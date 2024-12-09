@@ -29,7 +29,6 @@ import io.opentelemetry.api.trace.StatusCode
 import io.opentelemetry.context.Context
 import io.opentelemetry.sdk.common.Clock
 import io.opentelemetry.semconv.ExceptionAttributes
-import java.util.Queue
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.TimeUnit
@@ -44,24 +43,24 @@ internal class EmbraceSpanImpl(
     private val limits: OtelLimitsConfig = InstrumentedConfigImpl.otelLimits,
 ) : PersistableEmbraceSpan {
 
+    private companion object {
+        private const val EXCEPTION_EVENT_NAME = "exception"
+    }
+
     private val startedSpan: AtomicReference<io.opentelemetry.api.trace.Span?> = AtomicReference(null)
     private var spanStartTimeMs: Long? = null
     private var spanEndTimeMs: Long? = null
     private var status = Span.Status.UNSET
     private var updatedName: String? = null
-    private val systemEvents = ConcurrentLinkedQueue<EmbraceSpanEvent>()
-    private val customEvents = ConcurrentLinkedQueue<EmbraceSpanEvent>()
-    private val systemAttributes = ConcurrentHashMap<String, String>().apply {
+    private val events = ConcurrentLinkedQueue<EmbraceSpanEvent>()
+    private val attributes = ConcurrentHashMap<String, String>().apply {
         putAll(spanBuilder.getFixedAttributes().associate { it.key.attributeKey.key to it.value })
-    }
-    private val customAttributes = ConcurrentHashMap<String, String>().apply {
         putAll(spanBuilder.getCustomAttributes())
     }
 
     // size for ConcurrentLinkedQueues is not a constant operation, so it could be subject to race conditions
     // do the bookkeeping separately so we don't have to worry about this
-    private val systemEventCount = AtomicInteger(0)
-    private val customEventCount = AtomicInteger(0)
+    private val eventCount = AtomicInteger(0)
 
     override val parent: EmbraceSpan? = spanBuilder.getParentSpan()
 
@@ -120,18 +119,15 @@ internal class EmbraceSpanImpl(
             }
 
             startedSpan.get()?.let { spanToStop ->
-                systemAttributes.forEach { systemAttribute ->
-                    spanToStop.setAttribute(systemAttribute.key, systemAttribute.value)
-                }
-                customAttributes.redactIfSensitive().forEach { attribute ->
+                attributes.redactIfSensitive().forEach { attribute ->
                     spanToStop.setAttribute(attribute.key, attribute.value)
                 }
 
-                val redactedCustomEvents = customEvents.map { it.copy(attributes = it.attributes.redactIfSensitive()) }
+                val redactedEvents = events.map { it.copy(attributes = it.attributes.redactIfSensitive()) }
 
-                (systemEvents + redactedCustomEvents).forEach { event ->
+                redactedEvents.forEach { event ->
                     val eventAttributes = if (event.attributes.isNotEmpty()) {
-                        Attributes.builder().fromMap(event.attributes, spanBuilder.internal).build()
+                        Attributes.builder().fromMap(event.attributes).build()
                     } else {
                         Attributes.empty()
                     }
@@ -165,7 +161,7 @@ internal class EmbraceSpanImpl(
     }
 
     override fun addEvent(name: String, timestampMs: Long?, attributes: Map<String, String>?): Boolean =
-        recordEvent(customEvents, customEventCount, limits.getMaxCustomEventCount()) {
+        recordEvent {
             EmbraceSpanEvent.create(
                 name = name,
                 timestampMs = timestampMs?.normalizeTimestampAsMillis() ?: openTelemetryClock.now().nanosToMillis(),
@@ -174,7 +170,7 @@ internal class EmbraceSpanImpl(
         }
 
     override fun recordException(exception: Throwable, attributes: Map<String, String>?): Boolean =
-        recordEvent(customEvents, customEventCount, limits.getMaxCustomEventCount()) {
+        recordEvent {
             val eventAttributes = mutableMapOf<String, String>()
             if (attributes != null) {
                 eventAttributes.putAll(attributes)
@@ -191,27 +187,18 @@ internal class EmbraceSpanImpl(
             eventAttributes[ExceptionAttributes.EXCEPTION_STACKTRACE.key] = exception.truncatedStacktraceText()
 
             EmbraceSpanEvent.create(
-                name = limits.getExceptionEventName(),
+                name = EXCEPTION_EVENT_NAME,
                 timestampMs = openTelemetryClock.now().nanosToMillis(),
                 attributes = eventAttributes
             )
         }
 
-    override fun addSystemEvent(name: String, timestampMs: Long?, attributes: Map<String, String>?): Boolean =
-        recordEvent(systemEvents, systemEventCount, limits.getMaxTotalEventCount()) {
-            EmbraceSpanEvent.create(
-                name = name,
-                timestampMs = timestampMs?.normalizeTimestampAsMillis() ?: openTelemetryClock.now().nanosToMillis(),
-                attributes = attributes
-            )
-        }
-
-    override fun removeSystemEvents(type: EmbType): Boolean {
-        synchronized(systemEventCount) {
-            systemEvents.forEach { event ->
+    override fun removeEvents(type: EmbType): Boolean {
+        synchronized(eventCount) {
+            events.forEach { event ->
                 if (event.hasFixedAttribute(type)) {
-                    systemEvents.remove(event)
-                    systemEventCount.decrementAndGet()
+                    events.remove(event)
+                    eventCount.decrementAndGet()
                     spanRepository.notifySpanUpdate()
                     return true
                 }
@@ -231,10 +218,10 @@ internal class EmbraceSpanImpl(
     }
 
     override fun addAttribute(key: String, value: String): Boolean {
-        if (customAttributes.size < limits.getMaxCustomAttributeCount() && limits.isAttributeValid(key, value, spanBuilder.internal)) {
-            synchronized(customAttributes) {
-                if (customAttributes.size < limits.getMaxCustomAttributeCount() && isRecording) {
-                    customAttributes[key] = value
+        if (attributes.size < limits.getMaxAttributeCount() && limits.isAttributeValid(key, value)) {
+            synchronized(attributes) {
+                if (attributes.size < limits.getMaxAttributeCount() && isRecording) {
+                    attributes[key] = value
                     spanRepository.notifySpanUpdate()
                     return true
                 }
@@ -245,7 +232,7 @@ internal class EmbraceSpanImpl(
     }
 
     override fun updateName(newName: String): Boolean {
-        if (limits.isNameValid(newName, spanBuilder.internal)) {
+        if (limits.isNameValid(newName)) {
             synchronized(startedSpan) {
                 if (!spanStarted() || isRecording) {
                     updatedName = newName
@@ -262,7 +249,7 @@ internal class EmbraceSpanImpl(
     override fun asNewContext(): Context? = startedSpan.get()?.run { spanBuilder.parentContext.with(this) }
 
     override fun snapshot(): Span? {
-        val redactedCustomEvents = customEvents.map { it.copy(attributes = it.attributes.redactIfSensitive()) }
+        val redactedEvents = events.map { it.copy(attributes = it.attributes.redactIfSensitive()) }
         return if (canSnapshot()) {
             Span(
                 traceId = traceId,
@@ -272,7 +259,7 @@ internal class EmbraceSpanImpl(
                 startTimeNanos = spanStartTimeMs?.millisToNanos(),
                 endTimeNanos = spanEndTimeMs?.millisToNanos(),
                 status = status,
-                events = systemEvents.map(EmbraceSpanEvent::toNewPayload) + redactedCustomEvents.map(EmbraceSpanEvent::toNewPayload),
+                events = redactedEvents.map(EmbraceSpanEvent::toNewPayload),
                 attributes = getAttributesPayload()
             )
         } else {
@@ -280,42 +267,28 @@ internal class EmbraceSpanImpl(
         }
     }
 
+    override fun getAttribute(key: AttributeKey<String>): String? = attributes[key.key]
+
     override fun hasFixedAttribute(fixedAttribute: FixedAttribute): Boolean =
-        systemAttributes[fixedAttribute.key.attributeKey.key] == fixedAttribute.value
+        attributes[fixedAttribute.key.attributeKey.key] == fixedAttribute.value
 
-    override fun getSystemAttribute(key: AttributeKey<String>): String? = systemAttributes[key.key]
-
-    override fun setSystemAttribute(key: AttributeKey<String>, value: String) {
-        addSystemAttribute(key.key, value)
-    }
-
-    override fun addSystemAttribute(key: String, value: String) {
-        systemAttributes[key] = value
+    override fun removeAttribute(key: String) {
+        attributes.remove(key)
         spanRepository.notifySpanUpdate()
     }
 
-    override fun removeSystemAttribute(key: String) {
-        systemAttributes.remove(key)
-        spanRepository.notifySpanUpdate()
-    }
-
-    private fun getAttributesPayload(): List<Attribute> =
-        systemAttributes.map { Attribute(it.key, it.value) } + customAttributes.redactIfSensitive().toNewPayload()
+    private fun getAttributesPayload(): List<Attribute> = attributes.redactIfSensitive().map { Attribute(it.key, it.value) }
 
     private fun canSnapshot(): Boolean = spanId != null && spanStartTimeMs != null
 
-    private fun recordEvent(
-        events: Queue<EmbraceSpanEvent>,
-        count: AtomicInteger,
-        max: Int,
-        eventSupplier: () -> EmbraceSpanEvent?,
-    ): Boolean {
-        if (count.get() < max) {
-            synchronized(count) {
-                if (count.get() < max && isRecording) {
+    private fun recordEvent(eventSupplier: () -> EmbraceSpanEvent?): Boolean {
+        val max = limits.getMaxEventCount()
+        if (eventCount.get() < max) {
+            synchronized(eventCount) {
+                if (eventCount.get() < max && isRecording) {
                     eventSupplier()?.apply {
                         events.add(this)
-                        count.incrementAndGet()
+                        eventCount.incrementAndGet()
                         spanRepository.notifySpanUpdate()
                         return true
                     }

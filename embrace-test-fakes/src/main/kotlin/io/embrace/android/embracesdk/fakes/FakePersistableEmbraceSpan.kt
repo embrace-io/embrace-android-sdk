@@ -7,7 +7,6 @@ import io.embrace.android.embracesdk.internal.arch.schema.FixedAttribute
 import io.embrace.android.embracesdk.internal.arch.schema.TelemetryType
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.clock.normalizeTimestampAsMillis
-import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
 import io.embrace.android.embracesdk.internal.opentelemetry.embHeartbeatTimeUnixNano
 import io.embrace.android.embracesdk.internal.opentelemetry.embState
 import io.embrace.android.embracesdk.internal.payload.Span
@@ -85,7 +84,7 @@ class FakePersistableEmbraceSpan(
 
             if (status == Span.Status.ERROR) {
                 val error = errorCode?.fromErrorCode() ?: ErrorCodeAttribute.Failure
-                setSystemAttribute(error.key.attributeKey, error.value)
+                addAttribute(error.key.attributeKey.key, error.value)
             }
 
             val timestamp = endTimeMs ?: fakeClock.now()
@@ -109,12 +108,9 @@ class FakePersistableEmbraceSpan(
     }
 
     override fun recordException(exception: Throwable, attributes: Map<String, String>?): Boolean =
-        addEvent(InstrumentedConfigImpl.otelLimits.getExceptionEventName(), null, attributes)
+        addEvent("exception", null, attributes)
 
-    override fun addSystemEvent(name: String, timestampMs: Long?, attributes: Map<String, String>?): Boolean =
-        addEvent(name, timestampMs, attributes)
-
-    override fun removeSystemEvents(type: EmbType): Boolean {
+    override fun removeEvents(type: EmbType): Boolean {
         events.removeAll { it.hasFixedAttribute(type) }
         return true
     }
@@ -157,19 +153,11 @@ class FakePersistableEmbraceSpan(
     override fun hasFixedAttribute(fixedAttribute: FixedAttribute): Boolean =
         attributes.hasFixedAttribute(fixedAttribute)
 
-    override fun getSystemAttribute(key: AttributeKey<String>): String? = attributes[key.key]
-
-    override fun setSystemAttribute(key: AttributeKey<String>, value: String) {
-        addSystemAttribute(key.key, value)
-    }
-
-    override fun addSystemAttribute(key: String, value: String) {
-        attributes[key] = value
-    }
-
-    override fun removeSystemAttribute(key: String) {
+    override fun removeAttribute(key: String) {
         attributes.remove(key)
     }
+
+    override fun getAttribute(key: AttributeKey<String>): String? = attributes[key.key]
 
     private fun started(): Boolean = sdkSpan != null
 
@@ -206,10 +194,10 @@ class FakePersistableEmbraceSpan(
                 type = EmbType.Ux.Session
             ).apply {
                 start(startTimeMs)
-                setSystemAttribute(SessionIncubatingAttributes.SESSION_ID, sessionId)
-                setSystemAttribute(embState.attributeKey, "foreground")
-                setSystemAttribute(
-                    embHeartbeatTimeUnixNano.attributeKey,
+                addAttribute(SessionIncubatingAttributes.SESSION_ID.key, sessionId)
+                addAttribute(embState.attributeKey.key, "foreground")
+                addAttribute(
+                    embHeartbeatTimeUnixNano.attributeKey.key,
                     (lastHeartbeatTimeMs ?: this.spanStartTimeMs)!!.millisToNanos().toString()
                 )
                 if (endTimeMs != null) {

@@ -43,11 +43,10 @@ internal fun LogRecordBuilder.setAttribute(
  */
 fun AttributesBuilder.fromMap(
     attributes: Map<String, String>,
-    internal: Boolean,
     limits: OtelLimitsConfig = InstrumentedConfigImpl.otelLimits,
 ): AttributesBuilder {
     attributes.filter {
-        limits.isAttributeValid(it.key, it.value, internal) || it.key.isValidLongValueAttribute()
+        limits.isAttributeValid(it.key, it.value) || it.key.isValidLongValueAttribute()
     }.forEach {
         put(it.key, it.value)
     }

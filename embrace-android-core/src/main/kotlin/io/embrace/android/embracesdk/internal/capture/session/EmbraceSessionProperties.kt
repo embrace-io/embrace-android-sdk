@@ -56,7 +56,7 @@ internal class EmbraceSessionProperties(
                 }
                 temporary[sanitizedKey] = sanitizedValue
             }
-            writer.addSystemAttribute(
+            writer.addAttribute(
                 SpanAttributeData(
                     sanitizedKey.toSessionPropertyAttributeName(),
                     sanitizedValue
@@ -79,7 +79,7 @@ internal class EmbraceSessionProperties(
                 preferencesService.permanentSessionProperties = permanentProperties()
                 existed = true
             }
-            writer.removeSystemAttribute(sanitizedKey.toSessionPropertyAttributeName())
+            writer.removeAttribute(sanitizedKey.toSessionPropertyAttributeName())
             return existed
         }
     }
@@ -98,7 +98,7 @@ internal class EmbraceSessionProperties(
 
     fun addPermPropsToSessionSpan() {
         permanentProperties().entries.forEach {
-            writer.addSystemAttribute(
+            writer.addAttribute(
                 SpanAttributeData(
                     it.key.toSessionPropertyAttributeName(),
                     it.value

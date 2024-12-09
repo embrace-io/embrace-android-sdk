@@ -495,7 +495,7 @@ internal class CurrentSessionSpanImplTests {
 
     @Test
     fun `validate maximum events on session span`() {
-        val limit = InstrumentedConfigImpl.otelLimits.getMaxTotalEventCount()
+        val limit = InstrumentedConfigImpl.otelLimits.getMaxEventCount()
         repeat(limit + 1) {
             currentSessionSpan.addEvent(SchemaType.Breadcrumb("test-event"), 1000L + it)
         }
@@ -509,9 +509,9 @@ internal class CurrentSessionSpanImplTests {
 
     @Test
     fun `add and remove attribute forwarded to span`() {
-        currentSessionSpan.addSystemAttribute(SpanAttributeData("my_key", "my_value"))
-        currentSessionSpan.addSystemAttribute(SpanAttributeData("missing", "my_value"))
-        currentSessionSpan.removeSystemAttribute("missing")
+        currentSessionSpan.addAttribute(SpanAttributeData("my_key", "my_value"))
+        currentSessionSpan.addAttribute(SpanAttributeData("missing", "my_value"))
+        currentSessionSpan.removeAttribute("missing")
         val span = currentSessionSpan.endSession(true).single()
         assertEquals("emb-session", span.name)
 
@@ -522,9 +522,9 @@ internal class CurrentSessionSpanImplTests {
 
     @Test
     fun `validate maximum attributes on session span`() {
-        val limit = InstrumentedConfigImpl.otelLimits.getMaxTotalAttributeCount()
+        val limit = InstrumentedConfigImpl.otelLimits.getMaxAttributeCount()
         repeat(limit + 1) {
-            currentSessionSpan.addSystemAttribute(SpanAttributeData("attribute-$it", "value"))
+            currentSessionSpan.addAttribute(SpanAttributeData("attribute-$it", "value"))
         }
 
         val span = currentSessionSpan.endSession(true).single()
@@ -540,8 +540,8 @@ internal class CurrentSessionSpanImplTests {
         assertTrue(endSession(true).isEmpty())
         assertFalse(addEvent(SchemaType.Breadcrumb("test"), clock.now()))
         // check doesn't throw exception
-        addSystemAttribute(attribute = SpanAttributeData("test", "test"))
-        removeSystemAttribute("test")
+        addAttribute(attribute = SpanAttributeData("test", "test"))
+        removeAttribute("test")
         removeEvents(EmbType.System.Breadcrumb)
     }
 
@@ -550,8 +550,8 @@ internal class CurrentSessionSpanImplTests {
         assertTrue(canStartNewSpan(parent = null, internal = true))
         assertTrue(addEvent(SchemaType.Breadcrumb("test"), clock.now()))
         // check doesn't throw exception
-        addSystemAttribute(attribute = SpanAttributeData("test", "test"))
-        removeSystemAttribute("test")
+        addAttribute(attribute = SpanAttributeData("test", "test"))
+        removeAttribute("test")
         removeEvents(EmbType.System.Breadcrumb)
     }
 

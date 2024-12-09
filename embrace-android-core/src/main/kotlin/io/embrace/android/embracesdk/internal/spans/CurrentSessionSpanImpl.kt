@@ -82,7 +82,7 @@ internal class CurrentSessionSpanImpl(
     }
 
     override fun getSessionId(): String {
-        return sessionSpan.get()?.getSystemAttribute(SessionIncubatingAttributes.SESSION_ID) ?: ""
+        return sessionSpan.get()?.getAttribute(SessionIncubatingAttributes.SESSION_ID) ?: ""
     }
 
     override fun readySession(): Boolean {
@@ -124,8 +124,8 @@ internal class CurrentSessionSpanImpl(
                 } else {
                     val crashTime = openTelemetryClock.now().nanosToMillis()
                     spanRepository.failActiveSpans(crashTime)
-                    endingSessionSpan.setSystemAttribute(
-                        appTerminationCause.key.attributeKey,
+                    endingSessionSpan.addAttribute(
+                        appTerminationCause.key.attributeKey.key,
                         appTerminationCause.value
                     )
                     endingSessionSpan.stop(errorCode = ErrorCode.FAILURE, endTimeMs = crashTime)
@@ -139,7 +139,7 @@ internal class CurrentSessionSpanImpl(
 
     override fun addEvent(schemaType: SchemaType, startTimeMs: Long): Boolean {
         val currentSession = sessionSpan.get() ?: return false
-        return currentSession.addSystemEvent(
+        return currentSession.addEvent(
             schemaType.fixedObjectName.toEmbraceObjectName(),
             startTimeMs,
             schemaType.attributes() + schemaType.telemetryType.toEmbraceKeyValuePair()
@@ -148,17 +148,17 @@ internal class CurrentSessionSpanImpl(
 
     override fun removeEvents(type: EmbType) {
         val currentSession = sessionSpan.get() ?: return
-        currentSession.removeSystemEvents(type)
+        currentSession.removeEvents(type)
     }
 
-    override fun addSystemAttribute(attribute: SpanAttributeData) {
+    override fun addAttribute(attribute: SpanAttributeData) {
         val currentSession = sessionSpan.get() ?: return
-        currentSession.addSystemAttribute(attribute.key, attribute.value)
+        currentSession.addAttribute(attribute.key, attribute.value)
     }
 
-    override fun removeSystemAttribute(key: String) {
+    override fun removeAttribute(key: String) {
         val currentSession = sessionSpan.get() ?: return
-        currentSession.removeSystemAttribute(key)
+        currentSession.removeAttribute(key)
     }
 
     /**
@@ -175,7 +175,7 @@ internal class CurrentSessionSpanImpl(
             private = false,
         ).apply {
             start(startTimeMs = startTimeMs)
-            setSystemAttribute(SessionIncubatingAttributes.SESSION_ID, Uuid.getEmbUuid())
+            addAttribute(SessionIncubatingAttributes.SESSION_ID.key, Uuid.getEmbUuid())
         }
     }
 

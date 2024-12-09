@@ -25,7 +25,7 @@ interface NativeCrashService {
     fun sendNativeCrash(
         nativeCrash: NativeCrashData,
         sessionProperties: Map<String, String>,
-        metadata: Map<AttributeKey<String>, String> = emptyMap(),
+        metadata: Map<AttributeKey<String>, String>,
     )
 
     /**

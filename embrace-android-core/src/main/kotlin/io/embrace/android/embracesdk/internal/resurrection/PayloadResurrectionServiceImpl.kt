@@ -40,66 +40,15 @@ internal class PayloadResurrectionServiceImpl(
         val nativeCrashService = nativeCrashServiceProvider()
         val undeliveredPayloads = cacheStorageService.getUndeliveredPayloads()
         val nativeCrashes = nativeCrashService?.getNativeCrashes()?.associateBy { it.sessionId } ?: emptyMap()
-
-        processUndeliveredPayload(undeliveredPayloads, nativeCrashes, nativeCrashService)
-        nativeCrashService?.deleteAllNativeCrashes()
-    }
-
-    /**
-     * Load and modify the given incomplete payload envelope and send the result to the [IntakeService] for delivery.
-     * Resurrected payloads sent to the [IntakeService] will be deleted.
-     */
-    private fun processUndeliveredPayload(
-        payloadMetadata: List<StoredTelemetryMetadata>,
-        nativeCrashes: Map<String, NativeCrashData>,
-        nativeCrashService: NativeCrashService?,
-    ) {
         val processedCrashes = mutableSetOf<NativeCrashData>()
-        payloadMetadata.forEach { payload ->
+
+        undeliveredPayloads.forEach { payload ->
             val result = runCatching {
-                with(payload) {
-                    val resurrectedPayload = when (envelopeType) {
-                        SupportedEnvelopeType.SESSION -> {
-                            val deadSession = serializer.fromJson<Envelope<SessionPayload>>(
-                                inputStream = GZIPInputStream(cacheStorageService.loadPayloadAsStream(this)),
-                                type = envelopeType.serializedType
-                            )
-
-                            val sessionId = deadSession.getSessionId()
-                            val appState = deadSession.getSessionSpan()?.attributes?.findAttributeValue(embState.name)
-                            val nativeCrash = if (sessionId != null) {
-                                nativeCrashes[sessionId]?.apply {
-                                    processedCrashes.add(this)
-                                    nativeCrashService?.sendNativeCrash(
-                                        nativeCrash = this,
-                                        sessionProperties = deadSession.getSessionProperties(),
-                                        metadata = if (appState != null) {
-                                            mapOf(embState.attributeKey to appState)
-                                        } else {
-                                            emptyMap()
-                                        }
-                                    )
-                                }
-                            } else {
-                                null
-                            }
-
-                            deadSession.resurrectSession(nativeCrash)
-                                ?: throw IllegalArgumentException(
-                                    "Session resurrection failed. Payload does not contain exactly one session span."
-                                )
-                        }
-
-                        else -> null
-                    }
-
-                    if (resurrectedPayload != null) {
-                        intakeService.take(
-                            intake = resurrectedPayload,
-                            metadata = copy(complete = true)
-                        )
-                    }
-                }
+                payload.processUndeliveredPayload(
+                    nativeCrashService = nativeCrashService,
+                    nativeCrashProvider = nativeCrashes::get,
+                    postNativeCrashCallback = processedCrashes::add,
+                )
             }
 
             if (result.isSuccess) {
@@ -116,16 +65,70 @@ internal class PayloadResurrectionServiceImpl(
                 )
             }
         }
+
         if (nativeCrashService != null) {
             nativeCrashes.values.filterNot { processedCrashes.contains(it) }.forEach { nativeCrash ->
-                nativeCrashService.sendNativeCrash(nativeCrash = nativeCrash, sessionProperties = emptyMap())
+                nativeCrashService.sendNativeCrash(
+                    nativeCrash = nativeCrash,
+                    sessionProperties = emptyMap(),
+                    metadata = emptyMap()
+                )
             }
+            nativeCrashService.deleteAllNativeCrashes()
+        }
+    }
+
+    private fun StoredTelemetryMetadata.processUndeliveredPayload(
+        nativeCrashService: NativeCrashService?,
+        nativeCrashProvider: (String) -> NativeCrashData?,
+        postNativeCrashCallback: (NativeCrashData) -> Unit,
+    ) {
+        val resurrectedPayload = when (envelopeType) {
+            SupportedEnvelopeType.SESSION -> {
+                val deadSession = serializer.fromJson<Envelope<SessionPayload>>(
+                    inputStream = GZIPInputStream(cacheStorageService.loadPayloadAsStream(this)),
+                    type = envelopeType.serializedType
+                )
+
+                val sessionId = deadSession.getSessionId()
+                val appState = deadSession.getSessionSpan()?.attributes?.findAttributeValue(embState.name)
+                val nativeCrash = if (sessionId != null) {
+                    nativeCrashProvider(sessionId)?.apply {
+                        postNativeCrashCallback(this)
+                        nativeCrashService?.sendNativeCrash(
+                            nativeCrash = this,
+                            sessionProperties = deadSession.getSessionProperties(),
+                            metadata = if (appState != null) {
+                                mapOf(embState.attributeKey to appState)
+                            } else {
+                                emptyMap()
+                            }
+                        )
+                    }
+                } else {
+                    null
+                }
+
+                deadSession.resurrectSession(nativeCrash)
+                    ?: throw IllegalArgumentException(
+                        "Session resurrection failed. Payload does not contain exactly one session span."
+                    )
+            }
+
+            else -> null
+        }
+
+        if (resurrectedPayload != null) {
+            intakeService.take(
+                intake = resurrectedPayload,
+                metadata = copy(complete = true)
+            )
         }
     }
 
     /**
-     * Return copy of envelope with a modified set of spans to reflect their resurrected states, or null if payload does not contain
-     * exactly one session span.
+     * Return copy of envelope with a modified set of spans to reflect their resurrected states, or null if the
+     * payload does not contain exactly one session span.
      */
     private fun Envelope<SessionPayload>.resurrectSession(
         nativeCrashData: NativeCrashData?,

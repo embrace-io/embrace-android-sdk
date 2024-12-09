@@ -122,7 +122,8 @@ internal class NativeCrashDataSourceImplTest {
                 crash = null,
                 symbols = null,
             ),
-            sessionProperties = emptyMap()
+            sessionProperties = emptyMap(),
+            metadata = emptyMap(),
         )
 
         with(otelLogger.builders.single()) {
@@ -146,7 +147,8 @@ internal class NativeCrashDataSourceImplTest {
                 crash = "",
                 symbols = emptyMap(),
             ),
-            sessionProperties = emptyMap()
+            sessionProperties = emptyMap(),
+            metadata = emptyMap(),
         )
 
         with(otelLogger.builders.single()) {

@@ -60,8 +60,8 @@ class DeliveryTracer {
             }.joinToString("\n")
     }
 
-    fun onStartDeliveryLoop(sendLoopActive: Boolean) {
-        events.add(DeliveryTraceState.StartDeliveryLoop(sendLoopActive))
+    fun onStartDeliveryLoop() {
+        events.add(DeliveryTraceState.StartDeliveryLoop)
     }
 
     fun onPayloadQueueCreated(

@@ -14,7 +14,6 @@ import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import java.io.InputStream
 import java.util.Collections
-import java.util.LinkedList
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
@@ -32,14 +31,11 @@ class SchedulingServiceImpl(
 
     private val blockedEndpoints: MutableMap<Endpoint, Long> = ConcurrentHashMap()
     private val hasNetwork = AtomicBoolean(true)
-    private val sendLoopActive = AtomicBoolean(false)
-    private val queryForPayloads = AtomicBoolean(true)
     private val activeSends: MutableSet<StoredTelemetryMetadata> = Collections.newSetFromMap(ConcurrentHashMap())
     private val deleteInProgress: MutableSet<StoredTelemetryMetadata> = Collections.newSetFromMap(ConcurrentHashMap())
     private val payloadsToRetry: MutableMap<StoredTelemetryMetadata, RetryInstance> = ConcurrentHashMap()
 
     override fun onPayloadIntake() {
-        queryForPayloads.set(true)
         startDeliveryLoop()
     }
 
@@ -66,13 +62,9 @@ class SchedulingServiceImpl(
     private fun startDeliveryLoop() {
         // When a payload arrives, check to see if there's already an active job try to deliver payloads
         // If not, schedule job. If so, do nothing.
-        if (sendLoopActive.compareAndSet(false, true)) {
-            deliveryTracer?.onStartDeliveryLoop(true)
-            schedulingWorker.submit {
-                deliveryLoop()
-            }
-        } else {
-            deliveryTracer?.onStartDeliveryLoop(false)
+        deliveryTracer?.onStartDeliveryLoop()
+        schedulingWorker.submit {
+            deliveryLoop()
         }
     }
 
@@ -82,9 +74,8 @@ class SchedulingServiceImpl(
     private fun deliveryLoop() {
         val failedPayloads = mutableSetOf<StoredTelemetryMetadata>()
         try {
-            var deliveryQueue = createPayloadQueue()
-            while (deliveryQueue.isNotEmpty() && readyToSend()) {
-                val payload = deliveryQueue.poll()
+            var payload: StoredTelemetryMetadata? = findNextPayload()
+            while (payload != null && readyToSend()) {
                 runCatching {
                     payload?.run {
                         if (shouldSendPayload() && readyToSend()) {
@@ -109,10 +100,7 @@ class SchedulingServiceImpl(
                         throwable = IllegalStateException("Failed to queue payload with file name $fileName", error)
                     )
                 }
-
-                if (queryForPayloads.compareAndSet(true, false) || deliveryQueue.isEmpty()) {
-                    deliveryQueue = createPayloadQueue(failedPayloads)
-                }
+                payload = findNextPayload(failedPayloads)
             }
         } catch (t: Throwable) {
             // This block catches unhandled errors resulting from the recreation of a queue of payloads to be delivered
@@ -120,12 +108,11 @@ class SchedulingServiceImpl(
             // to retry any pending payloads.
             logger.trackInternalError(InternalErrorType.DELIVERY_SCHEDULING_FAIL, t)
         } finally {
-            sendLoopActive.set(false)
             scheduleDeliveryLoopForNextRetry()
         }
     }
 
-    private fun createPayloadQueue(exclude: Set<StoredTelemetryMetadata> = emptySet()): LinkedList<StoredTelemetryMetadata> {
+    private fun findNextPayload(exclude: Set<StoredTelemetryMetadata> = emptySet()): StoredTelemetryMetadata? {
         val payloadsByPriority = storageService.getPayloadsByPriority()
         val payloadsToSend = payloadsByPriority
             .filter { it.shouldSendPayload() && !exclude.contains(it) }
@@ -134,7 +121,7 @@ class SchedulingServiceImpl(
             payloadsByPriority,
             payloadsToSend,
         )
-        return LinkedList(payloadsToSend)
+        return payloadsToSend.firstOrNull()
     }
 
     private fun queueDelivery(payload: StoredTelemetryMetadata): Future<ExecutionResult> {

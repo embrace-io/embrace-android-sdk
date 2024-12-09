@@ -11,12 +11,14 @@ import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.ndk.NativeCrashService
 import io.embrace.android.embracesdk.internal.opentelemetry.embCrashId
 import io.embrace.android.embracesdk.internal.opentelemetry.embHeartbeatTimeUnixNano
+import io.embrace.android.embracesdk.internal.opentelemetry.embState
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.getSessionId
+import io.embrace.android.embracesdk.internal.payload.getSessionProperties
 import io.embrace.android.embracesdk.internal.payload.getSessionSpan
 import io.embrace.android.embracesdk.internal.payload.toFailedSpan
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
@@ -36,74 +38,97 @@ internal class PayloadResurrectionServiceImpl(
 
     override fun resurrectOldPayloads(nativeCrashServiceProvider: Provider<NativeCrashService?>) {
         val nativeCrashService = nativeCrashServiceProvider()
-        val nativeCrashes = nativeCrashService
-            ?.getNativeCrashes()
-            ?.associateBy { it.sessionId }
-            ?.apply {
-                values.forEach { nativeCrash ->
-                    nativeCrashService.sendNativeCrash(nativeCrash)
-                }
-            } ?: emptyMap()
+        val undeliveredPayloads = cacheStorageService.getUndeliveredPayloads()
+        val nativeCrashes = nativeCrashService?.getNativeCrashes()?.associateBy { it.sessionId } ?: emptyMap()
+        val processedCrashes = mutableSetOf<NativeCrashData>()
 
-        cacheStorageService
-            .getUndeliveredPayloads()
-            .forEach { deadProcessPayloadMetadata ->
-                deadProcessPayloadMetadata.processUndeliveredPayload(nativeCrashes::get)
-            }
-        nativeCrashService?.deleteAllNativeCrashes()
-    }
-
-    /**
-     * Load and modify the given incomplete payload envelope and send the result to the [IntakeService] for delivery.
-     * Resurrected payloads sent to the [IntakeService] will be deleted.
-     */
-    private fun StoredTelemetryMetadata.processUndeliveredPayload(nativeCrashProvider: (String) -> NativeCrashData?) {
-        val result = runCatching {
-            val resurrectedPayload = when (envelopeType) {
-                SupportedEnvelopeType.SESSION -> {
-                    val deadSession = serializer.fromJson<Envelope<SessionPayload>>(
-                        inputStream = GZIPInputStream(cacheStorageService.loadPayloadAsStream(this)),
-                        type = envelopeType.serializedType
-                    )
-
-                    val nativeCrash = deadSession.getSessionId()?.run {
-                        nativeCrashProvider(this)
-                    }
-
-                    deadSession.resurrectSession(nativeCrash)
-                        ?: throw IllegalArgumentException(
-                            "Session resurrection failed. Payload does not contain exactly one session span."
-                        )
-                }
-                else -> null
+        undeliveredPayloads.forEach { payload ->
+            val result = runCatching {
+                payload.processUndeliveredPayload(
+                    nativeCrashService = nativeCrashService,
+                    nativeCrashProvider = nativeCrashes::get,
+                    postNativeCrashCallback = processedCrashes::add,
+                )
             }
 
-            if (resurrectedPayload != null) {
-                intakeService.take(
-                    intake = resurrectedPayload,
-                    metadata = copy(complete = true)
+            if (result.isSuccess) {
+                cacheStorageService.delete(payload)
+            } else {
+                val exception = IllegalStateException(
+                    "Resurrecting and sending incomplete payloads from previous app launches failed.",
+                    result.exceptionOrNull()
+                )
+
+                logger.trackInternalError(
+                    type = InternalErrorType.PAYLOAD_RESURRECTION_FAIL,
+                    throwable = exception
                 )
             }
         }
 
-        if (result.isSuccess) {
-            cacheStorageService.delete(this)
-        } else {
-            val exception = IllegalStateException(
-                "Resurrecting and sending incomplete payloads from previous app launches failed.",
-                result.exceptionOrNull()
-            )
+        if (nativeCrashService != null) {
+            nativeCrashes.values.filterNot { processedCrashes.contains(it) }.forEach { nativeCrash ->
+                nativeCrashService.sendNativeCrash(
+                    nativeCrash = nativeCrash,
+                    sessionProperties = emptyMap(),
+                    metadata = emptyMap()
+                )
+            }
+            nativeCrashService.deleteAllNativeCrashes()
+        }
+    }
 
-            logger.trackInternalError(
-                type = InternalErrorType.PAYLOAD_RESURRECTION_FAIL,
-                throwable = exception
+    private fun StoredTelemetryMetadata.processUndeliveredPayload(
+        nativeCrashService: NativeCrashService?,
+        nativeCrashProvider: (String) -> NativeCrashData?,
+        postNativeCrashCallback: (NativeCrashData) -> Unit,
+    ) {
+        val resurrectedPayload = when (envelopeType) {
+            SupportedEnvelopeType.SESSION -> {
+                val deadSession = serializer.fromJson<Envelope<SessionPayload>>(
+                    inputStream = GZIPInputStream(cacheStorageService.loadPayloadAsStream(this)),
+                    type = envelopeType.serializedType
+                )
+
+                val sessionId = deadSession.getSessionId()
+                val appState = deadSession.getSessionSpan()?.attributes?.findAttributeValue(embState.name)
+                val nativeCrash = if (sessionId != null) {
+                    nativeCrashProvider(sessionId)?.apply {
+                        postNativeCrashCallback(this)
+                        nativeCrashService?.sendNativeCrash(
+                            nativeCrash = this,
+                            sessionProperties = deadSession.getSessionProperties(),
+                            metadata = if (appState != null) {
+                                mapOf(embState.attributeKey to appState)
+                            } else {
+                                emptyMap()
+                            }
+                        )
+                    }
+                } else {
+                    null
+                }
+
+                deadSession.resurrectSession(nativeCrash)
+                    ?: throw IllegalArgumentException(
+                        "Session resurrection failed. Payload does not contain exactly one session span."
+                    )
+            }
+
+            else -> null
+        }
+
+        if (resurrectedPayload != null) {
+            intakeService.take(
+                intake = resurrectedPayload,
+                metadata = copy(complete = true)
             )
         }
     }
 
     /**
-     * Return copy of envelope with a modified set of spans to reflect their resurrected states, or null if payload does not contain
-     * exactly one session span.
+     * Return copy of envelope with a modified set of spans to reflect their resurrected states, or null if the
+     * payload does not contain exactly one session span.
      */
     private fun Envelope<SessionPayload>.resurrectSession(
         nativeCrashData: NativeCrashData?,

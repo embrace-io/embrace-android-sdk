@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute.Failure.fromErrorCode
 import io.embrace.android.embracesdk.internal.arch.schema.FixedAttribute
 import io.embrace.android.embracesdk.internal.arch.schema.TelemetryType
+import io.embrace.android.embracesdk.internal.arch.schema.toSessionPropertyAttributeName
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.clock.normalizeTimestampAsMillis
 import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
@@ -200,12 +201,20 @@ class FakePersistableEmbraceSpan(
             startTimeMs: Long,
             lastHeartbeatTimeMs: Long?,
             endTimeMs: Long? = null,
+            sessionProperties: Map<String, String>? = null,
         ): FakePersistableEmbraceSpan =
             FakePersistableEmbraceSpan(
                 name = "emb-session",
                 type = EmbType.Ux.Session
             ).apply {
                 start(startTimeMs)
+                sessionProperties?.forEach {
+                    addSystemAttribute(
+                        key = it.key.toSessionPropertyAttributeName(),
+                        value = it.value
+                    )
+                }
+
                 setSystemAttribute(SessionIncubatingAttributes.SESSION_ID, sessionId)
                 setSystemAttribute(embState.attributeKey, "foreground")
                 setSystemAttribute(

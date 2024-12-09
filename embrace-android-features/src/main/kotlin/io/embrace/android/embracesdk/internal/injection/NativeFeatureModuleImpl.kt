@@ -57,7 +57,6 @@ internal class NativeFeatureModuleImpl(
             null
         } else {
             NativeCrashDataSourceImpl(
-                sessionPropertiesService = essentialServiceModule.sessionPropertiesService,
                 nativeCrashProcessor = nativeCoreModule.processor,
                 preferencesService = androidServicesModule.preferencesService,
                 logWriter = essentialServiceModule.logWriter,

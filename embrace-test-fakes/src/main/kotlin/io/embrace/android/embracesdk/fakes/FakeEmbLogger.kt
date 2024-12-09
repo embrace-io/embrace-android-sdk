@@ -1,10 +1,13 @@
 package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
+import io.embrace.android.embracesdk.internal.logging.InternalErrorHandler
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.utils.Provider
 
 class FakeEmbLogger(
     var throwOnInternalError: Boolean = true,
+    override var errorHandlerProvider: Provider<InternalErrorHandler?> = { null },
 ) : EmbLogger {
 
     data class LogMessage(
@@ -37,5 +40,6 @@ class FakeEmbLogger(
             throw IllegalStateException("Internal error: $type", throwable)
         }
         internalErrorMessages.add(LogMessage(type.toString(), throwable))
+        errorHandlerProvider()?.trackInternalError(type, throwable)
     }
 }

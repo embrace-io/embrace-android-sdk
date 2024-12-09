@@ -2,7 +2,9 @@ package io.embrace.android.embracesdk.testframework.actions
 
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.testframework.export.ExportedSpanValidator
+import io.embrace.android.embracesdk.testframework.export.FilteredLogExporter
 import io.embrace.android.embracesdk.testframework.export.FilteredSpanExporter
+import io.opentelemetry.sdk.logs.data.LogRecordData
 import io.opentelemetry.sdk.trace.data.SpanData
 
 /**
@@ -11,6 +13,7 @@ import io.opentelemetry.sdk.trace.data.SpanData
  */
 internal class EmbraceOtelExportAssertionInterface(
     private val spanExporter: FilteredSpanExporter,
+    private val logExporter: FilteredLogExporter,
     private val validator: ExportedSpanValidator = ExportedSpanValidator(),
 ) {
 
@@ -20,6 +23,26 @@ internal class EmbraceOtelExportAssertionInterface(
      */
     fun awaitSpansWithType(type: EmbType, expectedCount: Int): List<SpanData> {
         return spanExporter.awaitSpansWithType(type, expectedCount)
+    }
+
+    /**
+     * Retrieves spans that match the provided filter and waits until they are exported or a timeout is reached
+     */
+    fun awaitSpanExport(
+        expectedCount: Int,
+        filter: (SpanData) -> Boolean = { true },
+    ): List<SpanData> {
+        return spanExporter.awaitSpanExport(expectedCount, filter)
+    }
+
+    /**
+     * Retrieves logs that match the provided filter and waits until they are exported or a timeout is reached
+     */
+    fun awaitLogExport(
+        expectedCount: Int,
+        filter: (LogRecordData) -> Boolean = { true },
+    ): List<LogRecordData> {
+        return logExporter.awaitLogExport(expectedCount, filter)
     }
 
     /**

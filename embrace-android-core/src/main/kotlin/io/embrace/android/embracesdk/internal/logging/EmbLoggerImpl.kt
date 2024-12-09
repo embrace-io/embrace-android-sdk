@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.logging
 
 import android.util.Log
+import io.embrace.android.embracesdk.internal.utils.Provider
 import java.util.concurrent.atomic.AtomicBoolean
 
 internal const val EMBRACE_TAG = "[Embrace]"
@@ -12,7 +13,7 @@ internal const val EMBRACE_TAG = "[Embrace]"
 class EmbLoggerImpl : EmbLogger {
 
     private val loggedSdkNotStarted = AtomicBoolean(false)
-    var errorHandler: InternalErrorHandler? = null
+    override var errorHandlerProvider: Provider<InternalErrorHandler?> = { null }
 
     override fun logInfo(msg: String, throwable: Throwable?) {
         log(msg, EmbLogger.Severity.INFO, throwable)
@@ -31,7 +32,7 @@ class EmbLoggerImpl : EmbLogger {
 
     override fun trackInternalError(type: InternalErrorType, throwable: Throwable) {
         try {
-            errorHandler?.trackInternalError(type, throwable)
+            errorHandlerProvider()?.trackInternalError(type, throwable)
         } catch (exc: Throwable) {
             // don't cause a crash loop!
             Log.w(EMBRACE_TAG, "Failed to track internal error", exc)

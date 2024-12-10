@@ -12,6 +12,7 @@ import io.embrace.android.embracesdk.fakes.FakeMemoryCleanerService
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakeOtelPayloadMapper
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
+import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fakes.FakeSessionPropertiesService
 import io.embrace.android.embracesdk.fakes.FakeUserService
@@ -97,6 +98,8 @@ internal class SessionHandlerTest {
             currentSessionSpan,
             spanRepository,
             FakeOtelPayloadMapper(),
+            FakeProcessStateService(),
+            FakeClock(),
             logger
         )
         val payloadSourceModule = FakePayloadSourceModule(

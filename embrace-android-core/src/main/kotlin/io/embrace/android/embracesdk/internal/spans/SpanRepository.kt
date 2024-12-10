@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.spans
 
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.utils.lockAndRun
+import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.ErrorCode
 import java.util.concurrent.ConcurrentHashMap
@@ -101,4 +102,52 @@ class SpanRepository {
     }
 
     private fun notTracked(spanId: String): Boolean = activeSpans[spanId] == null && completedSpans[spanId] == null
+
+    /**
+     * Automatically terminates root spans
+     */
+    fun autoTerminateSpans(now: Long) {
+        val roots = buildSpanTree()
+        terminateSpansIfRequired(now, roots.filter { it.span.autoTerminationMode == AutoTerminationMode.ON_BACKGROUND })
+    }
+
+    /**
+     * Terminates any spans & their descendants that are set to auto terminate on the process entering the background.
+     *
+     * The root span and their descendants are terminated via depth-first traversal. The end time is guaranteed
+     * to be the same for any auto-terminated spans.
+     */
+    private fun terminateSpansIfRequired(endTimeMs: Long, nodes: List<SpanNode>) {
+        nodes.forEach { node ->
+            if (node.span.isRecording) {
+                node.span.stop(endTimeMs = endTimeMs)
+            }
+            terminateSpansIfRequired(endTimeMs, node.children)
+        }
+    }
+
+    private fun buildSpanTree(): List<SpanNode> {
+        // first, create nodes individually
+        val spans = activeSpans.values.toList().plus(completedSpans.values)
+        val nodes = spans.map { SpanNode(it, mutableListOf()) }.associateBy(SpanNode::span)
+        val roots = mutableListOf<SpanNode>()
+
+        // then build relationships between nodes
+        spans.forEach { span ->
+            nodes[span]?.let { node ->
+                if (span.parent != null) {
+                    nodes[span.parent]?.children?.add(node)
+                } else {
+                    roots.add(node)
+                }
+            }
+        }
+        // finally, return a list of root nodes
+        return roots.toList()
+    }
+
+    private data class SpanNode(
+        val span: EmbraceSpan,
+        val children: MutableList<SpanNode>,
+    )
 }

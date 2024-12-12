@@ -38,6 +38,7 @@ public abstract interface class io/embrace/android/embracesdk/internal/api/Bread
 }
 
 public abstract interface class io/embrace/android/embracesdk/internal/api/EmbraceAndroidApi {
+	public abstract fun disable ()V
 	public abstract fun endView (Ljava/lang/String;)Z
 	public abstract fun start (Landroid/content/Context;)V
 	public abstract fun start (Landroid/content/Context;Lio/embrace/android/embracesdk/AppFramework;)V

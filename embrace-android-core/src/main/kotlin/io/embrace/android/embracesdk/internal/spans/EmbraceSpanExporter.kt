@@ -12,9 +12,13 @@ import io.opentelemetry.sdk.trace.export.SpanExporter
 internal class EmbraceSpanExporter(
     private val spanSink: SpanSink,
     private val externalSpanExporter: SpanExporter,
+    private val exportCheck: () -> Boolean,
 ) : SpanExporter {
     @Synchronized
     override fun export(spans: MutableCollection<SpanData>): CompletableResultCode {
+        if (!exportCheck()) {
+            return CompletableResultCode.ofSuccess()
+        }
         val result = spanSink.storeCompletedSpans(spans.toList())
         if (result == CompletableResultCode.ofSuccess()) {
             return externalSpanExporter.export(spans.filterNot { it.hasFixedAttribute(PrivateSpan) })

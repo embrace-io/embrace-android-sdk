@@ -35,6 +35,7 @@ import io.embrace.android.embracesdk.internal.api.delegate.SessionApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.UserApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.ViewTrackingApiDelegate
 import io.embrace.android.embracesdk.internal.config.ConfigService
+import io.embrace.android.embracesdk.internal.delivery.storage.StorageLocation
 import io.embrace.android.embracesdk.internal.fromFramework
 import io.embrace.android.embracesdk.internal.injection.InternalInterfaceModule
 import io.embrace.android.embracesdk.internal.injection.InternalInterfaceModuleImpl
@@ -45,6 +46,7 @@ import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.worker.TaskPriority
 import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.spans.TracingApi
+import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
@@ -137,7 +139,7 @@ internal class EmbraceImpl @JvmOverloads constructor(
     @Suppress("DEPRECATION", "CyclomaticComplexMethod", "ComplexMethod")
     private fun startImpl(
         context: Context,
-        framework: io.embrace.android.embracesdk.AppFramework
+        framework: io.embrace.android.embracesdk.AppFramework,
     ) {
         if (application != null) {
             return
@@ -264,6 +266,22 @@ internal class EmbraceImpl @JvmOverloads constructor(
                     }
                     application = null
                     bootstrapper.stopServices()
+                }
+            }
+        }
+    }
+
+    override fun disable() {
+        if (sdkCallChecker.started.get()) {
+            bootstrapper.openTelemetryModule.openTelemetryConfiguration.disableDataExport()
+            stop()
+        }
+
+        // delete any persisted data
+        runCatching {
+            Executors.newSingleThreadExecutor().execute {
+                StorageLocation.values().map { it.asFile(bootstrapper.coreModule.context, logger).value }.forEach {
+                    it.deleteRecursively()
                 }
             }
         }

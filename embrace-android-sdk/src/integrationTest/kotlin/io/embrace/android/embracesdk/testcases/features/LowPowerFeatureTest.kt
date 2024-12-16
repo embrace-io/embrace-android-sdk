@@ -45,7 +45,7 @@ internal class LowPowerFeatureTest {
                 assertEquals(startTimeMs + tickTimeMs, span.endTimeNanos?.nanosToMillis())
             },
             otelExportAssertion = {
-                val spans = awaitSpansWithType(EmbType.System.LowPower, 1)
+                val spans = awaitSpansWithType(1, EmbType.System.LowPower)
                 assertSpansMatchGoldenFile(spans, "system-low-power-export.json")
             }
         )

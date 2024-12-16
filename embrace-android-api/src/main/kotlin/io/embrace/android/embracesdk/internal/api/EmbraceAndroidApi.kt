@@ -74,4 +74,19 @@ public interface EmbraceAndroidApi {
      * @param name the name of the view to log
      */
     public fun endView(name: String): Boolean
+
+    /**
+     * If a user wishes to opt-out of exporting data to Embrace, you should:
+     *
+     * (1) Persist this user preference somewhere that can be readily accessed between processes
+     * (2) On the next process launch, read this preference & only initialize the Embrace SDK if you wish to capture data
+     * (3) Call this function if the SDK has already been initialized.
+     *
+     * When the SDK has already been initialized this function will prevent the SDK from exporting any further data
+     * via HTTP requests or OTel exports, and will delete any persisted data that has not yet been exported.
+     *
+     * The SDK makes a best effort attempt. Some data capture/handlers may remain active until the next process launch
+     * due to technical reasons, but any captured data will not be exported.
+     */
+    public fun disable()
 }

@@ -26,6 +26,7 @@ import io.embrace.android.embracesdk.testframework.actions.EmbraceOtelExportAsse
 import io.embrace.android.embracesdk.testframework.actions.EmbracePayloadAssertionInterface
 import io.embrace.android.embracesdk.testframework.actions.EmbracePreSdkStartInterface
 import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
+import io.embrace.android.embracesdk.testframework.export.FilteredLogExporter
 import io.embrace.android.embracesdk.testframework.export.FilteredSpanExporter
 import io.embrace.android.embracesdk.testframework.server.FakeApiServer
 import java.io.File
@@ -98,6 +99,7 @@ internal class IntegrationTestRule(
     lateinit var preSdkStart: EmbracePreSdkStartInterface
     private lateinit var otelAssertion: EmbraceOtelExportAssertionInterface
     private lateinit var spanExporter: FilteredSpanExporter
+    private lateinit var logExporter: FilteredLogExporter
     private lateinit var embraceImpl: EmbraceImpl
     private lateinit var baseUrl: String
 
@@ -139,7 +141,8 @@ internal class IntegrationTestRule(
         action = EmbraceActionInterface(setup, bootstrapper)
         payloadAssertion = EmbracePayloadAssertionInterface(bootstrapper, apiServer)
         spanExporter = FilteredSpanExporter()
-        otelAssertion = EmbraceOtelExportAssertionInterface(spanExporter)
+        logExporter = FilteredLogExporter()
+        otelAssertion = EmbraceOtelExportAssertionInterface(spanExporter, logExporter)
 
         setupAction(setup)
         with(setup) {
@@ -147,6 +150,7 @@ internal class IntegrationTestRule(
             EmbraceHooks.setImpl(embraceImpl)
             preSdkStartAction(preSdkStart)
             embraceImpl.addSpanExporter(spanExporter)
+            embraceImpl.addLogRecordExporter(logExporter)
 
             // persist config here before the SDK starts up
             persistConfig(persistedRemoteConfig)

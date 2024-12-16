@@ -27,12 +27,24 @@ internal class FilteredSpanExporter : SpanExporter {
         return CompletableResultCode.ofSuccess()
     }
 
-    fun awaitSpansWithType(type: EmbType, expectedCount: Int): List<SpanData> {
-        return awaitSpanExport({
-            it.attributes.asMap().any { entry ->
-                entry.key.key == "emb.type" && entry.value == type.value
+    fun awaitSpans(expectedCount: Int, filter: (SpanData) -> Boolean): List<SpanData> {
+        val supplier = { spanData.filter(filter) }
+        return returnIfConditionMet(
+            desiredValueSupplier = supplier,
+            dataProvider = supplier,
+            condition = { data ->
+                data.size == expectedCount
+            },
+            errorMessageSupplier = {
+                "Timeout. Expected $expectedCount spans, but got ${supplier().size}."
             }
-        }, expectedCount)
+        )
+    }
+
+    fun awaitSpansWithType(expectedCount: Int, type: EmbType): List<SpanData> {
+        return awaitSpans(expectedCount) { data ->
+            data.attributes?.asMap()?.mapKeys { it.key.key }?.get("emb.type") == type.value
+        }
     }
 
     fun failOnDuplicate() {
@@ -50,22 +62,5 @@ internal class FilteredSpanExporter : SpanExporter {
         if (duplicates.isNotEmpty()) {
             error("Duplicate spans exported: $duplicates")
         }
-    }
-
-    private fun awaitSpanExport(
-        spanFilter: (SpanData) -> Boolean,
-        expectedCount: Int,
-    ): List<SpanData> {
-        val supplier = { spanData.filter(spanFilter) }
-        return returnIfConditionMet(
-            desiredValueSupplier = supplier,
-            dataProvider = supplier,
-            condition = { data ->
-                data.size == expectedCount
-            },
-            errorMessageSupplier = {
-                "Timeout. Expected $expectedCount spans, but got ${supplier().size}."
-            }
-        )
     }
 }

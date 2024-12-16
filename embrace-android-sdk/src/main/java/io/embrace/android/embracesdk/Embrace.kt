@@ -418,4 +418,8 @@ public class Embrace private constructor(
 
     override val lastRunEndState: LastRunEndState
         get() = impl.lastRunEndState
+
+    override fun disable() {
+        impl.disable()
+    }
 }

@@ -55,11 +55,19 @@ class OpenTelemetryConfiguration(
     private val externalSpanExporters = mutableListOf<SpanExporter>()
     private val externalLogExporters = mutableListOf<LogRecordExporter>()
 
+    private var exportEnabled: Boolean = true
+    private val exportCheck: () -> Boolean = { exportEnabled }
+
+    fun disableDataExport() {
+        exportEnabled = false
+    }
+
     val spanProcessor: SpanProcessor by lazy {
         EmbraceSpanProcessor(
             EmbraceSpanExporter(
                 spanSink = spanSink,
-                externalSpanExporter = SpanExporter.composite(externalSpanExporters)
+                externalSpanExporter = SpanExporter.composite(externalSpanExporters),
+                exportCheck = exportCheck,
             ),
             processIdentifier
         )
@@ -69,7 +77,8 @@ class OpenTelemetryConfiguration(
         EmbraceLogRecordProcessor(
             EmbraceLogRecordExporter(
                 logSink = logSink,
-                externalLogRecordExporter = LogRecordExporter.composite(externalLogExporters)
+                externalLogRecordExporter = LogRecordExporter.composite(externalLogExporters),
+                exportCheck = exportCheck,
             )
         )
     }

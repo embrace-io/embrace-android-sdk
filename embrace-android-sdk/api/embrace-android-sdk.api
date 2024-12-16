@@ -12,6 +12,7 @@ public final class io/embrace/android/embracesdk/Embrace : io/embrace/android/em
 	public fun clearUsername ()V
 	public fun createSpan (Ljava/lang/String;Lio/embrace/android/embracesdk/spans/AutoTerminationMode;)Lio/embrace/android/embracesdk/spans/EmbraceSpan;
 	public fun createSpan (Ljava/lang/String;Lio/embrace/android/embracesdk/spans/EmbraceSpan;Lio/embrace/android/embracesdk/spans/AutoTerminationMode;)Lio/embrace/android/embracesdk/spans/EmbraceSpan;
+	public fun disable ()V
 	public fun endSession ()V
 	public fun endSession (Z)V
 	public fun endView (Ljava/lang/String;)Z

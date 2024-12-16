@@ -36,9 +36,11 @@ internal class ActivityFeatureTest {
                 val message = getSingleSessionEnvelope()
                 val viewSpan = message.findSpanOfType(EmbType.Ux.View)
 
-                viewSpan.attributes?.assertMatches(mapOf(
-                    "view.name" to "android.app.Activity"
-                ))
+                viewSpan.attributes?.assertMatches(
+                    mapOf(
+                        "view.name" to "android.app.Activity"
+                    )
+                )
 
                 with(viewSpan) {
                     assertEquals(startTimeMs, startTimeNanos?.nanosToMillis())
@@ -46,7 +48,7 @@ internal class ActivityFeatureTest {
                 }
             },
             otelExportAssertion = {
-                val spans = awaitSpansWithType(EmbType.Ux.View, 1)
+                val spans = awaitSpansWithType(1, EmbType.Ux.View)
                 assertSpansMatchGoldenFile(spans, "ux-view-export.json")
             }
         )

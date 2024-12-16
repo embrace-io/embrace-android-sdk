@@ -14,6 +14,8 @@ import io.embrace.android.embracesdk.internal.delivery.intake.IntakeService
 import io.embrace.android.embracesdk.internal.delivery.intake.IntakeServiceImpl
 import io.embrace.android.embracesdk.internal.delivery.scheduling.SchedulingService
 import io.embrace.android.embracesdk.internal.delivery.scheduling.SchedulingServiceImpl
+import io.embrace.android.embracesdk.internal.delivery.storage.CachedLogEnvelopeStore
+import io.embrace.android.embracesdk.internal.delivery.storage.CachedLogEnvelopeStoreImpl
 import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageService
 import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageServiceImpl
 import io.embrace.android.embracesdk.internal.delivery.storage.StorageLocation
@@ -142,6 +144,20 @@ internal class DeliveryModuleImpl(
                 processIdProvider,
                 initModule.logger,
                 deliveryTracer
+            )
+        }
+    }
+
+    override val cachedLogEnvelopeStore: CachedLogEnvelopeStore? by singleton {
+        if (configModule.configService.isOnlyUsingOtelExporters()) {
+            null
+        } else {
+            val location = StorageLocation.ENVELOPE.asFile(coreModule.context, initModule.logger)
+            CachedLogEnvelopeStoreImpl(
+                outputDir = location,
+                worker = dataPersistenceWorker,
+                logger = initModule.logger,
+                serializer = initModule.jsonSerializer
             )
         }
     }

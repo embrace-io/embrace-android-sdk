@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.assertions.findSpansByName
 import io.embrace.android.embracesdk.assertions.getLastHeartbeatTimeMs
 import io.embrace.android.embracesdk.assertions.getSessionId
 import io.embrace.android.embracesdk.assertions.getStartTime
+import io.embrace.android.embracesdk.fakes.FakeCachedLogEnvelopeStore
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeIntakeService
 import io.embrace.android.embracesdk.fakes.FakeNativeCrashService
@@ -14,14 +15,19 @@ import io.embrace.android.embracesdk.fakes.FakePersistableEmbraceSpan
 import io.embrace.android.embracesdk.fakes.FakeSpanData.Companion.perfSpanSnapshot
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.fakes.fakeEmptyLogEnvelope
+import io.embrace.android.embracesdk.fakes.fakeEnvelopeMetadata
+import io.embrace.android.embracesdk.fakes.fakeEnvelopeResource
 import io.embrace.android.embracesdk.fakes.fakeIncompleteSessionEnvelope
+import io.embrace.android.embracesdk.fakes.fakeLaterEnvelopeMetadata
+import io.embrace.android.embracesdk.fakes.fakeLaterEnvelopeResource
 import io.embrace.android.embracesdk.fixtures.fakeCachedSessionStoredTelemetryMetadata
-import io.embrace.android.embracesdk.fixtures.fakeNativeCrashStoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.isSessionPropertyAttributeName
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
+import io.embrace.android.embracesdk.internal.delivery.PayloadType
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
+import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType.CRASH
 import io.embrace.android.embracesdk.internal.opentelemetry.embCrashId
 import io.embrace.android.embracesdk.internal.opentelemetry.embState
 import io.embrace.android.embracesdk.internal.payload.Envelope
@@ -34,9 +40,9 @@ import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.internal.spans.toEmbraceSpanData
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.api.trace.SpanId
-import junit.framework.TestCase.assertEquals
-import junit.framework.TestCase.assertTrue
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
@@ -44,6 +50,7 @@ class PayloadResurrectionServiceImplTest {
 
     private lateinit var intakeService: FakeIntakeService
     private lateinit var cacheStorageService: FakePayloadStorageService
+    private lateinit var cachedLogEnvelopeStore: FakeCachedLogEnvelopeStore
     private lateinit var nativeCrashService: FakeNativeCrashService
     private lateinit var logger: FakeEmbLogger
     private lateinit var serializer: TestPlatformSerializer
@@ -53,12 +60,14 @@ class PayloadResurrectionServiceImplTest {
     fun setUp() {
         intakeService = FakeIntakeService()
         cacheStorageService = FakePayloadStorageService()
+        cachedLogEnvelopeStore = FakeCachedLogEnvelopeStore()
         nativeCrashService = FakeNativeCrashService()
         logger = FakeEmbLogger(false)
         serializer = TestPlatformSerializer()
         resurrectionService = PayloadResurrectionServiceImpl(
             intakeService = intakeService,
             cacheStorageService = cacheStorageService,
+            cachedLogEnvelopeStore = cachedLogEnvelopeStore,
             logger = logger,
             serializer = serializer,
         )
@@ -66,7 +75,7 @@ class PayloadResurrectionServiceImplTest {
 
     @Test
     fun `if no previous cached session then send previous cached sessions should not send anything`() {
-        resurrectionService.resurrectOldPayloads({ nativeCrashService })
+        resurrectionService.resurrectOldPayloads { nativeCrashService }
         assertTrue(intakeService.intakeList.isEmpty())
     }
 
@@ -96,12 +105,12 @@ class PayloadResurrectionServiceImplTest {
     @Test
     fun `all payloads from previous app launches are deleted after resurrection`() {
         cacheStorageService.addPayload(
-            metadata = fakeNativeCrashStoredTelemetryMetadata,
+            metadata = fakeCachedCrashEnvelopeMetadata,
             data = fakeEmptyLogEnvelope()
         )
         assertEquals(1, cacheStorageService.storedPayloadCount())
         assertEquals(0, cacheStorageService.deleteCount.get())
-        resurrectionService.resurrectOldPayloads({ nativeCrashService })
+        resurrectionService.resurrectOldPayloads { nativeCrashService }
 
         assertTrue(intakeService.getIntakes<SessionPayload>().isEmpty())
         assertEquals(1, cacheStorageService.deleteCount.get())
@@ -184,7 +193,7 @@ class PayloadResurrectionServiceImplTest {
             data = deadSessionEnvelope
         )
         serializer.errorOnNextOperation()
-        resurrectionService.resurrectOldPayloads({ nativeCrashService })
+        resurrectionService.resurrectOldPayloads { nativeCrashService }
         assertResurrectionFailure()
     }
 
@@ -206,11 +215,15 @@ class PayloadResurrectionServiceImplTest {
             data = deadSessionEnvelope
         )
 
+        val oldResource = fakeEnvelopeResource.copy(appVersion = "1.4", sdkVersion = "6.13", osVersion = "10")
+        val oldMetadata = fakeEnvelopeMetadata.copy(username = "old-admin")
         val earlierDeadSession = fakeIncompleteSessionEnvelope(
             sessionId = "anotherFakeSessionId",
             startMs = deadSessionEnvelope.getStartTime() - 100_000L,
             lastHeartbeatTimeMs = deadSessionEnvelope.getStartTime() - 90_000L,
-            sessionProperties = mapOf("prop" to "earlier")
+            sessionProperties = mapOf("prop" to "earlier"),
+            resource = oldResource,
+            metadata = oldMetadata
 
         )
         val earlierSessionCrashData = createNativeCrashData(
@@ -230,7 +243,7 @@ class PayloadResurrectionServiceImplTest {
             data = earlierDeadSession
         )
 
-        resurrectionService.resurrectOldPayloads({ nativeCrashService })
+        resurrectionService.resurrectOldPayloads { nativeCrashService }
 
         val sessionPayloads = intakeService.getIntakes<SessionPayload>()
         assertEquals(2, sessionPayloads.size)
@@ -260,6 +273,17 @@ class PayloadResurrectionServiceImplTest {
             )
         }
 
+        val createdEnvelopes = cachedLogEnvelopeStore.createdEnvelopes
+        assertEquals(2, createdEnvelopes.size)
+        with(createdEnvelopes.first()) {
+            assertEquals(fakeEnvelopeResource, resource)
+            assertEquals(fakeEnvelopeMetadata, metadata)
+        }
+        with(createdEnvelopes.last()) {
+            assertEquals(oldResource, resource)
+            assertEquals(oldMetadata, metadata)
+        }
+
         assertEquals(2, nativeCrashService.nativeCrashesSent.size)
         with(nativeCrashService.nativeCrashesSent.first()) {
             assertEquals(deadSessionCrashData, first)
@@ -280,10 +304,42 @@ class PayloadResurrectionServiceImplTest {
             nativeCrashId = "native-crash-1",
             sessionId = "no-session-id"
         )
+        cacheStorageService.addPayload(
+            metadata = fakeCachedCrashEnvelopeMetadata,
+            data = fakeEmptyLogEnvelope(
+                resource = fakeLaterEnvelopeResource,
+                metadata = fakeLaterEnvelopeMetadata
+            )
+        )
         nativeCrashService.addNativeCrashData(deadSessionCrashData)
-        resurrectionService.resurrectOldPayloads({ nativeCrashService })
+        resurrectionService.resurrectOldPayloads { nativeCrashService }
 
         assertEquals(0, intakeService.getIntakes<SessionPayload>().size)
+
+        with(cachedLogEnvelopeStore.createdEnvelopes.single()) {
+            assertEquals(fakeLaterEnvelopeResource, resource)
+            assertEquals(fakeLaterEnvelopeMetadata, metadata)
+        }
+
+        assertEquals(1, nativeCrashService.nativeCrashesSent.size)
+        with(nativeCrashService.nativeCrashesSent.first()) {
+            assertEquals(deadSessionCrashData, first)
+            assertTrue(second.keys.none { it.isSessionPropertyAttributeName() || embState.name == it })
+        }
+    }
+
+    @Test
+    fun `native crashes without sessions or cached crash envelopes sent`() {
+        val deadSessionCrashData = createNativeCrashData(
+            nativeCrashId = "native-crash-1",
+            sessionId = "no-session-id"
+        )
+        nativeCrashService.addNativeCrashData(deadSessionCrashData)
+        resurrectionService.resurrectOldPayloads { nativeCrashService }
+
+        assertEquals(0, intakeService.getIntakes<SessionPayload>().size)
+
+        assertTrue(cachedLogEnvelopeStore.createdEnvelopes.isEmpty())
         assertEquals(1, nativeCrashService.nativeCrashesSent.size)
         with(nativeCrashService.nativeCrashesSent.first()) {
             assertEquals(deadSessionCrashData, first)
@@ -296,7 +352,7 @@ class PayloadResurrectionServiceImplTest {
             metadata = sessionMetadata,
             data = this
         )
-        resurrectionService.resurrectOldPayloads({ nativeCrashService })
+        resurrectionService.resurrectOldPayloads { nativeCrashService }
     }
 
     private fun createNativeCrashData(
@@ -350,6 +406,14 @@ class PayloadResurrectionServiceImplTest {
                     )
                 )
             )
+        )
+        val fakeCachedCrashEnvelopeMetadata = StoredTelemetryMetadata(
+            timestamp = 1000L,
+            uuid = "old-session-id",
+            processId = "old-process-id",
+            envelopeType = CRASH,
+            complete = false,
+            payloadType = PayloadType.UNKNOWN
         )
     }
 }

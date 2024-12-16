@@ -297,7 +297,7 @@ class IntakeServiceImplTest {
     fun `new empty crash envelope caching will remove the old copy`() {
         executorService.blockingMode = false
         val cache1 =
-            StoredTelemetryMetadata(clock.now(), UUID, PROCESS_ID, CRASH, false, PayloadType.NATIVE_CRASH).apply {
+            StoredTelemetryMetadata(clock.now(), UUID, PROCESS_ID, CRASH, false, PayloadType.UNKNOWN).apply {
                 intakeService.take(
                     intake = logEnvelope,
                     metadata = this
@@ -307,7 +307,7 @@ class IntakeServiceImplTest {
         assertEquals(cache1.filename, cacheStorageService.storedFilenames().single())
 
         val cache2 =
-            StoredTelemetryMetadata(clock.tick(), UUID, PROCESS_ID, CRASH, false, PayloadType.NATIVE_CRASH).apply {
+            StoredTelemetryMetadata(clock.tick(), UUID, PROCESS_ID, CRASH, false, PayloadType.UNKNOWN).apply {
                 intakeService.take(
                     intake = logEnvelope,
                     metadata = this

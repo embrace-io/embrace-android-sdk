@@ -47,7 +47,7 @@ internal class V2PayloadStore(
             metadata = createMetadata(
                 type = SupportedEnvelopeType.CRASH,
                 complete = false,
-                payloadType = PayloadType.NATIVE_CRASH
+                payloadType = PayloadType.UNKNOWN
             )
         )
     }

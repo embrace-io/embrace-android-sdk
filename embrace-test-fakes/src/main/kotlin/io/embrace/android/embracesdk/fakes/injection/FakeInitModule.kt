@@ -23,9 +23,10 @@ class FakeInitModule(
     initModule: InitModule = createInitModule(
         clock = clock,
         logger = logger,
-        systemInfo = systemInfo
+        systemInfo = systemInfo,
     ),
-    override var instrumentedConfig: InstrumentedConfig = FakeInstrumentedConfig()
+    override var instrumentedConfig: InstrumentedConfig = FakeInstrumentedConfig(),
+    override val processIdentifierProvider: () -> String = { "fake-process-id" },
 ) : InitModule by initModule {
 
     val openTelemetryModule: OpenTelemetryModule by lazy { createOpenTelemetryModule(initModule) }

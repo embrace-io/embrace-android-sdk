@@ -20,7 +20,12 @@ enum class StorageLocation(private val dir: String) {
     /**
      * Native Embrace crash reports
      */
-    NATIVE("embrace_native");
+    NATIVE("embrace_native"),
+
+    /**
+     * Cached envelopes
+     */
+    ENVELOPE("embrace_envelopes");
 
     /**
      * Get the directory as a [File] object

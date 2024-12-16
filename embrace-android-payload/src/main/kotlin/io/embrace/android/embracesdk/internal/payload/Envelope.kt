@@ -36,5 +36,14 @@ data class Envelope<T>(
             Types.newParameterizedType(Envelope::class.java, SessionPayload::class.java)
         val logEnvelopeType: ParameterizedType =
             Types.newParameterizedType(Envelope::class.java, LogPayload::class.java)
+
+        fun LogPayload.createLogEnvelope(resource: EnvelopeResource, metadata: EnvelopeMetadata) =
+            Envelope(
+                resource = resource,
+                metadata = metadata,
+                version = "0.1.0",
+                type = "logs",
+                data = this
+            )
     }
 }

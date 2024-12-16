@@ -24,6 +24,7 @@ import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.opentelemetry.embCrashId
 import io.embrace.android.embracesdk.internal.payload.Envelope
+import io.embrace.android.embracesdk.internal.payload.Envelope.Companion.createLogEnvelope
 import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
@@ -337,17 +338,9 @@ internal class EmbraceDeliveryServiceTest {
             incompleteSessionEnvelope.getSessionId(),
             incompleteSessionEnvelope.getStartTime(),
         ).filename
-        private val logsEnvelope = Envelope(
+        private val logsEnvelope = LogPayload(logs = listOf(Log(), Log())).createLogEnvelope(
             resource = FakeEnvelopeResourceSource().resource,
             metadata = FakeEnvelopeMetadataSource().metadata,
-            version = "0.1.0",
-            type = "logs",
-            data = LogPayload(
-                logs = listOf(
-                    Log(),
-                    Log()
-                )
-            )
         )
     }
 }

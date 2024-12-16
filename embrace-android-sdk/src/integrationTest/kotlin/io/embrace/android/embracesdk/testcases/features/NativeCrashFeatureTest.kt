@@ -7,6 +7,10 @@ import io.embrace.android.embracesdk.fakes.FakePayloadStorageService
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
+import io.embrace.android.embracesdk.fakes.fakeEnvelopeMetadata
+import io.embrace.android.embracesdk.fakes.fakeEnvelopeResource
+import io.embrace.android.embracesdk.fakes.fakeLaterEnvelopeMetadata
+import io.embrace.android.embracesdk.fakes.fakeLaterEnvelopeResource
 import io.embrace.android.embracesdk.internal.delivery.PayloadType
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
@@ -62,29 +66,33 @@ internal class NativeCrashFeatureTest {
     )
     private val crashMetadata = StoredTelemetryMetadata(
         timestamp = sessionMetadata.timestamp + 1_000L,
-        uuid = "94c0e427-9faf-4dac-b1d5-2fd74039ef2d",
-        processId = "f0652f96-8e76-4f68-8545-14f6229f01f8",
+        uuid = "EB96C6A8AF09449A8547C7703CE6BDAE",
+        processId = "8115ec91-3e5e-4d8a-816d-cc40306f9822",
         envelopeType = SupportedEnvelopeType.CRASH,
+        complete = false,
         payloadType = PayloadType.NATIVE_CRASH,
     )
     private val crashMetadata2 = StoredTelemetryMetadata(
         timestamp = sessionMetadata2.timestamp + 1_000L,
-        uuid = "bb690ad1-6b87-4e08-b72c-7deca14451d8",
-        processId = "bb15ec91-3e5e-4d8a-816d-cc40306f9822",
+        uuid = "A0A0C6A8AF09449A8547C7703CE6BDAE",
+        processId = "aa15ec91-3e5e-4d8a-816d-cc40306f9822",
         envelopeType = SupportedEnvelopeType.CRASH,
+        complete = false,
         payloadType = PayloadType.NATIVE_CRASH,
     )
     private val crashData = createStoredNativeCrashData(
-        serializer,
-        sessionMetadata,
-        crashMetadata,
-        "native_crash_1.txt",
+        serializer = serializer,
+        resourceFixtureName = "native_crash_1.txt",
+        crashMetadata = crashMetadata,
+        sessionMetadata = sessionMetadata,
     )
     private val crashData2 = createStoredNativeCrashData(
-        serializer,
-        sessionMetadata2,
-        crashMetadata2,
-        "native_crash_2.txt",
+        serializer = serializer,
+        resourceFixtureName = "native_crash_2.txt",
+        crashMetadata = crashMetadata2,
+        sessionMetadata = sessionMetadata2,
+        envelopeResource = fakeLaterEnvelopeResource,
+        envelopeMetadata = fakeLaterEnvelopeMetadata
     )
 
     private lateinit var cacheStorageService: FakePayloadStorageService
@@ -92,7 +100,9 @@ internal class NativeCrashFeatureTest {
     @Rule
     @JvmField
     val testRule: IntegrationTestRule = IntegrationTestRule {
-        EmbraceSetupInterface().apply {
+        EmbraceSetupInterface(
+            processIdentifier = "8115ec91-3e5e-4d8a-816d-cc40306f9822"
+        ).apply {
             (overriddenInitModule.logger as FakeEmbLogger).throwOnInternalError = false
         }
     }
@@ -107,7 +117,10 @@ internal class NativeCrashFeatureTest {
         testRule.runTest(
             instrumentedConfig = config,
             setupAction = {
-                setupFakeDeadSession(cacheStorageService, crashData)
+                setupCachedDataFromNativeCrash(
+                    storageService = cacheStorageService,
+                    crashData = crashData
+                )
                 setupFakeNativeCrash(serializer, crashData)
             },
             testCaseAction = {},
@@ -116,6 +129,10 @@ internal class NativeCrashFeatureTest {
                     assertDeadSessionResurrected(crashData)
                 }
                 val envelope = getSingleLogEnvelope()
+                with(envelope) {
+                    assertEquals(fakeEnvelopeResource, resource)
+                    assertEquals(fakeEnvelopeMetadata, metadata)
+                }
                 val log = envelope.getLastLog()
                 assertNativeCrashSent(log, crashData, testRule.setup.symbols)
             }
@@ -127,12 +144,22 @@ internal class NativeCrashFeatureTest {
         testRule.runTest(
             instrumentedConfig = config,
             setupAction = {
-                setupFakeNativeCrash(serializer, crashData)
+                val modifiedCrashData = crashData.copy(sessionMetadata = null, sessionEnvelope = null)
+                setupCachedDataFromNativeCrash(
+                    storageService = cacheStorageService,
+                    crashData = modifiedCrashData
+                )
+                setupFakeNativeCrash(serializer, modifiedCrashData)
             },
-            testCaseAction = {},
+            testCaseAction = {
+                recordSession()
+            },
             assertAction = {
-                assertEquals(0, getSessionEnvelopes(0).size)
                 val envelope = getSingleLogEnvelope()
+                with(envelope) {
+                    assertEquals(fakeEnvelopeResource, resource)
+                    assertEquals(fakeEnvelopeMetadata, metadata)
+                }
                 val log = envelope.getLastLog()
                 assertNativeCrashSent(log, crashData, testRule.setup.symbols)
             }
@@ -144,7 +171,7 @@ internal class NativeCrashFeatureTest {
         testRule.runTest(
             instrumentedConfig = config,
             setupAction = {
-                setupFakeDeadSession(cacheStorageService, crashData)
+                setupCachedDataFromNativeCrash(cacheStorageService, crashData = crashData)
             },
             testCaseAction = {},
             assertAction = {
@@ -161,8 +188,8 @@ internal class NativeCrashFeatureTest {
         testRule.runTest(
             instrumentedConfig = config,
             setupAction = {
-                setupFakeDeadSession(cacheStorageService, crashData)
-                setupFakeDeadSession(cacheStorageService, crashData2)
+                setupCachedDataFromNativeCrash(cacheStorageService, crashData = crashData)
+                setupCachedDataFromNativeCrash(cacheStorageService, crashData = crashData2)
                 setupFakeNativeCrash(serializer, crashData)
                 setupFakeNativeCrash(serializer, crashData2)
             },
@@ -170,10 +197,24 @@ internal class NativeCrashFeatureTest {
             assertAction = {
                 val sessionEnvelopes = getSessionEnvelopes(2)
                 val logEnvelopes = getLogEnvelopes(2)
+                val expectedCrashEnvelope = checkNotNull(crashData.cachedCrashEnvelope)
 
                 // crashes sent
-                val log1 = logEnvelopes.single { findMatchingSessionId(it, crashData) }.getLastLog()
-                val log2 = logEnvelopes.single { findMatchingSessionId(it, crashData2) }.getLastLog()
+                val crashEnvelope1 = logEnvelopes.single { findMatchingSessionId(it, crashData) }
+                with(crashEnvelope1) {
+                    assertEquals(expectedCrashEnvelope.resource, resource)
+                    assertEquals(expectedCrashEnvelope.metadata, metadata)
+                }
+
+                val crashEnvelope2 = logEnvelopes.single { findMatchingSessionId(it, crashData2) }
+                with(crashEnvelope2) {
+                    assertEquals(fakeLaterEnvelopeResource, resource)
+                    assertEquals(fakeLaterEnvelopeMetadata, metadata)
+                }
+
+                val log1 = crashEnvelope1.getLastLog()
+                val log2 = crashEnvelope2.getLastLog()
+
                 assertNativeCrashSent(log1, crashData, testRule.setup.symbols)
                 assertNativeCrashSent(log2, crashData2, testRule.setup.symbols)
 
@@ -193,7 +234,7 @@ internal class NativeCrashFeatureTest {
         testRule.runTest(
             instrumentedConfig = FakeInstrumentedConfig(),
             setupAction = {
-                setupFakeDeadSession(cacheStorageService, crashData)
+                setupCachedDataFromNativeCrash(cacheStorageService, crashData = crashData)
                 setupFakeNativeCrash(serializer, crashData)
             },
             testCaseAction = {},
@@ -212,7 +253,7 @@ internal class NativeCrashFeatureTest {
         testRule.runTest(
             instrumentedConfig = config,
             setupAction = {
-                setupFakeDeadSession(cacheStorageService, crashData)
+                setupCachedDataFromNativeCrash(cacheStorageService, crashData = crashData)
                 setupFakeNativeCrash(serializer, crashData)
 
                 // simulate JNI call failing to load struct
@@ -233,7 +274,7 @@ internal class NativeCrashFeatureTest {
         testRule.runTest(
             instrumentedConfig = config,
             setupAction = {
-                setupFakeDeadSession(cacheStorageService, crashData)
+                setupCachedDataFromNativeCrash(cacheStorageService, crashData = crashData)
                 setupFakeNativeCrash(serializer, crashData)
 
                 // simulate bad JSON

@@ -1,4 +1,4 @@
-name: "Run subset of swazzler-tests"
+name: "Run swazzler-tests"
 
 on:
   pull_request:
@@ -15,7 +15,7 @@ jobs:
   runSwazzlerTests:
     name: "Run Gradle Tests"
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
 
@@ -38,6 +38,11 @@ jobs:
       - name: Install NDK
         if: steps.ndk-cache.outputs.cache-hit != 'true'
         run: echo "y" | ${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager --install "ndk;27.0.12077973"
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 16.x
 
       # make sure version in gradle.properties matches the version of embrace-swazzler3 version
       - name: "Publish SDK locally"
@@ -64,7 +69,7 @@ jobs:
 
       - name: "Run Gradle Tests"
         working-directory: ./swazzler-test
-        run: ./gradlew :functional-tests:swazzlerTests --tests "io.embrace.android.gradle.swazzler.tests.MinimumSurvivalTests" --stacktrace
+        run: ./gradlew :functional-tests:swazzlerTests --tests "io.embrace.android.gradle.swazzler.tests.*" --stacktrace
 
       - name: "Test Results"
         if: ${{ always() }}

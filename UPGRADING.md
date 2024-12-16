@@ -4,6 +4,7 @@
 
 Version 7 of the Embrace Android SDK contains the following breaking changes:
 
+- The `embrace-android-fcm` and `embrace-android-compose` gradle modules are no longer automatically added by Embrace's gradle plugin. Add them as dependencies in your `build.gradle` file if you require them.
 - The `startMoment/endMoment` API has been removed. Use `startSpan/recordSpan` instead.
 - `Embrace.AppFramework` is now its own top level class, `AppFramework`
 - `Embrace.LastRunEndState` is now its own top level class, `LastRunEndState`

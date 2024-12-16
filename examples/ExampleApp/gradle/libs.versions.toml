@@ -1,17 +1,17 @@
 [versions]
-agp = "8.7.2"
-kotlin = "2.0.21"
+agp = "8.7.3"
+kotlin = "2.1.0"
 coreKtx = "1.15.0"
 junit = "4.13.2"
 junitVersion = "1.2.1"
 espressoCore = "3.6.1"
 lifecycleRuntimeKtx = "2.8.7"
 activityCompose = "1.9.3"
-composeBom = "2024.10.01"
+composeBom = "2024.12.01"
 embrace = "6.14.0"
-navigationCompose = "2.8.3"
+navigationCompose = "2.8.5"
 okhttp = "4.12.0"
-otel = "1.43.0"
+otel = "1.45.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }

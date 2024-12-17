@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.internal.envelope.metadata.EnvelopeMetadata
 import io.embrace.android.embracesdk.internal.envelope.resource.EnvelopeResourceSource
 import io.embrace.android.embracesdk.internal.logs.LogRequest
 import io.embrace.android.embracesdk.internal.payload.Envelope
+import io.embrace.android.embracesdk.internal.payload.Envelope.Companion.createLogEnvelope
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 
 class FakeLogEnvelopeSource(
@@ -27,11 +28,8 @@ class FakeLogEnvelopeSource(
 
     override fun getEmptySingleLogEnvelope(): Envelope<LogPayload> = getLogEnvelope(LogPayload())
 
-    private fun getLogEnvelope(payload: LogPayload) = Envelope(
-        resourceSource.getEnvelopeResource(),
-        metadataSource.getEnvelopeMetadata(),
-        "0.1.0",
-        "logs",
-        payload
+    private fun getLogEnvelope(payload: LogPayload) = payload.createLogEnvelope(
+        resource = resourceSource.getEnvelopeResource(),
+        metadata = metadataSource.getEnvelopeMetadata(),
     )
 }

@@ -40,7 +40,12 @@ internal class OpenTelemetryModuleImpl(
     }
 
     override val openTelemetryConfiguration: OpenTelemetryConfiguration by lazy {
-        OpenTelemetryConfiguration(spanSink, logSink, initModule.systemInfo)
+        OpenTelemetryConfiguration(
+            spanSink = spanSink,
+            logSink = logSink,
+            systemInfo = initModule.systemInfo,
+            processIdentifierProvider = initModule.processIdentifierProvider
+        )
     }
 
     private val openTelemetrySdk: OpenTelemetrySdk by lazy {

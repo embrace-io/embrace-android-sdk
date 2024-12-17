@@ -1,10 +1,13 @@
 package io.embrace.android.embracesdk.testcases.features
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakePayloadStorageService
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
+import io.embrace.android.embracesdk.fakes.fakeEnvelopeMetadata
+import io.embrace.android.embracesdk.fakes.fakeEnvelopeResource
 import io.embrace.android.embracesdk.fixtures.fakeCachedSessionStoredTelemetryMetadata
 import io.embrace.android.embracesdk.fixtures.fakeNativeCrashStoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRemoteConfig
@@ -13,9 +16,12 @@ import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.delivery.PayloadType
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
+import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.testframework.IntegrationTestRule
+import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import io.embrace.android.embracesdk.testframework.actions.createStoredNativeCrashData
 import io.embrace.android.embracesdk.testframework.assertions.getLastLog
+import io.opentelemetry.semconv.ExceptionAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -33,7 +39,11 @@ internal class ResurrectionFeatureTest {
 
     @Rule
     @JvmField
-    val testRule: IntegrationTestRule = IntegrationTestRule()
+    val testRule: IntegrationTestRule = IntegrationTestRule {
+        EmbraceSetupInterface().apply {
+            (overriddenInitModule.logger as FakeEmbLogger).throwOnInternalError = false
+        }
+    }
 
     @Before
     fun setUp() {
@@ -48,15 +58,15 @@ internal class ResurrectionFeatureTest {
     @Test
     fun `crashed session and native crash resurrected and sent properly`() {
         val crashData = createStoredNativeCrashData(
-            serializer,
-            fakeCachedSessionStoredTelemetryMetadata,
-            fakeNativeCrashStoredTelemetryMetadata,
-            "native_crash_1.txt",
+            serializer = serializer,
+            resourceFixtureName = "native_crash_1.txt",
+            crashMetadata = fakeNativeCrashStoredTelemetryMetadata,
+            sessionMetadata = fakeCachedSessionStoredTelemetryMetadata,
         )
         testRule.runTest(
             instrumentedConfig = FakeInstrumentedConfig(enabledFeatures = FakeEnabledFeatureConfig(nativeCrashCapture = true)),
             setupAction = {
-                setupFakeDeadSession(cacheStorageService, crashData)
+                setupCachedDataFromNativeCrash(cacheStorageService, crashData = crashData)
                 setupFakeNativeCrash(serializer, crashData)
             },
             testCaseAction = {},
@@ -65,8 +75,117 @@ internal class ResurrectionFeatureTest {
                     assertDeadSessionResurrected(crashData)
                 }
                 val envelope = getSingleLogEnvelope()
+                with(envelope) {
+                    assertEquals(fakeEnvelopeResource, resource)
+                    assertEquals(fakeEnvelopeMetadata, metadata)
+                }
+
                 val log = envelope.getLastLog()
                 assertNativeCrashSent(log, crashData, testRule.setup.symbols)
+            }
+        )
+    }
+
+    @Test
+    fun `native crash without session resurrected and sent properly`() {
+        val crashData = createStoredNativeCrashData(
+            serializer = serializer,
+            resourceFixtureName = "native_crash_1.txt",
+            crashMetadata = fakeNativeCrashStoredTelemetryMetadata,
+        )
+        testRule.runTest(
+            instrumentedConfig = FakeInstrumentedConfig(enabledFeatures = FakeEnabledFeatureConfig(nativeCrashCapture = true)),
+            setupAction = {
+                setupCachedDataFromNativeCrash(cacheStorageService, crashData = crashData)
+                setupFakeNativeCrash(serializer, crashData)
+            },
+            testCaseAction = {},
+            assertAction = {
+                val envelope = getSingleLogEnvelope()
+                with(envelope) {
+                    assertEquals(fakeEnvelopeResource, resource)
+                    assertEquals(fakeEnvelopeMetadata, metadata)
+                }
+
+                val log = envelope.getLastLog()
+                assertNativeCrashSent(log, crashData, testRule.setup.symbols)
+            }
+        )
+    }
+
+
+    @Test
+    fun `native crash without session or crash envelope is sent with current SDK envelope`() {
+        val crashData = createStoredNativeCrashData(
+            serializer = serializer,
+            resourceFixtureName = "native_crash_1.txt",
+            crashMetadata = fakeNativeCrashStoredTelemetryMetadata,
+            createCrashEnvelope = false,
+        )
+        testRule.runTest(
+            instrumentedConfig = FakeInstrumentedConfig(
+                enabledFeatures = FakeEnabledFeatureConfig(
+                    bgActivityCapture = false,
+                    nativeCrashCapture = true
+                )
+            ),
+            setupAction = {
+                setupCachedDataFromNativeCrash(cacheStorageService, crashData = crashData)
+                setupFakeNativeCrash(serializer, crashData)
+            },
+            testCaseAction = {
+                recordSession()
+            },
+            assertAction = {
+                val session = getSingleSessionEnvelope()
+                val envelopes = getLogEnvelopes(2)
+                with(envelopes.first()) {
+                    assertEquals(session.resource, resource)
+                    assertEquals(session.metadata, metadata)
+                    val crash = getLastLog()
+                    assertNativeCrashSent(crash, crashData, testRule.setup.symbols)
+                }
+
+                with(envelopes.last()) {
+                    val errors = checkNotNull(data.logs)
+                    assertEquals(2, errors.size)
+                    with(errors.first()) {
+                        assertEquals(
+                            "Cached native crash envelope data not found",
+                            attributes?.findAttributeValue(ExceptionAttributes.EXCEPTION_MESSAGE.key)
+                        )
+                    }
+
+                    with(errors.last()) {
+                        assertEquals(
+                            "java.io.FileNotFoundException",
+                            attributes?.findAttributeValue(ExceptionAttributes.EXCEPTION_TYPE.key)
+                        )
+                    }
+                }
+            }
+        )
+    }
+
+    @Test
+    fun `session with native crash ID but no matching crash sent properly`() {
+        val crashData = createStoredNativeCrashData(
+            serializer = serializer,
+            resourceFixtureName = "native_crash_1.txt",
+            crashMetadata = fakeNativeCrashStoredTelemetryMetadata,
+            sessionMetadata = fakeCachedSessionStoredTelemetryMetadata,
+        )
+        testRule.runTest(
+            instrumentedConfig = FakeInstrumentedConfig(enabledFeatures = FakeEnabledFeatureConfig(nativeCrashCapture = true)),
+            setupAction = {
+                setupCachedDataFromNativeCrash(cacheStorageService, crashData = crashData)
+            },
+            testCaseAction = {},
+            assertAction = {
+                with(getSingleSessionEnvelope()) {
+                    assertDeadSessionResurrected(null)
+                }
+                assertEquals(0, getLogEnvelopes(0).size)
             }
         )
     }
@@ -109,7 +228,7 @@ internal class ResurrectionFeatureTest {
                 getSessionEnvelopes(3)
                 with(cacheStorageService.getCachedCrashEnvelope().single()) {
                     assertEquals(SupportedEnvelopeType.CRASH, envelopeType)
-                    assertEquals(PayloadType.NATIVE_CRASH, payloadType)
+                    assertEquals(PayloadType.UNKNOWN, payloadType)
                     assertFalse(complete)
                 }
 

@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.clock.normalizeTimestampAsMillis
 import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
 import io.embrace.android.embracesdk.internal.opentelemetry.embHeartbeatTimeUnixNano
+import io.embrace.android.embracesdk.internal.opentelemetry.embProcessIdentifier
 import io.embrace.android.embracesdk.internal.opentelemetry.embState
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.toNewPayload
@@ -202,6 +203,7 @@ class FakePersistableEmbraceSpan(
             lastHeartbeatTimeMs: Long?,
             endTimeMs: Long? = null,
             sessionProperties: Map<String, String>? = null,
+            processIdentifier: String = "fake-process-id"
         ): FakePersistableEmbraceSpan =
             FakePersistableEmbraceSpan(
                 name = "emb-session",
@@ -216,6 +218,7 @@ class FakePersistableEmbraceSpan(
                 }
 
                 setSystemAttribute(SessionIncubatingAttributes.SESSION_ID, sessionId)
+                setSystemAttribute(embProcessIdentifier.attributeKey, processIdentifier)
                 setSystemAttribute(embState.attributeKey, "foreground")
                 setSystemAttribute(
                     embHeartbeatTimeUnixNano.attributeKey,

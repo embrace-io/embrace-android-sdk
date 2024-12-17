@@ -15,12 +15,12 @@ data class StoredTelemetryMetadata(
     val envelopeType: SupportedEnvelopeType,
     val complete: Boolean = true,
     val payloadType: PayloadType = PayloadType.UNKNOWN,
+) {
     val filename: String = "${envelopeType.priority}_${timestamp}_${uuid}_${processId}_${complete}_${
         toFilenamePart(
             payloadType
         )
-    }_v1.json",
-) {
+    }_v1.json"
 
     companion object {
         /**
@@ -52,7 +52,6 @@ data class StoredTelemetryMetadata(
                     envelopeType,
                     complete,
                     payloadType,
-                    filename
                 )
             )
         }

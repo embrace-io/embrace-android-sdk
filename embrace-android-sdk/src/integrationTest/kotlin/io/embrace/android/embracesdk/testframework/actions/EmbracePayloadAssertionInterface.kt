@@ -26,16 +26,16 @@ import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.testframework.assertions.JsonComparator
 import io.embrace.android.embracesdk.testframework.assertions.assertMatches
 import io.embrace.android.embracesdk.testframework.server.FakeApiServer
-import java.io.File
-import java.io.IOException
-import java.util.Locale
-import java.util.concurrent.TimeoutException
 import org.json.JSONObject
 import org.junit.Assert
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
+import java.io.File
+import java.io.IOException
+import java.util.Locale
+import java.util.concurrent.TimeoutException
 
 /**
  * Provides assertions that can be used in integration tests to validate the behavior of the SDK,
@@ -244,7 +244,7 @@ internal class EmbracePayloadAssertionInterface(
             assertEquals(Span.Status.ERROR, status)
 
             if (crashData != null) {
-                assertEquals(crashData.sessionEnvelope.getSessionId(), getSessionId())
+                assertEquals(checkNotNull(crashData.sessionEnvelope).getSessionId(), getSessionId())
                 assertEquals(crashData.lastHeartbeatMs, endTimeNanos?.nanosToMillis())
                 assertEquals(
                     crashData.nativeCrash.nativeCrashId,
@@ -281,7 +281,9 @@ internal class EmbracePayloadAssertionInterface(
         )
         assertNotNull(attrs.findAttributeValue("log.record.uid"))
         assertNotNull(attrs.findAttributeValue("emb.android.crash_number"))
-        assertEquals(crashData.sessionEnvelope.getSessionId(), attrs.findAttributeValue("session.id"))
+        if (crashData.sessionEnvelope != null) {
+            assertEquals(crashData.sessionEnvelope.getSessionId(), attrs.findAttributeValue("session.id"))
+        }
         assertFalse(crashData.getCrashFile().exists())
     }
 

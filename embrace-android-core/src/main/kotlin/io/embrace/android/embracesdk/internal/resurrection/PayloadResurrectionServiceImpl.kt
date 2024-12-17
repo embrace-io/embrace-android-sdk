@@ -5,15 +5,22 @@ import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
 import io.embrace.android.embracesdk.internal.delivery.intake.IntakeService
+import io.embrace.android.embracesdk.internal.delivery.storage.CachedLogEnvelopeStore
+import io.embrace.android.embracesdk.internal.delivery.storage.CachedLogEnvelopeStore.Companion.createNativeCrashEnvelopeMetadata
 import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageService
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.ndk.NativeCrashService
 import io.embrace.android.embracesdk.internal.opentelemetry.embCrashId
 import io.embrace.android.embracesdk.internal.opentelemetry.embHeartbeatTimeUnixNano
+import io.embrace.android.embracesdk.internal.opentelemetry.embProcessIdentifier
 import io.embrace.android.embracesdk.internal.opentelemetry.embState
+import io.embrace.android.embracesdk.internal.payload.ApplicationState
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Envelope
+import io.embrace.android.embracesdk.internal.payload.EnvelopeMetadata
+import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
+import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.payload.Span
@@ -26,12 +33,14 @@ import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.internal.spans.hasFixedAttribute
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes
+import java.util.Locale
 import java.util.zip.GZIPInputStream
 import kotlin.math.max
 
 internal class PayloadResurrectionServiceImpl(
     private val intakeService: IntakeService,
     private val cacheStorageService: PayloadStorageService,
+    private val cachedLogEnvelopeStore: CachedLogEnvelopeStore,
     private val logger: EmbLogger,
     private val serializer: PlatformSerializer,
 ) : PayloadResurrectionService {
@@ -39,15 +48,16 @@ internal class PayloadResurrectionServiceImpl(
     override fun resurrectOldPayloads(nativeCrashServiceProvider: Provider<NativeCrashService?>) {
         val nativeCrashService = nativeCrashServiceProvider()
         val undeliveredPayloads = cacheStorageService.getUndeliveredPayloads()
+        val payloadsToResurrect = undeliveredPayloads.filterNot { it.isCrashEnvelope() }
         val nativeCrashes = nativeCrashService?.getNativeCrashes()?.associateBy { it.sessionId } ?: emptyMap()
         val processedCrashes = mutableSetOf<NativeCrashData>()
 
-        undeliveredPayloads.forEach { payload ->
+        payloadsToResurrect.forEach { payload ->
             val result = runCatching {
                 payload.processUndeliveredPayload(
                     nativeCrashService = nativeCrashService,
                     nativeCrashProvider = nativeCrashes::get,
-                    postNativeCrashCallback = processedCrashes::add,
+                    postNativeCrashProcessingCallback = processedCrashes::add,
                 )
             }
 
@@ -67,21 +77,81 @@ internal class PayloadResurrectionServiceImpl(
         }
 
         if (nativeCrashService != null) {
-            nativeCrashes.values.filterNot { processedCrashes.contains(it) }.forEach { nativeCrash ->
-                nativeCrashService.sendNativeCrash(
-                    nativeCrash = nativeCrash,
-                    sessionProperties = emptyMap(),
-                    metadata = emptyMap()
-                )
+            // We assume that there can ever only be one cached crash envelope and one sessionless native crash
+            // Internal errors will be logged if that assumption is not true, as we currently don't store enough
+            // metadata in the native crash to determine which app instance it came from if it isn't associated with
+            // a session.
+            //
+            // This assumption would be incorrect if a native crash happens during startup, before a session is created,
+            // and before the payload resurrection phase of the SDK startup has completed. This seems pretty rare.
+            //
+            // Solving this requires the persistence of the processIdentifier, and we will only do this if this
+            // proves to be a problem in production.
+
+            val sessionlessNativeCrashes = nativeCrashes.values.filterNot { processedCrashes.contains(it) }
+            if (sessionlessNativeCrashes.isNotEmpty()) {
+                val cachedCrashEnvelopeMetadata = undeliveredPayloads.firstOrNull { it.isCrashEnvelope() }
+                val cachedCrashEnvelope = if (cachedCrashEnvelopeMetadata != null) {
+                    runCatching {
+                        serializer.fromJson<Envelope<LogPayload>>(
+                            inputStream = GZIPInputStream(
+                                cacheStorageService.loadPayloadAsStream(cachedCrashEnvelopeMetadata)
+                            ),
+                            type = SupportedEnvelopeType.CRASH.serializedType
+                        ).also {
+                            cacheStorageService.delete(cachedCrashEnvelopeMetadata)
+                        }
+                    }.getOrNull()
+                } else {
+                    null
+                }
+                val resource = cachedCrashEnvelope?.resource
+                val metadata = cachedCrashEnvelope?.metadata
+                sessionlessNativeCrashes.forEach { nativeCrash ->
+                    if (resource != null && metadata != null) {
+                        cachedLogEnvelopeStore.create(
+                            storedTelemetryMetadata = createNativeCrashEnvelopeMetadata(
+                                sessionId = nativeCrash.sessionId
+                            ),
+                            resource = resource,
+                            metadata = metadata
+                        )
+                    } else {
+                        logger.trackInternalError(
+                            type = InternalErrorType.NATIVE_CRASH_RESURRECTION_ERROR,
+                            throwable = IllegalStateException("Cached native crash envelope data not found")
+                        )
+                    }
+                    nativeCrashService.sendNativeCrash(
+                        nativeCrash = nativeCrash,
+                        sessionProperties = emptyMap(),
+                        metadata = mapOf(
+                            embState.attributeKey to ApplicationState.BACKGROUND.name.lowercase(Locale.ENGLISH)
+                        ),
+                    )
+                }
+                if (sessionlessNativeCrashes.size > 1) {
+                    logger.trackInternalError(
+                        type = InternalErrorType.NATIVE_CRASH_RESURRECTION_ERROR,
+                        throwable = IllegalStateException("Multiple sessionless native crashes found.")
+                    )
+                }
             }
             nativeCrashService.deleteAllNativeCrashes()
         }
+
+        undeliveredPayloads.filter { it.isCrashEnvelope() }.forEach { crashEnvelopeMetadata ->
+            cacheStorageService.delete(crashEnvelopeMetadata)
+        }
+        cachedLogEnvelopeStore.clear()
     }
+
+    private fun StoredTelemetryMetadata.isCrashEnvelope() = envelopeType == SupportedEnvelopeType.CRASH
 
     private fun StoredTelemetryMetadata.processUndeliveredPayload(
         nativeCrashService: NativeCrashService?,
         nativeCrashProvider: (String) -> NativeCrashData?,
-        postNativeCrashCallback: (NativeCrashData) -> Unit,
+        postNativeCrashProcessingCallback: (NativeCrashData) -> Unit,
     ) {
         val resurrectedPayload = when (envelopeType) {
             SupportedEnvelopeType.SESSION -> {
@@ -92,18 +162,33 @@ internal class PayloadResurrectionServiceImpl(
 
                 val sessionId = deadSession.getSessionId()
                 val appState = deadSession.getSessionSpan()?.attributes?.findAttributeValue(embState.name)
-                val nativeCrash = if (sessionId != null) {
+                val nativeCrash = if (nativeCrashService != null && sessionId != null) {
                     nativeCrashProvider(sessionId)?.apply {
-                        postNativeCrashCallback(this)
-                        nativeCrashService?.sendNativeCrash(
+                        val nativeCrashEnvelopeMetadata = createNativeCrashEnvelopeMetadata(
+                            sessionId = sessionId,
+                            processIdentifier = processId
+                        )
+
+                        cachedLogEnvelopeStore.create(
+                            storedTelemetryMetadata = nativeCrashEnvelopeMetadata,
+                            resource = deadSession.resource ?: EnvelopeResource(),
+                            metadata = deadSession.metadata ?: EnvelopeMetadata()
+                        )
+
+                        nativeCrashService.sendNativeCrash(
                             nativeCrash = this,
                             sessionProperties = deadSession.getSessionProperties(),
                             metadata = if (appState != null) {
-                                mapOf(embState.attributeKey to appState)
+                                mapOf(
+                                    embState.attributeKey to appState,
+                                    embProcessIdentifier.attributeKey to processId
+                                )
                             } else {
                                 emptyMap()
-                            }
+                            },
                         )
+
+                        postNativeCrashProcessingCallback(this)
                     }
                 } else {
                     null

@@ -40,8 +40,8 @@ val fakeLogStoredTelemetryMetadata = StoredTelemetryMetadata(
 )
 
 val fakeNativeCrashStoredTelemetryMetadata = StoredTelemetryMetadata(
-    timestamp = DEFAULT_FAKE_CURRENT_TIME + 500L,
-    uuid = "794b67fd-2dd7-4380-beeb-89c2432f25aa",
+    timestamp = 1681972471806L,
+    uuid = "bb6b5b1ea2ff48928382fe81d7991ced",
     processId = "8115ec91-3e5e-4d8a-816d-cc40306f9822",
     envelopeType = SupportedEnvelopeType.CRASH,
     complete = false,

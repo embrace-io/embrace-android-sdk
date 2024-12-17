@@ -41,7 +41,12 @@ internal class EmbraceSetupInterface @JvmOverloads constructor(
     currentTimeMs: Long = IntegrationTestRule.DEFAULT_SDK_START_TIME_MS,
     var useMockWebServer: Boolean = true,
     val overriddenClock: FakeClock = FakeClock(currentTime = currentTimeMs),
-    val overriddenInitModule: FakeInitModule = FakeInitModule(clock = overriddenClock, logger = FakeEmbLogger()),
+    val processIdentifier: String = "integration-test-process",
+    val overriddenInitModule: FakeInitModule = FakeInitModule(
+        clock = overriddenClock,
+        logger = FakeEmbLogger(),
+        processIdentifierProvider = { processIdentifier }
+    ),
     val overriddenOpenTelemetryModule: OpenTelemetryModule = overriddenInitModule.openTelemetryModule,
     val overriddenCoreModule: FakeCoreModule = FakeCoreModule(),
     val overriddenWorkerThreadModule: WorkerThreadModule = createWorkerThreadModule(),
@@ -128,11 +133,16 @@ internal class EmbraceSetupInterface @JvmOverloads constructor(
     /**
      * Setup a fake dead session on disk
      */
-    fun EmbraceSetupInterface.setupFakeDeadSession(
+    fun EmbraceSetupInterface.setupCachedDataFromNativeCrash(
         storageService: FakePayloadStorageService,
         crashData: StoredNativeCrashData,
     ) {
-        storageService.addPayload(crashData.sessionMetadata, crashData.sessionEnvelope)
+        if (crashData.sessionMetadata != null && crashData.sessionEnvelope != null) {
+            storageService.addPayload(crashData.sessionMetadata, crashData.sessionEnvelope)
+        }
+        if (crashData.cachedCrashEnvelopeMetadata != null && crashData.cachedCrashEnvelope != null) {
+            storageService.addPayload(crashData.cachedCrashEnvelopeMetadata, crashData.cachedCrashEnvelope)
+        }
         cacheStorageServiceProvider = { storageService }
     }
 

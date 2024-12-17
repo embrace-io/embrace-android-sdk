@@ -25,6 +25,7 @@ class OpenTelemetryConfiguration(
     spanSink: SpanSink,
     logSink: LogSink,
     systemInfo: SystemInfo,
+    private val processIdentifierProvider: () -> String = IdGenerator.Companion::generateLaunchInstanceId
 ) {
     val embraceSdkName: String = BuildConfig.LIBRARY_PACKAGE_NAME
     val embraceSdkVersion: String = BuildConfig.VERSION_NAME
@@ -49,7 +50,7 @@ class OpenTelemetryConfiguration(
      * this out by proximity for stitched sessions.
      */
     val processIdentifier: String by lazy {
-        Systrace.traceSynchronous("process-identifier-init", IdGenerator.Companion::generateLaunchInstanceId)
+        Systrace.traceSynchronous("process-identifier-init", processIdentifierProvider)
     }
 
     private val externalSpanExporters = mutableListOf<SpanExporter>()

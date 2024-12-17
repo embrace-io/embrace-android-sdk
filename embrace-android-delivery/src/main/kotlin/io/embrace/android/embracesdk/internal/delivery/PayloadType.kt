@@ -12,6 +12,7 @@ enum class PayloadType(
     AEI("sys.exit"),
     EXCEPTION("sys.exception"),
     NETWORK_CAPTURE("sys.network_capture"),
+    INTERNAL_ERROR("sys.internal"),
     UNKNOWN("unknown");
 
     companion object {
@@ -30,6 +31,7 @@ enum class PayloadType(
                 AEI -> "aei"
                 EXCEPTION -> "exception"
                 NETWORK_CAPTURE -> "network"
+                INTERNAL_ERROR -> "internal"
                 else -> "unknown"
             }
         }
@@ -45,6 +47,7 @@ enum class PayloadType(
                 "aei" -> AEI
                 "exception" -> EXCEPTION
                 "network" -> NETWORK_CAPTURE
+                "internal" -> INTERNAL_ERROR
                 else -> UNKNOWN
             }
         }

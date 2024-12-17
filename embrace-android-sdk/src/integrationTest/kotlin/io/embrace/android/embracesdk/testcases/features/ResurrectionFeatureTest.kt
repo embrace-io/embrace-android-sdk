@@ -16,11 +16,12 @@ import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.delivery.PayloadType
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
-import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.testframework.IntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import io.embrace.android.embracesdk.testframework.actions.createStoredNativeCrashData
 import io.embrace.android.embracesdk.testframework.assertions.getLastLog
+import io.opentelemetry.semconv.ExceptionAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -122,7 +123,12 @@ internal class ResurrectionFeatureTest {
             createCrashEnvelope = false,
         )
         testRule.runTest(
-            instrumentedConfig = FakeInstrumentedConfig(enabledFeatures = FakeEnabledFeatureConfig(nativeCrashCapture = true)),
+            instrumentedConfig = FakeInstrumentedConfig(
+                enabledFeatures = FakeEnabledFeatureConfig(
+                    bgActivityCapture = false,
+                    nativeCrashCapture = true
+                )
+            ),
             setupAction = {
                 setupCachedDataFromNativeCrash(cacheStorageService, crashData = crashData)
                 setupFakeNativeCrash(serializer, crashData)
@@ -132,17 +138,31 @@ internal class ResurrectionFeatureTest {
             },
             assertAction = {
                 val session = getSingleSessionEnvelope()
-                val envelope = getSingleLogEnvelope()
-                with(envelope) {
+                val envelopes = getLogEnvelopes(2)
+                with(envelopes.first()) {
                     assertEquals(session.resource, resource)
                     assertEquals(session.metadata, metadata)
+                    val crash = getLastLog()
+                    assertNativeCrashSent(crash, crashData, testRule.setup.symbols)
                 }
 
-                val log = envelope.getLastLog()
-                assertNativeCrashSent(log, crashData, testRule.setup.symbols)
-                assertEquals(2, getInternalErrors().size)
-                assertEquals(InternalErrorType.NATIVE_CRASH_RESURRECTION_ERROR.toString(), getInternalErrors().first().msg)
-                assertEquals(InternalErrorType.PAYLOAD_STORAGE_FAIL.toString(), getInternalErrors().last().msg)
+                with(envelopes.last()) {
+                    val errors = checkNotNull(data.logs)
+                    assertEquals(2, errors.size)
+                    with(errors.first()) {
+                        assertEquals(
+                            "Cached native crash envelope data not found",
+                            attributes?.findAttributeValue(ExceptionAttributes.EXCEPTION_MESSAGE.key)
+                        )
+                    }
+
+                    with(errors.last()) {
+                        assertEquals(
+                            "java.io.FileNotFoundException",
+                            attributes?.findAttributeValue(ExceptionAttributes.EXCEPTION_TYPE.key)
+                        )
+                    }
+                }
             }
         )
     }

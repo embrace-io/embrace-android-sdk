@@ -7,7 +7,6 @@ import io.embrace.android.embracesdk.assertions.findSessionSpan
 import io.embrace.android.embracesdk.assertions.getSessionId
 import io.embrace.android.embracesdk.assertions.returnIfConditionMet
 import io.embrace.android.embracesdk.fakes.FakeDeliveryService
-import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.internal.TypeUtils
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
@@ -53,7 +52,6 @@ internal class EmbracePayloadAssertionInterface(
 
     private val deliveryService by lazy { bootstrapper.deliveryModule.deliveryService as FakeDeliveryService }
     private val serializer by lazy { bootstrapper.initModule.jsonSerializer }
-    private val logger by lazy { bootstrapper.initModule.logger as FakeEmbLogger }
     private val deliveryTracer by lazy {
         checkNotNull(bootstrapper.deliveryModule.deliveryTracer)
     }
@@ -347,8 +345,6 @@ internal class EmbracePayloadAssertionInterface(
             throw IllegalStateException("Failed to validate request against golden file.", e)
         }
     }
-
-    internal fun getInternalErrors(): List<FakeEmbLogger.LogMessage> = logger.internalErrorMessages
 
     /**
      * Retrieves a payload that was stored in the delivery service.

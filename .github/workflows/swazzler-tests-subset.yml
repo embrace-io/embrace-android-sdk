@@ -42,7 +42,7 @@ jobs:
       - name: Install Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 16.x
+          node-version: 20.x
 
       # make sure version in gradle.properties matches the version of embrace-swazzler3 version
       - name: "Publish SDK locally"
@@ -76,4 +76,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: swazzler-test-results
-          path: ./swazzler-test/functional-tests/build/reports/tests/swazzlerTests/
+          path: |
+            ./swazzler-test/functional-tests/build/reports/tests/swazzlerTests/
+            ./swazzler-test/functional-tests/swazzler_test_debug_output

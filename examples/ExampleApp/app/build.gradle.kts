@@ -66,6 +66,7 @@ dependencies {
 //    implementation(libs.embrace.android.core)
 //    implementation(libs.embrace.android.features)
 //    implementation(libs.embrace.android.payload)
+//    implementation(libs.embrace.android.delivery)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

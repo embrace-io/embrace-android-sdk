@@ -43,20 +43,22 @@ class NativeCrashHandlerInstallerImpl(
     private fun startNativeCrashMonitoring() {
         try {
             if (sharedObjectLoader.loadEmbraceNative()) {
-                delegate.onSessionChange(sessionIdTracker.getActiveSessionId(), createNativeReportPath())
+                delegate.onSessionChange(sanitizeSessionId(sessionIdTracker.getActiveSessionId()), createNativeReportPath())
                 mainThreadHandler.postAtFrontOfQueue { installSignals() }
                 mainThreadHandler.postDelayed(
                     Runnable(::checkSignalHandlersOverwritten),
                     HANDLER_CHECK_DELAY_MS
                 )
                 sessionIdTracker.addListener { sessionId ->
-                    delegate.onSessionChange(sessionId, createNativeReportPath())
+                    delegate.onSessionChange(sanitizeSessionId(sessionId), createNativeReportPath())
                 }
             }
         } catch (ex: Exception) {
             logger.trackInternalError(InternalErrorType.NATIVE_HANDLER_INSTALL_FAIL, ex)
         }
     }
+
+    private fun sanitizeSessionId(sid: String?) = sid ?: "null"
 
     private fun checkSignalHandlersOverwritten() {
         if (configService.autoDataCaptureBehavior.is3rdPartySigHandlerDetectionEnabled()) {
@@ -100,7 +102,7 @@ class NativeCrashHandlerInstallerImpl(
     private fun createNativeReportPath(): String {
         val metadata = StoredTelemetryMetadata(
             timestamp = clock.now(),
-            uuid = sessionIdTracker.getActiveSessionId() ?: "null",
+            uuid = sanitizeSessionId(sessionIdTracker.getActiveSessionId()),
             processId = processIdProvider(),
             envelopeType = SupportedEnvelopeType.CRASH,
             payloadType = PayloadType.NATIVE_CRASH,

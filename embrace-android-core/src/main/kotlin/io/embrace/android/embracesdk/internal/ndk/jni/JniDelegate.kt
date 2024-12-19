@@ -10,7 +10,7 @@ interface JniDelegate {
         devLogging: Boolean,
     )
     fun updateMetaData(metadata: String?)
-    fun onSessionChange(sessionId: String?, reportPath: String)
+    fun onSessionChange(sessionId: String, reportPath: String)
     fun updateAppState(appState: String?)
     fun getCrashReport(path: String): String?
     fun checkForOverwrittenHandlers(): String?

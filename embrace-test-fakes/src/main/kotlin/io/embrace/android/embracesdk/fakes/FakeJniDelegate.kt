@@ -25,7 +25,7 @@ class FakeJniDelegate : JniDelegate {
         // do nothing
     }
 
-    override fun onSessionChange(sessionId: String?, reportPath: String) {
+    override fun onSessionChange(sessionId: String, reportPath: String) {
         this.reportPath = reportPath
     }
 

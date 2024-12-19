@@ -26,20 +26,8 @@ internal class NdkJniInterfaceTest : NativeTestSuite() {
     }
 
     @Test
-    fun updateMetaDataTest() {
-        val result = delegate.updateMetaData("new_device_meta_data")
-        assertEquals(Unit.javaClass, result.javaClass)
-    }
-
-    @Test
-    fun updateSessionIdTest() {
+    fun onSessionChange() {
         val result = delegate.onSessionChange("new_session_id", "new_native_report_path")
-        assertEquals(Unit.javaClass, result.javaClass)
-    }
-
-    @Test
-    fun updateAppStateTest() {
-        val result = delegate.updateAppState("new_app_state")
         assertEquals(Unit.javaClass, result.javaClass)
     }
 

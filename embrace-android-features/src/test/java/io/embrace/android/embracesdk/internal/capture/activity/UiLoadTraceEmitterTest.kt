@@ -64,7 +64,30 @@ internal class UiLoadTraceEmitterTest {
 
     @Config(sdk = [Build.VERSION_CODES.UPSIDE_DOWN_CAKE])
     @Test
-    fun `verify cold ui load trace from background in U`() {
+    fun `verify cold ui load trace from an interrupted opening of another activity in U`() {
+        verifyOpen(
+            previousState = PreviousState.FROM_INTERRUPTED_LOAD,
+            uiLoadType = UiLoadType.COLD,
+            firePreAndPost = true,
+            hasRenderEvent = true,
+        )
+    }
+
+    @Config(sdk = [Build.VERSION_CODES.UPSIDE_DOWN_CAKE])
+    @Test
+    fun `verify cold ui load trace from an interrupted opening of the same activity in U`() {
+        verifyOpen(
+            lastActivityName = ACTIVITY_NAME,
+            previousState = PreviousState.FROM_INTERRUPTED_LOAD,
+            uiLoadType = UiLoadType.COLD,
+            firePreAndPost = true,
+            hasRenderEvent = true,
+        )
+    }
+
+    @Config(sdk = [Build.VERSION_CODES.UPSIDE_DOWN_CAKE])
+    @Test
+    fun `verify cold open trace from background in U`() {
         verifyOpen(
             previousState = PreviousState.FROM_BACKGROUND,
             uiLoadType = UiLoadType.COLD,
@@ -89,6 +112,29 @@ internal class UiLoadTraceEmitterTest {
     fun `verify cold ui load trace in from another activity L`() {
         verifyOpen(
             previousState = PreviousState.FROM_ACTIVITY,
+            uiLoadType = UiLoadType.COLD,
+            firePreAndPost = false,
+            hasRenderEvent = false,
+        )
+    }
+
+    @Config(sdk = [Build.VERSION_CODES.LOLLIPOP])
+    @Test
+    fun `verify cold ui load trace from an interrupted opening of another activity in L`() {
+        verifyOpen(
+            previousState = PreviousState.FROM_INTERRUPTED_LOAD,
+            uiLoadType = UiLoadType.COLD,
+            firePreAndPost = false,
+            hasRenderEvent = false,
+        )
+    }
+
+    @Config(sdk = [Build.VERSION_CODES.LOLLIPOP])
+    @Test
+    fun `verify cold ui load trace from an interrupted opening of the same activity in L`() {
+        verifyOpen(
+            lastActivityName = ACTIVITY_NAME,
+            previousState = PreviousState.FROM_INTERRUPTED_LOAD,
             uiLoadType = UiLoadType.COLD,
             firePreAndPost = false,
             hasRenderEvent = false,
@@ -209,13 +255,14 @@ internal class UiLoadTraceEmitterTest {
         val lastActivityExitMs = clock.now()
         clock.tick(100L)
 
+        // set state of tracker to simulate that at least one activity has been opened
+        traceEmitter.abandon(lastInstanceId, lastActivityName, lastActivityExitMs)
         when (previousState) {
             PreviousState.FROM_ACTIVITY -> {
-                traceEmitter.abandon(lastInstanceId, lastActivityName, lastActivityExitMs)
+                // do nothing extra
             }
 
             PreviousState.FROM_BACKGROUND -> {
-                traceEmitter.abandon(lastInstanceId, lastActivityName, lastActivityExitMs)
                 traceEmitter.reset(lastInstanceId)
             }
 
@@ -273,7 +320,7 @@ internal class UiLoadTraceEmitterTest {
             events[LifecycleStage.RENDER] = this
         }
 
-        val traceStartMs = if (previousState != PreviousState.FROM_BACKGROUND) {
+        val traceStartMs = if (previousState == PreviousState.FROM_ACTIVITY) {
             lastActivityExitMs
         } else {
             createEvents?.run {

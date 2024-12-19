@@ -138,7 +138,7 @@ internal class ResurrectionFeatureTest {
             },
             assertAction = {
                 val session = getSingleSessionEnvelope()
-                val envelopes = getLogEnvelopes(2)
+                val envelopes = getLogEnvelopes(2).sortedBy { it.data.logs?.size }
                 with(envelopes.first()) {
                     assertEquals(session.resource, resource)
                     assertEquals(session.metadata, metadata)

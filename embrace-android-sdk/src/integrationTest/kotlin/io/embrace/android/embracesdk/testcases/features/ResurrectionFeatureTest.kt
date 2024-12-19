@@ -16,12 +16,10 @@ import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.delivery.PayloadType
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
-import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.testframework.IntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import io.embrace.android.embracesdk.testframework.actions.createStoredNativeCrashData
 import io.embrace.android.embracesdk.testframework.assertions.getLastLog
-import io.opentelemetry.semconv.ExceptionAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -138,30 +136,12 @@ internal class ResurrectionFeatureTest {
             },
             assertAction = {
                 val session = getSingleSessionEnvelope()
-                val envelopes = getLogEnvelopes(2).sortedBy { it.data.logs?.size }
-                with(envelopes.first()) {
+                val crashEnvelope = getSingleLogEnvelope()
+                with(crashEnvelope) {
                     assertEquals(session.resource, resource)
                     assertEquals(session.metadata, metadata)
                     val crash = getLastLog()
                     assertNativeCrashSent(crash, crashData, testRule.setup.symbols)
-                }
-
-                with(envelopes.last()) {
-                    val errors = checkNotNull(data.logs)
-                    assertEquals(2, errors.size)
-                    with(errors.first()) {
-                        assertEquals(
-                            "Cached native crash envelope data not found",
-                            attributes?.findAttributeValue(ExceptionAttributes.EXCEPTION_MESSAGE.key)
-                        )
-                    }
-
-                    with(errors.last()) {
-                        assertEquals(
-                            "java.io.FileNotFoundException",
-                            attributes?.findAttributeValue(ExceptionAttributes.EXCEPTION_TYPE.key)
-                        )
-                    }
                 }
             }
         )

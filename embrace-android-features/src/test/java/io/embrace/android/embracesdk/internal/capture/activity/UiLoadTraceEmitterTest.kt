@@ -5,11 +5,14 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.assertEmbraceSpanData
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
+import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.payload.toNewPayload
 import io.embrace.android.embracesdk.internal.spans.SpanService
 import io.embrace.android.embracesdk.internal.spans.SpanSink
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.opentelemetry.api.trace.SpanId
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
@@ -107,6 +110,30 @@ internal class UiLoadTraceEmitterTest {
         )
     }
 
+    @Config(sdk = [Build.VERSION_CODES.UPSIDE_DOWN_CAKE])
+    @Test
+    fun `verify cold ui load trace to be ended manually in U`() {
+        verifyOpen(
+            previousState = PreviousState.FROM_ACTIVITY,
+            uiLoadType = UiLoadType.COLD,
+            firePreAndPost = true,
+            hasRenderEvent = true,
+            manualEnd = true,
+        )
+    }
+
+    @Config(sdk = [Build.VERSION_CODES.UPSIDE_DOWN_CAKE])
+    @Test
+    fun `verify hot ui load trace to be ended manually in U`() {
+        verifyOpen(
+            previousState = PreviousState.FROM_ACTIVITY,
+            uiLoadType = UiLoadType.HOT,
+            firePreAndPost = true,
+            hasRenderEvent = true,
+            manualEnd = true,
+        )
+    }
+
     @Config(sdk = [Build.VERSION_CODES.LOLLIPOP])
     @Test
     fun `verify cold ui load trace in from another activity L`() {
@@ -163,6 +190,30 @@ internal class UiLoadTraceEmitterTest {
         )
     }
 
+    @Config(sdk = [Build.VERSION_CODES.LOLLIPOP])
+    @Test
+    fun `verify cold ui load trace to be ended manually in L`() {
+        verifyOpen(
+            previousState = PreviousState.FROM_ACTIVITY,
+            uiLoadType = UiLoadType.COLD,
+            firePreAndPost = false,
+            hasRenderEvent = false,
+            manualEnd = true,
+        )
+    }
+
+    @Config(sdk = [Build.VERSION_CODES.LOLLIPOP])
+    @Test
+    fun `verify hot ui load trace to be ended manually in L`() {
+        verifyOpen(
+            previousState = PreviousState.FROM_ACTIVITY,
+            uiLoadType = UiLoadType.HOT,
+            firePreAndPost = false,
+            hasRenderEvent = false,
+            manualEnd = true,
+        )
+    }
+
     private fun verifyOpen(
         activityName: String = ACTIVITY_NAME,
         instanceId: Int = NEW_INSTANCE_ID,
@@ -172,6 +223,7 @@ internal class UiLoadTraceEmitterTest {
         uiLoadType: UiLoadType,
         firePreAndPost: Boolean,
         hasRenderEvent: Boolean,
+        manualEnd: Boolean = false,
     ) {
         openActivity(
             activityName = activityName,
@@ -181,7 +233,8 @@ internal class UiLoadTraceEmitterTest {
             previousState = previousState,
             uiLoadType = uiLoadType,
             firePreAndPost = firePreAndPost,
-            hasRenderEvent = hasRenderEvent
+            hasRenderEvent = hasRenderEvent,
+            manualEnd = manualEnd,
         ).let { timestamps ->
             val spanMap = spanSink.completedSpans().associateBy { it.name }
             val trace = checkNotNull(spanMap["emb-$activityName-${uiLoadType.typeName}-time-to-initial-display"])
@@ -237,6 +290,18 @@ internal class UiLoadTraceEmitterTest {
                 assertNull(spanMap["emb-$activityName-resume"])
                 assertNull(spanMap["emb-$activityName-render"])
             }
+
+            val lastEventEndTimeMs = if (hasRenderEvent) {
+                checkNotNull(events[LifecycleStage.RENDER]).endMs()
+            } else {
+                checkNotNull(events[LifecycleStage.RESUME]).startMs()
+            }
+
+            if (manualEnd) {
+                assertNotEquals(trace.endTimeNanos.nanosToMillis(), lastEventEndTimeMs)
+            } else {
+                assertEquals(trace.endTimeNanos.nanosToMillis(), lastEventEndTimeMs)
+            }
         }
     }
 
@@ -250,6 +315,7 @@ internal class UiLoadTraceEmitterTest {
         uiLoadType: UiLoadType,
         firePreAndPost: Boolean,
         hasRenderEvent: Boolean,
+        manualEnd: Boolean,
     ): Triple<Long, Long, Map<LifecycleStage, LifecycleEvents>> {
         val events = mutableMapOf<LifecycleStage, LifecycleEvents>()
         val lastActivityExitMs = clock.now()
@@ -270,21 +336,24 @@ internal class UiLoadTraceEmitterTest {
                 activityCreate(
                     activityName = lastActivityName,
                     instanceId = lastInstanceId,
-                    firePreAndPost = firePreAndPost
+                    firePreAndPost = firePreAndPost,
                 )
                 activityStart(
                     activityName = lastActivityName,
                     instanceId = lastInstanceId,
-                    firePreAndPost = firePreAndPost
+                    firePreAndPost = firePreAndPost,
                 )
             }
         }
+
+        clock.tick()
 
         val createEvents = if (uiLoadType == UiLoadType.COLD) {
             activityCreate(
                 activityName = activityName,
                 instanceId = instanceId,
-                firePreAndPost = firePreAndPost
+                firePreAndPost = firePreAndPost,
+                manualEnd = manualEnd,
             )
         } else {
             null
@@ -292,21 +361,29 @@ internal class UiLoadTraceEmitterTest {
             events[LifecycleStage.CREATE] = this
         }
 
+        clock.tick()
+
         val startEvents = activityStart(
             activityName = activityName,
             instanceId = instanceId,
-            firePreAndPost = firePreAndPost
+            firePreAndPost = firePreAndPost,
+            manualEnd = manualEnd,
         ).apply {
             events[LifecycleStage.START] = this
         }
 
+        clock.tick()
+
         val resumeEvents = activityResume(
             activityName = activityName,
             instanceId = instanceId,
-            firePreAndPost = firePreAndPost
+            fireEndEvent = hasRenderEvent,
+            firePreAndPost = firePreAndPost,
         ).apply {
             events[LifecycleStage.RESUME] = this
         }
+
+        clock.tick()
 
         val renderEvents = if (hasRenderEvent) {
             activityRender(
@@ -336,9 +413,15 @@ internal class UiLoadTraceEmitterTest {
             }
         }
 
-        val traceEndMs = renderEvents?.run {
-            endMs()
-        } ?: resumeEvents.startMs()
+        val traceEndMs = if (manualEnd) {
+            clock.tick(500L).also { time ->
+                traceEmitter.complete(instanceId, time)
+            }
+        } else {
+            renderEvents?.run {
+                endMs()
+            } ?: resumeEvents.startMs()
+        }
 
         return Triple(traceStartMs, traceEndMs, events)
     }
@@ -346,7 +429,8 @@ internal class UiLoadTraceEmitterTest {
     private fun activityCreate(
         activityName: String,
         instanceId: Int,
-        firePreAndPost: Boolean = true
+        firePreAndPost: Boolean = true,
+        manualEnd: Boolean = false,
     ): LifecycleEvents {
         return runLifecycleEvent(
             activityName = activityName,
@@ -354,13 +438,15 @@ internal class UiLoadTraceEmitterTest {
             startCallback = traceEmitter::create,
             endCallback = traceEmitter::createEnd,
             firePreAndPost = firePreAndPost,
+            manualEnd = manualEnd,
         )
     }
 
     private fun activityStart(
         activityName: String,
         instanceId: Int,
-        firePreAndPost: Boolean = true
+        firePreAndPost: Boolean = true,
+        manualEnd: Boolean = false,
     ): LifecycleEvents {
         return runLifecycleEvent(
             activityName = activityName,
@@ -368,32 +454,40 @@ internal class UiLoadTraceEmitterTest {
             startCallback = traceEmitter::start,
             endCallback = traceEmitter::startEnd,
             firePreAndPost = firePreAndPost,
+            manualEnd = manualEnd,
         )
     }
 
+    @Suppress("FunctionParameterNaming", "UnusedParameter", "EmptyFunctionBlock")
     private fun activityResume(
         activityName: String,
         instanceId: Int,
-        firePreAndPost: Boolean = true
+        fireEndEvent: Boolean,
+        firePreAndPost: Boolean = true,
     ): LifecycleEvents {
         return runLifecycleEvent(
             activityName = activityName,
             instanceId = instanceId,
-            startCallback = traceEmitter::resume,
-            endCallback = traceEmitter::resumeEnd,
+            startCallback = fun(instanceId: Int, activityName: String, startMs: Long, _: Boolean) {
+                traceEmitter.resume(instanceId, activityName, startMs)
+            },
+            endCallback = if (fireEndEvent) traceEmitter::resumeEnd else fun(_, _) {},
             firePreAndPost = firePreAndPost,
         )
     }
 
+    @Suppress("FunctionParameterNaming", "UnusedParameter")
     private fun activityRender(
         activityName: String,
         instanceId: Int,
-        firePreAndPost: Boolean = true
+        firePreAndPost: Boolean = true,
     ): LifecycleEvents {
         return runLifecycleEvent(
             activityName = activityName,
             instanceId = instanceId,
-            startCallback = traceEmitter::render,
+            startCallback = fun(instanceId: Int, activityName: String, startMs: Long, _: Boolean) {
+                traceEmitter.render(instanceId, activityName, startMs)
+            },
             endCallback = traceEmitter::renderEnd,
             firePreAndPost = firePreAndPost,
         )
@@ -402,9 +496,10 @@ internal class UiLoadTraceEmitterTest {
     private fun runLifecycleEvent(
         activityName: String,
         instanceId: Int,
-        startCallback: (instanceId: Int, activityName: String, startMs: Long) -> Unit,
+        startCallback: (instanceId: Int, activityName: String, startMs: Long, manualEnd: Boolean) -> Unit,
         endCallback: (instanceId: Int, startMs: Long) -> Unit,
-        firePreAndPost: Boolean = true
+        firePreAndPost: Boolean = true,
+        manualEnd: Boolean = false,
     ): LifecycleEvents {
         val events = LifecycleEvents()
         if (firePreAndPost) {
@@ -412,7 +507,7 @@ internal class UiLoadTraceEmitterTest {
             clock.tick()
         }
         events.eventStart = clock.now()
-        startCallback(instanceId, activityName, events.startMs())
+        startCallback(instanceId, activityName, events.startMs(), manualEnd)
         events.eventEnd = clock.tick(100L)
         if (firePreAndPost) {
             events.post = clock.tick()

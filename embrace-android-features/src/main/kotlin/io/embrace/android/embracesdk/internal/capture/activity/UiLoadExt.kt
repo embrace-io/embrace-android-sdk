@@ -148,7 +148,8 @@ private class UiLoadEventEmitter(
         uiLoadEventListener.create(
             instanceId = traceInstanceId(activity),
             activityName = activity.localClassName,
-            timestampMs = nowMs()
+            timestampMs = nowMs(),
+            manualEnd = false,
         )
     }
 
@@ -163,7 +164,8 @@ private class UiLoadEventEmitter(
         uiLoadEventListener.start(
             instanceId = traceInstanceId(activity),
             activityName = activity.localClassName,
-            timestampMs = nowMs()
+            timestampMs = nowMs(),
+            manualEnd = false,
         )
     }
 

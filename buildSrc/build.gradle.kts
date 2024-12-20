@@ -18,7 +18,7 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:2.0.21")
     implementation("com.android.tools.build:gradle:8.7.3")
     implementation("io.gitlab.arturbosch.detekt:detekt-gradle-plugin:1.23.7")
-    implementation("org.jetbrains.kotlinx:binary-compatibility-validator:0.16.3")
+    implementation("org.jetbrains.kotlinx:binary-compatibility-validator:0.17.0")
     implementation("org.jetbrains.kotlinx:kover-gradle-plugin:0.9.0")
 }
 

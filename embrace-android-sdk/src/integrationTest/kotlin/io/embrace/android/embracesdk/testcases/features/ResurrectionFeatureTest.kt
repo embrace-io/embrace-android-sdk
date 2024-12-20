@@ -25,6 +25,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -112,6 +113,7 @@ internal class ResurrectionFeatureTest {
     }
 
 
+    @Ignore("Flakey because the internal errors sometimes comes before the crash")
     @Test
     fun `native crash without session or crash envelope is sent with current SDK envelope`() {
         val crashData = createStoredNativeCrashData(

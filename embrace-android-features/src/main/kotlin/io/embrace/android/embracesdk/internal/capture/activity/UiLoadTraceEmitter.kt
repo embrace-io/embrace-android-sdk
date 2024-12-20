@@ -54,12 +54,13 @@ class UiLoadTraceEmitter(
     private val traceZygoteHolder: AtomicReference<UiLoadTraceZygote> = AtomicReference(INITIAL)
     private var currentTracedInstanceId: Int? = null
 
-    override fun create(instanceId: Int, activityName: String, timestampMs: Long) {
+    override fun create(instanceId: Int, activityName: String, timestampMs: Long, manualEnd: Boolean) {
         startTrace(
             uiLoadType = UiLoadType.COLD,
             instanceId = instanceId,
             activityName = activityName,
-            timestampMs = timestampMs
+            timestampMs = timestampMs,
+            manualEnd = manualEnd
         )
         startChildSpan(
             instanceId = instanceId,
@@ -76,12 +77,13 @@ class UiLoadTraceEmitter(
         )
     }
 
-    override fun start(instanceId: Int, activityName: String, timestampMs: Long) {
+    override fun start(instanceId: Int, activityName: String, timestampMs: Long, manualEnd: Boolean) {
         startTrace(
             uiLoadType = UiLoadType.HOT,
             instanceId = instanceId,
             activityName = activityName,
-            timestampMs = timestampMs
+            timestampMs = timestampMs,
+            manualEnd = manualEnd
         )
         startChildSpan(
             instanceId = instanceId,
@@ -99,12 +101,12 @@ class UiLoadTraceEmitter(
     }
 
     override fun resume(instanceId: Int, activityName: String, timestampMs: Long) {
-        if (!hasRenderEvent()) {
+        if (traceCompleteTrigger(instanceId) == TraceCompleteTrigger.RESUME) {
             endTrace(
                 instanceId = instanceId,
                 timestampMs = timestampMs,
             )
-        } else {
+        } else if (hasRenderEvent()) {
             startChildSpan(
                 instanceId = instanceId,
                 timestampMs = timestampMs,
@@ -136,16 +138,32 @@ class UiLoadTraceEmitter(
             timestampMs = timestampMs,
             lifecycleStage = LifecycleStage.RENDER
         )
-        endTrace(
-            instanceId = instanceId,
-            timestampMs = timestampMs,
-        )
+
+        if (traceCompleteTrigger(instanceId) == TraceCompleteTrigger.RENDER) {
+            endTrace(
+                instanceId = instanceId,
+                timestampMs = timestampMs,
+            )
+        }
+    }
+
+    override fun complete(instanceId: Int, timestampMs: Long) {
+        if (traceCompleteTrigger(instanceId) == TraceCompleteTrigger.MANUAL) {
+            endTrace(
+                instanceId = instanceId,
+                timestampMs = timestampMs,
+            )
+        }
     }
 
     override fun abandon(instanceId: Int, activityName: String, timestampMs: Long) {
         currentTracedInstanceId?.let { currentlyTracedInstanceId ->
             if (instanceId != currentlyTracedInstanceId) {
-                endTrace(instanceId = currentlyTracedInstanceId, timestampMs = timestampMs, errorCode = ErrorCode.USER_ABANDON)
+                endTrace(
+                    instanceId = currentlyTracedInstanceId,
+                    timestampMs = timestampMs,
+                    errorCode = ErrorCode.USER_ABANDON
+                )
             }
         }
         traceZygoteHolder.set(
@@ -167,7 +185,8 @@ class UiLoadTraceEmitter(
         uiLoadType: UiLoadType,
         instanceId: Int,
         activityName: String,
-        timestampMs: Long
+        timestampMs: Long,
+        manualEnd: Boolean,
     ) {
         if (traceZygoteHolder.get() == INITIAL) {
             return
@@ -189,8 +208,22 @@ class UiLoadTraceEmitter(
                 if (zygote.lastActivityInstanceId != -1) {
                     root.addSystemAttribute("last_activity", zygote.lastActivityName)
                 }
-                activeTraces[instanceId] = UiLoadTrace(root = root, activityName = activityName)
+                activeTraces[instanceId] = UiLoadTrace(
+                    root = root,
+                    traceCompleteTrigger = determineEndEvent(manualEnd),
+                    activityName = activityName
+                )
             }
+        }
+    }
+
+    private fun determineEndEvent(manualEnd: Boolean): TraceCompleteTrigger {
+        return if (manualEnd) {
+            TraceCompleteTrigger.MANUAL
+        } else if (hasRenderEvent()) {
+            TraceCompleteTrigger.RENDER
+        } else {
+            TraceCompleteTrigger.RESUME
         }
     }
 
@@ -228,19 +261,29 @@ class UiLoadTraceEmitter(
         }
     }
 
+    private fun traceCompleteTrigger(instanceId: Int): TraceCompleteTrigger? = activeTraces[instanceId]?.traceCompleteTrigger
+
     private fun hasRenderEvent(): Boolean = versionChecker.isAtLeast(Build.VERSION_CODES.Q)
 
     private fun traceName(
         activityName: String,
-        uiLoadType: UiLoadType
+        uiLoadType: UiLoadType,
     ): String = "$activityName-${uiLoadType.typeName}-time-to-initial-display"
 
+    /**
+     * Metadata for the trace recorded for a particular instance of UI Load
+     */
     private data class UiLoadTrace(
         val activityName: String,
+        val traceCompleteTrigger: TraceCompleteTrigger,
         val root: PersistableEmbraceSpan,
         val children: Map<LifecycleStage, PersistableEmbraceSpan> = ConcurrentHashMap(),
     )
 
+    /**
+     * Metadata for the conditions of the app prior to the start of a UI Load trace. This is used to determine
+     * when the newly created trace started.
+     */
     private data class UiLoadTraceZygote(
         val lastActivityName: String,
         val lastActivityInstanceId: Int,
@@ -251,18 +294,38 @@ class UiLoadTraceEmitter(
         const val INVALID_INSTANCE: Int = -1
         const val INVALID_TIME: Long = -1L
 
+        /**
+         * The trigger to end a particular UI Load trace.
+         */
+        enum class TraceCompleteTrigger {
+            RESUME,
+            RENDER,
+            MANUAL,
+        }
+
+        /**
+         * Presents the state of the app before the first before any UI is displayed. No UI Load traces should be logged
+         * when the app is in this state. Any piece of UI loaded should contribute to the app launch trace.
+         */
         val INITIAL = UiLoadTraceZygote(
             lastActivityName = "NEW_APP_LAUNCH",
             lastActivityInstanceId = INVALID_INSTANCE,
             lastActivityPausedTimeMs = INVALID_TIME
         )
 
+        /**
+         * The app is in the foreground and ready to log UI Load traces for any configured components.
+         */
         val READY = UiLoadTraceZygote(
             lastActivityName = "READY",
             lastActivityInstanceId = INVALID_INSTANCE,
             lastActivityPausedTimeMs = INVALID_TIME
         )
 
+        /**
+         * The app is backgrounded, so the next trace would be recording the foregrounding of the app, so the trace
+         * start time should take that into account.
+         */
         val BACKGROUNDED = UiLoadTraceZygote(
             lastActivityName = "BACKGROUNDED",
             lastActivityInstanceId = INVALID_INSTANCE,

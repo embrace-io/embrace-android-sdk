@@ -25,7 +25,7 @@ class FakeUiLoadEventListener : UiLoadEventListener {
         )
     }
 
-    override fun create(instanceId: Int, activityName: String, timestampMs: Long) {
+    override fun create(instanceId: Int, activityName: String, timestampMs: Long, manualEnd: Boolean) {
         events.add(
             EventData(
                 stage = "create",
@@ -47,7 +47,7 @@ class FakeUiLoadEventListener : UiLoadEventListener {
         )
     }
 
-    override fun start(instanceId: Int, activityName: String, timestampMs: Long) {
+    override fun start(instanceId: Int, activityName: String, timestampMs: Long, manualEnd: Boolean) {
         events.add(
             EventData(
                 stage = "start",
@@ -104,6 +104,16 @@ class FakeUiLoadEventListener : UiLoadEventListener {
         events.add(
             EventData(
                 stage = "renderEnd",
+                instanceId = instanceId,
+                timestampMs = timestampMs
+            )
+        )
+    }
+
+    override fun complete(instanceId: Int, timestampMs: Long) {
+        events.add(
+            EventData(
+                stage = "complete",
                 instanceId = instanceId,
                 timestampMs = timestampMs
             )

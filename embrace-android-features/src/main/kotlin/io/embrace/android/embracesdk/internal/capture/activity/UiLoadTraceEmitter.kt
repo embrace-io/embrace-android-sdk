@@ -98,7 +98,7 @@ class UiLoadTraceEmitter(
         )
     }
 
-    override fun resume(instanceId: Int, activityName: String, timestampMs: Long) {
+    override fun resume(instanceId: Int, timestampMs: Long) {
         if (traceCompleteTrigger(instanceId) == TraceCompleteTrigger.RESUME) {
             endTrace(
                 instanceId = instanceId,
@@ -121,7 +121,7 @@ class UiLoadTraceEmitter(
         )
     }
 
-    override fun render(instanceId: Int, activityName: String, timestampMs: Long) {
+    override fun render(instanceId: Int, timestampMs: Long) {
         startChildSpan(
             instanceId = instanceId,
             timestampMs = timestampMs,
@@ -153,16 +153,13 @@ class UiLoadTraceEmitter(
         }
     }
 
-    override fun exit(instanceId: Int, activityName: String, timestampMs: Long) {
+    override fun discard(instanceId: Int, timestampMs: Long) {
         // end trace as abandoned if it's not already complete
         endTrace(
             instanceId = instanceId,
             timestampMs = timestampMs,
             errorCode = ErrorCode.USER_ABANDON
         )
-    }
-
-    override fun reset(lastInstanceId: Int) {
     }
 
     private fun startTrace(
@@ -174,9 +171,8 @@ class UiLoadTraceEmitter(
     ) {
         if (!activeTraces.containsKey(instanceId)) {
             val newInstance = UiInstance(activityName, instanceId)
-            val previousInstance = currentInstance.getAndSet(newInstance)
-            if (previousInstance != null) {
-                exit(previousInstance.id, previousInstance.name, timestampMs)
+            currentInstance.getAndSet(newInstance)?.let { previousInstance ->
+                discard(previousInstance.id, timestampMs)
             }
 
             spanService.startSpan(

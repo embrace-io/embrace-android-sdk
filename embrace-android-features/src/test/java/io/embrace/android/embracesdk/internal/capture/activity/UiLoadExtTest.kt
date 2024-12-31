@@ -82,11 +82,8 @@ internal class UiLoadExtTest {
                     timestampMs = startTimeMs + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 3
                 ),
                 createEvent(
-                    stage = "abandon",
+                    stage = "discard",
                     timestampMs = startTimeMs + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 3 + PRE_DURATION
-                ),
-                createEvent(
-                    stage = "reset",
                 ),
             )
         )
@@ -115,11 +112,8 @@ internal class UiLoadExtTest {
                     timestampMs = startTimeMs + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 2
                 ),
                 createEvent(
-                    stage = "abandon",
+                    stage = "discard",
                     timestampMs = startTimeMs + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 2 + PRE_DURATION
-                ),
-                createEvent(
-                    stage = "reset",
                 ),
             )
         )
@@ -133,11 +127,8 @@ internal class UiLoadExtTest {
         uiLoadEventListener.events.assertEventData(
             listOf(
                 createEvent(
-                    stage = "abandon",
+                    stage = "discard",
                     timestampMs = startTimeMs + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 3 + PRE_DURATION
-                ),
-                createEvent(
-                    stage = "reset",
                 ),
             )
         )
@@ -170,11 +161,8 @@ internal class UiLoadExtTest {
                     timestampMs = startTimeMs + STATE_DURATION * 3
                 ),
                 createEvent(
-                    stage = "abandon",
+                    stage = "discard",
                     timestampMs = startTimeMs + STATE_DURATION * 4
-                ),
-                createEvent(
-                    stage = "reset",
                 ),
             )
         )
@@ -203,11 +191,8 @@ internal class UiLoadExtTest {
                     timestampMs = startTimeMs + STATE_DURATION * 2
                 ),
                 createEvent(
-                    stage = "abandon",
+                    stage = "discard",
                     timestampMs = startTimeMs + STATE_DURATION * 3
-                ),
-                createEvent(
-                    stage = "reset",
                 ),
             )
         )
@@ -221,11 +206,8 @@ internal class UiLoadExtTest {
         uiLoadEventListener.events.assertEventData(
             listOf(
                 createEvent(
-                    stage = "abandon",
+                    stage = "discard",
                     timestampMs = startTimeMs + STATE_DURATION * 4
-                ),
-                createEvent(
-                    stage = "reset",
                 ),
             )
         )

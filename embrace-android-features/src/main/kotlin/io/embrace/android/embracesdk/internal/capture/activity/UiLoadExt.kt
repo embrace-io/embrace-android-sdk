@@ -81,10 +81,6 @@ private class ActivityLoadEventEmitter(
     override fun onActivityPrePaused(activity: Activity) {
         lifecycleEventEmitter.pause(activity)
     }
-
-    override fun onActivityStopped(activity: Activity) {
-        lifecycleEventEmitter.stop(activity)
-    }
 }
 
 /**
@@ -116,10 +112,6 @@ private class LegacyActivityLoadEventEmitter(
 
     override fun onActivityPaused(activity: Activity) {
         lifecycleEventEmitter.pause(activity)
-    }
-
-    override fun onActivityStopped(activity: Activity) {
-        lifecycleEventEmitter.stop(activity)
     }
 }
 
@@ -166,7 +158,6 @@ private class LifecycleEventEmitter(
     fun resume(activity: Activity) {
         uiLoadEventListener.resume(
             instanceId = traceInstanceId(activity),
-            activityName = activity.localClassName,
             timestampMs = nowMs()
         )
     }
@@ -179,16 +170,9 @@ private class LifecycleEventEmitter(
     }
 
     fun pause(activity: Activity) {
-        uiLoadEventListener.exit(
+        uiLoadEventListener.discard(
             instanceId = traceInstanceId(activity),
-            activityName = activity.localClassName,
             timestampMs = nowMs()
-        )
-    }
-
-    fun stop(activity: Activity) {
-        uiLoadEventListener.reset(
-            lastInstanceId = traceInstanceId(activity),
         )
     }
 

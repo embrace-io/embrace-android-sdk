@@ -43,7 +43,7 @@ interface UiLoadEventListener {
      *
      * For an Activity, it means it is about to enter the RESUMED state of its lifecycle.
      */
-    fun resume(instanceId: Int, activityName: String, timestampMs: Long)
+    fun resume(instanceId: Int, timestampMs: Long)
 
     /**
      * When the given UI instance is ready to start rendering.
@@ -57,7 +57,7 @@ interface UiLoadEventListener {
      *
      * For an Activity, it means when its root View is begin to render
      */
-    fun render(instanceId: Int, activityName: String, timestampMs: Long)
+    fun render(instanceId: Int, timestampMs: Long)
 
     /**
      * When the given UI instance is has rendered its first frame
@@ -74,13 +74,7 @@ interface UiLoadEventListener {
 
     /**
      * When we no longer wish to observe the loading of the given UI instance. This may be called during its load
-     * or after it has loaded. Calls to this for a given instance should be idempotent.
+     * or after it has loaded (the latter should be a no-op). Calls to this for a given instance should be idempotent.
      */
-    fun exit(instanceId: Int, activityName: String, timestampMs: Long)
-
-    /**
-     * When the app is no longer in a state where it is trying to open up UI. All traces should be abandoned and
-     * Any events received after this should assume the app is emerging or have emerged from a background state.
-     */
-    fun reset(lastInstanceId: Int)
+    fun discard(instanceId: Int, timestampMs: Long)
 }

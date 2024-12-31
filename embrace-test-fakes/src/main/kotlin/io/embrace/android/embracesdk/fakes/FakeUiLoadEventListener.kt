@@ -5,26 +5,6 @@ import io.embrace.android.embracesdk.internal.capture.activity.UiLoadEventListen
 class FakeUiLoadEventListener : UiLoadEventListener {
     val events = mutableListOf<EventData>()
 
-    override fun exit(instanceId: Int, activityName: String, timestampMs: Long) {
-        events.add(
-            EventData(
-                stage = "abandon",
-                instanceId = instanceId,
-                activityName = activityName,
-                timestampMs = timestampMs
-            )
-        )
-    }
-
-    override fun reset(lastInstanceId: Int) {
-        events.add(
-            EventData(
-                stage = "reset",
-                instanceId = lastInstanceId,
-            )
-        )
-    }
-
     override fun create(instanceId: Int, activityName: String, timestampMs: Long, manualEnd: Boolean) {
         events.add(
             EventData(
@@ -41,7 +21,6 @@ class FakeUiLoadEventListener : UiLoadEventListener {
             EventData(
                 stage = "createEnd",
                 instanceId = instanceId,
-                activityName = null,
                 timestampMs = timestampMs
             )
         )
@@ -68,12 +47,11 @@ class FakeUiLoadEventListener : UiLoadEventListener {
         )
     }
 
-    override fun resume(instanceId: Int, activityName: String, timestampMs: Long) {
+    override fun resume(instanceId: Int, timestampMs: Long) {
         events.add(
             EventData(
                 stage = "resume",
                 instanceId = instanceId,
-                activityName = activityName,
                 timestampMs = timestampMs
             )
         )
@@ -89,12 +67,11 @@ class FakeUiLoadEventListener : UiLoadEventListener {
         )
     }
 
-    override fun render(instanceId: Int, activityName: String, timestampMs: Long) {
+    override fun render(instanceId: Int, timestampMs: Long) {
         events.add(
             EventData(
                 stage = "render",
                 instanceId = instanceId,
-                activityName = activityName,
                 timestampMs = timestampMs
             )
         )
@@ -114,6 +91,16 @@ class FakeUiLoadEventListener : UiLoadEventListener {
         events.add(
             EventData(
                 stage = "complete",
+                instanceId = instanceId,
+                timestampMs = timestampMs
+            )
+        )
+    }
+
+    override fun discard(instanceId: Int, timestampMs: Long) {
+        events.add(
+            EventData(
+                stage = "discard",
                 instanceId = instanceId,
                 timestampMs = timestampMs
             )

@@ -322,7 +322,7 @@ internal class UiLoadTraceEmitterTest {
         clock.tick(100L)
 
         // set state of tracker to simulate that at least one activity has been opened
-        traceEmitter.abandon(lastInstanceId, lastActivityName, lastActivityExitMs)
+        traceEmitter.exit(lastInstanceId, lastActivityName, lastActivityExitMs)
         when (previousState) {
             PreviousState.FROM_ACTIVITY -> {
                 // do nothing extra

@@ -21,14 +21,14 @@ fun createActivityLoadEventEmitter(
     clock: Clock,
     versionChecker: VersionChecker,
 ): ActivityLifecycleListener {
-    val uiLoadEventEmitter = UiLoadEventEmitter(
+    val lifecycleEventEmitter = LifecycleEventEmitter(
         uiLoadEventListener = uiLoadEventListener,
         clock = clock,
     )
     return if (versionChecker.isAtLeast(VERSION_CODES.Q)) {
-        ActivityLoadEventEmitter(uiLoadEventEmitter)
+        ActivityLoadEventEmitter(lifecycleEventEmitter)
     } else {
-        LegacyActivityLoadEventEmitter(uiLoadEventEmitter)
+        LegacyActivityLoadEventEmitter(lifecycleEventEmitter)
     }
 }
 
@@ -39,51 +39,51 @@ fun Activity.observeOpening() = javaClass.isAnnotationPresent(ObservedActivity::
  */
 @RequiresApi(VERSION_CODES.Q)
 private class ActivityLoadEventEmitter(
-    private val uiLoadEventEmitter: UiLoadEventEmitter
+    private val lifecycleEventEmitter: LifecycleEventEmitter
 ) : ActivityLifecycleListener {
 
     override fun onActivityPreCreated(activity: Activity, savedInstanceState: Bundle?) {
         if (activity.observeOpening()) {
-            uiLoadEventEmitter.create(activity)
+            lifecycleEventEmitter.create(activity)
         }
     }
 
     override fun onActivityPostCreated(activity: Activity, savedInstanceState: Bundle?) {
         if (activity.observeOpening()) {
-            uiLoadEventEmitter.createEnd(activity)
+            lifecycleEventEmitter.createEnd(activity)
         }
     }
 
     override fun onActivityPreStarted(activity: Activity) {
         if (activity.observeOpening()) {
-            uiLoadEventEmitter.start(activity)
+            lifecycleEventEmitter.start(activity)
         }
     }
 
     override fun onActivityPostStarted(activity: Activity) {
         if (activity.observeOpening()) {
-            uiLoadEventEmitter.startEnd(activity)
+            lifecycleEventEmitter.startEnd(activity)
         }
     }
 
     override fun onActivityPreResumed(activity: Activity) {
         if (activity.observeOpening()) {
-            uiLoadEventEmitter.resume(activity)
+            lifecycleEventEmitter.resume(activity)
         }
     }
 
     override fun onActivityPostResumed(activity: Activity) {
         if (activity.observeOpening()) {
-            uiLoadEventEmitter.resumeEnd(activity)
+            lifecycleEventEmitter.resumeEnd(activity)
         }
     }
 
     override fun onActivityPrePaused(activity: Activity) {
-        uiLoadEventEmitter.abandonTrace(activity)
+        lifecycleEventEmitter.pause(activity)
     }
 
     override fun onActivityStopped(activity: Activity) {
-        uiLoadEventEmitter.reset(activity)
+        lifecycleEventEmitter.stop(activity)
     }
 }
 
@@ -91,58 +91,45 @@ private class ActivityLoadEventEmitter(
  * Version of [ActivityLoadEventEmitter] that works with all Android version and used for Android 9 or lower
  */
 private class LegacyActivityLoadEventEmitter(
-    private val uiLoadEventEmitter: UiLoadEventEmitter
+    private val lifecycleEventEmitter: LifecycleEventEmitter
 ) : ActivityLifecycleListener {
 
     override fun onActivityCreated(activity: Activity, bundle: Bundle?) {
         if (activity.observeOpening()) {
-            uiLoadEventEmitter.create(activity)
+            lifecycleEventEmitter.create(activity)
         }
     }
 
     override fun onActivityStarted(activity: Activity) {
         if (activity.observeOpening()) {
-            uiLoadEventEmitter.createEnd(activity)
-            uiLoadEventEmitter.start(activity)
+            lifecycleEventEmitter.createEnd(activity)
+            lifecycleEventEmitter.start(activity)
         }
     }
 
     override fun onActivityResumed(activity: Activity) {
         if (activity.observeOpening()) {
-            uiLoadEventEmitter.startEnd(activity)
-            uiLoadEventEmitter.resume(activity)
+            lifecycleEventEmitter.startEnd(activity)
+            lifecycleEventEmitter.resume(activity)
         }
     }
 
     override fun onActivityPaused(activity: Activity) {
-        uiLoadEventEmitter.abandonTrace(activity)
+        lifecycleEventEmitter.pause(activity)
     }
 
     override fun onActivityStopped(activity: Activity) {
-        uiLoadEventEmitter.reset(activity)
+        lifecycleEventEmitter.stop(activity)
     }
 }
 
 /**
- * Maps an Activity instance's UI Load events the app-wide UI [UiLoadEventListener]
+ * Maps lifecycle events to UI Load events implemented by the given [UiLoadEventListener]
  */
-private class UiLoadEventEmitter(
+private class LifecycleEventEmitter(
     private val uiLoadEventListener: UiLoadEventListener,
     private val clock: Clock,
 ) {
-    fun abandonTrace(activity: Activity) {
-        uiLoadEventListener.abandon(
-            instanceId = traceInstanceId(activity),
-            activityName = activity.localClassName,
-            timestampMs = nowMs()
-        )
-    }
-
-    fun reset(activity: Activity) {
-        uiLoadEventListener.reset(
-            lastInstanceId = traceInstanceId(activity),
-        )
-    }
 
     fun create(activity: Activity) {
         uiLoadEventListener.create(
@@ -188,6 +175,20 @@ private class UiLoadEventEmitter(
         uiLoadEventListener.resumeEnd(
             instanceId = traceInstanceId(activity),
             timestampMs = nowMs()
+        )
+    }
+
+    fun pause(activity: Activity) {
+        uiLoadEventListener.exit(
+            instanceId = traceInstanceId(activity),
+            activityName = activity.localClassName,
+            timestampMs = nowMs()
+        )
+    }
+
+    fun stop(activity: Activity) {
+        uiLoadEventListener.reset(
+            lastInstanceId = traceInstanceId(activity),
         )
     }
 

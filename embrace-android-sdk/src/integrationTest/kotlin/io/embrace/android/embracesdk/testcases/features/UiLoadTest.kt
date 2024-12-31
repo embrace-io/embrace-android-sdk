@@ -79,25 +79,25 @@ internal class UiLoadTest {
                 val rootSpanId = checkNotNull(trace.spanId)
                 assertEquals("emb-$ACTIVITY2_NAME-cold-time-to-initial-display", trace.name)
 
-                val expectedTraceStartTime = preLaunchTimeMs + 20301
+                val expectedTraceStartTime = preLaunchTimeMs + 20351
                 assertEmbraceSpanData(
                     span = trace,
                     expectedStartTimeMs = expectedTraceStartTime,
-                    expectedEndTimeMs = expectedTraceStartTime + 250,
+                    expectedEndTimeMs = expectedTraceStartTime + 200,
                     expectedParentId = SpanId.getInvalid(),
                 )
 
                 assertEmbraceSpanData(
                     span = payload.findSpansByName("emb-${LifecycleStage.CREATE.spanName(ACTIVITY2_NAME)}").single(),
-                    expectedStartTimeMs = expectedTraceStartTime + 50,
-                    expectedEndTimeMs = expectedTraceStartTime + 150,
+                    expectedStartTimeMs = expectedTraceStartTime,
+                    expectedEndTimeMs = expectedTraceStartTime + 100,
                     expectedParentId = rootSpanId,
                 )
 
                 assertEmbraceSpanData(
                     span = payload.findSpansByName("emb-${LifecycleStage.START.spanName(ACTIVITY2_NAME)}").single(),
-                    expectedStartTimeMs = expectedTraceStartTime + 150,
-                    expectedEndTimeMs = expectedTraceStartTime + 250,
+                    expectedStartTimeMs = expectedTraceStartTime + 100,
+                    expectedEndTimeMs = expectedTraceStartTime + 200,
                     expectedParentId = rootSpanId,
                 )
             }

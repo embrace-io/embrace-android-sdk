@@ -322,13 +322,26 @@ internal class UiLoadTraceEmitterTest {
         clock.tick(100L)
 
         // set state of tracker to simulate that at least one activity has been opened
-        traceEmitter.exit(lastInstanceId, lastActivityName, lastActivityExitMs)
         when (previousState) {
             PreviousState.FROM_ACTIVITY -> {
-                // do nothing extra
+                traceEmitter.exit(
+                    instanceId = lastInstanceId,
+                    activityName = lastActivityName,
+                    timestampMs = lastActivityExitMs
+                )
             }
 
             PreviousState.FROM_BACKGROUND -> {
+                activityCreate(
+                    activityName = lastActivityName,
+                    instanceId = lastInstanceId,
+                    firePreAndPost = firePreAndPost,
+                )
+                traceEmitter.exit(
+                    instanceId = lastInstanceId,
+                    activityName = lastActivityName,
+                    timestampMs = lastActivityExitMs
+                )
                 traceEmitter.reset(lastInstanceId)
             }
 
@@ -397,20 +410,16 @@ internal class UiLoadTraceEmitterTest {
             events[LifecycleStage.RENDER] = this
         }
 
-        val traceStartMs = if (previousState == PreviousState.FROM_ACTIVITY) {
-            lastActivityExitMs
-        } else {
-            createEvents?.run {
-                if (firePreAndPost) {
-                    pre
-                } else {
-                    eventStart
-                }
-            } ?: if (firePreAndPost) {
-                startEvents.pre
+        val traceStartMs = createEvents?.run {
+            if (firePreAndPost) {
+                pre
             } else {
-                startEvents.eventStart
+                eventStart
             }
+        } ?: if (firePreAndPost) {
+            startEvents.pre
+        } else {
+            startEvents.eventStart
         }
 
         val traceEndMs = if (manualEnd) {

@@ -30,8 +30,8 @@ fun assertEmbraceSpanData(
 ) {
     checkNotNull(span)
     with(span) {
-        assertEquals(expectedStartTimeMs, startTimeNanos?.nanosToMillis())
-        assertEquals(expectedEndTimeMs, endTimeNanos?.nanosToMillis())
+        assertEquals("Wrong start time", expectedStartTimeMs, startTimeNanos?.nanosToMillis())
+        assertEquals("Wrong end time", expectedEndTimeMs, endTimeNanos?.nanosToMillis())
         assertEquals(expectedParentId, parentSpanId)
         if (expectedTraceId != null) {
             assertEquals(expectedTraceId, traceId)

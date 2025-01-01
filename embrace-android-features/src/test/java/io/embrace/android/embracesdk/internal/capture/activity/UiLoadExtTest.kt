@@ -4,7 +4,9 @@ import android.app.Activity
 import android.os.Build
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeClock
-import io.embrace.android.embracesdk.fakes.FakeObservedActivity
+import io.embrace.android.embracesdk.fakes.FakeClock.Companion.DEFAULT_FAKE_CURRENT_TIME
+import io.embrace.android.embracesdk.fakes.FakeNotTracedActivity
+import io.embrace.android.embracesdk.fakes.FakeTracedActivity
 import io.embrace.android.embracesdk.fakes.FakeUiLoadEventListener
 import io.embrace.android.embracesdk.fakes.FakeUiLoadEventListener.EventData
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
@@ -15,6 +17,7 @@ import io.embrace.android.embracesdk.internal.ClockTickingActivityLifecycleCallb
 import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityLifecycleListener
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -26,201 +29,115 @@ import kotlin.reflect.KClass
 
 @RunWith(AndroidJUnit4::class)
 internal class UiLoadExtTest {
+
     private lateinit var clock: FakeClock
     private lateinit var uiLoadEventListener: FakeUiLoadEventListener
     private lateinit var eventEmitter: ActivityLifecycleListener
     private lateinit var activityController: ActivityController<*>
-    private var startTimeMs: Long = 0L
-    private var instanceId = 0
-    private var activityName = ""
 
     @Before
     fun setUp() {
-        clock = FakeClock()
+        clock = FakeClock(currentTime = DEFAULT_FAKE_CURRENT_TIME)
         uiLoadEventListener = FakeUiLoadEventListener()
         RuntimeEnvironment.getApplication().registerActivityLifecycleCallbacks(
             ClockTickingActivityLifecycleCallbacks(clock)
         )
-        eventEmitter = createActivityLoadEventEmitter(
-            uiLoadEventListener = uiLoadEventListener,
-            clock = FakeInitModule(clock = clock).openTelemetryModule.openTelemetryClock,
-            versionChecker = BuildVersionChecker
-        )
-        RuntimeEnvironment.getApplication().registerActivityLifecycleCallbacks(eventEmitter)
-        startTimeMs = clock.now()
-        setupActivityController(FakeObservedActivity::class)
     }
 
     @Config(sdk = [Build.VERSION_CODES.UPSIDE_DOWN_CAKE])
     @Test
     fun `check cold ui load event stages in U`() {
+        createEventEmitter(autoTraceEnabled = false, activityClass = FakeTracedActivity::class)
         stepThroughActivityLifecycle()
-        uiLoadEventListener.events.assertEventData(
-            listOf(
-                createEvent(
-                    stage = "create",
-                    timestampMs = startTimeMs + PRE_DURATION
-                ),
-                createEvent(
-                    stage = "createEnd",
-                    timestampMs = startTimeMs + POST_DURATION + STATE_DURATION + PRE_DURATION
-                ),
-                createEvent(
-                    stage = "start",
-                    timestampMs = startTimeMs + POST_DURATION + STATE_DURATION + PRE_DURATION * 2
-                ),
-                createEvent(
-                    stage = "startEnd",
-                    timestampMs = startTimeMs + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 2
-                ),
-                createEvent(
-                    stage = "resume",
-                    timestampMs = startTimeMs + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 2 + PRE_DURATION
-                ),
-                createEvent(
-                    stage = "resumeEnd",
-                    timestampMs = startTimeMs + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 3
-                ),
-                createEvent(
-                    stage = "discard",
-                    timestampMs = startTimeMs + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 3 + PRE_DURATION
-                ),
-            )
-        )
+        uiLoadEventListener.events.assertEventData(expectedColdOpenEvents)
     }
 
     @Config(sdk = [Build.VERSION_CODES.UPSIDE_DOWN_CAKE])
     @Test
     fun `check hot ui load event stages in U`() {
+        createEventEmitter(autoTraceEnabled = false, activityClass = FakeTracedActivity::class)
         stepThroughActivityLifecycle(isColdOpen = false)
-        uiLoadEventListener.events.assertEventData(
-            listOf(
-                createEvent(
-                    stage = "start",
-                    timestampMs = startTimeMs + PRE_DURATION
-                ),
-                createEvent(
-                    stage = "startEnd",
-                    timestampMs = startTimeMs + POST_DURATION + STATE_DURATION + PRE_DURATION
-                ),
-                createEvent(
-                    stage = "resume",
-                    timestampMs = startTimeMs + POST_DURATION + STATE_DURATION + PRE_DURATION * 2
-                ),
-                createEvent(
-                    stage = "resumeEnd",
-                    timestampMs = startTimeMs + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 2
-                ),
-                createEvent(
-                    stage = "discard",
-                    timestampMs = startTimeMs + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 2 + PRE_DURATION
-                ),
-            )
-        )
+        uiLoadEventListener.events.assertEventData(expectedHotOpenEvents)
     }
 
     @Config(sdk = [Build.VERSION_CODES.UPSIDE_DOWN_CAKE])
     @Test
-    fun `unobserved activities will not emit ui load events in U`() {
-        setupActivityController(Activity::class)
+    fun `unannotated activities will emit ui load events in U if auto capture is enabled`() {
+        createEventEmitter(autoTraceEnabled = true, activityClass = Activity::class)
         stepThroughActivityLifecycle()
-        uiLoadEventListener.events.assertEventData(
-            listOf(
-                createEvent(
-                    stage = "discard",
-                    timestampMs = startTimeMs + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 3 + PRE_DURATION
-                ),
-            )
-        )
+        uiLoadEventListener.events.assertEventData(expectedColdOpenEvents)
+    }
+
+    @Config(sdk = [Build.VERSION_CODES.UPSIDE_DOWN_CAKE])
+    @Test
+    fun `unannotated activities will not emit ui load events in U if auto capture is not enabled`() {
+        createEventEmitter(autoTraceEnabled = false, activityClass = Activity::class)
+        stepThroughActivityLifecycle()
+        assertTrue(uiLoadEventListener.events.isEmpty())
+    }
+
+    @Config(sdk = [Build.VERSION_CODES.UPSIDE_DOWN_CAKE])
+    @Test
+    fun `activities will not emit ui load events in U if explicitly disabled`() {
+        createEventEmitter(autoTraceEnabled = true, activityClass = FakeNotTracedActivity::class)
+        stepThroughActivityLifecycle()
+        assertTrue(uiLoadEventListener.events.isEmpty())
     }
 
     @Config(sdk = [Build.VERSION_CODES.LOLLIPOP])
     @Test
     fun `check cold ui load event stages in L`() {
+        createEventEmitter(autoTraceEnabled = false, activityClass = FakeTracedActivity::class)
         stepThroughActivityLifecycle()
-        uiLoadEventListener.events.assertEventData(
-            listOf(
-                createEvent(
-                    stage = "create",
-                    timestampMs = startTimeMs + STATE_DURATION
-                ),
-                createEvent(
-                    stage = "createEnd",
-                    timestampMs = startTimeMs + STATE_DURATION * 2
-                ),
-                createEvent(
-                    stage = "start",
-                    timestampMs = startTimeMs + STATE_DURATION * 2
-                ),
-                createEvent(
-                    stage = "startEnd",
-                    timestampMs = startTimeMs + STATE_DURATION * 3
-                ),
-                createEvent(
-                    stage = "resume",
-                    timestampMs = startTimeMs + STATE_DURATION * 3
-                ),
-                createEvent(
-                    stage = "discard",
-                    timestampMs = startTimeMs + STATE_DURATION * 4
-                ),
-            )
-        )
+        uiLoadEventListener.events.assertEventData(legacyColdOpenEvents)
     }
 
     @Config(sdk = [Build.VERSION_CODES.LOLLIPOP])
     @Test
     fun `check hot ui load event stages in L`() {
+        createEventEmitter(autoTraceEnabled = false, activityClass = FakeTracedActivity::class)
         stepThroughActivityLifecycle(isColdOpen = false)
-        uiLoadEventListener.events.assertEventData(
-            listOf(
-                createEvent(
-                    stage = "createEnd",
-                    timestampMs = startTimeMs + STATE_DURATION
-                ),
-                createEvent(
-                    stage = "start",
-                    timestampMs = startTimeMs + STATE_DURATION
-                ),
-                createEvent(
-                    stage = "startEnd",
-                    timestampMs = startTimeMs + STATE_DURATION * 2
-                ),
-                createEvent(
-                    stage = "resume",
-                    timestampMs = startTimeMs + STATE_DURATION * 2
-                ),
-                createEvent(
-                    stage = "discard",
-                    timestampMs = startTimeMs + STATE_DURATION * 3
-                ),
-            )
-        )
+        uiLoadEventListener.events.assertEventData(legacyHotOpenEvents)
     }
 
     @Config(sdk = [Build.VERSION_CODES.LOLLIPOP])
     @Test
-    fun `unobserved activities will not emit ui load events in L`() {
-        setupActivityController(Activity::class)
+    fun `unannotated activities will emit ui load events in L if auto capture is enabled`() {
+        createEventEmitter(autoTraceEnabled = true, activityClass = Activity::class)
         stepThroughActivityLifecycle()
-        uiLoadEventListener.events.assertEventData(
-            listOf(
-                createEvent(
-                    stage = "discard",
-                    timestampMs = startTimeMs + STATE_DURATION * 4
-                ),
-            )
-        )
+        uiLoadEventListener.events.assertEventData(legacyColdOpenEvents)
     }
 
-    private fun <T : Activity> setupActivityController(activityClass: KClass<T>) {
-        activityController = Robolectric.buildActivity(activityClass.java)
-        instanceId = activityController.get().hashCode()
-        activityName = activityController.get().localClassName
+    @Config(sdk = [Build.VERSION_CODES.LOLLIPOP])
+    @Test
+    fun `unannotated activities will not emit ui load events in L if auto capture is not enabled`() {
+        createEventEmitter(autoTraceEnabled = false, activityClass = Activity::class)
+        stepThroughActivityLifecycle()
+        assertTrue(uiLoadEventListener.events.isEmpty())
+    }
+
+    @Config(sdk = [Build.VERSION_CODES.LOLLIPOP])
+    @Test
+    fun `activities will not emit ui load events in L if explicitly disabled`() {
+        createEventEmitter(autoTraceEnabled = true, activityClass = FakeNotTracedActivity::class)
+        stepThroughActivityLifecycle()
+        assertTrue(uiLoadEventListener.events.isEmpty())
+    }
+
+    private fun <T : Activity> createEventEmitter(autoTraceEnabled: Boolean, activityClass: KClass<T>) {
+        eventEmitter = createActivityLoadEventEmitter(
+            uiLoadEventListener = uiLoadEventListener,
+            autoTraceEnabled = autoTraceEnabled,
+            clock = FakeInitModule(clock = clock).openTelemetryModule.openTelemetryClock,
+            versionChecker = BuildVersionChecker
+        ).apply {
+            RuntimeEnvironment.getApplication().registerActivityLifecycleCallbacks(this)
+            activityController = Robolectric.buildActivity(activityClass.java)
+        }
     }
 
     private fun stepThroughActivityLifecycle(
-        isColdOpen: Boolean = true
+        isColdOpen: Boolean = true,
     ) {
         with(activityController) {
             if (isColdOpen) {
@@ -237,11 +154,117 @@ internal class UiLoadExtTest {
         assertEquals(expectedEvents.map { it.stage to it.timestampMs }, map { it.stage to it.timestampMs })
     }
 
-    private fun createEvent(stage: String, timestampMs: Long? = null) =
-        EventData(
-            stage = stage,
-            instanceId = instanceId,
-            activityName = activityName,
-            timestampMs = timestampMs
+    companion object {
+        private const val START_TIME_MS: Long = DEFAULT_FAKE_CURRENT_TIME
+        private val expectedColdOpenEvents = listOf(
+            createEvent(
+                stage = "create",
+                timestampMs = START_TIME_MS + PRE_DURATION
+            ),
+            createEvent(
+                stage = "createEnd",
+                timestampMs = START_TIME_MS + POST_DURATION + STATE_DURATION + PRE_DURATION
+            ),
+            createEvent(
+                stage = "start",
+                timestampMs = START_TIME_MS + POST_DURATION + STATE_DURATION + PRE_DURATION * 2
+            ),
+            createEvent(
+                stage = "startEnd",
+                timestampMs = START_TIME_MS + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 2
+            ),
+            createEvent(
+                stage = "resume",
+                timestampMs = START_TIME_MS + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 2 + PRE_DURATION
+            ),
+            createEvent(
+                stage = "resumeEnd",
+                timestampMs = START_TIME_MS + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 3
+            ),
+            createEvent(
+                stage = "discard",
+                timestampMs = START_TIME_MS + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 3 + PRE_DURATION
+            ),
         )
+
+        val expectedHotOpenEvents = listOf(
+            createEvent(
+                stage = "start",
+                timestampMs = START_TIME_MS + PRE_DURATION
+            ),
+            createEvent(
+                stage = "startEnd",
+                timestampMs = START_TIME_MS + POST_DURATION + STATE_DURATION + PRE_DURATION
+            ),
+            createEvent(
+                stage = "resume",
+                timestampMs = START_TIME_MS + POST_DURATION + STATE_DURATION + PRE_DURATION * 2
+            ),
+            createEvent(
+                stage = "resumeEnd",
+                timestampMs = START_TIME_MS + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 2
+            ),
+            createEvent(
+                stage = "discard",
+                timestampMs = START_TIME_MS + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 2 + PRE_DURATION
+            ),
+        )
+
+        val legacyColdOpenEvents = listOf(
+            createEvent(
+                stage = "create",
+                timestampMs = START_TIME_MS + STATE_DURATION
+            ),
+            createEvent(
+                stage = "createEnd",
+                timestampMs = START_TIME_MS + STATE_DURATION * 2
+            ),
+            createEvent(
+                stage = "start",
+                timestampMs = START_TIME_MS + STATE_DURATION * 2
+            ),
+            createEvent(
+                stage = "startEnd",
+                timestampMs = START_TIME_MS + STATE_DURATION * 3
+            ),
+            createEvent(
+                stage = "resume",
+                timestampMs = START_TIME_MS + STATE_DURATION * 3
+            ),
+            createEvent(
+                stage = "discard",
+                timestampMs = START_TIME_MS + STATE_DURATION * 4
+            ),
+        )
+
+        val legacyHotOpenEvents = listOf(
+            createEvent(
+                stage = "createEnd",
+                timestampMs = START_TIME_MS + STATE_DURATION
+            ),
+            createEvent(
+                stage = "start",
+                timestampMs = START_TIME_MS + STATE_DURATION
+            ),
+            createEvent(
+                stage = "startEnd",
+                timestampMs = START_TIME_MS + STATE_DURATION * 2
+            ),
+            createEvent(
+                stage = "resume",
+                timestampMs = START_TIME_MS + STATE_DURATION * 2
+            ),
+            createEvent(
+                stage = "discard",
+                timestampMs = START_TIME_MS + STATE_DURATION * 3
+            ),
+        )
+
+        private fun createEvent(stage: String, timestampMs: Long? = null) =
+            EventData(
+                stage = stage,
+                instanceId = 0,
+                timestampMs = timestampMs
+            )
+    }
 }

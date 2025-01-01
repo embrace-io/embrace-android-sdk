@@ -26,7 +26,8 @@ class FakeEnabledFeatureConfig(
     private val requestContentLengthCapture: Boolean = base.isRequestContentLengthCaptureEnabled(),
     private val httpUrlConnectionCapture: Boolean = base.isHttpUrlConnectionCaptureEnabled(),
     private val networkSpanForwarding: Boolean = base.isNetworkSpanForwardingEnabled(),
-    private val uiLoadPerfCapture: Boolean = base.isUiLoadPerfCaptureEnabled()
+    private val uiLoadPerfCapture: Boolean = base.isUiLoadPerfCaptureEnabled(),
+    private val uiLoadPerfAutoCapture: Boolean = base.isUiLoadPerfAutoCaptureEnabled(),
 ) : EnabledFeatureConfig {
 
     override fun isUnityAnrCaptureEnabled(): Boolean = unityAnrCapture
@@ -52,4 +53,5 @@ class FakeEnabledFeatureConfig(
     override fun isHttpUrlConnectionCaptureEnabled(): Boolean = httpUrlConnectionCapture
     override fun isNetworkSpanForwardingEnabled(): Boolean = networkSpanForwarding
     override fun isUiLoadPerfCaptureEnabled(): Boolean = uiLoadPerfCapture
+    override fun isUiLoadPerfAutoCaptureEnabled(): Boolean = uiLoadPerfAutoCapture
 }

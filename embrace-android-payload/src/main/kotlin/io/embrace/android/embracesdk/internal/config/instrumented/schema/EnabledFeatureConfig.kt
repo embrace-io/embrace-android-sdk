@@ -152,4 +152,11 @@ interface EnabledFeatureConfig {
      * sdk_config.automatic_data_capture.ui_load_perf_info
      */
     fun isUiLoadPerfCaptureEnabled(): Boolean = false
+
+    /**
+     * Gates whether the SDK will default to automatically capture traces for the performance of the opening of all Activities.
+     *
+     * sdk_config.automatic_data_capture.ui_load_perf_info
+     */
+    fun isUiLoadPerfAutoCaptureEnabled(): Boolean = false
 }

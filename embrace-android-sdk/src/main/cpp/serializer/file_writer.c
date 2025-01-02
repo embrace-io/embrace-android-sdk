@@ -211,7 +211,7 @@ bool emb_add_exc_info_to_json(const emb_crash *crash, JSON_Object *crash_object,
 bool emb_add_exc_to_json(const emb_exception *exception, JSON_Array *frames_object) {
     EMB_LOGDEV("About to serialize %d stack frames.", (int) exception->num_sframes);
 
-    for (int i = 0; i < exception->num_sframes; ++i) {
+    for (int i = 0; i < exception->num_sframes && i < kEMBMaxSFrames; ++i) {
         JSON_Value *frame_value = json_value_init_object();
         if (frame_value == NULL) {
             return false;

@@ -4,7 +4,8 @@ import android.app.Activity
 import android.os.Build.VERSION_CODES
 import android.os.Bundle
 import androidx.annotation.RequiresApi
-import io.embrace.android.embracesdk.annotation.ObservedActivity
+import io.embrace.android.embracesdk.annotation.NotTracedActivity
+import io.embrace.android.embracesdk.annotation.TracedActivity
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityLifecycleListener
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
@@ -18,11 +19,13 @@ import io.opentelemetry.sdk.common.Clock
  */
 fun createActivityLoadEventEmitter(
     uiLoadEventListener: UiLoadEventListener,
+    autoTraceEnabled: Boolean,
     clock: Clock,
     versionChecker: VersionChecker,
 ): ActivityLifecycleListener {
     val lifecycleEventEmitter = LifecycleEventEmitter(
         uiLoadEventListener = uiLoadEventListener,
+        autoTraceEnabled = autoTraceEnabled,
         clock = clock,
     )
     return if (versionChecker.isAtLeast(VERSION_CODES.Q)) {
@@ -32,50 +35,36 @@ fun createActivityLoadEventEmitter(
     }
 }
 
-fun Activity.observeOpening() = javaClass.isAnnotationPresent(ObservedActivity::class.java)
-
 /**
  * Implementation that works with Android 10+ APIs
  */
 @RequiresApi(VERSION_CODES.Q)
 private class ActivityLoadEventEmitter(
-    private val lifecycleEventEmitter: LifecycleEventEmitter
+    private val lifecycleEventEmitter: LifecycleEventEmitter,
 ) : ActivityLifecycleListener {
 
     override fun onActivityPreCreated(activity: Activity, savedInstanceState: Bundle?) {
-        if (activity.observeOpening()) {
-            lifecycleEventEmitter.create(activity)
-        }
+        lifecycleEventEmitter.create(activity)
     }
 
     override fun onActivityPostCreated(activity: Activity, savedInstanceState: Bundle?) {
-        if (activity.observeOpening()) {
-            lifecycleEventEmitter.createEnd(activity)
-        }
+        lifecycleEventEmitter.createEnd(activity)
     }
 
     override fun onActivityPreStarted(activity: Activity) {
-        if (activity.observeOpening()) {
-            lifecycleEventEmitter.start(activity)
-        }
+        lifecycleEventEmitter.start(activity)
     }
 
     override fun onActivityPostStarted(activity: Activity) {
-        if (activity.observeOpening()) {
-            lifecycleEventEmitter.startEnd(activity)
-        }
+        lifecycleEventEmitter.startEnd(activity)
     }
 
     override fun onActivityPreResumed(activity: Activity) {
-        if (activity.observeOpening()) {
-            lifecycleEventEmitter.resume(activity)
-        }
+        lifecycleEventEmitter.resume(activity)
     }
 
     override fun onActivityPostResumed(activity: Activity) {
-        if (activity.observeOpening()) {
-            lifecycleEventEmitter.resumeEnd(activity)
-        }
+        lifecycleEventEmitter.resumeEnd(activity)
     }
 
     override fun onActivityPrePaused(activity: Activity) {
@@ -87,27 +76,21 @@ private class ActivityLoadEventEmitter(
  * Version of [ActivityLoadEventEmitter] that works with all Android version and used for Android 9 or lower
  */
 private class LegacyActivityLoadEventEmitter(
-    private val lifecycleEventEmitter: LifecycleEventEmitter
+    private val lifecycleEventEmitter: LifecycleEventEmitter,
 ) : ActivityLifecycleListener {
 
     override fun onActivityCreated(activity: Activity, bundle: Bundle?) {
-        if (activity.observeOpening()) {
-            lifecycleEventEmitter.create(activity)
-        }
+        lifecycleEventEmitter.create(activity)
     }
 
     override fun onActivityStarted(activity: Activity) {
-        if (activity.observeOpening()) {
-            lifecycleEventEmitter.createEnd(activity)
-            lifecycleEventEmitter.start(activity)
-        }
+        lifecycleEventEmitter.createEnd(activity)
+        lifecycleEventEmitter.start(activity)
     }
 
     override fun onActivityResumed(activity: Activity) {
-        if (activity.observeOpening()) {
-            lifecycleEventEmitter.startEnd(activity)
-            lifecycleEventEmitter.resume(activity)
-        }
+        lifecycleEventEmitter.startEnd(activity)
+        lifecycleEventEmitter.resume(activity)
     }
 
     override fun onActivityPaused(activity: Activity) {
@@ -120,60 +103,80 @@ private class LegacyActivityLoadEventEmitter(
  */
 private class LifecycleEventEmitter(
     private val uiLoadEventListener: UiLoadEventListener,
+    private val autoTraceEnabled: Boolean,
     private val clock: Clock,
 ) {
 
     fun create(activity: Activity) {
-        uiLoadEventListener.create(
-            instanceId = traceInstanceId(activity),
-            activityName = activity.localClassName,
-            timestampMs = nowMs(),
-            manualEnd = false,
-        )
+        if (activity.observe()) {
+            uiLoadEventListener.create(
+                instanceId = traceInstanceId(activity),
+                activityName = activity.localClassName,
+                timestampMs = nowMs(),
+                manualEnd = false,
+            )
+        }
     }
 
     fun createEnd(activity: Activity) {
-        uiLoadEventListener.createEnd(
-            instanceId = traceInstanceId(activity),
-            timestampMs = nowMs()
-        )
+        if (activity.observe()) {
+            uiLoadEventListener.createEnd(
+                instanceId = traceInstanceId(activity),
+                timestampMs = nowMs()
+            )
+        }
     }
 
     fun start(activity: Activity) {
-        uiLoadEventListener.start(
-            instanceId = traceInstanceId(activity),
-            activityName = activity.localClassName,
-            timestampMs = nowMs(),
-            manualEnd = false,
-        )
+        if (activity.observe()) {
+            uiLoadEventListener.start(
+                instanceId = traceInstanceId(activity),
+                activityName = activity.localClassName,
+                timestampMs = nowMs(),
+                manualEnd = false,
+            )
+        }
     }
 
     fun startEnd(activity: Activity) {
-        uiLoadEventListener.startEnd(
-            instanceId = traceInstanceId(activity),
-            timestampMs = nowMs()
-        )
+        if (activity.observe()) {
+            uiLoadEventListener.startEnd(
+                instanceId = traceInstanceId(activity),
+                timestampMs = nowMs()
+            )
+        }
     }
 
     fun resume(activity: Activity) {
-        uiLoadEventListener.resume(
-            instanceId = traceInstanceId(activity),
-            timestampMs = nowMs()
-        )
+        if (activity.observe()) {
+            uiLoadEventListener.resume(
+                instanceId = traceInstanceId(activity),
+                timestampMs = nowMs()
+            )
+        }
     }
 
     fun resumeEnd(activity: Activity) {
-        uiLoadEventListener.resumeEnd(
-            instanceId = traceInstanceId(activity),
-            timestampMs = nowMs()
-        )
+        if (activity.observe()) {
+            uiLoadEventListener.resumeEnd(
+                instanceId = traceInstanceId(activity),
+                timestampMs = nowMs()
+            )
+        }
     }
 
     fun pause(activity: Activity) {
-        uiLoadEventListener.discard(
-            instanceId = traceInstanceId(activity),
-            timestampMs = nowMs()
-        )
+        if (activity.observe()) {
+            uiLoadEventListener.discard(
+                instanceId = traceInstanceId(activity),
+                timestampMs = nowMs()
+            )
+        }
+    }
+
+    private fun Activity.observe(): Boolean {
+        return javaClass.isAnnotationPresent(TracedActivity::class.java) ||
+            autoTraceEnabled && !javaClass.isAnnotationPresent(NotTracedActivity::class.java)
     }
 
     private fun traceInstanceId(activity: Activity): Int = activity.hashCode()

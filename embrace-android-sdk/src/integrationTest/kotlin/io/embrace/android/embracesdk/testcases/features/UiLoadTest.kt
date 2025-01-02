@@ -3,7 +3,8 @@ package io.embrace.android.embracesdk.testcases.features
 import android.app.Activity
 import android.os.Build
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.annotation.ObservedActivity
+import io.embrace.android.embracesdk.annotation.NotTracedActivity
+import io.embrace.android.embracesdk.annotation.TracedActivity
 import io.embrace.android.embracesdk.assertions.assertEmbraceSpanData
 import io.embrace.android.embracesdk.assertions.findSpansByName
 import io.embrace.android.embracesdk.assertions.findSpansOfType
@@ -15,6 +16,7 @@ import io.embrace.android.embracesdk.internal.payload.ApplicationState
 import io.embrace.android.embracesdk.testframework.IntegrationTestRule
 import io.opentelemetry.api.trace.SpanId
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -46,8 +48,55 @@ internal class UiLoadTest {
                 )
             },
             assertAction = {
-                val payload = getSingleSessionEnvelope()
-                assertEquals(0, payload.findSpansOfType(EmbType.Performance.UiLoad).size)
+                assertTrue(getSingleSessionEnvelope().findSpansOfType(EmbType.Performance.UiLoad).isEmpty())
+            }
+        )
+    }
+
+    @Config(sdk = [Build.VERSION_CODES.LOLLIPOP])
+    @Test
+    fun `activity open creates a trace for unannotated activity if auto capture enabled`() {
+        testRule.runTest(
+            instrumentedConfig = FakeInstrumentedConfig(
+                enabledFeatures = FakeEnabledFeatureConfig(
+                    uiLoadPerfCapture = true,
+                    uiLoadPerfAutoCapture = true,
+                    bgActivityCapture = true
+                )
+            ),
+            testCaseAction = {
+                simulateOpeningActivities(
+                    activitiesAndActions = listOf(
+                        Robolectric.buildActivity(Activity::class.java) to {},
+                    )
+                )
+            },
+            assertAction = {
+                assertEquals(1, getSingleSessionEnvelope().findSpansOfType(EmbType.Performance.UiLoad).size)
+            }
+        )
+    }
+
+    @Config(sdk = [Build.VERSION_CODES.LOLLIPOP])
+    @Test
+    fun `activity open does not create a trace for explicitly disabled activity even if auto capture enabled`() {
+        testRule.runTest(
+            instrumentedConfig = FakeInstrumentedConfig(
+                enabledFeatures = FakeEnabledFeatureConfig(
+                    uiLoadPerfCapture = true,
+                    uiLoadPerfAutoCapture = true,
+                    bgActivityCapture = true
+                )
+            ),
+            testCaseAction = {
+                simulateOpeningActivities(
+                    activitiesAndActions = listOf(
+                        Robolectric.buildActivity(IgnoredActivity::class.java) to {},
+                    )
+                )
+            },
+            assertAction = {
+                assertTrue(getSingleSessionEnvelope().findSpansOfType(EmbType.Performance.UiLoad).isEmpty())
             }
         )
     }
@@ -205,11 +254,14 @@ internal class UiLoadTest {
     }
 
     private companion object {
-        @ObservedActivity
+        @TracedActivity
         class Activity1 : Activity()
 
-        @ObservedActivity
+        @TracedActivity
         class Activity2 : Activity()
+
+        @NotTracedActivity
+        class IgnoredActivity : Activity()
 
         val ACTIVITY1_NAME = Robolectric.buildActivity(Activity1::class.java).get().localClassName
         val ACTIVITY2_NAME = Robolectric.buildActivity(Activity2::class.java).get().localClassName

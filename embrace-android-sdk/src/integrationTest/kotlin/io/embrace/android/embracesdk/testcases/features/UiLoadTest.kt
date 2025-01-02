@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.testcases.features
 import android.app.Activity
 import android.os.Build
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.annotation.CustomTracedActivity
 import io.embrace.android.embracesdk.annotation.NotTracedActivity
 import io.embrace.android.embracesdk.annotation.TracedActivity
 import io.embrace.android.embracesdk.assertions.assertEmbraceSpanData
@@ -13,6 +14,8 @@ import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.capture.activity.LifecycleStage
 import io.embrace.android.embracesdk.internal.payload.ApplicationState
+import io.embrace.android.embracesdk.internal.payload.Span
+import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.android.embracesdk.testframework.IntegrationTestRule
 import io.opentelemetry.api.trace.SpanId
 import org.junit.Assert.assertEquals
@@ -73,6 +76,87 @@ internal class UiLoadTest {
             },
             assertAction = {
                 assertEquals(1, getSingleSessionEnvelope().findSpansOfType(EmbType.Performance.UiLoad).size)
+            }
+        )
+    }
+
+    @Config(sdk = [Build.VERSION_CODES.LOLLIPOP])
+    @Test
+    fun `activity open creates a trace for manually ended load`() {
+        var preLaunchTimeMs = 0L
+        testRule.runTest(
+            instrumentedConfig = FakeInstrumentedConfig(
+                enabledFeatures = FakeEnabledFeatureConfig(
+                    uiLoadPerfCapture = true,
+                    uiLoadPerfAutoCapture = false,
+                    bgActivityCapture = true
+                )
+            ),
+            setupAction = {
+                preLaunchTimeMs = overriddenClock.now()
+            },
+            testCaseAction = {
+                simulateOpeningActivities(
+                    invokeManualEnd = true,
+                    activitiesAndActions = listOf(
+                        Robolectric.buildActivity(ManualStopActivity::class.java) to {},
+                    )
+                )
+            },
+            assertAction = {
+                with(getSingleSessionEnvelope()) {
+                    val trace = findSpansOfType(EmbType.Performance.UiLoad).single()
+                    assertEquals("emb-$MANUAL_STOP_ACTIVITY_NAME-cold-time-to-initial-display", trace.name)
+
+                    val expectedTraceStartTime = preLaunchTimeMs + 50
+                    assertEmbraceSpanData(
+                        span = trace,
+                        expectedStartTimeMs = expectedTraceStartTime,
+                        expectedEndTimeMs = expectedTraceStartTime + 400,
+                        expectedParentId = SpanId.getInvalid(),
+                    )
+                }
+            }
+        )
+    }
+
+    @Config(sdk = [Build.VERSION_CODES.LOLLIPOP])
+    @Test
+    fun `opening activity configured to be ended manually creates an abandoned trace if activityLoaded not invoked`() {
+        var preLaunchTimeMs = 0L
+        testRule.runTest(
+            instrumentedConfig = FakeInstrumentedConfig(
+                enabledFeatures = FakeEnabledFeatureConfig(
+                    uiLoadPerfCapture = true,
+                    uiLoadPerfAutoCapture = false,
+                    bgActivityCapture = true
+                )
+            ),
+            setupAction = {
+                preLaunchTimeMs = overriddenClock.now()
+            },
+            testCaseAction = {
+                simulateOpeningActivities(
+                    activitiesAndActions = listOf(
+                        Robolectric.buildActivity(ManualStopActivity::class.java) to {},
+                    )
+                )
+            },
+            assertAction = {
+                with(getSingleSessionEnvelope()) {
+                    val trace = findSpansOfType(EmbType.Performance.UiLoad).single()
+                    assertEquals("emb-$MANUAL_STOP_ACTIVITY_NAME-cold-time-to-initial-display", trace.name)
+
+                    val expectedTraceStartTime = preLaunchTimeMs + 50
+                    assertEmbraceSpanData(
+                        span = trace,
+                        expectedStartTimeMs = expectedTraceStartTime,
+                        expectedEndTimeMs = expectedTraceStartTime + 20301,
+                        expectedParentId = SpanId.getInvalid(),
+                        expectedStatus = Span.Status.ERROR,
+                        expectedErrorCode = ErrorCode.USER_ABANDON,
+                    )
+                }
             }
         )
     }
@@ -263,7 +347,11 @@ internal class UiLoadTest {
         @NotTracedActivity
         class IgnoredActivity : Activity()
 
+        @CustomTracedActivity
+        class ManualStopActivity : Activity()
+
         val ACTIVITY1_NAME = Robolectric.buildActivity(Activity1::class.java).get().localClassName
         val ACTIVITY2_NAME = Robolectric.buildActivity(Activity2::class.java).get().localClassName
+        val MANUAL_STOP_ACTIVITY_NAME = Robolectric.buildActivity(ManualStopActivity::class.java).get().localClassName
     }
 }

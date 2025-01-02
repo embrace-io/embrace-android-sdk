@@ -5,6 +5,7 @@ import android.os.Build
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeClock.Companion.DEFAULT_FAKE_CURRENT_TIME
+import io.embrace.android.embracesdk.fakes.FakeCustomTracedActivity
 import io.embrace.android.embracesdk.fakes.FakeNotTracedActivity
 import io.embrace.android.embracesdk.fakes.FakeTracedActivity
 import io.embrace.android.embracesdk.fakes.FakeUiLoadEventListener
@@ -84,6 +85,14 @@ internal class UiLoadExtTest {
         assertTrue(uiLoadEventListener.events.isEmpty())
     }
 
+    @Config(sdk = [Build.VERSION_CODES.UPSIDE_DOWN_CAKE])
+    @Test
+    fun `activities with manual ended trace will emit ui load events in U`() {
+        createEventEmitter(autoTraceEnabled = false, activityClass = FakeCustomTracedActivity::class)
+        stepThroughActivityLifecycle()
+        uiLoadEventListener.events.assertEventData(expectedColdOpenEvents)
+    }
+
     @Config(sdk = [Build.VERSION_CODES.LOLLIPOP])
     @Test
     fun `check cold ui load event stages in L`() {
@@ -122,6 +131,14 @@ internal class UiLoadExtTest {
         createEventEmitter(autoTraceEnabled = true, activityClass = FakeNotTracedActivity::class)
         stepThroughActivityLifecycle()
         assertTrue(uiLoadEventListener.events.isEmpty())
+    }
+
+    @Config(sdk = [Build.VERSION_CODES.LOLLIPOP])
+    @Test
+    fun `activities with manual ended trace will emit ui load events in L`() {
+        createEventEmitter(autoTraceEnabled = false, activityClass = FakeCustomTracedActivity::class)
+        stepThroughActivityLifecycle()
+        uiLoadEventListener.events.assertEventData(legacyColdOpenEvents)
     }
 
     private fun <T : Activity> createEventEmitter(autoTraceEnabled: Boolean, activityClass: KClass<T>) {

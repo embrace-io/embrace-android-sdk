@@ -64,6 +64,7 @@ internal class EmbraceActionInterface(
         addStartupActivity: Boolean = true,
         startInBackground: Boolean = false,
         createFirstActivity: Boolean = true,
+        invokeManualEnd: Boolean = false,
         activitiesAndActions: List<Pair<ActivityController<*>, () -> Unit>> = listOf(),
         lifecycleEventGap: Long = 100L,
         postActionDwell: Long = 20000L,
@@ -99,6 +100,10 @@ internal class EmbraceActionInterface(
             }
             activityController.resume()
             setup.overriddenClock.tick(lifecycleEventGap)
+            if (invokeManualEnd) {
+                setup.overriddenClock.tick(lifecycleEventGap)
+                embrace.activityLoaded(activityController.get())
+            }
             lastActivity?.stop()
             setup.overriddenClock.tick()
 

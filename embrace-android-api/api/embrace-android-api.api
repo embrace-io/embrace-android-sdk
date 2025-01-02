@@ -24,6 +24,9 @@ public final class io/embrace/android/embracesdk/Severity : java/lang/Enum {
 	public static fun values ()[Lio/embrace/android/embracesdk/Severity;
 }
 
+public abstract interface annotation class io/embrace/android/embracesdk/annotation/CustomTracedActivity : java/lang/annotation/Annotation {
+}
+
 public abstract interface annotation class io/embrace/android/embracesdk/annotation/InternalApi : java/lang/annotation/Annotation {
 }
 
@@ -46,6 +49,10 @@ public abstract interface class io/embrace/android/embracesdk/internal/api/Embra
 	public abstract fun start (Landroid/content/Context;)V
 	public abstract fun start (Landroid/content/Context;Lio/embrace/android/embracesdk/AppFramework;)V
 	public abstract fun startView (Ljava/lang/String;)Z
+}
+
+public abstract interface class io/embrace/android/embracesdk/internal/api/InstrumentationApi {
+	public abstract fun activityLoaded (Landroid/app/Activity;)V
 }
 
 public abstract interface class io/embrace/android/embracesdk/internal/api/InternalWebViewApi {
@@ -82,7 +89,7 @@ public abstract interface class io/embrace/android/embracesdk/internal/api/OTelA
 	public abstract fun getOpenTelemetry ()Lio/opentelemetry/api/OpenTelemetry;
 }
 
-public abstract interface class io/embrace/android/embracesdk/internal/api/SdkApi : io/embrace/android/embracesdk/internal/api/BreadcrumbApi, io/embrace/android/embracesdk/internal/api/EmbraceAndroidApi, io/embrace/android/embracesdk/internal/api/InternalWebViewApi, io/embrace/android/embracesdk/internal/api/LogsApi, io/embrace/android/embracesdk/internal/api/NetworkRequestApi, io/embrace/android/embracesdk/internal/api/OTelApi, io/embrace/android/embracesdk/internal/api/SdkStateApi, io/embrace/android/embracesdk/internal/api/SessionApi, io/embrace/android/embracesdk/internal/api/UserApi, io/embrace/android/embracesdk/spans/TracingApi {
+public abstract interface class io/embrace/android/embracesdk/internal/api/SdkApi : io/embrace/android/embracesdk/internal/api/BreadcrumbApi, io/embrace/android/embracesdk/internal/api/EmbraceAndroidApi, io/embrace/android/embracesdk/internal/api/InstrumentationApi, io/embrace/android/embracesdk/internal/api/InternalWebViewApi, io/embrace/android/embracesdk/internal/api/LogsApi, io/embrace/android/embracesdk/internal/api/NetworkRequestApi, io/embrace/android/embracesdk/internal/api/OTelApi, io/embrace/android/embracesdk/internal/api/SdkStateApi, io/embrace/android/embracesdk/internal/api/SessionApi, io/embrace/android/embracesdk/internal/api/UserApi, io/embrace/android/embracesdk/spans/TracingApi {
 }
 
 public final class io/embrace/android/embracesdk/internal/api/SdkApi$DefaultImpls {

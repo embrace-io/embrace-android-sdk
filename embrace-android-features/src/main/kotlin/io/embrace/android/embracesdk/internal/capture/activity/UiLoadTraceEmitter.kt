@@ -156,7 +156,7 @@ class UiLoadTraceEmitter(
         }
     }
 
-    override fun abandon(instanceId: Int, activityName: String, timestampMs: Long) {
+    override fun exit(instanceId: Int, activityName: String, timestampMs: Long) {
         currentTracedInstanceId?.let { currentlyTracedInstanceId ->
             if (instanceId != currentlyTracedInstanceId) {
                 endTrace(

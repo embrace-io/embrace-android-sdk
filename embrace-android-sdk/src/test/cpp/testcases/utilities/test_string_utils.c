@@ -33,7 +33,7 @@ TEST test_string_copy_larger_source(void) {
     char dst[2];
     char src[] = "123456";
     emb_strncpy(dst, src, sizeof(dst));
-    ASSERT_STR_EQ("12", dst);
+    ASSERT_STR_EQ("1", dst);    // the rest of the source is truncated to size 2 (1 and a null terminator)
     PASS();
 }
 

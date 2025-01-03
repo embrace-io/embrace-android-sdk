@@ -17,6 +17,10 @@ import io.embrace.android.embracesdk.internal.payload.ApplicationState
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.android.embracesdk.testframework.IntegrationTestRule
+import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface.Companion.ACTIVITY_GAP
+import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface.Companion.LIFECYCLE_EVENT_GAP
+import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface.Companion.POST_ACTIVITY_ACTION_DWELL
+import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface.Companion.STARTUP_BACKGROUND_TIME
 import io.opentelemetry.api.trace.SpanId
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -113,11 +117,11 @@ internal class UiLoadTest {
                     val trace = findSpansOfType(EmbType.Performance.UiLoad).single()
                     assertEquals("emb-$MANUAL_STOP_ACTIVITY_NAME-cold-time-to-initial-display", trace.name)
 
-                    val expectedTraceStartTime = preLaunchTimeMs + 50
+                    val expectedTraceStartTime = preLaunchTimeMs + calculateTotalTime(activityGaps = 1)
                     assertEmbraceSpanData(
                         span = trace,
                         expectedStartTimeMs = expectedTraceStartTime,
-                        expectedEndTimeMs = expectedTraceStartTime + 400,
+                        expectedEndTimeMs = expectedTraceStartTime + calculateTotalTime(lifecycleStages = 4),
                         expectedParentId = SpanId.getInvalid(),
                     )
                 }
@@ -152,11 +156,11 @@ internal class UiLoadTest {
                     val trace = findSpansOfType(EmbType.Performance.UiLoad).single()
                     assertEquals("emb-$MANUAL_STOP_ACTIVITY_NAME-cold-time-to-initial-display", trace.name)
 
-                    val expectedTraceStartTime = preLaunchTimeMs + 50
+                    val expectedTraceStartTime = preLaunchTimeMs + ACTIVITY_GAP
                     assertEmbraceSpanData(
                         span = trace,
                         expectedStartTimeMs = expectedTraceStartTime,
-                        expectedEndTimeMs = expectedTraceStartTime + 20301,
+                        expectedEndTimeMs = expectedTraceStartTime + calculateTotalTime(lifecycleStages = 3, activitiesFullyLoaded = 1),
                         expectedParentId = SpanId.getInvalid(),
                         expectedStatus = Span.Status.ERROR,
                         expectedErrorCode = ErrorCode.USER_ABANDON,
@@ -217,25 +221,27 @@ internal class UiLoadTest {
                 val rootSpanId = checkNotNull(trace.spanId)
                 assertEquals("emb-$ACTIVITY2_NAME-cold-time-to-initial-display", trace.name)
 
-                val expectedTraceStartTime = preLaunchTimeMs + 20351
+                val expectedTraceStartTime = preLaunchTimeMs +
+                    calculateTotalTime(lifecycleStages = 3, activitiesFullyLoaded = 1, activityGaps = 1)
+
                 assertEmbraceSpanData(
                     span = trace,
                     expectedStartTimeMs = expectedTraceStartTime,
-                    expectedEndTimeMs = expectedTraceStartTime + 200,
+                    expectedEndTimeMs = expectedTraceStartTime + calculateTotalTime(lifecycleStages = 2),
                     expectedParentId = SpanId.getInvalid(),
                 )
 
                 assertEmbraceSpanData(
                     span = payload.findSpansByName("emb-${LifecycleStage.CREATE.spanName(ACTIVITY2_NAME)}").single(),
                     expectedStartTimeMs = expectedTraceStartTime,
-                    expectedEndTimeMs = expectedTraceStartTime + 100,
+                    expectedEndTimeMs = expectedTraceStartTime + calculateTotalTime(lifecycleStages = 1),
                     expectedParentId = rootSpanId,
                 )
 
                 assertEmbraceSpanData(
                     span = payload.findSpansByName("emb-${LifecycleStage.START.spanName(ACTIVITY2_NAME)}").single(),
-                    expectedStartTimeMs = expectedTraceStartTime + 100,
-                    expectedEndTimeMs = expectedTraceStartTime + 200,
+                    expectedStartTimeMs = expectedTraceStartTime + calculateTotalTime(lifecycleStages = 1),
+                    expectedEndTimeMs = expectedTraceStartTime + calculateTotalTime(lifecycleStages = 2),
                     expectedParentId = rootSpanId,
                 )
             }
@@ -269,11 +275,11 @@ internal class UiLoadTest {
                 assertEquals("emb-$ACTIVITY1_NAME-cold-time-to-initial-display", trace.name)
                 val rootSpanId = checkNotNull(trace.spanId)
 
-                val expectedTraceStartTime = preLaunchTimeMs + 10000
+                val expectedTraceStartTime = preLaunchTimeMs + calculateTotalTime(fromBackground = true)
                 assertEmbraceSpanData(
                     span = trace,
                     expectedStartTimeMs = expectedTraceStartTime,
-                    expectedEndTimeMs = expectedTraceStartTime + 200,
+                    expectedEndTimeMs = expectedTraceStartTime + calculateTotalTime(lifecycleStages = 2),
                     expectedParentId = SpanId.getInvalid(),
                 )
 
@@ -283,14 +289,14 @@ internal class UiLoadTest {
                         .findSpansByName("emb-${LifecycleStage.CREATE.spanName(ACTIVITY1_NAME)}")
                         .single(),
                     expectedStartTimeMs = expectedTraceStartTime,
-                    expectedEndTimeMs = expectedTraceStartTime + 100,
+                    expectedEndTimeMs = expectedTraceStartTime + calculateTotalTime(lifecycleStages = 1),
                     expectedParentId = rootSpanId,
                 )
 
                 assertEmbraceSpanData(
                     span = payload.findSpansByName("emb-${LifecycleStage.START.spanName(ACTIVITY1_NAME)}").single(),
-                    expectedStartTimeMs = expectedTraceStartTime + 100,
-                    expectedEndTimeMs = expectedTraceStartTime + 200,
+                    expectedStartTimeMs = expectedTraceStartTime + calculateTotalTime(lifecycleStages = 1),
+                    expectedEndTimeMs = expectedTraceStartTime + calculateTotalTime(lifecycleStages = 2),
                     expectedParentId = rootSpanId,
                 )
             }
@@ -324,18 +330,18 @@ internal class UiLoadTest {
                 assertEquals("emb-$ACTIVITY1_NAME-hot-time-to-initial-display", trace.name)
                 val rootSpanId = checkNotNull(trace.spanId)
 
-                val expectedTraceStartTime = preLaunchTimeMs + 10000
+                val expectedTraceStartTime = preLaunchTimeMs + calculateTotalTime(fromBackground = true)
                 assertEmbraceSpanData(
                     span = trace,
                     expectedStartTimeMs = expectedTraceStartTime,
-                    expectedEndTimeMs = expectedTraceStartTime + 100,
+                    expectedEndTimeMs = expectedTraceStartTime + calculateTotalTime(lifecycleStages = 1),
                     expectedParentId = SpanId.getInvalid(),
                 )
 
                 assertEmbraceSpanData(
                     span = payload.findSpansByName("emb-${LifecycleStage.START.spanName(ACTIVITY1_NAME)}").single(),
                     expectedStartTimeMs = expectedTraceStartTime,
-                    expectedEndTimeMs = expectedTraceStartTime + 100,
+                    expectedEndTimeMs = expectedTraceStartTime + calculateTotalTime(lifecycleStages = 1),
                     expectedParentId = rootSpanId,
                 )
             }
@@ -358,5 +364,15 @@ internal class UiLoadTest {
         val ACTIVITY1_NAME = Robolectric.buildActivity(Activity1::class.java).get().localClassName
         val ACTIVITY2_NAME = Robolectric.buildActivity(Activity2::class.java).get().localClassName
         val MANUAL_STOP_ACTIVITY_NAME = Robolectric.buildActivity(ManualStopActivity::class.java).get().localClassName
+
+        fun calculateTotalTime(
+            lifecycleStages: Int = 0,
+            activitiesFullyLoaded: Int = 0,
+            activityGaps: Int = 0,
+            fromBackground: Boolean = false,
+        ): Long = lifecycleStages * LIFECYCLE_EVENT_GAP +
+            activitiesFullyLoaded * POST_ACTIVITY_ACTION_DWELL +
+            activityGaps * ACTIVITY_GAP +
+            if (fromBackground) STARTUP_BACKGROUND_TIME else 0
     }
 }

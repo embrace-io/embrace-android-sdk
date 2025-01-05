@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.injection
 
+import android.os.Build
 import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.capture.activity.UiLoadEventListener
 import io.embrace.android.embracesdk.internal.capture.activity.UiLoadTraceEmitter
@@ -15,6 +16,7 @@ import io.embrace.android.embracesdk.internal.capture.webview.EmbraceWebViewServ
 import io.embrace.android.embracesdk.internal.capture.webview.WebViewService
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityLifecycleListener
+import io.embrace.android.embracesdk.internal.ui.FirstDrawDetector
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.internal.worker.Worker
@@ -67,8 +69,11 @@ internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
         StartupTracker(
             appStartupDataCollector = appStartupDataCollector,
             activityLoadEventEmitter = activityLoadEventEmitter,
-            logger = initModule.logger,
-            versionChecker = versionChecker,
+            drawEventEmitter = if (versionChecker.isAtLeast(Build.VERSION_CODES.Q)) {
+                FirstDrawDetector(initModule.logger)
+            } else {
+                null
+            }
         )
     }
 

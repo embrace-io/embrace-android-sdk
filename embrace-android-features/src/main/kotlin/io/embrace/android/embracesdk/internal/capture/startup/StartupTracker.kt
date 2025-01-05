@@ -22,14 +22,14 @@ import io.embrace.android.embracesdk.internal.ui.DrawEventEmitter
  *
  * For approximating the first frame being completely drawn:
  *
- * - Android 10 onwards, [FirstDrawDetector] to detect that an activity's first frame was been rendered.
+ * - Android 10 onwards, [DrawEventEmitter] to detect that an activity's first frame was been rendered.
  *
  * - Older Android versions that are supported, we just use when the first Activity was resumed. We will iterate on this in the future.
  */
 class StartupTracker(
     private val appStartupDataCollector: AppStartupDataCollector,
     private val activityLoadEventEmitter: ActivityLifecycleListener?,
-    private val drawEventEmitter: DrawEventEmitter?,
+    private val drawEventEmitterFactory: () -> DrawEventEmitter?,
 ) : Application.ActivityLifecycleCallbacks {
 
     private var startupActivityId: Int? = null
@@ -51,7 +51,7 @@ class StartupTracker(
                     collectionCompleteCallback = { startupComplete(application) }
                 )
             }
-            drawEventEmitter?.registerFirstDrawCallback(activity, callback)
+            drawEventEmitterFactory()?.registerFirstDrawCallback(activity, callback)
         }
     }
 

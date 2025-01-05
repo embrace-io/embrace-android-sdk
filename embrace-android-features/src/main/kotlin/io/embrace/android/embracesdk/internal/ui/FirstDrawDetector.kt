@@ -19,7 +19,7 @@ import io.embrace.android.embracesdk.internal.logging.InternalErrorType
  * that can be found here: https://blog.p-y.wtf/tracking-android-app-launch-in-production. PY's code was adapted and tweaked for use here.
  */
 @RequiresApi(Build.VERSION_CODES.Q)
-internal class FirstDrawDetector(
+class FirstDrawDetector(
     private val logger: EmbLogger,
 ) : DrawEventEmitter {
     private var isFirstDraw: Boolean = false

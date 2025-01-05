@@ -6,6 +6,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeClock.Companion.DEFAULT_FAKE_CURRENT_TIME
 import io.embrace.android.embracesdk.fakes.FakeCustomTracedActivity
+import io.embrace.android.embracesdk.fakes.FakeDrawEventEmitter
 import io.embrace.android.embracesdk.fakes.FakeNotTracedActivity
 import io.embrace.android.embracesdk.fakes.FakeTracedActivity
 import io.embrace.android.embracesdk.fakes.FakeUiLoadEventListener
@@ -34,12 +35,14 @@ internal class UiLoadExtTest {
     private lateinit var clock: FakeClock
     private lateinit var uiLoadEventListener: FakeUiLoadEventListener
     private lateinit var eventEmitter: ActivityLifecycleListener
+    private lateinit var drawEventEmitter: FakeDrawEventEmitter
     private lateinit var activityController: ActivityController<*>
 
     @Before
     fun setUp() {
         clock = FakeClock(currentTime = DEFAULT_FAKE_CURRENT_TIME)
         uiLoadEventListener = FakeUiLoadEventListener()
+        drawEventEmitter = FakeDrawEventEmitter()
         RuntimeEnvironment.getApplication().registerActivityLifecycleCallbacks(
             ClockTickingActivityLifecycleCallbacks(clock)
         )
@@ -144,6 +147,7 @@ internal class UiLoadExtTest {
     private fun <T : Activity> createEventEmitter(autoTraceEnabled: Boolean, activityClass: KClass<T>) {
         eventEmitter = createActivityLoadEventEmitter(
             uiLoadEventListener = uiLoadEventListener,
+            firstDrawDetectorFactory = { drawEventEmitter },
             autoTraceEnabled = autoTraceEnabled,
             clock = FakeInitModule(clock = clock).openTelemetryModule.openTelemetryClock,
             versionChecker = BuildVersionChecker
@@ -162,6 +166,10 @@ internal class UiLoadExtTest {
             }
             start()
             resume()
+            if (uiLoadEventListener.events.any { it.stage == "render" }) {
+                clock.tick(RENDER_DURATION)
+                drawEventEmitter.lastCallback?.invoke()
+            }
             pause()
             stop()
         }
@@ -173,6 +181,8 @@ internal class UiLoadExtTest {
 
     companion object {
         private const val START_TIME_MS: Long = DEFAULT_FAKE_CURRENT_TIME
+        private const val RENDER_DURATION: Long = 66L
+
         private val expectedColdOpenEvents = listOf(
             createEvent(
                 stage = "create",
@@ -199,8 +209,16 @@ internal class UiLoadExtTest {
                 timestampMs = START_TIME_MS + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 3
             ),
             createEvent(
+                stage = "render",
+                timestampMs = START_TIME_MS + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 3
+            ),
+            createEvent(
+                stage = "renderEnd",
+                timestampMs = START_TIME_MS + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 3 + RENDER_DURATION
+            ),
+            createEvent(
                 stage = "discard",
-                timestampMs = START_TIME_MS + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 3 + PRE_DURATION
+                timestampMs = START_TIME_MS + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 3 + RENDER_DURATION + PRE_DURATION
             ),
         )
 
@@ -222,8 +240,16 @@ internal class UiLoadExtTest {
                 timestampMs = START_TIME_MS + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 2
             ),
             createEvent(
+                stage = "render",
+                timestampMs = START_TIME_MS + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 2
+            ),
+            createEvent(
+                stage = "renderEnd",
+                timestampMs = START_TIME_MS + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 2 + RENDER_DURATION
+            ),
+            createEvent(
                 stage = "discard",
-                timestampMs = START_TIME_MS + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 2 + PRE_DURATION
+                timestampMs = START_TIME_MS + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 2 + RENDER_DURATION + PRE_DURATION
             ),
         )
 

@@ -5,7 +5,7 @@ import io.embrace.android.embracesdk.internal.capture.activity.UiLoadEventListen
 class FakeUiLoadEventListener : UiLoadEventListener {
     val events = mutableListOf<EventData>()
 
-    override fun abandon(instanceId: Int, activityName: String, timestampMs: Long) {
+    override fun exit(instanceId: Int, activityName: String, timestampMs: Long) {
         events.add(
             EventData(
                 stage = "abandon",

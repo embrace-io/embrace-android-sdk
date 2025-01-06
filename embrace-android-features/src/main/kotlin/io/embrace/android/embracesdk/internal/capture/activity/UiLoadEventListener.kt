@@ -76,7 +76,7 @@ interface UiLoadEventListener {
      * When we no longer wish to observe the loading of the given UI instance. This may be called during its load
      * or after it has loaded. Calls to this for a given instance should be idempotent.
      */
-    fun abandon(instanceId: Int, activityName: String, timestampMs: Long)
+    fun exit(instanceId: Int, activityName: String, timestampMs: Long)
 
     /**
      * When the app is no longer in a state where it is trying to open up UI. All traces should be abandoned and

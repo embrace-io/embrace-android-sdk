@@ -83,6 +83,7 @@ internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
         if (configService.autoDataCaptureBehavior.isUiLoadPerfCaptureEnabled()) {
             createActivityLoadEventEmitter(
                 uiLoadEventListener = uiLoadTraceEmitter,
+                autoTraceEnabled = configService.autoDataCaptureBehavior.isUiLoadPerfAutoCaptureEnabled(),
                 clock = openTelemetryModule.openTelemetryClock,
                 versionChecker = versionChecker
             )

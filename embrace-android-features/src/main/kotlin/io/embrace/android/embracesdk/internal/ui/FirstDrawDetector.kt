@@ -8,8 +8,10 @@ import android.view.View
 import android.view.ViewTreeObserver
 import android.view.Window
 import androidx.annotation.RequiresApi
+import io.embrace.android.embracesdk.internal.capture.activity.traceInstanceId
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Component that uses the [ViewTreeObserver.OnDrawListener] callback to detect that the first frame of a registered
@@ -22,33 +24,51 @@ import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 class FirstDrawDetector(
     private val logger: EmbLogger,
 ) : DrawEventEmitter {
-    private var isFirstDraw: Boolean = false
-    private var nullWindowCallbackErrorLogged = false
+
+    private val loadingActivities: MutableMap<Int, () -> Unit> = ConcurrentHashMap()
 
     override fun registerFirstDrawCallback(activity: Activity, completionCallback: () -> Unit) {
-        if (!isFirstDraw) {
+        val instanceId = traceInstanceId(activity)
+        if (!trackingLoad(instanceId)) {
             val window = activity.window
             if (window.callback != null) {
                 window.onDecorViewReady {
                     val decorView = window.decorView
                     decorView.onNextDraw {
-                        if (!isFirstDraw) {
-                            isFirstDraw = true
+                        if (!trackingLoad(instanceId)) {
+                            loadingActivities[instanceId] = completionCallback
                             decorView.viewTreeObserver.registerFrameCommitCallback(completionCallback)
                         }
                     }
                 }
-            } else if (!nullWindowCallbackErrorLogged) {
+            } else if (!loadingActivities.containsKey(instanceId)) {
                 logger.trackInternalError(
                     type = InternalErrorType.UI_CALLBACK_FAIL,
                     throwable = IllegalStateException(
                         "Fail to attach frame rendering callback because the callback on Window was null"
                     )
                 )
-                nullWindowCallbackErrorLogged = true
+                loadingActivities[instanceId] = { }
             }
         }
     }
+
+    override fun unregisterFirstDrawCallback(activity: Activity) {
+        val instanceId = traceInstanceId(activity)
+        loadingActivities[instanceId]?.let { firstDrawCallback ->
+            runCatching {
+                activity.window.decorView.viewTreeObserver.unregisterFrameCommitCallback(firstDrawCallback)
+            }.exceptionOrNull()?.let { exception ->
+                logger.trackInternalError(
+                    type = InternalErrorType.UI_CALLBACK_FAIL,
+                    throwable = IllegalStateException("Failed to unregister first draw callback", exception)
+                )
+            }
+            loadingActivities.remove(instanceId)
+        }
+    }
+
+    private fun trackingLoad(instanceId: Int): Boolean = loadingActivities.containsKey(instanceId)
 
     private fun View.onNextDraw(onDrawCallback: () -> Unit) {
         viewTreeObserver.addOnDrawListener(

@@ -19,6 +19,7 @@ import io.embrace.android.embracesdk.internal.ClockTickingActivityLifecycleCallb
 import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityLifecycleListener
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -54,6 +55,7 @@ internal class UiLoadExtTest {
         createEventEmitter(autoTraceEnabled = false, activityClass = FakeTracedActivity::class)
         stepThroughActivityLifecycle()
         uiLoadEventListener.events.assertEventData(expectedColdOpenEvents)
+        assertDrawEvents()
     }
 
     @Config(sdk = [Build.VERSION_CODES.UPSIDE_DOWN_CAKE])
@@ -62,6 +64,7 @@ internal class UiLoadExtTest {
         createEventEmitter(autoTraceEnabled = false, activityClass = FakeTracedActivity::class)
         stepThroughActivityLifecycle(isColdOpen = false)
         uiLoadEventListener.events.assertEventData(expectedHotOpenEvents)
+        assertDrawEvents()
     }
 
     @Config(sdk = [Build.VERSION_CODES.UPSIDE_DOWN_CAKE])
@@ -70,6 +73,7 @@ internal class UiLoadExtTest {
         createEventEmitter(autoTraceEnabled = true, activityClass = Activity::class)
         stepThroughActivityLifecycle()
         uiLoadEventListener.events.assertEventData(expectedColdOpenEvents)
+        assertDrawEvents()
     }
 
     @Config(sdk = [Build.VERSION_CODES.UPSIDE_DOWN_CAKE])
@@ -94,6 +98,7 @@ internal class UiLoadExtTest {
         createEventEmitter(autoTraceEnabled = false, activityClass = FakeCustomTracedActivity::class)
         stepThroughActivityLifecycle()
         uiLoadEventListener.events.assertEventData(expectedColdOpenEvents)
+        assertDrawEvents()
     }
 
     @Config(sdk = [Build.VERSION_CODES.LOLLIPOP])
@@ -102,6 +107,7 @@ internal class UiLoadExtTest {
         createEventEmitter(autoTraceEnabled = false, activityClass = FakeTracedActivity::class)
         stepThroughActivityLifecycle()
         uiLoadEventListener.events.assertEventData(legacyColdOpenEvents)
+        assertDrawEvents()
     }
 
     @Config(sdk = [Build.VERSION_CODES.LOLLIPOP])
@@ -110,6 +116,7 @@ internal class UiLoadExtTest {
         createEventEmitter(autoTraceEnabled = false, activityClass = FakeTracedActivity::class)
         stepThroughActivityLifecycle(isColdOpen = false)
         uiLoadEventListener.events.assertEventData(legacyHotOpenEvents)
+        assertDrawEvents()
     }
 
     @Config(sdk = [Build.VERSION_CODES.LOLLIPOP])
@@ -118,6 +125,7 @@ internal class UiLoadExtTest {
         createEventEmitter(autoTraceEnabled = true, activityClass = Activity::class)
         stepThroughActivityLifecycle()
         uiLoadEventListener.events.assertEventData(legacyColdOpenEvents)
+        assertDrawEvents()
     }
 
     @Config(sdk = [Build.VERSION_CODES.LOLLIPOP])
@@ -142,6 +150,7 @@ internal class UiLoadExtTest {
         createEventEmitter(autoTraceEnabled = false, activityClass = FakeCustomTracedActivity::class)
         stepThroughActivityLifecycle()
         uiLoadEventListener.events.assertEventData(legacyColdOpenEvents)
+        assertDrawEvents()
     }
 
     private fun <T : Activity> createEventEmitter(autoTraceEnabled: Boolean, activityClass: KClass<T>) {
@@ -168,7 +177,7 @@ internal class UiLoadExtTest {
             resume()
             if (uiLoadEventListener.events.any { it.stage == "render" }) {
                 clock.tick(RENDER_DURATION)
-                drawEventEmitter.lastCallback?.invoke()
+                checkNotNull(drawEventEmitter.lastCallback).invoke()
             }
             pause()
             stop()
@@ -177,6 +186,13 @@ internal class UiLoadExtTest {
 
     private fun List<EventData>.assertEventData(expectedEvents: List<EventData>) {
         assertEquals(expectedEvents.map { it.stage to it.timestampMs }, map { it.stage to it.timestampMs })
+    }
+
+    private fun assertDrawEvents() {
+        assertNotNull(drawEventEmitter.lastRegisteredActivity)
+        assertNotNull(drawEventEmitter.lastCallback)
+        assertNotNull(drawEventEmitter.lastUnregisteredActivity)
+        assertEquals(drawEventEmitter.lastRegisteredActivity, drawEventEmitter.lastRegisteredActivity)
     }
 
     companion object {

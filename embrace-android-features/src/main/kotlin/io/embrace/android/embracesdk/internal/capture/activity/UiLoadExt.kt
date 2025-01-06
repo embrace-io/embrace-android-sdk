@@ -140,19 +140,21 @@ private class LifecycleEventEmitter(
     fun start(activity: Activity) {
         if (activity.traceLoad()) {
             val instanceId = traceInstanceId(activity)
+            if (drawEventEmitter != null) {
+                val callback = {
+                    uiLoadEventListener.renderEnd(
+                        instanceId = instanceId,
+                        timestampMs = nowMs()
+                    )
+                }
+                drawEventEmitter.registerFirstDrawCallback(activity, callback)
+            }
             uiLoadEventListener.start(
                 instanceId = instanceId,
                 activityName = activity.localClassName,
                 timestampMs = nowMs(),
                 manualEnd = activity.isManualEnd(),
             )
-            val callback = {
-                uiLoadEventListener.renderEnd(
-                    instanceId = instanceId,
-                    timestampMs = nowMs()
-                )
-            }
-            drawEventEmitter?.registerFirstDrawCallback(activity, callback)
         }
     }
 
@@ -197,6 +199,7 @@ private class LifecycleEventEmitter(
                 instanceId = traceInstanceId(activity),
                 timestampMs = nowMs()
             )
+            drawEventEmitter?.unregisterFirstDrawCallback(activity)
         }
     }
 

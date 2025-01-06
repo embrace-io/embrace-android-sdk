@@ -7,4 +7,6 @@ import android.app.Activity
  */
 interface DrawEventEmitter {
     fun registerFirstDrawCallback(activity: Activity, completionCallback: () -> Unit)
+
+    fun unregisterFirstDrawCallback(activity: Activity)
 }

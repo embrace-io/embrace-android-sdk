@@ -47,7 +47,7 @@ internal class StartupTrackerTest {
         startupTracker = StartupTracker(
             appStartupDataCollector = dataCollector,
             activityLoadEventEmitter = activityLifecycleListener,
-            drawEventEmitterFactory = { drawEventEmitter },
+            drawEventEmitter = drawEventEmitter,
         )
         application.registerActivityLifecycleCallbacks(startupTracker)
         defaultActivityController = Robolectric.buildActivity(Activity::class.java)

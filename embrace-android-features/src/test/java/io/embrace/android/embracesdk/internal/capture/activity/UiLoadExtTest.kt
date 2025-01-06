@@ -156,7 +156,7 @@ internal class UiLoadExtTest {
     private fun <T : Activity> createEventEmitter(autoTraceEnabled: Boolean, activityClass: KClass<T>) {
         eventEmitter = createActivityLoadEventEmitter(
             uiLoadEventListener = uiLoadEventListener,
-            firstDrawDetectorFactory = { drawEventEmitter },
+            firstDrawDetector = drawEventEmitter,
             autoTraceEnabled = autoTraceEnabled,
             clock = FakeInitModule(clock = clock).openTelemetryModule.openTelemetryClock,
             versionChecker = BuildVersionChecker

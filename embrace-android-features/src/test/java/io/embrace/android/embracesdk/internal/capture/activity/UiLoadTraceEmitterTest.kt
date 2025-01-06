@@ -324,9 +324,8 @@ internal class UiLoadTraceEmitterTest {
         // set state of tracker to simulate that at least one activity has been opened
         when (previousState) {
             PreviousState.FROM_ACTIVITY -> {
-                traceEmitter.exit(
+                traceEmitter.discard(
                     instanceId = lastInstanceId,
-                    activityName = lastActivityName,
                     timestampMs = lastActivityExitMs
                 )
             }
@@ -337,12 +336,6 @@ internal class UiLoadTraceEmitterTest {
                     instanceId = lastInstanceId,
                     firePreAndPost = firePreAndPost,
                 )
-                traceEmitter.exit(
-                    instanceId = lastInstanceId,
-                    activityName = lastActivityName,
-                    timestampMs = lastActivityExitMs
-                )
-                traceEmitter.reset(lastInstanceId)
             }
 
             PreviousState.FROM_INTERRUPTED_LOAD -> {
@@ -477,8 +470,8 @@ internal class UiLoadTraceEmitterTest {
         return runLifecycleEvent(
             activityName = activityName,
             instanceId = instanceId,
-            startCallback = fun(instanceId: Int, activityName: String, startMs: Long, _: Boolean) {
-                traceEmitter.resume(instanceId, activityName, startMs)
+            startCallback = fun(instanceId: Int, _: String, startMs: Long, _: Boolean) {
+                traceEmitter.resume(instanceId, startMs)
             },
             endCallback = if (fireEndEvent) traceEmitter::resumeEnd else fun(_, _) {},
             firePreAndPost = firePreAndPost,
@@ -494,8 +487,8 @@ internal class UiLoadTraceEmitterTest {
         return runLifecycleEvent(
             activityName = activityName,
             instanceId = instanceId,
-            startCallback = fun(instanceId: Int, activityName: String, startMs: Long, _: Boolean) {
-                traceEmitter.render(instanceId, activityName, startMs)
+            startCallback = fun(instanceId: Int, _: String, startMs: Long, _: Boolean) {
+                traceEmitter.render(instanceId, startMs)
             },
             endCallback = traceEmitter::renderEnd,
             firePreAndPost = firePreAndPost,

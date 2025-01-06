@@ -21,14 +21,14 @@ import io.opentelemetry.sdk.common.Clock
  */
 fun createActivityLoadEventEmitter(
     uiLoadEventListener: UiLoadEventListener,
-    firstDrawDetectorFactory: () -> DrawEventEmitter?,
+    firstDrawDetector: DrawEventEmitter?,
     autoTraceEnabled: Boolean,
     clock: Clock,
     versionChecker: VersionChecker,
 ): ActivityLifecycleListener {
     val lifecycleEventEmitter = LifecycleEventEmitter(
         uiLoadEventListener = uiLoadEventListener,
-        drawEventEmitter = firstDrawDetectorFactory(),
+        drawEventEmitter = firstDrawDetector,
         autoTraceEnabled = autoTraceEnabled,
         clock = clock,
     )

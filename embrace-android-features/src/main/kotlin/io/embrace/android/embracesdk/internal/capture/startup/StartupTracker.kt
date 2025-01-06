@@ -29,7 +29,7 @@ import io.embrace.android.embracesdk.internal.ui.DrawEventEmitter
 class StartupTracker(
     private val appStartupDataCollector: AppStartupDataCollector,
     private val activityLoadEventEmitter: ActivityLifecycleListener?,
-    private val drawEventEmitterFactory: () -> DrawEventEmitter?,
+    private val drawEventEmitter: DrawEventEmitter?,
 ) : Application.ActivityLifecycleCallbacks {
 
     private var startupActivityId: Int? = null
@@ -51,7 +51,7 @@ class StartupTracker(
                     collectionCompleteCallback = { startupComplete(application) }
                 )
             }
-            drawEventEmitterFactory()?.registerFirstDrawCallback(activity, callback)
+            drawEventEmitter?.registerFirstDrawCallback(activity, callback)
         }
     }
 

@@ -12,12 +12,12 @@
 void emb_fix_fileinfo(ssize_t frame_count,
                          emb_sframe stacktrace[kEMBMaxSFrames]) {
     static Dl_info info;
-    for (int i = 0; i < frame_count; ++i) {
+
+    for (int i = 0; i < frame_count && i < kEMBMaxSFrames; ++i) {
         if (dladdr((void *)stacktrace[i].frame_addr, &info) != 0) {
             stacktrace[i].module_addr = (uintptr_t)info.dli_fbase;
             stacktrace[i].offset_addr = (uintptr_t)info.dli_saddr;
-            stacktrace[i].line_num =
-                    stacktrace[i].frame_addr - stacktrace[i].module_addr;
+            stacktrace[i].line_num = stacktrace[i].frame_addr - stacktrace[i].module_addr;
             if (info.dli_fname != NULL) {
                 emb_strncpy(stacktrace[i].filename, (char *)info.dli_fname, sizeof(stacktrace[i].filename));
             }

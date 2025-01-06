@@ -17,6 +17,9 @@ static inline void emb_copy_frame_data(unwindstack::AndroidUnwinderData &android
     int k = 0;
 
     for (const auto &frame: android_unwinder_data.frames) {
+        if (k >= kEMBMaxSFrames) {
+            break;
+        }
         emb_sframe *data = &stacktrace[k++];
 
         // populate the link register for the first value only

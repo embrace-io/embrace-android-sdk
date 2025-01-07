@@ -72,18 +72,23 @@ internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
         )
     }
 
-    override val uiLoadTraceEmitter: UiLoadEventListener by singleton {
-        UiLoadTraceEmitter(
-            spanService = openTelemetryModule.spanService,
-            versionChecker = versionChecker,
-        )
+    override val uiLoadTraceEmitter: UiLoadEventListener? by singleton {
+        if (configService.autoDataCaptureBehavior.isUiLoadTracingEnabled()) {
+            UiLoadTraceEmitter(
+                spanService = openTelemetryModule.spanService,
+                versionChecker = versionChecker,
+            )
+        } else {
+            null
+        }
     }
 
     override val activityLoadEventEmitter: ActivityLifecycleListener? by singleton {
-        if (configService.autoDataCaptureBehavior.isUiLoadPerfCaptureEnabled()) {
+        val traceEmitter = uiLoadTraceEmitter
+        if (traceEmitter != null) {
             createActivityLoadEventEmitter(
-                uiLoadEventListener = uiLoadTraceEmitter,
-                autoTraceEnabled = configService.autoDataCaptureBehavior.isUiLoadPerfAutoCaptureEnabled(),
+                uiLoadEventListener = traceEmitter,
+                autoTraceEnabled = configService.autoDataCaptureBehavior.isUiLoadTracingTraceAll(),
                 clock = openTelemetryModule.openTelemetryClock,
                 versionChecker = versionChecker
             )

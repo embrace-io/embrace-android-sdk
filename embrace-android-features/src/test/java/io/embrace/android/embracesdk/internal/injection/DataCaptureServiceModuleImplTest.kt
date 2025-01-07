@@ -31,16 +31,34 @@ internal class DataCaptureServiceModuleImplTest {
         assertNotNull(module.appStartupDataCollector)
         assertNotNull(module.pushNotificationService)
         assertNotNull(module.startupService)
-        assertNull(module.activityLoadEventEmitter)
+        assertNotNull(module.activityLoadEventEmitter)
+        assertNotNull(module.uiLoadTraceEmitter)
     }
 
     @Test
-    fun `enable ui load performance capture`() {
+    fun `disable ui load performance capture`() {
         val module = DataCaptureServiceModuleImpl(
             initModule,
             openTelemetryModule,
             FakeConfigService(
-                autoDataCaptureBehavior = FakeAutoDataCaptureBehavior(uiLoadPerfCaptureEnabled = true)
+                autoDataCaptureBehavior = FakeAutoDataCaptureBehavior(uiLoadTracingEnabled = false)
+            ),
+            FakeWorkerThreadModule(),
+            FakeVersionChecker(false),
+            FakeFeatureModule()
+        )
+
+        assertNull(module.uiLoadTraceEmitter)
+        assertNull(module.activityLoadEventEmitter)
+    }
+
+    @Test
+    fun `enable only selected ui load performance capture`() {
+        val module = DataCaptureServiceModuleImpl(
+            initModule,
+            openTelemetryModule,
+            FakeConfigService(
+                autoDataCaptureBehavior = FakeAutoDataCaptureBehavior(uiLoadTracingTraceAll = false)
             ),
             FakeWorkerThreadModule(),
             FakeVersionChecker(false),

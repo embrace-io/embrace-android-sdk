@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.fakes
 
 import android.app.Activity
-import io.embrace.android.embracesdk.annotation.TracedActivity
+import io.embrace.android.embracesdk.annotation.LoadTracedActivity
 
-@TracedActivity
+@LoadTracedActivity
 class FakeTracedActivity : Activity()

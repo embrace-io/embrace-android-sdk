@@ -65,7 +65,9 @@ internal class EmbraceActionInterface(
         startInBackground: Boolean = false,
         createFirstActivity: Boolean = true,
         invokeManualEnd: Boolean = false,
-        activitiesAndActions: List<Pair<ActivityController<*>, () -> Unit>> = listOf(),
+        activitiesAndActions: List<Pair<ActivityController<*>, () -> Unit>> = listOf(
+            Robolectric.buildActivity(Activity::class.java) to {},
+        ),
         lifecycleEventGap: Long = 100L,
         postActionDwell: Long = 20000L,
         activityGap: Long = 50L,

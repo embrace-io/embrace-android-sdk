@@ -4,9 +4,9 @@ import android.app.Activity
 import android.os.Build.VERSION_CODES
 import android.os.Bundle
 import androidx.annotation.RequiresApi
-import io.embrace.android.embracesdk.annotation.CustomTracedActivity
+import io.embrace.android.embracesdk.annotation.CustomLoadTracedActivity
+import io.embrace.android.embracesdk.annotation.LoadTracedActivity
 import io.embrace.android.embracesdk.annotation.NotTracedActivity
-import io.embrace.android.embracesdk.annotation.TracedActivity
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityLifecycleListener
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
@@ -183,10 +183,10 @@ private class LifecycleEventEmitter(
     private fun Activity.traceLoad(): Boolean {
         return (autoTraceEnabled && !javaClass.isAnnotationPresent(NotTracedActivity::class.java)) ||
             isManualEnd() ||
-            javaClass.isAnnotationPresent(TracedActivity::class.java)
+            javaClass.isAnnotationPresent(LoadTracedActivity::class.java)
     }
 
-    private fun Activity.isManualEnd(): Boolean = javaClass.isAnnotationPresent(CustomTracedActivity::class.java)
+    private fun Activity.isManualEnd(): Boolean = javaClass.isAnnotationPresent(CustomLoadTracedActivity::class.java)
 
     private fun nowMs(): Long = clock.now().nanosToMillis()
 }

@@ -3,9 +3,9 @@ package io.embrace.android.embracesdk.testcases.features
 import android.app.Activity
 import android.os.Build
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.annotation.CustomTracedActivity
+import io.embrace.android.embracesdk.annotation.CustomLoadTracedActivity
+import io.embrace.android.embracesdk.annotation.LoadTracedActivity
 import io.embrace.android.embracesdk.annotation.NotTracedActivity
-import io.embrace.android.embracesdk.annotation.TracedActivity
 import io.embrace.android.embracesdk.assertions.assertEmbraceSpanData
 import io.embrace.android.embracesdk.assertions.findSpansByName
 import io.embrace.android.embracesdk.assertions.findSpansOfType
@@ -35,20 +35,29 @@ internal class UiLoadTest {
 
     @Config(sdk = [Build.VERSION_CODES.LOLLIPOP])
     @Test
+    fun `activity open creates a trace by default`() {
+        testRule.runTest(
+            instrumentedConfig = FakeInstrumentedConfig(
+                enabledFeatures = FakeEnabledFeatureConfig(bgActivityCapture = true)
+            ),
+            testCaseAction = {
+                simulateOpeningActivities()
+            },
+            assertAction = {
+                assertEquals(1, getSingleSessionEnvelope().findSpansOfType(EmbType.Performance.UiLoad).size)
+            }
+        )
+    }
+
+    @Config(sdk = [Build.VERSION_CODES.LOLLIPOP])
+    @Test
     fun `activity open does not create a trace if feature flag is disabled`() {
         testRule.runTest(
             instrumentedConfig = FakeInstrumentedConfig(
-                enabledFeatures = FakeEnabledFeatureConfig(uiLoadPerfCapture = false, bgActivityCapture = true)
+                enabledFeatures = FakeEnabledFeatureConfig(uiLoadTracingEnabled = false, bgActivityCapture = true)
             ),
             testCaseAction = {
-                simulateOpeningActivities(
-                    addStartupActivity = false,
-                    startInBackground = true,
-                    activitiesAndActions = listOf(
-                        Robolectric.buildActivity(Activity1::class.java) to {},
-                        Robolectric.buildActivity(Activity2::class.java) to {},
-                    )
-                )
+                simulateOpeningActivities()
             },
             assertAction = {
                 assertTrue(getSingleSessionEnvelope().findSpansOfType(EmbType.Performance.UiLoad).isEmpty())
@@ -62,17 +71,13 @@ internal class UiLoadTest {
         testRule.runTest(
             instrumentedConfig = FakeInstrumentedConfig(
                 enabledFeatures = FakeEnabledFeatureConfig(
-                    uiLoadPerfCapture = true,
-                    uiLoadPerfAutoCapture = true,
+                    uiLoadTracingEnabled = true,
+                    uiLoadTracingTraceAll = true,
                     bgActivityCapture = true
                 )
             ),
             testCaseAction = {
-                simulateOpeningActivities(
-                    activitiesAndActions = listOf(
-                        Robolectric.buildActivity(Activity::class.java) to {},
-                    )
-                )
+                simulateOpeningActivities()
             },
             assertAction = {
                 assertEquals(1, getSingleSessionEnvelope().findSpansOfType(EmbType.Performance.UiLoad).size)
@@ -87,8 +92,8 @@ internal class UiLoadTest {
         testRule.runTest(
             instrumentedConfig = FakeInstrumentedConfig(
                 enabledFeatures = FakeEnabledFeatureConfig(
-                    uiLoadPerfCapture = true,
-                    uiLoadPerfAutoCapture = false,
+                    uiLoadTracingEnabled = true,
+                    uiLoadTracingTraceAll = false,
                     bgActivityCapture = true
                 )
             ),
@@ -127,8 +132,8 @@ internal class UiLoadTest {
         testRule.runTest(
             instrumentedConfig = FakeInstrumentedConfig(
                 enabledFeatures = FakeEnabledFeatureConfig(
-                    uiLoadPerfCapture = true,
-                    uiLoadPerfAutoCapture = false,
+                    uiLoadTracingEnabled = true,
+                    uiLoadTracingTraceAll = false,
                     bgActivityCapture = true
                 )
             ),
@@ -167,8 +172,8 @@ internal class UiLoadTest {
         testRule.runTest(
             instrumentedConfig = FakeInstrumentedConfig(
                 enabledFeatures = FakeEnabledFeatureConfig(
-                    uiLoadPerfCapture = true,
-                    uiLoadPerfAutoCapture = true,
+                    uiLoadTracingEnabled = true,
+                    uiLoadTracingTraceAll = true,
                     bgActivityCapture = true
                 )
             ),
@@ -191,7 +196,7 @@ internal class UiLoadTest {
         var preLaunchTimeMs = 0L
         testRule.runTest(
             instrumentedConfig = FakeInstrumentedConfig(
-                enabledFeatures = FakeEnabledFeatureConfig(uiLoadPerfCapture = true, bgActivityCapture = true)
+                enabledFeatures = FakeEnabledFeatureConfig(uiLoadTracingEnabled = true, bgActivityCapture = true)
             ),
             setupAction = {
                 preLaunchTimeMs = overriddenClock.now()
@@ -243,7 +248,7 @@ internal class UiLoadTest {
         var preLaunchTimeMs = 0L
         testRule.runTest(
             instrumentedConfig = FakeInstrumentedConfig(
-                enabledFeatures = FakeEnabledFeatureConfig(uiLoadPerfCapture = true, bgActivityCapture = true)
+                enabledFeatures = FakeEnabledFeatureConfig(uiLoadTracingEnabled = true, bgActivityCapture = true)
             ),
             setupAction = {
                 preLaunchTimeMs = overriddenClock.now()
@@ -298,7 +303,7 @@ internal class UiLoadTest {
         var preLaunchTimeMs = 0L
         testRule.runTest(
             instrumentedConfig = FakeInstrumentedConfig(
-                enabledFeatures = FakeEnabledFeatureConfig(uiLoadPerfCapture = true, bgActivityCapture = true)
+                enabledFeatures = FakeEnabledFeatureConfig(uiLoadTracingEnabled = true, bgActivityCapture = true)
             ),
             setupAction = {
                 preLaunchTimeMs = overriddenClock.now()
@@ -338,16 +343,16 @@ internal class UiLoadTest {
     }
 
     private companion object {
-        @TracedActivity
+        @LoadTracedActivity
         class Activity1 : Activity()
 
-        @TracedActivity
+        @LoadTracedActivity
         class Activity2 : Activity()
 
         @NotTracedActivity
         class IgnoredActivity : Activity()
 
-        @CustomTracedActivity
+        @CustomLoadTracedActivity
         class ManualStopActivity : Activity()
 
         val ACTIVITY1_NAME = Robolectric.buildActivity(Activity1::class.java).get().localClassName

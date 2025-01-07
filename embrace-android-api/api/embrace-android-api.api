@@ -24,19 +24,19 @@ public final class io/embrace/android/embracesdk/Severity : java/lang/Enum {
 	public static fun values ()[Lio/embrace/android/embracesdk/Severity;
 }
 
-public abstract interface annotation class io/embrace/android/embracesdk/annotation/CustomTracedActivity : java/lang/annotation/Annotation {
+public abstract interface annotation class io/embrace/android/embracesdk/annotation/CustomLoadTracedActivity : java/lang/annotation/Annotation {
 }
 
 public abstract interface annotation class io/embrace/android/embracesdk/annotation/InternalApi : java/lang/annotation/Annotation {
+}
+
+public abstract interface annotation class io/embrace/android/embracesdk/annotation/LoadTracedActivity : java/lang/annotation/Annotation {
 }
 
 public abstract interface annotation class io/embrace/android/embracesdk/annotation/NotTracedActivity : java/lang/annotation/Annotation {
 }
 
 public abstract interface annotation class io/embrace/android/embracesdk/annotation/StartupActivity : java/lang/annotation/Annotation {
-}
-
-public abstract interface annotation class io/embrace/android/embracesdk/annotation/TracedActivity : java/lang/annotation/Annotation {
 }
 
 public abstract interface class io/embrace/android/embracesdk/internal/api/BreadcrumbApi {

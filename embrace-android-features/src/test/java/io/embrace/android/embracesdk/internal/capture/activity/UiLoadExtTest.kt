@@ -177,7 +177,7 @@ internal class UiLoadExtTest {
             resume()
             if (uiLoadEventListener.events.any { it.stage == "render" }) {
                 clock.tick(RENDER_DURATION)
-                checkNotNull(drawEventEmitter.lastCallback).invoke()
+                drawEventEmitter.draw(activityController.get())
             }
             pause()
             stop()

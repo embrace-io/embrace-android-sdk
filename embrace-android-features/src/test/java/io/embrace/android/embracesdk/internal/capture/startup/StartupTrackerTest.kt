@@ -180,7 +180,7 @@ internal class StartupTrackerTest {
     @Test
     fun `render time tracked if first draw event emitted`() {
         launchActivity()
-        checkNotNull(drawEventEmitter.lastCallback)()
+        drawEventEmitter.draw(defaultActivityController.get())
         assertEquals(clock.now(), dataCollector.firstFrameRenderedMs)
     }
 
@@ -193,7 +193,7 @@ internal class StartupTrackerTest {
         defaultActivityController.create(null)
         assertEquals(clock.now(), dataCollector.startupActivityInitStartMs)
         clock.tick()
-        checkNotNull(drawEventEmitter.lastCallback)()
+        drawEventEmitter.draw(defaultActivityController.get())
         defaultActivityController.create(null)
         assertNotEquals(clock.now(), dataCollector.startupActivityInitStartMs)
         assertEquals(1, activityLifecycleListener.onCreateInvokedCount)

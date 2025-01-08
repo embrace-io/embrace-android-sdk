@@ -15,8 +15,8 @@ import io.embrace.android.embracesdk.internal.capture.startup.StartupTracker
 import io.embrace.android.embracesdk.internal.capture.webview.EmbraceWebViewService
 import io.embrace.android.embracesdk.internal.capture.webview.WebViewService
 import io.embrace.android.embracesdk.internal.config.ConfigService
+import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityLifecycleListener
-import io.embrace.android.embracesdk.internal.ui.DrawEventEmitter
 import io.embrace.android.embracesdk.internal.ui.FirstDrawDetector
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
@@ -70,7 +70,10 @@ internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
         StartupTracker(
             appStartupDataCollector = appStartupDataCollector,
             activityLoadEventEmitter = activityLoadEventEmitter,
-            drawEventEmitter = firstDrawDetector
+            drawEventEmitter = createFirstDrawDetector(
+                versionChecker = versionChecker,
+                logger = initModule.logger,
+            )
         )
     }
 
@@ -90,7 +93,7 @@ internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
         if (traceEmitter != null) {
             createActivityLoadEventEmitter(
                 uiLoadEventListener = traceEmitter,
-                firstDrawDetector = firstDrawDetector,
+                firstDrawDetector = createFirstDrawDetector(versionChecker, initModule.logger),
                 autoTraceEnabled = configService.autoDataCaptureBehavior.isUiLoadTracingTraceAll(),
                 clock = openTelemetryModule.openTelemetryClock,
                 versionChecker = versionChecker
@@ -100,11 +103,10 @@ internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
         }
     }
 
-    private val firstDrawDetector: DrawEventEmitter? by singleton {
+    private fun createFirstDrawDetector(versionChecker: VersionChecker, logger: EmbLogger) =
         if (versionChecker.isAtLeast(Build.VERSION_CODES.Q)) {
-            FirstDrawDetector(initModule.logger)
+            FirstDrawDetector(logger)
         } else {
             null
         }
-    }
 }

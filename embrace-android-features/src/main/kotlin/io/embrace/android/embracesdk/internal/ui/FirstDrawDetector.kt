@@ -48,6 +48,10 @@ class FirstDrawDetector(
                         "Fail to attach frame rendering callback because the callback on Window was null"
                     )
                 )
+
+                // Adding an empty function indicates that the registration has failed and no subsequent attempts should
+                // be made for this instance. This prevents over-logging of errors for the same instance if the callback
+                // the window is null, should that ever happen.
                 loadingActivities[instanceId] = { }
             }
         }

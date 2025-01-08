@@ -141,6 +141,7 @@ private class LifecycleEventEmitter(
         if (activity.traceLoad()) {
             val instanceId = traceInstanceId(activity)
             if (drawEventEmitter != null) {
+                // this callback will be cached, so it should not directly reference the Activity instance
                 val callback = {
                     uiLoadEventListener.renderEnd(
                         instanceId = instanceId,

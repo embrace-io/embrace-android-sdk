@@ -3,6 +3,7 @@
 package io.embrace.android.embracesdk
 
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.content.Context
 import android.webkit.ConsoleMessage
 import io.embrace.android.embracesdk.internal.Systrace
@@ -421,5 +422,9 @@ public class Embrace private constructor(
 
     override fun disable() {
         impl.disable()
+    }
+
+    override fun activityLoaded(activity: Activity) {
+        impl.activityLoaded(activity)
     }
 }

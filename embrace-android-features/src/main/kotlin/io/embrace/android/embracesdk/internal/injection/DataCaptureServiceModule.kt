@@ -37,11 +37,23 @@ interface DataCaptureServiceModule {
      */
     val startupService: StartupService
 
+    /**
+     * Collects data happening during app startup so that startup traces can be created from it
+     */
     val appStartupDataCollector: AppStartupDataCollector
 
+    /**
+     * Listens for events in the app to pass along to [appStartupDataCollector]
+     */
     val startupTracker: StartupTracker
 
-    val uiLoadTraceEmitter: UiLoadEventListener
+    /**
+     * Creates UI Load traces based data it collects
+     */
+    val uiLoadTraceEmitter: UiLoadEventListener?
 
+    /**
+     * Listens for lifecycle events during the loading of Activities proxies them to [uiLoadTraceEmitter]
+     */
     val activityLoadEventEmitter: ActivityLifecycleListener?
 }

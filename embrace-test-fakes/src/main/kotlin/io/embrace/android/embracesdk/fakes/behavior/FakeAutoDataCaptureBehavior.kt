@@ -15,8 +15,8 @@ class FakeAutoDataCaptureBehavior(
     private val sigHandlerDetectionEnabled: Boolean = true,
     private val ndkEnabled: Boolean = false,
     private val diskUsageReportingEnabled: Boolean = true,
-    private val uiLoadPerfCaptureEnabled: Boolean = false,
-    private val uiLoadPerfAutoCaptureEnabled: Boolean = false,
+    private val uiLoadTracingEnabled: Boolean = true,
+    private val uiLoadTracingTraceAll: Boolean = true,
     private val v2StorageEnabled: Boolean = true,
     private val useOkhttp: Boolean = true,
 ) : AutoDataCaptureBehavior {
@@ -36,8 +36,8 @@ class FakeAutoDataCaptureBehavior(
     override fun is3rdPartySigHandlerDetectionEnabled(): Boolean = sigHandlerDetectionEnabled
     override fun isNativeCrashCaptureEnabled(): Boolean = ndkEnabled
     override fun isDiskUsageCaptureEnabled(): Boolean = diskUsageReportingEnabled
-    override fun isUiLoadPerfCaptureEnabled(): Boolean = uiLoadPerfCaptureEnabled
-    override fun isUiLoadPerfAutoCaptureEnabled(): Boolean = uiLoadPerfAutoCaptureEnabled
+    override fun isUiLoadTracingEnabled(): Boolean = uiLoadTracingEnabled
+    override fun isUiLoadTracingTraceAll(): Boolean = uiLoadTracingTraceAll
     override fun isV2StorageEnabled(): Boolean = v2StorageEnabled
     override fun shouldUseOkHttp(): Boolean = useOkhttp
 }

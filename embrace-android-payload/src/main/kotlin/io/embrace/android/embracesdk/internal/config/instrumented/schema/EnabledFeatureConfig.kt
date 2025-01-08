@@ -149,14 +149,16 @@ interface EnabledFeatureConfig {
     /**
      * Gates whether the SDK will capture traces for the performance of the opening of Activities.
      *
-     * sdk_config.automatic_data_capture.ui_load_perf_info
+     * Will be true if sdk_config.automatic_data_capture.ui_load_tracing_disabled is not true
      */
-    fun isUiLoadPerfCaptureEnabled(): Boolean = false
+    fun isUiLoadTracingEnabled(): Boolean = true
 
     /**
      * Gates whether the SDK will default to automatically capture traces for the performance of the opening of all Activities.
      *
-     * sdk_config.automatic_data_capture.ui_load_perf_info
+     * Will be true NEITHER of the following is true:
+     * - sdk_config.automatic_data_capture.ui_load_tracing_disabled
+     * - sdk_config.automatic_data_capture.ui_load_tracing_selected_only
      */
-    fun isUiLoadPerfAutoCaptureEnabled(): Boolean = false
+    fun isUiLoadTracingTraceAll(): Boolean = true
 }

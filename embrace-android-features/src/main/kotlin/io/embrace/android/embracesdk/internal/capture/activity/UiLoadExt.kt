@@ -4,8 +4,9 @@ import android.app.Activity
 import android.os.Build.VERSION_CODES
 import android.os.Bundle
 import androidx.annotation.RequiresApi
+import io.embrace.android.embracesdk.annotation.CustomLoadTracedActivity
+import io.embrace.android.embracesdk.annotation.LoadTracedActivity
 import io.embrace.android.embracesdk.annotation.NotTracedActivity
-import io.embrace.android.embracesdk.annotation.TracedActivity
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityLifecycleListener
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
@@ -34,6 +35,11 @@ fun createActivityLoadEventEmitter(
         LegacyActivityLoadEventEmitter(lifecycleEventEmitter)
     }
 }
+
+/**
+ * Return an ID to identify the trace for the given [Activity] instance
+ */
+fun traceInstanceId(activity: Activity): Int = activity.hashCode()
 
 /**
  * Implementation that works with Android 10+ APIs
@@ -108,18 +114,18 @@ private class LifecycleEventEmitter(
 ) {
 
     fun create(activity: Activity) {
-        if (activity.observe()) {
+        if (activity.traceLoad()) {
             uiLoadEventListener.create(
                 instanceId = traceInstanceId(activity),
                 activityName = activity.localClassName,
                 timestampMs = nowMs(),
-                manualEnd = false,
+                manualEnd = activity.isManualEnd(),
             )
         }
     }
 
     fun createEnd(activity: Activity) {
-        if (activity.observe()) {
+        if (activity.traceLoad()) {
             uiLoadEventListener.createEnd(
                 instanceId = traceInstanceId(activity),
                 timestampMs = nowMs()
@@ -128,18 +134,18 @@ private class LifecycleEventEmitter(
     }
 
     fun start(activity: Activity) {
-        if (activity.observe()) {
+        if (activity.traceLoad()) {
             uiLoadEventListener.start(
                 instanceId = traceInstanceId(activity),
                 activityName = activity.localClassName,
                 timestampMs = nowMs(),
-                manualEnd = false,
+                manualEnd = activity.isManualEnd(),
             )
         }
     }
 
     fun startEnd(activity: Activity) {
-        if (activity.observe()) {
+        if (activity.traceLoad()) {
             uiLoadEventListener.startEnd(
                 instanceId = traceInstanceId(activity),
                 timestampMs = nowMs()
@@ -148,7 +154,7 @@ private class LifecycleEventEmitter(
     }
 
     fun resume(activity: Activity) {
-        if (activity.observe()) {
+        if (activity.traceLoad()) {
             uiLoadEventListener.resume(
                 instanceId = traceInstanceId(activity),
                 timestampMs = nowMs()
@@ -157,7 +163,7 @@ private class LifecycleEventEmitter(
     }
 
     fun resumeEnd(activity: Activity) {
-        if (activity.observe()) {
+        if (activity.traceLoad()) {
             uiLoadEventListener.resumeEnd(
                 instanceId = traceInstanceId(activity),
                 timestampMs = nowMs()
@@ -166,7 +172,7 @@ private class LifecycleEventEmitter(
     }
 
     fun pause(activity: Activity) {
-        if (activity.observe()) {
+        if (activity.traceLoad()) {
             uiLoadEventListener.discard(
                 instanceId = traceInstanceId(activity),
                 timestampMs = nowMs()
@@ -174,12 +180,13 @@ private class LifecycleEventEmitter(
         }
     }
 
-    private fun Activity.observe(): Boolean {
-        return javaClass.isAnnotationPresent(TracedActivity::class.java) ||
-            autoTraceEnabled && !javaClass.isAnnotationPresent(NotTracedActivity::class.java)
+    private fun Activity.traceLoad(): Boolean {
+        return (autoTraceEnabled && !javaClass.isAnnotationPresent(NotTracedActivity::class.java)) ||
+            isManualEnd() ||
+            javaClass.isAnnotationPresent(LoadTracedActivity::class.java)
     }
 
-    private fun traceInstanceId(activity: Activity): Int = activity.hashCode()
+    private fun Activity.isManualEnd(): Boolean = javaClass.isAnnotationPresent(CustomLoadTracedActivity::class.java)
 
     private fun nowMs(): Long = clock.now().nanosToMillis()
 }

@@ -68,12 +68,12 @@ interface AutoDataCaptureBehavior : ConfigBehavior<EnabledFeatureConfig, RemoteC
     /**
      * Whether the SDK is configured to capture traces for the performance of the opening of Activities.
      */
-    fun isUiLoadPerfCaptureEnabled(): Boolean
+    fun isUiLoadTracingEnabled(): Boolean
 
     /**
      * Whether the SDK is configured to capture traces for the performance of the opening of all Activities by default.
      */
-    fun isUiLoadPerfAutoCaptureEnabled(): Boolean
+    fun isUiLoadTracingTraceAll(): Boolean
 
     /**
      * Gates whether the SDK should use OkHttp or fallback to UrlConnection.

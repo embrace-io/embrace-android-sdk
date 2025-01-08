@@ -15,6 +15,7 @@ import io.embrace.android.embracesdk.internal.Systrace.startSynchronous
 import io.embrace.android.embracesdk.internal.UnityInternalInterface
 import io.embrace.android.embracesdk.internal.anr.ndk.isUnityMainThread
 import io.embrace.android.embracesdk.internal.api.BreadcrumbApi
+import io.embrace.android.embracesdk.internal.api.InstrumentationApi
 import io.embrace.android.embracesdk.internal.api.InternalWebViewApi
 import io.embrace.android.embracesdk.internal.api.LogsApi
 import io.embrace.android.embracesdk.internal.api.NetworkRequestApi
@@ -25,6 +26,7 @@ import io.embrace.android.embracesdk.internal.api.SessionApi
 import io.embrace.android.embracesdk.internal.api.UserApi
 import io.embrace.android.embracesdk.internal.api.ViewTrackingApi
 import io.embrace.android.embracesdk.internal.api.delegate.BreadcrumbApiDelegate
+import io.embrace.android.embracesdk.internal.api.delegate.InstrumentationApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.InternalWebViewApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.LogsApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.NetworkRequestApiDelegate
@@ -76,6 +78,8 @@ internal class EmbraceImpl @JvmOverloads constructor(
     private val breadcrumbApiDelegate: BreadcrumbApiDelegate = BreadcrumbApiDelegate(bootstrapper, sdkCallChecker),
     private val webviewApiDelegate: InternalWebViewApiDelegate =
         InternalWebViewApiDelegate(bootstrapper, sdkCallChecker),
+    private val instrumentationApiDelegate: InstrumentationApiDelegate =
+        InstrumentationApiDelegate(bootstrapper, sdkCallChecker)
 ) : SdkApi,
     LogsApi by logsApiDelegate,
     NetworkRequestApi by networkRequestApiDelegate,
@@ -87,6 +91,7 @@ internal class EmbraceImpl @JvmOverloads constructor(
     ViewTrackingApi by viewTrackingApiDelegate,
     BreadcrumbApi by breadcrumbApiDelegate,
     InternalWebViewApi by webviewApiDelegate,
+    InstrumentationApi by instrumentationApiDelegate,
     InternalInterfaceApi {
 
     init {

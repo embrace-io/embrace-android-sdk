@@ -64,7 +64,10 @@ internal class EmbraceActionInterface(
         addStartupActivity: Boolean = true,
         startInBackground: Boolean = false,
         createFirstActivity: Boolean = true,
-        activitiesAndActions: List<Pair<ActivityController<*>, () -> Unit>> = listOf(),
+        invokeManualEnd: Boolean = false,
+        activitiesAndActions: List<Pair<ActivityController<*>, () -> Unit>> = listOf(
+            Robolectric.buildActivity(Activity::class.java) to {},
+        ),
         lifecycleEventGap: Long = 100L,
         postActionDwell: Long = 20000L,
         activityGap: Long = 50L,
@@ -99,6 +102,10 @@ internal class EmbraceActionInterface(
             }
             activityController.resume()
             setup.overriddenClock.tick(lifecycleEventGap)
+            if (invokeManualEnd) {
+                setup.overriddenClock.tick(lifecycleEventGap)
+                embrace.activityLoaded(activityController.get())
+            }
             lastActivity?.stop()
             setup.overriddenClock.tick()
 

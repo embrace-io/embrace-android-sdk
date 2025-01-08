@@ -40,7 +40,7 @@ internal class EmbraceActionInterface(
         onForeground()
 
         // perform a custom action during the session boundary, e.g. adding a breadcrumb.
-        action()
+        this.action()
 
         // end session 30s later by entering background
         setup.overriddenClock.tick(30000)
@@ -68,9 +68,6 @@ internal class EmbraceActionInterface(
         activitiesAndActions: List<Pair<ActivityController<*>, () -> Unit>> = listOf(
             Robolectric.buildActivity(Activity::class.java) to {},
         ),
-        lifecycleEventGap: Long = 100L,
-        postActionDwell: Long = 20000L,
-        activityGap: Long = 50L,
     ) {
         var lastActivity: ActivityController<*>? = if (addStartupActivity) {
             Robolectric.buildActivity(Activity::class.java)
@@ -85,35 +82,34 @@ internal class EmbraceActionInterface(
             if (startInBackground) {
                 stop()
                 onBackground()
-                setup.overriddenClock.tick(10000L)
+                setup.overriddenClock.tick(STARTUP_BACKGROUND_TIME)
             } else {
-                setup.overriddenClock.tick(activityGap)
+                setup.overriddenClock.tick(ACTIVITY_GAP)
             }
         }
         activitiesAndActions.forEachIndexed { index, (activityController, action) ->
             if (index != 0 || createFirstActivity) {
                 activityController.create()
-                setup.overriddenClock.tick(lifecycleEventGap)
+                setup.overriddenClock.tick(LIFECYCLE_EVENT_GAP)
             }
             activityController.start()
-            setup.overriddenClock.tick(lifecycleEventGap)
+            setup.overriddenClock.tick(LIFECYCLE_EVENT_GAP)
             if (index == 0 && startInBackground) {
                 onForeground()
             }
             activityController.resume()
-            setup.overriddenClock.tick(lifecycleEventGap)
+            setup.overriddenClock.tick(LIFECYCLE_EVENT_GAP)
             if (invokeManualEnd) {
-                setup.overriddenClock.tick(lifecycleEventGap)
+                setup.overriddenClock.tick(LIFECYCLE_EVENT_GAP)
                 embrace.activityLoaded(activityController.get())
             }
             lastActivity?.stop()
-            setup.overriddenClock.tick()
 
             action()
 
-            setup.overriddenClock.tick(postActionDwell)
+            setup.overriddenClock.tick(POST_ACTIVITY_ACTION_DWELL)
             activityController.pause()
-            setup.overriddenClock.tick(activityGap)
+            setup.overriddenClock.tick(ACTIVITY_GAP)
             lastActivity = activityController
         }
         lastActivity?.stop()
@@ -151,5 +147,12 @@ internal class EmbraceActionInterface(
     fun alterThermalState(thermalState: Int) {
         val dataSource = checkNotNull(bootstrapper.featureModule.thermalStateDataSource.dataSource)
         dataSource.handleThermalStateChange(thermalState)
+    }
+
+    companion object {
+        const val LIFECYCLE_EVENT_GAP: Long = 10L
+        const val ACTIVITY_GAP: Long = 100L
+        const val STARTUP_BACKGROUND_TIME: Long = 1000L
+        const val POST_ACTIVITY_ACTION_DWELL: Long = 10000L
     }
 }

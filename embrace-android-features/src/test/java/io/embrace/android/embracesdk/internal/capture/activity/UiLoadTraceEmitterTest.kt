@@ -381,7 +381,6 @@ internal class UiLoadTraceEmitterTest {
         clock.tick()
 
         val resumeEvents = activityResume(
-            activityName = activityName,
             instanceId = instanceId,
             fireEndEvent = hasRenderEvent,
             firePreAndPost = firePreAndPost,
@@ -392,11 +391,7 @@ internal class UiLoadTraceEmitterTest {
         clock.tick()
 
         val renderEvents = if (hasRenderEvent) {
-            activityRender(
-                activityName = activityName,
-                instanceId = instanceId,
-                firePreAndPost = firePreAndPost
-            )
+            activityRender(instanceId = instanceId)
         } else {
             null
         }?.apply {
@@ -435,10 +430,10 @@ internal class UiLoadTraceEmitterTest {
         manualEnd: Boolean = false,
     ): LifecycleEvents {
         return runLifecycleEvent(
-            activityName = activityName,
             instanceId = instanceId,
             startCallback = traceEmitter::create,
             endCallback = traceEmitter::createEnd,
+            activityName = activityName,
             firePreAndPost = firePreAndPost,
             manualEnd = manualEnd,
         )
@@ -451,10 +446,10 @@ internal class UiLoadTraceEmitterTest {
         manualEnd: Boolean = false,
     ): LifecycleEvents {
         return runLifecycleEvent(
-            activityName = activityName,
             instanceId = instanceId,
             startCallback = traceEmitter::start,
             endCallback = traceEmitter::startEnd,
+            activityName = activityName,
             firePreAndPost = firePreAndPost,
             manualEnd = manualEnd,
         )
@@ -462,13 +457,11 @@ internal class UiLoadTraceEmitterTest {
 
     @Suppress("FunctionParameterNaming", "UnusedParameter", "EmptyFunctionBlock")
     private fun activityResume(
-        activityName: String,
         instanceId: Int,
         fireEndEvent: Boolean,
         firePreAndPost: Boolean = true,
     ): LifecycleEvents {
         return runLifecycleEvent(
-            activityName = activityName,
             instanceId = instanceId,
             startCallback = fun(instanceId: Int, _: String, startMs: Long, _: Boolean) {
                 traceEmitter.resume(instanceId, startMs)
@@ -478,28 +471,20 @@ internal class UiLoadTraceEmitterTest {
         )
     }
 
-    @Suppress("FunctionParameterNaming", "UnusedParameter")
-    private fun activityRender(
-        activityName: String,
-        instanceId: Int,
-        firePreAndPost: Boolean = true,
-    ): LifecycleEvents {
-        return runLifecycleEvent(
-            activityName = activityName,
-            instanceId = instanceId,
-            startCallback = fun(instanceId: Int, _: String, startMs: Long, _: Boolean) {
-                traceEmitter.render(instanceId, startMs)
-            },
-            endCallback = traceEmitter::renderEnd,
-            firePreAndPost = firePreAndPost,
-        )
+    private fun activityRender(instanceId: Int): LifecycleEvents {
+        val events = LifecycleEvents()
+        events.eventStart = clock.now()
+        traceEmitter.render(instanceId, events.startMs())
+        events.eventEnd = clock.tick(100L)
+        traceEmitter.renderEnd(instanceId, events.endMs())
+        return events
     }
 
     private fun runLifecycleEvent(
-        activityName: String,
         instanceId: Int,
         startCallback: (instanceId: Int, activityName: String, startMs: Long, manualEnd: Boolean) -> Unit,
         endCallback: (instanceId: Int, startMs: Long) -> Unit,
+        activityName: String = "",
         firePreAndPost: Boolean = true,
         manualEnd: Boolean = false,
     ): LifecycleEvents {

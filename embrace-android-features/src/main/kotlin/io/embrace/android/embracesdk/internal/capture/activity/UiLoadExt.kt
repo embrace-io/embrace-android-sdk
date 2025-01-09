@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.annotation.LoadTracedActivity
 import io.embrace.android.embracesdk.annotation.NotTracedActivity
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityLifecycleListener
+import io.embrace.android.embracesdk.internal.ui.DrawEventEmitter
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.opentelemetry.sdk.common.Clock
 
@@ -20,12 +21,14 @@ import io.opentelemetry.sdk.common.Clock
  */
 fun createActivityLoadEventEmitter(
     uiLoadEventListener: UiLoadEventListener,
+    firstDrawDetector: DrawEventEmitter?,
     autoTraceEnabled: Boolean,
     clock: Clock,
     versionChecker: VersionChecker,
 ): ActivityLifecycleListener {
     val lifecycleEventEmitter = LifecycleEventEmitter(
         uiLoadEventListener = uiLoadEventListener,
+        drawEventEmitter = firstDrawDetector,
         autoTraceEnabled = autoTraceEnabled,
         clock = clock,
     )
@@ -46,7 +49,7 @@ fun traceInstanceId(activity: Activity): Int = activity.hashCode()
  */
 @RequiresApi(VERSION_CODES.Q)
 private class ActivityLoadEventEmitter(
-    private val lifecycleEventEmitter: LifecycleEventEmitter,
+    private val lifecycleEventEmitter: LifecycleEventEmitter
 ) : ActivityLifecycleListener {
 
     override fun onActivityPreCreated(activity: Activity, savedInstanceState: Bundle?) {
@@ -109,6 +112,7 @@ private class LegacyActivityLoadEventEmitter(
  */
 private class LifecycleEventEmitter(
     private val uiLoadEventListener: UiLoadEventListener,
+    private val drawEventEmitter: DrawEventEmitter?,
     private val autoTraceEnabled: Boolean,
     private val clock: Clock,
 ) {
@@ -135,8 +139,19 @@ private class LifecycleEventEmitter(
 
     fun start(activity: Activity) {
         if (activity.traceLoad()) {
+            val instanceId = traceInstanceId(activity)
+            if (drawEventEmitter != null) {
+                // this callback will be cached, so it should not directly reference the Activity instance
+                val callback = {
+                    uiLoadEventListener.renderEnd(
+                        instanceId = instanceId,
+                        timestampMs = nowMs()
+                    )
+                }
+                drawEventEmitter.registerFirstDrawCallback(activity, callback)
+            }
             uiLoadEventListener.start(
-                instanceId = traceInstanceId(activity),
+                instanceId = instanceId,
                 activityName = activity.localClassName,
                 timestampMs = nowMs(),
                 manualEnd = activity.isManualEnd(),
@@ -164,10 +179,18 @@ private class LifecycleEventEmitter(
 
     fun resumeEnd(activity: Activity) {
         if (activity.traceLoad()) {
+            val now = nowMs()
             uiLoadEventListener.resumeEnd(
                 instanceId = traceInstanceId(activity),
-                timestampMs = nowMs()
+                timestampMs = now
             )
+
+            if (drawEventEmitter != null) {
+                uiLoadEventListener.render(
+                    instanceId = traceInstanceId(activity),
+                    timestampMs = now
+                )
+            }
         }
     }
 
@@ -177,6 +200,7 @@ private class LifecycleEventEmitter(
                 instanceId = traceInstanceId(activity),
                 timestampMs = nowMs()
             )
+            drawEventEmitter?.unregisterFirstDrawCallback(activity)
         }
     }
 

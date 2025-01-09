@@ -6,6 +6,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeClock.Companion.DEFAULT_FAKE_CURRENT_TIME
 import io.embrace.android.embracesdk.fakes.FakeCustomTracedActivity
+import io.embrace.android.embracesdk.fakes.FakeDrawEventEmitter
 import io.embrace.android.embracesdk.fakes.FakeNotTracedActivity
 import io.embrace.android.embracesdk.fakes.FakeTracedActivity
 import io.embrace.android.embracesdk.fakes.FakeUiLoadEventListener
@@ -18,6 +19,7 @@ import io.embrace.android.embracesdk.internal.ClockTickingActivityLifecycleCallb
 import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityLifecycleListener
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -34,12 +36,14 @@ internal class UiLoadExtTest {
     private lateinit var clock: FakeClock
     private lateinit var uiLoadEventListener: FakeUiLoadEventListener
     private lateinit var eventEmitter: ActivityLifecycleListener
+    private lateinit var drawEventEmitter: FakeDrawEventEmitter
     private lateinit var activityController: ActivityController<*>
 
     @Before
     fun setUp() {
         clock = FakeClock(currentTime = DEFAULT_FAKE_CURRENT_TIME)
         uiLoadEventListener = FakeUiLoadEventListener()
+        drawEventEmitter = FakeDrawEventEmitter()
         RuntimeEnvironment.getApplication().registerActivityLifecycleCallbacks(
             ClockTickingActivityLifecycleCallbacks(clock)
         )
@@ -51,6 +55,7 @@ internal class UiLoadExtTest {
         createEventEmitter(autoTraceEnabled = false, activityClass = FakeTracedActivity::class)
         stepThroughActivityLifecycle()
         uiLoadEventListener.events.assertEventData(expectedColdOpenEvents)
+        assertDrawEvents()
     }
 
     @Config(sdk = [Build.VERSION_CODES.UPSIDE_DOWN_CAKE])
@@ -59,6 +64,7 @@ internal class UiLoadExtTest {
         createEventEmitter(autoTraceEnabled = false, activityClass = FakeTracedActivity::class)
         stepThroughActivityLifecycle(isColdOpen = false)
         uiLoadEventListener.events.assertEventData(expectedHotOpenEvents)
+        assertDrawEvents()
     }
 
     @Config(sdk = [Build.VERSION_CODES.UPSIDE_DOWN_CAKE])
@@ -67,6 +73,7 @@ internal class UiLoadExtTest {
         createEventEmitter(autoTraceEnabled = true, activityClass = Activity::class)
         stepThroughActivityLifecycle()
         uiLoadEventListener.events.assertEventData(expectedColdOpenEvents)
+        assertDrawEvents()
     }
 
     @Config(sdk = [Build.VERSION_CODES.UPSIDE_DOWN_CAKE])
@@ -91,6 +98,7 @@ internal class UiLoadExtTest {
         createEventEmitter(autoTraceEnabled = false, activityClass = FakeCustomTracedActivity::class)
         stepThroughActivityLifecycle()
         uiLoadEventListener.events.assertEventData(expectedColdOpenEvents)
+        assertDrawEvents()
     }
 
     @Config(sdk = [Build.VERSION_CODES.LOLLIPOP])
@@ -99,6 +107,7 @@ internal class UiLoadExtTest {
         createEventEmitter(autoTraceEnabled = false, activityClass = FakeTracedActivity::class)
         stepThroughActivityLifecycle()
         uiLoadEventListener.events.assertEventData(legacyColdOpenEvents)
+        assertDrawEvents()
     }
 
     @Config(sdk = [Build.VERSION_CODES.LOLLIPOP])
@@ -107,6 +116,7 @@ internal class UiLoadExtTest {
         createEventEmitter(autoTraceEnabled = false, activityClass = FakeTracedActivity::class)
         stepThroughActivityLifecycle(isColdOpen = false)
         uiLoadEventListener.events.assertEventData(legacyHotOpenEvents)
+        assertDrawEvents()
     }
 
     @Config(sdk = [Build.VERSION_CODES.LOLLIPOP])
@@ -115,6 +125,7 @@ internal class UiLoadExtTest {
         createEventEmitter(autoTraceEnabled = true, activityClass = Activity::class)
         stepThroughActivityLifecycle()
         uiLoadEventListener.events.assertEventData(legacyColdOpenEvents)
+        assertDrawEvents()
     }
 
     @Config(sdk = [Build.VERSION_CODES.LOLLIPOP])
@@ -139,11 +150,13 @@ internal class UiLoadExtTest {
         createEventEmitter(autoTraceEnabled = false, activityClass = FakeCustomTracedActivity::class)
         stepThroughActivityLifecycle()
         uiLoadEventListener.events.assertEventData(legacyColdOpenEvents)
+        assertDrawEvents()
     }
 
     private fun <T : Activity> createEventEmitter(autoTraceEnabled: Boolean, activityClass: KClass<T>) {
         eventEmitter = createActivityLoadEventEmitter(
             uiLoadEventListener = uiLoadEventListener,
+            firstDrawDetector = drawEventEmitter,
             autoTraceEnabled = autoTraceEnabled,
             clock = FakeInitModule(clock = clock).openTelemetryModule.openTelemetryClock,
             versionChecker = BuildVersionChecker
@@ -162,6 +175,10 @@ internal class UiLoadExtTest {
             }
             start()
             resume()
+            if (uiLoadEventListener.events.any { it.stage == "render" }) {
+                clock.tick(RENDER_DURATION)
+                drawEventEmitter.draw(activityController.get())
+            }
             pause()
             stop()
         }
@@ -171,8 +188,17 @@ internal class UiLoadExtTest {
         assertEquals(expectedEvents.map { it.stage to it.timestampMs }, map { it.stage to it.timestampMs })
     }
 
+    private fun assertDrawEvents() {
+        assertNotNull(drawEventEmitter.lastRegisteredActivity)
+        assertNotNull(drawEventEmitter.lastCallback)
+        assertNotNull(drawEventEmitter.lastUnregisteredActivity)
+        assertEquals(drawEventEmitter.lastRegisteredActivity, drawEventEmitter.lastRegisteredActivity)
+    }
+
     companion object {
         private const val START_TIME_MS: Long = DEFAULT_FAKE_CURRENT_TIME
+        private const val RENDER_DURATION: Long = 66L
+
         private val expectedColdOpenEvents = listOf(
             createEvent(
                 stage = "create",
@@ -199,8 +225,16 @@ internal class UiLoadExtTest {
                 timestampMs = START_TIME_MS + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 3
             ),
             createEvent(
+                stage = "render",
+                timestampMs = START_TIME_MS + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 3
+            ),
+            createEvent(
+                stage = "renderEnd",
+                timestampMs = START_TIME_MS + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 3 + RENDER_DURATION
+            ),
+            createEvent(
                 stage = "discard",
-                timestampMs = START_TIME_MS + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 3 + PRE_DURATION
+                timestampMs = START_TIME_MS + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 3 + RENDER_DURATION + PRE_DURATION
             ),
         )
 
@@ -222,8 +256,16 @@ internal class UiLoadExtTest {
                 timestampMs = START_TIME_MS + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 2
             ),
             createEvent(
+                stage = "render",
+                timestampMs = START_TIME_MS + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 2
+            ),
+            createEvent(
+                stage = "renderEnd",
+                timestampMs = START_TIME_MS + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 2 + RENDER_DURATION
+            ),
+            createEvent(
                 stage = "discard",
-                timestampMs = START_TIME_MS + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 2 + PRE_DURATION
+                timestampMs = START_TIME_MS + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 2 + RENDER_DURATION + PRE_DURATION
             ),
         )
 

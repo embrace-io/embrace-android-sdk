@@ -12,6 +12,7 @@ import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityLifecycl
 import io.embrace.android.embracesdk.internal.ui.DrawEventEmitter
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.opentelemetry.sdk.common.Clock
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Creates [ActivityLifecycleListener] that maps Activity lifecycle events to the given [UiLoadEventListener].
@@ -49,7 +50,7 @@ fun traceInstanceId(activity: Activity): Int = activity.hashCode()
  */
 @RequiresApi(VERSION_CODES.Q)
 private class ActivityLoadEventEmitter(
-    private val lifecycleEventEmitter: LifecycleEventEmitter
+    private val lifecycleEventEmitter: LifecycleEventEmitter,
 ) : ActivityLifecycleListener {
 
     override fun onActivityPreCreated(activity: Activity, savedInstanceState: Bundle?) {
@@ -117,6 +118,8 @@ private class LifecycleEventEmitter(
     private val clock: Clock,
 ) {
 
+    private val instanceStartTime: MutableMap<Int, Long> = ConcurrentHashMap()
+
     fun create(activity: Activity) {
         if (activity.traceLoad()) {
             uiLoadEventListener.create(
@@ -150,19 +153,21 @@ private class LifecycleEventEmitter(
                 }
                 drawEventEmitter.registerFirstDrawCallback(activity, callback)
             }
-            uiLoadEventListener.start(
-                instanceId = instanceId,
-                activityName = activity.localClassName,
-                timestampMs = nowMs(),
-                manualEnd = activity.isManualEnd(),
-            )
+            instanceStartTime[instanceId] = nowMs()
         }
     }
 
     fun startEnd(activity: Activity) {
         if (activity.traceLoad()) {
+            val instanceId = traceInstanceId(activity)
+            uiLoadEventListener.start(
+                instanceId = instanceId,
+                activityName = activity.localClassName,
+                timestampMs = instanceStartTime.remove(instanceId) ?: nowMs(),
+                manualEnd = activity.isManualEnd(),
+            )
             uiLoadEventListener.startEnd(
-                instanceId = traceInstanceId(activity),
+                instanceId = instanceId,
                 timestampMs = nowMs()
             )
         }

@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.spans.PersistableEmbraceSpan
 import io.embrace.android.embracesdk.internal.spans.SpanService
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
+import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicReference
@@ -47,7 +48,7 @@ import java.util.concurrent.atomic.AtomicReference
 class UiLoadTraceEmitter(
     private val spanService: SpanService,
     private val versionChecker: VersionChecker,
-) : UiLoadEventListener {
+) : UiLoadEventListener, UiLoadTraceModifier {
 
     private val activeTraces: MutableMap<Int, UiLoadTrace> = ConcurrentHashMap()
     private var currentInstance: AtomicReference<UiInstance?> = AtomicReference()
@@ -160,6 +161,35 @@ class UiLoadTraceEmitter(
             timestampMs = timestampMs,
             errorCode = ErrorCode.USER_ABANDON
         )
+    }
+
+    override fun addAttribute(instanceId: Int, key: String, value: String) {
+        activeTraces[instanceId]?.run {
+            root.addAttribute(key, value)
+        }
+    }
+
+    override fun addChildSpan(
+        instanceId: Int,
+        name: String,
+        startTimeMs: Long,
+        endTimeMs: Long,
+        attributes: Map<String, String>,
+        events: List<EmbraceSpanEvent>,
+        errorCode: ErrorCode?,
+    ) {
+        activeTraces[instanceId]?.run {
+            spanService.recordCompletedSpan(
+                name = name,
+                startTimeMs = startTimeMs,
+                endTimeMs = endTimeMs,
+                internal = false,
+                parent = root,
+                attributes = attributes,
+                events = events,
+                errorCode = errorCode
+            )
+        }
     }
 
     private fun startTrace(

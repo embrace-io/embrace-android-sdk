@@ -201,8 +201,10 @@ private class LifecycleEventEmitter(
 
     fun pause(activity: Activity) {
         if (activity.traceLoad()) {
+            val instanceId = traceInstanceId(activity)
+            instanceStartTime.remove(instanceId)
             uiLoadEventListener.discard(
-                instanceId = traceInstanceId(activity),
+                instanceId = instanceId,
                 timestampMs = nowMs()
             )
             drawEventEmitter?.unregisterFirstDrawCallback(activity)

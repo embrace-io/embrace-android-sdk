@@ -32,16 +32,11 @@ class EmbraceLogService(
     private val serializer: PlatformSerializer,
 ) : LogService {
 
+    private val behavior = configService.logMessageBehavior
     private val logCounters = mapOf(
-        Severity.INFO to LogCounter(
-            configService.logMessageBehavior::getInfoLogLimit
-        ),
-        Severity.WARNING to LogCounter(
-            configService.logMessageBehavior::getWarnLogLimit
-        ),
-        Severity.ERROR to LogCounter(
-            configService.logMessageBehavior::getErrorLogLimit
-        )
+        Severity.INFO to LogCounter(behavior::getInfoLogLimit),
+        Severity.WARNING to LogCounter(behavior::getWarnLogLimit),
+        Severity.ERROR to LogCounter(behavior::getErrorLogLimit)
     )
 
     override fun log(
@@ -57,112 +52,46 @@ class EmbraceLogService(
         exceptionMessage: String?,
     ) {
         val redactedProperties = redactSensitiveProperties(properties)
-        if (logExceptionType == LogExceptionType.NONE) {
-            log(
-                message,
-                severity,
-                redactedProperties
+        val attrs = createTelemetryAttributes(redactedProperties)
+
+        val schemaProvider: (TelemetryAttributes) -> SchemaType = when {
+            logExceptionType == LogExceptionType.NONE -> ::Log
+            configService.appFramework == AppFramework.FLUTTER -> ::FlutterException
+            else -> ::Exception
+        }
+
+        if (logExceptionType != LogExceptionType.NONE) {
+            val stacktrace = stackTraceElements?.let(serializer::truncatedStacktrace) ?: customStackTrace
+            populateLogExceptionAttributes(
+                attributes = attrs,
+                logExceptionType = logExceptionType,
+                stackTrace = stacktrace,
+                type = exceptionName,
+                message = exceptionMessage,
             )
-        } else {
-            val stacktrace = if (stackTraceElements != null) {
-                serializer.truncatedStacktrace(stackTraceElements)
-            } else {
-                customStackTrace
-            }
             if (configService.appFramework == AppFramework.FLUTTER) {
-                logFlutterException(
-                    message = message,
-                    severity = severity,
-                    logExceptionType = logExceptionType,
-                    properties = redactedProperties,
-                    stackTrace = stacktrace,
-                    exceptionName = exceptionName,
-                    exceptionMessage = exceptionMessage,
+                populateFlutterExceptionAttrs(
                     context = context,
-                    library = library
-                )
-            } else {
-                logException(
-                    message = message,
-                    severity = severity,
-                    logExceptionType = logExceptionType,
-                    properties = redactedProperties,
-                    stackTrace = stacktrace,
-                    exceptionName = exceptionName,
-                    exceptionMessage = exceptionMessage
+                    library = library,
+                    attrs = attrs
                 )
             }
         }
-    }
-
-    private fun log(
-        message: String,
-        severity: Severity,
-        properties: Map<String, Any>?,
-    ) {
         addLogEventData(
             message = message,
             severity = severity,
-            attributes = createTelemetryAttributes(properties),
-            schemaProvider = ::Log
+            attributes = attrs,
+            schemaProvider = schemaProvider
         )
     }
 
-    private fun logException(
-        message: String,
-        severity: Severity,
-        logExceptionType: LogExceptionType,
-        properties: Map<String, Any>?,
-        stackTrace: String?,
-        exceptionName: String?,
-        exceptionMessage: String?,
-    ) {
-        val attributes = createTelemetryAttributes(properties)
-        populateLogExceptionAttributes(
-            attributes = attributes,
-            logExceptionType = logExceptionType,
-            stackTrace = stackTrace,
-            type = exceptionName,
-            message = exceptionMessage,
-        )
-
-        addLogEventData(
-            message = message,
-            severity = severity,
-            attributes = attributes,
-            schemaProvider = ::Exception
-        )
-    }
-
-    private fun logFlutterException(
-        message: String,
-        severity: Severity,
-        logExceptionType: LogExceptionType,
-        properties: Map<String, Any>?,
-        stackTrace: String?,
-        exceptionName: String?,
-        exceptionMessage: String?,
+    private fun populateFlutterExceptionAttrs(
         context: String?,
         library: String?,
+        attrs: TelemetryAttributes,
     ) {
-        val attributes = createTelemetryAttributes(properties)
-        populateLogExceptionAttributes(
-            attributes = attributes,
-            logExceptionType = logExceptionType,
-            stackTrace = stackTrace,
-            type = exceptionName,
-            message = exceptionMessage,
-        )
-
-        context?.let { attributes.setAttribute(embFlutterExceptionContext, it) }
-        library?.let { attributes.setAttribute(embFlutterExceptionLibrary, it) }
-
-        addLogEventData(
-            message = message,
-            severity = severity,
-            attributes = attributes,
-            schemaProvider = ::FlutterException
-        )
+        context?.let { attrs.setAttribute(embFlutterExceptionContext, it) }
+        library?.let { attrs.setAttribute(embFlutterExceptionLibrary, it) }
     }
 
     override fun getErrorLogsCount(): Int {
@@ -182,9 +111,7 @@ class EmbraceLogService(
             sessionPropertiesProvider = sessionPropertiesService::getProperties,
             customAttributes = customProperties?.mapValues { it.value.toString() } ?: emptyMap()
         )
-
         attributes.setAttribute(LogIncubatingAttributes.LOG_RECORD_UID, Uuid.getEmbUuid())
-
         return attributes
     }
 
@@ -210,12 +137,10 @@ class EmbraceLogService(
         if (shouldLogBeGated(severity)) {
             return
         }
-
         val logId = attributes.getAttribute(LogIncubatingAttributes.LOG_RECORD_UID)
         if (logId == null || !logCounters.getValue(severity).addIfAllowed()) {
             return
         }
-
         logWriter.addLog(schemaProvider(attributes), severity.toOtelSeverity(), trimToMaxLength(message))
     }
 
@@ -238,7 +163,7 @@ class EmbraceLogService(
         val maxLength = if (configService.appFramework == AppFramework.UNITY) {
             LOG_MESSAGE_UNITY_MAXIMUM_ALLOWED_LENGTH
         } else {
-            configService.logMessageBehavior.getLogMessageMaximumAllowedLength()
+            behavior.getLogMessageMaximumAllowedLength()
         }
 
         if (message.length > maxLength) {
@@ -247,7 +172,6 @@ class EmbraceLogService(
             if (maxLength <= endChars.length) {
                 return message.take(maxLength)
             }
-
             return message.take(maxLength - endChars.length) + endChars
         } else {
             return message

@@ -32,7 +32,7 @@ internal class DataCaptureServiceModuleImplTest {
         assertNotNull(module.pushNotificationService)
         assertNotNull(module.startupService)
         assertNotNull(module.activityLoadEventEmitter)
-        assertNotNull(module.uiLoadTraceEmitter)
+        assertNotNull(module.uiLoadDataListener)
     }
 
     @Test
@@ -48,7 +48,7 @@ internal class DataCaptureServiceModuleImplTest {
             FakeFeatureModule()
         )
 
-        assertNull(module.uiLoadTraceEmitter)
+        assertNull(module.uiLoadDataListener)
         assertNull(module.activityLoadEventEmitter)
     }
 
@@ -65,7 +65,7 @@ internal class DataCaptureServiceModuleImplTest {
             FakeFeatureModule()
         )
 
-        assertNotNull(module.uiLoadTraceEmitter)
+        assertNotNull(module.uiLoadDataListener)
         assertNotNull(module.activityLoadEventEmitter)
     }
 }

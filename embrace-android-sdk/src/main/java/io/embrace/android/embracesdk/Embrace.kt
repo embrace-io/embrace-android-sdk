@@ -427,4 +427,28 @@ public class Embrace private constructor(
     override fun activityLoaded(activity: Activity) {
         impl.activityLoaded(activity)
     }
+
+    override fun addAttributeToLoadTrace(activity: Activity, key: String, value: String) {
+        impl.addAttributeToLoadTrace(activity, key, value)
+    }
+
+    override fun addChildSpanToLoadTrace(
+        activity: Activity,
+        name: String,
+        startTimeMs: Long,
+        endTimeMs: Long,
+        attributes: Map<String, String>,
+        events: List<EmbraceSpanEvent>,
+        errorCode: ErrorCode?,
+    ) {
+        impl.addChildSpanToLoadTrace(
+            activity = activity,
+            name = name,
+            startTimeMs = startTimeMs,
+            endTimeMs = endTimeMs,
+            attributes = attributes,
+            events = events,
+            errorCode = errorCode
+        )
+    }
 }

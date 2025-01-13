@@ -3,8 +3,6 @@ package io.embrace.android.embracesdk.internal.logs
 import io.embrace.android.embracesdk.LogExceptionType
 import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.internal.arch.destination.LogWriter
-import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.FlutterException.embFlutterExceptionContext
-import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.FlutterException.embFlutterExceptionLibrary
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType.Exception
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType.FlutterException
@@ -15,11 +13,10 @@ import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.config.behavior.REDACTED_LABEL
 import io.embrace.android.embracesdk.internal.opentelemetry.embExceptionHandling
 import io.embrace.android.embracesdk.internal.payload.AppFramework
-import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
-import io.embrace.android.embracesdk.internal.serialization.truncatedStacktrace
 import io.embrace.android.embracesdk.internal.spans.toOtelSeverity
+import io.embrace.android.embracesdk.internal.utils.PropertyUtils.normalizeProperties
 import io.embrace.android.embracesdk.internal.utils.Uuid
-import io.opentelemetry.semconv.ExceptionAttributes
+import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.semconv.incubating.LogIncubatingAttributes
 
 /**
@@ -29,7 +26,6 @@ class EmbraceLogService(
     private val logWriter: LogWriter,
     private val configService: ConfigService,
     private val sessionPropertiesService: SessionPropertiesService,
-    private val serializer: PlatformSerializer,
 ) : LogService {
 
     private val behavior = configService.logMessageBehavior
@@ -44,38 +40,18 @@ class EmbraceLogService(
         severity: Severity,
         logExceptionType: LogExceptionType,
         properties: Map<String, Any>?,
-        stackTraceElements: Array<StackTraceElement>?,
-        customStackTrace: String?,
-        context: String?,
-        library: String?,
-        exceptionName: String?,
-        exceptionMessage: String?,
+        customLogAttrs: Map<AttributeKey<String>, String>,
     ) {
-        val redactedProperties = redactSensitiveProperties(properties)
-        val attrs = createTelemetryAttributes(redactedProperties)
+        val redactedProperties = redactSensitiveProperties(normalizeProperties(properties))
+        val attrs = createTelemetryAttributes(redactedProperties, customLogAttrs)
 
         val schemaProvider: (TelemetryAttributes) -> SchemaType = when {
             logExceptionType == LogExceptionType.NONE -> ::Log
             configService.appFramework == AppFramework.FLUTTER -> ::FlutterException
             else -> ::Exception
         }
-
         if (logExceptionType != LogExceptionType.NONE) {
-            val stacktrace = stackTraceElements?.let(serializer::truncatedStacktrace) ?: customStackTrace
-            populateLogExceptionAttributes(
-                attributes = attrs,
-                logExceptionType = logExceptionType,
-                stackTrace = stacktrace,
-                type = exceptionName,
-                message = exceptionMessage,
-            )
-            if (configService.appFramework == AppFramework.FLUTTER) {
-                populateFlutterExceptionAttrs(
-                    context = context,
-                    library = library,
-                    attrs = attrs
-                )
-            }
+            attrs.setAttribute(embExceptionHandling, logExceptionType.value)
         }
         addLogEventData(
             message = message,
@@ -83,15 +59,6 @@ class EmbraceLogService(
             attributes = attrs,
             schemaProvider = schemaProvider
         )
-    }
-
-    private fun populateFlutterExceptionAttrs(
-        context: String?,
-        library: String?,
-        attrs: TelemetryAttributes,
-    ) {
-        context?.let { attrs.setAttribute(embFlutterExceptionContext, it) }
-        library?.let { attrs.setAttribute(embFlutterExceptionLibrary, it) }
     }
 
     override fun getErrorLogsCount(): Int {
@@ -105,27 +72,20 @@ class EmbraceLogService(
     /**
      * Create [TelemetryAttributes] with the standard log properties
      */
-    private fun createTelemetryAttributes(customProperties: Map<String, Any>?): TelemetryAttributes {
+    private fun createTelemetryAttributes(
+        customProperties: Map<String, Any>?,
+        logAttrs: Map<AttributeKey<String>, String>,
+    ): TelemetryAttributes {
         val attributes = TelemetryAttributes(
             configService = configService,
             sessionPropertiesProvider = sessionPropertiesService::getProperties,
             customAttributes = customProperties?.mapValues { it.value.toString() } ?: emptyMap()
         )
         attributes.setAttribute(LogIncubatingAttributes.LOG_RECORD_UID, Uuid.getEmbUuid())
+        logAttrs.forEach {
+            attributes.setAttribute(it.key, it.value)
+        }
         return attributes
-    }
-
-    private fun populateLogExceptionAttributes(
-        attributes: TelemetryAttributes,
-        logExceptionType: LogExceptionType,
-        stackTrace: String?,
-        type: String?,
-        message: String?,
-    ) {
-        attributes.setAttribute(embExceptionHandling, logExceptionType.value)
-        type?.let { attributes.setAttribute(ExceptionAttributes.EXCEPTION_TYPE, it) }
-        message?.let { attributes.setAttribute(ExceptionAttributes.EXCEPTION_MESSAGE, it) }
-        stackTrace?.let { attributes.setAttribute(ExceptionAttributes.EXCEPTION_STACKTRACE, it) }
     }
 
     private fun addLogEventData(

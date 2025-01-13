@@ -11,7 +11,6 @@ import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.fakeModuleInitBootstrapper
 import io.embrace.android.embracesdk.fakes.injection.FakeLogModule
 import io.embrace.android.embracesdk.internal.payload.AppFramework
-import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
@@ -67,7 +66,7 @@ internal class LogsApiDelegateTest {
 
     @Test
     fun logMessage() {
-        delegate.logMessage("test", Severity.WARNING)
+        delegate.logMessageImpl(message = "test", severity = Severity.WARNING)
         val log = logService.loggedMessages.single()
         assertEquals("test", log.message)
         assertEquals(Severity.WARNING, log.severity)
@@ -122,7 +121,6 @@ internal class LogsApiDelegateTest {
         assertEquals("", log.message)
         assertEquals(Severity.ERROR, log.severity)
         assertEquals(LogExceptionType.HANDLED, log.logExceptionType)
-        assertArrayEquals(stacktrace, log.stackTraceElements)
     }
 
     @Test
@@ -133,7 +131,6 @@ internal class LogsApiDelegateTest {
         assertEquals("", log.message)
         assertEquals(Severity.INFO, log.severity)
         assertEquals(LogExceptionType.HANDLED, log.logExceptionType)
-        assertArrayEquals(stacktrace, log.stackTraceElements)
     }
 
     @Test
@@ -146,7 +143,6 @@ internal class LogsApiDelegateTest {
         assertEquals("", log.message)
         assertEquals(Severity.INFO, log.severity)
         assertEquals(LogExceptionType.HANDLED, log.logExceptionType)
-        assertArrayEquals(stacktrace, log.stackTraceElements)
         assertEquals(props, log.properties)
     }
 
@@ -160,7 +156,6 @@ internal class LogsApiDelegateTest {
         assertEquals("my message", log.message)
         assertEquals(Severity.INFO, log.severity)
         assertEquals(LogExceptionType.HANDLED, log.logExceptionType)
-        assertArrayEquals(stacktrace, log.stackTraceElements)
         assertEquals(props, log.properties)
     }
 }

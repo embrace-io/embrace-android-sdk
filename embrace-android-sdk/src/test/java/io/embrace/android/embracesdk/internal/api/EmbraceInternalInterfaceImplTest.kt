@@ -1,12 +1,8 @@
-@file:Suppress("DEPRECATION")
-
 package io.embrace.android.embracesdk.internal.api
 
 import android.net.Uri
 import android.webkit.URLUtil
 import io.embrace.android.embracesdk.EmbraceImpl
-import io.embrace.android.embracesdk.LogExceptionType
-import io.embrace.android.embracesdk.LogType
 import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
@@ -78,25 +74,6 @@ internal class EmbraceInternalInterfaceImplTest {
         internalImpl.logError("", emptyMap(), null, false)
         verify(exactly = 1) {
             embraceImpl.logMessage("", Severity.ERROR, emptyMap<String, String>())
-        }
-    }
-
-    @Suppress("DEPRECATION")
-    @Test
-    fun testLogHandledException() {
-        val exception = Throwable("handled exception")
-        internalImpl.logHandledException(exception, LogType.ERROR, emptyMap(), null)
-        verify(exactly = 1) {
-            embraceImpl.logMessage(
-                Severity.ERROR,
-                "handled exception",
-                emptyMap<String, String>(),
-                exception.stackTrace,
-                null,
-                LogExceptionType.NONE,
-                null,
-                null
-            )
         }
     }
 

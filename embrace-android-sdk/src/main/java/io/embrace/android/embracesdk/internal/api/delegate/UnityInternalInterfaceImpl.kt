@@ -58,16 +58,12 @@ internal class UnityInternalInterfaceImpl(
     ) {
         if (embrace.isStarted) {
             embrace.logMessage(
-                Severity.ERROR,
-                "Unity exception",
-                null,
-                null,
-                stacktrace,
-                exceptionType,
-                null,
-                null,
-                name,
-                message
+                severity = Severity.ERROR,
+                message = "Unity exception",
+                customStackTrace = stacktrace,
+                logExceptionType = exceptionType,
+                exceptionName = name,
+                exceptionMessage = message
             )
         } else {
             logger.logSdkNotInitialized("log Unity exception")

@@ -4,7 +4,6 @@ package io.embrace.android.embracesdk.internal.api.delegate
 
 import android.annotation.SuppressLint
 import io.embrace.android.embracesdk.EmbraceImpl
-import io.embrace.android.embracesdk.LogExceptionType
 import io.embrace.android.embracesdk.LogType
 import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
@@ -61,14 +60,10 @@ internal class EmbraceInternalInterfaceImpl(
             else -> Severity.INFO
         }
         embraceImpl.logMessage(
-            eventType,
-            throwable.message ?: "",
-            properties,
-            customStackTrace ?: throwable.stackTrace,
-            null,
-            LogExceptionType.NONE,
-            null,
-            null
+            severity = eventType,
+            message = throwable.message ?: "",
+            properties = properties,
+            stackTraceElements = customStackTrace ?: throwable.stackTrace,
         )
     }
 

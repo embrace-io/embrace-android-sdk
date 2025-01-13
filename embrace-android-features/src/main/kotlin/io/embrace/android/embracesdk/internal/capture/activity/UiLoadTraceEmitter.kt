@@ -12,7 +12,7 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicReference
 
 /**
- * Observes [UiLoadEventListener] to create traces that model the workflow for displaying UI on screen.
+ * Implements [UiLoadDataListener] to create acquire data to generate traces that model the workflow for displaying UI on screen.
  * This will record traces for all [UiLoadType] but will ignore any UI load that is part of the app startup workflow.
  *
  * Depending on the version of Android and the state of the app, the start, end, and intermediate stages of the workflow will use
@@ -30,7 +30,7 @@ import java.util.concurrent.atomic.AtomicReference
  * - Android 9 and lower, when [ActivityLifecycleCallbacks.onActivityCreated] is fired, denoting the activity is in the
  *   process of being created. The timestamp will vary depending on which onCreate callback have already run.
  *
- *  The start for [UiLoadType.HOT]
+ *  The start for [UiLoadType.HOT]:
  *
  * - On Android 10+, when [ActivityLifecycleCallbacks.onActivityPreStarted] is fired, denoting that an existing Activity instance is ready
  *   to be started
@@ -48,7 +48,7 @@ import java.util.concurrent.atomic.AtomicReference
 class UiLoadTraceEmitter(
     private val spanService: SpanService,
     private val versionChecker: VersionChecker,
-) : UiLoadEventListener, UiLoadTraceModifier {
+) : UiLoadDataListener {
 
     private val activeTraces: MutableMap<Int, UiLoadTrace> = ConcurrentHashMap()
     private var currentInstance: AtomicReference<UiInstance?> = AtomicReference()

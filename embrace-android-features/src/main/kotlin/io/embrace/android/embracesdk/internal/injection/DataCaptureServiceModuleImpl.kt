@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.internal.injection
 
 import android.os.Build
 import io.embrace.android.embracesdk.internal.Systrace
-import io.embrace.android.embracesdk.internal.capture.activity.UiLoadEventListener
+import io.embrace.android.embracesdk.internal.capture.activity.UiLoadDataListener
 import io.embrace.android.embracesdk.internal.capture.activity.UiLoadTraceEmitter
 import io.embrace.android.embracesdk.internal.capture.activity.createActivityLoadEventEmitter
 import io.embrace.android.embracesdk.internal.capture.crumbs.ActivityBreadcrumbTracker
@@ -77,7 +77,7 @@ internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
         )
     }
 
-    override val uiLoadTraceEmitter: UiLoadEventListener? by singleton {
+    override val uiLoadDataListener: UiLoadDataListener? by singleton {
         if (configService.autoDataCaptureBehavior.isUiLoadTracingEnabled()) {
             UiLoadTraceEmitter(
                 spanService = openTelemetryModule.spanService,
@@ -89,10 +89,10 @@ internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
     }
 
     override val activityLoadEventEmitter: ActivityLifecycleListener? by singleton {
-        val traceEmitter = uiLoadTraceEmitter
-        if (traceEmitter != null) {
+        val uiLoadEventListener = uiLoadDataListener
+        if (uiLoadEventListener != null) {
             createActivityLoadEventEmitter(
-                uiLoadEventListener = traceEmitter,
+                uiLoadEventListener = uiLoadEventListener,
                 firstDrawDetector = createFirstDrawDetector(versionChecker, initModule.logger),
                 autoTraceEnabled = configService.autoDataCaptureBehavior.isUiLoadTracingTraceAll(),
                 clock = openTelemetryModule.openTelemetryClock,

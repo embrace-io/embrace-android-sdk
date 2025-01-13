@@ -1,7 +1,10 @@
 public final class io/embrace/android/embracesdk/Embrace : io/embrace/android/embracesdk/internal/api/SdkApi {
 	public static final field Companion Lio/embrace/android/embracesdk/Embrace$Companion;
 	public fun activityLoaded (Landroid/app/Activity;)V
+	public fun addAttributeToLoadTrace (Landroid/app/Activity;Ljava/lang/String;Ljava/lang/String;)V
 	public fun addBreadcrumb (Ljava/lang/String;)V
+	public fun addChildSpanToLoadTrace (Landroid/app/Activity;Ljava/lang/String;JJ)V
+	public fun addChildSpanToLoadTrace (Landroid/app/Activity;Ljava/lang/String;JJLjava/util/Map;Ljava/util/List;Lio/embrace/android/embracesdk/spans/ErrorCode;)V
 	public fun addLogRecordExporter (Lio/opentelemetry/sdk/logs/export/LogRecordExporter;)V
 	public fun addSessionProperty (Ljava/lang/String;Ljava/lang/String;Z)Z
 	public fun addSpanExporter (Lio/opentelemetry/sdk/trace/export/SpanExporter;)V

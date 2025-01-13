@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.injection
 
-import io.embrace.android.embracesdk.internal.capture.activity.UiLoadEventListener
+import io.embrace.android.embracesdk.internal.capture.activity.UiLoadDataListener
 import io.embrace.android.embracesdk.internal.capture.crumbs.ActivityBreadcrumbTracker
 import io.embrace.android.embracesdk.internal.capture.crumbs.PushNotificationCaptureService
 import io.embrace.android.embracesdk.internal.capture.startup.AppStartupDataCollector
@@ -50,10 +50,10 @@ interface DataCaptureServiceModule {
     /**
      * Creates UI Load traces based data it collects
      */
-    val uiLoadTraceEmitter: UiLoadEventListener?
+    val uiLoadDataListener: UiLoadDataListener?
 
     /**
-     * Listens for lifecycle events during the loading of Activities proxies them to [uiLoadTraceEmitter]
+     * Listens for lifecycle events during the loading of Activities proxies them to [uiLoadDataListener]
      */
     val activityLoadEventEmitter: ActivityLifecycleListener?
 }

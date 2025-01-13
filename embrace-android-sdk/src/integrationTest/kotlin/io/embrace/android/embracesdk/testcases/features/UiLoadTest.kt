@@ -91,7 +91,7 @@ internal class UiLoadTest {
 
     @Config(sdk = [Build.VERSION_CODES.LOLLIPOP])
     @Test
-    fun `activity open creates a trace for manually ended load`() {
+    fun `activity open creates a trace for manually ended load with custom attribute and child span`() {
         var preLaunchTimeMs = 0L
         testRule.runTest(
             instrumentedConfig = FakeInstrumentedConfig(
@@ -117,12 +117,21 @@ internal class UiLoadTest {
                     val trace = findSpansOfType(EmbType.Performance.UiLoad).single()
                     assertEquals("emb-$MANUAL_STOP_ACTIVITY_NAME-cold-time-to-initial-display", trace.name)
 
+
                     val expectedTraceStartTime = preLaunchTimeMs + calculateTotalTime(activityGaps = 1)
                     assertEmbraceSpanData(
                         span = trace,
                         expectedStartTimeMs = expectedTraceStartTime,
                         expectedEndTimeMs = expectedTraceStartTime + calculateTotalTime(lifecycleStages = 4),
                         expectedParentId = SpanId.getInvalid(),
+                        expectedCustomAttributes = mapOf("manual-end" to "true")
+                    )
+
+                    assertEmbraceSpanData(
+                        span = findSpansByName("loading-time").single(),
+                        expectedStartTimeMs = expectedTraceStartTime + calculateTotalTime(lifecycleStages = 3),
+                        expectedEndTimeMs = expectedTraceStartTime + calculateTotalTime(lifecycleStages = 4),
+                        expectedParentId = checkNotNull(trace.spanId),
                     )
                 }
             }

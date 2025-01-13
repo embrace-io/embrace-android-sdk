@@ -68,5 +68,5 @@ jobs:
         with:
           name: swazzler-test-results
           path: |
-            ./embrace-swazzler3/embrace-gradle-plugin-functional-tests/reports/tests/test/
+            ./embrace-swazzler3/embrace-gradle-plugin-functional-tests/build/reports/tests/test
             ./embrace-swazzler3/embrace-gradle-plugin-functional-tests/test_debug_output

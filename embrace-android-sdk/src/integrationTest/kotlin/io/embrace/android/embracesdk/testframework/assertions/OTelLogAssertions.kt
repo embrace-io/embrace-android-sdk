@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.testframework.assertions
 
+import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.internal.opentelemetry.embExceptionHandling
 import io.embrace.android.embracesdk.internal.opentelemetry.embState
 import io.embrace.android.embracesdk.internal.payload.Log
@@ -53,8 +54,16 @@ internal fun assertOtelLogReceived(
     }
 }
 
+internal fun getOtelSeverity(severity: Severity): io.opentelemetry.api.logs.Severity {
+    return when (severity) {
+        Severity.INFO -> io.opentelemetry.api.logs.Severity.INFO
+        Severity.WARNING -> io.opentelemetry.api.logs.Severity.WARN
+        Severity.ERROR -> io.opentelemetry.api.logs.Severity.ERROR
+    }
+}
+
 private fun assertAttribute(log: Log, name: String, expectedValue: String) {
     val attribute = log.attributes?.find { it.key == name }
-    assertNotNull(attribute)
+    assertNotNull("Attribute not found: $name", attribute)
     assertEquals(expectedValue, attribute?.data)
 }

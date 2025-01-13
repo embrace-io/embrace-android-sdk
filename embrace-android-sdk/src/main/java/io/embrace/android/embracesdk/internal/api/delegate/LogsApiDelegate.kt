@@ -79,6 +79,34 @@ internal class LogsApiDelegate(
         )
     }
 
+    override fun logMessage(
+        message: String,
+        severity: Severity,
+        properties: Map<String, Any>?,
+        attachment: ByteArray,
+    ) {
+        logMessageImpl(
+            severity = severity,
+            message = message,
+            properties = properties,
+        )
+    }
+
+    override fun logMessage(
+        message: String,
+        severity: Severity,
+        properties: Map<String, Any>?,
+        attachmentId: String,
+        attachmentUrl: String,
+        attachmentSize: Long,
+    ) {
+        logMessageImpl(
+            severity = severity,
+            message = message,
+            properties = properties,
+        )
+    }
+
     override fun logException(
         throwable: Throwable,
         severity: Severity,

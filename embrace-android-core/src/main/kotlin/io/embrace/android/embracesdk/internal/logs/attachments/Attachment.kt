@@ -9,7 +9,7 @@ import java.util.UUID
 /**
  * Holds attributes that describe an attachment to a log record.
  */
-internal sealed class Attachment(
+sealed class Attachment(
     val size: Long,
     val id: String,
     val counter: AttachmentCounter,

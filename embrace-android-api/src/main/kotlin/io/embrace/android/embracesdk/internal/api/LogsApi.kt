@@ -35,6 +35,44 @@ public interface LogsApi {
     )
 
     /**
+     * Remotely logs a message at the given severity level with an attachment. These log messages will appear
+     * as part of the session timeline, and can be used to describe what was happening at a particular
+     * time within the app.
+     *
+     * @param message    the message to remotely log
+     * @param severity   the severity level of the log message
+     * @param properties the properties to attach to the log message
+     * @param attachment an attachment to include with the log message. This must be < 1MB in size.
+     */
+    public fun logMessage(
+        message: String,
+        severity: Severity,
+        properties: Map<String, Any>?,
+        attachment: ByteArray,
+    )
+
+    /**
+     * Remotely logs a message at the given severity level with an attachment that has been persisted on a 3rd party
+     * hosting solution. These log messages will appear as part of the session timeline, and can be used to
+     * describe what was happening at a particular time within the app.
+     *
+     * @param message    the message to remotely log
+     * @param severity   the severity level of the log message
+     * @param properties the properties to attach to the log message
+     * @param attachmentId a UUID that identifies the attachment
+     * @param attachmentUrl a URL that gives the location of the attachment
+     * @param attachmentSize the size of the attachment in bytes
+     */
+    public fun logMessage(
+        message: String,
+        severity: Severity,
+        properties: Map<String, Any>?,
+        attachmentId: String,
+        attachmentUrl: String,
+        attachmentSize: Long,
+    )
+
+    /**
      * Remotely logs a message at INFO level. These log messages will appear as part of the session
      * timeline, and can be used to describe what was happening at a particular time within the app.
      *

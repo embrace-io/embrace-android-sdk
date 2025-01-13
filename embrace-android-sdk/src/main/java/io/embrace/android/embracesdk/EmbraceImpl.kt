@@ -318,6 +318,38 @@ internal class EmbraceImpl @JvmOverloads constructor(
         )
     }
 
+    override fun logMessage(
+        message: String,
+        severity: Severity,
+        properties: Map<String, Any>?,
+        attachment: ByteArray,
+    ) {
+        logsApiDelegate.logMessage(
+            message,
+            severity,
+            properties,
+            attachment
+        )
+    }
+
+    override fun logMessage(
+        message: String,
+        severity: Severity,
+        properties: Map<String, Any>?,
+        attachmentId: String,
+        attachmentUrl: String,
+        attachmentSize: Long,
+    ) {
+        logsApiDelegate.logMessage(
+            message,
+            severity,
+            properties,
+            attachmentId,
+            attachmentUrl,
+            attachmentSize
+        )
+    }
+
     /**
      * Gets the [EmbraceInternalInterface] that should be used as the sole source of
      * communication with other Android SDK modules.

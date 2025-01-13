@@ -10,10 +10,13 @@ import io.embrace.android.embracesdk.internal.payload.toNewPayload
 import io.embrace.android.embracesdk.internal.spans.SpanService
 import io.embrace.android.embracesdk.internal.spans.SpanSink
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
+import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
+import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.api.trace.SpanId
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -238,13 +241,33 @@ internal class UiLoadTraceEmitterTest {
         ).let { timestamps ->
             val spanMap = spanSink.completedSpans().associateBy { it.name }
             val trace = checkNotNull(spanMap["emb-$activityName-${uiLoadType.typeName}-time-to-initial-display"])
+            val expectedEvent = checkNotNull(
+                EmbraceSpanEvent.create(
+                    name = "custom-event",
+                    timestampMs = timestamps.first,
+                    attributes = customAttributes
+                )
+            ).toNewPayload()
 
             assertEmbraceSpanData(
                 span = trace.toNewPayload(),
                 expectedStartTimeMs = timestamps.first,
                 expectedEndTimeMs = timestamps.second,
                 expectedParentId = SpanId.getInvalid(),
+                expectedCustomAttributes = customAttributes,
             )
+
+            assertEmbraceSpanData(
+                span = checkNotNull(spanMap["custom-span"]).toNewPayload(),
+                expectedStartTimeMs = timestamps.first,
+                expectedEndTimeMs = timestamps.first + 1,
+                expectedParentId = trace.spanId,
+                expectedCustomAttributes = customAttributes,
+                expectedEvents = listOf(expectedEvent),
+                expectedErrorCode = ErrorCode.FAILURE
+            )
+
+            assertTrue(trace.attributes.keys.none { it == "before-start" || it == "after-end" })
 
             val events = timestamps.third
             if (uiLoadType == UiLoadType.COLD) {
@@ -354,6 +377,8 @@ internal class UiLoadTraceEmitterTest {
 
         clock.tick()
 
+        traceEmitter.addAttribute(instanceId, "before-start", "stub")
+
         val createEvents = if (uiLoadType == UiLoadType.COLD) {
             activityCreate(
                 activityName = activityName,
@@ -380,6 +405,38 @@ internal class UiLoadTraceEmitterTest {
 
         clock.tick()
 
+        traceEmitter.addAttribute(instanceId, "custom-attribute", "custom-value")
+
+        val traceStartMs = createEvents?.run {
+            if (firePreAndPost) {
+                pre
+            } else {
+                eventStart
+            }
+        } ?: if (firePreAndPost) {
+            startEvents.pre
+        } else {
+            startEvents.eventStart
+        }
+
+        traceEmitter.addChildSpan(
+            instanceId = instanceId,
+            name = "custom-span",
+            startTimeMs = traceStartMs,
+            endTimeMs = traceStartMs + 1L,
+            attributes = customAttributes,
+            events = listOf(
+                checkNotNull(
+                    EmbraceSpanEvent.create(
+                        name = "custom-event",
+                        timestampMs = traceStartMs,
+                        attributes = customAttributes
+                    )
+                )
+            ),
+            errorCode = ErrorCode.FAILURE
+        )
+
         val resumeEvents = activityResume(
             instanceId = instanceId,
             fireEndEvent = hasRenderEvent,
@@ -398,18 +455,6 @@ internal class UiLoadTraceEmitterTest {
             events[LifecycleStage.RENDER] = this
         }
 
-        val traceStartMs = createEvents?.run {
-            if (firePreAndPost) {
-                pre
-            } else {
-                eventStart
-            }
-        } ?: if (firePreAndPost) {
-            startEvents.pre
-        } else {
-            startEvents.eventStart
-        }
-
         val traceEndMs = if (manualEnd) {
             clock.tick(500L).also { time ->
                 traceEmitter.complete(instanceId, time)
@@ -419,6 +464,8 @@ internal class UiLoadTraceEmitterTest {
                 endMs()
             } ?: resumeEvents.startMs()
         }
+
+        traceEmitter.addAttribute(instanceId, "after-end", "stub")
 
         return Triple(traceStartMs, traceEndMs, events)
     }
@@ -525,5 +572,7 @@ internal class UiLoadTraceEmitterTest {
         const val ACTIVITY_NAME = "com.my.CoolActivity"
         const val LAST_ACTIVITY_NAME = "com.my.Activity"
         const val LAST_ACTIVITY_INSTANCE_ID = 99
+
+        val customAttributes = mapOf("custom-attribute" to "custom-value")
     }
 }

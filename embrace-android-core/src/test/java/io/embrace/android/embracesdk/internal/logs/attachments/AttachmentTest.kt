@@ -1,12 +1,12 @@
 package io.embrace.android.embracesdk.internal.logs.attachments
 
-import io.embrace.android.embracesdk.internal.logs.attachments.Attachment.Companion.ATTR_KEY_ERR_CODE
-import io.embrace.android.embracesdk.internal.logs.attachments.Attachment.Companion.ATTR_KEY_ID
-import io.embrace.android.embracesdk.internal.logs.attachments.Attachment.Companion.ATTR_KEY_SIZE
-import io.embrace.android.embracesdk.internal.logs.attachments.Attachment.Companion.ATTR_KEY_URL
 import io.embrace.android.embracesdk.internal.logs.attachments.AttachmentErrorCode.ATTACHMENT_TOO_LARGE
 import io.embrace.android.embracesdk.internal.logs.attachments.AttachmentErrorCode.OVER_MAX_ATTACHMENTS
 import io.embrace.android.embracesdk.internal.logs.attachments.AttachmentErrorCode.UNKNOWN
+import io.embrace.android.embracesdk.internal.opentelemetry.embAttachmentErrorCode
+import io.embrace.android.embracesdk.internal.opentelemetry.embAttachmentId
+import io.embrace.android.embracesdk.internal.opentelemetry.embAttachmentSize
+import io.embrace.android.embracesdk.internal.opentelemetry.embAttachmentUrl
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Test
@@ -22,7 +22,7 @@ internal class AttachmentTest {
         private val BYTES = "{}".toByteArray()
     }
 
-    private val counter = AttachmentCounter(limit = Int.MAX_VALUE)
+    private val counter: () -> Boolean = { true }
 
     @Test
     fun `create embrace hosted attachment`() {
@@ -46,19 +46,27 @@ internal class AttachmentTest {
     fun `embrace hosted attachment obeys max size constraints`() {
         val size = LIMIT_MB + 1
         val attachment = Attachment.EmbraceHosted(ByteArray(size), counter)
-        attachment.assertEmbraceHostedAttributesMatch(size = size.toLong(), errorCode = ATTACHMENT_TOO_LARGE)
+        attachment.assertEmbraceHostedAttributesMatch(
+            size = size.toLong(),
+            errorCode = ATTACHMENT_TOO_LARGE
+        )
     }
 
     @Test
     fun `embrace hosted attachment exceeds session limit`() {
-        val smallCounter = AttachmentCounter(1)
+        var limit = true
+        val smallCounter: () -> Boolean = { limit }
         val attachment = Attachment.EmbraceHosted(BYTES, smallCounter)
         attachment.assertEmbraceHostedAttributesMatch()
 
         val size = LIMIT_MB + 1L
         val bytes = ByteArray(size.toInt())
+        limit = false
         val limitedAttachment = Attachment.EmbraceHosted(bytes, smallCounter)
-        limitedAttachment.assertEmbraceHostedAttributesMatch(size = size, errorCode = OVER_MAX_ATTACHMENTS)
+        limitedAttachment.assertEmbraceHostedAttributesMatch(
+            size = size,
+            errorCode = OVER_MAX_ATTACHMENTS
+        )
     }
 
     @Test
@@ -104,23 +112,28 @@ internal class AttachmentTest {
 
     @Test
     fun `user hosted attachment exceeds session limit`() {
-        val smallCounter = AttachmentCounter(1)
+        var limit = true
+        val smallCounter: () -> Boolean = { limit }
         val attachment = Attachment.UserHosted(SIZE, ID, URL, smallCounter)
         attachment.assertUserHostedAttributesMatch()
 
         val size = -1L
+        limit = false
         val limitedAttachment = Attachment.UserHosted(size, ID, URL, smallCounter)
-        limitedAttachment.assertUserHostedAttributesMatch(size = size, errorCode = OVER_MAX_ATTACHMENTS)
+        limitedAttachment.assertUserHostedAttributesMatch(
+            size = size,
+            errorCode = OVER_MAX_ATTACHMENTS
+        )
     }
 
     private fun Attachment.assertEmbraceHostedAttributesMatch(
         size: Long = SIZE,
         errorCode: AttachmentErrorCode? = null,
     ) {
-        val observedId = checkNotNull(attributes[ATTR_KEY_ID])
+        val observedId = checkNotNull(attributes[embAttachmentId])
         assertNotNull(UUID.fromString(observedId))
-        assertEquals(size, checkNotNull(attributes[ATTR_KEY_SIZE]).toLong())
-        assertEquals(errorCode?.toString(), attributes[ATTR_KEY_ERR_CODE])
+        assertEquals(size, checkNotNull(attributes[embAttachmentSize]).toLong())
+        assertEquals(errorCode?.toString(), attributes[embAttachmentErrorCode])
     }
 
     private fun Attachment.assertUserHostedAttributesMatch(
@@ -129,9 +142,9 @@ internal class AttachmentTest {
         id: String = ID,
         errorCode: AttachmentErrorCode? = null,
     ) {
-        assertEquals(size, checkNotNull(attributes[ATTR_KEY_SIZE]).toLong())
-        assertEquals(id, checkNotNull(attributes[ATTR_KEY_ID]))
-        assertEquals(errorCode?.toString(), attributes[ATTR_KEY_ERR_CODE])
-        assertEquals(url, checkNotNull(attributes[ATTR_KEY_URL]))
+        assertEquals(size, checkNotNull(attributes[embAttachmentSize]).toLong())
+        assertEquals(id, checkNotNull(attributes[embAttachmentId]))
+        assertEquals(errorCode?.toString(), attributes[embAttachmentErrorCode])
+        assertEquals(url, checkNotNull(attributes[embAttachmentUrl]))
     }
 }

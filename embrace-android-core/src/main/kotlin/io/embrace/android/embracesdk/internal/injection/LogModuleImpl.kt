@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.internal.logs.EmbraceLogService
 import io.embrace.android.embracesdk.internal.logs.LogOrchestrator
 import io.embrace.android.embracesdk.internal.logs.LogOrchestratorImpl
 import io.embrace.android.embracesdk.internal.logs.LogService
+import io.embrace.android.embracesdk.internal.logs.attachments.AttachmentService
 import io.embrace.android.embracesdk.internal.network.logging.EmbraceDomainCountLimiter
 import io.embrace.android.embracesdk.internal.network.logging.EmbraceNetworkCaptureService
 import io.embrace.android.embracesdk.internal.network.logging.EmbraceNetworkLoggingService
@@ -73,5 +74,9 @@ internal class LogModuleImpl(
             deliveryModule.payloadStore,
             payloadSourceModule.logEnvelopeSource,
         )
+    }
+
+    override val attachmentService: AttachmentService by singleton {
+        AttachmentService()
     }
 }

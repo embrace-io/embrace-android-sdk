@@ -376,6 +376,7 @@ internal class ModuleInitBootstrapper(
                     }
 
                     postInit(LogModule::class) {
+                        serviceRegistry.registerService(lazy { logModule.attachmentService })
                         serviceRegistry.registerService(lazy { logModule.logService })
                         // Start the log orchestrator
                         openTelemetryModule.logSink.registerLogStoredCallback {

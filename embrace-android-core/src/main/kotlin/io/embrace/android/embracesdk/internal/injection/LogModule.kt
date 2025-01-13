@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.injection
 
 import io.embrace.android.embracesdk.internal.logs.LogOrchestrator
 import io.embrace.android.embracesdk.internal.logs.LogService
+import io.embrace.android.embracesdk.internal.logs.attachments.AttachmentService
 import io.embrace.android.embracesdk.internal.network.logging.NetworkCaptureDataSource
 import io.embrace.android.embracesdk.internal.network.logging.NetworkCaptureService
 import io.embrace.android.embracesdk.internal.network.logging.NetworkLoggingService
@@ -15,4 +16,5 @@ interface LogModule {
     val networkLoggingService: NetworkLoggingService
     val logService: LogService
     val logOrchestrator: LogOrchestrator
+    val attachmentService: AttachmentService
 }

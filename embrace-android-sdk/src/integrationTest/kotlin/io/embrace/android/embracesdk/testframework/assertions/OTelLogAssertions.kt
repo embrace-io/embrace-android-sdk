@@ -19,7 +19,7 @@ internal fun assertOtelLogReceived(
     expectedMessage: String,
     expectedSeverityNumber: Int,
     expectedSeverityText: String,
-    expectedTimeMs: Long = IntegrationTestRule.DEFAULT_SDK_START_TIME_MS,
+    expectedTimeMs: Long? = IntegrationTestRule.DEFAULT_SDK_START_TIME_MS,
     expectedType: String? = null,
     expectedExceptionName: String? = null,
     expectedExceptionMessage: String? = null,
@@ -34,7 +34,9 @@ internal fun assertOtelLogReceived(
         assertEquals(expectedMessage, log.body)
         assertEquals(expectedSeverityNumber, log.severityNumber)
         assertEquals(expectedSeverityText, log.severityText)
-        assertEquals(expectedTimeMs * 1000000, log.timeUnixNano)
+        if (expectedTimeMs != null) {
+            assertEquals(expectedTimeMs * 1000000, log.timeUnixNano)
+        }
         assertFalse(log.attributes?.findAttributeValue(SessionIncubatingAttributes.SESSION_ID.key).isNullOrBlank())
         expectedType?.let { assertAttribute(log, embExceptionHandling.name, it) }
         assertEquals(expectedState, log.attributes?.findAttributeValue(embState.attributeKey.key))

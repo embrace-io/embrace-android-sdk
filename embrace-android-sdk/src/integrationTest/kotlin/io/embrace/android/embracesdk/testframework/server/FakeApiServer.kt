@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.testframework.server
 import io.embrace.android.embracesdk.assertions.getSessionId
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.internal.TypeUtils
+import io.embrace.android.embracesdk.internal.comms.api.Endpoint
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
 import io.embrace.android.embracesdk.internal.payload.Envelope
@@ -28,14 +29,8 @@ import org.junit.Assert.assertNotNull
  */
 internal class FakeApiServer(
     private val remoteConfig: RemoteConfig,
-    private val deliveryTracer: DeliveryTracer
+    private val deliveryTracer: DeliveryTracer,
 ) : Dispatcher() {
-
-    private enum class Endpoint {
-        LOGS,
-        SESSIONS,
-        CONFIG
-    }
 
     private val serializer by threadLocal { TestPlatformSerializer() }
     private val sessionRequests = CopyOnWriteArrayList<Envelope<SessionPayload>>()
@@ -66,6 +61,7 @@ internal class FakeApiServer(
 
             // IMPORTANT NOTE: this response is not used until the SDK next starts!
             Endpoint.CONFIG -> handleConfigRequest(request)
+            else -> error("Unsupported endpoint $endpoint")
         }
     }
 
@@ -95,7 +91,10 @@ internal class FakeApiServer(
     private fun handleLogRequest(endpoint: Endpoint, envelope: Envelope<*>) {
         val obj = envelope as Envelope<LogPayload>
         logRequests.add(obj)
-        deliveryTracer.onServerCompletedRequest(endpoint.name, obj.getLastLog().attributes?.findAttributeValue(LogIncubatingAttributes.LOG_RECORD_UID.key) ?: "")
+        deliveryTracer.onServerCompletedRequest(
+            endpoint.name,
+            obj.getLastLog().attributes?.findAttributeValue(LogIncubatingAttributes.LOG_RECORD_UID.key) ?: ""
+        )
     }
 
     private fun handleConfigRequest(request: RecordedRequest): MockResponse {

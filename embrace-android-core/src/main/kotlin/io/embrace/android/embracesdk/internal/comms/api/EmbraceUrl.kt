@@ -15,12 +15,8 @@ internal class EmbraceUrl(val url: URL) {
     }
 
     fun endpoint(): Endpoint {
-        return when (url.path.substringAfterLast("/")) {
-            Endpoint.LOGS.path -> Endpoint.LOGS
-            Endpoint.SESSIONS.path -> Endpoint.SESSIONS
-            Endpoint.CONFIG.path -> Endpoint.CONFIG
-            else -> Endpoint.UNKNOWN
-        }
+        val endpoints = Endpoint.values().associateBy { it.path }
+        return endpoints[url.path.substringAfterLast("/")] ?: Endpoint.UNKNOWN
     }
 
     override fun toString(): String {

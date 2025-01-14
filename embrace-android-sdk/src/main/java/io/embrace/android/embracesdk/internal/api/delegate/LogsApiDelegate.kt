@@ -7,7 +7,6 @@ import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.injection.embraceImplInject
 import io.embrace.android.embracesdk.internal.logs.attachments.Attachment
 import io.embrace.android.embracesdk.internal.logs.attachments.Attachment.EmbraceHosted
-import io.embrace.android.embracesdk.internal.logs.attachments.Attachment.UserHosted
 import io.embrace.android.embracesdk.internal.payload.PushNotificationBreadcrumb
 import io.embrace.android.embracesdk.internal.serialization.truncatedStacktrace
 import io.embrace.android.embracesdk.internal.utils.getSafeStackTrace
@@ -175,17 +174,20 @@ internal class LogsApiDelegate(
                 stacktrace?.let { attrs[ExceptionAttributes.EXCEPTION_STACKTRACE] = it }
 
                 if (attachment != null) {
-                    when (attachment) {
-                        is EmbraceHosted -> {} // TODO: add support
-                        is UserHosted -> attrs.putAll(attachment.attributes.mapKeys { it.key.attributeKey })
-                    }
+                    attrs.putAll(attachment.attributes.mapKeys { it.key.attributeKey })
+                }
+
+                val logAttachment = when {
+                    attachment is EmbraceHosted && attachment.shouldAttemptUpload() -> attachment
+                    else -> null
                 }
                 logService?.log(
                     message,
                     severity,
                     logExceptionType,
                     properties,
-                    attrs.plus(customLogAttrs)
+                    attrs.plus(customLogAttrs),
+                    logAttachment
                 )
                 sessionOrchestrator?.reportBackgroundActivityStateChange()
             }

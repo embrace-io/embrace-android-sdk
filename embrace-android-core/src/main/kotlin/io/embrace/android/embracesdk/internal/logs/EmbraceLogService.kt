@@ -11,8 +11,11 @@ import io.embrace.android.embracesdk.internal.arch.schema.TelemetryAttributes
 import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.config.behavior.REDACTED_LABEL
+import io.embrace.android.embracesdk.internal.logs.attachments.Attachment
 import io.embrace.android.embracesdk.internal.opentelemetry.embExceptionHandling
 import io.embrace.android.embracesdk.internal.payload.AppFramework
+import io.embrace.android.embracesdk.internal.payload.Envelope
+import io.embrace.android.embracesdk.internal.session.orchestrator.PayloadStore
 import io.embrace.android.embracesdk.internal.spans.toOtelSeverity
 import io.embrace.android.embracesdk.internal.utils.PropertyUtils.normalizeProperties
 import io.embrace.android.embracesdk.internal.utils.Uuid
@@ -26,6 +29,7 @@ class EmbraceLogService(
     private val logWriter: LogWriter,
     private val configService: ConfigService,
     private val sessionPropertiesService: SessionPropertiesService,
+    private val payloadStore: PayloadStore?,
 ) : LogService {
 
     private val behavior = configService.logMessageBehavior
@@ -41,6 +45,7 @@ class EmbraceLogService(
         logExceptionType: LogExceptionType,
         properties: Map<String, Any>?,
         customLogAttrs: Map<AttributeKey<String>, String>,
+        logAttachment: Attachment.EmbraceHosted?,
     ) {
         val redactedProperties = redactSensitiveProperties(normalizeProperties(properties))
         val attrs = createTelemetryAttributes(redactedProperties, customLogAttrs)
@@ -53,6 +58,12 @@ class EmbraceLogService(
         if (logExceptionType != LogExceptionType.NONE) {
             attrs.setAttribute(embExceptionHandling, logExceptionType.value)
         }
+
+        logAttachment?.let {
+            val envelope = Envelope(data = Pair(it.id, it.bytes))
+            payloadStore?.storeAttachment(envelope)
+        }
+
         addLogEventData(
             message = message,
             severity = severity,

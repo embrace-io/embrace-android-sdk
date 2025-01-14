@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.LogExceptionType
 import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeLogWriter
+import io.embrace.android.embracesdk.fakes.FakePayloadStore
 import io.embrace.android.embracesdk.fakes.FakeSessionPropertiesService
 import io.embrace.android.embracesdk.fakes.behavior.FakeLogMessageBehavior
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
@@ -14,6 +15,7 @@ import io.embrace.android.embracesdk.internal.config.behavior.REDACTED_LABEL
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.SessionRemoteConfig
+import io.embrace.android.embracesdk.internal.logs.attachments.Attachment
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.opentelemetry.semconv.incubating.LogIncubatingAttributes
 import org.junit.Assert.assertEquals
@@ -28,6 +30,7 @@ internal class EmbraceLogServiceTest {
     private lateinit var fakeLogWriter: FakeLogWriter
     private lateinit var fakeSessionPropertiesService: FakeSessionPropertiesService
     private lateinit var fakeConfigService: FakeConfigService
+    private lateinit var payloadStore: FakePayloadStore
 
     @Before
     fun setUp() {
@@ -38,7 +41,7 @@ internal class EmbraceLogServiceTest {
         )
         fakeSessionPropertiesService = FakeSessionPropertiesService()
         fakeLogWriter = FakeLogWriter()
-
+        payloadStore = FakePayloadStore()
         logService = createEmbraceLogService()
     }
 
@@ -46,6 +49,7 @@ internal class EmbraceLogServiceTest {
         logWriter = fakeLogWriter,
         configService = fakeConfigService,
         sessionPropertiesService = fakeSessionPropertiesService,
+        payloadStore = payloadStore,
     )
 
     @Test
@@ -236,5 +240,23 @@ internal class EmbraceLogServiceTest {
 
         // then the correct number of error logs is returned
         assertEquals(5, logService.getErrorLogsCount())
+    }
+
+    @Test
+    fun `log with attachment`() {
+        val bytes = ByteArray(2)
+        val msg = "message"
+        logService.log(
+            message = msg,
+            severity = Severity.INFO,
+            logExceptionType = LogExceptionType.NONE,
+            logAttachment = Attachment.EmbraceHosted(bytes) { true },
+        )
+
+        // then the sensitive key is redacted
+        val log = fakeLogWriter.logEvents.single()
+        assertEquals(msg, log.message)
+        val attachment = payloadStore.storedAttachments.single()
+        assertEquals(bytes, attachment.data.second)
     }
 }

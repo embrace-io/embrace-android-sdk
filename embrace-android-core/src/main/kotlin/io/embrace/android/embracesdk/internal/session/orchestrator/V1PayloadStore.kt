@@ -31,7 +31,7 @@ class V1PayloadStore(
         }
     }
 
-    override fun storeAttachment(envelope: Envelope<ByteArray>) {
+    override fun storeAttachment(envelope: Envelope<Pair<String, ByteArray>>) {
         // ignored - v1 doesn't support attachments
     }
 

@@ -40,7 +40,7 @@ class FakeRequestExecutionService(
     ): ExecutionResult {
         exceptionOnExecution?.run { throw this }
         val bufferedStream = GZIPInputStream(payloadStream())
-        val envelope: Envelope<*> = serializer.fromJson(bufferedStream, envelopeType.serializedType)
+        val envelope: Envelope<*> = serializer.fromJson(bufferedStream, checkNotNull(envelopeType.serializedType))
         processEnvelope(envelope)
         return responseAction(envelope)
     }

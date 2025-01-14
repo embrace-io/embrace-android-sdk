@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.fakes.FakeLogWriter
 import io.embrace.android.embracesdk.fakes.FakeNetworkCaptureDataSource
 import io.embrace.android.embracesdk.fakes.FakeNetworkCaptureService
 import io.embrace.android.embracesdk.fakes.FakeNetworkLoggingService
+import io.embrace.android.embracesdk.fakes.FakePayloadStore
 import io.embrace.android.embracesdk.fakes.FakeSessionPropertiesService
 import io.embrace.android.embracesdk.internal.injection.LogModule
 import io.embrace.android.embracesdk.internal.logs.EmbraceLogService
@@ -22,7 +23,8 @@ class FakeLogModule(
     override val logService: LogService = EmbraceLogService(
         FakeLogWriter(),
         FakeConfigService(),
-        FakeSessionPropertiesService()
+        FakeSessionPropertiesService(),
+        FakePayloadStore(),
     ),
 ) : LogModule {
 

@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.fakes.FakeSchedulingService
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.internal.delivery.PayloadType
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
+import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType.ATTACHMENT
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType.BLOB
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType.CRASH
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType.LOG
@@ -25,6 +26,7 @@ import io.embrace.android.embracesdk.internal.worker.PriorityWorker
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -57,6 +59,9 @@ class IntakeServiceImplTest {
     private val logEnvelope = Envelope(
         data = LogPayload(logs = listOf(Log(body = "Log data")))
     )
+    private val attachmentEnvelope = Envelope(
+        data = Pair("my-id", ByteArray(2))
+    )
     private val sessionDataExpected = run {
         val baos = ByteArrayOutputStream()
         serializer.toJson(sessionEnvelope, Envelope.sessionEnvelopeType, GZIPOutputStream(baos))
@@ -70,11 +75,15 @@ class IntakeServiceImplTest {
 
     private val clock = FakeClock()
     private val sessionMetadata = StoredTelemetryMetadata(clock.now(), UUID, PROCESS_ID, SESSION)
+    private val attachmentMetadata =
+        StoredTelemetryMetadata(clock.now(), UUID, PROCESS_ID, ATTACHMENT, payloadType = PayloadType.ATTACHMENT)
     private val logMetadata = StoredTelemetryMetadata(clock.now(), UUID, PROCESS_ID, LOG, payloadType = PayloadType.LOG)
     private val networkMetadata = StoredTelemetryMetadata(clock.now(), UUID, PROCESS_ID, BLOB)
     private val crashMetadata = StoredTelemetryMetadata(clock.now(), UUID, PROCESS_ID, CRASH)
     private val sessionMetadata2 = StoredTelemetryMetadata(clock.apply { tick(100L) }.now(), UUID, PROCESS_ID, SESSION)
     private val logMetadata2 = StoredTelemetryMetadata(clock.apply { tick(100L) }.now(), UUID, PROCESS_ID, LOG)
+    private val attachmentMetadata2 =
+        StoredTelemetryMetadata(clock.apply { tick(100L) }.now(), UUID, PROCESS_ID, ATTACHMENT)
     private val networkMetadata2 = StoredTelemetryMetadata(clock.apply { tick(100L) }.now(), UUID, PROCESS_ID, BLOB)
     private val crashMetadata2 = StoredTelemetryMetadata(clock.apply { tick(100L) }.now(), UUID, PROCESS_ID, CRASH)
 
@@ -132,6 +141,24 @@ class IntakeServiceImplTest {
         // assert payload was stored
         val obj = payloadStorageService.storedPayloads().single()
         assertArrayEquals(logDataExpected, obj)
+
+        // assert scheduling service was notified
+        assertEquals(1, schedulingService.payloadIntakeCount)
+    }
+
+    @Test
+    fun `take attachment`() {
+        intakeService.take(attachmentEnvelope, attachmentMetadata)
+        executorService.runCurrentlyBlocked()
+
+        // assert filename is valid & contains correct metadata
+        val filename = payloadStorageService.storedFilenames().single()
+        val metadata = StoredTelemetryMetadata.fromFilename(filename).getOrThrow()
+        assertEquals(ATTACHMENT, metadata.envelopeType)
+
+        // assert payload was stored
+        val obj = payloadStorageService.storedPayloads().single()
+        assertNotNull(obj)
 
         // assert scheduling service was notified
         assertEquals(1, schedulingService.payloadIntakeCount)
@@ -231,8 +258,10 @@ class IntakeServiceImplTest {
             take(sessionEnvelope, sessionMetadata)
             take(logEnvelope, crashMetadata)
             take(logEnvelope, networkMetadata)
+            take(attachmentEnvelope, attachmentMetadata)
             take(logEnvelope, logMetadata)
             clock.tick(1000)
+            take(attachmentEnvelope, attachmentMetadata2)
             take(logEnvelope, logMetadata2)
             take(logEnvelope, networkMetadata2)
             take(logEnvelope, crashMetadata2)
@@ -242,15 +271,15 @@ class IntakeServiceImplTest {
             latch.countDown()
         }
         worker.shutdownAndWait(1000)
-        assertEquals(8, payloadStorageService.storedPayloadCount())
-        assertEquals(8, payloadStorageService.storeCount.get())
+        assertEquals(10, payloadStorageService.storedPayloadCount())
+        assertEquals(10, payloadStorageService.storeCount.get())
 
         // assert payloads were prioritised in the expected order
         val observedTypes = payloadStorageService.storedFilenames().map {
             val metadata = StoredTelemetryMetadata.fromFilename(it).getOrThrow()
             metadata.envelopeType
         }
-        val expected = listOf(CRASH, CRASH, SESSION, SESSION, LOG, LOG, BLOB, BLOB)
+        val expected = listOf(CRASH, CRASH, SESSION, SESSION, ATTACHMENT, ATTACHMENT, LOG, LOG, BLOB, BLOB)
         assertEquals(expected, observedTypes)
     }
 

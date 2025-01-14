@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.fakes
 
+import io.embrace.android.embracesdk.internal.delivery.PayloadType
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageService
 import io.embrace.android.embracesdk.internal.injection.SerializationAction
@@ -30,7 +31,11 @@ class FakePayloadStorageService(
         }
 
         val baos = ByteArrayOutputStream()
-        action(GZIPOutputStream(baos))
+        if (metadata.payloadType != PayloadType.ATTACHMENT) {
+            action(GZIPOutputStream(baos))
+        } else {
+            action(baos)
+        }
         cachedPayloads[metadata] = baos.toByteArray()
     }
 
@@ -58,7 +63,7 @@ class FakePayloadStorageService(
 
     fun <T> addPayload(metadata: StoredTelemetryMetadata, data: T) {
         store(metadata) { stream ->
-            serializer.toJson(data, metadata.envelopeType.serializedType, stream)
+            serializer.toJson(data, checkNotNull(metadata.envelopeType.serializedType), stream)
         }
     }
 

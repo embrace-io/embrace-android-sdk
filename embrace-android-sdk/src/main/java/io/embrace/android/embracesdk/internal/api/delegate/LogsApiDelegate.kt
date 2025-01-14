@@ -5,6 +5,9 @@ import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.internal.api.LogsApi
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.injection.embraceImplInject
+import io.embrace.android.embracesdk.internal.logs.attachments.Attachment
+import io.embrace.android.embracesdk.internal.logs.attachments.Attachment.EmbraceHosted
+import io.embrace.android.embracesdk.internal.logs.attachments.Attachment.UserHosted
 import io.embrace.android.embracesdk.internal.payload.PushNotificationBreadcrumb
 import io.embrace.android.embracesdk.internal.serialization.truncatedStacktrace
 import io.embrace.android.embracesdk.internal.utils.getSafeStackTrace
@@ -25,6 +28,9 @@ internal class LogsApiDelegate(
     }
     private val serializer by embraceImplInject(sdkCallChecker) {
         bootstrapper.initModule.jsonSerializer
+    }
+    private val attachmentService by embraceImplInject(sdkCallChecker) {
+        bootstrapper.logModule.attachmentService
     }
 
     override fun logInfo(message: String) = logMessage(message, Severity.INFO)
@@ -85,10 +91,12 @@ internal class LogsApiDelegate(
         properties: Map<String, Any>?,
         attachment: ByteArray,
     ) {
+        val obj = attachmentService?.createAttachment(attachment) ?: return
         logMessageImpl(
             severity = severity,
             message = message,
             properties = properties,
+            attachment = obj,
         )
     }
 
@@ -100,10 +108,12 @@ internal class LogsApiDelegate(
         attachmentUrl: String,
         attachmentSize: Long,
     ) {
+        val obj = attachmentService?.createAttachment(attachmentId, attachmentUrl, attachmentSize) ?: return
         logMessageImpl(
             severity = severity,
             message = message,
             properties = properties,
+            attachment = obj,
         )
     }
 
@@ -121,7 +131,7 @@ internal class LogsApiDelegate(
             stackTraceElements = throwable.getSafeStackTrace(),
             logExceptionType = LogExceptionType.HANDLED,
             exceptionName = throwable.javaClass.simpleName,
-            exceptionMessage = exceptionMessage
+            exceptionMessage = exceptionMessage,
         )
     }
 
@@ -137,7 +147,7 @@ internal class LogsApiDelegate(
             properties = properties,
             stackTraceElements = stacktraceElements,
             logExceptionType = LogExceptionType.HANDLED,
-            exceptionMessage = message
+            exceptionMessage = message,
         )
     }
 
@@ -152,6 +162,7 @@ internal class LogsApiDelegate(
         exceptionName: String? = null,
         exceptionMessage: String? = null,
         customLogAttrs: Map<AttributeKey<String>, String> = emptyMap(),
+        attachment: Attachment? = null,
     ) {
         if (sdkCallChecker.check("log_message")) {
             runCatching {
@@ -159,9 +170,16 @@ internal class LogsApiDelegate(
                 exceptionName?.let { attrs[ExceptionAttributes.EXCEPTION_TYPE] = it }
                 exceptionMessage?.let { attrs[ExceptionAttributes.EXCEPTION_MESSAGE] = it }
 
-                val stacktrace = stackTraceElements?.let(checkNotNull(serializer)::truncatedStacktrace) ?: customStackTrace
+                val stacktrace =
+                    stackTraceElements?.let(checkNotNull(serializer)::truncatedStacktrace) ?: customStackTrace
                 stacktrace?.let { attrs[ExceptionAttributes.EXCEPTION_STACKTRACE] = it }
 
+                if (attachment != null) {
+                    when (attachment) {
+                        is EmbraceHosted -> {} // TODO: add support
+                        is UserHosted -> attrs.putAll(attachment.attributes.mapKeys { it.key.attributeKey })
+                    }
+                }
                 logService?.log(
                     message,
                     severity,

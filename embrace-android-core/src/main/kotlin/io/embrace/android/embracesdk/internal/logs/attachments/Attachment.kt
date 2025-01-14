@@ -1,8 +1,13 @@
 package io.embrace.android.embracesdk.internal.logs.attachments
 
+import io.embrace.android.embracesdk.internal.arch.schema.EmbraceAttributeKey
 import io.embrace.android.embracesdk.internal.logs.attachments.AttachmentErrorCode.ATTACHMENT_TOO_LARGE
 import io.embrace.android.embracesdk.internal.logs.attachments.AttachmentErrorCode.OVER_MAX_ATTACHMENTS
 import io.embrace.android.embracesdk.internal.logs.attachments.AttachmentErrorCode.UNKNOWN
+import io.embrace.android.embracesdk.internal.opentelemetry.embAttachmentErrorCode
+import io.embrace.android.embracesdk.internal.opentelemetry.embAttachmentId
+import io.embrace.android.embracesdk.internal.opentelemetry.embAttachmentSize
+import io.embrace.android.embracesdk.internal.opentelemetry.embAttachmentUrl
 import io.embrace.android.embracesdk.internal.utils.toNonNullMap
 import java.util.UUID
 
@@ -12,27 +17,22 @@ import java.util.UUID
 sealed class Attachment(
     val size: Long,
     val id: String,
-    val counter: AttachmentCounter,
 ) {
 
     internal companion object {
-        const val ATTR_KEY_SIZE = "emb.attachment_size"
-        const val ATTR_KEY_URL = "emb.attachment_url"
-        const val ATTR_KEY_ID = "emb.attachment_id"
-        const val ATTR_KEY_ERR_CODE = "emb.attachment_error_code"
         private const val LIMIT_MB = 1 * 1024 * 1024
     }
 
-    abstract val attributes: Map<String, String>
+    abstract val attributes: Map<EmbraceAttributeKey, String>
 
     protected fun constructAttributes(
         size: Long,
         id: String,
         errorCode: AttachmentErrorCode? = null
-    ) = mapOf(
-        ATTR_KEY_SIZE to size.toString(),
-        ATTR_KEY_ID to id,
-        ATTR_KEY_ERR_CODE to errorCode?.name
+    ): Map<EmbraceAttributeKey, String> = mapOf(
+        embAttachmentSize to size.toString(),
+        embAttachmentId to id,
+        embAttachmentErrorCode to errorCode?.name
     ).toNonNullMap()
 
     /**
@@ -40,20 +40,20 @@ sealed class Attachment(
      */
     class EmbraceHosted(
         val bytes: ByteArray,
-        counter: AttachmentCounter,
+        counter: () -> Boolean
     ) : Attachment(
         bytes.size.toLong(),
-        UUID.randomUUID().toString(),
-        counter
+        UUID.randomUUID().toString()
     ) {
 
         private val errorCode: AttachmentErrorCode? = when {
-            !counter.incrementAndCheckAttachmentLimit() -> OVER_MAX_ATTACHMENTS
+            !counter() -> OVER_MAX_ATTACHMENTS
             size > LIMIT_MB -> ATTACHMENT_TOO_LARGE
             else -> null
         }
 
-        override val attributes: Map<String, String> = constructAttributes(size, id, errorCode)
+        override val attributes: Map<EmbraceAttributeKey, String> =
+            constructAttributes(size, id, errorCode)
     }
 
     /**
@@ -63,20 +63,20 @@ sealed class Attachment(
         size: Long,
         id: String,
         val url: String,
-        counter: AttachmentCounter,
-    ) : Attachment(size, id, counter) {
+        counter: () -> Boolean,
+    ) : Attachment(size, id) {
 
         private val errorCode: AttachmentErrorCode? = when {
-            !counter.incrementAndCheckAttachmentLimit() -> OVER_MAX_ATTACHMENTS
+            !counter() -> OVER_MAX_ATTACHMENTS
             size < 0 -> UNKNOWN
             url.isEmpty() -> UNKNOWN
             isNotUuid() -> UNKNOWN
             else -> null
         }
 
-        override val attributes: Map<String, String> =
+        override val attributes: Map<EmbraceAttributeKey, String> =
             constructAttributes(size, id, errorCode).plus(
-                ATTR_KEY_URL to url
+                embAttachmentUrl to url
             )
 
         private fun isNotUuid(): Boolean = try {

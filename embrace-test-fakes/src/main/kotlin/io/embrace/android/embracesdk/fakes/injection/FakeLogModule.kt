@@ -11,6 +11,7 @@ import io.embrace.android.embracesdk.internal.injection.LogModule
 import io.embrace.android.embracesdk.internal.logs.EmbraceLogService
 import io.embrace.android.embracesdk.internal.logs.LogOrchestrator
 import io.embrace.android.embracesdk.internal.logs.LogService
+import io.embrace.android.embracesdk.internal.logs.attachments.AttachmentService
 import io.embrace.android.embracesdk.internal.network.logging.NetworkCaptureDataSource
 import io.embrace.android.embracesdk.internal.network.logging.NetworkCaptureService
 import io.embrace.android.embracesdk.internal.network.logging.NetworkLoggingService
@@ -33,4 +34,6 @@ class FakeLogModule(
 
     override val networkCaptureDataSource: NetworkCaptureDataSource
         get() = FakeNetworkCaptureDataSource()
+
+    override val attachmentService: AttachmentService = AttachmentService()
 }

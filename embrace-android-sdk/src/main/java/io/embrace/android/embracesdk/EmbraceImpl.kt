@@ -314,7 +314,7 @@ internal class EmbraceImpl @JvmOverloads constructor(
             logExceptionType = logExceptionType,
             exceptionName = exceptionName,
             exceptionMessage = exceptionMessage,
-            customLogAttrs = customLogAttrs
+            customLogAttrs = customLogAttrs,
         )
     }
 

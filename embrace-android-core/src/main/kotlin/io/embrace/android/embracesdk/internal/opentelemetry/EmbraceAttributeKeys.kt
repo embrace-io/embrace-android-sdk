@@ -102,3 +102,23 @@ val embFreeDiskBytes: EmbraceAttributeKey = EmbraceAttributeKey("disk_free_bytes
  * Attribute name that identifies how a signal should be delivered to the Embrace backend
  */
 val embSendMode: EmbraceAttributeKey = EmbraceAttributeKey(id = "send_mode", isPrivate = true)
+
+/**
+ * The size of a log message attachment in bytes
+ */
+val embAttachmentSize: EmbraceAttributeKey = EmbraceAttributeKey("attachment_size")
+
+/**
+ * The URL of a user-hosted log message attachment
+ */
+val embAttachmentUrl: EmbraceAttributeKey = EmbraceAttributeKey("attachment_url")
+
+/**
+ * The ID of a user-hosted log message attachment
+ */
+val embAttachmentId: EmbraceAttributeKey = EmbraceAttributeKey("attachment_id")
+
+/**
+ * The error code associated with a failed log message attachment
+ */
+val embAttachmentErrorCode: EmbraceAttributeKey = EmbraceAttributeKey("attachment_error_code")

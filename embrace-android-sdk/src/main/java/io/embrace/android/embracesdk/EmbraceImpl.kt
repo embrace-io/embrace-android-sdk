@@ -48,6 +48,7 @@ import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.worker.TaskPriority
 import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.spans.TracingApi
+import io.opentelemetry.api.common.AttributeKey
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -296,26 +297,24 @@ internal class EmbraceImpl @JvmOverloads constructor(
     fun logMessage(
         severity: Severity,
         message: String,
-        properties: Map<String, Any>?,
-        stackTraceElements: Array<StackTraceElement>?,
-        customStackTrace: String?,
-        logExceptionType: LogExceptionType,
-        context: String?,
-        library: String?,
+        properties: Map<String, Any>? = null,
+        stackTraceElements: Array<StackTraceElement>? = null,
+        customStackTrace: String? = null,
+        logExceptionType: LogExceptionType = LogExceptionType.NONE,
         exceptionName: String? = null,
         exceptionMessage: String? = null,
+        customLogAttrs: Map<AttributeKey<String>, String> = emptyMap(),
     ) {
-        logsApiDelegate.logMessage(
-            severity,
-            message,
-            properties,
-            stackTraceElements,
-            customStackTrace,
-            logExceptionType,
-            context,
-            library,
-            exceptionName,
-            exceptionMessage
+        logsApiDelegate.logMessageImpl(
+            severity = severity,
+            message = message,
+            properties = properties,
+            stackTraceElements = stackTraceElements,
+            customStackTrace = customStackTrace,
+            logExceptionType = logExceptionType,
+            exceptionName = exceptionName,
+            exceptionMessage = exceptionMessage,
+            customLogAttrs = customLogAttrs
         )
     }
 

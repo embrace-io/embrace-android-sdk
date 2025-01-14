@@ -6,8 +6,10 @@ import io.embrace.android.embracesdk.internal.api.LogsApi
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.injection.embraceImplInject
 import io.embrace.android.embracesdk.internal.payload.PushNotificationBreadcrumb
-import io.embrace.android.embracesdk.internal.utils.PropertyUtils.normalizeProperties
+import io.embrace.android.embracesdk.internal.serialization.truncatedStacktrace
 import io.embrace.android.embracesdk.internal.utils.getSafeStackTrace
+import io.opentelemetry.api.common.AttributeKey
+import io.opentelemetry.semconv.ExceptionAttributes
 
 internal class LogsApiDelegate(
     bootstrapper: ModuleInitBootstrapper,
@@ -21,18 +23,13 @@ internal class LogsApiDelegate(
     private val pushNotificationDataSource by embraceImplInject(sdkCallChecker) {
         bootstrapper.featureModule.pushNotificationDataSource.dataSource
     }
-
-    override fun logInfo(message: String) {
-        logMessage(message, Severity.INFO)
+    private val serializer by embraceImplInject(sdkCallChecker) {
+        bootstrapper.initModule.jsonSerializer
     }
 
-    override fun logWarning(message: String) {
-        logMessage(message, Severity.WARNING)
-    }
-
-    override fun logError(message: String) {
-        logMessage(message, Severity.ERROR)
-    }
+    override fun logInfo(message: String) = logMessage(message, Severity.INFO)
+    override fun logWarning(message: String) = logMessage(message, Severity.WARNING)
+    override fun logError(message: String) = logMessage(message, Severity.ERROR)
 
     override fun logMessage(message: String, severity: Severity) {
         logMessage(message, severity, null)
@@ -75,15 +72,10 @@ internal class LogsApiDelegate(
         severity: Severity,
         properties: Map<String, Any>?,
     ) {
-        logMessage(
-            severity,
-            message,
-            properties,
-            null,
-            null,
-            LogExceptionType.NONE,
-            null,
-            null
+        logMessageImpl(
+            severity = severity,
+            message = message,
+            properties = properties,
         )
     }
 
@@ -93,21 +85,15 @@ internal class LogsApiDelegate(
         properties: Map<String, Any>?,
         message: String?,
     ) {
-        val exceptionMessage = if (throwable.message != null) throwable.message else ""
-        logMessage(
-            severity,
-            (
-                message
-                    ?: exceptionMessage
-                ) ?: "",
-            properties,
-            throwable.getSafeStackTrace(),
-            null,
-            LogExceptionType.HANDLED,
-            null,
-            null,
-            throwable.javaClass.simpleName,
-            exceptionMessage
+        val exceptionMessage = throwable.message ?: ""
+        logMessageImpl(
+            severity = severity,
+            message = message ?: exceptionMessage,
+            properties = properties,
+            stackTraceElements = throwable.getSafeStackTrace(),
+            logExceptionType = LogExceptionType.HANDLED,
+            exceptionName = throwable.javaClass.simpleName,
+            exceptionMessage = exceptionMessage
         )
     }
 
@@ -117,47 +103,43 @@ internal class LogsApiDelegate(
         properties: Map<String, Any>?,
         message: String?,
     ) {
-        logMessage(
-            severity,
-            message
-                ?: "",
-            properties,
-            stacktraceElements,
-            null,
-            LogExceptionType.HANDLED,
-            null,
-            null,
-            null,
-            message
+        logMessageImpl(
+            severity = severity,
+            message = message ?: "",
+            properties = properties,
+            stackTraceElements = stacktraceElements,
+            logExceptionType = LogExceptionType.HANDLED,
+            exceptionMessage = message
         )
     }
 
     @JvmOverloads
-    fun logMessage(
+    fun logMessageImpl(
         severity: Severity,
         message: String,
-        properties: Map<String, Any>?,
-        stackTraceElements: Array<StackTraceElement>?,
-        customStackTrace: String?,
-        logExceptionType: LogExceptionType,
-        context: String?,
-        library: String?,
+        properties: Map<String, Any>? = null,
+        stackTraceElements: Array<StackTraceElement>? = null,
+        customStackTrace: String? = null,
+        logExceptionType: LogExceptionType = LogExceptionType.NONE,
         exceptionName: String? = null,
         exceptionMessage: String? = null,
+        customLogAttrs: Map<AttributeKey<String>, String> = emptyMap(),
     ) {
         if (sdkCallChecker.check("log_message")) {
             runCatching {
+                val attrs = mutableMapOf<AttributeKey<String>, String>()
+                exceptionName?.let { attrs[ExceptionAttributes.EXCEPTION_TYPE] = it }
+                exceptionMessage?.let { attrs[ExceptionAttributes.EXCEPTION_MESSAGE] = it }
+
+                val stacktrace = stackTraceElements?.let(checkNotNull(serializer)::truncatedStacktrace) ?: customStackTrace
+                stacktrace?.let { attrs[ExceptionAttributes.EXCEPTION_STACKTRACE] = it }
+
                 logService?.log(
                     message,
                     severity,
                     logExceptionType,
-                    normalizeProperties(properties),
-                    stackTraceElements,
-                    customStackTrace,
-                    context,
-                    library,
-                    exceptionName,
-                    exceptionMessage
+                    properties,
+                    attrs.plus(customLogAttrs)
                 )
                 sessionOrchestrator?.reportBackgroundActivityStateChange()
             }

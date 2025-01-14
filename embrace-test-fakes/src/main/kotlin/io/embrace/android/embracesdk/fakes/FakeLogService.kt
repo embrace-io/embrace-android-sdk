@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.fakes
 import io.embrace.android.embracesdk.LogExceptionType
 import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.internal.logs.LogService
+import io.opentelemetry.api.common.AttributeKey
 
 class FakeLogService : LogService {
     class LogData(
@@ -10,12 +11,6 @@ class FakeLogService : LogService {
         val severity: Severity,
         val logExceptionType: LogExceptionType,
         val properties: Map<String, Any>?,
-        val stackTraceElements: Array<StackTraceElement>?,
-        val customStackTrace: String?,
-        val context: String?,
-        val library: String?,
-        val exceptionName: String?,
-        val exceptionMessage: String?,
     )
 
     val logs: MutableList<String> = mutableListOf()
@@ -27,12 +22,7 @@ class FakeLogService : LogService {
         severity: Severity,
         logExceptionType: LogExceptionType,
         properties: Map<String, Any>?,
-        stackTraceElements: Array<StackTraceElement>?,
-        customStackTrace: String?,
-        context: String?,
-        library: String?,
-        exceptionName: String?,
-        exceptionMessage: String?,
+        customLogAttrs: Map<AttributeKey<String>, String>,
     ) {
         loggedMessages.add(
             LogData(
@@ -40,12 +30,6 @@ class FakeLogService : LogService {
                 severity = severity,
                 logExceptionType = logExceptionType,
                 properties = properties,
-                stackTraceElements = stackTraceElements,
-                customStackTrace = customStackTrace,
-                context = context,
-                library = library,
-                exceptionName = exceptionName,
-                exceptionMessage = exceptionMessage
             )
         )
     }
@@ -54,7 +38,5 @@ class FakeLogService : LogService {
         return errorLogIds.count()
     }
 
-    override fun cleanCollections() {
-        TODO("Not yet implemented")
-    }
+    override fun cleanCollections() {}
 }

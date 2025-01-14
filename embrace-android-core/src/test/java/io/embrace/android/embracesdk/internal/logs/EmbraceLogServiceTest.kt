@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.internal.logs
 
 import io.embrace.android.embracesdk.LogExceptionType
 import io.embrace.android.embracesdk.Severity
-import io.embrace.android.embracesdk.arch.assertIsType
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeLogWriter
 import io.embrace.android.embracesdk.fakes.FakeSessionPropertiesService
@@ -10,18 +9,13 @@ import io.embrace.android.embracesdk.fakes.behavior.FakeLogMessageBehavior
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.config.FakeRedactionConfig
 import io.embrace.android.embracesdk.fakes.createSessionBehavior
-import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.toSessionPropertyAttributeName
 import io.embrace.android.embracesdk.internal.config.behavior.REDACTED_LABEL
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.SessionRemoteConfig
-import io.embrace.android.embracesdk.internal.opentelemetry.embExceptionHandling
 import io.embrace.android.embracesdk.internal.payload.AppFramework
-import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
-import io.opentelemetry.semconv.ExceptionAttributes
 import io.opentelemetry.semconv.incubating.LogIncubatingAttributes
-import org.junit.Assert
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
@@ -34,8 +28,6 @@ internal class EmbraceLogServiceTest {
     private lateinit var fakeLogWriter: FakeLogWriter
     private lateinit var fakeSessionPropertiesService: FakeSessionPropertiesService
     private lateinit var fakeConfigService: FakeConfigService
-
-    private val embraceSerializer = EmbraceSerializer()
 
     @Before
     fun setUp() {
@@ -54,7 +46,6 @@ internal class EmbraceLogServiceTest {
         logWriter = fakeLogWriter,
         configService = fakeConfigService,
         sessionPropertiesService = fakeSessionPropertiesService,
-        serializer = embraceSerializer,
     )
 
     @Test
@@ -245,86 +236,5 @@ internal class EmbraceLogServiceTest {
 
         // then the correct number of error logs is returned
         assertEquals(5, logService.getErrorLogsCount())
-    }
-
-    @Test
-    fun `stacktrace elements are truncated`() {
-        // given a stacktrace with more than 200 elements
-        val stackTrace = Array(201) { StackTraceElement("TestClass", "testMethod", "testFile", it) }
-
-        // when logging a message with the stacktrace
-        logService.log("message", Severity.INFO, LogExceptionType.HANDLED, stackTraceElements = stackTrace)
-
-        // then the stacktrace is truncated
-        val log = fakeLogWriter.logEvents.single()
-        val truncatedStacktraceString = log.schemaType.attributes()[ExceptionAttributes.EXCEPTION_STACKTRACE.key] ?: ""
-
-        // serialize back to Array<StackTraceElement> to get the size
-        val truncatedStacktrace = embraceSerializer.fromJson(truncatedStacktraceString, List::class.java)
-        assertEquals(200, truncatedStacktrace.size)
-    }
-
-    @Test
-    fun `exception is logged`() {
-        // given an exception
-        val message = "Oh no"
-        val exception = NullPointerException("Oh no!")
-
-        // when logging it
-        logService.log(
-            message = message,
-            severity = Severity.WARNING,
-            logExceptionType = LogExceptionType.HANDLED,
-            stackTraceElements = exception.stackTrace,
-            exceptionName = exception.javaClass.simpleName,
-            exceptionMessage = exception.message,
-        )
-
-        // then the exception is correctly logged
-        val log = fakeLogWriter.logEvents.single()
-        assertEquals(message, log.message)
-        assertEquals(io.opentelemetry.api.logs.Severity.WARN, log.severity)
-        val attributes = log.schemaType.attributes()
-        Assert.assertNotNull(attributes[LogIncubatingAttributes.LOG_RECORD_UID.key])
-        assertEquals(LogExceptionType.HANDLED.value, attributes[embExceptionHandling.name])
-        assertEquals(exception.javaClass.simpleName, attributes[ExceptionAttributes.EXCEPTION_TYPE.key])
-        assertEquals(exception.message, attributes[ExceptionAttributes.EXCEPTION_MESSAGE.key])
-        log.assertIsType(EmbType.System.Exception)
-    }
-
-    @Test
-    fun `flutter exception is logged`() {
-        // given a flutter exception
-        val flutterMessage = "Dart error"
-        val flutterContext = "Flutter context"
-        val flutterLibrary = "Flutter library"
-        val flutterException = NullPointerException("Something broke on Flutter")
-        fakeConfigService = FakeConfigService(appFramework = AppFramework.FLUTTER)
-        logService = createEmbraceLogService()
-
-        // when logging it
-        logService.log(
-            message = flutterMessage,
-            severity = Severity.ERROR,
-            logExceptionType = LogExceptionType.HANDLED,
-            stackTraceElements = flutterException.stackTrace,
-            exceptionName = flutterException.javaClass.simpleName,
-            exceptionMessage = flutterException.message,
-            context = flutterContext,
-            library = flutterLibrary
-        )
-
-        // then the exception is correctly logged
-        val log = fakeLogWriter.logEvents.single()
-        assertEquals(flutterMessage, log.message)
-        assertEquals(io.opentelemetry.api.logs.Severity.ERROR, log.severity)
-        val attributes = log.schemaType.attributes()
-        Assert.assertNotNull(attributes[LogIncubatingAttributes.LOG_RECORD_UID.key])
-        assertEquals(LogExceptionType.HANDLED.value, attributes[embExceptionHandling.name])
-        assertEquals(flutterException.javaClass.simpleName, attributes[ExceptionAttributes.EXCEPTION_TYPE.key])
-        assertEquals(flutterException.message, attributes[ExceptionAttributes.EXCEPTION_MESSAGE.key])
-        assertEquals(flutterContext, attributes[EmbType.System.FlutterException.embFlutterExceptionContext.name])
-        assertEquals(flutterLibrary, attributes[EmbType.System.FlutterException.embFlutterExceptionLibrary.name])
-        log.assertIsType(EmbType.System.FlutterException)
     }
 }

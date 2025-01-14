@@ -14,7 +14,6 @@ import io.embrace.android.embracesdk.internal.logs.LogService
 import io.embrace.android.embracesdk.internal.network.logging.NetworkCaptureDataSource
 import io.embrace.android.embracesdk.internal.network.logging.NetworkCaptureService
 import io.embrace.android.embracesdk.internal.network.logging.NetworkLoggingService
-import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 
 class FakeLogModule(
     override val networkLoggingService: NetworkLoggingService = FakeNetworkLoggingService(),
@@ -22,8 +21,7 @@ class FakeLogModule(
     override val logService: LogService = EmbraceLogService(
         FakeLogWriter(),
         FakeConfigService(),
-        FakeSessionPropertiesService(),
-        EmbraceSerializer()
+        FakeSessionPropertiesService()
     ),
 ) : LogModule {
 

@@ -43,14 +43,11 @@ internal class ReactNativeInternalInterfaceImpl(
     ) {
         if (embrace.isStarted) {
             embrace.logMessage(
-                Severity.ERROR,
-                message,
-                properties,
-                null,
-                stacktrace,
-                LogExceptionType.HANDLED,
-                null,
-                null
+                severity = Severity.ERROR,
+                message = message,
+                properties = properties,
+                customStackTrace = stacktrace,
+                logExceptionType = LogExceptionType.HANDLED
             )
         } else {
             logger.logSdkNotInitialized("log JS exception")

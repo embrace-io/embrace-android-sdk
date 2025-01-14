@@ -60,16 +60,12 @@ internal class UnityInternalInterfaceImplTest {
         impl.logUnhandledUnityException("name", "msg", "stack")
         verify(exactly = 1) {
             embrace.logMessage(
-                Severity.ERROR,
-                "Unity exception",
-                null,
-                null,
-                "stack",
-                LogExceptionType.UNHANDLED,
-                null,
-                null,
-                "name",
-                "msg"
+                severity = Severity.ERROR,
+                message = "Unity exception",
+                customStackTrace = "stack",
+                logExceptionType = LogExceptionType.UNHANDLED,
+                exceptionName = "name",
+                exceptionMessage = "msg"
             )
         }
     }
@@ -80,16 +76,12 @@ internal class UnityInternalInterfaceImplTest {
         impl.logHandledUnityException("name", "msg", "stack")
         verify(exactly = 1) {
             embrace.logMessage(
-                Severity.ERROR,
-                "Unity exception",
-                null,
-                null,
-                "stack",
-                LogExceptionType.HANDLED,
-                null,
-                null,
-                "name",
-                "msg"
+                severity = Severity.ERROR,
+                message = "Unity exception",
+                customStackTrace = "stack",
+                logExceptionType = LogExceptionType.HANDLED,
+                exceptionName = "name",
+                exceptionMessage = "msg"
             )
         }
     }

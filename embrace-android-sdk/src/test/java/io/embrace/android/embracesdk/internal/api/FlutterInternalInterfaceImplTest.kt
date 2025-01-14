@@ -5,6 +5,8 @@ import io.embrace.android.embracesdk.LogExceptionType
 import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.internal.api.delegate.FlutterInternalInterfaceImpl
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.FlutterException.embFlutterExceptionContext
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.FlutterException.embFlutterExceptionLibrary
 import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.payload.AppFramework
@@ -67,10 +69,12 @@ internal class FlutterInternalInterfaceImplTest {
                 null,
                 "stack",
                 LogExceptionType.UNHANDLED,
-                "ctx",
-                "lib",
                 "exception name",
-                "message"
+                "message",
+                mapOf(
+                    embFlutterExceptionContext.attributeKey to "ctx",
+                    embFlutterExceptionLibrary.attributeKey to "lib"
+                ),
             )
         }
     }
@@ -79,18 +83,19 @@ internal class FlutterInternalInterfaceImplTest {
     fun testLogHandledDartException() {
         every { embrace.isStarted } returns true
         impl.logHandledDartException("stack", "exception name", "message", "ctx", "lib")
+
         verify(exactly = 1) {
             embrace.logMessage(
-                Severity.ERROR,
-                "Dart error",
-                null,
-                null,
-                "stack",
-                LogExceptionType.HANDLED,
-                "ctx",
-                "lib",
-                "exception name",
-                "message"
+                severity = Severity.ERROR,
+                message = "Dart error",
+                customStackTrace = "stack",
+                logExceptionType = LogExceptionType.HANDLED,
+                exceptionName = "exception name",
+                exceptionMessage = "message",
+                customLogAttrs = mapOf(
+                    embFlutterExceptionContext.attributeKey to "ctx",
+                    embFlutterExceptionLibrary.attributeKey to "lib"
+                ),
             )
         }
     }

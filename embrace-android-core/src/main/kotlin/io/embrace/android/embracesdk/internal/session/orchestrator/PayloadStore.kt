@@ -29,6 +29,11 @@ interface PayloadStore : CrashTeardownHandler {
     fun storeLogPayload(envelope: Envelope<LogPayload>, attemptImmediateRequest: Boolean)
 
     /**
+     * Stores a log attachment.
+     */
+    fun storeAttachment(envelope: Envelope<ByteArray>)
+
+    /**
      * Stores an empty payload-type-less crash envelope for future use. One one cached version of this should
      * exist at one time.
      */

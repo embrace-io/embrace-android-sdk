@@ -70,7 +70,7 @@ class IntakeServiceImplTest {
 
     private val clock = FakeClock()
     private val sessionMetadata = StoredTelemetryMetadata(clock.now(), UUID, PROCESS_ID, SESSION)
-    private val logMetadata = StoredTelemetryMetadata(clock.now(), UUID, PROCESS_ID, LOG)
+    private val logMetadata = StoredTelemetryMetadata(clock.now(), UUID, PROCESS_ID, LOG, payloadType = PayloadType.LOG)
     private val networkMetadata = StoredTelemetryMetadata(clock.now(), UUID, PROCESS_ID, BLOB)
     private val crashMetadata = StoredTelemetryMetadata(clock.now(), UUID, PROCESS_ID, CRASH)
     private val sessionMetadata2 = StoredTelemetryMetadata(clock.apply { tick(100L) }.now(), UUID, PROCESS_ID, SESSION)

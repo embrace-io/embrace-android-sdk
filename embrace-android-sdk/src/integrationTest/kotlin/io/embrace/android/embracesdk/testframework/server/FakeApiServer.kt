@@ -35,6 +35,7 @@ internal class FakeApiServer(
     private val serializer by threadLocal { TestPlatformSerializer() }
     private val sessionRequests = CopyOnWriteArrayList<Envelope<SessionPayload>>()
     private val logRequests = CopyOnWriteArrayList<Envelope<LogPayload>>()
+    private val attachments = CopyOnWriteArrayList<List<FormPart>>()
     private val configRequests = CopyOnWriteArrayList<String>()
 
     /**
@@ -48,6 +49,11 @@ internal class FakeApiServer(
     fun getLogEnvelopes(): List<Envelope<LogPayload>> = logRequests.toList()
 
     /**
+     * Returns a list of attachments in the order in which the server received them.
+     */
+    fun getAttachments(): List<List<FormPart>> = attachments.toList()
+
+    /**
      * Returns a list of config requests in the order in which the server received them.
      * The returned value is the query parameter.
      */
@@ -58,6 +64,7 @@ internal class FakeApiServer(
         deliveryTracer.onServerReceivedRequest(endpoint.name)
         return when (endpoint) {
             Endpoint.LOGS, Endpoint.SESSIONS -> handleEnvelopeRequest(request, endpoint)
+            Endpoint.ATTACHMENT -> handleAttachmentRequest(request)
 
             // IMPORTANT NOTE: this response is not used until the SDK next starts!
             Endpoint.CONFIG -> handleConfigRequest(request)
@@ -97,6 +104,17 @@ internal class FakeApiServer(
         )
     }
 
+    private fun handleAttachmentRequest(request: RecordedRequest): MockResponse {
+        try {
+            MultipartFormReader().read(request).let { parts ->
+                attachments.add(parts)
+            }
+            return MockResponse().setResponseCode(200)
+        } catch (exc: Throwable) {
+            throw IllegalStateException("Failed to handle attachment request", exc)
+        }
+    }
+
     private fun handleConfigRequest(request: RecordedRequest): MockResponse {
         configRequests.add(request.requestUrl?.toUrl()?.query)
 
@@ -132,6 +150,7 @@ internal class FakeApiServer(
             "logs" -> Endpoint.LOGS
             "spans" -> Endpoint.SESSIONS
             "config" -> Endpoint.CONFIG
+            "attachment" -> Endpoint.ATTACHMENT
             else -> error("Unsupported path $endpoint")
         }
     }

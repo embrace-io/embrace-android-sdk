@@ -54,6 +54,8 @@ sealed class Attachment(
 
         override val attributes: Map<EmbraceAttributeKey, String> =
             constructAttributes(size, id, errorCode)
+
+        fun shouldAttemptUpload(): Boolean = errorCode == null
     }
 
     /**

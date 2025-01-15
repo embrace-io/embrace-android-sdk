@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.delivery
 
-import io.embrace.android.embracesdk.internal.delivery.PayloadType.Companion.toFilenamePart
 import kotlin.Result.Companion.failure
 
 /**
@@ -17,9 +16,7 @@ data class StoredTelemetryMetadata(
     val payloadType: PayloadType = PayloadType.UNKNOWN,
 ) {
     val filename: String = "${envelopeType.priority}_${timestamp}_${uuid}_${processId}_${complete}_${
-        toFilenamePart(
-            payloadType
-        )
+        payloadType.filenameComponent
     }_v1.json"
 
     companion object {

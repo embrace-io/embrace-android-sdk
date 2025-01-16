@@ -59,4 +59,9 @@ interface AppStartupDataCollector {
      * Set an arbitrary time interval during startup that is of note
      */
     fun addTrackedInterval(name: String, startTimeMs: Long, endTimeMs: Long)
+
+    /**
+     * Add custom attribute to the root span of the trace logged for app startup
+     */
+    fun addAttribute(key: String, value: String)
 }

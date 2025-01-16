@@ -1,5 +1,8 @@
 package io.embrace.android.embracesdk.internal.capture.startup
 
+import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
+import io.embrace.android.embracesdk.spans.ErrorCode
+
 /**
  * Collects relevant information during app startup to be used to produce telemetry about the startup workflow.
  *
@@ -58,7 +61,14 @@ interface AppStartupDataCollector {
     /**
      * Set an arbitrary time interval during startup that is of note
      */
-    fun addTrackedInterval(name: String, startTimeMs: Long, endTimeMs: Long)
+    fun addTrackedInterval(
+        name: String,
+        startTimeMs: Long,
+        endTimeMs: Long,
+        attributes: Map<String, String> = emptyMap(),
+        events: List<EmbraceSpanEvent> = emptyList(),
+        errorCode: ErrorCode? = null,
+    )
 
     /**
      * Add custom attribute to the root span of the trace logged for app startup

@@ -11,6 +11,8 @@ import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.spans.EmbraceSpan
+import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
+import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.sdk.common.Clock
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -155,9 +157,23 @@ internal class AppStartupTraceEmitter(
         }
     }
 
-    override fun addTrackedInterval(name: String, startTimeMs: Long, endTimeMs: Long) {
+    override fun addTrackedInterval(
+        name: String,
+        startTimeMs: Long,
+        endTimeMs: Long,
+        attributes: Map<String, String>,
+        events: List<EmbraceSpanEvent>,
+        errorCode: ErrorCode?
+    ) {
         additionalTrackedIntervals.add(
-            TrackedInterval(name = name, startTimeMs = startTimeMs, endTimeMs = endTimeMs)
+            TrackedInterval(
+                name = name,
+                startTimeMs = startTimeMs,
+                endTimeMs = endTimeMs,
+                attributes = attributes,
+                events = events,
+                errorCode = errorCode
+            )
         )
     }
 
@@ -257,6 +273,9 @@ internal class AppStartupTraceEmitter(
                     startTimeMs = trackedInterval.startTimeMs,
                     endTimeMs = trackedInterval.endTimeMs,
                     internal = false,
+                    attributes = trackedInterval.attributes,
+                    events = trackedInterval.events,
+                    errorCode = trackedInterval.errorCode
                 )
             }
         } while (additionalTrackedIntervals.isNotEmpty())
@@ -435,6 +454,9 @@ internal class AppStartupTraceEmitter(
         val name: String,
         val startTimeMs: Long,
         val endTimeMs: Long,
+        val attributes: Map<String, String>,
+        val events: List<EmbraceSpanEvent>,
+        val errorCode: ErrorCode?,
     )
 
     companion object {

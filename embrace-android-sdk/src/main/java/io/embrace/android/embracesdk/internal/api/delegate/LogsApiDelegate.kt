@@ -105,9 +105,8 @@ internal class LogsApiDelegate(
         properties: Map<String, Any>?,
         attachmentId: String,
         attachmentUrl: String,
-        attachmentSize: Long,
     ) {
-        val obj = attachmentService?.createAttachment(attachmentId, attachmentUrl, attachmentSize) ?: return
+        val obj = attachmentService?.createAttachment(attachmentId, attachmentUrl) ?: return
         logMessageImpl(
             severity = severity,
             message = message,

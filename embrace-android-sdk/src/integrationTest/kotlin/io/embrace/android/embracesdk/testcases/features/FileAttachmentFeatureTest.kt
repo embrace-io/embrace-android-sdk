@@ -35,35 +35,33 @@ internal class FileAttachmentFeatureTest {
 
     @Test
     fun `log message with user hosted file attachment`() {
-        val size = 509L
         val url = "https://example.com/my-file.txt"
         val id = attachmentId.toString()
         testRule.runTest(testCaseAction = {
             recordSession {
-                logWithUserHostedAttachment(id, url, size)
+                logWithUserHostedAttachment(id, url)
             }
         }, assertAction = {
             val log = getSingleLogEnvelope().getLastLog()
-            assertUserHostedLogSent(log, size, url, id)
+            assertUserHostedLogSent(log, url, id)
             assertNull(log.attributes?.findAttributeValue(ATTR_KEY_ERR_CODE))
         })
     }
 
     @Test
     fun `user hosted file attachment exceeding limit`() {
-        val size = 509L
         val url = "https://example.com/my-file.txt"
         val id = attachmentId.toString()
         val limit = 5
         testRule.runTest(testCaseAction = {
             recordSession {
                 repeat(limit + 1) {
-                    logWithUserHostedAttachment(id, url, size)
+                    logWithUserHostedAttachment(id, url)
                 }
             }
             recordSession {
                 repeat(limit + 1) {
-                    logWithUserHostedAttachment(id, url, size)
+                    logWithUserHostedAttachment(id, url)
                 }
             }
         }, assertAction = {
@@ -71,7 +69,7 @@ internal class FileAttachmentFeatureTest {
             assertEquals((limit * 2) + 2, logs.size)
 
             logs.forEachIndexed { k, log ->
-                assertUserHostedLogSent(log, size, url, id)
+                assertUserHostedLogSent(log, url, id)
 
                 val errCode = log.attributes?.findAttributeValue(ATTR_KEY_ERR_CODE)
                 val expectedCode = when (k) {
@@ -107,7 +105,7 @@ internal class FileAttachmentFeatureTest {
     private fun verifyAttachment(
         parts: List<FormPart>,
         byteArray: ByteArray,
-        appId: String = "abcde"
+        appId: String = "abcde",
     ) {
         assertEquals("form-data; name=\"app_id\"", parts[0].contentDisposition)
         assertEquals(appId, parts[0].data)
@@ -121,7 +119,6 @@ internal class FileAttachmentFeatureTest {
 
     private fun assertUserHostedLogSent(
         log: Log,
-        size: Long,
         url: String,
         id: String,
     ) {
@@ -134,7 +131,6 @@ internal class FileAttachmentFeatureTest {
             expectedTimeMs = null,
             expectedProperties = mapOf(
                 "key" to "value",
-                ATTR_KEY_SIZE to size.toString(),
                 ATTR_KEY_URL to url,
                 ATTR_KEY_ID to id,
             ),
@@ -164,7 +160,6 @@ internal class FileAttachmentFeatureTest {
     private fun EmbraceActionInterface.logWithUserHostedAttachment(
         id: String,
         url: String,
-        size: Long,
     ) {
         embrace.logMessage(
             message = "test message",
@@ -172,7 +167,6 @@ internal class FileAttachmentFeatureTest {
             properties = mapOf("key" to "value"),
             attachmentId = id,
             attachmentUrl = url,
-            attachmentSize = size,
         )
     }
 }

@@ -61,7 +61,6 @@ public interface LogsApi {
      * @param properties the properties to attach to the log message
      * @param attachmentId a UUID that identifies the attachment
      * @param attachmentUrl a URL that gives the location of the attachment
-     * @param attachmentSize the size of the attachment in bytes
      */
     public fun logMessage(
         message: String,
@@ -69,7 +68,6 @@ public interface LogsApi {
         properties: Map<String, Any>?,
         attachmentId: String,
         attachmentUrl: String,
-        attachmentSize: Long,
     )
 
     /**

@@ -30,13 +30,13 @@ internal class InstrumentationApiDelegate(
 
     override fun getSdkCurrentTimeMs(): Long = clock.now()
 
-    override fun addAttributeToLoadTrace(activity: Activity, key: String, value: String) {
-        if (sdkCallChecker.check("add_attribute_to_load_trace")) {
+    override fun addLoadTraceAttribute(activity: Activity, key: String, value: String) {
+        if (sdkCallChecker.check("add_load_trace_attribute")) {
             uiLoadTraceEmitter?.addAttribute(traceInstanceId(activity), key, value)
         }
     }
 
-    override fun addChildSpanToLoadTrace(
+    override fun addLoadTraceChildSpan(
         activity: Activity,
         name: String,
         startTimeMs: Long,
@@ -45,7 +45,7 @@ internal class InstrumentationApiDelegate(
         events: List<EmbraceSpanEvent>,
         errorCode: ErrorCode?,
     ) {
-        if (sdkCallChecker.check("add_child_span_to_load_trace")) {
+        if (sdkCallChecker.check("add_load_trace_child_span")) {
             uiLoadTraceEmitter?.addChildSpan(
                 instanceId = traceInstanceId(activity),
                 name = name,
@@ -59,12 +59,12 @@ internal class InstrumentationApiDelegate(
     }
 
     override fun addStartupTraceAttribute(key: String, value: String) {
-        if (sdkCallChecker.check("add_attribute_to_app_startup_trace")) {
+        if (sdkCallChecker.check("add_startup_trace_attribute")) {
             appStartupDataCollector?.addAttribute(key, value)
         }
     }
 
-    override fun addStartupChildSpan(
+    override fun addStartupTraceChildSpan(
         name: String,
         startTimeMs: Long,
         endTimeMs: Long,
@@ -72,7 +72,7 @@ internal class InstrumentationApiDelegate(
         events: List<EmbraceSpanEvent>,
         errorCode: ErrorCode?,
     ) {
-        if (sdkCallChecker.check("add_child_span_to_app_startup_trace")) {
+        if (sdkCallChecker.check("add_startup_trace_child_span")) {
             appStartupDataCollector?.addTrackedInterval(
                 name = name,
                 startTimeMs = startTimeMs,

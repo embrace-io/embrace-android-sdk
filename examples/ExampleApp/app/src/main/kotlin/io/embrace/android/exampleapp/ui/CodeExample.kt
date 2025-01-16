@@ -9,6 +9,7 @@ enum class CodeExample(
     TRACING("Tracing API"),
     ADD_BREADCRUMB("Add Breadcrumb"),
     LOG_MESSAGE("Send Log Message"),
+    LOG_MESSAGE_ATTACHMENT("Log with Attachment"),
     RECORD_NETWORK_REQUEST("Network Requests"),
     SESSION_PROPERTIES("Session Properties"),
     END_SESSION("End Session"),

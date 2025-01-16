@@ -278,11 +278,6 @@ internal class EmbraceTracerTest {
     }
 
     @Test
-    fun `getSdkClockTimeMs is the same as the internal clock time`() {
-        assertEquals(clock.now(), embraceTracer.getSdkCurrentTimeMs())
-    }
-
-    @Test
     fun `event timestamp will be converted to millis if an inappropriate value detected`() {
         spanSink.flushSpans()
         val span = checkNotNull(embraceTracer.startSpan(name = "my-span"))

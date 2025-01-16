@@ -254,9 +254,9 @@ class EmbraceOkHttp3NetworkInterceptor @JvmOverloads constructor(
         // Any difference that is greater than 1 ms is likely the result of a change to the system clock during this process, or some
         // scheduling quirk that makes the result not trustworthy. In that case, we simply don't return an offset.
 
-        val sdkTime1 = embraceInternalApi.internalInterface.getSdkCurrentTime()
+        val sdkTime1 = embrace.getSdkCurrentTimeMs()
         val systemTime1 = systemClock.now()
-        val sdkTime2 = embraceInternalApi.internalInterface.getSdkCurrentTime()
+        val sdkTime2 = embrace.getSdkCurrentTimeMs()
         val systemTime2 = systemClock.now()
 
         val diff1 = sdkTime1 - systemTime1

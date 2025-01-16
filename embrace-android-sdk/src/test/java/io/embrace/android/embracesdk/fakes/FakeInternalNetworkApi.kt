@@ -9,7 +9,7 @@ internal class FakeInternalNetworkApi(
     var started: Boolean = true,
     var w3cTraceparent: String? = "00-3c72a77a7b51af6fb3778c06d4c165ce-4c1d710fffc88e35-01",
 ) : InternalNetworkApi {
-    override fun getSdkCurrentTime(): Long = time
+    override fun getSdkCurrentTimeMs(): Long = time
     override fun isStarted(): Boolean = started
     override fun generateW3cTraceparent(): String? = w3cTraceparent
     override fun isNetworkSpanForwardingEnabled(): Boolean = internalInterface.isNetworkSpanForwardingEnabled()

@@ -158,8 +158,6 @@ internal class EmbraceInternalInterfaceImpl(
     override fun isNetworkSpanForwardingEnabled(): Boolean =
         configService.networkSpanForwardingBehavior.isNetworkSpanForwardingEnabled()
 
-    override fun getSdkCurrentTime(): Long = initModule.clock.now()
-
     override fun isAnrCaptureEnabled(): Boolean = configService.anrBehavior.isAnrCaptureEnabled()
 
     override fun isNdkEnabled(): Boolean = configService.autoDataCaptureBehavior.isNativeCrashCaptureEnabled()

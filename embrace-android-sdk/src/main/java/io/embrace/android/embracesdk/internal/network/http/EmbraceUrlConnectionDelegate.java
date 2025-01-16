@@ -147,7 +147,7 @@ class EmbraceUrlConnectionDelegate<T extends HttpURLConnection> implements Embra
         this.connection = connection;
         this.enableWrapIoStreams = enableWrapIoStreams;
         this.internalNetworkApi = internalNetworkApi;
-        this.createdTime = internalNetworkApi.getSdkCurrentTime();
+        this.createdTime = internalNetworkApi.getSdkCurrentTimeMs();
         this.isSDKStarted = internalNetworkApi.isStarted();
     }
 
@@ -533,7 +533,7 @@ class EmbraceUrlConnectionDelegate<T extends HttpURLConnection> implements Embra
             // We are proactive with setting this flag so that we don't get nested calls to log the network call by virtue of
             // extracting the data we need to log the network call.
             this.didLogNetworkCall = true;  // TODO: Wouldn't this mean that the network call might not be logged
-            long endTime = internalNetworkApi.getSdkCurrentTime();
+            long endTime = internalNetworkApi.getSdkCurrentTimeMs();
 
             String url = EmbraceHttpPathOverride.getURLString(new EmbraceHttpUrlConnectionOverride(this.connection));
 
@@ -754,7 +754,7 @@ class EmbraceUrlConnectionDelegate<T extends HttpURLConnection> implements Embra
     @Nullable
     private InputStream getWrappedInputStream(InputStream connectionInputStream) {
         identifyTraceId();
-        setStartTime(internalNetworkApi.getSdkCurrentTime());
+        setStartTime(internalNetworkApi.getSdkCurrentTimeMs());
         InputStream in = null;
         if (shouldUncompressGzip()) {
             try {
@@ -798,7 +798,7 @@ class EmbraceUrlConnectionDelegate<T extends HttpURLConnection> implements Embra
             return;
         }
 
-        setStartTime(internalNetworkApi.getSdkCurrentTime());
+        setStartTime(internalNetworkApi.getSdkCurrentTimeMs());
 
         if (headerFields.get() == null) {
             synchronized (headerFields) {

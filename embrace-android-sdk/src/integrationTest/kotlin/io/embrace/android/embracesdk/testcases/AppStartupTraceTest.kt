@@ -6,9 +6,15 @@ import io.embrace.android.embracesdk.assertions.findSpansOfType
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
+import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
+import io.embrace.android.embracesdk.internal.spans.hasFixedAttribute
+import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
+import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.android.embracesdk.testframework.IntegrationTestRule
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -34,6 +40,22 @@ internal class AppStartupTraceTest {
                 val customStartTimeMs = clock.now()
                 val customEndTimeMs = clock.tick(100L)
                 embrace.addStartupTraceChildSpan("custom-span", customStartTimeMs, customEndTimeMs)
+                embrace.addStartupTraceChildSpan(
+                    name = "custom-span-with-stuff",
+                    startTimeMs = customStartTimeMs,
+                    endTimeMs = customEndTimeMs,
+                    attributes = mapOf("custom" to "attribute"),
+                    events = listOf(
+                        checkNotNull(
+                            EmbraceSpanEvent.create(
+                                name = "custom-event",
+                                timestampMs = customEndTimeMs,
+                                attributes = mapOf("custom" to "attribute")
+                            )
+                        )
+                    ),
+                    errorCode = ErrorCode.FAILURE
+                )
                 embrace.addStartupTraceAttribute("custom-attribute", "yes")
                 simulateOpeningActivities(
                     addStartupActivity = false,
@@ -49,6 +71,12 @@ internal class AppStartupTraceTest {
                     }
                     assertTrue(spans.containsKey("emb-embrace-init"))
                     assertTrue(spans.containsKey("custom-span"))
+                    with(checkNotNull(spans["custom-span-with-stuff"])) {
+                        assertEquals("attribute", attributes?.findAttributeValue("custom"))
+                        assertEquals(true, attributes?.hasFixedAttribute(ErrorCodeAttribute.Failure))
+                        assertNotNull(events?.single())
+                        assertEquals(Span.Status.ERROR, status)
+                    }
                     assertTrue(spans.containsKey("emb-activity-create"))
                     assertTrue(spans.containsKey("emb-activity-resume"))
                 }

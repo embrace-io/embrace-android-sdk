@@ -76,7 +76,10 @@ internal class InstrumentationApiDelegate(
             appStartupDataCollector?.addTrackedInterval(
                 name = name,
                 startTimeMs = startTimeMs,
-                endTimeMs = endTimeMs
+                endTimeMs = endTimeMs,
+                attributes = attributes,
+                events = events,
+                errorCode = errorCode
             )
         }
     }

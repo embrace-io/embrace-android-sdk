@@ -41,7 +41,7 @@ class OkHttpRequestExecutionService(
         envelopeType: SupportedEnvelopeType,
         payloadType: String,
     ): ExecutionResult {
-        val multipart = envelopeType.endpoint == Endpoint.ATTACHMENT
+        val multipart = envelopeType.endpoint == Endpoint.ATTACHMENTS
         val apiRequest = envelopeType.endpoint.getApiRequestFromEndpoint(multipart)
         val request = when {
             multipart -> prepareMultipartRequest(payloadStream, apiRequest)

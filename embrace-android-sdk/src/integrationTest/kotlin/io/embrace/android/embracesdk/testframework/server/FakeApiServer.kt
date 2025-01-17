@@ -64,7 +64,7 @@ internal class FakeApiServer(
         deliveryTracer.onServerReceivedRequest(endpoint.name)
         return when (endpoint) {
             Endpoint.LOGS, Endpoint.SESSIONS -> handleEnvelopeRequest(request, endpoint)
-            Endpoint.ATTACHMENT -> handleAttachmentRequest(request)
+            Endpoint.ATTACHMENTS -> handleAttachmentRequest(request)
 
             // IMPORTANT NOTE: this response is not used until the SDK next starts!
             Endpoint.CONFIG -> handleConfigRequest(request)
@@ -150,7 +150,7 @@ internal class FakeApiServer(
             "logs" -> Endpoint.LOGS
             "spans" -> Endpoint.SESSIONS
             "config" -> Endpoint.CONFIG
-            "attachment" -> Endpoint.ATTACHMENT
+            "attachments" -> Endpoint.ATTACHMENTS
             else -> error("Unsupported path $endpoint")
         }
     }

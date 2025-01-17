@@ -15,7 +15,7 @@ enum class SupportedEnvelopeType(
 
     CRASH(Envelope.logEnvelopeType, "p1", Endpoint.LOGS),
     SESSION(Envelope.sessionEnvelopeType, "p3", Endpoint.SESSIONS),
-    ATTACHMENT(null, "p4", Endpoint.ATTACHMENT),
+    ATTACHMENT(null, "p4", Endpoint.ATTACHMENTS),
     LOG(Envelope.logEnvelopeType, "p5", Endpoint.LOGS),
     BLOB(Envelope.logEnvelopeType, "p7", Endpoint.LOGS);
 

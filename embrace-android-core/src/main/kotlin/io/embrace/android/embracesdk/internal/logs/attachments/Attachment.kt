@@ -21,6 +21,7 @@ sealed class Attachment(val id: String) {
     }
 
     abstract val attributes: Map<EmbraceAttributeKey, String>
+    abstract val errorCode: AttachmentErrorCode?
 
     protected fun constructAttributes(
         id: String,
@@ -42,7 +43,7 @@ sealed class Attachment(val id: String) {
 
         private val size: Long = bytes.size.toLong()
 
-        private val errorCode: AttachmentErrorCode? = when {
+        override val errorCode: AttachmentErrorCode? = when {
             !counter() -> OVER_MAX_ATTACHMENTS
             size > LIMIT_MB -> ATTACHMENT_TOO_LARGE
             else -> null
@@ -64,7 +65,7 @@ sealed class Attachment(val id: String) {
         counter: () -> Boolean,
     ) : Attachment(id) {
 
-        private val errorCode: AttachmentErrorCode? = when {
+        override val errorCode: AttachmentErrorCode? = when {
             !counter() -> OVER_MAX_ATTACHMENTS
             url.isEmpty() -> UNKNOWN
             isNotUuid() -> UNKNOWN

@@ -7,6 +7,9 @@ import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.injection.embraceImplInject
 import io.embrace.android.embracesdk.internal.logs.attachments.Attachment
 import io.embrace.android.embracesdk.internal.logs.attachments.Attachment.EmbraceHosted
+import io.embrace.android.embracesdk.internal.logs.attachments.AttachmentErrorCode.ATTACHMENT_TOO_LARGE
+import io.embrace.android.embracesdk.internal.logs.attachments.AttachmentErrorCode.OVER_MAX_ATTACHMENTS
+import io.embrace.android.embracesdk.internal.logs.attachments.AttachmentErrorCode.UNKNOWN
 import io.embrace.android.embracesdk.internal.payload.PushNotificationBreadcrumb
 import io.embrace.android.embracesdk.internal.serialization.truncatedStacktrace
 import io.embrace.android.embracesdk.internal.utils.getSafeStackTrace
@@ -30,6 +33,9 @@ internal class LogsApiDelegate(
     }
     private val attachmentService by embraceImplInject(sdkCallChecker) {
         bootstrapper.logModule.attachmentService
+    }
+    private val logger by embraceImplInject(sdkCallChecker) {
+        bootstrapper.initModule.logger
     }
 
     override fun logInfo(message: String) = logMessage(message, Severity.INFO)
@@ -91,6 +97,7 @@ internal class LogsApiDelegate(
         attachment: ByteArray,
     ) {
         val obj = attachmentService?.createAttachment(attachment) ?: return
+        logAttachmentErrorIfNeeded(obj)
         logMessageImpl(
             severity = severity,
             message = message,
@@ -107,12 +114,25 @@ internal class LogsApiDelegate(
         attachmentUrl: String,
     ) {
         val obj = attachmentService?.createAttachment(attachmentId, attachmentUrl) ?: return
+        logAttachmentErrorIfNeeded(obj)
         logMessageImpl(
             severity = severity,
             message = message,
             properties = properties,
             attachment = obj,
         )
+    }
+
+    private fun logAttachmentErrorIfNeeded(obj: Attachment) {
+        if (obj.errorCode != null) {
+            val msg = when (obj.errorCode) {
+                ATTACHMENT_TOO_LARGE -> "Supplied attachment exceeds 1Mb limit. This attachment will not be uploaded."
+                OVER_MAX_ATTACHMENTS -> "A maximum of 5 attachments are allowed per session. This attachment will not be uploaded."
+                UNKNOWN -> "An unknown error occurred while processing the attachment."
+                null -> null
+            } ?: return
+            logger?.logError(msg, RuntimeException(msg))
+        }
     }
 
     override fun logException(

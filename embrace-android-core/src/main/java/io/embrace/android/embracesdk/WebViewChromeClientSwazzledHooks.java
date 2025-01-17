@@ -10,7 +10,7 @@ import io.embrace.android.embracesdk.annotation.InternalApi;
  * @hide
  */
 @InternalApi
-final class WebViewChromeClientSwazzledHooks {
+public final class WebViewChromeClientSwazzledHooks {
 
     private WebViewChromeClientSwazzledHooks() {
     }

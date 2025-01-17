@@ -5,18 +5,22 @@ import io.embrace.android.embracesdk.internal.comms.api.Endpoint
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
 import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
 import io.embrace.android.embracesdk.internal.delivery.execution.ExecutionResult.Companion.getResult
+import io.embrace.android.embracesdk.internal.delivery.storage.loadAttachment
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import okhttp3.Headers.Companion.toHeaders
 import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.MultipartBody
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import okio.BufferedSink
 import okio.buffer
 import okio.source
 import java.io.IOException
 import java.io.InputStream
+import java.util.zip.GZIPInputStream
 
 class OkHttpRequestExecutionService(
     private val okHttpClient: OkHttpClient,
@@ -28,23 +32,21 @@ class OkHttpRequestExecutionService(
     private val deliveryTracer: DeliveryTracer? = null,
 ) : RequestExecutionService {
 
+    private companion object {
+        private val mediaType = "application/json".toMediaType()
+    }
+
     override fun attemptHttpRequest(
         payloadStream: () -> InputStream,
         envelopeType: SupportedEnvelopeType,
         payloadType: String,
     ): ExecutionResult {
-        val apiRequest = envelopeType.endpoint.getApiRequestFromEndpoint()
-        val requestBody = ApiRequestBody(payloadStream)
-        val request = Request.Builder()
-            .url(apiRequest.url)
-            .headers(
-                apiRequest
-                    .getHeaders()
-                    .plus("X-EM-TYPES" to payloadType)
-                    .toHeaders()
-            )
-            .post(requestBody)
-            .build()
+        val multipart = envelopeType.endpoint == Endpoint.ATTACHMENT
+        val apiRequest = envelopeType.endpoint.getApiRequestFromEndpoint(multipart)
+        val request = when {
+            multipart -> prepareMultipartRequest(payloadStream, apiRequest)
+            else -> prepareRequest(payloadStream, apiRequest, payloadType)
+        }
 
         var executionError: Throwable? = null
         val httpCallResponse = try {
@@ -72,26 +74,67 @@ class OkHttpRequestExecutionService(
         }
     }
 
-    private fun Endpoint.getApiRequestFromEndpoint(): ApiRequestV2 = ApiRequestV2(
+    private fun prepareRequest(
+        payloadStream: () -> InputStream,
+        apiRequest: ApiRequestV2,
+        payloadType: String,
+    ): Request {
+        val request = Request.Builder()
+            .url(apiRequest.url)
+            .headers(
+                apiRequest
+                    .getHeaders()
+                    .plus("X-EM-TYPES" to payloadType)
+                    .toHeaders()
+            )
+            .post(ApiRequestBody(payloadStream))
+            .build()
+        return request
+    }
+
+    private fun prepareMultipartRequest(
+        payloadStream: () -> InputStream,
+        apiRequest: ApiRequestV2,
+    ): Request {
+        GZIPInputStream(payloadStream()).use {
+            val attachment = loadAttachment(it) ?: throw IOException("Failed to load attachment")
+            val builder = MultipartBody.Builder()
+                .setType(MultipartBody.FORM)
+                .addFormDataPart("app_id", checkNotNull(apiRequest.appId))
+                .addFormDataPart("attachment_id", attachment.second)
+                .addFormDataPart("file", "file", attachment.first.toRequestBody())
+
+            val request = Request.Builder()
+                .url(apiRequest.url)
+                .post(builder.build())
+                .build()
+            return request
+        }
+    }
+
+    private fun Endpoint.getApiRequestFromEndpoint(multipart: Boolean): ApiRequestV2 = ApiRequestV2(
         url = "$coreBaseUrl${this.path}",
         appId = appId,
         deviceId = lazyDeviceId.value,
-        contentEncoding = "gzip",
+        contentEncoding = when {
+            multipart -> null
+            else -> "gzip"
+        },
+        contentType = when {
+            multipart -> "multipart/form-data"
+            else -> "application/json"
+        },
         userAgent = "Embrace/a/$embraceVersionName"
     )
 
-    private companion object {
-        private val mediaType = "application/json".toMediaType()
+    class ApiRequestBody(
+        private val payloadStream: () -> InputStream,
+    ) : RequestBody() {
+        override fun contentType() = mediaType
 
-        class ApiRequestBody(
-            private val payloadStream: () -> InputStream,
-        ) : RequestBody() {
-            override fun contentType() = mediaType
-
-            override fun writeTo(sink: BufferedSink) {
-                payloadStream().source().buffer().use { source ->
-                    sink.writeAll(source)
-                }
+        override fun writeTo(sink: BufferedSink) {
+            payloadStream().source().buffer().use { source ->
+                sink.writeAll(source)
             }
         }
     }

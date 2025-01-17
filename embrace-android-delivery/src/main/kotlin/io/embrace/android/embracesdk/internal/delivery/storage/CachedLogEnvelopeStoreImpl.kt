@@ -37,7 +37,7 @@ class CachedLogEnvelopeStoreImpl(
                     resource,
                     metadata
                 ),
-                storedTelemetryMetadata.envelopeType.serializedType,
+                checkNotNull(storedTelemetryMetadata.envelopeType.serializedType),
                 stream
             )
         }
@@ -48,7 +48,7 @@ class CachedLogEnvelopeStoreImpl(
             fileStorageService.loadPayloadAsStream(storedTelemetryMetadata)?.let { inputStream ->
                 serializer.fromJson<Envelope<LogPayload>>(
                     inputStream = inputStream,
-                    type = storedTelemetryMetadata.envelopeType.serializedType
+                    type = checkNotNull(storedTelemetryMetadata.envelopeType.serializedType)
                 )
             }
         }.getOrNull()

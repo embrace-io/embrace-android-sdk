@@ -41,7 +41,14 @@ internal class V2PayloadStore(
         intakeService.take(envelope, createMetadata(type, payloadType = payloadType))
     }
 
-    override fun storeAttachment(envelope: Envelope<ByteArray>) {
+    override fun storeAttachment(envelope: Envelope<Pair<String, ByteArray>>) {
+        intakeService.take(
+            envelope,
+            createMetadata(
+                type = SupportedEnvelopeType.ATTACHMENT,
+                payloadType = PayloadType.ATTACHMENT
+            )
+        )
     }
 
     override fun cacheEmptyCrashEnvelope(envelope: Envelope<LogPayload>) {

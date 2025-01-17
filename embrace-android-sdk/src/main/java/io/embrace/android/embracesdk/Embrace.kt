@@ -154,9 +154,8 @@ public class Embrace private constructor(
         properties: Map<String, Any>?,
         attachmentId: String,
         attachmentUrl: String,
-        attachmentSize: Long,
     ) {
-        impl.logMessage(message, severity, properties, attachmentId, attachmentUrl, attachmentSize)
+        impl.logMessage(message, severity, properties, attachmentId, attachmentUrl)
     }
 
     override fun logException(throwable: Throwable) {

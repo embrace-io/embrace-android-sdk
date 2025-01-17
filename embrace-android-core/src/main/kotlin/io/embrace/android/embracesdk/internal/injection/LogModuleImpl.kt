@@ -62,7 +62,8 @@ internal class LogModuleImpl(
         EmbraceLogService(
             essentialServiceModule.logWriter,
             configModule.configService,
-            essentialServiceModule.sessionPropertiesService
+            essentialServiceModule.sessionPropertiesService,
+            deliveryModule.payloadStore,
         )
     }
 

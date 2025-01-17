@@ -14,10 +14,7 @@ import java.util.UUID
 /**
  * Holds attributes that describe an attachment to a log record.
  */
-sealed class Attachment(
-    val size: Long,
-    val id: String,
-) {
+sealed class Attachment(val id: String) {
 
     internal companion object {
         private const val LIMIT_MB = 1 * 1024 * 1024
@@ -26,11 +23,9 @@ sealed class Attachment(
     abstract val attributes: Map<EmbraceAttributeKey, String>
 
     protected fun constructAttributes(
-        size: Long,
         id: String,
-        errorCode: AttachmentErrorCode? = null
+        errorCode: AttachmentErrorCode? = null,
     ): Map<EmbraceAttributeKey, String> = mapOf(
-        embAttachmentSize to size.toString(),
         embAttachmentId to id,
         embAttachmentErrorCode to errorCode?.name
     ).toNonNullMap()
@@ -40,11 +35,12 @@ sealed class Attachment(
      */
     class EmbraceHosted(
         val bytes: ByteArray,
-        counter: () -> Boolean
+        counter: () -> Boolean,
     ) : Attachment(
-        bytes.size.toLong(),
         UUID.randomUUID().toString()
     ) {
+
+        private val size: Long = bytes.size.toLong()
 
         private val errorCode: AttachmentErrorCode? = when {
             !counter() -> OVER_MAX_ATTACHMENTS
@@ -52,8 +48,9 @@ sealed class Attachment(
             else -> null
         }
 
-        override val attributes: Map<EmbraceAttributeKey, String> =
-            constructAttributes(size, id, errorCode)
+        override val attributes: Map<EmbraceAttributeKey, String> = constructAttributes(id, errorCode).plus(
+            embAttachmentSize to size.toString(),
+        )
 
         fun shouldAttemptUpload(): Boolean = errorCode == null
     }
@@ -62,24 +59,21 @@ sealed class Attachment(
      * An attachment that is uploaded to a user-supplied backend.
      */
     class UserHosted(
-        size: Long,
         id: String,
         val url: String,
         counter: () -> Boolean,
-    ) : Attachment(size, id) {
+    ) : Attachment(id) {
 
         private val errorCode: AttachmentErrorCode? = when {
             !counter() -> OVER_MAX_ATTACHMENTS
-            size < 0 -> UNKNOWN
             url.isEmpty() -> UNKNOWN
             isNotUuid() -> UNKNOWN
             else -> null
         }
 
-        override val attributes: Map<EmbraceAttributeKey, String> =
-            constructAttributes(size, id, errorCode).plus(
-                embAttachmentUrl to url
-            )
+        override val attributes: Map<EmbraceAttributeKey, String> = constructAttributes(id, errorCode).plus(
+            embAttachmentUrl to url
+        )
 
         private fun isNotUuid(): Boolean = try {
             UUID.fromString(id)

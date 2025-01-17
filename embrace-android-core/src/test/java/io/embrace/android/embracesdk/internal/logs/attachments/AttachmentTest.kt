@@ -73,57 +73,34 @@ internal class AttachmentTest {
 
     @Test
     fun `create user hosted attachment`() {
-        val attachment = UserHosted(SIZE, ID, URL, counter)
+        val attachment = UserHosted(ID, URL, counter)
         attachment.assertUserHostedAttributesMatch()
-    }
-
-    @Test
-    fun `user hosted attachment empty size`() {
-        val size: Long = 0
-        val attachment = UserHosted(size, ID, URL, counter)
-        attachment.assertUserHostedAttributesMatch(size = size)
-    }
-
-    @Test
-    fun `user hosted attachment invalid size`() {
-        val size: Long = -1
-        val attachment = UserHosted(size, ID, URL, counter)
-        attachment.assertUserHostedAttributesMatch(size = size, errorCode = UNKNOWN)
     }
 
     @Test
     fun `user hosted attachment invalid url`() {
         val url = ""
-        val attachment = UserHosted(SIZE, ID, url, counter)
+        val attachment = UserHosted(ID, url, counter)
         attachment.assertUserHostedAttributesMatch(url = url, errorCode = UNKNOWN)
     }
 
     @Test
     fun `user hosted attachment invalid ID`() {
         val id = "my-id"
-        val attachment = UserHosted(SIZE, id, URL, counter)
+        val attachment = UserHosted(id, URL, counter)
         attachment.assertUserHostedAttributesMatch(id = id, errorCode = UNKNOWN)
-    }
-
-    @Test
-    fun `user hosted attachment has no max size constraints`() {
-        val size = 5000000L // 50MiB
-        val attachment = UserHosted(size, ID, URL, counter)
-        attachment.assertUserHostedAttributesMatch(size = size)
     }
 
     @Test
     fun `user hosted attachment exceeds session limit`() {
         var limit = true
         val smallCounter: () -> Boolean = { limit }
-        val attachment = UserHosted(SIZE, ID, URL, smallCounter)
+        val attachment = UserHosted(ID, URL, smallCounter)
         attachment.assertUserHostedAttributesMatch()
 
-        val size = -1L
         limit = false
-        val limitedAttachment = UserHosted(size, ID, URL, smallCounter)
+        val limitedAttachment = UserHosted(ID, URL, smallCounter)
         limitedAttachment.assertUserHostedAttributesMatch(
-            size = size,
             errorCode = OVER_MAX_ATTACHMENTS
         )
     }
@@ -140,12 +117,10 @@ internal class AttachmentTest {
     }
 
     private fun UserHosted.assertUserHostedAttributesMatch(
-        size: Long = SIZE,
         url: String = URL,
         id: String = ID,
         errorCode: AttachmentErrorCode? = null,
     ) {
-        assertEquals(size, checkNotNull(attributes[embAttachmentSize]).toLong())
         assertEquals(id, checkNotNull(attributes[embAttachmentId]))
         assertEquals(errorCode?.toString(), attributes[embAttachmentErrorCode])
         assertEquals(url, checkNotNull(attributes[embAttachmentUrl]))

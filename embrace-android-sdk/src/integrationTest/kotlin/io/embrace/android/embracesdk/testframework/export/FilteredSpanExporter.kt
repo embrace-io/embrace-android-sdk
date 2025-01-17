@@ -36,7 +36,9 @@ internal class FilteredSpanExporter : SpanExporter {
                 data.size == expectedCount
             },
             errorMessageSupplier = {
-                "Timeout. Expected $expectedCount spans, but got ${supplier().size}."
+                val spans = supplier()
+                "Timeout. Expected $expectedCount spans, but got ${spans.size}. " +
+                    "Found spans: ${spans.joinToString { it.name }}"
             }
         )
     }

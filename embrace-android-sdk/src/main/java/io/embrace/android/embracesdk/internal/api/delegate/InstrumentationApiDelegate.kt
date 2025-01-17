@@ -22,6 +22,12 @@ internal class InstrumentationApiDelegate(
         bootstrapper.dataCaptureServiceModule.appStartupDataCollector
     }
 
+    override fun applicationInitEnd() {
+        if (sdkCallChecker.check("application_init_end")) {
+            appStartupDataCollector?.applicationInitEnd()
+        }
+    }
+
     override fun activityLoaded(activity: Activity) {
         if (sdkCallChecker.check("activity_fully_loaded")) {
             uiLoadTraceEmitter?.complete(traceInstanceId(activity), clock.now())

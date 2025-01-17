@@ -12,6 +12,7 @@ public final class io/embrace/android/embracesdk/Embrace : io/embrace/android/em
 	public fun addStartupTraceChildSpan (Ljava/lang/String;JJ)V
 	public fun addStartupTraceChildSpan (Ljava/lang/String;JJLjava/util/Map;Ljava/util/List;Lio/embrace/android/embracesdk/spans/ErrorCode;)V
 	public fun addUserPersona (Ljava/lang/String;)V
+	public fun applicationInitEnd ()V
 	public fun clearAllUserPersonas ()V
 	public fun clearUserEmail ()V
 	public fun clearUserIdentifier ()V

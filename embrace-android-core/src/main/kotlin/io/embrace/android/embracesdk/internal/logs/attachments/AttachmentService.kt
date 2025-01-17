@@ -16,9 +16,7 @@ class AttachmentService(private val limit: Int = 5) : MemoryCleanerListener {
     fun createAttachment(
         attachmentId: String,
         attachmentUrl: String,
-        attachmentSize: Long,
     ): UserHosted = UserHosted(
-        attachmentSize,
         attachmentId,
         attachmentUrl,
         ::incrementAndCheckAttachmentLimit

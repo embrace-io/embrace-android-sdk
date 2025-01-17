@@ -338,7 +338,6 @@ internal class EmbraceImpl @JvmOverloads constructor(
         properties: Map<String, Any>?,
         attachmentId: String,
         attachmentUrl: String,
-        attachmentSize: Long,
     ) {
         logsApiDelegate.logMessage(
             message,
@@ -346,7 +345,6 @@ internal class EmbraceImpl @JvmOverloads constructor(
             properties,
             attachmentId,
             attachmentUrl,
-            attachmentSize
         )
     }
 

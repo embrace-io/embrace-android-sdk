@@ -81,7 +81,7 @@ public abstract interface class io/embrace/android/embracesdk/internal/api/LogsA
 	public abstract fun logInfo (Ljava/lang/String;)V
 	public abstract fun logMessage (Ljava/lang/String;Lio/embrace/android/embracesdk/Severity;)V
 	public abstract fun logMessage (Ljava/lang/String;Lio/embrace/android/embracesdk/Severity;Ljava/util/Map;)V
-	public abstract fun logMessage (Ljava/lang/String;Lio/embrace/android/embracesdk/Severity;Ljava/util/Map;Ljava/lang/String;Ljava/lang/String;J)V
+	public abstract fun logMessage (Ljava/lang/String;Lio/embrace/android/embracesdk/Severity;Ljava/util/Map;Ljava/lang/String;Ljava/lang/String;)V
 	public abstract fun logMessage (Ljava/lang/String;Lio/embrace/android/embracesdk/Severity;Ljava/util/Map;[B)V
 	public abstract fun logPushNotification (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Boolean;Ljava/lang/Boolean;)V
 	public abstract fun logWarning (Ljava/lang/String;)V

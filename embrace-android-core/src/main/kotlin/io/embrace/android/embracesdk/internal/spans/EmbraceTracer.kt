@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.spans
 
-import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.clock.normalizeTimestampAsMillis
 import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
@@ -9,7 +8,6 @@ import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.android.embracesdk.spans.TracingApi
 
 class EmbraceTracer(
-    private val clock: Clock,
     private val spanService: SpanService,
 ) : TracingApi {
 
@@ -80,10 +78,4 @@ class EmbraceTracer(
     )
 
     override fun getSpan(spanId: String): EmbraceSpan? = spanService.getSpan(spanId = spanId)
-
-    /**
-     * Return the current time in millis for the clock instance used by the Embrace SDK. This should be used to obtain the time
-     * in used for [recordCompletedSpan] so the timestamps will be in sync with those used by the SDK when a time is implicitly recorded.
-     */
-    fun getSdkCurrentTimeMs(): Long = clock.now()
 }

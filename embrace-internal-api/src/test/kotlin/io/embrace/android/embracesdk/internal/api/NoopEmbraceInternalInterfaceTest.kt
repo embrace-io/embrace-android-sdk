@@ -8,7 +8,6 @@ import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.http.HttpMethod
 import io.mockk.mockk
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import java.net.SocketException
@@ -67,12 +66,6 @@ internal class NoopEmbraceInternalInterfaceTest {
     }
 
     @Test
-    fun `check default SDK time implementation`() {
-        assertTrue(beforeObjectInitTime < impl.getSdkCurrentTime())
-        assertTrue(impl.getSdkCurrentTime() <= System.currentTimeMillis())
-    }
-
-    @Test
     fun `check isNetworkSpanForwardingEnabled before SDK starts`() {
         assertFalse(impl.isNetworkSpanForwardingEnabled())
     }
@@ -85,9 +78,5 @@ internal class NoopEmbraceInternalInterfaceTest {
     @Test
     fun `check isNdkEnabled before SDK starts`() {
         assertFalse(impl.isNdkEnabled())
-    }
-
-    companion object {
-        private val beforeObjectInitTime = System.currentTimeMillis() - 1
     }
 }

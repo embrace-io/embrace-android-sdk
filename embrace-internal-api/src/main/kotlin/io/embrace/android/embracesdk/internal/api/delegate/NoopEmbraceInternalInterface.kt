@@ -74,8 +74,6 @@ internal class NoopEmbraceInternalInterface(
 
     override fun isNetworkSpanForwardingEnabled(): Boolean = false
 
-    override fun getSdkCurrentTime(): Long = System.currentTimeMillis()
-
     override fun isAnrCaptureEnabled(): Boolean = false
 
     override fun isNdkEnabled(): Boolean = false

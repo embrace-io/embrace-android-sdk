@@ -19,7 +19,6 @@ import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.android.embracesdk.testframework.IntegrationTestRule
 import io.embrace.android.embracesdk.testframework.assertions.assertMatches
 import io.opentelemetry.semconv.HttpAttributes
-import java.net.SocketException
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -28,6 +27,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.net.SocketException
 
 /**
  * Validation of the internal API
@@ -99,7 +99,6 @@ internal class EmbraceInternalInterfaceTest {
                     logComposeTap(Pair(0.0f, 0.0f), "")
                     assertFalse(shouldCaptureNetworkBody("", ""))
                     assertFalse(isNetworkSpanForwardingEnabled())
-                    getSdkCurrentTime()
                 }
                 assertFalse(embrace.isStarted)
             }
@@ -237,17 +236,6 @@ internal class EmbraceInternalInterfaceTest {
     }
 
     @Test
-    fun `test sdk time`() {
-        testRule.runTest(
-            testCaseAction = {
-                assertEquals(clock.now(), EmbraceInternalApi.getInstance().internalInterface.getSdkCurrentTime())
-                clock.tick()
-                assertEquals(clock.now(), EmbraceInternalApi.getInstance().internalInterface.getSdkCurrentTime())
-            }
-        )
-    }
-
-    @Test
     fun `internal tracing APIs work as expected`() {
         testRule.runTest(
             testCaseAction = {
@@ -267,7 +255,7 @@ internal class EmbraceInternalInterfaceTest {
                         recordCompletedSpan(
                             name = "tz-old-span",
                             startTimeMs = clock.now() - 1L,
-                            endTimeMs = EmbraceInternalApi.getInstance().internalInterface.getSdkCurrentTime(),
+                            endTimeMs = embrace.getSdkCurrentTimeMs(),
                         )
                         stopSpan(spanId = childSpanId, errorCode = ErrorCode.USER_ABANDON)
                         stopSpan(parentSpanId)

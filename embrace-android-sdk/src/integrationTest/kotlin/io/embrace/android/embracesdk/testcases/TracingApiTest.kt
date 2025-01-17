@@ -9,7 +9,6 @@ import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fixtures.TOO_LONG_ATTRIBUTE_KEY
 import io.embrace.android.embracesdk.fixtures.TOO_LONG_ATTRIBUTE_VALUE
-import io.embrace.android.embracesdk.internal.EmbraceInternalApi
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.payload.ApplicationState
 import io.embrace.android.embracesdk.internal.payload.Attribute
@@ -23,8 +22,6 @@ import io.embrace.android.embracesdk.testframework.IntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbracePayloadAssertionInterface
 import io.opentelemetry.api.trace.SpanId
 import io.opentelemetry.context.Context
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
@@ -35,6 +32,8 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
 @RunWith(AndroidJUnit4::class)
 internal class TracingApiTest {
@@ -85,10 +84,10 @@ internal class TracingApiTest {
                         )
                         true
                     })
-                    val failedOpStartTimeMs = EmbraceInternalApi.getInstance().internalInterface.getSdkCurrentTime()
+                    val failedOpStartTimeMs = embrace.getSdkCurrentTimeMs()
                     clock.tick(200L)
                     parentSpan.addEvent(name = "delayed event", timestampMs = clock.now() - 50L, null)
-                    val failedOpEndTimeMs = EmbraceInternalApi.getInstance().internalInterface.getSdkCurrentTime()
+                    val failedOpEndTimeMs = embrace.getSdkCurrentTimeMs()
 
                     assertTrue(parentSpan.stop())
 

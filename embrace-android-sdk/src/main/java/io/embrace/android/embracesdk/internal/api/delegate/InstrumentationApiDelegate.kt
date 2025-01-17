@@ -18,12 +18,17 @@ internal class InstrumentationApiDelegate(
     private val uiLoadTraceEmitter by embraceImplInject(sdkCallChecker) {
         bootstrapper.dataCaptureServiceModule.uiLoadDataListener
     }
+    private val appStartupDataCollector by embraceImplInject(sdkCallChecker) {
+        bootstrapper.dataCaptureServiceModule.appStartupDataCollector
+    }
 
     override fun activityLoaded(activity: Activity) {
         if (sdkCallChecker.check("activity_fully_loaded")) {
             uiLoadTraceEmitter?.complete(traceInstanceId(activity), clock.now())
         }
     }
+
+    override fun getSdkCurrentTimeMs(): Long = clock.now()
 
     override fun addAttributeToLoadTrace(activity: Activity, key: String, value: String) {
         if (sdkCallChecker.check("add_attribute_to_load_trace")) {
@@ -49,6 +54,29 @@ internal class InstrumentationApiDelegate(
                 attributes = attributes,
                 events = events,
                 errorCode = errorCode
+            )
+        }
+    }
+
+    override fun addStartupTraceAttribute(key: String, value: String) {
+        if (sdkCallChecker.check("add_attribute_to_app_startup_trace")) {
+            appStartupDataCollector?.addAttribute(key, value)
+        }
+    }
+
+    override fun addStartupChildSpan(
+        name: String,
+        startTimeMs: Long,
+        endTimeMs: Long,
+        attributes: Map<String, String>,
+        events: List<EmbraceSpanEvent>,
+        errorCode: ErrorCode?,
+    ) {
+        if (sdkCallChecker.check("add_child_span_to_app_startup_trace")) {
+            appStartupDataCollector?.addTrackedInterval(
+                name = name,
+                startTimeMs = startTimeMs,
+                endTimeMs = endTimeMs
             )
         }
     }

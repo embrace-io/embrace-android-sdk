@@ -8,6 +8,9 @@ public final class io/embrace/android/embracesdk/Embrace : io/embrace/android/em
 	public fun addLogRecordExporter (Lio/opentelemetry/sdk/logs/export/LogRecordExporter;)V
 	public fun addSessionProperty (Ljava/lang/String;Ljava/lang/String;Z)Z
 	public fun addSpanExporter (Lio/opentelemetry/sdk/trace/export/SpanExporter;)V
+	public fun addStartupChildSpan (Ljava/lang/String;JJ)V
+	public fun addStartupChildSpan (Ljava/lang/String;JJLjava/util/Map;Ljava/util/List;Lio/embrace/android/embracesdk/spans/ErrorCode;)V
+	public fun addStartupTraceAttribute (Ljava/lang/String;Ljava/lang/String;)V
 	public fun addUserPersona (Ljava/lang/String;)V
 	public fun clearAllUserPersonas ()V
 	public fun clearUserEmail ()V
@@ -26,6 +29,7 @@ public final class io/embrace/android/embracesdk/Embrace : io/embrace/android/em
 	public static final fun getInstance ()Lio/embrace/android/embracesdk/Embrace;
 	public fun getLastRunEndState ()Lio/embrace/android/embracesdk/LastRunEndState;
 	public fun getOpenTelemetry ()Lio/opentelemetry/api/OpenTelemetry;
+	public fun getSdkCurrentTimeMs ()J
 	public fun getSpan (Ljava/lang/String;)Lio/embrace/android/embracesdk/spans/EmbraceSpan;
 	public fun isStarted ()Z
 	public fun logCustomStacktrace ([Ljava/lang/StackTraceElement;)V

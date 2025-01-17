@@ -12,6 +12,7 @@ import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.opentelemetry.sdk.common.Clock
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -46,6 +47,7 @@ internal class AppStartupTraceEmitter(
     private val processCreateRequestedMs: Long?
     private val processCreatedMs: Long?
     private val additionalTrackedIntervals = ConcurrentLinkedQueue<TrackedInterval>()
+    private val customAttributes: MutableMap<String, String> = ConcurrentHashMap()
 
     init {
         val timestampAtDeviceStart = nowMs() - clock.nanoTime().nanosToMillis()
@@ -159,6 +161,10 @@ internal class AppStartupTraceEmitter(
         )
     }
 
+    override fun addAttribute(key: String, value: String) {
+        customAttributes[key] = value
+    }
+
     /**
      * Called when app startup is considered complete, i.e. the data can be used and any additional updates can be ignored
      */
@@ -250,6 +256,7 @@ internal class AppStartupTraceEmitter(
                     parent = startupTrace,
                     startTimeMs = trackedInterval.startTimeMs,
                     endTimeMs = trackedInterval.endTimeMs,
+                    internal = false,
                 )
             }
         } while (additionalTrackedIntervals.isNotEmpty())
@@ -388,6 +395,7 @@ internal class AppStartupTraceEmitter(
     private fun nowMs(): Long = clock.now().nanosToMillis()
 
     private fun PersistableEmbraceSpan.addTraceMetadata() {
+        addCustomAttributes()
         processCreateDelay()?.let { delay ->
             addAttribute("process-create-delay-ms", delay.toString())
         }
@@ -414,6 +422,12 @@ internal class AppStartupTraceEmitter(
 
         sdkInitThreadName?.let { threadName ->
             addAttribute("embrace-init-thread-name", threadName)
+        }
+    }
+
+    private fun PersistableEmbraceSpan.addCustomAttributes() {
+        customAttributes.forEach {
+            addAttribute(it.key, it.value)
         }
     }
 

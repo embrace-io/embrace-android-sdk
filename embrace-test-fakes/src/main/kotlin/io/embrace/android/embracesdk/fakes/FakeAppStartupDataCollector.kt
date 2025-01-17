@@ -1,6 +1,10 @@
 package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.internal.capture.startup.AppStartupDataCollector
+import io.embrace.android.embracesdk.internal.clock.millisToNanos
+import io.opentelemetry.sdk.trace.data.SpanData
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentLinkedQueue
 
 class FakeAppStartupDataCollector(
     private val clock: FakeClock,
@@ -14,6 +18,8 @@ class FakeAppStartupDataCollector(
     var startupActivityInitEndMs: Long? = null
     var startupActivityResumedMs: Long? = null
     var firstFrameRenderedMs: Long? = null
+    var customChildSpans = ConcurrentLinkedQueue<SpanData>()
+    var customAttributes: MutableMap<String, String> = ConcurrentHashMap()
 
     override fun applicationInitStart(timestampMs: Long?) {
         applicationInitStartMs = timestampMs ?: clock.now()
@@ -60,6 +66,16 @@ class FakeAppStartupDataCollector(
     }
 
     override fun addTrackedInterval(name: String, startTimeMs: Long, endTimeMs: Long) {
-        TODO("Not yet implemented")
+        customChildSpans.add(
+            FakeSpanData(
+                name = name,
+                startEpochNanos = startTimeMs.millisToNanos(),
+                endTimeNanos = endTimeMs.millisToNanos()
+            )
+        )
+    }
+
+    override fun addAttribute(key: String, value: String) {
+        customAttributes[key] = value
     }
 }

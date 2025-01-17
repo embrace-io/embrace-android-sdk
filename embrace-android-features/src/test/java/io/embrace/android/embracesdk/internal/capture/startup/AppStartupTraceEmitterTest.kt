@@ -223,16 +223,19 @@ internal class AppStartupTraceEmitterTest {
     private fun verifyColdStartWithRender(processCreateDelayMs: Long? = null) {
         clock.tick(100L)
         appStartupTraceEmitter.applicationInitStart()
+        val customSpanStartMs = clock.now()
         clock.tick(15L)
         val (sdkInitStart, sdkInitEnd) = startSdk()
+        appStartupTraceEmitter.addAttribute("custom-attribute", "true")
         appStartupTraceEmitter.applicationInitEnd()
         val applicationInitEnd = clock.now()
         clock.tick(50L)
+        appStartupTraceEmitter.addTrackedInterval("custom-span", customSpanStartMs, applicationInitEnd)
 
         val activityCreateEvents = createStartupActivity()
         val traceEnd = startupActivityRender().second
 
-        assertEquals(7, spanSink.completedSpans().size)
+        assertEquals(8, spanSink.completedSpans().size)
         val spanMap = spanSink.completedSpans().associateBy { it.name }
         val trace = checkNotNull(spanMap["emb-cold-time-to-initial-display"])
         val processInit = checkNotNull(spanMap["emb-process-init"])
@@ -240,6 +243,7 @@ internal class AppStartupTraceEmitterTest {
         val activityInitDelay = checkNotNull(spanMap["emb-activity-init-gap"])
         val activityCreate = checkNotNull(spanMap["emb-activity-create"])
         val firstRender = checkNotNull(spanMap["emb-first-frame-render"])
+        val customSpan = checkNotNull(spanMap["custom-span"])
 
         val startupActivityStart = checkNotNull(activityCreateEvents.create)
         val startupActivityEnd = checkNotNull((activityCreateEvents.finished))
@@ -252,12 +256,14 @@ internal class AppStartupTraceEmitterTest {
             expectedActivityPreCreatedMs = activityCreateEvents.preCreate,
             expectedActivityPostCreatedMs = activityCreateEvents.postCreate,
             expectedFirstActivityLifecycleEventMs = activityCreateEvents.firstEvent,
+            expectedCustomAttributes = mapOf("custom-attribute" to "true")
         )
         assertChildSpan(processInit, DEFAULT_FAKE_CURRENT_TIME, applicationInitEnd)
         assertChildSpan(embraceInit, sdkInitStart, sdkInitEnd)
         assertChildSpan(activityInitDelay, applicationInitEnd, startupActivityStart)
         assertChildSpan(activityCreate, startupActivityStart, startupActivityEnd)
         assertChildSpan(firstRender, startupActivityEnd, traceEnd)
+        assertChildSpan(customSpan, customSpanStartMs, applicationInitEnd)
         assertEquals(0, logger.internalErrorMessages.size)
     }
 
@@ -542,6 +548,7 @@ internal class AppStartupTraceEmitterTest {
         expectedActivityPreCreatedMs: Long? = null,
         expectedActivityPostCreatedMs: Long? = null,
         expectedFirstActivityLifecycleEventMs: Long? = null,
+        expectedCustomAttributes: Map<String, String> = emptyMap(),
     ) {
         val trace = input.toNewPayload()
         assertEquals(expectedStartTimeMs, trace.startTimeNanos?.nanosToMillis())
@@ -565,6 +572,10 @@ internal class AppStartupTraceEmitterTest {
         assertEquals("false", attrs.findAttributeValue("embrace-init-in-foreground"))
         assertEquals("main", attrs.findAttributeValue("embrace-init-thread-name"))
         assertEquals(1, dataCollectionCompletedCallbackInvokedCount)
+
+        expectedCustomAttributes.forEach { entry ->
+            assertEquals(entry.value, trace.attributes?.findAttributeValue(entry.key))
+        }
     }
 
     private fun assertChildSpan(span: EmbraceSpanData, expectedStartTimeNanos: Long, expectedEndTimeNanos: Long) {

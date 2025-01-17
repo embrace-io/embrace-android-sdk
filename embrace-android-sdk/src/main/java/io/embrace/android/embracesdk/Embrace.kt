@@ -430,11 +430,11 @@ public class Embrace private constructor(
 
     override fun getSdkCurrentTimeMs(): Long = impl.getSdkCurrentTimeMs()
 
-    override fun addAttributeToLoadTrace(activity: Activity, key: String, value: String) {
-        impl.addAttributeToLoadTrace(activity, key, value)
+    override fun addLoadTraceAttribute(activity: Activity, key: String, value: String) {
+        impl.addLoadTraceAttribute(activity, key, value)
     }
 
-    override fun addChildSpanToLoadTrace(
+    override fun addLoadTraceChildSpan(
         activity: Activity,
         name: String,
         startTimeMs: Long,
@@ -443,7 +443,7 @@ public class Embrace private constructor(
         events: List<EmbraceSpanEvent>,
         errorCode: ErrorCode?,
     ) {
-        impl.addChildSpanToLoadTrace(
+        impl.addLoadTraceChildSpan(
             activity = activity,
             name = name,
             startTimeMs = startTimeMs,
@@ -458,7 +458,7 @@ public class Embrace private constructor(
         impl.addStartupTraceAttribute(key, value)
     }
 
-    override fun addStartupChildSpan(
+    override fun addStartupTraceChildSpan(
         name: String,
         startTimeMs: Long,
         endTimeMs: Long,
@@ -466,7 +466,7 @@ public class Embrace private constructor(
         events: List<EmbraceSpanEvent>,
         errorCode: ErrorCode?,
     ) {
-        impl.addStartupChildSpan(
+        impl.addStartupTraceChildSpan(
             name = name,
             startTimeMs = startTimeMs,
             endTimeMs = endTimeMs,

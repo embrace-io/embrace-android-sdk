@@ -102,11 +102,11 @@ internal class EmbraceActionInterface(
             setup.overriddenClock.tick(LIFECYCLE_EVENT_GAP)
 
             if (invokeManualEnd) {
-                embrace.addAttributeToLoadTrace(activityController.get(), "manual-end", "true")
+                embrace.addLoadTraceAttribute(activityController.get(), "manual-end", "true")
                 val startTime = clock.now()
                 setup.overriddenClock.tick(LIFECYCLE_EVENT_GAP)
                 val endTime = clock.now()
-                embrace.addChildSpanToLoadTrace(
+                embrace.addLoadTraceChildSpan(
                     activity = activityController.get(),
                     name = "loading-time",
                     startTimeMs = startTime,

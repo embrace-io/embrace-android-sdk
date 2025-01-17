@@ -33,7 +33,7 @@ internal class AppStartupTraceTest {
             testCaseAction = {
                 val customStartTimeMs = clock.now()
                 val customEndTimeMs = clock.tick(100L)
-                embrace.addStartupChildSpan("custom-span", customStartTimeMs, customEndTimeMs)
+                embrace.addStartupTraceChildSpan("custom-span", customStartTimeMs, customEndTimeMs)
                 embrace.addStartupTraceAttribute("custom-attribute", "yes")
                 simulateOpeningActivities(
                     addStartupActivity = false,

@@ -410,6 +410,10 @@ public class Embrace private constructor(
         impl.trackWebViewPerformance(tag, message)
     }
 
+    override fun applicationInitEnd() {
+        impl.applicationInitEnd()
+    }
+
     override fun logWebView(url: String?) {
         impl.logWebView(url)
     }

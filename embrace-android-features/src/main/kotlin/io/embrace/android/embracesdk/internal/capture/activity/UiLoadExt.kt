@@ -144,14 +144,21 @@ private class LifecycleEventEmitter(
         if (activity.traceLoad()) {
             val instanceId = traceInstanceId(activity)
             if (drawEventEmitter != null) {
+                val renderStartCallback = {
+                    uiLoadEventListener.render(
+                        instanceId = instanceId,
+                        timestampMs = nowMs()
+                    )
+                }
+
                 // this callback will be cached, so it should not directly reference the Activity instance
-                val callback = {
+                val renderEndCallback = {
                     uiLoadEventListener.renderEnd(
                         instanceId = instanceId,
                         timestampMs = nowMs()
                     )
                 }
-                drawEventEmitter.registerFirstDrawCallback(activity, callback)
+                drawEventEmitter.registerFirstDrawCallback(activity, renderStartCallback, renderEndCallback)
             }
             instanceStartTime[instanceId] = nowMs()
         }
@@ -189,13 +196,6 @@ private class LifecycleEventEmitter(
                 instanceId = traceInstanceId(activity),
                 timestampMs = now
             )
-
-            if (drawEventEmitter != null) {
-                uiLoadEventListener.render(
-                    instanceId = traceInstanceId(activity),
-                    timestampMs = now
-                )
-            }
         }
     }
 

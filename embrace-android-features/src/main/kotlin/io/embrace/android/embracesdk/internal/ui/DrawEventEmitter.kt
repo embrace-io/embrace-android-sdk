@@ -10,7 +10,11 @@ interface DrawEventEmitter {
      * Register the given callback to the UI inside of the given activity instance to be invoked when the first frame
      * has drawn.
      */
-    fun registerFirstDrawCallback(activity: Activity, completionCallback: () -> Unit)
+    fun registerFirstDrawCallback(
+        activity: Activity,
+        drawBeginCallback: () -> Unit,
+        firstFrameDeliveredCallback: () -> Unit
+    )
 
     /**
      * Unregister any first draw callbacks registered for the given Activity instance

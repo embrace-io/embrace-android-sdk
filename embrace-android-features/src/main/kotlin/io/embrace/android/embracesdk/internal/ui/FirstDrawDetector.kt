@@ -27,7 +27,11 @@ class FirstDrawDetector(
 
     private val loadingActivities: MutableMap<Int, () -> Unit> = ConcurrentHashMap()
 
-    override fun registerFirstDrawCallback(activity: Activity, completionCallback: () -> Unit) {
+    override fun registerFirstDrawCallback(
+        activity: Activity,
+        drawBeginCallback: () -> Unit,
+        firstFrameDeliveredCallback: () -> Unit
+    ) {
         val instanceId = traceInstanceId(activity)
         if (!trackingLoad(instanceId)) {
             val window = activity.window
@@ -36,8 +40,9 @@ class FirstDrawDetector(
                     val decorView = window.decorView
                     decorView.onNextDraw {
                         if (!trackingLoad(instanceId)) {
-                            loadingActivities[instanceId] = completionCallback
-                            decorView.viewTreeObserver.registerFrameCommitCallback(completionCallback)
+                            drawBeginCallback()
+                            loadingActivities[instanceId] = firstFrameDeliveredCallback
+                            decorView.viewTreeObserver.registerFrameCommitCallback(firstFrameDeliveredCallback)
                         }
                     }
                 }

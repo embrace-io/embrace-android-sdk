@@ -8,13 +8,14 @@ import java.lang.reflect.Type
  * Enumerates the different types of telemetry that are supported when persisting to disk.
  */
 enum class SupportedEnvelopeType(
-    val serializedType: Type,
+    val serializedType: Type?,
     val priority: String,
     val endpoint: Endpoint,
 ) {
 
     CRASH(Envelope.logEnvelopeType, "p1", Endpoint.LOGS),
     SESSION(Envelope.sessionEnvelopeType, "p3", Endpoint.SESSIONS),
+    ATTACHMENT(null, "p4", Endpoint.ATTACHMENTS),
     LOG(Envelope.logEnvelopeType, "p5", Endpoint.LOGS),
     BLOB(Envelope.logEnvelopeType, "p7", Endpoint.LOGS);
 

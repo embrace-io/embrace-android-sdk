@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
 import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
 import io.embrace.android.embracesdk.internal.delivery.scheduling.SchedulingService
 import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageService
+import io.embrace.android.embracesdk.internal.delivery.storage.storeAttachment
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.payload.Envelope
@@ -45,6 +46,7 @@ class IntakeServiceImpl(
         }
     }
 
+    @Suppress("UNCHECKED_CAST")
     private fun processIntake(
         intake: Envelope<*>,
         metadata: StoredTelemetryMetadata,
@@ -55,7 +57,12 @@ class IntakeServiceImpl(
                 else -> cacheStorageService
             }
             service.store(metadata) { stream ->
-                serializer.toJson(intake, metadata.envelopeType.serializedType, stream)
+                if (metadata.envelopeType.serializedType != null) {
+                    serializer.toJson(intake, metadata.envelopeType.serializedType, stream)
+                } else { // payload doesn't require serialization
+                    val pair = intake.data as Pair<String, ByteArray>
+                    storeAttachment(stream, pair.second, pair.first)
+                }
             }
             val lastReference = cacheReferences[metadata.envelopeType]
 

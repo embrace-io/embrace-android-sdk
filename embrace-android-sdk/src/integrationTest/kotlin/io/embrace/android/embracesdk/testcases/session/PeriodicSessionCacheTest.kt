@@ -103,7 +103,7 @@ internal class PeriodicSessionCacheTest {
         val inputStream = checkNotNull(cacheStorageService.loadPayloadAsStream(metadata))
         return TestPlatformSerializer().fromJson(
             inputStream,
-            SupportedEnvelopeType.SESSION.serializedType
+            checkNotNull(SupportedEnvelopeType.SESSION.serializedType)
         )
     }
 

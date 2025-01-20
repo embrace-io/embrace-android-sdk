@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.testframework.assertions
 
+import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.internal.opentelemetry.embExceptionHandling
 import io.embrace.android.embracesdk.internal.opentelemetry.embState
 import io.embrace.android.embracesdk.internal.payload.Log
@@ -18,7 +19,7 @@ internal fun assertOtelLogReceived(
     expectedMessage: String,
     expectedSeverityNumber: Int,
     expectedSeverityText: String,
-    expectedTimeMs: Long = IntegrationTestRule.DEFAULT_SDK_START_TIME_MS,
+    expectedTimeMs: Long? = IntegrationTestRule.DEFAULT_SDK_START_TIME_MS,
     expectedType: String? = null,
     expectedExceptionName: String? = null,
     expectedExceptionMessage: String? = null,
@@ -33,7 +34,9 @@ internal fun assertOtelLogReceived(
         assertEquals(expectedMessage, log.body)
         assertEquals(expectedSeverityNumber, log.severityNumber)
         assertEquals(expectedSeverityText, log.severityText)
-        assertEquals(expectedTimeMs * 1000000, log.timeUnixNano)
+        if (expectedTimeMs != null) {
+            assertEquals(expectedTimeMs * 1000000, log.timeUnixNano)
+        }
         assertFalse(log.attributes?.findAttributeValue(SessionIncubatingAttributes.SESSION_ID.key).isNullOrBlank())
         expectedType?.let { assertAttribute(log, embExceptionHandling.name, it) }
         assertEquals(expectedState, log.attributes?.findAttributeValue(embState.attributeKey.key))
@@ -53,8 +56,16 @@ internal fun assertOtelLogReceived(
     }
 }
 
+internal fun getOtelSeverity(severity: Severity): io.opentelemetry.api.logs.Severity {
+    return when (severity) {
+        Severity.INFO -> io.opentelemetry.api.logs.Severity.INFO
+        Severity.WARNING -> io.opentelemetry.api.logs.Severity.WARN
+        Severity.ERROR -> io.opentelemetry.api.logs.Severity.ERROR
+    }
+}
+
 private fun assertAttribute(log: Log, name: String, expectedValue: String) {
     val attribute = log.attributes?.find { it.key == name }
-    assertNotNull(attribute)
+    assertNotNull("Attribute not found: $name", attribute)
     assertEquals(expectedValue, attribute?.data)
 }

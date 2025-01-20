@@ -66,7 +66,7 @@ internal class LogsApiDelegateTest {
 
     @Test
     fun logMessage() {
-        delegate.logMessageImpl(message = "test", severity = Severity.WARNING)
+        delegate.logMessageImpl(severity = Severity.WARNING, message = "test")
         val log = logService.loggedMessages.single()
         assertEquals("test", log.message)
         assertEquals(Severity.WARNING, log.severity)

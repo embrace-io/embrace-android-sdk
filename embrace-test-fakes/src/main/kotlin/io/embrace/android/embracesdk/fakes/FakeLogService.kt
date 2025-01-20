@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.fakes
 import io.embrace.android.embracesdk.LogExceptionType
 import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.internal.logs.LogService
+import io.embrace.android.embracesdk.internal.logs.attachments.Attachment
 import io.opentelemetry.api.common.AttributeKey
 
 class FakeLogService : LogService {
@@ -23,6 +24,7 @@ class FakeLogService : LogService {
         logExceptionType: LogExceptionType,
         properties: Map<String, Any>?,
         customLogAttrs: Map<AttributeKey<String>, String>,
+        logAttachment: Attachment.EmbraceHosted?,
     ) {
         loggedMessages.add(
             LogData(

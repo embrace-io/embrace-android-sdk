@@ -97,7 +97,7 @@ internal class PayloadResurrectionServiceImpl(
                             inputStream = GZIPInputStream(
                                 cacheStorageService.loadPayloadAsStream(cachedCrashEnvelopeMetadata)
                             ),
-                            type = SupportedEnvelopeType.CRASH.serializedType
+                            type = checkNotNull(SupportedEnvelopeType.CRASH.serializedType)
                         ).also {
                             cacheStorageService.delete(cachedCrashEnvelopeMetadata)
                         }
@@ -157,7 +157,7 @@ internal class PayloadResurrectionServiceImpl(
             SupportedEnvelopeType.SESSION -> {
                 val deadSession = serializer.fromJson<Envelope<SessionPayload>>(
                     inputStream = GZIPInputStream(cacheStorageService.loadPayloadAsStream(this)),
-                    type = envelopeType.serializedType
+                    type = checkNotNull(envelopeType.serializedType)
                 )
 
                 val sessionId = deadSession.getSessionId()

@@ -82,6 +82,7 @@ dependencies {
     testImplementation(libs.protobuf.java)
     testImplementation(libs.protobuf.java.util)
     testImplementation(libs.kotlin.reflect)
+    testImplementation(libs.mockwebserver)
 
     androidTestImplementation(project(":embrace-test-fakes"))
 }

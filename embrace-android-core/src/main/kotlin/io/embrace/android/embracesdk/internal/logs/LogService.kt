@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.logs
 
 import io.embrace.android.embracesdk.LogExceptionType
 import io.embrace.android.embracesdk.Severity
+import io.embrace.android.embracesdk.internal.logs.attachments.Attachment
 import io.embrace.android.embracesdk.internal.session.MemoryCleanerListener
 import io.opentelemetry.api.common.AttributeKey
 
@@ -12,11 +13,6 @@ interface LogService : MemoryCleanerListener {
 
     /**
      * Creates a remote log.
-     *
-     * @param message            the message to log
-     * @param severity           the log severity
-     * @param logExceptionType   whether the log is a handled exception, unhandled, or non an exception
-     * @param properties         custom properties to send as part of the event
      */
     fun log(
         message: String,
@@ -24,6 +20,7 @@ interface LogService : MemoryCleanerListener {
         logExceptionType: LogExceptionType,
         properties: Map<String, Any>? = null,
         customLogAttrs: Map<AttributeKey<String>, String> = emptyMap(),
+        logAttachment: Attachment.EmbraceHosted? = null,
     )
 
     /**

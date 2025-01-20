@@ -31,6 +31,10 @@ class V1PayloadStore(
         }
     }
 
+    override fun storeAttachment(envelope: Envelope<Pair<String, ByteArray>>) {
+        // ignored - v1 doesn't support attachments
+    }
+
     override fun cacheEmptyCrashEnvelope(envelope: Envelope<LogPayload>) {
         // ignore - there's no good place to stash this, and since this will be deleted soon, I'm not going to find one
     }

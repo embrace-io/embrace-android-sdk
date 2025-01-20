@@ -110,6 +110,17 @@ class V2PayloadStoreTest {
         assertEquals(System.NetworkCapturedRequest.value, getLastLogMetadata().payloadType.value)
     }
 
+    @Test
+    fun `test log attachment`() {
+        val envelope = Envelope(data = Pair("test", ByteArray(5)))
+        store.storeAttachment(envelope)
+
+        val intake = intakeService.getIntakes<Pair<String, ByteArray>>().single()
+        assertSame(envelope, intake.envelope)
+        assertEquals("p4_1692201601000_fakeuuid_fakeProcessId_true_attachment_v1.json", intake.metadata.filename)
+        assertEquals(0, intakeService.shutdownCount)
+    }
+
     private fun storeLogWithType(type: TelemetryType) {
         val envelope = Envelope(
             data = LogPayload(

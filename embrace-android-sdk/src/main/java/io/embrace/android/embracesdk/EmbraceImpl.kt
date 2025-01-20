@@ -314,7 +314,37 @@ internal class EmbraceImpl @JvmOverloads constructor(
             logExceptionType = logExceptionType,
             exceptionName = exceptionName,
             exceptionMessage = exceptionMessage,
-            customLogAttrs = customLogAttrs
+            customLogAttrs = customLogAttrs,
+        )
+    }
+
+    override fun logMessage(
+        message: String,
+        severity: Severity,
+        properties: Map<String, Any>?,
+        attachment: ByteArray,
+    ) {
+        logsApiDelegate.logMessage(
+            message,
+            severity,
+            properties,
+            attachment
+        )
+    }
+
+    override fun logMessage(
+        message: String,
+        severity: Severity,
+        properties: Map<String, Any>?,
+        attachmentId: String,
+        attachmentUrl: String,
+    ) {
+        logsApiDelegate.logMessage(
+            message,
+            severity,
+            properties,
+            attachmentId,
+            attachmentUrl,
         )
     }
 

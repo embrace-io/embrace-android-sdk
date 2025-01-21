@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.capture.activity
 
-import android.os.Build
+import android.os.Build.VERSION_CODES
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.assertEmbraceSpanData
 import io.embrace.android.embracesdk.fakes.FakeClock
@@ -30,10 +30,14 @@ internal class UiLoadTraceEmitterTest {
     private lateinit var spanSink: SpanSink
     private lateinit var spanService: SpanService
     private lateinit var traceEmitter: UiLoadTraceEmitter
+    private var hasRenderEvent: Boolean = false
+    private var hasPreAndPostEvents: Boolean = false
 
     @Before
     fun setUp() {
         clock = FakeClock()
+        hasRenderEvent = hasRenderEvent(BuildVersionChecker)
+        hasPreAndPostEvents = hasPrePostEvents(BuildVersionChecker)
         val initModule = FakeInitModule(clock = clock)
         spanSink = initModule.openTelemetryModule.spanSink
         spanService = initModule.openTelemetryModule.spanService
@@ -45,174 +49,144 @@ internal class UiLoadTraceEmitterTest {
         )
     }
 
-    @Config(sdk = [Build.VERSION_CODES.UPSIDE_DOWN_CAKE])
+    @Config(sdk = [VERSION_CODES.UPSIDE_DOWN_CAKE])
     @Test
     fun `verify cold ui load trace from another activity in U`() {
         verifyOpen(
             previousState = PreviousState.FROM_ACTIVITY,
             uiLoadType = UiLoadType.COLD,
-            firePreAndPost = true,
-            hasRenderEvent = true,
         )
     }
 
-    @Config(sdk = [Build.VERSION_CODES.UPSIDE_DOWN_CAKE])
+    @Config(sdk = [VERSION_CODES.UPSIDE_DOWN_CAKE])
     @Test
     fun `verify cold ui load trace from the same activity in U`() {
         verifyOpen(
             lastActivityName = ACTIVITY_NAME,
             previousState = PreviousState.FROM_ACTIVITY,
             uiLoadType = UiLoadType.COLD,
-            firePreAndPost = true,
-            hasRenderEvent = true,
         )
     }
 
-    @Config(sdk = [Build.VERSION_CODES.UPSIDE_DOWN_CAKE])
+    @Config(sdk = [VERSION_CODES.UPSIDE_DOWN_CAKE])
     @Test
     fun `verify cold ui load trace from an interrupted opening of another activity in U`() {
         verifyOpen(
             previousState = PreviousState.FROM_INTERRUPTED_LOAD,
             uiLoadType = UiLoadType.COLD,
-            firePreAndPost = true,
-            hasRenderEvent = true,
         )
     }
 
-    @Config(sdk = [Build.VERSION_CODES.UPSIDE_DOWN_CAKE])
+    @Config(sdk = [VERSION_CODES.UPSIDE_DOWN_CAKE])
     @Test
     fun `verify cold ui load trace from an interrupted opening of the same activity in U`() {
         verifyOpen(
             lastActivityName = ACTIVITY_NAME,
             previousState = PreviousState.FROM_INTERRUPTED_LOAD,
             uiLoadType = UiLoadType.COLD,
-            firePreAndPost = true,
-            hasRenderEvent = true,
         )
     }
 
-    @Config(sdk = [Build.VERSION_CODES.UPSIDE_DOWN_CAKE])
+    @Config(sdk = [VERSION_CODES.UPSIDE_DOWN_CAKE])
     @Test
     fun `verify cold open trace from background in U`() {
         verifyOpen(
             previousState = PreviousState.FROM_BACKGROUND,
             uiLoadType = UiLoadType.COLD,
-            firePreAndPost = true,
-            hasRenderEvent = true,
         )
     }
 
-    @Config(sdk = [Build.VERSION_CODES.UPSIDE_DOWN_CAKE])
+    @Config(sdk = [VERSION_CODES.UPSIDE_DOWN_CAKE])
     @Test
     fun `verify hot ui load trace in from background in U`() {
         verifyOpen(
             previousState = PreviousState.FROM_BACKGROUND,
             uiLoadType = UiLoadType.HOT,
-            firePreAndPost = true,
-            hasRenderEvent = true,
         )
     }
 
-    @Config(sdk = [Build.VERSION_CODES.UPSIDE_DOWN_CAKE])
+    @Config(sdk = [VERSION_CODES.UPSIDE_DOWN_CAKE])
     @Test
     fun `verify cold ui load trace to be ended manually in U`() {
         verifyOpen(
             previousState = PreviousState.FROM_ACTIVITY,
             uiLoadType = UiLoadType.COLD,
-            firePreAndPost = true,
-            hasRenderEvent = true,
             manualEnd = true,
         )
     }
 
-    @Config(sdk = [Build.VERSION_CODES.UPSIDE_DOWN_CAKE])
+    @Config(sdk = [VERSION_CODES.UPSIDE_DOWN_CAKE])
     @Test
     fun `verify hot ui load trace to be ended manually in U`() {
         verifyOpen(
             previousState = PreviousState.FROM_ACTIVITY,
             uiLoadType = UiLoadType.HOT,
-            firePreAndPost = true,
-            hasRenderEvent = true,
             manualEnd = true,
         )
     }
 
-    @Config(sdk = [Build.VERSION_CODES.LOLLIPOP])
+    @Config(sdk = [VERSION_CODES.LOLLIPOP])
     @Test
     fun `verify cold ui load trace in from another activity L`() {
         verifyOpen(
             previousState = PreviousState.FROM_ACTIVITY,
             uiLoadType = UiLoadType.COLD,
-            firePreAndPost = false,
-            hasRenderEvent = false,
         )
     }
 
-    @Config(sdk = [Build.VERSION_CODES.LOLLIPOP])
+    @Config(sdk = [VERSION_CODES.LOLLIPOP])
     @Test
     fun `verify cold ui load trace from an interrupted opening of another activity in L`() {
         verifyOpen(
             previousState = PreviousState.FROM_INTERRUPTED_LOAD,
             uiLoadType = UiLoadType.COLD,
-            firePreAndPost = false,
-            hasRenderEvent = false,
         )
     }
 
-    @Config(sdk = [Build.VERSION_CODES.LOLLIPOP])
+    @Config(sdk = [VERSION_CODES.LOLLIPOP])
     @Test
     fun `verify cold ui load trace from an interrupted opening of the same activity in L`() {
         verifyOpen(
             lastActivityName = ACTIVITY_NAME,
             previousState = PreviousState.FROM_INTERRUPTED_LOAD,
             uiLoadType = UiLoadType.COLD,
-            firePreAndPost = false,
-            hasRenderEvent = false,
         )
     }
 
-    @Config(sdk = [Build.VERSION_CODES.LOLLIPOP])
+    @Config(sdk = [VERSION_CODES.LOLLIPOP])
     @Test
     fun `verify cold ui load trace from background in L`() {
         verifyOpen(
             previousState = PreviousState.FROM_BACKGROUND,
             uiLoadType = UiLoadType.COLD,
-            firePreAndPost = false,
-            hasRenderEvent = false,
         )
     }
 
-    @Config(sdk = [Build.VERSION_CODES.LOLLIPOP])
+    @Config(sdk = [VERSION_CODES.LOLLIPOP])
     @Test
     fun `verify hot ui load trace in L from background`() {
         verifyOpen(
             previousState = PreviousState.FROM_BACKGROUND,
             uiLoadType = UiLoadType.HOT,
-            firePreAndPost = false,
-            hasRenderEvent = false,
         )
     }
 
-    @Config(sdk = [Build.VERSION_CODES.LOLLIPOP])
+    @Config(sdk = [VERSION_CODES.LOLLIPOP])
     @Test
     fun `verify cold ui load trace to be ended manually in L`() {
         verifyOpen(
             previousState = PreviousState.FROM_ACTIVITY,
             uiLoadType = UiLoadType.COLD,
-            firePreAndPost = false,
-            hasRenderEvent = false,
             manualEnd = true,
         )
     }
 
-    @Config(sdk = [Build.VERSION_CODES.LOLLIPOP])
+    @Config(sdk = [VERSION_CODES.LOLLIPOP])
     @Test
     fun `verify hot ui load trace to be ended manually in L`() {
         verifyOpen(
             previousState = PreviousState.FROM_ACTIVITY,
             uiLoadType = UiLoadType.HOT,
-            firePreAndPost = false,
-            hasRenderEvent = false,
             manualEnd = true,
         )
     }
@@ -224,8 +198,6 @@ internal class UiLoadTraceEmitterTest {
         lastInstanceId: Int = LAST_ACTIVITY_INSTANCE_ID,
         previousState: PreviousState,
         uiLoadType: UiLoadType,
-        firePreAndPost: Boolean,
-        hasRenderEvent: Boolean,
         manualEnd: Boolean = false,
     ) {
         openActivity(
@@ -235,8 +207,6 @@ internal class UiLoadTraceEmitterTest {
             lastInstanceId = lastInstanceId,
             previousState = previousState,
             uiLoadType = uiLoadType,
-            firePreAndPost = firePreAndPost,
-            hasRenderEvent = hasRenderEvent,
             manualEnd = manualEnd,
         ).let { timestamps ->
             val spanMap = spanSink.completedSpans().associateBy { it.name }
@@ -336,8 +306,6 @@ internal class UiLoadTraceEmitterTest {
         lastInstanceId: Int,
         previousState: PreviousState,
         uiLoadType: UiLoadType,
-        firePreAndPost: Boolean,
-        hasRenderEvent: Boolean,
         manualEnd: Boolean,
     ): Triple<Long, Long, Map<LifecycleStage, LifecycleEvents>> {
         val events = mutableMapOf<LifecycleStage, LifecycleEvents>()
@@ -357,7 +325,6 @@ internal class UiLoadTraceEmitterTest {
                 activityCreate(
                     activityName = lastActivityName,
                     instanceId = lastInstanceId,
-                    firePreAndPost = firePreAndPost,
                 )
             }
 
@@ -365,12 +332,10 @@ internal class UiLoadTraceEmitterTest {
                 activityCreate(
                     activityName = lastActivityName,
                     instanceId = lastInstanceId,
-                    firePreAndPost = firePreAndPost,
                 )
                 activityStart(
                     activityName = lastActivityName,
                     instanceId = lastInstanceId,
-                    firePreAndPost = firePreAndPost,
                 )
             }
         }
@@ -383,7 +348,6 @@ internal class UiLoadTraceEmitterTest {
             activityCreate(
                 activityName = activityName,
                 instanceId = instanceId,
-                firePreAndPost = firePreAndPost,
                 manualEnd = manualEnd,
             )
         } else {
@@ -397,7 +361,6 @@ internal class UiLoadTraceEmitterTest {
         val startEvents = activityStart(
             activityName = activityName,
             instanceId = instanceId,
-            firePreAndPost = firePreAndPost,
             manualEnd = manualEnd,
         ).apply {
             events[LifecycleStage.START] = this
@@ -408,12 +371,12 @@ internal class UiLoadTraceEmitterTest {
         traceEmitter.addAttribute(instanceId, "custom-attribute", "custom-value")
 
         val traceStartMs = createEvents?.run {
-            if (firePreAndPost) {
+            if (hasPreAndPostEvents) {
                 pre
             } else {
                 eventStart
             }
-        } ?: if (firePreAndPost) {
+        } ?: if (hasPreAndPostEvents) {
             startEvents.pre
         } else {
             startEvents.eventStart
@@ -440,7 +403,6 @@ internal class UiLoadTraceEmitterTest {
         val resumeEvents = activityResume(
             instanceId = instanceId,
             fireEndEvent = hasRenderEvent,
-            firePreAndPost = firePreAndPost,
         ).apply {
             events[LifecycleStage.RESUME] = this
         }
@@ -473,7 +435,6 @@ internal class UiLoadTraceEmitterTest {
     private fun activityCreate(
         activityName: String,
         instanceId: Int,
-        firePreAndPost: Boolean = true,
         manualEnd: Boolean = false,
     ): LifecycleEvents {
         return runLifecycleEvent(
@@ -481,7 +442,6 @@ internal class UiLoadTraceEmitterTest {
             startCallback = traceEmitter::create,
             endCallback = traceEmitter::createEnd,
             activityName = activityName,
-            firePreAndPost = firePreAndPost,
             manualEnd = manualEnd,
         )
     }
@@ -489,7 +449,6 @@ internal class UiLoadTraceEmitterTest {
     private fun activityStart(
         activityName: String,
         instanceId: Int,
-        firePreAndPost: Boolean = true,
         manualEnd: Boolean = false,
     ): LifecycleEvents {
         return runLifecycleEvent(
@@ -497,7 +456,6 @@ internal class UiLoadTraceEmitterTest {
             startCallback = traceEmitter::start,
             endCallback = traceEmitter::startEnd,
             activityName = activityName,
-            firePreAndPost = firePreAndPost,
             manualEnd = manualEnd,
         )
     }
@@ -506,7 +464,6 @@ internal class UiLoadTraceEmitterTest {
     private fun activityResume(
         instanceId: Int,
         fireEndEvent: Boolean,
-        firePreAndPost: Boolean = true,
     ): LifecycleEvents {
         return runLifecycleEvent(
             instanceId = instanceId,
@@ -514,7 +471,6 @@ internal class UiLoadTraceEmitterTest {
                 traceEmitter.resume(instanceId, startMs)
             },
             endCallback = if (fireEndEvent) traceEmitter::resumeEnd else fun(_, _) {},
-            firePreAndPost = firePreAndPost,
         )
     }
 
@@ -532,18 +488,17 @@ internal class UiLoadTraceEmitterTest {
         startCallback: (instanceId: Int, activityName: String, startMs: Long, manualEnd: Boolean) -> Unit,
         endCallback: (instanceId: Int, startMs: Long) -> Unit,
         activityName: String = "",
-        firePreAndPost: Boolean = true,
         manualEnd: Boolean = false,
     ): LifecycleEvents {
         val events = LifecycleEvents()
-        if (firePreAndPost) {
+        if (hasPreAndPostEvents) {
             events.pre = clock.now()
             clock.tick()
         }
         events.eventStart = clock.now()
         startCallback(instanceId, activityName, events.startMs(), manualEnd)
         events.eventEnd = clock.tick(100L)
-        if (firePreAndPost) {
+        if (hasPreAndPostEvents) {
             events.post = clock.tick()
         }
         endCallback(instanceId, events.endMs())

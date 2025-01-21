@@ -12,6 +12,7 @@ import io.embrace.android.embracesdk.fakes.FakeDrawEventEmitter
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeNotStartupActivity
 import io.embrace.android.embracesdk.fakes.FakeSplashScreenActivity
+import io.embrace.android.embracesdk.internal.capture.startup.AppStartupTraceEmitter.Companion.startupHasRenderEvent
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import org.junit.Assert.assertEquals
@@ -214,7 +215,7 @@ internal class StartupTrackerTest {
         val resumeTime = clock.now()
         controller.resume()
         clock.tick()
-        val renderTime = if (BuildVersionChecker.isAtLeast(Build.VERSION_CODES.Q)) {
+        val renderTime = if (startupHasRenderEvent(BuildVersionChecker)) {
             drawEventEmitter.draw(controller.get()) {
                 clock.tick()
             }

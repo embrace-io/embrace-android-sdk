@@ -52,7 +52,7 @@ class StartupTracker(
                     collectionCompleteCallback = { startupComplete(application) }
                 )
             }
-            drawEventEmitter?.registerFirstDrawCallback(activity, callback)
+            drawEventEmitter?.registerFirstDrawCallback(activity, {}, callback)
         }
     }
 

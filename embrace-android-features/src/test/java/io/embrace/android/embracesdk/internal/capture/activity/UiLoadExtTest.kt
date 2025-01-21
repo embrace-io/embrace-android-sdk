@@ -166,18 +166,17 @@ internal class UiLoadExtTest {
         }
     }
 
-    private fun stepThroughActivityLifecycle(
-        isColdOpen: Boolean = true,
-    ) {
+    private fun stepThroughActivityLifecycle(isColdOpen: Boolean = true) {
         with(activityController) {
             if (isColdOpen) {
                 create()
             }
             start()
             resume()
-            if (uiLoadEventListener.events.any { it.stage == "render" }) {
-                clock.tick(RENDER_DURATION)
-                drawEventEmitter.draw(activityController.get())
+            if (BuildVersionChecker.isAtLeast(Build.VERSION_CODES.Q)) {
+                drawEventEmitter.draw(activityController.get()) {
+                    clock.tick(RENDER_DURATION)
+                }
             }
             pause()
             stop()
@@ -190,7 +189,7 @@ internal class UiLoadExtTest {
 
     private fun assertDrawEvents() {
         assertNotNull(drawEventEmitter.lastRegisteredActivity)
-        assertNotNull(drawEventEmitter.lastCallback)
+        assertNotNull(drawEventEmitter.lastFirstFrameDeliveredCallback)
         assertNotNull(drawEventEmitter.lastUnregisteredActivity)
         assertEquals(drawEventEmitter.lastRegisteredActivity, drawEventEmitter.lastRegisteredActivity)
     }

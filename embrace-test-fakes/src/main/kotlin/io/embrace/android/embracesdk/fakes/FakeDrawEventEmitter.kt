@@ -7,15 +7,19 @@ import java.util.concurrent.ConcurrentHashMap
 
 class FakeDrawEventEmitter : DrawEventEmitter {
 
-    val registeredActivities: MutableMap<Int, () -> Unit> = ConcurrentHashMap()
+    val registeredActivities: MutableMap<Int, Pair<() -> Unit, () -> Unit>> = ConcurrentHashMap()
     var lastRegisteredActivity: Activity? = null
     var lastUnregisteredActivity: Activity? = null
-    var lastCallback: (() -> Unit)? = null
+    var lastFirstFrameDeliveredCallback: (() -> Unit)? = null
 
-    override fun registerFirstDrawCallback(activity: Activity, completionCallback: () -> Unit) {
-        registeredActivities[traceInstanceId(activity)] = completionCallback
+    override fun registerFirstDrawCallback(
+        activity: Activity,
+        drawBeginCallback: () -> Unit,
+        firstFrameDeliveredCallback: () -> Unit
+    ) {
+        registeredActivities[traceInstanceId(activity)] = drawBeginCallback to firstFrameDeliveredCallback
         lastRegisteredActivity = activity
-        lastCallback = completionCallback
+        lastFirstFrameDeliveredCallback = firstFrameDeliveredCallback
     }
 
     override fun unregisterFirstDrawCallback(activity: Activity) {
@@ -23,7 +27,11 @@ class FakeDrawEventEmitter : DrawEventEmitter {
         lastUnregisteredActivity = activity
     }
 
-    fun draw(activity: Activity) {
-        registeredActivities[traceInstanceId(activity)]?.invoke()
+    fun draw(activity: Activity, gapCallback: () -> Unit = {}) {
+        registeredActivities[traceInstanceId(activity)]?.run {
+            first()
+            gapCallback()
+            second()
+        }
     }
 }

@@ -13,6 +13,7 @@ import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeNotStartupActivity
 import io.embrace.android.embracesdk.fakes.FakeSplashScreenActivity
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
+import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
@@ -63,7 +64,8 @@ internal class StartupTrackerTest {
                 createTime = createTime,
                 postCreateTime = createTime,
                 startTime = startTime,
-                resumeTime = resumeTime
+                resumeTime = resumeTime,
+                renderTime = renderTime,
             )
         }
     }
@@ -77,7 +79,8 @@ internal class StartupTrackerTest {
                 createTime = createTime,
                 postCreateTime = createTime,
                 startTime = startTime,
-                resumeTime = resumeTime
+                resumeTime = resumeTime,
+                renderTime = renderTime,
             )
         }
     }
@@ -89,7 +92,7 @@ internal class StartupTrackerTest {
             verifyLifecycle(
                 createTime = createTime,
                 startTime = startTime,
-                resumeTime = resumeTime
+                resumeTime = resumeTime,
             )
         }
     }
@@ -118,7 +121,8 @@ internal class StartupTrackerTest {
                 createTime = createTime,
                 postCreateTime = createTime,
                 startTime = startTime,
-                resumeTime = resumeTime
+                resumeTime = resumeTime,
+                renderTime = renderTime,
             )
         }
     }
@@ -135,7 +139,8 @@ internal class StartupTrackerTest {
                 createTime = createTime,
                 postCreateTime = createTime,
                 startTime = startTime,
-                resumeTime = resumeTime
+                resumeTime = resumeTime,
+                renderTime = renderTime,
             )
         }
     }
@@ -173,7 +178,7 @@ internal class StartupTrackerTest {
         assertNull(dataCollector.startupActivityResumedMs)
         assertNull(dataCollector.firstFrameRenderedMs)
         assertNull(drawEventEmitter.lastRegisteredActivity)
-        assertNull(drawEventEmitter.lastCallback)
+        assertNull(drawEventEmitter.lastFirstFrameDeliveredCallback)
     }
 
     @Config(sdk = [Build.VERSION_CODES.UPSIDE_DOWN_CAKE])
@@ -209,7 +214,15 @@ internal class StartupTrackerTest {
         val resumeTime = clock.now()
         controller.resume()
         clock.tick()
-        return ActivityTiming(createTime, startTime, resumeTime)
+        val renderTime = if (BuildVersionChecker.isAtLeast(Build.VERSION_CODES.Q)) {
+            drawEventEmitter.draw(controller.get()) {
+                clock.tick()
+            }
+            clock.now()
+        } else {
+            null
+        }
+        return ActivityTiming(createTime, startTime, resumeTime, renderTime)
     }
 
     private fun verifyLifecycle(
@@ -218,20 +231,26 @@ internal class StartupTrackerTest {
         postCreateTime: Long? = null,
         startTime: Long,
         resumeTime: Long,
+        renderTime: Long? = null
     ) {
         assertEquals(preCreateTime, dataCollector.startupActivityPreCreatedMs)
         assertEquals(createTime, dataCollector.startupActivityInitStartMs)
         assertEquals(postCreateTime, dataCollector.startupActivityPostCreatedMs)
         assertEquals(startTime, dataCollector.startupActivityInitEndMs)
         assertEquals(resumeTime, dataCollector.startupActivityResumedMs)
-        assertNull(dataCollector.firstFrameRenderedMs)
+        if (renderTime != null) {
+            assertEquals(renderTime, dataCollector.firstFrameRenderedMs)
+        } else {
+            assertNull(dataCollector.firstFrameRenderedMs)
+        }
         assertNotNull(drawEventEmitter.lastRegisteredActivity)
-        assertNotNull(drawEventEmitter.lastCallback)
+        assertNotNull(drawEventEmitter.lastFirstFrameDeliveredCallback)
     }
 
     private data class ActivityTiming(
         val createTime: Long,
         val startTime: Long,
-        val resumeTime: Long
+        val resumeTime: Long,
+        val renderTime: Long? = null,
     )
 }

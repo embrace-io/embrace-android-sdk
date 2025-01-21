@@ -47,8 +47,11 @@ fun traceInstanceId(activity: Activity): Int = activity.hashCode()
 
 /**
  * Determine if the current instance of the app will fire render events
+ *
+ * Disabled temporarily as we figure out how it interacts with Compose navigation
  */
-fun hasRenderEvent(versionChecker: VersionChecker) = versionChecker.isAtLeast(VERSION_CODES.Q)
+@Suppress("FunctionOnlyReturningConstant", "UNUSED_PARAMETER")
+fun hasRenderEvent(versionChecker: VersionChecker): Boolean = false
 
 /**
  * Determine if the current instance of the app will pre and post lifecycle events

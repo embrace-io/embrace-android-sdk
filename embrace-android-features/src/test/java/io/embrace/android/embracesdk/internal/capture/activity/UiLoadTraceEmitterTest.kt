@@ -262,7 +262,7 @@ internal class UiLoadTraceEmitterTest {
                 )
             }
 
-            if (hasRenderEvent) {
+            if (hasPreAndPostEvents) {
                 checkNotNull(events[LifecycleStage.RESUME]).run {
                     assertEmbraceSpanData(
                         span = checkNotNull(spanMap["emb-$activityName-resume"]).toNewPayload(),
@@ -271,6 +271,11 @@ internal class UiLoadTraceEmitterTest {
                         expectedParentId = trace.spanId
                     )
                 }
+            } else {
+                assertNull(spanMap["emb-$activityName-resume"])
+            }
+
+            if (hasRenderEvent) {
                 checkNotNull(events[LifecycleStage.RENDER]).run {
                     assertEmbraceSpanData(
                         span = checkNotNull(spanMap["emb-$activityName-render"]).toNewPayload(),
@@ -280,14 +285,17 @@ internal class UiLoadTraceEmitterTest {
                     )
                 }
             } else {
-                assertNull(spanMap["emb-$activityName-resume"])
                 assertNull(spanMap["emb-$activityName-render"])
             }
 
             val lastEventEndTimeMs = if (hasRenderEvent) {
                 checkNotNull(events[LifecycleStage.RENDER]).endMs()
             } else {
-                checkNotNull(events[LifecycleStage.RESUME]).startMs()
+                if (hasPreAndPostEvents) {
+                    checkNotNull(events[LifecycleStage.RESUME]).endMs()
+                } else {
+                    checkNotNull(events[LifecycleStage.RESUME]).startMs()
+                }
             }
 
             if (manualEnd) {
@@ -400,10 +408,7 @@ internal class UiLoadTraceEmitterTest {
             errorCode = ErrorCode.FAILURE
         )
 
-        val resumeEvents = activityResume(
-            instanceId = instanceId,
-            fireEndEvent = hasRenderEvent,
-        ).apply {
+        val resumeEvents = activityResume(instanceId).apply {
             events[LifecycleStage.RESUME] = this
         }
 
@@ -422,9 +427,12 @@ internal class UiLoadTraceEmitterTest {
                 traceEmitter.complete(instanceId, time)
             }
         } else {
-            renderEvents?.run {
-                endMs()
-            } ?: resumeEvents.startMs()
+            renderEvents?.endMs()
+                ?: if (hasPreAndPostEvents) {
+                    resumeEvents.endMs()
+                } else {
+                    resumeEvents.startMs()
+                }
         }
 
         traceEmitter.addAttribute(instanceId, "after-end", "stub")
@@ -460,17 +468,16 @@ internal class UiLoadTraceEmitterTest {
         )
     }
 
-    @Suppress("FunctionParameterNaming", "UnusedParameter", "EmptyFunctionBlock")
+    @Suppress("FunctionParameterNaming", "UNUSED_PARAMETER", "EmptyFunctionBlock")
     private fun activityResume(
         instanceId: Int,
-        fireEndEvent: Boolean,
     ): LifecycleEvents {
         return runLifecycleEvent(
             instanceId = instanceId,
             startCallback = fun(instanceId: Int, _: String, startMs: Long, _: Boolean) {
                 traceEmitter.resume(instanceId, startMs)
             },
-            endCallback = if (fireEndEvent) traceEmitter::resumeEnd else fun(_, _) {},
+            endCallback = if (hasPreAndPostEvents) traceEmitter::resumeEnd else fun(_, _) {},
         )
     }
 

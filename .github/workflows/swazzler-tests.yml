@@ -14,7 +14,7 @@ concurrency:
 jobs:
   runSwazzlerTests:
     name: "Run Gradle Tests"
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
@@ -37,7 +37,9 @@ jobs:
 
       - name: Install NDK
         if: steps.ndk-cache.outputs.cache-hit != 'true'
-        run: echo "y" | ${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager --install "ndk;27.0.12077973"
+        run: |
+          echo "y" | ${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager --install "ndk;27.0.12077973"
+          echo "y" | ${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager --install "cmake;3.10.2.4988404"
 
       - name: Install Node.js
         uses: actions/setup-node@v4
@@ -58,7 +60,11 @@ jobs:
         working-directory: ./embrace-swazzler3
         run: ./gradlew publishToMavenLocal --no-daemon
 
-      - name: "Run Gradle Tests"
+      - name: "Run Integration Tests"
+        working-directory: ./embrace-swazzler3
+        run: ./gradlew :embrace-gradle-plugin-integration-tests:test --stacktrace
+
+      - name: "Run Functional Tests"
         working-directory: ./embrace-swazzler3
         run: ./gradlew :embrace-gradle-plugin-functional-tests:test --tests "io.embrace.android.gradle.swazzler.tests.*" --stacktrace
 

@@ -13,6 +13,7 @@ import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.capture.activity.LifecycleStage
+import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.payload.ApplicationState
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.spans.ErrorCode
@@ -39,11 +40,29 @@ internal class UiLoadTest {
 
     @Config(sdk = [Build.VERSION_CODES.LOLLIPOP])
     @Test
-    fun `activity open creates a trace by default`() {
+    fun `activity open does not create a trace by default`() {
         testRule.runTest(
             instrumentedConfig = FakeInstrumentedConfig(
-                enabledFeatures = FakeEnabledFeatureConfig(bgActivityCapture = true)
+                enabledFeatures = FakeEnabledFeatureConfig(bgActivityCapture = true),
             ),
+            persistedRemoteConfig = RemoteConfig(),
+            testCaseAction = {
+                simulateOpeningActivities()
+            },
+            assertAction = {
+                assertTrue(getSingleSessionEnvelope().findSpansOfType(EmbType.Performance.UiLoad).isEmpty())
+            }
+        )
+    }
+
+    @Config(sdk = [Build.VERSION_CODES.LOLLIPOP])
+    @Test
+    fun `activity open creates a trace by default if remote config is enabled`() {
+        testRule.runTest(
+            instrumentedConfig = FakeInstrumentedConfig(
+                enabledFeatures = FakeEnabledFeatureConfig(bgActivityCapture = true),
+            ),
+            persistedRemoteConfig = RemoteConfig(uiLoadInstrumentationEnabled = true),
             testCaseAction = {
                 simulateOpeningActivities()
             },
@@ -60,6 +79,7 @@ internal class UiLoadTest {
             instrumentedConfig = FakeInstrumentedConfig(
                 enabledFeatures = FakeEnabledFeatureConfig(uiLoadTracingEnabled = false, bgActivityCapture = true)
             ),
+            persistedRemoteConfig = RemoteConfig(uiLoadInstrumentationEnabled = true),
             testCaseAction = {
                 simulateOpeningActivities()
             },
@@ -80,6 +100,7 @@ internal class UiLoadTest {
                     bgActivityCapture = true
                 )
             ),
+            persistedRemoteConfig = RemoteConfig(uiLoadInstrumentationEnabled = true),
             testCaseAction = {
                 simulateOpeningActivities()
             },
@@ -101,6 +122,7 @@ internal class UiLoadTest {
                     bgActivityCapture = true
                 )
             ),
+            persistedRemoteConfig = RemoteConfig(uiLoadInstrumentationEnabled = true),
             setupAction = {
                 preLaunchTimeMs = overriddenClock.now()
             },
@@ -150,6 +172,7 @@ internal class UiLoadTest {
                     bgActivityCapture = true
                 )
             ),
+            persistedRemoteConfig = RemoteConfig(uiLoadInstrumentationEnabled = true),
             setupAction = {
                 preLaunchTimeMs = overriddenClock.now()
             },
@@ -169,7 +192,10 @@ internal class UiLoadTest {
                     assertEmbraceSpanData(
                         span = trace,
                         expectedStartTimeMs = expectedTraceStartTime,
-                        expectedEndTimeMs = expectedTraceStartTime + calculateTotalTime(lifecycleStages = 3, activitiesFullyLoaded = 1),
+                        expectedEndTimeMs = expectedTraceStartTime + calculateTotalTime(
+                            lifecycleStages = 3,
+                            activitiesFullyLoaded = 1
+                        ),
                         expectedParentId = SpanId.getInvalid(),
                         expectedStatus = Span.Status.ERROR,
                         expectedErrorCode = ErrorCode.USER_ABANDON,
@@ -190,6 +216,7 @@ internal class UiLoadTest {
                     bgActivityCapture = true
                 )
             ),
+            persistedRemoteConfig = RemoteConfig(uiLoadInstrumentationEnabled = true),
             testCaseAction = {
                 simulateOpeningActivities(
                     activitiesAndActions = listOf(
@@ -211,6 +238,7 @@ internal class UiLoadTest {
             instrumentedConfig = FakeInstrumentedConfig(
                 enabledFeatures = FakeEnabledFeatureConfig(uiLoadTracingEnabled = true, bgActivityCapture = true)
             ),
+            persistedRemoteConfig = RemoteConfig(uiLoadInstrumentationEnabled = true),
             setupAction = {
                 preLaunchTimeMs = overriddenClock.now()
             },
@@ -265,6 +293,7 @@ internal class UiLoadTest {
             instrumentedConfig = FakeInstrumentedConfig(
                 enabledFeatures = FakeEnabledFeatureConfig(uiLoadTracingEnabled = true, bgActivityCapture = true)
             ),
+            persistedRemoteConfig = RemoteConfig(uiLoadInstrumentationEnabled = true),
             setupAction = {
                 preLaunchTimeMs = overriddenClock.now()
             },
@@ -320,6 +349,7 @@ internal class UiLoadTest {
             instrumentedConfig = FakeInstrumentedConfig(
                 enabledFeatures = FakeEnabledFeatureConfig(uiLoadTracingEnabled = true, bgActivityCapture = true)
             ),
+            persistedRemoteConfig = RemoteConfig(uiLoadInstrumentationEnabled = true),
             setupAction = {
                 preLaunchTimeMs = overriddenClock.now()
             },

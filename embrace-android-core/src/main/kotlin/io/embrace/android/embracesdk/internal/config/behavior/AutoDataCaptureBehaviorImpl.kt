@@ -17,6 +17,7 @@ class AutoDataCaptureBehaviorImpl(
         const val THERMAL_STATUS_ENABLED_DEFAULT = true
         const val V2_STORAGE_ENABLED_DEFAULT = true
         const val USE_OKHTTP_DEFAULT = true
+        const val UI_LOAD_REMOTE_ENABLED_DEFAULT = false
     }
 
     override val local = local.enabledFeatures
@@ -43,8 +44,11 @@ class AutoDataCaptureBehaviorImpl(
 
     override fun isNativeCrashCaptureEnabled(): Boolean = local.isNativeCrashCaptureEnabled()
     override fun isDiskUsageCaptureEnabled(): Boolean = local.isDiskUsageCaptureEnabled()
-    override fun isUiLoadTracingEnabled(): Boolean = local.isUiLoadTracingEnabled()
-    override fun isUiLoadTracingTraceAll(): Boolean = local.isUiLoadTracingTraceAll()
+    override fun isUiLoadTracingEnabled(): Boolean = local.isUiLoadTracingEnabled() && uiLoadEnabledRemotely()
+    override fun isUiLoadTracingTraceAll(): Boolean = local.isUiLoadTracingTraceAll() && uiLoadEnabledRemotely()
+
+    private fun uiLoadEnabledRemotely(): Boolean =
+        remote?.uiLoadInstrumentationEnabled ?: UI_LOAD_REMOTE_ENABLED_DEFAULT
 
     private val v2StorageImpl by lazy {
         thresholdCheck.isBehaviorEnabled(remote?.killSwitchConfig?.v2StoragePct) ?: V2_STORAGE_ENABLED_DEFAULT

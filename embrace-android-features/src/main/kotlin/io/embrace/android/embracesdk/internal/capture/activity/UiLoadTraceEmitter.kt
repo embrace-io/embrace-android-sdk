@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.capture.activity
 
 import android.app.Application.ActivityLifecycleCallbacks
-import android.os.Build
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.spans.PersistableEmbraceSpan
 import io.embrace.android.embracesdk.internal.spans.SpanService
@@ -105,7 +104,7 @@ class UiLoadTraceEmitter(
                 instanceId = instanceId,
                 timestampMs = timestampMs,
             )
-        } else if (hasRenderEvent()) {
+        } else if (hasRenderEvent(versionChecker)) {
             startChildSpan(
                 instanceId = instanceId,
                 timestampMs = timestampMs,
@@ -222,7 +221,7 @@ class UiLoadTraceEmitter(
     private fun determineEndEvent(manualEnd: Boolean): TraceCompleteTrigger {
         return if (manualEnd) {
             TraceCompleteTrigger.MANUAL
-        } else if (hasRenderEvent()) {
+        } else if (hasRenderEvent(versionChecker)) {
             TraceCompleteTrigger.RENDER
         } else {
             TraceCompleteTrigger.RESUME
@@ -265,8 +264,6 @@ class UiLoadTraceEmitter(
 
     private fun traceCompleteTrigger(instanceId: Int): TraceCompleteTrigger? =
         activeTraces[instanceId]?.traceCompleteTrigger
-
-    private fun hasRenderEvent(): Boolean = versionChecker.isAtLeast(Build.VERSION_CODES.Q)
 
     private fun traceName(
         activityName: String,

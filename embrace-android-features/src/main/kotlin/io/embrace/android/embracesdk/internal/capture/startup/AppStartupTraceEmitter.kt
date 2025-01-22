@@ -103,7 +103,7 @@ internal class AppStartupTraceEmitter(
 
     private val startupRecorded = AtomicBoolean(false)
     private val dataCollectionComplete = AtomicBoolean(false)
-    private val endWithFrameDraw: Boolean = versionChecker.isAtLeast(VERSION_CODES.Q)
+    private val endWithFrameDraw: Boolean = startupHasRenderEvent(versionChecker)
 
     override fun applicationInitStart(timestampMs: Long?) {
         applicationInitStartMs = timestampMs ?: nowMs()
@@ -218,7 +218,7 @@ internal class AppStartupTraceEmitter(
             }
 
         val traceEndTimeMs: Long? =
-            if (versionChecker.isAtLeast(VERSION_CODES.Q)) {
+            if (endWithFrameDraw) {
                 firstFrameRenderedMs
             } else {
                 startupActivityResumedMs
@@ -472,5 +472,7 @@ internal class AppStartupTraceEmitter(
         } else {
             null
         }
+
+        fun startupHasRenderEvent(versionChecker: VersionChecker) = versionChecker.isAtLeast(VERSION_CODES.Q)
     }
 }

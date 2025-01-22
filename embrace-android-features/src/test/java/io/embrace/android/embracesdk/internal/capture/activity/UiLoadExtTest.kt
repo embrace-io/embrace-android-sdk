@@ -173,7 +173,7 @@ internal class UiLoadExtTest {
             }
             start()
             resume()
-            if (BuildVersionChecker.isAtLeast(Build.VERSION_CODES.Q)) {
+            if (hasRenderEvent(BuildVersionChecker)) {
                 drawEventEmitter.draw(activityController.get()) {
                     clock.tick(RENDER_DURATION)
                 }

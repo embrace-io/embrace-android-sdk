@@ -33,7 +33,7 @@ fun createActivityLoadEventEmitter(
         autoTraceEnabled = autoTraceEnabled,
         clock = clock,
     )
-    return if (versionChecker.isAtLeast(VERSION_CODES.Q)) {
+    return if (hasPrePostEvents(versionChecker)) {
         ActivityLoadEventEmitter(lifecycleEventEmitter)
     } else {
         LegacyActivityLoadEventEmitter(lifecycleEventEmitter)
@@ -44,6 +44,16 @@ fun createActivityLoadEventEmitter(
  * Return an ID to identify the trace for the given [Activity] instance
  */
 fun traceInstanceId(activity: Activity): Int = activity.hashCode()
+
+/**
+ * Determine if the current instance of the app will fire render events
+ */
+fun hasRenderEvent(versionChecker: VersionChecker) = versionChecker.isAtLeast(VERSION_CODES.Q)
+
+/**
+ * Determine if the current instance of the app will pre and post lifecycle events
+ */
+fun hasPrePostEvents(versionChecker: VersionChecker) = versionChecker.isAtLeast(VERSION_CODES.Q)
 
 /**
  * Implementation that works with Android 10+ APIs

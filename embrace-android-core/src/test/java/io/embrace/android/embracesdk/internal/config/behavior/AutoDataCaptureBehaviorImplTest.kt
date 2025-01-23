@@ -1,9 +1,12 @@
 package io.embrace.android.embracesdk.internal.config.behavior
 
+import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
+import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.createAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.internal.config.remote.DataRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.KillSwitchRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.internal.utils.Uuid
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -17,7 +20,8 @@ internal class AutoDataCaptureBehaviorImplTest {
             v2StoragePct = 100f,
             useOkHttpPct = 100f
         ),
-        dataConfig = DataRemoteConfig(pctThermalStatusEnabled = 0.0f)
+        dataConfig = DataRemoteConfig(pctThermalStatusEnabled = 0.0f),
+        uiLoadInstrumentationEnabled = false,
     )
 
     @Test
@@ -33,8 +37,8 @@ internal class AutoDataCaptureBehaviorImplTest {
             assertFalse(isNativeCrashCaptureEnabled())
             assertTrue(isDiskUsageCaptureEnabled())
             assertTrue(isThermalStatusCaptureEnabled())
-            assertTrue(isUiLoadTracingEnabled())
-            assertTrue(isUiLoadTracingTraceAll())
+            assertFalse(isUiLoadTracingEnabled())
+            assertFalse(isUiLoadTracingTraceAll())
             assertTrue(isThermalStatusCaptureEnabled())
             assertTrue(isV2StorageEnabled())
         }
@@ -77,4 +81,55 @@ internal class AutoDataCaptureBehaviorImplTest {
             assertTrue(isComposeClickCaptureEnabled())
         }
     }
+
+    @Test
+    fun `disable ui load remotely`() {
+        val behavior = createBehavior(
+            localUiLoadTracingEnabled = true,
+            localUiLoadTracingTraceAllEnabled = true,
+            remote = remote.copy(uiLoadInstrumentationEnabled = false)
+        )
+
+        assertFalse(behavior.isUiLoadTracingEnabled())
+        assertFalse(behavior.isUiLoadTracingTraceAll())
+    }
+
+    @Test
+    fun `disable ui load locally`() {
+        val behavior = createBehavior(
+            localUiLoadTracingEnabled = false,
+            localUiLoadTracingTraceAllEnabled = false,
+            remote = remote.copy(uiLoadInstrumentationEnabled = true)
+        )
+
+        assertFalse(behavior.isUiLoadTracingEnabled())
+        assertFalse(behavior.isUiLoadTracingTraceAll())
+    }
+
+    @Test
+    fun `disable ui load trace all locally`() {
+        val behavior = createBehavior(
+            localUiLoadTracingEnabled = true,
+            localUiLoadTracingTraceAllEnabled = false,
+            remote = remote.copy(uiLoadInstrumentationEnabled = true)
+        )
+
+        assertTrue(behavior.isUiLoadTracingEnabled())
+        assertFalse(behavior.isUiLoadTracingTraceAll())
+    }
+
+    private fun createBehavior(
+        localUiLoadTracingEnabled: Boolean,
+        localUiLoadTracingTraceAllEnabled: Boolean,
+        remote: RemoteConfig,
+    ) = AutoDataCaptureBehaviorImpl(
+        thresholdCheck = BehaviorThresholdCheck(Uuid::getEmbUuid),
+        local = FakeInstrumentedConfig(
+            enabledFeatures = FakeEnabledFeatureConfig(
+                uiLoadTracingTraceAll = localUiLoadTracingTraceAllEnabled,
+                uiLoadTracingEnabled = localUiLoadTracingEnabled
+            )
+        ),
+        remote = remote
+    )
 }

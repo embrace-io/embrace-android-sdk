@@ -31,8 +31,8 @@ internal class DataCaptureServiceModuleImplTest {
         assertNotNull(module.appStartupDataCollector)
         assertNotNull(module.pushNotificationService)
         assertNotNull(module.startupService)
-        assertNotNull(module.activityLoadEventEmitter)
-        assertNotNull(module.uiLoadDataListener)
+        assertNull(module.activityLoadEventEmitter)
+        assertNull(module.uiLoadDataListener)
     }
 
     @Test

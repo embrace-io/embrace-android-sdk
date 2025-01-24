@@ -67,7 +67,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: android-sdk-test-results
-          path: embrace-android-sdk/embrace-gradle-plugin-functional-tests/build/reports/tests/
+          path: embrace-android-sdk/embrace-android-sdk/embrace-gradle-plugin-functional-tests/build/reports/tests/
 
       - name: Set version tag in SDK
         run: |

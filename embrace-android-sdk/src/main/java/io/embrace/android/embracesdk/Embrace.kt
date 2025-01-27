@@ -429,6 +429,10 @@ public class Embrace private constructor(
         impl.trackWebViewPerformance(tag, message)
     }
 
+    override fun applicationInitEnd() {
+        impl.applicationInitEnd()
+    }
+
     override fun logWebView(url: String?) {
         impl.logWebView(url)
     }
@@ -447,11 +451,13 @@ public class Embrace private constructor(
         impl.activityLoaded(activity)
     }
 
-    override fun addAttributeToLoadTrace(activity: Activity, key: String, value: String) {
-        impl.addAttributeToLoadTrace(activity, key, value)
+    override fun getSdkCurrentTimeMs(): Long = impl.getSdkCurrentTimeMs()
+
+    override fun addLoadTraceAttribute(activity: Activity, key: String, value: String) {
+        impl.addLoadTraceAttribute(activity, key, value)
     }
 
-    override fun addChildSpanToLoadTrace(
+    override fun addLoadTraceChildSpan(
         activity: Activity,
         name: String,
         startTimeMs: Long,
@@ -460,8 +466,30 @@ public class Embrace private constructor(
         events: List<EmbraceSpanEvent>,
         errorCode: ErrorCode?,
     ) {
-        impl.addChildSpanToLoadTrace(
+        impl.addLoadTraceChildSpan(
             activity = activity,
+            name = name,
+            startTimeMs = startTimeMs,
+            endTimeMs = endTimeMs,
+            attributes = attributes,
+            events = events,
+            errorCode = errorCode
+        )
+    }
+
+    override fun addStartupTraceAttribute(key: String, value: String) {
+        impl.addStartupTraceAttribute(key, value)
+    }
+
+    override fun addStartupTraceChildSpan(
+        name: String,
+        startTimeMs: Long,
+        endTimeMs: Long,
+        attributes: Map<String, String>,
+        events: List<EmbraceSpanEvent>,
+        errorCode: ErrorCode?,
+    ) {
+        impl.addStartupTraceChildSpan(
             name = name,
             startTimeMs = startTimeMs,
             endTimeMs = endTimeMs,

@@ -11,7 +11,10 @@ import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.spans.EmbraceSpan
+import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
+import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.sdk.common.Clock
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -46,6 +49,7 @@ internal class AppStartupTraceEmitter(
     private val processCreateRequestedMs: Long?
     private val processCreatedMs: Long?
     private val additionalTrackedIntervals = ConcurrentLinkedQueue<TrackedInterval>()
+    private val customAttributes: MutableMap<String, String> = ConcurrentHashMap()
 
     init {
         val timestampAtDeviceStart = nowMs() - clock.nanoTime().nanosToMillis()
@@ -99,7 +103,7 @@ internal class AppStartupTraceEmitter(
 
     private val startupRecorded = AtomicBoolean(false)
     private val dataCollectionComplete = AtomicBoolean(false)
-    private val endWithFrameDraw: Boolean = versionChecker.isAtLeast(VERSION_CODES.Q)
+    private val endWithFrameDraw: Boolean = startupHasRenderEvent(versionChecker)
 
     override fun applicationInitStart(timestampMs: Long?) {
         applicationInitStartMs = timestampMs ?: nowMs()
@@ -153,10 +157,28 @@ internal class AppStartupTraceEmitter(
         }
     }
 
-    override fun addTrackedInterval(name: String, startTimeMs: Long, endTimeMs: Long) {
+    override fun addTrackedInterval(
+        name: String,
+        startTimeMs: Long,
+        endTimeMs: Long,
+        attributes: Map<String, String>,
+        events: List<EmbraceSpanEvent>,
+        errorCode: ErrorCode?
+    ) {
         additionalTrackedIntervals.add(
-            TrackedInterval(name = name, startTimeMs = startTimeMs, endTimeMs = endTimeMs)
+            TrackedInterval(
+                name = name,
+                startTimeMs = startTimeMs,
+                endTimeMs = endTimeMs,
+                attributes = attributes,
+                events = events,
+                errorCode = errorCode
+            )
         )
+    }
+
+    override fun addAttribute(key: String, value: String) {
+        customAttributes[key] = value
     }
 
     /**
@@ -196,7 +218,7 @@ internal class AppStartupTraceEmitter(
             }
 
         val traceEndTimeMs: Long? =
-            if (versionChecker.isAtLeast(VERSION_CODES.Q)) {
+            if (endWithFrameDraw) {
                 firstFrameRenderedMs
             } else {
                 startupActivityResumedMs
@@ -250,6 +272,10 @@ internal class AppStartupTraceEmitter(
                     parent = startupTrace,
                     startTimeMs = trackedInterval.startTimeMs,
                     endTimeMs = trackedInterval.endTimeMs,
+                    internal = false,
+                    attributes = trackedInterval.attributes,
+                    events = trackedInterval.events,
+                    errorCode = trackedInterval.errorCode
                 )
             }
         } while (additionalTrackedIntervals.isNotEmpty())
@@ -388,6 +414,7 @@ internal class AppStartupTraceEmitter(
     private fun nowMs(): Long = clock.now().nanosToMillis()
 
     private fun PersistableEmbraceSpan.addTraceMetadata() {
+        addCustomAttributes()
         processCreateDelay()?.let { delay ->
             addAttribute("process-create-delay-ms", delay.toString())
         }
@@ -417,10 +444,19 @@ internal class AppStartupTraceEmitter(
         }
     }
 
+    private fun PersistableEmbraceSpan.addCustomAttributes() {
+        customAttributes.forEach {
+            addAttribute(it.key, it.value)
+        }
+    }
+
     private data class TrackedInterval(
         val name: String,
         val startTimeMs: Long,
         val endTimeMs: Long,
+        val attributes: Map<String, String>,
+        val events: List<EmbraceSpanEvent>,
+        val errorCode: ErrorCode?,
     )
 
     companion object {
@@ -436,5 +472,7 @@ internal class AppStartupTraceEmitter(
         } else {
             null
         }
+
+        fun startupHasRenderEvent(versionChecker: VersionChecker) = versionChecker.isAtLeast(VERSION_CODES.Q)
     }
 }

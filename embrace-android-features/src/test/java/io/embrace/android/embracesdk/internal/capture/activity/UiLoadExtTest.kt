@@ -166,18 +166,17 @@ internal class UiLoadExtTest {
         }
     }
 
-    private fun stepThroughActivityLifecycle(
-        isColdOpen: Boolean = true,
-    ) {
+    private fun stepThroughActivityLifecycle(isColdOpen: Boolean = true) {
         with(activityController) {
             if (isColdOpen) {
                 create()
             }
             start()
             resume()
-            if (uiLoadEventListener.events.any { it.stage == "render" }) {
-                clock.tick(RENDER_DURATION)
-                drawEventEmitter.draw(activityController.get())
+            if (hasRenderEvent(BuildVersionChecker)) {
+                drawEventEmitter.draw(activityController.get()) {
+                    clock.tick(RENDER_DURATION)
+                }
             }
             pause()
             stop()
@@ -190,7 +189,7 @@ internal class UiLoadExtTest {
 
     private fun assertDrawEvents() {
         assertNotNull(drawEventEmitter.lastRegisteredActivity)
-        assertNotNull(drawEventEmitter.lastCallback)
+        assertNotNull(drawEventEmitter.lastFirstFrameDeliveredCallback)
         assertNotNull(drawEventEmitter.lastUnregisteredActivity)
         assertEquals(drawEventEmitter.lastRegisteredActivity, drawEventEmitter.lastRegisteredActivity)
     }
@@ -224,17 +223,21 @@ internal class UiLoadExtTest {
                 stage = "resumeEnd",
                 timestampMs = START_TIME_MS + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 3
             ),
-            createEvent(
-                stage = "render",
-                timestampMs = START_TIME_MS + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 3
-            ),
-            createEvent(
-                stage = "renderEnd",
-                timestampMs = START_TIME_MS + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 3 + RENDER_DURATION
-            ),
+//            createEvent(
+//                stage = "render",
+//                timestampMs = START_TIME_MS + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 3
+//            ),
+//            createEvent(
+//                stage = "renderEnd",
+//                timestampMs = START_TIME_MS + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 3 + RENDER_DURATION
+//            ),
+//            createEvent(
+//                stage = "discard",
+//                timestampMs = START_TIME_MS + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 3 + RENDER_DURATION + PRE_DURATION
+//            ),
             createEvent(
                 stage = "discard",
-                timestampMs = START_TIME_MS + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 3 + RENDER_DURATION + PRE_DURATION
+                timestampMs = START_TIME_MS + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 3 + PRE_DURATION
             ),
         )
 
@@ -255,17 +258,21 @@ internal class UiLoadExtTest {
                 stage = "resumeEnd",
                 timestampMs = START_TIME_MS + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 2
             ),
-            createEvent(
-                stage = "render",
-                timestampMs = START_TIME_MS + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 2
-            ),
-            createEvent(
-                stage = "renderEnd",
-                timestampMs = START_TIME_MS + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 2 + RENDER_DURATION
-            ),
+//            createEvent(
+//                stage = "render",
+//                timestampMs = START_TIME_MS + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 2
+//            ),
+//            createEvent(
+//                stage = "renderEnd",
+//                timestampMs = START_TIME_MS + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 2 + RENDER_DURATION
+//            ),
+//            createEvent(
+//                stage = "discard",
+//                timestampMs = START_TIME_MS + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 2 + RENDER_DURATION + PRE_DURATION
+//            ),
             createEvent(
                 stage = "discard",
-                timestampMs = START_TIME_MS + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 2 + RENDER_DURATION + PRE_DURATION
+                timestampMs = START_TIME_MS + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 2 + PRE_DURATION
             ),
         )
 

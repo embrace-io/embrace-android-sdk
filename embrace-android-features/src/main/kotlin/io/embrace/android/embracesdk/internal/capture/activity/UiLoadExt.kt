@@ -33,7 +33,7 @@ fun createActivityLoadEventEmitter(
         autoTraceEnabled = autoTraceEnabled,
         clock = clock,
     )
-    return if (versionChecker.isAtLeast(VERSION_CODES.Q)) {
+    return if (hasPrePostEvents(versionChecker)) {
         ActivityLoadEventEmitter(lifecycleEventEmitter)
     } else {
         LegacyActivityLoadEventEmitter(lifecycleEventEmitter)
@@ -44,6 +44,19 @@ fun createActivityLoadEventEmitter(
  * Return an ID to identify the trace for the given [Activity] instance
  */
 fun traceInstanceId(activity: Activity): Int = activity.hashCode()
+
+/**
+ * Determine if the current instance of the app will fire render events
+ *
+ * Disabled temporarily as we figure out how it interacts with Compose navigation
+ */
+@Suppress("FunctionOnlyReturningConstant", "UNUSED_PARAMETER")
+fun hasRenderEvent(versionChecker: VersionChecker): Boolean = false
+
+/**
+ * Determine if the current instance of the app will pre and post lifecycle events
+ */
+fun hasPrePostEvents(versionChecker: VersionChecker) = versionChecker.isAtLeast(VERSION_CODES.Q)
 
 /**
  * Implementation that works with Android 10+ APIs
@@ -144,14 +157,21 @@ private class LifecycleEventEmitter(
         if (activity.traceLoad()) {
             val instanceId = traceInstanceId(activity)
             if (drawEventEmitter != null) {
+                val renderStartCallback = {
+                    uiLoadEventListener.render(
+                        instanceId = instanceId,
+                        timestampMs = nowMs()
+                    )
+                }
+
                 // this callback will be cached, so it should not directly reference the Activity instance
-                val callback = {
+                val renderEndCallback = {
                     uiLoadEventListener.renderEnd(
                         instanceId = instanceId,
                         timestampMs = nowMs()
                     )
                 }
-                drawEventEmitter.registerFirstDrawCallback(activity, callback)
+                drawEventEmitter.registerFirstDrawCallback(activity, renderStartCallback, renderEndCallback)
             }
             instanceStartTime[instanceId] = nowMs()
         }
@@ -189,13 +209,6 @@ private class LifecycleEventEmitter(
                 instanceId = traceInstanceId(activity),
                 timestampMs = now
             )
-
-            if (drawEventEmitter != null) {
-                uiLoadEventListener.render(
-                    instanceId = traceInstanceId(activity),
-                    timestampMs = now
-                )
-            }
         }
     }
 

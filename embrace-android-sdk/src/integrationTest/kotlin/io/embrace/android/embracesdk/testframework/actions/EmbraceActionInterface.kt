@@ -63,6 +63,7 @@ internal class EmbraceActionInterface(
     internal fun simulateOpeningActivities(
         addStartupActivity: Boolean = true,
         startInBackground: Boolean = false,
+        endInBackground: Boolean = true,
         createFirstActivity: Boolean = true,
         invokeManualEnd: Boolean = false,
         activitiesAndActions: List<Pair<ActivityController<*>, () -> Unit>> = listOf(
@@ -102,11 +103,11 @@ internal class EmbraceActionInterface(
             setup.overriddenClock.tick(LIFECYCLE_EVENT_GAP)
 
             if (invokeManualEnd) {
-                embrace.addAttributeToLoadTrace(activityController.get(), "manual-end", "true")
+                embrace.addLoadTraceAttribute(activityController.get(), "manual-end", "true")
                 val startTime = clock.now()
                 setup.overriddenClock.tick(LIFECYCLE_EVENT_GAP)
                 val endTime = clock.now()
-                embrace.addChildSpanToLoadTrace(
+                embrace.addLoadTraceChildSpan(
                     activity = activityController.get(),
                     name = "loading-time",
                     startTimeMs = startTime,
@@ -123,9 +124,13 @@ internal class EmbraceActionInterface(
             setup.overriddenClock.tick(ACTIVITY_GAP)
             lastActivity = activityController
         }
+
         lastActivity?.stop()
         setup.overriddenClock.tick()
-        onBackground()
+
+        if (endInBackground) {
+            onBackground()
+        }
     }
 
 

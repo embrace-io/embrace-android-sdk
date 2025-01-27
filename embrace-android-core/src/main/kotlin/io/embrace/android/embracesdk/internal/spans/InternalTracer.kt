@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.spans
 
 import io.embrace.android.embracesdk.internal.InternalTracingApi
+import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.clock.normalizeTimestampAsMillis
 import io.embrace.android.embracesdk.spans.EmbraceSpan
@@ -10,6 +11,7 @@ import io.embrace.android.embracesdk.spans.ErrorCode
 class InternalTracer(
     private val spanRepository: SpanRepository,
     private val embraceTracer: EmbraceTracer,
+    private val clock: Clock,
 ) : InternalTracingApi {
 
     override fun startSpan(name: String, parentSpanId: String?, startTimeMs: Long?): String? {
@@ -111,7 +113,7 @@ class InternalTracer(
         // else if timestampNanos isn't specified, use the current time in millis
         // Otherwise, it means we have an invalid type of timestampNanos so we don't create the event
         val validatedTimeMs = timestampMs ?: timestampNanos ?: if (map["timestampNanos"] == null) {
-            embraceTracer.getSdkCurrentTimeMs()
+            clock.now()
         } else {
             return null
         }

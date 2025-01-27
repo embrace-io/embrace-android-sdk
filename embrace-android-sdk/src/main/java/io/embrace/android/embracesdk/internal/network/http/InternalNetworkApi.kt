@@ -7,7 +7,7 @@ internal interface InternalNetworkApi {
     fun recordNetworkRequest(embraceNetworkRequest: EmbraceNetworkRequest)
     fun shouldCaptureNetworkBody(url: String, method: String): Boolean
     fun logInternalError(error: Throwable)
-    fun getSdkCurrentTime(): Long
+    fun getSdkCurrentTimeMs(): Long
     fun isStarted(): Boolean
     fun generateW3cTraceparent(): String?
 }

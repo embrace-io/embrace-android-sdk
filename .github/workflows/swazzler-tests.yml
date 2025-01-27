@@ -14,7 +14,7 @@ concurrency:
 jobs:
   runSwazzlerTests:
     name: "Run Gradle Tests"
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
@@ -37,15 +37,14 @@ jobs:
 
       - name: Install NDK
         if: steps.ndk-cache.outputs.cache-hit != 'true'
-        run: echo "y" | ${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager --install "ndk;27.0.12077973"
+        run: |
+          echo "y" | ${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager --install "ndk;27.0.12077973"
+          echo "y" | ${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager --install "cmake;3.10.2.4988404"
 
       - name: Install Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20.x
-
-      - name: "Publish SDK locally"
-        run: ./gradlew publishDebugSdk --no-daemon
 
       - name: Checkout Swazzler
         uses: actions/checkout@v4
@@ -54,13 +53,9 @@ jobs:
           path: ./embrace-swazzler3
           token: ${{ secrets.GH_ANDROID_SDK_TOKEN }}
 
-      - name: "Publish Swazzler locally"
+      - name: "Run Integration Tests"
         working-directory: ./embrace-swazzler3
-        run: ./gradlew publishToMavenLocal --no-daemon
-
-      - name: "Run Gradle Tests"
-        working-directory: ./embrace-swazzler3
-        run: ./gradlew :embrace-gradle-plugin-functional-tests:test --tests "io.embrace.android.gradle.swazzler.tests.*" --stacktrace
+        run: ./gradlew :embrace-gradle-plugin-integration-tests:test --stacktrace
 
       - name: "Test Results"
         if: ${{ always() }}
@@ -68,5 +63,4 @@ jobs:
         with:
           name: swazzler-test-results
           path: |
-            ./embrace-swazzler3/embrace-gradle-plugin-functional-tests/build/reports/tests/test
-            ./embrace-swazzler3/embrace-gradle-plugin-functional-tests/test_debug_output
+            ./embrace-swazzler3/embrace-gradle-plugin-integration-tests/build/reports/tests/test

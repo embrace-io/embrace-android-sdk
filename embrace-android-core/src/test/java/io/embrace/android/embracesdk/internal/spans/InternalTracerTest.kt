@@ -35,6 +35,7 @@ internal class InternalTracerTest {
         internalTracer = InternalTracer(
             initModule.openTelemetryModule.spanRepository,
             initModule.openTelemetryModule.embraceTracer,
+            initModule.clock
         )
         spanSink.flushSpans()
     }

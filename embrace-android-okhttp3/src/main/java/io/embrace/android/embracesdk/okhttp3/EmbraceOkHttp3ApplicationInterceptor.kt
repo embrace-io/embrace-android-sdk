@@ -29,7 +29,7 @@ class EmbraceOkHttp3ApplicationInterceptor(
 
     @Throws(IOException::class)
     override fun intercept(chain: Interceptor.Chain): Response {
-        val startTime = embraceInternalApi.internalInterface.getSdkCurrentTime()
+        val startTime = embrace.getSdkCurrentTimeMs()
         val request: Request = chain.request()
         return try {
             // we are not interested in response, just proceed
@@ -43,7 +43,7 @@ class EmbraceOkHttp3ApplicationInterceptor(
                         urlString,
                         HttpMethod.fromString(request.method),
                         startTime,
-                        embraceInternalApi.internalInterface.getSdkCurrentTime(),
+                        embrace.getSdkCurrentTimeMs(),
                         causeName(e, UNKNOWN_EXCEPTION),
                         causeMessage(e, UNKNOWN_MESSAGE),
                         request.header(CUSTOM_TRACE_ID_HEADER_NAME),
@@ -70,7 +70,7 @@ class EmbraceOkHttp3ApplicationInterceptor(
                         urlString,
                         HttpMethod.fromString(request.method),
                         startTime,
-                        embraceInternalApi.internalInterface.getSdkCurrentTime(),
+                        embrace.getSdkCurrentTimeMs(),
                         errorType ?: UNKNOWN_EXCEPTION,
                         errorMessage ?: UNKNOWN_MESSAGE,
                         request.header(CUSTOM_TRACE_ID_HEADER_NAME),

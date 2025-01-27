@@ -128,12 +128,6 @@ interface EmbraceInternalInterface : InternalTracingApi {
     fun isNetworkSpanForwardingEnabled(): Boolean
 
     /**
-     * Return internal time the SDK is using in milliseconds. It is equivalent to [System.currentTimeMillis] assuming the system clock did
-     * not change after the SDK has started.
-     */
-    fun getSdkCurrentTime(): Long
-
-    /**
      * Whether the ANR capture service is enabled
      */
     fun isAnrCaptureEnabled(): Boolean

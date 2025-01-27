@@ -89,10 +89,6 @@ class FakeEmbraceInternalInterface(
 
     override fun isNetworkSpanForwardingEnabled(): Boolean = networkSpanForwardingEnabled
 
-    override fun getSdkCurrentTime(): Long {
-        return 0
-    }
-
     override fun isAnrCaptureEnabled(): Boolean {
         return true
     }

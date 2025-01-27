@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.capture.activity
 
 import android.app.Application.ActivityLifecycleCallbacks
-import android.os.Build
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.spans.PersistableEmbraceSpan
 import io.embrace.android.embracesdk.internal.spans.SpanService
@@ -47,11 +46,13 @@ import java.util.concurrent.atomic.AtomicReference
  */
 class UiLoadTraceEmitter(
     private val spanService: SpanService,
-    private val versionChecker: VersionChecker,
+    versionChecker: VersionChecker,
 ) : UiLoadDataListener {
 
     private val activeTraces: MutableMap<Int, UiLoadTrace> = ConcurrentHashMap()
     private var currentInstance: AtomicReference<UiInstance?> = AtomicReference()
+    private val hasRenderEvent = hasRenderEvent(versionChecker)
+    private val hasPrePostEvents = hasPrePostEvents(versionChecker)
 
     override fun create(instanceId: Int, activityName: String, timestampMs: Long, manualEnd: Boolean) {
         startTrace(
@@ -100,16 +101,16 @@ class UiLoadTraceEmitter(
     }
 
     override fun resume(instanceId: Int, timestampMs: Long) {
-        if (traceCompleteTrigger(instanceId) == TraceCompleteTrigger.RESUME) {
-            endTrace(
-                instanceId = instanceId,
-                timestampMs = timestampMs,
-            )
-        } else if (hasRenderEvent()) {
+        if (hasPrePostEvents) {
             startChildSpan(
                 instanceId = instanceId,
                 timestampMs = timestampMs,
                 lifecycleStage = LifecycleStage.RESUME
+            )
+        } else if (traceCompleteTrigger(instanceId) == TraceCompleteTrigger.RESUME) {
+            endTrace(
+                instanceId = instanceId,
+                timestampMs = timestampMs,
             )
         }
     }
@@ -120,28 +121,39 @@ class UiLoadTraceEmitter(
             timestampMs = timestampMs,
             lifecycleStage = LifecycleStage.RESUME
         )
-    }
 
-    override fun render(instanceId: Int, timestampMs: Long) {
-        startChildSpan(
-            instanceId = instanceId,
-            timestampMs = timestampMs,
-            lifecycleStage = LifecycleStage.RENDER
-        )
-    }
-
-    override fun renderEnd(instanceId: Int, timestampMs: Long) {
-        endChildSpan(
-            instanceId = instanceId,
-            timestampMs = timestampMs,
-            lifecycleStage = LifecycleStage.RENDER
-        )
-
-        if (traceCompleteTrigger(instanceId) == TraceCompleteTrigger.RENDER) {
+        if (traceCompleteTrigger(instanceId) == TraceCompleteTrigger.RESUME) {
             endTrace(
                 instanceId = instanceId,
                 timestampMs = timestampMs,
             )
+        }
+    }
+
+    override fun render(instanceId: Int, timestampMs: Long) {
+        if (hasRenderEvent) {
+            startChildSpan(
+                instanceId = instanceId,
+                timestampMs = timestampMs,
+                lifecycleStage = LifecycleStage.RENDER
+            )
+        }
+    }
+
+    override fun renderEnd(instanceId: Int, timestampMs: Long) {
+        if (hasRenderEvent) {
+            endChildSpan(
+                instanceId = instanceId,
+                timestampMs = timestampMs,
+                lifecycleStage = LifecycleStage.RENDER
+            )
+
+            if (traceCompleteTrigger(instanceId) == TraceCompleteTrigger.RENDER) {
+                endTrace(
+                    instanceId = instanceId,
+                    timestampMs = timestampMs,
+                )
+            }
         }
     }
 
@@ -222,7 +234,7 @@ class UiLoadTraceEmitter(
     private fun determineEndEvent(manualEnd: Boolean): TraceCompleteTrigger {
         return if (manualEnd) {
             TraceCompleteTrigger.MANUAL
-        } else if (hasRenderEvent()) {
+        } else if (hasRenderEvent) {
             TraceCompleteTrigger.RENDER
         } else {
             TraceCompleteTrigger.RESUME
@@ -265,8 +277,6 @@ class UiLoadTraceEmitter(
 
     private fun traceCompleteTrigger(instanceId: Int): TraceCompleteTrigger? =
         activeTraces[instanceId]?.traceCompleteTrigger
-
-    private fun hasRenderEvent(): Boolean = versionChecker.isAtLeast(Build.VERSION_CODES.Q)
 
     private fun traceName(
         activityName: String,

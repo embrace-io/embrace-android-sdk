@@ -53,13 +53,19 @@ public abstract interface class io/embrace/android/embracesdk/internal/api/Embra
 
 public abstract interface class io/embrace/android/embracesdk/internal/api/InstrumentationApi {
 	public abstract fun activityLoaded (Landroid/app/Activity;)V
-	public abstract fun addAttributeToLoadTrace (Landroid/app/Activity;Ljava/lang/String;Ljava/lang/String;)V
-	public abstract fun addChildSpanToLoadTrace (Landroid/app/Activity;Ljava/lang/String;JJ)V
-	public abstract fun addChildSpanToLoadTrace (Landroid/app/Activity;Ljava/lang/String;JJLjava/util/Map;Ljava/util/List;Lio/embrace/android/embracesdk/spans/ErrorCode;)V
+	public abstract fun addLoadTraceAttribute (Landroid/app/Activity;Ljava/lang/String;Ljava/lang/String;)V
+	public abstract fun addLoadTraceChildSpan (Landroid/app/Activity;Ljava/lang/String;JJ)V
+	public abstract fun addLoadTraceChildSpan (Landroid/app/Activity;Ljava/lang/String;JJLjava/util/Map;Ljava/util/List;Lio/embrace/android/embracesdk/spans/ErrorCode;)V
+	public abstract fun addStartupTraceAttribute (Ljava/lang/String;Ljava/lang/String;)V
+	public abstract fun addStartupTraceChildSpan (Ljava/lang/String;JJ)V
+	public abstract fun addStartupTraceChildSpan (Ljava/lang/String;JJLjava/util/Map;Ljava/util/List;Lio/embrace/android/embracesdk/spans/ErrorCode;)V
+	public abstract fun applicationInitEnd ()V
+	public abstract fun getSdkCurrentTimeMs ()J
 }
 
 public final class io/embrace/android/embracesdk/internal/api/InstrumentationApi$DefaultImpls {
-	public static fun addChildSpanToLoadTrace (Lio/embrace/android/embracesdk/internal/api/InstrumentationApi;Landroid/app/Activity;Ljava/lang/String;JJ)V
+	public static fun addLoadTraceChildSpan (Lio/embrace/android/embracesdk/internal/api/InstrumentationApi;Landroid/app/Activity;Ljava/lang/String;JJ)V
+	public static fun addStartupTraceChildSpan (Lio/embrace/android/embracesdk/internal/api/InstrumentationApi;Ljava/lang/String;JJ)V
 }
 
 public abstract interface class io/embrace/android/embracesdk/internal/api/InternalWebViewApi {
@@ -102,7 +108,8 @@ public abstract interface class io/embrace/android/embracesdk/internal/api/SdkAp
 }
 
 public final class io/embrace/android/embracesdk/internal/api/SdkApi$DefaultImpls {
-	public static fun addChildSpanToLoadTrace (Lio/embrace/android/embracesdk/internal/api/SdkApi;Landroid/app/Activity;Ljava/lang/String;JJ)V
+	public static fun addLoadTraceChildSpan (Lio/embrace/android/embracesdk/internal/api/SdkApi;Landroid/app/Activity;Ljava/lang/String;JJ)V
+	public static fun addStartupTraceChildSpan (Lio/embrace/android/embracesdk/internal/api/SdkApi;Ljava/lang/String;JJ)V
 	public static fun createSpan (Lio/embrace/android/embracesdk/internal/api/SdkApi;Ljava/lang/String;Lio/embrace/android/embracesdk/spans/AutoTerminationMode;)Lio/embrace/android/embracesdk/spans/EmbraceSpan;
 	public static fun recordCompletedSpan (Lio/embrace/android/embracesdk/internal/api/SdkApi;Ljava/lang/String;JJ)Z
 	public static fun recordCompletedSpan (Lio/embrace/android/embracesdk/internal/api/SdkApi;Ljava/lang/String;JJLio/embrace/android/embracesdk/spans/EmbraceSpan;)Z

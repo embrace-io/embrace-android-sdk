@@ -1,14 +1,18 @@
 public final class io/embrace/android/embracesdk/Embrace : io/embrace/android/embracesdk/internal/api/SdkApi {
 	public static final field Companion Lio/embrace/android/embracesdk/Embrace$Companion;
 	public fun activityLoaded (Landroid/app/Activity;)V
-	public fun addAttributeToLoadTrace (Landroid/app/Activity;Ljava/lang/String;Ljava/lang/String;)V
 	public fun addBreadcrumb (Ljava/lang/String;)V
-	public fun addChildSpanToLoadTrace (Landroid/app/Activity;Ljava/lang/String;JJ)V
-	public fun addChildSpanToLoadTrace (Landroid/app/Activity;Ljava/lang/String;JJLjava/util/Map;Ljava/util/List;Lio/embrace/android/embracesdk/spans/ErrorCode;)V
+	public fun addLoadTraceAttribute (Landroid/app/Activity;Ljava/lang/String;Ljava/lang/String;)V
+	public fun addLoadTraceChildSpan (Landroid/app/Activity;Ljava/lang/String;JJ)V
+	public fun addLoadTraceChildSpan (Landroid/app/Activity;Ljava/lang/String;JJLjava/util/Map;Ljava/util/List;Lio/embrace/android/embracesdk/spans/ErrorCode;)V
 	public fun addLogRecordExporter (Lio/opentelemetry/sdk/logs/export/LogRecordExporter;)V
 	public fun addSessionProperty (Ljava/lang/String;Ljava/lang/String;Z)Z
 	public fun addSpanExporter (Lio/opentelemetry/sdk/trace/export/SpanExporter;)V
+	public fun addStartupTraceAttribute (Ljava/lang/String;Ljava/lang/String;)V
+	public fun addStartupTraceChildSpan (Ljava/lang/String;JJ)V
+	public fun addStartupTraceChildSpan (Ljava/lang/String;JJLjava/util/Map;Ljava/util/List;Lio/embrace/android/embracesdk/spans/ErrorCode;)V
 	public fun addUserPersona (Ljava/lang/String;)V
+	public fun applicationInitEnd ()V
 	public fun clearAllUserPersonas ()V
 	public fun clearUserEmail ()V
 	public fun clearUserIdentifier ()V
@@ -26,6 +30,7 @@ public final class io/embrace/android/embracesdk/Embrace : io/embrace/android/em
 	public static final fun getInstance ()Lio/embrace/android/embracesdk/Embrace;
 	public fun getLastRunEndState ()Lio/embrace/android/embracesdk/LastRunEndState;
 	public fun getOpenTelemetry ()Lio/opentelemetry/api/OpenTelemetry;
+	public fun getSdkCurrentTimeMs ()J
 	public fun getSpan (Ljava/lang/String;)Lio/embrace/android/embracesdk/spans/EmbraceSpan;
 	public fun isStarted ()Z
 	public fun logCustomStacktrace ([Ljava/lang/StackTraceElement;)V
@@ -72,5 +77,20 @@ public final class io/embrace/android/embracesdk/Embrace : io/embrace/android/em
 
 public final class io/embrace/android/embracesdk/Embrace$Companion {
 	public final fun getInstance ()Lio/embrace/android/embracesdk/Embrace;
+}
+
+public final class io/embrace/android/embracesdk/ViewSwazzledHooks {
+}
+
+public final class io/embrace/android/embracesdk/ViewSwazzledHooks$OnClickListener {
+	public static fun _preOnClick (Landroid/view/View$OnClickListener;Landroid/view/View;)V
+}
+
+public final class io/embrace/android/embracesdk/ViewSwazzledHooks$OnLongClickListener {
+	public static fun _preOnLongClick (Landroid/view/View$OnLongClickListener;Landroid/view/View;)V
+}
+
+public final class io/embrace/android/embracesdk/WebViewClientSwazzledHooks {
+	public static fun _preOnPageStarted (Landroid/webkit/WebView;Ljava/lang/String;Landroid/graphics/Bitmap;)V
 }
 

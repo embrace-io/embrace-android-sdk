@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.opentelemetry.sdk.common.CompletableResultCode
 import io.opentelemetry.sdk.trace.data.SpanData
 import io.opentelemetry.sdk.trace.export.SpanExporter
+import java.util.concurrent.CopyOnWriteArrayList
 
 /**
  * A [SpanExporter] used in the integration tests that allows retrieving exported spans
@@ -12,7 +13,7 @@ import io.opentelemetry.sdk.trace.export.SpanExporter
  */
 internal class FilteredSpanExporter : SpanExporter {
 
-    private val spanData = mutableListOf<SpanData>()
+    private val spanData = CopyOnWriteArrayList<SpanData>()
 
     override fun export(spans: MutableCollection<SpanData>): CompletableResultCode {
         spanData.addAll(spans)
@@ -36,7 +37,9 @@ internal class FilteredSpanExporter : SpanExporter {
                 data.size == expectedCount
             },
             errorMessageSupplier = {
-                "Timeout. Expected $expectedCount spans, but got ${supplier().size}."
+                val spans = supplier()
+                "Timeout. Expected $expectedCount spans, but got ${spans.size}. " +
+                    "Found spans: ${spans.joinToString { it.name }}"
             }
         )
     }

@@ -13,7 +13,7 @@ import java.util.concurrent.atomic.AtomicInteger
  */
 class SpanRepository {
     private val activeSpans: MutableMap<String, PersistableEmbraceSpan> = ConcurrentHashMap()
-    private val completedSpans: MutableMap<String, PersistableEmbraceSpan> = mutableMapOf()
+    private val completedSpans: MutableMap<String, PersistableEmbraceSpan> = ConcurrentHashMap()
     private val spanIdsInProcess: MutableMap<String, AtomicInteger> = ConcurrentHashMap()
     private var spanUpdateNotifier: (() -> Unit)? = null
 
@@ -127,8 +127,8 @@ class SpanRepository {
     }
 
     private fun buildSpanTree(): List<SpanNode> {
-        // first, create nodes individually
-        val spans = activeSpans.values.toList().plus(completedSpans.values)
+        // first, create nodes individually by getting all active spans, then adding them to all completed spans
+        val spans = getCompletedSpans().plus(getActiveSpans())
         val nodes = spans.map { SpanNode(it, mutableListOf()) }.associateBy(SpanNode::span)
         val roots = mutableListOf<SpanNode>()
 

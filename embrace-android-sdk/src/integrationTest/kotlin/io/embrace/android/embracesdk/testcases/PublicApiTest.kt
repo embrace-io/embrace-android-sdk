@@ -113,4 +113,15 @@ internal class PublicApiTest {
             }
         )
     }
+
+    @Test
+    fun `test sdk time`() {
+        testRule.runTest(
+            testCaseAction = {
+                assertEquals(clock.now(), embrace.getSdkCurrentTimeMs())
+                clock.tick()
+                assertEquals(clock.now(), embrace.getSdkCurrentTimeMs())
+            }
+        )
+    }
 }

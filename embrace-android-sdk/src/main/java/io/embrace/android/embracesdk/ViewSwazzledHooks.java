@@ -11,7 +11,7 @@ import kotlin.Pair;
  * @hide
  */
 @InternalApi
-final class ViewSwazzledHooks {
+public final class ViewSwazzledHooks {
 
     private static final String UNKNOWN_ELEMENT_NAME = "Unknown element";
 

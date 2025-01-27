@@ -166,14 +166,6 @@ internal class EmbraceInternalInterfaceImplTest {
     }
 
     @Test
-    fun `check usage of SDK time`() {
-        assertEquals(beforeObjectInitTime, internalImpl.getSdkCurrentTime())
-        assertTrue(internalImpl.getSdkCurrentTime() < System.currentTimeMillis())
-        fakeClock.tick(10L)
-        assertEquals(fakeClock.now(), internalImpl.getSdkCurrentTime())
-    }
-
-    @Test
     fun `check isNetworkSpanForwardingEnabled`() {
         assertFalse(internalImpl.isNetworkSpanForwardingEnabled())
         fakeConfigService.networkSpanForwardingBehavior = FakeNetworkSpanForwardingBehavior(true)

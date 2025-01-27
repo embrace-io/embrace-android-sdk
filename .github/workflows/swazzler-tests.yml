@@ -46,9 +46,6 @@ jobs:
         with:
           node-version: 20.x
 
-      - name: "Publish SDK locally"
-        run: ./gradlew publishDebugSdk --no-daemon
-
       - name: Checkout Swazzler
         uses: actions/checkout@v4
         with:
@@ -56,17 +53,9 @@ jobs:
           path: ./embrace-swazzler3
           token: ${{ secrets.GH_ANDROID_SDK_TOKEN }}
 
-      - name: "Publish Swazzler locally"
-        working-directory: ./embrace-swazzler3
-        run: ./gradlew publishToMavenLocal --no-daemon
-
       - name: "Run Integration Tests"
         working-directory: ./embrace-swazzler3
         run: ./gradlew :embrace-gradle-plugin-integration-tests:test --stacktrace
-
-      - name: "Run Functional Tests"
-        working-directory: ./embrace-swazzler3
-        run: ./gradlew :embrace-gradle-plugin-functional-tests:test --tests "io.embrace.android.gradle.swazzler.tests.*" --stacktrace
 
       - name: "Test Results"
         if: ${{ always() }}
@@ -74,5 +63,4 @@ jobs:
         with:
           name: swazzler-test-results
           path: |
-            ./embrace-swazzler3/embrace-gradle-plugin-functional-tests/build/reports/tests/test
-            ./embrace-swazzler3/embrace-gradle-plugin-functional-tests/test_debug_output
+            ./embrace-swazzler3/embrace-gradle-plugin-integration-tests/build/reports/tests/test

@@ -84,7 +84,7 @@ jobs:
 
       - name: Generate Swazzler RC - Publish and Close repository
         run: |
-          ./gradlew clean :embrace-gradle-plugin:publishToSonatype :embrace-gradle-plugin:closeSonatypeStagingRepository -Dorg.gradle.parallel=false --no-build-cache --no-configuration-cache --stacktrace
+          ./gradlew clean :embrace-gradle-plugin:publishToSonatype closeSonatypeStagingRepository -Dorg.gradle.parallel=false --no-build-cache --no-configuration-cache --stacktrace
 
       - name: Set version tag in Swazzler
         run: |

@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.embrace)
+    alias(libs.plugins.google.services)
 }
 
 android {
@@ -23,6 +24,7 @@ android {
         release {
             isMinifyEnabled = true
             isShrinkResources = true
+            signingConfig = signingConfigs.getByName("debug")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -46,6 +48,10 @@ android {
     }
 }
 
+swazzler {
+    instrumentFirebaseMessaging = true
+}
+
 dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
@@ -60,6 +66,12 @@ dependencies {
     implementation(platform(libs.opentelemetry.bom))
     implementation(libs.opentelemetry.api)
     implementation(libs.opentelemetry.sdk)
+
+    implementation(libs.embrace.android.compose)
+    implementation(libs.embrace.android.fcm)
+
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.cloud.messaging)
 
     // uncomment to enable debugging through source contained in those modules
 //    implementation(libs.embrace.android.sdk)

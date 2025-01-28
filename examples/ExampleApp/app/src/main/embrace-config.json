@@ -1,5 +1,11 @@
 {
-  "app_id": "xxxxx",
-  "api_token": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
-  "ndk_enabled": true
+  "app_id": "7aMAH",
+  "api_token": "13f327e891ad45858949004eb755b9f1",
+  "ndk_enabled": true,
+  "sdk_config": {
+    "capture_fcm_pii_data": true,
+    "compose": {
+      "capture_compose_onclick": true
+    }
+  }
 }

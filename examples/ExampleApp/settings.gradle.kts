@@ -10,6 +10,9 @@ pluginManagement {
         mavenCentral()
         mavenLocal()
         gradlePluginPortal()
+        maven {  // add this with the swazzler repo
+            url = uri("https://s01.oss.sonatype.org/content/repositories/ioembrace-1443")
+        }
     }
 }
 dependencyResolutionManagement {
@@ -18,6 +21,9 @@ dependencyResolutionManagement {
         google()
         mavenCentral()
         mavenLocal()
+        maven {  // add this with the sdk repo
+            url = uri("https://s01.oss.sonatype.org/content/repositories/ioembrace-1442")
+        }
     }
 }
 

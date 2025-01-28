@@ -46,6 +46,16 @@ interface InternalTracingApi {
     ): Boolean
 
     /**
+     * Gets the OpenTelemetry span ID for the given [spanId].
+     */
+    fun getSpanUnderlyingSpanId(spanId: String): String?
+
+    /**
+     * Gets the OpenTelemetry trace ID  for the given [spanId].
+     */
+    fun getSpanUnderlyingTraceId(spanId: String): String?
+
+    /**
      * Record a span around the execution of the given lambda. If an uncaught exception occurs during the execution, the span will be
      * terminated as a failure.
      *

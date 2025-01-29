@@ -60,10 +60,6 @@ android {
             withSourcesJar()
             withJavadocJar()
         }
-
-        // Create component with single publication variant for local debugging (without Javadoc)
-        singleVariant("debug") {
-        }
     }
 
     sourceSets {
@@ -146,11 +142,6 @@ publishing {
         register<MavenPublication>("release") {
             addPublication(this, "release")
         }
-
-        // debug publication without Javadoc generation (optimizes build time)
-        register<MavenPublication>("debugLocal") {
-            addPublication(this, "debug")
-        }
     }
 
     // configure repositories where the publication can be hosted
@@ -186,11 +177,6 @@ signing {
 
 project.tasks.withType(Sign::class).configureEach {
     enabled = !project.version.toString().endsWith("-SNAPSHOT")
-}
-
-// alias for publishing debugLocal variant to mavenLocal
-project.tasks.register("publishDebugSdk") {
-    dependsOn("publishDebugLocalPublicationToMavenLocal")
 }
 
 // workaround: see https://medium.com/@saulmm2/android-gradle-precompiled-scripts-tomls-kotlin-dsl-df3c27ea017c

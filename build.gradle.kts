@@ -1,5 +1,6 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 import java.io.FileInputStream
+import java.time.Duration
 import java.util.Properties
 import org.jetbrains.dokka.gradle.DokkaTaskPartial
 
@@ -42,6 +43,12 @@ nexusPublishing {
             nexusUrl.set(uri("https://s01.oss.sonatype.org/service/local/"))
         }
     }
+    transitionCheckOptions {
+        maxRetries.set(60)
+        delayBetween.set(Duration.ofSeconds(20))
+    }
+    connectTimeout.set(Duration.ofMinutes(15))
+    clientTimeout.set(Duration.ofMinutes(15))
 }
 
 allprojects {

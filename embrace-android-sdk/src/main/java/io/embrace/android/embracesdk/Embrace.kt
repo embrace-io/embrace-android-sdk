@@ -139,6 +139,25 @@ public class Embrace private constructor(
         impl.logMessage(message, severity, properties)
     }
 
+    override fun logMessage(
+        message: String,
+        severity: Severity,
+        properties: Map<String, Any>?,
+        attachment: ByteArray,
+    ) {
+        impl.logMessage(message, severity, properties, attachment)
+    }
+
+    override fun logMessage(
+        message: String,
+        severity: Severity,
+        properties: Map<String, Any>?,
+        attachmentId: String,
+        attachmentUrl: String,
+    ) {
+        impl.logMessage(message, severity, properties, attachmentId, attachmentUrl)
+    }
+
     override fun logException(throwable: Throwable) {
         impl.logException(throwable)
     }

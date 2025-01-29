@@ -16,12 +16,13 @@ import io.embrace.android.embracesdk.testframework.IntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import io.embrace.android.embracesdk.testframework.assertions.assertOtelLogReceived
 import io.embrace.android.embracesdk.testframework.assertions.getLastLog
+import io.embrace.android.embracesdk.testframework.assertions.getOtelSeverity
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
-internal class EmbraceLoggingFeatureTest {
+internal class LogFeatureTest {
 
     private val instrumentedConfig = FakeInstrumentedConfig(enabledFeatures = FakeEnabledFeatureConfig(bgActivityCapture = true))
 
@@ -397,14 +398,6 @@ internal class EmbraceLoggingFeatureTest {
         executor.runCurrentlyBlocked()
         val logOrchestrator = testRule.bootstrapper.logModule.logOrchestrator
         logOrchestrator.flush(false)
-    }
-
-    private fun getOtelSeverity(severity: Severity): io.opentelemetry.api.logs.Severity {
-        return when (severity) {
-            Severity.INFO -> io.opentelemetry.api.logs.Severity.INFO
-            Severity.WARNING -> io.opentelemetry.api.logs.Severity.WARN
-            Severity.ERROR -> io.opentelemetry.api.logs.Severity.ERROR
-        }
     }
 
     private fun getEmbraceSeverity(severityNumber: Int): Severity {

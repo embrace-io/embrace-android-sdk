@@ -5,6 +5,11 @@ import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.internal.api.LogsApi
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.injection.embraceImplInject
+import io.embrace.android.embracesdk.internal.logs.attachments.Attachment
+import io.embrace.android.embracesdk.internal.logs.attachments.Attachment.EmbraceHosted
+import io.embrace.android.embracesdk.internal.logs.attachments.AttachmentErrorCode.ATTACHMENT_TOO_LARGE
+import io.embrace.android.embracesdk.internal.logs.attachments.AttachmentErrorCode.OVER_MAX_ATTACHMENTS
+import io.embrace.android.embracesdk.internal.logs.attachments.AttachmentErrorCode.UNKNOWN
 import io.embrace.android.embracesdk.internal.payload.PushNotificationBreadcrumb
 import io.embrace.android.embracesdk.internal.serialization.truncatedStacktrace
 import io.embrace.android.embracesdk.internal.utils.getSafeStackTrace
@@ -25,6 +30,12 @@ internal class LogsApiDelegate(
     }
     private val serializer by embraceImplInject(sdkCallChecker) {
         bootstrapper.initModule.jsonSerializer
+    }
+    private val attachmentService by embraceImplInject(sdkCallChecker) {
+        bootstrapper.logModule.attachmentService
+    }
+    private val logger by embraceImplInject(sdkCallChecker) {
+        bootstrapper.initModule.logger
     }
 
     override fun logInfo(message: String) = logMessage(message, Severity.INFO)
@@ -79,6 +90,51 @@ internal class LogsApiDelegate(
         )
     }
 
+    override fun logMessage(
+        message: String,
+        severity: Severity,
+        properties: Map<String, Any>?,
+        attachment: ByteArray,
+    ) {
+        val obj = attachmentService?.createAttachment(attachment) ?: return
+        logAttachmentErrorIfNeeded(obj)
+        logMessageImpl(
+            severity = severity,
+            message = message,
+            properties = properties,
+            attachment = obj,
+        )
+    }
+
+    override fun logMessage(
+        message: String,
+        severity: Severity,
+        properties: Map<String, Any>?,
+        attachmentId: String,
+        attachmentUrl: String,
+    ) {
+        val obj = attachmentService?.createAttachment(attachmentId, attachmentUrl) ?: return
+        logAttachmentErrorIfNeeded(obj)
+        logMessageImpl(
+            severity = severity,
+            message = message,
+            properties = properties,
+            attachment = obj,
+        )
+    }
+
+    private fun logAttachmentErrorIfNeeded(obj: Attachment) {
+        if (obj.errorCode != null) {
+            val msg = when (obj.errorCode) {
+                ATTACHMENT_TOO_LARGE -> "Supplied attachment exceeds 1Mb limit. This attachment will not be uploaded."
+                OVER_MAX_ATTACHMENTS -> "A maximum of 5 attachments are allowed per session. This attachment will not be uploaded."
+                UNKNOWN -> "An unknown error occurred while processing the attachment."
+                null -> null
+            } ?: return
+            logger?.logError(msg, RuntimeException(msg))
+        }
+    }
+
     override fun logException(
         throwable: Throwable,
         severity: Severity,
@@ -93,7 +149,7 @@ internal class LogsApiDelegate(
             stackTraceElements = throwable.getSafeStackTrace(),
             logExceptionType = LogExceptionType.HANDLED,
             exceptionName = throwable.javaClass.simpleName,
-            exceptionMessage = exceptionMessage
+            exceptionMessage = exceptionMessage,
         )
     }
 
@@ -109,7 +165,7 @@ internal class LogsApiDelegate(
             properties = properties,
             stackTraceElements = stacktraceElements,
             logExceptionType = LogExceptionType.HANDLED,
-            exceptionMessage = message
+            exceptionMessage = message,
         )
     }
 
@@ -124,6 +180,7 @@ internal class LogsApiDelegate(
         exceptionName: String? = null,
         exceptionMessage: String? = null,
         customLogAttrs: Map<AttributeKey<String>, String> = emptyMap(),
+        attachment: Attachment? = null,
     ) {
         if (sdkCallChecker.check("log_message")) {
             runCatching {
@@ -131,15 +188,25 @@ internal class LogsApiDelegate(
                 exceptionName?.let { attrs[ExceptionAttributes.EXCEPTION_TYPE] = it }
                 exceptionMessage?.let { attrs[ExceptionAttributes.EXCEPTION_MESSAGE] = it }
 
-                val stacktrace = stackTraceElements?.let(checkNotNull(serializer)::truncatedStacktrace) ?: customStackTrace
+                val stacktrace =
+                    stackTraceElements?.let(checkNotNull(serializer)::truncatedStacktrace) ?: customStackTrace
                 stacktrace?.let { attrs[ExceptionAttributes.EXCEPTION_STACKTRACE] = it }
 
+                if (attachment != null) {
+                    attrs.putAll(attachment.attributes.mapKeys { it.key.attributeKey })
+                }
+
+                val logAttachment = when {
+                    attachment is EmbraceHosted && attachment.shouldAttemptUpload() -> attachment
+                    else -> null
+                }
                 logService?.log(
                     message,
                     severity,
                     logExceptionType,
                     properties,
-                    attrs.plus(customLogAttrs)
+                    attrs.plus(customLogAttrs),
+                    logAttachment
                 )
                 sessionOrchestrator?.reportBackgroundActivityStateChange()
             }

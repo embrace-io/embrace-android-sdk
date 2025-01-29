@@ -26,16 +26,17 @@ import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.testframework.assertions.JsonComparator
 import io.embrace.android.embracesdk.testframework.assertions.assertMatches
 import io.embrace.android.embracesdk.testframework.server.FakeApiServer
+import io.embrace.android.embracesdk.testframework.server.FormPart
+import java.io.File
+import java.io.IOException
+import java.util.Locale
+import java.util.concurrent.TimeoutException
 import org.json.JSONObject
 import org.junit.Assert
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
-import java.io.File
-import java.io.IOException
-import java.util.Locale
-import java.util.concurrent.TimeoutException
 
 /**
  * Provides assertions that can be used in integration tests to validate the behavior of the SDK,
@@ -64,20 +65,15 @@ internal class EmbracePayloadAssertionInterface(
      * it will wait a maximum of 1 second for the number of payloads that exist to equal
      * to that before returning, timing out if it doesn't.
      */
-    internal fun getLogEnvelopes(expectedSize: Int): List<Envelope<LogPayload>> {
-        return retrieveLogEnvelopes(expectedSize)
-    }
-
-    internal fun getSingleLogEnvelope(): Envelope<LogPayload> {
-        return getLogEnvelopes(1).single()
-    }
+    internal fun getLogEnvelopes(expectedSize: Int) = retrieveLogEnvelopes(expectedSize)
+    internal fun getSingleLogEnvelope() = getLogEnvelopes(1).single()
 
     private fun retrieveLogEnvelopes(
         expectedSize: Int,
     ): List<Envelope<LogPayload>> {
         val supplier = { checkNotNull(apiServer).getLogEnvelopes() }
         try {
-            return retrievePayload(expectedSize, supplier)
+            return retrievePayload(expectedSize = expectedSize, supplier = supplier)
         } catch (exc: TimeoutException) {
             val envelopes: List<Map<String, String?>> = supplier().map { envelope ->
                 mapOf(
@@ -119,19 +115,24 @@ internal class EmbracePayloadAssertionInterface(
     }
 
 
-    /*** SESSIONS ***/
+    /*** ATTACHMENTS ***/
 
-    /**
-     * Returns a list of sessions that were completed by the SDK & sent to a mock web server.
-     */
-    internal fun getSessionEnvelopesFromMockServer(
+    internal fun getAttachments(expectedSize: Int) = retrieveAttachments(expectedSize)
+    internal fun getSingleAttachment() = getAttachments(1).single()
+
+    private fun retrieveAttachments(
         expectedSize: Int,
-        state: ApplicationState = ApplicationState.FOREGROUND,
-    ): List<Envelope<SessionPayload>> {
-        return retrievePayload(expectedSize) {
-            checkNotNull(apiServer).getSessionEnvelopes().filter { it.findAppState() == state }
+    ): List<List<FormPart>> {
+        val supplier = { checkNotNull(apiServer).getAttachments() }
+        try {
+            return retrievePayload(expectedSize = expectedSize, supplier = supplier)
+        } catch (exc: TimeoutException) {
+            throwPayloadErrMsg(expectedSize, supplier().size, emptyList(), exc)
         }
     }
+
+
+    /*** SESSIONS ***/
 
     /**
      * Returns a list of sessions that were completed by the SDK.
@@ -191,7 +192,7 @@ internal class EmbracePayloadAssertionInterface(
             checkNotNull(apiServer).getConfigRequests()
         }
         try {
-            retrievePayload(expectedRequests, supplier)
+            retrievePayload(expectedSize = expectedRequests, supplier = supplier)
         } catch (exc: TimeoutException) {
             throw IllegalStateException(
                 "Expected $expectedRequests config requests, but got ${supplier().size}.",
@@ -313,10 +314,6 @@ internal class EmbracePayloadAssertionInterface(
 
     /*** TEST INFRA ***/
 
-    internal fun debugDeliveryLayer(): String {
-        error(deliveryTracer.generateReport())
-    }
-
     /**
      * Validates a payload against a golden file in the test resources. If the payload does not match
      * the golden file, the assertion fails.
@@ -345,14 +342,6 @@ internal class EmbracePayloadAssertionInterface(
             throw IllegalStateException("Failed to validate request against golden file.", e)
         }
     }
-
-    /**
-     * Retrieves a payload that was stored in the delivery service.
-     */
-    private inline fun <reified T> retrievePayload(
-        expectedSize: Int?,
-        supplier: () -> List<T>,
-    ): List<T> = retrievePayload(expectedSize, WAIT_TIME_MS, supplier)
 
     /**
      * Retrieves a payload that was stored in the delivery service.

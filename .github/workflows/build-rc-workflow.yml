@@ -47,7 +47,7 @@ jobs:
       - name: Checkout SDK
         uses: actions/checkout@v4
         with:
-          ref: release/${{ github.event.inputs.version_of_rc }}
+          ref: release/${{ inputs.version_of_rc }}
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -71,15 +71,15 @@ jobs:
 
       - name: Set version tag in SDK
         run: |
-          git push origin :refs/tags/${{ github.event.inputs.version_of_rc }}.${{ github.event.inputs.patch_number }}
-          git tag -f ${{ github.event.inputs.version_of_rc }}.${{ github.event.inputs.patch_number }}
+          git push origin :refs/tags/${{ inputs.version_of_rc }}.${{ inputs.patch_number }}
+          git tag -f ${{ inputs.version_of_rc }}.${{ inputs.patch_number }}
           git push origin --tags
 
       - name: Checkout Swazzler
         uses: actions/checkout@v4
         with:
           repository: embrace-io/embrace-swazzler3
-          ref: release/${{ github.event.inputs.version_of_rc }}
+          ref: release/${{ inputs.version_of_rc }}
           token: ${{ secrets.GH_EMBRACE_SWAZZLER3_TOKEN }}
 
       - name: Generate Swazzler RC - Publish and Close repository
@@ -88,6 +88,6 @@ jobs:
 
       - name: Set version tag in Swazzler
         run: |
-          git push origin :refs/tags/${{ github.event.inputs.version_of_rc }}.${{ github.event.inputs.patch_number }}
-          git tag -f ${{ github.event.inputs.version_of_rc }}.${{ github.event.inputs.patch_number }}
+          git push origin :refs/tags/${{ inputs.version_of_rc }}.${{ inputs.patch_number }}
+          git tag -f ${{ inputs.version_of_rc }}.${{ inputs.patch_number }}
           git push origin --tags

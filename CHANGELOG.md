@@ -3,6 +3,9 @@
 ## 7.0.0
 *January 28, 2025*
 
+> ### Important 
+> This version has an issue where JVM symbol mapping files are sometimes not being uploaded correctly, leading to some call stacks being partially obfuscated (e.g. in crashes and ANRs). We are investigating the issue, and in the meantime, please refrain from putting this SDK version in production.
+
 - API and functional changes in this major release are documented in the [Upgrade Guide](https://embrace.io/docs/android/upgrading/). Key ones to be aware of include:
     - Moments feature and API have been removed in favor of [Traces](https://embrace.io/docs/android/features/traces/), which should be used instead to track how long workflows in the app took to complete.
     - Public API methods are all implemented in Kotlin, so passing in nulls in Java for parameters annotated with `@NonNull` will cause a runtime exception and could cause a crash.

@@ -1,5 +1,6 @@
 plugins {
     id("embrace-prod-defaults")
+    id("io.embrace.internal.build-logic")
 }
 
 description = "Embrace Android SDK: Internal API"

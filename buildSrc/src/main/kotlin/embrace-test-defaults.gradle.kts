@@ -11,37 +11,6 @@ plugins {
     id("io.gitlab.arturbosch.detekt") apply false
 }
 
-android {
-    compileSdk = Versions.COMPILE_SDK
-
-    defaultConfig {
-        minSdk = Versions.MIN_SDK
-    }
-
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
-    }
-
-    lint {
-        abortOnError = true
-        warningsAsErrors = true
-        checkAllWarnings = true
-        checkReleaseBuilds = false // run on CI instead, speeds up release builds
-        baseline = project.file("lint-baseline.xml")
-        disable.addAll(mutableSetOf("GradleDependency", "NewerVersionAvailable"))
-    }
-
-    kotlin {
-        compilerOptions {
-            apiVersion.set(KotlinVersion.KOTLIN_1_8)
-            languageVersion.set(KotlinVersion.KOTLIN_1_8)
-            jvmTarget.set(JvmTarget.JVM_1_8)
-            allWarningsAsErrors = true
-        }
-    }
-}
-
 dependencies {
     add("detektPlugins", findLibrary("detekt.formatting"))
 }

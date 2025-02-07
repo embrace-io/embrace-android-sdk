@@ -1,5 +1,10 @@
 plugins {
     id("embrace-prod-defaults")
+    id("io.embrace.internal.build-logic")
+}
+
+embrace {
+//    printSomething.set("Hello from Embrace!")
 }
 
 description = "Embrace Android SDK: Core"

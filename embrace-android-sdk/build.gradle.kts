@@ -2,8 +2,13 @@ import io.embrace.gradle.Versions
 
 plugins {
     id("embrace-prod-defaults")
-    id("enable-explicit-api-mode")
+    id("io.embrace.internal.build-logic")
     id("com.google.devtools.ksp")
+}
+
+embrace {
+    explicitApiMode.set(true)
+    apiCompatChecks.set(true)
 }
 
 description = "Embrace Android SDK: Core"

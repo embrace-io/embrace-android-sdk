@@ -1,3 +1,4 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 group = "io.embrace.internal"
@@ -41,8 +42,8 @@ project.tasks.withType(JavaCompile::class.java).configureEach {
 }
 
 // ensure the Kotlin + Java compilers both use the same language level.
-project.tasks.withType(KotlinCompile::class.java).configureEach {
-    kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_1_8.toString()
+kotlin {
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_1_8)
     }
 }

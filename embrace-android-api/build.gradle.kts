@@ -1,4 +1,6 @@
 plugins {
+    id("com.android.library")
+    id("kotlin-android")
     id("io.embrace.internal.build-logic")
 }
 

@@ -1,5 +1,3 @@
-import io.embrace.internal.Versions
-
 plugins {
     id("com.android.library")
     id("kotlin-android")
@@ -14,7 +12,7 @@ embrace {
 description = "Embrace Android SDK: Core"
 
 android {
-    ndkVersion = Versions.NDK
+    ndkVersion = "22.1.7171670"
 
     defaultConfig {
         namespace = "io.embrace.android.embracesdk"

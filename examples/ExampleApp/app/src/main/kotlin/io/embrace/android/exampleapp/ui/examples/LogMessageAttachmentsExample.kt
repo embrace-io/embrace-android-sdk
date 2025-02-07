@@ -57,7 +57,29 @@ fun LogMessageAttachmentsExample() {
     }
     Spacer(Modifier.padding(8.dp))
     Button(onClick = {
-        TODO("Not supported in 7.0.")
+        val properties = when (includeProps) {
+            true -> mapOf(
+                "my_custom_key" to "my_custom_value"
+            )
+            else -> null
+        }
+
+        if (hostFileOn3rdPartyServer) {
+            Embrace.getInstance().logMessage(
+                message = textValue,
+                severity = severityValue,
+                properties = properties,
+                attachmentId = UUID.randomUUID().toString(),
+                attachmentUrl = "https://example.com/my-attachment",
+            )
+        } else {
+            Embrace.getInstance().logMessage(
+                message = textValue,
+                severity = severityValue,
+                properties = properties,
+                attachment = "Hello, world!".toByteArray(),
+            )
+        }
     }) {
         Text("Send Log")
     }

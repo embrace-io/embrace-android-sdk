@@ -5,7 +5,7 @@ version = "1.0.0"
 
 plugins {
     `kotlin-dsl`
-    `kotlin-dsl-precompiled-script-plugins`
+    `java-gradle-plugin`
 }
 
 repositories {

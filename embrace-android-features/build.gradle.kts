@@ -1,5 +1,4 @@
 plugins {
-    id("embrace-prod-defaults")
     id("io.embrace.internal.build-logic")
 }
 
@@ -36,5 +35,3 @@ dependencies {
     testImplementation(libs.protobuf.java)
     testImplementation(libs.protobuf.java.util)
 }
-
-apiValidation.validationDisabled = true

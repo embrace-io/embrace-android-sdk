@@ -1,6 +1,9 @@
 plugins {
-    id("embrace-test-defaults")
     id("io.embrace.internal.build-logic")
+}
+
+embrace {
+    productionModule.set(false)
 }
 
 android {

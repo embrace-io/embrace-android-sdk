@@ -1,11 +1,9 @@
 plugins {
-    id("embrace-prod-defaults")
     id("io.embrace.internal.build-logic")
 }
 
 embrace {
-    explicitApiMode.set(true)
-    apiCompatChecks.set(true)
+    containsPublicApi.set(true)
 }
 
 description = "Embrace Android SDK: API"

@@ -1,14 +1,12 @@
-import io.embrace.gradle.Versions
+import io.embrace.internal.Versions
 
 plugins {
-    id("embrace-prod-defaults")
     id("io.embrace.internal.build-logic")
     id("com.google.devtools.ksp")
 }
 
 embrace {
-    explicitApiMode.set(true)
-    apiCompatChecks.set(true)
+    containsPublicApi.set(true)
 }
 
 description = "Embrace Android SDK: Core"
@@ -28,13 +26,6 @@ android {
     }
     packaging {
         jniLibs.pickFirsts.add("**/*.so")
-    }
-}
-
-// include these projects in code coverage
-rootProject.childProjects.forEach { (_, proj) ->
-    if (proj.plugins.hasPlugin("embrace-prod-defaults")) {
-        dependencies.add("kover", proj)
     }
 }
 

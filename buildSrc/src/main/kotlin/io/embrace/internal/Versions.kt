@@ -1,4 +1,4 @@
-package io.embrace.gradle
+package io.embrace.internal
 
 /**
  * Defines dependency versions that are used in the project that cannot be defined in libs.versions.toml

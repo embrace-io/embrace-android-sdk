@@ -1,10 +1,8 @@
 plugins {
-    id("embrace-prod-defaults")
     id("io.embrace.internal.build-logic")
 }
 
 embrace {
-//    printSomething.set("Hello from Embrace!")
 }
 
 description = "Embrace Android SDK: Core"
@@ -22,8 +20,6 @@ android {
         buildConfig = true
     }
 }
-
-apiValidation.validationDisabled = true
 
 dependencies {
     implementation(project(":embrace-android-payload"))

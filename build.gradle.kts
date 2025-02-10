@@ -1,25 +1,12 @@
 import java.time.Duration
 import org.jetbrains.dokka.gradle.DokkaTaskPartial
 
-buildscript {
-    repositories {
-        google()
-        maven(url = "https://plugins.gradle.org/m2/")
-    }
-
-    dependencies {
-        classpath(libs.detekt.gradle.plugin)
-        classpath(libs.dokka.gradle.plugin)
-        classpath(libs.dokka.docs)
-    }
-}
-
 plugins {
-    id("com.google.devtools.ksp") version ("2.1.0-1.0.29") apply false
-    id("io.github.gradle-nexus.publish-plugin") version "1.3.0"
+    kotlin("android") apply false
+    alias(libs.plugins.google.ksp) apply false
     id("com.android.library") apply false
-    id("org.jetbrains.kotlin.android") apply false
-    id("org.jetbrains.dokka") version "1.9.20"
+    alias(libs.plugins.nexus.publish)
+    alias(libs.plugins.dokka)
 }
 
 group = "io.embrace"
@@ -39,13 +26,6 @@ nexusPublishing {
     }
     connectTimeout.set(Duration.ofMinutes(15))
     clientTimeout.set(Duration.ofMinutes(15))
-}
-
-allprojects {
-    repositories {
-        google()
-        maven(url = "https://plugins.gradle.org/m2/")
-    }
 }
 
 subprojects {

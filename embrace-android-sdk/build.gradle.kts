@@ -69,9 +69,6 @@ dependencies {
     implementation(libs.opentelemetry.context)
     implementation(libs.opentelemetry.semconv)
     implementation(libs.opentelemetry.semconv.incubating)
-
-    // ProfileInstaller 1.2.0 requires compileSdk 32. 1.1.0 requires compileSdk 31.
-    // Please, don"t update it until we update compileSdk.
     implementation(libs.profileinstaller)
 
     testImplementation(project(":embrace-test-fakes"))

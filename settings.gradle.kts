@@ -15,6 +15,14 @@ include(
     ":embrace-test-fakes"
 )
 
+pluginManagement {
+    repositories {
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+
 dependencyResolutionManagement {
     repositories {
         google()

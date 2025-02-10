@@ -16,7 +16,7 @@ import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.delivery.PayloadType
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
-import io.embrace.android.embracesdk.testframework.IntegrationTestRule
+import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import io.embrace.android.embracesdk.testframework.actions.createStoredNativeCrashData
 import io.embrace.android.embracesdk.testframework.assertions.getLastLog
@@ -38,7 +38,7 @@ internal class ResurrectionFeatureTest {
 
     @Rule
     @JvmField
-    val testRule: IntegrationTestRule = IntegrationTestRule {
+    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule {
         EmbraceSetupInterface().apply {
             (overriddenInitModule.logger as FakeEmbLogger).throwOnInternalError = false
         }

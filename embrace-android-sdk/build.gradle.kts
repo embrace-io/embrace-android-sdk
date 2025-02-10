@@ -79,6 +79,3 @@ dependencies {
 
     androidTestImplementation(project(":embrace-test-fakes"))
 }
-
-project.tasks.register("publishLocal") { dependsOn("publishMavenPublicationToMavenLocal") }
-project.tasks.register("publishQa") { dependsOn("publishMavenPublicationToQaRepository") }

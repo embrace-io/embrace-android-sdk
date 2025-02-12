@@ -47,17 +47,6 @@ jobs:
         run: |
           ./gradlew findSonatypeStagingRepository releaseSonatypeStagingRepository -Dorg.gradle.parallel=false --no-build-cache --no-configuration-cache --stacktrace
 
-      - name: Checkout embrace gradle plugin
-        uses: actions/checkout@v4
-        with:
-          repository: embrace-io/embrace-swazzler3
-          ref: release/${{ github.event.inputs.version_to_release }}
-          token: ${{ secrets.GH_EMBRACE_SWAZZLER3_TOKEN }}
-
-      - name: Release embrace gradle plugin to Maven Central
-        run: |
-          ./gradlew findSonatypeStagingRepository releaseSonatypeStagingRepository -Dorg.gradle.parallel=false --no-build-cache --no-configuration-cache --stacktrace
-
   publish-api-docs:
     name: Publish API Docs
     uses: ./.github/workflows/publish-api-docs.yml
@@ -65,4 +54,3 @@ jobs:
     with:
       version_to_release: ${{ github.event.inputs.version_to_release }}
       patch_version_of_release: ${{ github.event.inputs.patch_version_of_release }}
-

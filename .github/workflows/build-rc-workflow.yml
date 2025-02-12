@@ -74,20 +74,3 @@ jobs:
           git push origin :refs/tags/${{ inputs.version_of_rc }}.${{ inputs.patch_number }}
           git tag -f ${{ inputs.version_of_rc }}.${{ inputs.patch_number }}
           git push origin --tags
-
-      - name: Checkout embrace gradle plugin
-        uses: actions/checkout@v4
-        with:
-          repository: embrace-io/embrace-swazzler3
-          ref: release/${{ inputs.version_of_rc }}
-          token: ${{ secrets.GH_EMBRACE_SWAZZLER3_TOKEN }}
-
-      - name: Generate embrace gradle plugin RC - Publish and Close repository
-        run: |
-          ./gradlew clean publishToSonatype closeSonatypeStagingRepository -Dorg.gradle.parallel=false --no-build-cache --no-configuration-cache --stacktrace
-
-      - name: Set version tag in embrace gradle plugin
-        run: |
-          git push origin :refs/tags/${{ inputs.version_of_rc }}.${{ inputs.patch_number }}
-          git tag -f ${{ inputs.version_of_rc }}.${{ inputs.patch_number }}
-          git push origin --tags

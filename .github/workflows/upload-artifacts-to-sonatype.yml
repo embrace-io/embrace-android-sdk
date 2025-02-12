@@ -1,4 +1,4 @@
-name: Build Release Candidates
+name: Upload artifacts to Sonatype
 
 env:
   SONATYPE_USERNAME: ${{ secrets.SONATYPE_TOKEN_USER }}
@@ -40,7 +40,7 @@ jobs:
           git config --global user.name 'embrace-ci[bot]'
           git config --global user.email 'embrace-ci@users.noreply.github.com'
 
-      - name: Checkout SDK
+      - name: Checkout
         uses: actions/checkout@v4
         with:
           ref: release/${{ inputs.rc_version }}
@@ -54,18 +54,11 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Generate SDK RC - Publish and close Sonatype repository
+      - name: Publish and close Sonatype repository
         run: |
           ./gradlew clean publishReleasePublicationToSonatype closeSonatypeStagingRepository -Dorg.gradle.parallel=false --no-build-cache --no-configuration-cache --stacktrace
 
-      - name: Archive Test Results
-        if: ${{ always() }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: android-sdk-test-results
-          path: embrace-android-sdk/build/reports/tests/
-
-      - name: Set version tag in SDK
+      - name: Publish git tag
         run: |
           git push origin :refs/tags/${{ inputs.rc_version }}
           git tag -f ${{ inputs.rc_version }}

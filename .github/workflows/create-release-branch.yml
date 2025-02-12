@@ -1,4 +1,4 @@
-name: Create Release Branches
+name: Create Release Branch
 
 on:
   workflow_call:
@@ -16,7 +16,7 @@ permissions:
   contents: write
 
 jobs:
-  release-branch:
+  create-release-branch:
     name: Create Release Branch
     timeout-minutes: 60
     runs-on: ubuntu-latest
@@ -26,16 +26,16 @@ jobs:
           git config --global user.name 'embrace-ci[bot]'
           git config --global user.email 'embrace-ci@users.noreply.github.com'
 
-      - name: Checkout SDK
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Create SDK Release Branch "release/${{ inputs.rc_version }}"
+      - name: Create Release Branch "release/${{ inputs.rc_version }}"
         run: |
           git checkout -b release/${{ inputs.rc_version }}
 
       - name: Set version in gradle.properties
         run: |
-          sed -i -r "s#version = ([^\']+)#version = ${{ inputs.rc_version }}#" gradle.properties
+          sed -i -r "s#version = ([^\']+)#version=${{ inputs.rc_version }}#" gradle.properties
           git add gradle.properties
           git commit -m "CI/CD: change version to be released: ${{ inputs.rc_version }}"
           git push --set-upstream origin release/${{ inputs.rc_version }}

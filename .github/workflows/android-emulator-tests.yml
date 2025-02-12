@@ -1,10 +1,8 @@
-name: Run Functional Tests
+name: Run tests on android emulator
 
 on:
   workflow_dispatch:
   workflow_call:
-  schedule:
-    - cron: '0 3 * * *'
   pull_request:
     branches: [ main ]
 
@@ -62,7 +60,7 @@ jobs:
           disable-animations: false
           script: echo "Generated AVD snapshot for caching."
 
-      - name: Run Functional Tests
+      - name: Run tests on android emulator
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: ${{ matrix.api-level }}
@@ -77,20 +75,8 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: sdk-functional-test-results
+          name: android-emulator-test-results
           path: |
             embrace-android-sdk/build/reports/androidTests/connected
             test_failure
             emulator_logcat.log
-
-      - name: Notify Slack of Test Failure
-        if: failure()
-        uses: slackapi/slack-github-action@v1.27.0
-        with:
-          payload: |
-            {
-              "failed_action_url": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-            }
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK

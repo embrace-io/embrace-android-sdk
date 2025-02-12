@@ -11,24 +11,24 @@ on:
         required: true
 
 jobs:
-  release-branch:
-    name: Create Release Branches
-    uses: ./.github/workflows/rc-release-branch.yml
+  create-release-branch:
+    name: Create Release Branch
+    uses: ./.github/workflows/create-release-branch.yml
     secrets: inherit
     with:
       rc_version: ${{ inputs.rc_version }}
 
-  update-main-versions:
-    name: Update Main Versions
-    uses: ./.github/workflows/update-main-versions.yml
+  bump-snapshot-version:
+    name: Bump Snapshot Version
+    uses: ./.github/workflows/bump-snapshot-version.yml
     secrets: inherit
     with:
       next_version: ${{ inputs.next_version }}
 
-  release-candidate:
-    name: Build Release Candidates
-    needs: release-branch
-    uses: ./.github/workflows/build-rc-workflow.yml
+  upload-artifacts-to-sonatype:
+    name: Upload RC artifacts to Sonatype
+    needs: create-release-branch
+    uses: ./.github/workflows/upload-artifacts-to-sonatype.yml
     secrets: inherit
     with:
       rc_version: ${{ inputs.rc_version }}

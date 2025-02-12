@@ -3,21 +3,14 @@ name: Publish API Docs
 on:
   workflow_call:
     inputs:
-      version_to_release:
-        required: true
-        type: string
-      patch_version_of_release:
+      rc_version:
         required: true
         type: string
   workflow_dispatch:
     inputs:
-      version_to_release:
-        description: 'SDK version these docs are for. Specify <major.minor> only, without the patch number, e.g. 6.3. It will use the branch "release/<version>".'
+      rc_version:
+        description: 'SDK version these docs are for. Specify <major.minor.patch> e.g. 7.1.2. It will use the branch "release/<version>".'
         required: true
-      patch_version_of_release:
-        description: 'The patch version for this release, i.e. the third number per semantic versioning <major.minor.patch>. If it is not a hotfix, use the default of 0'
-        required: true
-        default: '0'
 
 permissions:
   contents: write
@@ -35,7 +28,7 @@ jobs:
       - name: Checkout SDK
         uses: actions/checkout@v4
         with:
-          ref: release/${{ inputs.version_to_release }}
+          ref: release/${{ inputs.rc_version }}
           fetch-depth: 0
 
       - name: Setup Java
@@ -58,13 +51,13 @@ jobs:
           mv .docs-newly-generated docs
           date > docs/version.txt
           echo ${{ github.sha }} >> docs/version.txt
-          echo ${{ inputs.version_to_release }}.${{ inputs.patch_version_of_release }} >> docs/version.txt
+          echo ${{ inputs.rc_version }} >> docs/version.txt
           git add -f docs
           git config --global user.name "embrace-ci"
           git config --global user.email "embrace-ci@users.noreply.github.com"
-          git commit --allow-empty --message 'CI/CD: Automatically generated documentation for ${{ inputs.version_to_release }}.${{ inputs.patch_version_of_release }}' docs/
+          git commit --allow-empty --message 'CI/CD: Automatically generated documentation for ${{ inputs.rc_version }}' docs/
           git push --force origin gh-pages
 
-      - name: Record SDK Version History (${{ inputs.version_to_release }}.${{ inputs.patch_version_of_release }})
+      - name: Record SDK Version History (${{ inputs.rc_version }})
         run: |
           curl -X POST ${{ vars.SDK_VERSION_URL }}/android/version/ -H 'X-Embrace-CI: ${{ secrets.SDK_VERSION_TOKEN }}' -H 'Content-Type: application/json' -d '{"version": "${{ inputs.version_to_release }}.${{ inputs.patch_version_of_release }}"}'

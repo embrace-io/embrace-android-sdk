@@ -3,13 +3,13 @@ name: Create Release Branches
 on:
   workflow_call:
     inputs:
-      version_to_release:
+      rc_version:
         required: true
         type: string
   workflow_dispatch:
     inputs:
-      version_to_release:
-        description: 'Version to release. Specify <major.minor> only, without the patch number, e.g. 6.3. A new branch called "release/<version>" will be created where the release-specific changes will be committed.'
+      rc_version:
+        description: 'Version to release. Specify <major.minor.patch>, e.g. 7.1.2. A new branch called "release/<version>" will be created where the release-specific changes will be committed.'
         required: true
 
 permissions:
@@ -17,7 +17,7 @@ permissions:
 
 jobs:
   release-branch:
-    name: Create Release Branches
+    name: Create Release Branch
     timeout-minutes: 60
     runs-on: ubuntu-latest
     steps:
@@ -29,13 +29,13 @@ jobs:
       - name: Checkout SDK
         uses: actions/checkout@v4
 
-      - name: Create SDK Release Branch "release/${{ inputs.version_to_release }}"
+      - name: Create SDK Release Branch "release/${{ inputs.rc_version }}"
         run: |
-          git checkout -b release/${{ inputs.version_to_release }}
+          git checkout -b release/${{ inputs.rc_version }}
 
       - name: Set version in gradle.properties
         run: |
-          sed -i -r "s#version = ([^\']+)#version = ${{ inputs.version_to_release }}.0#" gradle.properties
+          sed -i -r "s#version = ([^\']+)#version = ${{ inputs.rc_version }}#" gradle.properties
           git add gradle.properties
-          git commit -m "CI/CD: change version to be released: ${{ inputs.version_to_release }}.0"
-          git push --set-upstream origin release/${{ inputs.version_to_release }}
+          git commit -m "CI/CD: change version to be released: ${{ inputs.rc_version }}"
+          git push --set-upstream origin release/${{ inputs.rc_version }}

@@ -12,13 +12,9 @@ env:
 on:
   workflow_dispatch:
     inputs:
-      version_to_release:
-        description: 'SDK version this workflow run will release. Specify <major.minor> only, without the patch number, e.g. 6.3. It will use the branch "release/<version>".'
+      rc_version:
+        description: 'SDK version this workflow run will release. Specify <major.minor.patch> e.g. 7.1.2. It will use the branch "release/<version>".'
         required: true
-      patch_version_of_release:
-        description: 'The patch version for this release, i.e. the third number per semantic versioning <major.minor.patch>. If it is not a hotfix, use the default of 0'
-        required: true
-        default: '0'
 
 permissions:
   contents: write
@@ -31,7 +27,7 @@ jobs:
       - name: Checkout SDK
         uses: actions/checkout@v4
         with:
-          ref: release/${{ inputs.version_to_release }}
+          ref: release/${{ inputs.rc_version }}
           fetch-depth: 0
 
       - name: Setup Java
@@ -52,5 +48,4 @@ jobs:
     uses: ./.github/workflows/publish-api-docs.yml
     secrets: inherit
     with:
-      version_to_release: ${{ inputs.version_to_release }}
-      patch_version_of_release: ${{ inputs.patch_version_of_release }}
+      rc_version: ${{ inputs.rc_version }}

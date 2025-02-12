@@ -12,17 +12,13 @@ env:
 on:
   workflow_call:
     inputs:
-      version_of_rc:
+      rc_version:
         required: true
         type: string
   workflow_dispatch:
     inputs:
-      version_of_rc:
-        description: 'Version to create new RC for. Specify <major.minor> only, e.g. 6.3'
-        required: true
-      patch_number:
-        description: 'Patch number. e.g. for 6.3.1, use "1". Defaults to 0'
-        default: '0'
+      rc_version:
+        description: 'Version to create new RC for. Specify <major.minor.patch>, e.g. 7.1.2'
         required: true
 
 permissions:
@@ -47,7 +43,7 @@ jobs:
       - name: Checkout SDK
         uses: actions/checkout@v4
         with:
-          ref: release/${{ inputs.version_of_rc }}
+          ref: release/${{ inputs.rc_version }}
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -71,6 +67,6 @@ jobs:
 
       - name: Set version tag in SDK
         run: |
-          git push origin :refs/tags/${{ inputs.version_of_rc }}.${{ inputs.patch_number }}
-          git tag -f ${{ inputs.version_of_rc }}.${{ inputs.patch_number }}
+          git push origin :refs/tags/${{ inputs.rc_version }}
+          git tag -f ${{ inputs.rc_version }}
           git push origin --tags

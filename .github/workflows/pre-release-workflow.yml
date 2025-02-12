@@ -16,14 +16,14 @@ jobs:
     uses: ./.github/workflows/rc-release-branch.yml
     secrets: inherit
     with:
-      version_to_release: ${{ github.event.inputs.version_to_release }}
+      version_to_release: ${{ inputs.version_to_release }}
 
   update-main-versions:
     name: Update Main Versions
     uses: ./.github/workflows/update-main-versions.yml
     secrets: inherit
     with:
-      next_version: ${{ github.event.inputs.next_version }}
+      next_version: ${{ inputs.next_version }}
 
   release-candidate:
     name: Build Release Candidates
@@ -31,4 +31,4 @@ jobs:
     uses: ./.github/workflows/build-rc-workflow.yml
     secrets: inherit
     with:
-      version_of_rc: ${{ github.event.inputs.version_to_release }}
+      version_of_rc: ${{ inputs.version_to_release }}

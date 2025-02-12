@@ -35,7 +35,7 @@ jobs:
       - name: Checkout SDK
         uses: actions/checkout@v4
         with:
-          ref: release/${{ github.event.inputs.version_to_release }}
+          ref: release/${{ inputs.version_to_release }}
           fetch-depth: 0
 
       - name: Setup Java
@@ -58,13 +58,13 @@ jobs:
           mv .docs-newly-generated docs
           date > docs/version.txt
           echo ${{ github.sha }} >> docs/version.txt
-          echo ${{ github.event.inputs.version_to_release }}.${{ github.event.inputs.patch_version_of_release }} >> docs/version.txt
+          echo ${{ inputs.version_to_release }}.${{ inputs.patch_version_of_release }} >> docs/version.txt
           git add -f docs
           git config --global user.name "embrace-ci"
           git config --global user.email "embrace-ci@users.noreply.github.com"
-          git commit --allow-empty --message 'CI/CD: Automatically generated documentation for ${{ github.event.inputs.version_to_release }}.${{ github.event.inputs.patch_version_of_release }}' docs/
+          git commit --allow-empty --message 'CI/CD: Automatically generated documentation for ${{ inputs.version_to_release }}.${{ inputs.patch_version_of_release }}' docs/
           git push --force origin gh-pages
 
-      - name: Record SDK Version History (${{ github.event.inputs.version_to_release }}.${{ github.event.inputs.patch_version_of_release }})
+      - name: Record SDK Version History (${{ inputs.version_to_release }}.${{ inputs.patch_version_of_release }})
         run: |
-          curl -X POST ${{ vars.SDK_VERSION_URL }}/android/version/ -H 'X-Embrace-CI: ${{ secrets.SDK_VERSION_TOKEN }}' -H 'Content-Type: application/json' -d '{"version": "${{ github.event.inputs.version_to_release }}.${{ github.event.inputs.patch_version_of_release }}"}'
+          curl -X POST ${{ vars.SDK_VERSION_URL }}/android/version/ -H 'X-Embrace-CI: ${{ secrets.SDK_VERSION_TOKEN }}' -H 'Content-Type: application/json' -d '{"version": "${{ inputs.version_to_release }}.${{ inputs.patch_version_of_release }}"}'

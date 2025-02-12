@@ -31,7 +31,7 @@ jobs:
       - name: Checkout SDK
         uses: actions/checkout@v4
         with:
-          ref: release/${{ github.event.inputs.version_to_release }}
+          ref: release/${{ inputs.version_to_release }}
           fetch-depth: 0
 
       - name: Setup Java
@@ -52,5 +52,5 @@ jobs:
     uses: ./.github/workflows/publish-api-docs.yml
     secrets: inherit
     with:
-      version_to_release: ${{ github.event.inputs.version_to_release }}
-      patch_version_of_release: ${{ github.event.inputs.patch_version_of_release }}
+      version_to_release: ${{ inputs.version_to_release }}
+      patch_version_of_release: ${{ inputs.patch_version_of_release }}

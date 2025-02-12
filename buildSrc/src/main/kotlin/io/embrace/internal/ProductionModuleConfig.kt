@@ -1,15 +1,14 @@
 package io.embrace.internal
 
 import com.android.build.api.dsl.LibraryExtension
-import kotlinx.validation.ApiValidationExtension
 import org.gradle.api.Project
 import org.gradle.api.artifacts.VersionCatalogsExtension
-import org.gradle.api.plugins.quality.Checkstyle
-import org.gradle.api.plugins.quality.CheckstyleExtension
-import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.kotlin.dsl.getByType
 
-fun Project.configureProductionModule(android: LibraryExtension, module: EmbraceBuildLogicExtension) {
+fun Project.configureProductionModule(
+    android: LibraryExtension,
+    module: EmbraceBuildLogicExtension
+) {
     with(project.pluginManager) {
         apply("checkstyle")
         apply("org.jetbrains.kotlinx.kover")
@@ -18,10 +17,7 @@ fun Project.configureProductionModule(android: LibraryExtension, module: Embrace
         apply("binary-compatibility-validator")
     }
 
-    project.afterEvaluate {
-        val apiValidation = project.extensions.getByType(ApiValidationExtension::class.java)
-        apiValidation.validationDisabled = !module.containsPublicApi.get()
-    }
+    project.configureBinaryCompatValidation(module)
 
     android.apply {
         useLibrary("android.test.runner")
@@ -30,29 +26,10 @@ fun Project.configureProductionModule(android: LibraryExtension, module: Embrace
 
         defaultConfig {
             testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-
-            aarMetadata {
-                minCompileSdk = Versions.MIN_COMPILE_SDK
-            }
+            aarMetadata.minCompileSdk = 34
         }
 
-        @Suppress("UnstableApiUsage")
-        testOptions {
-            // Calling Android logging methods will throw exceptions if this is false
-            // see: http://tools.android.com/tech-docs/unit-testing-support#TOC-Method-...-not-mocked.-
-            unitTests.isReturnDefaultValues = true
-            unitTests.isIncludeAndroidResources = true
-
-            unitTests {
-                all { test ->
-                    test.testLogging {
-                        this.exceptionFormat = TestExceptionFormat.FULL
-                    }
-                    test.maxParallelForks = (Runtime.getRuntime().availableProcessors() / 3) + 1
-                }
-            }
-            execution = "ANDROIDX_TEST_ORCHESTRATOR"
-        }
+        configureTestOptions(this)
 
         buildTypes {
             named("release") {
@@ -77,19 +54,7 @@ fun Project.configureProductionModule(android: LibraryExtension, module: Embrace
         }
     }
 
-    val checkstyle = project.extensions.getByType(CheckstyleExtension::class.java)
-    checkstyle.toolVersion = "10.3.2"
-
-    @Suppress("UnstableApiUsage")
-    project.tasks.register("checkstyle", Checkstyle::class.java).configure {
-        configFile = project.rootProject.file("config/checkstyle/google_checks.xml")
-        ignoreFailures = false
-        isShowViolations = true
-        source("src")
-        include("**/*.java")
-        classpath = project.files()
-        maxWarnings = 0
-    }
+    configureCheckstyle()
 
     project.dependencies.apply {
         add("implementation", findLibrary("kotlin.stdlib"))
@@ -119,5 +84,5 @@ fun Project.configureProductionModule(android: LibraryExtension, module: Embrace
 }
 
 // workaround: see https://medium.com/@saulmm2/android-gradle-precompiled-scripts-tomls-kotlin-dsl-df3c27ea017c
-private fun Project.findLibrary(alias: String) =
+fun Project.findLibrary(alias: String) =
     project.extensions.getByType<VersionCatalogsExtension>().named("libs").findLibrary(alias).get()

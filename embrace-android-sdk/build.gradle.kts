@@ -1,5 +1,3 @@
-import io.embrace.internal.Versions
-
 plugins {
     id("com.android.library")
     id("kotlin-android")
@@ -14,7 +12,7 @@ embrace {
 description = "Embrace Android SDK: Core"
 
 android {
-    ndkVersion = Versions.NDK
+    ndkVersion = "22.1.7171670"
 
     defaultConfig {
         namespace = "io.embrace.android.embracesdk"
@@ -71,9 +69,6 @@ dependencies {
     implementation(libs.opentelemetry.context)
     implementation(libs.opentelemetry.semconv)
     implementation(libs.opentelemetry.semconv.incubating)
-
-    // ProfileInstaller 1.2.0 requires compileSdk 32. 1.1.0 requires compileSdk 31.
-    // Please, don"t update it until we update compileSdk.
     implementation(libs.profileinstaller)
 
     testImplementation(project(":embrace-test-fakes"))

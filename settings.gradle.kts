@@ -14,3 +14,11 @@ include(
     ":embrace-test-common",
     ":embrace-test-fakes"
 )
+
+dependencyResolutionManagement {
+    repositories {
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}

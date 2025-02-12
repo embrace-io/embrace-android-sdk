@@ -84,5 +84,5 @@ fun Project.configureProductionModule(
 }
 
 // workaround: see https://medium.com/@saulmm2/android-gradle-precompiled-scripts-tomls-kotlin-dsl-df3c27ea017c
-private fun Project.findLibrary(alias: String) =
+fun Project.findLibrary(alias: String) =
     project.extensions.getByType<VersionCatalogsExtension>().named("libs").findLibrary(alias).get()

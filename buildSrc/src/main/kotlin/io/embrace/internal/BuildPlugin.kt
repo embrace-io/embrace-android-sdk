@@ -15,7 +15,7 @@ class BuildPlugin : Plugin<Project> {
 
         project.dependencies.add(
             "detektPlugins",
-            "io.gitlab.arturbosch.detekt:detekt-formatting:1.23.7"
+            project.findLibrary("detekt-formatting")
         )
         project.configureJvmWarningsAsErrors()
         project.configureDetekt()

@@ -43,7 +43,7 @@ jobs:
 
       # Build the entire project, run the tests, and run all static analysis
       - name: Gradle Build
-        run: ./gradlew assembleRelease testReleaseUnitTest detekt lint apiCheck --stacktrace
+        run: ./gradlew assembleRelease check --stacktrace
 
       - name: Archive Test Results
         if: ${{ always() }}

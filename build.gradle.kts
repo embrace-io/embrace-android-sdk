@@ -1,7 +1,4 @@
-// Top-level build file where you can add configuration options common to all sub-projects/modules.
-import java.io.FileInputStream
 import java.time.Duration
-import java.util.Properties
 import org.jetbrains.dokka.gradle.DokkaTaskPartial
 
 buildscript {
@@ -18,7 +15,7 @@ buildscript {
 }
 
 plugins {
-    id("com.google.devtools.ksp") version("2.1.0-1.0.29") apply false
+    id("com.google.devtools.ksp") version ("2.1.0-1.0.29") apply false
     id("io.github.gradle-nexus.publish-plugin") version "1.3.0"
     id("com.android.library") apply false
     id("org.jetbrains.kotlin.android") apply false
@@ -28,18 +25,11 @@ plugins {
 group = "io.embrace"
 version = project.version
 
-// load credentials from local properties if present
-val localProperties = Properties()
-val localPropertiesFile = rootProject.file("local.properties")
-if (localPropertiesFile.exists()) {
-    localProperties.load(FileInputStream(localPropertiesFile))
-}
-
 nexusPublishing {
     repositories {
         sonatype {
-            username = System.getenv("SONATYPE_USERNAME") ?: localProperties.getProperty("ossrhUsername")
-            password = System.getenv("SONATYPE_PASSWORD") ?: localProperties.getProperty("ossrhPassword")
+            username = System.getenv("SONATYPE_USERNAME")
+            password = System.getenv("SONATYPE_PASSWORD")
             nexusUrl.set(uri("https://s01.oss.sonatype.org/service/local/"))
         }
     }
@@ -58,8 +48,6 @@ allprojects {
     }
 }
 
-// You can apply and configure Dokka in each subproject
-// individially or configure all subprojects at once
 subprojects {
     if (project.name == "embrace-android-sdk" || project.name == "embrace-android-api") {
         apply(plugin = "org.jetbrains.dokka")
@@ -81,4 +69,3 @@ subprojects {
         }
     }
 }
-

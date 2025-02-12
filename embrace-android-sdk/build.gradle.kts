@@ -1,6 +1,8 @@
 import io.embrace.internal.Versions
 
 plugins {
+    id("com.android.library")
+    id("kotlin-android")
     id("io.embrace.internal.build-logic")
     id("com.google.devtools.ksp")
 }

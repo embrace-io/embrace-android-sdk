@@ -4,6 +4,13 @@ plugins {
     id("java-library")
     id("kotlin")
     id("com.android.lint")
+    id("io.embrace.internal.build-logic")
+}
+
+embrace {
+    productionModule.set(false)
+    androidLibrary.set(false)
+    jvmTarget.set(JavaVersion.VERSION_11)
 }
 
 java {

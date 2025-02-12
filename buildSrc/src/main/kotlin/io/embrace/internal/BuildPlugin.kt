@@ -9,7 +9,9 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.tasks.compile.JavaCompile
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.dsl.KotlinAndroidExtension
 import org.jetbrains.kotlin.gradle.dsl.KotlinAndroidProjectExtension
+import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
 import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 
 class BuildPlugin : Plugin<Project> {
@@ -18,8 +20,6 @@ class BuildPlugin : Plugin<Project> {
         val module = project.extensions.create("embrace", EmbraceBuildLogicExtension::class.java)
 
         with(project.pluginManager) {
-            apply("com.android.library")
-            apply("kotlin-android")
             apply("io.gitlab.arturbosch.detekt")
         }
 
@@ -33,17 +33,44 @@ class BuildPlugin : Plugin<Project> {
         project.pluginManager.withPlugin("com.android.library") {
             onAgpApplied(project, module)
         }
+
+        project.afterEvaluate {
+            val target = when (module.jvmTarget.get()) {
+                JavaVersion.VERSION_1_8 -> JvmTarget.JVM_1_8
+                JavaVersion.VERSION_11 -> JvmTarget.JVM_11
+                else -> error("Unsupported jvm target: ${module.jvmTarget.get()}")
+            }
+            // ensure the Kotlin + Java compilers both use the same language level.
+            project.tasks.withType(JavaCompile::class.java).configureEach {
+                sourceCompatibility = module.jvmTarget.get().toString()
+                targetCompatibility = module.jvmTarget.get().toString()
+            }
+
+            when (val kotlin = project.extensions.getByName("kotlin")) {
+                is KotlinJvmProjectExtension -> {
+                    kotlin.apply {
+                        compilerOptions {
+                            apiVersion.set(KotlinVersion.KOTLIN_1_8)
+                            languageVersion.set(KotlinVersion.KOTLIN_1_8)
+                            jvmTarget.set(target)
+                            allWarningsAsErrors.set(true)
+                        }
+                    }
+                }
+
+                is KotlinAndroidExtension -> kotlin.configureKotlinExtension(target)
+                else -> error("Unsupported kotlin plugin type: ${kotlin::class.java.name}")
+            }
+        }
     }
 
     private fun onAgpApplied(project: Project, module: EmbraceBuildLogicExtension) {
         val android = project.extensions.getByType(LibraryExtension::class.java)
         android.configureAndroidExtension(project)
 
-        val kotlin = project.extensions.getByType(KotlinAndroidProjectExtension::class.java)
-        kotlin.configureKotlinExtension()
-
         project.afterEvaluate {
             if (module.containsPublicApi.get()) {
+                val kotlin = project.extensions.getByType(KotlinAndroidProjectExtension::class.java)
                 kotlin.configureExplicitApiMode()
             }
         }
@@ -103,16 +130,16 @@ class BuildPlugin : Plugin<Project> {
         }
     }
 
-    private fun KotlinAndroidProjectExtension.configureKotlinExtension() {
+    private fun KotlinAndroidExtension.configureKotlinExtension(target: JvmTarget) {
         compilerOptions {
             apiVersion.set(KotlinVersion.KOTLIN_1_8)
             languageVersion.set(KotlinVersion.KOTLIN_1_8)
-            jvmTarget.set(JvmTarget.JVM_1_8)
+            jvmTarget.set(target)
             allWarningsAsErrors.set(true)
         }
     }
 
-    private fun KotlinAndroidProjectExtension.configureExplicitApiMode() {
+    private fun KotlinAndroidExtension.configureExplicitApiMode() {
         compilerOptions {
             freeCompilerArgs.set(freeCompilerArgs.get().plus("-Xexplicit-api=strict"))
         }

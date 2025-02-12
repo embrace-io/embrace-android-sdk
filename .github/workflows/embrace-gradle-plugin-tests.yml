@@ -1,4 +1,4 @@
-name: "Run swazzler-tests"
+name: "Run embrace-gradle-plugin-tests"
 
 on:
   pull_request:
@@ -12,7 +12,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  runSwazzlerTests:
+  runTests:
     name: "Run Gradle Tests"
     runs-on: ubuntu-latest
     timeout-minutes: 60
@@ -46,7 +46,7 @@ jobs:
         with:
           node-version: 20.x
 
-      - name: Checkout Swazzler
+      - name: Checkout embrace gradle plugin
         uses: actions/checkout@v4
         with:
           repository: embrace-io/embrace-swazzler3
@@ -61,6 +61,6 @@ jobs:
         if: ${{ always() }}
         uses: actions/upload-artifact@v4
         with:
-          name: swazzler-test-results
+          name: gradle-plugin-test-results
           path: |
             ./embrace-swazzler3/embrace-gradle-plugin-integration-tests/build/reports/tests/test

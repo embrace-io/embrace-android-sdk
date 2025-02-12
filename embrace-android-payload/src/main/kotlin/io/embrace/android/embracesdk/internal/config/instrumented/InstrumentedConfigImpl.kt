@@ -10,16 +10,16 @@ import io.embrace.android.embracesdk.internal.config.instrumented.schema.Redacti
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.SessionConfig
 
 /**
- * This class and its contents are instrumented by the swazzler to alter its return values
+ * This class and its contents are instrumented by the embrace gradle plugin to alter its return values
  * based on what values have been set in the embrace-config.json. If no value has been set,
  * the default value specified in the class will be used.
  *
  * It's important to:
  *
  * (1) always use functions, as this is somewhat easier to instrument than Kotlin properties
- * (2) always keep the swazzler in sync when adding new config values or altering existing ones
+ * (2) always keep the embrace gradle plugin in sync when adding new config values or altering existing ones
  */
-@Swazzled
+@EmbraceInstrumented
 object InstrumentedConfigImpl : InstrumentedConfig {
     override val baseUrls: BaseUrlConfig = BaseUrlConfigImpl
     override val enabledFeatures: EnabledFeatureConfig = EnabledFeatureConfigImpl
@@ -30,23 +30,23 @@ object InstrumentedConfigImpl : InstrumentedConfig {
     override val session: SessionConfig = SessionConfigImpl
 }
 
-@Swazzled
+@EmbraceInstrumented
 object BaseUrlConfigImpl : BaseUrlConfig
 
-@Swazzled
+@EmbraceInstrumented
 object EnabledFeatureConfigImpl : EnabledFeatureConfig
 
-@Swazzled
+@EmbraceInstrumented
 object NetworkCaptureConfigImpl : NetworkCaptureConfig
 
-@Swazzled
+@EmbraceInstrumented
 object OtelLimitsConfigImpl : OtelLimitsConfig
 
-@Swazzled
+@EmbraceInstrumented
 object ProjectConfigImpl : ProjectConfig
 
-@Swazzled
+@EmbraceInstrumented
 object RedactionConfigImpl : RedactionConfig
 
-@Swazzled
+@EmbraceInstrumented
 object SessionConfigImpl : SessionConfig

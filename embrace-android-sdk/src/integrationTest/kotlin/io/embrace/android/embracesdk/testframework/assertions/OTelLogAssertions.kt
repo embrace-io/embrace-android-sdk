@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.serialization.truncatedStacktrace
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
-import io.embrace.android.embracesdk.testframework.IntegrationTestRule
+import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.opentelemetry.semconv.ExceptionAttributes
 import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes
 import org.junit.Assert.assertEquals
@@ -19,7 +19,7 @@ internal fun assertOtelLogReceived(
     expectedMessage: String,
     expectedSeverityNumber: Int,
     expectedSeverityText: String,
-    expectedTimeMs: Long? = IntegrationTestRule.DEFAULT_SDK_START_TIME_MS,
+    expectedTimeMs: Long? = SdkIntegrationTestRule.DEFAULT_SDK_START_TIME_MS,
     expectedType: String? = null,
     expectedExceptionName: String? = null,
     expectedExceptionMessage: String? = null,

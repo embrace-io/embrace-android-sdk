@@ -10,7 +10,7 @@ import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import io.embrace.android.embracesdk.internal.EmbraceInternalApi
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.worker.Worker
-import io.embrace.android.embracesdk.testframework.IntegrationTestRule
+import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import io.embrace.android.embracesdk.testframework.assertions.assertMatches
 import io.embrace.android.embracesdk.testframework.assertions.assertOtelLogReceived
@@ -36,8 +36,8 @@ internal class FlutterInternalInterfaceTest {
 
     @Rule
     @JvmField
-    val testRule: IntegrationTestRule = IntegrationTestRule {
-        val clock = FakeClock(IntegrationTestRule.DEFAULT_SDK_START_TIME_MS)
+    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule {
+        val clock = FakeClock(SdkIntegrationTestRule.DEFAULT_SDK_START_TIME_MS)
         val fakeInitModule = FakeInitModule(clock = clock)
         EmbraceSetupInterface(
             overriddenClock = clock,

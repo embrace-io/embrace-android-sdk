@@ -18,7 +18,7 @@ import io.embrace.android.embracesdk.internal.worker.PriorityWorker
 import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.internal.worker.Worker.Background.PeriodicCacheWorker
 import io.embrace.android.embracesdk.testframework.FakeCacheStorageService
-import io.embrace.android.embracesdk.testframework.IntegrationTestRule
+import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import io.embrace.android.embracesdk.testframework.assertions.assertMatches
 import org.junit.Assert.assertEquals
@@ -38,8 +38,8 @@ internal class PeriodicSessionCacheTest {
 
     @Rule
     @JvmField
-    val testRule: IntegrationTestRule = IntegrationTestRule {
-        val clock = FakeClock(IntegrationTestRule.DEFAULT_SDK_START_TIME_MS)
+    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule {
+        val clock = FakeClock(SdkIntegrationTestRule.DEFAULT_SDK_START_TIME_MS)
         val fakeInitModule = FakeInitModule(clock = clock)
         executor = BlockingScheduledExecutorService(fakeClock = clock)
 

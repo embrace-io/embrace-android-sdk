@@ -14,7 +14,7 @@ import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.worker.Worker
-import io.embrace.android.embracesdk.testframework.IntegrationTestRule
+import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface
 import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import io.embrace.android.embracesdk.testframework.assertions.assertMatches
@@ -39,7 +39,7 @@ internal class AnrFeatureTest {
 
     @Rule
     @JvmField
-    val testRule: IntegrationTestRule = IntegrationTestRule {
+    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule {
         val clock = FakeClock(currentTime = START_TIME_MS)
         val initModule = FakeInitModule(clock, FakeEmbLogger(throwOnInternalError = false))
         val workerThreadModule =

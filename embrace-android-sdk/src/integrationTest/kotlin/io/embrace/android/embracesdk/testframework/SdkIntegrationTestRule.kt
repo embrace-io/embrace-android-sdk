@@ -77,7 +77,7 @@ import org.junit.rules.ExternalResource
  * verify the default config settings because what's in use is a [FakeConfigService], which is not used in
  * production.
  */
-internal class IntegrationTestRule(
+internal class SdkIntegrationTestRule(
     private val embraceSetupInterfaceSupplier: Provider<EmbraceSetupInterface> = { EmbraceSetupInterface() },
 ) : ExternalResource() {
 

@@ -32,13 +32,13 @@ import io.embrace.android.embracesdk.internal.injection.createWorkerThreadModule
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.utils.Provider
-import io.embrace.android.embracesdk.testframework.IntegrationTestRule
+import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 
 /**
  * Test harness for which an instance is generated each test run and provided to the test by the Rule
  */
 internal class EmbraceSetupInterface @JvmOverloads constructor(
-    currentTimeMs: Long = IntegrationTestRule.DEFAULT_SDK_START_TIME_MS,
+    currentTimeMs: Long = SdkIntegrationTestRule.DEFAULT_SDK_START_TIME_MS,
     var useMockWebServer: Boolean = true,
     val overriddenClock: FakeClock = FakeClock(currentTime = currentTimeMs),
     val processIdentifier: String = "integration-test-process",

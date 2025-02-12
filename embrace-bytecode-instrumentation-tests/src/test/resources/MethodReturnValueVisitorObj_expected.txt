@@ -1,0 +1,123 @@
+// class version 55.0 (55)
+// access flags 0x31
+public final class io/embrace/test/fixtures/MethodReturnValueVisitorObj {
+
+  // compiled from: MethodReturnValueVisitorObj.kt
+
+  @Lkotlin/Metadata;(mv={2, 1, 0}, k=1, xi=48, d1={"\u00000\n\u0002\u0018\u0002\n\u0002\u0010\u0000\n\u0002\u0008\u0003\n\u0002\u0010\u000b\n\u0000\n\u0002\u0010\u0008\n\u0000\n\u0002\u0010\u0009\n\u0000\n\u0002\u0010\u000e\n\u0000\n\u0002\u0010 \n\u0000\n\u0002\u0010$\n\u0000\u0018\u00002\u00020\u0001B\u0007\u00a2\u0006\u0004\u0008\u0002\u0010\u0003J\u0006\u0010\u0004\u001a\u00020\u0005J\u0006\u0010\u0006\u001a\u00020\u0007J\u0006\u0010\u0008\u001a\u00020\u0009J\u0006\u0010\n\u001a\u00020\u000bJ\u000c\u0010\u000c\u001a\u0008\u0012\u0004\u0012\u00020\u000b0\rJ\u0012\u0010\u000e\u001a\u000e\u0012\u0004\u0012\u00020\u000b\u0012\u0004\u0012\u00020\u00070\u000f\u00a8\u0006\u0010"}, d2={"Lio/embrace/test/fixtures/MethodReturnValueVisitorObj;", "", "<init>", "()V", "getSomeBool", "", "getSomeInt", "", "getSomeLong", "", "getSomeStr", "", "getSomeList", "", "getSomeMap", "", "embrace-bytecode-instrumentation-tests_release"})
+
+  // access flags 0x1
+  public <init>()V
+   L0
+    LINENUMBER 3 L0
+    ALOAD 0
+    INVOKESPECIAL java/lang/Object.<init> ()V
+    RETURN
+   L1
+    LOCALVARIABLE this Lio/embrace/test/fixtures/MethodReturnValueVisitorObj; L0 L1 0
+    MAXSTACK = 1
+    MAXLOCALS = 1
+
+  // access flags 0x11
+  public final getSomeBool()Z
+   L0
+    LINENUMBER 5 L0
+    ICONST_0
+    ICONST_1
+    IRETURN
+   L1
+    LOCALVARIABLE this Lio/embrace/test/fixtures/MethodReturnValueVisitorObj; L0 L1 0
+    MAXSTACK = 1
+    MAXLOCALS = 1
+
+  // access flags 0x11
+  public final getSomeInt()I
+   L0
+    LINENUMBER 6 L0
+    BIPUSH 100
+    LDC 520
+    IRETURN
+   L1
+    LOCALVARIABLE this Lio/embrace/test/fixtures/MethodReturnValueVisitorObj; L0 L1 0
+    MAXSTACK = 1
+    MAXLOCALS = 1
+
+  // access flags 0x11
+  public final getSomeLong()J
+   L0
+    LINENUMBER 7 L0
+    LDC 2
+    LDC 150900202020202
+    LRETURN
+   L1
+    LOCALVARIABLE this Lio/embrace/test/fixtures/MethodReturnValueVisitorObj; L0 L1 0
+    MAXSTACK = 2
+    MAXLOCALS = 1
+
+  // access flags 0x11
+  public final getSomeStr()Ljava/lang/String;
+  @Lorg/jetbrains/annotations/NotNull;() // invisible
+   L0
+    LINENUMBER 8 L0
+    LDC "Hi"
+    LDC "Hello world! I'm a string."
+    ARETURN
+   L1
+    LOCALVARIABLE this Lio/embrace/test/fixtures/MethodReturnValueVisitorObj; L0 L1 0
+    MAXSTACK = 1
+    MAXLOCALS = 1
+
+  // access flags 0x11
+  // signature ()Ljava/util/List<Ljava/lang/String;>;
+  // declaration: java.util.List<java.lang.String> getSomeList()
+  public final getSomeList()Ljava/util/List;
+  @Lorg/jetbrains/annotations/NotNull;() // invisible
+    NEW java/util/ArrayList
+    DUP
+    INVOKESPECIAL java/util/ArrayList.<init> ()V
+    DUP
+    LDC "adam aardvark"
+    INVOKEVIRTUAL java/util/ArrayList.add (Ljava/lang/Object;)Z
+    POP
+    DUP
+    LDC "bob banana"
+    INVOKEVIRTUAL java/util/ArrayList.add (Ljava/lang/Object;)Z
+    POP
+    ARETURN
+   L0
+    LINENUMBER 9 L0
+    INVOKESTATIC kotlin/collections/CollectionsKt.emptyList ()Ljava/util/List;
+    ARETURN
+   L1
+    LOCALVARIABLE this Lio/embrace/test/fixtures/MethodReturnValueVisitorObj; L0 L1 0
+    MAXSTACK = 1
+    MAXLOCALS = 1
+
+  // access flags 0x11
+  // signature ()Ljava/util/Map<Ljava/lang/String;Ljava/lang/Integer;>;
+  // declaration: java.util.Map<java.lang.String, java.lang.Integer> getSomeMap()
+  public final getSomeMap()Ljava/util/Map;
+  @Lorg/jetbrains/annotations/NotNull;() // invisible
+    NEW java/util/HashMap
+    DUP
+    INVOKESPECIAL java/util/HashMap.<init> ()V
+    DUP
+    LDC "adam"
+    LDC "1"
+    INVOKEVIRTUAL java/util/HashMap.put (Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+    POP
+    DUP
+    LDC "bob"
+    LDC "2"
+    INVOKEVIRTUAL java/util/HashMap.put (Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+    POP
+    ARETURN
+   L0
+    LINENUMBER 10 L0
+    INVOKESTATIC kotlin/collections/MapsKt.emptyMap ()Ljava/util/Map;
+    ARETURN
+   L1
+    LOCALVARIABLE this Lio/embrace/test/fixtures/MethodReturnValueVisitorObj; L0 L1 0
+    MAXSTACK = 1
+    MAXLOCALS = 1
+}

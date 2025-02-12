@@ -12,7 +12,10 @@ include(
     ":embrace-android-compose",
     ":embrace-lint",
     ":embrace-test-common",
-    ":embrace-test-fakes"
+    ":embrace-test-fakes",
+    ":embrace-gradle-plugin",
+    ":embrace-bytecode-instrumentation-tests",
+    ":embrace-gradle-plugin-integration-tests",
 )
 
 pluginManagement {

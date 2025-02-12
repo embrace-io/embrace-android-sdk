@@ -1,0 +1,46 @@
+// class version 55.0 (55)
+// access flags 0x20
+class io/embrace/test/fixtures/AnonInnerClassOnLongClickListener$1 implements android/view/View$OnLongClickListener {
+
+  // compiled from: AnonInnerClassOnLongClickListener.java
+  NESTHOST io/embrace/test/fixtures/AnonInnerClassOnLongClickListener
+  OUTERCLASS io/embrace/test/fixtures/AnonInnerClassOnLongClickListener setupListeners ()V
+  // access flags 0x0
+  INNERCLASS io/embrace/test/fixtures/AnonInnerClassOnLongClickListener$1 null null
+  // access flags 0x609
+  public static abstract INNERCLASS android/view/View$OnLongClickListener android/view/View OnLongClickListener
+
+  // access flags 0x1010
+  final synthetic Lio/embrace/test/fixtures/AnonInnerClassOnLongClickListener; this$0
+
+  // access flags 0x0
+  <init>(Lio/embrace/test/fixtures/AnonInnerClassOnLongClickListener;)V
+   L0
+    LINENUMBER 10 L0
+    ALOAD 0
+    ALOAD 1
+    PUTFIELD io/embrace/test/fixtures/AnonInnerClassOnLongClickListener$1.this$0 : Lio/embrace/test/fixtures/AnonInnerClassOnLongClickListener;
+    ALOAD 0
+    INVOKESPECIAL java/lang/Object.<init> ()V
+    RETURN
+   L1
+    LOCALVARIABLE this Lio/embrace/test/fixtures/AnonInnerClassOnLongClickListener$1; L0 L1 0
+    LOCALVARIABLE this$0 Lio/embrace/test/fixtures/AnonInnerClassOnLongClickListener; L0 L1 1
+    MAXSTACK = 2
+    MAXLOCALS = 2
+
+  // access flags 0x1
+  public onLongClick(Landroid/view/View;)Z
+    ALOAD 0
+    ALOAD 1
+    INVOKESTATIC io/embrace/android/embracesdk/ViewSwazzledHooks$OnLongClickListener._preOnLongClick (Landroid/view/View$OnLongClickListener;Landroid/view/View;)V
+   L0
+    LINENUMBER 13 L0
+    ICONST_0
+    IRETURN
+   L1
+    LOCALVARIABLE this Lio/embrace/test/fixtures/AnonInnerClassOnLongClickListener$1; L0 L1 0
+    LOCALVARIABLE view Landroid/view/View; L0 L1 1
+    MAXSTACK = 1
+    MAXLOCALS = 2
+}

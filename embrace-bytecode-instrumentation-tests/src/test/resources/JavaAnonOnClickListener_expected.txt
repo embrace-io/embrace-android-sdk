@@ -1,0 +1,51 @@
+// class version 55.0 (55)
+// access flags 0x20
+class io/embrace/test/fixtures/JavaAnonOnClickListener$1 implements android/view/View$OnClickListener {
+
+  // compiled from: JavaAnonOnClickListener.java
+  NESTHOST io/embrace/test/fixtures/JavaAnonOnClickListener
+  OUTERCLASS io/embrace/test/fixtures/JavaAnonOnClickListener onCreateView (Landroid/view/LayoutInflater;Landroid/view/ViewGroup;Landroid/os/Bundle;)Landroid/view/View;
+  // access flags 0x0
+  INNERCLASS io/embrace/test/fixtures/JavaAnonOnClickListener$1 null null
+  // access flags 0x609
+  public static abstract INNERCLASS android/view/View$OnClickListener android/view/View OnClickListener
+
+  // access flags 0x1010
+  final synthetic Lio/embrace/test/fixtures/JavaAnonOnClickListener; this$0
+
+  // access flags 0x0
+  <init>(Lio/embrace/test/fixtures/JavaAnonOnClickListener;)V
+   L0
+    LINENUMBER 22 L0
+    ALOAD 0
+    ALOAD 1
+    PUTFIELD io/embrace/test/fixtures/JavaAnonOnClickListener$1.this$0 : Lio/embrace/test/fixtures/JavaAnonOnClickListener;
+    ALOAD 0
+    INVOKESPECIAL java/lang/Object.<init> ()V
+    RETURN
+   L1
+    LOCALVARIABLE this Lio/embrace/test/fixtures/JavaAnonOnClickListener$1; L0 L1 0
+    LOCALVARIABLE this$0 Lio/embrace/test/fixtures/JavaAnonOnClickListener; L0 L1 1
+    MAXSTACK = 2
+    MAXLOCALS = 2
+
+  // access flags 0x1
+  public onClick(Landroid/view/View;)V
+    ALOAD 0
+    ALOAD 1
+    INVOKESTATIC io/embrace/android/embracesdk/ViewSwazzledHooks$OnClickListener._preOnClick (Landroid/view/View$OnClickListener;Landroid/view/View;)V
+   L0
+    LINENUMBER 25 L0
+    LDC "Embrace"
+    LDC "test "
+    INVOKESTATIC android/util/Log.d (Ljava/lang/String;Ljava/lang/String;)I
+    POP
+   L1
+    LINENUMBER 26 L1
+    RETURN
+   L2
+    LOCALVARIABLE this Lio/embrace/test/fixtures/JavaAnonOnClickListener$1; L0 L2 0
+    LOCALVARIABLE lambdaView Landroid/view/View; L0 L2 1
+    MAXSTACK = 2
+    MAXLOCALS = 2
+}

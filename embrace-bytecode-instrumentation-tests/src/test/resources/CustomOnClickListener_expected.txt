@@ -1,0 +1,51 @@
+// class version 55.0 (55)
+// access flags 0x21
+public class io/embrace/test/fixtures/CustomOnClickListener implements android/view/View$OnClickListener {
+
+  // compiled from: CustomOnClickListener.kt
+
+  @Lkotlin/Metadata;(mv={2, 1, 0}, k=1, xi=48, d1={"\u0000\u0018\n\u0002\u0018\u0002\n\u0002\u0018\u0002\n\u0002\u0008\u0003\n\u0002\u0010\u0002\n\u0000\n\u0002\u0018\u0002\n\u0000\u0008\u0016\u0018\u00002\u00020\u0001B\u0007\u00a2\u0006\u0004\u0008\u0002\u0010\u0003J\u0010\u0010\u0004\u001a\u00020\u00052\u0006\u0010\u0006\u001a\u00020\u0007H\u0016\u00a8\u0006\u0008"}, d2={"Lio/embrace/test/fixtures/CustomOnClickListener;", "Landroid/view/View$OnClickListener;", "<init>", "()V", "onClick", "", "view", "Landroid/view/View;", "embrace-bytecode-instrumentation-tests_release"})
+  // access flags 0x609
+  public static abstract INNERCLASS android/view/View$OnClickListener android/view/View OnClickListener
+
+  // access flags 0x1
+  public <init>()V
+   L0
+    LINENUMBER 8 L0
+    ALOAD 0
+    INVOKESPECIAL java/lang/Object.<init> ()V
+    RETURN
+   L1
+    LOCALVARIABLE this Lio/embrace/test/fixtures/CustomOnClickListener; L0 L1 0
+    MAXSTACK = 1
+    MAXLOCALS = 1
+
+  // access flags 0x1
+  public onClick(Landroid/view/View;)V
+    // annotable parameter count: 1 (invisible)
+    @Lorg/jetbrains/annotations/NotNull;() // invisible, parameter 0
+    ALOAD 0
+    ALOAD 1
+    INVOKESTATIC io/embrace/android/embracesdk/ViewSwazzledHooks$OnClickListener._preOnClick (Landroid/view/View$OnClickListener;Landroid/view/View;)V
+   L0
+    ALOAD 1
+    LDC "view"
+    INVOKESTATIC kotlin/jvm/internal/Intrinsics.checkNotNullParameter (Ljava/lang/Object;Ljava/lang/String;)V
+   L1
+    LINENUMBER 10 L1
+    ALOAD 1
+    INVOKEVIRTUAL android/view/View.isActivated ()Z
+    IFEQ L2
+   L3
+    LINENUMBER 11 L3
+    RETURN
+   L2
+    LINENUMBER 13 L2
+   FRAME FULL [io/embrace/test/fixtures/CustomOnClickListener android/view/View] []
+    RETURN
+   L4
+    LOCALVARIABLE this Lio/embrace/test/fixtures/CustomOnClickListener; L0 L4 0
+    LOCALVARIABLE view Landroid/view/View; L0 L4 1
+    MAXSTACK = 2
+    MAXLOCALS = 2
+}

@@ -1,0 +1,50 @@
+// class version 55.0 (55)
+// access flags 0x31
+public final class io/embrace/test/fixtures/KotlinNestedOnLongClick$OnLongClickInnerListener implements android/view/View$OnLongClickListener {
+
+  // compiled from: KotlinNestedOnLongClick.kt
+
+  @Lkotlin/Metadata;(mv={2, 1, 0}, k=1, xi=48, d1={"\u0000\u0018\n\u0002\u0018\u0002\n\u0002\u0018\u0002\n\u0002\u0008\u0003\n\u0002\u0010\u000b\n\u0000\n\u0002\u0018\u0002\n\u0000\u0008\u0086\u0004\u0018\u00002\u00020\u0001B\u0007\u00a2\u0006\u0004\u0008\u0002\u0010\u0003J\u0012\u0010\u0004\u001a\u00020\u00052\u0008\u0010\u0006\u001a\u0004\u0018\u00010\u0007H\u0016\u00a8\u0006\u0008"}, d2={"Lio/embrace/test/fixtures/KotlinNestedOnLongClick$OnLongClickInnerListener;", "Landroid/view/View$OnLongClickListener;", "<init>", "(Lio/embrace/test/fixtures/KotlinNestedOnLongClick;)V", "onLongClick", "", "view", "Landroid/view/View;", "embrace-bytecode-instrumentation-tests_release"})
+  // access flags 0x609
+  public static abstract INNERCLASS android/view/View$OnLongClickListener android/view/View OnLongClickListener
+  // access flags 0x11
+  public final INNERCLASS io/embrace/test/fixtures/KotlinNestedOnLongClick$OnLongClickInnerListener io/embrace/test/fixtures/KotlinNestedOnLongClick OnLongClickInnerListener
+
+  // access flags 0x1010
+  final synthetic Lio/embrace/test/fixtures/KotlinNestedOnLongClick; this$0
+
+  // access flags 0x1
+  // signature ()V
+  // declaration: void <init>()
+  public <init>(Lio/embrace/test/fixtures/KotlinNestedOnLongClick;)V
+   L0
+    LINENUMBER 9 L0
+    ALOAD 0
+    ALOAD 1
+    PUTFIELD io/embrace/test/fixtures/KotlinNestedOnLongClick$OnLongClickInnerListener.this$0 : Lio/embrace/test/fixtures/KotlinNestedOnLongClick;
+    ALOAD 0
+    INVOKESPECIAL java/lang/Object.<init> ()V
+    RETURN
+   L1
+    LOCALVARIABLE this Lio/embrace/test/fixtures/KotlinNestedOnLongClick$OnLongClickInnerListener; L0 L1 0
+    LOCALVARIABLE this$0 Lio/embrace/test/fixtures/KotlinNestedOnLongClick; L0 L1 1
+    MAXSTACK = 2
+    MAXLOCALS = 2
+
+  // access flags 0x1
+  public onLongClick(Landroid/view/View;)Z
+    // annotable parameter count: 1 (invisible)
+    @Lorg/jetbrains/annotations/Nullable;() // invisible, parameter 0
+    ALOAD 0
+    ALOAD 1
+    INVOKESTATIC io/embrace/android/embracesdk/ViewSwazzledHooks$OnLongClickListener._preOnLongClick (Landroid/view/View$OnLongClickListener;Landroid/view/View;)V
+   L0
+    LINENUMBER 11 L0
+    ICONST_1
+    IRETURN
+   L1
+    LOCALVARIABLE this Lio/embrace/test/fixtures/KotlinNestedOnLongClick$OnLongClickInnerListener; L0 L1 0
+    LOCALVARIABLE view Landroid/view/View; L0 L1 1
+    MAXSTACK = 1
+    MAXLOCALS = 2
+}

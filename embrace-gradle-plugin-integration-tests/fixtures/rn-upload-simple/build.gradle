@@ -1,0 +1,25 @@
+import io.embrace.android.gradle.plugin.tasks.reactnative.EmbraceRnSourcemapGeneratorTask
+import io.embrace.android.gradle.plugin.network.EmbraceEndpoint
+
+plugins {
+    id("java")
+    id("io.embrace.swazzler")
+    id("io.embrace.android.testplugin")
+}
+
+project.tasks.register("testTask", EmbraceRnSourcemapGeneratorTask) { task ->
+    integrationTest.configureGradleUploadTask(project, task, EmbraceEndpoint.SOURCE_MAP, "sourcemap.json")
+
+    task.generatedEmbraceResourcesDirectory.set(
+            project.layout.buildDirectory.dir("generated-embrace-resources")
+    )
+    task.sourcemap.set(
+            project.layout.projectDirectory.file("source.map")
+    )
+    task.bundleFile.set(
+            project.layout.projectDirectory.file("bundle.js")
+    )
+    task.sourcemapAndBundleFile.set(
+            project.layout.buildDirectory.file("output")
+    )
+}

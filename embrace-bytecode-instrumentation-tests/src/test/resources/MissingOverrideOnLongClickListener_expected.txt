@@ -1,0 +1,35 @@
+// class version 55.0 (55)
+// access flags 0x21
+public class io/embrace/test/fixtures/MissingOverrideOnLongClickListener implements android/view/View$OnLongClickListener {
+
+  // compiled from: MissingOverrideOnLongClickListener.java
+  // access flags 0x609
+  public static abstract INNERCLASS android/view/View$OnLongClickListener android/view/View OnLongClickListener
+
+  // access flags 0x1
+  public <init>()V
+   L0
+    LINENUMBER 8 L0
+    ALOAD 0
+    INVOKESPECIAL java/lang/Object.<init> ()V
+    RETURN
+   L1
+    LOCALVARIABLE this Lio/embrace/test/fixtures/MissingOverrideOnLongClickListener; L0 L1 0
+    MAXSTACK = 1
+    MAXLOCALS = 1
+
+  // access flags 0x1
+  public onLongClick(Landroid/view/View;)Z
+    ALOAD 0
+    ALOAD 1
+    INVOKESTATIC io/embrace/android/embracesdk/ViewSwazzledHooks$OnLongClickListener._preOnLongClick (Landroid/view/View$OnLongClickListener;Landroid/view/View;)V
+   L0
+    LINENUMBER 10 L0
+    ICONST_0
+    IRETURN
+   L1
+    LOCALVARIABLE this Lio/embrace/test/fixtures/MissingOverrideOnLongClickListener; L0 L1 0
+    LOCALVARIABLE view Landroid/view/View; L0 L1 1
+    MAXSTACK = 1
+    MAXLOCALS = 2
+}

@@ -1,0 +1,49 @@
+// class version 55.0 (55)
+// access flags 0x21
+public class io/embrace/test/fixtures/CustomWebViewClient extends android/webkit/WebViewClient {
+
+  // compiled from: CustomWebViewClient.kt
+
+  @Lkotlin/Metadata;(mv={2, 1, 0}, k=1, xi=48, d1={"\u0000$\n\u0002\u0018\u0002\n\u0002\u0018\u0002\n\u0002\u0008\u0003\n\u0002\u0010\u0002\n\u0000\n\u0002\u0018\u0002\n\u0000\n\u0002\u0010\u000e\n\u0000\n\u0002\u0018\u0002\n\u0000\u0008\u0016\u0018\u00002\u00020\u0001B\u0007\u00a2\u0006\u0004\u0008\u0002\u0010\u0003J&\u0010\u0004\u001a\u00020\u00052\u0008\u0010\u0006\u001a\u0004\u0018\u00010\u00072\u0008\u0010\u0008\u001a\u0004\u0018\u00010\u00092\u0008\u0010\n\u001a\u0004\u0018\u00010\u000bH\u0016\u00a8\u0006\u000c"}, d2={"Lio/embrace/test/fixtures/CustomWebViewClient;", "Landroid/webkit/WebViewClient;", "<init>", "()V", "onPageStarted", "", "view", "Landroid/webkit/WebView;", "url", "", "favicon", "Landroid/graphics/Bitmap;", "embrace-bytecode-instrumentation-tests_release"})
+
+  // access flags 0x1
+  public <init>()V
+   L0
+    LINENUMBER 7 L0
+    ALOAD 0
+    INVOKESPECIAL android/webkit/WebViewClient.<init> ()V
+    RETURN
+   L1
+    LOCALVARIABLE this Lio/embrace/test/fixtures/CustomWebViewClient; L0 L1 0
+    MAXSTACK = 1
+    MAXLOCALS = 1
+
+  // access flags 0x1
+  public onPageStarted(Landroid/webkit/WebView;Ljava/lang/String;Landroid/graphics/Bitmap;)V
+    // annotable parameter count: 3 (invisible)
+    @Lorg/jetbrains/annotations/Nullable;() // invisible, parameter 0
+    @Lorg/jetbrains/annotations/Nullable;() // invisible, parameter 1
+    @Lorg/jetbrains/annotations/Nullable;() // invisible, parameter 2
+    ALOAD 1
+    ALOAD 2
+    ALOAD 3
+    INVOKESTATIC io/embrace/android/embracesdk/WebViewClientSwazzledHooks._preOnPageStarted (Landroid/webkit/WebView;Ljava/lang/String;Landroid/graphics/Bitmap;)V
+   L0
+    ALOAD 0
+   L1
+    LINENUMBER 10 L1
+    ALOAD 1
+    ALOAD 2
+    ALOAD 3
+    INVOKESPECIAL android/webkit/WebViewClient.onPageStarted (Landroid/webkit/WebView;Ljava/lang/String;Landroid/graphics/Bitmap;)V
+   L2
+    LINENUMBER 11 L2
+    RETURN
+   L3
+    LOCALVARIABLE this Lio/embrace/test/fixtures/CustomWebViewClient; L0 L3 0
+    LOCALVARIABLE view Landroid/webkit/WebView; L0 L3 1
+    LOCALVARIABLE url Ljava/lang/String; L0 L3 2
+    LOCALVARIABLE favicon Landroid/graphics/Bitmap; L0 L3 3
+    MAXSTACK = 4
+    MAXLOCALS = 4
+}

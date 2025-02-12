@@ -4,8 +4,15 @@ plugins {
     id("groovy")
     id("maven-publish")
     id("signing")
-    alias(libs.plugins.ksp)
+    alias(libs.plugins.google.ksp)
     alias(libs.plugins.buildconfig)
+    id("io.embrace.internal.build-logic")
+}
+
+embrace {
+    productionModule.set(false)
+    androidModule.set(false)
+    jvmTarget.set(JavaVersion.VERSION_11)
 }
 
 dependencies {

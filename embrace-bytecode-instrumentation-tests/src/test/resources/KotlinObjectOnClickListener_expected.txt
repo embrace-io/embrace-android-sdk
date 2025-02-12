@@ -5,7 +5,7 @@ public final class io/embrace/test/fixtures/KotlinObjectOnClickListener$onCreate
   // compiled from: KotlinObjectOnClickListener.kt
   OUTERCLASS io/embrace/test/fixtures/KotlinObjectOnClickListener onCreateView (Landroid/view/LayoutInflater;Landroid/view/ViewGroup;Landroid/os/Bundle;)Landroid/view/View;
 
-  @Lkotlin/Metadata;(mv={2, 1, 0}, k=1, xi=48, d1={"\u0000\u0017\n\u0000\n\u0002\u0018\u0002\n\u0000\n\u0002\u0010\u0002\n\u0000\n\u0002\u0018\u0002\n\u0000*\u0001\u0000\u0008\n\u0018\u00002\u00020\u0001J\u0012\u0010\u0002\u001a\u00020\u00032\u0008\u0010\u0004\u001a\u0004\u0018\u00010\u0005H\u0016\u00a8\u0006\u0006"}, d2={"io/embrace/test/fixtures/KotlinObjectOnClickListener$onCreateView$1", "Landroid/view/View$OnClickListener;", "onClick", "", "view", "Landroid/view/View;", "embrace-bytecode-instrumentation-tests_release"})
+  @Lkotlin/Metadata;(mv={1, 8, 0}, k=1, xi=48, d1={"\u0000\u0017\n\u0000\n\u0002\u0018\u0002\n\u0000\n\u0002\u0010\u0002\n\u0000\n\u0002\u0018\u0002\n\u0000*\u0001\u0000\u0008\n\u0018\u00002\u00020\u0001J\u0012\u0010\u0002\u001a\u00020\u00032\u0008\u0010\u0004\u001a\u0004\u0018\u00010\u0005H\u0016\u00a8\u0006\u0006"}, d2={"io/embrace/test/fixtures/KotlinObjectOnClickListener$onCreateView$1", "Landroid/view/View$OnClickListener;", "onClick", "", "view", "Landroid/view/View;", "embrace-bytecode-instrumentation-tests_release"})
   // access flags 0x609
   public static abstract INNERCLASS android/view/View$OnClickListener android/view/View OnClickListener
   // access flags 0x19

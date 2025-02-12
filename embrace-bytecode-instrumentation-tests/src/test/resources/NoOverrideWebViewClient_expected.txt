@@ -4,7 +4,7 @@ public final class io/embrace/test/fixtures/NoOverrideWebViewClient extends andr
 
   // compiled from: NoOverrideWebViewClient.kt
 
-  @Lkotlin/Metadata;(mv={2, 1, 0}, k=1, xi=48, d1={"\u0000\u000c\n\u0002\u0018\u0002\n\u0002\u0018\u0002\n\u0002\u0008\u0003\u0018\u00002\u00020\u0001B\u0007\u00a2\u0006\u0004\u0008\u0002\u0010\u0003\u00a8\u0006\u0004"}, d2={"Lio/embrace/test/fixtures/NoOverrideWebViewClient;", "Landroid/webkit/WebViewClient;", "<init>", "()V", "embrace-bytecode-instrumentation-tests_release"})
+  @Lkotlin/Metadata;(mv={1, 8, 0}, k=1, xi=48, d1={"\u0000\u000c\n\u0002\u0018\u0002\n\u0002\u0018\u0002\n\u0002\u0008\u0002\u0018\u00002\u00020\u0001B\u0005\u00a2\u0006\u0002\u0010\u0002\u00a8\u0006\u0003"}, d2={"Lio/embrace/test/fixtures/NoOverrideWebViewClient;", "Landroid/webkit/WebViewClient;", "()V", "embrace-bytecode-instrumentation-tests_release"})
 
   // access flags 0x1
   public <init>()V

@@ -3,6 +3,12 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 plugins {
     id("com.android.library")
     kotlin("android")
+    id("io.embrace.internal.build-logic")
+}
+
+embrace {
+    productionModule.set(false)
+    jvmTarget.set(JavaVersion.VERSION_11)
 }
 
 android {

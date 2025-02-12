@@ -1,8 +1,15 @@
 plugins {
     kotlin("jvm")
-    alias(libs.plugins.ksp)
+    alias(libs.plugins.google.ksp)
     id("java-gradle-plugin")
     id("maven-publish")
+    id("io.embrace.internal.build-logic")
+}
+
+embrace {
+    productionModule.set(false)
+    androidModule.set(false)
+    jvmTarget.set(JavaVersion.VERSION_11)
 }
 
 dependencies {
@@ -21,9 +28,6 @@ dependencies {
     implementation(libs.zstd.jni)
     implementation(libs.bundletool)
     implementation(libs.apktool.lib)
-
-    // detekt
-    detektPlugins(libs.detekt.formatting)
 }
 
 // ensure that the plugin is published to maven local before running integration tests

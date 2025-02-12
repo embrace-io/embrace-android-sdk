@@ -40,13 +40,13 @@ jobs:
           git commit -m "CI/CD: change version to be released: ${{ github.event.inputs.version_to_release }}.0"
           git push --set-upstream origin release/${{ github.event.inputs.version_to_release }}
 
-      - name: Checkout Swazzler
+      - name: Checkout embrace gradle plugin
         uses: actions/checkout@v4
         with:
           repository: embrace-io/embrace-swazzler3
           token: ${{ secrets.GH_EMBRACE_SWAZZLER3_TOKEN }}
 
-      - name: Create Swazzler Release Branch "release/${{ github.event.inputs.version_to_release }}"
+      - name: Create embrace gradle plugin Release Branch "release/${{ github.event.inputs.version_to_release }}"
         run: |
           git checkout -b release/${{ github.event.inputs.version_to_release }}
 

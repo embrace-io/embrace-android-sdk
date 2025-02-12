@@ -27,7 +27,7 @@ Currently, only Spans and Logs are supported, but other signals will be added in
 
 # Getting Started
 ### Android Project Setup
-1. In your app's Gradle file, add a dependency to the latest version of the Embrace Swazzler Gradle plugin: `io.embrace:embrace-swazzler:<version>`.
+1. In your app's Gradle file, add a dependency to the latest version of the Embrace Gradle plugin: `io.embrace:embrace-swazzler:<version>`.
    - This plugin is responsible for configuring your app at build time to auto-capture telemetry. This includes:
      - Updating dependencies to include optional modules that are needed for certain features.
      - Setting up configuration files to be read at runtime.

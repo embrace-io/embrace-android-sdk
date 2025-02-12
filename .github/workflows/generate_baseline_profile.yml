@@ -45,14 +45,14 @@ jobs:
       - name: Publish SDK to Maven local
         run: ./gradlew pTML
 
-      - name: Checkout Swazzler
+      - name: Checkout embrace gradle plugin
         uses: actions/checkout@v4
         with:
           repository: embrace-io/embrace-swazzler3
           token: ${{ secrets.GH_EMBRACE_SWAZZLER3_TOKEN }}
           path: './embrace-swazzler3'
 
-      - name: Publish Swazzler to Maven local
+      - name: Publish embrace gradle plugin to Maven local
         working-directory: ./embrace-swazzler3
         run: ./gradlew pTML
 

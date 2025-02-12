@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.internal.config.instrumented.schema
 
 /**
  * Defines the locally set configuration for the SDK. This is typically set from embrace-config.json
- * and instrumented by swazzler, but can be overridden for test purposes.
+ * and instrumented by the embrace gradle plugin, but can be overridden for test purposes.
  */
 interface InstrumentedConfig {
     val baseUrls: BaseUrlConfig

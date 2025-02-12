@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<issues format="6" by="lint 8.7.1" type="baseline" client="gradle" dependencies="false" name="AGP (8.7.1)" variant="all" version="8.7.1">
+<issues format="6" by="lint 8.7.3" type="baseline" client="gradle" dependencies="false" name="AGP (8.7.3)" variant="all" version="8.7.3">
 
     <issue
         id="UnknownNullness"
@@ -8,7 +8,7 @@
         errorLine2="                                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/io/embrace/android/embracesdk/okhttp3/swazzle/callback/okhttp3/OkHttpClient.java"
-            line="35"
+            line="34"
             column="38"/>
     </issue>
 
@@ -19,7 +19,7 @@
         errorLine2="                                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/io/embrace/android/embracesdk/okhttp3/swazzle/callback/okhttp3/OkHttpClient.java"
-            line="40"
+            line="39"
             column="51"/>
     </issue>
 

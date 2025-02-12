@@ -1,8 +1,11 @@
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
+group = "io.embrace.internal"
+version = "1.0.0"
 
 plugins {
     `kotlin-dsl`
-    `kotlin-dsl-precompiled-script-plugins`
+    `java-gradle-plugin`
 }
 
 repositories {
@@ -10,16 +13,22 @@ repositories {
     mavenCentral()
 }
 
-// NOTE: when updating any of these keep in sync with the version catalog
 dependencies {
     implementation(gradleApi())
+    implementation(libs.kotlin.gradle.plugin)
+    implementation(libs.agp)
+    implementation(libs.detekt.gradle.plugin)
+    implementation(libs.binary.compatibility.validator)
+    implementation(libs.kover.gradle.plugin)
+}
 
-    // Version of Kotlin used at build time
-    implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:2.1.0")
-    implementation("com.android.tools.build:gradle:8.7.3")
-    implementation("io.gitlab.arturbosch.detekt:detekt-gradle-plugin:1.23.7")
-    implementation("org.jetbrains.kotlinx:binary-compatibility-validator:0.17.0")
-    implementation("org.jetbrains.kotlinx:kover-gradle-plugin:0.9.1")
+gradlePlugin {
+    plugins {
+        create("embracePlugin") {
+            id = "io.embrace.internal.build-logic"
+            implementationClass = "io.embrace.internal.BuildPlugin"
+        }
+    }
 }
 
 // ensure the Kotlin + Java compilers both use the same language level.
@@ -29,8 +38,8 @@ project.tasks.withType(JavaCompile::class.java).configureEach {
 }
 
 // ensure the Kotlin + Java compilers both use the same language level.
-project.tasks.withType(KotlinCompile::class.java).configureEach {
-    kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_1_8.toString()
+kotlin {
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_1_8)
     }
 }

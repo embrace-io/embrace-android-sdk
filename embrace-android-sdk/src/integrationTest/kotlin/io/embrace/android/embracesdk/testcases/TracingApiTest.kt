@@ -18,7 +18,7 @@ import io.embrace.android.embracesdk.internal.payload.toNewPayload
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
-import io.embrace.android.embracesdk.testframework.IntegrationTestRule
+import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbracePayloadAssertionInterface
 import io.opentelemetry.api.trace.SpanId
 import io.opentelemetry.context.Context
@@ -39,7 +39,7 @@ import java.util.concurrent.TimeUnit
 internal class TracingApiTest {
     @Rule
     @JvmField
-    val testRule: IntegrationTestRule = IntegrationTestRule()
+    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule()
 
     private val results = mutableListOf<String>()
     private lateinit var executor: SingleThreadTestScheduledExecutor

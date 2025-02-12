@@ -1,10 +1,10 @@
 plugins {
-    id("embrace-prod-defaults")
+    id("com.android.library")
+    id("kotlin-android")
+    id("io.embrace.internal.build-logic")
 }
 
 description = "Embrace Android SDK: Internal API"
-
-apiValidation.validationDisabled = true
 
 android {
     namespace = "io.embrace.android.embracesdk.api.internal"

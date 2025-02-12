@@ -1,5 +1,7 @@
 plugins {
-    id("embrace-prod-defaults")
+    id("com.android.library")
+    id("kotlin-android")
+    id("io.embrace.internal.build-logic")
 }
 
 description = "Embrace Android SDK: Features"
@@ -35,5 +37,3 @@ dependencies {
     testImplementation(libs.protobuf.java)
     testImplementation(libs.protobuf.java.util)
 }
-
-apiValidation.validationDisabled = true

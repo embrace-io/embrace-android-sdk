@@ -1,15 +1,18 @@
-import io.embrace.gradle.Versions
-
 plugins {
-    id("embrace-prod-defaults")
-    id("enable-explicit-api-mode")
+    id("com.android.library")
+    id("kotlin-android")
+    id("io.embrace.internal.build-logic")
     id("com.google.devtools.ksp")
+}
+
+embrace {
+    containsPublicApi.set(true)
 }
 
 description = "Embrace Android SDK: Core"
 
 android {
-    ndkVersion = Versions.NDK
+    ndkVersion = "22.1.7171670"
 
     defaultConfig {
         namespace = "io.embrace.android.embracesdk"
@@ -23,13 +26,6 @@ android {
     }
     packaging {
         jniLibs.pickFirsts.add("**/*.so")
-    }
-}
-
-// include these projects in code coverage
-rootProject.childProjects.forEach { (_, proj) ->
-    if (proj.plugins.hasPlugin("embrace-prod-defaults")) {
-        dependencies.add("kover", proj)
     }
 }
 
@@ -73,9 +69,6 @@ dependencies {
     implementation(libs.opentelemetry.context)
     implementation(libs.opentelemetry.semconv)
     implementation(libs.opentelemetry.semconv.incubating)
-
-    // ProfileInstaller 1.2.0 requires compileSdk 32. 1.1.0 requires compileSdk 31.
-    // Please, don"t update it until we update compileSdk.
     implementation(libs.profileinstaller)
 
     testImplementation(project(":embrace-test-fakes"))
@@ -86,6 +79,3 @@ dependencies {
 
     androidTestImplementation(project(":embrace-test-fakes"))
 }
-
-project.tasks.register("publishLocal") { dependsOn("publishMavenPublicationToMavenLocal") }
-project.tasks.register("publishQa") { dependsOn("publishMavenPublicationToQaRepository") }

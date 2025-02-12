@@ -13,7 +13,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.internal.config.remote.AppExitInfoConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.payload.Log
-import io.embrace.android.embracesdk.testframework.IntegrationTestRule
+import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.assertions.assertMatches
 import io.embrace.android.embracesdk.testframework.assertions.getLastLog
 import io.mockk.every
@@ -62,7 +62,7 @@ internal class AeiFeatureTest {
 
     @Rule
     @JvmField
-    val testRule = IntegrationTestRule()
+    val testRule = SdkIntegrationTestRule()
 
     private val jvmCrash = TestAeiData(
         ApplicationExitInfo.REASON_CRASH,

@@ -1,5 +1,10 @@
 plugins {
-    id("embrace-prod-defaults")
+    id("com.android.library")
+    id("kotlin-android")
+    id("io.embrace.internal.build-logic")
+}
+
+embrace {
 }
 
 description = "Embrace Android SDK: Core"
@@ -17,8 +22,6 @@ android {
         buildConfig = true
     }
 }
-
-apiValidation.validationDisabled = true
 
 dependencies {
     implementation(project(":embrace-android-payload"))

@@ -1,5 +1,7 @@
 plugins {
-    id("embrace-prod-defaults")
+    id("com.android.library")
+    id("kotlin-android")
+    id("io.embrace.internal.build-logic")
     id("com.google.devtools.ksp")
 }
 
@@ -8,8 +10,6 @@ description = "Embrace Android SDK: Payload"
 android {
     namespace = "io.embrace.android.embracesdk.payload"
 }
-
-apiValidation.validationDisabled = true
 
 dependencies {
     implementation(libs.moshi)

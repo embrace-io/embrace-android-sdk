@@ -1,6 +1,11 @@
 plugins {
-    id("embrace-prod-defaults")
-    id("enable-explicit-api-mode")
+    id("com.android.library")
+    id("kotlin-android")
+    id("io.embrace.internal.build-logic")
+}
+
+embrace {
+    containsPublicApi.set(true)
 }
 
 description = "Embrace Android SDK: API"

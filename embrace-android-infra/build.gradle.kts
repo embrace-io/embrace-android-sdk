@@ -1,5 +1,7 @@
 plugins {
-    id("embrace-prod-defaults")
+    id("com.android.library")
+    id("kotlin-android")
+    id("io.embrace.internal.build-logic")
 }
 
 description = "Embrace Android SDK: Infra"
@@ -7,5 +9,3 @@ description = "Embrace Android SDK: Infra"
 android {
     namespace = "io.embrace.android.embracesdk.infra"
 }
-
-apiValidation.validationDisabled = true

@@ -1,5 +1,11 @@
 plugins {
-    id("embrace-test-defaults")
+    id("com.android.library")
+    id("kotlin-android")
+    id("io.embrace.internal.build-logic")
+}
+
+embrace {
+    productionModule.set(false)
 }
 
 android {

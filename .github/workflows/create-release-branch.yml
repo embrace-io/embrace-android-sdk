@@ -1,0 +1,41 @@
+name: Create Release Branch
+
+on:
+  workflow_call:
+    inputs:
+      rc_version:
+        required: true
+        type: string
+  workflow_dispatch:
+    inputs:
+      rc_version:
+        description: 'Version to release. Specify <major.minor.patch>, e.g. 7.1.2. A new branch called "release/<version>" will be created where the release-specific changes will be committed.'
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  create-release-branch:
+    name: Create Release Branch
+    timeout-minutes: 60
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure git
+        run: |
+          git config --global user.name 'embrace-ci[bot]'
+          git config --global user.email 'embrace-ci@users.noreply.github.com'
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Create Release Branch "release/${{ inputs.rc_version }}"
+        run: |
+          git checkout -b release/${{ inputs.rc_version }}
+
+      - name: Set version in gradle.properties
+        run: |
+          sed -i -r "s#version = ([^\']+)#version=${{ inputs.rc_version }}#" gradle.properties
+          git add gradle.properties
+          git commit -m "CI/CD: change version to be released: ${{ inputs.rc_version }}"
+          git push --set-upstream origin release/${{ inputs.rc_version }}

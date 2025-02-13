@@ -35,14 +35,14 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Read SDK version
+      - name: Read version
         run: |
           # Read the version from gradle.properties
           version=$(grep '^version' gradle.properties | cut -d'=' -f2 | tr -d '[:space:]')
           # Set the version as an environment variable
           echo "ANDROID_SDK_VERSION=${version}" >> "$GITHUB_ENV"
 
-      - name: Publish SDK to Maven local
+      - name: Publish to Maven local
         run: ./gradlew pTML
 
       - name: Checkout Android SDK Benchmark

@@ -57,7 +57,3 @@ jobs:
           git config --global user.email "embrace-ci@users.noreply.github.com"
           git commit --allow-empty --message 'CI/CD: Automatically generated documentation for ${{ inputs.rc_version }}' docs/
           git push --force origin gh-pages
-
-      - name: Record Version History (${{ inputs.rc_version }})
-        run: |
-          curl -X POST ${{ vars.SDK_VERSION_URL }}/android/version/ -H 'X-Embrace-CI: ${{ secrets.SDK_VERSION_TOKEN }}' -H 'Content-Type: application/json' -d '{"version": "${{ inputs.rc_version }}"}'

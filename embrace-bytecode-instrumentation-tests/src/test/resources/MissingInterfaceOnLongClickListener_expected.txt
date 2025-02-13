@@ -1,0 +1,44 @@
+// class version 55.0 (55)
+// access flags 0x21
+public class io/embrace/test/fixtures/MissingInterfaceOnLongClickListener {
+
+  // compiled from: MissingInterfaceOnLongClickListener.java
+
+  // access flags 0x1
+  public <init>()V
+   L0
+    LINENUMBER 8 L0
+    ALOAD 0
+    INVOKESPECIAL java/lang/Object.<init> ()V
+    RETURN
+   L1
+    LOCALVARIABLE this Lio/embrace/test/fixtures/MissingInterfaceOnLongClickListener; L0 L1 0
+    MAXSTACK = 1
+    MAXLOCALS = 1
+
+  // access flags 0x1
+  public onLongClick(Landroid/view/View;)Z
+    ALOAD 0
+    ALOAD 1
+    INVOKESTATIC io/embrace/android/embracesdk/ViewSwazzledHooks$OnLongClickListener._preOnLongClick (Landroid/view/View$OnLongClickListener;Landroid/view/View;)V
+   L0
+    LINENUMBER 10 L0
+    ICONST_1
+    IRETURN
+   L1
+    LOCALVARIABLE this Lio/embrace/test/fixtures/MissingInterfaceOnLongClickListener; L0 L1 0
+    LOCALVARIABLE view Landroid/view/View; L0 L1 1
+    MAXSTACK = 1
+    MAXLOCALS = 2
+
+  // access flags 0x1
+  public onLongClick()Z
+   L0
+    LINENUMBER 14 L0
+    ICONST_1
+    IRETURN
+   L1
+    LOCALVARIABLE this Lio/embrace/test/fixtures/MissingInterfaceOnLongClickListener; L0 L1 0
+    MAXSTACK = 1
+    MAXLOCALS = 1
+}

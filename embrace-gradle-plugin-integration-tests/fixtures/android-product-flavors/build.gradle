@@ -1,0 +1,21 @@
+plugins {
+    id("com.android.application")
+    id("io.embrace.swazzler")
+    id("io.embrace.android.testplugin")
+}
+
+integrationTest.configureAndroidProject(project)
+
+android {
+    flavorDimensions "apple"
+    productFlavors {
+        demo {
+            dimension "apple"
+            versionNameSuffix "-demo"
+        }
+        full {
+            dimension "apple"
+            versionNameSuffix "-full"
+        }
+    }
+}

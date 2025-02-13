@@ -6,7 +6,7 @@ plugins {
 
 embrace {
     productionModule.set(false)
-    androidLibrary.set(false)
+    androidModule.set(false)
 }
 
 dependencies {

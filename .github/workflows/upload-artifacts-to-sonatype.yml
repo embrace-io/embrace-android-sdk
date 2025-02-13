@@ -1,0 +1,65 @@
+name: Upload artifacts to Sonatype
+
+env:
+  SONATYPE_USERNAME: ${{ secrets.SONATYPE_TOKEN_USER }}
+  SONATYPE_PASSWORD: ${{ secrets.SONATYPE_TOKEN_USER_PASSWORD }}
+  MAVEN_QA_USER: github
+  MAVEN_QA_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
+  mavenSigningKeyId: ${{ secrets.MAVEN_ANDROID_SIGNING_KEY }}
+  mavenSigningKeyRingFileEncoded: ${{ secrets.MAVEN_ANDROID_GPG_KEY }}
+  mavenSigningKeyPassword: ${{ secrets.MAVEN_ANDROID_SIGNING_PASSWORD }}
+
+on:
+  workflow_call:
+    inputs:
+      rc_version:
+        required: true
+        type: string
+  workflow_dispatch:
+    inputs:
+      rc_version:
+        description: 'Version to create new RC for. Specify <major.minor.patch>, e.g. 7.1.2'
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    timeout-minutes: 60
+    runs-on: ubuntu-latest
+    steps:
+      - name: Decode Keystore
+        run: |
+          mkdir "$RUNNER_TEMP"/keystore
+          echo $mavenSigningKeyRingFileEncoded | base64 -di > "$RUNNER_TEMP"/keystore/2DE631C1.gpg
+          echo "mavenSigningKeyRingFile=$RUNNER_TEMP/keystore/2DE631C1.gpg" >> $GITHUB_ENV
+
+      - name: Configure git
+        run: |
+          git config --global user.name 'embrace-ci[bot]'
+          git config --global user.email 'embrace-ci@users.noreply.github.com'
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: release/${{ inputs.rc_version }}
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'adopt'
+          java-version: 17
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Publish and close Sonatype repository
+        run: |
+          ./gradlew clean publishReleasePublicationToSonatype closeSonatypeStagingRepository -Dorg.gradle.parallel=false --no-build-cache --no-configuration-cache --stacktrace
+
+      - name: Publish git tag
+        run: |
+          git push origin :refs/tags/${{ inputs.rc_version }}
+          git tag -f ${{ inputs.rc_version }}
+          git push origin --tags

@@ -1,0 +1,15 @@
+plugins {
+    id("com.android.application")
+    id("io.embrace.swazzler")
+    id("io.embrace.android.testplugin")
+}
+
+integrationTest.configureAndroidProject(project)
+
+android {
+    externalNativeBuild {
+        cmake {
+            path("src/main/cpp/CMakeLists.txt")
+        }
+    }
+}

@@ -1,0 +1,23 @@
+# compiler: R8
+# compiler_version: 3.1.51
+# min_api: 21
+# pg_map_id: 9697d76
+# common_typos_disable
+# {"id":"com.android.tools.r8.mapping","version":"1.0"}
+android.support.v4.app.RemoteActionCompatParcelizer -> android.support.v4.app.RemoteActionCompatParcelizer:
+    1:1:void <init>():11:11 -> <init>
+    1:1:androidx.core.app.RemoteActionCompat read(androidx.versionedparcelable.VersionedParcel):13:13 -> read
+    1:1:void write(androidx.core.app.RemoteActionCompat,androidx.versionedparcelable.VersionedParcel):17:17 -> write
+android.support.v4.graphics.drawable.IconCompatParcelizer -> android.support.v4.graphics.drawable.IconCompatParcelizer:
+    1:1:void <init>():11:11 -> <init>
+    1:1:androidx.core.graphics.drawable.IconCompat read(androidx.versionedparcelable.VersionedParcel):13:13 -> read
+    1:1:void write(androidx.core.graphics.drawable.IconCompat,androidx.versionedparcelable.VersionedParcel):17:17 -> write
+android.support.v4.media.MediaBrowserCompat$CustomActionResultReceiver -> android.support.v4.media.MediaBrowserCompat$CustomActionResultReceiver:
+    void onReceiveResult(int,android.os.Bundle) -> j
+android.support.v4.media.MediaBrowserCompat$ItemReceiver -> android.support.v4.media.MediaBrowserCompat$ItemReceiver:
+    1:1:void onReceiveResult(int,android.os.Bundle):2246:2246 -> j
+    2:2:void onReceiveResult(int,android.os.Bundle):2248:2248 -> j
+    3:4:void onReceiveResult(int,android.os.Bundle):2252:2253 -> j
+    5:5:void onReceiveResult(int,android.os.Bundle):2256:2256 -> j
+    6:6:void onReceiveResult(int,android.os.Bundle):2254:2254 -> j
+    7:7:void onReceiveResult(int,android.os.Bundle):2249:2249 -> j

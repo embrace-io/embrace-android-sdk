@@ -1,0 +1,95 @@
+name: Generate Baseline Profile
+
+on:
+  workflow_dispatch:
+  workflow_call:
+    secrets:
+      token:
+        required: true
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Enable KVM group perms
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Checkout Branch
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'adopt'
+          java-version: 17
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Read version
+        run: |
+          # Read the version from gradle.properties
+          version=$(grep '^version' gradle.properties | cut -d'=' -f2 | tr -d '[:space:]')
+          # Set the version as an environment variable
+          echo "ANDROID_SDK_VERSION=${version}" >> "$GITHUB_ENV"
+
+      - name: Publish to Maven local
+        run: ./gradlew pTML
+
+      - name: Checkout Android SDK Benchmark
+        uses: actions/checkout@v4
+        with:
+          repository: embrace-io/android-sdk-benchmark
+          ref: main
+          path: ./android-sdk-benchmark
+          token: ${{ secrets.GH_ANDROID_SDK_TOKEN || secrets.token }} # NOTE: read android-sdk-benchmark
+
+      - name: Clean Managed Devices
+        working-directory: android-sdk-benchmark
+        run: ./gradlew cleanManagedDevices --unused-only
+
+      - name: Generate Baseline Profile
+        working-directory: android-sdk-benchmark
+        run: ./gradlew :macrobenchmark:pixel6Api34BaselineProfileAndroidTest 
+          -Pandroid.testInstrumentationRunnerArguments.androidx.benchmark.enabledRules=BaselineProfile
+          -Pandroid.testoptions.manageddevices.emulator.gpu="swiftshader_indirect"
+          -Pandroid.experimental.testOptions.managedDevices.maxConcurrentDevices=1
+
+      # Sets the Baseline Profile on its proper place so it gets correctly bundled into Play Store
+      - name: Move & Rename Baseline Profiles
+        run: cat android-sdk-benchmark/macrobenchmark/build/outputs/managed_device_android_test_additional_output/baselineprofile/pixel6Api34/BaselineProfileGenerator_startup-baseline-prof.txt 
+          | grep '^[^[]*io/embrace/android/embracesdk' > embrace-android-sdk/src/main/baseline-prof.txt
+
+      - name: Create baseline profile PR
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config --global user.name 'embrace-ci[bot]'
+          git config --global user.email 'embrace-ci@users.noreply.github.com'
+          
+          branch=baseline-profile-${{ github.run_id }}
+          git checkout -b $branch
+          
+          if [[ `git status --porcelain` ]]; then
+            git add embrace-android-sdk/src/main/baseline-prof.txt
+            git commit -m "Generate baseline profiles"
+            git push -f origin $branch
+          
+            gh pr create \
+                --base main \
+                --head $branch \
+                --title "Generate baseline profile ${{ github.ref }}" \
+                --body "Baseline Profiles help guide optimization beyond app startup by providing common user interactions that improve app runtime from the first launch" \
+                --assignee ${{ github.actor }}
+          else
+            echo "No changes to commit"
+          fi

@@ -14,7 +14,7 @@ concurrency:
 jobs:
   gradle-test:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 60
     steps:
       - name: Checkout Branch
         uses: actions/checkout@v4
@@ -43,14 +43,14 @@ jobs:
 
       # Build the entire project, run the tests, and run all static analysis
       - name: Gradle Build
-        run: ./gradlew assembleRelease testReleaseUnitTest detekt lint apiCheck --stacktrace
+        run: ./gradlew assembleRelease check --stacktrace
 
       - name: Archive Test Results
         if: ${{ always() }}
         uses: actions/upload-artifact@v4
         with:
-          name: android-sdk-test-results
-          path: embrace-android-sdk/build/reports/tests/
+          name: test-results
+          path: '**/build/reports/tests/**'
 
       - name: Run Kover Code Coverage
         run: ./gradlew koverXmlReportRelease

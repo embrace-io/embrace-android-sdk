@@ -1,0 +1,44 @@
+// class version 55.0 (55)
+// access flags 0x31
+public final class io/embrace/test/fixtures/KotlinNested$KotlinStaticListener implements android/view/View$OnClickListener {
+
+  // compiled from: KotlinNested.kt
+
+  @Lkotlin/Metadata;(mv={1, 8, 0}, k=1, xi=48, d1={"\u0000\u0018\n\u0002\u0018\u0002\n\u0002\u0018\u0002\n\u0002\u0008\u0002\n\u0002\u0010\u0002\n\u0000\n\u0002\u0018\u0002\n\u0000\u0018\u00002\u00020\u0001B\u0005\u00a2\u0006\u0002\u0010\u0002J\u0010\u0010\u0003\u001a\u00020\u00042\u0006\u0010\u0005\u001a\u00020\u0006H\u0016\u00a8\u0006\u0007"}, d2={"Lio/embrace/test/fixtures/KotlinNested$KotlinStaticListener;", "Landroid/view/View$OnClickListener;", "()V", "onClick", "", "view", "Landroid/view/View;", "embrace-bytecode-instrumentation-tests_release"})
+  // access flags 0x609
+  public static abstract INNERCLASS android/view/View$OnClickListener android/view/View OnClickListener
+  // access flags 0x19
+  public final static INNERCLASS io/embrace/test/fixtures/KotlinNested$KotlinStaticListener io/embrace/test/fixtures/KotlinNested KotlinStaticListener
+
+  // access flags 0x1
+  public <init>()V
+   L0
+    LINENUMBER 13 L0
+    ALOAD 0
+    INVOKESPECIAL java/lang/Object.<init> ()V
+    RETURN
+   L1
+    LOCALVARIABLE this Lio/embrace/test/fixtures/KotlinNested$KotlinStaticListener; L0 L1 0
+    MAXSTACK = 1
+    MAXLOCALS = 1
+
+  // access flags 0x1
+  public onClick(Landroid/view/View;)V
+    // annotable parameter count: 1 (invisible)
+    @Lorg/jetbrains/annotations/NotNull;() // invisible, parameter 0
+    ALOAD 0
+    ALOAD 1
+    INVOKESTATIC io/embrace/android/embracesdk/ViewSwazzledHooks$OnClickListener._preOnClick (Landroid/view/View$OnClickListener;Landroid/view/View;)V
+   L0
+    ALOAD 1
+    LDC "view"
+    INVOKESTATIC kotlin/jvm/internal/Intrinsics.checkNotNullParameter (Ljava/lang/Object;Ljava/lang/String;)V
+   L1
+    LINENUMBER 14 L1
+    RETURN
+   L2
+    LOCALVARIABLE this Lio/embrace/test/fixtures/KotlinNested$KotlinStaticListener; L0 L2 0
+    LOCALVARIABLE view Landroid/view/View; L0 L2 1
+    MAXSTACK = 2
+    MAXLOCALS = 2
+}

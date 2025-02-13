@@ -12,7 +12,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  gradle-test:
+  build-example-app:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -31,6 +31,6 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
 
       # Build the entire project, run the tests, and run all static analysis
-      - name: Gradle Build
+      - name: Build example app
         working-directory: examples/ExampleApp
         run: ./gradlew bundleRelease

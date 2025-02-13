@@ -1,0 +1,491 @@
+// class version 51.0 (51)
+// access flags 0x21
+public class com/android/volley/NetworkDispatcher extends java/lang/Thread {
+
+  // compiled from: NetworkDispatcher.java
+  // access flags 0x9
+  public static INNERCLASS android/os/Build$VERSION_CODES android/os/Build VERSION_CODES
+  // access flags 0x2609
+  public static abstract INNERCLASS com/android/volley/RequestQueue$RequestEvent com/android/volley/RequestQueue RequestEvent
+  // access flags 0x9
+  public static INNERCLASS android/os/Build$VERSION android/os/Build VERSION
+  // access flags 0x9
+  public static INNERCLASS com/android/volley/Cache$Entry com/android/volley/Cache Entry
+
+  // access flags 0x12
+  // signature Ljava/util/concurrent/BlockingQueue<Lcom/android/volley/Request<*>;>;
+  // declaration: mQueue extends java.util.concurrent.BlockingQueue<com.android.volley.Request<?>>
+  private final Ljava/util/concurrent/BlockingQueue; mQueue
+
+  // access flags 0x12
+  private final Lcom/android/volley/Network; mNetwork
+
+  // access flags 0x12
+  private final Lcom/android/volley/Cache; mCache
+
+  // access flags 0x12
+  private final Lcom/android/volley/ResponseDelivery; mDelivery
+
+  // access flags 0x42
+  private volatile Z mQuit
+
+  // access flags 0x1
+  // signature (Ljava/util/concurrent/BlockingQueue<Lcom/android/volley/Request<*>;>;Lcom/android/volley/Network;Lcom/android/volley/Cache;Lcom/android/volley/ResponseDelivery;)V
+  // declaration: void <init>(java.util.concurrent.BlockingQueue<com.android.volley.Request<?>>, com.android.volley.Network, com.android.volley.Cache, com.android.volley.ResponseDelivery)
+  public <init>(Ljava/util/concurrent/BlockingQueue;Lcom/android/volley/Network;Lcom/android/volley/Cache;Lcom/android/volley/ResponseDelivery;)V
+   L0
+    LINENUMBER 61 L0
+    ALOAD 0
+    INVOKESPECIAL java/lang/Thread.<init> ()V
+   L1
+    LINENUMBER 46 L1
+    ALOAD 0
+    ICONST_0
+    PUTFIELD com/android/volley/NetworkDispatcher.mQuit : Z
+   L2
+    LINENUMBER 62 L2
+    ALOAD 0
+    ALOAD 1
+    PUTFIELD com/android/volley/NetworkDispatcher.mQueue : Ljava/util/concurrent/BlockingQueue;
+   L3
+    LINENUMBER 63 L3
+    ALOAD 0
+    ALOAD 2
+    PUTFIELD com/android/volley/NetworkDispatcher.mNetwork : Lcom/android/volley/Network;
+   L4
+    LINENUMBER 64 L4
+    ALOAD 0
+    ALOAD 3
+    PUTFIELD com/android/volley/NetworkDispatcher.mCache : Lcom/android/volley/Cache;
+   L5
+    LINENUMBER 65 L5
+    ALOAD 0
+    ALOAD 4
+    PUTFIELD com/android/volley/NetworkDispatcher.mDelivery : Lcom/android/volley/ResponseDelivery;
+   L6
+    LINENUMBER 66 L6
+    RETURN
+   L7
+    LOCALVARIABLE this Lcom/android/volley/NetworkDispatcher; L0 L7 0
+    LOCALVARIABLE queue Ljava/util/concurrent/BlockingQueue; L0 L7 1
+    // signature Ljava/util/concurrent/BlockingQueue<Lcom/android/volley/Request<*>;>;
+    // declaration: queue extends java.util.concurrent.BlockingQueue<com.android.volley.Request<?>>
+    LOCALVARIABLE network Lcom/android/volley/Network; L0 L7 2
+    LOCALVARIABLE cache Lcom/android/volley/Cache; L0 L7 3
+    LOCALVARIABLE delivery Lcom/android/volley/ResponseDelivery; L0 L7 4
+    MAXSTACK = 2
+    MAXLOCALS = 5
+
+  // access flags 0x1
+  public quit()V
+   L0
+    LINENUMBER 73 L0
+    ALOAD 0
+    ICONST_1
+    PUTFIELD com/android/volley/NetworkDispatcher.mQuit : Z
+   L1
+    LINENUMBER 74 L1
+    ALOAD 0
+    INVOKEVIRTUAL com/android/volley/NetworkDispatcher.interrupt ()V
+   L2
+    LINENUMBER 75 L2
+    RETURN
+   L3
+    LOCALVARIABLE this Lcom/android/volley/NetworkDispatcher; L0 L3 0
+    MAXSTACK = 2
+    MAXLOCALS = 1
+
+  // access flags 0x2
+  // signature (Lcom/android/volley/Request<*>;)V
+  // declaration: void addTrafficStatsTag(com.android.volley.Request<?>)
+  private addTrafficStatsTag(Lcom/android/volley/Request;)V
+  @Landroid/annotation/TargetApi;(value=14) // invisible
+   L0
+    LINENUMBER 80 L0
+    GETSTATIC android/os/Build$VERSION.SDK_INT : I
+    BIPUSH 14
+    IF_ICMPLT L1
+   L2
+    LINENUMBER 81 L2
+    ALOAD 1
+    INVOKEVIRTUAL com/android/volley/Request.getTrafficStatsTag ()I
+    INVOKESTATIC android/net/TrafficStats.setThreadStatsTag (I)V
+   L1
+    LINENUMBER 83 L1
+   FRAME FULL [com/android/volley/NetworkDispatcher com/android/volley/Request] []
+    RETURN
+   L3
+    LOCALVARIABLE this Lcom/android/volley/NetworkDispatcher; L0 L3 0
+    LOCALVARIABLE request Lcom/android/volley/Request; L0 L3 1
+    // signature Lcom/android/volley/Request<*>;
+    // declaration: request extends com.android.volley.Request<?>
+    MAXSTACK = 2
+    MAXLOCALS = 2
+
+  // access flags 0x1
+  public run()V
+    TRYCATCHBLOCK L0 L1 L2 java/lang/InterruptedException
+   L3
+    LINENUMBER 87 L3
+    BIPUSH 10
+    INVOKESTATIC android/os/Process.setThreadPriority (I)V
+   L0
+    LINENUMBER 90 L0
+   FRAME FULL [com/android/volley/NetworkDispatcher] []
+    ALOAD 0
+    INVOKESPECIAL com/android/volley/NetworkDispatcher.processRequest ()V
+   L1
+    LINENUMBER 100 L1
+    GOTO L0
+   L2
+    LINENUMBER 91 L2
+   FRAME FULL [com/android/volley/NetworkDispatcher] [java/lang/InterruptedException]
+    ASTORE 1
+   L4
+    LINENUMBER 93 L4
+    ALOAD 0
+    GETFIELD com/android/volley/NetworkDispatcher.mQuit : Z
+    IFEQ L5
+   L6
+    LINENUMBER 94 L6
+    INVOKESTATIC java/lang/Thread.currentThread ()Ljava/lang/Thread;
+    INVOKEVIRTUAL java/lang/Thread.interrupt ()V
+   L7
+    LINENUMBER 95 L7
+    RETURN
+   L5
+    LINENUMBER 97 L5
+   FRAME FULL [com/android/volley/NetworkDispatcher java/lang/InterruptedException] []
+    LDC "Ignoring spurious interrupt of NetworkDispatcher thread; use quit() to terminate it"
+    ICONST_0
+    ANEWARRAY java/lang/Object
+    INVOKESTATIC com/android/volley/VolleyLog.e (Ljava/lang/String;[Ljava/lang/Object;)V
+   L8
+    LINENUMBER 100 L8
+    GOTO L0
+   L9
+    LOCALVARIABLE e Ljava/lang/InterruptedException; L4 L8 1
+    LOCALVARIABLE this Lcom/android/volley/NetworkDispatcher; L3 L9 0
+    MAXSTACK = 2
+    MAXLOCALS = 2
+
+  // access flags 0x2
+  private processRequest()V throws java/lang/InterruptedException
+   L0
+    LINENUMBER 110 L0
+    ALOAD 0
+    GETFIELD com/android/volley/NetworkDispatcher.mQueue : Ljava/util/concurrent/BlockingQueue;
+    INVOKEINTERFACE java/util/concurrent/BlockingQueue.take ()Ljava/lang/Object; (itf)
+    CHECKCAST com/android/volley/Request
+    ASTORE 1
+   L1
+    LINENUMBER 111 L1
+    ALOAD 0
+    ALOAD 1
+    INVOKEVIRTUAL com/android/volley/NetworkDispatcher.processRequest (Lcom/android/volley/Request;)V
+   L2
+    LINENUMBER 112 L2
+    RETURN
+   L3
+    LOCALVARIABLE this Lcom/android/volley/NetworkDispatcher; L0 L3 0
+    LOCALVARIABLE request Lcom/android/volley/Request; L1 L3 1
+    // signature Lcom/android/volley/Request<*>;
+    // declaration: request extends com.android.volley.Request<?>
+    MAXSTACK = 2
+    MAXLOCALS = 2
+
+  // access flags 0x0
+  // signature (Lcom/android/volley/Request<*>;)V
+  // declaration: void processRequest(com.android.volley.Request<?>)
+  processRequest(Lcom/android/volley/Request;)V
+  @Landroidx/annotation/VisibleForTesting;() // invisible
+    TRYCATCHBLOCK L0 L1 L2 com/android/volley/VolleyError
+    TRYCATCHBLOCK L3 L4 L2 com/android/volley/VolleyError
+    TRYCATCHBLOCK L5 L6 L2 com/android/volley/VolleyError
+    TRYCATCHBLOCK L0 L1 L7 java/lang/Exception
+    TRYCATCHBLOCK L3 L4 L7 java/lang/Exception
+    TRYCATCHBLOCK L5 L6 L7 java/lang/Exception
+    TRYCATCHBLOCK L0 L1 L8 null
+    TRYCATCHBLOCK L3 L4 L8 null
+    TRYCATCHBLOCK L5 L6 L8 null
+    TRYCATCHBLOCK L2 L9 L8 null
+    TRYCATCHBLOCK L7 L10 L8 null
+    TRYCATCHBLOCK L8 L11 L8 null
+   L12
+    LINENUMBER 116 L12
+    INVOKESTATIC android/os/SystemClock.elapsedRealtime ()J
+    LSTORE 2
+   L13
+    LINENUMBER 117 L13
+    ALOAD 1
+    ICONST_3
+    INVOKEVIRTUAL com/android/volley/Request.sendEvent (I)V
+   L0
+    LINENUMBER 119 L0
+    ALOAD 1
+    LDC "network-queue-take"
+    INVOKEVIRTUAL com/android/volley/Request.addMarker (Ljava/lang/String;)V
+   L14
+    LINENUMBER 123 L14
+    ALOAD 1
+    INVOKEVIRTUAL com/android/volley/Request.isCanceled ()Z
+    IFEQ L3
+   L15
+    LINENUMBER 124 L15
+    ALOAD 1
+    LDC "network-discard-cancelled"
+    INVOKEVIRTUAL com/android/volley/Request.finish (Ljava/lang/String;)V
+   L16
+    LINENUMBER 125 L16
+    ALOAD 1
+    INVOKEVIRTUAL com/android/volley/Request.notifyListenerResponseNotUsable ()V
+   L1
+    LINENUMBER 169 L1
+    ALOAD 1
+    ICONST_4
+    INVOKEVIRTUAL com/android/volley/Request.sendEvent (I)V
+   L17
+    LINENUMBER 126 L17
+    RETURN
+   L3
+    LINENUMBER 129 L3
+   FRAME FULL [com/android/volley/NetworkDispatcher com/android/volley/Request J] []
+    ALOAD 0
+    ALOAD 1
+    INVOKESPECIAL com/android/volley/NetworkDispatcher.addTrafficStatsTag (Lcom/android/volley/Request;)V
+   L18
+    LINENUMBER 132 L18
+    ALOAD 0
+    GETFIELD com/android/volley/NetworkDispatcher.mNetwork : Lcom/android/volley/Network;
+    ALOAD 1
+    INVOKEINTERFACE com/android/volley/Network.performRequest (Lcom/android/volley/Request;)Lcom/android/volley/NetworkResponse; (itf)
+    ASTORE 4
+   L19
+    LINENUMBER 133 L19
+    ALOAD 1
+    LDC "network-http-complete"
+    INVOKEVIRTUAL com/android/volley/Request.addMarker (Ljava/lang/String;)V
+   L20
+    LINENUMBER 137 L20
+    ALOAD 4
+    GETFIELD com/android/volley/NetworkResponse.notModified : Z
+    IFEQ L5
+    ALOAD 1
+    INVOKEVIRTUAL com/android/volley/Request.hasHadResponseDelivered ()Z
+    IFEQ L5
+   L21
+    LINENUMBER 138 L21
+    ALOAD 1
+    LDC "not-modified"
+    INVOKEVIRTUAL com/android/volley/Request.finish (Ljava/lang/String;)V
+   L22
+    LINENUMBER 139 L22
+    ALOAD 1
+    INVOKEVIRTUAL com/android/volley/Request.notifyListenerResponseNotUsable ()V
+   L4
+    LINENUMBER 169 L4
+    ALOAD 1
+    ICONST_4
+    INVOKEVIRTUAL com/android/volley/Request.sendEvent (I)V
+   L23
+    LINENUMBER 140 L23
+    RETURN
+   L5
+    LINENUMBER 144 L5
+   FRAME FULL [com/android/volley/NetworkDispatcher com/android/volley/Request J com/android/volley/NetworkResponse] []
+    ALOAD 1
+    ALOAD 4
+    INVOKEVIRTUAL com/android/volley/Request.parseNetworkResponse (Lcom/android/volley/NetworkResponse;)Lcom/android/volley/Response;
+    ASTORE 5
+   L24
+    LINENUMBER 145 L24
+    ALOAD 1
+    LDC "network-parse-complete"
+    INVOKEVIRTUAL com/android/volley/Request.addMarker (Ljava/lang/String;)V
+   L25
+    LINENUMBER 149 L25
+    ALOAD 1
+    INVOKEVIRTUAL com/android/volley/Request.shouldCache ()Z
+    IFEQ L26
+    ALOAD 5
+    GETFIELD com/android/volley/Response.cacheEntry : Lcom/android/volley/Cache$Entry;
+    IFNULL L26
+   L27
+    LINENUMBER 150 L27
+    ALOAD 0
+    GETFIELD com/android/volley/NetworkDispatcher.mCache : Lcom/android/volley/Cache;
+    ALOAD 1
+    INVOKEVIRTUAL com/android/volley/Request.getCacheKey ()Ljava/lang/String;
+    ALOAD 5
+    GETFIELD com/android/volley/Response.cacheEntry : Lcom/android/volley/Cache$Entry;
+    INVOKEINTERFACE com/android/volley/Cache.put (Ljava/lang/String;Lcom/android/volley/Cache$Entry;)V (itf)
+   L28
+    LINENUMBER 151 L28
+    ALOAD 1
+    LDC "network-cache-written"
+    INVOKEVIRTUAL com/android/volley/Request.addMarker (Ljava/lang/String;)V
+   L26
+    LINENUMBER 155 L26
+   FRAME FULL [com/android/volley/NetworkDispatcher com/android/volley/Request J com/android/volley/NetworkResponse com/android/volley/Response] []
+    ALOAD 1
+    INVOKEVIRTUAL com/android/volley/Request.markDelivered ()V
+   L29
+    LINENUMBER 156 L29
+    ALOAD 0
+    GETFIELD com/android/volley/NetworkDispatcher.mDelivery : Lcom/android/volley/ResponseDelivery;
+    ALOAD 1
+    ALOAD 5
+    INVOKEINTERFACE com/android/volley/ResponseDelivery.postResponse (Lcom/android/volley/Request;Lcom/android/volley/Response;)V (itf)
+   L30
+    LINENUMBER 157 L30
+    ALOAD 1
+    ALOAD 5
+    INVOKEVIRTUAL com/android/volley/Request.notifyListenerResponseReceived (Lcom/android/volley/Response;)V
+   L6
+    LINENUMBER 169 L6
+    ALOAD 1
+    ICONST_4
+    INVOKEVIRTUAL com/android/volley/Request.sendEvent (I)V
+   L31
+    LINENUMBER 170 L31
+    GOTO L32
+   L2
+    LINENUMBER 158 L2
+   FRAME FULL [com/android/volley/NetworkDispatcher com/android/volley/Request J] [com/android/volley/VolleyError]
+    ASTORE 4
+   L33
+    LINENUMBER 159 L33
+    ALOAD 4
+    INVOKESTATIC android/os/SystemClock.elapsedRealtime ()J
+    LLOAD 2
+    LSUB
+    INVOKEVIRTUAL com/android/volley/VolleyError.setNetworkTimeMs (J)V
+   L34
+    LINENUMBER 160 L34
+    ALOAD 0
+    ALOAD 1
+    ALOAD 4
+    INVOKESPECIAL com/android/volley/NetworkDispatcher.parseAndDeliverNetworkError (Lcom/android/volley/Request;Lcom/android/volley/VolleyError;)V
+   L35
+    LINENUMBER 161 L35
+    ALOAD 1
+    INVOKEVIRTUAL com/android/volley/Request.notifyListenerResponseNotUsable ()V
+   L9
+    LINENUMBER 169 L9
+    ALOAD 1
+    ICONST_4
+    INVOKEVIRTUAL com/android/volley/Request.sendEvent (I)V
+   L36
+    LINENUMBER 170 L36
+    GOTO L32
+   L7
+    LINENUMBER 162 L7
+   FRAME FULL [com/android/volley/NetworkDispatcher com/android/volley/Request J] [java/lang/Exception]
+    ASTORE 4
+   L37
+    LINENUMBER 163 L37
+    ALOAD 4
+    LDC "Unhandled exception %s"
+    ICONST_1
+    ANEWARRAY java/lang/Object
+    DUP
+    ICONST_0
+    ALOAD 4
+    INVOKEVIRTUAL java/lang/Exception.toString ()Ljava/lang/String;
+    AASTORE
+    INVOKESTATIC com/android/volley/VolleyLog.e (Ljava/lang/Throwable;Ljava/lang/String;[Ljava/lang/Object;)V
+   L38
+    LINENUMBER 164 L38
+    NEW com/android/volley/VolleyError
+    DUP
+    ALOAD 4
+    INVOKESPECIAL com/android/volley/VolleyError.<init> (Ljava/lang/Throwable;)V
+    ASTORE 5
+   L39
+    LINENUMBER 165 L39
+    ALOAD 5
+    INVOKESTATIC android/os/SystemClock.elapsedRealtime ()J
+    LLOAD 2
+    LSUB
+    INVOKEVIRTUAL com/android/volley/VolleyError.setNetworkTimeMs (J)V
+   L40
+    LINENUMBER 166 L40
+    ALOAD 0
+    GETFIELD com/android/volley/NetworkDispatcher.mDelivery : Lcom/android/volley/ResponseDelivery;
+    ALOAD 1
+    ALOAD 5
+    INVOKEINTERFACE com/android/volley/ResponseDelivery.postError (Lcom/android/volley/Request;Lcom/android/volley/VolleyError;)V (itf)
+   L41
+    LINENUMBER 167 L41
+    ALOAD 1
+    INVOKEVIRTUAL com/android/volley/Request.notifyListenerResponseNotUsable ()V
+   L10
+    LINENUMBER 169 L10
+    ALOAD 1
+    ICONST_4
+    INVOKEVIRTUAL com/android/volley/Request.sendEvent (I)V
+   L42
+    LINENUMBER 170 L42
+    GOTO L32
+   L8
+    LINENUMBER 169 L8
+   FRAME FULL [com/android/volley/NetworkDispatcher com/android/volley/Request J] [java/lang/Throwable]
+    ASTORE 6
+   L11
+    ALOAD 1
+    ICONST_4
+    INVOKEVIRTUAL com/android/volley/Request.sendEvent (I)V
+    ALOAD 6
+    ATHROW
+   L32
+    LINENUMBER 171 L32
+   FRAME FULL [com/android/volley/NetworkDispatcher com/android/volley/Request J] []
+    RETURN
+   L43
+    LOCALVARIABLE networkResponse Lcom/android/volley/NetworkResponse; L19 L6 4
+    LOCALVARIABLE response Lcom/android/volley/Response; L24 L6 5
+    // signature Lcom/android/volley/Response<*>;
+    // declaration: response extends com.android.volley.Response<?>
+    LOCALVARIABLE volleyError Lcom/android/volley/VolleyError; L33 L9 4
+    LOCALVARIABLE volleyError Lcom/android/volley/VolleyError; L39 L10 5
+    LOCALVARIABLE e Ljava/lang/Exception; L37 L10 4
+    LOCALVARIABLE this Lcom/android/volley/NetworkDispatcher; L12 L43 0
+    LOCALVARIABLE request Lcom/android/volley/Request; L12 L43 1
+    // signature Lcom/android/volley/Request<*>;
+    // declaration: request extends com.android.volley.Request<?>
+    LOCALVARIABLE startTimeMs J L13 L43 2
+    MAXSTACK = 6
+    MAXLOCALS = 7
+
+  // access flags 0x2
+  // signature (Lcom/android/volley/Request<*>;Lcom/android/volley/VolleyError;)V
+  // declaration: void parseAndDeliverNetworkError(com.android.volley.Request<?>, com.android.volley.VolleyError)
+  private parseAndDeliverNetworkError(Lcom/android/volley/Request;Lcom/android/volley/VolleyError;)V
+    ALOAD 1
+    ALOAD 2
+    INVOKESTATIC io/embrace/android/embracesdk/volley/callback/com/android/volley/NetworkDispatcher._preParseAndDeliverNetworkError (Lcom/android/volley/Request;Lcom/android/volley/VolleyError;)V
+   L0
+    LINENUMBER 174 L0
+    ALOAD 1
+    ALOAD 2
+    INVOKEVIRTUAL com/android/volley/Request.parseNetworkError (Lcom/android/volley/VolleyError;)Lcom/android/volley/VolleyError;
+    ASTORE 2
+   L1
+    LINENUMBER 175 L1
+    ALOAD 0
+    GETFIELD com/android/volley/NetworkDispatcher.mDelivery : Lcom/android/volley/ResponseDelivery;
+    ALOAD 1
+    ALOAD 2
+    INVOKEINTERFACE com/android/volley/ResponseDelivery.postError (Lcom/android/volley/Request;Lcom/android/volley/VolleyError;)V (itf)
+   L2
+    LINENUMBER 176 L2
+    RETURN
+   L3
+    LOCALVARIABLE this Lcom/android/volley/NetworkDispatcher; L0 L3 0
+    LOCALVARIABLE request Lcom/android/volley/Request; L0 L3 1
+    // signature Lcom/android/volley/Request<*>;
+    // declaration: request extends com.android.volley.Request<?>
+    LOCALVARIABLE error Lcom/android/volley/VolleyError; L0 L3 2
+    MAXSTACK = 3
+    MAXLOCALS = 3
+}

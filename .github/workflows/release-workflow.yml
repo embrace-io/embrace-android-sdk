@@ -1,4 +1,4 @@
-name: Release - Release RC and Update Documentation
+name: Release RC and Update Docs
 
 env:
   SONATYPE_USERNAME: ${{ secrets.SONATYPE_TOKEN_USER }}
@@ -12,26 +12,22 @@ env:
 on:
   workflow_dispatch:
     inputs:
-      version_to_release:
-        description: 'SDK version this workflow run will release. Specify <major.minor> only, without the patch number, e.g. 6.3. It will use the branch "release/<version>".'
+      rc_version:
+        description: 'SDK version this workflow run will release. Specify <major.minor.patch> e.g. 7.1.2. It will use the branch "release/<version>".'
         required: true
-      patch_version_of_release:
-        description: 'The patch version for this release, i.e. the third number per semantic versioning <major.minor.patch>. If it is not a hotfix, use the default of 0'
-        required: true
-        default: '0'
 
 permissions:
   contents: write
 
 jobs:
-  release:
+  release-to-maven-central:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
       - name: Checkout SDK
         uses: actions/checkout@v4
         with:
-          ref: release/${{ github.event.inputs.version_to_release }}
+          ref: release/${{ inputs.rc_version }}
           fetch-depth: 0
 
       - name: Setup Java
@@ -43,26 +39,13 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Gradlew Release SDK to Maven Central
-        run: |
-          ./gradlew findSonatypeStagingRepository releaseSonatypeStagingRepository -Dorg.gradle.parallel=false --no-build-cache --no-configuration-cache --stacktrace
-
-      - name: Checkout embrace gradle plugin
-        uses: actions/checkout@v4
-        with:
-          repository: embrace-io/embrace-swazzler3
-          ref: release/${{ github.event.inputs.version_to_release }}
-          token: ${{ secrets.GH_EMBRACE_SWAZZLER3_TOKEN }}
-
-      - name: Release embrace gradle plugin to Maven Central
+      - name: Release to Maven Central
         run: |
           ./gradlew findSonatypeStagingRepository releaseSonatypeStagingRepository -Dorg.gradle.parallel=false --no-build-cache --no-configuration-cache --stacktrace
 
   publish-api-docs:
-    name: Publish API Docs
+    name: Publish API Docs to GitHub Pages
     uses: ./.github/workflows/publish-api-docs.yml
     secrets: inherit
     with:
-      version_to_release: ${{ github.event.inputs.version_to_release }}
-      patch_version_of_release: ${{ github.event.inputs.patch_version_of_release }}
-
+      rc_version: ${{ inputs.rc_version }}

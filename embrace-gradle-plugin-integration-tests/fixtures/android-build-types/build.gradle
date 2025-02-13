@@ -1,0 +1,19 @@
+plugins {
+    id("com.android.application")
+    id("io.embrace.swazzler")
+    id("io.embrace.android.testplugin")
+}
+
+integrationTest.configureAndroidProject(project)
+
+android {
+    buildTypes {
+        custom {
+            minifyEnabled = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android.txt"),
+                "proguard-rules.pro"
+            )
+        }
+    }
+}

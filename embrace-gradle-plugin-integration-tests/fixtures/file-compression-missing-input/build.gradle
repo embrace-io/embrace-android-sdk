@@ -1,0 +1,17 @@
+import io.embrace.android.gradle.plugin.tasks.common.FileCompressionTask
+
+plugins {
+    id("java")
+    id("io.embrace.swazzler")
+    id("io.embrace.android.testplugin")
+}
+
+project.tasks.register("testTask", FileCompressionTask) { task ->
+    task.originalFile.set(
+            project.layout.projectDirectory.file("mapping.txt")
+    )
+    task.compressedFile.set(
+            project.layout.buildDirectory.file("mapping.txt")
+    )
+    integrationTest.configureEmbraceTask(task)
+}

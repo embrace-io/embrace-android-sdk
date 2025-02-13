@@ -84,8 +84,8 @@ class AssertionInterface(
     private fun AssertionInterface.verifyBuildTelemetryRequestContents(
         request: RecordedRequest,
         expectedVariants: List<String>,
-        testMatrix: TestMatrix,
-        validateAppId: Boolean = true
+        expectedAppIds: List<String>,
+        testMatrix: TestMatrix
     ) {
         with(deserializeRequestBody<BuildTelemetryRequest>(request)) {
             assertNotNull(metadataRequestId)
@@ -102,12 +102,11 @@ class AssertionInterface(
 
             // assert variants match expected list and contain unique build IDs
             val variants = checkNotNull(variantMetadata)
-            variants.forEach { variant ->
+            variants.forEachIndexed { i, variant ->
                 assertNotNull(variant.buildId)
                 assertTrue(expectedVariants.contains(variant.variantName))
-
-                if (validateAppId) {
-                    assertNotNull(variant.appId)
+                if (expectedAppIds.isNotEmpty()) {
+                    assertEquals(expectedAppIds[i], variant.appId)
                 }
             }
             assertEquals(variants.size, variants.map { it.buildId }.distinct().count())
@@ -115,30 +114,39 @@ class AssertionInterface(
     }
 
     /**
-     * Verifies the contents of a build telemetry request.
+     * Verifies the contents of a build telemetry request. An optional list of [expectedAppIds] can be passed in to
+     * check the appIds in the requests. If not passed in, each appId would be expected to be the default test one.
      */
     fun AssertionInterface.verifyBuildTelemetryRequestSent(
         expectedVariants: List<String>,
-        validateAppId: Boolean = true,
+        expectedAppIds: List<String>? = null,
         testMatrix: TestMatrix = TestMatrix.MaxVersion,
     ) {
         val request = fetchRequest(EmbraceEndpoint.BUILD_DATA)
         assertHeaders(request, "application/json", null)
 
+        val appIds = expectedAppIds ?: defaultAppIds(expectedVariants.size)
+
         // assert plugin telemetry was sent
-        verifyBuildTelemetryRequestContents(request, expectedVariants, testMatrix, validateAppId)
+        verifyBuildTelemetryRequestContents(request, expectedVariants, appIds, testMatrix)
     }
 
     /**
-     * Verifies JVM mapping requests were sent.
+     * Verifies expected number of JVM mapping requests were sent with the default test appId
      */
-    fun AssertionInterface.verifyJvmMappingRequestsSent(expectedCount: Int) {
-        val requests = fetchRequests(EmbraceEndpoint.PROGUARD)
-        assertEquals(expectedCount, requests.size)
+    fun AssertionInterface.verifyJvmMappingRequestsSent(expectedCount: Int) =
+        verifyJvmMappingRequestsSent(appIds = defaultAppIds(expectedCount))
 
-        requests.forEach { request ->
+    /**
+     * Verifies expected JVM mapping requests were sent with the specific appIds in the given order
+     */
+    fun AssertionInterface.verifyJvmMappingRequestsSent(appIds: List<String>) {
+        val requests = fetchRequests(EmbraceEndpoint.PROGUARD)
+        assertEquals(appIds.size, requests.size)
+
+        requests.forEachIndexed { i, request ->
             val parts = readMultipartRequest(request)
-            parts[0].validateBodyAppId(IntegrationTestDefaults.APP_ID)
+            parts[0].validateBodyAppId(appIds[i])
             parts[1].validateBodyApiToken(IntegrationTestDefaults.API_TOKEN)
             parts[2].validateBodyBuildId()
             parts[3].validateMappingFile("mapping.txt")
@@ -288,5 +296,9 @@ class AssertionInterface(
     private fun verifyNdkSymbolUpload(parts: List<FormPart>) {
         parts[0].validateBodyAppId(IntegrationTestDefaults.APP_ID)
         parts[1].validateBodyApiToken(IntegrationTestDefaults.API_TOKEN)
+    }
+
+    private fun defaultAppIds(size: Int) = MutableList(size) {
+        IntegrationTestDefaults.APP_ID
     }
 }

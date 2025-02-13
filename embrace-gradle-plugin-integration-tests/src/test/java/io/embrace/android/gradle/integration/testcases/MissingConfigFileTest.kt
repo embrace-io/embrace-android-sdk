@@ -27,7 +27,7 @@ class MissingConfigFileTest {
                 endpoints.forEach {
                     verifyNoRequestsSent(it)
                 }
-                verifyBuildTelemetryRequestSent(listOf("debug", "release"), validateAppId = false)
+                verifyBuildTelemetryRequestSent(listOf("debug", "release"), expectedAppIds = emptyList())
             }
         )
     }

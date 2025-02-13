@@ -12,6 +12,8 @@ class AndroidProductFlavorTest {
     val rule: PluginIntegrationTestRule = PluginIntegrationTestRule()
 
     private val variants = listOf("demoDebug", "fullDebug", "demoRelease", "fullRelease")
+    private val appIds = listOf("demod", "fulld", "demor", "fullr")
+    private val obfuscatedAppIds = listOf("demor", "fullr")
 
     @Test
     fun assemble() {
@@ -20,8 +22,8 @@ class AndroidProductFlavorTest {
             task = "assemble",
             projectType = ProjectType.ANDROID,
             assertions = {
-                verifyBuildTelemetryRequestSent(variants)
-                verifyJvmMappingRequestsSent(2)
+                verifyBuildTelemetryRequestSent(expectedVariants = variants, expectedAppIds = appIds)
+                verifyJvmMappingRequestsSent(obfuscatedAppIds)
             }
         )
     }
@@ -33,8 +35,8 @@ class AndroidProductFlavorTest {
             task = "assembleDemo",
             projectType = ProjectType.ANDROID,
             assertions = {
-                verifyBuildTelemetryRequestSent(variants)
-                verifyJvmMappingRequestsSent(1)
+                verifyBuildTelemetryRequestSent(expectedVariants = variants, expectedAppIds = appIds)
+                verifyJvmMappingRequestsSent(listOf("demor"))
             }
         )
     }
@@ -46,8 +48,8 @@ class AndroidProductFlavorTest {
             task = "bundle",
             projectType = ProjectType.ANDROID,
             assertions = {
-                verifyBuildTelemetryRequestSent(variants)
-                verifyJvmMappingRequestsSent(2)
+                verifyBuildTelemetryRequestSent(expectedVariants = variants, expectedAppIds = appIds)
+                verifyJvmMappingRequestsSent(obfuscatedAppIds)
             }
         )
     }
@@ -59,8 +61,8 @@ class AndroidProductFlavorTest {
             task = "bundleFull",
             projectType = ProjectType.ANDROID,
             assertions = {
-                verifyBuildTelemetryRequestSent(variants)
-                verifyJvmMappingRequestsSent(1)
+                verifyBuildTelemetryRequestSent(expectedVariants = variants, expectedAppIds = appIds)
+                verifyJvmMappingRequestsSent(listOf("fullr"))
             }
         )
     }

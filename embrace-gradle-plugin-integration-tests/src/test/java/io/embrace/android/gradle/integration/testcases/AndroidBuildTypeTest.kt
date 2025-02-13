@@ -12,6 +12,8 @@ class AndroidBuildTypeTest {
     val rule: PluginIntegrationTestRule = PluginIntegrationTestRule()
 
     private val variants = listOf("debug", "release", "custom")
+    private val appIds = listOf("debug", "relea", "custo")
+    private val obfuscatedAppIds = listOf("custo", "relea")
 
     @Test
     fun assemble() {
@@ -20,8 +22,8 @@ class AndroidBuildTypeTest {
             task = "assemble",
             projectType = ProjectType.ANDROID,
             assertions = {
-                verifyBuildTelemetryRequestSent(variants)
-                verifyJvmMappingRequestsSent(2)
+                verifyBuildTelemetryRequestSent(expectedVariants = variants, expectedAppIds = appIds)
+                verifyJvmMappingRequestsSent(obfuscatedAppIds)
             }
         )
     }
@@ -33,8 +35,8 @@ class AndroidBuildTypeTest {
             task = "assembleCustom",
             projectType = ProjectType.ANDROID,
             assertions = {
-                verifyBuildTelemetryRequestSent(variants)
-                verifyJvmMappingRequestsSent(1)
+                verifyBuildTelemetryRequestSent(expectedVariants = variants, expectedAppIds = appIds)
+                verifyJvmMappingRequestsSent(listOf("custo"))
             }
         )
     }
@@ -46,8 +48,8 @@ class AndroidBuildTypeTest {
             task = "bundle",
             projectType = ProjectType.ANDROID,
             assertions = {
-                verifyBuildTelemetryRequestSent(variants)
-                verifyJvmMappingRequestsSent(2)
+                verifyBuildTelemetryRequestSent(expectedVariants = variants, expectedAppIds = appIds)
+                verifyJvmMappingRequestsSent(obfuscatedAppIds)
             }
         )
     }
@@ -59,8 +61,8 @@ class AndroidBuildTypeTest {
             task = "bundleCustom",
             projectType = ProjectType.ANDROID,
             assertions = {
-                verifyBuildTelemetryRequestSent(variants)
-                verifyJvmMappingRequestsSent(1)
+                verifyBuildTelemetryRequestSent(expectedVariants = variants, expectedAppIds = appIds)
+                verifyJvmMappingRequestsSent(listOf("custo"))
             }
         )
     }

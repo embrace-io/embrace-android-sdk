@@ -35,25 +35,14 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Read SDK version
+      - name: Read version
         run: |
           # Read the version from gradle.properties
           version=$(grep '^version' gradle.properties | cut -d'=' -f2 | tr -d '[:space:]')
           # Set the version as an environment variable
           echo "ANDROID_SDK_VERSION=${version}" >> "$GITHUB_ENV"
 
-      - name: Publish SDK to Maven local
-        run: ./gradlew pTML
-
-      - name: Checkout embrace gradle plugin
-        uses: actions/checkout@v4
-        with:
-          repository: embrace-io/embrace-swazzler3
-          token: ${{ secrets.GH_EMBRACE_SWAZZLER3_TOKEN }}
-          path: './embrace-swazzler3'
-
-      - name: Publish embrace gradle plugin to Maven local
-        working-directory: ./embrace-swazzler3
+      - name: Publish to Maven local
         run: ./gradlew pTML
 
       - name: Checkout Android SDK Benchmark
@@ -70,7 +59,7 @@ jobs:
 
       - name: Generate Baseline Profile
         working-directory: android-sdk-benchmark
-        run: ./gradlew -Pswazzler_version=${{ env.ANDROID_SDK_VERSION }} :macrobenchmark:pixel6Api34BaselineProfileAndroidTest 
+        run: ./gradlew :macrobenchmark:pixel6Api34BaselineProfileAndroidTest 
           -Pandroid.testInstrumentationRunnerArguments.androidx.benchmark.enabledRules=BaselineProfile
           -Pandroid.testoptions.manageddevices.emulator.gpu="swiftshader_indirect"
           -Pandroid.experimental.testOptions.managedDevices.maxConcurrentDevices=1

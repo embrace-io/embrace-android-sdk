@@ -3,32 +3,32 @@ name: Prepare New Release
 on:
   workflow_dispatch:
     inputs:
-      version_to_release:
-        description: 'Version to release. Specify <major.minor> only, without the patch number, e.g. 6.3. A new branch called "release/<version>" will be created where the release-specific changes will be committed.'
+      rc_version:
+        description: 'Version to release. Specify <major.minor.patch>  e.g. 7.1.2. A new branch called "release/<version>" will be created where the release-specific changes will be committed.'
         required: true
       next_version:
-        description: 'Next version. Specify <major.minor>, e.g. 6.4 (Do NOT include -SNAPSHOT, will be added automatically)'
+        description: 'Next version. Specify <major.minor.patch>, e.g. 7.2.0 (Do NOT include -SNAPSHOT, will be added automatically)'
         required: true
 
 jobs:
-  release-branch:
-    name: Create Release Branches
-    uses: ./.github/workflows/rc-release-branch.yml
+  create-release-branch:
+    name: Create Release Branch
+    uses: ./.github/workflows/create-release-branch.yml
     secrets: inherit
     with:
-      version_to_release: ${{ github.event.inputs.version_to_release }}
+      rc_version: ${{ inputs.rc_version }}
 
-  update-main-versions:
-    name: Update Main Versions
-    uses: ./.github/workflows/update-main-versions.yml
+  bump-snapshot-version:
+    name: Bump Snapshot Version
+    uses: ./.github/workflows/bump-snapshot-version.yml
     secrets: inherit
     with:
-      next_version: ${{ github.event.inputs.next_version }}
+      next_version: ${{ inputs.next_version }}
 
-  release-candidate:
-    name: Build Release Candidates
-    needs: release-branch
-    uses: ./.github/workflows/build-rc-workflow.yml
+  upload-artifacts-to-sonatype:
+    name: Upload RC artifacts to Sonatype
+    needs: create-release-branch
+    uses: ./.github/workflows/upload-artifacts-to-sonatype.yml
     secrets: inherit
     with:
-      version_of_rc: ${{ github.event.inputs.version_to_release }}
+      rc_version: ${{ inputs.rc_version }}

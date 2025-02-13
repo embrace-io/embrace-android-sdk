@@ -35,7 +35,7 @@ jobs:
 
       - name: Set version in gradle.properties
         run: |
-          sed -i -r "s#version = ([^\']+)#version=${{ inputs.rc_version }}#" gradle.properties
+          sed -i -r "s#version=([^\']+)#version=${{ inputs.rc_version }}#" gradle.properties
           git add gradle.properties
           git commit -m "CI/CD: change version to be released: ${{ inputs.rc_version }}"
           git push --set-upstream origin release/${{ inputs.rc_version }}

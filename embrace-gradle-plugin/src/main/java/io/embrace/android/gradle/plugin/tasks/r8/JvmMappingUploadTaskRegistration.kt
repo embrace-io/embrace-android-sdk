@@ -80,11 +80,11 @@ class JvmMappingUploadTaskRegistration : EmbraceTaskRegistration {
             task.requestParams.set(
                 project.provider {
                     RequestParams(
-                        appId = variantExtension.appId.get(),
-                        apiToken = variantExtension.apiToken.get(),
+                        appId = variantExtension.config.get().embraceConfig?.appId.orEmpty(),
+                        apiToken = variantExtension.config.get().embraceConfig?.apiToken.orEmpty(),
                         endpoint = EmbraceEndpoint.PROGUARD,
                         fileName = FILE_NAME_MAPPING_TXT,
-                        buildId = variantExtension.buildId.get(),
+                        buildId = variantExtension.config.get().buildId,
                         baseUrl = baseUrl,
                     )
                 }

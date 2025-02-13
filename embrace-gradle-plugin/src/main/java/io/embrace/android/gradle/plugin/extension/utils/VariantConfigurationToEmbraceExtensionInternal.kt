@@ -11,8 +11,6 @@ import io.embrace.android.gradle.plugin.tasks.il2cpp.UnitySymbolFilesManager
 import org.gradle.api.Project
 import org.gradle.api.provider.Provider
 
-private const val NDK_ENABLED_DEFAULT: Boolean = true
-
 /**
  * It configures this extension with given VariantConfiguration properties.
  */
@@ -27,27 +25,7 @@ class VariantConfigurationToEmbraceExtensionInternal(
     override fun setupVariant(extension: EmbraceExtensionInternal) {
         extension.variants.named(variantInfo.name).configure {
             // properties from variant configuration
-            it.apiToken.set(
-                variantConfigProvider.map { variantConfig ->
-                    variantConfig.embraceConfig?.apiToken ?: ""
-                }
-            )
-            it.ndkEnabled.set(
-                variantConfigProvider.map { variantConfig ->
-                    variantConfig.embraceConfig?.ndkEnabled ?: NDK_ENABLED_DEFAULT
-                }
-            )
-            it.appId.set(
-                variantConfigProvider.map { variantConfig ->
-                    variantConfig.embraceConfig?.appId ?: ""
-                }
-            )
             it.config.set(variantConfigProvider)
-            it.buildId.set(
-                variantConfigProvider.map { variantConfig ->
-                    variantConfig.buildId ?: ""
-                }
-            )
 
             val symbolsDir = getSymbolsDir()
             val projectType = getProjectType(symbolsDir)

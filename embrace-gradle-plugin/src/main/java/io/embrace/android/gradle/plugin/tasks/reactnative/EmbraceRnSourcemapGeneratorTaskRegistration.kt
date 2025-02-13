@@ -90,8 +90,8 @@ class EmbraceRnSourcemapGeneratorTaskRegistration : EmbraceTaskRegistration {
             rnTask.requestParams.set(
                 project.provider {
                     RequestParams(
-                        appId = variantExtension.appId.get(),
-                        apiToken = variantExtension.apiToken.get(),
+                        appId = variantExtension.config.orNull?.embraceConfig?.appId.orEmpty(),
+                        apiToken = variantExtension.config.orNull?.embraceConfig?.apiToken.orEmpty(),
                         endpoint = EmbraceEndpoint.SOURCE_MAP,
                         fileName = FILE_NAME_SOURCE_MAP_JSON,
                         baseUrl = baseUrl,

@@ -1,0 +1,34 @@
+// class version 55.0 (55)
+// access flags 0x21
+public class io/embrace/test/fixtures/MissingOverrideOnClickListener implements android/view/View$OnClickListener {
+
+  // compiled from: MissingOverrideOnClickListener.java
+  // access flags 0x609
+  public static abstract INNERCLASS android/view/View$OnClickListener android/view/View OnClickListener
+
+  // access flags 0x1
+  public <init>()V
+   L0
+    LINENUMBER 8 L0
+    ALOAD 0
+    INVOKESPECIAL java/lang/Object.<init> ()V
+    RETURN
+   L1
+    LOCALVARIABLE this Lio/embrace/test/fixtures/MissingOverrideOnClickListener; L0 L1 0
+    MAXSTACK = 1
+    MAXLOCALS = 1
+
+  // access flags 0x1
+  public onClick(Landroid/view/View;)V
+    ALOAD 0
+    ALOAD 1
+    INVOKESTATIC io/embrace/android/embracesdk/ViewSwazzledHooks$OnClickListener._preOnClick (Landroid/view/View$OnClickListener;Landroid/view/View;)V
+   L0
+    LINENUMBER 11 L0
+    RETURN
+   L1
+    LOCALVARIABLE this Lio/embrace/test/fixtures/MissingOverrideOnClickListener; L0 L1 0
+    LOCALVARIABLE view Landroid/view/View; L0 L1 1
+    MAXSTACK = 0
+    MAXLOCALS = 2
+}

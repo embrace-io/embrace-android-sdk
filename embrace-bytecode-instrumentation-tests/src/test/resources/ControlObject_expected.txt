@@ -1,0 +1,29 @@
+// class version 55.0 (55)
+// access flags 0x21
+public class io/embrace/test/fixtures/ControlObject extends androidx/appcompat/app/AppCompatActivity {
+
+  // compiled from: ControlObject.java
+
+  // access flags 0x1
+  public <init>()V
+   L0
+    LINENUMBER 10 L0
+    ALOAD 0
+    INVOKESPECIAL androidx/appcompat/app/AppCompatActivity.<init> ()V
+    RETURN
+   L1
+    LOCALVARIABLE this Lio/embrace/test/fixtures/ControlObject; L0 L1 0
+    MAXSTACK = 1
+    MAXLOCALS = 1
+
+  // access flags 0x1
+  public processView(Landroid/view/View;)V
+   L0
+    LINENUMBER 13 L0
+    RETURN
+   L1
+    LOCALVARIABLE this Lio/embrace/test/fixtures/ControlObject; L0 L1 0
+    LOCALVARIABLE view Landroid/view/View; L0 L1 1
+    MAXSTACK = 0
+    MAXLOCALS = 2
+}

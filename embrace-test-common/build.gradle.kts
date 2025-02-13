@@ -1,13 +1,16 @@
 plugins {
-    id("com.android.library")
-    id("kotlin-android")
+    kotlin("jvm")
+    alias(libs.plugins.google.ksp)
     id("io.embrace.internal.build-logic")
 }
 
 embrace {
     productionModule.set(false)
+    androidModule.set(false)
 }
 
-android {
-    namespace = "io.embrace.android.embracesdk.test.common"
+dependencies {
+    implementation(libs.mockwebserver)
+    implementation(libs.moshi)
+    ksp(libs.moshi.kotlin.codegen)
 }

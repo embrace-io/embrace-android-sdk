@@ -7,7 +7,7 @@ plugins {
 
 embrace {
     productionModule.set(false)
-    androidLibrary.set(false)
+    androidModule.set(false)
     jvmTarget.set(JavaVersion.VERSION_11)
 }
 

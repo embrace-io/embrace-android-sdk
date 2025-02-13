@@ -1,0 +1,44 @@
+// class version 55.0 (55)
+// access flags 0x30
+final class io/embrace/test/fixtures/KotlinMethodRefOnLongClickListener$sam$android_view_View_OnLongClickListener$0 implements android/view/View$OnLongClickListener {
+
+  // compiled from: KotlinMethodRefOnLongClickListener.kt
+
+  @Lkotlin/Metadata;(mv={1, 4, 2}, bv={1, 0, 3}, k=3)
+
+  // access flags 0x1012
+  private final synthetic Lkotlin/jvm/functions/Function1; function
+
+  // access flags 0x0
+  <init>(Lkotlin/jvm/functions/Function1;)V
+    ALOAD 0
+    INVOKESPECIAL java/lang/Object.<init> ()V
+    ALOAD 0
+    ALOAD 1
+    PUTFIELD io/embrace/test/fixtures/KotlinMethodRefOnLongClickListener$sam$android_view_View_OnLongClickListener$0.function : Lkotlin/jvm/functions/Function1;
+    RETURN
+    MAXSTACK = 2
+    MAXLOCALS = 2
+
+  // access flags 0x1011
+  public final synthetic onLongClick(Landroid/view/View;)Z
+    ALOAD 0
+    ALOAD 1
+    INVOKESTATIC io/embrace/android/embracesdk/ViewSwazzledHooks$OnLongClickListener._preOnLongClick (Landroid/view/View$OnLongClickListener;Landroid/view/View;)V
+   L0
+    ALOAD 0
+    GETFIELD io/embrace/test/fixtures/KotlinMethodRefOnLongClickListener$sam$android_view_View_OnLongClickListener$0.function : Lkotlin/jvm/functions/Function1;
+    ALOAD 1
+    INVOKEINTERFACE kotlin/jvm/functions/Function1.invoke (Ljava/lang/Object;)Ljava/lang/Object; (itf)
+    DUP
+    LDC "invoke(...)"
+    INVOKESTATIC kotlin/jvm/internal/Intrinsics.checkNotNullExpressionValue (Ljava/lang/Object;Ljava/lang/String;)V
+    CHECKCAST java/lang/Boolean
+    INVOKEVIRTUAL java/lang/Boolean.booleanValue ()Z
+    IRETURN
+   L1
+    LOCALVARIABLE this Landroid/view/View$OnLongClickListener; L0 L1 0
+    LOCALVARIABLE p0 Landroid/view/View; L0 L1 1
+    MAXSTACK = 3
+    MAXLOCALS = 2
+}

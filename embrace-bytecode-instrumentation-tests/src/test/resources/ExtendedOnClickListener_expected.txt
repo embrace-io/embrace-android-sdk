@@ -1,0 +1,67 @@
+// class version 55.0 (55)
+// access flags 0x21
+public class io/embrace/test/fixtures/ExtendedOnClickListener extends io/embrace/test/fixtures/CustomOnClickListener {
+
+  // compiled from: ExtendedOnClickListener.java
+
+  // access flags 0x1
+  public <init>()V
+   L0
+    LINENUMBER 11 L0
+    ALOAD 0
+    INVOKESPECIAL io/embrace/test/fixtures/CustomOnClickListener.<init> ()V
+    RETURN
+   L1
+    LOCALVARIABLE this Lio/embrace/test/fixtures/ExtendedOnClickListener; L0 L1 0
+    MAXSTACK = 1
+    MAXLOCALS = 1
+
+  // access flags 0x1
+  public onClick(Landroid/view/View;)V
+    // annotable parameter count: 1 (invisible)
+    @Lorg/jetbrains/annotations/NotNull;() // invisible, parameter 0
+    ALOAD 0
+    ALOAD 1
+    INVOKESTATIC io/embrace/android/embracesdk/ViewSwazzledHooks$OnClickListener._preOnClick (Landroid/view/View$OnClickListener;Landroid/view/View;)V
+   L0
+    LINENUMBER 16 L0
+    ALOAD 0
+    INVOKEVIRTUAL io/embrace/test/fixtures/ExtendedOnClickListener.doSomething ()I
+    POP
+   L1
+    LINENUMBER 17 L1
+    ALOAD 0
+    ALOAD 1
+    INVOKESPECIAL io/embrace/test/fixtures/CustomOnClickListener.onClick (Landroid/view/View;)V
+   L2
+    LINENUMBER 19 L2
+    ALOAD 1
+    INVOKEVIRTUAL android/view/View.isEnabled ()Z
+    IFEQ L3
+   L4
+    LINENUMBER 20 L4
+    LDC "EmbraceTest"
+    LDC "Clicked a button"
+    INVOKESTATIC android/util/Log.d (Ljava/lang/String;Ljava/lang/String;)I
+    POP
+   L3
+    LINENUMBER 22 L3
+   FRAME FULL [io/embrace/test/fixtures/ExtendedOnClickListener android/view/View] []
+    RETURN
+   L5
+    LOCALVARIABLE this Lio/embrace/test/fixtures/ExtendedOnClickListener; L0 L5 0
+    LOCALVARIABLE view Landroid/view/View; L0 L5 1
+    MAXSTACK = 2
+    MAXLOCALS = 2
+
+  // access flags 0x2
+  private doSomething()I
+   L0
+    LINENUMBER 25 L0
+    LDC 1088681
+    IRETURN
+   L1
+    LOCALVARIABLE this Lio/embrace/test/fixtures/ExtendedOnClickListener; L0 L1 0
+    MAXSTACK = 1
+    MAXLOCALS = 1
+}

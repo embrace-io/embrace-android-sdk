@@ -1,0 +1,40 @@
+{
+  "app_id": "sazwW",
+  "api_token": "13f327e891ad45858949004eb755b9f1",
+  "ndk_enabled": true,
+  "sdk_config": {
+    "anr": {
+      "capture_google": "text",
+      "new_attribute": "text"
+    },
+    "newConfig": {
+      "test_config": "text",
+      "test_config_2": "text",
+      "test_config_3": "text"
+    },
+    "crash_handler": {
+      "enabled": "text"
+    },
+    "base_urls": {
+      "config.REMOVE_THIS_TO_SET": "http://YOUR_LOCAL_IP_HERE:23002",
+      "data.REMOVE_THIS_TO_SET": "http://YOUR_LOCAL_IP_HERE:24000",
+      "data_dev.REMOVE_THIS_TO_SET": "http://YOUR_LOCAL_IP_HERE:24001",
+      "images.REMOVE_THIS_TO_SET": "http://YOUR_LOCAL_IP_HERE:24000"
+    },
+    "networking": {
+      "capture_request_content_length": "text"
+    },
+    "session": {
+      "async_end": "text",
+      "max_session_seconds": "text"
+    },
+    "startup_moment": {
+      "automatically_end.REMOVE_THIS_TO_SET": "text",
+      "automatically_end": "text",
+      "take_screenshot": "text"
+    },
+    "taps": {
+      "capture_coordinates": "text"
+    }
+  }
+}

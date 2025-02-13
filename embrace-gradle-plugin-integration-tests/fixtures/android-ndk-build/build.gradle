@@ -1,0 +1,16 @@
+plugins {
+    id("com.android.application")
+    id("io.embrace.swazzler")
+    id("io.embrace.android.testplugin")
+}
+
+integrationTest.configureAndroidProject(project)
+
+android {
+    ndkVersion "27.0.12077973"
+    externalNativeBuild {
+        ndkBuild {
+            path "src/main/cpp/Android.mk"
+        }
+    }
+}

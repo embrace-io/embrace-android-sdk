@@ -1,0 +1,16 @@
+import io.embrace.android.gradle.plugin.tasks.common.MultipartUploadTask
+import io.embrace.android.gradle.plugin.network.EmbraceEndpoint
+
+plugins {
+    id("java")
+    id("io.embrace.swazzler")
+    id("io.embrace.android.testplugin")
+}
+
+project.tasks.register("testTask", MultipartUploadTask) { task ->
+    integrationTest.configureGradleUploadTask(project, task, EmbraceEndpoint.PROGUARD, "my-filename.txt")
+
+    task.uploadFile.set(
+            project.layout.projectDirectory.file("input.txt")
+    )
+}

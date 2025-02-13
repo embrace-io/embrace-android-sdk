@@ -1,0 +1,47 @@
+// class version 55.0 (55)
+// access flags 0x30
+final class io/embrace/test/fixtures/KotlinLambdaOnLongClickListener$onCreateView$1 implements android/view/View$OnLongClickListener {
+
+  // compiled from: KotlinLambdaOnLongClickListener.kt
+  OUTERCLASS io/embrace/test/fixtures/KotlinLambdaOnLongClickListener onCreateView (Landroid/view/LayoutInflater;Landroid/view/ViewGroup;Landroid/os/Bundle;)Landroid/view/View;
+
+  @Lkotlin/Metadata;(mv={1, 4, 2}, bv={1, 0, 3}, k=3, d1={"\u0000\u0010\n\u0000\n\u0002\u0010\u000b\n\u0000\n\u0002\u0018\u0002\n\u0002\u0008\u0002\u0010\u0000\u001a\u00020\u00012\u000e\u0010\u0002\u001a\n \u0004*\u0004\u0018\u00010\u00030\u0003H\n\u00a2\u0006\u0002\u0008\u0005"}, d2={"<anonymous>", "", "it", "Landroid/view/View;", "kotlin.jvm.PlatformType", "onLongClick"})
+  // access flags 0x18
+  final static INNERCLASS io/embrace/test/fixtures/KotlinLambdaOnLongClickListener$onCreateView$1 null null
+
+  // access flags 0x19
+  public final static Lio/embrace/test/fixtures/KotlinLambdaOnLongClickListener$onCreateView$1; INSTANCE
+
+  // access flags 0x11
+  public final onLongClick(Landroid/view/View;)Z
+    ALOAD 0
+    ALOAD 1
+    INVOKESTATIC io/embrace/android/embracesdk/ViewSwazzledHooks$OnLongClickListener._preOnLongClick (Landroid/view/View$OnLongClickListener;Landroid/view/View;)V
+   L0
+    LINENUMBER 18 L0
+    ICONST_0
+    IRETURN
+   L1
+    LOCALVARIABLE this Lio/embrace/test/fixtures/KotlinLambdaOnLongClickListener$onCreateView$1; L0 L1 0
+    LOCALVARIABLE it Landroid/view/View; L0 L1 1
+    MAXSTACK = 1
+    MAXLOCALS = 2
+
+  // access flags 0x0
+  <init>()V
+    ALOAD 0
+    INVOKESPECIAL java/lang/Object.<init> ()V
+    RETURN
+    MAXSTACK = 1
+    MAXLOCALS = 1
+
+  // access flags 0x8
+  static <clinit>()V
+    NEW io/embrace/test/fixtures/KotlinLambdaOnLongClickListener$onCreateView$1
+    DUP
+    INVOKESPECIAL io/embrace/test/fixtures/KotlinLambdaOnLongClickListener$onCreateView$1.<init> ()V
+    PUTSTATIC io/embrace/test/fixtures/KotlinLambdaOnLongClickListener$onCreateView$1.INSTANCE : Lio/embrace/test/fixtures/KotlinLambdaOnLongClickListener$onCreateView$1;
+    RETURN
+    MAXSTACK = 2
+    MAXLOCALS = 0
+}

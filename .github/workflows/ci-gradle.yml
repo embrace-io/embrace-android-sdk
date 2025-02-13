@@ -59,4 +59,4 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: false
-          files: embrace-android-sdk/build/reports/kover/reportRelease.xml
+          files: embrace-android-api/build/reports/kover/reportRelease.xml,embrace-android-compose/build/reports/kover/reportRelease.xml,embrace-android-core/build/reports/kover/reportRelease.xml,embrace-android-delivery/build/reports/kover/reportRelease.xml,embrace-android-fcm/build/reports/kover/reportRelease.xml,embrace-android-features/build/reports/kover/reportRelease.xml,embrace-android-infra/build/reports/kover/reportRelease.xml,embrace-android-okhttp3/build/reports/kover/reportRelease.xml,embrace-android-payload/build/reports/kover/reportRelease.xml,embrace-android-sdk/build/reports/kover/reportRelease.xml,embrace-gradle-plugin/build/reports/kover/reportRelease.xml,embrace-internal-api/build/reports/kover/reportRelease.xml

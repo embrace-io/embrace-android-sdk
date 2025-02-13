@@ -1,4 +1,4 @@
-name: Release - Release RC and Update Documentation
+name: Release RC and Update Docs
 
 env:
   SONATYPE_USERNAME: ${{ secrets.SONATYPE_TOKEN_USER }}
@@ -20,7 +20,7 @@ permissions:
   contents: write
 
 jobs:
-  release:
+  release-to-maven-central:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
@@ -39,12 +39,12 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Gradlew Release SDK to Maven Central
+      - name: Release to Maven Central
         run: |
           ./gradlew findSonatypeStagingRepository releaseSonatypeStagingRepository -Dorg.gradle.parallel=false --no-build-cache --no-configuration-cache --stacktrace
 
   publish-api-docs:
-    name: Publish API Docs
+    name: Publish API Docs to GitHub Pages
     uses: ./.github/workflows/publish-api-docs.yml
     secrets: inherit
     with:

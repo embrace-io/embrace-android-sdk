@@ -51,7 +51,7 @@ jobs:
           repository: embrace-io/android-sdk-benchmark
           ref: main
           path: ./android-sdk-benchmark
-          token: ${{ secrets.GH_ANDROID_SDK_TOKEN || secrets.token }} # NOTE: read android-sdk-benchmark
+          token: ${{ secrets.GH_ANDROID_SDK_TOKEN }} # NOTE: read android-sdk-benchmark
 
       - name: Clean Managed Devices
         working-directory: android-sdk-benchmark

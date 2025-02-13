@@ -6,6 +6,8 @@ import io.embrace.android.gradle.plugin.config.UnitySymbolsDir
 import io.embrace.android.gradle.plugin.extension.EXTENSION_EMBRACE_INTERNAL
 import io.embrace.android.gradle.plugin.extension.EmbraceExtensionInternal
 import io.embrace.android.gradle.plugin.gradle.isTaskRegistered
+import io.embrace.android.gradle.plugin.instrumentation.config.model.EmbraceVariantConfig
+import io.embrace.android.gradle.plugin.instrumentation.config.model.VariantConfig
 import io.embrace.android.gradle.plugin.model.AndroidCompactedVariantData
 import io.embrace.android.gradle.plugin.network.EmbraceEndpoint
 import io.embrace.android.gradle.plugin.tasks.common.RequestParams
@@ -56,9 +58,17 @@ class NdkUploadTaskRegistrationTest {
         )
 
         extension.variants.create("variantName").also { newVariant ->
-            newVariant.appId.set("appId")
-            newVariant.apiToken.set("apiToken")
-            newVariant.ndkEnabled.set(ndkEnabled)
+            newVariant.config.set(
+                VariantConfig(
+                    embraceConfig = EmbraceVariantConfig(
+                        appId = "appId",
+                        apiToken = "apiToken",
+                        ndkEnabled = ndkEnabled,
+                        sdkConfig = null,
+                        unityConfig = null
+                    )
+                )
+            )
             newVariant.projectType.set(projectType)
             newVariant.unitySymbolsDir.set(unitySymbolsDir)
         }

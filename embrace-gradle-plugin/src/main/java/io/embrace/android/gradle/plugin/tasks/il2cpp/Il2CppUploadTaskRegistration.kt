@@ -130,11 +130,11 @@ class Il2CppUploadTaskRegistration : EmbraceTaskRegistration {
             task.requestParams.set(
                 project.provider {
                     RequestParams(
-                        appId = variantInfo.appId.get(),
-                        apiToken = variantInfo.apiToken.get(),
+                        appId = variantInfo.config.get().embraceConfig?.appId.orEmpty(),
+                        apiToken = variantInfo.config.get().embraceConfig?.apiToken.orEmpty(),
                         endpoint = info.endpoint,
                         fileName = info.filename,
-                        buildId = variantInfo.buildId.get(),
+                        buildId = variantInfo.config.get().buildId,
                         baseUrl = baseUrl,
                     )
                 }

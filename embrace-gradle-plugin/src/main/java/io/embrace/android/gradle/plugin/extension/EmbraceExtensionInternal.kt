@@ -29,25 +29,16 @@ abstract class EmbraceExtensionInternal(
 
         override fun getName() = variantName
 
-        val apiToken: Property<String> = objectFactory.property(String::class.java)
-        val ndkEnabled: Property<Boolean> = objectFactory.property(Boolean::class.java)
-
         // Include properties from VariantConfiguration
         // convention(EmbraceExtensionInternal.getAppId())
-        val appId: Property<String> = objectFactory.property(String::class.java)
         val config: Property<VariantConfig> = objectFactory.property(VariantConfig::class.java)
-        val buildId: Property<String> = objectFactory.property(String::class.java)
 
         val projectType: Property<ProjectType> = objectFactory.property(ProjectType::class.java)
         val unitySymbolsDir: Property<UnitySymbolsDir?> = objectFactory.property(UnitySymbolsDir::class.java)
 
         // we need this because older gradle can not inject ObjectFactory
         fun initialize() {
-            appId.finalizeValueOnRead()
             config.finalizeValueOnRead()
-            buildId.finalizeValueOnRead()
-            apiToken.finalizeValueOnRead()
-            ndkEnabled.finalizeValueOnRead()
             projectType.finalizeValueOnRead()
             unitySymbolsDir.finalizeValueOnRead()
         }

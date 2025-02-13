@@ -36,9 +36,9 @@ class NdkUploadTaskRegistration(
      */
     fun RegistrationParams.execute(): TaskProvider<NdkUploadTask>? {
         val variantExtension = extension.variants.getByName(data.name)
-        if (!variantExtension.ndkEnabled.get()) {
-            return null
-        }
+        val embraceConfig = variantExtension.config.orNull?.embraceConfig
+
+        if (embraceConfig?.ndkEnabled == false) return null
 
         val mergeNativeLibsProvider = project.provider {
             project.tryGetTaskProvider(
@@ -51,24 +51,21 @@ class NdkUploadTaskRegistration(
             NdkUploadTask::class.java,
             data
         ) { task ->
-            extension.variants.getByName(data.name).let { variantExtension ->
-                task.requestParams.set(
-                    project.provider {
-                        RequestParams(
-                            appId = variantExtension.appId.get(),
-                            apiToken = variantExtension.apiToken.get(),
-                            endpoint = EmbraceEndpoint.NDK,
-                            baseUrl = baseUrl,
-                        )
-                    }
-                )
-
-                task.generatedEmbraceResourcesDirectory.set(
-                    project.layout.buildDirectory.dir(
-                        "$GENERATED_RESOURCE_PATH/${data.name}/ndk"
+            task.requestParams.set(
+                project.provider {
+                    RequestParams(
+                        appId = embraceConfig?.appId.orEmpty(),
+                        apiToken = embraceConfig?.apiToken.orEmpty(),
+                        endpoint = EmbraceEndpoint.NDK,
+                        baseUrl = baseUrl,
                     )
-                )
-            }
+                }
+            )
+
+            task.generatedEmbraceResourcesDirectory.set(
+                project.layout.buildDirectory.dir("$GENERATED_RESOURCE_PATH/${data.name}/ndk")
+            )
+
             task.unitySymbolsDir.set(
                 variantExtension.projectType.nullSafeMap {
                     when (it) {
@@ -77,7 +74,11 @@ class NdkUploadTaskRegistration(
                     }
                 }
             )
-            task.ndkEnabled.set(variantExtension.ndkEnabled)
+            task.ndkEnabled.set(
+                variantExtension.config.map {
+                    it.embraceConfig?.ndkEnabled ?: true
+                }
+            )
             task.deobfuscatedFilesDirPath.set(
                 project.layout.buildDirectory.dir(
                     "outputs/embrace/native/mapping/${getMappingFileFolder(data.buildTypeName, data.flavorName)}"
@@ -122,9 +123,7 @@ class NdkUploadTaskRegistration(
 
         val taskContainer = project.tasks
         ndkUploadTaskProvider.configure { ndkUploadTask: NdkUploadTask ->
-
-            val ndkEnabled = variantExtension.ndkEnabled
-            ndkUploadTask.onlyIf { ndkEnabled.getOrElse(false) }
+            ndkUploadTask.onlyIf { variantExtension.config.orNull?.embraceConfig?.ndkEnabled ?: true }
             ndkUploadTask.ndkType.set(
                 variantExtension.projectType.map {
                     when (it) {

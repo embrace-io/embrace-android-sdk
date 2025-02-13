@@ -86,9 +86,9 @@ class TaskRegistrar(
             false
         } else {
             val variantExtension = embraceExtensionInternal.variants.getByName(variant.name)
-            if (variantExtension.apiToken.orNull.isNullOrEmpty()) {
+            if (variantExtension.config.orNull?.embraceConfig?.apiToken.isNullOrEmpty()) {
                 false
-            } else if (variantExtension.appId.orNull.isNullOrEmpty()) {
+            } else if (variantExtension.config.orNull?.embraceConfig?.appId.isNullOrEmpty()) {
                 false
             } else {
                 true

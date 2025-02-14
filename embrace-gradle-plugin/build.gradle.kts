@@ -43,23 +43,27 @@ allprojects {
     extra["signing.password"] = System.getenv("mavenSigningKeyPassword")
 }
 
-// marker artifact publication
+java {
+    withJavadocJar()
+    withSourcesJar()
+}
+
 gradlePlugin {
     plugins {
-        create("swazzlerPlugin") {
+        create("embraceGradle") {
             id = "io.embrace.swazzler"
             group = "io.embrace"
             implementationClass = "io.embrace.android.gradle.plugin.EmbraceGradlePlugin"
             displayName = "Embrace Gradle Plugin"
-            description = "The Embrace Gradle plugin uploads mapping information and instruments bytecode"
+            description =
+                "The Embrace Gradle plugin uploads mapping information and instruments bytecode"
         }
     }
 }
 
-// maven-publish plugin publications settings
 publishing {
     publications {
-        create<MavenPublication>("pluginMaven") {
+        withType<MavenPublication>().configureEach {
             pom {
                 artifactId = "embrace-swazzler"
                 name = "embrace-swazzler"
@@ -81,46 +85,17 @@ publishing {
                 }
                 scm {
                     connection = "scm:git:github.com/embrace-io/embrace-android-sdk.git"
-                    developerConnection = "scm:git:ssh://github.com/embrace-io/embrace-android-sdk.git"
+                    developerConnection =
+                        "scm:git:ssh://github.com/embrace-io/embrace-android-sdk.git"
                     url = "https://github.com/embrace-io/embrace-android-sdk/tree/main"
                 }
             }
         }
     }
-    // I need afterEvaluate otherwise it does not find swazzlerPluginPluginMarkerMaven
     afterEvaluate {
-        publications {
-            named<MavenPublication>("swazzlerPluginPluginMarkerMaven") {
-                pom {
-                    name = "embrace-swazzler"
-                    artifactId = "io.embrace.swazzler.gradle.plugin"
-                    group = "io.embrace"
-                    description = "Embrace Gradle Plugin"
-                    url = "https://github.com/embrace-io/embrace-android-sdk"
-                    licenses {
-                        license {
-                            name = "Embrace License"
-                            url = "https://embrace.io/docs/terms-of-service/"
-                        }
-                    }
-                    developers {
-                        developer {
-                            id = "dev1"
-                            name = "Embrace"
-                            email = "support@embrace.io"
-                        }
-                    }
-                    scm {
-                        connection = "scm:git:github.com/embrace-io/embrace-android-sdk.git"
-                        developerConnection = "scm:git:ssh://github.com/embrace-io/embrace-android-sdk.git"
-                        url = "https://github.com/embrace-io/embrace-android-sdk/tree/main"
-                    }
-                }
-            }
-        }
         signing {
-            setRequired { gradle.taskGraph.hasTask("publishSwazzlerPluginPluginMarkerMavenPublicationToSonatypeRepository") }
-            sign(publishing.publications["swazzlerPluginPluginMarkerMaven"])
+            setRequired { gradle.taskGraph.hasTask("publishEmbraceGradlePluginMarkerMavenPublicationToSonatypeRepository") }
+            sign(publishing.publications["embraceGradlePluginMarkerMaven"])
         }
     }
 
@@ -152,9 +127,5 @@ publishing {
             name = "sonatype"
             url = uri("https://s01.oss.sonatype.org/service/local/staging/deploy/maven2")
         }
-    }
-    signing {
-        setRequired { gradle.taskGraph.hasTask("publishPluginMavenPublicationToSonatypeRepository") }
-        sign(publishing.publications["pluginMaven"])
     }
 }

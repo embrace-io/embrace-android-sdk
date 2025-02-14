@@ -39,14 +39,12 @@ tasks.withType(Test::class.java).configureEach {
 group = "io.embrace"
 version = project.properties["version"] as String
 
-if (!gradle.startParameter.taskNames.any { it == "publishToSonatype" || it == "closeSonatypeStagingRepository" }) {
-    gradlePlugin {
-        plugins {
-            create("integrationTestPlugin") {
-                id = "io.embrace.android.testplugin"
-                implementationClass =
-                    "io.embrace.android.gradle.integration.framework.IntegrationTestPlugin"
-            }
+gradlePlugin {
+    plugins {
+        create("integrationTestPlugin") {
+            id = "io.embrace.android.testplugin"
+            implementationClass =
+                "io.embrace.android.gradle.integration.framework.IntegrationTestPlugin"
         }
     }
 }

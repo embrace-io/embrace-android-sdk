@@ -72,8 +72,6 @@ fun Project.configureProductionModule(
         add("androidTestImplementation", findLibrary("androidx.test.core"))
         add("androidTestImplementation", findLibrary("androidx.test.runner"))
         add("androidTestUtil", findLibrary("androidx.test.orchestrator"))
-
-        add("kover", project)
     }
 
     project.afterEvaluate {

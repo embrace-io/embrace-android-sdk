@@ -64,6 +64,9 @@ gradlePlugin {
 publishing {
     publications {
         withType<MavenPublication>().configureEach {
+            // Ensure sources and Javadoc JARs are added
+            from(components["java"])
+
             pom {
                 artifactId = "embrace-swazzler"
                 name = "embrace-swazzler"

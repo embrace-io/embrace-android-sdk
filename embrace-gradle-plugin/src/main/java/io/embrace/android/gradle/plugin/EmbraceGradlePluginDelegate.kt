@@ -6,7 +6,7 @@ import io.embrace.android.gradle.plugin.agp.AgpWrapper
 import io.embrace.android.gradle.plugin.agp.AgpWrapperImpl
 import io.embrace.android.gradle.plugin.buildreporter.BuildTelemetryService
 import io.embrace.android.gradle.plugin.config.PluginBehaviorImpl
-import io.embrace.android.gradle.plugin.config.variant.EmbraceVariantConfigurationBuilderForValueSource
+import io.embrace.android.gradle.plugin.config.variant.EmbraceVariantConfigurationBuilder
 import io.embrace.android.gradle.plugin.extension.EXTENSION_EMBRACE_INTERNAL
 import io.embrace.android.gradle.plugin.extension.EmbraceExtensionInternal
 import io.embrace.android.gradle.plugin.gradle.getProperty
@@ -28,7 +28,7 @@ class EmbraceGradlePluginDelegate {
     fun onAndroidPluginApplied(
         project: Project,
         variantConfigurationsListProperty: ListProperty<VariantConfig>,
-        extension: SwazzlerExtension
+        extension: SwazzlerExtension,
     ) {
         val behavior = PluginBehaviorImpl(project, extension)
         Logger.setPluginLogLevel(behavior.logLevel)
@@ -54,7 +54,7 @@ class EmbraceGradlePluginDelegate {
         registerAsmTasks(project, behavior)
 
         val embraceVariantConfigurationBuilder =
-            EmbraceVariantConfigurationBuilderForValueSource(
+            EmbraceVariantConfigurationBuilder(
                 project.layout.projectDirectory,
                 project.providers
             )

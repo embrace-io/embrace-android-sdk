@@ -56,7 +56,7 @@ jobs:
 
       - name: Publish and close Sonatype repository
         run: |
-          ./gradlew clean publishReleasePublicationToSonatype closeSonatypeStagingRepository -Dorg.gradle.parallel=false --no-build-cache --no-configuration-cache --stacktrace
+          ./gradlew clean publishToSonatype publishReleasePublicationToSonatype closeSonatypeStagingRepository -Dorg.gradle.parallel=false --no-build-cache --no-configuration-cache --stacktrace
 
       - name: Publish git tag
         run: |

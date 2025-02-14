@@ -8,7 +8,7 @@ espressoCore = "3.6.1"
 lifecycleRuntimeKtx = "2.8.7"
 activityCompose = "1.9.3"
 composeBom = "2024.12.01"
-embrace = "7.1.0"
+embrace = 9.9.9
 navigationCompose = "2.8.5"
 okhttp = "4.12.0"
 otel = "1.46.0"
@@ -45,5 +45,5 @@ embrace-android-delivery = { group = "io.embrace", name = "embrace-android-deliv
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
-embrace = { id = "io.embrace.swazzler", version.ref = "embrace" }
+embrace = 9.9.9
 

@@ -227,7 +227,7 @@ class EmbraceUrlConnectionDelegate<T extends HttpURLConnection> implements Embra
     @Override
     @TargetApi(24)
     public long getContentLengthLong() {
-        return (shouldUncompressGzip() || Build.VERSION.SDK_INT < Build.VERSION_CODES.N) ?
+        return shouldUncompressGzip() ?
             -1 : this.connection.getContentLengthLong();
     }
 
@@ -338,8 +338,7 @@ class EmbraceUrlConnectionDelegate<T extends HttpURLConnection> implements Embra
     public long getHeaderFieldLong(@NonNull String name, long defaultValue) {
         Long result = retrieveHeaderField(name,
             defaultValue,
-            () -> Build.VERSION.SDK_INT < Build.VERSION_CODES.N ? -1 :
-                this.connection.getHeaderFieldLong(name, defaultValue)
+            () -> this.connection.getHeaderFieldLong(name, defaultValue)
 
         );
         return result != null ? result : defaultValue;

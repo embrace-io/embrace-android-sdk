@@ -19,7 +19,6 @@ dependencies {
     implementation(libs.agp)
     implementation(libs.detekt.gradle.plugin)
     implementation(libs.binary.compatibility.validator)
-    implementation(libs.kover.gradle.plugin)
 }
 
 gradlePlugin {

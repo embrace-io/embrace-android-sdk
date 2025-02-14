@@ -1,3 +1,5 @@
+import io.embrace.internal.EmbraceBuildLogicExtension
+
 plugins {
     id("com.android.library")
     id("kotlin-android")
@@ -41,6 +43,23 @@ kover {
             xml {}
         }
     }
+}
+
+val codeCoverageModules = listOf( // FIXME: future: add gradle plugin to code coverage
+    ":embrace-android-api",
+    ":embrace-internal-api",
+    ":embrace-android-sdk",
+    ":embrace-android-core",
+    ":embrace-android-infra",
+    ":embrace-android-features",
+    ":embrace-android-payload",
+    ":embrace-android-delivery",
+    ":embrace-android-okhttp3",
+    ":embrace-android-fcm",
+    ":embrace-android-compose",
+)
+codeCoverageModules.forEach { projectName ->
+    dependencies.add("kover", project(projectName))
 }
 
 dependencies {

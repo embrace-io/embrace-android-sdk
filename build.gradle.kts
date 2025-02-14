@@ -8,6 +8,7 @@ plugins {
     id("com.android.library") apply false
     alias(libs.plugins.nexus.publish)
     alias(libs.plugins.dokka)
+    alias(libs.plugins.kover)
 }
 
 group = "io.embrace"

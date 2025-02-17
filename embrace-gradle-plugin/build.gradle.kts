@@ -43,10 +43,15 @@ allprojects {
     extra["signing.password"] = System.getenv("mavenSigningKeyPassword")
 }
 
+java {
+    withJavadocJar()
+    withSourcesJar()
+}
+
 // marker artifact publication
 gradlePlugin {
     plugins {
-        create("swazzlerPlugin") {
+        create("embraceGradle") {
             id = "io.embrace.swazzler"
             group = "io.embrace"
             implementationClass = "io.embrace.android.gradle.plugin.EmbraceGradlePlugin"
@@ -64,7 +69,7 @@ publishing {
                 artifactId = "embrace-swazzler"
                 name = "embrace-swazzler"
                 group = "io.embrace"
-                description = "Embrace Swazzler Gradle Plugin"
+                description = "Embrace Gradle Plugin"
                 url = "https://github.com/embrace-io/embrace-android-sdk"
                 licenses {
                     license {
@@ -87,10 +92,10 @@ publishing {
             }
         }
     }
-    // I need afterEvaluate otherwise it does not find swazzlerPluginPluginMarkerMaven
+
     afterEvaluate {
         publications {
-            named<MavenPublication>("swazzlerPluginPluginMarkerMaven") {
+            named<MavenPublication>("embraceGradlePluginMarkerMaven") {
                 pom {
                     name = "embrace-swazzler"
                     artifactId = "io.embrace.swazzler.gradle.plugin"
@@ -119,8 +124,8 @@ publishing {
             }
         }
         signing {
-            setRequired { gradle.taskGraph.hasTask("publishSwazzlerPluginPluginMarkerMavenPublicationToSonatypeRepository") }
-            sign(publishing.publications["swazzlerPluginPluginMarkerMaven"])
+            setRequired { gradle.taskGraph.hasTask("publishEmbraceGradlePluginMarkerMavenPublicationToSonatypeRepository") }
+            sign(publishing.publications["embraceGradlePluginMarkerMaven"])
         }
     }
 

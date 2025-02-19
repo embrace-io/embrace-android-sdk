@@ -48,6 +48,7 @@ import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.worker.TaskPriority
 import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.spans.TracingApi
+import io.embrace.common.fibonacci.generateFibi
 import io.opentelemetry.api.common.AttributeKey
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
@@ -147,6 +148,7 @@ internal class EmbraceImpl @JvmOverloads constructor(
         context: Context,
         framework: io.embrace.android.embracesdk.AppFramework,
     ) {
+        generateFibi().take(3).forEach { android.util.Log.w("Embrace", "Fibi: $it") }
         if (application != null) {
             return
         }

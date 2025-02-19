@@ -97,4 +97,5 @@ dependencies {
     testImplementation(libs.mockwebserver)
 
     androidTestImplementation(project(":embrace-test-fakes"))
+    implementation(libs.embrace.common.android)
 }

@@ -8,6 +8,7 @@ import io.embrace.android.gradle.plugin.tasks.BuildResourceWriter
 import io.embrace.android.gradle.plugin.tasks.EmbraceUploadTask
 import io.embrace.android.gradle.plugin.tasks.EmbraceUploadTaskImpl
 import okio.buffer
+import okio.gzip
 import okio.sink
 import okio.source
 import org.gradle.api.file.DirectoryProperty
@@ -21,9 +22,7 @@ import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
 import java.io.File
-import java.io.FileOutputStream
 import java.io.IOException
-import java.util.zip.GZIPOutputStream
 import javax.inject.Inject
 
 /**
@@ -129,15 +128,16 @@ abstract class EmbraceRnSourcemapGeneratorTask @Inject constructor(
     ): File {
         try {
             sourceMapAndBundleJsonFile.parentFile.mkdirs()
-            val fos = GZIPOutputStream(FileOutputStream(sourceMapAndBundleJsonFile)).sink().buffer()
-            JsonWriter.of(fos).use { jsonWriter ->
-                with(jsonWriter) {
-                    beginObject()
-                    name(KEY_NAME_BUNDLE)
-                    bundleFile.source().buffer().use { value(it) }
-                    name(KEY_NAME_SOURCE_MAP)
-                    sourceMapFile.source().buffer().use { value(it) }
-                    endObject()
+            sourceMapAndBundleJsonFile.sink().gzip().buffer().use { sink ->
+                JsonWriter.of(sink).use { jsonWriter ->
+                    with(jsonWriter) {
+                        beginObject()
+                        name(KEY_NAME_BUNDLE)
+                        bundleFile.source().buffer().use { value(it.readUtf8()) }
+                        name(KEY_NAME_SOURCE_MAP)
+                        sourceMapFile.source().buffer().use { value(it.readUtf8()) }
+                        endObject()
+                    }
                 }
             }
         } catch (e: Exception) {

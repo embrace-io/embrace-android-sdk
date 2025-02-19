@@ -34,7 +34,7 @@ gradleTestKit = "8.11.1"
 zstdJni = "1.5.6-10"
 detekt = "1.23.7"
 buildconfig = "5.5.1"
-agp-api = "7.4.2"
+agp-api = "8.8.1"
 apktoolLib = "2.11.0"
 bundletool = "1.18.0"
 

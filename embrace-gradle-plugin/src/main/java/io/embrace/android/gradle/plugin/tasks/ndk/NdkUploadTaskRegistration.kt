@@ -2,6 +2,7 @@ package io.embrace.android.gradle.plugin.tasks.ndk
 
 import io.embrace.android.gradle.plugin.config.PluginBehavior
 import io.embrace.android.gradle.plugin.config.ProjectType
+import io.embrace.android.gradle.plugin.config.UnitySymbolsDir
 import io.embrace.android.gradle.plugin.gradle.isTaskRegistered
 import io.embrace.android.gradle.plugin.gradle.nullSafeMap
 import io.embrace.android.gradle.plugin.gradle.registerTask
@@ -24,6 +25,8 @@ private const val GENERATED_RESOURCE_PATH = "generated/embrace/res"
  */
 class NdkUploadTaskRegistration(
     private val behavior: PluginBehavior,
+    private val unitySymbolsDir: Provider<UnitySymbolsDir>,
+    private val projectType: Provider<ProjectType>
 ) : EmbraceTaskRegistration {
 
     override fun register(params: RegistrationParams) {
@@ -67,9 +70,9 @@ class NdkUploadTaskRegistration(
             )
 
             task.unitySymbolsDir.set(
-                variantExtension.projectType.nullSafeMap {
+                projectType.nullSafeMap {
                     when (it) {
-                        ProjectType.UNITY -> variantExtension.unitySymbolsDir.orNull
+                        ProjectType.UNITY -> unitySymbolsDir.orNull
                         else -> null
                     }
                 }
@@ -125,7 +128,7 @@ class NdkUploadTaskRegistration(
         ndkUploadTaskProvider.configure { ndkUploadTask: NdkUploadTask ->
             ndkUploadTask.onlyIf { variantExtension.config.orNull?.embraceConfig?.ndkEnabled ?: true }
             ndkUploadTask.ndkType.set(
-                variantExtension.projectType.map {
+                projectType.map {
                     when (it) {
                         ProjectType.UNITY -> NdkType.UNITY
                         ProjectType.NATIVE -> {

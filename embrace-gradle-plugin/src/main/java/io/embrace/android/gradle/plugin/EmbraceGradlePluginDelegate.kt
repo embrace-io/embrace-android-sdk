@@ -51,7 +51,7 @@ class EmbraceGradlePluginDelegate {
         )
 
         // bytecode instrumentation must be registered before project evaluation
-        registerAsmTasks(project, behavior)
+        registerAsmTasks(project, behavior, variantConfigurationsListProperty)
 
         val embraceVariantConfigurationBuilder =
             EmbraceVariantConfigurationBuilder(

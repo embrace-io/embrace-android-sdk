@@ -1,10 +1,9 @@
 package io.embrace.android.gradle.plugin.ndk
 
-import io.embrace.android.gradle.plugin.EXTENSION_NAME
+import com.android.build.api.variant.Variant
 import io.embrace.android.gradle.plugin.config.ProjectType
 import io.embrace.android.gradle.plugin.config.UnitySymbolsDir
-import io.embrace.android.gradle.plugin.extension.EXTENSION_EMBRACE_INTERNAL
-import io.embrace.android.gradle.plugin.extension.EmbraceExtensionInternal
+import io.embrace.android.gradle.plugin.gradle.GradleCompatibilityHelper
 import io.embrace.android.gradle.plugin.gradle.isTaskRegistered
 import io.embrace.android.gradle.plugin.instrumentation.config.model.EmbraceVariantConfig
 import io.embrace.android.gradle.plugin.instrumentation.config.model.VariantConfig
@@ -15,12 +14,12 @@ import io.embrace.android.gradle.plugin.tasks.ndk.NdkUploadTask
 import io.embrace.android.gradle.plugin.tasks.ndk.NdkUploadTaskRegistration
 import io.embrace.android.gradle.plugin.tasks.registration.RegistrationParams
 import io.embrace.android.gradle.plugin.util.capitalizedString
-import io.embrace.android.gradle.swazzler.plugin.extension.SwazzlerExtension
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.unmockkAll
 import org.gradle.api.DefaultTask
 import org.gradle.api.Project
+import org.gradle.api.provider.ListProperty
 import org.gradle.api.tasks.TaskProvider
 import org.gradle.testfixtures.ProjectBuilder
 import org.junit.AfterClass
@@ -28,11 +27,25 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.Test
 
 class NdkUploadTaskRegistrationTest {
 
     private val baseUrl = "https://example.com/api"
+    private val project = ProjectBuilder.builder().build()
+    private lateinit var variantConfigurationsListProperty: ListProperty<VariantConfig>
+
+    private val mockVariant = mockk<Variant>(relaxed = true)
+    private val testAndroidCompactedVariantData = AndroidCompactedVariantData(
+        name = "variantName",
+        flavorName = "variantFlavor",
+        buildTypeName = "buildTypeName",
+        isBuildTypeDebuggable = false,
+        versionName = "versionName",
+        productFlavors = emptyList(),
+        sourceMapPath = "sourceMapPath"
+    )
 
     companion object {
         val unitySymbolsDir = mockk<UnitySymbolsDir>()
@@ -44,37 +57,10 @@ class NdkUploadTaskRegistrationTest {
         }
     }
 
-    private fun createExtension(
-        project: Project,
-        ndkEnabled: Boolean
-    ): EmbraceExtensionInternal {
-        val extension = project.extensions.create(
-            EXTENSION_EMBRACE_INTERNAL,
-            EmbraceExtensionInternal::class.java,
-            project.objects
-        )
-
-        project.extensions.create(
-            EXTENSION_NAME,
-            SwazzlerExtension::class.java,
-            project.objects
-        )
-
-        extension.variants.create("variantName").also { newVariant ->
-            newVariant.config.set(
-                VariantConfig(
-                    embraceConfig = EmbraceVariantConfig(
-                        appId = "appId",
-                        apiToken = "apiToken",
-                        ndkEnabled = ndkEnabled,
-                        sdkConfig = null,
-                        unityConfig = null
-                    )
-                )
-            )
-        }
-
-        return extension
+    @Before
+    fun setUp() {
+        every { mockVariant.name } returns "variantName"
+        variantConfigurationsListProperty = project.objects.listProperty(VariantConfig::class.java).convention(emptyList())
     }
 
     private fun registerTestTask(project: Project, taskName: String): TaskProvider<DefaultTask> =
@@ -86,34 +72,33 @@ class NdkUploadTaskRegistrationTest {
     @Test
     fun `test configure ndkUploadTask with ndk disabled`() {
         val taskName = NdkUploadTask.NAME
-        val variant = mockk<AndroidCompactedVariantData>(relaxed = true) {
-            every { name } returns "variantName"
-        }
         val project = ProjectBuilder.builder().build()
 
-        val extension = createExtension(project, false)
+        setVariantConfig(ndkEnabled = false)
+
         val unitySymbolsDirProvider = project.provider { unitySymbolsDir }
         val projectTypeProvider = project.provider { ProjectType.UNITY }
 
         val registration =
             NdkUploadTaskRegistration(mockk(relaxed = true), unitySymbolsDirProvider, projectTypeProvider)
         val params = RegistrationParams(
-            project,
-            mockk(relaxed = true),
-            variant,
-            mockk(relaxed = true),
-            extension,
-            baseUrl,
+            project = project,
+            variant = mockVariant,
+            data = testAndroidCompactedVariantData,
+            networkService = mockk(relaxed = true),
+            variantConfigurationsListProperty = variantConfigurationsListProperty,
+            baseUrl = baseUrl,
         )
         assertFalse(
             project.isTaskRegistered(
                 taskName,
-                variant.name
+                testAndroidCompactedVariantData.name
             )
         )
         registration.register(params)
 
-        val ndkUploadTask = project.tasks.findByName("$taskName${variant.name.capitalizedString()}") as? NdkUploadTask
+        val ndkUploadTask =
+            project.tasks.findByName("$taskName${testAndroidCompactedVariantData.name.capitalizedString()}") as? NdkUploadTask
         assertNull(ndkUploadTask)
     }
 
@@ -121,11 +106,9 @@ class NdkUploadTaskRegistrationTest {
     fun `test configure ndkUploadTask for native project type`() {
         val taskName = NdkUploadTask.NAME
         val project = ProjectBuilder.builder().build()
-        val variant = mockk<AndroidCompactedVariantData>(relaxed = true) {
-            every { name } returns "variantName"
-        }
 
-        val extension = createExtension(project, true)
+        setVariantConfig(ndkEnabled = true)
+
         val unitySymbolsDirProvider = project.provider { unitySymbolsDir }
         val projectTypeProvider = project.provider { ProjectType.NATIVE }
 
@@ -133,16 +116,16 @@ class NdkUploadTaskRegistrationTest {
             NdkUploadTaskRegistration(mockk(relaxed = true), unitySymbolsDirProvider, projectTypeProvider)
         val params = RegistrationParams(
             project,
+            variant = mockVariant,
+            testAndroidCompactedVariantData,
             mockk(relaxed = true),
-            variant,
-            mockk(relaxed = true),
-            extension,
+            variantConfigurationsListProperty,
             baseUrl,
         )
         assertFalse(
             project.isTaskRegistered(
                 taskName,
-                variant.name
+                testAndroidCompactedVariantData.name
             )
         )
         registration.register(params)
@@ -150,7 +133,7 @@ class NdkUploadTaskRegistrationTest {
         assertTrue(
             project.isTaskRegistered(
                 NdkUploadTask.NAME,
-                variant.name
+                testAndroidCompactedVariantData.name
             )
         )
     }
@@ -159,18 +142,16 @@ class NdkUploadTaskRegistrationTest {
     fun `test configure ndkUploadTask for unity 2018-2019 project type`() {
         val taskName = NdkUploadTask.NAME
         val project = ProjectBuilder.builder().build()
-        val variant = mockk<AndroidCompactedVariantData>(relaxed = true) {
-            every { name } returns "variantName"
-        }
+
         val mergeJniLibFoldersTaskName =
-            "merge${variant.name.capitalizedString()}JniLibFolders"
+            "merge${testAndroidCompactedVariantData.name.capitalizedString()}JniLibFolders"
 
         registerTestTask(project, mergeJniLibFoldersTaskName)
 
         val transformNativeLibsTaskName =
-            "transformNativeLibsWithMergeJniLibsFor${variant.name.capitalizedString()}"
+            "transformNativeLibsWithMergeJniLibsFor${testAndroidCompactedVariantData.name.capitalizedString()}"
 
-        val extension = createExtension(project, true)
+        setVariantConfig(ndkEnabled = true)
 
         registerTestTask(project, transformNativeLibsTaskName)
 
@@ -181,27 +162,27 @@ class NdkUploadTaskRegistrationTest {
             NdkUploadTaskRegistration(mockk(relaxed = true), unitySymbolsDirProvider, projectTypeProvider)
         val params = RegistrationParams(
             project,
+            variant = mockVariant,
+            testAndroidCompactedVariantData,
             mockk(relaxed = true),
-            variant,
-            mockk(relaxed = true),
-            extension,
+            variantConfigurationsListProperty,
             baseUrl,
         )
         assertFalse(
             project.isTaskRegistered(
                 taskName,
-                variant.name
+                testAndroidCompactedVariantData.name
             )
         )
         registration.register(params)
 
         val ndkUploadTask: NdkUploadTask =
-            project.tasks.findByName("$taskName${variant.name.capitalizedString()}") as NdkUploadTask
+            project.tasks.findByName("$taskName${testAndroidCompactedVariantData.name.capitalizedString()}") as NdkUploadTask
 
         assertTrue(
             project.isTaskRegistered(
                 NdkUploadTask.NAME,
-                variant.name
+                testAndroidCompactedVariantData.name
             )
         )
         assertTrue(
@@ -215,20 +196,16 @@ class NdkUploadTaskRegistrationTest {
         val taskName = NdkUploadTask.NAME
         val project = ProjectBuilder.builder().build()
 
-        val variant = mockk<AndroidCompactedVariantData>(relaxed = true) {
-            every { name } returns "variantName"
-        }
         val mergeJniLibFoldersTaskName =
-            "merge${variant.name.capitalizedString()}JniLibFolders"
+            "merge${testAndroidCompactedVariantData.name.capitalizedString()}JniLibFolders"
 
         registerTestTask(project, mergeJniLibFoldersTaskName)
 
         val mergeNativeLibs =
-            "merge${variant.name.capitalizedString()}NativeLibs"
+            "merge${testAndroidCompactedVariantData.name.capitalizedString()}NativeLibs"
 
         registerTestTask(project, mergeNativeLibs)
-        val extension = createExtension(project, true)
-
+        setVariantConfig(ndkEnabled = true)
         val unitySymbolsDirProvider = project.provider { unitySymbolsDir }
         val projectTypeProvider = project.provider { ProjectType.UNITY }
 
@@ -236,28 +213,28 @@ class NdkUploadTaskRegistrationTest {
             NdkUploadTaskRegistration(mockk(relaxed = true), unitySymbolsDirProvider, projectTypeProvider)
         val params = RegistrationParams(
             project,
+            variant = mockVariant,
+            testAndroidCompactedVariantData,
             mockk(relaxed = true),
-            variant,
-            mockk(relaxed = true),
-            extension,
+            variantConfigurationsListProperty,
             baseUrl,
         )
 
         assertFalse(
             project.isTaskRegistered(
                 taskName,
-                variant.name
+                testAndroidCompactedVariantData.name
             )
         )
         registration.register(params)
 
         val ndkUploadTask: NdkUploadTask =
-            project.tasks.findByName("$taskName${variant.name.capitalizedString()}") as NdkUploadTask
+            project.tasks.findByName("$taskName${testAndroidCompactedVariantData.name.capitalizedString()}") as NdkUploadTask
 
         assertTrue(
             project.isTaskRegistered(
                 NdkUploadTask.NAME,
-                variant.name
+                testAndroidCompactedVariantData.name
             )
         )
         assertTrue(
@@ -269,11 +246,8 @@ class NdkUploadTaskRegistrationTest {
     @Test
     fun `test execute throws the exception`() {
         val project = ProjectBuilder.builder().build()
-        val variant = mockk<AndroidCompactedVariantData>(relaxed = true) {
-            every { name } returns "variantName"
-        }
-        val extension = createExtension(project, true)
 
+        setVariantConfig(ndkEnabled = true)
         val unitySymbolsDirProvider = project.provider { unitySymbolsDir }
         val projectTypeProvider = project.provider { ProjectType.NATIVE }
 
@@ -281,10 +255,10 @@ class NdkUploadTaskRegistrationTest {
             NdkUploadTaskRegistration(mockk(relaxed = true), unitySymbolsDirProvider, projectTypeProvider)
         val params = RegistrationParams(
             project,
+            variant = mockVariant,
+            testAndroidCompactedVariantData,
             mockk(relaxed = true),
-            variant,
-            mockk(relaxed = true),
-            extension,
+            variantConfigurationsListProperty,
             baseUrl,
         )
         try {
@@ -298,12 +272,8 @@ class NdkUploadTaskRegistrationTest {
     fun `verify Ndk upload task configuration once is registered`() {
         val taskName = NdkUploadTask.NAME
         val project = ProjectBuilder.builder().build()
-        val variant = mockk<AndroidCompactedVariantData>(relaxed = true) {
-            every { name } returns "variantName"
-        }
 
-        val extension = createExtension(project, true)
-
+        setVariantConfig(ndkEnabled = true)
         val unitySymbolsDirProvider = project.provider { unitySymbolsDir }
         val projectTypeProvider = project.provider { ProjectType.NATIVE }
 
@@ -311,15 +281,15 @@ class NdkUploadTaskRegistrationTest {
             NdkUploadTaskRegistration(mockk(relaxed = true), unitySymbolsDirProvider, projectTypeProvider)
         val params = RegistrationParams(
             project,
+            variant = mockVariant,
+            testAndroidCompactedVariantData,
             mockk(relaxed = true),
-            variant,
-            mockk(relaxed = true),
-            extension,
+            variantConfigurationsListProperty,
             baseUrl,
         )
         registration.register(params)
         val ndkUploadTask: NdkUploadTask =
-            project.tasks.findByName("$taskName${variant.name.capitalizedString()}") as NdkUploadTask
+            project.tasks.findByName("$taskName${testAndroidCompactedVariantData.name.capitalizedString()}") as NdkUploadTask
 
         assertEquals(
             ndkUploadTask.requestParams.get(),
@@ -337,12 +307,8 @@ class NdkUploadTaskRegistrationTest {
     fun `verify Ndk upload task configuration once is registered for unity`() {
         val taskName = NdkUploadTask.NAME
         val project = ProjectBuilder.builder().build()
-        val variant = mockk<AndroidCompactedVariantData>(relaxed = true) {
-            every { name } returns "variantName"
-        }
 
-        val extension = createExtension(project, true)
-
+        setVariantConfig(ndkEnabled = true)
         val unitySymbolsDirProvider = project.provider { unitySymbolsDir }
         val projectTypeProvider = project.provider { ProjectType.UNITY }
 
@@ -350,15 +316,15 @@ class NdkUploadTaskRegistrationTest {
             NdkUploadTaskRegistration(mockk(relaxed = true), unitySymbolsDirProvider, projectTypeProvider)
         val params = RegistrationParams(
             project,
+            variant = mockVariant,
+            testAndroidCompactedVariantData,
             mockk(relaxed = true),
-            variant,
-            mockk(relaxed = true),
-            extension,
+            variantConfigurationsListProperty,
             baseUrl,
         )
         registration.register(params)
         val ndkUploadTask: NdkUploadTask =
-            project.tasks.findByName("$taskName${variant.name.capitalizedString()}") as NdkUploadTask
+            project.tasks.findByName("$taskName${testAndroidCompactedVariantData.name.capitalizedString()}") as NdkUploadTask
 
         assertEquals(
             ndkUploadTask.requestParams.get(),
@@ -370,5 +336,23 @@ class NdkUploadTaskRegistrationTest {
             )
         )
         assertEquals(ndkUploadTask.unitySymbolsDir.orNull, unitySymbolsDir)
+    }
+
+    private fun setVariantConfig(ndkEnabled: Boolean) {
+        GradleCompatibilityHelper.add(
+            variantConfigurationsListProperty,
+            project.provider {
+                VariantConfig(
+                    variantName = "variantName",
+                    embraceConfig = EmbraceVariantConfig(
+                        appId = "appId",
+                        apiToken = "apiToken",
+                        ndkEnabled = ndkEnabled,
+                        sdkConfig = null,
+                        unityConfig = null
+                    )
+                )
+            }
+        )
     }
 }

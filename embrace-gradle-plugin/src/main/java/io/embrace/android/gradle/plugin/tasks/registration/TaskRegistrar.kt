@@ -9,7 +9,6 @@ import io.embrace.android.gradle.plugin.config.ProjectTypeVerifier
 import io.embrace.android.gradle.plugin.config.UnitySymbolsDir
 import io.embrace.android.gradle.plugin.config.variant.EmbraceVariantConfigurationBuilder
 import io.embrace.android.gradle.plugin.dependency.installDependenciesForVariant
-import io.embrace.android.gradle.plugin.extension.EmbraceExtensionInternal
 import io.embrace.android.gradle.plugin.extension.EmbraceExtensionInternalSource
 import io.embrace.android.gradle.plugin.instrumentation.config.model.VariantConfig
 import io.embrace.android.gradle.plugin.model.AndroidCompactedVariantData
@@ -21,7 +20,6 @@ import io.embrace.android.gradle.plugin.tasks.r8.JvmMappingUploadTaskRegistratio
 import io.embrace.android.gradle.plugin.tasks.reactnative.EmbraceRnSourcemapGeneratorTaskRegistration
 import org.gradle.api.Project
 import org.gradle.api.provider.ListProperty
-import org.gradle.api.provider.Property
 import org.gradle.api.provider.Provider
 
 /**
@@ -34,10 +32,6 @@ class TaskRegistrar(
     private val variantConfigurationsListProperty: ListProperty<VariantConfig>,
     private val networkService: NetworkService,
 ) {
-
-    private val embraceExtensionInternal: EmbraceExtensionInternal = checkNotNull(
-        project.extensions.findByType(EmbraceExtensionInternal::class.java)
-    )
 
     /**
      * It is in charge of looping through each variant and configure each task.
@@ -60,7 +54,7 @@ class TaskRegistrar(
             variantConfigurationsListProperty
         )
 
-        if (behavior.isPluginDisabledForVariant(variant.name) || !shouldRegisterUploadTasks(variant)) {
+        if (behavior.isPluginDisabledForVariant(variant.name) || !shouldRegisterUploadTasks(variant, variantConfigurationsListProperty)) {
             return
         } else {
             val params = RegistrationParams(
@@ -68,7 +62,7 @@ class TaskRegistrar(
                 ref,
                 variant,
                 networkService,
-                embraceExtensionInternal,
+                variantConfigurationsListProperty,
                 behavior.baseUrl,
             )
             registerTasks(params, variant)
@@ -81,7 +75,7 @@ class TaskRegistrar(
             val taskRegistration = EmbraceRnSourcemapGeneratorTaskRegistration()
             taskRegistration.register(params)
         }
-        val variantConfig = embraceExtensionInternal.variants.getByName(variant.name).config
+        val variantConfig = variantConfigurationsListProperty.get().first { it.variantName == variant.name }
         val symbolsDir = getSymbolsDir(variantConfig)
         val projectType = getProjectType(symbolsDir, AgpWrapperImpl(project))
         NdkUploadTaskRegistration(behavior, symbolsDir, projectType).register(params)
@@ -90,14 +84,17 @@ class TaskRegistrar(
         }
     }
 
-    private fun shouldRegisterUploadTasks(variant: AndroidCompactedVariantData): Boolean {
+    private fun shouldRegisterUploadTasks(
+        variant: AndroidCompactedVariantData,
+        variantConfigurationsListProperty: ListProperty<VariantConfig>,
+    ): Boolean {
         return if (behavior.isUploadMappingFilesDisabled) {
             false
         } else {
-            val variantExtension = embraceExtensionInternal.variants.getByName(variant.name)
-            if (variantExtension.config.orNull?.embraceConfig?.apiToken.isNullOrEmpty()) {
+            val embraceConfig = variantConfigurationsListProperty.get().first { it.variantName == variant.name }.embraceConfig
+            if (embraceConfig?.apiToken.isNullOrEmpty()) {
                 false
-            } else if (variantExtension.config.orNull?.embraceConfig?.appId.isNullOrEmpty()) {
+            } else if (embraceConfig?.appId.isNullOrEmpty()) {
                 false
             } else {
                 true
@@ -105,8 +102,8 @@ class TaskRegistrar(
         }
     }
 
-    private fun getSymbolsDir(variantConfig: Property<VariantConfig>): Provider<UnitySymbolsDir> = project.provider {
-        val unityConfig = variantConfig.orNull?.embraceConfig?.unityConfig
+    private fun getSymbolsDir(variantConfig: VariantConfig): Provider<UnitySymbolsDir> = project.provider {
+        val unityConfig = variantConfig.embraceConfig?.unityConfig
         val realProject = project.parent ?: project
         UnitySymbolFilesManager.of().getSymbolsDir(
             realProject.layout.projectDirectory,

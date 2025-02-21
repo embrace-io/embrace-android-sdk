@@ -1,5 +1,7 @@
 package io.embrace.android.gradle.plugin
 
+import io.embrace.android.gradle.plugin.gradle.GradleVersion
+import io.embrace.android.gradle.plugin.gradle.GradleVersion.Companion.isAtLeast
 import io.embrace.android.gradle.plugin.instrumentation.config.model.VariantConfig
 import io.embrace.android.gradle.swazzler.plugin.extension.SwazzlerExtension
 import org.gradle.api.Plugin
@@ -18,6 +20,8 @@ class EmbraceGradlePlugin : Plugin<Project> {
     }
 
     override fun apply(project: Project) {
+        validateMinGradleVersion()
+
         val extension = project.extensions.create(
             EXTENSION_NAME,
             SwazzlerExtension::class.java,
@@ -37,6 +41,12 @@ class EmbraceGradlePlugin : Plugin<Project> {
                 variantConfigurationsListProperty,
                 extension
             )
+        }
+    }
+
+    private fun validateMinGradleVersion() {
+        if (!isAtLeast(GradleVersion.MIN_VERSION)) {
+            error("Embrace Gradle Plugin requires Gradle version ${GradleVersion.MIN_VERSION} or newer")
         }
     }
 }

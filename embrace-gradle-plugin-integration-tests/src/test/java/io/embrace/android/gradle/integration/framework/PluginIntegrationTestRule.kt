@@ -6,6 +6,7 @@ import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.GradleRunner
 import org.gradle.testkit.runner.TaskOutcome
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.rules.ExternalResource
 import java.io.File
 import java.nio.file.Files
@@ -91,6 +92,11 @@ class PluginIntegrationTestRule : ExternalResource() {
         expectedOutcome: TaskOutcome = TaskOutcome.SUCCESS,
 
         /**
+         * The expected exception message if the task fails.
+         */
+        expectedExceptionMessage: String? = null,
+
+        /**
          * Whether a debugger should be attached to the TestKit build. This stops the build
          * proceeding until a remote debugger is attached.
          */
@@ -123,10 +129,10 @@ class PluginIntegrationTestRule : ExternalResource() {
 
         // run any preconditions before the build
         setupInterface.setup(dir)
-        val result = executeGradleBuild(args, testMatrix.gradle)
+        val result = executeGradleBuild(args, testMatrix.gradle, expectedExceptionMessage != null)
 
         // run assertions on the build outcome
-        assertTaskOutcome(result, task, expectedOutcome)
+        assertTaskOutcome(result, task, expectedOutcome, expectedExceptionMessage)
         assertionInterface.assertions(dir)
     }
 
@@ -137,7 +143,7 @@ class PluginIntegrationTestRule : ExternalResource() {
     private fun prepareTempDirectory(
         fixture: String,
         projectType: ProjectType,
-        androidProjectRoot: String?
+        androidProjectRoot: String?,
     ): File {
         val srcDir = File("fixtures/$fixture")
         if (!srcDir.exists()) {
@@ -185,14 +191,22 @@ class PluginIntegrationTestRule : ExternalResource() {
      */
     private fun executeGradleBuild(
         args: List<String>,
-        gradleVersion: String
-    ): BuildResult = GradleRunner.create()
-        .withProjectDir(tmpDir)
-        .withArguments(args)
-        .withGradleVersion(gradleVersion)
-        .forwardStdOutput(System.out.writer())
-        .forwardStdError(System.err.writer())
-        .build()
+        gradleVersion: String,
+        fail: Boolean,
+    ): BuildResult {
+        val runner = GradleRunner.create()
+            .withProjectDir(tmpDir)
+            .withArguments(args)
+            .withGradleVersion(gradleVersion)
+            .forwardStdOutput(System.out.writer())
+            .forwardStdError(System.err.writer())
+
+        return if (fail) {
+            runner.buildAndFail()
+        } else {
+            runner.build()
+        }
+    }
 
     /**
      * Adds some additional arguments to the gradle build for better performance of the test suite.
@@ -257,8 +271,13 @@ class PluginIntegrationTestRule : ExternalResource() {
     private fun assertTaskOutcome(
         result: BuildResult,
         task: String,
-        expectedOutcome: TaskOutcome
+        expectedOutcome: TaskOutcome,
+        exceptionExpected: String?,
     ) {
+        if (exceptionExpected != null) {
+            assertTrue(result.output.contains(exceptionExpected))
+            return
+        }
         val buildTask = result.tasks.singleOrNull { it.path == ":$task" || it.path == ":app:$task" }
             ?: error("Task '$task' not found in result.")
         val outcome = buildTask.outcome

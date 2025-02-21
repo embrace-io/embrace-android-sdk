@@ -79,19 +79,19 @@ class EmbraceRnSourcemapGeneratorTaskRegistration : EmbraceTaskRegistration {
     }
 
     private fun RegistrationParams.createRnSourcemapGeneratorTaskProvider(
-        generatorTask: TaskProvider<Task>
+        generatorTask: TaskProvider<Task>,
     ) = project.registerTask(
         SOURCEMAP_GENERATOR_NAME,
         EmbraceRnSourcemapGeneratorTask::class.java,
         data
     ) { rnTask ->
         try {
-            val variantExtension = extension.variants.getByName(variant.name)
+            val embraceConfig = variantConfigurationsListProperty.get().first { it.variantName == variant.name }.embraceConfig
             rnTask.requestParams.set(
                 project.provider {
                     RequestParams(
-                        appId = variantExtension.config.orNull?.embraceConfig?.appId.orEmpty(),
-                        apiToken = variantExtension.config.orNull?.embraceConfig?.apiToken.orEmpty(),
+                        appId = embraceConfig?.appId.orEmpty(),
+                        apiToken = embraceConfig?.apiToken.orEmpty(),
                         endpoint = EmbraceEndpoint.SOURCE_MAP,
                         fileName = FILE_NAME_SOURCE_MAP_JSON,
                         baseUrl = baseUrl,

@@ -41,9 +41,6 @@ class EmbraceGradlePluginDelegate {
             project.objects
         )
 
-        // we don't want anyone to update it once it's read
-        variantConfigurationsListProperty.finalizeValueOnRead()
-
         BuildTelemetryService.register(
             project,
             variantConfigurationsListProperty,

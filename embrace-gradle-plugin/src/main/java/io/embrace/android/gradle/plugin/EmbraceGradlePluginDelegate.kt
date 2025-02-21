@@ -41,9 +41,6 @@ class EmbraceGradlePluginDelegate {
             project.objects
         )
 
-        // we don't want anyone to update it once it's read
-        variantConfigurationsListProperty.finalizeValueOnRead()
-
         BuildTelemetryService.register(
             project,
             variantConfigurationsListProperty,
@@ -51,7 +48,7 @@ class EmbraceGradlePluginDelegate {
         )
 
         // bytecode instrumentation must be registered before project evaluation
-        registerAsmTasks(project, behavior)
+        registerAsmTasks(project, behavior, variantConfigurationsListProperty)
 
         val embraceVariantConfigurationBuilder =
             EmbraceVariantConfigurationBuilder(

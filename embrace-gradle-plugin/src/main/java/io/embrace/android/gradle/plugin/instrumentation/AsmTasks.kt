@@ -5,9 +5,9 @@ package io.embrace.android.gradle.plugin.instrumentation
 import com.android.build.api.instrumentation.FramesComputationMode
 import com.android.build.api.variant.AndroidComponentsExtension
 import io.embrace.android.gradle.plugin.config.PluginBehavior
-import io.embrace.android.gradle.plugin.extension.EmbraceExtensionInternal
+import io.embrace.android.gradle.plugin.instrumentation.config.model.VariantConfig
 import org.gradle.api.Project
-import org.gradle.api.UnknownDomainObjectException
+import org.gradle.api.provider.ListProperty
 
 /**
  * Registers an ASM class visitor for all build variants, which ensures that the
@@ -15,7 +15,8 @@ import org.gradle.api.UnknownDomainObjectException
  */
 fun registerAsmTasks(
     project: Project,
-    behavior: PluginBehavior
+    behavior: PluginBehavior,
+    variantConfigurationsListProperty: ListProperty<VariantConfig>,
 ) {
     // register for asm
     project.extensions.getByType(AndroidComponentsExtension::class.java).onVariants { variant ->
@@ -33,27 +34,10 @@ fun registerAsmTasks(
                 scope
             ) { params: BytecodeInstrumentationParams ->
                 project.logger.debug("Configuring ASM instrumentation")
-                val embraceExtensionInternal = checkNotNull(
-                    project.extensions.findByType(EmbraceExtensionInternal::class.java)
-                )
 
                 params.config.set(
-                    project.provider {
-                        val variantExtension = try {
-                            embraceExtensionInternal.variants.getByName(variant.name)
-                        } catch (exc: UnknownDomainObjectException) {
-                            project.logger.lifecycle(
-                                "Variant ${variant.name} not found in EmbraceExtensionInternal." +
-                                    "Following variants are available: ${
-                                        embraceExtensionInternal.variants.asMap.values.joinToString(
-                                            ","
-                                        )
-                                    }"
-                            )
-                            throw exc
-                        }
-
-                        variantExtension.config.get()
+                    variantConfigurationsListProperty.map { variantConfigs ->
+                        variantConfigs.first { it.variantName == variant.name }
                     }
                 )
                 params.logLevel.set(

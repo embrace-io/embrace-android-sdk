@@ -107,11 +107,19 @@ class UiLoadTraceEmitter(
                 timestampMs = timestampMs,
                 lifecycleStage = LifecycleStage.RESUME
             )
-        } else if (traceCompleteTrigger(instanceId) == TraceCompleteTrigger.RESUME) {
-            endTrace(
-                instanceId = instanceId,
-                timestampMs = timestampMs,
-            )
+        } else {
+            if (traceCompleteTrigger(instanceId) == TraceCompleteTrigger.RESUME) {
+                endTrace(
+                    instanceId = instanceId,
+                    timestampMs = timestampMs,
+                )
+            } else if (!hasRenderEvent && traceCompleteTrigger(instanceId) == TraceCompleteTrigger.MANUAL) {
+                startChildSpan(
+                    instanceId = instanceId,
+                    timestampMs = timestampMs,
+                    lifecycleStage = LifecycleStage.READY
+                )
+            }
         }
     }
 
@@ -122,10 +130,17 @@ class UiLoadTraceEmitter(
             lifecycleStage = LifecycleStage.RESUME
         )
 
-        if (traceCompleteTrigger(instanceId) == TraceCompleteTrigger.RESUME) {
+        val endType = traceCompleteTrigger(instanceId)
+        if (endType == TraceCompleteTrigger.RESUME) {
             endTrace(
                 instanceId = instanceId,
                 timestampMs = timestampMs,
+            )
+        } else if (!hasRenderEvent && endType == TraceCompleteTrigger.MANUAL) {
+            startChildSpan(
+                instanceId = instanceId,
+                timestampMs = timestampMs,
+                lifecycleStage = LifecycleStage.READY
             )
         }
     }
@@ -148,17 +163,35 @@ class UiLoadTraceEmitter(
                 lifecycleStage = LifecycleStage.RENDER
             )
 
-            if (traceCompleteTrigger(instanceId) == TraceCompleteTrigger.RENDER) {
-                endTrace(
-                    instanceId = instanceId,
-                    timestampMs = timestampMs,
-                )
+            val endType = traceCompleteTrigger(instanceId)
+            when (endType) {
+                TraceCompleteTrigger.RENDER -> {
+                    endTrace(
+                        instanceId = instanceId,
+                        timestampMs = timestampMs,
+                    )
+                }
+
+                TraceCompleteTrigger.MANUAL -> {
+                    startChildSpan(
+                        instanceId = instanceId,
+                        timestampMs = timestampMs,
+                        lifecycleStage = LifecycleStage.READY
+                    )
+                }
+
+                else -> {}
             }
         }
     }
 
     override fun complete(instanceId: Int, timestampMs: Long) {
         if (traceCompleteTrigger(instanceId) == TraceCompleteTrigger.MANUAL) {
+            endChildSpan(
+                instanceId = instanceId,
+                timestampMs = timestampMs,
+                lifecycleStage = LifecycleStage.READY
+            )
             endTrace(
                 instanceId = instanceId,
                 timestampMs = timestampMs,

@@ -7,7 +7,8 @@ enum class LifecycleStage(private val typeName: String) {
     CREATE("create"),
     START("start"),
     RESUME("resume"),
-    RENDER("render");
+    RENDER("render"),
+    READY("ready");
 
     fun spanName(componentName: String): String = "$componentName-$typeName"
 }

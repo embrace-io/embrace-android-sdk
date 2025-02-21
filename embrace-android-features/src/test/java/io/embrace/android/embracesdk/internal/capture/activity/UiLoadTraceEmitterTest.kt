@@ -298,10 +298,17 @@ internal class UiLoadTraceEmitterTest {
                 }
             }
 
+            val traceEndTime = trace.endTimeNanos.nanosToMillis()
             if (manualEnd) {
-                assertNotEquals(trace.endTimeNanos.nanosToMillis(), lastEventEndTimeMs)
+                assertEmbraceSpanData(
+                    span = checkNotNull(spanMap["emb-$activityName-ready"]).toNewPayload(),
+                    expectedStartTimeMs = lastEventEndTimeMs,
+                    expectedEndTimeMs = traceEndTime,
+                    expectedParentId = trace.spanId
+                )
+                assertNotEquals(traceEndTime, lastEventEndTimeMs)
             } else {
-                assertEquals(trace.endTimeNanos.nanosToMillis(), lastEventEndTimeMs)
+                assertEquals(traceEndTime, lastEventEndTimeMs)
             }
         }
     }

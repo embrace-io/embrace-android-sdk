@@ -17,6 +17,4 @@ interface ActivityTracker : Application.ActivityLifecycleCallbacks, Closeable {
     val foregroundActivity: Activity?
 
     fun addListener(listener: ActivityLifecycleListener)
-
-    fun addStartupListener(listener: StartupListener)
 }

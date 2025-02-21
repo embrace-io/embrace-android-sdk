@@ -6,13 +6,10 @@ import android.content.res.Configuration
 import android.content.res.Resources
 import android.os.Bundle
 import android.os.Looper
-import io.embrace.android.embracesdk.annotation.StartupActivity
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityLifecycleListener
 import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityLifecycleTracker
-import io.embrace.android.embracesdk.internal.session.lifecycle.StartupListener
-import io.mockk.Called
 import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.mockk
@@ -124,25 +121,6 @@ internal class ActivityLifecycleTrackerTest {
     }
 
     @Test
-    fun `verify on activity resumed for a StartupActivity does not trigger listeners`() {
-        val mockActivityLifecycleListener = mockk<ActivityLifecycleListener>()
-        activityLifecycleTracker.addListener(mockActivityLifecycleListener)
-
-        activityLifecycleTracker.onActivityResumed(TestStartupActivity())
-
-        verify { mockActivityLifecycleListener wasNot Called }
-    }
-
-    @Test
-    fun `verify on activity resumed for a non StartupActivity does trigger listeners`() {
-        val mockStartupListener = mockk<StartupListener>()
-        activityLifecycleTracker.addStartupListener(mockStartupListener)
-        activityLifecycleTracker.onActivityResumed(TestNonStartupActivity())
-
-        verify { mockStartupListener.applicationStartupComplete() }
-    }
-
-    @Test
     fun `verify on activity stopped triggers listeners`() {
         val mockActivity = mockk<Activity>()
         every { mockActivity.localClassName } returns "localClassName"
@@ -192,17 +170,6 @@ internal class ActivityLifecycleTrackerTest {
     }
 
     @Test
-    fun `verify startup listener is added`() {
-        // assert empty list first
-        assertEquals(0, activityLifecycleTracker.startupListeners.size)
-
-        val mockStartupListeners = mockk<StartupListener>()
-        activityLifecycleTracker.addStartupListener(mockStartupListeners)
-
-        assertEquals(1, activityLifecycleTracker.startupListeners.size)
-    }
-
-    @Test
     fun `verify if listener is already present, then it does not add anything`() {
         val mockActivityLifecycleListener = mockk<ActivityLifecycleListener>()
         activityLifecycleTracker.addListener(mockActivityLifecycleListener)
@@ -228,9 +195,7 @@ internal class ActivityLifecycleTrackerTest {
     fun `verify close cleans everything`() {
         // add a listener first, so we then check that listener have been cleared
         val mockActivityLifecycleListener = mockk<ActivityLifecycleListener>()
-        val mockStartupListeners = mockk<StartupListener>()
         activityLifecycleTracker.addListener(mockActivityLifecycleListener)
-        activityLifecycleTracker.addStartupListener(mockStartupListeners)
 
         every { application.unregisterActivityLifecycleCallbacks(activityLifecycleTracker) } returns Unit
 
@@ -238,11 +203,5 @@ internal class ActivityLifecycleTrackerTest {
 
         verify { application.unregisterActivityLifecycleCallbacks(activityLifecycleTracker) }
         assertTrue(activityLifecycleTracker.activityListeners.isEmpty())
-        assertTrue(activityLifecycleTracker.startupListeners.isEmpty())
     }
-
-    @StartupActivity
-    private class TestStartupActivity : Activity()
-
-    private class TestNonStartupActivity : Activity()
 }

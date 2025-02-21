@@ -6,7 +6,6 @@ import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.internal.session.MemoryCleanerListener
 import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityLifecycleListener
 import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateListener
-import io.embrace.android.embracesdk.internal.session.lifecycle.StartupListener
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -27,7 +26,6 @@ internal class ServiceRegistryTest {
         assertEquals(expected, registry.processStateListeners)
         assertEquals(expected, registry.activityLifecycleListeners)
         assertEquals(expected, registry.memoryCleanerListeners)
-        assertEquals(expected, registry.startupListener)
     }
 
     @Test
@@ -43,9 +41,7 @@ internal class ServiceRegistryTest {
 
         val activityLifecycleTracker = FakeActivityTracker()
         registry.registerActivityLifecycleListeners(activityLifecycleTracker)
-        registry.registerStartupListener(activityLifecycleTracker)
         assertEquals(expected, activityLifecycleTracker.listeners)
-        assertEquals(expected, activityLifecycleTracker.startupListeners)
 
         val memoryCleanerService = FakeMemoryCleanerService()
         registry.registerMemoryCleanerListeners(memoryCleanerService)
@@ -67,8 +63,7 @@ internal class ServiceRegistryTest {
         Closeable,
         MemoryCleanerListener,
         ProcessStateListener,
-        ActivityLifecycleListener,
-        StartupListener {
+        ActivityLifecycleListener {
 
         var closed = false
 

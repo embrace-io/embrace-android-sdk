@@ -1,6 +1,8 @@
 package io.embrace.android.embracesdk.annotation
 
-@Deprecated("Does nothing")
+/**
+ * Ignore for the purposes of tracking App startup
+ */
 @Target(AnnotationTarget.CLASS)
 @Retention(AnnotationRetention.RUNTIME)
-public annotation class StartupActivity
+public annotation class IgnoreForStartup

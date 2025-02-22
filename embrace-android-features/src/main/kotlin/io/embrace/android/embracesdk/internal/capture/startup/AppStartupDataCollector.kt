@@ -21,6 +21,11 @@ interface AppStartupDataCollector {
     fun applicationInitEnd(timestampMs: Long? = null)
 
     /**
+     * Set the time the first activity was detected to have started, irrespective of whether it should be used for startup
+     */
+    fun firstActivityInit(timestampMs: Long? = null)
+
+    /**
      * Set the time just prior to the creation of the Activity whose rendering will denote the end of the startup workflow
      */
     fun startupActivityPreCreated(timestampMs: Long? = null)

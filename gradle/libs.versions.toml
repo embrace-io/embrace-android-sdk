@@ -2,7 +2,6 @@
 
 # Some dependencies are pinned to old versions because of an unpatched AGP issue in 7.x: https://issuetracker.google.com/issues/377760847
 binaryCompatibilityValidator = "0.17.0"
-detektGradlePlugin = "1.23.7"
 agp = "8.8.1"
 junit = "4.13.2"
 kotlinExposed = "1.8.22"
@@ -32,7 +31,7 @@ appcompat = "1.7.0"
 asmUtil = "9.7"
 gradleTestKit = "8.11.1"
 zstdJni = "1.5.7-1"
-detekt = "1.23.7"
+detekt = "1.23.8"
 buildconfig = "5.5.1"
 agp-api = "7.4.2"
 apktoolLib = "2.11.0"
@@ -40,7 +39,7 @@ bundletool = "1.18.0"
 
 [libraries]
 binary-compatibility-validator = { module = "org.jetbrains.kotlinx:binary-compatibility-validator", version.ref = "binaryCompatibilityValidator" }
-detekt-gradle-plugin = { module = "io.gitlab.arturbosch.detekt:detekt-gradle-plugin", version.ref = "detektGradlePlugin" }
+detekt-gradle-plugin = { module = "io.gitlab.arturbosch.detekt:detekt-gradle-plugin", version.ref = "detekt" }
 agp = { module = "com.android.tools.build:gradle", version.ref = "agp" }
 kotlin-gradle-plugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlinGradlePlugin" }
 lifecycle-runtime = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycle" }
@@ -74,7 +73,7 @@ androidx-test-runner = { module = "androidx.test:runner", version.ref = "android
 androidx-test-orchestrator = { module = "androidx.test:orchestrator", version.ref = "androidxOrchestrator" }
 mockwebserver = { module = "com.squareup.okhttp3:mockwebserver", version.ref = "mockwebserver" }
 kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "kotlinExposed" }
-detekt-formatting = { module = "io.gitlab.arturbosch.detekt:detekt-formatting", version.ref = "detektGradlePlugin" }
+detekt-formatting = { module = "io.gitlab.arturbosch.detekt:detekt-formatting", version.ref = "detekt" }
 appcompat = { module = "androidx.appcompat:appcompat", version.ref = "appcompat" }
 asm-util = { module = "org.ow2.asm:asm-util", version.ref = "asmUtil" }
 gradle-test-kit = { module = "dev.gradleplugins:gradle-test-kit", version.ref = "gradleTestKit" }

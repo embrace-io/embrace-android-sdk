@@ -2,7 +2,7 @@
 
 # Some dependencies are pinned to old versions because of an unpatched AGP issue in 7.x: https://issuetracker.google.com/issues/377760847
 binaryCompatibilityValidator = "0.17.0"
-detektGradlePlugin = "1.23.7"
+detektGradlePlugin = "1.23.8"
 agp = "8.8.1"
 junit = "4.13.2"
 kotlinExposed = "1.8.22"

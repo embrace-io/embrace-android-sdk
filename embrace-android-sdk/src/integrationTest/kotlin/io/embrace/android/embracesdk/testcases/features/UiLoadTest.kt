@@ -24,6 +24,7 @@ import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterfac
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface.Companion.STARTUP_BACKGROUND_TIME
 import io.opentelemetry.api.trace.SpanId
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -148,6 +149,10 @@ internal class UiLoadTest {
                         expectedParentId = SpanId.getInvalid(),
                         expectedCustomAttributes = mapOf("manual-end" to "true")
                     )
+
+                    assertNotNull(findSpansByName("emb-$MANUAL_STOP_ACTIVITY_NAME-create").single())
+                    assertNotNull(findSpansByName("emb-$MANUAL_STOP_ACTIVITY_NAME-start").single())
+                    assertNotNull(findSpansByName("emb-$MANUAL_STOP_ACTIVITY_NAME-ready").single())
 
                     assertEmbraceSpanData(
                         span = findSpansByName("loading-time").single(),

@@ -70,6 +70,8 @@ interface PersistableEmbraceSpan : EmbraceSpan, ImplicitContextKeyed {
      */
     fun setStatus(statusCode: StatusCode, description: String = "")
 
+    fun getStartTimeMs(): Long?
+
     override fun storeInContext(context: Context): Context = context.with(embraceSpanContextKey, this)
 }
 

@@ -46,9 +46,10 @@ class StartupTracker(
         if (activity.useAsStartupActivity()) {
             appStartupDataCollector.startupActivityInitStart()
             val application = activity.application
+            val activityName = activity.localClassName
             val callback = {
                 appStartupDataCollector.firstFrameRendered(
-                    activityName = activity.localClassName,
+                    activityName = activityName,
                     collectionCompleteCallback = { startupComplete(application) }
                 )
             }

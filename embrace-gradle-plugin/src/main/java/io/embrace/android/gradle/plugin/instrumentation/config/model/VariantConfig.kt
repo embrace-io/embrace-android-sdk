@@ -11,7 +11,7 @@ import java.io.Serializable
  */
 @JsonClass(generateAdapter = true)
 data class VariantConfig(
-    val variantName: String? = null,
+    val variantName: String,
     val variantVersion: String? = null,
     val buildId: String? = null,
     val buildType: String? = null,

@@ -26,7 +26,7 @@ private const val GENERATED_RESOURCE_PATH = "generated/embrace/res"
 class NdkUploadTaskRegistration(
     private val behavior: PluginBehavior,
     private val unitySymbolsDir: Provider<UnitySymbolsDir>,
-    private val projectType: Provider<ProjectType>
+    private val projectType: Provider<ProjectType>,
 ) : EmbraceTaskRegistration {
 
     override fun register(params: RegistrationParams) {
@@ -38,8 +38,8 @@ class NdkUploadTaskRegistration(
      * build process.
      */
     fun RegistrationParams.execute(): TaskProvider<NdkUploadTask>? {
-        val variantExtension = extension.variants.getByName(data.name)
-        val embraceConfig = variantExtension.config.orNull?.embraceConfig
+        val variantConfig = variantConfigurationsListProperty.get().first { it.variantName == variant.name }
+        val embraceConfig = variantConfig.embraceConfig
 
         if (embraceConfig?.ndkEnabled == false) return null
 
@@ -78,9 +78,7 @@ class NdkUploadTaskRegistration(
                 }
             )
             task.ndkEnabled.set(
-                variantExtension.config.map {
-                    it.embraceConfig?.ndkEnabled ?: true
-                }
+                embraceConfig?.ndkEnabled ?: true
             )
             task.deobfuscatedFilesDirPath.set(
                 project.layout.buildDirectory.dir(
@@ -126,7 +124,7 @@ class NdkUploadTaskRegistration(
 
         val taskContainer = project.tasks
         ndkUploadTaskProvider.configure { ndkUploadTask: NdkUploadTask ->
-            ndkUploadTask.onlyIf { variantExtension.config.orNull?.embraceConfig?.ndkEnabled ?: true }
+            ndkUploadTask.onlyIf { embraceConfig?.ndkEnabled ?: true }
             ndkUploadTask.ndkType.set(
                 projectType.map {
                     when (it) {
@@ -135,7 +133,7 @@ class NdkUploadTaskRegistration(
                             if (behavior.customSymbolsDirectory.isNullOrEmpty() ||
                                 taskContainer.isTaskRegistered(
                                     "externalNativeBuild",
-                                    variantExtension.name
+                                    variantConfig.variantName
                                 )
                             ) {
                                 NdkType.NATIVE
@@ -154,13 +152,13 @@ class NdkUploadTaskRegistration(
                 override fun call(): Any {
                     return listOfNotNull(
                         project.tryGetTaskProvider(
-                            "merge${variantExtension.name.capitalizedString()}JniLibFolders"
+                            "merge${variantConfig.variantName.capitalizedString()}JniLibFolders"
                         ),
                         project.tryGetTaskProvider(
-                            "transformNativeLibsWithMergeJniLibsFor${variantExtension.name.capitalizedString()}"
+                            "transformNativeLibsWithMergeJniLibsFor${variantConfig.variantName.capitalizedString()}"
                         ),
                         project.tryGetTaskProvider(
-                            "merge${variantExtension.name.capitalizedString()}NativeLibs"
+                            "merge${variantConfig.variantName.capitalizedString()}NativeLibs"
                         )
                     )
                 }
@@ -177,7 +175,7 @@ class NdkUploadTaskRegistration(
 
     private fun getMappingFileFolder(
         buildTypeName: String?,
-        flavorName: String?
+        flavorName: String?,
     ) = if (flavorName.isNullOrEmpty()) {
         buildTypeName ?: ""
     } else {

@@ -73,7 +73,7 @@ internal class AppStartupTraceTest {
             otelExportAssertion = {
                 val spans = awaitSpansWithType(7, EmbType.Performance.Default).associateBy { it.name }
                 assertTrue(spans.isNotEmpty())
-                with(checkNotNull(spans["emb-cold-time-to-initial-display"])) {
+                with(checkNotNull(spans["emb-app-startup-cold"])) {
                     assertEquals("yes", attributes.toNewPayload().findAttributeValue("custom-attribute"))
                 }
                 assertTrue(spans.containsKey("emb-embrace-init"))

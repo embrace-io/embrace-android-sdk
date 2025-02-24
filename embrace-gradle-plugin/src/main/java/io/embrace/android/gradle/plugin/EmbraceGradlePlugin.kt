@@ -46,7 +46,7 @@ class EmbraceGradlePlugin : Plugin<Project> {
 
     private fun validateMinGradleVersion() {
         if (!isAtLeast(GradleVersion.MIN_VERSION)) {
-            error("Embrace Gradle Plugin requires Gradle version ${GradleVersion.MIN_VERSION} or newer")
+            error("Embrace requires Gradle version ${GradleVersion.MIN_VERSION} or higher. Please update your Gradle version.")
         }
     }
 }

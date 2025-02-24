@@ -44,7 +44,10 @@ class NdkUploadTaskRegistrationTest {
         }
     }
 
-    private fun createExtension(project: Project, ndkEnabled: Boolean, projectType: ProjectType): EmbraceExtensionInternal {
+    private fun createExtension(
+        project: Project,
+        ndkEnabled: Boolean
+    ): EmbraceExtensionInternal {
         val extension = project.extensions.create(
             EXTENSION_EMBRACE_INTERNAL,
             EmbraceExtensionInternal::class.java,
@@ -69,8 +72,6 @@ class NdkUploadTaskRegistrationTest {
                     )
                 )
             )
-            newVariant.projectType.set(projectType)
-            newVariant.unitySymbolsDir.set(unitySymbolsDir)
         }
 
         return extension
@@ -90,9 +91,12 @@ class NdkUploadTaskRegistrationTest {
         }
         val project = ProjectBuilder.builder().build()
 
-        val extension = createExtension(project, false, ProjectType.UNITY)
+        val extension = createExtension(project, false)
+        val unitySymbolsDirProvider = project.provider { unitySymbolsDir }
+        val projectTypeProvider = project.provider { ProjectType.UNITY }
 
-        val registration = NdkUploadTaskRegistration(mockk(relaxed = true))
+        val registration =
+            NdkUploadTaskRegistration(mockk(relaxed = true), unitySymbolsDirProvider, projectTypeProvider)
         val params = RegistrationParams(
             project,
             mockk(relaxed = true),
@@ -121,9 +125,12 @@ class NdkUploadTaskRegistrationTest {
             every { name } returns "variantName"
         }
 
-        val extension = createExtension(project, true, ProjectType.NATIVE)
+        val extension = createExtension(project, true)
+        val unitySymbolsDirProvider = project.provider { unitySymbolsDir }
+        val projectTypeProvider = project.provider { ProjectType.NATIVE }
 
-        val registration = NdkUploadTaskRegistration(mockk(relaxed = true))
+        val registration =
+            NdkUploadTaskRegistration(mockk(relaxed = true), unitySymbolsDirProvider, projectTypeProvider)
         val params = RegistrationParams(
             project,
             mockk(relaxed = true),
@@ -163,11 +170,15 @@ class NdkUploadTaskRegistrationTest {
         val transformNativeLibsTaskName =
             "transformNativeLibsWithMergeJniLibsFor${variant.name.capitalizedString()}"
 
-        val extension = createExtension(project, true, ProjectType.UNITY)
+        val extension = createExtension(project, true)
 
         registerTestTask(project, transformNativeLibsTaskName)
 
-        val registration = NdkUploadTaskRegistration(mockk(relaxed = true))
+        val unitySymbolsDirProvider = project.provider { unitySymbolsDir }
+        val projectTypeProvider = project.provider { ProjectType.UNITY }
+
+        val registration =
+            NdkUploadTaskRegistration(mockk(relaxed = true), unitySymbolsDirProvider, projectTypeProvider)
         val params = RegistrationParams(
             project,
             mockk(relaxed = true),
@@ -216,9 +227,13 @@ class NdkUploadTaskRegistrationTest {
             "merge${variant.name.capitalizedString()}NativeLibs"
 
         registerTestTask(project, mergeNativeLibs)
-        val extension = createExtension(project, true, ProjectType.UNITY)
+        val extension = createExtension(project, true)
 
-        val registration = NdkUploadTaskRegistration(mockk(relaxed = true))
+        val unitySymbolsDirProvider = project.provider { unitySymbolsDir }
+        val projectTypeProvider = project.provider { ProjectType.UNITY }
+
+        val registration =
+            NdkUploadTaskRegistration(mockk(relaxed = true), unitySymbolsDirProvider, projectTypeProvider)
         val params = RegistrationParams(
             project,
             mockk(relaxed = true),
@@ -257,9 +272,13 @@ class NdkUploadTaskRegistrationTest {
         val variant = mockk<AndroidCompactedVariantData>(relaxed = true) {
             every { name } returns "variantName"
         }
-        val extension = createExtension(project, true, ProjectType.NATIVE)
+        val extension = createExtension(project, true)
 
-        val registration = NdkUploadTaskRegistration(mockk(relaxed = true))
+        val unitySymbolsDirProvider = project.provider { unitySymbolsDir }
+        val projectTypeProvider = project.provider { ProjectType.NATIVE }
+
+        val registration =
+            NdkUploadTaskRegistration(mockk(relaxed = true), unitySymbolsDirProvider, projectTypeProvider)
         val params = RegistrationParams(
             project,
             mockk(relaxed = true),
@@ -283,9 +302,13 @@ class NdkUploadTaskRegistrationTest {
             every { name } returns "variantName"
         }
 
-        val extension = createExtension(project, true, ProjectType.NATIVE)
+        val extension = createExtension(project, true)
 
-        val registration = NdkUploadTaskRegistration(mockk(relaxed = true))
+        val unitySymbolsDirProvider = project.provider { unitySymbolsDir }
+        val projectTypeProvider = project.provider { ProjectType.NATIVE }
+
+        val registration =
+            NdkUploadTaskRegistration(mockk(relaxed = true), unitySymbolsDirProvider, projectTypeProvider)
         val params = RegistrationParams(
             project,
             mockk(relaxed = true),
@@ -318,9 +341,13 @@ class NdkUploadTaskRegistrationTest {
             every { name } returns "variantName"
         }
 
-        val extension = createExtension(project, true, ProjectType.UNITY)
+        val extension = createExtension(project, true)
 
-        val registration = NdkUploadTaskRegistration(mockk(relaxed = true))
+        val unitySymbolsDirProvider = project.provider { unitySymbolsDir }
+        val projectTypeProvider = project.provider { ProjectType.UNITY }
+
+        val registration =
+            NdkUploadTaskRegistration(mockk(relaxed = true), unitySymbolsDirProvider, projectTypeProvider)
         val params = RegistrationParams(
             project,
             mockk(relaxed = true),

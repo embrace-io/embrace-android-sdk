@@ -12,7 +12,6 @@ import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getAllSemanticsNodes
 import androidx.compose.ui.semantics.getOrNull
 import io.embrace.android.embracesdk.internal.EmbraceInternalApi
-import java.util.concurrent.ScheduledExecutorService
 
 private const val UNKNOWN_ELEMENT_NAME = "Unlabeled Compose element"
 
@@ -23,18 +22,16 @@ internal class EmbraceNodeIterator {
      *  we collect the compose tree and iterate over it to find the clicked view,
      *  by comparing with the received position (x,y)
      *  */
-    fun findClickedElement(root: View, x: Float, y: Float, backgroundWorker: ScheduledExecutorService) {
+    fun findClickedElement(root: View, x: Float, y: Float) {
         val semanticsOwner = if (root is AndroidComposeView) root.semanticsOwner else return
         val semanticsNodes = semanticsOwner.getAllSemanticsNodes(true)
 
-        backgroundWorker.submit {
-            findClickedElement(semanticsNodes, x, y)?.let {
-                val clickedView = ClickedView(it, x, y)
-                EmbraceInternalApi.getInstance().internalInterface.logComposeTap(
-                    Pair(clickedView.x, clickedView.y),
-                    clickedView.tag
-                )
-            }
+        findClickedElement(semanticsNodes, x, y)?.let {
+            val clickedView = ClickedView(it, x, y)
+            EmbraceInternalApi.getInstance().internalInterface.logComposeTap(
+                Pair(clickedView.x, clickedView.y),
+                clickedView.tag
+            )
         }
     }
 

@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.compose.internal
 
 import android.view.View
-import java.util.concurrent.ScheduledExecutorService
 
 /**
  * Given a view and a position ( x, y),
@@ -13,6 +12,5 @@ internal interface EmbraceClickedTargetIterator {
         decorView: View,
         x: Float,
         y: Float,
-        onSingleTapUpBackgroundWorker: ScheduledExecutorService,
     )
 }

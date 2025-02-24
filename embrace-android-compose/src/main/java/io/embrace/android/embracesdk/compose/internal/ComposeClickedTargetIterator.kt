@@ -5,7 +5,6 @@ import android.view.ViewGroup
 import androidx.compose.ui.platform.ComposeView
 import java.util.LinkedList
 import java.util.Queue
-import java.util.concurrent.ScheduledExecutorService
 
 internal class ComposeClickedTargetIterator : EmbraceClickedTargetIterator {
 
@@ -16,7 +15,6 @@ internal class ComposeClickedTargetIterator : EmbraceClickedTargetIterator {
         decorView: View,
         x: Float,
         y: Float,
-        onSingleTapUpBackgroundWorker: ScheduledExecutorService,
     ) {
         try {
             val queue: Queue<View> = LinkedList()
@@ -32,7 +30,7 @@ internal class ComposeClickedTargetIterator : EmbraceClickedTargetIterator {
                     }
 
                     if (it.parent is ComposeView) { // this validation is to reduce the locate method execution to the proper view
-                        nodeLocator.findClickedElement(it, x, y, onSingleTapUpBackgroundWorker)
+                        nodeLocator.findClickedElement(it, x, y)
                     }
                 }
             }

@@ -9,7 +9,7 @@ import io.embrace.android.gradle.plugin.config.ProjectTypeVerifier
 import io.embrace.android.gradle.plugin.config.UnitySymbolsDir
 import io.embrace.android.gradle.plugin.config.variant.EmbraceVariantConfigurationBuilder
 import io.embrace.android.gradle.plugin.dependency.installDependenciesForVariant
-import io.embrace.android.gradle.plugin.extension.EmbraceExtensionInternalSource
+import io.embrace.android.gradle.plugin.gradle.GradleCompatibilityHelper
 import io.embrace.android.gradle.plugin.instrumentation.config.model.VariantConfig
 import io.embrace.android.gradle.plugin.model.AndroidCompactedVariantData
 import io.embrace.android.gradle.plugin.network.NetworkService
@@ -47,12 +47,7 @@ class TaskRegistrar(
     private fun onVariant(variant: AndroidCompactedVariantData, ref: Variant) {
         project.installDependenciesForVariant(variant.name, behavior)
 
-        EmbraceExtensionInternalSource().setupExtension(
-            project,
-            variant,
-            embraceVariantConfigurationBuilder,
-            variantConfigurationsListProperty
-        )
+        setupVariantConfigurationListProperty(variant, variantConfigurationsListProperty)
 
         if (behavior.isPluginDisabledForVariant(variant.name) || !shouldRegisterUploadTasks(variant, variantConfigurationsListProperty)) {
             return
@@ -118,5 +113,20 @@ class TaskRegistrar(
             agpWrapper,
             behavior,
         )
+    }
+
+    private fun setupVariantConfigurationListProperty(
+        androidCompactedVariantData: AndroidCompactedVariantData,
+        variantConfigurationsListProperty: ListProperty<VariantConfig>,
+    ) {
+        val embraceVariantConfiguration = embraceVariantConfigurationBuilder.buildVariantConfiguration(androidCompactedVariantData)
+        val fullVariantConfiguration = embraceVariantConfiguration.map {
+            VariantConfig.from(it, androidCompactedVariantData)
+        }.orElse(
+            VariantConfig.from(null, androidCompactedVariantData)
+        )
+
+        // let's add configuration for current variant to our property
+        GradleCompatibilityHelper.add(variantConfigurationsListProperty, fullVariantConfiguration)
     }
 }

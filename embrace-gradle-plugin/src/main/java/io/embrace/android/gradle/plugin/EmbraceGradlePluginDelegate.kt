@@ -7,8 +7,6 @@ import io.embrace.android.gradle.plugin.agp.AgpWrapperImpl
 import io.embrace.android.gradle.plugin.buildreporter.BuildTelemetryService
 import io.embrace.android.gradle.plugin.config.PluginBehaviorImpl
 import io.embrace.android.gradle.plugin.config.variant.EmbraceVariantConfigurationBuilder
-import io.embrace.android.gradle.plugin.extension.EXTENSION_EMBRACE_INTERNAL
-import io.embrace.android.gradle.plugin.extension.EmbraceExtensionInternal
 import io.embrace.android.gradle.plugin.gradle.getProperty
 import io.embrace.android.gradle.plugin.instrumentation.config.model.VariantConfig
 import io.embrace.android.gradle.plugin.instrumentation.registerAsmTasks
@@ -34,12 +32,6 @@ class EmbraceGradlePluginDelegate {
         Logger.setPluginLogLevel(behavior.logLevel)
         val agpExtension = AgpWrapperImpl(project)
         val networkService = OkHttpNetworkService(behavior.baseUrl)
-
-        project.extensions.create(
-            EXTENSION_EMBRACE_INTERNAL,
-            EmbraceExtensionInternal::class.java,
-            project.objects
-        )
 
         BuildTelemetryService.register(
             project,

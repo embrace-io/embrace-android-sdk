@@ -1,6 +1,6 @@
 package io.embrace.android.gradle.plugin.buildreporter
 
-import io.embrace.android.gradle.plugin.agp.AgpWrapperImpl
+import io.embrace.android.gradle.plugin.agp.AgpWrapper
 import io.embrace.android.gradle.plugin.config.PluginBehavior
 import io.embrace.android.gradle.plugin.gradle.GradleVersion
 import io.embrace.android.gradle.plugin.gradle.GradleVersion.Companion.isAtLeast
@@ -27,11 +27,12 @@ class BuildTelemetryCollector {
         behavior: PluginBehavior,
         providerFactory: ProviderFactory,
         variantConfigs: ListProperty<VariantConfig>,
+        agpWrapper: AgpWrapper,
     ): Provider<BuildTelemetryRequest> {
         // first, get telemetry that is ok to capture during the configuration phase
         val configPhaseTelemetry = with(project) {
             BuildTelemetryRequest(
-                agpVersion = AgpWrapperImpl(this).version.toString(),
+                agpVersion = agpWrapper.version.toString(),
                 gradleVersion = getGradleVersion(this),
                 isBuildCacheEnabled = isBuildCacheEnabled(),
                 isConfigCacheEnabled = isConfigurationCacheEnabled(),

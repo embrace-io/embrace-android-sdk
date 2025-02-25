@@ -1,5 +1,6 @@
 package io.embrace.android.gradle.plugin.buildreporter
 
+import io.embrace.android.gradle.plugin.agp.AgpWrapper
 import io.embrace.android.gradle.plugin.config.PluginBehavior
 import io.embrace.android.gradle.plugin.instrumentation.config.model.VariantConfig
 import io.embrace.android.gradle.plugin.network.OkHttpNetworkService
@@ -42,7 +43,8 @@ abstract class BuildTelemetryService :
         fun register(
             project: Project,
             variantConfigurations: ListProperty<VariantConfig>,
-            behavior: PluginBehavior
+            behavior: PluginBehavior,
+            agpWrapper: AgpWrapper,
         ): Provider<BuildTelemetryService> {
             if (behavior.isTelemetryDisabled) {
                 return project.provider { null }
@@ -52,13 +54,14 @@ abstract class BuildTelemetryService :
                     .registerIfAbsent(
                         BuildTelemetryService::class.java.name,
                         BuildTelemetryService::class.java
-                    ) { serviceSpec: BuildServiceSpec<BuildTelemetryService.Params> ->
-                        serviceSpec.parameters { params: BuildTelemetryService.Params ->
+                    ) { serviceSpec: BuildServiceSpec<Params> ->
+                        serviceSpec.parameters { params: Params ->
                             val telemetryProvider = BuildTelemetryCollector().collect(
                                 project,
                                 behavior,
                                 project.providers,
                                 variantConfigurations,
+                                agpWrapper
                             )
                             params.request.set(telemetryProvider)
                             params.baseUrl.set(behavior.baseUrl)

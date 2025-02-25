@@ -30,13 +30,14 @@ class EmbraceGradlePluginDelegate {
     ) {
         val behavior = PluginBehaviorImpl(project, extension)
         Logger.setPluginLogLevel(behavior.logLevel)
-        val agpExtension = AgpWrapperImpl(project)
+        val agpWrapper = AgpWrapperImpl(project)
         val networkService = OkHttpNetworkService(behavior.baseUrl)
 
         BuildTelemetryService.register(
             project,
             variantConfigurationsListProperty,
             behavior,
+            agpWrapper
         )
 
         // bytecode instrumentation must be registered before project evaluation
@@ -54,12 +55,13 @@ class EmbraceGradlePluginDelegate {
             embraceVariantConfigurationBuilder,
             variantConfigurationsListProperty,
             networkService,
+            agpWrapper
         )
 
         taskRegistrar.registerTasks()
 
         project.afterEvaluate { evaluatedProject ->
-            onProjectEvaluated(evaluatedProject, agpExtension)
+            onProjectEvaluated(evaluatedProject, agpWrapper)
         }
     }
 

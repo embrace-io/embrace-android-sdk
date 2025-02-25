@@ -30,7 +30,7 @@ class TaskRegistrar(
     private val embraceVariantConfigurationBuilder: EmbraceVariantConfigurationBuilder,
     private val variantConfigurationsListProperty: ListProperty<VariantConfig>,
     private val networkService: NetworkService,
-    private val agpWrapper: AgpWrapper
+    private val agpWrapper: AgpWrapper,
 ) {
 
     /**
@@ -72,7 +72,7 @@ class TaskRegistrar(
         }
         val variantConfig = variantConfigurationsListProperty.get().first { it.variantName == variant.name }
         val symbolsDir = getSymbolsDir(variantConfig)
-        val projectType = getProjectType(symbolsDir, agpWrapper)
+        val projectType = getProjectType(symbolsDir, agpWrapper, variantConfig.variantName, project)
         NdkUploadTaskRegistration(behavior, symbolsDir, projectType).register(params)
         if (behavior.isIl2CppMappingFilesUploadEnabled) {
             Il2CppUploadTaskRegistration().register(params)
@@ -107,11 +107,18 @@ class TaskRegistrar(
         )
     }
 
-    private fun getProjectType(symbolsDir: Provider<UnitySymbolsDir>, agpWrapper: AgpWrapper) = project.provider {
+    private fun getProjectType(
+        symbolsDir: Provider<UnitySymbolsDir>,
+        agpWrapper: AgpWrapper,
+        variantName: String,
+        project: Project,
+    ) = this.project.provider {
         ProjectTypeVerifier.getProjectType(
             symbolsDir,
             agpWrapper,
             behavior,
+            variantName,
+            project
         )
     }
 

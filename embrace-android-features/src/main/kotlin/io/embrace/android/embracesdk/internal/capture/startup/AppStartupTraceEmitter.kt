@@ -16,7 +16,6 @@ import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.sdk.common.Clock
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
-import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 
 /**
@@ -51,6 +50,8 @@ internal class AppStartupTraceEmitter(
     private val processCreatedMs: Long?
     private val additionalTrackedIntervals = ConcurrentLinkedQueue<TrackedInterval>()
     private val customAttributes: MutableMap<String, String> = ConcurrentHashMap()
+    private val endWithFrameDraw: Boolean = startupHasRenderEvent(versionChecker)
+    private val appStartupRootSpan = AtomicReference<PersistableEmbraceSpan?>(null)
 
     init {
         val timestampAtDeviceStart = nowMs() - clock.nanoTime().nanosToMillis()
@@ -97,12 +98,10 @@ internal class AppStartupTraceEmitter(
     private var firstFrameRenderedMs: Long? = null
 
     @Volatile
-    private var recordColdStart = true
+    private var dataCollectionComplete = false
 
-    private val appStartupRootSpan = AtomicReference<PersistableEmbraceSpan?>(null)
-    private val startupRecorded = AtomicBoolean(false)
-    private val dataCollectionComplete = AtomicBoolean(false)
-    private val endWithFrameDraw: Boolean = startupHasRenderEvent(versionChecker)
+    @Volatile
+    private var recordColdStart = true
 
     override fun applicationInitStart(timestampMs: Long?) {
         applicationInitStartMs = timestampMs ?: nowMs()
@@ -202,22 +201,18 @@ internal class AppStartupTraceEmitter(
      * Called when app startup is considered complete, i.e. the data can be used and any additional updates can be ignored
      */
     private fun dataCollectionComplete(callback: (() -> Unit)?) {
-        if (!dataCollectionComplete.get()) {
-            synchronized(dataCollectionComplete) {
-                if (!dataCollectionComplete.get()) {
-                    backgroundWorker.submit {
-                        recordStartup()
-                        if (!startupRecorded.get()) {
-                            logger.trackInternalError(
-                                type = InternalErrorType.APP_LAUNCH_TRACE_FAIL,
-                                throwable = IllegalStateException("App startup trace recording attempted but did not succeed")
-                            )
-                        }
-                    }
-                    callback?.invoke()
-                    dataCollectionComplete.set(true)
+        if (!dataCollectionComplete) {
+            backgroundWorker.submit {
+                recordStartup()
+                if (appStartupRootSpan.get()?.isRecording != false) {
+                    logger.trackInternalError(
+                        type = InternalErrorType.APP_LAUNCH_TRACE_FAIL,
+                        throwable = IllegalStateException("App startup trace recording attempted but did not succeed")
+                    )
                 }
             }
+            callback?.invoke()
+            dataCollectionComplete = true
         }
     }
 
@@ -296,7 +291,6 @@ internal class AppStartupTraceEmitter(
         } while (additionalTrackedIntervals.isNotEmpty())
     }
 
-    @Suppress("CyclomaticComplexMethod", "ComplexMethod")
     private fun recordTtid(
         applicationInitEndMs: Long?,
         sdkInitStartMs: Long?,
@@ -305,69 +299,63 @@ internal class AppStartupTraceEmitter(
         activityInitStartMs: Long?,
         activityInitEndMs: Long?,
         traceEndTimeMs: Long,
-    ): EmbraceSpan? {
-        return if (!startupRecorded.get()) {
-            appStartupRootSpan.get()?.apply {
-                addTraceMetadata()
+    ) {
+        appStartupRootSpan.get()?.takeIf { it.isRecording }?.apply {
+            addTraceMetadata()
 
-                if (stop(endTimeMs = traceEndTimeMs)) {
-                    startupRecorded.set(true)
-                }
+            stop(endTimeMs = traceEndTimeMs)
 
-                getStartTimeMs()?.let { traceStartTimeMs ->
-                    if (applicationInitEndMs != null) {
-                        spanService.recordCompletedSpan(
-                            name = "process-init",
-                            parent = this,
-                            startTimeMs = traceStartTimeMs,
-                            endTimeMs = applicationInitEndMs,
-                        )
-                    }
-                }
-
-                if (sdkInitStartMs != null && sdkInitEndMs != null) {
+            getStartTimeMs()?.let { traceStartTimeMs ->
+                if (applicationInitEndMs != null) {
                     spanService.recordCompletedSpan(
-                        name = "embrace-init",
+                        name = "process-init",
                         parent = this,
-                        startTimeMs = sdkInitStartMs,
-                        endTimeMs = sdkInitEndMs,
-                    )
-                }
-
-                val lastEventBeforeActivityInit = applicationInitEndMs ?: sdkInitEndMs
-                if (lastEventBeforeActivityInit != null && firstActivityInitMs != null) {
-                    spanService.recordCompletedSpan(
-                        name = "activity-init-gap",
-                        parent = this,
-                        startTimeMs = lastEventBeforeActivityInit,
-                        endTimeMs = firstActivityInitMs,
-                    )
-                }
-
-                if (activityInitStartMs != null && activityInitEndMs != null) {
-                    spanService.recordCompletedSpan(
-                        name = "activity-create",
-                        parent = this,
-                        startTimeMs = activityInitStartMs,
-                        endTimeMs = activityInitEndMs,
-                    )
-                }
-                if (activityInitEndMs != null) {
-                    val uiLoadSpanName = if (endWithFrameDraw) {
-                        "first-frame-render"
-                    } else {
-                        "activity-resume"
-                    }
-                    spanService.recordCompletedSpan(
-                        name = uiLoadSpanName,
-                        parent = this,
-                        startTimeMs = activityInitEndMs,
-                        endTimeMs = traceEndTimeMs,
+                        startTimeMs = traceStartTimeMs,
+                        endTimeMs = applicationInitEndMs,
                     )
                 }
             }
-        } else {
-            null
+
+            if (sdkInitStartMs != null && sdkInitEndMs != null) {
+                spanService.recordCompletedSpan(
+                    name = "embrace-init",
+                    parent = this,
+                    startTimeMs = sdkInitStartMs,
+                    endTimeMs = sdkInitEndMs,
+                )
+            }
+
+            val lastEventBeforeActivityInit = applicationInitEndMs ?: sdkInitEndMs
+            if (lastEventBeforeActivityInit != null && firstActivityInitMs != null) {
+                spanService.recordCompletedSpan(
+                    name = "activity-init-gap",
+                    parent = this,
+                    startTimeMs = lastEventBeforeActivityInit,
+                    endTimeMs = firstActivityInitMs,
+                )
+            }
+
+            if (activityInitStartMs != null && activityInitEndMs != null) {
+                spanService.recordCompletedSpan(
+                    name = "activity-create",
+                    parent = this,
+                    startTimeMs = activityInitStartMs,
+                    endTimeMs = activityInitEndMs,
+                )
+            }
+            if (activityInitEndMs != null) {
+                val uiLoadSpanName = if (endWithFrameDraw) {
+                    "first-frame-render"
+                } else {
+                    "activity-resume"
+                }
+                spanService.recordCompletedSpan(
+                    name = uiLoadSpanName,
+                    parent = this,
+                    startTimeMs = activityInitEndMs,
+                    endTimeMs = traceEndTimeMs,
+                )
+            }
         }
     }
 

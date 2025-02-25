@@ -3,7 +3,6 @@ package io.embrace.android.gradle.plugin.tasks.ndk
 import io.embrace.android.gradle.plugin.config.PluginBehavior
 import io.embrace.android.gradle.plugin.config.ProjectType
 import io.embrace.android.gradle.plugin.config.UnitySymbolsDir
-import io.embrace.android.gradle.plugin.gradle.isTaskRegistered
 import io.embrace.android.gradle.plugin.gradle.nullSafeMap
 import io.embrace.android.gradle.plugin.gradle.registerTask
 import io.embrace.android.gradle.plugin.gradle.safeFlatMap
@@ -122,29 +121,14 @@ class NdkUploadTaskRegistration(
             }
         }
 
-        val taskContainer = project.tasks
         ndkUploadTaskProvider.configure { ndkUploadTask: NdkUploadTask ->
             ndkUploadTask.onlyIf { embraceConfig?.ndkEnabled ?: true }
             ndkUploadTask.ndkType.set(
                 projectType.map {
                     when (it) {
                         ProjectType.UNITY -> NdkType.UNITY
-                        ProjectType.NATIVE -> {
-                            if (behavior.customSymbolsDirectory.isNullOrEmpty() ||
-                                taskContainer.isTaskRegistered(
-                                    "externalNativeBuild",
-                                    variantConfig.variantName
-                                )
-                            ) {
-                                NdkType.NATIVE
-                            } else {
-                                NdkType.UNDEFINED
-                            }
-                        }
-
-                        else -> {
-                            NdkType.UNDEFINED
-                        }
+                        ProjectType.NATIVE -> NdkType.NATIVE
+                        else -> NdkType.UNDEFINED
                     }
                 }
             )

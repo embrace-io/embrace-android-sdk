@@ -28,9 +28,11 @@ class EmbraceGradlePluginDelegate {
         variantConfigurationsListProperty: ListProperty<VariantConfig>,
         extension: SwazzlerExtension,
     ) {
+        val agpWrapper = AgpWrapperImpl(project)
+        validateMinAgpVersion(agpWrapper)
+
         val behavior = PluginBehaviorImpl(project, extension)
         Logger.setPluginLogLevel(behavior.logLevel)
-        val agpWrapper = AgpWrapperImpl(project)
         val networkService = OkHttpNetworkService(behavior.baseUrl)
 
         BuildTelemetryService.register(
@@ -125,6 +127,12 @@ class EmbraceGradlePluginDelegate {
                         " https://issuetracker.google.com/issues/230454566#comment18"
                 )
             }
+        }
+    }
+
+    private fun validateMinAgpVersion(agpWrapper: AgpWrapper) {
+        if (agpWrapper.version < AgpVersion.MIN_VERSION) {
+            error("Embrace requires AGP version ${AgpVersion.MIN_VERSION} or higher. Please update your AGP version.")
         }
     }
 }

@@ -34,13 +34,14 @@ class AgpSupportTest {
     fun `maximum supported version`() = runTest(MaxVersion)
 
     @Test
-    fun `unsupported old version`() {
+    fun `unsupported old gradle version`() {
         rule.runTest(
             fixture = "android-version-support",
             task = "assembleRelease",
             testMatrix = TestMatrix.UnsupportedOldGradleVersion,
             projectType = ProjectType.ANDROID,
-            expectedExceptionMessage = "Embrace Gradle Plugin requires Gradle version ${GradleVersion.MIN_VERSION} or newer",
+            expectedExceptionMessage =
+            "Embrace requires Gradle version ${GradleVersion.MIN_VERSION} or higher. Please update your Gradle version.",
             assertions = {
                 verifyNoUploads()
             }

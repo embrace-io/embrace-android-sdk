@@ -5,6 +5,7 @@ import com.android.build.api.AndroidPluginVersion
 sealed class AgpVersion(private val version: AndroidPluginVersion) : Comparable<AgpVersion> {
 
     class CURRENT(version: AndroidPluginVersion) : AgpVersion(version)
+    object MIN_VERSION : AgpVersion(AndroidPluginVersion(7, 4, 2))
     object AGP_8_3_0 : AgpVersion(AndroidPluginVersion(8, 3, 0))
     object AGP_8_0_0 : AgpVersion(AndroidPluginVersion(8, 0, 0))
 

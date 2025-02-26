@@ -79,4 +79,9 @@ interface AutoDataCaptureBehavior : ConfigBehavior<EnabledFeatureConfig, RemoteC
      * Gates whether the SDK should use OkHttp or fallback to UrlConnection.
      */
     fun shouldUseOkHttp(): Boolean
+
+    /**
+     * Whether the app startup trace will be waiting for a call to Embrace.appReady() to signal completion
+     */
+    fun isManualAppStartupCompletionEnabled(): Boolean
 }

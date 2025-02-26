@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.annotation.IgnoreForStartup
 import io.embrace.android.embracesdk.internal.capture.activity.traceInstanceId
 import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityLifecycleListener
 import io.embrace.android.embracesdk.internal.ui.DrawEventEmitter
+import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * Component that captures various timestamps throughout the startup process and uses that information to log spans that approximates to
@@ -33,27 +34,25 @@ class StartupTracker(
     private val drawEventEmitter: DrawEventEmitter?,
 ) : Application.ActivityLifecycleCallbacks {
 
+    private val startupDataCollectionComplete = AtomicBoolean(false)
+    private val firstActivitySeen = AtomicBoolean(false)
     private var startupActivityId: Int? = null
-    private var startupDataCollectionComplete = false
-    private var firstActivitySeen = false
 
     override fun onActivityPreCreated(activity: Activity, savedInstanceState: Bundle?) {
-        firstActivityInit()
+        firstActivityInit(activity)
         if (activity.useAsStartupActivity()) {
             appStartupDataCollector.startupActivityPreCreated()
         }
     }
 
     override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
-        firstActivityInit()
+        firstActivityInit(activity)
         if (activity.useAsStartupActivity()) {
             appStartupDataCollector.startupActivityInitStart()
-            val application = activity.application
             val activityName = activity.localClassName
             val callback = {
                 appStartupDataCollector.firstFrameRendered(
-                    activityName = activityName,
-                    collectionCompleteCallback = { startupComplete(application) }
+                    activityName = activityName
                 )
             }
             drawEventEmitter?.registerFirstDrawCallback(activity, {}, callback)
@@ -74,10 +73,8 @@ class StartupTracker(
 
     override fun onActivityResumed(activity: Activity) {
         if (activity.observeForStartup()) {
-            val application = activity.application
             appStartupDataCollector.startupActivityResumed(
-                activityName = activity.localClassName,
-                collectionCompleteCallback = { startupComplete(application) }
+                activityName = activity.localClassName
             )
         }
     }
@@ -90,20 +87,19 @@ class StartupTracker(
 
     override fun onActivityDestroyed(activity: Activity) {}
 
-    private fun firstActivityInit() {
-        if (!firstActivitySeen) {
-            appStartupDataCollector.firstActivityInit()
-            firstActivitySeen = true
+    private fun firstActivityInit(activity: Activity) {
+        if (!firstActivitySeen.getAndSet(true)) {
+            val app = activity.application
+            appStartupDataCollector.firstActivityInit(startupCompleteCallback = { startupComplete(app) })
         }
     }
 
     private fun startupComplete(application: Application) {
-        if (!startupDataCollectionComplete) {
+        if (!startupDataCollectionComplete.getAndSet(true)) {
             application.unregisterActivityLifecycleCallbacks(this)
             if (activityLoadEventEmitter != null) {
                 application.registerActivityLifecycleCallbacks(activityLoadEventEmitter)
             }
-            startupDataCollectionComplete = true
         }
     }
 

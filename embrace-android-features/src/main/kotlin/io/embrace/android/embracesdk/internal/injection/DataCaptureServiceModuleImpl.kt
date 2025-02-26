@@ -63,7 +63,8 @@ internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
             spanService = openTelemetryModule.spanService,
             backgroundWorker = workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker),
             versionChecker = versionChecker,
-            logger = initModule.logger
+            logger = initModule.logger,
+            manualEnd = configService.autoDataCaptureBehavior.isManualAppStartupCompletionEnabled()
         )
     }
 

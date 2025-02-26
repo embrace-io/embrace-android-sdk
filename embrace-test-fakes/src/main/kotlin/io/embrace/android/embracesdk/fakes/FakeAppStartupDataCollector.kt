@@ -26,6 +26,7 @@ class FakeAppStartupDataCollector(
     var startupActivityInitEndMs: Long? = null
     var startupActivityResumedMs: Long? = null
     var firstFrameRenderedMs: Long? = null
+    var appReadyMs: Long? = null
     var customChildSpans = ConcurrentLinkedQueue<SpanData>()
     var customAttributes: MutableMap<String, String> = ConcurrentHashMap()
 
@@ -74,6 +75,11 @@ class FakeAppStartupDataCollector(
     ) {
         startupActivityName = activityName
         firstFrameRenderedMs = timestampMs ?: clock.now()
+        collectionCompleteCallback?.invoke()
+    }
+
+    override fun appReady(timestampMs: Long?, collectionCompleteCallback: (() -> Unit)?) {
+        appReadyMs = timestampMs ?: clock.now()
         collectionCompleteCallback?.invoke()
     }
 

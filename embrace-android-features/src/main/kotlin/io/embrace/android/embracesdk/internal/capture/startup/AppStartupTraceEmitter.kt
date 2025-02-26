@@ -45,13 +45,21 @@ internal class AppStartupTraceEmitter(
     private val backgroundWorker: BackgroundWorker,
     private val versionChecker: VersionChecker,
     private val logger: EmbLogger,
+    private val manualEnd: Boolean = false,
 ) : AppStartupDataCollector {
     private val processCreateRequestedMs: Long?
     private val processCreatedMs: Long?
     private val additionalTrackedIntervals = ConcurrentLinkedQueue<TrackedInterval>()
     private val customAttributes: MutableMap<String, String> = ConcurrentHashMap()
-    private val endWithFrameDraw: Boolean = startupHasRenderEvent(versionChecker)
+    private val hasRenderEvent = startupHasRenderEvent(versionChecker)
     private val appStartupRootSpan = AtomicReference<PersistableEmbraceSpan?>(null)
+    private val traceEnd = if (manualEnd) {
+        TraceEnd.READY
+    } else if (hasRenderEvent) {
+        TraceEnd.RENDERED
+    } else {
+        TraceEnd.RESUMED
+    }
 
     init {
         val timestampAtDeviceStart = nowMs() - clock.nanoTime().nanosToMillis()
@@ -134,11 +142,7 @@ internal class AppStartupTraceEmitter(
     }
 
     override fun startupActivityInitStart(timestampMs: Long?) {
-        startupActivityInitStartMs = (timestampMs ?: nowMs()).apply {
-            if (firstActivityInitStartMs == null) {
-                firstActivityInit(this)
-            }
-        }
+        startupActivityInitStartMs = timestampMs ?: nowMs()
     }
 
     override fun startupActivityPostCreated(timestampMs: Long?) {
@@ -154,10 +158,11 @@ internal class AppStartupTraceEmitter(
         collectionCompleteCallback: (() -> Unit)?,
         timestampMs: Long?,
     ) {
+        val timeMs = timestampMs ?: nowMs()
         startupActivityName = activityName
-        startupActivityResumedMs = timestampMs ?: nowMs()
-        if (!endWithFrameDraw) {
-            dataCollectionComplete(collectionCompleteCallback)
+        startupActivityResumedMs = timeMs
+        if (traceEnd == TraceEnd.RESUMED) {
+            dataCollectionComplete(collectionCompleteCallback, timeMs)
         }
     }
 
@@ -166,10 +171,20 @@ internal class AppStartupTraceEmitter(
         collectionCompleteCallback: (() -> Unit)?,
         timestampMs: Long?,
     ) {
+        val timeMs = timestampMs ?: nowMs()
         startupActivityName = activityName
-        firstFrameRenderedMs = timestampMs ?: nowMs()
-        if (endWithFrameDraw) {
-            dataCollectionComplete(collectionCompleteCallback)
+        firstFrameRenderedMs = timeMs
+        if (traceEnd == TraceEnd.RENDERED) {
+            dataCollectionComplete(collectionCompleteCallback, timeMs)
+        }
+    }
+
+    override fun appReady(
+        timestampMs: Long?,
+        collectionCompleteCallback: (() -> Unit)?
+    ) {
+        if (traceEnd == TraceEnd.READY) {
+            dataCollectionComplete(collectionCompleteCallback, timestampMs ?: nowMs())
         }
     }
 
@@ -200,10 +215,10 @@ internal class AppStartupTraceEmitter(
     /**
      * Called when app startup is considered complete, i.e. the data can be used and any additional updates can be ignored
      */
-    private fun dataCollectionComplete(callback: (() -> Unit)?) {
+    private fun dataCollectionComplete(callback: (() -> Unit)?, traceEndTimeMs: Long) {
         if (!dataCollectionComplete) {
             backgroundWorker.submit {
-                recordStartup()
+                recordStartup(traceEndTimeMs)
                 if (appStartupRootSpan.get()?.isRecording != false) {
                     logger.trackInternalError(
                         type = InternalErrorType.APP_LAUNCH_TRACE_FAIL,
@@ -248,25 +263,19 @@ internal class AppStartupTraceEmitter(
         }
     }
 
-    private fun recordStartup() {
+    private fun recordStartup(traceEndTimeMs: Long) {
         val startupService = startupServiceProvider() ?: return
         val sdkInitEndMs = startupService.getSdkInitEndMs()
-        val traceEndTimeMs: Long? =
-            if (endWithFrameDraw) {
-                firstFrameRenderedMs
-            } else {
-                startupActivityResumedMs
-            }
-
-        if (traceEndTimeMs != null && sdkInitEndMs != null) {
+        if (sdkInitEndMs != null) {
             appStartupRootSpan.get()?.let { startupTrace ->
                 recordTtid(
                     applicationInitEndMs = if (recordColdStart) applicationInitEndMs else null,
                     sdkInitStartMs = if (recordColdStart) startupService.getSdkInitStartMs() else null,
                     sdkInitEndMs = if (recordColdStart) sdkInitEndMs else null,
-                    firstActivityInitMs = if (recordColdStart) firstActivityInitStartMs else null,
-                    activityInitStartMs = startupActivityInitStartMs,
+                    firstActivityInitMs = firstActivityInitStartMs,
+                    activityInitStartMs = startupActivityPreCreatedMs ?: startupActivityInitStartMs,
                     activityInitEndMs = startupActivityInitEndMs,
+                    uiLoadedMs = if (hasRenderEvent) firstFrameRenderedMs else startupActivityResumedMs,
                     traceEndTimeMs = traceEndTimeMs
                 )
                 recordAdditionalIntervals(startupTrace)
@@ -291,6 +300,7 @@ internal class AppStartupTraceEmitter(
         } while (additionalTrackedIntervals.isNotEmpty())
     }
 
+    @Suppress("CyclomaticComplexMethod", "ComplexMethod")
     private fun recordTtid(
         applicationInitEndMs: Long?,
         sdkInitStartMs: Long?,
@@ -298,6 +308,7 @@ internal class AppStartupTraceEmitter(
         firstActivityInitMs: Long?,
         activityInitStartMs: Long?,
         activityInitEndMs: Long?,
+        uiLoadedMs: Long?,
         traceEndTimeMs: Long,
     ) {
         appStartupRootSpan.get()?.takeIf { it.isRecording }?.apply {
@@ -343,8 +354,9 @@ internal class AppStartupTraceEmitter(
                     endTimeMs = activityInitEndMs,
                 )
             }
-            if (activityInitEndMs != null) {
-                val uiLoadSpanName = if (endWithFrameDraw) {
+
+            if (activityInitEndMs != null && uiLoadedMs != null) {
+                val uiLoadSpanName = if (hasRenderEvent) {
                     "first-frame-render"
                 } else {
                     "activity-resume"
@@ -353,6 +365,15 @@ internal class AppStartupTraceEmitter(
                     name = uiLoadSpanName,
                     parent = this,
                     startTimeMs = activityInitEndMs,
+                    endTimeMs = uiLoadedMs,
+                )
+            }
+
+            if (traceEnd == TraceEnd.READY && uiLoadedMs != null) {
+                spanService.recordCompletedSpan(
+                    name = "app-ready",
+                    parent = this,
+                    startTimeMs = uiLoadedMs,
                     endTimeMs = traceEndTimeMs,
                 )
             }
@@ -386,6 +407,12 @@ internal class AppStartupTraceEmitter(
         val events: List<EmbraceSpanEvent>,
         val errorCode: ErrorCode?,
     )
+
+    private enum class TraceEnd {
+        RESUMED,
+        RENDERED,
+        READY
+    }
 
     companion object {
         /**

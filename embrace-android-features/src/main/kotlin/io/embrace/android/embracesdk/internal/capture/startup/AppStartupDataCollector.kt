@@ -64,6 +64,14 @@ interface AppStartupDataCollector {
     )
 
     /**
+     * Notify the SDK app startup is complete. The startup trace will end if it's configured to wait for this to complete.
+     */
+    fun appReady(
+        timestampMs: Long? = null,
+        collectionCompleteCallback: (() -> Unit)? = null
+    )
+
+    /**
      * Set an arbitrary time interval during startup that is of note
      */
     fun addTrackedInterval(

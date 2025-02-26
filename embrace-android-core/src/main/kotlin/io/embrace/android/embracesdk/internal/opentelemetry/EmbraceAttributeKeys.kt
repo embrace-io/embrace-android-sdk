@@ -122,3 +122,8 @@ val embAttachmentId: EmbraceAttributeKey = EmbraceAttributeKey("attachment_id")
  * The error code associated with a failed log message attachment
  */
 val embAttachmentErrorCode: EmbraceAttributeKey = EmbraceAttributeKey("attachment_error_code")
+
+/**
+ * The name of the Activity that app startup completed in
+ */
+val embStartupActivityName: EmbraceAttributeKey = EmbraceAttributeKey("startup_activity")

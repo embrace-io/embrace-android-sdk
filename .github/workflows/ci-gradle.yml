@@ -16,6 +16,11 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
+      - name: Clear Space
+        uses: embrace-io/free-disk-space@main
+        with:
+          android: true
+          
       - name: Checkout Branch
         uses: actions/checkout@v4
         with:

@@ -76,59 +76,60 @@ internal class AppStartupTraceEmitterTest {
     @Test
     fun `no crashes if startup service not available in T`() {
         startupService = null
-        createTraceEmitter().firstFrameRendered(STARTUP_ACTIVITY_NAME, ::dataCollectionCompletedCallback)
-        assertEquals(1, dataCollectionCompletedCallbackInvokedCount)
+        createTraceEmitter().simulateAppStartup(verifyTrace = false)
     }
 
     @Config(sdk = [Build.VERSION_CODES.TIRAMISU])
     @Test
     fun `verify cold start trace with every event triggered in T`() {
-        createTraceEmitter().verifyAppStartupTrace()
+        createTraceEmitter().simulateAppStartup()
     }
 
     @Config(sdk = [Build.VERSION_CODES.TIRAMISU])
     @Test
     fun `verify cold start trace without application init start and end triggered in T`() {
-        createTraceEmitter().verifyAppStartupTrace(hasAppInitEvents = false)
+        createTraceEmitter().simulateAppStartup(hasAppInitEvents = false)
     }
 
     @Config(sdk = [Build.VERSION_CODES.TIRAMISU])
     @Test
     fun `verify cold start trace aborted activity creation in T`() {
-        createTraceEmitter().verifyAppStartupTrace(abortFirstActivityLoad = true)
+        createTraceEmitter().simulateAppStartup(abortFirstActivityLoad = true)
     }
 
     @Config(sdk = [Build.VERSION_CODES.TIRAMISU])
     @Test
     fun `verify cold start trace with splash screen in T`() {
-        createTraceEmitter().verifyAppStartupTrace(loadSplashScreen = true)
+        createTraceEmitter().simulateAppStartup(loadSplashScreen = true)
     }
 
     @Config(sdk = [Build.VERSION_CODES.TIRAMISU])
     @Test
     fun `verify cold start trace with manual end in T`() {
-        createTraceEmitter(manualEnd = true).verifyAppStartupTrace(manualEnd = true)
+        createTraceEmitter(manualEnd = true).simulateAppStartup(manualEnd = true)
     }
 
     @Config(sdk = [Build.VERSION_CODES.TIRAMISU])
     @Test
     fun `verify warm start trace without application init start and end triggered in T`() {
-        createTraceEmitter().verifyAppStartupTrace(isColdStart = false, hasAppInitEvents = false)
+        createTraceEmitter().simulateAppStartup(isColdStart = false, hasAppInitEvents = false)
     }
 
     @Config(sdk = [Build.VERSION_CODES.TIRAMISU])
     @Test
     fun `verify warm start trace with manual end in T`() {
-        createTraceEmitter(manualEnd = true).verifyAppStartupTrace(isColdStart = false, manualEnd = true)
+        createTraceEmitter(manualEnd = true).simulateAppStartup(isColdStart = false, manualEnd = true)
     }
 
     @Config(sdk = [Build.VERSION_CODES.TIRAMISU])
     @Test
     fun `trace end callback will not be invoked twice`() {
         startupService = null
-        val appStartupTraceEmitter = createTraceEmitter()
-        appStartupTraceEmitter.firstFrameRendered(STARTUP_ACTIVITY_NAME, ::dataCollectionCompletedCallback)
-        appStartupTraceEmitter.firstFrameRendered(STARTUP_ACTIVITY_NAME, ::dataCollectionCompletedCallback)
+        createTraceEmitter().run {
+            firstActivityInit(startupCompleteCallback = { dataCollectionCompletedCallbackInvokedCount++ })
+            firstFrameRendered(STARTUP_ACTIVITY_NAME)
+            firstFrameRendered(STARTUP_ACTIVITY_NAME)
+        }
         assertEquals(1, dataCollectionCompletedCallbackInvokedCount)
     }
 
@@ -136,45 +137,44 @@ internal class AppStartupTraceEmitterTest {
     @Test
     fun `no crashes if startup service not available in S`() {
         startupService = null
-        createTraceEmitter().firstFrameRendered(STARTUP_ACTIVITY_NAME, ::dataCollectionCompletedCallback)
-        assertEquals(1, dataCollectionCompletedCallbackInvokedCount)
+        createTraceEmitter().simulateAppStartup(verifyTrace = false)
     }
 
     @Config(sdk = [Build.VERSION_CODES.S])
     @Test
     fun `verify cold start trace with every event triggered in S`() {
-        createTraceEmitter().verifyAppStartupTrace()
+        createTraceEmitter().simulateAppStartup()
     }
 
     @Config(sdk = [Build.VERSION_CODES.S])
     @Test
     fun `verify cold start trace without application init start and end triggered in S`() {
-        createTraceEmitter().verifyAppStartupTrace(hasAppInitEvents = false)
+        createTraceEmitter().simulateAppStartup(hasAppInitEvents = false)
     }
 
     @Config(sdk = [Build.VERSION_CODES.S])
     @Test
     fun `verify cold start trace aborted activity creation in S`() {
-        createTraceEmitter().verifyAppStartupTrace(abortFirstActivityLoad = true)
+        createTraceEmitter().simulateAppStartup(abortFirstActivityLoad = true)
     }
 
     @Config(sdk = [Build.VERSION_CODES.S])
     @Test
     fun `verify cold start trace with splash screen in S`() {
-        createTraceEmitter().verifyAppStartupTrace(loadSplashScreen = true)
+        createTraceEmitter().simulateAppStartup(loadSplashScreen = true)
     }
 
     @Config(sdk = [Build.VERSION_CODES.S])
     @Test
     fun `verify cold start trace with manual end in S`() {
-        createTraceEmitter(manualEnd = true).verifyAppStartupTrace(manualEnd = true)
+        createTraceEmitter(manualEnd = true).simulateAppStartup(manualEnd = true)
     }
 
     @Config(sdk = [Build.VERSION_CODES.S])
     @Test
     fun `verify warm start trace without application init start and end triggered in S`() {
         createTraceEmitter()
-            .verifyAppStartupTrace(
+            .simulateAppStartup(
                 isColdStart = false,
                 hasAppInitEvents = false
             )
@@ -184,7 +184,7 @@ internal class AppStartupTraceEmitterTest {
     @Test
     fun `verify warm start trace aborted activity creation S`() {
         createTraceEmitter()
-            .verifyAppStartupTrace(
+            .simulateAppStartup(
                 isColdStart = false,
                 hasAppInitEvents = false,
                 abortFirstActivityLoad = true
@@ -194,22 +194,25 @@ internal class AppStartupTraceEmitterTest {
     @Config(sdk = [Build.VERSION_CODES.S])
     @Test
     fun `verify warm start trace with manual end in S`() {
-        createTraceEmitter(manualEnd = true).verifyAppStartupTrace(isColdStart = false, manualEnd = true)
+        createTraceEmitter(manualEnd = true).simulateAppStartup(isColdStart = false, manualEnd = true)
     }
 
     @Config(sdk = [Build.VERSION_CODES.P])
     @Test
     fun `no crashes if startup service not available in P`() {
         startupService = null
-        createTraceEmitter().startupActivityResumed(STARTUP_ACTIVITY_NAME, ::dataCollectionCompletedCallback)
-        assertEquals(1, dataCollectionCompletedCallbackInvokedCount)
+        createTraceEmitter().simulateAppStartup(
+            verifyTrace = false,
+            firePreAndPostCreate = false,
+            hasRenderEvent = false
+        )
     }
 
     @Config(sdk = [Build.VERSION_CODES.P])
     @Test
     fun `verify cold start trace with every event triggered in P`() {
         createTraceEmitter()
-            .verifyAppStartupTrace(
+            .simulateAppStartup(
                 firePreAndPostCreate = false,
                 hasRenderEvent = false
             )
@@ -219,7 +222,7 @@ internal class AppStartupTraceEmitterTest {
     @Test
     fun `verify cold start trace without application init start and end triggered in P`() {
         createTraceEmitter()
-            .verifyAppStartupTrace(
+            .simulateAppStartup(
                 firePreAndPostCreate = false,
                 hasAppInitEvents = false,
                 hasRenderEvent = false
@@ -230,7 +233,7 @@ internal class AppStartupTraceEmitterTest {
     @Test
     fun `verify cold start trace aborted activity creation in P`() {
         createTraceEmitter()
-            .verifyAppStartupTrace(
+            .simulateAppStartup(
                 firePreAndPostCreate = false,
                 hasRenderEvent = false,
                 abortFirstActivityLoad = true
@@ -241,7 +244,7 @@ internal class AppStartupTraceEmitterTest {
     @Test
     fun `verify cold start trace with splash screen in P`() {
         createTraceEmitter()
-            .verifyAppStartupTrace(
+            .simulateAppStartup(
                 firePreAndPostCreate = false,
                 hasRenderEvent = false,
                 loadSplashScreen = true
@@ -252,7 +255,7 @@ internal class AppStartupTraceEmitterTest {
     @Test
     fun `verify cold start trace with manual end in P`() {
         createTraceEmitter(manualEnd = true)
-            .verifyAppStartupTrace(
+            .simulateAppStartup(
                 firePreAndPostCreate = false,
                 hasRenderEvent = false,
                 manualEnd = true
@@ -263,7 +266,7 @@ internal class AppStartupTraceEmitterTest {
     @Test
     fun `verify warm start trace without application init start and end triggered in P`() {
         createTraceEmitter()
-            .verifyAppStartupTrace(
+            .simulateAppStartup(
                 isColdStart = false,
                 firePreAndPostCreate = false,
                 hasAppInitEvents = false,
@@ -275,7 +278,7 @@ internal class AppStartupTraceEmitterTest {
     @Test
     fun `verify warm start trace with manual end in P`() {
         createTraceEmitter(manualEnd = true)
-            .verifyAppStartupTrace(
+            .simulateAppStartup(
                 isColdStart = false,
                 firePreAndPostCreate = false,
                 hasRenderEvent = false,
@@ -287,15 +290,19 @@ internal class AppStartupTraceEmitterTest {
     @Test
     fun `no crashes if startup service not available in M`() {
         startupService = null
-        createTraceEmitter().startupActivityResumed(STARTUP_ACTIVITY_NAME, ::dataCollectionCompletedCallback)
-        assertEquals(1, dataCollectionCompletedCallbackInvokedCount)
+        createTraceEmitter().simulateAppStartup(
+            verifyTrace = false,
+            firePreAndPostCreate = false,
+            trackProcessStart = false,
+            hasRenderEvent = false
+        )
     }
 
     @Config(sdk = [Build.VERSION_CODES.M])
     @Test
     fun `verify cold start trace with every event triggered in M`() {
         createTraceEmitter()
-            .verifyAppStartupTrace(
+            .simulateAppStartup(
                 firePreAndPostCreate = false,
                 trackProcessStart = false,
                 hasRenderEvent = false
@@ -306,7 +313,7 @@ internal class AppStartupTraceEmitterTest {
     @Test
     fun `verify cold start trace without application init start and end triggered in M`() {
         createTraceEmitter()
-            .verifyAppStartupTrace(
+            .simulateAppStartup(
                 firePreAndPostCreate = false,
                 trackProcessStart = false,
                 hasAppInitEvents = false,
@@ -318,7 +325,7 @@ internal class AppStartupTraceEmitterTest {
     @Test
     fun `verify cold start trace aborted activity creation in M`() {
         createTraceEmitter()
-            .verifyAppStartupTrace(
+            .simulateAppStartup(
                 firePreAndPostCreate = false,
                 trackProcessStart = false,
                 hasRenderEvent = false,
@@ -330,7 +337,7 @@ internal class AppStartupTraceEmitterTest {
     @Test
     fun `verify cold start trace with splash screen in M`() {
         createTraceEmitter()
-            .verifyAppStartupTrace(
+            .simulateAppStartup(
                 firePreAndPostCreate = false,
                 trackProcessStart = false,
                 hasRenderEvent = false,
@@ -342,7 +349,7 @@ internal class AppStartupTraceEmitterTest {
     @Test
     fun `verify cold start trace with manual end in M`() {
         createTraceEmitter(manualEnd = true)
-            .verifyAppStartupTrace(
+            .simulateAppStartup(
                 firePreAndPostCreate = false,
                 trackProcessStart = false,
                 hasRenderEvent = false,
@@ -354,7 +361,7 @@ internal class AppStartupTraceEmitterTest {
     @Test
     fun `verify warm start trace without application init start and end triggered in M`() {
         createTraceEmitter()
-            .verifyAppStartupTrace(
+            .simulateAppStartup(
                 isColdStart = false,
                 firePreAndPostCreate = false,
                 trackProcessStart = false,
@@ -367,7 +374,7 @@ internal class AppStartupTraceEmitterTest {
     @Test
     fun `verify warm start trace with manual end in M`() {
         createTraceEmitter(manualEnd = true)
-            .verifyAppStartupTrace(
+            .simulateAppStartup(
                 isColdStart = false,
                 firePreAndPostCreate = false,
                 trackProcessStart = false,
@@ -380,15 +387,19 @@ internal class AppStartupTraceEmitterTest {
     @Test
     fun `no crashes if startup service not available in L`() {
         startupService = null
-        createTraceEmitter().startupActivityResumed(STARTUP_ACTIVITY_NAME, ::dataCollectionCompletedCallback)
-        assertEquals(1, dataCollectionCompletedCallbackInvokedCount)
+        createTraceEmitter().simulateAppStartup(
+            verifyTrace = false,
+            firePreAndPostCreate = false,
+            trackProcessStart = false,
+            hasRenderEvent = false
+        )
     }
 
     @Config(sdk = [Build.VERSION_CODES.LOLLIPOP])
     @Test
     fun `verify cold start trace with every event triggered in L`() {
         createTraceEmitter()
-            .verifyAppStartupTrace(
+            .simulateAppStartup(
                 firePreAndPostCreate = false,
                 trackProcessStart = false,
                 hasRenderEvent = false
@@ -399,7 +410,7 @@ internal class AppStartupTraceEmitterTest {
     @Test
     fun `verify cold start trace without application init start and end triggered in L`() {
         createTraceEmitter()
-            .verifyAppStartupTrace(
+            .simulateAppStartup(
                 firePreAndPostCreate = false,
                 trackProcessStart = false,
                 hasAppInitEvents = false,
@@ -411,7 +422,7 @@ internal class AppStartupTraceEmitterTest {
     @Test
     fun `verify cold start trace aborted activity creation in L`() {
         createTraceEmitter()
-            .verifyAppStartupTrace(
+            .simulateAppStartup(
                 firePreAndPostCreate = false,
                 trackProcessStart = false,
                 hasRenderEvent = false,
@@ -423,7 +434,7 @@ internal class AppStartupTraceEmitterTest {
     @Test
     fun `verify cold start trace with splash screen in L`() {
         createTraceEmitter()
-            .verifyAppStartupTrace(
+            .simulateAppStartup(
                 firePreAndPostCreate = false,
                 trackProcessStart = false,
                 hasRenderEvent = false,
@@ -435,7 +446,7 @@ internal class AppStartupTraceEmitterTest {
     @Test
     fun `verify cold start trace with manual end in L`() {
         createTraceEmitter(manualEnd = true)
-            .verifyAppStartupTrace(
+            .simulateAppStartup(
                 firePreAndPostCreate = false,
                 trackProcessStart = false,
                 hasRenderEvent = false,
@@ -447,7 +458,7 @@ internal class AppStartupTraceEmitterTest {
     @Test
     fun `verify warm start trace without application init start and end triggered in L`() {
         createTraceEmitter()
-            .verifyAppStartupTrace(
+            .simulateAppStartup(
                 isColdStart = false,
                 firePreAndPostCreate = false,
                 trackProcessStart = false,
@@ -460,7 +471,7 @@ internal class AppStartupTraceEmitterTest {
     @Test
     fun `verify warm start trace with manual end in L`() {
         createTraceEmitter(manualEnd = true)
-            .verifyAppStartupTrace(
+            .simulateAppStartup(
                 isColdStart = false,
                 firePreAndPostCreate = false,
                 trackProcessStart = false,
@@ -481,7 +492,8 @@ internal class AppStartupTraceEmitterTest {
         )
 
     @Suppress("CyclomaticComplexMethod", "ComplexMethod")
-    private fun AppStartupTraceEmitter.verifyAppStartupTrace(
+    private fun AppStartupTraceEmitter.simulateAppStartup(
+        verifyTrace: Boolean = true,
         isColdStart: Boolean = true,
         firePreAndPostCreate: Boolean = true,
         trackProcessStart: Boolean = true,
@@ -559,24 +571,26 @@ internal class AppStartupTraceEmitterTest {
             uiLoadEnd
         }
 
-        StartupTimestamps(
-            traceStart = traceStart,
-            sdkInitStart = sdkInitStart,
-            sdkInitEnd = sdkInitEnd,
-            applicationInitEnd = applicationInitEnd,
-            customSpanStart = customSpanStartMs,
-            customSpanEnd = customSpanEndMs,
-            firstActivityInit = firstActivityInit,
-            startupActivityStart = startupActivityStart,
-            startupActivityEnd = startupActivityEnd,
-            uiLoadEnd = uiLoadEnd,
-            traceEnd = traceEnd
-        ).verifyTrace(
-            isColdStart = isColdStart,
-            hasAppInitEvents = hasAppInitEvents,
-            hasRenderEvent = hasRenderEvent,
-            manualEnd = manualEnd
-        )
+        if (verifyTrace) {
+            StartupTimestamps(
+                traceStart = traceStart,
+                sdkInitStart = sdkInitStart,
+                sdkInitEnd = sdkInitEnd,
+                applicationInitEnd = applicationInitEnd,
+                customSpanStart = customSpanStartMs,
+                customSpanEnd = customSpanEndMs,
+                firstActivityInit = firstActivityInit,
+                startupActivityStart = startupActivityStart,
+                startupActivityEnd = startupActivityEnd,
+                uiLoadEnd = uiLoadEnd,
+                traceEnd = traceEnd
+            ).verifyTrace(
+                isColdStart = isColdStart,
+                hasAppInitEvents = hasAppInitEvents,
+                hasRenderEvent = hasRenderEvent,
+                manualEnd = manualEnd
+            )
+        }
     }
 
     private fun StartupTimestamps.verifyTrace(
@@ -633,17 +647,13 @@ internal class AppStartupTraceEmitterTest {
         assertEquals(0, logger.internalErrorMessages.size)
     }
 
-    private fun dataCollectionCompletedCallback() {
-        dataCollectionCompletedCallbackInvokedCount++
-    }
-
     private fun startSdk(): Pair<Long, Long> {
         clock.tick(100L)
         val sdkInitStart = clock.now()
         clock.tick(30L)
         val sdkInitEnd = clock.now()
         clock.tick(400L)
-        checkNotNull(startupService).setSdkStartupInfo(
+        startupService?.setSdkStartupInfo(
             startTimeMs = sdkInitStart,
             endTimeMs = sdkInitEnd,
             endedInForeground = false,
@@ -658,7 +668,7 @@ internal class AppStartupTraceEmitterTest {
         abortFirstLoad: Boolean,
     ): ActivityCreateEvents {
         val activityCreateEvents = ActivityCreateEvents()
-        firstActivityInit()
+        firstActivityInit(startupCompleteCallback = { dataCollectionCompletedCallbackInvokedCount++ })
         activityCreateEvents.firstEvent = clock.now()
 
         if (loadSplashScreen) {
@@ -695,18 +705,18 @@ internal class AppStartupTraceEmitterTest {
     }
 
     private fun AppStartupTraceEmitter.startupActivityRender(renderFrame: Boolean): Pair<Long, Long> {
-        startupActivityResumed(STARTUP_ACTIVITY_NAME, ::dataCollectionCompletedCallback)
+        startupActivityResumed(STARTUP_ACTIVITY_NAME)
         val resumed = clock.now()
         if (renderFrame) {
             clock.tick(199L)
-            firstFrameRendered(STARTUP_ACTIVITY_NAME, ::dataCollectionCompletedCallback)
+            firstFrameRendered(STARTUP_ACTIVITY_NAME)
         }
         return Pair(resumed, clock.now())
     }
 
     private fun AppStartupTraceEmitter.invokeAppReady(): Long {
         clock.tick(1000L)
-        appReady(collectionCompleteCallback = ::dataCollectionCompletedCallback)
+        appReady()
         return clock.now()
     }
 

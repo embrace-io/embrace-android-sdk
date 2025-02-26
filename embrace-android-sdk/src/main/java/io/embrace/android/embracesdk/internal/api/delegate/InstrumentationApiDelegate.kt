@@ -28,6 +28,12 @@ internal class InstrumentationApiDelegate(
         }
     }
 
+    override fun appReady() {
+        if (sdkCallChecker.check("app_ready")) {
+            appStartupDataCollector?.appReady(timestampMs = clock.now())
+        }
+    }
+
     override fun activityLoaded(activity: Activity) {
         if (sdkCallChecker.check("activity_fully_loaded")) {
             uiLoadTraceEmitter?.complete(traceInstanceId(activity), clock.now())

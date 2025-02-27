@@ -9,7 +9,17 @@ import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
+import io.embrace.android.embracesdk.internal.capture.startup.AppStartupTraceEmitter.Companion.ACTIVITY_INIT_DELAY_SPAN
+import io.embrace.android.embracesdk.internal.capture.startup.AppStartupTraceEmitter.Companion.ACTIVITY_INIT_SPAN
+import io.embrace.android.embracesdk.internal.capture.startup.AppStartupTraceEmitter.Companion.ACTIVITY_LOAD_SPAN
+import io.embrace.android.embracesdk.internal.capture.startup.AppStartupTraceEmitter.Companion.ACTIVITY_RENDER_SPAN
+import io.embrace.android.embracesdk.internal.capture.startup.AppStartupTraceEmitter.Companion.APP_READY_SPAN
+import io.embrace.android.embracesdk.internal.capture.startup.AppStartupTraceEmitter.Companion.COLD_APP_STARTUP_ROOT_SPAN
+import io.embrace.android.embracesdk.internal.capture.startup.AppStartupTraceEmitter.Companion.EMBRACE_INIT_SPAN
+import io.embrace.android.embracesdk.internal.capture.startup.AppStartupTraceEmitter.Companion.PROCESS_INIT_SPAN
+import io.embrace.android.embracesdk.internal.capture.startup.AppStartupTraceEmitter.Companion.WARM_APP_STARTUP_ROOT_SPAN
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
+import io.embrace.android.embracesdk.internal.opentelemetry.embStartupActivityName
 import io.embrace.android.embracesdk.internal.payload.toNewPayload
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.spans.SpanService
@@ -712,7 +722,7 @@ internal class AppStartupTraceEmitterTest {
         assertEquals(expectedEndTimeMs, trace.endTimeNanos?.nanosToMillis())
         trace.assertDoesNotHaveEmbraceAttribute(PrivateSpan)
         val attrs = checkNotNull(trace.attributes)
-        assertEquals(STARTUP_ACTIVITY_NAME, attrs.findAttributeValue("startup-activity-name"))
+        assertEquals(STARTUP_ACTIVITY_NAME, attrs.findAttributeValue(embStartupActivityName.name))
         assertEquals(1, dataCollectionCompletedCallbackInvokedCount)
 
         expectedCustomAttributes.forEach { entry ->
@@ -727,16 +737,16 @@ internal class AppStartupTraceEmitterTest {
         span.assertDoesNotHaveEmbraceAttribute(PrivateSpan)
     }
 
-    private fun Map<String, EmbraceSpanData?>.coldAppStartupRootSpan() = this["emb-app-startup-cold"]
-    private fun Map<String, EmbraceSpanData?>.warmAppStartupRootSpan() = this["emb-app-startup-warm"]
-    private fun Map<String, EmbraceSpanData?>.processInitSpan() = this["emb-process-init"]
-    private fun Map<String, EmbraceSpanData?>.embraceInitSpan() = this["emb-embrace-init"]
-    private fun Map<String, EmbraceSpanData?>.initGapSpan() = this["emb-activity-init-gap"]
+    private fun Map<String, EmbraceSpanData?>.coldAppStartupRootSpan() = this["emb-${COLD_APP_STARTUP_ROOT_SPAN}"]
+    private fun Map<String, EmbraceSpanData?>.warmAppStartupRootSpan() = this["emb-${WARM_APP_STARTUP_ROOT_SPAN}"]
+    private fun Map<String, EmbraceSpanData?>.processInitSpan() = this["emb-${PROCESS_INIT_SPAN}"]
+    private fun Map<String, EmbraceSpanData?>.embraceInitSpan() = this["emb-${EMBRACE_INIT_SPAN}"]
+    private fun Map<String, EmbraceSpanData?>.initGapSpan() = this["emb-${ACTIVITY_INIT_DELAY_SPAN}"]
+    private fun Map<String, EmbraceSpanData?>.activityInitSpan() = this["emb-${ACTIVITY_INIT_SPAN}"]
+    private fun Map<String, EmbraceSpanData?>.firstFrameRenderSpan() = this["emb-${ACTIVITY_RENDER_SPAN}"]
+    private fun Map<String, EmbraceSpanData?>.activityResumeSpan() = this["emb-${ACTIVITY_LOAD_SPAN}"]
+    private fun Map<String, EmbraceSpanData?>.appReadySpan() = this["emb-${APP_READY_SPAN}"]
     private fun Map<String, EmbraceSpanData?>.customSpan() = this["custom-span"]
-    private fun Map<String, EmbraceSpanData?>.activityInitSpan() = this["emb-activity-create"]
-    private fun Map<String, EmbraceSpanData?>.firstFrameRenderSpan() = this["emb-first-frame-render"]
-    private fun Map<String, EmbraceSpanData?>.activityResumeSpan() = this["emb-activity-resume"]
-    private fun Map<String, EmbraceSpanData?>.appReadySpan() = this["emb-app-ready"]
 
     private data class StartupTimestamps(
         val traceStart: Long,

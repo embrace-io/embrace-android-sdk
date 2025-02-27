@@ -5,6 +5,7 @@ import android.os.Process
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.opentelemetry.embStartupActivityName
 import io.embrace.android.embracesdk.internal.spans.PersistableEmbraceSpan
 import io.embrace.android.embracesdk.internal.spans.SpanService
 import io.embrace.android.embracesdk.internal.utils.Provider
@@ -243,12 +244,12 @@ internal class AppStartupTraceEmitter(
                 }
 
             spanService.startSpan(
-                name = "app-startup-cold",
+                name = COLD_APP_STARTUP_ROOT_SPAN,
                 startTimeMs = processStartTimeMs,
             )
         } else {
             spanService.startSpan(
-                name = "app-startup-warm",
+                name = WARM_APP_STARTUP_ROOT_SPAN,
                 startTimeMs = activityInitTimeMs,
             )
         }
@@ -319,7 +320,7 @@ internal class AppStartupTraceEmitter(
             getStartTimeMs()?.let { traceStartTimeMs ->
                 if (applicationInitEndMs != null) {
                     spanService.recordCompletedSpan(
-                        name = "process-init",
+                        name = PROCESS_INIT_SPAN,
                         parent = this,
                         startTimeMs = traceStartTimeMs,
                         endTimeMs = applicationInitEndMs,
@@ -329,7 +330,7 @@ internal class AppStartupTraceEmitter(
 
             if (sdkInitStartMs != null && sdkInitEndMs != null) {
                 spanService.recordCompletedSpan(
-                    name = "embrace-init",
+                    name = EMBRACE_INIT_SPAN,
                     parent = this,
                     startTimeMs = sdkInitStartMs,
                     endTimeMs = sdkInitEndMs,
@@ -339,7 +340,7 @@ internal class AppStartupTraceEmitter(
             val lastEventBeforeActivityInit = applicationInitEndMs ?: sdkInitEndMs
             if (lastEventBeforeActivityInit != null && firstActivityInitMs != null) {
                 spanService.recordCompletedSpan(
-                    name = "activity-init-gap",
+                    name = ACTIVITY_INIT_DELAY_SPAN,
                     parent = this,
                     startTimeMs = lastEventBeforeActivityInit,
                     endTimeMs = firstActivityInitMs,
@@ -348,7 +349,7 @@ internal class AppStartupTraceEmitter(
 
             if (activityInitStartMs != null && activityInitEndMs != null) {
                 spanService.recordCompletedSpan(
-                    name = "activity-create",
+                    name = ACTIVITY_INIT_SPAN,
                     parent = this,
                     startTimeMs = activityInitStartMs,
                     endTimeMs = activityInitEndMs,
@@ -357,9 +358,9 @@ internal class AppStartupTraceEmitter(
 
             if (activityInitEndMs != null && uiLoadedMs != null) {
                 val uiLoadSpanName = if (hasRenderEvent) {
-                    "first-frame-render"
+                    ACTIVITY_RENDER_SPAN
                 } else {
-                    "activity-resume"
+                    ACTIVITY_LOAD_SPAN
                 }
                 spanService.recordCompletedSpan(
                     name = uiLoadSpanName,
@@ -371,7 +372,7 @@ internal class AppStartupTraceEmitter(
 
             if (traceEnd == TraceEnd.READY && uiLoadedMs != null) {
                 spanService.recordCompletedSpan(
-                    name = "app-ready",
+                    name = APP_READY_SPAN,
                     parent = this,
                     startTimeMs = uiLoadedMs,
                     endTimeMs = traceEndTimeMs,
@@ -389,7 +390,7 @@ internal class AppStartupTraceEmitter(
         addCustomAttributes()
 
         startupActivityName?.let { name ->
-            addAttribute("startup-activity-name", name)
+            setSystemAttribute(embStartupActivityName.attributeKey, name)
         }
     }
 
@@ -421,6 +422,15 @@ internal class AppStartupTraceEmitter(
          * so we track this app launch as a warm start.
          */
         const val SDK_AND_ACTIVITY_INIT_GAP: Long = 2000L
+        const val COLD_APP_STARTUP_ROOT_SPAN = "app-startup-cold"
+        const val WARM_APP_STARTUP_ROOT_SPAN = "app-startup-warm"
+        const val PROCESS_INIT_SPAN = "process-init"
+        const val EMBRACE_INIT_SPAN = "embrace-init"
+        const val ACTIVITY_INIT_DELAY_SPAN = "activity-init-delay"
+        const val ACTIVITY_INIT_SPAN = "activity-init"
+        const val ACTIVITY_RENDER_SPAN = "activity-render"
+        const val ACTIVITY_LOAD_SPAN = "activity-load"
+        const val APP_READY_SPAN = "app-ready"
 
         fun duration(start: Long?, end: Long?): Long? = if (start != null && end != null) {
             end - start

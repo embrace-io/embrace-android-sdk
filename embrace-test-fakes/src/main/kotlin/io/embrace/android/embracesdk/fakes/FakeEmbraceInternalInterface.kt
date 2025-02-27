@@ -123,6 +123,14 @@ class FakeEmbraceInternalInterface(
         return true
     }
 
+    override fun getSpanUnderlyingSpanId(spanId: String): String? {
+        return null
+    }
+
+    override fun getSpanUnderlyingTraceId(spanId: String): String? {
+        return null
+    }
+
     override fun <T> recordSpan(
         name: String,
         parentSpanId: String?,

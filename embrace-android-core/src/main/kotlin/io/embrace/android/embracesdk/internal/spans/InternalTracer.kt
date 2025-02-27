@@ -97,6 +97,14 @@ class InternalTracer(
             value = value
         ) ?: false
 
+    override fun getSpanUnderlyingSpanId(spanId: String): String? {
+        return spanRepository.getSpan(spanId = spanId)?.spanId
+    }
+
+    override fun getSpanUnderlyingTraceId(spanId: String): String? {
+        return spanRepository.getSpan(spanId = spanId)?.traceId
+    }
+
     private fun mapToEvent(map: Map<String, Any>): EmbraceSpanEvent? {
         val name = map["name"]
         val timestampMs = map["timestampMs"] as? Long?

@@ -48,6 +48,7 @@ import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.worker.TaskPriority
 import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.spans.TracingApi
+import io.embrace.common.fibonacci.kmpString
 import io.opentelemetry.api.common.AttributeKey
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
@@ -80,7 +81,7 @@ internal class EmbraceImpl @JvmOverloads constructor(
     private val webviewApiDelegate: InternalWebViewApiDelegate =
         InternalWebViewApiDelegate(bootstrapper, sdkCallChecker),
     private val instrumentationApiDelegate: InstrumentationApiDelegate =
-        InstrumentationApiDelegate(bootstrapper, sdkCallChecker)
+        InstrumentationApiDelegate(bootstrapper, sdkCallChecker),
 ) : SdkApi,
     LogsApi by logsApiDelegate,
     NetworkRequestApi by networkRequestApiDelegate,
@@ -147,6 +148,7 @@ internal class EmbraceImpl @JvmOverloads constructor(
         context: Context,
         framework: io.embrace.android.embracesdk.AppFramework,
     ) {
+        android.util.Log.w("Embrace", kmpString())
         if (application != null) {
             return
         }

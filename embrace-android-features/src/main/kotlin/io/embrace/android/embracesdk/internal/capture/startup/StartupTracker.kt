@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.capture.startup
 import android.app.Activity
 import android.app.Application
 import android.os.Bundle
-import io.embrace.android.embracesdk.annotation.IgnoreForStartup
+import io.embrace.android.embracesdk.annotation.StartupActivity
 import io.embrace.android.embracesdk.internal.capture.activity.traceInstanceId
 import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityLifecycleListener
 import io.embrace.android.embracesdk.internal.ui.DrawEventEmitter
@@ -126,6 +126,6 @@ class StartupTracker(
     }
 
     private companion object {
-        fun Activity.observeForStartup(): Boolean = !javaClass.isAnnotationPresent(IgnoreForStartup::class.java)
+        fun Activity.observeForStartup(): Boolean = !javaClass.isAnnotationPresent(StartupActivity::class.java)
     }
 }

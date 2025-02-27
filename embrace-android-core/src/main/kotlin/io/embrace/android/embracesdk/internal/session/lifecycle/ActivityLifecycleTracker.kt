@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.session.lifecycle
 import android.app.Activity
 import android.app.Application
 import android.os.Bundle
+import io.embrace.android.embracesdk.annotation.StartupActivity
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.utils.stream
@@ -26,6 +27,11 @@ class ActivityLifecycleTracker(
      */
     val activityListeners: CopyOnWriteArrayList<ActivityLifecycleListener> =
         CopyOnWriteArrayList<ActivityLifecycleListener>()
+
+    /**
+     * List of listeners notified when application startup is complete
+     */
+    val startupListeners: CopyOnWriteArrayList<StartupListener> = CopyOnWriteArrayList<StartupListener>()
 
     /**
      * The currently active activity.
@@ -78,9 +84,21 @@ class ActivityLifecycleTracker(
         }
     }
 
-    override fun onActivityResumed(activity: Activity) {}
-    override fun onActivityPaused(activity: Activity) {}
+    override fun onActivityResumed(activity: Activity) {
+        if (!activity.javaClass.isAnnotationPresent(StartupActivity::class.java)) {
+            // If the activity coming to foreground doesn't have the StartupActivity annotation
+            // the the SDK will finalize any pending startup moment.
+            stream(startupListeners) { listener: StartupListener ->
+                try {
+                    listener.applicationStartupComplete()
+                } catch (ex: Exception) {
+                    logger.trackInternalError(InternalErrorType.ACTIVITY_LISTENER_FAIL, ex)
+                }
+            }
+        }
+    }
 
+    override fun onActivityPaused(activity: Activity) {}
     override fun onActivityStopped(activity: Activity) {
         stream(activityListeners) { listener: ActivityLifecycleListener ->
             try {
@@ -101,10 +119,17 @@ class ActivityLifecycleTracker(
         }
     }
 
+    override fun addStartupListener(listener: StartupListener) {
+        if (!startupListeners.contains(listener)) {
+            startupListeners.addIfAbsent(listener)
+        }
+    }
+
     override fun close() {
         runCatching {
             application.unregisterActivityLifecycleCallbacks(this)
             activityListeners.clear()
+            startupListeners.clear()
         }
     }
 }

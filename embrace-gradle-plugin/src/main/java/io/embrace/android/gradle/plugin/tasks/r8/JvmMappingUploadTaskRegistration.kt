@@ -58,8 +58,10 @@ class JvmMappingUploadTaskRegistration : EmbraceTaskRegistration {
         baseUrl: String,
         variantConfigurationsListProperty: ListProperty<VariantConfig>,
     ): TaskProvider<MultipartUploadTask> {
+        val anchorTaskWithoutVariant = anchorTask.name.replace(variant.name, "", true)
+        val compressionTaskName = "${COMPRESS_TASK_NAME}For${anchorTaskWithoutVariant}OnVariant"
         val compressionTask = project.registerTask(
-            "$COMPRESS_TASK_NAME${variant.name}",
+            compressionTaskName,
             FileCompressionTask::class.java,
             variant
         ) { task: FileCompressionTask ->
@@ -72,8 +74,9 @@ class JvmMappingUploadTaskRegistration : EmbraceTaskRegistration {
             )
         }
 
+        val uploadTaskName = "${UPLOAD_TASK_NAME}For${anchorTaskWithoutVariant}OnVariant"
         val uploadTask = project.registerTask(
-            "$UPLOAD_TASK_NAME${variant.name}",
+            uploadTaskName,
             MultipartUploadTask::class.java,
             variant
         ) { task ->

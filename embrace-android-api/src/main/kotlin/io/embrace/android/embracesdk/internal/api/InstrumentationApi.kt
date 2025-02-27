@@ -19,6 +19,11 @@ public interface InstrumentationApi {
     public fun applicationInitEnd()
 
     /**
+     * Notify the Embrace SDK that app startup has completed and the UI is ready to be used.
+     */
+    public fun appReady()
+
+    /**
      * Notify the Embrace UI Load instrumentation that the given [Activity] instance has fully loaded, so its associated
      * trace can be stopped
      */

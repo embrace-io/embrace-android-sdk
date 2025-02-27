@@ -17,6 +17,7 @@ import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.sdk.common.Clock
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 
 /**
@@ -46,7 +47,7 @@ internal class AppStartupTraceEmitter(
     private val backgroundWorker: BackgroundWorker,
     private val versionChecker: VersionChecker,
     private val logger: EmbLogger,
-    private val manualEnd: Boolean = false,
+    manualEnd: Boolean = false,
 ) : AppStartupDataCollector {
     private val processCreateRequestedMs: Long?
     private val processCreatedMs: Long?
@@ -54,6 +55,7 @@ internal class AppStartupTraceEmitter(
     private val customAttributes: MutableMap<String, String> = ConcurrentHashMap()
     private val hasRenderEvent = startupHasRenderEvent(versionChecker)
     private val appStartupRootSpan = AtomicReference<PersistableEmbraceSpan?>(null)
+    private val dataCollectionComplete = AtomicBoolean(false)
     private val traceEnd = if (manualEnd) {
         TraceEnd.READY
     } else if (hasRenderEvent) {
@@ -107,7 +109,7 @@ internal class AppStartupTraceEmitter(
     private var firstFrameRenderedMs: Long? = null
 
     @Volatile
-    private var dataCollectionComplete = false
+    private var appStartupCompleteCallback: (() -> Unit)? = null
 
     @Volatile
     private var recordColdStart = true
@@ -120,9 +122,10 @@ internal class AppStartupTraceEmitter(
         applicationInitEndMs = timestampMs ?: nowMs()
     }
 
-    override fun firstActivityInit(timestampMs: Long?) {
+    override fun firstActivityInit(timestampMs: Long?, startupCompleteCallback: () -> Unit) {
         val activityInitTimeMs = timestampMs ?: nowMs()
         firstActivityInitStartMs = activityInitTimeMs
+        appStartupCompleteCallback = startupCompleteCallback
 
         val sdkInitStartMs = startupServiceProvider()?.getSdkInitStartMs()
         val sdkInitEndMs = startupServiceProvider()?.getSdkInitEndMs()
@@ -156,36 +159,31 @@ internal class AppStartupTraceEmitter(
 
     override fun startupActivityResumed(
         activityName: String,
-        collectionCompleteCallback: (() -> Unit)?,
         timestampMs: Long?,
     ) {
         val timeMs = timestampMs ?: nowMs()
         startupActivityName = activityName
         startupActivityResumedMs = timeMs
         if (traceEnd == TraceEnd.RESUMED) {
-            dataCollectionComplete(collectionCompleteCallback, timeMs)
+            dataCollectionComplete(timeMs)
         }
     }
 
     override fun firstFrameRendered(
         activityName: String,
-        collectionCompleteCallback: (() -> Unit)?,
         timestampMs: Long?,
     ) {
         val timeMs = timestampMs ?: nowMs()
         startupActivityName = activityName
         firstFrameRenderedMs = timeMs
         if (traceEnd == TraceEnd.RENDERED) {
-            dataCollectionComplete(collectionCompleteCallback, timeMs)
+            dataCollectionComplete(timeMs)
         }
     }
 
-    override fun appReady(
-        timestampMs: Long?,
-        collectionCompleteCallback: (() -> Unit)?
-    ) {
+    override fun appReady(timestampMs: Long?) {
         if (traceEnd == TraceEnd.READY) {
-            dataCollectionComplete(collectionCompleteCallback, timestampMs ?: nowMs())
+            dataCollectionComplete(timestampMs ?: nowMs())
         }
     }
 
@@ -216,8 +214,8 @@ internal class AppStartupTraceEmitter(
     /**
      * Called when app startup is considered complete, i.e. the data can be used and any additional updates can be ignored
      */
-    private fun dataCollectionComplete(callback: (() -> Unit)?, traceEndTimeMs: Long) {
-        if (!dataCollectionComplete) {
+    private fun dataCollectionComplete(traceEndTimeMs: Long) {
+        if (!dataCollectionComplete.getAndSet(true)) {
             backgroundWorker.submit {
                 recordStartup(traceEndTimeMs)
                 if (appStartupRootSpan.get()?.isRecording != false) {
@@ -227,8 +225,7 @@ internal class AppStartupTraceEmitter(
                     )
                 }
             }
-            callback?.invoke()
-            dataCollectionComplete = true
+            appStartupCompleteCallback?.invoke()
         }
     }
 

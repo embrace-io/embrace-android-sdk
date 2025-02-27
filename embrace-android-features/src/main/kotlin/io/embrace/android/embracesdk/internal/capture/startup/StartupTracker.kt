@@ -35,17 +35,14 @@ class StartupTracker(
 
     private var startupActivityId: Int? = null
     private var startupDataCollectionComplete = false
-    private var firstActivitySeen = false
 
     override fun onActivityPreCreated(activity: Activity, savedInstanceState: Bundle?) {
-        firstActivityInit()
         if (activity.useAsStartupActivity()) {
             appStartupDataCollector.startupActivityPreCreated()
         }
     }
 
     override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
-        firstActivityInit()
         if (activity.useAsStartupActivity()) {
             appStartupDataCollector.startupActivityInitStart()
             val application = activity.application
@@ -89,13 +86,6 @@ class StartupTracker(
     override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) {}
 
     override fun onActivityDestroyed(activity: Activity) {}
-
-    private fun firstActivityInit() {
-        if (!firstActivitySeen) {
-            appStartupDataCollector.firstActivityInit()
-            firstActivitySeen = true
-        }
-    }
 
     private fun startupComplete(application: Application) {
         if (!startupDataCollectionComplete) {

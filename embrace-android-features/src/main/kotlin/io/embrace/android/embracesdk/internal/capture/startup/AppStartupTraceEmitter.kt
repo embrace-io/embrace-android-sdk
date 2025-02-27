@@ -113,10 +113,6 @@ internal class AppStartupTraceEmitter(
         applicationInitEndMs = timestampMs ?: nowMs()
     }
 
-    override fun firstActivityInit(timestampMs: Long?) {
-        firstActivityInitStartMs = timestampMs ?: nowMs()
-    }
-
     override fun startupActivityPreCreated(timestampMs: Long?) {
         startupActivityPreCreatedMs = timestampMs ?: nowMs()
     }

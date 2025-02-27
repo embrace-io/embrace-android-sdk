@@ -3,16 +3,17 @@ package io.embrace.android.gradle.plugin.tasks.ndk
 import io.embrace.android.gradle.plugin.config.PluginBehavior
 import io.embrace.android.gradle.plugin.config.ProjectType
 import io.embrace.android.gradle.plugin.config.UnitySymbolsDir
-import io.embrace.android.gradle.plugin.gradle.isTaskRegistered
 import io.embrace.android.gradle.plugin.gradle.nullSafeMap
 import io.embrace.android.gradle.plugin.gradle.registerTask
 import io.embrace.android.gradle.plugin.gradle.safeFlatMap
 import io.embrace.android.gradle.plugin.gradle.tryGetTaskProvider
+import io.embrace.android.gradle.plugin.instrumentation.config.model.EmbraceVariantConfig
 import io.embrace.android.gradle.plugin.network.EmbraceEndpoint
 import io.embrace.android.gradle.plugin.tasks.common.RequestParams
 import io.embrace.android.gradle.plugin.tasks.registration.EmbraceTaskRegistration
 import io.embrace.android.gradle.plugin.tasks.registration.RegistrationParams
 import io.embrace.android.gradle.plugin.util.capitalizedString
+import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.TaskProvider
@@ -122,32 +123,10 @@ class NdkUploadTaskRegistration(
             }
         }
 
-        val taskContainer = project.tasks
         ndkUploadTaskProvider.configure { ndkUploadTask: NdkUploadTask ->
-            ndkUploadTask.onlyIf { embraceConfig?.ndkEnabled ?: true }
-            ndkUploadTask.ndkType.set(
-                projectType.map {
-                    when (it) {
-                        ProjectType.UNITY -> NdkType.UNITY
-                        ProjectType.NATIVE -> {
-                            if (behavior.customSymbolsDirectory.isNullOrEmpty() ||
-                                taskContainer.isTaskRegistered(
-                                    "externalNativeBuild",
-                                    variantConfig.variantName
-                                )
-                            ) {
-                                NdkType.NATIVE
-                            } else {
-                                NdkType.UNDEFINED
-                            }
-                        }
-
-                        else -> {
-                            NdkType.UNDEFINED
-                        }
-                    }
-                }
-            )
+            val shouldExecuteNdkUploadTaskProvider = getShouldExecuteNdkUploadTaskProvider(project, embraceConfig)
+            ndkUploadTask.onlyIf { shouldExecuteNdkUploadTaskProvider.orNull ?: true }
+            ndkUploadTask.projectType.set(projectType)
             ndkUploadTask.mustRunAfter(object : Callable<Any> {
                 override fun call(): Any {
                     return listOfNotNull(
@@ -180,5 +159,9 @@ class NdkUploadTaskRegistration(
         buildTypeName ?: ""
     } else {
         "$flavorName/$buildTypeName"
+    }
+
+    private fun getShouldExecuteNdkUploadTaskProvider(project: Project, embraceConfig: EmbraceVariantConfig?) = project.provider {
+        embraceConfig?.ndkEnabled ?: true && (projectType.orNull == ProjectType.NATIVE || projectType.orNull == ProjectType.UNITY)
     }
 }

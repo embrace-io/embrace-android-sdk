@@ -113,6 +113,10 @@ internal class AppStartupTraceEmitter(
         applicationInitEndMs = timestampMs ?: nowMs()
     }
 
+    override fun firstActivityInit(timestampMs: Long?) {
+        firstActivityInitStartMs = timestampMs ?: nowMs()
+    }
+
     override fun startupActivityPreCreated(timestampMs: Long?) {
         startupActivityPreCreatedMs = timestampMs ?: nowMs()
     }
@@ -209,7 +213,6 @@ internal class AppStartupTraceEmitter(
         val startupService = startupServiceProvider() ?: return
         val sdkInitStartMs = startupService.getSdkInitStartMs()
         val sdkInitEndMs = startupService.getSdkInitEndMs()
-        val sdkStartupDuration = duration(sdkInitStartMs, sdkInitEndMs)
         val processStartTimeMs: Long? =
             if (versionChecker.isAtLeast(VERSION_CODES.N)) {
                 processCreatedMs
@@ -251,8 +254,6 @@ internal class AppStartupTraceEmitter(
                             activityInitStartMs = startupActivityInitStartMs,
                             activityInitEndMs = startupActivityInitEndMs,
                             traceEndTimeMs = traceEndTimeMs,
-                            processToActivityCreateGap = gap,
-                            sdkStartupDuration = sdkStartupDuration,
                         )
                     }
                 }
@@ -294,7 +295,7 @@ internal class AppStartupTraceEmitter(
     ): EmbraceSpan? {
         return if (!startupRecorded.get()) {
             spanService.startSpan(
-                name = "cold-time-to-initial-display",
+                name = "app-startup-cold",
                 startTimeMs = traceStartTimeMs,
             )?.apply {
                 addTraceMetadata()
@@ -361,21 +362,12 @@ internal class AppStartupTraceEmitter(
         activityInitStartMs: Long?,
         activityInitEndMs: Long?,
         traceEndTimeMs: Long,
-        processToActivityCreateGap: Long?,
-        sdkStartupDuration: Long?,
     ): EmbraceSpan? {
         return if (!startupRecorded.get()) {
             spanService.startSpan(
-                name = "warm-time-to-initial-display",
+                name = "app-startup-warm",
                 startTimeMs = traceStartTimeMs,
             )?.apply {
-                processToActivityCreateGap?.let { gap ->
-                    addAttribute("activity-init-gap-ms", gap.toString())
-                }
-                sdkStartupDuration?.let { duration ->
-                    addAttribute("embrace-init-duration-ms", duration.toString())
-                }
-
                 addTraceMetadata()
 
                 if (stop(endTimeMs = traceEndTimeMs)) {
@@ -406,8 +398,6 @@ internal class AppStartupTraceEmitter(
         }
     }
 
-    private fun processCreateDelay(): Long? = duration(processCreateRequestedMs, processCreatedMs)
-
     private fun applicationActivityCreationGap(sdkInitEndMs: Long): Long? =
         duration(applicationInitEndMs ?: sdkInitEndMs, firstActivityInitStartMs)
 
@@ -415,32 +405,9 @@ internal class AppStartupTraceEmitter(
 
     private fun PersistableEmbraceSpan.addTraceMetadata() {
         addCustomAttributes()
-        processCreateDelay()?.let { delay ->
-            addAttribute("process-create-delay-ms", delay.toString())
-        }
 
         startupActivityName?.let { name ->
             addAttribute("startup-activity-name", name)
-        }
-
-        startupActivityPreCreatedMs?.let { timeMs ->
-            addAttribute("startup-activity-pre-created-ms", timeMs.toString())
-        }
-
-        startupActivityPostCreatedMs?.let { timeMs ->
-            addAttribute("startup-activity-post-created-ms", timeMs.toString())
-        }
-
-        sdkInitEndedInForeground?.let { inForeground ->
-            addAttribute("embrace-init-in-foreground", inForeground.toString())
-        }
-
-        firstActivityInitStartMs?.let { timeMs ->
-            addAttribute("first-activity-init-ms", timeMs.toString())
-        }
-
-        sdkInitThreadName?.let { threadName ->
-            addAttribute("embrace-init-thread-name", threadName)
         }
     }
 

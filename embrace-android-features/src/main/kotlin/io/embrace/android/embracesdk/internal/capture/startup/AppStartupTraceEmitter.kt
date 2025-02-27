@@ -291,7 +291,7 @@ internal class AppStartupTraceEmitter(
     ): EmbraceSpan? {
         return if (!startupRecorded.get()) {
             spanService.startSpan(
-                name = "app-startup-cold",
+                name = "cold-time-to-initial-display",
                 startTimeMs = traceStartTimeMs,
             )?.apply {
                 addTraceMetadata()
@@ -361,7 +361,7 @@ internal class AppStartupTraceEmitter(
     ): EmbraceSpan? {
         return if (!startupRecorded.get()) {
             spanService.startSpan(
-                name = "app-startup-warm",
+                name = "warm-time-to-initial-display",
                 startTimeMs = traceStartTimeMs,
             )?.apply {
                 addTraceMetadata()

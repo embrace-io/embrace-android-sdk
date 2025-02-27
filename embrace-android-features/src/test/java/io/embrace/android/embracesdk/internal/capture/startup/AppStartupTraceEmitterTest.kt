@@ -237,7 +237,7 @@ internal class AppStartupTraceEmitterTest {
 
         assertEquals(8, spanSink.completedSpans().size)
         val spanMap = spanSink.completedSpans().associateBy { it.name }
-        val trace = checkNotNull(spanMap["emb-app-startup-cold"])
+        val trace = checkNotNull(spanMap["emb-cold-time-to-initial-display"])
         val processInit = checkNotNull(spanMap["emb-process-init"])
         val embraceInit = checkNotNull(spanMap["emb-embrace-init"])
         val activityInitDelay = checkNotNull(spanMap["emb-activity-init-gap"])
@@ -270,7 +270,7 @@ internal class AppStartupTraceEmitterTest {
 
         assertEquals(6, spanSink.completedSpans().size)
         val spanMap = spanSink.completedSpans().associateBy { it.name }
-        val trace = checkNotNull(spanMap["emb-app-startup-cold"])
+        val trace = checkNotNull(spanMap["emb-cold-time-to-initial-display"])
         val embraceInit = checkNotNull(spanMap["emb-embrace-init"])
         val activityInitDelay = checkNotNull(spanMap["emb-activity-init-gap"])
         val activityCreate = checkNotNull(spanMap["emb-activity-create"])
@@ -306,7 +306,7 @@ internal class AppStartupTraceEmitterTest {
 
         assertEquals(7, spanSink.completedSpans().size)
         val spanMap = spanSink.completedSpans().associateBy { it.name }
-        val trace = checkNotNull(spanMap["emb-app-startup-cold"])
+        val trace = checkNotNull(spanMap["emb-cold-time-to-initial-display"])
         val processInit = checkNotNull(spanMap["emb-process-init"])
         val embraceInit = checkNotNull(spanMap["emb-embrace-init"])
         val activityInitDelay = checkNotNull(spanMap["emb-activity-init-gap"])
@@ -341,7 +341,7 @@ internal class AppStartupTraceEmitterTest {
 
         assertEquals(6, spanSink.completedSpans().size)
         val spanMap = spanSink.completedSpans().associateBy { it.name }
-        val trace = checkNotNull(spanMap["emb-app-startup-cold"])
+        val trace = checkNotNull(spanMap["emb-cold-time-to-initial-display"])
         val embraceInit = checkNotNull(spanMap["emb-embrace-init"])
         val activityInitDelay = checkNotNull(spanMap["emb-activity-init-gap"])
         val activityCreate = checkNotNull(spanMap["emb-activity-create"])
@@ -375,7 +375,7 @@ internal class AppStartupTraceEmitterTest {
 
         assertEquals(4, spanSink.completedSpans().size)
         val spanMap = spanSink.completedSpans().associateBy { it.name }
-        val trace = checkNotNull(spanMap["emb-app-startup-warm"])
+        val trace = checkNotNull(spanMap["emb-warm-time-to-initial-display"])
         val activityCreate = checkNotNull(spanMap["emb-activity-create"])
         val firstRender = checkNotNull(spanMap["emb-first-frame-render"])
 
@@ -401,7 +401,7 @@ internal class AppStartupTraceEmitterTest {
 
         assertEquals(4, spanSink.completedSpans().size)
         val spanMap = spanSink.completedSpans().associateBy { it.name }
-        val trace = checkNotNull(spanMap["emb-app-startup-warm"])
+        val trace = checkNotNull(spanMap["emb-warm-time-to-initial-display"])
         val activityCreate = checkNotNull(spanMap["emb-activity-create"])
         val activityResume = checkNotNull(spanMap["emb-activity-resume"])
 
@@ -440,10 +440,10 @@ internal class AppStartupTraceEmitterTest {
 
         val spanMap = spanSink.completedSpans().associateBy { it.name }
         val traceName = if (isWarm) {
-            "emb-app-startup-warm"
+            "emb-warm-time-to-initial-display"
         } else {
             assertChildSpan(checkNotNull(spanMap["emb-activity-init-gap"]), sdkInitEnd, firstActivityInit)
-            "emb-app-startup-cold"
+            "emb-cold-time-to-initial-display"
         }
         val trace = checkNotNull(spanMap[traceName])
         val activityCreate = checkNotNull(spanMap["emb-activity-create"])

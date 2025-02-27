@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.fakes.FakeAppStartupDataCollector
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeDrawEventEmitter
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
+import io.embrace.android.embracesdk.fakes.FakeNotStartupActivity
 import io.embrace.android.embracesdk.fakes.FakeSplashScreenActivity
 import io.embrace.android.embracesdk.internal.capture.startup.AppStartupTraceEmitter.Companion.startupHasRenderEvent
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
@@ -60,7 +61,6 @@ internal class StartupTrackerTest {
         with(launchActivity()) {
             assertEquals("android.app.Activity", dataCollector.startupActivityName)
             verifyLifecycle(
-                firstActivityInitTime = createTime,
                 preCreateTime = createTime,
                 createTime = createTime,
                 postCreateTime = createTime,
@@ -76,7 +76,6 @@ internal class StartupTrackerTest {
     fun `cold start in Q`() {
         with(launchActivity()) {
             verifyLifecycle(
-                firstActivityInitTime = createTime,
                 preCreateTime = createTime,
                 createTime = createTime,
                 postCreateTime = createTime,
@@ -92,7 +91,6 @@ internal class StartupTrackerTest {
     fun `cold start in P`() {
         with(launchActivity()) {
             verifyLifecycle(
-                firstActivityInitTime = createTime,
                 createTime = createTime,
                 startTime = startTime,
                 resumeTime = resumeTime,
@@ -105,7 +103,6 @@ internal class StartupTrackerTest {
     fun `cold start in L`() {
         with(launchActivity()) {
             verifyLifecycle(
-                firstActivityInitTime = createTime,
                 createTime = createTime,
                 startTime = startTime,
                 resumeTime = resumeTime
@@ -116,13 +113,11 @@ internal class StartupTrackerTest {
     @Config(sdk = [Build.VERSION_CODES.UPSIDE_DOWN_CAKE])
     @Test
     fun `cold start with different activities being created and foregrounded first`() {
-        val firstActivityInitTime = clock.now()
         defaultActivityController.create()
         clock.tick()
         with(launchActivity(Robolectric.buildActivity(FakeActivity::class.java))) {
             assertEquals("io.embrace.android.embracesdk.fakes.FakeActivity", dataCollector.startupActivityName)
             verifyLifecycle(
-                firstActivityInitTime = firstActivityInitTime,
                 preCreateTime = createTime,
                 createTime = createTime,
                 postCreateTime = createTime,
@@ -136,12 +131,11 @@ internal class StartupTrackerTest {
     @Config(sdk = [Build.VERSION_CODES.UPSIDE_DOWN_CAKE])
     @Test
     fun `cold start initial activity not tracked will use the second for timing`() {
-        val firstActivityInitTime = launchActivity(Robolectric.buildActivity(FakeSplashScreenActivity::class.java)).createTime
+        launchActivity(Robolectric.buildActivity(FakeSplashScreenActivity::class.java))
         clock.tick()
         with(launchActivity()) {
             assertEquals("android.app.Activity", dataCollector.startupActivityName)
             verifyLifecycle(
-                firstActivityInitTime = firstActivityInitTime,
                 preCreateTime = createTime,
                 createTime = createTime,
                 postCreateTime = createTime,
@@ -174,7 +168,7 @@ internal class StartupTrackerTest {
     @Config(sdk = [Build.VERSION_CODES.UPSIDE_DOWN_CAKE])
     @Test
     fun `data only collected if activity is used as startup activity`() {
-        launchActivity(Robolectric.buildActivity(FakeSplashScreenActivity::class.java))
+        launchActivity(Robolectric.buildActivity(FakeNotStartupActivity::class.java))
         assertNull(dataCollector.applicationInitStartMs)
         assertNull(dataCollector.applicationInitEndMs)
         assertNull(dataCollector.startupActivityName)
@@ -212,7 +206,6 @@ internal class StartupTrackerTest {
     }
 
     private fun launchActivity(controller: ActivityController<*> = defaultActivityController): ActivityTiming {
-        clock.tick()
         val createTime = clock.now()
         controller.create()
         clock.tick()
@@ -234,7 +227,6 @@ internal class StartupTrackerTest {
     }
 
     private fun verifyLifecycle(
-        firstActivityInitTime: Long,
         preCreateTime: Long? = null,
         createTime: Long,
         postCreateTime: Long? = null,
@@ -242,7 +234,6 @@ internal class StartupTrackerTest {
         resumeTime: Long,
         renderTime: Long? = null
     ) {
-        assertEquals(firstActivityInitTime, dataCollector.firstActivityInitMs)
         assertEquals(preCreateTime, dataCollector.startupActivityPreCreatedMs)
         assertEquals(createTime, dataCollector.startupActivityInitStartMs)
         assertEquals(postCreateTime, dataCollector.startupActivityPostCreatedMs)

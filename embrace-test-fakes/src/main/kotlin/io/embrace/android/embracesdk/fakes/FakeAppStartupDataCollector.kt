@@ -19,7 +19,6 @@ class FakeAppStartupDataCollector(
     var applicationInitStartMs: Long? = null
     var applicationInitEndMs: Long? = null
     var startupActivityName: String? = null
-    var firstActivityInitMs: Long? = null
     var startupActivityPreCreatedMs: Long? = null
     var startupActivityInitStartMs: Long? = null
     var startupActivityPostCreatedMs: Long? = null
@@ -35,10 +34,6 @@ class FakeAppStartupDataCollector(
 
     override fun applicationInitEnd(timestampMs: Long?) {
         applicationInitEndMs = timestampMs ?: clock.now()
-    }
-
-    override fun firstActivityInit(timestampMs: Long?) {
-        firstActivityInitMs = timestampMs ?: clock.now()
     }
 
     override fun startupActivityPreCreated(timestampMs: Long?) {

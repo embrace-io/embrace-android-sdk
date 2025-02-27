@@ -16,6 +16,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
+      - name: Free Disk Space (Ubuntu)
+        uses: embrace-io/free-disk-space@main
+        with:
+          tool-cache: false
+          # keep android packages
+          android: false
       - name: Checkout Branch
         uses: actions/checkout@v4
         with:

@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.capture.startup
 import android.app.Activity
 import android.app.Application
 import android.os.Bundle
-import io.embrace.android.embracesdk.annotation.StartupActivity
+import io.embrace.android.embracesdk.annotation.IgnoreForStartup
 import io.embrace.android.embracesdk.internal.capture.activity.traceInstanceId
 import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityLifecycleListener
 import io.embrace.android.embracesdk.internal.ui.DrawEventEmitter
@@ -35,14 +35,17 @@ class StartupTracker(
 
     private var startupActivityId: Int? = null
     private var startupDataCollectionComplete = false
+    private var firstActivitySeen = false
 
     override fun onActivityPreCreated(activity: Activity, savedInstanceState: Bundle?) {
+        firstActivityInit()
         if (activity.useAsStartupActivity()) {
             appStartupDataCollector.startupActivityPreCreated()
         }
     }
 
     override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
+        firstActivityInit()
         if (activity.useAsStartupActivity()) {
             appStartupDataCollector.startupActivityInitStart()
             val application = activity.application
@@ -87,6 +90,13 @@ class StartupTracker(
 
     override fun onActivityDestroyed(activity: Activity) {}
 
+    private fun firstActivityInit() {
+        if (!firstActivitySeen) {
+            appStartupDataCollector.firstActivityInit()
+            firstActivitySeen = true
+        }
+    }
+
     private fun startupComplete(application: Application) {
         if (!startupDataCollectionComplete) {
             application.unregisterActivityLifecycleCallbacks(this)
@@ -126,6 +136,6 @@ class StartupTracker(
     }
 
     private companion object {
-        fun Activity.observeForStartup(): Boolean = !javaClass.isAnnotationPresent(StartupActivity::class.java)
+        fun Activity.observeForStartup(): Boolean = !javaClass.isAnnotationPresent(IgnoreForStartup::class.java)
     }
 }

@@ -432,7 +432,6 @@ internal class ModuleInitBootstrapper(
                         serviceRegistry.registerActivityListeners(essentialServiceModule.processStateService)
                         serviceRegistry.registerMemoryCleanerListeners(sessionOrchestrationModule.memoryCleanerService)
                         serviceRegistry.registerActivityLifecycleListeners(essentialServiceModule.activityLifecycleTracker)
-                        serviceRegistry.registerStartupListener(essentialServiceModule.activityLifecycleTracker)
                     }
 
                     // Verify that the ProcessStateService is fully initialized at this point, and log otherwise.

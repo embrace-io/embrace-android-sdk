@@ -1,6 +1,8 @@
 package io.embrace.android.gradle.plugin.config
 
 import io.embrace.android.gradle.plugin.agp.AgpWrapper
+import io.embrace.android.gradle.plugin.gradle.isTaskRegistered
+import org.gradle.api.Project
 import org.gradle.api.provider.Provider
 
 internal object ProjectTypeVerifier {
@@ -10,9 +12,11 @@ internal object ProjectTypeVerifier {
         unitySymbolsDir: Provider<UnitySymbolsDir>,
         agpWrapper: AgpWrapper,
         behavior: PluginBehavior,
+        variantName: String,
+        project: Project,
     ): ProjectType {
         return when {
-            isNative(agpWrapper, behavior) -> ProjectType.NATIVE
+            isNative(agpWrapper, behavior, variantName, project) -> ProjectType.NATIVE
             isUnity(unitySymbolsDir.orNull) -> ProjectType.UNITY
             else -> ProjectType.OTHER
         }
@@ -27,13 +31,18 @@ internal object ProjectTypeVerifier {
      */
     private fun isNative(
         agpWrapper: AgpWrapper,
-        behavior: PluginBehavior
+        behavior: PluginBehavior,
+        variantName: String,
+        project: Project,
     ): Boolean {
-        return agpWrapper.usesCMake || agpWrapper.usesNdkBuild ||
+        return agpWrapper.usesCMake || agpWrapper.usesNdkBuild || hasExternalNativeTask(variantName, project) ||
             usesCustomNativeBuild(behavior)
     }
 
-    private fun usesCustomNativeBuild(behavior: PluginBehavior): Boolean {
-        return !behavior.customSymbolsDirectory.isNullOrEmpty()
-    }
+    private fun usesCustomNativeBuild(behavior: PluginBehavior) = !behavior.customSymbolsDirectory.isNullOrEmpty()
+
+    private fun hasExternalNativeTask(variantName: String, project: Project) = project.isTaskRegistered(
+        "externalNativeBuild",
+        variantName
+    )
 }

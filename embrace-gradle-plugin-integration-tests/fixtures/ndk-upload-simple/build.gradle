@@ -1,6 +1,6 @@
 import io.embrace.android.gradle.plugin.tasks.ndk.NdkUploadTask
-import io.embrace.android.gradle.plugin.tasks.ndk.NdkType
 import io.embrace.android.gradle.plugin.network.EmbraceEndpoint
+import io.embrace.android.gradle.plugin.config.ProjectType
 
 plugins {
     id("java")
@@ -10,8 +10,9 @@ plugins {
 
 project.tasks.register("testTask", NdkUploadTask) { task ->
     integrationTest.configureGradleUploadTask(project, task, EmbraceEndpoint.NDK, null)
-    task.ndkType.set(NdkType.NATIVE)
     task.ndkEnabled.set(true)
+
+    task.projectType.set(ProjectType.NATIVE)
 
     task.architecturesDirectoryForNative.from(
             project.layout.projectDirectory.dir("native-libs")

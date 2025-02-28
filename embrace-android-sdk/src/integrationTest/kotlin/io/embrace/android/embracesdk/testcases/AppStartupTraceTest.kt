@@ -83,7 +83,7 @@ internal class AppStartupTraceTest {
                     assertEquals("yes", attributes.toNewPayload().findAttributeValue("custom-attribute"))
                 }
                 assertTrue(spans.containsKey("emb-embrace-init"))
-                with(checkNotNull(spans["emb-activity-init-gap"])) {
+                with(checkNotNull(spans["emb-activity-init-delay"])) {
                     assertEquals(sdkStartTimeMs, startEpochNanos.nanosToMillis())
                     assertEquals(activityInitStartMs, endEpochNanos.nanosToMillis())
                 }
@@ -95,8 +95,8 @@ internal class AppStartupTraceTest {
                     assertNotNull(events?.single())
                     assertEquals(Span.Status.ERROR, status.statusCode.toStatus())
                 }
-                assertTrue(spans.containsKey("emb-activity-create"))
-                assertTrue(spans.containsKey("emb-activity-resume"))
+                assertTrue(spans.containsKey("emb-activity-init"))
+                assertTrue(spans.containsKey("emb-activity-load"))
             }
         )
     }
@@ -124,10 +124,10 @@ internal class AppStartupTraceTest {
                 with(checkNotNull(spans["emb-app-startup-warm"])) {
                     assertEquals(startupActivityInitMs, startEpochNanos.nanosToMillis())
                 }
-                with(checkNotNull(spans["emb-activity-create"])) {
+                with(checkNotNull(spans["emb-activity-init"])) {
                     assertEquals(startupActivityInitMs, startEpochNanos.nanosToMillis())
                 }
-                assertTrue(spans.containsKey("emb-activity-resume"))
+                assertTrue(spans.containsKey("emb-activity-load"))
             }
         )
     }
@@ -166,14 +166,14 @@ internal class AppStartupTraceTest {
                 assertTrue(spans.isNotEmpty())
                 assertTrue(spans.containsKey("emb-app-startup-cold"))
                 assertTrue(spans.containsKey("emb-embrace-init"))
-                with(checkNotNull(spans["emb-activity-init-gap"])) {
+                with(checkNotNull(spans["emb-activity-init-delay"])) {
                     assertEquals(sdkStartTimeMs, startEpochNanos.nanosToMillis())
                     assertEquals(firstActivityInitMs, endEpochNanos.nanosToMillis())
                 }
-                with(checkNotNull(spans["emb-activity-create"])) {
+                with(checkNotNull(spans["emb-activity-init"])) {
                     assertEquals(startupActivityInitMs, startEpochNanos.nanosToMillis())
                 }
-                assertTrue(spans.containsKey("emb-activity-resume"))
+                assertTrue(spans.containsKey("emb-activity-load"))
             }
         )
     }
@@ -212,10 +212,10 @@ internal class AppStartupTraceTest {
                 with(checkNotNull(spans["emb-app-startup-warm"])) {
                     assertEquals(firstActivityInitMs, startEpochNanos.nanosToMillis())
                 }
-                with(checkNotNull(spans["emb-activity-create"])) {
+                with(checkNotNull(spans["emb-activity-init"])) {
                     assertEquals(startupActivityInitMs, startEpochNanos.nanosToMillis())
                 }
-                assertTrue(spans.containsKey("emb-activity-resume"))
+                assertTrue(spans.containsKey("emb-activity-load"))
             }
         )
     }
@@ -247,7 +247,7 @@ internal class AppStartupTraceTest {
                 with(checkNotNull(spans["emb-process-init"])) {
                     assertEquals(applicationEndTimeMs, endEpochNanos.nanosToMillis())
                 }
-                with(checkNotNull(spans["emb-activity-init-gap"])) {
+                with(checkNotNull(spans["emb-activity-init-delay"])) {
                     assertEquals(applicationEndTimeMs, startEpochNanos.nanosToMillis())
                     assertEquals(activityInitStartMs, endEpochNanos.nanosToMillis())
                 }

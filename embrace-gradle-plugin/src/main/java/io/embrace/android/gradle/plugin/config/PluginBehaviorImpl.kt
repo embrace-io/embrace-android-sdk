@@ -35,6 +35,10 @@ class PluginBehaviorImpl(
         project.getBoolProperty(EMBRACE_DISABLE_MAPPING_FILE_UPLOAD)
     }
 
+    override val failBuildOnUploadErrors: Boolean by lazy {
+        project.getBoolProperty(EMBRACE_FAIL_BUILD_ON_UPLOAD_ERRORS)
+    }
+
     override val baseUrl: String by lazy {
         val prop = project.getProperty(EMBRACE_BASE_URL)
             ?: return@lazy DEFAULT_SYMBOL_STORE_HOST_URL

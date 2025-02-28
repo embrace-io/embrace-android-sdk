@@ -45,10 +45,17 @@ internal class EmbraceSpanImpl(
 ) : PersistableEmbraceSpan {
 
     private val startedSpan: AtomicReference<io.opentelemetry.api.trace.Span?> = AtomicReference(null)
+
+    @Volatile
     private var spanStartTimeMs: Long? = null
+
+    @Volatile
     private var spanEndTimeMs: Long? = null
+
+    @Volatile
     private var status = Span.Status.UNSET
     private var updatedName: String? = null
+
     private val systemEvents = ConcurrentLinkedQueue<EmbraceSpanEvent>()
     private val customEvents = ConcurrentLinkedQueue<EmbraceSpanEvent>()
     private val systemAttributes = ConcurrentHashMap<String, String>().apply {
@@ -229,6 +236,8 @@ internal class EmbraceSpanImpl(
             }
         }
     }
+
+    override fun getStartTimeMs(): Long? = spanStartTimeMs
 
     override fun addAttribute(key: String, value: String): Boolean {
         if (customAttributes.size < limits.getMaxCustomAttributeCount() && limits.isAttributeValid(key, value, spanBuilder.internal)) {

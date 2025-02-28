@@ -19,6 +19,7 @@ class FakeAutoDataCaptureBehavior(
     private val uiLoadTracingTraceAll: Boolean = true,
     private val v2StorageEnabled: Boolean = true,
     private val useOkhttp: Boolean = true,
+    private val manualAppStartupCompletion: Boolean = false,
 ) : AutoDataCaptureBehavior {
 
     override val local: EnabledFeatureConfig
@@ -40,4 +41,5 @@ class FakeAutoDataCaptureBehavior(
     override fun isUiLoadTracingTraceAll(): Boolean = uiLoadTracingTraceAll
     override fun isV2StorageEnabled(): Boolean = v2StorageEnabled
     override fun shouldUseOkHttp(): Boolean = useOkhttp
+    override fun isManualAppStartupCompletionEnabled(): Boolean = manualAppStartupCompletion
 }

@@ -1,6 +1,7 @@
 package io.embrace.android.gradle.plugin.tasks.ndk
 
 import io.embrace.android.gradle.plugin.Logger
+import io.embrace.android.gradle.plugin.config.ProjectType
 import io.embrace.android.gradle.plugin.config.UnitySymbolsDir
 import io.embrace.android.gradle.plugin.hash.calculateSha1ForFile
 import io.embrace.android.gradle.plugin.network.OkHttpNetworkService
@@ -32,7 +33,7 @@ import javax.xml.transform.TransformerException
  * A task that uploads NDK symbols to Embrace.
  */
 abstract class NdkUploadTask @Inject constructor(
-    objectFactory: ObjectFactory
+    objectFactory: ObjectFactory,
 ) : EmbraceUploadTask, EmbraceUploadTaskImpl(objectFactory) {
 
     private val logger = Logger(NdkUploadTask::class.java)
@@ -43,8 +44,7 @@ abstract class NdkUploadTask @Inject constructor(
 
     @get:Optional
     @get:Input
-    val ndkType: Property<NdkType> =
-        objectFactory.property(NdkType::class.java).convention(NdkType.UNDEFINED)
+    val projectType: Property<ProjectType> = objectFactory.property(ProjectType::class.java).convention(ProjectType.OTHER)
 
     @get:Internal
     val deobfuscatedFilesDirPath: DirectoryProperty = objectFactory.directoryProperty()
@@ -74,11 +74,6 @@ abstract class NdkUploadTask @Inject constructor(
     fun onRun() {
         if (!ndkEnabled.get()) {
             logger.warn("NDK upload task will not run when the NDK is disabled.")
-            return
-        }
-
-        if (ndkType.get() == NdkType.UNDEFINED) {
-            logger.warn("Cannot run NDK upload task without defining an NDK type.")
             return
         }
 
@@ -123,18 +118,10 @@ abstract class NdkUploadTask @Inject constructor(
     }
 
     private fun getSoFilesByArchitecture(): Map<String, List<File>> {
-        val archFiles = when (ndkType.get()) {
-            NdkType.UNITY -> {
-                getSoFilesByArchitectureForUnity()
-            }
-
-            NdkType.NATIVE -> {
-                getSoFilesByArchitectureForNative()
-            }
-
-            else -> {
-                throw IllegalArgumentException("Cannot generate NDK map file. Unsupported NDK type.")
-            }
+        val archFiles = when (projectType.get()) {
+            ProjectType.UNITY -> getSoFilesByArchitectureForUnity()
+            ProjectType.NATIVE -> getSoFilesByArchitectureForNative()
+            else -> throw IllegalArgumentException("Cannot generate NDK map file. Unsupported NDK type.")
         }
 
         return generateArchSoMap(archFiles)
@@ -243,7 +230,7 @@ abstract class NdkUploadTask @Inject constructor(
      * @return a map of requested symbols grouped by architecture
      */
     private fun filterRequestedSymbolsFiles(
-        requestedSymbols: Map<String, List<String>>
+        requestedSymbols: Map<String, List<String>>,
     ): Map<String, Map<String, File>> {
         val selectedSymbols = mutableMapOf<String, Map<String, File>>()
         getDeobfuscatedSymbolsFiles()?.let { deobfuscatedSymbols ->

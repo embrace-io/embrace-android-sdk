@@ -61,5 +61,5 @@ class AutoDataCaptureBehaviorImpl(
     }
 
     override fun shouldUseOkHttp(): Boolean = shouldUseOkHttpImpl
-    override fun isManualAppStartupCompletionEnabled(): Boolean = local.isManualAppStartupCompletionEnabled()
+    override fun isEndStartupWithAppReadyEnabled(): Boolean = local.isEndStartupWithAppReadyEnabled()
 }

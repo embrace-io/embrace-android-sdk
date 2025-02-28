@@ -83,5 +83,5 @@ interface AutoDataCaptureBehavior : ConfigBehavior<EnabledFeatureConfig, RemoteC
     /**
      * Whether the app startup trace will be waiting for a call to Embrace.appReady() to signal completion
      */
-    fun isManualAppStartupCompletionEnabled(): Boolean
+    fun isEndStartupWithAppReadyEnabled(): Boolean
 }

@@ -64,7 +64,7 @@ internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
             backgroundWorker = workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker),
             versionChecker = versionChecker,
             logger = initModule.logger,
-            manualEnd = configService.autoDataCaptureBehavior.isManualAppStartupCompletionEnabled()
+            manualEnd = configService.autoDataCaptureBehavior.isEndStartupWithAppReadyEnabled()
         )
     }
 

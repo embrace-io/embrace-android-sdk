@@ -162,5 +162,11 @@ interface EnabledFeatureConfig {
      */
     fun isUiLoadTracingTraceAll(): Boolean = true
 
-    fun isManualAppStartupCompletionEnabled(): Boolean = false
+    /**
+     * Requires appReady() to be invoked manually to end appStartup. If that is not called before the app backgrounds, it is considered
+     * to have been abandoned.
+     *
+     * Will be true only if sdk_config.automatic_data_capture.end_startup_with_app_ready is true
+     */
+    fun isEndStartupWithAppReadyEnabled(): Boolean = false
 }

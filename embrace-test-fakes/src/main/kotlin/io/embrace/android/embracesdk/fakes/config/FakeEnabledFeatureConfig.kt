@@ -28,7 +28,7 @@ class FakeEnabledFeatureConfig(
     private val networkSpanForwarding: Boolean = base.isNetworkSpanForwardingEnabled(),
     private val uiLoadTracingEnabled: Boolean = base.isUiLoadTracingEnabled(),
     private val uiLoadTracingTraceAll: Boolean = base.isUiLoadTracingTraceAll(),
-    private val manualAppStartupCompletion: Boolean = base.isManualAppStartupCompletionEnabled(),
+    private val endStartupWithAppReady: Boolean = base.isEndStartupWithAppReadyEnabled(),
 ) : EnabledFeatureConfig {
 
     override fun isUnityAnrCaptureEnabled(): Boolean = unityAnrCapture
@@ -55,5 +55,5 @@ class FakeEnabledFeatureConfig(
     override fun isNetworkSpanForwardingEnabled(): Boolean = networkSpanForwarding
     override fun isUiLoadTracingEnabled(): Boolean = uiLoadTracingEnabled
     override fun isUiLoadTracingTraceAll(): Boolean = uiLoadTracingTraceAll
-    override fun isManualAppStartupCompletionEnabled(): Boolean = manualAppStartupCompletion
+    override fun isEndStartupWithAppReadyEnabled(): Boolean = endStartupWithAppReady
 }

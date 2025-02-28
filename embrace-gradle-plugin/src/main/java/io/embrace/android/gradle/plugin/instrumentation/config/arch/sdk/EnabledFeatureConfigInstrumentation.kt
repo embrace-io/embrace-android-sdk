@@ -37,5 +37,6 @@ fun createEnabledFeatureConfigInstrumentation(cfg: VariantConfig) = modelSdkConf
                 true
             }
         }
+        boolMethod("isEndStartupWithAppReadyEnabled") { automaticDataCaptureConfig?.endStartupWithAppReadyEnabled }
     }
 }

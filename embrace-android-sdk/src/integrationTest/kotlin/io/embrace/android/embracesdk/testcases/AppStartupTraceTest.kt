@@ -107,7 +107,7 @@ internal class AppStartupTraceTest {
             instrumentedConfig = FakeInstrumentedConfig(
                 enabledFeatures = FakeEnabledFeatureConfig(
                     bgActivityCapture = true,
-                    manualAppStartupCompletion = true
+                    endStartupWithAppReady = true
                 )
             ),
             testCaseAction = {

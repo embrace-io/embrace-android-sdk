@@ -7,7 +7,6 @@
 - Fixed build issues on some apps that use DexGuard
 - Fixed memory leak of the Activity loaded during app launch
 - Fixed rare crash when the Jetpack Compose tap detection feature is enabled
-- Added ProGuard rule to always retain local configuration settings in obfuscated builds
 
 ## 7.1.0
 *February 7, 2025*

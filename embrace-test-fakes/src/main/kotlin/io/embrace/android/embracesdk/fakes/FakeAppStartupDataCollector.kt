@@ -19,12 +19,15 @@ class FakeAppStartupDataCollector(
     var applicationInitStartMs: Long? = null
     var applicationInitEndMs: Long? = null
     var startupActivityName: String? = null
+    var firstActivityInitMs: Long? = null
     var startupActivityPreCreatedMs: Long? = null
     var startupActivityInitStartMs: Long? = null
     var startupActivityPostCreatedMs: Long? = null
     var startupActivityInitEndMs: Long? = null
     var startupActivityResumedMs: Long? = null
     var firstFrameRenderedMs: Long? = null
+    var appReadyMs: Long? = null
+    var appStartupCompleteCallback: (() -> Unit)? = null
     var customChildSpans = ConcurrentLinkedQueue<SpanData>()
     var customAttributes: MutableMap<String, String> = ConcurrentHashMap()
 
@@ -34,6 +37,11 @@ class FakeAppStartupDataCollector(
 
     override fun applicationInitEnd(timestampMs: Long?) {
         applicationInitEndMs = timestampMs ?: clock.now()
+    }
+
+    override fun firstActivityInit(timestampMs: Long?, startupCompleteCallback: () -> Unit) {
+        firstActivityInitMs = timestampMs ?: clock.now()
+        appStartupCompleteCallback = startupCompleteCallback
     }
 
     override fun startupActivityPreCreated(timestampMs: Long?) {
@@ -54,22 +62,25 @@ class FakeAppStartupDataCollector(
 
     override fun startupActivityResumed(
         activityName: String,
-        collectionCompleteCallback: (() -> Unit)?,
         timestampMs: Long?,
     ) {
         startupActivityName = activityName
         startupActivityResumedMs = timestampMs ?: clock.now()
-        collectionCompleteCallback?.invoke()
+        appStartupCompleteCallback?.invoke()
     }
 
     override fun firstFrameRendered(
         activityName: String,
-        collectionCompleteCallback: (() -> Unit)?,
         timestampMs: Long?,
     ) {
         startupActivityName = activityName
         firstFrameRenderedMs = timestampMs ?: clock.now()
-        collectionCompleteCallback?.invoke()
+        appStartupCompleteCallback?.invoke()
+    }
+
+    override fun appReady(timestampMs: Long?) {
+        appReadyMs = timestampMs ?: clock.now()
+        appStartupCompleteCallback?.invoke()
     }
 
     override fun addTrackedInterval(

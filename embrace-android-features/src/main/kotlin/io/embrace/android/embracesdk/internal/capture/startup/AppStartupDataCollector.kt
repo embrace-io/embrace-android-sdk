@@ -21,6 +21,11 @@ interface AppStartupDataCollector {
     fun applicationInitEnd(timestampMs: Long? = null)
 
     /**
+     * Set the time the first activity was detected to have started, irrespective of whether it should be used for startup
+     */
+    fun firstActivityInit(timestampMs: Long? = null, startupCompleteCallback: () -> Unit)
+
+    /**
      * Set the time just prior to the creation of the Activity whose rendering will denote the end of the startup workflow
      */
     fun startupActivityPreCreated(timestampMs: Long? = null)
@@ -45,7 +50,6 @@ interface AppStartupDataCollector {
      */
     fun startupActivityResumed(
         activityName: String,
-        collectionCompleteCallback: (() -> Unit)? = null,
         timestampMs: Long? = null,
     )
 
@@ -54,9 +58,13 @@ interface AppStartupDataCollector {
      */
     fun firstFrameRendered(
         activityName: String,
-        collectionCompleteCallback: (() -> Unit)? = null,
         timestampMs: Long? = null,
     )
+
+    /**
+     * Notify the SDK app startup is complete. The startup trace will end if it's configured to wait for this to complete.
+     */
+    fun appReady(timestampMs: Long? = null)
 
     /**
      * Set an arbitrary time interval during startup that is of note

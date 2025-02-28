@@ -1,5 +1,13 @@
 # Embrace Android SDK Changelog
 
+## 7.2.0
+*February 27, 2025*
+
+- Fixed stacktrace deobfuscation in React Native
+- Fixed build issues on some apps that use DexGuard
+- Fixed memory leak of the Activity loaded during app launch
+- Fixed rare crash when the Jetpack Compose tap detection feature is enabled
+
 ## 7.1.0
 *February 7, 2025*
 

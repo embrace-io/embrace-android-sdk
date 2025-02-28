@@ -161,4 +161,6 @@ interface EnabledFeatureConfig {
      * - sdk_config.automatic_data_capture.ui_load_tracing_selected_only
      */
     fun isUiLoadTracingTraceAll(): Boolean = true
+
+    fun isManualAppStartupCompletionEnabled(): Boolean = false
 }

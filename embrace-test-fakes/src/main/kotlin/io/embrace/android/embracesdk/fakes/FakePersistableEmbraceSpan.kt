@@ -126,6 +126,8 @@ class FakePersistableEmbraceSpan(
         statusDescription = description
     }
 
+    override fun getStartTimeMs(): Long? = spanStartTimeMs
+
     override fun addAttribute(key: String, value: String): Boolean {
         attributes[key] = value
         return true

@@ -133,7 +133,6 @@ abstract class NdkUploadTask @Inject constructor(
             unitySymbolFilesManager.getSymbolFiles(
                 symbolsDir,
                 getProjectLayout().buildDirectory.get(),
-                variantData.get()
             )
         } else {
             emptyArray()

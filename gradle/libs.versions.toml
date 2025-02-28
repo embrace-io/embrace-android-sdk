@@ -8,6 +8,7 @@ kotlinExposed = "1.8.22"
 dokka = "1.9.20"
 kotlinGradlePlugin = "2.1.10"
 koverGradlePlugin = "0.9.1"
+embraceCommonAndroid = "0.1.0"
 lint = "31.8.2"
 openTelemetryCore = "1.46.0"
 openTelementrySemConv = "1.29.0-alpha"
@@ -42,6 +43,7 @@ binary-compatibility-validator = { module = "org.jetbrains.kotlinx:binary-compat
 detekt-gradle-plugin = { module = "io.gitlab.arturbosch.detekt:detekt-gradle-plugin", version.ref = "detekt" }
 agp = { module = "com.android.tools.build:gradle", version.ref = "agp" }
 kotlin-gradle-plugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlinGradlePlugin" }
+embrace-common-android = { module = "io.embrace:common-android", version.ref = "embraceCommonAndroid" }
 lifecycle-runtime = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycle" }
 lifecycle-compiler = { group = "androidx.lifecycle", name = "lifecycle-compiler", version.ref = "lifecycle" }
 lifecycle-process = { group = "androidx.lifecycle", name = "lifecycle-process", version.ref = "lifecycle" }

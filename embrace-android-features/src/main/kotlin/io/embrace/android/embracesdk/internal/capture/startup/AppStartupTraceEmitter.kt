@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.capture.startup
 
 import android.os.Build.VERSION_CODES
 import android.os.Process
+import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
@@ -47,7 +48,7 @@ internal class AppStartupTraceEmitter(
     private val backgroundWorker: BackgroundWorker,
     private val versionChecker: VersionChecker,
     private val logger: EmbLogger,
-    manualEnd: Boolean
+    manualEnd: Boolean,
 ) : AppStartupDataCollector {
     private val processCreateRequestedMs: Long?
     private val processCreatedMs: Long?
@@ -216,7 +217,7 @@ internal class AppStartupTraceEmitter(
      */
     private fun dataCollectionComplete(traceEndTimeMs: Long) {
         if (!dataCollectionComplete.getAndSet(true)) {
-            backgroundWorker.submit {
+            Systrace.traceSynchronous("record-startup") {
                 recordStartup(traceEndTimeMs)
                 if (appStartupRootSpan.get()?.isRecording != false) {
                     logger.trackInternalError(

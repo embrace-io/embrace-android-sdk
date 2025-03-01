@@ -25,9 +25,6 @@ class CombinedRemoteConfigSource(
     fun getConfig(): RemoteConfig? = response?.cfg
 
     fun scheduleConfigRequests() {
-        Systrace.traceSynchronous("set-initial-etag") {
-            response?.etag?.let(httpSource::setInitialEtag)
-        }
         Systrace.traceSynchronous("schedule-http-request") {
             worker.scheduleWithFixedDelay(
                 ::attemptConfigRequest,
@@ -39,6 +36,9 @@ class CombinedRemoteConfigSource(
     }
 
     private fun attemptConfigRequest() {
+        response?.etag?.let {
+            httpSource.setInitialEtag(it)
+        }
         httpSource.getConfig()?.let {
             store.saveResponse(it)
         }

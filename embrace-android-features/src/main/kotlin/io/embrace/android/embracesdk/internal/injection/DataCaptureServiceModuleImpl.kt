@@ -21,13 +21,11 @@ import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityLifecycl
 import io.embrace.android.embracesdk.internal.ui.FirstDrawDetector
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
-import io.embrace.android.embracesdk.internal.worker.Worker
 
 internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
     initModule: InitModule,
     openTelemetryModule: OpenTelemetryModule,
     configService: ConfigService,
-    workerThreadModule: WorkerThreadModule,
     versionChecker: VersionChecker = BuildVersionChecker,
     featureModule: FeatureModule,
 ) : DataCaptureServiceModule {
@@ -61,7 +59,6 @@ internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
             clock = openTelemetryModule.openTelemetryClock,
             startupServiceProvider = { startupService },
             spanService = openTelemetryModule.spanService,
-            backgroundWorker = workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker),
             versionChecker = versionChecker,
             logger = initModule.logger,
             manualEnd = configService.autoDataCaptureBehavior.isEndStartupWithAppReadyEnabled()

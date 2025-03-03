@@ -11,7 +11,6 @@ import io.embrace.android.embracesdk.internal.spans.PersistableEmbraceSpan
 import io.embrace.android.embracesdk.internal.spans.SpanService
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
-import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
@@ -45,7 +44,6 @@ internal class AppStartupTraceEmitter(
     private val clock: Clock,
     private val startupServiceProvider: Provider<StartupService?>,
     private val spanService: SpanService,
-    private val backgroundWorker: BackgroundWorker,
     private val versionChecker: VersionChecker,
     private val logger: EmbLogger,
     manualEnd: Boolean,

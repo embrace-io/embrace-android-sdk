@@ -6,7 +6,6 @@ import io.embrace.android.embracesdk.arch.assertDoesNotHaveEmbraceAttribute
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeClock.Companion.DEFAULT_FAKE_CURRENT_TIME
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
-import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.capture.startup.AppStartupTraceEmitter.Companion.ACTIVITY_INIT_DELAY_SPAN
@@ -26,7 +25,6 @@ import io.embrace.android.embracesdk.internal.spans.SpanService
 import io.embrace.android.embracesdk.internal.spans.SpanSink
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
-import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.opentelemetry.sdk.common.Clock
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -53,12 +51,10 @@ internal class AppStartupTraceEmitterTest {
     private lateinit var spanSink: SpanSink
     private lateinit var spanService: SpanService
     private lateinit var logger: FakeEmbLogger
-    private lateinit var backgroundWorker: BackgroundWorker
 
     @Before
     fun setUp() {
         clock = FakeClock(processInitTime)
-        backgroundWorker = fakeBackgroundWorker()
         FakeInitModule(clock = clock).run {
             otelClock = openTelemetryModule.openTelemetryClock
             spanSink = openTelemetryModule.spanSink
@@ -485,7 +481,6 @@ internal class AppStartupTraceEmitterTest {
             clock = otelClock,
             startupServiceProvider = { startupService },
             spanService = spanService,
-            backgroundWorker = backgroundWorker,
             versionChecker = BuildVersionChecker,
             logger = logger,
             manualEnd = manualEnd,

@@ -254,7 +254,6 @@ internal class ModuleInitBootstrapper(
                             initModule,
                             openTelemetryModule,
                             configModule.configService,
-                            workerThreadModule,
                             versionChecker,
                             featureModule
                         )

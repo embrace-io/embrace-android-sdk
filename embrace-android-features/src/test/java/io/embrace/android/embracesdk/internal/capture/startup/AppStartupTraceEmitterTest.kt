@@ -486,7 +486,6 @@ internal class AppStartupTraceEmitterTest {
             manualEnd = manualEnd,
         )
 
-    @Suppress("CyclomaticComplexMethod", "ComplexMethod")
     private fun AppStartupTraceEmitter.simulateAppStartup(
         verifyTrace: Boolean = true,
         isColdStart: Boolean = true,
@@ -498,87 +497,46 @@ internal class AppStartupTraceEmitterTest {
         abortFirstActivityLoad: Boolean = false,
         loadSplashScreen: Boolean = false,
     ) {
-        val applicationInitStart = if (hasAppInitEvents) {
-            clock.tick(100L)
-            applicationInitStart()
-            clock.now()
-        } else {
-            null
-        }
-
-        val (sdkInitStart, sdkInitEnd) = startSdk().run {
-            if (isColdStart) {
-                this
-            } else {
-                null to null
-            }
-        }
+        val appInitTimestamps = initApp(
+            hasAppInitEvents = hasAppInitEvents,
+            isColdStart = isColdStart
+        )
 
         val customSpanStartMs = clock.now()
         addAttribute("custom-attribute", "true")
         val customSpanEndMs = clock.tick(15L)
         addTrackedInterval("custom-span", customSpanStartMs, customSpanEndMs)
 
-        val applicationInitEnd = if (hasAppInitEvents) {
-            clock.tick(44L)
-            applicationInitEnd()
-            clock.now()
-        } else {
-            null
-        }
-
-        if (isColdStart) {
-            clock.tick(50L)
-        } else {
-            clock.tick(AppStartupTraceEmitter.SDK_AND_ACTIVITY_INIT_GAP + 1)
-        }
-
-        val activityCreateEvents = launchActivity(
+        val activityInitTimestamps = initActivity(
             firePreAndPostCreate = firePreAndPostCreate,
+            renderFrame = hasRenderEvent,
             loadSplashScreen = loadSplashScreen,
             abortFirstLoad = abortFirstActivityLoad
         )
-        val uiLoadEnd = startupActivityRender(hasRenderEvent).run {
-            if (hasRenderEvent) {
-                second
-            } else {
-                first
-            }
-        }
-
-        val firstActivityInit = activityCreateEvents.firstEvent ?: error("No first Activity init time")
-        val startupActivityStart = activityCreateEvents.preCreate ?: activityCreateEvents.create ?: error("No activity create time")
-        val startupActivityEnd = checkNotNull((activityCreateEvents.finished))
 
         val traceStart = if (isColdStart) {
             if (trackProcessStart) {
                 processInitTime
             } else {
-                applicationInitStart ?: sdkInitStart ?: firstActivityInit
+                appInitTimestamps.applicationInitStart ?: appInitTimestamps.sdkInitStart ?: activityInitTimestamps.firstActivityInit
             }
         } else {
-            firstActivityInit
+            activityInitTimestamps.firstActivityInit
         }
 
         val traceEnd = if (manualEnd) {
             invokeAppReady()
         } else {
-            uiLoadEnd
+            activityInitTimestamps.uiLoadEnd
         }
 
         if (verifyTrace) {
             StartupTimestamps(
-                traceStart = traceStart,
-                sdkInitStart = sdkInitStart,
-                sdkInitEnd = sdkInitEnd,
-                applicationInitEnd = applicationInitEnd,
-                customSpanStart = customSpanStartMs,
-                customSpanEnd = customSpanEndMs,
-                firstActivityInit = firstActivityInit,
-                startupActivityStart = startupActivityStart,
-                startupActivityEnd = startupActivityEnd,
-                uiLoadEnd = uiLoadEnd,
-                traceEnd = traceEnd
+                traceStart = checkNotNull(traceStart),
+                appInitTimestamps = appInitTimestamps,
+                customSpanTimeStamps = customSpanStartMs to customSpanEndMs,
+                activityInitTimestamps = activityInitTimestamps,
+                traceEnd = checkNotNull(traceEnd)
             ).verifyTrace(
                 isColdStart = isColdStart,
                 hasAppInitEvents = hasAppInitEvents,
@@ -596,14 +554,16 @@ internal class AppStartupTraceEmitterTest {
     ) {
         val spanMap = spanSink.completedSpans().associateBy { it.name }
         val trace = if (isColdStart) {
-            assertChildSpan(spanMap.embraceInitSpan(), sdkInitStart, sdkInitEnd)
-            val gapStart = if (hasAppInitEvents) {
-                applicationInitEnd
-            } else {
-                sdkInitEnd
+            with(appInitTimestamps) {
+                assertChildSpan(spanMap.embraceInitSpan(), sdkInitStart, sdkInitEnd)
+                val gapStart = if (hasAppInitEvents) {
+                    applicationInitEnd
+                } else {
+                    sdkInitEnd
+                }
+                assertChildSpan(spanMap.initGapSpan(), gapStart, activityInitTimestamps.firstActivityInit)
+                spanMap.coldAppStartupRootSpan()
             }
-            assertChildSpan(spanMap.initGapSpan(), gapStart, firstActivityInit)
-            spanMap.coldAppStartupRootSpan()
         } else {
             assertNull(spanMap.embraceInitSpan())
             assertNull(spanMap.initGapSpan())
@@ -618,95 +578,133 @@ internal class AppStartupTraceEmitterTest {
         )
 
         if (isColdStart && hasAppInitEvents) {
-            assertChildSpan(spanMap.processInitSpan(), traceStart, applicationInitEnd)
+            assertChildSpan(spanMap.processInitSpan(), traceStart, appInitTimestamps.applicationInitEnd)
         } else {
             assertNull(spanMap.processInitSpan())
         }
-        assertChildSpan(spanMap.customSpan(), customSpanStart, customSpanEnd)
-        assertChildSpan(spanMap.activityInitSpan(), startupActivityStart, startupActivityEnd)
 
-        if (hasRenderEvent) {
-            assertChildSpan(spanMap.firstFrameRenderSpan(), startupActivityEnd, uiLoadEnd)
-            assertNull(spanMap.activityResumeSpan())
-        } else {
-            assertChildSpan(spanMap.activityResumeSpan(), startupActivityEnd, uiLoadEnd)
-            assertNull(spanMap.firstFrameRenderSpan())
-        }
+        assertChildSpan(spanMap.customSpan(), customSpanTimeStamps.first, customSpanTimeStamps.second)
 
-        if (manualEnd) {
-            assertChildSpan(spanMap.appReadySpan(), uiLoadEnd, traceEnd)
-        } else {
-            assertNull(spanMap.appReadySpan())
+        with(activityInitTimestamps) {
+            assertChildSpan(spanMap.activityInitSpan(), startupActivityStart, startupActivityEnd)
+            if (hasRenderEvent) {
+                assertChildSpan(spanMap.firstFrameRenderSpan(), startupActivityEnd, uiLoadEnd)
+                assertNull(spanMap.activityResumeSpan())
+            } else {
+                assertChildSpan(spanMap.activityResumeSpan(), startupActivityEnd, uiLoadEnd)
+                assertNull(spanMap.firstFrameRenderSpan())
+            }
+
+            if (manualEnd) {
+                assertChildSpan(spanMap.appReadySpan(), uiLoadEnd, traceEnd)
+            } else {
+                assertNull(spanMap.appReadySpan())
+            }
         }
 
         assertEquals(0, logger.internalErrorMessages.size)
     }
 
-    private fun startSdk(): Pair<Long, Long> {
+    private fun AppStartupTraceEmitter.initApp(hasAppInitEvents: Boolean, isColdStart: Boolean): AppInitTimestamps {
+        val applicationInitStart = if (hasAppInitEvents) {
+            clock.tick(100L)
+            applicationInitStart()
+            clock.now()
+        } else {
+            null
+        }
+
         clock.tick(100L)
-        val sdkInitStart = clock.now()
+        val start = clock.now()
         clock.tick(30L)
-        val sdkInitEnd = clock.now()
+        val end = clock.now()
         clock.tick(400L)
         startupService?.setSdkStartupInfo(
-            startTimeMs = sdkInitStart,
-            endTimeMs = sdkInitEnd,
+            startTimeMs = start,
+            endTimeMs = end,
             endedInForeground = false,
             threadName = "main"
         )
-        return Pair(sdkInitStart, sdkInitEnd)
+
+        val applicationInitEnd = if (hasAppInitEvents) {
+            clock.tick(44L)
+            applicationInitEnd()
+            clock.now()
+        } else {
+            null
+        }
+
+        val (sdkInitStart, sdkInitEnd) = if (isColdStart) {
+            clock.tick(50L)
+            start to end
+        } else {
+            clock.tick(AppStartupTraceEmitter.SDK_AND_ACTIVITY_INIT_GAP + 1)
+            null to null
+        }
+
+        return AppInitTimestamps(
+            applicationInitStart = applicationInitStart,
+            applicationInitEnd = applicationInitEnd,
+            sdkInitStart = sdkInitStart,
+            sdkInitEnd = sdkInitEnd
+        )
     }
 
-    private fun AppStartupTraceEmitter.launchActivity(
-        firePreAndPostCreate: Boolean,
-        loadSplashScreen: Boolean,
-        abortFirstLoad: Boolean,
-    ): ActivityCreateEvents {
-        val activityCreateEvents = ActivityCreateEvents()
+    private fun AppStartupTraceEmitter.preActivityInit(loadSplashScreen: Boolean): Long {
         firstActivityInit(startupCompleteCallback = { dataCollectionCompletedCallbackInvokedCount++ })
-        activityCreateEvents.firstEvent = clock.now()
-
+        val timestamp = clock.now()
         if (loadSplashScreen) {
             clock.tick(400L)
         }
-
-        if (firePreAndPostCreate) {
-            startupActivityPreCreated()
-            activityCreateEvents.preCreate = clock.now()
-            clock.tick()
-        }
-        startupActivityInitStart()
-        activityCreateEvents.create = clock.now()
-        clock.tick(180)
-
-        if (abortFirstLoad) {
-            startupActivityPreCreated()
-            activityCreateEvents.preCreate = clock.now()
-            clock.tick()
-            startupActivityInitStart()
-            activityCreateEvents.create = clock.now()
-            clock.tick(230)
-        }
-
-        if (firePreAndPostCreate) {
-            startupActivityPostCreated()
-            activityCreateEvents.postCreate = clock.now()
-            clock.tick()
-        }
-        startupActivityInitEnd()
-        activityCreateEvents.finished = clock.now()
-        clock.tick(15L)
-        return activityCreateEvents
+        return timestamp
     }
 
-    private fun AppStartupTraceEmitter.startupActivityRender(renderFrame: Boolean): Pair<Long, Long> {
-        startupActivityResumed(STARTUP_ACTIVITY_NAME)
-        val resumed = clock.now()
-        if (renderFrame) {
-            clock.tick(199L)
-            firstFrameRendered(STARTUP_ACTIVITY_NAME)
+    private fun AppStartupTraceEmitter.initActivity(
+        firePreAndPostCreate: Boolean,
+        renderFrame: Boolean,
+        loadSplashScreen: Boolean,
+        abortFirstLoad: Boolean,
+    ): ActivityInitTimestamps {
+        val activityInitTimestamps = ActivityInitTimestamps()
+        with(activityInitTimestamps) {
+            firstActivityInit = preActivityInit(loadSplashScreen)
+            startupActivityStart = createActivity(firePreAndPostCreate)
+
+            clock.tick(180)
+
+            if (abortFirstLoad) {
+                startupActivityStart = createActivity(firePreAndPostCreate)
+            }
+
+            if (firePreAndPostCreate) {
+                startupActivityPostCreated()
+                clock.tick()
+            }
+            startupActivityInitEnd()
+            startupActivityEnd = clock.now()
+            clock.tick(15L)
+
+            startupActivityResumed(STARTUP_ACTIVITY_NAME)
+            if (renderFrame) {
+                clock.tick(199L)
+                firstFrameRendered(STARTUP_ACTIVITY_NAME)
+            }
+
+            uiLoadEnd = clock.now()
         }
-        return Pair(resumed, clock.now())
+        return activityInitTimestamps
+    }
+
+    private fun AppStartupTraceEmitter.createActivity(firePreAndPostCreate: Boolean): Long {
+        val preCreateTimestamp = if (firePreAndPostCreate) {
+            clock.tick()
+            startupActivityPreCreated()
+            clock.now()
+        } else {
+            null
+        }
+        startupActivityInitStart()
+        return preCreateTimestamp ?: clock.now()
     }
 
     private fun AppStartupTraceEmitter.invokeAppReady(): Long {
@@ -755,24 +753,24 @@ internal class AppStartupTraceEmitterTest {
 
     private data class StartupTimestamps(
         val traceStart: Long,
-        val sdkInitStart: Long? = null,
-        val sdkInitEnd: Long? = null,
-        val applicationInitEnd: Long? = null,
-        val customSpanStart: Long? = null,
-        val customSpanEnd: Long? = null,
-        val firstActivityInit: Long,
-        val startupActivityStart: Long,
-        val startupActivityEnd: Long,
-        val uiLoadEnd: Long,
+        val appInitTimestamps: AppInitTimestamps,
+        val activityInitTimestamps: ActivityInitTimestamps,
+        val customSpanTimeStamps: Pair<Long, Long>,
         val traceEnd: Long,
     )
 
-    private data class ActivityCreateEvents(
-        var firstEvent: Long? = null,
-        var preCreate: Long? = null,
-        var create: Long? = null,
-        var postCreate: Long? = null,
-        var finished: Long? = null,
+    private data class AppInitTimestamps(
+        val applicationInitStart: Long?,
+        val applicationInitEnd: Long?,
+        val sdkInitStart: Long?,
+        val sdkInitEnd: Long?,
+    )
+
+    private data class ActivityInitTimestamps(
+        var firstActivityInit: Long? = null,
+        var startupActivityStart: Long? = null,
+        var startupActivityEnd: Long? = null,
+        var uiLoadEnd: Long? = null,
     )
 
     companion object {

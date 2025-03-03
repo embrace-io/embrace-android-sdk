@@ -16,7 +16,7 @@ private val nextVisitor: MethodVisitor = mockk(relaxed = true)
 
 fun verifyConfigMethodVisitor(
     instrumentation: InstrumentedConfigClass,
-    method: ConfigMethod
+    method: ConfigMethod,
 ) {
     val visitor = instrumentation.getMethodVisitor(
         method.name,
@@ -32,7 +32,7 @@ fun verifyConfigMethodVisitor(
             is IntReturnValueMethodVisitor -> visitor.replacedValue
             is LongReturnValueMethodVisitor -> visitor.replacedValue
             is StringReturnValueMethodVisitor -> visitor.replacedValue
-            is io.embrace.android.gradle.plugin.instrumentation.config.StringListReturnValueMethodVisitor -> visitor.replacedValue
+            is StringListReturnValueMethodVisitor -> visitor.replacedValue
             is MapReturnValueMethodVisitor -> visitor.replacedValue
             else -> null
         }

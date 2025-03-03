@@ -49,6 +49,7 @@ class EnabledFeatureConfigInstrumentationKtTest {
         ConfigMethod("isNetworkSpanForwardingEnabled", "()Z", true),
         ConfigMethod("isUiLoadTracingEnabled", "()Z", true),
         ConfigMethod("isUiLoadTracingTraceAll", "()Z", true),
+        ConfigMethod("isEndStartupWithAppReadyEnabled", "()Z", true),
     )
 
     @Test
@@ -85,6 +86,7 @@ class EnabledFeatureConfigInstrumentationKtTest {
                             anrServiceEnabled = true,
                             uiLoadPerfTracingDisabled = false,
                             uiLoadPerfTracingSelectedOnly = false,
+                            endStartupWithAppReadyEnabled = true,
                         ),
                         backgroundActivityConfig = BackgroundActivityLocalConfig(
                             backgroundActivityCaptureEnabled = true

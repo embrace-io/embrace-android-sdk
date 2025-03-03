@@ -47,7 +47,7 @@ internal class AppStartupTraceEmitter(
     private val backgroundWorker: BackgroundWorker,
     private val versionChecker: VersionChecker,
     private val logger: EmbLogger,
-    manualEnd: Boolean = false,
+    manualEnd: Boolean
 ) : AppStartupDataCollector {
     private val processCreateRequestedMs: Long?
     private val processCreatedMs: Long?

@@ -23,6 +23,9 @@ data class AutomaticDataCaptureLocalConfig(
 
     @Json(name = "ui_load_tracing_selected_only")
     val uiLoadPerfTracingSelectedOnly: Boolean? = null,
+
+    @Json(name = "end_startup_with_app_ready")
+    val endStartupWithAppReadyEnabled: Boolean? = null,
 ) : Serializable {
 
     private companion object {

@@ -41,6 +41,7 @@ internal class AutoDataCaptureBehaviorImplTest {
             assertFalse(isUiLoadTracingTraceAll())
             assertTrue(isThermalStatusCaptureEnabled())
             assertTrue(isV2StorageEnabled())
+            assertFalse(isEndStartupWithAppReadyEnabled())
         }
     }
 
@@ -108,6 +109,18 @@ internal class AutoDataCaptureBehaviorImplTest {
 
     @Test
     fun `disable ui load trace all locally`() {
+        val behavior = createBehavior(
+            localUiLoadTracingEnabled = true,
+            localUiLoadTracingTraceAllEnabled = false,
+            remote = remote.copy(uiLoadInstrumentationEnabled = true)
+        )
+
+        assertTrue(behavior.isUiLoadTracingEnabled())
+        assertFalse(behavior.isUiLoadTracingTraceAll())
+    }
+
+    @Test
+    fun `enable ui load trace all locally`() {
         val behavior = createBehavior(
             localUiLoadTracingEnabled = true,
             localUiLoadTracingTraceAllEnabled = false,

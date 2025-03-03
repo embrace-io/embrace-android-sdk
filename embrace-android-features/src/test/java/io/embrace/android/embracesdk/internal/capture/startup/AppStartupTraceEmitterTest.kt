@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.capture.startup
 import android.os.Build
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.arch.assertDoesNotHaveEmbraceAttribute
+import io.embrace.android.embracesdk.arch.assertError
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeClock.Companion.DEFAULT_FAKE_CURRENT_TIME
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
@@ -25,8 +26,10 @@ import io.embrace.android.embracesdk.internal.spans.SpanService
 import io.embrace.android.embracesdk.internal.spans.SpanSink
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
+import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.sdk.common.Clock
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
@@ -127,6 +130,137 @@ internal class AppStartupTraceEmitterTest {
             firstFrameRendered(STARTUP_ACTIVITY_NAME)
         }
         assertEquals(1, dataCollectionCompletedCallbackInvokedCount)
+    }
+
+    @Config(sdk = [Build.VERSION_CODES.TIRAMISU])
+    @Test
+    fun `abandon cold start after app init`() {
+        val emitter = createTraceEmitter().apply {
+            initApp(
+                hasAppInitEvents = true,
+                isColdStart = true
+            )
+            preActivityInit(false)
+        }
+        val abandonTime = clock.tick()
+        emitter.onBackground(abandonTime)
+        val spanMap = spanSink.completedSpans().associateBy { it.name }
+        with(checkNotNull(spanMap.coldAppStartupRootSpan())) {
+            assertError(ErrorCode.USER_ABANDON)
+            assertEquals(abandonTime, endTimeNanos.nanosToMillis())
+        }
+
+        assertNotNull(spanMap.processInitSpan())
+        assertNotNull(spanMap.embraceInitSpan())
+        assertNotNull(spanMap.initGapSpan())
+        assertNull(spanMap.activityInitSpan())
+    }
+
+    @Config(sdk = [Build.VERSION_CODES.TIRAMISU])
+    @Test
+    fun `abandon cold start after activity init`() {
+        val emitter = createTraceEmitter().apply {
+            initApp(
+                hasAppInitEvents = true,
+                isColdStart = true
+            )
+            preActivityInit(false)
+            createActivity(true)
+            clock.tick(200)
+            startupActivityInitEnd()
+        }
+
+        val abandonTime = clock.tick()
+        emitter.onBackground(abandonTime)
+        with(spanSink.completedSpans().associateBy { it.name }) {
+            with(checkNotNull(coldAppStartupRootSpan())) {
+                assertError(ErrorCode.USER_ABANDON)
+                assertEquals(abandonTime, endTimeNanos.nanosToMillis())
+            }
+            assertNotNull(processInitSpan())
+            assertNotNull(embraceInitSpan())
+            assertNotNull(initGapSpan())
+            assertNotNull(activityInitSpan())
+            assertNull(firstFrameRenderSpan())
+        }
+    }
+
+    @Config(sdk = [Build.VERSION_CODES.TIRAMISU])
+    @Test
+    fun `abandon cold start after before manual end`() {
+        val emitter = createTraceEmitter(true).apply {
+            initApp(
+                hasAppInitEvents = true,
+                isColdStart = true
+            )
+            initActivity(
+                firePreAndPostCreate = true,
+                renderFrame = true,
+                loadSplashScreen = false,
+                abortFirstLoad = false
+            )
+        }
+        val abandonTime = clock.tick()
+        emitter.onBackground(abandonTime)
+        with(spanSink.completedSpans().associateBy { it.name }) {
+            with(checkNotNull(coldAppStartupRootSpan())) {
+                assertError(ErrorCode.USER_ABANDON)
+                assertEquals(abandonTime, endTimeNanos.nanosToMillis())
+            }
+            assertNotNull(processInitSpan())
+            assertNotNull(embraceInitSpan())
+            assertNotNull(initGapSpan())
+            assertNotNull(activityInitSpan())
+            assertNotNull(firstFrameRenderSpan())
+            assertNull(appReadySpan())
+        }
+    }
+
+    @Config(sdk = [Build.VERSION_CODES.TIRAMISU])
+    @Test
+    fun `abandon warm start after app init`() {
+        val emitter = createTraceEmitter().apply {
+            initApp(
+                hasAppInitEvents = true,
+                isColdStart = false
+            )
+            preActivityInit(false)
+        }
+        val abandonTime = clock.tick()
+        emitter.onBackground(abandonTime)
+        val spanMap = spanSink.completedSpans().associateBy { it.name }
+        with(checkNotNull(spanMap.warmAppStartupRootSpan())) {
+            assertError(ErrorCode.USER_ABANDON)
+            assertEquals(abandonTime, endTimeNanos.nanosToMillis())
+        }
+    }
+
+    @Config(sdk = [Build.VERSION_CODES.TIRAMISU])
+    @Test
+    fun `abandon warm start after before manual end`() {
+        val emitter = createTraceEmitter(true).apply {
+            initApp(
+                hasAppInitEvents = true,
+                isColdStart = false
+            )
+            initActivity(
+                firePreAndPostCreate = true,
+                renderFrame = true,
+                loadSplashScreen = false,
+                abortFirstLoad = false
+            )
+        }
+        val abandonTime = clock.tick()
+        emitter.onBackground(abandonTime)
+        with(spanSink.completedSpans().associateBy { it.name }) {
+            with(checkNotNull(warmAppStartupRootSpan())) {
+                assertError(ErrorCode.USER_ABANDON)
+                assertEquals(abandonTime, endTimeNanos.nanosToMillis())
+            }
+            assertNotNull(activityInitSpan())
+            assertNotNull(firstFrameRenderSpan())
+            assertNull(appReadySpan())
+        }
     }
 
     @Config(sdk = [Build.VERSION_CODES.S])

@@ -61,8 +61,8 @@ class CombinedRemoteConfigSourceTest {
         remoteConfigStore.impl = ConfigHttpResponse(RemoteConfig(), "etag")
         assertEquals(0, remoteConfigSource.callCount)
         source.scheduleConfigRequests()
-        assertEquals("etag", remoteConfigSource.etag)
         executorService.runCurrentlyBlocked()
+        assertEquals("etag", remoteConfigSource.etag)
         assertEquals(1, remoteConfigSource.callCount)
         assertEquals(1, remoteConfigStore.saveCount)
     }

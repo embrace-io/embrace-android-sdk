@@ -1,0 +1,17 @@
+plugins {
+    id("com.android.application")
+    id("io.embrace.swazzler")
+    id("io.embrace.android.testplugin")
+}
+
+repositories {
+    google()
+    mavenCentral()
+    mavenLocal()
+}
+
+integrationTest.configureAndroidProject(project)
+
+swazzler {
+    disableDependencyInjection = false
+}

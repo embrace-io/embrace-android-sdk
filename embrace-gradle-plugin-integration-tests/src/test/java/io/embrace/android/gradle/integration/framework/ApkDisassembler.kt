@@ -6,6 +6,7 @@ import brut.directory.ExtFile
 import org.w3c.dom.Element
 import java.io.File
 import java.nio.file.Files
+import java.util.LinkedList
 import javax.xml.parsers.DocumentBuilderFactory
 
 /**
@@ -24,8 +25,8 @@ internal class ApkDisassembler {
         outDir.exists()
 
         val stringTable = readStringTable(outDir)
-        // TODO: dex files
-        return DecodedApk(stringTable)
+        val smaliFiles = readSmaliFiles(outDir)
+        return DecodedApk(stringTable, smaliFiles)
     }
 
     private fun decodeApk(apkFile: File): File {
@@ -59,5 +60,29 @@ internal class ApkDisassembler {
             }
             return table
         }
+    }
+
+    private fun readSmaliFiles(outDir: File): Map<String, File> {
+        val smaliDir = File(outDir, "smali")
+        if (!smaliDir.exists() || !smaliDir.isDirectory) {
+            return emptyMap()
+        }
+        val result = mutableMapOf<String, File>()
+        val queue = LinkedList<File>().apply { add(smaliDir) }
+
+        while (queue.isNotEmpty()) {
+            val current = queue.removeFirst()
+
+            current.listFiles()?.forEach { file ->
+                if (file.isDirectory) {
+                    queue.add(file)
+                } else if (file.isFile) {
+                    val key = file.absolutePath.substringAfter(smaliDir.absolutePath)
+                        .removeSuffix(".smali")
+                    result[key] = file
+                }
+            }
+        }
+        return result
     }
 }

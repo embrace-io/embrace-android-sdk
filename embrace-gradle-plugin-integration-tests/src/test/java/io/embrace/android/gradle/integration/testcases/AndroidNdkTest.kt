@@ -4,6 +4,7 @@ import io.embrace.android.gradle.integration.framework.ApkDisassembler
 import io.embrace.android.gradle.integration.framework.BundleToolApkBuilder
 import io.embrace.android.gradle.integration.framework.PluginIntegrationTestRule
 import io.embrace.android.gradle.integration.framework.ProjectType
+import io.embrace.android.gradle.integration.framework.findArtifact
 import io.embrace.android.gradle.integration.utils.NdkSymbols
 import io.embrace.android.gradle.plugin.util.serialization.MoshiSerializer
 import okio.ByteString.Companion.decodeBase64
@@ -237,12 +238,5 @@ class AndroidNdkTest {
                 assertTrue(symbolsMap[arch]?.containsKey(lib) ?: false)
             }
         }
-    }
-
-    private fun findArtifact(projectDir: File, buildDir: String, suffix: String): File {
-        return File(projectDir, buildDir)
-            .listFiles { _, name -> name.endsWith(suffix) }
-            ?.single()
-            ?: error("File not found")
     }
 }

@@ -35,6 +35,9 @@ class UnityTest {
             fixture = "unity-fake-project",
             task = "assembleRelease",
             projectType = ProjectType.ANDROID,
+            setup = {
+                setupMockResponses(emptyList(), emptyList(), listOf("release"))
+            },
             assertions = {
                 verifyLineMapRequestSent()
                 verifyMethodMapRequestSent()

@@ -1,6 +1,5 @@
 package io.embrace.android.gradle.plugin.tasks.ndk
 
-import io.embrace.android.gradle.plugin.config.PluginBehavior
 import io.embrace.android.gradle.plugin.config.ProjectType
 import io.embrace.android.gradle.plugin.config.UnitySymbolsDir
 import io.embrace.android.gradle.plugin.gradle.nullSafeMap
@@ -25,7 +24,6 @@ private const val GENERATED_RESOURCE_PATH = "generated/embrace/res"
  * In charge of registering tasks for ndk mapping file upload.
  */
 class NdkUploadTaskRegistration(
-    private val behavior: PluginBehavior,
     private val unitySymbolsDir: Provider<UnitySymbolsDir>,
     private val projectType: Provider<ProjectType>,
 ) : EmbraceTaskRegistration {
@@ -55,13 +53,15 @@ class NdkUploadTaskRegistration(
             NdkUploadTask::class.java,
             data
         ) { task ->
+            task.failBuildOnUploadErrors.set(behavior.failBuildOnUploadErrors)
             task.requestParams.set(
                 project.provider {
                     RequestParams(
                         appId = embraceConfig?.appId.orEmpty(),
                         apiToken = embraceConfig?.apiToken.orEmpty(),
                         endpoint = EmbraceEndpoint.NDK,
-                        baseUrl = baseUrl,
+                        failBuildOnUploadErrors = behavior.failBuildOnUploadErrors,
+                        baseUrl = behavior.baseUrl,
                     )
                 }
             )

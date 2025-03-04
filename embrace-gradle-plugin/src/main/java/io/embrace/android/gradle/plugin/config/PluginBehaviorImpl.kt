@@ -36,7 +36,7 @@ class PluginBehaviorImpl(
     }
 
     override val failBuildOnUploadErrors: Boolean by lazy {
-        project.getBoolProperty(EMBRACE_FAIL_BUILD_ON_UPLOAD_ERRORS)
+        project.getProperty(EMBRACE_FAIL_BUILD_ON_UPLOAD_ERRORS) != "false"
     }
 
     override val baseUrl: String by lazy {
@@ -70,7 +70,7 @@ class PluginBehaviorImpl(
 
     @Suppress("DEPRECATION")
     override val customSymbolsDirectory: String? by lazy {
-        extension.customSymbolsDirectory.get()
+        extension.customSymbolsDirectory.orNull
     }
 
     override fun isInstrumentationDisabledForVariant(variantName: String): Boolean {

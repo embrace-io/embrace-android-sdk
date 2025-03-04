@@ -94,7 +94,8 @@ class EmbraceRnSourcemapGeneratorTaskRegistration : EmbraceTaskRegistration {
                         apiToken = embraceConfig?.apiToken.orEmpty(),
                         endpoint = EmbraceEndpoint.SOURCE_MAP,
                         fileName = FILE_NAME_SOURCE_MAP_JSON,
-                        baseUrl = baseUrl,
+                        baseUrl = behavior.baseUrl,
+                        failBuildOnUploadErrors = behavior.failBuildOnUploadErrors,
                     )
                 }
             )

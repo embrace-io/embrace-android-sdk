@@ -7,6 +7,7 @@ import io.embrace.android.gradle.plugin.hash.calculateSha1ForFile
 import io.embrace.android.gradle.plugin.network.OkHttpNetworkService
 import io.embrace.android.gradle.plugin.tasks.EmbraceUploadTask
 import io.embrace.android.gradle.plugin.tasks.EmbraceUploadTaskImpl
+import io.embrace.android.gradle.plugin.tasks.handleHttpCallResult
 import io.embrace.android.gradle.plugin.tasks.il2cpp.UnitySymbolFilesManager
 import io.embrace.android.gradle.plugin.util.compression.ZstdFileCompressor
 import org.gradle.api.file.ConfigurableFileCollection
@@ -58,6 +59,9 @@ abstract class NdkUploadTask @Inject constructor(
     @get:Input
     val ndkEnabled: Property<Boolean> = objectFactory.property(Boolean::class.java)
 
+    @get:Input
+    val failBuildOnUploadErrors: Property<Boolean> = objectFactory.property(Boolean::class.java)
+
     @get:OutputDirectory
     val generatedEmbraceResourcesDirectory: DirectoryProperty = objectFactory.directoryProperty()
 
@@ -77,15 +81,9 @@ abstract class NdkUploadTask @Inject constructor(
             return
         }
 
-        try {
-            generateHashedObjects()
-            uploadHandshake()
-            injectSymbolsAsResources()
-        } catch (ex: Exception) {
-            val msg = "Failed uploading mapping artifact."
-            logger.error(msg)
-            throw IllegalStateException(msg, ex)
-        }
+        generateHashedObjects()
+        uploadHandshake()
+        injectSymbolsAsResources()
     }
 
     @Throws(IllegalArgumentException::class)
@@ -194,7 +192,7 @@ abstract class NdkUploadTask @Inject constructor(
         )
         val networkService = OkHttpNetworkService(requestParams.get().baseUrl)
 
-        NdkUploadHandshake(networkService).getRequestedSymbols(params)?.let { requestedSymbols ->
+        NdkUploadHandshake(networkService).getRequestedSymbols(params, failBuildOnUploadErrors.get())?.let { requestedSymbols ->
             uploadSymbols(requestedSymbols)
         }
     }
@@ -203,22 +201,17 @@ abstract class NdkUploadTask @Inject constructor(
      * Attempt to upload requested symbols per architecture
      */
     private fun uploadSymbols(requestedSymbols: Map<String, List<String>>) {
+        val networkService = OkHttpNetworkService(requestParams.get().baseUrl)
         filterRequestedSymbolsFiles(requestedSymbols).forEach { (arch, files) ->
             files.forEach { (id: String, symbolFile: File) ->
-                try {
-                    OkHttpNetworkService(requestParams.get().baseUrl).uploadNdkSymbolFile(
-                        params = requestParams.get().copy(fileName = symbolFile.name),
-                        file = symbolFile,
-                        variantName = variantData.get().name,
-                        arch = arch,
-                        id = id,
-                    )
-                } catch (ex: Exception) {
-                    logger.error(
-                        "An exception occurred when attempting to upload symbols ${symbolFile.getName()} for arch $arch.",
-                        ex
-                    )
-                }
+                val result = networkService.uploadNdkSymbolFile(
+                    params = requestParams.get().copy(fileName = symbolFile.name),
+                    file = symbolFile,
+                    variantName = variantData.get().name,
+                    arch = arch,
+                    id = id,
+                )
+                handleHttpCallResult(result, requestParams.get())
             }
         }
     }

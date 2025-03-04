@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.opentelemetry.embStartupActivityName
+import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateListener
 import io.embrace.android.embracesdk.internal.spans.PersistableEmbraceSpan
 import io.embrace.android.embracesdk.internal.spans.SpanService
 import io.embrace.android.embracesdk.internal.utils.Provider
@@ -47,7 +48,7 @@ internal class AppStartupTraceEmitter(
     private val versionChecker: VersionChecker,
     private val logger: EmbLogger,
     manualEnd: Boolean,
-) : AppStartupDataCollector {
+) : AppStartupDataCollector, ProcessStateListener {
     private val processCreateRequestedMs: Long?
     private val processCreatedMs: Long?
     private val additionalTrackedIntervals = ConcurrentLinkedQueue<TrackedInterval>()
@@ -210,13 +211,17 @@ internal class AppStartupTraceEmitter(
         customAttributes[key] = value
     }
 
+    override fun onBackground(timestamp: Long) {
+        dataCollectionComplete(timestamp, false)
+    }
+
     /**
      * Called when app startup is considered complete, i.e. the data can be used and any additional updates can be ignored
      */
-    private fun dataCollectionComplete(traceEndTimeMs: Long) {
+    private fun dataCollectionComplete(traceEndTimeMs: Long, completed: Boolean = true) {
         if (!dataCollectionComplete.getAndSet(true)) {
             Systrace.traceSynchronous("record-startup") {
-                recordStartup(traceEndTimeMs)
+                recordStartup(traceEndTimeMs, completed)
                 if (appStartupRootSpan.get()?.isRecording != false) {
                     logger.trackInternalError(
                         type = InternalErrorType.APP_LAUNCH_TRACE_FAIL,
@@ -260,7 +265,7 @@ internal class AppStartupTraceEmitter(
         }
     }
 
-    private fun recordStartup(traceEndTimeMs: Long) {
+    private fun recordStartup(traceEndTimeMs: Long, completed: Boolean) {
         val startupService = startupServiceProvider() ?: return
         val sdkInitEndMs = startupService.getSdkInitEndMs()
         if (sdkInitEndMs != null) {
@@ -273,7 +278,8 @@ internal class AppStartupTraceEmitter(
                     activityInitStartMs = startupActivityPreCreatedMs ?: startupActivityInitStartMs,
                     activityInitEndMs = startupActivityInitEndMs,
                     uiLoadedMs = if (hasRenderEvent) firstFrameRenderedMs else startupActivityResumedMs,
-                    traceEndTimeMs = traceEndTimeMs
+                    traceEndTimeMs = traceEndTimeMs,
+                    completed = completed,
                 )
                 recordAdditionalIntervals(startupTrace)
             }
@@ -307,11 +313,15 @@ internal class AppStartupTraceEmitter(
         activityInitEndMs: Long?,
         uiLoadedMs: Long?,
         traceEndTimeMs: Long,
+        completed: Boolean,
     ) {
         appStartupRootSpan.get()?.takeIf { it.isRecording }?.apply {
             addTraceMetadata()
 
-            stop(endTimeMs = traceEndTimeMs)
+            stop(
+                errorCode = if (!completed) ErrorCode.USER_ABANDON else null,
+                endTimeMs = traceEndTimeMs
+            )
 
             getStartTimeMs()?.let { traceStartTimeMs ->
                 if (applicationInitEndMs != null) {
@@ -366,7 +376,7 @@ internal class AppStartupTraceEmitter(
                 )
             }
 
-            if (traceEnd == TraceEnd.READY && uiLoadedMs != null) {
+            if (traceEnd == TraceEnd.READY && uiLoadedMs != null && completed) {
                 spanService.recordCompletedSpan(
                     name = APP_READY_SPAN,
                     parent = this,

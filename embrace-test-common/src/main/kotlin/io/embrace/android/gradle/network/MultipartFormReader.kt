@@ -50,9 +50,13 @@ fun FormPart.validateBodyVariant(expectedVariantName: String) {
     assertEquals(expectedVariantName, data)
 }
 
-fun FormPart.validateBodyBuildId() {
+fun FormPart.validateBodyBuildId(expectedBuildId: String? = null) {
     assertEquals("form-data; name=\"id\"", contentDisposition)
     assertTrue(data?.length == BUILD_ID_LENGTH)
+
+    if (expectedBuildId != null) {
+        assertEquals(expectedBuildId, data)
+    }
 }
 
 fun FormPart.validateMappingFile(expectedFileName: String) {

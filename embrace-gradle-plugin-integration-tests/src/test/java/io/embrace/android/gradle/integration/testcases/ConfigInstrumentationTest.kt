@@ -26,7 +26,6 @@ class ConfigInstrumentationTest {
             projectType = ProjectType.ANDROID,
             assertions = { projectDir ->
                 verifyBuildTelemetryRequestSent(variants)
-                verifyJvmMappingRequestsSent(1)
 
                 val apk = findArtifact(projectDir, "build/outputs/apk/release/", ".apk")
                 val decodedApk = ApkDisassembler().disassembleApk(apk)
@@ -53,7 +52,9 @@ class ConfigInstrumentationTest {
                 }
 
                 // build ID is non-deterministic, test independently
-                assertNotNull(methods.single { it.signature.contains("getBuildId") }.returnValue)
+                val buildId = methods.single { it.signature.contains("getBuildId") }.returnValue
+                assertNotNull(buildId)
+                verifyJvmMappingRequestsSent(appIds = listOf("abcde"), buildIds = listOf(buildId))
             }
         )
     }

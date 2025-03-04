@@ -140,7 +140,7 @@ class AssertionInterface(
     /**
      * Verifies expected JVM mapping requests were sent with the specific appIds in the given order
      */
-    fun AssertionInterface.verifyJvmMappingRequestsSent(appIds: List<String>) {
+    fun AssertionInterface.verifyJvmMappingRequestsSent(appIds: List<String>, buildIds: List<String>? = null) {
         val requests = fetchRequests(EmbraceEndpoint.PROGUARD)
         assertEquals(appIds.size, requests.size)
 
@@ -148,7 +148,7 @@ class AssertionInterface(
             val parts = readMultipartRequest(request)
             parts[0].validateBodyAppId(appIds[i])
             parts[1].validateBodyApiToken(IntegrationTestDefaults.API_TOKEN)
-            parts[2].validateBodyBuildId()
+            parts[2].validateBodyBuildId(buildIds?.get(i))
             parts[3].validateMappingFile("mapping.txt")
         }
     }

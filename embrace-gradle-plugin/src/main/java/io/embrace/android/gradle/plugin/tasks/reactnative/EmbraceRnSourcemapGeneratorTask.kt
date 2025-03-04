@@ -7,6 +7,7 @@ import io.embrace.android.gradle.plugin.network.OkHttpNetworkService
 import io.embrace.android.gradle.plugin.tasks.BuildResourceWriter
 import io.embrace.android.gradle.plugin.tasks.EmbraceUploadTask
 import io.embrace.android.gradle.plugin.tasks.EmbraceUploadTaskImpl
+import io.embrace.android.gradle.plugin.tasks.handleHttpCallResult
 import okio.buffer
 import okio.gzip
 import okio.sink
@@ -29,7 +30,7 @@ import javax.inject.Inject
  * Task to upload React Native sourcemap artefacts to Embrace.
  */
 abstract class EmbraceRnSourcemapGeneratorTask @Inject constructor(
-    objectFactory: ObjectFactory
+    objectFactory: ObjectFactory,
 ) : EmbraceUploadTask, EmbraceUploadTaskImpl(objectFactory) {
 
     private val logger = Logger(EmbraceRnSourcemapGeneratorTask::class.java)
@@ -87,15 +88,12 @@ abstract class EmbraceRnSourcemapGeneratorTask @Inject constructor(
 
         val sourceMapAndBundleJsonFile = sourcemapAndBundleFile.asFile.get()
 
-        uploadBundleFiles(
-            generateBundleZipFile(
-                bundleFile,
-                sourceMapFile,
-                sourceMapAndBundleJsonFile
-            ),
-            bundleId
+        val jsonFile = generateBundleZipFile(
+            bundleFile,
+            sourceMapFile,
+            sourceMapAndBundleJsonFile
         )
-
+        uploadBundleFiles(jsonFile, bundleId)
         injectSymbolsAsResources(bundleId)
     }
 
@@ -115,16 +113,18 @@ abstract class EmbraceRnSourcemapGeneratorTask @Inject constructor(
     }
 
     private fun uploadBundleFiles(jsonFile: File, bundleId: String) {
-        OkHttpNetworkService(requestParams.get().baseUrl).uploadRnSourcemapFile(
+        val networkService = OkHttpNetworkService(requestParams.get().baseUrl)
+        val result = networkService.uploadRnSourcemapFile(
             requestParams.get().copy(buildId = bundleId),
             jsonFile
         )
+        handleHttpCallResult(result, requestParams.get())
     }
 
     private fun generateBundleZipFile(
         bundleFile: File,
         sourceMapFile: File,
-        sourceMapAndBundleJsonFile: File
+        sourceMapAndBundleJsonFile: File,
     ): File {
         try {
             sourceMapAndBundleJsonFile.parentFile.mkdirs()

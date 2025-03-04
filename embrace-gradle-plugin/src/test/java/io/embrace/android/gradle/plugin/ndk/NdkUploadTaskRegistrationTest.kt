@@ -1,6 +1,7 @@
 package io.embrace.android.gradle.plugin.ndk
 
 import com.android.build.api.variant.Variant
+import io.embrace.android.gradle.plugin.config.PluginBehaviorImpl
 import io.embrace.android.gradle.plugin.config.ProjectType
 import io.embrace.android.gradle.plugin.config.UnitySymbolsDir
 import io.embrace.android.gradle.plugin.gradle.GradleCompatibilityHelper
@@ -14,6 +15,7 @@ import io.embrace.android.gradle.plugin.tasks.ndk.NdkUploadTask
 import io.embrace.android.gradle.plugin.tasks.ndk.NdkUploadTaskRegistration
 import io.embrace.android.gradle.plugin.tasks.registration.RegistrationParams
 import io.embrace.android.gradle.plugin.util.capitalizedString
+import io.embrace.android.gradle.swazzler.plugin.extension.SwazzlerExtension
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.unmockkAll
@@ -32,8 +34,10 @@ import org.junit.Test
 
 class NdkUploadTaskRegistrationTest {
 
-    private val baseUrl = "https://example.com/api"
+    private val baseUrl = "https://dsym-store.emb-api.com"
     private val project = ProjectBuilder.builder().build()
+    private val behavior =
+        PluginBehaviorImpl(project, project.extensions.create("swazzler", SwazzlerExtension::class.java))
     private lateinit var variantConfigurationsListProperty: ListProperty<VariantConfig>
 
     private val mockVariant = mockk<Variant>(relaxed = true)
@@ -80,14 +84,13 @@ class NdkUploadTaskRegistrationTest {
         val projectTypeProvider = project.provider { ProjectType.UNITY }
 
         val registration =
-            NdkUploadTaskRegistration(mockk(relaxed = true), unitySymbolsDirProvider, projectTypeProvider)
+            NdkUploadTaskRegistration(unitySymbolsDirProvider, projectTypeProvider)
         val params = RegistrationParams(
             project = project,
             variant = mockVariant,
             data = testAndroidCompactedVariantData,
-            networkService = mockk(relaxed = true),
             variantConfigurationsListProperty = variantConfigurationsListProperty,
-            baseUrl = baseUrl,
+            behavior = behavior,
         )
         assertFalse(
             project.isTaskRegistered(
@@ -113,14 +116,13 @@ class NdkUploadTaskRegistrationTest {
         val projectTypeProvider = project.provider { ProjectType.NATIVE }
 
         val registration =
-            NdkUploadTaskRegistration(mockk(relaxed = true), unitySymbolsDirProvider, projectTypeProvider)
+            NdkUploadTaskRegistration(unitySymbolsDirProvider, projectTypeProvider)
         val params = RegistrationParams(
             project,
             variant = mockVariant,
             testAndroidCompactedVariantData,
-            mockk(relaxed = true),
             variantConfigurationsListProperty,
-            baseUrl,
+            behavior = behavior,
         )
         assertFalse(
             project.isTaskRegistered(
@@ -159,14 +161,13 @@ class NdkUploadTaskRegistrationTest {
         val projectTypeProvider = project.provider { ProjectType.UNITY }
 
         val registration =
-            NdkUploadTaskRegistration(mockk(relaxed = true), unitySymbolsDirProvider, projectTypeProvider)
+            NdkUploadTaskRegistration(unitySymbolsDirProvider, projectTypeProvider)
         val params = RegistrationParams(
             project,
             variant = mockVariant,
             testAndroidCompactedVariantData,
-            mockk(relaxed = true),
             variantConfigurationsListProperty,
-            baseUrl,
+            behavior = behavior,
         )
         assertFalse(
             project.isTaskRegistered(
@@ -210,14 +211,13 @@ class NdkUploadTaskRegistrationTest {
         val projectTypeProvider = project.provider { ProjectType.UNITY }
 
         val registration =
-            NdkUploadTaskRegistration(mockk(relaxed = true), unitySymbolsDirProvider, projectTypeProvider)
+            NdkUploadTaskRegistration(unitySymbolsDirProvider, projectTypeProvider)
         val params = RegistrationParams(
             project,
             variant = mockVariant,
             testAndroidCompactedVariantData,
-            mockk(relaxed = true),
             variantConfigurationsListProperty,
-            baseUrl,
+            behavior = behavior,
         )
 
         assertFalse(
@@ -252,14 +252,13 @@ class NdkUploadTaskRegistrationTest {
         val projectTypeProvider = project.provider { ProjectType.NATIVE }
 
         val registration =
-            NdkUploadTaskRegistration(mockk(relaxed = true), unitySymbolsDirProvider, projectTypeProvider)
+            NdkUploadTaskRegistration(unitySymbolsDirProvider, projectTypeProvider)
         val params = RegistrationParams(
             project,
             variant = mockVariant,
             testAndroidCompactedVariantData,
-            mockk(relaxed = true),
             variantConfigurationsListProperty,
-            baseUrl,
+            behavior = behavior,
         )
         try {
             registration.register(params)
@@ -278,27 +277,27 @@ class NdkUploadTaskRegistrationTest {
         val projectTypeProvider = project.provider { ProjectType.NATIVE }
 
         val registration =
-            NdkUploadTaskRegistration(mockk(relaxed = true), unitySymbolsDirProvider, projectTypeProvider)
+            NdkUploadTaskRegistration(unitySymbolsDirProvider, projectTypeProvider)
         val params = RegistrationParams(
             project,
             variant = mockVariant,
             testAndroidCompactedVariantData,
-            mockk(relaxed = true),
             variantConfigurationsListProperty,
-            baseUrl,
+            behavior = behavior,
         )
         registration.register(params)
         val ndkUploadTask: NdkUploadTask =
             project.tasks.findByName("$taskName${testAndroidCompactedVariantData.name.capitalizedString()}") as NdkUploadTask
 
         assertEquals(
-            ndkUploadTask.requestParams.get(),
             RequestParams(
                 appId = "appId",
                 apiToken = "apiToken",
                 endpoint = EmbraceEndpoint.NDK,
-                baseUrl,
-            )
+                failBuildOnUploadErrors = true,
+                baseUrl = baseUrl,
+            ),
+            ndkUploadTask.requestParams.get(),
         )
         assertEquals(ndkUploadTask.unitySymbolsDir.orNull, null)
     }
@@ -313,27 +312,27 @@ class NdkUploadTaskRegistrationTest {
         val projectTypeProvider = project.provider { ProjectType.UNITY }
 
         val registration =
-            NdkUploadTaskRegistration(mockk(relaxed = true), unitySymbolsDirProvider, projectTypeProvider)
+            NdkUploadTaskRegistration(unitySymbolsDirProvider, projectTypeProvider)
         val params = RegistrationParams(
             project,
             variant = mockVariant,
             testAndroidCompactedVariantData,
-            mockk(relaxed = true),
             variantConfigurationsListProperty,
-            baseUrl,
+            behavior = behavior,
         )
         registration.register(params)
         val ndkUploadTask: NdkUploadTask =
             project.tasks.findByName("$taskName${testAndroidCompactedVariantData.name.capitalizedString()}") as NdkUploadTask
 
         assertEquals(
-            ndkUploadTask.requestParams.get(),
             RequestParams(
                 appId = "appId",
                 apiToken = "apiToken",
                 endpoint = EmbraceEndpoint.NDK,
-                baseUrl,
-            )
+                failBuildOnUploadErrors = true,
+                baseUrl = baseUrl,
+            ),
+            ndkUploadTask.requestParams.get(),
         )
         assertEquals(ndkUploadTask.unitySymbolsDir.orNull, unitySymbolsDir)
     }

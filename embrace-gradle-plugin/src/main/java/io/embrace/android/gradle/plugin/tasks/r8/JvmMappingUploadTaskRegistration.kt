@@ -3,6 +3,7 @@ package io.embrace.android.gradle.plugin.tasks.r8
 import com.android.build.api.artifact.SingleArtifact
 import com.android.build.api.variant.Variant
 import io.embrace.android.gradle.plugin.agp.AgpUtils.isDexguard
+import io.embrace.android.gradle.plugin.config.PluginBehavior
 import io.embrace.android.gradle.plugin.gradle.isTaskRegistered
 import io.embrace.android.gradle.plugin.gradle.nullSafeMap
 import io.embrace.android.gradle.plugin.gradle.registerTask
@@ -42,7 +43,7 @@ class JvmMappingUploadTaskRegistration : EmbraceTaskRegistration {
                         data,
                         task,
                         fetchJvmMappingFile(task, variant),
-                        baseUrl,
+                        behavior,
                         variantConfigurationsListProperty
                     )
                 }
@@ -55,7 +56,7 @@ class JvmMappingUploadTaskRegistration : EmbraceTaskRegistration {
         variant: AndroidCompactedVariantData,
         anchorTask: TaskProvider<Task>,
         mappingFile: Provider<File?>,
-        baseUrl: String,
+        behavior: PluginBehavior,
         variantConfigurationsListProperty: ListProperty<VariantConfig>,
     ): TaskProvider<MultipartUploadTask> {
         val anchorTaskWithoutVariant = anchorTask.name.replace(variant.name, "", true)
@@ -89,7 +90,8 @@ class JvmMappingUploadTaskRegistration : EmbraceTaskRegistration {
                         endpoint = EmbraceEndpoint.PROGUARD,
                         fileName = FILE_NAME_MAPPING_TXT,
                         buildId = variantConfig.buildId,
-                        baseUrl = baseUrl,
+                        baseUrl = behavior.baseUrl,
+                        failBuildOnUploadErrors = behavior.failBuildOnUploadErrors,
                     )
                 }
             )

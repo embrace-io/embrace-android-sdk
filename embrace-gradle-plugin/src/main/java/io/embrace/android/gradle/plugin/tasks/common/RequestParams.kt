@@ -8,6 +8,7 @@ data class RequestParams(
     val apiToken: String,
     val endpoint: EmbraceEndpoint,
     val baseUrl: String,
+    val failBuildOnUploadErrors: Boolean,
     val fileName: String? = null,
     val buildId: String? = null,
 ) : Serializable {

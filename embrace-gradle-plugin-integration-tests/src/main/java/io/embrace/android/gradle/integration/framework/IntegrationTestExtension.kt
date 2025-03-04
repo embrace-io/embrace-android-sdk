@@ -49,6 +49,7 @@ abstract class IntegrationTestExtension(objectFactory: ObjectFactory) {
                 buildId = buildId.orNull,
                 endpoint = endpoint,
                 fileName = filename,
+                failBuildOnUploadErrors = true,
                 baseUrl = checkNotNull(project.findProperty("embrace.baseUrl")?.toString())
             )
         )

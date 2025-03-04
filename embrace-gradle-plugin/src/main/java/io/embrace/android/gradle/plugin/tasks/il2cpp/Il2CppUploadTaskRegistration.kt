@@ -1,5 +1,6 @@
 package io.embrace.android.gradle.plugin.tasks.il2cpp
 
+import io.embrace.android.gradle.plugin.config.PluginBehavior
 import io.embrace.android.gradle.plugin.gradle.registerTask
 import io.embrace.android.gradle.plugin.instrumentation.config.model.VariantConfig
 import io.embrace.android.gradle.plugin.model.AndroidCompactedVariantData
@@ -38,7 +39,7 @@ class Il2CppUploadTaskRegistration : EmbraceTaskRegistration {
                     task,
                     data,
                     variantConfigurationsListProperty,
-                    baseUrl
+                    behavior
                 )
             }
         }
@@ -49,7 +50,7 @@ class Il2CppUploadTaskRegistration : EmbraceTaskRegistration {
         ndkTaskProvider: TaskProvider<Task>,
         variant: AndroidCompactedVariantData,
         variantConfigurationsListProperty: ListProperty<VariantConfig>,
-        baseUrl: String,
+        behavior: PluginBehavior,
     ) {
         val il2cppSymbolsDir = File(project.rootDir, IL2CPP_SYMBOLS_DIR)
         val variantConfig = variantConfigurationsListProperty.get().first { it.variantName == variant.name }
@@ -67,7 +68,7 @@ class Il2CppUploadTaskRegistration : EmbraceTaskRegistration {
             ndkTaskProvider,
             lineNumberCompressionTaskProvider,
             variantConfig,
-            baseUrl,
+            behavior,
         )
 
         val methodMapCompressionTaskProvider = configureFileCompressionTask(
@@ -84,7 +85,7 @@ class Il2CppUploadTaskRegistration : EmbraceTaskRegistration {
             ndkTaskProvider,
             methodMapCompressionTaskProvider,
             variantConfig,
-            baseUrl,
+            behavior,
         )
     }
 
@@ -121,7 +122,7 @@ class Il2CppUploadTaskRegistration : EmbraceTaskRegistration {
         ndkTaskProvider: TaskProvider<Task>,
         fileCompressionTask: TaskProvider<FileCompressionTask>,
         variantInfo: VariantConfig,
-        baseUrl: String,
+        behavior: PluginBehavior,
     ) {
         val uploadTask = project.registerTask(
             info.uploadTaskName,
@@ -136,7 +137,8 @@ class Il2CppUploadTaskRegistration : EmbraceTaskRegistration {
                         endpoint = info.endpoint,
                         fileName = info.filename,
                         buildId = variantInfo.buildId,
-                        baseUrl = baseUrl,
+                        failBuildOnUploadErrors = behavior.failBuildOnUploadErrors,
+                        baseUrl = behavior.baseUrl,
                     )
                 }
             )

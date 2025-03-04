@@ -1,8 +1,10 @@
 package io.embrace.android.gradle.plugin.tasks.ndk
 
 import io.embrace.android.gradle.plugin.Logger
+import io.embrace.android.gradle.plugin.network.EmbraceEndpoint
 import io.embrace.android.gradle.plugin.network.HttpCallResult
 import io.embrace.android.gradle.plugin.network.NetworkService
+import io.embrace.android.gradle.plugin.tasks.handleHttpCallResult
 
 /**
  * This class is responsible for performing the NDK upload handshake.
@@ -51,31 +53,28 @@ import io.embrace.android.gradle.plugin.network.NetworkService
  * and getRequestedSymbols will return null.
  */
 class NdkUploadHandshake(
-    private val networkService: NetworkService
+    private val networkService: NetworkService,
 ) {
     private val logger = Logger(NdkUploadHandshake::class.java)
 
-    fun getRequestedSymbols(request: NdkUploadHandshakeRequest): Map<String, List<String>>? {
-        try {
-            val uploadResult = networkService.postNdkHandshake(
-                appId = request.appId,
-                handshake = request,
-            )
-            if (uploadResult is HttpCallResult.Success<*>) {
-                val response = uploadResult.body as? NdkUploadHandshakeResponse ?: return null
-                val symbolsToUpload = response.symbols
-                return if (symbolsToUpload.isNullOrEmpty()) {
-                    logger.info("No NDK files requested. Skipping NDK symbols upload.")
-                    null
-                } else {
-                    logger.info("Requested NDK symbols: " + response.symbols)
-                    symbolsToUpload
-                }
+    fun getRequestedSymbols(request: NdkUploadHandshakeRequest, failBuildOnUploadErrors: Boolean): Map<String, List<String>>? {
+        val result = networkService.postNdkHandshake(
+            appId = request.appId,
+            handshake = request,
+        )
+        handleHttpCallResult(result, EmbraceEndpoint.NDK_HANDSHAKE, failBuildOnUploadErrors)
+
+        if (result is HttpCallResult.Success<*>) {
+            val response = result.body as? NdkUploadHandshakeResponse ?: return null
+            val symbolsToUpload = response.symbols
+            return if (symbolsToUpload.isNullOrEmpty()) {
+                logger.info("No NDK files requested. Skipping NDK symbols upload.")
+                null
+            } else {
+                logger.info("Requested NDK symbols: " + response.symbols)
+                symbolsToUpload
             }
-            return null
-        } catch (ex: Exception) {
-            logger.error("Failed to perform NDK Handshake. ", ex)
-            return null
         }
+        return null
     }
 }

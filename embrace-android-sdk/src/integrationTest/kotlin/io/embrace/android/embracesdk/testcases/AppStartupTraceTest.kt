@@ -2,6 +2,8 @@ package io.embrace.android.embracesdk.testcases
 
 import android.os.Build
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.arch.assertError
+import io.embrace.android.embracesdk.assertions.findSpansOfType
 import io.embrace.android.embracesdk.fakes.FakeActivity
 import io.embrace.android.embracesdk.fakes.FakeSplashScreenActivity
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
@@ -269,6 +271,71 @@ internal class AppStartupTraceTest {
                         assertEquals(applicationEndTimeMs, startEpochNanos.nanosToMillis())
                         assertEquals(activityInitStartMs, endEpochNanos.nanosToMillis())
                     }
+                }
+            }
+        )
+    }
+
+    @Test
+    fun `cold startup waiting for app ready ended by a crash`() {
+        var crashTimestamp: Long? = null
+        testRule.runTest(
+            instrumentedConfig = FakeInstrumentedConfig(
+                enabledFeatures = FakeEnabledFeatureConfig(
+                    bgActivityCapture = true,
+                    endStartupWithAppReady = true
+                )
+            ),
+            testCaseAction = {
+                simulateOpeningActivities(
+                    addStartupActivity = false,
+                    startInBackground = true,
+                    endInBackground = false,
+                )
+                crashTimestamp = clock.now()
+                simulateJvmUncaughtException(RuntimeException())
+            },
+            assertAction = {
+                val session = getSingleSessionEnvelope()
+                val spans = session.findSpansOfType(EmbType.Performance.Default).associateBy { it.name }
+                with(checkNotNull(spans["emb-app-startup-cold"])) {
+                    assertError(ErrorCode.FAILURE)
+                    assertEquals(crashTimestamp, checkNotNull(endTimeNanos).nanosToMillis())
+                }
+
+            }
+        )
+    }
+
+    @Test
+    fun `warm startup waiting for app ready ended by a crash`() {
+        var startupActivityInitMs: Long? = null
+        var crashTimestamp: Long? = null
+        testRule.runTest(
+            instrumentedConfig = FakeInstrumentedConfig(
+                enabledFeatures = FakeEnabledFeatureConfig(
+                    bgActivityCapture = true,
+                    endStartupWithAppReady = true
+                )
+            ),
+            testCaseAction = {
+                clock.tick(10000L)
+                startupActivityInitMs = clock.now()
+                simulateOpeningActivities(
+                    addStartupActivity = false,
+                    startInBackground = true,
+                    endInBackground = false
+                )
+                crashTimestamp = clock.now()
+                simulateJvmUncaughtException(RuntimeException())
+            },
+            assertAction = {
+                val session = getSingleSessionEnvelope()
+                val spans = session.findSpansOfType(EmbType.Performance.Default).associateBy { it.name }
+                with(checkNotNull(spans["emb-app-startup-warm"])) {
+                    assertError(ErrorCode.FAILURE)
+                    assertEquals(startupActivityInitMs, checkNotNull(startTimeNanos).nanosToMillis())
+                    assertEquals(crashTimestamp, checkNotNull(endTimeNanos).nanosToMillis())
                 }
             }
         )

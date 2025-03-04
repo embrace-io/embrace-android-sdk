@@ -2,9 +2,7 @@ package io.embrace.android.embracesdk.testcases.features
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.findSessionSpan
-import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
-import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fixtures.fakeSessionStoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.comms.delivery.NetworkStatus
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
@@ -27,14 +25,9 @@ internal class PruningFeatureTest {
     @Rule
     @JvmField
     val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule {
-        val clock = FakeClock(0)
-        EmbraceSetupInterface(
-            overriddenClock = clock,
-            overriddenInitModule = FakeInitModule(
-                clock,
-                FakeEmbLogger(throwOnInternalError = false)
-            )
-        )
+        EmbraceSetupInterface().apply {
+            (overriddenInitModule.logger as FakeEmbLogger).throwOnInternalError = false
+        }
     }
 
     @Test

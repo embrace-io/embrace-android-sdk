@@ -1,0 +1,183 @@
+{
+  "values": [
+    {
+      "className": "BaseUrlConfigImpl",
+      "methods": [
+        {
+          "signature": "getConfig()Ljava/lang/String;"
+        },
+        {
+          "signature": "getData()Ljava/lang/String;"
+        }
+      ]
+    },
+    {
+      "className": "EnabledFeatureConfigImpl",
+      "methods": [
+        {
+          "signature": "is3rdPartySigHandlerDetectionEnabled()Z"
+        },
+        {
+          "signature": "isActivityBreadcrumbCaptureEnabled()Z"
+        },
+        {
+          "signature": "isAeiCaptureEnabled()Z"
+        },
+        {
+          "signature": "isAnrCaptureEnabled()Z"
+        },
+        {
+          "signature": "isBackgroundActivityCaptureEnabled()Z"
+        },
+        {
+          "signature": "isComposeClickCaptureEnabled()Z"
+        },
+        {
+          "signature": "isDiskUsageCaptureEnabled()Z"
+        },
+        {
+          "signature": "isEndStartupWithAppReadyEnabled()Z"
+        },
+        {
+          "signature": "isFcmPiiDataCaptureEnabled()Z"
+        },
+        {
+          "signature": "isHttpUrlConnectionCaptureEnabled()Z"
+        },
+        {
+          "signature": "isJvmCrashCaptureEnabled()Z"
+        },
+        {
+          "signature": "isMemoryWarningCaptureEnabled()Z"
+        },
+        {
+          "signature": "isNativeCrashCaptureEnabled()Z"
+        },
+        {
+          "signature": "isNetworkConnectivityCaptureEnabled()Z"
+        },
+        {
+          "signature": "isNetworkSpanForwardingEnabled()Z"
+        },
+        {
+          "signature": "isPowerSaveModeCaptureEnabled()Z"
+        },
+        {
+          "signature": "isRequestContentLengthCaptureEnabled()Z"
+        },
+        {
+          "signature": "isUiLoadTracingEnabled()Z"
+        },
+        {
+          "signature": "isUiLoadTracingTraceAll()Z"
+        },
+        {
+          "signature": "isUnityAnrCaptureEnabled()Z"
+        },
+        {
+          "signature": "isViewClickCoordinateCaptureEnabled()Z"
+        },
+        {
+          "signature": "isWebViewBreadcrumbCaptureEnabled()Z"
+        },
+        {
+          "signature": "isWebViewBreadcrumbQueryParamCaptureEnabled()Z"
+        }
+      ]
+    },
+    {
+      "className": "NetworkCaptureConfigImpl",
+      "methods": [
+        {
+          "signature": "getIgnoredRequestPatternList()Ljava/util/List;"
+        },
+        {
+          "signature": "getLimitsByDomain()Ljava/util/Map;"
+        },
+        {
+          "signature": "getNetworkBodyCapturePublicKey()Ljava/lang/String;"
+        },
+        {
+          "signature": "getRequestLimitPerDomain()I"
+        }
+      ]
+    },
+    {
+      "className": "OtelLimitsConfigImpl",
+      "methods": [
+        {
+          "signature": "getExceptionEventName()Ljava/lang/String;"
+        },
+        {
+          "signature": "getMaxCustomAttributeCount()I"
+        },
+        {
+          "signature": "getMaxCustomAttributeKeyLength()I"
+        },
+        {
+          "signature": "getMaxCustomAttributeValueLength()I"
+        },
+        {
+          "signature": "getMaxCustomEventCount()I"
+        },
+        {
+          "signature": "getMaxInternalAttributeKeyLength()I"
+        },
+        {
+          "signature": "getMaxInternalAttributeValueLength()I"
+        },
+        {
+          "signature": "getMaxInternalNameLength()I"
+        },
+        {
+          "signature": "getMaxNameLength()I"
+        },
+        {
+          "signature": "getMaxTotalAttributeCount()I"
+        },
+        {
+          "signature": "getMaxTotalEventCount()I"
+        }
+      ]
+    },
+    {
+      "className": "ProjectConfigImpl",
+      "methods": [
+        {
+          "signature": "getAppFramework()Ljava/lang/String;"
+        },
+        {
+          "signature": "getAppId()Ljava/lang/String;",
+          "returnValue": "abcde"
+        },
+        {
+          "signature": "getBuildFlavor()Ljava/lang/String;",
+          "returnValue": ""
+        },
+        {
+          "signature": "getBuildType()Ljava/lang/String;",
+          "returnValue": "release"
+        }
+      ]
+    },
+    {
+      "className": "RedactionConfigImpl",
+      "methods": [
+        {
+          "signature": "getSensitiveKeysDenylist()Ljava/util/List;"
+        }
+      ]
+    },
+    {
+      "className": "SessionConfigImpl",
+      "methods": [
+        {
+          "signature": "getFullSessionEvents()Ljava/util/List;"
+        },
+        {
+          "signature": "getSessionComponents()Ljava/util/List;"
+        }
+      ]
+    }
+  ]
+}

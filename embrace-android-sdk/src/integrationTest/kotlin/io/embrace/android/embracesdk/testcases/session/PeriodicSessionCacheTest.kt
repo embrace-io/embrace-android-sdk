@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.assertions.findSpanSnapshotOfType
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
+import io.embrace.android.embracesdk.fakes.createForIntegrationTest
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
@@ -40,7 +41,7 @@ internal class PeriodicSessionCacheTest {
     @JvmField
     val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule {
         val clock = FakeClock(SdkIntegrationTestRule.DEFAULT_SDK_START_TIME_MS)
-        val fakeInitModule = FakeInitModule(clock = clock)
+        val fakeInitModule = FakeInitModule(clock = clock, logger = createForIntegrationTest())
         executor = BlockingScheduledExecutorService(fakeClock = clock)
 
         workerThreadModule = FakeWorkerThreadModule(

@@ -12,7 +12,7 @@ internal class EmbracePreSdkStartInterface(
     val embrace = Embrace.getInstance()
 
     val clock: FakeClock
-        get() = setup.overriddenClock
+        get() = setup.getClock()
 
     /**
      * Asserts that no config has been persisted on disk yet.

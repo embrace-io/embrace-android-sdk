@@ -4,20 +4,13 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.findSessionSpan
 import io.embrace.android.embracesdk.assertions.findSpanSnapshotOfType
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
-import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
-import io.embrace.android.embracesdk.fakes.createForIntegrationTest
-import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
-import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
-import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.spans.getSessionProperty
-import io.embrace.android.embracesdk.internal.worker.PriorityWorker
 import io.embrace.android.embracesdk.internal.worker.Worker
-import io.embrace.android.embracesdk.internal.worker.Worker.Background.PeriodicCacheWorker
 import io.embrace.android.embracesdk.testframework.FakeCacheStorageService
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
@@ -33,32 +26,19 @@ import org.junit.runner.RunWith
  */
 @RunWith(AndroidJUnit4::class)
 internal class PeriodicSessionCacheTest {
-
-    private lateinit var workerThreadModule: FakeWorkerThreadModule
-    private lateinit var executor: BlockingScheduledExecutorService
+    private lateinit var periodicCacheWorkerExecutor: BlockingScheduledExecutorService
+    private lateinit var dataPersistenceWorkerExecutor: BlockingScheduledExecutorService
 
     @Rule
     @JvmField
     val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule {
-        val clock = FakeClock(SdkIntegrationTestRule.DEFAULT_SDK_START_TIME_MS)
-        val fakeInitModule = FakeInitModule(clock = clock, logger = createForIntegrationTest())
-        executor = BlockingScheduledExecutorService(fakeClock = clock)
-
-        workerThreadModule = FakeWorkerThreadModule(
-            fakeInitModule = fakeInitModule,
-            testWorkerName = PeriodicCacheWorker,
-            priorityWorkerSupplier = { worker ->
-                when (worker) {
-                    Worker.Priority.DataPersistenceWorker -> PriorityWorker<StoredTelemetryMetadata>(executor)
-                    else -> null
-                }
-            }
-        )
         EmbraceSetupInterface(
-            overriddenClock = clock,
-            overriddenInitModule = fakeInitModule,
-            overriddenWorkerThreadModule = workerThreadModule
-        )
+            workerToFake = Worker.Background.PeriodicCacheWorker,
+            priorityWorkerToFake = Worker.Priority.DataPersistenceWorker,
+        ).apply {
+            periodicCacheWorkerExecutor = getFakedWorkerExecutor()
+            dataPersistenceWorkerExecutor = getFakedPriorityWorkerExecutor()
+        }
     }
 
     @Test
@@ -84,17 +64,21 @@ internal class PeriodicSessionCacheTest {
                 val endMessage = checkNotNull(snapshot)
                 val span = endMessage.findSpanSnapshotOfType(EmbType.Ux.Session)
                 assertNotNull(span.getSessionProperty("Test"))
-                span.attributes?.assertMatches(mapOf(
-                    "emb.clean_exit" to false,
-                    "emb.terminated" to true
-                ))
+                span.attributes?.assertMatches(
+                    mapOf(
+                        "emb.clean_exit" to false,
+                        "emb.terminated" to true
+                    )
+                )
                 val completedMessage = getSingleSessionEnvelope()
                 val completedSpan = completedMessage.findSessionSpan()
                 assertEquals("Test", completedSpan.getSessionProperty("Test"))
-                completedSpan.attributes?.assertMatches(mapOf(
-                    "emb.clean_exit" to true,
-                    "emb.terminated" to false
-                ))
+                completedSpan.attributes?.assertMatches(
+                    mapOf(
+                        "emb.clean_exit" to true,
+                        "emb.terminated" to false
+                    )
+                )
             }
         )
     }
@@ -109,8 +93,8 @@ internal class PeriodicSessionCacheTest {
     }
 
     private fun allowPeriodicCacheExecution() {
-        workerThreadModule.executor.runCurrentlyBlocked()
-        executor.runCurrentlyBlocked()
+        periodicCacheWorkerExecutor.runCurrentlyBlocked()
+        dataPersistenceWorkerExecutor.runCurrentlyBlocked()
     }
 
     private fun getCacheStorageService(): FakeCacheStorageService {

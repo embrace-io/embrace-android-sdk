@@ -11,7 +11,7 @@ composeBom = "2025.02.00"
 embrace = "7.2.0"
 navigationCompose = "2.8.8"
 okhttp = "4.12.0"
-otel = "1.46.0"
+otel = "1.47.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }

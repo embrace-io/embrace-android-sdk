@@ -28,8 +28,8 @@ internal class LogFeatureTest {
     @Rule
     @JvmField
     val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule {
-        EmbraceSetupInterface(workerToFake = Worker.Background.LogMessageWorker).apply {
-            executor = getFakedWorkerExecutor()
+        EmbraceSetupInterface(workerToFake = Worker.Background.LogMessageWorker).also {
+            executor = it.getFakedWorkerExecutor()
         }
     }
 

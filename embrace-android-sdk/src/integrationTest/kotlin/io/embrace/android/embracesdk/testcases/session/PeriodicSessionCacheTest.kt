@@ -35,9 +35,9 @@ internal class PeriodicSessionCacheTest {
         EmbraceSetupInterface(
             workerToFake = Worker.Background.PeriodicCacheWorker,
             priorityWorkerToFake = Worker.Priority.DataPersistenceWorker,
-        ).apply {
-            periodicCacheWorkerExecutor = getFakedWorkerExecutor()
-            dataPersistenceWorkerExecutor = getFakedPriorityWorkerExecutor()
+        ).also {
+            periodicCacheWorkerExecutor = it.getFakedWorkerExecutor()
+            dataPersistenceWorkerExecutor = it.getFakedPriorityWorkerExecutor()
         }
     }
 

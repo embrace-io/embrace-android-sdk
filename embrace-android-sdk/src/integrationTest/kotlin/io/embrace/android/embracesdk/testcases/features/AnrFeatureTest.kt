@@ -37,10 +37,12 @@ internal class AnrFeatureTest {
             currentTimeMs = START_TIME_MS,
             workerToFake = Worker.Background.AnrWatchdogWorker,
             anrMonitoringThread = Thread.currentThread()
-        ).apply {
-            anrMonitorExecutor = getFakedWorkerExecutor()
-            anrMonitorExecutor.blockingMode = false
-            blockedThreadDetector = getBlockedThreadDetector()
+        ).also {
+            with(it) {
+                anrMonitorExecutor = getFakedWorkerExecutor()
+                anrMonitorExecutor.blockingMode = false
+                blockedThreadDetector = getBlockedThreadDetector()
+            }
         }
     }
 

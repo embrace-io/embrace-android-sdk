@@ -2,21 +2,22 @@ package io.embrace.android.embracesdk.testcases.features
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.Severity
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface
 import io.embrace.android.embracesdk.testframework.assertions.assertOtelLogReceived
-import io.embrace.android.embracesdk.testframework.assertions.getLastLog
+import io.embrace.android.embracesdk.testframework.assertions.getLogOfType
 import io.embrace.android.embracesdk.testframework.assertions.getOtelSeverity
 import io.embrace.android.embracesdk.testframework.server.FormPart
-import java.util.UUID
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.util.UUID
 
 @RunWith(AndroidJUnit4::class)
 internal class FileAttachmentFeatureTest {
@@ -43,7 +44,7 @@ internal class FileAttachmentFeatureTest {
                 logWithUserHostedAttachment(id, url)
             }
         }, assertAction = {
-            val log = getSingleLogEnvelope().getLastLog()
+            val log = getSingleLogEnvelope().getLogOfType(EmbType.System.Log)
             assertUserHostedLogSent(log, url, id)
             assertNull(log.attributes?.findAttributeValue(ATTR_KEY_ERR_CODE))
         })
@@ -63,7 +64,9 @@ internal class FileAttachmentFeatureTest {
                 }
             }
         }, assertAction = {
-            val logs = getLogEnvelopes(2).flatMap { checkNotNull(it.data.logs) }
+            val logs = getLogEnvelopes(2)
+                .flatMap { checkNotNull(it.data.logs) }
+                .filter { it.attributes?.findAttributeValue("emb.type") == "sys.log" }
             assertEquals((limit * 2) + 2, logs.size)
 
             logs.forEachIndexed { k, log ->
@@ -89,8 +92,7 @@ internal class FileAttachmentFeatureTest {
         }, assertAction = {
             val parts = getSingleAttachment()
             verifyAttachment(parts, byteArray)
-
-            val log = getSingleLogEnvelope().getLastLog()
+            val log = getSingleLogEnvelope().getLogOfType(EmbType.System.Log)
             assertEmbraceHostedLogSent(log, byteArray.size.toLong())
         })
     }
@@ -108,7 +110,9 @@ internal class FileAttachmentFeatureTest {
                 }
             }
         }, assertAction = {
-            val logs = getLogEnvelopes(2).flatMap { checkNotNull(it.data.logs) }
+            val logs = getLogEnvelopes(2)
+                .flatMap { checkNotNull(it.data.logs) }
+                .filter { it.attributes?.findAttributeValue("emb.type") == "sys.log" }
             val logSize = (limit * 2) + 2
             assertEquals(logSize, logs.size)
 
@@ -141,7 +145,7 @@ internal class FileAttachmentFeatureTest {
             val parts = getSingleAttachment()
             verifyAttachment(parts, byteArray)
 
-            val log = getSingleLogEnvelope().getLastLog()
+            val log = getSingleLogEnvelope().getLogOfType(EmbType.System.Log)
             assertEmbraceHostedLogSent(log, byteArray.size.toLong())
         })
     }
@@ -154,7 +158,7 @@ internal class FileAttachmentFeatureTest {
                 logWithEmbraceHostedAttachment(byteArray)
             }
         }, assertAction = {
-            val log = getSingleLogEnvelope().getLastLog()
+            val log = getSingleLogEnvelope().getLogOfType(EmbType.System.Log)
             assertEmbraceHostedLogSent(log, byteArray.size.toLong())
             assertTrue(getAttachments(0).isEmpty())
         })
@@ -174,7 +178,9 @@ internal class FileAttachmentFeatureTest {
             }
         }, assertAction = {
             val expectedSize = 3
-            val logs = getLogEnvelopes(1).flatMap { checkNotNull(it.data.logs) }
+            val logs = getLogEnvelopes(1)
+                .flatMap { checkNotNull(it.data.logs) }
+                .filter { it.attributes?.findAttributeValue("emb.type") == "sys.log" }
             assertEquals(expectedSize, logs.size)
 
             val attachments = getAttachments(expectedSize)

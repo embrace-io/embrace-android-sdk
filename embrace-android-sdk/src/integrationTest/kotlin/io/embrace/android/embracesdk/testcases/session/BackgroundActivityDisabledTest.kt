@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.assertions.findEventsOfType
 import io.embrace.android.embracesdk.assertions.findSessionSpan
 import io.embrace.android.embracesdk.assertions.getSessionId
 import io.embrace.android.embracesdk.fakes.FakeClock
+import io.embrace.android.embracesdk.fakes.createForIntegrationTest
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
@@ -48,7 +49,7 @@ internal class BackgroundActivityDisabledTest {
     @JvmField
     val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule {
         val clock = FakeClock()
-        val initModule = FakeInitModule(clock)
+        val initModule = FakeInitModule(clock, createForIntegrationTest())
         val workerThreadModule =
             FakeWorkerThreadModule(initModule, Worker.Background.LogMessageWorker)
 

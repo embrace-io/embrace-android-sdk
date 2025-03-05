@@ -4,7 +4,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
-import io.embrace.android.embracesdk.fakes.FakeEmbLogger
+import io.embrace.android.embracesdk.fakes.createForIntegrationTest
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import io.embrace.android.embracesdk.internal.anr.detection.BlockedThreadDetector
@@ -18,11 +18,11 @@ import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface
 import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import io.embrace.android.embracesdk.testframework.assertions.assertMatches
-import java.util.concurrent.atomic.AtomicReference
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.util.concurrent.atomic.AtomicReference
 
 private const val START_TIME_MS = 10000000000L
 private const val INTERVAL_MS = 100L
@@ -41,7 +41,7 @@ internal class AnrFeatureTest {
     @JvmField
     val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule {
         val clock = FakeClock(currentTime = START_TIME_MS)
-        val initModule = FakeInitModule(clock, FakeEmbLogger(throwOnInternalError = false))
+        val initModule = FakeInitModule(clock, createForIntegrationTest(throwOnInternalError = false))
         val workerThreadModule =
             FakeWorkerThreadModule(initModule, Worker.Background.AnrWatchdogWorker).apply {
                 anrMonitorThread = AtomicReference(Thread.currentThread())

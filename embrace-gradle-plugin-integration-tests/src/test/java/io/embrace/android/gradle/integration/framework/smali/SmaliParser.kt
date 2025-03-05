@@ -7,9 +7,17 @@ class SmaliParser {
     private companion object {
         private const val METHOD_START = ".method"
         private const val METHOD_END = ".end method"
+        private const val METHOD_ARGS = ")"
         private const val STRING_CONSTANT = "const-string"
+        private const val LOW_INT_CONSTANT = "const/16"
+        private const val BOOL_CONSTANT = "const/4"
         private const val CONSTRUCTOR = "<init>()V"
         private const val CLASS_CONSTRUCTOR = "<clinit>()V"
+        private const val RETURN_TYPE_STRING = "Ljava/lang/String;"
+        private const val RETURN_TYPE_INT = "I"
+        private const val RETURN_TYPE_BOOL = "Z"
+        private const val RETURN_TYPE_LIST = "Ljava/util/List;"
+        private const val RETURN_TYPE_MAP = "Ljava/util/Map;"
     }
 
     /**
@@ -37,10 +45,54 @@ class SmaliParser {
                 methodSig = null
                 returnValue = null
             }
-            if (input.startsWith(STRING_CONSTANT)) {
-                returnValue = input.split(" ").last().replace("\"", "")
+            if (methodSig != null) {
+                val returnType = checkNotNull(methodSig).split(METHOD_ARGS).last()
+                val value = readReturnValue(input, returnType)
+                if (value != null) {
+                    returnValue = computeReturnValue(returnValue, value, returnType)
+                }
             }
         }
         return SmaliFile(file.nameWithoutExtension, methods.map { SmaliMethod(it.key, it.value) })
+    }
+
+    private fun readReturnValue(input: String, returnType: String): String? {
+        return if (input.startsWith(STRING_CONSTANT) && returnType == RETURN_TYPE_STRING) {
+            input.split(" ").last().replace("\"", "")
+        } else if (input.startsWith(LOW_INT_CONSTANT) && returnType == RETURN_TYPE_INT) {
+            readHexValue(input)
+        } else if (input.startsWith(BOOL_CONSTANT) && returnType == RETURN_TYPE_BOOL) {
+            when (readHexValue(input)) {
+                "1" -> "true"
+                "0" -> "false"
+                else -> error("Unexpected boolean value")
+            }
+        } else if (input.startsWith(STRING_CONSTANT) && (returnType == RETURN_TYPE_LIST || returnType == RETURN_TYPE_MAP)) {
+            input.split(" ").last().replace("\"", "")
+        } else {
+            null
+        }
+    }
+
+    private fun computeReturnValue(returnValue: String?, value: String, returnType: String): String {
+        if (returnValue == null) {
+            return value
+        }
+
+        val separator = when (returnType) {
+            RETURN_TYPE_LIST -> ","
+            RETURN_TYPE_MAP -> ":"
+            else -> null
+        }
+        return when (separator) {
+            null -> value
+            else -> "$returnValue$separator$value"
+        }
+    }
+
+    private fun readHexValue(input: String): String {
+        val token = input.split(" ").last()
+        val value = token.replace("\"", "").replace("0x", "")
+        return value.toInt(16).toString()
     }
 }

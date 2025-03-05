@@ -15,7 +15,9 @@ import io.embrace.android.embracesdk.internal.config.remote.AppExitInfoConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
+import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
+import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import io.embrace.android.embracesdk.testframework.assertions.assertMatches
 import io.embrace.android.embracesdk.testframework.assertions.getLastLog
 import io.embrace.android.embracesdk.testframework.assertions.getLogOfType
@@ -65,7 +67,11 @@ internal class AeiFeatureTest {
 
     @Rule
     @JvmField
-    val testRule = SdkIntegrationTestRule()
+    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule {
+        // Replace log batching worker with one that uses an executor that is never unblocked.
+        // This means all internal error logs will be "stuck" and never flushed, thus never affecting the existing tests.
+        EmbraceSetupInterface(workerToFake = Worker.Background.LogMessageWorker)
+    }
 
     private val jvmCrash = TestAeiData(
         ApplicationExitInfo.REASON_CRASH,

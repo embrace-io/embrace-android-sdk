@@ -4,10 +4,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.findEventsOfType
 import io.embrace.android.embracesdk.assertions.findSessionSpan
 import io.embrace.android.embracesdk.assertions.getSessionId
-import io.embrace.android.embracesdk.fakes.FakeClock
-import io.embrace.android.embracesdk.fakes.createForIntegrationTest
-import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
-import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
+import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.opentelemetry.embCleanExit
@@ -45,19 +42,14 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 internal class BackgroundActivityDisabledTest {
 
+    private lateinit var executor: BlockingScheduledExecutorService
+
     @Rule
     @JvmField
     val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule {
-        val clock = FakeClock()
-        val initModule = FakeInitModule(clock, createForIntegrationTest())
-        val workerThreadModule =
-            FakeWorkerThreadModule(initModule, Worker.Background.LogMessageWorker)
-
-        EmbraceSetupInterface(
-            overriddenClock = clock,
-            overriddenInitModule = initModule,
-            overriddenWorkerThreadModule = workerThreadModule,
-        )
+        EmbraceSetupInterface(workerToFake = Worker.Background.LogMessageWorker).apply {
+            executor = getFakedWorkerExecutor()
+        }
     }
 
     @Test
@@ -105,24 +97,30 @@ internal class BackgroundActivityDisabledTest {
 
                 with(logs[0]) {
                     assertEquals("error", body)
-                    attributes?.assertMatches(mapOf(
-                        embState.attributeKey.key to "background"
-                    ))
+                    attributes?.assertMatches(
+                        mapOf(
+                            embState.attributeKey.key to "background"
+                        )
+                    )
                     assertNull(attributes?.findAttributeValue(SessionIncubatingAttributes.SESSION_ID.key))
                 }
                 with(logs[1]) {
                     assertEquals("info", body)
-                    attributes?.assertMatches(mapOf(
-                        embState.attributeKey.key to "background"
-                    ))
+                    attributes?.assertMatches(
+                        mapOf(
+                            embState.attributeKey.key to "background"
+                        )
+                    )
                     assertNull(attributes?.findAttributeValue(SessionIncubatingAttributes.SESSION_ID.key))
                 }
                 with(logs[2]) {
                     assertEquals("warning", body)
-                    attributes?.assertMatches(mapOf(
-                        embState.attributeKey.key to "foreground",
-                        SessionIncubatingAttributes.SESSION_ID.key to sessions[1].getSessionId()
-                    ))
+                    attributes?.assertMatches(
+                        mapOf(
+                            embState.attributeKey.key to "foreground",
+                            SessionIncubatingAttributes.SESSION_ID.key to sessions[1].getSessionId()
+                        )
+                    )
                 }
                 val secondSession = sessions[1]
                 assertEquals(
@@ -132,19 +130,23 @@ internal class BackgroundActivityDisabledTest {
 
                 with(logs[3]) {
                     assertEquals("sent-after-session", body)
-                    attributes?.assertMatches(mapOf(
-                        embState.attributeKey.key to "foreground",
-                        SessionIncubatingAttributes.SESSION_ID.key to secondSession.getSessionId()
-                    ))
+                    attributes?.assertMatches(
+                        mapOf(
+                            embState.attributeKey.key to "foreground",
+                            SessionIncubatingAttributes.SESSION_ID.key to secondSession.getSessionId()
+                        )
+                    )
                 }
 
                 with(secondSession) {
                     with(findSessionSpan()) {
                         with(findEventsOfType(EmbType.System.Breadcrumb)) {
                             assertEquals(1, size)
-                            single().attributes?.assertMatches(mapOf(
-                                "message" to "logged"
-                            ))
+                            single().attributes?.assertMatches(
+                                mapOf(
+                                    "message" to "logged"
+                                )
+                            )
                         }
                     }
 
@@ -159,7 +161,7 @@ internal class BackgroundActivityDisabledTest {
     private fun EmbraceActionInterface.flushLogEnvelope() {
         runLoggingThread()
         clock.tick(2000L)
-        flushLogBatch()
+        testRule.bootstrapper.logModule.logOrchestrator.flush(false)
     }
 
     @Test
@@ -225,11 +227,7 @@ internal class BackgroundActivityDisabledTest {
     }
 
     private fun runLoggingThread() {
-        (testRule.setup.overriddenWorkerThreadModule as FakeWorkerThreadModule).executor.runCurrentlyBlocked()
-    }
-
-    private fun flushLogBatch() {
-        testRule.bootstrapper.logModule.logOrchestrator.flush(false)
+        executor.runCurrentlyBlocked()
     }
 
     private fun Span.assertExpectedSessionSpanAttributes(
@@ -241,16 +239,18 @@ internal class BackgroundActivityDisabledTest {
     ) {
         assertEquals(startMs, startTimeNanos?.nanosToMillis())
         assertEquals(endMs, endTimeNanos?.nanosToMillis())
-        attributes?.assertMatches(mapOf(
-            embSessionNumber.attributeKey.key to sessionNumber,
-            embSequenceId.attributeKey.key to sequenceId,
-            embColdStart.attributeKey.key to coldStart,
-            embState.attributeKey.key to "foreground",
-            embCleanExit.attributeKey.key to "true",
-            embTerminated.attributeKey.key to "false",
-            embSessionStartType.attributeKey.key to "state",
-            embSessionEndType.attributeKey.key to "state",
-        ))
+        attributes?.assertMatches(
+            mapOf(
+                embSessionNumber.attributeKey.key to sessionNumber,
+                embSequenceId.attributeKey.key to sequenceId,
+                embColdStart.attributeKey.key to coldStart,
+                embState.attributeKey.key to "foreground",
+                embCleanExit.attributeKey.key to "true",
+                embTerminated.attributeKey.key to "false",
+                embSessionStartType.attributeKey.key to "state",
+                embSessionEndType.attributeKey.key to "state",
+            )
+        )
         with(checkNotNull(attributes)) {
             assertFalse(findAttributeValue(embProcessIdentifier.attributeKey.key).isNullOrBlank())
             assertFalse(findAttributeValue(SessionIncubatingAttributes.SESSION_ID.key).isNullOrBlank())

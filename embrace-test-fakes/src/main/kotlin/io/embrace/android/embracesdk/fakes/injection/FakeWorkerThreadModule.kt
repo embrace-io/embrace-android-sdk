@@ -11,32 +11,43 @@ import java.util.concurrent.atomic.AtomicReference
 
 class FakeWorkerThreadModule(
     fakeInitModule: FakeInitModule = FakeInitModule(),
-    private val testWorkerName: Worker? = null,
-    private val anotherTestWorkerName: Worker? = null,
+    anrMonitoringThread: Thread? = null,
+    private val testWorker: Worker? = null,
+    private val anotherTestWorker: Worker? = null,
+    private val testPriorityWorker: Worker.Priority? = null,
     private val base: WorkerThreadModule = createWorkerThreadModule(),
-    private val priorityWorkerSupplier: (worker: Worker.Priority) -> PriorityWorker<*>? = { null },
 ) : WorkerThreadModule by base {
 
     val executorClock: FakeClock = fakeInitModule.getFakeClock() ?: FakeClock()
     val executor: BlockingScheduledExecutorService = BlockingScheduledExecutorService(fakeClock = executorClock)
     val anotherExecutor: BlockingScheduledExecutorService = BlockingScheduledExecutorService(fakeClock = executorClock)
+    val priorityWorkerExecutor: BlockingScheduledExecutorService =
+        BlockingScheduledExecutorService(fakeClock = executorClock)
 
     private val backgroundWorker = BackgroundWorker(executor)
     private val anotherBackgroundWorker = BackgroundWorker(anotherExecutor)
+    private val priorityWorker = PriorityWorker<Any>(priorityWorkerExecutor)
+    private val anrMonitoringThreadRef: AtomicReference<Thread> = if (anrMonitoringThread == null) {
+        base.anrMonitorThread
+    } else {
+        AtomicReference(anrMonitoringThread)
+    }
 
     @Suppress("UNCHECKED_CAST")
-    override fun <T> priorityWorker(worker: Worker.Priority): PriorityWorker<T> {
-        val override = priorityWorkerSupplier(worker) as PriorityWorker<T>?
-        return override ?: base.priorityWorker(worker)
-    }
+    override fun <T> priorityWorker(worker: Worker.Priority): PriorityWorker<T> =
+        if (worker == testPriorityWorker) {
+            priorityWorker as PriorityWorker<T>
+        } else {
+            base.priorityWorker(worker)
+        }
 
     override fun backgroundWorker(worker: Worker.Background): BackgroundWorker {
         return when (worker) {
-            testWorkerName -> backgroundWorker
-            anotherTestWorkerName -> anotherBackgroundWorker
+            testWorker -> backgroundWorker
+            anotherTestWorker -> anotherBackgroundWorker
             else -> base.backgroundWorker(worker)
         }
     }
 
-    override var anrMonitorThread: AtomicReference<Thread> = base.anrMonitorThread
+    override val anrMonitorThread: AtomicReference<Thread> = anrMonitoringThreadRef
 }

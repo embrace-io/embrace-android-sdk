@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.capture.metadata
 
-import android.annotation.TargetApi
 import android.app.usage.StorageStatsManager
 import android.content.Context
 import android.content.pm.PackageManager
@@ -9,6 +8,7 @@ import android.os.Environment
 import android.os.Process
 import android.os.StatFs
 import android.os.storage.StorageManager
+import androidx.annotation.RequiresApi
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.envelope.resource.EnvelopeResourceSource
@@ -69,7 +69,7 @@ internal class EmbraceMetadataService(
     }
 
     @Suppress("DEPRECATION")
-    @TargetApi(Build.VERSION_CODES.O)
+    @RequiresApi(Build.VERSION_CODES.O)
     private fun getDeviceDiskAppUsage(
         storageStatsManager: StorageStatsManager?,
         packageManager: PackageManager,

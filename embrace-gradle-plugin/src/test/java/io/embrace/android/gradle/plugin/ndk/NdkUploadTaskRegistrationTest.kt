@@ -1,6 +1,7 @@
 package io.embrace.android.gradle.plugin.ndk
 
 import com.android.build.api.variant.Variant
+import io.embrace.android.gradle.plugin.api.EmbraceExtension
 import io.embrace.android.gradle.plugin.config.PluginBehaviorImpl
 import io.embrace.android.gradle.plugin.config.ProjectType
 import io.embrace.android.gradle.plugin.config.UnitySymbolsDir
@@ -37,7 +38,11 @@ class NdkUploadTaskRegistrationTest {
     private val baseUrl = "https://dsym-store.emb-api.com"
     private val project = ProjectBuilder.builder().build()
     private val behavior =
-        PluginBehaviorImpl(project, project.extensions.create("swazzler", SwazzlerExtension::class.java))
+        PluginBehaviorImpl(
+            project,
+            project.extensions.create("swazzler", SwazzlerExtension::class.java),
+            project.extensions.create("embrace", EmbraceExtension::class.java)
+        )
     private lateinit var variantConfigurationsListProperty: ListProperty<VariantConfig>
 
     private val mockVariant = mockk<Variant>(relaxed = true)

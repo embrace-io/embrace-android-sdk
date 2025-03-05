@@ -1,14 +1,17 @@
 package io.embrace.android.gradle.plugin.config
 
 import io.embrace.android.gradle.plugin.Logger
+import io.embrace.android.gradle.plugin.api.EmbraceExtension
 import io.embrace.android.gradle.swazzler.plugin.extension.SwazzlerExtension
 import org.gradle.api.Project
 import org.gradle.api.logging.LogLevel
 import java.io.File
 
+@Suppress("DEPRECATION")
 class PluginBehaviorImpl(
     private val project: Project,
     private val extension: SwazzlerExtension,
+    private val embrace: EmbraceExtension,
 ) : PluginBehavior {
 
     override val instrumentation: InstrumentationBehavior by lazy {
@@ -61,7 +64,8 @@ class PluginBehaviorImpl(
     }
 
     override val autoAddEmbraceDependencies: Boolean by lazy {
-        !extension.disableDependencyInjection.get() && !isUnityEdmEnabled
+        val userValue = embrace.autoAddEmbraceDependencies.orNull ?: extension.disableDependencyInjection.orNull?.not() ?: true
+        userValue && !isUnityEdmEnabled
     }
 
     override val autoAddEmbraceComposeDependency: Boolean by lazy {

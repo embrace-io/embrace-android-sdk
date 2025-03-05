@@ -35,7 +35,7 @@ detekt = "1.23.8"
 buildconfig = "5.5.1"
 agp-api = "7.4.2"
 apktoolLib = "2.11.0"
-bundletool = "1.18.0"
+bundletool = "1.18.1"
 
 [libraries]
 binary-compatibility-validator = { module = "org.jetbrains.kotlinx:binary-compatibility-validator", version.ref = "binaryCompatibilityValidator" }

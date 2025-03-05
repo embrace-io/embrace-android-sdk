@@ -19,6 +19,9 @@ class NdkUploadTaskIntegrationTest {
     fun `ndk upload`() {
         rule.runTest(
             fixture = "ndk-upload-simple",
+            setup = {
+                setupMockResponses(emptyList(), emptyList(), listOf("release"))
+            },
             assertions = { projectDir ->
                 // 1. assert that the symbols were injected as a string resource
                 val symbols =

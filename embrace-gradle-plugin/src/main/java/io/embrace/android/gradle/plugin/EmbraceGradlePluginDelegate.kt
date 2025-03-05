@@ -10,7 +10,6 @@ import io.embrace.android.gradle.plugin.config.variant.EmbraceVariantConfigurati
 import io.embrace.android.gradle.plugin.gradle.getProperty
 import io.embrace.android.gradle.plugin.instrumentation.config.model.VariantConfig
 import io.embrace.android.gradle.plugin.instrumentation.registerAsmTasks
-import io.embrace.android.gradle.plugin.network.OkHttpNetworkService
 import io.embrace.android.gradle.plugin.tasks.registration.TaskRegistrar
 import io.embrace.android.gradle.swazzler.plugin.extension.SwazzlerExtension
 import org.gradle.api.Project
@@ -33,7 +32,6 @@ class EmbraceGradlePluginDelegate {
 
         val behavior = PluginBehaviorImpl(project, extension)
         Logger.setPluginLogLevel(behavior.logLevel)
-        val networkService = OkHttpNetworkService(behavior.baseUrl)
 
         BuildTelemetryService.register(
             project,
@@ -56,7 +54,6 @@ class EmbraceGradlePluginDelegate {
             behavior,
             embraceVariantConfigurationBuilder,
             variantConfigurationsListProperty,
-            networkService,
             agpWrapper
         )
 

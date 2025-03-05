@@ -11,7 +11,6 @@ import io.embrace.android.gradle.plugin.dependency.installDependenciesForVariant
 import io.embrace.android.gradle.plugin.gradle.GradleCompatibilityHelper
 import io.embrace.android.gradle.plugin.instrumentation.config.model.VariantConfig
 import io.embrace.android.gradle.plugin.model.AndroidCompactedVariantData
-import io.embrace.android.gradle.plugin.network.NetworkService
 import io.embrace.android.gradle.plugin.tasks.il2cpp.Il2CppUploadTaskRegistration
 import io.embrace.android.gradle.plugin.tasks.il2cpp.UnitySymbolFilesManager
 import io.embrace.android.gradle.plugin.tasks.ndk.NdkUploadTaskRegistration
@@ -29,7 +28,6 @@ class TaskRegistrar(
     private val behavior: PluginBehavior,
     private val embraceVariantConfigurationBuilder: EmbraceVariantConfigurationBuilder,
     private val variantConfigurationsListProperty: ListProperty<VariantConfig>,
-    private val networkService: NetworkService,
     private val agpWrapper: AgpWrapper,
 ) {
 
@@ -56,9 +54,8 @@ class TaskRegistrar(
                 project,
                 ref,
                 variant,
-                networkService,
                 variantConfigurationsListProperty,
-                behavior.baseUrl,
+                behavior,
             )
             registerTasks(params, variant)
         }
@@ -73,7 +70,7 @@ class TaskRegistrar(
         val variantConfig = variantConfigurationsListProperty.get().first { it.variantName == variant.name }
         val symbolsDir = getSymbolsDir(variantConfig)
         val projectType = getProjectType(symbolsDir, agpWrapper, variantConfig.variantName, project)
-        NdkUploadTaskRegistration(behavior, symbolsDir, projectType).register(params)
+        NdkUploadTaskRegistration(symbolsDir, projectType).register(params)
         if (behavior.isIl2CppMappingFilesUploadEnabled) {
             Il2CppUploadTaskRegistration().register(params)
         }

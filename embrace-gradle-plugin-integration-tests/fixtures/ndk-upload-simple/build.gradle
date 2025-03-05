@@ -11,7 +11,7 @@ plugins {
 project.tasks.register("testTask", NdkUploadTask) { task ->
     integrationTest.configureGradleUploadTask(project, task, EmbraceEndpoint.NDK, null)
     task.ndkEnabled.set(true)
-
+    task.failBuildOnUploadErrors.set(true)
     task.projectType.set(ProjectType.NATIVE)
 
     task.architecturesDirectoryForNative.from(

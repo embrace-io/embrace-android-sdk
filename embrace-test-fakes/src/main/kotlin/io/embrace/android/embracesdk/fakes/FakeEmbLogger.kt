@@ -44,8 +44,3 @@ class FakeEmbLogger(
         errorHandlerProvider()?.trackInternalError(type, throwable)
     }
 }
-
-fun createForIntegrationTest(throwOnInternalError: Boolean = true): FakeEmbLogger = FakeEmbLogger(
-    throwOnInternalError = throwOnInternalError,
-    ignoredErrors = mutableListOf(InternalErrorType.PROCESS_STATE_CALLBACK_FAIL)
-)

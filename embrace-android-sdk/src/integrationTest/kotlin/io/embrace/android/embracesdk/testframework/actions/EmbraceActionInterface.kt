@@ -24,7 +24,7 @@ internal class EmbraceActionInterface(
     val embrace = Embrace.getInstance()
 
     val clock: FakeClock
-        get() = setup.overriddenClock
+        get() = setup.getClock()
 
     /**
      * Starts & ends a session for the purposes of testing. An action can be supplied as a lambda
@@ -43,7 +43,7 @@ internal class EmbraceActionInterface(
         this.action()
 
         // end session 30s later by entering background
-        setup.overriddenClock.tick(30000)
+        setup.getClock().tick(30000)
         onBackground()
     }
 
@@ -83,29 +83,29 @@ internal class EmbraceActionInterface(
             if (startInBackground) {
                 stop()
                 onBackground()
-                setup.overriddenClock.tick(STARTUP_BACKGROUND_TIME)
+                setup.getClock().tick(STARTUP_BACKGROUND_TIME)
             } else {
-                setup.overriddenClock.tick(ACTIVITY_GAP)
+                setup.getClock().tick(ACTIVITY_GAP)
             }
         }
         activitiesAndActions.forEachIndexed { index, (activityController, action) ->
             if (index != 0 || createFirstActivity) {
                 activityController.create()
-                setup.overriddenClock.tick(LIFECYCLE_EVENT_GAP)
+                setup.getClock().tick(LIFECYCLE_EVENT_GAP)
             }
             activityController.start()
-            setup.overriddenClock.tick(LIFECYCLE_EVENT_GAP)
+            setup.getClock().tick(LIFECYCLE_EVENT_GAP)
             if (index == 0 && startInBackground) {
                 onForeground()
             }
             activityController.resume()
 
-            setup.overriddenClock.tick(LIFECYCLE_EVENT_GAP)
+            setup.getClock().tick(LIFECYCLE_EVENT_GAP)
 
             if (invokeManualEnd) {
                 embrace.addLoadTraceAttribute(activityController.get(), "manual-end", "true")
                 val startTime = clock.now()
-                setup.overriddenClock.tick(LIFECYCLE_EVENT_GAP)
+                setup.getClock().tick(LIFECYCLE_EVENT_GAP)
                 val endTime = clock.now()
                 embrace.addLoadTraceChildSpan(
                     activity = activityController.get(),
@@ -119,14 +119,14 @@ internal class EmbraceActionInterface(
 
             action()
 
-            setup.overriddenClock.tick(POST_ACTIVITY_ACTION_DWELL)
+            setup.getClock().tick(POST_ACTIVITY_ACTION_DWELL)
             activityController.pause()
-            setup.overriddenClock.tick(ACTIVITY_GAP)
+            setup.getClock().tick(ACTIVITY_GAP)
             lastActivity = activityController
         }
 
         lastActivity?.stop()
-        setup.overriddenClock.tick()
+        setup.getClock().tick()
 
         if (endInBackground) {
             onBackground()

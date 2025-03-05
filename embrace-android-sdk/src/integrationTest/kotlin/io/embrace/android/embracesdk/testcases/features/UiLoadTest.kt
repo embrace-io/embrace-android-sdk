@@ -125,7 +125,7 @@ internal class UiLoadTest {
             ),
             persistedRemoteConfig = RemoteConfig(uiLoadInstrumentationEnabled = true),
             setupAction = {
-                preLaunchTimeMs = overriddenClock.now()
+                preLaunchTimeMs = getClock().now()
             },
             testCaseAction = {
                 simulateOpeningActivities(
@@ -179,7 +179,7 @@ internal class UiLoadTest {
             ),
             persistedRemoteConfig = RemoteConfig(uiLoadInstrumentationEnabled = true),
             setupAction = {
-                preLaunchTimeMs = overriddenClock.now()
+                preLaunchTimeMs = getClock().now()
             },
             testCaseAction = {
                 simulateOpeningActivities(
@@ -245,7 +245,7 @@ internal class UiLoadTest {
             ),
             persistedRemoteConfig = RemoteConfig(uiLoadInstrumentationEnabled = true),
             setupAction = {
-                preLaunchTimeMs = overriddenClock.now()
+                preLaunchTimeMs = getClock().now()
             },
             testCaseAction = {
                 simulateOpeningActivities(
@@ -300,7 +300,7 @@ internal class UiLoadTest {
             ),
             persistedRemoteConfig = RemoteConfig(uiLoadInstrumentationEnabled = true),
             setupAction = {
-                preLaunchTimeMs = overriddenClock.now()
+                preLaunchTimeMs = getClock().now()
             },
             testCaseAction = {
                 simulateOpeningActivities(
@@ -356,7 +356,7 @@ internal class UiLoadTest {
             ),
             persistedRemoteConfig = RemoteConfig(uiLoadInstrumentationEnabled = true),
             setupAction = {
-                preLaunchTimeMs = overriddenClock.now()
+                preLaunchTimeMs = getClock().now()
             },
             testCaseAction = {
                 simulateOpeningActivities(

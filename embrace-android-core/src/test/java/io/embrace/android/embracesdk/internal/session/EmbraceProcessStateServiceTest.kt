@@ -179,8 +179,8 @@ internal class EmbraceProcessStateServiceTest {
         invocations.clear()
         stateService.onBackground()
         val backgroundExpected = listOf(
+            "DecoratedListener",
             "DecoratedSessionOrchestrator",
-            "DecoratedListener"
         )
         assertEquals(backgroundExpected, invocations)
     }

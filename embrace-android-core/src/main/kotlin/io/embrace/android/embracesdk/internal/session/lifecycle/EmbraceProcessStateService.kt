@@ -84,13 +84,14 @@ internal class EmbraceProcessStateService(
     override fun onBackground() {
         isInBackground = true
         val timestamp = clock.now()
-        invokeCallbackSafely { sessionOrchestrator?.onBackground(timestamp) }
 
         stream<ProcessStateListener>(listeners) { listener: ProcessStateListener ->
             invokeCallbackSafely {
                 listener.onBackground(timestamp)
             }
         }
+
+        invokeCallbackSafely { sessionOrchestrator?.onBackground(timestamp) }
     }
 
     private inline fun invokeCallbackSafely(action: () -> Unit) {

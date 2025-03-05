@@ -1,5 +1,6 @@
 package io.embrace.android.gradle.plugin.config
 
+import io.embrace.android.gradle.plugin.api.EmbraceExtension
 import io.embrace.android.gradle.swazzler.plugin.extension.SwazzlerExtension
 import org.gradle.api.Action
 import org.gradle.api.Project
@@ -11,17 +12,20 @@ import org.junit.Before
 import org.junit.Test
 import java.io.File
 
+@Suppress("DEPRECATION")
 class PluginBehaviorImplTest {
 
     private lateinit var project: Project
-    private lateinit var extension: SwazzlerExtension
+    private lateinit var swazzler: SwazzlerExtension
+    private lateinit var embrace: EmbraceExtension
     private lateinit var behavior: PluginBehavior
 
     @Before
     fun setUp() {
         project = ProjectBuilder.builder().build()
-        extension = project.extensions.create("swazzler", SwazzlerExtension::class.java)
-        behavior = PluginBehaviorImpl(project, extension)
+        swazzler = project.extensions.create("swazzler", SwazzlerExtension::class.java)
+        embrace = project.extensions.create("embrace", EmbraceExtension::class.java)
+        behavior = PluginBehaviorImpl(project, swazzler, embrace)
     }
 
     @Test
@@ -138,14 +142,14 @@ class PluginBehaviorImplTest {
     }
 
     @Test
-    fun `autoAddEmbraceDependencies disabled`() {
-        extension.disableDependencyInjection.set(true)
+    fun `autoAddEmbraceDependencies disabled via swazzler`() {
+        swazzler.disableDependencyInjection.set(true)
         assertFalse(behavior.autoAddEmbraceDependencies)
     }
 
     @Test
-    fun `autoAddEmbraceDependency disabled`() {
-        extension.disableDependencyInjection.set(true)
+    fun `autoAddEmbraceDependencies disabled via embrace`() {
+        embrace.autoAddEmbraceDependencies.set(false)
         assertFalse(behavior.autoAddEmbraceDependencies)
     }
 
@@ -165,7 +169,7 @@ class PluginBehaviorImplTest {
 
     @Test
     fun `autoAddEmbraceComposeDependency enabled`() {
-        extension.disableComposeDependencyInjection.set(false)
+        swazzler.disableComposeDependencyInjection.set(false)
         assertTrue(behavior.autoAddEmbraceComposeDependency)
     }
 
@@ -178,7 +182,7 @@ class PluginBehaviorImplTest {
     @Test
     fun `customSymbolDirectory override`() {
         val dir = "/foo"
-        extension.customSymbolsDirectory.set(dir)
+        swazzler.customSymbolsDirectory.set(dir)
         assertEquals(dir, behavior.customSymbolsDirectory)
     }
 
@@ -190,7 +194,7 @@ class PluginBehaviorImplTest {
     @Test
     fun `instrumentation disabled for variant`() {
         val disabledVariant = "foo"
-        extension.variantFilter = Action {
+        swazzler.variantFilter = Action {
             if (it.name == disabledVariant) {
                 it.enabled = false
             }
@@ -207,7 +211,7 @@ class PluginBehaviorImplTest {
     @Test
     fun `plugin disabled for variant`() {
         val disabledVariant = "foo"
-        extension.variantFilter = Action {
+        swazzler.variantFilter = Action {
             if (it.name == disabledVariant) {
                 it.swazzlerOff = true
             }

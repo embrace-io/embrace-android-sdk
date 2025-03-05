@@ -4,6 +4,7 @@ import io.embrace.android.gradle.plugin.agp.AgpUtils
 import io.embrace.android.gradle.plugin.agp.AgpVersion
 import io.embrace.android.gradle.plugin.agp.AgpWrapper
 import io.embrace.android.gradle.plugin.agp.AgpWrapperImpl
+import io.embrace.android.gradle.plugin.api.EmbraceExtension
 import io.embrace.android.gradle.plugin.buildreporter.BuildTelemetryService
 import io.embrace.android.gradle.plugin.config.PluginBehaviorImpl
 import io.embrace.android.gradle.plugin.config.variant.EmbraceVariantConfigurationBuilder
@@ -26,11 +27,12 @@ class EmbraceGradlePluginDelegate {
         project: Project,
         variantConfigurationsListProperty: ListProperty<VariantConfig>,
         extension: SwazzlerExtension,
+        embrace: EmbraceExtension,
     ) {
         val agpWrapper = AgpWrapperImpl(project)
         validateMinAgpVersion(agpWrapper)
 
-        val behavior = PluginBehaviorImpl(project, extension)
+        val behavior = PluginBehaviorImpl(project, extension, embrace)
 
         BuildTelemetryService.register(
             project,

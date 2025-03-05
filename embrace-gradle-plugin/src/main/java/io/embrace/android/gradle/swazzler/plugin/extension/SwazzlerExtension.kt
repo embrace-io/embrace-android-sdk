@@ -13,8 +13,9 @@ abstract class SwazzlerExtension(objectFactory: ObjectFactory) {
     val forceIncrementalOverwrite: Property<Boolean> =
         objectFactory.property(Boolean::class.java).convention(false)
 
+    @Deprecated("Use embrace.autoAddEmbraceDependencies instead.")
     val disableDependencyInjection: Property<Boolean> =
-        objectFactory.property(Boolean::class.java).convention(false)
+        objectFactory.property(Boolean::class.java)
 
     val disableComposeDependencyInjection: Property<Boolean> =
         objectFactory.property(Boolean::class.java).convention(true)

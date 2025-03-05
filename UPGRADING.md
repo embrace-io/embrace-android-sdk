@@ -2,6 +2,27 @@
 
 # Upgrading to the new Embrace Gradle Plugin DSL
 
+| Old API                                               | New API                                                                 |
+|-------------------------------------------------------|-------------------------------------------------------------------------|
+| `swazzler.disableDependencyInjection`                 | `embrace.autoAddEmbraceDependencies`                                    |
+| `swazzler.disableComposeDependencyInjection`          | `embrace.autoAddEmbraceComposeDependency`                               |
+| `swazzler.instrumentOkHttp`                           | `embrace.bytecodeInstrumentation.okhttp`                                |
+| `swazzler.instrumentOnClick`                          | `embrace.bytecodeInstrumentation.onClick`                               |
+| `swazzler.instrumentOnLongClick`                      | `embrace.bytecodeInstrumentation.onLongClick`                           |
+| `swazzler.instrumentWebview`                          | `embrace.bytecodeInstrumentation.webviewOnPageStarted`                  |
+| `swazzler.instrumentFirebaseMessaging`                | `embrace.bytecodeInstrumentation.firebasePushNotifications`             |
+| `swazzler.classSkipList`                              | `embrace.bytecodeInstrumentation.classIgnorePatterns`                   |
+| `swazzler.variantFilter`                              | `embrace.buildVariantFilter`                                            |
+| `SwazzlerExtension.Variant.enabled`                   | `embrace.buildVariantFilter.disableBytecodeInstrumentationForVariant()` |
+| `SwazzlerExtension.Variant.swazzlerOff`               | `embrace.buildVariantFilter.disablePluginForVariant()`                  |
+| `SwazzlerExtension.Variant.setSwazzlingEnabled()`     | `embrace.buildVariantFilter.disableBytecodeInstrumentationForVariant()` |
+| `SwazzlerExtension.Variant.disablePluginForVariant()` | `embrace.buildVariantFilter.disablePluginForVariant()`                  |
+| `embrace.disableCollectBuildData`                     | `embrace.telemetryEnabled`                                              |
+| `embrace.disableMappingFileUpload`                    | `embrace.mappingFileUploadEnabled`                                      |
+| `swazzler.forceIncrementalOverwrite`                  | Obsolete - no alternative provided.                                     |
+| `swazzler.disableRNBundleRetriever`                   | Obsolete - no alternative provided.                                     |
+| `swazzler.customSymbolsDirectory`                     | Obsolete - no alternative provided.                                     |
+
 The following project properties are now ignored and have no effect. You should remove them from your `gradle.properties` file:
 
 - `embrace.logLevel`

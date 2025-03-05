@@ -1,0 +1,81 @@
+{
+  "app_id": "abcde",
+  "api_token": "12345123451234512345123451234512",
+  "ndk_enabled": true,
+  "sdk_config": {
+    "app_framework": "flutter",
+    "base_urls": {
+      "config": "https://config.example.com",
+      "data": "https://data.example.com"
+    },
+    "sensitive_keys_denylist": [
+      "secret"
+    ],
+    "capture_public_key": "my_public_key",
+    "networking": {
+      "default_capture_limit": 54,
+      "disabled_url_patterns": [
+        "google.com",
+        "example.com"
+      ],
+      "domains": [
+        {
+          "domain_name": "example.com",
+          "domain_limit": 30
+        }
+      ],
+      "capture_request_content_length": true,
+      "enable_native_monitoring": false,
+      "enable_network_span_forwarding": true
+    },
+    "automatic_data_capture": {
+      "memory_info": false,
+      "network_connectivity_info": false,
+      "power_save_mode_info": false,
+      "anr_info": false,
+      "ui_load_tracing_disabled": true,
+      "ui_load_tracing_selected_only": true,
+      "end_startup_with_app_ready": true
+    },
+    "anr": {
+      "capture_unity_thread": true
+    },
+    "view_config": {
+      "enable_automatic_activity_capture": false
+    },
+    "compose": {
+      "capture_compose_onclick": true
+    },
+    "taps": {
+      "capture_coordinates": true
+    },
+    "app": {
+      "report_disk_usage": false
+    },
+    "crash_handler": {
+      "enabled": false
+    },
+    "app_exit_info": {
+      "aei_enabled": false
+    },
+    "sig_handler_detection": true,
+    "background_activity": {
+      "capture_enabled": true
+    },
+    "webview": {
+      "enable": false,
+      "capture_query_params": false
+    },
+    "capture_fcm_pii_data": true,
+    "session": {
+      "components": [
+        "component_a",
+        "component_b"
+      ],
+      "send_full_for": [
+        "crash",
+        "log"
+      ]
+    }
+  }
+}

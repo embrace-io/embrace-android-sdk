@@ -1,0 +1,216 @@
+{
+  "values": [
+    {
+      "className": "BaseUrlConfigImpl",
+      "methods": [
+        {
+          "signature": "getConfig()Ljava/lang/String;",
+          "returnValue": "https://config.example.com"
+        },
+        {
+          "signature": "getData()Ljava/lang/String;",
+          "returnValue": "https://data.example.com"
+        }
+      ]
+    },
+    {
+      "className": "EnabledFeatureConfigImpl",
+      "methods": [
+        {
+          "signature": "is3rdPartySigHandlerDetectionEnabled()Z",
+          "returnValue": "true"
+        },
+        {
+          "signature": "isActivityBreadcrumbCaptureEnabled()Z",
+          "returnValue": "false"
+        },
+        {
+          "signature": "isAeiCaptureEnabled()Z",
+          "returnValue": "false"
+        },
+        {
+          "signature": "isAnrCaptureEnabled()Z",
+          "returnValue": "false"
+        },
+        {
+          "signature": "isBackgroundActivityCaptureEnabled()Z",
+          "returnValue": "true"
+        },
+        {
+          "signature": "isComposeClickCaptureEnabled()Z",
+          "returnValue": "true"
+        },
+        {
+          "signature": "isDiskUsageCaptureEnabled()Z",
+          "returnValue": "false"
+        },
+        {
+          "signature": "isEndStartupWithAppReadyEnabled()Z",
+          "returnValue": "true"
+        },
+        {
+          "signature": "isFcmPiiDataCaptureEnabled()Z",
+          "returnValue": "true"
+        },
+        {
+          "signature": "isHttpUrlConnectionCaptureEnabled()Z",
+          "returnValue": "false"
+        },
+        {
+          "signature": "isJvmCrashCaptureEnabled()Z",
+          "returnValue": "false"
+        },
+        {
+          "signature": "isMemoryWarningCaptureEnabled()Z",
+          "returnValue": "false"
+        },
+        {
+          "signature": "isNativeCrashCaptureEnabled()Z",
+          "returnValue": "true"
+        },
+        {
+          "signature": "isNetworkConnectivityCaptureEnabled()Z",
+          "returnValue": "false"
+        },
+        {
+          "signature": "isNetworkSpanForwardingEnabled()Z",
+          "returnValue": "true"
+        },
+        {
+          "signature": "isPowerSaveModeCaptureEnabled()Z",
+          "returnValue": "false"
+        },
+        {
+          "signature": "isRequestContentLengthCaptureEnabled()Z",
+          "returnValue": "true"
+        },
+        {
+          "signature": "isUiLoadTracingEnabled()Z",
+          "returnValue": "false"
+        },
+        {
+          "signature": "isUiLoadTracingTraceAll()Z",
+          "returnValue": "false"
+        },
+        {
+          "signature": "isUnityAnrCaptureEnabled()Z",
+          "returnValue": "true"
+        },
+        {
+          "signature": "isViewClickCoordinateCaptureEnabled()Z",
+          "returnValue": "true"
+        },
+        {
+          "signature": "isWebViewBreadcrumbCaptureEnabled()Z",
+          "returnValue": "false"
+        },
+        {
+          "signature": "isWebViewBreadcrumbQueryParamCaptureEnabled()Z",
+          "returnValue": "false"
+        }
+      ]
+    },
+    {
+      "className": "NetworkCaptureConfigImpl",
+      "methods": [
+        {
+          "signature": "getIgnoredRequestPatternList()Ljava/util/List;",
+          "returnValue": "google.com,example.com"
+        },
+        {
+          "signature": "getLimitsByDomain()Ljava/util/Map;",
+          "returnValue": "example.com:30"
+        },
+        {
+          "signature": "getNetworkBodyCapturePublicKey()Ljava/lang/String;",
+          "returnValue": "my_public_key"
+        },
+        {
+          "signature": "getRequestLimitPerDomain()I",
+          "returnValue": "54"
+        }
+      ]
+    },
+    {
+      "className": "OtelLimitsConfigImpl",
+      "methods": [
+        {
+          "signature": "getExceptionEventName()Ljava/lang/String;"
+        },
+        {
+          "signature": "getMaxCustomAttributeCount()I"
+        },
+        {
+          "signature": "getMaxCustomAttributeKeyLength()I"
+        },
+        {
+          "signature": "getMaxCustomAttributeValueLength()I"
+        },
+        {
+          "signature": "getMaxCustomEventCount()I"
+        },
+        {
+          "signature": "getMaxInternalAttributeKeyLength()I"
+        },
+        {
+          "signature": "getMaxInternalAttributeValueLength()I"
+        },
+        {
+          "signature": "getMaxInternalNameLength()I"
+        },
+        {
+          "signature": "getMaxNameLength()I"
+        },
+        {
+          "signature": "getMaxTotalAttributeCount()I"
+        },
+        {
+          "signature": "getMaxTotalEventCount()I"
+        }
+      ]
+    },
+    {
+      "className": "ProjectConfigImpl",
+      "methods": [
+        {
+          "signature": "getAppFramework()Ljava/lang/String;",
+            "returnValue": "flutter"
+        },
+        {
+          "signature": "getAppId()Ljava/lang/String;",
+          "returnValue": "abcde"
+        },
+        {
+          "signature": "getBuildFlavor()Ljava/lang/String;",
+          "returnValue": ""
+        },
+        {
+          "signature": "getBuildType()Ljava/lang/String;",
+          "returnValue": "release"
+        }
+      ]
+    },
+    {
+      "className": "RedactionConfigImpl",
+      "methods": [
+        {
+          "signature": "getSensitiveKeysDenylist()Ljava/util/List;",
+          "returnValue": "secret"
+        }
+      ]
+    },
+    {
+      "className": "SessionConfigImpl",
+      "methods": [
+        {
+          "signature": "getFullSessionEvents()Ljava/util/List;",
+          "returnValue": "crash,log"
+        },
+        {
+          "signature": "getSessionComponents()Ljava/util/List;",
+          "returnValue": "component_a,component_b"
+        }
+      ]
+    }
+  ]
+}

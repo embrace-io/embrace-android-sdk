@@ -57,7 +57,7 @@ abstract class EmbraceExtension @Inject internal constructor(objectFactory: Obje
     /**
      * DSL for configuring the Embrace Gradle Plugin's behavior on a per build variant basis.
      */
-    internal var buildVariantFilter: Action<BuildVariant> = Action { }
+    var buildVariantFilter: Action<BuildVariant> = Action { }
 
     /**
      * DSL for configuring the Embrace Gradle Plugin's behavior on a per build variant basis.

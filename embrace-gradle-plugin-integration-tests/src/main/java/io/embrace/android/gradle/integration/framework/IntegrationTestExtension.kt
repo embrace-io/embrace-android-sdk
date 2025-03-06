@@ -1,12 +1,12 @@
 package io.embrace.android.gradle.integration.framework
 
 import com.android.build.api.dsl.ApplicationExtension
+import io.embrace.android.gradle.plugin.api.EmbraceExtension
 import io.embrace.android.gradle.plugin.model.AndroidCompactedVariantData
 import io.embrace.android.gradle.plugin.network.EmbraceEndpoint
 import io.embrace.android.gradle.plugin.tasks.EmbraceTask
 import io.embrace.android.gradle.plugin.tasks.EmbraceUploadTask
 import io.embrace.android.gradle.plugin.tasks.common.RequestParams
-import io.embrace.android.gradle.swazzler.plugin.extension.SwazzlerExtension
 import org.gradle.api.Project
 import org.gradle.api.model.ObjectFactory
 import org.gradle.api.provider.Property
@@ -39,7 +39,7 @@ abstract class IntegrationTestExtension(objectFactory: ObjectFactory) {
         project: Project,
         task: EmbraceUploadTask,
         endpoint: EmbraceEndpoint = EmbraceEndpoint.PROGUARD,
-        filename: String? = null
+        filename: String? = null,
     ) {
         configureEmbraceTask(task)
         task.requestParams.set(
@@ -63,8 +63,8 @@ abstract class IntegrationTestExtension(objectFactory: ObjectFactory) {
 
         // disable dependency injection as SNAPSHOT versions of SDK don't necessarily exist
         // whenever unit tests are run
-        val embrace = checkNotNull(project.extensions.findByType(SwazzlerExtension::class.java))
-        embrace.disableDependencyInjection.set(true)
+        val embrace = checkNotNull(project.extensions.findByType(EmbraceExtension::class.java))
+        embrace.autoAddEmbraceDependencies.set(false)
 
         val android = checkNotNull(project.extensions.findByType(ApplicationExtension::class.java))
 

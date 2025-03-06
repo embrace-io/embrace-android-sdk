@@ -50,6 +50,5 @@ abstract class EmbraceBytecodeInstrumentation @Inject internal constructor(objec
      *
      * Defaults to an empty list.
      */
-    val classIgnorePatterns: ListProperty<String> =
-        objectFactory.listProperty(String::class.java)
+    val classIgnorePatterns: ListProperty<String> = objectFactory.listProperty(String::class.java)
 }

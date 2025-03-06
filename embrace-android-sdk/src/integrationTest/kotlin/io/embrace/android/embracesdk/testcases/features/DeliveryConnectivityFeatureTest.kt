@@ -34,7 +34,7 @@ internal class DeliveryConnectivityFeatureTest {
         val envelope = fakeSessionEnvelope(startMs = startMs)
         testRule.runTest(
             setupAction = {
-                networkConnectivityService.networkStatus = NetworkStatus.NOT_REACHABLE
+                fakeNetworkConnectivityService.networkStatus = NetworkStatus.NOT_REACHABLE
                 payloadStorageService.addPayload(sessionMetadata, envelope)
                 payloadStorageServiceProvider = { payloadStorageService }
             },
@@ -49,7 +49,7 @@ internal class DeliveryConnectivityFeatureTest {
     fun `new payload not sent with no connection`() {
         testRule.runTest(
             setupAction = {
-                networkConnectivityService.networkStatus = NetworkStatus.NOT_REACHABLE
+                fakeNetworkConnectivityService.networkStatus = NetworkStatus.NOT_REACHABLE
             },
             testCaseAction = {
                 recordSession()
@@ -67,7 +67,7 @@ internal class DeliveryConnectivityFeatureTest {
         val envelope = fakeSessionEnvelope(startMs = startMs)
         testRule.runTest(
             setupAction = {
-                networkConnectivityService.networkStatus = NetworkStatus.NOT_REACHABLE
+                fakeNetworkConnectivityService.networkStatus = NetworkStatus.NOT_REACHABLE
                 payloadStorageService.addPayload(sessionMetadata, envelope)
                 payloadStorageServiceProvider = { payloadStorageService }
             },

@@ -5,6 +5,29 @@ plugins {
     alias(libs.plugins.embrace)
 }
 
+embrace {
+    autoAddEmbraceDependencies.set(true)
+    autoAddEmbraceComposeDependency.set(false)
+    telemetryEnabled.set(true)
+    failBuildOnUploadErrors.set(true)
+
+    bytecodeInstrumentation {
+        enabled.set(true)
+        okhttpEnabled.set(true)
+        onClickEnabled.set(true)
+        onLongClickEnabled.set(true)
+        webviewOnPageStartedEnabled.set(true)
+        firebasePushNotificationsEnabled.set(true)
+        classIgnorePatterns.set(listOf("com.example.foo.*"))
+    }
+
+    buildVariantFilter {
+        if (name.contains("debug")) {
+            disableBytecodeInstrumentationForVariant()
+        }
+    }
+}
+
 android {
     namespace = "io.embrace.android.exampleapp"
     compileSdk = 35

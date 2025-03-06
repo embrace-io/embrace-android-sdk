@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.LogExceptionType
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.config.FakeProjectConfig
+import io.embrace.android.embracesdk.fakes.createForIntegrationTest
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import io.embrace.android.embracesdk.internal.EmbraceInternalApi
@@ -38,7 +39,7 @@ internal class FlutterInternalInterfaceTest {
     @JvmField
     val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule {
         val clock = FakeClock(SdkIntegrationTestRule.DEFAULT_SDK_START_TIME_MS)
-        val fakeInitModule = FakeInitModule(clock = clock)
+        val fakeInitModule = FakeInitModule(clock = clock, logger = createForIntegrationTest())
         EmbraceSetupInterface(
             overriddenClock = clock,
             overriddenInitModule = fakeInitModule,

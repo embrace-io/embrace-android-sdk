@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.testcases.features
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.assertions.getLogWithAttributeValue
@@ -22,7 +21,7 @@ internal class InternalErrorLogTest {
     fun `internal error log delivered`() {
         testRule.runTest(
             setupAction = {
-                (overriddenInitModule.logger as FakeEmbLogger).throwOnInternalError = false
+                getEmbLogger().throwOnInternalError = false
 
             },
             testCaseAction = {

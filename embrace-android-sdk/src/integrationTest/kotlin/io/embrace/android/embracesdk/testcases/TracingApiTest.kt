@@ -151,8 +151,7 @@ internal class TracingApiTest {
                 )
                 val allSpans = getSdkInitSpanFromBackgroundActivity() +
                     checkNotNull(session.data.spans) +
-                    testRule.setup.overriddenOpenTelemetryModule.spanSink.completedSpans()
-                        .map(EmbraceSpanData::toNewPayload)
+                    testRule.setup.getSpanSink().completedSpans().map(EmbraceSpanData::toNewPayload)
 
                 val spansMap = allSpans.associateBy { it.name }
                 val sessionSpan = checkNotNull(spansMap["emb-session"])

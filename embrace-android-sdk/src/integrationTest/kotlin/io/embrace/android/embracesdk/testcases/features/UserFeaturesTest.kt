@@ -21,7 +21,7 @@ internal class UserFeaturesTest {
     fun `user info setting and clearing`() {
         testRule.runTest(
             setupAction = {
-                overriddenAndroidServicesModule.preferencesService.apply {
+                getPreferencesService().apply {
                     userIdentifier = "customId"
                     username = "customUserName"
                     userEmailAddress = "custom@domain.com"

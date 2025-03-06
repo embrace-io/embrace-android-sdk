@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.testframework.actions
 
+import android.content.Context
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.testing.TestLifecycleOwner
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
@@ -25,8 +26,8 @@ import io.embrace.android.embracesdk.internal.delivery.execution.RequestExecutio
 import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageService
 import io.embrace.android.embracesdk.internal.injection.AndroidServicesModule
 import io.embrace.android.embracesdk.internal.injection.AnrModule
+import io.embrace.android.embracesdk.internal.injection.CoreModule
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
-import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModule
 import io.embrace.android.embracesdk.internal.injection.WorkerThreadModule
 import io.embrace.android.embracesdk.internal.injection.createAndroidServicesModule
 import io.embrace.android.embracesdk.internal.injection.createAnrModule
@@ -36,7 +37,10 @@ import io.embrace.android.embracesdk.internal.injection.createNativeCoreModule
 import io.embrace.android.embracesdk.internal.injection.createWorkerThreadModule
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
+import io.embrace.android.embracesdk.internal.prefs.PreferencesService
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
+import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
+import io.embrace.android.embracesdk.internal.spans.SpanSink
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
@@ -45,23 +49,11 @@ import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
  * Test harness for which an instance is generated each test run and provided to the test by the Rule
  */
 internal class EmbraceSetupInterface @JvmOverloads constructor(
-    currentTimeMs: Long = SdkIntegrationTestRule.DEFAULT_SDK_START_TIME_MS,
     workerToFake: Worker.Background? = null,
     priorityWorkerToFake: Worker.Priority? = null,
     anrMonitoringThread: Thread? = null,
+    processIdentifier: String = "integration-test-process",
     var useMockWebServer: Boolean = true,
-    val processIdentifier: String = "integration-test-process",
-    val overriddenInitModule: FakeInitModule = FakeInitModule(
-        clock = FakeClock(currentTime = currentTimeMs),
-        logger = FakeEmbLogger(ignoredErrors = mutableListOf(InternalErrorType.PROCESS_STATE_CALLBACK_FAIL)),
-        processIdentifierProvider = { processIdentifier }
-    ),
-    val overriddenOpenTelemetryModule: OpenTelemetryModule = overriddenInitModule.openTelemetryModule,
-    val overriddenCoreModule: FakeCoreModule = FakeCoreModule(),
-    val overriddenAndroidServicesModule: AndroidServicesModule = createAndroidServicesModule(
-        initModule = overriddenInitModule,
-        coreModule = overriddenCoreModule
-    ),
     var cacheStorageServiceProvider: Provider<PayloadStorageService>? = null,
     var payloadStorageServiceProvider: Provider<PayloadStorageService>? = null,
     val networkConnectivityService: FakeNetworkConnectivityService = FakeNetworkConnectivityService(),
@@ -69,8 +61,14 @@ internal class EmbraceSetupInterface @JvmOverloads constructor(
     var symbols: Map<String, String> = mapOf("libfoo.so" to "symbol_content"),
     val lifecycleOwner: TestLifecycleOwner = TestLifecycleOwner(initialState = Lifecycle.State.INITIALIZED),
 ) {
+    private val fakeInitModule: FakeInitModule = FakeInitModule(
+        clock = FakeClock(currentTime = SdkIntegrationTestRule.DEFAULT_SDK_START_TIME_MS),
+        logger = FakeEmbLogger(ignoredErrors = mutableListOf(InternalErrorType.PROCESS_STATE_CALLBACK_FAIL)),
+        processIdentifierProvider = { processIdentifier }
+    )
+
     private val workerThreadModule: WorkerThreadModule = initWorkerThreadModule(
-        fakeInitModule = overriddenInitModule,
+        fakeInitModule = fakeInitModule,
         workerToFake = workerToFake,
         priorityWorkerToFake = priorityWorkerToFake,
         anrMonitoringThread = anrMonitoringThread
@@ -78,7 +76,7 @@ internal class EmbraceSetupInterface @JvmOverloads constructor(
 
     private val anrModule: AnrModule = if (anrMonitoringThread != null) {
         createAnrModule(
-            overriddenInitModule,
+            fakeInitModule,
             FakeConfigService(),
             workerThreadModule
         )
@@ -86,17 +84,24 @@ internal class EmbraceSetupInterface @JvmOverloads constructor(
         FakeAnrModule()
     }
 
+    private val coreModule: CoreModule = FakeCoreModule()
+
+    private val androidServicesModule: AndroidServicesModule = createAndroidServicesModule(
+        initModule = fakeInitModule,
+        coreModule = coreModule
+    )
+
     fun createBootstrapper(
         instrumentedConfig: FakeInstrumentedConfig,
         deliveryTracer: DeliveryTracer,
     ): ModuleInitBootstrapper = ModuleInitBootstrapper(
-        initModule = overriddenInitModule.apply {
+        initModule = fakeInitModule.apply {
             this.instrumentedConfig = instrumentedConfig
         },
-        openTelemetryModule = overriddenInitModule.openTelemetryModule,
-        coreModuleSupplier = { _, _ -> overriddenCoreModule },
+        openTelemetryModule = fakeInitModule.openTelemetryModule,
+        coreModuleSupplier = { _, _ -> coreModule },
         workerThreadModuleSupplier = { workerThreadModule },
-        androidServicesModuleSupplier = { _, _ -> overriddenAndroidServicesModule },
+        androidServicesModuleSupplier = { _, _ -> androidServicesModule },
         essentialServiceModuleSupplier = { initModule, configModule, openTelemetryModule, coreModule, workerThreadModule, systemServiceModule, androidServicesModule, storageModule, _, _ ->
             createEssentialServiceModule(
                 initModule,
@@ -183,7 +188,13 @@ internal class EmbraceSetupInterface @JvmOverloads constructor(
         jniDelegate.addCrashRaw(key, json)
     }
 
-    fun getClock(): FakeClock = checkNotNull(overriddenInitModule.getFakeClock())
+    fun getContext(): Context = coreModule.context
+
+    fun getClock(): FakeClock = checkNotNull(fakeInitModule.getFakeClock())
+
+    fun getProcessIdentifierProvider(): () -> String = fakeInitModule.processIdentifierProvider
+
+    fun getEmbLogger(): FakeEmbLogger = fakeInitModule.logger as FakeEmbLogger
 
     fun getFakedWorkerExecutor(): BlockingScheduledExecutorService =
         (workerThreadModule as FakeWorkerThreadModule).executor
@@ -192,6 +203,12 @@ internal class EmbraceSetupInterface @JvmOverloads constructor(
         (workerThreadModule as FakeWorkerThreadModule).priorityWorkerExecutor
 
     fun getBlockedThreadDetector(): BlockedThreadDetector = anrModule.blockedThreadDetector
+
+    fun getSpanSink(): SpanSink = fakeInitModule.openTelemetryModule.spanSink
+
+    fun getCurrentSessionSpan(): CurrentSessionSpan = fakeInitModule.openTelemetryModule.currentSessionSpan
+
+    fun getPreferencesService(): PreferencesService = androidServicesModule.preferencesService
 
     private companion object {
         fun initWorkerThreadModule(

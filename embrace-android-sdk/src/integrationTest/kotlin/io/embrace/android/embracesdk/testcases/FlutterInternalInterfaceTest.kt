@@ -2,12 +2,9 @@ package io.embrace.android.embracesdk.testcases
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.LogExceptionType
-import io.embrace.android.embracesdk.fakes.FakeClock
+import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.config.FakeProjectConfig
-import io.embrace.android.embracesdk.fakes.createForIntegrationTest
-import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
-import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import io.embrace.android.embracesdk.internal.EmbraceInternalApi
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.worker.Worker
@@ -35,19 +32,14 @@ internal class FlutterInternalInterfaceTest {
         appFramework = "flutter"
     ))
 
+    private lateinit var executor: BlockingScheduledExecutorService
+
     @Rule
     @JvmField
     val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule {
-        val clock = FakeClock(SdkIntegrationTestRule.DEFAULT_SDK_START_TIME_MS)
-        val fakeInitModule = FakeInitModule(clock = clock, logger = createForIntegrationTest())
-        EmbraceSetupInterface(
-            overriddenClock = clock,
-            overriddenInitModule = fakeInitModule,
-            overriddenWorkerThreadModule = FakeWorkerThreadModule(
-                fakeInitModule = fakeInitModule,
-                testWorkerName = Worker.Background.LogMessageWorker
-            )
-        )
+        EmbraceSetupInterface(workerToFake = Worker.Background.LogMessageWorker).also {
+            executor = it.getFakedWorkerExecutor()
+        }
     }
 
     @Test
@@ -249,9 +241,7 @@ internal class FlutterInternalInterfaceTest {
     }
 
     private fun flushLogs() {
-        val executor = (testRule.setup.overriddenWorkerThreadModule as FakeWorkerThreadModule).executor
         executor.runCurrentlyBlocked()
-        val logOrchestrator = testRule.bootstrapper.logModule.logOrchestrator
-        logOrchestrator.flush(false)
+        testRule.bootstrapper.logModule.logOrchestrator.flush(false)
     }
 }

@@ -65,7 +65,7 @@ internal class AeiFeatureTest {
 
     @Rule
     @JvmField
-    val testRule = SdkIntegrationTestRule()
+    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule()
 
     private val jvmCrash = TestAeiData(
         ApplicationExitInfo.REASON_CRASH,

@@ -1,3 +1,5 @@
+@file:Suppress("DEPRECATION")
+
 package io.embrace.android.gradle.plugin.instrumentation.fakes
 
 import io.embrace.android.gradle.plugin.instrumentation.BytecodeInstrumentationParams
@@ -11,7 +13,6 @@ import org.gradle.api.provider.Property
 class TestBytecodeInstrumentationParams(
     disabled: Boolean = false,
     classInstrumentationFilter: ClassInstrumentationFilter = ClassInstrumentationFilter(emptyList()),
-    invalidate: Long = -1,
     instrumentFirebaseMessaging: Boolean = SwazzlerExtension.DEFAULT_INSTRUMENT_FIREBASE_MESSAGING,
     instrumentWebview: Boolean = SwazzlerExtension.DEFAULT_INSTRUMENT_WEBVIEW,
     instrumentOkHttp: Boolean = SwazzlerExtension.DEFAULT_INSTRUMENT_OKHTTP,
@@ -29,8 +30,6 @@ class TestBytecodeInstrumentationParams(
         DefaultProperty(PropertyHost.NO_OP, ClassInstrumentationFilter::class.javaObjectType).convention(
             classInstrumentationFilter
         )
-    override val invalidate: Property<Long> =
-        DefaultProperty(PropertyHost.NO_OP, Long::class.javaObjectType).convention(invalidate)
     override val shouldInstrumentFirebaseMessaging: Property<Boolean> =
         DefaultProperty(PropertyHost.NO_OP, Boolean::class.javaObjectType).convention(instrumentFirebaseMessaging)
     override val shouldInstrumentWebview: Property<Boolean> =

@@ -23,6 +23,9 @@ below:
 | `SwazzlerExtension.Variant.swazzlerOff`               | `embrace.buildVariantFilter.disablePluginForVariant()`                  |
 | `SwazzlerExtension.Variant.setSwazzlingEnabled()`     | `embrace.buildVariantFilter.disableBytecodeInstrumentationForVariant()` |
 | `SwazzlerExtension.Variant.disablePluginForVariant()` | `embrace.buildVariantFilter.disablePluginForVariant()`                  |
+| `swazzler.forceIncrementalOverwrite`                  | Obsolete - no alternative provided.                                     |
+| `swazzler.disableRNBundleRetriever`                   | Obsolete - no alternative provided.                                     |
+| `swazzler.customSymbolsDirectory`                     | Obsolete - no alternative provided.                                     |
 
 The following project properties are now ignored and have no effect. You should remove them from your `gradle.properties` file:
 

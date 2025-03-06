@@ -1,3 +1,5 @@
+@file:Suppress("DEPRECATION")
+
 package io.embrace.android.gradle.plugin.config
 
 import io.embrace.android.gradle.plugin.api.EmbraceExtension
@@ -10,7 +12,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
-@Suppress("DEPRECATION")
 class InstrumentationBehaviorImplTest {
 
     private lateinit var project: Project
@@ -24,17 +25,6 @@ class InstrumentationBehaviorImplTest {
         extension = project.extensions.create("swazzler", SwazzlerExtension::class.java)
         embrace = project.extensions.create("embrace", EmbraceExtension::class.java)
         behavior = InstrumentationBehaviorImpl(extension, embrace)
-    }
-
-    @Test
-    fun `invalidateBytecode default`() {
-        assertFalse(behavior.invalidateBytecode)
-    }
-
-    @Test
-    fun `invalidateBytecode true`() {
-        extension.forceIncrementalOverwrite.set(true)
-        assertTrue(behavior.invalidateBytecode)
     }
 
     @Test

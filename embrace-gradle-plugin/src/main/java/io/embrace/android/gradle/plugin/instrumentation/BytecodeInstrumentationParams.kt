@@ -33,17 +33,6 @@ interface BytecodeInstrumentationParams : InstrumentationParameters {
     @get:Input
     val classInstrumentationFilter: Property<ClassInstrumentationFilter>
 
-    /**
-     * Allows for invalidating the cache if the user wants to force the Transform to run from
-     * scratch.
-     *
-     * This may be useful if the bytecode params have not changed but the library dependencies have.
-     * Gradle's default behaviour is that these changed library dependencies will not be
-     * instrumented unless we alter at least one parameter value here.
-     */
-    @get:Input
-    val invalidate: Property<Long>
-
     @get:Input
     val shouldInstrumentFirebaseMessaging: Property<Boolean>
 

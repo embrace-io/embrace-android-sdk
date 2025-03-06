@@ -12,20 +12,28 @@ abstract class SwazzlerExtension(objectFactory: ObjectFactory) {
 
     val forceIncrementalOverwrite: Property<Boolean> =
         objectFactory.property(Boolean::class.java).convention(false)
+
     val disableDependencyInjection: Property<Boolean> =
         objectFactory.property(Boolean::class.java).convention(false)
+
     val disableComposeDependencyInjection: Property<Boolean> =
         objectFactory.property(Boolean::class.java).convention(true)
+
     val disableRNBundleRetriever: Property<Boolean> =
         objectFactory.property(Boolean::class.java).convention(false)
+
     val instrumentOkHttp: Property<Boolean> =
         objectFactory.property(Boolean::class.java).convention(DEFAULT_INSTRUMENT_OKHTTP)
+
     val instrumentOnClick: Property<Boolean> =
         objectFactory.property(Boolean::class.java).convention(DEFAULT_INSTRUMENT_ON_CLICK)
+
     val instrumentOnLongClick: Property<Boolean> =
         objectFactory.property(Boolean::class.java).convention(DEFAULT_INSTRUMENT_ON_LONG_CLICK)
+
     val instrumentWebview: Property<Boolean> =
         objectFactory.property(Boolean::class.java).convention(DEFAULT_INSTRUMENT_WEBVIEW)
+
     val instrumentFirebaseMessaging: Property<Boolean> =
         objectFactory.property(Boolean::class.java)
             .convention(DEFAULT_INSTRUMENT_FIREBASE_MESSAGING)
@@ -34,6 +42,7 @@ abstract class SwazzlerExtension(objectFactory: ObjectFactory) {
     @get:Deprecated("")
     val customSymbolsDirectory: Property<String> =
         objectFactory.property(String::class.java).convention(DEFAULT_CUSTOM_SYMBOLS_DIRECTORY)
+
     val classSkipList: ListProperty<String> =
         objectFactory.listProperty(String::class.java).convention(emptyList())
 

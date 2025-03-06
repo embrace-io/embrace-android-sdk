@@ -5,6 +5,7 @@ package io.embrace.android.gradle.plugin.config
 import io.embrace.android.gradle.plugin.api.EmbraceExtension
 import io.embrace.android.gradle.swazzler.plugin.extension.SwazzlerExtension
 import org.gradle.api.Project
+import org.gradle.api.provider.Provider
 import java.io.File
 
 class PluginBehaviorImpl(
@@ -17,8 +18,10 @@ class PluginBehaviorImpl(
         InstrumentationBehaviorImpl(extension, embrace)
     }
 
-    override val isTelemetryDisabled: Boolean by lazy {
-        project.getBoolProperty(EMBRACE_DISABLE_COLLECT_BUILD_DATA)
+    override val isTelemetryDisabled: Provider<Boolean> by lazy {
+        project.provider {
+            embrace.telemetryEnabled.orNull?.not() ?: project.getBoolProperty(EMBRACE_DISABLE_COLLECT_BUILD_DATA)
+        }
     }
 
     override val isUnityEdmEnabled: Boolean by lazy {
@@ -33,8 +36,10 @@ class PluginBehaviorImpl(
         project.getBoolProperty(EMBRACE_DISABLE_MAPPING_FILE_UPLOAD)
     }
 
-    override val failBuildOnUploadErrors: Boolean by lazy {
-        project.getProperty(EMBRACE_FAIL_BUILD_ON_UPLOAD_ERRORS) != "false"
+    override val failBuildOnUploadErrors: Provider<Boolean> by lazy {
+        project.provider {
+            embrace.failBuildOnUploadErrors.get()
+        }
     }
 
     override val baseUrl: String by lazy {

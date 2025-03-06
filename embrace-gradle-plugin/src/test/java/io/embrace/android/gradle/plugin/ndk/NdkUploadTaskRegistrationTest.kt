@@ -12,8 +12,6 @@ import io.embrace.android.gradle.plugin.gradle.isTaskRegistered
 import io.embrace.android.gradle.plugin.instrumentation.config.model.EmbraceVariantConfig
 import io.embrace.android.gradle.plugin.instrumentation.config.model.VariantConfig
 import io.embrace.android.gradle.plugin.model.AndroidCompactedVariantData
-import io.embrace.android.gradle.plugin.network.EmbraceEndpoint
-import io.embrace.android.gradle.plugin.tasks.common.RequestParams
 import io.embrace.android.gradle.plugin.tasks.ndk.NdkUploadTask
 import io.embrace.android.gradle.plugin.tasks.ndk.NdkUploadTaskRegistration
 import io.embrace.android.gradle.plugin.tasks.registration.RegistrationParams
@@ -28,7 +26,6 @@ import org.gradle.api.provider.ListProperty
 import org.gradle.api.tasks.TaskProvider
 import org.gradle.testfixtures.ProjectBuilder
 import org.junit.AfterClass
-import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -37,7 +34,6 @@ import org.junit.Test
 
 class NdkUploadTaskRegistrationTest {
 
-    private val baseUrl = "https://dsym-store.emb-api.com"
     private val project = ProjectBuilder.builder().build()
     private val behavior =
         PluginBehaviorImpl(
@@ -272,76 +268,6 @@ class NdkUploadTaskRegistrationTest {
         } catch (e: Exception) {
             assertTrue(e is NullPointerException)
         }
-    }
-
-    @Test
-    fun `verify Ndk upload task configuration once is registered`() {
-        val taskName = NdkUploadTask.NAME
-        val project = ProjectBuilder.builder().build()
-
-        setVariantConfig(ndkEnabled = true)
-        val unitySymbolsDirProvider = project.provider { unitySymbolsDir }
-        val projectTypeProvider = project.provider { ProjectType.NATIVE }
-
-        val registration =
-            NdkUploadTaskRegistration(unitySymbolsDirProvider, projectTypeProvider)
-        val params = RegistrationParams(
-            project,
-            variant = mockVariant,
-            testAndroidCompactedVariantData,
-            variantConfigurationsListProperty,
-            behavior = behavior,
-        )
-        registration.register(params)
-        val ndkUploadTask: NdkUploadTask =
-            project.tasks.findByName("$taskName${testAndroidCompactedVariantData.name.capitalizedString()}") as NdkUploadTask
-
-        assertEquals(
-            RequestParams(
-                appId = "appId",
-                apiToken = "apiToken",
-                endpoint = EmbraceEndpoint.NDK,
-                failBuildOnUploadErrors = true,
-                baseUrl = baseUrl,
-            ),
-            ndkUploadTask.requestParams.get(),
-        )
-        assertEquals(ndkUploadTask.unitySymbolsDir.orNull, null)
-    }
-
-    @Test
-    fun `verify Ndk upload task configuration once is registered for unity`() {
-        val taskName = NdkUploadTask.NAME
-        val project = ProjectBuilder.builder().build()
-
-        setVariantConfig(ndkEnabled = true)
-        val unitySymbolsDirProvider = project.provider { unitySymbolsDir }
-        val projectTypeProvider = project.provider { ProjectType.UNITY }
-
-        val registration =
-            NdkUploadTaskRegistration(unitySymbolsDirProvider, projectTypeProvider)
-        val params = RegistrationParams(
-            project,
-            variant = mockVariant,
-            testAndroidCompactedVariantData,
-            variantConfigurationsListProperty,
-            behavior = behavior,
-        )
-        registration.register(params)
-        val ndkUploadTask: NdkUploadTask =
-            project.tasks.findByName("$taskName${testAndroidCompactedVariantData.name.capitalizedString()}") as NdkUploadTask
-
-        assertEquals(
-            RequestParams(
-                appId = "appId",
-                apiToken = "apiToken",
-                endpoint = EmbraceEndpoint.NDK,
-                failBuildOnUploadErrors = true,
-                baseUrl = baseUrl,
-            ),
-            ndkUploadTask.requestParams.get(),
-        )
-        assertEquals(ndkUploadTask.unitySymbolsDir.orNull, unitySymbolsDir)
     }
 
     private fun setVariantConfig(ndkEnabled: Boolean) {

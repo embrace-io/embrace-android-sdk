@@ -31,19 +31,25 @@ class PluginBehaviorImplTest {
 
     @Test
     fun `telemetry disabled default`() {
-        assertFalse(behavior.isTelemetryDisabled)
+        assertFalse(behavior.isTelemetryDisabled.get())
     }
 
     @Test
     fun `telemetry disabled valid`() {
         addGradleProperty(EMBRACE_DISABLE_COLLECT_BUILD_DATA, "true")
-        assertTrue(behavior.isTelemetryDisabled)
+        assertTrue(behavior.isTelemetryDisabled.get())
     }
 
     @Test
     fun `telemetry disabled invalid`() {
         addGradleProperty(EMBRACE_DISABLE_COLLECT_BUILD_DATA, "foo")
-        assertFalse(behavior.isTelemetryDisabled)
+        assertFalse(behavior.isTelemetryDisabled.get())
+    }
+
+    @Test
+    fun `telemetry disabled via embrace extension`() {
+        embrace.telemetryEnabled.set(false)
+        assertTrue(behavior.isTelemetryDisabled.get())
     }
 
     @Test
@@ -95,6 +101,17 @@ class PluginBehaviorImplTest {
     fun `mapping file upload disabled invalid`() {
         addGradleProperty(EMBRACE_DISABLE_MAPPING_FILE_UPLOAD, "foo")
         assertFalse(behavior.isUploadMappingFilesDisabled)
+    }
+
+    @Test
+    fun `fail build on upload error default`() {
+        assertTrue(behavior.failBuildOnUploadErrors.get())
+    }
+
+    @Test
+    fun `fail build on upload error via embrace`() {
+        embrace.failBuildOnUploadErrors.set(false)
+        assertFalse(behavior.failBuildOnUploadErrors.get())
     }
 
     @Test

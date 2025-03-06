@@ -14,24 +14,28 @@ class InstrumentationBehaviorImpl(
         embrace.bytecodeInstrumentation
     }
 
+    private val enabled by lazy {
+        instrumentation.enabled.get()
+    }
+
     override val okHttpEnabled: Boolean by lazy {
-        instrumentation.okhttpEnabled.orNull ?: extension.instrumentOkHttp.orNull ?: true
+        enabled && (instrumentation.okhttpEnabled.orNull ?: extension.instrumentOkHttp.orNull ?: true)
     }
 
     override val onClickEnabled: Boolean by lazy {
-        instrumentation.onClickEnabled.orNull ?: extension.instrumentOnClick.orNull ?: true
+        enabled && (instrumentation.onClickEnabled.orNull ?: extension.instrumentOnClick.orNull ?: true)
     }
 
     override val onLongClickEnabled: Boolean by lazy {
-        instrumentation.onLongClickEnabled.orNull ?: extension.instrumentOnLongClick.orNull ?: true
+        enabled && (instrumentation.onLongClickEnabled.orNull ?: extension.instrumentOnLongClick.orNull ?: true)
     }
 
     override val webviewEnabled: Boolean by lazy {
-        instrumentation.webviewOnPageStartedEnabled.orNull ?: extension.instrumentWebview.orNull ?: true
+        enabled && (instrumentation.webviewOnPageStartedEnabled.orNull ?: extension.instrumentWebview.orNull ?: true)
     }
 
     override val fcmPushNotificationsEnabled: Boolean by lazy {
-        instrumentation.firebasePushNotificationsEnabled.orNull ?: extension.instrumentFirebaseMessaging.orNull ?: false
+        enabled && (instrumentation.firebasePushNotificationsEnabled.orNull ?: extension.instrumentFirebaseMessaging.orNull ?: false)
     }
 
     override val ignoredClasses: List<String> by lazy {

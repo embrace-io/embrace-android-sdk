@@ -91,7 +91,7 @@ class JvmMappingUploadTaskRegistration : EmbraceTaskRegistration {
                         fileName = FILE_NAME_MAPPING_TXT,
                         buildId = variantConfig.buildId,
                         baseUrl = behavior.baseUrl,
-                        failBuildOnUploadErrors = behavior.failBuildOnUploadErrors,
+                        failBuildOnUploadErrors = behavior.failBuildOnUploadErrors.get(),
                     )
                 }
             )

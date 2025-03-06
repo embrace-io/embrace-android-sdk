@@ -24,12 +24,6 @@ abstract class EmbraceExtension @Inject internal constructor(objectFactory: Obje
         objectFactory.property(Boolean::class.java)
 
     /**
-     * Whether the Embrace Gradle Plugin should automatically upload mapping files for stacktrace deobfuscation.
-     * Defaults to true.
-     */
-    val mappingFileUploadEnabled: Property<Boolean> = objectFactory.property(Boolean::class.java)
-
-    /**
      * Whether the Embrace Gradle Plugin should report telemetry on its own performance.
      * Defaults to true.
      */
@@ -39,7 +33,7 @@ abstract class EmbraceExtension @Inject internal constructor(objectFactory: Obje
      * Whether the Embrace Gradle Plugin should fail the build if it encounters an error during a HTTP request.
      * Defaults to true.
      */
-    val failBuildOnUploadErrors: Property<Boolean> = objectFactory.property(Boolean::class.java)
+    val failBuildOnUploadErrors: Property<Boolean> = objectFactory.property(Boolean::class.java).convention(true)
 
     /**
      * DSL for configuring how Embrace instruments bytecode.

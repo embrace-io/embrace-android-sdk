@@ -60,7 +60,7 @@ class NdkUploadTaskRegistration(
                         appId = embraceConfig?.appId.orEmpty(),
                         apiToken = embraceConfig?.apiToken.orEmpty(),
                         endpoint = EmbraceEndpoint.NDK,
-                        failBuildOnUploadErrors = behavior.failBuildOnUploadErrors,
+                        failBuildOnUploadErrors = behavior.failBuildOnUploadErrors.get(),
                         baseUrl = behavior.baseUrl,
                     )
                 }

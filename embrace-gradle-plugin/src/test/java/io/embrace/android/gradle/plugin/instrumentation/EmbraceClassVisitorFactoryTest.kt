@@ -102,7 +102,10 @@ class EmbraceClassVisitorFactoryTest {
     @Test
     fun testClassFiltering() {
         val filter = ClassInstrumentationFilter(mutableListOf("kotlin.Boolean"))
-        val params = TestBytecodeInstrumentationParams(disabled = false, classInstrumentationFilter = filter)
+        val params = TestBytecodeInstrumentationParams(
+            disabled = false,
+            classInstrumentationFilter = filter
+        )
         val factory = TestVisitorFactoryImpl(params = params)
         assertTrue(factory.isInstrumentable(clzDataString))
         assertFalse(factory.isInstrumentable(clzDataBool))
@@ -183,11 +186,11 @@ class EmbraceClassVisitorFactoryTest {
         instrumentFirebaseMessaging: Boolean = true
     ): TestBytecodeInstrumentationParams {
         return TestBytecodeInstrumentationParams(
-            instrumentOkHttp = instrumentOkHttp,
-            instrumentOnClick = instrumentOnClick,
-            instrumentOnLongClick = instrumentOnLongClick,
+            instrumentFirebaseMessaging = instrumentFirebaseMessaging,
             instrumentWebview = instrumentWebview,
-            instrumentFirebaseMessaging = instrumentFirebaseMessaging
+            instrumentOkHttp = instrumentOkHttp,
+            instrumentOnLongClick = instrumentOnLongClick,
+            instrumentOnClick = instrumentOnClick
         )
     }
 

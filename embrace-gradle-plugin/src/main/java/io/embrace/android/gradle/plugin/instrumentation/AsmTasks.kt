@@ -3,6 +3,7 @@
 package io.embrace.android.gradle.plugin.instrumentation
 
 import com.android.build.api.instrumentation.FramesComputationMode
+import com.android.build.api.instrumentation.InstrumentationScope
 import com.android.build.api.variant.AndroidComponentsExtension
 import io.embrace.android.gradle.plugin.config.PluginBehavior
 import io.embrace.android.gradle.plugin.instrumentation.config.model.VariantConfig
@@ -20,8 +21,7 @@ fun registerAsmTasks(
 ) {
     // register for asm
     project.extensions.getByType(AndroidComponentsExtension::class.java).onVariants { variant ->
-        val scope = behavior.instrumentation.scope
-        project.logger.info("Registered ASM task for ${variant.name} with scope=${scope.name}")
+        project.logger.info("Registered ASM task for ${variant.name}")
 
         // compute frames automatically only for modified methods
         variant.instrumentation.setAsmFramesComputationMode(
@@ -31,18 +31,13 @@ fun registerAsmTasks(
             // register the ASM class visitor factory
             variant.instrumentation.transformClassesWith(
                 EmbraceClassVisitorFactory::class.java,
-                scope
+                InstrumentationScope.ALL
             ) { params: BytecodeInstrumentationParams ->
                 project.logger.debug("Configuring ASM instrumentation")
 
                 params.config.set(
                     variantConfigurationsListProperty.map { variantConfigs ->
                         variantConfigs.first { it.variantName == variant.name }
-                    }
-                )
-                params.logLevel.set(
-                    project.provider {
-                        behavior.logLevel
                     }
                 )
                 params.disabled.set(

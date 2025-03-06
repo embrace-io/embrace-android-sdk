@@ -1,13 +1,6 @@
 package io.embrace.android.gradle.plugin.config
 
-import org.gradle.api.logging.LogLevel
-
 interface PluginBehavior {
-
-    /**
-     * The log level, set via `embrace.logLevel`
-     */
-    val logLevel: LogLevel?
 
     /**
      * Whether telemetry can be captured for this build, set via `embrace.disableCollectBuildData`.
@@ -78,8 +71,6 @@ interface PluginBehavior {
 }
 
 const val EMBRACE_BASE_URL = "embrace.baseUrl"
-const val EMBRACE_LOG_LEVEL = "embrace.logLevel"
-const val EMBRACE_INSTRUMENTATION_SCOPE = "embrace.instrumentationScope"
 const val EMBRACE_DISABLE_COLLECT_BUILD_DATA = "embrace.disableCollectBuildData"
 const val EMBRACE_UPLOAD_IL2CPP_MAPPING_FILES = "embrace.uploadIl2CppMappingFiles"
 const val EMBRACE_DISABLE_MAPPING_FILE_UPLOAD = "embrace.disableMappingFileUpload"

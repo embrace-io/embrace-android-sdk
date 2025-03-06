@@ -1,26 +1,13 @@
 package io.embrace.android.gradle.plugin.config
 
-import com.android.build.api.instrumentation.InstrumentationScope
 import io.embrace.android.gradle.swazzler.plugin.extension.SwazzlerExtension
-import org.gradle.api.Project
 
 class InstrumentationBehaviorImpl(
-    private val project: Project,
     private val extension: SwazzlerExtension,
 ) : InstrumentationBehavior {
 
     override val invalidateBytecode: Boolean by lazy {
         extension.forceIncrementalOverwrite.get()
-    }
-
-    override val scope: InstrumentationScope by lazy {
-        val prop = project.getProperty(EMBRACE_INSTRUMENTATION_SCOPE)
-            ?: return@lazy InstrumentationScope.ALL
-        try {
-            InstrumentationScope.valueOf(prop.uppercase())
-        } catch (e: IllegalArgumentException) {
-            InstrumentationScope.ALL
-        }
     }
 
     override val okHttpEnabled: Boolean by lazy {

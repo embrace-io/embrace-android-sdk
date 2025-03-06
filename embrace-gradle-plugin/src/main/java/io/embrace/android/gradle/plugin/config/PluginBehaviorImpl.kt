@@ -1,9 +1,7 @@
 package io.embrace.android.gradle.plugin.config
 
-import io.embrace.android.gradle.plugin.Logger
 import io.embrace.android.gradle.swazzler.plugin.extension.SwazzlerExtension
 import org.gradle.api.Project
-import org.gradle.api.logging.LogLevel
 import java.io.File
 
 class PluginBehaviorImpl(
@@ -12,11 +10,7 @@ class PluginBehaviorImpl(
 ) : PluginBehavior {
 
     override val instrumentation: InstrumentationBehavior by lazy {
-        InstrumentationBehaviorImpl(project, extension)
-    }
-
-    override val logLevel: LogLevel? by lazy {
-        Logger.getSupportedLogLevel(project.getProperty(EMBRACE_LOG_LEVEL))
+        InstrumentationBehaviorImpl(extension)
     }
 
     override val isTelemetryDisabled: Boolean by lazy {

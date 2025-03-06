@@ -31,7 +31,6 @@ class EmbraceGradlePluginDelegate {
         validateMinAgpVersion(agpWrapper)
 
         val behavior = PluginBehaviorImpl(project, extension)
-        Logger.setPluginLogLevel(behavior.logLevel)
 
         BuildTelemetryService.register(
             project,

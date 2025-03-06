@@ -1,5 +1,12 @@
 # Upgrade guide
 
+# Upgrading to the new Embrace Gradle Plugin DSL
+
+The following project properties are now ignored and have no effect. You should remove them from your `gradle.properties` file:
+
+- `embrace.logLevel`
+- `embrace.instrumentationScope`
+
 # Upgrading from 6.x to 7.x
 
 Version 7 of the Embrace Android SDK contains the following breaking changes:
@@ -15,8 +22,8 @@ Version 7 of the Embrace Android SDK contains the following breaking changes:
 - Several internally used classes and symbols have been hidden from the public API
 - Recording a custom trace ID for an HTTP request from a custom request header is no longer supported. IDs in the
   `x-emb-trace-id` header will still be recorded and displayed on the dashboard.
-- Methods to add and remove the `payer` Persona has been removed. 
-  - Use the generic Persona API methods with the name `payer` to get the equivalent functionality.
+- Methods to add and remove the `payer` Persona has been removed.
+    - Use the generic Persona API methods with the name `payer` to get the equivalent functionality.
 - The `setAppId` API has been removed. Changing the `appId` at runtime is no longer supported.
 - Removed several obsolete remote config + local config properties. If you specify the below in your
   `embrace-config.json` they will be ignored:
@@ -29,10 +36,11 @@ Version 7 of the Embrace Android SDK contains the following breaking changes:
     - `sdk_config.networking.trace_id_header`
     - `sdk_config.startup_moment.automatically_end`
 - Removed the following properties from the Embrace Gradle plugin, that can be removed if they remain in your buildscripts:
-  - `customSymbolsDirectory`
-  - `jarSkipList`
-  - `encodeExtractedFileNames`
-- Embrace no longer attempts to detect other signal handlers & reinstall itself by default. If you notice changes in your NDK crash report quality you can re-enable this behavior by setting `sdk_config.sig_handler_detection` to `true` in your `embrace-config.json`
+    - `customSymbolsDirectory`
+    - `jarSkipList`
+    - `encodeExtractedFileNames`
+- Embrace no longer attempts to detect other signal handlers & reinstall itself by default. If you notice changes in your NDK crash report
+  quality you can re-enable this behavior by setting `sdk_config.sig_handler_detection` to `true` in your `embrace-config.json`
 
 ### Removed APIs
 

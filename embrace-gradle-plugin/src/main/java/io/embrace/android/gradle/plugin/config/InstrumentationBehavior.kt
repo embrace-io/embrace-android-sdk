@@ -1,7 +1,5 @@
 package io.embrace.android.gradle.plugin.config
 
-import com.android.build.api.instrumentation.InstrumentationScope
-
 interface InstrumentationBehavior {
 
     /**
@@ -9,11 +7,6 @@ interface InstrumentationBehavior {
      * things to run again
      */
     val invalidateBytecode: Boolean
-
-    /**
-     * The scope of what modules get instrumented, set via `embrace.instrumentationScope`
-     */
-    val scope: InstrumentationScope
 
     /**
      * Whether OkHttp should be auto-instrumented

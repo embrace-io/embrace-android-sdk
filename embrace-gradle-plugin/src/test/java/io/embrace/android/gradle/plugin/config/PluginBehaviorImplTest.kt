@@ -3,11 +3,9 @@ package io.embrace.android.gradle.plugin.config
 import io.embrace.android.gradle.swazzler.plugin.extension.SwazzlerExtension
 import org.gradle.api.Action
 import org.gradle.api.Project
-import org.gradle.api.logging.LogLevel
 import org.gradle.testfixtures.ProjectBuilder
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -24,35 +22,6 @@ class PluginBehaviorImplTest {
         project = ProjectBuilder.builder().build()
         extension = project.extensions.create("swazzler", SwazzlerExtension::class.java)
         behavior = PluginBehaviorImpl(project, extension)
-    }
-
-    @Test
-    fun `log level default`() {
-        assertNull(behavior.logLevel)
-    }
-
-    @Test
-    fun `log level INFO`() {
-        addGradleProperty(EMBRACE_LOG_LEVEL, "info")
-        assertEquals(LogLevel.INFO, behavior.logLevel)
-    }
-
-    @Test
-    fun `log level WARN`() {
-        addGradleProperty(EMBRACE_LOG_LEVEL, "WARN")
-        assertEquals(LogLevel.WARN, behavior.logLevel)
-    }
-
-    @Test
-    fun `log level ERROR`() {
-        addGradleProperty(EMBRACE_LOG_LEVEL, "ErRoR")
-        assertEquals(LogLevel.ERROR, behavior.logLevel)
-    }
-
-    @Test
-    fun `log level invalid`() {
-        addGradleProperty(EMBRACE_LOG_LEVEL, "foo")
-        assertNull(behavior.logLevel)
     }
 
     @Test

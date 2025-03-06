@@ -1,6 +1,5 @@
 package io.embrace.android.gradle.plugin.config
 
-import com.android.build.api.instrumentation.InstrumentationScope
 import io.embrace.android.gradle.swazzler.plugin.extension.SwazzlerExtension
 import org.gradle.api.Project
 import org.gradle.testfixtures.ProjectBuilder
@@ -20,24 +19,7 @@ class InstrumentationBehaviorImplTest {
     fun setUp() {
         project = ProjectBuilder.builder().build()
         extension = project.extensions.create("swazzler", SwazzlerExtension::class.java)
-        behavior = InstrumentationBehaviorImpl(project, extension)
-    }
-
-    @Test
-    fun `instrumentation scope default`() {
-        assertEquals(InstrumentationScope.ALL, behavior.scope)
-    }
-
-    @Test
-    fun `instrumentation scope valid`() {
-        addGradleProperty(EMBRACE_INSTRUMENTATION_SCOPE, "project")
-        assertEquals(InstrumentationScope.PROJECT, behavior.scope)
-    }
-
-    @Test
-    fun `instrumentation scope invalid`() {
-        addGradleProperty(EMBRACE_INSTRUMENTATION_SCOPE, "foo")
-        assertEquals(InstrumentationScope.ALL, behavior.scope)
+        behavior = InstrumentationBehaviorImpl(extension)
     }
 
     @Test
@@ -116,9 +98,5 @@ class InstrumentationBehaviorImplTest {
         val values = listOf("foo", "bar")
         extension.classSkipList.set(values)
         assertEquals(values, behavior.ignoredClasses)
-    }
-
-    private fun addGradleProperty(key: String, value: String) {
-        project.extensions.extraProperties[key] = value
     }
 }

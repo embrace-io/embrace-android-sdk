@@ -2,10 +2,8 @@ package io.embrace.android.gradle.plugin.instrumentation
 
 import com.android.build.api.instrumentation.InstrumentationParameters
 import io.embrace.android.gradle.plugin.instrumentation.config.model.VariantConfig
-import org.gradle.api.logging.LogLevel
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.Optional
 
 /**
  * Contains parameters that affect how bytecode is manipulated during instrumentation.
@@ -21,14 +19,6 @@ interface BytecodeInstrumentationParams : InstrumentationParameters {
      */
     @get:Input
     val config: Property<VariantConfig>
-
-    /**
-     * Whether or not the plugin should operate in debug mode. This will mainly affect
-     * logging.
-     */
-    @get:Optional
-    @get:Input
-    val logLevel: Property<LogLevel>
 
     /**
      * Whether or not the plugin should operate for this variant.

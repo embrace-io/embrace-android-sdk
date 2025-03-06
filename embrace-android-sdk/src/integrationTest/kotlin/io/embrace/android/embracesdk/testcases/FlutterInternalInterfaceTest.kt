@@ -2,17 +2,15 @@ package io.embrace.android.embracesdk.testcases
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.LogExceptionType
-import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.config.FakeProjectConfig
 import io.embrace.android.embracesdk.internal.EmbraceInternalApi
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.payload.AppFramework
-import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
-import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import io.embrace.android.embracesdk.testframework.assertions.assertMatches
 import io.embrace.android.embracesdk.testframework.assertions.assertOtelLogReceived
-import io.embrace.android.embracesdk.testframework.assertions.getLastLog
+import io.embrace.android.embracesdk.testframework.assertions.getLogOfType
 import io.opentelemetry.api.logs.Severity
 import io.opentelemetry.semconv.ExceptionAttributes
 import org.junit.Assert.assertEquals
@@ -27,20 +25,16 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 internal class FlutterInternalInterfaceTest {
 
-    private val instrumentedConfig = FakeInstrumentedConfig(project = FakeProjectConfig(
-        appId = "abcde",
-        appFramework = "flutter"
-    ))
-
-    private lateinit var executor: BlockingScheduledExecutorService
+    private val instrumentedConfig = FakeInstrumentedConfig(
+        project = FakeProjectConfig(
+            appId = "abcde",
+            appFramework = "flutter"
+        )
+    )
 
     @Rule
     @JvmField
-    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule {
-        EmbraceSetupInterface(workerToFake = Worker.Background.LogMessageWorker).also {
-            executor = it.getFakedWorkerExecutor()
-        }
-    }
+    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule()
 
     @Test
     fun `flutter without values should return defaults`() {
@@ -169,11 +163,10 @@ internal class FlutterInternalInterfaceTest {
                         expectedContext,
                         expectedLibrary,
                     )
-                    flushLogs()
                 }
             },
             assertAction = {
-                val log = getSingleLogEnvelope().getLastLog()
+                val log = getSingleLogEnvelope().getLogOfType(EmbType.System.FlutterException)
 
                 assertOtelLogReceived(
                     logReceived = log,
@@ -186,11 +179,13 @@ internal class FlutterInternalInterfaceTest {
                     expectedEmbType = "sys.flutter_exception",
                     expectedState = "foreground",
                 )
-                log.attributes?.assertMatches(mapOf(
-                    ExceptionAttributes.EXCEPTION_STACKTRACE.key to expectedStacktrace,
-                    "emb.exception.context" to expectedContext,
-                    "emb.exception.library" to expectedLibrary,
-                ))
+                log.attributes?.assertMatches(
+                    mapOf(
+                        ExceptionAttributes.EXCEPTION_STACKTRACE.key to expectedStacktrace,
+                        "emb.exception.context" to expectedContext,
+                        "emb.exception.library" to expectedLibrary,
+                    )
+                )
             }
         )
     }
@@ -214,11 +209,10 @@ internal class FlutterInternalInterfaceTest {
                         expectedContext,
                         expectedLibrary,
                     )
-                    flushLogs()
                 }
             },
             assertAction = {
-                val log = getSingleLogEnvelope().getLastLog()
+                val log = getSingleLogEnvelope().getLogOfType(EmbType.System.FlutterException)
 
                 assertOtelLogReceived(
                     logReceived = log,
@@ -231,17 +225,14 @@ internal class FlutterInternalInterfaceTest {
                     expectedEmbType = "sys.flutter_exception",
                     expectedState = "foreground",
                 )
-                log.attributes?.assertMatches(mapOf(
-                    ExceptionAttributes.EXCEPTION_STACKTRACE.key to expectedStacktrace,
-                    "emb.exception.context" to expectedContext,
-                    "emb.exception.library" to expectedLibrary,
-                ))
+                log.attributes?.assertMatches(
+                    mapOf(
+                        ExceptionAttributes.EXCEPTION_STACKTRACE.key to expectedStacktrace,
+                        "emb.exception.context" to expectedContext,
+                        "emb.exception.library" to expectedLibrary,
+                    )
+                )
             }
         )
-    }
-
-    private fun flushLogs() {
-        executor.runCurrentlyBlocked()
-        testRule.bootstrapper.logModule.logOrchestrator.flush(false)
     }
 }

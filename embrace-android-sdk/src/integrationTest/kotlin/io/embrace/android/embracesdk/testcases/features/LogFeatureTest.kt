@@ -3,17 +3,15 @@ package io.embrace.android.embracesdk.testcases.features
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.LogExceptionType
 import io.embrace.android.embracesdk.Severity
-import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.utils.getSafeStackTrace
-import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
-import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import io.embrace.android.embracesdk.testframework.assertions.assertOtelLogReceived
-import io.embrace.android.embracesdk.testframework.assertions.getLastLog
+import io.embrace.android.embracesdk.testframework.assertions.getLogOfType
 import io.embrace.android.embracesdk.testframework.assertions.getOtelSeverity
 import org.junit.Rule
 import org.junit.Test
@@ -22,16 +20,15 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 internal class LogFeatureTest {
 
-    private val instrumentedConfig = FakeInstrumentedConfig(enabledFeatures = FakeEnabledFeatureConfig(bgActivityCapture = true))
-    private lateinit var executor: BlockingScheduledExecutorService
+    private val instrumentedConfig = FakeInstrumentedConfig(
+        enabledFeatures = FakeEnabledFeatureConfig(
+            bgActivityCapture = true
+        )
+    )
 
     @Rule
     @JvmField
-    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule {
-        EmbraceSetupInterface(workerToFake = Worker.Background.LogMessageWorker).also {
-            executor = it.getFakedWorkerExecutor()
-        }
-    }
+    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule()
 
     @Test
     fun `log info message sent in foreground`() {
@@ -40,11 +37,11 @@ internal class LogFeatureTest {
             testCaseAction = {
                 recordSession {
                     embrace.logInfo("test message")
-                    flushLogs()
+
                 }
             },
             assertAction = {
-                val log = getSingleLogEnvelope().getLastLog()
+                val log = getSingleLogEnvelope().getLogOfType(EmbType.System.Log)
                 assertOtelLogReceived(
                     logReceived = log,
                     expectedMessage = "test message",
@@ -62,10 +59,10 @@ internal class LogFeatureTest {
             instrumentedConfig = instrumentedConfig,
             testCaseAction = {
                 embrace.logWarning("test message")
-                flushLogs()
+                clock.tick(2000L)
             },
             assertAction = {
-                val log = getSingleLogEnvelope().getLastLog()
+                val log = getSingleLogEnvelope().getLogOfType(EmbType.System.Log)
                 assertOtelLogReceived(
                     logReceived = log,
                     expectedMessage = "test message",
@@ -82,10 +79,11 @@ internal class LogFeatureTest {
             instrumentedConfig = instrumentedConfig,
             testCaseAction = {
                 embrace.logError("test message")
-                flushLogs()
+                clock.tick(2000L)
+
             },
             assertAction = {
-                val log = getSingleLogEnvelope().getLastLog()
+                val log = getSingleLogEnvelope().getLogOfType(EmbType.System.Log)
                 assertOtelLogReceived(
                     log,
                     expectedMessage = "test message",
@@ -105,7 +103,7 @@ internal class LogFeatureTest {
                     val expectedMessage = "test message ${severity.name}"
                     embrace.logMessage(expectedMessage, severity)
                 }
-                flushLogs()
+                clock.tick(2000L)
             },
             assertAction = {
                 val logs = groupLogsBySeverity(getSingleLogEnvelope())
@@ -132,7 +130,7 @@ internal class LogFeatureTest {
                     val expectedMessage = "test message ${severity.name}"
                     embrace.logMessage(expectedMessage, severity, customProperties)
                 }
-                flushLogs()
+                clock.tick(2000L)
             },
             assertAction = {
                 val logs = groupLogsBySeverity(getSingleLogEnvelope())
@@ -156,10 +154,10 @@ internal class LogFeatureTest {
             instrumentedConfig = instrumentedConfig,
             testCaseAction = {
                 embrace.logException(testException)
-                flushLogs()
+                clock.tick(2000L)
             },
             assertAction = {
-                val log = getSingleLogEnvelope().getLastLog()
+                val log = getSingleLogEnvelope().getLogOfType(EmbType.System.Exception)
                 assertOtelLogReceived(
                     log,
                     expectedMessage = checkNotNull(testException.message),
@@ -181,10 +179,10 @@ internal class LogFeatureTest {
             instrumentedConfig = instrumentedConfig,
             testCaseAction = {
                 embrace.logException(testException, Severity.INFO)
-                flushLogs()
+                clock.tick(2000L)
             },
             assertAction = {
-                val log = getSingleLogEnvelope().getLastLog()
+                val log = getSingleLogEnvelope().getLogOfType(EmbType.System.Exception)
                 assertOtelLogReceived(
                     log,
                     expectedMessage = checkNotNull(testException.message),
@@ -211,7 +209,7 @@ internal class LogFeatureTest {
                         customProperties
                     )
                 }
-                flushLogs()
+                clock.tick(2000L)
             },
             assertAction = {
                 val logs = groupLogsBySeverity(getSingleLogEnvelope())
@@ -243,7 +241,7 @@ internal class LogFeatureTest {
                     val expectedMessage = "test message ${severity.name}"
                     embrace.logException(testException, severity, customProperties, expectedMessage)
                 }
-                flushLogs()
+                clock.tick(2000L)
             },
             assertAction = {
                 val logs = groupLogsBySeverity(getSingleLogEnvelope())
@@ -273,10 +271,10 @@ internal class LogFeatureTest {
             instrumentedConfig = instrumentedConfig,
             testCaseAction = {
                 embrace.logCustomStacktrace(stacktrace)
-                flushLogs()
+                clock.tick(2000L)
             },
             assertAction = {
-                val log = getSingleLogEnvelope().getLastLog()
+                val log = getSingleLogEnvelope().getLogOfType(EmbType.System.Exception)
                 assertOtelLogReceived(
                     log,
                     expectedMessage = "",
@@ -298,7 +296,7 @@ internal class LogFeatureTest {
                 Severity.values().forEach { severity ->
                     embrace.logCustomStacktrace(stacktrace, severity)
                 }
-                flushLogs()
+                clock.tick(2000L)
             },
             assertAction = {
                 val logs = groupLogsBySeverity(getSingleLogEnvelope())
@@ -326,7 +324,7 @@ internal class LogFeatureTest {
                 Severity.values().forEach { severity ->
                     embrace.logCustomStacktrace(stacktrace, severity, customProperties)
                 }
-                flushLogs()
+                clock.tick(2000L)
             },
             assertAction = {
                 val logs = groupLogsBySeverity(getSingleLogEnvelope())
@@ -361,7 +359,7 @@ internal class LogFeatureTest {
                         expectedMessage
                     )
                 }
-                flushLogs()
+                clock.tick(2000L)
             },
             assertAction = {
                 val envelope = getSingleLogEnvelope()
@@ -382,11 +380,6 @@ internal class LogFeatureTest {
                 }
             }
         )
-    }
-
-    private fun flushLogs() {
-        executor.runCurrentlyBlocked()
-        testRule.bootstrapper.logModule.logOrchestrator.flush(false)
     }
 
     private fun getEmbraceSeverity(severityNumber: Int): Severity {

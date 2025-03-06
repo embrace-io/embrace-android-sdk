@@ -1,45 +1,35 @@
 package io.embrace.android.embracesdk.testcases.session
 
+import android.os.Build.VERSION_CODES.TIRAMISU
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.findSessionSpan
 import io.embrace.android.embracesdk.assertions.findSpanSnapshotOfType
-import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
+import io.embrace.android.embracesdk.assertions.returnIfConditionMet
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.spans.getSessionProperty
-import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.testframework.FakeCacheStorageService
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
-import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import io.embrace.android.embracesdk.testframework.assertions.assertMatches
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.annotation.Config
 
 /**
  * Asserts that the session is periodically cached.
  */
+@Config(sdk = [TIRAMISU])
 @RunWith(AndroidJUnit4::class)
 internal class PeriodicSessionCacheTest {
-    private lateinit var periodicCacheWorkerExecutor: BlockingScheduledExecutorService
-    private lateinit var dataPersistenceWorkerExecutor: BlockingScheduledExecutorService
 
     @Rule
     @JvmField
-    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule {
-        EmbraceSetupInterface(
-            workerToFake = Worker.Background.PeriodicCacheWorker,
-            priorityWorkerToFake = Worker.Priority.DataPersistenceWorker,
-        ).also {
-            periodicCacheWorkerExecutor = it.getFakedWorkerExecutor()
-            dataPersistenceWorkerExecutor = it.getFakedPriorityWorkerExecutor()
-        }
-    }
+    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule()
 
     @Test
     fun `session is periodically cached`() {
@@ -50,20 +40,27 @@ internal class PeriodicSessionCacheTest {
             },
             testCaseAction = {
                 val cacheStorageService = getCacheStorageService()
-
                 recordSession {
                     assertEquals(0, cacheStorageService.storedPayloads.size)
                     embrace.addSessionProperty("Test", "Test", true)
-                    allowPeriodicCacheExecution()
-                    assertEquals(1, cacheStorageService.storedPayloads.size)
-                    snapshot = loadSnapshot(cacheStorageService)
+                    val dataSupplier = { cacheStorageService.storedPayloads }
+                    snapshot = returnIfConditionMet(
+                        waitTimeMs = 10000,
+                        desiredValueSupplier = { cacheStorageService.getLastCachedSession() },
+                        dataProvider = dataSupplier,
+                        condition = { data ->
+                            data.size > 0 && cacheStorageService.getLastCachedSession().findSpanSnapshotOfType(EmbType.Ux.Session)
+                                .getSessionProperty("Test") != null
+                        },
+                        errorMessageSupplier = { "Timeout waiting for cached session" }
+                    )
+                    embrace.addSessionProperty("Test", "Passed", true)
                 }
-                allowPeriodicCacheExecution()
             },
             assertAction = {
                 val endMessage = checkNotNull(snapshot)
                 val span = endMessage.findSpanSnapshotOfType(EmbType.Ux.Session)
-                assertNotNull(span.getSessionProperty("Test"))
+                assertEquals("Test", span.getSessionProperty("Test"))
                 span.attributes?.assertMatches(
                     mapOf(
                         "emb.clean_exit" to false,
@@ -72,7 +69,7 @@ internal class PeriodicSessionCacheTest {
                 )
                 val completedMessage = getSingleSessionEnvelope()
                 val completedSpan = completedMessage.findSessionSpan()
-                assertEquals("Test", completedSpan.getSessionProperty("Test"))
+                assertEquals("Passed", completedSpan.getSessionProperty("Test"))
                 completedSpan.attributes?.assertMatches(
                     mapOf(
                         "emb.clean_exit" to true,
@@ -83,18 +80,11 @@ internal class PeriodicSessionCacheTest {
         )
     }
 
-    private fun loadSnapshot(cacheStorageService: FakeCacheStorageService): Envelope<SessionPayload> {
-        val metadata = cacheStorageService.storedPayloads.keys.single()
-        val inputStream = checkNotNull(cacheStorageService.loadPayloadAsStream(metadata))
+    private fun FakeCacheStorageService.getLastCachedSession(): Envelope<SessionPayload> {
         return TestPlatformSerializer().fromJson(
-            inputStream,
+            checkNotNull(loadPayloadAsStream(storedPayloads.keys.last())),
             checkNotNull(SupportedEnvelopeType.SESSION.serializedType)
         )
-    }
-
-    private fun allowPeriodicCacheExecution() {
-        periodicCacheWorkerExecutor.runCurrentlyBlocked()
-        dataPersistenceWorkerExecutor.runCurrentlyBlocked()
     }
 
     private fun getCacheStorageService(): FakeCacheStorageService {

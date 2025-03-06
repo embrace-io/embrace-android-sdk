@@ -11,6 +11,7 @@ import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModule
 import io.embrace.android.embracesdk.internal.injection.createInitModule
 import io.embrace.android.embracesdk.internal.injection.createOpenTelemetryModule
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
+import java.util.UUID
 
 class FakeInitModule(
     clock: Clock = FakeClock(),
@@ -25,9 +26,12 @@ class FakeInitModule(
         logger = logger,
         systemInfo = systemInfo,
     ),
+    processIdentifier: String = UUID.randomUUID().toString(),
     override var instrumentedConfig: InstrumentedConfig = FakeInstrumentedConfig(),
-    override val processIdentifierProvider: () -> String = { "fake-process-id" },
+
 ) : InitModule by initModule {
+
+    override val processIdentifierProvider: () -> String = { processIdentifier }
 
     val openTelemetryModule: OpenTelemetryModule by lazy { createOpenTelemetryModule(initModule) }
 

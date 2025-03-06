@@ -4,7 +4,6 @@ import android.app.Activity
 import androidx.lifecycle.Lifecycle
 import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.fakes.FakeClock
-import io.embrace.android.embracesdk.fakes.FakeNetworkConnectivityService
 import io.embrace.android.embracesdk.internal.comms.delivery.NetworkStatus
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import org.robolectric.Robolectric
@@ -56,8 +55,7 @@ internal class EmbraceActionInterface(
     }
 
     fun simulateNetworkChange(status: NetworkStatus) {
-        val service = (bootstrapper.essentialServiceModule.networkConnectivityService as FakeNetworkConnectivityService)
-        service.networkStatus = status
+        setup.fakeNetworkConnectivityService.networkStatus = status
     }
 
     internal fun simulateOpeningActivities(

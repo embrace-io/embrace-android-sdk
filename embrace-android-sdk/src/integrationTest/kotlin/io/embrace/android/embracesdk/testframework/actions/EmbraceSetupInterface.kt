@@ -23,7 +23,6 @@ import io.embrace.android.embracesdk.internal.anr.detection.BlockedThreadDetecto
 import io.embrace.android.embracesdk.internal.comms.delivery.DeliveryService
 import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
 import io.embrace.android.embracesdk.internal.delivery.execution.RequestExecutionService
-import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageService
 import io.embrace.android.embracesdk.internal.injection.AndroidServicesModule
 import io.embrace.android.embracesdk.internal.injection.AnrModule
 import io.embrace.android.embracesdk.internal.injection.CoreModule
@@ -42,6 +41,7 @@ import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
 import io.embrace.android.embracesdk.internal.spans.SpanSink
 import io.embrace.android.embracesdk.internal.utils.Provider
+import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 
@@ -51,21 +51,31 @@ import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 internal class EmbraceSetupInterface @JvmOverloads constructor(
     workerToFake: Worker.Background? = null,
     anrMonitoringThread: Thread? = null,
-    processIdentifier: String = "integration-test-process",
+    fakeStorageLayer: Boolean = false,
     var useMockWebServer: Boolean = true,
-    var cacheStorageServiceProvider: Provider<PayloadStorageService>? = null,
-    var payloadStorageServiceProvider: Provider<PayloadStorageService>? = null,
     val ignoredInternalErrors: List<InternalErrorType> = listOf(InternalErrorType.APP_LAUNCH_TRACE_FAIL),
 ) {
+    private val processIdentifier: String = Uuid.getEmbUuid()
+
     val fakeNetworkConnectivityService = FakeNetworkConnectivityService()
     val fakeJniDelegate = FakeJniDelegate()
     val fakeSymbolService = FakeSymbolService()
     val fakeLifecycleOwner: TestLifecycleOwner = TestLifecycleOwner(initialState = Lifecycle.State.INITIALIZED)
+    val fakePayloadStorageService = if (fakeStorageLayer) {
+        FakePayloadStorageService(processIdentifier)
+    } else {
+        null
+    }
+    val fakeCacheStorageService = if (fakeStorageLayer) {
+        FakePayloadStorageService(processIdentifier)
+    } else {
+        null
+    }
 
     private val fakeInitModule: FakeInitModule = FakeInitModule(
         clock = FakeClock(currentTime = SdkIntegrationTestRule.DEFAULT_SDK_START_TIME_MS),
         logger = FakeEmbLogger(ignoredErrors = ignoredInternalErrors),
-        processIdentifierProvider = { processIdentifier }
+        processIdentifier = processIdentifier
     )
 
     private val workerThreadModule: WorkerThreadModule = initWorkerThreadModule(
@@ -104,16 +114,17 @@ internal class EmbraceSetupInterface @JvmOverloads constructor(
         androidServicesModuleSupplier = { _, _ -> androidServicesModule },
         essentialServiceModuleSupplier = { initModule, configModule, openTelemetryModule, coreModule, workerThreadModule, systemServiceModule, androidServicesModule, storageModule, _, _ ->
             createEssentialServiceModule(
-                initModule,
-                configModule,
-                openTelemetryModule,
-                coreModule,
-                workerThreadModule,
-                systemServiceModule,
-                androidServicesModule,
-                storageModule,
-                { fakeLifecycleOwner }
-            ) { fakeNetworkConnectivityService }
+                initModule = initModule,
+                configModule = configModule,
+                openTelemetryModule = openTelemetryModule,
+                coreModule = coreModule,
+                workerThreadModule = workerThreadModule,
+                systemServiceModule = systemServiceModule,
+                androidServicesModule = androidServicesModule,
+                storageModule = storageModule,
+                lifecycleOwnerProvider = { fakeLifecycleOwner },
+                networkConnectivityServiceProvider = { fakeNetworkConnectivityService }
+            )
         },
         deliveryModuleSupplier = { configModule, initModule, otelModule, workerThreadModule, coreModule, storageModule, essentialServiceModule, androidServicesModule, _, _, _, _, _ ->
             val requestExecutionServiceProvider: Provider<RequestExecutionService>? = when {
@@ -125,16 +136,16 @@ internal class EmbraceSetupInterface @JvmOverloads constructor(
                 else -> ::FakeDeliveryService
             }
             createDeliveryModule(
-                configModule,
-                initModule,
-                otelModule,
-                workerThreadModule,
-                coreModule,
-                storageModule,
-                essentialServiceModule,
-                androidServicesModule,
-                payloadStorageServiceProvider = payloadStorageServiceProvider,
-                cacheStorageServiceProvider = cacheStorageServiceProvider,
+                configModule = configModule,
+                initModule = initModule,
+                otelModule = otelModule,
+                workerThreadModule = workerThreadModule,
+                coreModule = coreModule,
+                storageModule = storageModule,
+                essentialServiceModule = essentialServiceModule,
+                androidServicesModule = androidServicesModule,
+                payloadStorageServiceProvider = fakePayloadStorageService?.let { { it } },
+                cacheStorageServiceProvider = fakeCacheStorageService?.let { { it } },
                 requestExecutionServiceProvider = requestExecutionServiceProvider,
                 deliveryServiceProvider = deliveryServiceProvider,
                 deliveryTracer = deliveryTracer
@@ -143,36 +154,33 @@ internal class EmbraceSetupInterface @JvmOverloads constructor(
         anrModuleSupplier = { _, _, _ -> anrModule },
         nativeCoreModuleSupplier = { initModule, coreModule, payloadSourceModule, workerThreadModule, configModule, storageModule, essentialServiceModule, openTelemetryModule, _, _, _ ->
             createNativeCoreModule(
-                initModule,
-                coreModule,
-                payloadSourceModule,
-                workerThreadModule,
-                configModule,
-                storageModule,
-                essentialServiceModule,
-                openTelemetryModule,
-                { fakeJniDelegate },
-                ::FakeSharedObjectLoader,
-                { fakeSymbolService }
+                initModule = initModule,
+                coreModule = coreModule,
+                payloadSourceModule = payloadSourceModule,
+                workerThreadModule = workerThreadModule,
+                configModule = configModule,
+                storageModule = storageModule,
+                essentialServiceModule = essentialServiceModule,
+                otelModule = openTelemetryModule,
+                delegateProvider = { fakeJniDelegate },
+                sharedObjectLoaderProvider = ::FakeSharedObjectLoader,
+                symbolServiceProvider = { fakeSymbolService }
             )
         },
     )
 
-
     /**
      * Setup a fake dead session on disk
      */
-    fun setupCachedDataFromNativeCrash(
-        storageService: FakePayloadStorageService,
-        crashData: StoredNativeCrashData,
-    ) {
-        if (crashData.sessionMetadata != null && crashData.sessionEnvelope != null) {
-            storageService.addPayload(crashData.sessionMetadata, crashData.sessionEnvelope)
+    fun setupCachedDataFromNativeCrash(crashData: StoredNativeCrashData) {
+        if (fakeCacheStorageService != null) {
+            if (crashData.sessionMetadata != null && crashData.sessionEnvelope != null) {
+                fakeCacheStorageService.addPayload(crashData.sessionMetadata, crashData.sessionEnvelope)
+            }
+            if (crashData.cachedCrashEnvelopeMetadata != null && crashData.cachedCrashEnvelope != null) {
+                fakeCacheStorageService.addPayload(crashData.cachedCrashEnvelopeMetadata, crashData.cachedCrashEnvelope)
+            }
         }
-        if (crashData.cachedCrashEnvelopeMetadata != null && crashData.cachedCrashEnvelope != null) {
-            storageService.addPayload(crashData.cachedCrashEnvelopeMetadata, crashData.cachedCrashEnvelope)
-        }
-        cacheStorageServiceProvider = { storageService }
     }
 
     /**
@@ -190,8 +198,6 @@ internal class EmbraceSetupInterface @JvmOverloads constructor(
 
     fun getClock(): FakeClock = checkNotNull(fakeInitModule.getFakeClock())
 
-    fun getProcessIdentifierProvider(): () -> String = fakeInitModule.processIdentifierProvider
-
     fun getSpanSink(): SpanSink = fakeInitModule.openTelemetryModule.spanSink
 
     fun getCurrentSessionSpan(): CurrentSessionSpan = fakeInitModule.openTelemetryModule.currentSessionSpan
@@ -200,8 +206,7 @@ internal class EmbraceSetupInterface @JvmOverloads constructor(
 
     fun getContext(): Context = coreModule.context
 
-    fun getFakedWorkerExecutor(): BlockingScheduledExecutorService =
-        (workerThreadModule as FakeWorkerThreadModule).executor
+    fun getFakedWorkerExecutor(): BlockingScheduledExecutorService = (workerThreadModule as FakeWorkerThreadModule).executor
 
     fun getBlockedThreadDetector(): BlockedThreadDetector = anrModule.blockedThreadDetector
 

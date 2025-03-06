@@ -11,12 +11,14 @@ import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.io.InputStream
+import java.util.UUID
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.zip.GZIPOutputStream
 
 class FakePayloadStorageService(
-    private val processIdProvider: () -> String = { "pid" },
+    processIdentifier: String = UUID.randomUUID().toString()
 ) : PayloadStorageService {
+    private val processIdProvider: () -> String = { processIdentifier }
     private val serializer = TestPlatformSerializer()
     private val cachedPayloads = LinkedHashMap<StoredTelemetryMetadata, ByteArray>()
 

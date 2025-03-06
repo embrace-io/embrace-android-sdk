@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.testcases.features
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.getSessionId
-import io.embrace.android.embracesdk.fakes.FakePayloadStorageService
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
@@ -26,7 +25,6 @@ import io.embrace.android.embracesdk.testframework.assertions.getLogOfType
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
-import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -96,23 +94,16 @@ internal class NativeCrashFeatureTest {
     )
     private val fakeSymbols = mapOf("libfoo.so" to "symbol_content")
 
-    private lateinit var cacheStorageService: FakePayloadStorageService
-
     @Rule
     @JvmField
     val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule {
         EmbraceSetupInterface(
-            processIdentifier = "8115ec91-3e5e-4d8a-816d-cc40306f9822"
+            fakeStorageLayer = true
         ).apply {
             getEmbLogger().throwOnInternalError = false
         }.also {
             it.fakeSymbolService.symbolsForCurrentArch.putAll(fakeSymbols)
         }
-    }
-
-    @Before
-    fun setUp() {
-        cacheStorageService = FakePayloadStorageService()
     }
 
     @Test
@@ -121,7 +112,6 @@ internal class NativeCrashFeatureTest {
             instrumentedConfig = config,
             setupAction = {
                 setupCachedDataFromNativeCrash(
-                    storageService = cacheStorageService,
                     crashData = crashData
                 )
                 setupFakeNativeCrash(serializer, crashData)
@@ -149,22 +139,17 @@ internal class NativeCrashFeatureTest {
             setupAction = {
                 val modifiedCrashData = crashData.copy(sessionMetadata = null, sessionEnvelope = null)
                 setupCachedDataFromNativeCrash(
-                    storageService = cacheStorageService,
                     crashData = modifiedCrashData
                 )
                 setupFakeNativeCrash(serializer, modifiedCrashData)
             },
             testCaseAction = {
                 recordSession()
+                clock.tick(2000L)
             },
             assertAction = {
-                val envelope = getSingleLogEnvelope()
-                with(envelope) {
-                    assertEquals(fakeEnvelopeResource, resource)
-                    assertEquals(fakeEnvelopeMetadata, metadata)
-                }
-                val log = envelope.getLogOfType(EmbType.System.NativeCrash)
-                assertNativeCrashSent(log, crashData, fakeSymbols)
+                val nativeCrash = getSingleLogEnvelope().getLogOfType(EmbType.System.NativeCrash)
+                assertNativeCrashSent(nativeCrash, crashData, fakeSymbols)
             }
         )
     }
@@ -174,7 +159,7 @@ internal class NativeCrashFeatureTest {
         testRule.runTest(
             instrumentedConfig = config,
             setupAction = {
-                setupCachedDataFromNativeCrash(cacheStorageService, crashData = crashData)
+                setupCachedDataFromNativeCrash(crashData = crashData)
             },
             testCaseAction = {},
             assertAction = {
@@ -191,8 +176,8 @@ internal class NativeCrashFeatureTest {
         testRule.runTest(
             instrumentedConfig = config,
             setupAction = {
-                setupCachedDataFromNativeCrash(cacheStorageService, crashData = crashData)
-                setupCachedDataFromNativeCrash(cacheStorageService, crashData = crashData2)
+                setupCachedDataFromNativeCrash(crashData = crashData)
+                setupCachedDataFromNativeCrash(crashData = crashData2)
                 setupFakeNativeCrash(serializer, crashData)
                 setupFakeNativeCrash(serializer, crashData2)
             },
@@ -237,7 +222,7 @@ internal class NativeCrashFeatureTest {
         testRule.runTest(
             instrumentedConfig = FakeInstrumentedConfig(),
             setupAction = {
-                setupCachedDataFromNativeCrash(cacheStorageService, crashData = crashData)
+                setupCachedDataFromNativeCrash(crashData = crashData)
                 setupFakeNativeCrash(serializer, crashData)
             },
             testCaseAction = {},
@@ -256,7 +241,7 @@ internal class NativeCrashFeatureTest {
         testRule.runTest(
             instrumentedConfig = config,
             setupAction = {
-                setupCachedDataFromNativeCrash(cacheStorageService, crashData = crashData)
+                setupCachedDataFromNativeCrash(crashData = crashData)
                 setupFakeNativeCrash(serializer, crashData)
 
                 // simulate JNI call failing to load struct
@@ -277,7 +262,7 @@ internal class NativeCrashFeatureTest {
         testRule.runTest(
             instrumentedConfig = config,
             setupAction = {
-                setupCachedDataFromNativeCrash(cacheStorageService, crashData = crashData)
+                setupCachedDataFromNativeCrash(crashData = crashData)
                 setupFakeNativeCrash(serializer, crashData)
 
                 // simulate bad JSON

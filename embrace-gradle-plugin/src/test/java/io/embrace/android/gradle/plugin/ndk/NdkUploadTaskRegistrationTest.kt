@@ -1,3 +1,5 @@
+@file:Suppress("DEPRECATION")
+
 package io.embrace.android.gradle.plugin.ndk
 
 import com.android.build.api.variant.Variant

@@ -1,17 +1,14 @@
+@file:Suppress("DEPRECATION")
+
 package io.embrace.android.gradle.plugin.config
 
 import io.embrace.android.gradle.plugin.api.EmbraceExtension
 import io.embrace.android.gradle.swazzler.plugin.extension.SwazzlerExtension
 
-@Suppress("DEPRECATION")
 class InstrumentationBehaviorImpl(
     private val extension: SwazzlerExtension,
     private val embrace: EmbraceExtension,
 ) : InstrumentationBehavior {
-
-    override val invalidateBytecode: Boolean by lazy {
-        extension.forceIncrementalOverwrite.get()
-    }
 
     private val instrumentation by lazy {
         embrace.bytecodeInstrumentation

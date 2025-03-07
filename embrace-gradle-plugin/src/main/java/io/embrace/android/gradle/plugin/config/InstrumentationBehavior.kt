@@ -3,12 +3,6 @@ package io.embrace.android.gradle.plugin.config
 interface InstrumentationBehavior {
 
     /**
-     * Whether the project should poison the bytecode instrumentation cache to force
-     * things to run again
-     */
-    val invalidateBytecode: Boolean
-
-    /**
      * Whether OkHttp should be auto-instrumented
      */
     val okHttpEnabled: Boolean

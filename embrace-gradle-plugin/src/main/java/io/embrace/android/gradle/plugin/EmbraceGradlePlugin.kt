@@ -1,3 +1,5 @@
+@file:Suppress("DEPRECATION")
+
 package io.embrace.android.gradle.plugin
 
 import io.embrace.android.gradle.plugin.api.EmbraceExtension

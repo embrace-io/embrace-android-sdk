@@ -1,3 +1,5 @@
+@file:Suppress("DEPRECATION")
+
 package io.embrace.android.gradle.plugin.config
 
 import io.embrace.android.gradle.plugin.api.EmbraceExtension
@@ -5,7 +7,6 @@ import io.embrace.android.gradle.swazzler.plugin.extension.SwazzlerExtension
 import org.gradle.api.Project
 import java.io.File
 
-@Suppress("DEPRECATION")
 class PluginBehaviorImpl(
     private val project: Project,
     private val extension: SwazzlerExtension,

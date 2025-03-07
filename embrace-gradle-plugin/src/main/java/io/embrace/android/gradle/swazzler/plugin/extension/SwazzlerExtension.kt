@@ -9,10 +9,11 @@ import org.gradle.api.provider.Property
  * An extension that can be used to configure the plugin.
  */
 @Suppress("DEPRECATION")
+@Deprecated("Deprecated. Use EmbraceExtension instead.")
 abstract class SwazzlerExtension(objectFactory: ObjectFactory) {
 
-    val forceIncrementalOverwrite: Property<Boolean> =
-        objectFactory.property(Boolean::class.java).convention(false)
+    @Deprecated("This property is deprecated and is no longer respected.")
+    val forceIncrementalOverwrite: Property<Boolean> = objectFactory.property(Boolean::class.java)
 
     @Deprecated("Use embrace.autoAddEmbraceDependencies instead.")
     val disableDependencyInjection: Property<Boolean> = objectFactory.property(Boolean::class.java)
@@ -20,8 +21,8 @@ abstract class SwazzlerExtension(objectFactory: ObjectFactory) {
     @Deprecated("Use embrace.autoAddEmbraceComposeDependency instead.")
     val disableComposeDependencyInjection: Property<Boolean> = objectFactory.property(Boolean::class.java)
 
-    val disableRNBundleRetriever: Property<Boolean> =
-        objectFactory.property(Boolean::class.java).convention(false)
+    @Deprecated("This property is deprecated and is no longer respected.")
+    val disableRNBundleRetriever: Property<Boolean> = objectFactory.property(Boolean::class.java)
 
     @Deprecated("Use embrace.bytecodeInstrumentation.okhttpEnabled instead.")
     val instrumentOkHttp: Property<Boolean> = objectFactory.property(Boolean::class.java)
@@ -38,8 +39,7 @@ abstract class SwazzlerExtension(objectFactory: ObjectFactory) {
     @Deprecated("Use embrace.bytecodeInstrumentation.firebasePushNotificationsEnabled instead.")
     val instrumentFirebaseMessaging: Property<Boolean> = objectFactory.property(Boolean::class.java)
 
-    // It is now ignored because we're automatically detecting all native symbols. This can be removed.
-    @Deprecated("")
+    @Deprecated("This property is deprecated and is no longer respected.")
     val customSymbolsDirectory: Property<String> =
         objectFactory.property(String::class.java).convention(DEFAULT_CUSTOM_SYMBOLS_DIRECTORY)
 

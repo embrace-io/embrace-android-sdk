@@ -1,3 +1,5 @@
+@file:Suppress("DEPRECATION")
+
 package io.embrace.android.gradle.plugin.config
 
 import io.embrace.android.gradle.plugin.api.EmbraceExtension
@@ -12,7 +14,6 @@ import org.junit.Before
 import org.junit.Test
 import java.io.File
 
-@Suppress("DEPRECATION")
 class PluginBehaviorImplTest {
 
     private lateinit var project: Project

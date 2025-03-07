@@ -1,5 +1,3 @@
-@file:JvmName("AsmTasks")
-
 package io.embrace.android.gradle.plugin.instrumentation
 
 import com.android.build.api.instrumentation.FramesComputationMode
@@ -42,18 +40,11 @@ fun registerAsmTasks(
                 )
                 params.disabled.set(
                     project.provider {
-                        behavior.isPluginDisabledForVariant(variant.name) ||
-                            behavior.isInstrumentationDisabledForVariant(variant.name)
+                        behavior.isPluginDisabledForVariant(variant.name) || behavior.isInstrumentationDisabledForVariant(variant.name)
                     }
                 )
                 params.classInstrumentationFilter.set(
                     ClassInstrumentationFilter(behavior.instrumentation.ignoredClasses)
-                )
-                params.invalidate.set(
-                    when {
-                        behavior.instrumentation.invalidateBytecode -> System.currentTimeMillis()
-                        else -> -1L // use a predictable input each time
-                    }
                 )
                 params.shouldInstrumentFirebaseMessaging.set(behavior.instrumentation.fcmPushNotificationsEnabled)
                 params.shouldInstrumentWebview.set(behavior.instrumentation.webviewEnabled)
@@ -64,8 +55,7 @@ fun registerAsmTasks(
             project.logger.debug("Asm transformClassesWith successfully called.")
         } catch (e: TransformClassesWithReflectionException) {
             project.logger.warn(
-                "There was a reflection issue while performing ASM bytecode transformation.\nThis " +
-                    "shouldn't affect build output.",
+                "There was a reflection issue while performing ASM bytecode transformation.\nThis " + "shouldn't affect build output.",
                 e
             )
         }

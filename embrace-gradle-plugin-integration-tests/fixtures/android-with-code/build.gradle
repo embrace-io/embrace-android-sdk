@@ -12,6 +12,6 @@ repositories {
 
 integrationTest.configureAndroidProject(project)
 
-swazzler {
-    disableDependencyInjection = false
+embrace {
+    autoAddEmbraceDependencies.set(true)
 }

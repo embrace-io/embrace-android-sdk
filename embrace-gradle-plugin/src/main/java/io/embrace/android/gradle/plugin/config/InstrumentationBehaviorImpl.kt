@@ -1,36 +1,43 @@
 package io.embrace.android.gradle.plugin.config
 
+import io.embrace.android.gradle.plugin.api.EmbraceExtension
 import io.embrace.android.gradle.swazzler.plugin.extension.SwazzlerExtension
 
+@Suppress("DEPRECATION")
 class InstrumentationBehaviorImpl(
     private val extension: SwazzlerExtension,
+    private val embrace: EmbraceExtension,
 ) : InstrumentationBehavior {
 
     override val invalidateBytecode: Boolean by lazy {
         extension.forceIncrementalOverwrite.get()
     }
 
+    private val instrumentation by lazy {
+        embrace.bytecodeInstrumentation
+    }
+
     override val okHttpEnabled: Boolean by lazy {
-        extension.instrumentOkHttp.get()
+        instrumentation.okhttpEnabled.orNull ?: extension.instrumentOkHttp.orNull ?: true
     }
 
     override val onClickEnabled: Boolean by lazy {
-        extension.instrumentOnClick.get()
+        instrumentation.onClickEnabled.orNull ?: extension.instrumentOnClick.orNull ?: true
     }
 
     override val onLongClickEnabled: Boolean by lazy {
-        extension.instrumentOnLongClick.get()
+        instrumentation.onLongClickEnabled.orNull ?: extension.instrumentOnLongClick.orNull ?: true
     }
 
     override val webviewEnabled: Boolean by lazy {
-        extension.instrumentWebview.get()
+        instrumentation.webviewOnPageStartedEnabled.orNull ?: extension.instrumentWebview.orNull ?: true
     }
 
     override val fcmPushNotificationsEnabled: Boolean by lazy {
-        extension.instrumentFirebaseMessaging.get()
+        instrumentation.firebasePushNotificationsEnabled.orNull ?: extension.instrumentFirebaseMessaging.orNull ?: false
     }
 
     override val ignoredClasses: List<String> by lazy {
-        extension.classSkipList.get()
+        instrumentation.classIgnorePatterns.get().plus(extension.classSkipList.get())
     }
 }

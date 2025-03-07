@@ -2,6 +2,28 @@
 
 # Upgrading to the new Embrace Gradle Plugin DSL
 
+The Embrace Gradle Plugin previously had a DSL via the 'swazzler' extension. This has been replaced with a new DSL via the 'embrace'
+extension.
+You can still use the 'swazzler' extension but it is deprecated and will be removed in a future release. It's recommended you use one
+extension or the other, rather than combining their use. Migration instructions are shown
+below:
+
+| Old API                                               | New API                                                                 |
+|-------------------------------------------------------|-------------------------------------------------------------------------|
+| `swazzler.disableDependencyInjection`                 | `embrace.autoAddEmbraceDependencies`                                    |
+| `swazzler.disableComposeDependencyInjection`          | `embrace.autoAddEmbraceComposeDependency`                               |
+| `swazzler.instrumentOkHttp`                           | `embrace.bytecodeInstrumentation.okhttpEnabled`                         |
+| `swazzler.instrumentOnClick`                          | `embrace.bytecodeInstrumentation.onClickEnabled`                        |
+| `swazzler.instrumentOnLongClick`                      | `embrace.bytecodeInstrumentation.onLongClickEnabled`                    |
+| `swazzler.instrumentWebview`                          | `embrace.bytecodeInstrumentation.webviewOnPageStartedEnabled`           |
+| `swazzler.instrumentFirebaseMessaging`                | `embrace.bytecodeInstrumentation.firebasePushNotificationsEnabled`      |
+| `swazzler.classSkipList`                              | `embrace.bytecodeInstrumentation.classIgnorePatterns`                   |
+| `swazzler.variantFilter`                              | `embrace.buildVariantFilter`                                            |
+| `SwazzlerExtension.Variant.enabled`                   | `embrace.buildVariantFilter.disableBytecodeInstrumentationForVariant()` |
+| `SwazzlerExtension.Variant.swazzlerOff`               | `embrace.buildVariantFilter.disablePluginForVariant()`                  |
+| `SwazzlerExtension.Variant.setSwazzlingEnabled()`     | `embrace.buildVariantFilter.disableBytecodeInstrumentationForVariant()` |
+| `SwazzlerExtension.Variant.disablePluginForVariant()` | `embrace.buildVariantFilter.disablePluginForVariant()`                  |
+
 The following project properties are now ignored and have no effect. You should remove them from your `gradle.properties` file:
 
 - `embrace.logLevel`

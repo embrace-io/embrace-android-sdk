@@ -1,16 +1,19 @@
 package io.embrace.android.gradle.plugin.config
 
+import io.embrace.android.gradle.plugin.api.EmbraceExtension
 import io.embrace.android.gradle.swazzler.plugin.extension.SwazzlerExtension
 import org.gradle.api.Project
 import java.io.File
 
+@Suppress("DEPRECATION")
 class PluginBehaviorImpl(
     private val project: Project,
     private val extension: SwazzlerExtension,
+    private val embrace: EmbraceExtension,
 ) : PluginBehavior {
 
     override val instrumentation: InstrumentationBehavior by lazy {
-        InstrumentationBehaviorImpl(extension)
+        InstrumentationBehaviorImpl(extension, embrace)
     }
 
     override val isTelemetryDisabled: Boolean by lazy {
@@ -55,31 +58,35 @@ class PluginBehaviorImpl(
     }
 
     override val autoAddEmbraceDependencies: Boolean by lazy {
-        !extension.disableDependencyInjection.get() && !isUnityEdmEnabled
+        val userValue = embrace.autoAddEmbraceDependencies.orNull ?: extension.disableDependencyInjection.orNull?.not() ?: true
+        userValue && !isUnityEdmEnabled
     }
 
     override val autoAddEmbraceComposeDependency: Boolean by lazy {
-        !extension.disableComposeDependencyInjection.get()
+        embrace.autoAddEmbraceComposeDependency.orNull ?: extension.disableComposeDependencyInjection.orNull?.not() ?: false
     }
 
-    @Suppress("DEPRECATION")
     override val customSymbolsDirectory: String? by lazy {
         extension.customSymbolsDirectory.orNull
     }
 
     override fun isInstrumentationDisabledForVariant(variantName: String): Boolean {
-        val variant = findVariant(variantName)
-        return !variant.enabled
+        return !findVariant(variantName).enabled || !findBuildVariant(variantName).bytecodeInstrumentationEnabled
     }
 
     override fun isPluginDisabledForVariant(variantName: String): Boolean {
-        val variant = findVariant(variantName)
-        return variant.swazzlerOff
+        return findVariant(variantName).swazzlerOff || !findBuildVariant(variantName).pluginEnabled
     }
 
     private fun findVariant(variantName: String): SwazzlerExtension.Variant {
         return SwazzlerExtension.Variant(variantName).also {
             extension.variantFilter?.execute(it)
+        }
+    }
+
+    private fun findBuildVariant(variantName: String): EmbraceExtension.BuildVariant {
+        return EmbraceExtension.BuildVariant(variantName).also {
+            embrace.buildVariantFilter.execute(it)
         }
     }
 }

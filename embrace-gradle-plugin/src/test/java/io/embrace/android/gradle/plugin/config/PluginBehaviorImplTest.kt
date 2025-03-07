@@ -193,7 +193,7 @@ class PluginBehaviorImplTest {
 
     @Test
     fun `autoAddEmbraceComposeDependency enabled via embrace`() {
-        embrace.autoAddEmbraceComposeDependency.set(true)
+        embrace.autoAddEmbraceComposeClickDependency.set(true)
         assertTrue(behavior.autoAddEmbraceComposeDependency)
     }
 

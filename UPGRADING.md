@@ -11,7 +11,7 @@ below:
 | Old API                                               | New API                                                                 |
 |-------------------------------------------------------|-------------------------------------------------------------------------|
 | `swazzler.disableDependencyInjection`                 | `embrace.autoAddEmbraceDependencies`                                    |
-| `swazzler.disableComposeDependencyInjection`          | `embrace.autoAddEmbraceComposeDependency`                               |
+| `swazzler.disableComposeDependencyInjection`          | `embrace.autoAddEmbraceComposeClickDependency`                          |
 | `swazzler.instrumentOkHttp`                           | `embrace.bytecodeInstrumentation.okhttpEnabled`                         |
 | `swazzler.instrumentOnClick`                          | `embrace.bytecodeInstrumentation.onClickEnabled`                        |
 | `swazzler.instrumentOnLongClick`                      | `embrace.bytecodeInstrumentation.onLongClickEnabled`                    |

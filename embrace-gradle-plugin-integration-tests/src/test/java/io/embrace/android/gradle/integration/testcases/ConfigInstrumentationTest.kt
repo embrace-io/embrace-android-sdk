@@ -1,17 +1,12 @@
 package io.embrace.android.gradle.integration.testcases
 
-import com.squareup.moshi.Moshi
 import io.embrace.android.embracesdk.ResourceReader
-import io.embrace.android.gradle.integration.framework.ApkDisassembler
 import io.embrace.android.gradle.integration.framework.AssertionInterface
 import io.embrace.android.gradle.integration.framework.PluginIntegrationTestRule
 import io.embrace.android.gradle.integration.framework.ProjectType
-import io.embrace.android.gradle.integration.framework.findArtifact
-import io.embrace.android.gradle.integration.framework.smali.ExpectedSmaliConfig
+import io.embrace.android.gradle.integration.framework.smali.SmaliConfigReader
 import io.embrace.android.gradle.integration.framework.smali.SmaliMethod
 import io.embrace.android.gradle.integration.framework.smali.SmaliParser
-import okio.buffer
-import okio.source
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -70,14 +65,15 @@ class ConfigInstrumentationTest {
 
     private fun AssertionInterface.verifyInstrumentedConfig(projectDir: File, resName: String) {
         verifyBuildTelemetryRequestSent(variants)
-        val smaliFiles = readSmaliFiles(projectDir)
+        val reader = SmaliConfigReader()
+        val smaliFiles = reader.readSmaliFiles(projectDir, classNames)
         val parser = SmaliParser()
-        val cfg = readExpectedConfig(resName)
+        val cfg = reader.readExpectedConfig(resName)
         var buildIdMethod: SmaliMethod? = null
 
         cfg.values.forEach { expected ->
             val file = smaliFiles.single { it.name == "${expected.className}.smali" }
-            val observed = parser.parse(file)
+            val observed = parser.parse(file, expected.methods)
 
             val obs = if (observed.className == "ProjectConfigImpl") {
                 buildIdMethod = observed.methods.single { it.signature.contains("getBuildId") }
@@ -85,24 +81,16 @@ class ConfigInstrumentationTest {
             } else {
                 observed
             }
-            assertEquals(expected, obs)
+            val exp = if (observed.className == "ProjectConfigImpl") {
+                expected.copy(methods = expected.methods.filterNot { it.signature.contains("getBuildId") })
+            } else {
+                expected
+            }
+            assertEquals(exp, obs)
         }
 
         // build ID is non-deterministic, test independently
         val buildId = checkNotNull(buildIdMethod?.returnValue)
         verifyJvmMappingRequestsSent(appIds = listOf("abcde"), buildIds = listOf(buildId))
-    }
-
-    private fun readSmaliFiles(projectDir: File): List<File> {
-        val apk = findArtifact(projectDir, "build/outputs/apk/release/", ".apk")
-        val decodedApk = ApkDisassembler().disassembleApk(apk)
-        val smaliFiles = decodedApk.getSmaliFiles(classNames)
-        return smaliFiles
-    }
-
-    private fun readExpectedConfig(resName: String): ExpectedSmaliConfig {
-        val adapter = Moshi.Builder().build().adapter(ExpectedSmaliConfig::class.java)
-        val buffer = ResourceReader.readResource(resName).source().buffer()
-        return checkNotNull(adapter.fromJson(buffer))
     }
 }

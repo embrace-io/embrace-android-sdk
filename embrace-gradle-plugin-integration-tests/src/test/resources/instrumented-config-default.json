@@ -157,6 +157,9 @@
         {
           "signature": "getBuildType()Ljava/lang/String;",
           "returnValue": "release"
+        },
+        {
+          "signature": "getBuildId()Ljava/lang/String;"
         }
       ]
     },

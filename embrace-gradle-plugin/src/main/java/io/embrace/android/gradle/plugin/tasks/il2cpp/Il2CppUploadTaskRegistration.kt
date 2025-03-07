@@ -137,7 +137,7 @@ class Il2CppUploadTaskRegistration : EmbraceTaskRegistration {
                         endpoint = info.endpoint,
                         fileName = info.filename,
                         buildId = variantInfo.buildId,
-                        failBuildOnUploadErrors = behavior.failBuildOnUploadErrors,
+                        failBuildOnUploadErrors = behavior.failBuildOnUploadErrors.get(),
                         baseUrl = behavior.baseUrl,
                     )
                 }

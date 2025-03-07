@@ -45,6 +45,12 @@ class InstrumentationBehaviorImplTest {
     }
 
     @Test
+    fun `okHttpEnabled disabled via global`() {
+        embrace.bytecodeInstrumentation.enabled.set(false)
+        assertFalse(behavior.okHttpEnabled)
+    }
+
+    @Test
     fun `onClickEnabled default`() {
         assertTrue(behavior.onClickEnabled)
     }
@@ -58,6 +64,12 @@ class InstrumentationBehaviorImplTest {
     @Test
     fun `onClickEnabled via embrace`() {
         embrace.bytecodeInstrumentation.onClickEnabled.set(false)
+        assertFalse(behavior.onClickEnabled)
+    }
+
+    @Test
+    fun `onClickEnabled disabled via global`() {
+        embrace.bytecodeInstrumentation.enabled.set(false)
         assertFalse(behavior.onClickEnabled)
     }
 
@@ -79,6 +91,12 @@ class InstrumentationBehaviorImplTest {
     }
 
     @Test
+    fun `onLongClickEnabled disabled via global`() {
+        embrace.bytecodeInstrumentation.enabled.set(false)
+        assertFalse(behavior.onLongClickEnabled)
+    }
+
+    @Test
     fun `webviewEnabled default`() {
         assertTrue(behavior.webviewEnabled)
     }
@@ -92,6 +110,12 @@ class InstrumentationBehaviorImplTest {
     @Test
     fun `webviewEnabled via embrace`() {
         embrace.bytecodeInstrumentation.webviewOnPageStartedEnabled.set(false)
+        assertFalse(behavior.webviewEnabled)
+    }
+
+    @Test
+    fun `webviewEnabled disabled via global`() {
+        embrace.bytecodeInstrumentation.enabled.set(false)
         assertFalse(behavior.webviewEnabled)
     }
 
@@ -110,6 +134,13 @@ class InstrumentationBehaviorImplTest {
     fun `fcmPushNotificationsEnabled via embrace`() {
         embrace.bytecodeInstrumentation.firebasePushNotificationsEnabled.set(true)
         assertTrue(behavior.fcmPushNotificationsEnabled)
+    }
+
+    @Test
+    fun `fcmPushNotificationsEnabled disabled via global`() {
+        embrace.bytecodeInstrumentation.firebasePushNotificationsEnabled.set(true)
+        embrace.bytecodeInstrumentation.enabled.set(false)
+        assertFalse(behavior.fcmPushNotificationsEnabled)
     }
 
     @Test

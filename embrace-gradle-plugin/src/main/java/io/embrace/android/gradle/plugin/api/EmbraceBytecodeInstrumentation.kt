@@ -14,7 +14,7 @@ abstract class EmbraceBytecodeInstrumentation @Inject internal constructor(objec
      * Global flag that overrides all others & decides whether Embrace should perform any bytecode instrumentation.
      * Defaults to true.
      */
-    val enabled: Property<Boolean> = objectFactory.property(Boolean::class.java)
+    val enabled: Property<Boolean> = objectFactory.property(Boolean::class.java).convention(true)
 
     /**
      * Whether Embrace should automatically instrument OkHttp requests. Defaults to true.

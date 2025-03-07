@@ -23,6 +23,7 @@ below:
 | `SwazzlerExtension.Variant.swazzlerOff`               | `embrace.buildVariantFilter.disablePluginForVariant()`                  |
 | `SwazzlerExtension.Variant.setSwazzlingEnabled()`     | `embrace.buildVariantFilter.disableBytecodeInstrumentationForVariant()` |
 | `SwazzlerExtension.Variant.disablePluginForVariant()` | `embrace.buildVariantFilter.disablePluginForVariant()`                  |
+| `embrace.disableCollectBuildData`                     | `embrace.telemetryEnabled`                                              |
 | `swazzler.forceIncrementalOverwrite`                  | Obsolete - no alternative provided.                                     |
 | `swazzler.disableRNBundleRetriever`                   | Obsolete - no alternative provided.                                     |
 | `swazzler.customSymbolsDirectory`                     | Obsolete - no alternative provided.                                     |

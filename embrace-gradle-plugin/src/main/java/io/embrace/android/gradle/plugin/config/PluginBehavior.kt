@@ -1,11 +1,13 @@
 package io.embrace.android.gradle.plugin.config
 
+import org.gradle.api.provider.Provider
+
 interface PluginBehavior {
 
     /**
      * Whether telemetry can be captured for this build, set via `embrace.disableCollectBuildData`.
      */
-    val isTelemetryDisabled: Boolean
+    val isTelemetryDisabled: Provider<Boolean>
 
     /**
      * Whether Unity EDM is enabled, set via `embrace.externalDependencyManager`
@@ -25,7 +27,7 @@ interface PluginBehavior {
     /**
      * Whether the plugin should fail the build on upload errors, set via `embrace.failBuildOnUploadErrors`
      */
-    val failBuildOnUploadErrors: Boolean
+    val failBuildOnUploadErrors: Provider<Boolean>
 
     /**
      * The base URL for the Embrace API, set via `embrace.baseUrl`
@@ -74,6 +76,5 @@ const val EMBRACE_BASE_URL = "embrace.baseUrl"
 const val EMBRACE_DISABLE_COLLECT_BUILD_DATA = "embrace.disableCollectBuildData"
 const val EMBRACE_UPLOAD_IL2CPP_MAPPING_FILES = "embrace.uploadIl2CppMappingFiles"
 const val EMBRACE_DISABLE_MAPPING_FILE_UPLOAD = "embrace.disableMappingFileUpload"
-const val EMBRACE_FAIL_BUILD_ON_UPLOAD_ERRORS = "embrace.failBuildOnUploadErrors"
 const val EMBRACE_UNITY_EXTERNAL_DEPENDENCY_MANAGER = "embrace.externalDependencyManager"
 const val DEFAULT_SYMBOL_STORE_HOST_URL = "https://dsym-store.emb-api.com"

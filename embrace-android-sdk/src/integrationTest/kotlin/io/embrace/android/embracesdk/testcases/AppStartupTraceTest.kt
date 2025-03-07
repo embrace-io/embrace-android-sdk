@@ -5,6 +5,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.arch.assertError
 import io.embrace.android.embracesdk.assertions.findSpansOfType
 import io.embrace.android.embracesdk.fakes.FakeActivity
+import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeSplashScreenActivity
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
@@ -22,6 +23,7 @@ import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface.Companion.ACTIVITY_GAP
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface.Companion.LIFECYCLE_EVENT_GAP
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface.Companion.POST_ACTIVITY_ACTION_DWELL
+import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import io.opentelemetry.sdk.trace.data.SpanData
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -36,7 +38,11 @@ import org.robolectric.annotation.Config
 internal class AppStartupTraceTest {
     @Rule
     @JvmField
-    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule()
+    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule {
+        EmbraceSetupInterface().apply {
+            (overriddenInitModule.logger as FakeEmbLogger).ignoredErrors.clear()
+        }
+    }
 
     @Test
     fun `startup spans recorded in foreground session when background activity is enabled`() {
@@ -308,6 +314,36 @@ internal class AppStartupTraceTest {
     }
 
     @Test
+    fun `app backgrounded during cold startup while waiting for app ready`() {
+        var backgroundTime: Long? = null
+        testRule.runTest(
+            instrumentedConfig = FakeInstrumentedConfig(
+                enabledFeatures = FakeEnabledFeatureConfig(
+                    bgActivityCapture = true,
+                    endStartupWithAppReady = true
+                )
+            ),
+            testCaseAction = {
+                simulateOpeningActivities(
+                    addStartupActivity = false,
+                    startInBackground = true,
+                    endInBackground = true,
+                )
+                backgroundTime = clock.now()
+            },
+            assertAction = {
+                val session = getSingleSessionEnvelope()
+                val spans = session.findSpansOfType(EmbType.Performance.Default).associateBy { it.name }
+                with(checkNotNull(spans["emb-app-startup-cold"])) {
+                    assertError(ErrorCode.USER_ABANDON)
+                    assertEquals(backgroundTime, checkNotNull(endTimeNanos).nanosToMillis())
+                }
+
+            }
+        )
+    }
+
+    @Test
     fun `warm startup waiting for app ready ended by a crash`() {
         var startupActivityInitMs: Long? = null
         var crashTimestamp: Long? = null
@@ -337,6 +373,40 @@ internal class AppStartupTraceTest {
                     assertEquals(startupActivityInitMs, checkNotNull(startTimeNanos).nanosToMillis())
                     assertEquals(crashTimestamp, checkNotNull(endTimeNanos).nanosToMillis())
                 }
+            }
+        )
+    }
+
+    @Test
+    fun `app backgrounded during warm startup while waiting for app ready`() {
+        var startupActivityInitMs: Long? = null
+        var backgroundTime: Long? = null
+        testRule.runTest(
+            instrumentedConfig = FakeInstrumentedConfig(
+                enabledFeatures = FakeEnabledFeatureConfig(
+                    bgActivityCapture = true,
+                    endStartupWithAppReady = true
+                )
+            ),
+            testCaseAction = {
+                clock.tick(10000L)
+                startupActivityInitMs = clock.now()
+                simulateOpeningActivities(
+                    addStartupActivity = false,
+                    startInBackground = true,
+                    endInBackground = true,
+                )
+                backgroundTime = clock.now()
+            },
+            assertAction = {
+                val session = getSingleSessionEnvelope()
+                val spans = session.findSpansOfType(EmbType.Performance.Default).associateBy { it.name }
+                with(checkNotNull(spans["emb-app-startup-warm"])) {
+                    assertError(ErrorCode.USER_ABANDON)
+                    assertEquals(startupActivityInitMs, checkNotNull(startTimeNanos).nanosToMillis())
+                    assertEquals(backgroundTime, checkNotNull(endTimeNanos).nanosToMillis())
+                }
+
             }
         )
     }

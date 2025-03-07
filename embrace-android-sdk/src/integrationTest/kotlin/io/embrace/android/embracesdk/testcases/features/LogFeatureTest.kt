@@ -3,11 +3,9 @@ package io.embrace.android.embracesdk.testcases.features
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.LogExceptionType
 import io.embrace.android.embracesdk.Severity
-import io.embrace.android.embracesdk.fakes.FakeClock
+import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
-import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
-import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.utils.getSafeStackTrace
@@ -25,20 +23,14 @@ import org.junit.runner.RunWith
 internal class LogFeatureTest {
 
     private val instrumentedConfig = FakeInstrumentedConfig(enabledFeatures = FakeEnabledFeatureConfig(bgActivityCapture = true))
+    private lateinit var executor: BlockingScheduledExecutorService
 
     @Rule
     @JvmField
     val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule {
-        val clock = FakeClock(SdkIntegrationTestRule.DEFAULT_SDK_START_TIME_MS)
-        val fakeInitModule = FakeInitModule(clock = clock)
-        EmbraceSetupInterface(
-            overriddenClock = clock,
-            overriddenInitModule = fakeInitModule,
-            overriddenWorkerThreadModule = FakeWorkerThreadModule(
-                fakeInitModule = fakeInitModule,
-                testWorkerName = Worker.Background.LogMessageWorker
-            )
-        )
+        EmbraceSetupInterface(workerToFake = Worker.Background.LogMessageWorker).also {
+            executor = it.getFakedWorkerExecutor()
+        }
     }
 
     @Test
@@ -393,11 +385,8 @@ internal class LogFeatureTest {
     }
 
     private fun flushLogs() {
-        val executor =
-            (testRule.setup.overriddenWorkerThreadModule as FakeWorkerThreadModule).executor
         executor.runCurrentlyBlocked()
-        val logOrchestrator = testRule.bootstrapper.logModule.logOrchestrator
-        logOrchestrator.flush(false)
+        testRule.bootstrapper.logModule.logOrchestrator.flush(false)
     }
 
     private fun getEmbraceSeverity(severityNumber: Int): Severity {

@@ -2,14 +2,8 @@ package io.embrace.android.embracesdk.testcases.features
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
-import io.embrace.android.embracesdk.fakes.FakeClock
-import io.embrace.android.embracesdk.fakes.FakeConfigService
-import io.embrace.android.embracesdk.fakes.FakeEmbLogger
-import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
-import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import io.embrace.android.embracesdk.internal.anr.detection.BlockedThreadDetector
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
-import io.embrace.android.embracesdk.internal.injection.createAnrModule
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.payload.Span
@@ -18,7 +12,6 @@ import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface
 import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import io.embrace.android.embracesdk.testframework.assertions.assertMatches
-import java.util.concurrent.atomic.AtomicReference
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -40,27 +33,17 @@ internal class AnrFeatureTest {
     @Rule
     @JvmField
     val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule {
-        val clock = FakeClock(currentTime = START_TIME_MS)
-        val initModule = FakeInitModule(clock, FakeEmbLogger(throwOnInternalError = false))
-        val workerThreadModule =
-            FakeWorkerThreadModule(initModule, Worker.Background.AnrWatchdogWorker).apply {
-                anrMonitorThread = AtomicReference(Thread.currentThread())
-            }
-        anrMonitorExecutor = workerThreadModule.executor.apply { blockingMode = false }
-        val anrModule = createAnrModule(
-            initModule,
-            FakeConfigService(),
-            workerThreadModule
-        )
-        blockedThreadDetector = anrModule.blockedThreadDetector
-
         EmbraceSetupInterface(
             currentTimeMs = START_TIME_MS,
-            overriddenClock = clock,
-            overriddenInitModule = initModule,
-            overriddenWorkerThreadModule = workerThreadModule,
-            fakeAnrModule = anrModule
-        )
+            workerToFake = Worker.Background.AnrWatchdogWorker,
+            anrMonitoringThread = Thread.currentThread()
+        ).also {
+            with(it) {
+                anrMonitorExecutor = getFakedWorkerExecutor()
+                anrMonitorExecutor.blockingMode = false
+                blockedThreadDetector = getBlockedThreadDetector()
+            }
+        }
     }
 
     @Test
@@ -183,10 +166,12 @@ internal class AnrFeatureTest {
         assertEquals(endTime, span.endTimeNanos?.nanosToMillis())
 
         // assert span attributes
-        span.attributes?.assertMatches(mapOf(
-            "emb.type" to "perf.thread_blockage",
-            "interval_code" to expectedIntervalCode
-        ))
+        span.attributes?.assertMatches(
+            mapOf(
+                "emb.type" to "perf.thread_blockage",
+                "interval_code" to expectedIntervalCode
+            )
+        )
 
         val events = checkNotNull(span.events)
 
@@ -194,14 +179,16 @@ internal class AnrFeatureTest {
             assertEquals("perf.thread_blockage_sample", event.name)
 
             // assert attributes
-            event.attributes?.assertMatches(mapOf(
-                "emb.type" to "perf.thread_blockage_sample",
-                "sample_overhead" to 0,
-                "sample_code" to when {
-                    index < MAX_SAMPLE_COUNT -> "0"
-                    else -> "1"
-                }
-            ))
+            event.attributes?.assertMatches(
+                mapOf(
+                    "emb.type" to "perf.thread_blockage_sample",
+                    "sample_overhead" to 0,
+                    "sample_code" to when {
+                        index < MAX_SAMPLE_COUNT -> "0"
+                        else -> "1"
+                    }
+                )
+            )
 
             // assert interval time
             val expectedTime = startTime + ANR_THRESHOLD_MS + ((index + 1) * INTERVAL_MS)

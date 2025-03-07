@@ -10,12 +10,15 @@ import android.os.Build
 import android.preference.PreferenceManager
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.config.remote.AppExitInfoConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.payload.Log
+import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.assertions.assertMatches
 import io.embrace.android.embracesdk.testframework.assertions.getLastLog
+import io.embrace.android.embracesdk.testframework.assertions.getLogOfType
 import io.mockk.every
 import io.mockk.mockk
 import org.junit.Assert.assertEquals
@@ -62,7 +65,7 @@ internal class AeiFeatureTest {
 
     @Rule
     @JvmField
-    val testRule = SdkIntegrationTestRule()
+    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule()
 
     private val jvmCrash = TestAeiData(
         ApplicationExitInfo.REASON_CRASH,
@@ -101,7 +104,7 @@ internal class AeiFeatureTest {
                 recordSession()
             },
             assertAction = {
-                val log = getSingleLogEnvelope().getLastLog()
+                val log = getSingleLogEnvelope().getLogOfType(EmbType.System.Exit)
                 log.assertContainsAeiData(jvmCrash)
             }
         )
@@ -117,7 +120,7 @@ internal class AeiFeatureTest {
                 recordSession()
             },
             assertAction = {
-                val log = getSingleLogEnvelope().getLastLog()
+                val log = getSingleLogEnvelope().getLogOfType(EmbType.System.Exit)
                 log.assertContainsAeiData(nativeCrash)
             }
         )
@@ -133,7 +136,9 @@ internal class AeiFeatureTest {
                 recordSession()
             },
             assertAction = {
-                val log = getSingleLogEnvelope().getLastLog()
+                val log = getLogEnvelopes(2)
+                    .flatMap { checkNotNull(it.data.logs) }
+                    .single { it.attributes?.findAttributeValue("emb.type") == "sys.exit" }
                 log.assertContainsAeiData(anr)
             }
         )
@@ -149,7 +154,7 @@ internal class AeiFeatureTest {
                 recordSession()
             },
             assertAction = {
-                val log = getSingleLogEnvelope().getLastLog()
+                val log = getSingleLogEnvelope().getLogOfType(EmbType.System.Exit)
                 log.assertContainsAeiData(anr)
             }
         )
@@ -172,6 +177,7 @@ internal class AeiFeatureTest {
                 val envelopes = getLogEnvelopes(expectedSize)
                 assertEquals(expectedSize, envelopes.size)
                 val logs = envelopes.mapNotNull { it.data.logs?.singleOrNull() }
+                    .filter { it.attributes?.findAttributeValue("emb.type") == "sys.exit" }
                 assertEquals(32, logs.size)
             }
         )

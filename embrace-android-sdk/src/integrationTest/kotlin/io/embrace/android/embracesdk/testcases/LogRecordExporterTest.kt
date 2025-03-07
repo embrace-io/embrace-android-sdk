@@ -2,11 +2,10 @@ package io.embrace.android.embracesdk.testcases
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.Severity
-import io.embrace.android.embracesdk.assertions.returnIfConditionMet
 import io.embrace.android.embracesdk.fakes.FakeLogRecordExporter
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -34,17 +33,9 @@ internal class LogRecordExporterTest {
                     embrace.logMessage("test message", Severity.INFO)
                 }
             },
-            assertAction = {
-                assertTrue(
-                    returnIfConditionMet(
-                        desiredValueSupplier = { true },
-                        dataProvider = { fakeLogRecordExporter.exportedLogs?.size },
-                        condition = { data ->
-                            data == 1
-                        },
-                    )
-                )
-                with(checkNotNull(fakeLogRecordExporter.exportedLogs?.first())) {
+            otelExportAssertion = {
+                val log = awaitLogs(1) { it.attributes.get(EmbType.System.Log.key.attributeKey) == EmbType.System.Log.value }
+                with(log.single()) {
                     assertEquals("test message", body.asString())
                     assertEquals(logTimestampNanos, timestampEpochNanos)
                     assertEquals(logTimestampNanos, observedTimestampEpochNanos)

@@ -1,9 +1,8 @@
 package io.embrace.android.embracesdk.internal.network.http;
 
-import android.annotation.TargetApi;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -50,7 +49,7 @@ interface EmbraceHttpUrlConnection {
 
     int getContentLength();
 
-    @TargetApi(24)
+    @RequiresApi(24)
     long getContentLengthLong();
 
     @Nullable
@@ -86,7 +85,7 @@ interface EmbraceHttpUrlConnection {
     @Nullable
     String getHeaderFieldKey(int n);
 
-    @TargetApi(24)
+    @RequiresApi(24)
     long getHeaderFieldLong(@NonNull String name, long defaultValue);
 
     @Nullable

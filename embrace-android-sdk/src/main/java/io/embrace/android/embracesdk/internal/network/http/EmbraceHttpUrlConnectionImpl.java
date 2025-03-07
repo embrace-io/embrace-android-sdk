@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.network.http;
 
-import android.annotation.TargetApi;
+import androidx.annotation.RequiresApi;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -90,7 +90,7 @@ class EmbraceHttpUrlConnectionImpl<T extends HttpURLConnection> extends HttpURLC
     }
 
     @Override
-    @TargetApi(24)
+    @RequiresApi(24)
     public long getContentLengthLong() {
         return embraceHttpUrlConnectionDelegate.getContentLengthLong();
     }
@@ -166,7 +166,7 @@ class EmbraceHttpUrlConnectionImpl<T extends HttpURLConnection> extends HttpURLC
     }
 
     @Override
-    @TargetApi(24)
+    @RequiresApi(24)
     public long getHeaderFieldLong(String name, long defaultValue) {
         return embraceHttpUrlConnectionDelegate.getHeaderFieldLong(name, defaultValue);
     }

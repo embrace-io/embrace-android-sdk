@@ -4,7 +4,6 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.findEventsOfType
 import io.embrace.android.embracesdk.assertions.findSessionSpan
 import io.embrace.android.embracesdk.assertions.getSessionId
-import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.opentelemetry.embCleanExit
@@ -19,13 +18,10 @@ import io.embrace.android.embracesdk.internal.opentelemetry.embTerminated
 import io.embrace.android.embracesdk.internal.payload.ApplicationState
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
-import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
-import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface
-import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import io.embrace.android.embracesdk.testframework.assertions.assertMatches
-import io.embrace.android.embracesdk.testframework.assertions.getLastLog
+import io.embrace.android.embracesdk.testframework.assertions.getLogsOfType
 import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -42,15 +38,9 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 internal class BackgroundActivityDisabledTest {
 
-    private lateinit var executor: BlockingScheduledExecutorService
-
     @Rule
     @JvmField
-    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule {
-        EmbraceSetupInterface(workerToFake = Worker.Background.LogMessageWorker).also {
-            executor = it.getFakedWorkerExecutor()
-        }
-    }
+    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule()
 
     @Test
     fun `recording telemetry in the background when background activity is disabled does the right thing`() {
@@ -62,7 +52,6 @@ internal class BackgroundActivityDisabledTest {
                 recordSession {
                     trace = checkNotNull(embrace.startSpan("test-trace"))
                 }
-                runLoggingThread()
 
                 traceStopMs = clock.tick(100L)
                 assertTrue(trace.stop())
@@ -73,28 +62,24 @@ internal class BackgroundActivityDisabledTest {
                 assertTrue(embrace.deviceId.isNotBlank())
                 assertNull(embrace.startSpan("test"))
                 embrace.logError("error")
-                flushLogEnvelope()
 
                 embrace.addBreadcrumb("not-logged")
                 clock.tick(10_000L)
 
                 embrace.logInfo("info")
-                flushLogEnvelope()
 
                 recordSession {
                     assertFalse(embrace.currentSessionId.isNullOrBlank())
                     embrace.addBreadcrumb("logged")
                     embrace.logWarning("warning")
-                    flushLogEnvelope()
                     embrace.logError("sent-after-session")
                 }
-                flushLogEnvelope()
             },
             assertAction = {
                 val sessions = getSessionEnvelopes(2)
                 getSessionEnvelopes(0, ApplicationState.BACKGROUND)
-                val logs = getLogEnvelopes(4).map { it.getLastLog() }
 
+                val logs = getLogEnvelopes(2).flatMap { it.getLogsOfType(EmbType.System.Log) }
                 with(logs[0]) {
                     assertEquals("error", body)
                     attributes?.assertMatches(
@@ -122,12 +107,8 @@ internal class BackgroundActivityDisabledTest {
                         )
                     )
                 }
-                val secondSession = sessions[1]
-                assertEquals(
-                    0,
-                    getSessionEnvelopes(0, ApplicationState.BACKGROUND).size
-                )
 
+                val secondSession = sessions[1]
                 with(logs[3]) {
                     assertEquals("sent-after-session", body)
                     attributes?.assertMatches(
@@ -156,12 +137,6 @@ internal class BackgroundActivityDisabledTest {
                 }
             }
         )
-    }
-
-    private fun EmbraceActionInterface.flushLogEnvelope() {
-        runLoggingThread()
-        clock.tick(2000L)
-        testRule.bootstrapper.logModule.logOrchestrator.flush(false)
     }
 
     @Test
@@ -224,10 +199,6 @@ internal class BackgroundActivityDisabledTest {
                 )
             }
         )
-    }
-
-    private fun runLoggingThread() {
-        executor.runCurrentlyBlocked()
     }
 
     private fun Span.assertExpectedSessionSpanAttributes(

@@ -7,11 +7,13 @@ import io.embrace.android.embracesdk.internal.injection.SerializationAction
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.InputStream
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.CopyOnWriteArrayList
 
 internal class FakeCacheStorageService : PayloadStorageService {
 
-    val storedPayloads = mutableMapOf<StoredTelemetryMetadata, SerializationAction>()
-    val deletedPayloads = mutableListOf<StoredTelemetryMetadata>()
+    val storedPayloads = ConcurrentHashMap<StoredTelemetryMetadata, SerializationAction>()
+    val deletedPayloads = CopyOnWriteArrayList<StoredTelemetryMetadata>()
 
     override fun store(metadata: StoredTelemetryMetadata, action: SerializationAction) {
         storedPayloads[metadata] = action

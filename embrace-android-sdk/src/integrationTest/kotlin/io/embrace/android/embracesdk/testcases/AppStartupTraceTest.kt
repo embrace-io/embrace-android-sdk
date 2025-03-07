@@ -38,9 +38,7 @@ internal class AppStartupTraceTest {
     @Rule
     @JvmField
     val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule {
-        EmbraceSetupInterface().apply {
-            getEmbLogger().ignoredErrors.clear()
-        }
+        EmbraceSetupInterface(ignoredInternalErrors = emptyList())
     }
 
     @Test

@@ -55,6 +55,7 @@ internal class EmbraceSetupInterface @JvmOverloads constructor(
     var useMockWebServer: Boolean = true,
     var cacheStorageServiceProvider: Provider<PayloadStorageService>? = null,
     var payloadStorageServiceProvider: Provider<PayloadStorageService>? = null,
+    val ignoredInternalErrors: List<InternalErrorType> = listOf(InternalErrorType.APP_LAUNCH_TRACE_FAIL),
 ) {
     val fakeNetworkConnectivityService = FakeNetworkConnectivityService()
     val fakeJniDelegate = FakeJniDelegate()
@@ -63,7 +64,7 @@ internal class EmbraceSetupInterface @JvmOverloads constructor(
 
     private val fakeInitModule: FakeInitModule = FakeInitModule(
         clock = FakeClock(currentTime = SdkIntegrationTestRule.DEFAULT_SDK_START_TIME_MS),
-        logger = FakeEmbLogger(ignoredErrors = mutableListOf(InternalErrorType.PROCESS_STATE_CALLBACK_FAIL)),
+        logger = FakeEmbLogger(ignoredErrors = ignoredInternalErrors),
         processIdentifierProvider = { processIdentifier }
     )
 

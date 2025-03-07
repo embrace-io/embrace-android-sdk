@@ -8,7 +8,7 @@ import io.embrace.android.embracesdk.internal.utils.Provider
 class FakeEmbLogger(
     var throwOnInternalError: Boolean = true,
     override var errorHandlerProvider: Provider<InternalErrorHandler?> = { null },
-    val ignoredErrors: MutableList<InternalErrorType> = mutableListOf()
+    val ignoredErrors: List<InternalErrorType> = emptyList()
 ) : EmbLogger {
 
     data class LogMessage(
@@ -37,10 +37,13 @@ class FakeEmbLogger(
     }
 
     override fun trackInternalError(type: InternalErrorType, throwable: Throwable) {
-        if (throwOnInternalError && !ignoredErrors.contains(type)) {
-            throw IllegalStateException("Internal error: $type", throwable)
+        if (!ignoredErrors.contains(type)) {
+            if (throwOnInternalError) {
+                throw IllegalStateException("Internal error: $type", throwable)
+            } else {
+                internalErrorMessages.add(LogMessage(type.toString(), throwable))
+            }
         }
-        internalErrorMessages.add(LogMessage(type.toString(), throwable))
         errorHandlerProvider()?.trackInternalError(type, throwable)
     }
 }

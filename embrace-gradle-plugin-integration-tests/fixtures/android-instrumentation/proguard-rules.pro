@@ -1,0 +1,6 @@
+-keep class com.example.app.** { *; }
+-keep class okhttp3.** { *; }
+-keep class io.embrace.android.embracesdk.internal.config.instrumented.** { *; }
+-keep class io.embrace.android.embracesdk.ViewSwazzledHooks$OnClickListener { *; }
+-keep class io.embrace.android.embracesdk.ViewSwazzledHooks$OnLongClickListener { *; }
+-keep class com.google.firebase.messaging.RemoteMessage

@@ -1,13 +1,14 @@
+@file:Suppress("DEPRECATION")
+
 package io.embrace.android.gradle.plugin.config
 
+import io.embrace.android.gradle.plugin.api.EmbraceExtension
 import io.embrace.android.gradle.swazzler.plugin.extension.SwazzlerExtension
 import org.gradle.api.Action
 import org.gradle.api.Project
-import org.gradle.api.logging.LogLevel
 import org.gradle.testfixtures.ProjectBuilder
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -17,59 +18,38 @@ class PluginBehaviorImplTest {
 
     private lateinit var project: Project
     private lateinit var extension: SwazzlerExtension
+    private lateinit var embrace: EmbraceExtension
     private lateinit var behavior: PluginBehavior
 
     @Before
     fun setUp() {
         project = ProjectBuilder.builder().build()
         extension = project.extensions.create("swazzler", SwazzlerExtension::class.java)
-        behavior = PluginBehaviorImpl(project, extension)
-    }
-
-    @Test
-    fun `log level default`() {
-        assertNull(behavior.logLevel)
-    }
-
-    @Test
-    fun `log level INFO`() {
-        addGradleProperty(EMBRACE_LOG_LEVEL, "info")
-        assertEquals(LogLevel.INFO, behavior.logLevel)
-    }
-
-    @Test
-    fun `log level WARN`() {
-        addGradleProperty(EMBRACE_LOG_LEVEL, "WARN")
-        assertEquals(LogLevel.WARN, behavior.logLevel)
-    }
-
-    @Test
-    fun `log level ERROR`() {
-        addGradleProperty(EMBRACE_LOG_LEVEL, "ErRoR")
-        assertEquals(LogLevel.ERROR, behavior.logLevel)
-    }
-
-    @Test
-    fun `log level invalid`() {
-        addGradleProperty(EMBRACE_LOG_LEVEL, "foo")
-        assertNull(behavior.logLevel)
+        embrace = project.extensions.create("embrace", EmbraceExtension::class.java)
+        behavior = PluginBehaviorImpl(project, extension, embrace)
     }
 
     @Test
     fun `telemetry disabled default`() {
-        assertFalse(behavior.isTelemetryDisabled)
+        assertFalse(behavior.isTelemetryDisabled.get())
     }
 
     @Test
     fun `telemetry disabled valid`() {
         addGradleProperty(EMBRACE_DISABLE_COLLECT_BUILD_DATA, "true")
-        assertTrue(behavior.isTelemetryDisabled)
+        assertTrue(behavior.isTelemetryDisabled.get())
     }
 
     @Test
     fun `telemetry disabled invalid`() {
         addGradleProperty(EMBRACE_DISABLE_COLLECT_BUILD_DATA, "foo")
-        assertFalse(behavior.isTelemetryDisabled)
+        assertFalse(behavior.isTelemetryDisabled.get())
+    }
+
+    @Test
+    fun `telemetry disabled via embrace extension`() {
+        embrace.telemetryEnabled.set(false)
+        assertTrue(behavior.isTelemetryDisabled.get())
     }
 
     @Test
@@ -124,6 +104,17 @@ class PluginBehaviorImplTest {
     }
 
     @Test
+    fun `fail build on upload error default`() {
+        assertTrue(behavior.failBuildOnUploadErrors.get())
+    }
+
+    @Test
+    fun `fail build on upload error via embrace`() {
+        embrace.failBuildOnUploadErrors.set(false)
+        assertFalse(behavior.failBuildOnUploadErrors.get())
+    }
+
+    @Test
     fun `base url default`() {
         assertEquals(DEFAULT_SYMBOL_STORE_HOST_URL, behavior.baseUrl)
     }
@@ -169,14 +160,14 @@ class PluginBehaviorImplTest {
     }
 
     @Test
-    fun `autoAddEmbraceDependencies disabled`() {
+    fun `autoAddEmbraceDependencies disabled via swazzler`() {
         extension.disableDependencyInjection.set(true)
         assertFalse(behavior.autoAddEmbraceDependencies)
     }
 
     @Test
-    fun `autoAddEmbraceDependency disabled`() {
-        extension.disableDependencyInjection.set(true)
+    fun `autoAddEmbraceDependencies disabled via embrace`() {
+        embrace.autoAddEmbraceDependencies.set(false)
         assertFalse(behavior.autoAddEmbraceDependencies)
     }
 
@@ -195,8 +186,14 @@ class PluginBehaviorImplTest {
     }
 
     @Test
-    fun `autoAddEmbraceComposeDependency enabled`() {
+    fun `autoAddEmbraceComposeDependency enabled via swazzler`() {
         extension.disableComposeDependencyInjection.set(false)
+        assertTrue(behavior.autoAddEmbraceComposeDependency)
+    }
+
+    @Test
+    fun `autoAddEmbraceComposeDependency enabled via embrace`() {
+        embrace.autoAddEmbraceComposeDependency.set(true)
         assertTrue(behavior.autoAddEmbraceComposeDependency)
     }
 
@@ -219,11 +216,23 @@ class PluginBehaviorImplTest {
     }
 
     @Test
-    fun `instrumentation disabled for variant`() {
+    fun `instrumentation disabled for variant via swazzler`() {
         val disabledVariant = "foo"
         extension.variantFilter = Action {
             if (it.name == disabledVariant) {
                 it.enabled = false
+            }
+        }
+        assertTrue(behavior.isInstrumentationDisabledForVariant(disabledVariant))
+        assertFalse(behavior.isInstrumentationDisabledForVariant("bar"))
+    }
+
+    @Test
+    fun `instrumentation disabled for variant via embrace`() {
+        val disabledVariant = "foo"
+        embrace.buildVariantFilter = Action {
+            if (it.name == disabledVariant) {
+                it.disableBytecodeInstrumentationForVariant()
             }
         }
         assertTrue(behavior.isInstrumentationDisabledForVariant(disabledVariant))
@@ -236,11 +245,23 @@ class PluginBehaviorImplTest {
     }
 
     @Test
-    fun `plugin disabled for variant`() {
+    fun `plugin disabled for variant via swazzler`() {
         val disabledVariant = "foo"
         extension.variantFilter = Action {
             if (it.name == disabledVariant) {
                 it.swazzlerOff = true
+            }
+        }
+        assertTrue(behavior.isPluginDisabledForVariant(disabledVariant))
+        assertFalse(behavior.isPluginDisabledForVariant("bar"))
+    }
+
+    @Test
+    fun `plugin disabled for variant via embrace`() {
+        val disabledVariant = "foo"
+        embrace.buildVariantFilter = Action {
+            if (it.name == disabledVariant) {
+                it.disablePluginForVariant()
             }
         }
         assertTrue(behavior.isPluginDisabledForVariant(disabledVariant))

@@ -115,8 +115,8 @@ android {
     }
 }
 
-swazzler {
-    disableDependencyInjection = true
+embrace {
+    autoAddEmbraceDependencies.set(false)
 }
 
 dependencies {

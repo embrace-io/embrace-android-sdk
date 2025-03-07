@@ -25,12 +25,16 @@ abstract class BuildTelemetryService :
     interface Params : BuildServiceParameters {
         val request: Property<BuildTelemetryRequest>
         val baseUrl: Property<String>
+        val telemetryDisabled: Property<Boolean>
     }
 
     /**
      * It gets called moments before build is about to finish.
      */
     override fun close() {
+        if (parameters.telemetryDisabled.get()) {
+            return
+        }
         val networkService = OkHttpNetworkService(parameters.baseUrl.get())
         networkService.postBuildTelemetry(parameters.request.get())
     }
@@ -46,9 +50,6 @@ abstract class BuildTelemetryService :
             behavior: PluginBehavior,
             agpWrapper: AgpWrapper,
         ): Provider<BuildTelemetryService> {
-            if (behavior.isTelemetryDisabled) {
-                return project.provider { null }
-            }
             val serviceProvider: Provider<BuildTelemetryService> =
                 project.gradle.sharedServices
                     .registerIfAbsent(
@@ -65,6 +66,7 @@ abstract class BuildTelemetryService :
                             )
                             params.request.set(telemetryProvider)
                             params.baseUrl.set(behavior.baseUrl)
+                            params.telemetryDisabled.set(behavior.isTelemetryDisabled)
                         }
                     }
 

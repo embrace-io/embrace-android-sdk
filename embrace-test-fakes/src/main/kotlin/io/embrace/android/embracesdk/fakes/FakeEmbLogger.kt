@@ -42,8 +42,8 @@ class FakeEmbLogger(
                 throw IllegalStateException("Internal error: $type", throwable)
             } else {
                 internalErrorMessages.add(LogMessage(type.toString(), throwable))
+                errorHandlerProvider()?.trackInternalError(type, throwable)
             }
         }
-        errorHandlerProvider()?.trackInternalError(type, throwable)
     }
 }

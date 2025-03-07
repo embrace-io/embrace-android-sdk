@@ -69,7 +69,7 @@ class PluginBehaviorImpl(
     }
 
     override val autoAddEmbraceComposeDependency: Boolean by lazy {
-        embrace.autoAddEmbraceComposeDependency.orNull ?: extension.disableComposeDependencyInjection.orNull?.not() ?: false
+        embrace.autoAddEmbraceComposeClickDependency.orNull ?: extension.disableComposeDependencyInjection.orNull?.not() ?: false
     }
 
     override val customSymbolsDirectory: String? by lazy {

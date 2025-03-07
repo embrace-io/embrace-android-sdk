@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.testcases.features
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.getSessionId
-import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakePayloadStorageService
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
@@ -11,6 +10,7 @@ import io.embrace.android.embracesdk.fakes.fakeEnvelopeMetadata
 import io.embrace.android.embracesdk.fakes.fakeEnvelopeResource
 import io.embrace.android.embracesdk.fakes.fakeLaterEnvelopeMetadata
 import io.embrace.android.embracesdk.fakes.fakeLaterEnvelopeResource
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.delivery.PayloadType
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
@@ -22,7 +22,7 @@ import io.embrace.android.embracesdk.testframework.actions.EmbracePayloadAsserti
 import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import io.embrace.android.embracesdk.testframework.actions.StoredNativeCrashData
 import io.embrace.android.embracesdk.testframework.actions.createStoredNativeCrashData
-import io.embrace.android.embracesdk.testframework.assertions.getLastLog
+import io.embrace.android.embracesdk.testframework.assertions.getLogOfType
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -103,7 +103,7 @@ internal class NativeCrashFeatureTest {
         EmbraceSetupInterface(
             processIdentifier = "8115ec91-3e5e-4d8a-816d-cc40306f9822"
         ).apply {
-            (overriddenInitModule.logger as FakeEmbLogger).throwOnInternalError = false
+            getEmbLogger().throwOnInternalError = false
         }
     }
 
@@ -133,7 +133,7 @@ internal class NativeCrashFeatureTest {
                     assertEquals(fakeEnvelopeResource, resource)
                     assertEquals(fakeEnvelopeMetadata, metadata)
                 }
-                val log = envelope.getLastLog()
+                val log = envelope.getLogOfType(EmbType.System.NativeCrash)
                 assertNativeCrashSent(log, crashData, testRule.setup.symbols)
             }
         )
@@ -160,7 +160,7 @@ internal class NativeCrashFeatureTest {
                     assertEquals(fakeEnvelopeResource, resource)
                     assertEquals(fakeEnvelopeMetadata, metadata)
                 }
-                val log = envelope.getLastLog()
+                val log = envelope.getLogOfType(EmbType.System.NativeCrash)
                 assertNativeCrashSent(log, crashData, testRule.setup.symbols)
             }
         )
@@ -212,8 +212,8 @@ internal class NativeCrashFeatureTest {
                     assertEquals(fakeLaterEnvelopeMetadata, metadata)
                 }
 
-                val log1 = crashEnvelope1.getLastLog()
-                val log2 = crashEnvelope2.getLastLog()
+                val log1 = crashEnvelope1.getLogOfType(EmbType.System.NativeCrash)
+                val log2 = crashEnvelope2.getLogOfType(EmbType.System.NativeCrash)
 
                 assertNativeCrashSent(log1, crashData, testRule.setup.symbols)
                 assertNativeCrashSent(log2, crashData2, testRule.setup.symbols)
@@ -291,7 +291,7 @@ internal class NativeCrashFeatureTest {
     }
 
     private fun findMatchingSessionId(it: Envelope<LogPayload>, data: StoredNativeCrashData): Boolean {
-        return it.getLastLog().attributes?.findAttributeValue("session.id") == data.nativeCrash.sessionId
+        return it.getLogOfType(EmbType.System.NativeCrash).attributes?.findAttributeValue("session.id") == data.nativeCrash.sessionId
     }
 
     private fun EmbracePayloadAssertionInterface.assertNoNativeCrashSent(

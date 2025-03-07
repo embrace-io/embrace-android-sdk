@@ -26,7 +26,7 @@ internal class PruningFeatureTest {
     @JvmField
     val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule {
         EmbraceSetupInterface().apply {
-            (overriddenInitModule.logger as FakeEmbLogger).throwOnInternalError = false
+            getEmbLogger().throwOnInternalError = false
         }
     }
 

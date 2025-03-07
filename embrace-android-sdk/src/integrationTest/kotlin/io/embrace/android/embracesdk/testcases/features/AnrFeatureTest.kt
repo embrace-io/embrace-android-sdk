@@ -17,7 +17,6 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
-private const val START_TIME_MS = 10000000000L
 private const val INTERVAL_MS = 100L
 private const val ANR_THRESHOLD_MS = 1000L
 private const val MAX_SAMPLE_COUNT = 80
@@ -29,12 +28,12 @@ internal class AnrFeatureTest {
 
     private lateinit var anrMonitorExecutor: BlockingScheduledExecutorService
     private lateinit var blockedThreadDetector: BlockedThreadDetector
+    private var startTimeMs: Long = 0L
 
     @Rule
     @JvmField
     val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule {
         EmbraceSetupInterface(
-            currentTimeMs = START_TIME_MS,
             workerToFake = Worker.Background.AnrWatchdogWorker,
             anrMonitoringThread = Thread.currentThread()
         ).also {
@@ -42,6 +41,8 @@ internal class AnrFeatureTest {
                 anrMonitorExecutor = getFakedWorkerExecutor()
                 anrMonitorExecutor.blockingMode = false
                 blockedThreadDetector = getBlockedThreadDetector()
+                startTimeMs = getClock().now()
+
             }
         }
     }
@@ -66,7 +67,7 @@ internal class AnrFeatureTest {
                 // assert ANRs received
                 val spans = message.findAnrSpans()
                 assertEquals(2, spans.size)
-                assertAnrReceived(spans[0], START_TIME_MS, firstSampleCount)
+                assertAnrReceived(spans[0], startTimeMs, firstSampleCount)
                 assertAnrReceived(spans[1], checkNotNull(secondAnrStartTime), secondSampleCount)
             }
         )
@@ -88,7 +89,7 @@ internal class AnrFeatureTest {
                 // assert ANRs received
                 val spans = message.findAnrSpans()
                 val span = spans.single()
-                assertAnrReceived(span, START_TIME_MS, sampleCount)
+                assertAnrReceived(span, startTimeMs, sampleCount)
             }
         )
     }
@@ -149,7 +150,7 @@ internal class AnrFeatureTest {
                 // assert ANRs received
                 val spans = message.findAnrSpans()
                 val span = spans.single()
-                assertAnrReceived(span, START_TIME_MS, sampleCount, endTime = endTime)
+                assertAnrReceived(span, startTimeMs, sampleCount, endTime = endTime)
             }
         )
     }

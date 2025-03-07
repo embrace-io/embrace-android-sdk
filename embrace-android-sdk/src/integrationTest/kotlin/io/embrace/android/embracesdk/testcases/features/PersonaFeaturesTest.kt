@@ -19,7 +19,7 @@ internal class PersonaFeaturesTest {
     fun `personas found in metadata`() {
         testRule.runTest(
             setupAction = {
-                overriddenAndroidServicesModule.preferencesService.userPersonas = setOf("preloaded")
+                getPreferencesService().userPersonas = setOf("preloaded")
             },
             testCaseAction = {
                 embrace.addUserPersona("payer")

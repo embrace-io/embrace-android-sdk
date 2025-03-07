@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.testcases.features
 
+import android.os.Build.VERSION_CODES.TIRAMISU
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakePayloadStorageService
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
@@ -24,12 +24,13 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
-import org.junit.Before
 import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.annotation.Config
 
+@Config(sdk = [TIRAMISU])
 @RunWith(AndroidJUnit4::class)
 internal class ResurrectionFeatureTest {
 
@@ -40,18 +41,9 @@ internal class ResurrectionFeatureTest {
     @JvmField
     val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule {
         EmbraceSetupInterface().apply {
-            (overriddenInitModule.logger as FakeEmbLogger).throwOnInternalError = false
+            getEmbLogger().throwOnInternalError = false
+            cacheStorageService = FakePayloadStorageService(processIdProvider = getProcessIdentifierProvider())
         }
-    }
-
-    @Before
-    fun setUp() {
-        cacheStorageService =
-            FakePayloadStorageService(
-                processIdProvider = {
-                    testRule.setup.overriddenOpenTelemetryModule.openTelemetryConfiguration.processIdentifier
-                }
-            )
     }
 
     @Test

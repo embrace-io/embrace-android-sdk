@@ -128,7 +128,7 @@ internal class SessionPropertiesTest {
     }
 
     private fun EmbraceSetupInterface.setupPermanentProperties() {
-        overriddenAndroidServicesModule.preferencesService.permanentSessionProperties =
+        getPreferencesService().permanentSessionProperties =
             mapOf(
                 EXISTING_KEY_1 to VALUE,
                 EXISTING_KEY_2 to VALUE,

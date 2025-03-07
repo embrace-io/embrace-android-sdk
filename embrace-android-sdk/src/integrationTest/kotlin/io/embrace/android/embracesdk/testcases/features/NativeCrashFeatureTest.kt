@@ -94,6 +94,7 @@ internal class NativeCrashFeatureTest {
         envelopeResource = fakeLaterEnvelopeResource,
         envelopeMetadata = fakeLaterEnvelopeMetadata
     )
+    private val fakeSymbols = mapOf("libfoo.so" to "symbol_content")
 
     private lateinit var cacheStorageService: FakePayloadStorageService
 
@@ -104,6 +105,8 @@ internal class NativeCrashFeatureTest {
             processIdentifier = "8115ec91-3e5e-4d8a-816d-cc40306f9822"
         ).apply {
             getEmbLogger().throwOnInternalError = false
+        }.also {
+            it.fakeSymbolService.symbolsForCurrentArch.putAll(fakeSymbols)
         }
     }
 
@@ -134,7 +137,7 @@ internal class NativeCrashFeatureTest {
                     assertEquals(fakeEnvelopeMetadata, metadata)
                 }
                 val log = envelope.getLogOfType(EmbType.System.NativeCrash)
-                assertNativeCrashSent(log, crashData, testRule.setup.symbols)
+                assertNativeCrashSent(log, crashData, fakeSymbols)
             }
         )
     }
@@ -161,7 +164,7 @@ internal class NativeCrashFeatureTest {
                     assertEquals(fakeEnvelopeMetadata, metadata)
                 }
                 val log = envelope.getLogOfType(EmbType.System.NativeCrash)
-                assertNativeCrashSent(log, crashData, testRule.setup.symbols)
+                assertNativeCrashSent(log, crashData, fakeSymbols)
             }
         )
     }
@@ -215,8 +218,8 @@ internal class NativeCrashFeatureTest {
                 val log1 = crashEnvelope1.getLogOfType(EmbType.System.NativeCrash)
                 val log2 = crashEnvelope2.getLogOfType(EmbType.System.NativeCrash)
 
-                assertNativeCrashSent(log1, crashData, testRule.setup.symbols)
-                assertNativeCrashSent(log2, crashData2, testRule.setup.symbols)
+                assertNativeCrashSent(log1, crashData, fakeSymbols)
+                assertNativeCrashSent(log2, crashData2, fakeSymbols)
 
                 // sessions updated to include crash IDs
                 val session1 = sessionEnvelopes.single { it.getSessionId() == crashData.nativeCrash.sessionId }
@@ -257,7 +260,7 @@ internal class NativeCrashFeatureTest {
                 setupFakeNativeCrash(serializer, crashData)
 
                 // simulate JNI call failing to load struct
-                jniDelegate.addCrashRaw(crashData.getCrashFile().absolutePath, null)
+                fakeJniDelegate.addCrashRaw(crashData.getCrashFile().absolutePath, null)
             },
             testCaseAction = {},
             assertAction = {
@@ -278,7 +281,7 @@ internal class NativeCrashFeatureTest {
                 setupFakeNativeCrash(serializer, crashData)
 
                 // simulate bad JSON
-                jniDelegate.addCrashRaw(crashData.getCrashFile().absolutePath, "{")
+                fakeJniDelegate.addCrashRaw(crashData.getCrashFile().absolutePath, "{")
             },
             testCaseAction = {},
             assertAction = {

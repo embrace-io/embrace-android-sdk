@@ -48,11 +48,11 @@ internal class EmbraceActionInterface(
     }
 
     private fun onForeground() {
-        setup.lifecycleOwner.handleLifecycleEvent(Lifecycle.Event.ON_START)
+        setup.fakeLifecycleOwner.handleLifecycleEvent(Lifecycle.Event.ON_START)
     }
 
     private fun onBackground() {
-        setup.lifecycleOwner.handleLifecycleEvent(Lifecycle.Event.ON_STOP)
+        setup.fakeLifecycleOwner.handleLifecycleEvent(Lifecycle.Event.ON_STOP)
     }
 
     fun simulateNetworkChange(status: NetworkStatus) {

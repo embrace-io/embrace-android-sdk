@@ -54,7 +54,7 @@ internal class NativeCrashProcessorImplTest {
             logger,
             delegate,
             serializer,
-            FakeSymbolService(mapOf("symbol1" to "test")),
+            FakeSymbolService(mutableMapOf("symbol1" to "test")),
             lazy { storageDir },
             worker
         )

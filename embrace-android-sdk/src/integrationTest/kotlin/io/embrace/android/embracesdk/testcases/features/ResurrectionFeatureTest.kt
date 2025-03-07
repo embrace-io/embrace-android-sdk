@@ -35,6 +35,7 @@ import org.robolectric.annotation.Config
 internal class ResurrectionFeatureTest {
 
     private val serializer = TestPlatformSerializer()
+    private val fakeSymbols = mapOf("libfoo.so" to "symbol_content")
     private lateinit var cacheStorageService: FakePayloadStorageService
 
     @Rule
@@ -43,6 +44,8 @@ internal class ResurrectionFeatureTest {
         EmbraceSetupInterface().apply {
             getEmbLogger().throwOnInternalError = false
             cacheStorageService = FakePayloadStorageService(processIdProvider = getProcessIdentifierProvider())
+        }.also {
+            it.fakeSymbolService.symbolsForCurrentArch.putAll(fakeSymbols)
         }
     }
 
@@ -72,7 +75,7 @@ internal class ResurrectionFeatureTest {
                 }
 
                 val log = envelope.getLastLog()
-                assertNativeCrashSent(log, crashData, testRule.setup.symbols)
+                assertNativeCrashSent(log, crashData, fakeSymbols)
             }
         )
     }
@@ -99,7 +102,7 @@ internal class ResurrectionFeatureTest {
                 }
 
                 val log = envelope.getLastLog()
-                assertNativeCrashSent(log, crashData, testRule.setup.symbols)
+                assertNativeCrashSent(log, crashData, fakeSymbols)
             }
         )
     }
@@ -135,7 +138,7 @@ internal class ResurrectionFeatureTest {
                     assertEquals(session.resource, resource)
                     assertEquals(session.metadata, metadata)
                     val crash = getLastLog()
-                    assertNativeCrashSent(crash, crashData, testRule.setup.symbols)
+                    assertNativeCrashSent(crash, crashData, fakeSymbols)
                 }
             }
         )

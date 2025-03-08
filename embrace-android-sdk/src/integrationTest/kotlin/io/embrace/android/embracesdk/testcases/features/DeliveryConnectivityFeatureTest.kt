@@ -7,8 +7,8 @@ import io.embrace.android.embracesdk.fixtures.fakeSessionStoredTelemetryMetadata
 import io.embrace.android.embracesdk.fixtures.fakeSessionStoredTelemetryMetadata2
 import io.embrace.android.embracesdk.internal.comms.delivery.NetworkStatus
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
+import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import org.junit.Assert.assertEquals
-import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -17,14 +17,13 @@ import org.junit.runner.RunWith
 internal class DeliveryConnectivityFeatureTest {
 
     private lateinit var payloadStorageService: FakePayloadStorageService
-
+    
     @Rule
     @JvmField
-    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule()
-
-    @Before
-    fun setUp() {
-        payloadStorageService = FakePayloadStorageService()
+    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule {
+        EmbraceSetupInterface(fakeStorageLayer = true).also { 
+            payloadStorageService = checkNotNull(it.fakePayloadStorageService)
+        }
     }
 
     @Test
@@ -36,7 +35,6 @@ internal class DeliveryConnectivityFeatureTest {
             setupAction = {
                 fakeNetworkConnectivityService.networkStatus = NetworkStatus.NOT_REACHABLE
                 payloadStorageService.addPayload(sessionMetadata, envelope)
-                payloadStorageServiceProvider = { payloadStorageService }
             },
             testCaseAction = {},
             assertAction = {
@@ -69,7 +67,6 @@ internal class DeliveryConnectivityFeatureTest {
             setupAction = {
                 fakeNetworkConnectivityService.networkStatus = NetworkStatus.NOT_REACHABLE
                 payloadStorageService.addPayload(sessionMetadata, envelope)
-                payloadStorageServiceProvider = { payloadStorageService }
             },
             testCaseAction = {
                 recordSession()
@@ -94,7 +91,6 @@ internal class DeliveryConnectivityFeatureTest {
                     fakeSessionStoredTelemetryMetadata2,
                     fakeSessionEnvelope(sessionId = "2", startMs = startMs + 1000)
                 )
-                payloadStorageServiceProvider = { payloadStorageService }
             },
             testCaseAction = {},
             assertAction = {

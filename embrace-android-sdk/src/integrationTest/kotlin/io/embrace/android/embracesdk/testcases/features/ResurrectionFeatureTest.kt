@@ -41,11 +41,13 @@ internal class ResurrectionFeatureTest {
     @Rule
     @JvmField
     val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule {
-        EmbraceSetupInterface().apply {
+        EmbraceSetupInterface(
+            fakeStorageLayer = true
+        ).apply {
             getEmbLogger().throwOnInternalError = false
-            cacheStorageService = FakePayloadStorageService(processIdProvider = getProcessIdentifierProvider())
+            fakeSymbolService.symbolsForCurrentArch.putAll(fakeSymbols)
         }.also {
-            it.fakeSymbolService.symbolsForCurrentArch.putAll(fakeSymbols)
+            cacheStorageService = checkNotNull(it.fakeCacheStorageService)
         }
     }
 
@@ -60,7 +62,7 @@ internal class ResurrectionFeatureTest {
         testRule.runTest(
             instrumentedConfig = FakeInstrumentedConfig(enabledFeatures = FakeEnabledFeatureConfig(nativeCrashCapture = true)),
             setupAction = {
-                setupCachedDataFromNativeCrash(cacheStorageService, crashData = crashData)
+                setupCachedDataFromNativeCrash(crashData = crashData)
                 setupFakeNativeCrash(serializer, crashData)
             },
             testCaseAction = {},
@@ -90,7 +92,7 @@ internal class ResurrectionFeatureTest {
         testRule.runTest(
             instrumentedConfig = FakeInstrumentedConfig(enabledFeatures = FakeEnabledFeatureConfig(nativeCrashCapture = true)),
             setupAction = {
-                setupCachedDataFromNativeCrash(cacheStorageService, crashData = crashData)
+                setupCachedDataFromNativeCrash(crashData = crashData)
                 setupFakeNativeCrash(serializer, crashData)
             },
             testCaseAction = {},
@@ -125,7 +127,7 @@ internal class ResurrectionFeatureTest {
                 )
             ),
             setupAction = {
-                setupCachedDataFromNativeCrash(cacheStorageService, crashData = crashData)
+                setupCachedDataFromNativeCrash(crashData = crashData)
                 setupFakeNativeCrash(serializer, crashData)
             },
             testCaseAction = {
@@ -155,7 +157,7 @@ internal class ResurrectionFeatureTest {
         testRule.runTest(
             instrumentedConfig = FakeInstrumentedConfig(enabledFeatures = FakeEnabledFeatureConfig(nativeCrashCapture = true)),
             setupAction = {
-                setupCachedDataFromNativeCrash(cacheStorageService, crashData = crashData)
+                setupCachedDataFromNativeCrash(crashData = crashData)
             },
             testCaseAction = {},
             assertAction = {
@@ -173,9 +175,6 @@ internal class ResurrectionFeatureTest {
             persistedRemoteConfig = RemoteConfig(
                 backgroundActivityConfig = BackgroundActivityRemoteConfig(100f)
             ),
-            setupAction = {
-                cacheStorageServiceProvider = { cacheStorageService }
-            },
             testCaseAction = {
                 recordSession()
                 recordSession()
@@ -193,9 +192,6 @@ internal class ResurrectionFeatureTest {
             persistedRemoteConfig = RemoteConfig(
                 backgroundActivityConfig = BackgroundActivityRemoteConfig(0f)
             ),
-            setupAction = {
-                cacheStorageServiceProvider = { cacheStorageService }
-            },
             testCaseAction = {
                 recordSession()
                 recordSession()

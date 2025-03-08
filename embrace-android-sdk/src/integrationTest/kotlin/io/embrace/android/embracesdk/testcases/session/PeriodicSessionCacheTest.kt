@@ -5,20 +5,23 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.findSessionSpan
 import io.embrace.android.embracesdk.assertions.findSpanSnapshotOfType
 import io.embrace.android.embracesdk.assertions.returnIfConditionMet
+import io.embrace.android.embracesdk.fakes.FakePayloadStorageService
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.delivery.PayloadType
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.spans.getSessionProperty
-import io.embrace.android.embracesdk.testframework.FakeCacheStorageService
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
+import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import io.embrace.android.embracesdk.testframework.assertions.assertMatches
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
+import java.util.zip.GZIPInputStream
 
 /**
  * Asserts that the session is periodically cached.
@@ -27,30 +30,30 @@ import org.robolectric.annotation.Config
 @RunWith(AndroidJUnit4::class)
 internal class PeriodicSessionCacheTest {
 
+    private lateinit var cacheStorageService: FakePayloadStorageService
+
     @Rule
     @JvmField
-    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule()
+    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule {
+        EmbraceSetupInterface(fakeStorageLayer = true).also {
+            cacheStorageService = checkNotNull(it.fakeCacheStorageService)
+        }
+    }
 
     @Test
     fun `session is periodically cached`() {
         var snapshot: Envelope<SessionPayload>? = null
         testRule.runTest(
-            setupAction = {
-                cacheStorageServiceProvider = ::FakeCacheStorageService
-            },
             testCaseAction = {
-                val cacheStorageService = getCacheStorageService()
                 recordSession {
-                    assertEquals(0, cacheStorageService.storedPayloads.size)
+                    assertEquals(0, cacheStorageService.storedPayloadCount())
                     embrace.addSessionProperty("Test", "Test", true)
-                    val dataSupplier = { cacheStorageService.storedPayloads }
                     snapshot = returnIfConditionMet(
                         waitTimeMs = 10000,
                         desiredValueSupplier = { cacheStorageService.getLastCachedSession() },
-                        dataProvider = dataSupplier,
+                        dataProvider = { cacheStorageService.getLastCachedSession() },
                         condition = { data ->
-                            data.size > 0 && cacheStorageService.getLastCachedSession().findSpanSnapshotOfType(EmbType.Ux.Session)
-                                .getSessionProperty("Test") != null
+                            data != null && data.findSpanSnapshotOfType(EmbType.Ux.Session).getSessionProperty("Test") != null
                         },
                         errorMessageSupplier = { "Timeout waiting for cached session" }
                     )
@@ -80,14 +83,18 @@ internal class PeriodicSessionCacheTest {
         )
     }
 
-    private fun FakeCacheStorageService.getLastCachedSession(): Envelope<SessionPayload> {
-        return TestPlatformSerializer().fromJson(
-            checkNotNull(loadPayloadAsStream(storedPayloads.keys.last())),
-            checkNotNull(SupportedEnvelopeType.SESSION.serializedType)
-        )
-    }
-
-    private fun getCacheStorageService(): FakeCacheStorageService {
-        return testRule.bootstrapper.deliveryModule.cacheStorageService as FakeCacheStorageService
-    }
+    private fun FakePayloadStorageService.getLastCachedSession(): Envelope<SessionPayload>? =
+        storedPayloadMetadata()
+            .filter { it.payloadType == PayloadType.SESSION }
+            .let { sessions ->
+                return if (sessions.isEmpty()) {
+                    null
+                } else {
+                    val lastSessionMetadata = sessions.last()
+                    return TestPlatformSerializer().fromJson(
+                        GZIPInputStream(loadPayloadAsStream(lastSessionMetadata)),
+                        checkNotNull(SupportedEnvelopeType.SESSION.serializedType)
+                    )
+                }
+            }
 }

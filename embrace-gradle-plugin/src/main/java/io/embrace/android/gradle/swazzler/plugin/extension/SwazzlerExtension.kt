@@ -18,7 +18,7 @@ abstract class SwazzlerExtension(objectFactory: ObjectFactory) {
     @Deprecated("Use embrace.autoAddEmbraceDependencies instead.")
     val disableDependencyInjection: Property<Boolean> = objectFactory.property(Boolean::class.java)
 
-    @Deprecated("Use embrace.autoAddEmbraceComposeDependency instead.")
+    @Deprecated("Use embrace.autoAddEmbraceComposeClickDependency instead.")
     val disableComposeDependencyInjection: Property<Boolean> = objectFactory.property(Boolean::class.java)
 
     @Deprecated("This property is deprecated and is no longer respected.")

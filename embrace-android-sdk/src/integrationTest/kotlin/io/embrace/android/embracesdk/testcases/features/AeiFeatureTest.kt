@@ -13,9 +13,11 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.config.remote.AppExitInfoConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
+import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import io.embrace.android.embracesdk.testframework.assertions.assertMatches
 import io.embrace.android.embracesdk.testframework.assertions.getLastLog
 import io.embrace.android.embracesdk.testframework.assertions.getLogOfType
@@ -65,7 +67,14 @@ internal class AeiFeatureTest {
 
     @Rule
     @JvmField
-    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule()
+    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule {
+        EmbraceSetupInterface(
+            ignoredInternalErrors = listOf(
+                InternalErrorType.APP_LAUNCH_TRACE_FAIL,
+                InternalErrorType.DISK_STAT_CAPTURE_FAIL
+            )
+        )
+    }
 
     private val jvmCrash = TestAeiData(
         ApplicationExitInfo.REASON_CRASH,
@@ -136,9 +145,7 @@ internal class AeiFeatureTest {
                 recordSession()
             },
             assertAction = {
-                val log = getLogEnvelopes(2)
-                    .flatMap { checkNotNull(it.data.logs) }
-                    .single { it.attributes?.findAttributeValue("emb.type") == "sys.exit" }
+                val log = getSingleLogEnvelope().getLogOfType(EmbType.System.Exit)
                 log.assertContainsAeiData(anr)
             }
         )

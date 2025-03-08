@@ -1,0 +1,50 @@
+{
+  "values": [
+    {
+      "className": "WebViewClientFixture",
+      "methods": [
+        {
+          "signature": "onPageStarted(Landroid/webkit/WebView;Ljava/lang/String;Landroid/graphics/Bitmap;)V",
+          "embraceHook": "invoke-static {p1, p2, p3}, Lio/embrace/android/embracesdk/WebViewClientSwazzledHooks;->_preOnPageStarted(Landroid/webkit/WebView;Ljava/lang/String;Landroid/graphics/Bitmap;)V"
+        }
+      ]
+    },
+    {
+      "className": "OnClickListenerFixture",
+      "methods": [
+        {
+          "signature": "onClick(Landroid/view/View;)V",
+          "embraceHook": "invoke-static {p0, p1}, Lio/embrace/android/embracesdk/ViewSwazzledHooks$OnClickListener;->_preOnClick(Landroid/view/View$OnClickListener;Landroid/view/View;)V"
+        }
+      ]
+    },
+    {
+      "className": "OnLongClickListenerFixture",
+      "methods": [
+        {
+          "signature": "onLongClick(Landroid/view/View;)Z",
+          "embraceHook": "invoke-static {p0, p1}, Lio/embrace/android/embracesdk/ViewSwazzledHooks$OnLongClickListener;->_preOnLongClick(Landroid/view/View$OnLongClickListener;Landroid/view/View;)V",
+          "returnValue": "false"
+        }
+      ]
+    },
+    {
+      "className": "OkHttpClient$Builder",
+      "methods": [
+        {
+          "signature": "build()Lokhttp3/OkHttpClient;",
+          "embraceHook": "invoke-static {p0}, Lio/embrace/android/embracesdk/okhttp3/swazzle/callback/okhttp3/OkHttpClient$Builder;->_preBuild(Lokhttp3/OkHttpClient$Builder;)V"
+        }
+      ]
+    },
+    {
+      "className": "FcmServiceFixture",
+      "methods": [
+        {
+          "signature": "onMessageReceived(Lcom/google/firebase/messaging/RemoteMessage;)V",
+          "embraceHook": "invoke-static {p1}, Lio/embrace/android/embracesdk/fcm/swazzle/callback/com/android/fcm/FirebaseSwazzledHooks;->_onMessageReceived(Lcom/google/firebase/messaging/RemoteMessage;)V"
+        }
+      ]
+    }
+  ]
+}

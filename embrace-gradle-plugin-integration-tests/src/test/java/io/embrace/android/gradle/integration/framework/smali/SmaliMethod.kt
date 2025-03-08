@@ -9,4 +9,5 @@ import com.squareup.moshi.JsonClass
 data class SmaliMethod(
     val signature: String,
     val returnValue: String? = null,
+    val embraceHook: String? = null,
 )

@@ -25,7 +25,7 @@ class FirstDrawDetector(
     private val logger: EmbLogger,
 ) : DrawEventEmitter {
 
-    private val loadingActivities: MutableMap<Int, () -> Unit> = ConcurrentHashMap()
+    private val loadingActivities: MutableMap<Int, Runnable> = ConcurrentHashMap()
 
     override fun registerFirstDrawCallback(
         activity: Activity,
@@ -41,7 +41,7 @@ class FirstDrawDetector(
                     decorView.onNextDraw {
                         if (!trackingLoad(instanceId)) {
                             drawBeginCallback()
-                            loadingActivities[instanceId] = firstFrameDeliveredCallback
+                            loadingActivities[instanceId] = Runnable { firstFrameDeliveredCallback() }
                             decorView.viewTreeObserver.registerFrameCommitCallback(firstFrameDeliveredCallback)
                         }
                     }
@@ -57,7 +57,7 @@ class FirstDrawDetector(
                 // Adding an empty function indicates that the registration has failed and no subsequent attempts should
                 // be made for this instance. This prevents over-logging of errors for the same instance if the callback
                 // the window is null, should that ever happen.
-                loadingActivities[instanceId] = { }
+                loadingActivities[instanceId] = Runnable { }
             }
         }
     }

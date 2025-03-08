@@ -3,11 +3,9 @@ package io.embrace.android.embracesdk.internal.network.http;
 import static io.embrace.android.embracesdk.internal.EmbraceInternalApi.CUSTOM_TRACE_ID_HEADER_NAME;
 import static io.embrace.android.embracesdk.internal.config.behavior.NetworkSpanForwardingBehaviorImpl.TRACEPARENT_HEADER_NAME;
 
-import android.annotation.TargetApi;
-import android.os.Build;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -225,7 +223,7 @@ class EmbraceUrlConnectionDelegate<T extends HttpURLConnection> implements Embra
     }
 
     @Override
-    @TargetApi(24)
+    @RequiresApi(24)
     public long getContentLengthLong() {
         return shouldUncompressGzip() ?
             -1 : this.connection.getContentLengthLong();
@@ -334,7 +332,7 @@ class EmbraceUrlConnectionDelegate<T extends HttpURLConnection> implements Embra
 
 
     @Override
-    @TargetApi(24)
+    @RequiresApi(24)
     public long getHeaderFieldLong(@NonNull String name, long defaultValue) {
         Long result = retrieveHeaderField(name,
             defaultValue,

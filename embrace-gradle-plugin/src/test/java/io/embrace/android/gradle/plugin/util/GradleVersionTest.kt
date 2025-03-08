@@ -8,7 +8,7 @@ class GradleVersionTest {
 
     @Test
     fun testCompileVersion() {
-        assertEquals("8.12.1", GradleVersion.CURRENT.toString())
+        assertEquals("8.13", GradleVersion.CURRENT.toString())
     }
 
     @Test

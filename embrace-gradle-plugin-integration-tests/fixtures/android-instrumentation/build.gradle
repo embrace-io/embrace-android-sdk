@@ -1,0 +1,74 @@
+plugins {
+    id("com.android.application")
+    id("io.embrace.swazzler")
+    id("io.embrace.android.testplugin")
+    id("org.jetbrains.kotlin.android")
+}
+
+repositories {
+    google()
+    mavenCentral()
+    mavenLocal()
+}
+
+def globalDisable = project.hasProperty("globalDisable") ? project.getProperty("globalDisable") == "true" : false
+def individualDisable = project.hasProperty("individualDisable") ? project.getProperty("individualDisable") == "true" : false
+def disableByVariant = project.hasProperty("disableByVariant") ? project.getProperty("disableByVariant") == "true" : false
+
+embrace {
+    autoAddEmbraceDependencies.set(true)
+    bytecodeInstrumentation {
+        if (globalDisable) {
+            enabled.set(false)
+        }
+        if (individualDisable) {
+            okhttpEnabled.set(false)
+            onClickEnabled.set(false)
+            onLongClickEnabled.set(false)
+            webviewOnPageStartedEnabled.set(false)
+        } else {
+            firebasePushNotificationsEnabled.set(true)
+        }
+    }
+
+    if (disableByVariant) {
+        buildVariantFilter {
+            if (it.name.contains("release")) {
+                it.disableBytecodeInstrumentationForVariant()
+            }
+        }
+    }
+}
+
+android {
+    kotlinOptions {
+        jvmTarget = "1.8"
+    }
+}
+
+dependencies {
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("com.google.firebase:firebase-messaging:23.1.0")
+    implementation("io.embrace:embrace-android-fcm:+")
+}
+
+android {
+    namespace = "com.example"
+    compileSdk = 35
+
+    defaultConfig {
+        applicationId = "com.example.app"
+        minSdk = 24
+        versionCode = 1
+        versionName = "1.0"
+    }
+    buildTypes {
+        release {
+            minifyEnabled = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android.txt"),
+                "proguard-rules.pro"
+            )
+        }
+    }
+}

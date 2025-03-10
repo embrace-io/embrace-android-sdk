@@ -18,6 +18,9 @@ class SmaliParser {
         private const val RETURN_TYPE_BOOL = "Z"
         private const val RETURN_TYPE_LIST = "Ljava/util/List;"
         private const val RETURN_TYPE_MAP = "Ljava/util/Map;"
+        private const val INVOKE_STATIC = "invoke-static"
+        private const val INSTRUMENTATION_MARKER = "io/embrace/"
+        private const val DEFAULT_IMPLS_MARKER = "DefaultImpls"
     }
 
     /**
@@ -25,27 +28,30 @@ class SmaliParser {
      * is fairly naive and makes various assumptions about smali, but this is sufficient for
      * testing purposes right now given that our bytecode instrumentation is fairly simple.
      */
-    fun parse(file: File): SmaliFile {
-        val methods = mutableMapOf<String, String?>()
+    fun parse(file: File, expectedMethods: List<SmaliMethod>): SmaliFile {
+        val methods = mutableListOf<SmaliMethod>()
         var methodSig: String? = null
         var returnValue: String? = null
+        var invokeStatic: String? = null
 
         file.inputStream().bufferedReader().lines().forEach { line ->
             val input = line.trim()
-            if (input.startsWith(METHOD_START) && !input.contains(CLASS_CONSTRUCTOR) && !input.contains(CONSTRUCTOR)) {
+            if (isMethodStart(input)) {
                 if (methodSig != null || returnValue != null) {
                     error("Expected null methodSig + returnValue: $input")
                 }
                 methodSig = input.split(" ").last()
-            }
-            if (input.startsWith(METHOD_END)) {
-                if (methodSig != null) {
-                    methods[checkNotNull(methodSig)] = returnValue
+            } else if (isMethodEnd(input)) {
+                if (methodSig != null && expectedMethods.any { it.signature == methodSig }) {
+                    methods.add(SmaliMethod(checkNotNull(methodSig), returnValue, invokeStatic))
                 }
                 methodSig = null
                 returnValue = null
-            }
-            if (methodSig != null) {
+                invokeStatic = null
+            } else if (isEmbraceInstrumentedCode(input, invokeStatic)) {
+                // only look at first static invocation, as that should always be an embrace-added hook
+                invokeStatic = input
+            } else if (methodSig != null) {
                 val returnType = checkNotNull(methodSig).split(METHOD_ARGS).last()
                 val value = readReturnValue(input, returnType)
                 if (value != null) {
@@ -53,7 +59,20 @@ class SmaliParser {
                 }
             }
         }
-        return SmaliFile(file.nameWithoutExtension, methods.map { SmaliMethod(it.key, it.value) })
+        return SmaliFile(file.nameWithoutExtension, methods)
+    }
+
+    private fun isMethodStart(input: String): Boolean {
+        return input.startsWith(METHOD_START) && !input.contains(CLASS_CONSTRUCTOR) && !input.contains(CONSTRUCTOR)
+    }
+
+    private fun isMethodEnd(input: String): Boolean {
+        return input.startsWith(METHOD_END)
+    }
+
+    private fun isEmbraceInstrumentedCode(input: String, invokeStatic: String?): Boolean {
+        return input.startsWith(INVOKE_STATIC) && invokeStatic == null && input.contains(INSTRUMENTATION_MARKER) &&
+            !input.contains(DEFAULT_IMPLS_MARKER)
     }
 
     private fun readReturnValue(input: String, returnType: String): String? {

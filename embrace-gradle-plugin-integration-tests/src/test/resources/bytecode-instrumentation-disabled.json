@@ -1,0 +1,45 @@
+{
+  "values": [
+    {
+      "className": "WebViewClientFixture",
+      "methods": [
+        {
+          "signature": "onPageStarted(Landroid/webkit/WebView;Ljava/lang/String;Landroid/graphics/Bitmap;)V"
+        }
+      ]
+    },
+    {
+      "className": "OnClickListenerFixture",
+      "methods": [
+        {
+          "signature": "onClick(Landroid/view/View;)V"
+        }
+      ]
+    },
+    {
+      "className": "OnLongClickListenerFixture",
+      "methods": [
+        {
+          "signature": "onLongClick(Landroid/view/View;)Z",
+          "returnValue": "false"
+        }
+      ]
+    },
+    {
+      "className": "OkHttpClient$Builder",
+      "methods": [
+        {
+          "signature": "build()Lokhttp3/OkHttpClient;"
+        }
+      ]
+    },
+    {
+      "className": "FcmServiceFixture",
+      "methods": [
+        {
+          "signature": "onMessageReceived(Lcom/google/firebase/messaging/RemoteMessage;)V"
+        }
+      ]
+    }
+  ]
+}

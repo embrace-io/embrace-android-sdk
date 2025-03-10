@@ -12,7 +12,7 @@ class FirebaseMessagingServiceClassAdapter(
     api: Int,
     internal val nextClassVisitor: ClassVisitor?,
     private val logger: (() -> String) -> Unit
-) : ClassVisitor(api, nextClassVisitor) { // TODO add tests
+) : ClassVisitor(api, nextClassVisitor) {
 
     companion object : ClassVisitFilter {
         private const val CLASS_NAME = "com.google.firebase.messaging.FirebaseMessagingService"

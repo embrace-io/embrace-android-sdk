@@ -1,0 +1,30 @@
+plugins {
+    id("com.android.application")
+    id("io.embrace.swazzler")
+    id("io.embrace.android.testplugin")
+}
+
+integrationTest.configureAndroidProject(project)
+
+
+android {
+    buildTypes {
+        release {
+            minifyEnabled = false
+        }
+    }
+}
+
+// setup a fake dexguard task
+project.tasks.register("dexguardApkRelease") {
+    def mappingFile = project.layout.buildDirectory.file("mapping.txt")
+    outputs.file(mappingFile)
+
+    doLast {
+        mappingFile.get().asFile.text = "Hello, World!"
+    }
+}
+
+project.tasks.named("assemble").configure {
+    dependsOn("dexguardApkRelease")
+}

@@ -86,6 +86,13 @@ interface PreferencesService {
     fun incrementAndGetNativeCrashNumber(): Int
 
     /**
+     * Increments and returns the AEI crash number ordinal. This is an integer that
+     * increments on every NDK tombstone detected via an AEI trace. It allows us to check the % of AEI crashes that
+     * didn't get delivered to the backend.
+     */
+    fun incrementAndGetAeiCrashNumber(): Int
+
+    /**
      * Last javaScript bundle string url.
      */
     var javaScriptBundleURL: String?

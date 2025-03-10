@@ -36,7 +36,6 @@ import io.embrace.android.embracesdk.internal.api.delegate.SdkStateApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.SessionApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.UserApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.ViewTrackingApiDelegate
-import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.delivery.storage.StorageLocation
 import io.embrace.android.embracesdk.internal.fromFramework
 import io.embrace.android.embracesdk.internal.injection.InternalInterfaceModule
@@ -45,7 +44,6 @@ import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.injection.embraceImplInject
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.payload.AppFramework
-import io.embrace.android.embracesdk.internal.worker.TaskPriority
 import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.spans.TracingApi
 import io.opentelemetry.api.common.AttributeKey
@@ -173,26 +171,6 @@ internal class EmbraceImpl @JvmOverloads constructor(
 
         val crashModule = bootstrapper.crashModule
 
-        // Send any sessions that were cached and not yet sent.
-        startSynchronous("send-cached-sessions")
-
-        if (useV1DeliveryLayer(configModule.configService)) {
-            bootstrapper
-                .workerThreadModule
-                .priorityWorker<TaskPriority>(Worker.Priority.DeliveryCacheWorker)
-                .submit(TaskPriority.NORMAL) {
-                    if (useV1DeliveryLayer(configModule.configService)) {
-                        val essentialServiceModule = bootstrapper.essentialServiceModule
-                        bootstrapper.deliveryModule.deliveryService?.sendCachedSessions(
-                            bootstrapper.nativeFeatureModule::nativeCrashService,
-                            essentialServiceModule.sessionIdTracker
-                        )
-                    }
-                }
-        }
-
-        endSynchronous()
-
         crashModule.lastRunCrashVerifier.readAndCleanMarkerAsync(
             bootstrapper.workerThreadModule.backgroundWorker(Worker.Background.IoRegWorker)
         )
@@ -234,23 +212,17 @@ internal class EmbraceImpl @JvmOverloads constructor(
         )
         endSynchronous()
 
-        if (!useV1DeliveryLayer(configModule.configService)) {
-            val worker = bootstrapper
-                .workerThreadModule
-                .backgroundWorker(Worker.Background.IoRegWorker)
-            worker.submit {
-                if (!useV1DeliveryLayer(configModule.configService)) {
-                    bootstrapper.payloadSourceModule.payloadResurrectionService?.resurrectOldPayloads(
-                        nativeCrashServiceProvider = { bootstrapper.nativeFeatureModule.nativeCrashService }
-                    )
-                }
-            }
-            worker.submit { // potentially trigger first delivery attempt by firing network status callback
-                registerDeliveryNetworkListener()
-                bootstrapper.deliveryModule.schedulingService?.onPayloadIntake()
-            }
-        } else {
+        val worker = bootstrapper
+            .workerThreadModule
+            .backgroundWorker(Worker.Background.IoRegWorker)
+        worker.submit {
+            bootstrapper.payloadSourceModule.payloadResurrectionService?.resurrectOldPayloads(
+                nativeCrashServiceProvider = { bootstrapper.nativeFeatureModule.nativeCrashService }
+            )
+        }
+        worker.submit { // potentially trigger first delivery attempt by firing network status callback
             registerDeliveryNetworkListener()
+            bootstrapper.deliveryModule.schedulingService?.onPayloadIntake()
         }
     }
 
@@ -399,9 +371,5 @@ internal class EmbraceImpl @JvmOverloads constructor(
         } catch (exc: Exception) {
             logger.trackInternalError(InternalErrorType.NATIVE_THREAD_SAMPLE_FAIL, exc)
         }
-    }
-
-    private fun useV1DeliveryLayer(cfgService: ConfigService?): Boolean {
-        return cfgService?.autoDataCaptureBehavior?.isV2StorageEnabled() != true
     }
 }

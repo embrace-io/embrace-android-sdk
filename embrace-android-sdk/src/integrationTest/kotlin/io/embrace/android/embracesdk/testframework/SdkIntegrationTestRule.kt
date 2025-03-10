@@ -6,7 +6,6 @@ import io.embrace.android.embracesdk.EmbraceHooks
 import io.embrace.android.embracesdk.EmbraceImpl
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
-import io.embrace.android.embracesdk.fakes.FakeDeliveryService
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.fakes.config.FakeBaseUrlConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
@@ -29,11 +28,11 @@ import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import io.embrace.android.embracesdk.testframework.export.FilteredLogExporter
 import io.embrace.android.embracesdk.testframework.export.FilteredSpanExporter
 import io.embrace.android.embracesdk.testframework.server.FakeApiServer
+import java.io.File
 import okhttp3.Protocol
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.Assert.assertEquals
 import org.junit.rules.ExternalResource
-import java.io.File
 
 /**
  * A [org.junit.Rule] that is responsible for setting up and tearing down the Embrace SDK for use in
@@ -123,21 +122,22 @@ internal class SdkIntegrationTestRule(
         otelExportAssertion: EmbraceOtelExportAssertionInterface.() -> Unit = {},
     ) {
         setup = embraceSetupInterfaceSupplier()
-        var apiServer: FakeApiServer? = null
         val deliveryTracer = DeliveryTracer()
-
-        if (setup.useMockWebServer) {
-            apiServer = FakeApiServer(serverResponseConfig, deliveryTracer)
-            val server: MockWebServer = MockWebServer().apply {
-                protocols = listOf(Protocol.HTTP_2, Protocol.HTTP_1_1)
-                dispatcher = apiServer
-                start()
-            }
-            baseUrl = server.url("api").toString()
+        val apiServer = FakeApiServer(serverResponseConfig, deliveryTracer)
+        val server: MockWebServer = MockWebServer().apply {
+            protocols = listOf(Protocol.HTTP_2, Protocol.HTTP_1_1)
+            dispatcher = apiServer
+            start()
         }
+        baseUrl = server.url("api").toString()
 
         preSdkStart = EmbracePreSdkStartInterface(setup)
-        bootstrapper = setup.createBootstrapper(prepareConfig(instrumentedConfig), deliveryTracer)
+        bootstrapper = setup.createBootstrapper(
+            instrumentedConfig.copy(
+                baseUrls = FakeBaseUrlConfig(configImpl = baseUrl, dataImpl = baseUrl)
+            ),
+            deliveryTracer
+        )
         action = EmbraceActionInterface(setup, bootstrapper)
         payloadAssertion = EmbracePayloadAssertionInterface(bootstrapper, apiServer)
         spanExporter = FilteredSpanExporter()
@@ -185,15 +185,6 @@ internal class SdkIntegrationTestRule(
             TestPlatformSerializer().toJson(persistedRemoteConfig, RemoteConfig::class.java, stream)
         }
     }
-
-    private fun prepareConfig(instrumentedConfig: FakeInstrumentedConfig) =
-        when {
-            setup.useMockWebServer -> instrumentedConfig.copy(
-                baseUrls = FakeBaseUrlConfig(configImpl = baseUrl, dataImpl = baseUrl)
-            )
-
-            else -> instrumentedConfig
-        }
 
     /**
      * Setup the Embrace SDK so it's ready for testing.

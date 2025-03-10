@@ -17,8 +17,6 @@ class FakeAutoDataCaptureBehavior(
     private val diskUsageReportingEnabled: Boolean = true,
     private val uiLoadTracingEnabled: Boolean = true,
     private val uiLoadTracingTraceAll: Boolean = true,
-    private val v2StorageEnabled: Boolean = true,
-    private val useOkhttp: Boolean = true,
     private val endStartupWithAppReady: Boolean = false,
 ) : AutoDataCaptureBehavior {
 
@@ -39,7 +37,5 @@ class FakeAutoDataCaptureBehavior(
     override fun isDiskUsageCaptureEnabled(): Boolean = diskUsageReportingEnabled
     override fun isUiLoadTracingEnabled(): Boolean = uiLoadTracingEnabled
     override fun isUiLoadTracingTraceAll(): Boolean = uiLoadTracingTraceAll
-    override fun isV2StorageEnabled(): Boolean = v2StorageEnabled
-    override fun shouldUseOkHttp(): Boolean = useOkhttp
     override fun isEndStartupWithAppReadyEnabled(): Boolean = endStartupWithAppReady
 }

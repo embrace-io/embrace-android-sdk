@@ -15,8 +15,6 @@ class AutoDataCaptureBehaviorImpl(
 
     private companion object {
         const val THERMAL_STATUS_ENABLED_DEFAULT = true
-        const val V2_STORAGE_ENABLED_DEFAULT = true
-        const val USE_OKHTTP_DEFAULT = true
         const val UI_LOAD_REMOTE_ENABLED_DEFAULT = false
     }
 
@@ -50,16 +48,5 @@ class AutoDataCaptureBehaviorImpl(
     private fun uiLoadEnabledRemotely(): Boolean =
         remote?.uiLoadInstrumentationEnabled ?: UI_LOAD_REMOTE_ENABLED_DEFAULT
 
-    private val v2StorageImpl by lazy {
-        thresholdCheck.isBehaviorEnabled(remote?.killSwitchConfig?.v2StoragePct) ?: V2_STORAGE_ENABLED_DEFAULT
-    }
-
-    override fun isV2StorageEnabled(): Boolean = v2StorageImpl
-
-    private val shouldUseOkHttpImpl by lazy {
-        thresholdCheck.isBehaviorEnabled(remote?.killSwitchConfig?.useOkHttpPct) ?: USE_OKHTTP_DEFAULT
-    }
-
-    override fun shouldUseOkHttp(): Boolean = shouldUseOkHttpImpl
     override fun isEndStartupWithAppReadyEnabled(): Boolean = local.isEndStartupWithAppReadyEnabled()
 }

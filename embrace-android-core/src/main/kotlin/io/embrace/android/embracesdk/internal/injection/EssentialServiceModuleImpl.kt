@@ -11,12 +11,6 @@ import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesS
 import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesServiceImpl
 import io.embrace.android.embracesdk.internal.capture.user.EmbraceUserService
 import io.embrace.android.embracesdk.internal.capture.user.UserService
-import io.embrace.android.embracesdk.internal.comms.api.ApiClient
-import io.embrace.android.embracesdk.internal.comms.api.ApiClientImpl
-import io.embrace.android.embracesdk.internal.comms.api.ApiService
-import io.embrace.android.embracesdk.internal.comms.api.EmbraceApiService
-import io.embrace.android.embracesdk.internal.comms.delivery.EmbracePendingApiCallsSender
-import io.embrace.android.embracesdk.internal.comms.delivery.PendingApiCallsSender
 import io.embrace.android.embracesdk.internal.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.internal.session.id.SessionIdTrackerImpl
 import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityLifecycleTracker
@@ -33,14 +27,11 @@ class EssentialServiceModuleImpl(
     workerThreadModule: WorkerThreadModule,
     systemServiceModule: SystemServiceModule,
     androidServicesModule: AndroidServicesModule,
-    storageModule: StorageModule,
     lifecycleOwnerProvider: Provider<LifecycleOwner?>,
     networkConnectivityServiceProvider: Provider<NetworkConnectivityService?>,
 ) : EssentialServiceModule {
 
     private val configService by lazy { configModule.configService }
-
-    private val lazyDeviceId = lazy(androidServicesModule.preferencesService::deviceIdentifier)
 
     override val processStateService: ProcessStateService by singleton {
         Systrace.traceSynchronous("process-state-service-init") {
@@ -71,35 +62,6 @@ class EssentialServiceModuleImpl(
                 systemServiceModule.connectivityManager
             )
         }
-    }
-
-    override val pendingApiCallsSender: PendingApiCallsSender by singleton {
-        Systrace.traceSynchronous("pending-call-sender-init") {
-            EmbracePendingApiCallsSender(
-                workerThreadModule.backgroundWorker(Worker.Background.IoRegWorker),
-                storageModule.deliveryCacheManager,
-                initModule.clock
-            )
-        }
-    }
-
-    override val apiService: ApiService? by singleton {
-        val appId = configService.appId ?: return@singleton null
-        Systrace.traceSynchronous("api-service-init") {
-            EmbraceApiService(
-                apiClient = apiClient,
-                serializer = initModule.jsonSerializer,
-                priorityWorker = workerThreadModule.priorityWorker(Worker.Priority.NetworkRequestWorker),
-                pendingApiCallsSender = pendingApiCallsSender,
-                lazyDeviceId = lazyDeviceId,
-                appId = appId,
-                urlBuilder = checkNotNull(configModule.urlBuilder)
-            )
-        }
-    }
-
-    override val apiClient: ApiClient by singleton {
-        ApiClientImpl()
     }
 
     override val sessionIdTracker: SessionIdTracker by singleton {

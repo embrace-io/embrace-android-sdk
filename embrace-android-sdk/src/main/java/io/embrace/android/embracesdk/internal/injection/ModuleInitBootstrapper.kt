@@ -185,7 +185,6 @@ internal class ModuleInitBootstrapper(
                             workerThreadModule,
                             systemServiceModule,
                             androidServicesModule,
-                            storageModule,
                             { null },
                             { null }
                         )
@@ -207,10 +206,6 @@ internal class ModuleInitBootstrapper(
                             workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker).submit {
                                 Systrace.traceSynchronous("network-connectivity-registration") {
                                     essentialServiceModule.networkConnectivityService.register()
-                                }
-                                Systrace.traceSynchronous("network-connectivity-listeners") {
-                                    networkConnectivityService.addNetworkConnectivityListener(pendingApiCallsSender)
-                                    apiService?.let(networkConnectivityService::addNetworkConnectivityListener)
                                 }
                             }
                         }
@@ -282,10 +277,8 @@ internal class ModuleInitBootstrapper(
                             openTelemetryModule,
                             workerThreadModule,
                             coreModule,
-                            storageModule,
                             essentialServiceModule,
                             androidServicesModule,
-                            null,
                             null,
                             null,
                             null,

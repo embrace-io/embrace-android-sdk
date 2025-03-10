@@ -17,8 +17,6 @@ internal class AutoDataCaptureBehaviorImplTest {
         killSwitchConfig = KillSwitchRemoteConfig(
             sigHandlerDetection = true,
             jetpackCompose = false,
-            v2StoragePct = 100f,
-            useOkHttpPct = 100f
         ),
         dataConfig = DataRemoteConfig(pctThermalStatusEnabled = 0.0f),
         uiLoadInstrumentationEnabled = false,
@@ -40,7 +38,6 @@ internal class AutoDataCaptureBehaviorImplTest {
             assertFalse(isUiLoadTracingEnabled())
             assertFalse(isUiLoadTracingTraceAll())
             assertTrue(isThermalStatusCaptureEnabled())
-            assertTrue(isV2StorageEnabled())
             assertFalse(isEndStartupWithAppReadyEnabled())
         }
     }
@@ -51,7 +48,6 @@ internal class AutoDataCaptureBehaviorImplTest {
             assertTrue(is3rdPartySigHandlerDetectionEnabled())
             assertFalse(isComposeClickCaptureEnabled())
             assertFalse(isThermalStatusCaptureEnabled())
-            assertTrue(isV2StorageEnabled())
         }
     }
 

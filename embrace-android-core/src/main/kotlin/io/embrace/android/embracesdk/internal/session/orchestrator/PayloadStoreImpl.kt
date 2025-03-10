@@ -14,7 +14,7 @@ import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.internal.utils.Uuid
 
-internal class V2PayloadStore(
+internal class PayloadStoreImpl(
     private val intakeService: IntakeService,
     private val clock: Clock,
     private val processIdProvider: () -> String,

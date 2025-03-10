@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.internal.session
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
-import io.embrace.android.embracesdk.fakes.FakeDeliveryService
 import io.embrace.android.embracesdk.fakes.FakeGatingService
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakeOtelPayloadMapper
@@ -29,7 +28,6 @@ import io.embrace.android.embracesdk.internal.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.spans.SpanService
 import io.embrace.android.embracesdk.internal.spans.SpanSink
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
@@ -42,7 +40,6 @@ internal class PayloadFactoryBaTest {
     private lateinit var sessionIdTracker: FakeSessionIdTracker
     private lateinit var activityService: FakeProcessStateService
     private lateinit var userService: UserService
-    private lateinit var deliveryService: FakeDeliveryService
     private lateinit var configService: FakeConfigService
     private lateinit var spanRepository: SpanRepository
     private lateinit var spanSink: SpanSink
@@ -57,7 +54,6 @@ internal class PayloadFactoryBaTest {
         metadataService = FakeMetadataService()
         sessionIdTracker = FakeSessionIdTracker()
         activityService = FakeProcessStateService(isInBackground = true)
-        deliveryService = FakeDeliveryService()
         preferencesService = FakePreferenceService()
         userService = FakeUserService()
         val initModule = FakeInitModule(clock = clock)
@@ -71,13 +67,6 @@ internal class PayloadFactoryBaTest {
             )
         )
         blockingExecutorService = BlockingScheduledExecutorService(blockingMode = false)
-    }
-
-    @Test
-    fun `background activity is not started whn the service initializes in the foreground`() {
-        activityService.isInBackground = false
-        this.service = createService(false)
-        assertTrue(deliveryService.savedSessionEnvelopes.isEmpty())
     }
 
     @Test

@@ -7,7 +7,6 @@ import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
 import io.embrace.android.embracesdk.fakes.injection.FakeAndroidServicesModule
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
-import io.embrace.android.embracesdk.fakes.injection.FakeStorageModule
 import io.embrace.android.embracesdk.fakes.injection.FakeSystemServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import io.embrace.android.embracesdk.internal.injection.EssentialServiceModuleImpl
@@ -28,26 +27,22 @@ internal class EssentialServiceModuleImplTest {
         val initModule = FakeInitModule()
         val module = EssentialServiceModuleImpl(
             initModule = initModule,
+            configModule = FakeConfigModule(),
             openTelemetryModule = FakeOpenTelemetryModule(),
             coreModule = coreModule,
             workerThreadModule = FakeWorkerThreadModule(),
             systemServiceModule = FakeSystemServiceModule(),
             androidServicesModule = FakeAndroidServicesModule(),
-            storageModule = FakeStorageModule(),
-            configModule = FakeConfigModule(),
             lifecycleOwnerProvider = { TestLifecycleOwner() },
             networkConnectivityServiceProvider = { null }
         )
 
         assertNotNull(module.processStateService)
-        assertNotNull(module.apiClient)
-        assertNotNull(module.apiService)
         assertNotNull(module.activityLifecycleTracker)
         assertNotNull(module.sessionIdTracker)
         assertNotNull(module.sessionPropertiesService)
         assertNotNull(module.userService)
         assertNotNull(module.networkConnectivityService)
-        assertNotNull(module.pendingApiCallsSender)
         assertNotNull(module.logWriter)
     }
 }

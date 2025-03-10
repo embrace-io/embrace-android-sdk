@@ -6,7 +6,6 @@ import androidx.lifecycle.testing.TestLifecycleOwner
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
-import io.embrace.android.embracesdk.fakes.FakeDeliveryService
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeJniDelegate
 import io.embrace.android.embracesdk.fakes.FakeNetworkConnectivityService
@@ -20,9 +19,7 @@ import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import io.embrace.android.embracesdk.internal.anr.detection.BlockedThreadDetector
-import io.embrace.android.embracesdk.internal.comms.delivery.DeliveryService
 import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
-import io.embrace.android.embracesdk.internal.delivery.execution.RequestExecutionService
 import io.embrace.android.embracesdk.internal.injection.AndroidServicesModule
 import io.embrace.android.embracesdk.internal.injection.AnrModule
 import io.embrace.android.embracesdk.internal.injection.CoreModule
@@ -40,7 +37,6 @@ import io.embrace.android.embracesdk.internal.prefs.PreferencesService
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
 import io.embrace.android.embracesdk.internal.spans.SpanSink
-import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
@@ -52,7 +48,6 @@ internal class EmbraceSetupInterface @JvmOverloads constructor(
     workerToFake: Worker.Background? = null,
     anrMonitoringThread: Thread? = null,
     fakeStorageLayer: Boolean = false,
-    var useMockWebServer: Boolean = true,
     val ignoredInternalErrors: List<InternalErrorType> = listOf(InternalErrorType.APP_LAUNCH_TRACE_FAIL),
 ) {
     private val processIdentifier: String = Uuid.getEmbUuid()
@@ -112,7 +107,7 @@ internal class EmbraceSetupInterface @JvmOverloads constructor(
         coreModuleSupplier = { _, _ -> coreModule },
         workerThreadModuleSupplier = { workerThreadModule },
         androidServicesModuleSupplier = { _, _ -> androidServicesModule },
-        essentialServiceModuleSupplier = { initModule, configModule, openTelemetryModule, coreModule, workerThreadModule, systemServiceModule, androidServicesModule, storageModule, _, _ ->
+        essentialServiceModuleSupplier = { initModule, configModule, openTelemetryModule, coreModule, workerThreadModule, systemServiceModule, androidServicesModule, _, _ ->
             createEssentialServiceModule(
                 initModule = initModule,
                 configModule = configModule,
@@ -121,34 +116,23 @@ internal class EmbraceSetupInterface @JvmOverloads constructor(
                 workerThreadModule = workerThreadModule,
                 systemServiceModule = systemServiceModule,
                 androidServicesModule = androidServicesModule,
-                storageModule = storageModule,
                 lifecycleOwnerProvider = { fakeLifecycleOwner },
                 networkConnectivityServiceProvider = { fakeNetworkConnectivityService }
             )
         },
-        deliveryModuleSupplier = { configModule, initModule, otelModule, workerThreadModule, coreModule, storageModule, essentialServiceModule, androidServicesModule, _, _, _, _, _ ->
-            val requestExecutionServiceProvider: Provider<RequestExecutionService>? = when {
-                useMockWebServer -> null
-                else -> ::FakeRequestExecutionService
-            }
-            val deliveryServiceProvider: Provider<DeliveryService>? = when {
-                useMockWebServer -> null
-                else -> ::FakeDeliveryService
-            }
+        deliveryModuleSupplier = { configModule, initModule, otelModule, workerThreadModule, coreModule, essentialServiceModule, androidServicesModule, _, _, _, _ ->
             createDeliveryModule(
                 configModule = configModule,
                 initModule = initModule,
                 otelModule = otelModule,
                 workerThreadModule = workerThreadModule,
                 coreModule = coreModule,
-                storageModule = storageModule,
                 essentialServiceModule = essentialServiceModule,
                 androidServicesModule = androidServicesModule,
                 payloadStorageServiceProvider = fakePayloadStorageService?.let { { it } },
                 cacheStorageServiceProvider = fakeCacheStorageService?.let { { it } },
-                requestExecutionServiceProvider = requestExecutionServiceProvider,
-                deliveryServiceProvider = deliveryServiceProvider,
-                deliveryTracer = deliveryTracer
+                requestExecutionServiceProvider = null,
+                deliveryTracer = deliveryTracer,
             )
         },
         anrModuleSupplier = { _, _, _ -> anrModule },

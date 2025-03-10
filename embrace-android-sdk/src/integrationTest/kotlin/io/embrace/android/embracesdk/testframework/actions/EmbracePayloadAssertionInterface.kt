@@ -6,7 +6,6 @@ import io.embrace.android.embracesdk.ResourceReader
 import io.embrace.android.embracesdk.assertions.findSessionSpan
 import io.embrace.android.embracesdk.assertions.getSessionId
 import io.embrace.android.embracesdk.assertions.returnIfConditionMet
-import io.embrace.android.embracesdk.fakes.FakeDeliveryService
 import io.embrace.android.embracesdk.internal.TypeUtils
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
@@ -51,7 +50,6 @@ internal class EmbracePayloadAssertionInterface(
         private const val WAIT_TIME_MS = 10000
     }
 
-    private val deliveryService by lazy { bootstrapper.deliveryModule.deliveryService as FakeDeliveryService }
     private val serializer by lazy { bootstrapper.initModule.jsonSerializer }
     private val deliveryTracer by lazy {
         checkNotNull(bootstrapper.deliveryModule.deliveryTracer)
@@ -83,34 +81,6 @@ internal class EmbracePayloadAssertionInterface(
                 )
             }
             throwPayloadErrMsg(expectedSize, envelopes.size, envelopes, exc)
-        }
-    }
-
-    /*** LOGS V1 ***/
-
-
-    /**
-     * Returns the list of log payload envelopes that have been sent. If [expectedSize] is specified,
-     * it will wait a maximum of 1 second for the number of payloads that exist to equal
-     * to that before returning, timing out if it doesn't.
-     */
-    internal fun getLogEnvelopesV1(
-        expectedSize: Int,
-        sent: Boolean = true,
-    ): List<Envelope<LogPayload>> {
-        return retrieveLogEnvelopesV1(expectedSize, sent)
-    }
-
-    private fun retrieveLogEnvelopesV1(
-        expectedSize: Int?,
-        sent: Boolean,
-    ): List<Envelope<LogPayload>> {
-        return retrievePayload(expectedSize) {
-            if (sent) {
-                deliveryService.lastSentLogPayloads
-            } else {
-                deliveryService.lastSavedLogPayloads
-            }
         }
     }
 
@@ -287,30 +257,6 @@ internal class EmbracePayloadAssertionInterface(
         }
         assertFalse(crashData.getCrashFile().exists())
     }
-
-
-    /*** SESSIONS V1 ***/
-
-
-    /**
-     * Returns a list of sessions that were completed by the SDK.
-     */
-    internal fun getSessionEnvelopesV1(
-        expectedSize: Int,
-        state: ApplicationState = ApplicationState.FOREGROUND,
-    ): List<Envelope<SessionPayload>> {
-        return retrieveSessionEnvelopesV1(expectedSize, state)
-    }
-
-    private fun retrieveSessionEnvelopesV1(
-        expectedSize: Int, appState: ApplicationState,
-    ): List<Envelope<SessionPayload>> {
-        return retrievePayload(expectedSize) {
-            deliveryService.sentSessionEnvelopes.map { it.first }
-                .filter { it.findAppState() == appState }
-        }
-    }
-
 
     /*** TEST INFRA ***/
 

@@ -10,6 +10,8 @@ import android.os.Build
 import android.preference.PreferenceManager
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
+import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.config.remote.AppExitInfoConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
@@ -125,6 +127,7 @@ internal class AeiFeatureTest {
     @Test
     fun `native crash`() {
         testRule.runTest(
+            instrumentedConfig = FakeInstrumentedConfig(enabledFeatures = FakeEnabledFeatureConfig(nativeCrashCapture = true)),
             setupAction = {
                 setupFakeAeiData(listOf(nativeCrash.toAeiObject(), nativeCrash.toAeiObject()))
             },
@@ -135,6 +138,22 @@ internal class AeiFeatureTest {
                 val logs = getLogEnvelopes(2).flatMap { it.getLogsOfType(EmbType.System.Exit) }
                 logs[0].assertContainsAeiData(nativeCrash, "1", "1")
                 logs[1].assertContainsAeiData(nativeCrash, "2", "2")
+            }
+        )
+    }
+
+    @Test
+    fun `native crash disabled`() {
+        testRule.runTest(
+            instrumentedConfig = FakeInstrumentedConfig(enabledFeatures = FakeEnabledFeatureConfig(nativeCrashCapture = false)),
+            setupAction = {
+                setupFakeAeiData(listOf(nativeCrash.toAeiObject()))
+            },
+            testCaseAction = {
+                recordSession()
+            },
+            assertAction = {
+                assertEquals(0, getLogEnvelopes(0).size)
             }
         )
     }

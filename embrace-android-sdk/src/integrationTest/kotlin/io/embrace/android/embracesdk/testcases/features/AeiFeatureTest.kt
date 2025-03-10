@@ -169,9 +169,9 @@ internal class AeiFeatureTest {
 
     @Test
     fun `aei limit exceeded`() {
-        val timestamps = 0..50L
+        val timestamps = 0..100L
         val aeis = timestamps.map { anr.copy(timestamp = it) }.map(TestAeiData::toAeiObject)
-        val expectedSize = 32
+        val expectedSize = 64
 
         testRule.runTest(
             setupAction = {
@@ -185,7 +185,7 @@ internal class AeiFeatureTest {
                 assertEquals(expectedSize, envelopes.size)
                 val logs = envelopes.mapNotNull { it.data.logs?.singleOrNull() }
                     .filter { it.attributes?.findAttributeValue("emb.type") == "sys.exit" }
-                assertEquals(32, logs.size)
+                assertEquals(expectedSize, logs.size)
             }
         )
     }

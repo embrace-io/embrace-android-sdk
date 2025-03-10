@@ -17,16 +17,14 @@ class AppExitInfoBehaviorImpl(
         /**
          * Max size of bytes to allow capturing AppExitInfo ndk/anr traces
          */
-        private const val MAX_TRACE_SIZE_BYTES = 2097152 // 2MB
+        private const val MAX_TRACE_SIZE_BYTES = 10485760 // 10MB
         const val AEI_MAX_NUM_DEFAULT: Int = 0 // 0 means no limit
     }
 
     override val local = local.enabledFeatures
     override val remote = remote?.appExitInfoConfig
 
-    override fun getTraceMaxLimit(): Int =
-        remote?.appExitInfoTracesLimit
-            ?: MAX_TRACE_SIZE_BYTES
+    override fun getTraceMaxLimit(): Int = remote?.appExitInfoTracesLimit ?: MAX_TRACE_SIZE_BYTES
 
     override fun isAeiCaptureEnabled(): Boolean {
         return thresholdCheck.isBehaviorEnabled(remote?.pctAeiCaptureEnabled)

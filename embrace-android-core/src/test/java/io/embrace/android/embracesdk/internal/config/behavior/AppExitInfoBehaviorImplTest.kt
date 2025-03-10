@@ -16,7 +16,7 @@ internal class AppExitInfoBehaviorImplTest {
     @Test
     fun testDefaults() {
         with(createAppExitInfoBehavior()) {
-            assertEquals(2097152, getTraceMaxLimit())
+            assertEquals(10485760, getTraceMaxLimit())
             assertTrue(isAeiCaptureEnabled())
         }
     }

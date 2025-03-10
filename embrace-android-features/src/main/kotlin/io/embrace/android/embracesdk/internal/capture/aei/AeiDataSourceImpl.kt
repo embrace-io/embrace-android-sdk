@@ -35,7 +35,7 @@ internal class AeiDataSourceImpl(
 ) {
 
     private companion object {
-        private const val SDK_AEI_SEND_LIMIT = 32
+        private const val SDK_AEI_SEND_LIMIT = 64
     }
 
     override fun enableDataCapture() {

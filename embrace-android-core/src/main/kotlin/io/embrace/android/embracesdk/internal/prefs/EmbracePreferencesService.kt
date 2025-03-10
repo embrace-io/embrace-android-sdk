@@ -171,6 +171,10 @@ internal class EmbracePreferencesService(
         return incrementAndGetOrdinal(LAST_NATIVE_CRASH_NUMBER_KEY)
     }
 
+    override fun incrementAndGetAeiCrashNumber(): Int {
+        return incrementAndGetOrdinal(LAST_AEI_CRASH_NUMBER_KEY)
+    }
+
     private fun incrementAndGetOrdinal(key: String): Int {
         return try {
             val ordinal = (prefs.getIntegerPreference(key) ?: 0) + 1
@@ -278,6 +282,7 @@ internal class EmbracePreferencesService(
         private const val LAST_BACKGROUND_ACTIVITY_NUMBER_KEY = "io.embrace.bgactivitynumber"
         private const val LAST_CRASH_NUMBER_KEY = "io.embrace.crashnumber"
         private const val LAST_NATIVE_CRASH_NUMBER_KEY = "io.embrace.nativecrashnumber"
+        private const val LAST_AEI_CRASH_NUMBER_KEY = "io.embrace.aeicrashnumber"
         private const val JAVA_SCRIPT_BUNDLE_URL_KEY = "io.embrace.jsbundle.url"
         private const val JAVA_SCRIPT_BUNDLE_ID_KEY = "io.embrace.jsbundle.id"
         private const val JAVA_SCRIPT_PATCH_NUMBER_KEY = "io.embrace.javascript.patch"

@@ -14,6 +14,8 @@ import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.config.remote.AppExitInfoConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.opentelemetry.embAeiNumber
+import io.embrace.android.embracesdk.internal.opentelemetry.embCrashNumber
 import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
@@ -21,6 +23,7 @@ import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import io.embrace.android.embracesdk.testframework.assertions.assertMatches
 import io.embrace.android.embracesdk.testframework.assertions.getLastLog
 import io.embrace.android.embracesdk.testframework.assertions.getLogOfType
+import io.embrace.android.embracesdk.testframework.assertions.getLogsOfType
 import io.mockk.every
 import io.mockk.mockk
 import org.junit.Assert.assertEquals
@@ -123,14 +126,15 @@ internal class AeiFeatureTest {
     fun `native crash`() {
         testRule.runTest(
             setupAction = {
-                setupFakeAeiData(listOf(nativeCrash.toAeiObject()))
+                setupFakeAeiData(listOf(nativeCrash.toAeiObject(), nativeCrash.toAeiObject()))
             },
             testCaseAction = {
                 recordSession()
             },
             assertAction = {
-                val log = getSingleLogEnvelope().getLogOfType(EmbType.System.Exit)
-                log.assertContainsAeiData(nativeCrash)
+                val logs = getLogEnvelopes(2).flatMap { it.getLogsOfType(EmbType.System.Exit) }
+                logs[0].assertContainsAeiData(nativeCrash, "1", "1")
+                logs[1].assertContainsAeiData(nativeCrash, "2", "2")
             }
         )
     }
@@ -291,6 +295,8 @@ internal class AeiFeatureTest {
 
     private fun Log.assertContainsAeiData(
         expected: TestAeiData,
+        crashNumber: String = "null",
+        aeiNumber: String = "null",
     ) {
         with(expected) {
             attributes?.assertMatches(
@@ -305,7 +311,9 @@ internal class AeiFeatureTest {
                     "exit_status" to status,
                     "description" to description,
                     "reason" to reason,
-                    "emb.type" to "sys.exit"
+                    "emb.type" to "sys.exit",
+                    embCrashNumber.attributeKey.key to crashNumber,
+                    embAeiNumber.attributeKey.key to aeiNumber,
                 )
             )
             assertEquals(trace, body)

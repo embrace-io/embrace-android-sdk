@@ -1,8 +1,5 @@
 package io.embrace.android.embracesdk.internal.comms.api
 
-import io.embrace.android.embracesdk.network.http.HttpMethod
-import java.io.IOException
-
 internal fun ApiRequest.getHeaders(): Map<String, String> {
     val headers = mutableMapOf(
         "Accept" to accept,
@@ -15,23 +12,6 @@ internal fun ApiRequest.getHeaders(): Map<String, String> {
     deviceId?.let { headers["X-EM-DID"] = it }
     eTag?.let { headers["If-None-Match"] = it }
     return headers
-}
-
-internal fun ApiRequest.toConnection(): EmbraceConnection {
-    try {
-        val connection = EmbraceUrl.create(url.url).openConnection()
-
-        getHeaders().forEach {
-            connection.setRequestProperty(it.key, it.value)
-        }
-        connection.setRequestMethod(httpMethod.name)
-        if (httpMethod == HttpMethod.POST) {
-            connection.setDoOutput(true)
-        }
-        return connection
-    } catch (ex: IOException) {
-        throw IllegalStateException(ex.localizedMessage ?: "", ex)
-    }
 }
 
 /**

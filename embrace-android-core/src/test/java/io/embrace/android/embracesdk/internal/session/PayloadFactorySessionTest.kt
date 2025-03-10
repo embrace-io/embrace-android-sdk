@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.internal.session
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
-import io.embrace.android.embracesdk.fakes.FakeDeliveryService
 import io.embrace.android.embracesdk.fakes.FakeGatingService
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
@@ -15,7 +14,6 @@ import io.embrace.android.embracesdk.fakes.injection.FakePayloadSourceModule
 import io.embrace.android.embracesdk.internal.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.internal.capture.user.UserService
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
-import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessState
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactory
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactoryImpl
 import io.embrace.android.embracesdk.internal.session.message.PayloadMessageCollatorImpl
@@ -29,7 +27,6 @@ import io.mockk.unmockkAll
 import org.junit.After
 import org.junit.AfterClass
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.BeforeClass
 import org.junit.Test
@@ -39,7 +36,6 @@ internal class PayloadFactorySessionTest {
 
     private lateinit var spanSink: SpanSink
     private lateinit var service: PayloadFactory
-    private lateinit var deliveryService: FakeDeliveryService
     private lateinit var configService: FakeConfigService
     private lateinit var clock: FakeClock
     private lateinit var metadataService: MetadataService
@@ -71,7 +67,6 @@ internal class PayloadFactorySessionTest {
 
     @Before
     fun before() {
-        deliveryService = FakeDeliveryService()
         configService = FakeConfigService()
         clock = FakeClock(10000L)
         spanSink = FakeInitModule(clock = clock).openTelemetryModule.spanSink
@@ -91,21 +86,6 @@ internal class PayloadFactorySessionTest {
     @After
     fun after() {
         clearAllMocks(answers = false)
-    }
-
-    @Test
-    fun `initializing service should detect early sessions`() {
-        initializeSessionService(isActivityInBackground = false)
-        assertNull(deliveryService.lastSentCachedSession)
-    }
-
-    @Test
-    fun `on foreground starts state session successfully for cold start`() {
-        initializeSessionService()
-        val coldStart = true
-
-        service.startPayloadWithState(ProcessState.FOREGROUND, 456, coldStart)
-        assertNull(deliveryService.lastSentCachedSession)
     }
 
     @Test

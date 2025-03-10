@@ -1,9 +1,5 @@
 package io.embrace.android.embracesdk.internal.injection
 
-import io.embrace.android.embracesdk.internal.comms.delivery.CacheService
-import io.embrace.android.embracesdk.internal.comms.delivery.DeliveryCacheManager
-import io.embrace.android.embracesdk.internal.comms.delivery.EmbraceCacheService
-import io.embrace.android.embracesdk.internal.comms.delivery.EmbraceDeliveryCacheManager
 import io.embrace.android.embracesdk.internal.storage.EmbraceStorageService
 import io.embrace.android.embracesdk.internal.storage.StatFsAvailabilityChecker
 import io.embrace.android.embracesdk.internal.storage.StorageService
@@ -21,20 +17,6 @@ internal class StorageModuleImpl(
             coreModule.context,
             initModule.telemetryService,
             StatFsAvailabilityChecker(coreModule.context)
-        )
-    }
-
-    override val cacheService: CacheService by singleton {
-        EmbraceCacheService(
-            storageService,
-            initModule.jsonSerializer
-        )
-    }
-
-    override val deliveryCacheManager: DeliveryCacheManager by singleton {
-        EmbraceDeliveryCacheManager(
-            cacheService,
-            workerThreadModule.priorityWorker(Worker.Priority.DeliveryCacheWorker)
         )
     }
 

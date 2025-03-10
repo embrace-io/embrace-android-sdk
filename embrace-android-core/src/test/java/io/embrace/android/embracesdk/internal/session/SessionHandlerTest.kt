@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.internal.session
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
-import io.embrace.android.embracesdk.fakes.FakeDeliveryService
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeMetadataSource
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeResourceSource
 import io.embrace.android.embracesdk.fakes.FakeGatingService
@@ -59,7 +58,6 @@ internal class SessionHandlerTest {
     private lateinit var preferencesService: FakePreferenceService
     private lateinit var sessionIdTracker: FakeSessionIdTracker
     private lateinit var metadataService: FakeMetadataService
-    private lateinit var deliveryService: FakeDeliveryService
     private lateinit var gatingService: FakeGatingService
     private lateinit var configService: FakeConfigService
     private lateinit var memoryCleanerService: FakeMemoryCleanerService
@@ -86,7 +84,6 @@ internal class SessionHandlerTest {
         )
         gatingService = FakeGatingService(EmbraceGatingService(configService, FakeLogService()))
         preferencesService = FakePreferenceService()
-        deliveryService = FakeDeliveryService()
         val initModule = FakeInitModule(clock = clock)
         spanSink = initModule.openTelemetryModule.spanSink
         spanService = initModule.openTelemetryModule.spanService

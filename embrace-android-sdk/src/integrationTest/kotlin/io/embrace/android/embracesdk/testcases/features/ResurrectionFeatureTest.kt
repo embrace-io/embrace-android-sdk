@@ -11,7 +11,6 @@ import io.embrace.android.embracesdk.fakes.fakeEnvelopeResource
 import io.embrace.android.embracesdk.fixtures.fakeCachedSessionStoredTelemetryMetadata
 import io.embrace.android.embracesdk.fixtures.fakeNativeCrashStoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRemoteConfig
-import io.embrace.android.embracesdk.internal.config.remote.KillSwitchRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.delivery.PayloadType
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
@@ -22,7 +21,6 @@ import io.embrace.android.embracesdk.testframework.actions.createStoredNativeCra
 import io.embrace.android.embracesdk.testframework.assertions.getLastLog
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Ignore
 import org.junit.Rule
@@ -205,22 +203,6 @@ internal class ResurrectionFeatureTest {
                     assertFalse(complete)
                 }
 
-            }
-        )
-    }
-
-    @Test
-    fun `resurrection attempt with v2 delivery layer off does not crash the SDK`() {
-        testRule.runTest(
-            persistedRemoteConfig = RemoteConfig(killSwitchConfig = KillSwitchRemoteConfig(v2StoragePct = 0f)),
-            setupAction = {
-                useMockWebServer = false
-            },
-            testCaseAction = {
-                recordSession()
-            },
-            assertAction = {
-                assertNotNull(getSessionEnvelopesV1(1).single())
             }
         )
     }

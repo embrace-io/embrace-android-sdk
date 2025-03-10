@@ -7,8 +7,7 @@ import io.embrace.android.embracesdk.internal.payload.SessionPayload
 
 /**
  * Interface that hides the details of how session payloads are stored to callers. This is
- * a shim that hides whether v1 or v2 of the storage implementation is used. Once we delete
- * v1, this interface can be deleted too.
+ * a shim that hides how the storage implementation is used.
  */
 interface PayloadStore : CrashTeardownHandler {
 
@@ -41,8 +40,7 @@ interface PayloadStore : CrashTeardownHandler {
 
     /**
      * Handles graceful shutdown on a crash. This should be called _after_ any payloads for the
-     * crash have been added. The legacy implementation ignores this but the v2 implementation
-     * relies on it.
+     * crash have been added.
      */
     override fun handleCrash(crashId: String)
 }

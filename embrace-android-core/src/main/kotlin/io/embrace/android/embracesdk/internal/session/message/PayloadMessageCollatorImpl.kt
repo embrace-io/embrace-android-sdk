@@ -9,7 +9,7 @@ import io.embrace.android.embracesdk.internal.session.SessionZygote
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
 
 /**
- * Generates a V2 payload
+ * Generates a payload
  */
 internal class PayloadMessageCollatorImpl(
     private val gatingService: GatingService,

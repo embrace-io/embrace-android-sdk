@@ -130,25 +130,16 @@ internal class PayloadSourceModuleImpl(
         }
     }
 
-    @Suppress("ComplexCondition")
     override val payloadResurrectionService: PayloadResurrectionService? by singleton {
-        val intakeService = deliveryModule.intakeService
-        val cacheStorageService = deliveryModule.cacheStorageService
-        val cachedLogEnvelopeStore = deliveryModule.cachedLogEnvelopeStore
-        if (configModule.configService.autoDataCaptureBehavior.isV2StorageEnabled() &&
-            intakeService != null &&
-            cacheStorageService != null &&
-            cachedLogEnvelopeStore != null
-        ) {
-            PayloadResurrectionServiceImpl(
-                intakeService = intakeService,
-                cacheStorageService = cacheStorageService,
-                cachedLogEnvelopeStore = cachedLogEnvelopeStore,
-                logger = initModule.logger,
-                serializer = initModule.jsonSerializer
-            )
-        } else {
-            null
-        }
+        val intakeService = deliveryModule.intakeService ?: return@singleton null
+        val cacheStorageService = deliveryModule.cacheStorageService ?: return@singleton null
+        val cachedLogEnvelopeStore = deliveryModule.cachedLogEnvelopeStore ?: return@singleton null
+        PayloadResurrectionServiceImpl(
+            intakeService = intakeService,
+            cacheStorageService = cacheStorageService,
+            cachedLogEnvelopeStore = cachedLogEnvelopeStore,
+            logger = initModule.logger,
+            serializer = initModule.jsonSerializer
+        )
     }
 }

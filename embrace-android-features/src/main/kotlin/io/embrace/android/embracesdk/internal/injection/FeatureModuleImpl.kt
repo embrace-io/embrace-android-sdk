@@ -185,7 +185,7 @@ internal class FeatureModuleImpl(
         if (BuildVersionChecker.isAtLeast(Build.VERSION_CODES.R) && activityManager != null) {
             AeiDataSourceImpl(
                 workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker),
-                configService.appExitInfoBehavior,
+                configService,
                 activityManager,
                 androidServicesModule.preferencesService,
                 logWriter,

@@ -84,7 +84,7 @@ internal class AeiDataSourceImplTest {
     @Before
     fun setUp() {
         configService = FakeConfigService(
-            appExitInfoBehavior = FakeAppExitInfoBehavior(enabled = true)
+            appExitInfoBehavior = FakeAppExitInfoBehavior()
         )
     }
 
@@ -133,11 +133,11 @@ internal class AeiDataSourceImplTest {
     }
 
     @Test
-    fun `getHistoricalProcessExitInfo should truncate to 32 entries`() {
-        // given getHistoricalProcessExitReasons returns more than 32 entries
-        val appExitInfoListWithMoreThan32Entries = mutableListOf<ApplicationExitInfo>()
-        repeat(33) {
-            appExitInfoListWithMoreThan32Entries.add(mockAppExitInfo)
+    fun `getHistoricalProcessExitInfo should truncate to 64 entries`() {
+        // given getHistoricalProcessExitReasons returns more than 64 entries
+        val entries = mutableListOf<ApplicationExitInfo>()
+        repeat(65) {
+            entries.add(mockAppExitInfo)
         }
         every {
             mockActivityManager.getHistoricalProcessExitReasons(
@@ -145,12 +145,12 @@ internal class AeiDataSourceImplTest {
                 any(),
                 any()
             )
-        } returns appExitInfoListWithMoreThan32Entries
+        } returns entries
 
         startApplicationExitInfoService()
 
-        // then captured data should only have 32 entries
-        assertEquals(32, logWriter.logEvents.size)
+        // then captured data should only have 64 entries
+        assertEquals(64, logWriter.logEvents.size)
     }
 
     @Test
@@ -335,7 +335,7 @@ internal class AeiDataSourceImplTest {
 
     @Test
     fun `one object sent per payload`() {
-        val entries = (0..32).map { mockAppExitInfo }
+        val entries = (0..64).map { mockAppExitInfo }
         every {
             mockActivityManager.getHistoricalProcessExitReasons(
                 any(),
@@ -347,7 +347,7 @@ internal class AeiDataSourceImplTest {
         startApplicationExitInfoService()
 
         // each AEI object with a trace should be sent in a separate payload
-        assertEquals(32, logWriter.logEvents.size)
+        assertEquals(64, logWriter.logEvents.size)
     }
 
     private fun getAeiLogAttrs(): Map<String, String> {

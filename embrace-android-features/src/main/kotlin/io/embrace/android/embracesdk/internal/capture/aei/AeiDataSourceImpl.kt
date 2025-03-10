@@ -52,7 +52,12 @@ internal class AeiDataSourceImpl(
     private fun processAeiRecords() {
         val maxNum = appExitInfoBehavior.appExitInfoMaxNum()
         val records = activityManager.getHistoricalProcessExitReasons(null, 0, maxNum).take(SDK_AEI_SEND_LIMIT)
-        val unsentRecords = getUnsentRecords(records)
+        val deliveredIds = preferencesService.deliveredAeiIds
+
+        // update persisted state on what records were sent
+        val unsentRecords = records.filter { !deliveredIds.contains(it.getAeiId()) }
+        val sentRecords = records.minus(unsentRecords.toSet())
+        preferencesService.deliveredAeiIds = sentRecords.map { it.getAeiId() }.toSet()
 
         unsentRecords.forEach {
             val obj = it.constructAeiObject(versionChecker, appExitInfoBehavior.getTraceMaxLimit())
@@ -66,6 +71,9 @@ internal class AeiDataSourceImpl(
                 captureAction = {
                     val schemaType = AeiLog(obj, crashNumber, aeiNumber)
                     addLog(schemaType, INFO.toOtelSeverity(), obj.trace ?: "")
+
+                    // count AEI as delivered once submitted to the OTel logging system
+                    preferencesService.deliveredAeiIds = preferencesService.deliveredAeiIds.plus(obj.getAeiId())
                 }
             )
         }
@@ -80,15 +88,6 @@ internal class AeiDataSourceImpl(
         else -> null
     }
 
-    /**
-     * Calculates what AEI records have been sent by subtracting a collection of IDs that have been previously
-     * sent from the return value of getHistoricalProcessExitReasons.
-     */
-    private fun getUnsentRecords(records: List<ApplicationExitInfo>): List<ApplicationExitInfo> {
-        val deliveredIds = preferencesService.deliveredAeiIds
-        preferencesService.deliveredAeiIds = records.map { it.getAeiId() }.toSet()
-        return records.filter { !deliveredIds.contains(it.getAeiId()) }
-    }
-
     private fun ApplicationExitInfo.getAeiId(): String = "${timestamp}_$pid"
+    private fun AppExitInfoData.getAeiId(): String = "${timestamp}_$pid"
 }

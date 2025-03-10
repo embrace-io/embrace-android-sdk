@@ -21,11 +21,24 @@ fun handleHttpCallResult(
     failBuildOnUploadErrors: Boolean,
 ) {
     val msg = when (result) {
-        is Failure -> "failed: ${endpoint.url}, status=${result.code}"
+        is Failure -> handleHttpFailure(endpoint, result)
         is Error -> "errored: ${endpoint.url}, stacktrace=${result.exception.stackTrace.joinToString("\n")}"
         is Success<*> -> null
     }
     if (msg != null && failBuildOnUploadErrors) {
         error("Embrace HTTP request $msg")
     }
+}
+
+private fun handleHttpFailure(
+    endpoint: EmbraceEndpoint,
+    result: Failure,
+): String {
+    val msg = "failed: ${endpoint.url}, status=${result.code}"
+
+    if (result.code == 403) {
+        return "$msg. Please check that your embrace-config.json contains an " +
+            "app_id and api_token that match the settings page of your Embrace dashboard."
+    }
+    return msg
 }

@@ -3,8 +3,8 @@
     "name": "emb-screen-view",
     "kind": "INTERNAL",
     "status": "UNSET",
-    "startEpochNanos": "169220160000000000",
-    "endEpochNanos": "169220190000000000",
+    "startEpochNanos": "169220160010000000",
+    "endEpochNanos": "169220200131000000",
     "hasEnded": "true",
     "totalAttributeCount": "4",
     "attributes": {

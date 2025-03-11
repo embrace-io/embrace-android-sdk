@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.assertions.findSpanOfType
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
+import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface
 import io.embrace.android.embracesdk.testframework.assertions.assertMatches
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -23,14 +24,11 @@ internal class ActivityFeatureTest {
 
     @Test
     fun `automatically capture activities`() {
-        var startTimeMs: Long = 0
+        var timestamps: EmbraceActionInterface.SessionTimestamps? = null
 
         testRule.runTest(
             testCaseAction = {
-                recordSession {
-                    startTimeMs = clock.now()
-                    simulateActivityLifecycle()
-                }
+                timestamps = recordSession()
             },
             assertAction = {
                 val message = getSingleSessionEnvelope()
@@ -42,9 +40,9 @@ internal class ActivityFeatureTest {
                     )
                 )
 
-                with(viewSpan) {
-                    assertEquals(startTimeMs, startTimeNanos?.nanosToMillis())
-                    assertEquals(startTimeMs + 30000L, endTimeNanos?.nanosToMillis())
+                with(checkNotNull(timestamps)) {
+                    assertEquals(foregroundTimeMs, viewSpan.startTimeNanos?.nanosToMillis())
+                    assertEquals(endTimeMs, viewSpan.endTimeNanos?.nanosToMillis())
                 }
             },
             otelExportAssertion = {

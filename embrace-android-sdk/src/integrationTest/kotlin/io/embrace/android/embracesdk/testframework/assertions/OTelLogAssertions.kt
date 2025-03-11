@@ -1,13 +1,13 @@
 package io.embrace.android.embracesdk.testframework.assertions
 
 import io.embrace.android.embracesdk.Severity
+import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.opentelemetry.embExceptionHandling
 import io.embrace.android.embracesdk.internal.opentelemetry.embState
 import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.serialization.truncatedStacktrace
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
-import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.opentelemetry.semconv.ExceptionAttributes
 import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes
 import org.junit.Assert.assertEquals
@@ -19,7 +19,7 @@ internal fun assertOtelLogReceived(
     expectedMessage: String,
     expectedSeverityNumber: Int,
     expectedSeverityText: String,
-    expectedTimeMs: Long? = SdkIntegrationTestRule.DEFAULT_SDK_START_TIME_MS,
+    expectedTimeMs: Long,
     expectedType: String? = null,
     expectedExceptionName: String? = null,
     expectedExceptionMessage: String? = null,
@@ -34,9 +34,7 @@ internal fun assertOtelLogReceived(
         assertEquals(expectedMessage, log.body)
         assertEquals(expectedSeverityNumber, log.severityNumber)
         assertEquals(expectedSeverityText, log.severityText)
-        if (expectedTimeMs != null) {
-            assertEquals(expectedTimeMs * 1000000, log.timeUnixNano)
-        }
+        assertEquals(expectedTimeMs.millisToNanos(), log.timeUnixNano)
         assertFalse(log.attributes?.findAttributeValue(SessionIncubatingAttributes.SESSION_ID.key).isNullOrBlank())
         expectedType?.let { assertAttribute(log, embExceptionHandling.name, it) }
         assertEquals(expectedState, log.attributes?.findAttributeValue(embState.attributeKey.key))

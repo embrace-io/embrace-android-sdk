@@ -14,7 +14,6 @@ import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.capture.activity.LifecycleStage
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
-import io.embrace.android.embracesdk.internal.payload.ApplicationState
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
@@ -326,9 +325,8 @@ internal class UiLoadTest {
                     expectedParentId = SpanId.getInvalid(),
                 )
 
-                val lastBackgroundActivity = getSessionEnvelopes(2, ApplicationState.BACKGROUND)[1]
                 assertEmbraceSpanData(
-                    span = lastBackgroundActivity
+                    span = payload
                         .findSpansByName("emb-${LifecycleStage.CREATE.spanName(ACTIVITY1_NAME)}")
                         .single(),
                     expectedStartTimeMs = expectedTraceStartTime,

@@ -76,6 +76,7 @@ internal class V2PayloadStore(
             System.ReactNativeCrash.value -> SupportedEnvelopeType.CRASH
             System.FlutterException.value -> SupportedEnvelopeType.CRASH
             System.NetworkCapturedRequest.value -> SupportedEnvelopeType.BLOB
+            System.Exit.value -> SupportedEnvelopeType.AEI
             else -> SupportedEnvelopeType.LOG
         }
     }

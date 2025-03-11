@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.delivery
 
+import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType.AEI
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType.BLOB
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType.CRASH
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType.LOG
@@ -16,16 +17,17 @@ class StoredTelemetryComparatorTest {
     private val session2 = StoredTelemetryMetadata(100, "session2", "pid", SESSION)
     private val session3 = StoredTelemetryMetadata(1000, "session3", "pid", SESSION)
     private val log = StoredTelemetryMetadata(1, "log", "pid", LOG)
+    private val aei = StoredTelemetryMetadata(1, "aei", "pid", AEI)
     private val network = StoredTelemetryMetadata(1, "network", "pid", BLOB)
 
     @Test
     fun `sort values`() {
-        val result = listOf(network, log, session2, crash, session3, session)
+        val result = listOf(network, log, session2, crash, aei, session3, session)
             .map { PriorityRunnableFuture<StoredTelemetryMetadata>(mockk(relaxed = true), it) }
             .sortedWith(storedTelemetryRunnableComparator)
             .map { it.priorityInfo as StoredTelemetryMetadata }
             .map(StoredTelemetryMetadata::uuid)
-        val expected = listOf(crash, session, session2, session3, log, network)
+        val expected = listOf(crash, aei, session, session2, session3, log, network)
             .map(StoredTelemetryMetadata::uuid)
         assertEquals(expected, result)
     }

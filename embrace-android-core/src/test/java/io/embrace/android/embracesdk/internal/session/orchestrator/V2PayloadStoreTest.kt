@@ -95,7 +95,6 @@ class V2PayloadStoreTest {
 
         // log
         listOf(
-            System.Exit,
             System.Exception,
             System.Log
         ).forEach { type ->
@@ -103,6 +102,11 @@ class V2PayloadStoreTest {
             assertEquals(SupportedEnvelopeType.LOG, getLastLogMetadata().envelopeType)
             assertEquals(type.value, getLastLogMetadata().payloadType.value)
         }
+
+        // aei
+        storeLogWithType(System.Exit)
+        assertEquals(SupportedEnvelopeType.AEI, getLastLogMetadata().envelopeType)
+        assertEquals(System.Exit.value, getLastLogMetadata().payloadType.value)
 
         // network
         storeLogWithType(System.NetworkCapturedRequest)

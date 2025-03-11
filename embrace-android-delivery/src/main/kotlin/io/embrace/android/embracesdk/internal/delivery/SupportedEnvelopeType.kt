@@ -14,6 +14,7 @@ enum class SupportedEnvelopeType(
 ) {
 
     CRASH(Envelope.logEnvelopeType, "p1", Endpoint.LOGS),
+    AEI(Envelope.logEnvelopeType, "p2", Endpoint.LOGS),
     SESSION(Envelope.sessionEnvelopeType, "p3", Endpoint.SESSIONS),
     ATTACHMENT(null, "p4", Endpoint.ATTACHMENTS),
     LOG(Envelope.logEnvelopeType, "p5", Endpoint.LOGS),

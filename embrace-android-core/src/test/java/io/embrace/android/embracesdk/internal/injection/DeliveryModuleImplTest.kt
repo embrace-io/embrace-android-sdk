@@ -4,16 +4,14 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeConfigModule
 import io.embrace.android.embracesdk.fakes.FakeConfigService
-import io.embrace.android.embracesdk.fakes.FakeDeliveryService
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
 import io.embrace.android.embracesdk.fakes.FakeRequestExecutionService
 import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeAndroidServicesModule
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
-import io.embrace.android.embracesdk.fakes.injection.FakeStorageModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
-import io.embrace.android.embracesdk.internal.session.orchestrator.V2PayloadStore
+import io.embrace.android.embracesdk.internal.session.orchestrator.PayloadStoreImpl
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -37,20 +35,17 @@ class DeliveryModuleImplTest {
             FakeOpenTelemetryModule(),
             FakeWorkerThreadModule(),
             CoreModuleImpl(ApplicationProvider.getApplicationContext(), initModule),
-            FakeStorageModule(),
             FakeEssentialServiceModule(),
             FakeAndroidServicesModule(),
             ::FakeRequestExecutionService,
             null,
             null,
-            ::FakeDeliveryService
         )
     }
 
     @Test
     fun testModule() {
         assertNotNull(module)
-        assertNotNull(module.deliveryService)
         assertNotNull(module.intakeService)
         assertNotNull(module.payloadCachingService)
         assertNotNull(module.payloadStorageService)
@@ -58,14 +53,13 @@ class DeliveryModuleImplTest {
         assertNotNull(module.cachedLogEnvelopeStore)
         assertNotNull(module.requestExecutionService)
         assertNotNull(module.schedulingService)
-        assertTrue(module.payloadStore is V2PayloadStore)
+        assertTrue(module.payloadStore is PayloadStoreImpl)
     }
 
     @Test
     fun `test otel export only`() {
         configService.onlyUsingOtelExporters = true
         assertNotNull(module)
-        assertTrue(module.deliveryService is FakeDeliveryService)
         assertNull(module.intakeService)
         assertNull(module.payloadCachingService)
         assertNull(module.payloadStorageService)
@@ -78,8 +72,8 @@ class DeliveryModuleImplTest {
 
     @Test
     fun testV2Store() {
-        configService.autoDataCaptureBehavior = FakeAutoDataCaptureBehavior(v2StorageEnabled = true)
+        configService.autoDataCaptureBehavior = FakeAutoDataCaptureBehavior()
         assertNotNull(module)
-        assertTrue(module.payloadStore is V2PayloadStore)
+        assertTrue(module.payloadStore is PayloadStoreImpl)
     }
 }

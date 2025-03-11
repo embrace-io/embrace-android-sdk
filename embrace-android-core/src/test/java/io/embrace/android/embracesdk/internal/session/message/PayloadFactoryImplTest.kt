@@ -48,7 +48,7 @@ internal class PayloadFactoryImplTest {
     }
 
     @Test
-    fun `v2 payload generated`() {
+    fun `payload generated`() {
         val session = checkNotNull(factory.startPayloadWithState(FOREGROUND, 0, false))
         checkNotNull(factory.endPayloadWithState(FOREGROUND, 0, session))
     }

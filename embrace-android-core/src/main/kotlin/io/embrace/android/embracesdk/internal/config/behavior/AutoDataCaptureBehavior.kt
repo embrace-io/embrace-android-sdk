@@ -61,11 +61,6 @@ interface AutoDataCaptureBehavior : ConfigBehavior<EnabledFeatureConfig, RemoteC
     fun isDiskUsageCaptureEnabled(): Boolean
 
     /**
-     * Gates whether the SDK should use the v2 storage implementation or the legacy one.
-     */
-    fun isV2StorageEnabled(): Boolean
-
-    /**
      * Whether the SDK is configured to capture traces for the performance of the opening of Activities.
      */
     fun isUiLoadTracingEnabled(): Boolean
@@ -74,11 +69,6 @@ interface AutoDataCaptureBehavior : ConfigBehavior<EnabledFeatureConfig, RemoteC
      * Whether the SDK is configured to capture traces for the performance of the opening of all Activities by default.
      */
     fun isUiLoadTracingTraceAll(): Boolean
-
-    /**
-     * Gates whether the SDK should use OkHttp or fallback to UrlConnection.
-     */
-    fun shouldUseOkHttp(): Boolean
 
     /**
      * Whether the app startup trace will be waiting for a call to Embrace.appReady() to signal completion

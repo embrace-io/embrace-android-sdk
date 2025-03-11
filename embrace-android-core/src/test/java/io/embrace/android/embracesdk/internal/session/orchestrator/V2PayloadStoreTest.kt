@@ -20,13 +20,13 @@ import org.junit.Test
 
 class V2PayloadStoreTest {
 
-    private lateinit var store: V2PayloadStore
+    private lateinit var store: PayloadStoreImpl
     private lateinit var intakeService: FakeIntakeService
 
     @Before
     fun setUp() {
         intakeService = FakeIntakeService()
-        store = V2PayloadStore(intakeService, FakeClock(), { "fakeProcessId" }) { "fakeuuid" }
+        store = PayloadStoreImpl(intakeService, FakeClock(), { "fakeProcessId" }) { "fakeuuid" }
     }
 
     @Test

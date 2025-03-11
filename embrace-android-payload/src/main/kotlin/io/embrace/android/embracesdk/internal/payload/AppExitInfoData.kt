@@ -29,4 +29,7 @@ data class AppExitInfoData(
 
     // Error or Exception if the traces couldn't be collected
     val traceStatus: String?,
+
+    // process ID
+    val pid: Int,
 )

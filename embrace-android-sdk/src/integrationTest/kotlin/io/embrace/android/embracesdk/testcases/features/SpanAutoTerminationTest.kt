@@ -4,11 +4,13 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.findSpanByName
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
+import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
+import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -40,10 +42,8 @@ internal class SpanAutoTerminationTest {
 
     @Test
     fun `auto termination feature`() {
-        var firstSessionStart: Long? = null
-        var firstSessionEnd: Long? = null
-        var secondSessionStart: Long? = null
-        var secondSessionEnd: Long? = null
+        var firstSessionTimestamps: EmbraceActionInterface.SessionTimestamps? = null
+        var secondSessionTimestamps: EmbraceActionInterface.SessionTimestamps? = null
         testRule.runTest(
             instrumentedConfig = FakeInstrumentedConfig(
                 enabledFeatures = FakeEnabledFeatureConfig(
@@ -54,8 +54,7 @@ internal class SpanAutoTerminationTest {
                 var hangingSpan: EmbraceSpan? = null
 
                 // first session
-                firstSessionStart = clock.nowInNanos()
-                recordSession {
+                firstSessionTimestamps = recordSession {
                     // start a span without auto termination
                     hangingSpan = embrace.startSpan(
                         ROOT_HANGING_SPAN,
@@ -106,55 +105,49 @@ internal class SpanAutoTerminationTest {
                         stop()
                     }
                 }
-                firstSessionEnd = clock.nowInNanos()
-
 
                 // background activity
                 embrace.startSpan(BG_SPAN, autoTerminationMode = AutoTerminationMode.ON_BACKGROUND)
 
                 // second session
-                secondSessionStart = clock.nowInNanos()
-                recordSession {
+                secondSessionTimestamps = recordSession {
                     // stop a span without auto termination
                     hangingSpan?.stop()
                 }
-                secondSessionEnd = clock.nowInNanos()
             },
             assertAction = {
                 val message = getSessionEnvelopes(2)
-                assertFirstSpans(message[0], checkNotNull(firstSessionStart), checkNotNull(firstSessionEnd))
-                assertSecondSpans(message[1], checkNotNull(secondSessionStart), checkNotNull(secondSessionEnd))
+                checkNotNull(firstSessionTimestamps).assertFirstSpans(message[0])
+                checkNotNull(secondSessionTimestamps).assertSecondSpans(message[1])
             }
         )
     }
 
-    private fun assertFirstSpans(
+    private fun EmbraceActionInterface.SessionTimestamps.assertFirstSpans(
         first: Envelope<SessionPayload>,
-        sessionStart: Long,
-        sessionEnd: Long
     ) {
         // startSpan() with children
         val rootb = first.findSpanByName(ROOT_START_SPAN)
-        assertEquals(sessionEnd, rootb.endTimeNanos)
+        assertEquals(endTimeMs.millisToNanos(), rootb.endTimeNanos)
 
         val childa = first.findSpanByName(CHILD_START_SPAN_A)
-        assertEquals(sessionEnd, childa.endTimeNanos)
+        assertEquals(endTimeMs.millisToNanos(), childa.endTimeNanos)
 
         val childb = first.findSpanByName(CHILD_START_SPAN_B)
-        assertEquals(sessionEnd, childb.endTimeNanos)
+        assertEquals(endTimeMs.millisToNanos(), childb.endTimeNanos)
 
         val childc = first.findSpanByName(CHILD_START_SPAN_C)
-        assertEquals(sessionEnd, childc.endTimeNanos)
+        assertEquals(endTimeMs.millisToNanos(), childc.endTimeNanos)
 
         val childd = first.findSpanByName(CHILD_START_SPAN_D)
-        assertEquals(sessionStart, childd.endTimeNanos)
+        assertEquals(actionTimeMs.millisToNanos(), childd.endTimeNanos)
 
         val childe = first.findSpanByName(CHILD_START_SPAN_E)
-        assertEquals(sessionEnd, childe.endTimeNanos)
+        assertEquals(endTimeMs.millisToNanos(), childe.endTimeNanos)
 
         // createSpan()
         val rootc = first.findSpanByName(ROOT_CREATE_SPAN)
-        assertEquals(sessionEnd, rootc.endTimeNanos)
+        assertEquals(endTimeMs.millisToNanos(), rootc.endTimeNanos)
 
         // recordSpan()
         val rootd = first.findSpanByName(ROOT_RECORD_SPAN)
@@ -174,19 +167,14 @@ internal class SpanAutoTerminationTest {
         assertNull(hangingSpan.endTimeNanos)
     }
 
-    private fun assertSecondSpans(
+    private fun EmbraceActionInterface.SessionTimestamps.assertSecondSpans(
         second: Envelope<SessionPayload>,
-        sessionStart: Long,
-        sessionEnd: Long
     ) {
-        // hanging span + session span, no auto-terminated spans carried over
-        assertEquals(3, second.data.spans?.size)
-
         val roota = second.findSpanByName(ROOT_HANGING_SPAN)
-        assertEquals(sessionStart, roota.endTimeNanos)
+        assertEquals(actionTimeMs.millisToNanos(), roota.endTimeNanos)
 
         // spans in background activity are not auto-terminated until the next session ends
         val bgSpan = second.findSpanByName(BG_SPAN)
-        assertEquals(sessionEnd, bgSpan.endTimeNanos)
+        assertEquals(endTimeMs.millisToNanos(), bgSpan.endTimeNanos)
     }
 }

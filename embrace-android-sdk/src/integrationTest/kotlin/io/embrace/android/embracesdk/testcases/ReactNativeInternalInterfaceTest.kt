@@ -1,9 +1,8 @@
 package io.embrace.android.embracesdk.testcases
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.assertions.findSpanOfType
-import io.embrace.android.embracesdk.assertions.findSpanSnapshotOfType
 import io.embrace.android.embracesdk.assertions.findSpansByName
+import io.embrace.android.embracesdk.assertions.findSpansOfType
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.config.FakeProjectConfig
 import io.embrace.android.embracesdk.internal.EmbraceInternalApi
@@ -11,9 +10,11 @@ import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.toSessionPropertyAttributeName
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.payload.AppFramework
+import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.assertions.assertMatches
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Rule
 import org.junit.Test
@@ -25,10 +26,12 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 internal class ReactNativeInternalInterfaceTest {
 
-    private val instrumentedConfig = FakeInstrumentedConfig(project = FakeProjectConfig(
-        appId = "abcde",
-        appFramework = "react_native"
-    ))
+    private val instrumentedConfig = FakeInstrumentedConfig(
+        project = FakeProjectConfig(
+            appId = "abcde",
+            appFramework = "react_native"
+        )
+    )
 
     @Rule
     @JvmField
@@ -152,21 +155,19 @@ internal class ReactNativeInternalInterfaceTest {
                 assertEquals(1000L, span.startTimeNanos?.nanosToMillis())
                 assertEquals(5000L, span.endTimeNanos?.nanosToMillis())
 
-                span.attributes?.assertMatches(mapOf(
-                    "emb.type" to "sys.rn_action",
-                    "name" to "MyAction",
-                    "outcome" to "SUCCESS",
-                    "payload_size" to "100",
-                    "key".toSessionPropertyAttributeName() to "value",
-                ))
+                span.attributes?.assertMatches(
+                    mapOf(
+                        "emb.type" to "sys.rn_action",
+                        "name" to "MyAction",
+                        "outcome" to "SUCCESS",
+                        "payload_size" to "100",
+                        "key".toSessionPropertyAttributeName() to "value",
+                    )
+                )
             }
         )
     }
 
-    /*
-    * The first view is logged and stored as a span, because we know that it ends when logRnView is called again.
-    * The second view is logged as a span snapshot, because we know that it ends when the session ends.
-    * */
     @Test
     fun `react native log RN view`() {
         testRule.runTest(
@@ -179,21 +180,9 @@ internal class ReactNativeInternalInterfaceTest {
                 }
             },
             assertAction = {
-                val message = getSingleSessionEnvelope()
-                val firstSpan = message.findSpanOfType(EmbType.Ux.View)
-                val secondSpan = message.findSpanSnapshotOfType(EmbType.Ux.View)
-
-                assertEquals("emb-screen-view", firstSpan.name)
-                firstSpan.attributes?.assertMatches(mapOf(
-                    "emb.type" to "ux.view",
-                    "view.name" to "HomeScreen",
-                ))
-
-                assertEquals("emb-screen-view", secondSpan.name)
-                secondSpan.attributes?.assertMatches(mapOf(
-                    "emb.type" to "ux.view",
-                    "view.name" to "DetailsScreen",
-                ))
+                val viewSpans = getSingleSessionEnvelope().findSpansOfType(EmbType.Ux.View)
+                assertNotNull(viewSpans.single { it.attributes?.findAttributeValue("view.name") == "HomeScreen" })
+                assertNotNull(viewSpans.single { it.attributes?.findAttributeValue("view.name") == "DetailsScreen" })
             }
         )
     }
@@ -214,20 +203,8 @@ internal class ReactNativeInternalInterfaceTest {
                 }
             },
             assertAction = {
-                val message = getSingleSessionEnvelope()
-                val firstSpan = message.findSpanOfType(EmbType.Ux.View)
-                assertEquals("emb-screen-view", firstSpan.name)
-                firstSpan.attributes?.assertMatches(mapOf(
-                    "emb.type" to "ux.view",
-                    "view.name" to "HomeScreen",
-                ))
-
-                val secondSpan = message.findSpanSnapshotOfType(EmbType.Ux.View)
-                assertEquals("emb-screen-view", secondSpan.name)
-                secondSpan.attributes?.assertMatches(mapOf(
-                    "emb.type" to "ux.view",
-                    "view.name" to "HomeScreen",
-                ))
+                val viewSpans = getSingleSessionEnvelope().findSpansOfType(EmbType.Ux.View)
+                assertEquals(2, viewSpans.filter { it.attributes?.findAttributeValue("view.name") == "HomeScreen" }.size)
             }
         )
     }

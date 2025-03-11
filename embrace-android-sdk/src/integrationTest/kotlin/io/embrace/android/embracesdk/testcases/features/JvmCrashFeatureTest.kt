@@ -26,6 +26,7 @@ import io.opentelemetry.semconv.incubating.LogIncubatingAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -39,21 +40,28 @@ internal class JvmCrashFeatureTest {
 
     private val testException = RuntimeException("Boom!")
     private val serializer = EmbraceSerializer()
+    private var crashTimeMs = 0L
+
+    @Before
+    fun before() {
+        crashTimeMs = 0L
+    }
 
     @Test
     fun `app crash generates an OTel Log and matches the crashId in the session`() {
         testRule.runTest(
             testCaseAction = {
-                recordSession {
+                crashTimeMs = recordSession {
                     simulateJvmUncaughtException(testException)
-                }
+                }.actionTimeMs
             },
             assertAction = {
                 val session = getSingleSessionEnvelope()
                 assertEquals(0, session.data.spanSnapshots?.size)
                 getSingleLogEnvelope().getLastLog().assertCrash(
                     state = "foreground",
-                    crashId = session.getCrashedId()
+                    crashId = session.getCrashedId(),
+                    crashTimeMs = crashTimeMs,
                 )
             }
         )
@@ -64,13 +72,15 @@ internal class JvmCrashFeatureTest {
         testRule.runTest(
             persistedRemoteConfig = RemoteConfig(backgroundActivityConfig = BackgroundActivityRemoteConfig(100f)),
             testCaseAction = {
+                crashTimeMs = clock.now()
                 simulateJvmUncaughtException(testException)
             },
             assertAction = {
                 val ba = getSingleSessionEnvelope(ApplicationState.BACKGROUND)
                 assertEquals(0, ba.data.spanSnapshots?.size)
                 getSingleLogEnvelope().getLastLog().assertCrash(
-                    crashId = ba.getCrashedId()
+                    crashId = ba.getCrashedId(),
+                    crashTimeMs = crashTimeMs,
                 )
             }
         )
@@ -86,7 +96,7 @@ internal class JvmCrashFeatureTest {
                 )
             ),
             testCaseAction = {
-                recordSession {
+                crashTimeMs = recordSession {
                     EmbraceInternalApi.getInstance().reactNativeInternalInterface.logUnhandledJsException(
                         "name",
                         "message",
@@ -95,7 +105,7 @@ internal class JvmCrashFeatureTest {
                     )
                     val handler = checkNotNull(Thread.getDefaultUncaughtExceptionHandler())
                     handler.uncaughtException(Thread.currentThread(), testException)
-                }
+                }.actionTimeMs
             },
             assertAction = {
                 val log = getSingleLogEnvelope().getLastLog()
@@ -104,6 +114,7 @@ internal class JvmCrashFeatureTest {
                     expectedMessage = "",
                     expectedSeverityNumber = Severity.ERROR.severityNumber,
                     expectedSeverityText = Severity.ERROR.name,
+                    expectedTimeMs = crashTimeMs,
                     expectedExceptionName = testException.javaClass.canonicalName,
                     expectedExceptionMessage = checkNotNull(testException.message),
                     expectedStacktrace = testException.getSafeStackTrace()?.toList(),
@@ -138,12 +149,14 @@ internal class JvmCrashFeatureTest {
     private fun Log.assertCrash(
         crashId: String,
         state: String = "background",
+        crashTimeMs: Long,
     ) {
         assertOtelLogReceived(
             logReceived = this,
             expectedMessage = "",
             expectedSeverityNumber = Severity.ERROR.severityNumber,
             expectedSeverityText = Severity.ERROR.name,
+            expectedTimeMs = crashTimeMs,
             expectedExceptionName = testException.javaClass.canonicalName,
             expectedExceptionMessage = checkNotNull(testException.message),
             expectedStacktrace = testException.getSafeStackTrace()?.toList(),

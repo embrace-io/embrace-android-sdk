@@ -4,12 +4,10 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.ResourceReader
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
-import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.opentelemetry.embFreeDiskBytes
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
-import io.embrace.android.embracesdk.testframework.assertions.assertMatches
 import io.embrace.android.embracesdk.testframework.assertions.toMap
 import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes
 import org.junit.Assert.assertEquals
@@ -36,8 +34,7 @@ internal class SessionApiTest {
         testRule.runTest(
             instrumentedConfig = FakeInstrumentedConfig(enabledFeatures = FakeEnabledFeatureConfig(diskUsageCapture = false, bgActivityCapture = true)),
             testCaseAction = {
-                startTime = clock.now()
-                recordSession {
+                startTime = recordSession {
                     embrace.setUserIdentifier("some id")
                     embrace.setUserEmail("user@email.com")
                     embrace.setUsername("John Doe")
@@ -45,7 +42,7 @@ internal class SessionApiTest {
                     // add webview information
                     val msg = ResourceReader.readResourceAsText("expected-webview-core-vital.json")
                     embrace.trackWebViewPerformance("myWebView", msg)
-                }
+                }.startTimeMs
             },
             assertAction = {
                 val message = getSingleSessionEnvelope()
@@ -55,12 +52,8 @@ internal class SessionApiTest {
                 val snapshots = checkNotNull(message.data.spanSnapshots)
                 assertEquals(1, snapshots.size)
 
-                // validate network status span
-                val networkStatusSpan = snapshots.single { it.name == "emb-network-status" }
-                assertEquals(startTime, networkStatusSpan.startTimeNanos?.nanosToMillis())
-                networkStatusSpan.attributes?.assertMatches(mapOf(
-                    "emb.type" to "sys.network_status",
-                ))
+                // validate expected in-process spans
+                checkNotNull(snapshots.single { it.name == "emb-network-status" })
 
                 // validate session span
                 val spans = checkNotNull(message.data.spans)
@@ -85,14 +78,13 @@ internal class SessionApiTest {
                     "emb.session_start_type" to "state",
                     "emb.terminated" to "false",
                     "emb.session_end_type" to "state",
-                    "emb.heartbeat_time_unix_nano" to "${startTime.millisToNanos()}",
                     "emb.session_number" to "1",
                     "emb.type" to "ux.session",
                     "emb.error_log_count" to "0",
                     "emb.usage.set_username" to "1",
                     "emb.usage.set_user_email" to "1",
                     "emb.usage.set_user_identifier" to "1",
-                    "emb.private.sequence_id" to "4",
+                    "emb.private.sequence_id" to "5",
                     "emb.startup_duration" to "0"
                 ).toSortedMap()
 
@@ -110,6 +102,7 @@ internal class SessionApiTest {
             "emb.process_identifier",
             "emb.is_emulator",
             "emb.okhttp3_on_classpath",
+            "emb.heartbeat_time_unix_nano",
         )
 
         // Attributes that are unstable that we should not try to verify

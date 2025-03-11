@@ -4,9 +4,10 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.findSpansOfType
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
+import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
-import io.embrace.android.embracesdk.testframework.assertions.assertMatches
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -35,25 +36,20 @@ internal class ViewFeatureTest {
                 }
             },
             assertAction = {
-                val message = getSingleSessionEnvelope()
-                val viewSpans = message.findSpansOfType(EmbType.Ux.View)
-                assertEquals(2, viewSpans.size)
+                val viewSpans = getSingleSessionEnvelope().findSpansOfType(EmbType.Ux.View)
+                assertEquals(3, viewSpans.size)
 
-                with(viewSpans[0]) {
-                    attributes?.assertMatches(mapOf(
-                        "view.name" to "MyView"
-                    ))
+                with(viewSpans.single { it.attributes?.findAttributeValue("view.name") == "MyView" }) {
                     assertEquals(startTimeMs, startTimeNanos?.nanosToMillis())
                     assertEquals(startTimeMs + 3000L, endTimeNanos?.nanosToMillis())
                 }
 
-                with(viewSpans[1]) {
-                    attributes?.assertMatches(mapOf(
-                        "view.name" to "AnotherView"
-                    ))
+                with(viewSpans.single { it.attributes?.findAttributeValue("view.name") == "AnotherView" }) {
                     assertEquals(startTimeMs + 1000L, startTimeNanos?.nanosToMillis())
                     assertEquals(startTimeMs + 3000L, endTimeNanos?.nanosToMillis())
                 }
+
+                assertNotNull(viewSpans.single { it.attributes?.findAttributeValue("view.name") == "android.app.Activity" })
             }
         )
     }

@@ -23,13 +23,15 @@ internal class NetworkStatusFeatureTest {
     @Test
     fun `network status feature`() {
         val tickTimeMs = 3000L
-        var startTimeMs: Long = 0
+        var sdkStartTimeMs: Long = 0
+        var statusChangeTimeMs: Long = 0
 
         testRule.runTest(
             testCaseAction = {
+                sdkStartTimeMs = clock.now()
                 recordSession {
-                    startTimeMs = clock.now()
                     clock.tick(tickTimeMs)
+                    statusChangeTimeMs = clock.now()
                     alterConnectivityStatus(NetworkStatus.WIFI)
                 }
             },
@@ -37,43 +39,48 @@ internal class NetworkStatusFeatureTest {
                 val message = getSingleSessionEnvelope()
                 val span = message.findSpanOfType(EmbType.System.NetworkStatus)
                 assertEquals("emb-network-status", span.name)
-                assertEquals(startTimeMs, span.startTimeNanos?.nanosToMillis())
-                assertEquals(startTimeMs + tickTimeMs, span.endTimeNanos?.nanosToMillis())
+                assertEquals(sdkStartTimeMs, span.startTimeNanos?.nanosToMillis())
+                assertEquals(statusChangeTimeMs, span.endTimeNanos?.nanosToMillis())
 
-                span.attributes?.assertMatches(mapOf(
-                    "emb.type" to "sys.network_status",
-                    "network" to "unknown"
-                ))
+                span.attributes?.assertMatches(
+                    mapOf(
+                        "emb.type" to "sys.network_status",
+                        "network" to "unknown"
+                    )
+                )
 
                 val snapshot = message.findSpanSnapshotOfType(EmbType.System.NetworkStatus)
                 assertEquals("emb-network-status", snapshot.name)
-                assertEquals(startTimeMs + tickTimeMs, snapshot.startTimeNanos?.nanosToMillis())
-                snapshot.attributes?.assertMatches(mapOf(
-                    "emb.type" to "sys.network_status",
-                    "network" to "wifi"
-                ))
+                assertEquals(statusChangeTimeMs, snapshot.startTimeNanos?.nanosToMillis())
+                snapshot.attributes?.assertMatches(
+                    mapOf(
+                        "emb.type" to "sys.network_status",
+                        "network" to "wifi"
+                    )
+                )
             }
         )
     }
 
     @Test
     fun `initial session creates a span snapshot`() {
-        var startTimeMs: Long = 0
+        var sdkStartTimeMs: Long = 0
         testRule.runTest(
             testCaseAction = {
-                recordSession {
-                    startTimeMs = clock.now()
-                }
+                sdkStartTimeMs = clock.now()
+                recordSession()
             },
             assertAction = {
                 val message = getSingleSessionEnvelope()
                 val snapshot = message.findSpanSnapshotOfType(EmbType.System.NetworkStatus)
                 assertEquals("emb-network-status", snapshot.name)
-                assertEquals(startTimeMs, snapshot.startTimeNanos?.nanosToMillis())
-                snapshot.attributes?.assertMatches(mapOf(
-                    "emb.type" to "sys.network_status",
-                    "network" to "unknown"
-                ))
+                assertEquals(sdkStartTimeMs, snapshot.startTimeNanos?.nanosToMillis())
+                snapshot.attributes?.assertMatches(
+                    mapOf(
+                        "emb.type" to "sys.network_status",
+                        "network" to "unknown"
+                    )
+                )
             }
         )
     }

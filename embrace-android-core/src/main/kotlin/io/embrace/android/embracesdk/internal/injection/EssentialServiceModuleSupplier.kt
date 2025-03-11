@@ -15,7 +15,6 @@ typealias EssentialServiceModuleSupplier = (
     workerThreadModule: WorkerThreadModule,
     systemServiceModule: SystemServiceModule,
     androidServicesModule: AndroidServicesModule,
-    storageModule: StorageModule,
     lifecycleOwnerProvider: Provider<LifecycleOwner?>,
     networkConnectivityServiceProvider: Provider<NetworkConnectivityService?>,
 ) -> EssentialServiceModule
@@ -28,7 +27,6 @@ fun createEssentialServiceModule(
     workerThreadModule: WorkerThreadModule,
     systemServiceModule: SystemServiceModule,
     androidServicesModule: AndroidServicesModule,
-    storageModule: StorageModule,
     lifecycleOwnerProvider: Provider<LifecycleOwner?>,
     networkConnectivityServiceProvider: Provider<NetworkConnectivityService?>,
 ): EssentialServiceModule = EssentialServiceModuleImpl(
@@ -39,7 +37,6 @@ fun createEssentialServiceModule(
     workerThreadModule,
     systemServiceModule,
     androidServicesModule,
-    storageModule,
     lifecycleOwnerProvider,
     networkConnectivityServiceProvider
 )

@@ -1,5 +1,7 @@
 package io.embrace.android.embracesdk.internal.arch.schema
 
+import io.embrace.android.embracesdk.internal.opentelemetry.embAeiNumber
+import io.embrace.android.embracesdk.internal.opentelemetry.embCrashNumber
 import io.embrace.android.embracesdk.internal.opentelemetry.embSendMode
 import io.embrace.android.embracesdk.internal.payload.AppExitInfoData
 import io.embrace.android.embracesdk.internal.payload.NetworkCapturedCall
@@ -50,9 +52,7 @@ sealed class SchemaType(
 
     /**
      * Represents a push notification event.
-     * @param viewName The name of the view that the tap event occurred in.
      * @param type The type of tap event. "tap"/"long_press". "tap" is the default.
-     * @param coords The coordinates of the tap event.
      */
     class PushNotification(
         title: String?,
@@ -111,10 +111,14 @@ sealed class SchemaType(
         telemetryType = EmbType.Performance.MemoryWarning,
         fixedObjectName = "memory-warning"
     ) {
-        override val schemaAttributes: Map<String, String> = emptyMap<String, String>()
+        override val schemaAttributes: Map<String, String> = emptyMap()
     }
 
-    class AeiLog(message: AppExitInfoData) : SchemaType(EmbType.System.Exit) {
+    class AeiLog(
+        message: AppExitInfoData,
+        crashNumber: Int?,
+        aeiNumber: Int?,
+    ) : SchemaType(EmbType.System.Exit) {
         override val schemaAttributes: Map<String, String> = mapOf(
             "aei_session_id" to message.sessionId,
             "session_id_error" to message.sessionIdError,
@@ -125,7 +129,9 @@ sealed class SchemaType(
             "exit_status" to message.status.toString(),
             "timestamp" to message.timestamp.toString(),
             "description" to message.description,
-            "trace_status" to message.traceStatus
+            "trace_status" to message.traceStatus,
+            embCrashNumber.attributeKey.key to crashNumber.toString(),
+            embAeiNumber.attributeKey.key to aeiNumber.toString()
         ).toNonNullMap()
     }
 
@@ -165,7 +171,7 @@ sealed class SchemaType(
         telemetryType = EmbType.System.LowPower,
         fixedObjectName = "device-low-power"
     ) {
-        override val schemaAttributes: Map<String, String> = emptyMap<String, String>()
+        override val schemaAttributes: Map<String, String> = emptyMap()
     }
 
     class NetworkCapturedRequest(networkCapturedCall: NetworkCapturedCall) : SchemaType(

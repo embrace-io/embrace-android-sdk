@@ -58,5 +58,9 @@ class FakePreferenceService(
         return 1
     }
 
+    override fun incrementAndGetAeiCrashNumber(): Int {
+        return 1
+    }
+
     override fun isUsersFirstDay(): Boolean = firstDay
 }

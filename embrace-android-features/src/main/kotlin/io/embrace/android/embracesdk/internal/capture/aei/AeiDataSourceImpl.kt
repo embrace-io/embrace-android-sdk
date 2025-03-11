@@ -13,6 +13,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.SchemaType.AeiLog
 import io.embrace.android.embracesdk.internal.config.behavior.AppExitInfoBehavior
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.payload.AppExitInfoData
 import io.embrace.android.embracesdk.internal.prefs.PreferencesService
 import io.embrace.android.embracesdk.internal.spans.toOtelSeverity
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
@@ -35,7 +36,7 @@ internal class AeiDataSourceImpl(
 ) {
 
     private companion object {
-        private const val SDK_AEI_SEND_LIMIT = 32
+        private const val SDK_AEI_SEND_LIMIT = 64
     }
 
     override fun enableDataCapture() {
@@ -54,15 +55,29 @@ internal class AeiDataSourceImpl(
         val unsentRecords = getUnsentRecords(records)
 
         unsentRecords.forEach {
-            val obj = it.constructAeiObject(versionChecker, appExitInfoBehavior.getTraceMaxLimit()) ?: return@forEach
+            val obj = it.constructAeiObject(versionChecker, appExitInfoBehavior.getTraceMaxLimit())
+            val crashNumber = obj?.getOrdinal(preferencesService::incrementAndGetCrashNumber)
+            val aeiNumber = obj?.getOrdinal(preferencesService::incrementAndGetAeiCrashNumber)
+            if (obj == null) {
+                return@forEach
+            }
             captureData(
                 inputValidation = NoInputValidation,
                 captureAction = {
-                    val schemaType = AeiLog(obj)
+                    val schemaType = AeiLog(obj, crashNumber, aeiNumber)
                     addLog(schemaType, INFO.toOtelSeverity(), obj.trace ?: "")
                 }
             )
         }
+    }
+
+    private fun AppExitInfoData.hasNativeTombstone(): Boolean {
+        return trace != null && reason == ApplicationExitInfo.REASON_CRASH_NATIVE
+    }
+
+    private inline fun AppExitInfoData.getOrdinal(provider: () -> Int) = when (hasNativeTombstone()) {
+        true -> provider()
+        else -> null
     }
 
     /**

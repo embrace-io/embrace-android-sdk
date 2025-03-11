@@ -14,6 +14,11 @@ val embAndroidThreads: EmbraceAttributeKey = EmbraceAttributeKey("android.thread
 val embCrashNumber: EmbraceAttributeKey = EmbraceAttributeKey("android.crash_number")
 
 /**
+ * Sequence number for the number of AEI crashes captured by Embrace on the device, reported on every AEI crash
+ */
+val embAeiNumber: EmbraceAttributeKey = EmbraceAttributeKey("android.aei_crash_number")
+
+/**
  * Attribute name for the exception handling type - whether it's handled or unhandled
  */
 val embExceptionHandling: EmbraceAttributeKey = EmbraceAttributeKey("exception_handling")

@@ -185,6 +185,14 @@ internal class EmbracePreferencesServiceTest {
     }
 
     @Test
+    fun `test aei crash number is saved`() {
+        assertEquals(1, service.incrementAndGetAeiCrashNumber())
+        assertEquals(2, service.incrementAndGetAeiCrashNumber())
+        assertEquals(3, service.incrementAndGetAeiCrashNumber())
+        assertEquals(4, service.incrementAndGetAeiCrashNumber())
+    }
+
+    @Test
     fun `test incrementAndGet returns -1 on an exception`() {
         service = EmbracePreferencesService(
             FakeSharedPreferences(throwExceptionOnGet = true),

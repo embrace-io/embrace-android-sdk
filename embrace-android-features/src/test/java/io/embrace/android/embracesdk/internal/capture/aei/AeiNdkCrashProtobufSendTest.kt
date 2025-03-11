@@ -4,9 +4,10 @@ import android.app.ActivityManager
 import android.app.ApplicationExitInfo
 import com.android.server.os.TombstoneProtos
 import io.embrace.android.embracesdk.ResourceReader
+import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeLogWriter
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
-import io.embrace.android.embracesdk.fakes.behavior.FakeAppExitInfoBehavior
+import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
 import io.embrace.android.embracesdk.internal.TypeUtils
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
@@ -134,7 +135,7 @@ internal class AeiNdkCrashProtobufSendTest {
         val logWriter = FakeLogWriter()
         AeiDataSourceImpl(
             fakeBackgroundWorker(),
-            FakeAppExitInfoBehavior(enabled = true),
+            FakeConfigService(autoDataCaptureBehavior = FakeAutoDataCaptureBehavior(ndkEnabled = true)),
             activityManager,
             FakePreferenceService(),
             logWriter,

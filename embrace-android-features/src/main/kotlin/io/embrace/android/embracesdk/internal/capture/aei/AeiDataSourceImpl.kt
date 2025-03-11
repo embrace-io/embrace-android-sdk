@@ -10,7 +10,7 @@ import io.embrace.android.embracesdk.internal.arch.datasource.NoInputValidation
 import io.embrace.android.embracesdk.internal.arch.destination.LogWriter
 import io.embrace.android.embracesdk.internal.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType.AeiLog
-import io.embrace.android.embracesdk.internal.config.behavior.AppExitInfoBehavior
+import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.payload.AppExitInfoData
@@ -23,7 +23,7 @@ import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 @RequiresApi(VERSION_CODES.R)
 internal class AeiDataSourceImpl(
     private val backgroundWorker: BackgroundWorker,
-    private val appExitInfoBehavior: AppExitInfoBehavior,
+    private val configService: ConfigService,
     private val activityManager: ActivityManager,
     private val preferencesService: PreferencesService,
     logWriter: LogWriter,
@@ -50,7 +50,7 @@ internal class AeiDataSourceImpl(
     }
 
     private fun processAeiRecords() {
-        val maxNum = appExitInfoBehavior.appExitInfoMaxNum()
+        val maxNum = configService.appExitInfoBehavior.appExitInfoMaxNum()
         val records = activityManager.getHistoricalProcessExitReasons(null, 0, maxNum).take(SDK_AEI_SEND_LIMIT)
         val deliveredIds = preferencesService.deliveredAeiIds
 
@@ -60,7 +60,7 @@ internal class AeiDataSourceImpl(
         preferencesService.deliveredAeiIds = sentRecords.map { it.getAeiId() }.toSet()
 
         unsentRecords.forEach {
-            val obj = it.constructAeiObject(versionChecker, appExitInfoBehavior.getTraceMaxLimit())
+            val obj = it.constructAeiObject(versionChecker, configService.appExitInfoBehavior.getTraceMaxLimit())
             val crashNumber = obj?.getOrdinal(preferencesService::incrementAndGetCrashNumber)
             val aeiNumber = obj?.getOrdinal(preferencesService::incrementAndGetAeiCrashNumber)
             if (obj == null) {
@@ -69,10 +69,13 @@ internal class AeiDataSourceImpl(
             captureData(
                 inputValidation = NoInputValidation,
                 captureAction = {
-                    val schemaType = AeiLog(obj, crashNumber, aeiNumber)
-                    addLog(schemaType, INFO.toOtelSeverity(), obj.trace ?: "")
+                    val capture = configService.autoDataCaptureBehavior.isNativeCrashCaptureEnabled() || !obj.hasNativeTombstone()
+                    if (capture) {
+                        val schemaType = AeiLog(obj, crashNumber, aeiNumber)
+                        addLog(schemaType, INFO.toOtelSeverity(), obj.trace ?: "")
+                    }
 
-                    // count AEI as delivered once submitted to the OTel logging system
+                    // always count AEI as delivered once we process it & submit to the OTel logging system, or discard
                     preferencesService.deliveredAeiIds = preferencesService.deliveredAeiIds.plus(obj.getAeiId())
                 }
             )

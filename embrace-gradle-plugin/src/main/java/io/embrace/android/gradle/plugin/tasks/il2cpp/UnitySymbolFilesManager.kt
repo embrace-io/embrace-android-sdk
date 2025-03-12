@@ -3,7 +3,6 @@ package io.embrace.android.gradle.plugin.tasks.il2cpp
 import io.embrace.android.gradle.plugin.Logger
 import io.embrace.android.gradle.plugin.config.UnitySymbolsDir
 import io.embrace.android.gradle.plugin.instrumentation.config.model.UnityConfig
-import io.embrace.android.gradle.plugin.model.AndroidCompactedVariantData
 import org.gradle.api.file.Directory
 import java.io.BufferedInputStream
 import java.io.BufferedOutputStream
@@ -48,7 +47,7 @@ internal class UnitySymbolFilesManager {
     fun getSymbolsDir(
         realProjectDirectory: Directory,
         projectDirectory: Directory,
-        unityConfig: UnityConfig?
+        unityConfig: UnityConfig?,
     ): UnitySymbolsDir {
         val customArchiveName = unityConfig?.symbolsArchiveName?.takeIf { it.isNotEmpty() }
         val unitySymbolsArchiveFile = getUnitySymbolsArchive(projectDirectory, customArchiveName)
@@ -81,16 +80,14 @@ internal class UnitySymbolFilesManager {
      */
     fun getSymbolFiles(
         unitySymbolsDir: UnitySymbolsDir,
-        buildDir: Directory,
-        variantData: AndroidCompactedVariantData
+        decompressedUnitySharedObjectDirectory: Directory,
     ): Array<File> {
         val symbolsDir = unitySymbolsDir.unitySymbolsDir ?: return emptyArray()
 
         return if (unitySymbolsDir.isDirPresent() && unitySymbolsDir.zippedSymbols) {
             extractSoFilesFromZipFile(
                 symbolsDir,
-                buildDir,
-                variantData
+                decompressedUnitySharedObjectDirectory
             )
         } else {
             val files = symbolsDir.listFiles()
@@ -109,7 +106,7 @@ internal class UnitySymbolFilesManager {
      */
     private fun getUnitySymbolsArchive(
         projectDir: Directory,
-        customArchiveName: String?
+        customArchiveName: String?,
     ): File? {
         val parentDir = projectDir.asFile.parentFile ?: return null
         // Search symbols zip file at same level of exported project folder
@@ -132,7 +129,7 @@ internal class UnitySymbolFilesManager {
 
     private fun File.searchSymbolsArchive(
         defaultArchiveName: String,
-        customArchiveName: String?
+        customArchiveName: String?,
     ): File? {
         // Use the last file found that matches the criteria for being a Unity symbols file
         var foundFile: File? = null
@@ -184,10 +181,9 @@ internal class UnitySymbolFilesManager {
 
     private fun extractSoFilesFromZipFile(
         objFolder: File,
-        buildDir: Directory,
-        variantData: AndroidCompactedVariantData
+        decompressedUnitySharedObjectDirectory: Directory,
     ): Array<File> {
-        val decompressedFile = File(getUncompressedUnityFilesPath(buildDir, variantData))
+        val decompressedFile = decompressedUnitySharedObjectDirectory.asFile
 
         // Remove previous files from build intermediates folder
         try {
@@ -209,7 +205,7 @@ internal class UnitySymbolFilesManager {
         }
 
         val buffer = ByteArray(BUFFER_SIZE)
-        val outDir: Path = Paths.get(getUncompressedUnityFilesPath(buildDir, variantData))
+        val outDir: Path = Paths.get(decompressedFile.path)
 
         return try {
             FileInputStream(objFolder).use { fis ->
@@ -234,7 +230,7 @@ internal class UnitySymbolFilesManager {
         stream: ZipInputStream,
         outDir: Path,
         buffer: ByteArray,
-        decompressedFile: File
+        decompressedFile: File,
     ): Array<File> {
         var entry = stream.nextEntry
         while (entry != null) {
@@ -261,20 +257,5 @@ internal class UnitySymbolFilesManager {
             entry = stream.nextEntry
         }
         return decompressedFile.listFiles() ?: emptyArray()
-    }
-
-    private fun getUncompressedUnityFilesPath(
-        buildDir: Directory,
-        variantData: AndroidCompactedVariantData
-    ): String {
-        return "${buildDir.asFile.absoluteFile}/intermediates/embrace/unity/${getMappingFileFolder(variantData)}"
-    }
-
-    private fun getMappingFileFolder(variantData: AndroidCompactedVariantData): String {
-        return if (variantData.flavorName.isBlank()) {
-            variantData.buildTypeName
-        } else {
-            "${variantData.flavorName}/${variantData.buildTypeName}"
-        }
     }
 }

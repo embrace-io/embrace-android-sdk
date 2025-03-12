@@ -1,0 +1,17 @@
+import io.embrace.android.gradle.plugin.tasks.ndk.CreateArchToSharedObjectsMapTask
+
+plugins {
+    id("java")
+    id("io.embrace.swazzler")
+    id("io.embrace.android.testplugin")
+}
+
+project.tasks.register("testTask", CreateArchToSharedObjectsMapTask) { task ->
+    task.architecturesDirectory.set(
+        project.layout.projectDirectory.dir("testArchitecturesDir")
+    )
+    task.architecturesToSharedObjectFilesMap.set(
+        project.layout.buildDirectory.file("output.json")
+    )
+    integrationTest.configureEmbraceTask(task)
+}

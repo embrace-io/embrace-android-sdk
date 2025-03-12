@@ -4,6 +4,7 @@ import android.app.Application.ActivityLifecycleCallbacks
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.spans.PersistableEmbraceSpan
 import io.embrace.android.embracesdk.internal.spans.SpanService
+import io.embrace.android.embracesdk.internal.ui.hasRenderEvent
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
@@ -40,9 +41,9 @@ import java.util.concurrent.atomic.AtomicReference
  *
  * The end for both [UiLoadType.COLD] and [UiLoadType.HOT]:
  *
- * - Android 10+, when the Activity's first UI frame finishes rendering and is delivered to the screen
+ * - Android 6+, when the Activity's first UI frame finishes rendering and is delivered to the screen, as best as we can determine
  *
- * - Android 9 and lower, when [ActivityLifecycleCallbacks.onActivityResumed] is fired.
+ * - Android 5, when [ActivityLifecycleCallbacks.onActivityResumed] is fired.
  */
 class UiLoadTraceEmitter(
     private val spanService: SpanService,
@@ -51,7 +52,7 @@ class UiLoadTraceEmitter(
 
     private val activeTraces: MutableMap<Int, UiLoadTrace> = ConcurrentHashMap()
     private var currentInstance: AtomicReference<UiInstance?> = AtomicReference()
-    private val hasRenderEvent = hasRenderEvent(versionChecker)
+    private val trackRender = hasRenderEvent(versionChecker)
     private val hasPrePostEvents = hasPrePostEvents(versionChecker)
 
     override fun create(instanceId: Int, activityName: String, timestampMs: Long, manualEnd: Boolean) {
@@ -113,7 +114,7 @@ class UiLoadTraceEmitter(
                     instanceId = instanceId,
                     timestampMs = timestampMs,
                 )
-            } else if (!hasRenderEvent && traceCompleteTrigger(instanceId) == TraceCompleteTrigger.MANUAL) {
+            } else if (!trackRender && traceCompleteTrigger(instanceId) == TraceCompleteTrigger.MANUAL) {
                 startChildSpan(
                     instanceId = instanceId,
                     timestampMs = timestampMs,
@@ -136,7 +137,7 @@ class UiLoadTraceEmitter(
                 instanceId = instanceId,
                 timestampMs = timestampMs,
             )
-        } else if (!hasRenderEvent && endType == TraceCompleteTrigger.MANUAL) {
+        } else if (!trackRender && endType == TraceCompleteTrigger.MANUAL) {
             startChildSpan(
                 instanceId = instanceId,
                 timestampMs = timestampMs,
@@ -146,7 +147,7 @@ class UiLoadTraceEmitter(
     }
 
     override fun render(instanceId: Int, timestampMs: Long) {
-        if (hasRenderEvent) {
+        if (trackRender) {
             startChildSpan(
                 instanceId = instanceId,
                 timestampMs = timestampMs,
@@ -156,7 +157,7 @@ class UiLoadTraceEmitter(
     }
 
     override fun renderEnd(instanceId: Int, timestampMs: Long) {
-        if (hasRenderEvent) {
+        if (trackRender) {
             endChildSpan(
                 instanceId = instanceId,
                 timestampMs = timestampMs,
@@ -267,7 +268,7 @@ class UiLoadTraceEmitter(
     private fun determineEndEvent(manualEnd: Boolean): TraceCompleteTrigger {
         return if (manualEnd) {
             TraceCompleteTrigger.MANUAL
-        } else if (hasRenderEvent) {
+        } else if (trackRender) {
             TraceCompleteTrigger.RENDER
         } else {
             TraceCompleteTrigger.RESUME

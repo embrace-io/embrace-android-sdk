@@ -1,16 +1,13 @@
 package io.embrace.android.embracesdk.internal.injection
 
-import android.os.Build.VERSION_CODES
 import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.capture.activity.UiLoadDataListener
 import io.embrace.android.embracesdk.internal.capture.activity.UiLoadTraceEmitter
 import io.embrace.android.embracesdk.internal.capture.activity.createActivityLoadEventEmitter
-import io.embrace.android.embracesdk.internal.capture.activity.hasRenderEvent
 import io.embrace.android.embracesdk.internal.capture.crumbs.ActivityBreadcrumbTracker
 import io.embrace.android.embracesdk.internal.capture.crumbs.PushNotificationCaptureService
 import io.embrace.android.embracesdk.internal.capture.startup.AppStartupDataCollector
 import io.embrace.android.embracesdk.internal.capture.startup.AppStartupTraceEmitter
-import io.embrace.android.embracesdk.internal.capture.startup.AppStartupTraceEmitter.Companion.startupHasRenderEvent
 import io.embrace.android.embracesdk.internal.capture.startup.StartupService
 import io.embrace.android.embracesdk.internal.capture.startup.StartupServiceImpl
 import io.embrace.android.embracesdk.internal.capture.startup.StartupTracker
@@ -18,7 +15,7 @@ import io.embrace.android.embracesdk.internal.capture.webview.EmbraceWebViewServ
 import io.embrace.android.embracesdk.internal.capture.webview.WebViewService
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityLifecycleListener
-import io.embrace.android.embracesdk.internal.ui.FirstDrawDetector
+import io.embrace.android.embracesdk.internal.ui.createDrawEventEmitter
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
 
@@ -69,11 +66,7 @@ internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
         StartupTracker(
             appStartupDataCollector = appStartupDataCollector,
             activityLoadEventEmitter = activityLoadEventEmitter,
-            drawEventEmitter = if (startupHasRenderEvent(versionChecker)) {
-                FirstDrawDetector(logger = initModule.logger)
-            } else {
-                null
-            }
+            drawEventEmitter = createDrawEventEmitter(versionChecker, initModule.logger)
         )
     }
 
@@ -93,11 +86,7 @@ internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
         if (uiLoadEventListener != null) {
             createActivityLoadEventEmitter(
                 uiLoadEventListener = uiLoadEventListener,
-                firstDrawDetector = if (versionChecker.isAtLeast(VERSION_CODES.Q) && hasRenderEvent(versionChecker)) {
-                    FirstDrawDetector(initModule.logger)
-                } else {
-                    null
-                },
+                firstDrawDetector = createDrawEventEmitter(versionChecker, initModule.logger),
                 autoTraceEnabled = configService.autoDataCaptureBehavior.isUiLoadTracingTraceAll(),
                 clock = openTelemetryModule.openTelemetryClock,
                 versionChecker = versionChecker

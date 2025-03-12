@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.internal.opentelemetry.embStartupActivityNa
 import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateListener
 import io.embrace.android.embracesdk.internal.spans.PersistableEmbraceSpan
 import io.embrace.android.embracesdk.internal.spans.SpanService
+import io.embrace.android.embracesdk.internal.ui.hasRenderEvent
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.spans.EmbraceSpan
@@ -53,12 +54,12 @@ internal class AppStartupTraceEmitter(
     private val processCreatedMs: Long?
     private val additionalTrackedIntervals = ConcurrentLinkedQueue<TrackedInterval>()
     private val customAttributes: MutableMap<String, String> = ConcurrentHashMap()
-    private val hasRenderEvent = startupHasRenderEvent(versionChecker)
+    private val trackRender = hasRenderEvent(versionChecker)
     private val appStartupRootSpan = AtomicReference<PersistableEmbraceSpan?>(null)
     private val dataCollectionComplete = AtomicBoolean(false)
     private val traceEnd = if (manualEnd) {
         TraceEnd.READY
-    } else if (hasRenderEvent) {
+    } else if (trackRender) {
         TraceEnd.RENDERED
     } else {
         TraceEnd.RESUMED
@@ -277,7 +278,7 @@ internal class AppStartupTraceEmitter(
                     firstActivityInitMs = firstActivityInitStartMs,
                     activityInitStartMs = startupActivityPreCreatedMs ?: startupActivityInitStartMs,
                     activityInitEndMs = startupActivityInitEndMs,
-                    uiLoadedMs = if (hasRenderEvent) firstFrameRenderedMs else startupActivityResumedMs,
+                    uiLoadedMs = if (trackRender) firstFrameRenderedMs else startupActivityResumedMs,
                     traceEndTimeMs = traceEndTimeMs,
                     completed = completed,
                 )
@@ -363,7 +364,7 @@ internal class AppStartupTraceEmitter(
             }
 
             if (activityInitEndMs != null && uiLoadedMs != null) {
-                val uiLoadSpanName = if (hasRenderEvent) {
+                val uiLoadSpanName = if (trackRender) {
                     ACTIVITY_RENDER_SPAN
                 } else {
                     ACTIVITY_LOAD_SPAN
@@ -443,7 +444,5 @@ internal class AppStartupTraceEmitter(
         } else {
             null
         }
-
-        fun startupHasRenderEvent(versionChecker: VersionChecker) = versionChecker.isAtLeast(VERSION_CODES.Q)
     }
 }

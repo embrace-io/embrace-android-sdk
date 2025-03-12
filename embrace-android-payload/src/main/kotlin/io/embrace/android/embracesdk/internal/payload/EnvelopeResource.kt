@@ -54,8 +54,6 @@ import com.squareup.moshi.JsonClass
  * Unity/React Native/Flutter. Previous name: a.unv
  * @param hostedSdkVersion The version of the hosted SDK used. Previous name: a.usv
  * @param unityBuildId (Unity) the Unity build ID number. Previous name: a.ubg
- * @param launchCount (iOS) The number of times the SDK has been launched. Previous name: a.lc
- * @param environmentDetail (iOS) The name of the environment, i.e. dev or prod. Previous name: a.ed
  * @param deviceManufacturer The device manufacturer. Previous name: d.dm
  * @param deviceModel The device model. Previous name: d.do
  * @param deviceArchitecture The CPU architecture used by the device. Previous name: d.da
@@ -63,9 +61,7 @@ import com.squareup.moshi.JsonClass
  * @param diskTotalCapacity The total capacity of internal storage for the whole device. Previous name: d.ms
  * @param osType A hardcoded string representing the operating system in use. Previous name: d.os
  * @param osVersion The human readable OS version string. Previous name: d.ov
- * @param osAlternateType (iOS) The alternate OS type. Previous name: d.oa
  * @param osCode (Android) The OS version code. Previous name: d.oc
- * @param osBuild (iOS) The OS build code. Previous name: d.ob
  * @param screenResolution The screen resolution. Previous name: d.sr
  * @param numCores (Android) The number of CPU cores the device has. Previous name: d.nc
  */

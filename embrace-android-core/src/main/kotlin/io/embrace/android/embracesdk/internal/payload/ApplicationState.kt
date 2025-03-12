@@ -1,8 +1,5 @@
 package io.embrace.android.embracesdk.internal.payload
 
-import com.squareup.moshi.JsonClass
-
-@JsonClass(generateAdapter = false)
 enum class ApplicationState {
 
     /**

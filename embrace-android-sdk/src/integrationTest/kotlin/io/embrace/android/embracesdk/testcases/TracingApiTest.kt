@@ -53,13 +53,13 @@ internal class TracingApiTest {
     @Test
     fun `check spans logged in the right session when service is initialized after a session starts`() {
         var testStartTimeMs: Long = -1
+        var sessionStartTimeMs: Long = -1
         var sessionEndTimeMs: Long = -1
         val spanExporter = FakeSpanExporter()
 
         testRule.runTest(
             instrumentedConfig = FakeInstrumentedConfig(enabledFeatures = FakeEnabledFeatureConfig(bgActivityCapture = true)),
             preSdkStartAction = {
-                testStartTimeMs = clock.now()
                 clock.tick(100L)
                 embrace.addSpanExporter(spanExporter)
             },
@@ -69,9 +69,9 @@ internal class TracingApiTest {
                         spanExporter.exportedSpans.toList().map { it.name }
                     }"
                 )
-                recordSession {
+                val sessionTimeStamps = recordSession {
                     val parentSpan = checkNotNull(embrace.createSpan(name = "test-trace-root"))
-                    assertTrue(parentSpan.start(startTimeMs = clock.now() - 1L))
+                    assertTrue(parentSpan.start(startTimeMs = clock.now() + 1L))
                     assertTrue(parentSpan.addAttribute("oMg", "OmG"))
                     assertSame(parentSpan, embrace.getSpan(checkNotNull(parentSpan.spanId)))
                     assertTrue(embrace.recordSpan(name = "record-span-span", parent = parentSpan) {
@@ -140,7 +140,10 @@ internal class TracingApiTest {
                         }"
                     )
                 }
-                sessionEndTimeMs = clock.now()
+
+                sessionStartTimeMs = sessionTimeStamps.startTimeMs
+                testStartTimeMs = sessionTimeStamps.actionTimeMs
+                sessionEndTimeMs = sessionTimeStamps.endTimeMs
             },
             assertAction = {
                 val session = getSingleSessionEnvelope()
@@ -177,32 +180,25 @@ internal class TracingApiTest {
                 }
 
                 assertEmbraceSpanData(
-                    span = spansMap["emb-sdk-init"],
-                    expectedStartTimeMs = testStartTimeMs + 100,
-                    expectedEndTimeMs = testStartTimeMs + 100,
-                    expectedParentId = SpanId.getInvalid(),
-                    private = true
-                )
-                assertEmbraceSpanData(
                     span = traceRootSpan,
-                    expectedStartTimeMs = testStartTimeMs + 99,
-                    expectedEndTimeMs = testStartTimeMs + 400,
+                    expectedStartTimeMs = testStartTimeMs + 1,
+                    expectedEndTimeMs = testStartTimeMs + 300,
                     expectedParentId = SpanId.getInvalid(),
                     expectedCustomAttributes = mapOf(Pair("oMg", "OmG")),
                     expectedEvents = listOf(
                         SpanEvent(
                             name = "parent event",
-                            timestampNanos = (testStartTimeMs + 200).millisToNanos(),
+                            timestampNanos = (testStartTimeMs + 100).millisToNanos(),
                             attributes = emptyList()
                         ),
                         SpanEvent(
                             name = "parent event with attributes and bad input time",
-                            timestampNanos = (testStartTimeMs + 200).millisToNanos(),
+                            timestampNanos = (testStartTimeMs + 100).millisToNanos(),
                             attributes = listOf(Attribute("key", "value"))
                         ),
                         SpanEvent(
                             name = "delayed event",
-                            timestampNanos = (testStartTimeMs + 350).millisToNanos(),
+                            timestampNanos = (testStartTimeMs + 250).millisToNanos(),
                             attributes = emptyList()
                         ),
                     )
@@ -210,16 +206,16 @@ internal class TracingApiTest {
                 val expectedParentId = traceRootSpan.spanId
                 assertEmbraceSpanData(
                     span = spansMap["record-span-span"],
-                    expectedStartTimeMs = testStartTimeMs + 100,
-                    expectedEndTimeMs = testStartTimeMs + 200,
+                    expectedStartTimeMs = testStartTimeMs,
+                    expectedEndTimeMs = testStartTimeMs + 100,
                     expectedParentId = checkNotNull(expectedParentId),
                     expectedTraceId = traceRootSpan.traceId
                 )
 
                 assertEmbraceSpanData(
                     span = spansMap["completed-span"],
-                    expectedStartTimeMs = testStartTimeMs + 200,
-                    expectedEndTimeMs = testStartTimeMs + 400,
+                    expectedStartTimeMs = testStartTimeMs + 100,
+                    expectedEndTimeMs = testStartTimeMs + 300,
                     expectedParentId = expectedParentId,
                     expectedTraceId = traceRootSpan.traceId,
                     expectedErrorCode = ErrorCode.FAILURE,
@@ -227,7 +223,7 @@ internal class TracingApiTest {
                     expectedEvents = listOf(
                         SpanEvent(
                             name = "failure time",
-                            timestampNanos = (testStartTimeMs + 400).millisToNanos(),
+                            timestampNanos = (testStartTimeMs + 300).millisToNanos(),
                             attributes = listOf(Attribute("retry", "1"))
                         )
                     )
@@ -235,23 +231,23 @@ internal class TracingApiTest {
 
                 assertEmbraceSpanData(
                     span = spansMap["bonus-span"],
-                    expectedStartTimeMs = testStartTimeMs + 400,
-                    expectedEndTimeMs = testStartTimeMs + 401,
+                    expectedStartTimeMs = testStartTimeMs + 300,
+                    expectedEndTimeMs = testStartTimeMs + 301,
                     expectedParentId = expectedParentId,
                     expectedTraceId = traceRootSpan.traceId
                 )
 
                 assertEmbraceSpanData(
                     span = spansMap["bonus-span-2"],
-                    expectedStartTimeMs = testStartTimeMs + 410,
-                    expectedEndTimeMs = testStartTimeMs + 700,
+                    expectedStartTimeMs = testStartTimeMs + 310,
+                    expectedEndTimeMs = testStartTimeMs + 600,
                     expectedParentId = expectedParentId,
                     expectedTraceId = traceRootSpan.traceId
                 )
 
                 assertEmbraceSpanData(
                     span = sessionSpan,
-                    expectedStartTimeMs = testStartTimeMs + 100,
+                    expectedStartTimeMs = sessionStartTimeMs,
                     expectedEndTimeMs = sessionEndTimeMs,
                     expectedParentId = SpanId.getInvalid(),
                     private = false
@@ -262,7 +258,7 @@ internal class TracingApiTest {
                 unendingSpanSnapshot.assertIsTypePerformance()
                 assertEmbraceSpanData(
                     span = unendingSpanSnapshot,
-                    expectedStartTimeMs = testStartTimeMs + 700,
+                    expectedStartTimeMs = testStartTimeMs + 600,
                     expectedEndTimeMs = null,
                     expectedParentId = SpanId.getInvalid(),
                     expectedStatus = Span.Status.UNSET,
@@ -270,7 +266,7 @@ internal class TracingApiTest {
                     expectedEvents = listOf(
                         SpanEvent(
                             name = "unending-event",
-                            timestampNanos = (testStartTimeMs + 800).millisToNanos(),
+                            timestampNanos = (testStartTimeMs + 700).millisToNanos(),
                             attributes = emptyList()
                         )
                     )

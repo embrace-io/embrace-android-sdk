@@ -39,10 +39,8 @@ internal class AnrFeatureTest {
         ).also {
             with(it) {
                 anrMonitorExecutor = getFakedWorkerExecutor()
-                anrMonitorExecutor.blockingMode = false
+                anrMonitorExecutor.blockingMode = true
                 blockedThreadDetector = getBlockedThreadDetector()
-                startTimeMs = getClock().now()
-
             }
         }
     }
@@ -55,11 +53,11 @@ internal class AnrFeatureTest {
 
         testRule.runTest(
             testCaseAction = {
-                recordSession {
+                startTimeMs = recordSession {
                     triggerAnr(firstSampleCount)
                     secondAnrStartTime = clock.now()
                     triggerAnr(secondSampleCount)
-                }
+                }.actionTimeMs
             },
             assertAction = {
                 val message = getSingleSessionEnvelope()
@@ -79,9 +77,9 @@ internal class AnrFeatureTest {
 
         testRule.runTest(
             testCaseAction = {
-                recordSession {
+                startTimeMs = recordSession {
                     triggerAnr(sampleCount)
-                }
+                }.actionTimeMs
             },
             assertAction = {
                 val message = getSingleSessionEnvelope()
@@ -141,8 +139,10 @@ internal class AnrFeatureTest {
             testCaseAction = {
                 recordSession {
                     triggerAnr(sampleCount, incomplete = true)
+                }.let {
+                    startTimeMs = it.actionTimeMs
+                    endTime = it.endTimeMs
                 }
-                endTime = clock.now()
             },
             assertAction = {
                 val message = getSingleSessionEnvelope()

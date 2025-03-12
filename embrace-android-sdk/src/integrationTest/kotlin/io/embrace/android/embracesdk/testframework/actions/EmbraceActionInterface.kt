@@ -25,6 +25,8 @@ internal class EmbraceActionInterface(
     val clock: FakeClock
         get() = setup.getClock()
 
+    private var appHasStarted: Boolean = false
+
     /**
      * Starts & ends a session for the purposes of testing. An action can be supplied as a lambda
      * parameter: any code inside the lambda will be executed, so can be used to add breadcrumbs,
@@ -35,15 +37,52 @@ internal class EmbraceActionInterface(
      * should always be 30s long. Additionally, it performs assertions against fields that
      * are guaranteed not to change in the start/end message.
      */
-    internal fun recordSession(action: EmbraceActionInterface.() -> Unit = {}) {
-        onForeground()
+    internal fun recordSession(
+        action: EmbraceActionInterface.() -> Unit = {},
+    ): SessionTimestamps {
+        val sessionAction: () -> Unit = {
+            // perform a custom action during the session boundary, e.g. adding a breadcrumb.
+            this.action()
+            // end session 30s later by entering background
+            setup.getClock().tick(30000)
+        }
+        val activityAndAction = listOf(Robolectric.buildActivity(Activity::class.java) to sessionAction)
 
-        // perform a custom action during the session boundary, e.g. adding a breadcrumb.
-        this.action()
+        return if (!appHasStarted) {
+            appHasStarted = true
+            simulateOpeningActivities(
+                addStartupActivity = false,
+                startInBackground = true,
+                activitiesAndActions = activityAndAction
+            ).let { executionTimestamps ->
+                val isBackgroundActivityEnabled =
+                    bootstrapper.configModule.configService.backgroundActivityBehavior.isBackgroundActivityCaptureEnabled()
 
-        // end session 30s later by entering background
-        setup.getClock().tick(30000)
-        onBackground()
+                SessionTimestamps(
+                    startTimeMs = if (isBackgroundActivityEnabled) {
+                        executionTimestamps.firstForegroundTimeMs
+                    } else {
+                        executionTimestamps.executionStartTimeMs
+                    },
+                    foregroundTimeMs = executionTimestamps.firstForegroundTimeMs,
+                    actionTimeMs = executionTimestamps.firstActionTimeMs,
+                    endTimeMs = executionTimestamps.lastBackgroundTimeMs
+                )
+            }
+        } else {
+            simulateOpeningActivities(
+                addStartupActivity = false,
+                startInBackground = true,
+                activitiesAndActions = activityAndAction
+            ).let { executionTimestamps ->
+                SessionTimestamps(
+                    startTimeMs = executionTimestamps.firstForegroundTimeMs,
+                    foregroundTimeMs = executionTimestamps.firstForegroundTimeMs,
+                    actionTimeMs = executionTimestamps.firstActionTimeMs,
+                    endTimeMs = executionTimestamps.lastBackgroundTimeMs
+                )
+            }
+        }
     }
 
     private fun onForeground() {
@@ -67,7 +106,8 @@ internal class EmbraceActionInterface(
         activitiesAndActions: List<Pair<ActivityController<*>, () -> Unit>> = listOf(
             Robolectric.buildActivity(Activity::class.java) to {},
         ),
-    ) {
+    ): AppExecutionTimestamps {
+        val appExecutionTimes = AppExecutionTimestamps(executionStartTimeMs = clock.now())
         var lastActivity: ActivityController<*>? = if (addStartupActivity) {
             Robolectric.buildActivity(Activity::class.java)
         } else {
@@ -75,11 +115,13 @@ internal class EmbraceActionInterface(
         }?.apply {
             create()
             start()
+            appExecutionTimes.firstForegroundTimeMs = clock.now()
             onForeground()
             resume()
             pause()
             if (startInBackground) {
                 stop()
+                appExecutionTimes.lastBackgroundTimeMs = clock.now()
                 onBackground()
                 setup.getClock().tick(STARTUP_BACKGROUND_TIME)
             } else {
@@ -91,11 +133,14 @@ internal class EmbraceActionInterface(
                 activityController.create()
                 setup.getClock().tick(LIFECYCLE_EVENT_GAP)
             }
-            activityController.start()
-            setup.getClock().tick(LIFECYCLE_EVENT_GAP)
             if (index == 0 && startInBackground) {
+                if (appExecutionTimes.firstForegroundTimeMs == 0L) {
+                    appExecutionTimes.firstForegroundTimeMs = clock.now()
+                }
                 onForeground()
             }
+            activityController.start()
+            setup.getClock().tick(LIFECYCLE_EVENT_GAP)
             activityController.resume()
 
             setup.getClock().tick(LIFECYCLE_EVENT_GAP)
@@ -115,6 +160,7 @@ internal class EmbraceActionInterface(
             }
             lastActivity?.stop()
 
+            appExecutionTimes.firstActionTimeMs = clock.now()
             action()
 
             setup.getClock().tick(POST_ACTIVITY_ACTION_DWELL)
@@ -123,25 +169,14 @@ internal class EmbraceActionInterface(
             lastActivity = activityController
         }
 
-        lastActivity?.stop()
-        setup.getClock().tick()
-
         if (endInBackground) {
+            setup.getClock().tick()
+            appExecutionTimes.lastBackgroundTimeMs = clock.now()
+            lastActivity?.stop()
             onBackground()
         }
-    }
 
-
-    fun simulateActivityLifecycle() {
-        with(Robolectric.buildActivity(Activity::class.java)) {
-            create()
-            start()
-            resume()
-            clock.tick(30000)
-            pause()
-            stop()
-            destroy()
-        }
+        return appExecutionTimes
     }
 
     fun simulateJvmUncaughtException(exc: Throwable) {

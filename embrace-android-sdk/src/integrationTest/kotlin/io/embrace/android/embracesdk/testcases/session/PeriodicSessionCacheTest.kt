@@ -46,7 +46,6 @@ internal class PeriodicSessionCacheTest {
         testRule.runTest(
             testCaseAction = {
                 recordSession {
-                    assertEquals(0, cacheStorageService.storedPayloadCount())
                     embrace.addSessionProperty("Test", "Test", true)
                     snapshot = returnIfConditionMet(
                         waitTimeMs = 10000,

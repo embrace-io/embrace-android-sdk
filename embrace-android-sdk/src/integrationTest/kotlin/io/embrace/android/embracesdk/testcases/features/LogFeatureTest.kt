@@ -13,9 +13,12 @@ import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.assertions.assertOtelLogReceived
 import io.embrace.android.embracesdk.testframework.assertions.getLogOfType
 import io.embrace.android.embracesdk.testframework.assertions.getOtelSeverity
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.util.LinkedList
+import java.util.Queue
 
 @RunWith(AndroidJUnit4::class)
 internal class LogFeatureTest {
@@ -25,25 +28,33 @@ internal class LogFeatureTest {
             bgActivityCapture = true
         )
     )
+    private lateinit var logTimestamps: Queue<Long>
 
     @Rule
     @JvmField
     val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule()
+
+    @Before
+    fun before() {
+        logTimestamps = LinkedList()
+    }
 
     @Test
     fun `log info message sent in foreground`() {
         testRule.runTest(
             instrumentedConfig = instrumentedConfig,
             testCaseAction = {
-                recordSession {
-                    embrace.logInfo("test message")
-
-                }
+                logTimestamps.add(
+                    recordSession {
+                        embrace.logInfo("test message")
+                    }.actionTimeMs
+                )
             },
             assertAction = {
                 val log = getSingleLogEnvelope().getLogOfType(EmbType.System.Log)
                 assertOtelLogReceived(
                     logReceived = log,
+                    expectedTimeMs = logTimestamps.remove(),
                     expectedMessage = "test message",
                     expectedSeverityNumber = getOtelSeverity(Severity.INFO).severityNumber,
                     expectedSeverityText = Severity.INFO.name,
@@ -58,6 +69,7 @@ internal class LogFeatureTest {
         testRule.runTest(
             instrumentedConfig = instrumentedConfig,
             testCaseAction = {
+                logTimestamps.add(clock.now())
                 embrace.logWarning("test message")
                 clock.tick(2000L)
             },
@@ -67,7 +79,8 @@ internal class LogFeatureTest {
                     logReceived = log,
                     expectedMessage = "test message",
                     expectedSeverityNumber = getOtelSeverity(Severity.WARNING).severityNumber,
-                    expectedSeverityText = Severity.WARNING.name
+                    expectedSeverityText = Severity.WARNING.name,
+                    expectedTimeMs = logTimestamps.remove(),
                 )
             }
         )
@@ -78,6 +91,7 @@ internal class LogFeatureTest {
         testRule.runTest(
             instrumentedConfig = instrumentedConfig,
             testCaseAction = {
+                logTimestamps.add(clock.now())
                 embrace.logError("test message")
                 clock.tick(2000L)
 
@@ -88,7 +102,8 @@ internal class LogFeatureTest {
                     log,
                     expectedMessage = "test message",
                     expectedSeverityNumber = getOtelSeverity(Severity.ERROR).severityNumber,
-                    expectedSeverityText = Severity.ERROR.name
+                    expectedSeverityText = Severity.ERROR.name,
+                    expectedTimeMs = logTimestamps.remove(),
                 )
             }
         )
@@ -100,6 +115,7 @@ internal class LogFeatureTest {
             instrumentedConfig = instrumentedConfig,
             testCaseAction = {
                 Severity.values().forEach { severity ->
+                    logTimestamps.add(clock.now())
                     val expectedMessage = "test message ${severity.name}"
                     embrace.logMessage(expectedMessage, severity)
                 }
@@ -114,7 +130,8 @@ internal class LogFeatureTest {
                         logs[severity],
                         expectedMessage = expectedMessage,
                         expectedSeverityNumber = getOtelSeverity(severity).severityNumber,
-                        expectedSeverityText = severity.name
+                        expectedSeverityText = severity.name,
+                        expectedTimeMs = logTimestamps.remove(),
                     )
                 }
             }
@@ -127,6 +144,7 @@ internal class LogFeatureTest {
             instrumentedConfig = instrumentedConfig,
             testCaseAction = {
                 Severity.values().forEach { severity ->
+                    logTimestamps.add(clock.now())
                     val expectedMessage = "test message ${severity.name}"
                     embrace.logMessage(expectedMessage, severity, customProperties)
                 }
@@ -142,7 +160,8 @@ internal class LogFeatureTest {
                         expectedMessage = expectedMessage,
                         expectedSeverityNumber = getOtelSeverity(severity).severityNumber,
                         expectedSeverityText = severity.name,
-                        expectedProperties = customProperties
+                        expectedTimeMs = logTimestamps.remove(),
+                        expectedProperties = customProperties,
                     )
                 }
             })
@@ -153,6 +172,7 @@ internal class LogFeatureTest {
         testRule.runTest(
             instrumentedConfig = instrumentedConfig,
             testCaseAction = {
+                logTimestamps.add(clock.now())
                 embrace.logException(testException)
                 clock.tick(2000L)
             },
@@ -163,6 +183,7 @@ internal class LogFeatureTest {
                     expectedMessage = checkNotNull(testException.message),
                     expectedSeverityNumber = io.opentelemetry.api.logs.Severity.ERROR.severityNumber,
                     expectedSeverityText = Severity.ERROR.name,
+                    expectedTimeMs = logTimestamps.remove(),
                     expectedType = LogExceptionType.HANDLED.value,
                     expectedExceptionName = testException.javaClass.simpleName,
                     expectedExceptionMessage = checkNotNull(testException.message),
@@ -178,6 +199,7 @@ internal class LogFeatureTest {
         testRule.runTest(
             instrumentedConfig = instrumentedConfig,
             testCaseAction = {
+                logTimestamps.add(clock.now())
                 embrace.logException(testException, Severity.INFO)
                 clock.tick(2000L)
             },
@@ -188,6 +210,7 @@ internal class LogFeatureTest {
                     expectedMessage = checkNotNull(testException.message),
                     expectedSeverityNumber = io.opentelemetry.api.logs.Severity.INFO.severityNumber,
                     expectedSeverityText = Severity.INFO.name,
+                    expectedTimeMs = logTimestamps.remove(),
                     expectedType = LogExceptionType.HANDLED.value,
                     expectedExceptionName = testException.javaClass.simpleName,
                     expectedExceptionMessage = checkNotNull(testException.message),
@@ -204,6 +227,7 @@ internal class LogFeatureTest {
             instrumentedConfig = instrumentedConfig,
             testCaseAction = {
                 Severity.values().forEach { severity ->
+                    logTimestamps.add(clock.now())
                     embrace.logException(
                         testException, severity,
                         customProperties
@@ -220,6 +244,7 @@ internal class LogFeatureTest {
                         expectedMessage = checkNotNull(testException.message),
                         expectedSeverityNumber = getOtelSeverity(severity).severityNumber,
                         expectedSeverityText = severity.name,
+                        expectedTimeMs = logTimestamps.remove(),
                         expectedType = LogExceptionType.HANDLED.value,
                         expectedExceptionName = testException.javaClass.simpleName,
                         expectedExceptionMessage = checkNotNull(testException.message),
@@ -238,6 +263,7 @@ internal class LogFeatureTest {
             instrumentedConfig = instrumentedConfig,
             testCaseAction = {
                 Severity.values().forEach { severity ->
+                    logTimestamps.add(clock.now())
                     val expectedMessage = "test message ${severity.name}"
                     embrace.logException(testException, severity, customProperties, expectedMessage)
                 }
@@ -253,6 +279,7 @@ internal class LogFeatureTest {
                         expectedMessage = expectedMessage,
                         expectedSeverityNumber = getOtelSeverity(severity).severityNumber,
                         expectedSeverityText = severity.name,
+                        expectedTimeMs = logTimestamps.remove(),
                         expectedType = LogExceptionType.HANDLED.value,
                         expectedExceptionName = testException.javaClass.simpleName,
                         expectedExceptionMessage = checkNotNull(testException.message),
@@ -270,6 +297,7 @@ internal class LogFeatureTest {
         testRule.runTest(
             instrumentedConfig = instrumentedConfig,
             testCaseAction = {
+                logTimestamps.add(clock.now())
                 embrace.logCustomStacktrace(stacktrace)
                 clock.tick(2000L)
             },
@@ -280,6 +308,7 @@ internal class LogFeatureTest {
                     expectedMessage = "",
                     expectedSeverityNumber = getOtelSeverity(Severity.ERROR).severityNumber,
                     expectedSeverityText = Severity.ERROR.name,
+                    expectedTimeMs = logTimestamps.remove(),
                     expectedType = LogExceptionType.HANDLED.value,
                     expectedStacktrace = stacktrace.toList(),
                     expectedEmbType = "sys.exception",
@@ -294,6 +323,7 @@ internal class LogFeatureTest {
             instrumentedConfig = instrumentedConfig,
             testCaseAction = {
                 Severity.values().forEach { severity ->
+                    logTimestamps.add(clock.now())
                     embrace.logCustomStacktrace(stacktrace, severity)
                 }
                 clock.tick(2000L)
@@ -307,6 +337,7 @@ internal class LogFeatureTest {
                         expectedMessage = "",
                         expectedSeverityNumber = getOtelSeverity(severity).severityNumber,
                         expectedSeverityText = severity.name,
+                        expectedTimeMs = logTimestamps.remove(),
                         expectedType = LogExceptionType.HANDLED.value,
                         expectedStacktrace = stacktrace.toList(),
                         expectedEmbType = "sys.exception",
@@ -322,6 +353,7 @@ internal class LogFeatureTest {
             instrumentedConfig = instrumentedConfig,
             testCaseAction = {
                 Severity.values().forEach { severity ->
+                    logTimestamps.add(clock.now())
                     embrace.logCustomStacktrace(stacktrace, severity, customProperties)
                 }
                 clock.tick(2000L)
@@ -335,6 +367,7 @@ internal class LogFeatureTest {
                         expectedMessage = "",
                         expectedSeverityNumber = getOtelSeverity(severity).severityNumber,
                         expectedSeverityText = severity.name,
+                        expectedTimeMs = logTimestamps.remove(),
                         expectedType = LogExceptionType.HANDLED.value,
                         expectedStacktrace = stacktrace.toList(),
                         expectedProperties = customProperties,
@@ -351,6 +384,7 @@ internal class LogFeatureTest {
             instrumentedConfig = instrumentedConfig,
             testCaseAction = {
                 Severity.values().forEach { severity ->
+                    logTimestamps.add(clock.now())
                     val expectedMessage = "test message ${severity.name}"
                     embrace.logCustomStacktrace(
                         stacktrace,
@@ -372,6 +406,7 @@ internal class LogFeatureTest {
                         expectedMessage = expectedMessage,
                         expectedSeverityNumber = getOtelSeverity(severity).severityNumber,
                         expectedSeverityText = severity.name,
+                        expectedTimeMs = logTimestamps.remove(),
                         expectedType = LogExceptionType.HANDLED.value,
                         expectedStacktrace = stacktrace.toList(),
                         expectedProperties = customProperties,

@@ -148,12 +148,15 @@ internal class BackgroundActivityDisabledTest {
 
         testRule.runTest(
             testCaseAction = {
-                session1StartMs = clock.now()
-                recordSession()
-                session1EndMs = clock.now()
-                session2StartMs = clock.tick(15000)
-                recordSession()
-                session2EndMs = clock.now()
+                with(recordSession()) {
+                    session1StartMs = startTimeMs
+                    session1EndMs = endTimeMs
+                }
+                clock.tick(15000)
+                with(recordSession()) {
+                    session2StartMs = startTimeMs
+                    session2EndMs = endTimeMs
+                }
             },
             assertAction = {
                 val sessions = getSessionEnvelopes(2)
@@ -184,7 +187,7 @@ internal class BackgroundActivityDisabledTest {
                     startMs = session2StartMs,
                     endMs = session2EndMs,
                     sessionNumber = 2,
-                    sequenceId = 4,
+                    sequenceId = 10,
                     coldStart = false,
                 )
 

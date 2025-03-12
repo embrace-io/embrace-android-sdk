@@ -48,7 +48,7 @@ internal class EmbraceSetupInterface @JvmOverloads constructor(
     workerToFake: Worker.Background? = null,
     anrMonitoringThread: Thread? = null,
     fakeStorageLayer: Boolean = false,
-    val ignoredInternalErrors: List<InternalErrorType> = listOf(InternalErrorType.APP_LAUNCH_TRACE_FAIL),
+    val ignoredInternalErrors: List<InternalErrorType> = emptyList(),
 ) {
     private val processIdentifier: String = Uuid.getEmbUuid()
 

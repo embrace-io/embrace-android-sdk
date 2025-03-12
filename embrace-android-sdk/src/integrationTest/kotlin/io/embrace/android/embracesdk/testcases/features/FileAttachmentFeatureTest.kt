@@ -14,9 +14,12 @@ import io.embrace.android.embracesdk.testframework.server.FormPart
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.util.LinkedList
+import java.util.Queue
 import java.util.UUID
 
 @RunWith(AndroidJUnit4::class)
@@ -30,22 +33,30 @@ internal class FileAttachmentFeatureTest {
     }
 
     private val attachmentId = UUID.randomUUID()
+    private lateinit var logTimestamps: Queue<Long>
 
     @Rule
     @JvmField
     val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule()
+
+    @Before
+    fun before() {
+        logTimestamps = LinkedList()
+    }
 
     @Test
     fun `log message with user hosted file attachment`() {
         val url = "https://example.com/my-file.txt"
         val id = attachmentId.toString()
         testRule.runTest(testCaseAction = {
-            recordSession {
-                logWithUserHostedAttachment(id, url)
-            }
+            logTimestamps.add(
+                recordSession {
+                    logWithUserHostedAttachment(id, url)
+                }.actionTimeMs
+            )
         }, assertAction = {
             val log = getSingleLogEnvelope().getLogOfType(EmbType.System.Log)
-            assertUserHostedLogSent(log, url, id)
+            assertUserHostedLogSent(log, url, id, logTimestamps.remove())
             assertNull(log.attributes?.findAttributeValue(ATTR_KEY_ERR_CODE))
         })
     }
@@ -59,6 +70,7 @@ internal class FileAttachmentFeatureTest {
             repeat(2) {
                 recordSession {
                     repeat(limit + 1) {
+                        logTimestamps.add(clock.now())
                         logWithUserHostedAttachment(id, url)
                     }
                 }
@@ -70,7 +82,7 @@ internal class FileAttachmentFeatureTest {
             assertEquals((limit * 2) + 2, logs.size)
 
             logs.forEachIndexed { k, log ->
-                assertUserHostedLogSent(log, url, id)
+                assertUserHostedLogSent(log, url, id, logTimestamps.remove())
 
                 val errCode = log.attributes?.findAttributeValue(ATTR_KEY_ERR_CODE)
                 val expectedCode = when (k) {
@@ -86,14 +98,16 @@ internal class FileAttachmentFeatureTest {
     fun `log message with embrace hosted file attachment`() {
         val byteArray = "Hello, world!".toByteArray()
         testRule.runTest(testCaseAction = {
-            recordSession {
-                logWithEmbraceHostedAttachment(byteArray)
-            }
+            logTimestamps.add(
+                recordSession {
+                    logWithEmbraceHostedAttachment(byteArray)
+                }.actionTimeMs
+            )
         }, assertAction = {
             val parts = getSingleAttachment()
             verifyAttachment(parts, byteArray)
             val log = getSingleLogEnvelope().getLogOfType(EmbType.System.Log)
-            assertEmbraceHostedLogSent(log, byteArray.size.toLong())
+            assertEmbraceHostedLogSent(log, byteArray.size.toLong(), logTimestamps.remove())
         })
     }
 
@@ -105,6 +119,7 @@ internal class FileAttachmentFeatureTest {
             repeat(2) {
                 recordSession {
                     repeat(limit + 1) {
+                        logTimestamps.add(clock.now())
                         logWithEmbraceHostedAttachment(byteArray)
                     }
                 }
@@ -117,7 +132,7 @@ internal class FileAttachmentFeatureTest {
             assertEquals(logSize, logs.size)
 
             logs.forEachIndexed { k, log ->
-                assertEmbraceHostedLogSent(log, byteArray.size.toLong())
+                assertEmbraceHostedLogSent(log, byteArray.size.toLong(), logTimestamps.remove())
 
                 val errCode = log.attributes?.findAttributeValue(ATTR_KEY_ERR_CODE)
                 val expectedCode = when (k) {
@@ -138,15 +153,17 @@ internal class FileAttachmentFeatureTest {
     fun `embrace hosted file attachment equalling size limit`() {
         val byteArray = ByteArray(1024 * 1024)
         testRule.runTest(testCaseAction = {
-            recordSession {
-                logWithEmbraceHostedAttachment(byteArray)
-            }
+            logTimestamps.add(
+                recordSession {
+                    logWithEmbraceHostedAttachment(byteArray)
+                }.actionTimeMs
+            )
         }, assertAction = {
             val parts = getSingleAttachment()
             verifyAttachment(parts, byteArray)
 
             val log = getSingleLogEnvelope().getLogOfType(EmbType.System.Log)
-            assertEmbraceHostedLogSent(log, byteArray.size.toLong())
+            assertEmbraceHostedLogSent(log, byteArray.size.toLong(), logTimestamps.remove())
         })
     }
 
@@ -154,12 +171,14 @@ internal class FileAttachmentFeatureTest {
     fun `embrace hosted file attachment exceeding size limit`() {
         val byteArray = ByteArray(2 * 1024 * 1024)
         testRule.runTest(testCaseAction = {
-            recordSession {
-                logWithEmbraceHostedAttachment(byteArray)
-            }
+            logTimestamps.add(
+                recordSession {
+                    logWithEmbraceHostedAttachment(byteArray)
+                }.actionTimeMs
+            )
         }, assertAction = {
             val log = getSingleLogEnvelope().getLogOfType(EmbType.System.Log)
-            assertEmbraceHostedLogSent(log, byteArray.size.toLong())
+            assertEmbraceHostedLogSent(log, byteArray.size.toLong(), logTimestamps.remove())
             assertTrue(getAttachments(0).isEmpty())
         })
     }
@@ -171,11 +190,13 @@ internal class FileAttachmentFeatureTest {
         val c = "cherry".toByteArray()
 
         testRule.runTest(testCaseAction = {
-            recordSession {
-                logWithEmbraceHostedAttachment(a)
-                logWithEmbraceHostedAttachment(b)
-                logWithEmbraceHostedAttachment(c)
-            }
+            logTimestamps.add(
+                recordSession {
+                    logWithEmbraceHostedAttachment(a)
+                    logWithEmbraceHostedAttachment(b)
+                    logWithEmbraceHostedAttachment(c)
+                }.actionTimeMs
+            )
         }, assertAction = {
             val expectedSize = 3
             val logs = getLogEnvelopes(1)
@@ -222,6 +243,7 @@ internal class FileAttachmentFeatureTest {
         log: Log,
         url: String,
         id: String,
+        timestamp: Long,
     ) {
         assertOtelLogReceived(
             logReceived = log,
@@ -229,7 +251,7 @@ internal class FileAttachmentFeatureTest {
             expectedSeverityNumber = getOtelSeverity(Severity.INFO).severityNumber,
             expectedSeverityText = Severity.INFO.name,
             expectedState = "foreground",
-            expectedTimeMs = null,
+            expectedTimeMs = timestamp,
             expectedProperties = mapOf(
                 "key" to "value",
                 ATTR_KEY_URL to url,
@@ -241,6 +263,7 @@ internal class FileAttachmentFeatureTest {
     private fun assertEmbraceHostedLogSent(
         log: Log,
         size: Long,
+        timestamp: Long,
     ) {
         assertOtelLogReceived(
             logReceived = log,
@@ -248,7 +271,7 @@ internal class FileAttachmentFeatureTest {
             expectedSeverityNumber = getOtelSeverity(Severity.INFO).severityNumber,
             expectedSeverityText = Severity.INFO.name,
             expectedState = "foreground",
-            expectedTimeMs = null,
+            expectedTimeMs = timestamp,
             expectedProperties = mapOf(
                 "key" to "value",
                 ATTR_KEY_SIZE to size.toString(),

@@ -15,6 +15,7 @@ import io.opentelemetry.api.logs.Severity
 import io.opentelemetry.semconv.ExceptionAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -32,9 +33,16 @@ internal class FlutterInternalInterfaceTest {
         )
     )
 
+    private var sessionStartTimeMs: Long = 0L
+
     @Rule
     @JvmField
     val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule()
+
+    @Before
+    fun before() {
+        sessionStartTimeMs = 0L
+    }
 
     @Test
     fun `flutter without values should return defaults`() {
@@ -155,7 +163,7 @@ internal class FlutterInternalInterfaceTest {
         testRule.runTest(
             instrumentedConfig = instrumentedConfig,
             testCaseAction = {
-                recordSession {
+                sessionStartTimeMs = recordSession {
                     EmbraceInternalApi.getInstance().flutterInternalInterface.logHandledDartException(
                         expectedStacktrace,
                         expectedName,
@@ -163,7 +171,7 @@ internal class FlutterInternalInterfaceTest {
                         expectedContext,
                         expectedLibrary,
                     )
-                }
+                }.actionTimeMs
             },
             assertAction = {
                 val log = getSingleLogEnvelope().getLogOfType(EmbType.System.FlutterException)
@@ -173,6 +181,7 @@ internal class FlutterInternalInterfaceTest {
                     expectedMessage = "Dart error",
                     expectedSeverityNumber = Severity.ERROR.severityNumber,
                     expectedSeverityText = Severity.ERROR.name,
+                    expectedTimeMs = sessionStartTimeMs,
                     expectedType = LogExceptionType.HANDLED.value,
                     expectedExceptionName = expectedName,
                     expectedExceptionMessage = expectedMessage,
@@ -201,7 +210,7 @@ internal class FlutterInternalInterfaceTest {
         testRule.runTest(
             instrumentedConfig = instrumentedConfig,
             testCaseAction = {
-                recordSession {
+                sessionStartTimeMs = recordSession {
                     EmbraceInternalApi.getInstance().flutterInternalInterface.logUnhandledDartException(
                         expectedStacktrace,
                         expectedName,
@@ -209,7 +218,7 @@ internal class FlutterInternalInterfaceTest {
                         expectedContext,
                         expectedLibrary,
                     )
-                }
+                }.actionTimeMs
             },
             assertAction = {
                 val log = getSingleLogEnvelope().getLogOfType(EmbType.System.FlutterException)
@@ -219,6 +228,7 @@ internal class FlutterInternalInterfaceTest {
                     expectedMessage = "Dart error",
                     expectedSeverityNumber = Severity.ERROR.severityNumber,
                     expectedSeverityText = Severity.ERROR.name,
+                    expectedTimeMs = sessionStartTimeMs,
                     expectedType = LogExceptionType.UNHANDLED.value,
                     expectedExceptionName = expectedName,
                     expectedExceptionMessage = expectedMessage,

@@ -8,7 +8,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 
-class CreateArchToSharedObjectsMapTaskTest {
+class CreateArchitectureToHashedObjectsMapTaskTest {
     @Rule
     @JvmField
     val rule: PluginIntegrationTestRule = PluginIntegrationTestRule()
@@ -16,7 +16,7 @@ class CreateArchToSharedObjectsMapTaskTest {
     @Test
     fun `creates correct architectures to shared objects map`() {
         rule.runTest(
-            fixture = "architectures-to-shared-objects-test",
+            fixture = "architecture-to-hashed-objects-test",
             setup = { projectDir ->
                 assertTrue(projectDir.file("testArchitecturesDir").exists())
             },

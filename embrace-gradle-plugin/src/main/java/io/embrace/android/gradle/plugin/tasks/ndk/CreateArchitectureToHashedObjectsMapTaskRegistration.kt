@@ -14,7 +14,7 @@ import org.gradle.api.Project
 import org.gradle.api.provider.Provider
 import java.io.File
 
-class CreateArchToSharedObjectsMapTaskRegistration(
+class CreateArchitectureToHashedObjectsMapTaskRegistration(
     private val behavior: PluginBehavior,
     private val unitySymbolsDir: Provider<UnitySymbolsDir>,
     private val projectType: Provider<ProjectType>,
@@ -32,8 +32,8 @@ class CreateArchToSharedObjectsMapTaskRegistration(
         val sharedObjectFilesProvider = getSharedObjectFilesProvider(project, data, variant)
 
         project.registerTask(
-            CreateArchToSharedObjectsMapTask.NAME,
-            CreateArchToSharedObjectsMapTask::class.java,
+            CreateArchitectureToHashedObjectsMapTask.NAME,
+            CreateArchitectureToHashedObjectsMapTask::class.java,
             data
         ) { task ->
             task.onlyIf { projectType.orNull == ProjectType.NATIVE || projectType.orNull == ProjectType.UNITY }

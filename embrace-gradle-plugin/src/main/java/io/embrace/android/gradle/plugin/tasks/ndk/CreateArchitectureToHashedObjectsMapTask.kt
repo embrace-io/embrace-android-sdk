@@ -13,9 +13,22 @@ import java.io.File
 import javax.inject.Inject
 
 /**
- * Collects .so files from the project, depending on the project type.
+ * Given a directory containing architecture directories as its input, this task will output
+ * a map of architectures to maps of shared object file names to hashed objects. This map will be serialized to a JSON file.
+ *
+ * The map will look like this:
+ * {
+ *   "armeabi-v7a": {
+ *     "libtest1.so": "2a21dc0b99017d5db5960b80d94815a0fe0f3fc2",
+ *     "libtest2.so": "3b32ed1c88128e6ec4b71b93a4926a1bf1f4gd3"
+ *   },
+ *   "arm64-v8a": {
+ *     "libtest1.so": "4c43fe2d77239f7fd5a71c91b85926b2g2g5he4",
+ *     "libtest2.so": "5d54gf3e66340g8ge6b82da2c96a37c3h3h6if5"
+ *   }
+ * }
  */
-abstract class CreateArchToSharedObjectsMapTask @Inject constructor(
+abstract class CreateArchitectureToHashedObjectsMapTask @Inject constructor(
     objectFactory: ObjectFactory,
 ) : EmbraceTaskImpl(objectFactory) {
 
@@ -51,6 +64,6 @@ abstract class CreateArchToSharedObjectsMapTask @Inject constructor(
     }
 
     companion object {
-        const val NAME: String = "collectSharedObjectFilesTask"
+        const val NAME: String = "createArchitectureToHashedObjectsMap"
     }
 }

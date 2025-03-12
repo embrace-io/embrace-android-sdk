@@ -1,4 +1,4 @@
-import io.embrace.android.gradle.plugin.tasks.ndk.CreateArchToSharedObjectsMapTask
+import io.embrace.android.gradle.plugin.tasks.ndk.CreateArchitectureToHashedObjectsMapTask
 
 plugins {
     id("java")
@@ -6,7 +6,7 @@ plugins {
     id("io.embrace.android.testplugin")
 }
 
-project.tasks.register("testTask", CreateArchToSharedObjectsMapTask) { task ->
+project.tasks.register("testTask", CreateArchitectureToHashedObjectsMapTask) { task ->
     task.architecturesDirectory.set(
         project.layout.projectDirectory.dir("testArchitecturesDir")
     )

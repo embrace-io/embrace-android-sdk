@@ -10,7 +10,7 @@ import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
-import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface
+import io.embrace.android.embracesdk.testframework.actions.SessionTimestamps
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -42,8 +42,8 @@ internal class SpanAutoTerminationTest {
 
     @Test
     fun `auto termination feature`() {
-        var firstSessionTimestamps: EmbraceActionInterface.SessionTimestamps? = null
-        var secondSessionTimestamps: EmbraceActionInterface.SessionTimestamps? = null
+        var firstSessionTimestamps: SessionTimestamps? = null
+        var secondSessionTimestamps: SessionTimestamps? = null
         testRule.runTest(
             instrumentedConfig = FakeInstrumentedConfig(
                 enabledFeatures = FakeEnabledFeatureConfig(
@@ -123,7 +123,7 @@ internal class SpanAutoTerminationTest {
         )
     }
 
-    private fun EmbraceActionInterface.SessionTimestamps.assertFirstSpans(
+    private fun SessionTimestamps.assertFirstSpans(
         first: Envelope<SessionPayload>,
     ) {
         // startSpan() with children
@@ -167,7 +167,7 @@ internal class SpanAutoTerminationTest {
         assertNull(hangingSpan.endTimeNanos)
     }
 
-    private fun EmbraceActionInterface.SessionTimestamps.assertSecondSpans(
+    private fun SessionTimestamps.assertSecondSpans(
         second: Envelope<SessionPayload>,
     ) {
         val roota = second.findSpanByName(ROOT_HANGING_SPAN)

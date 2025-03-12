@@ -198,64 +198,6 @@ internal class EmbraceActionInterface(
         dataSource.handleThermalStateChange(thermalState)
     }
 
-    /**
-     * Timestamps for various events during the simulated execution of an app when we record a session during the integration tests
-     */
-    data class SessionTimestamps(
-        /**
-         * The time when the session begins
-         */
-        val startTimeMs: Long,
-
-        /**
-         * Time when the session foregrounds. This could differ from [startTimeMs] if the session corresponds to the first session
-         * of the app instance when background activity is disabled, as the time in the background will be included in the session time.
-         */
-        val foregroundTimeMs: Long,
-
-        /**
-         * The time when the action in the session is invoked
-         */
-        val actionTimeMs: Long,
-
-        /**
-         * The time when the session ended
-         */
-        val endTimeMs: Long,
-    )
-
-    /**
-     * Timestamps for various events during the simulated execution of an app when we record a session during the integration tests
-     */
-    data class AppExecutionTimestamps(
-        /**
-         * The time the simulated app execution started.
-         */
-        var executionStartTimeMs: Long = 0L,
-
-        /**
-         * The first time the app was foregrounded during the simulated execution.
-         *
-         * It should correspond to the start of the first session.
-         */
-        var firstForegroundTimeMs: Long = 0L,
-
-        /**
-         * The time just before the action within the session is executed for the first session in the execution
-         *
-         * This differs from the session creation time (aka foreground time) because some amount of time is ticked off as the app
-         * goes through the activity lifecycle stages.
-         */
-        var firstActionTimeMs: Long = 0L,
-
-        /**
-         * The last time the app was backgrounded during the execution simulation.
-         *
-         * It should correspond to the end of the last session.
-         */
-        var lastBackgroundTimeMs: Long = 0L,
-    )
-
     companion object {
         const val LIFECYCLE_EVENT_GAP: Long = 10L
         const val ACTIVITY_GAP: Long = 100L

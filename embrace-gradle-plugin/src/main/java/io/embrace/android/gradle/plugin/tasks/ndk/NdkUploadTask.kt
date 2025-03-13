@@ -130,8 +130,7 @@ abstract class NdkUploadTask @Inject constructor(
         val unitySymbolFiles = if (this.unitySymbolsDir.isPresent && symbolsDir != null) {
             unitySymbolFilesManager.getSymbolFiles(
                 symbolsDir,
-                getProjectLayout().buildDirectory.get(),
-                variantData.get()
+                getProjectLayout().buildDirectory.get()
             )
         } else {
             emptyArray()

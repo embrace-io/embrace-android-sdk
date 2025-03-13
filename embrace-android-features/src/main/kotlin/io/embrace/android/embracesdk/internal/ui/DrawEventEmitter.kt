@@ -1,6 +1,11 @@
 package io.embrace.android.embracesdk.internal.ui
 
 import android.app.Activity
+import android.os.Build
+import android.os.Build.VERSION_CODES
+import io.embrace.android.embracesdk.internal.handler.AndroidMainThreadHandler
+import io.embrace.android.embracesdk.internal.logging.EmbLogger
+import io.embrace.android.embracesdk.internal.utils.VersionChecker
 
 /**
  * Interface that allows callbacks to be registered and invoked when UI draw events happen
@@ -21,3 +26,19 @@ interface DrawEventEmitter {
      */
     fun unregisterFirstDrawCallback(activity: Activity)
 }
+
+fun createDrawEventEmitter(
+    versionChecker: VersionChecker,
+    logger: EmbLogger,
+): DrawEventEmitter? = if (supportFrameCommitCallback(versionChecker)) {
+    FirstDrawDetector(logger)
+} else if (hasRenderEvent(versionChecker)) {
+    HandlerMessageDrawDetector(AndroidMainThreadHandler())
+} else {
+    null
+}
+
+fun hasRenderEvent(versionChecker: VersionChecker) = versionChecker.isAtLeast(VERSION_CODES.M)
+
+private fun supportFrameCommitCallback(versionChecker: VersionChecker) = versionChecker.isAtLeast(VERSION_CODES.Q) &&
+    (Build.VERSION.SDK_INT != VERSION_CODES.S && Build.VERSION.SDK_INT != VERSION_CODES.S_V2)

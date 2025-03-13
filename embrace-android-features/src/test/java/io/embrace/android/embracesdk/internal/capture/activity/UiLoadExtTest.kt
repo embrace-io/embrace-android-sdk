@@ -17,6 +17,7 @@ import io.embrace.android.embracesdk.internal.ClockTickingActivityLifecycleCallb
 import io.embrace.android.embracesdk.internal.ClockTickingActivityLifecycleCallbacks.Companion.PRE_DURATION
 import io.embrace.android.embracesdk.internal.ClockTickingActivityLifecycleCallbacks.Companion.STATE_DURATION
 import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityLifecycleListener
+import io.embrace.android.embracesdk.internal.ui.hasRenderEvent
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -223,21 +224,17 @@ internal class UiLoadExtTest {
                 stage = "resumeEnd",
                 timestampMs = START_TIME_MS + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 3
             ),
-//            createEvent(
-//                stage = "render",
-//                timestampMs = START_TIME_MS + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 3
-//            ),
-//            createEvent(
-//                stage = "renderEnd",
-//                timestampMs = START_TIME_MS + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 3 + RENDER_DURATION
-//            ),
-//            createEvent(
-//                stage = "discard",
-//                timestampMs = START_TIME_MS + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 3 + RENDER_DURATION + PRE_DURATION
-//            ),
+            createEvent(
+                stage = "render",
+                timestampMs = START_TIME_MS + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 3
+            ),
+            createEvent(
+                stage = "renderEnd",
+                timestampMs = START_TIME_MS + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 3 + RENDER_DURATION
+            ),
             createEvent(
                 stage = "discard",
-                timestampMs = START_TIME_MS + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 3 + PRE_DURATION
+                timestampMs = START_TIME_MS + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 3 + RENDER_DURATION + PRE_DURATION
             ),
         )
 
@@ -258,21 +255,17 @@ internal class UiLoadExtTest {
                 stage = "resumeEnd",
                 timestampMs = START_TIME_MS + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 2
             ),
-//            createEvent(
-//                stage = "render",
-//                timestampMs = START_TIME_MS + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 2
-//            ),
-//            createEvent(
-//                stage = "renderEnd",
-//                timestampMs = START_TIME_MS + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 2 + RENDER_DURATION
-//            ),
-//            createEvent(
-//                stage = "discard",
-//                timestampMs = START_TIME_MS + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 2 + RENDER_DURATION + PRE_DURATION
-//            ),
+            createEvent(
+                stage = "render",
+                timestampMs = START_TIME_MS + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 2
+            ),
+            createEvent(
+                stage = "renderEnd",
+                timestampMs = START_TIME_MS + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 2 + RENDER_DURATION
+            ),
             createEvent(
                 stage = "discard",
-                timestampMs = START_TIME_MS + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 2 + PRE_DURATION
+                timestampMs = START_TIME_MS + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 2 + RENDER_DURATION + PRE_DURATION
             ),
         )
 

@@ -1,0 +1,20 @@
+import io.embrace.android.gradle.plugin.tasks.ndk.CompressAndHashSharedObjectFilesTask
+
+plugins {
+    id("java")
+    id("io.embrace.swazzler")
+    id("io.embrace.android.testplugin")
+}
+
+project.tasks.register("testTask", CompressAndHashSharedObjectFilesTask) { task ->
+    task.architecturesDirectory.set(
+        project.layout.projectDirectory.dir("testArchitecturesDir")
+    )
+    task.architecturesToHashedSharedObjectFilesMap.set(
+        project.layout.buildDirectory.file("output.json")
+    )
+    task.compressedSharedObjectFilesDirectory.set(
+        project.layout.buildDirectory.dir("compressedSharedObjectFiles")
+    )
+    integrationTest.configureEmbraceTask(task)
+}

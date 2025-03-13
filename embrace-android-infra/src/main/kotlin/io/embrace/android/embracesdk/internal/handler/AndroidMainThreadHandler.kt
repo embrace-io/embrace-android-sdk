@@ -2,15 +2,20 @@ package io.embrace.android.embracesdk.internal.handler
 
 import android.os.Handler
 import android.os.Looper
+import android.os.Message
 
 class AndroidMainThreadHandler : MainThreadHandler {
-    val handler = Handler(checkNotNull(Looper.getMainLooper()))
+    override val wrappedHandler = Handler(checkNotNull(Looper.getMainLooper()))
 
     override fun postAtFrontOfQueue(function: () -> Unit) {
-        handler.postAtFrontOfQueue(function)
+        wrappedHandler.postAtFrontOfQueue(function)
     }
 
     override fun postDelayed(runnable: Runnable, delayMillis: Long) {
-        handler.postDelayed(runnable, delayMillis)
+        wrappedHandler.postDelayed(runnable, delayMillis)
+    }
+
+    override fun sendMessageAtFrontOfQueue(message: Message): Boolean {
+        return wrappedHandler.sendMessageAtFrontOfQueue(message)
     }
 }

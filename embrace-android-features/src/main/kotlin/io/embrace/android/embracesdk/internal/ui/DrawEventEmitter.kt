@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.ui
 import android.app.Activity
 import android.os.Build
 import android.os.Build.VERSION_CODES
-import android.os.Looper
+import io.embrace.android.embracesdk.internal.handler.AndroidMainThreadHandler
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
 
@@ -33,7 +33,7 @@ fun createDrawEventEmitter(
 ): DrawEventEmitter? = if (supportFrameCommitCallback(versionChecker)) {
     FirstDrawDetector(logger)
 } else if (hasRenderEvent(versionChecker)) {
-    HandlerMessageDrawDetector(Looper.getMainLooper())
+    HandlerMessageDrawDetector(AndroidMainThreadHandler())
 } else {
     null
 }

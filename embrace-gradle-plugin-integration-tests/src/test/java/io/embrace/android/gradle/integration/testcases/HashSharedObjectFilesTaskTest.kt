@@ -9,19 +9,10 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 
-/*
- * Given an input directory structure:
- * architecturesDirectory/
- * ├── arm64-v8a/
- * │   ├── libexample1.so
- * │   └── libexample2.so
- * └── armeabi-v7a/
- *     ├── libexample1.so
- *     └── libexample2.so
- *
- * The task will:
- * 1. Create compressed files in:
- * compressedSharedObjectFilesDirectory/
+/**
+ * Tests the hashing of compressed shared object files.
+ * Given compressed files in:
+ * compressedSharedObjectFiles/
  * ├── arm64-v8a/
  * │   ├── libexample1.so (compressed)
  * │   └── libexample2.so (compressed)
@@ -29,11 +20,11 @@ import org.junit.Test
  *     ├── libexample1.so (compressed)
  *     └── libexample2.so (compressed)
  *
- * 2. Output a JSON map where:
- *    - Keys are architecture names (e.g., "arm64-v8a")
- *    - Values are maps where:
- *      - Keys are shared object filenames (e.g., "libexample1.so")
- *      - Values are SHA1 hashes of the compressed files
+ * The task will create a JSON map where:
+ * - Keys are architecture names (e.g., "arm64-v8a")
+ * - Values are maps where:
+ *   - Keys are shared object filenames (e.g., "libexample1.so")
+ *   - Values are SHA1 hashes of the compressed files
  * {
  *   "arm64-v8a": {
  *     "libexample1.so": "2a21dc0b99017d5db5960b80d94815a0fe0f3fc2",
@@ -45,8 +36,7 @@ import org.junit.Test
  *   }
  * }
  */
-
-class CompressAndHashSharedObjectFilesTaskTest {
+class HashSharedObjectFilesTaskTest {
 
     private val expectedSharedObjectFiles = listOf("libemb-donuts.so", "libemb-crisps.so")
     private val expectedArchitectures = listOf("x86_64", "x86", "armeabi-v7a", "arm64-v8a")
@@ -58,9 +48,10 @@ class CompressAndHashSharedObjectFilesTaskTest {
     @Test
     fun `map output is correct`() {
         rule.runTest(
-            fixture = "compress-and-hash-native-libs",
+            fixture = "hash-native-libs",
+            task = "hashTask",
             setup = { projectDir ->
-                assertTrue(projectDir.file("testArchitecturesDir").exists())
+                assertTrue(projectDir.file("compressedSharedObjectFiles").exists())
             },
             assertions = { projectDir ->
                 val deserializedOutputMap = MoshiSerializer().fromJson(
@@ -71,30 +62,10 @@ class CompressAndHashSharedObjectFilesTaskTest {
                 expectedArchitectures.forEach { architecture ->
                     expectedSharedObjectFiles.forEach { sharedObjectFile ->
                         val sha1Hash = deserializedOutputMap[architecture]?.get(sharedObjectFile)
-                        val compressedSoFile = projectDir.file("build/compressedSharedObjectFiles/$architecture/$sharedObjectFile")
+                        val compressedSoFile = projectDir.file("compressedSharedObjectFiles/$architecture/$sharedObjectFile")
                         assertTrue(sha1Hash == calculateSha1ForFile(compressedSoFile))
                     }
                 }
-            }
-        )
-    }
-
-    @Test
-    fun `verify compression reduces folder size`() {
-        rule.runTest(
-            fixture = "compress-and-hash-native-libs",
-            assertions = { projectDir ->
-                val originalSize = projectDir.file("testArchitecturesDir")
-                    .walk()
-                    .filter { it.isFile }
-                    .sumOf { it.length() } // returns size in bytes
-
-                val compressedSize = projectDir.file("build/compressedSharedObjectFiles")
-                    .walk()
-                    .filter { it.isFile }
-                    .sumOf { it.length() } // returns size in bytes
-                
-                assertTrue(compressedSize < originalSize)
             }
         )
     }

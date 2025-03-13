@@ -1,4 +1,4 @@
-import io.embrace.android.gradle.plugin.tasks.ndk.CompressAndHashSharedObjectFilesTask
+import io.embrace.android.gradle.plugin.tasks.ndk.CompressSharedObjectFilesTask
 
 plugins {
     id("java")
@@ -6,12 +6,9 @@ plugins {
     id("io.embrace.android.testplugin")
 }
 
-project.tasks.register("testTask", CompressAndHashSharedObjectFilesTask) { task ->
+project.tasks.register("compressTask", CompressSharedObjectFilesTask) { task ->
     task.architecturesDirectory.set(
         project.layout.projectDirectory.dir("testArchitecturesDir")
-    )
-    task.architecturesToHashedSharedObjectFilesMap.set(
-        project.layout.buildDirectory.file("output.json")
     )
     task.compressedSharedObjectFilesDirectory.set(
         project.layout.buildDirectory.dir("compressedSharedObjectFiles")

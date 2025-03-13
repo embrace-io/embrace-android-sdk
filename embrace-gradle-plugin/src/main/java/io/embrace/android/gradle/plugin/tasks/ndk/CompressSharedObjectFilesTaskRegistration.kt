@@ -14,7 +14,7 @@ import org.gradle.api.Project
 import org.gradle.api.provider.Provider
 import java.io.File
 
-class CompressAndHashSharedObjectFilesTaskRegistration(
+class CompressSharedObjectFilesTaskRegistration(
     private val behavior: PluginBehavior,
     private val unitySymbolsDir: Provider<UnitySymbolsDir>,
     private val projectType: Provider<ProjectType>,
@@ -31,14 +31,17 @@ class CompressAndHashSharedObjectFilesTaskRegistration(
 
         val sharedObjectFilesProvider = getSharedObjectFilesProvider(project, data, variant)
 
+        // Register the compression task
         project.registerTask(
-            CompressAndHashSharedObjectFilesTask.NAME,
-            CompressAndHashSharedObjectFilesTask::class.java,
+            CompressSharedObjectFilesTask.NAME,
+            CompressSharedObjectFilesTask::class.java,
             data
         ) { task ->
             task.onlyIf { projectType.orNull == ProjectType.NATIVE || projectType.orNull == ProjectType.UNITY }
-
             task.architecturesDirectory.set(project.layout.dir(sharedObjectFilesProvider))
+            task.compressedSharedObjectFilesDirectory.set(
+                project.layout.buildDirectory.dir("intermediates/embrace/compressed/${data.name}")
+            )
         }
     }
 

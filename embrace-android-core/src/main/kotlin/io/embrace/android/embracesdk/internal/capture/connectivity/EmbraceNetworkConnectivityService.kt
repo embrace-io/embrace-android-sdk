@@ -11,6 +11,7 @@ import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import java.net.Inet4Address
 import java.net.NetworkInterface
+import java.util.concurrent.CopyOnWriteArrayList
 
 @Suppress("DEPRECATION") // uses deprecated APIs for backwards compat
 internal class EmbraceNetworkConnectivityService(
@@ -22,7 +23,7 @@ internal class EmbraceNetworkConnectivityService(
 
     private val intentFilter = IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION)
     private var lastNetworkStatus: NetworkStatus = NetworkStatus.UNKNOWN
-    private val networkConnectivityListeners = mutableListOf<NetworkConnectivityListener>()
+    private val networkConnectivityListeners = CopyOnWriteArrayList<NetworkConnectivityListener>()
     override val ipAddress: String? by lazy { calculateIpAddress() }
 
     override fun onReceive(context: Context, intent: Intent) {

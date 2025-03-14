@@ -4,7 +4,6 @@ import android.app.Application.ActivityLifecycleCallbacks
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.spans.PersistableEmbraceSpan
 import io.embrace.android.embracesdk.internal.spans.SpanService
-import io.embrace.android.embracesdk.internal.ui.hasRenderEvent
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
@@ -52,7 +51,7 @@ class UiLoadTraceEmitter(
 
     private val activeTraces: MutableMap<Int, UiLoadTrace> = ConcurrentHashMap()
     private var currentInstance: AtomicReference<UiInstance?> = AtomicReference()
-    private val trackRender = hasRenderEvent(versionChecker)
+    private val trackRender = false
     private val hasPrePostEvents = hasPrePostEvents(versionChecker)
 
     override fun create(instanceId: Int, activityName: String, timestampMs: Long, manualEnd: Boolean) {

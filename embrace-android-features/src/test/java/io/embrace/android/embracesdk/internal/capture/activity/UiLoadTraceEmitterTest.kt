@@ -9,7 +9,6 @@ import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.payload.toNewPayload
 import io.embrace.android.embracesdk.internal.spans.SpanService
 import io.embrace.android.embracesdk.internal.spans.SpanSink
-import io.embrace.android.embracesdk.internal.ui.hasRenderEvent
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
@@ -37,7 +36,7 @@ internal class UiLoadTraceEmitterTest {
     @Before
     fun setUp() {
         clock = FakeClock()
-        hasRenderEvent = hasRenderEvent(BuildVersionChecker)
+        hasRenderEvent = false
         hasPreAndPostEvents = hasPrePostEvents(BuildVersionChecker)
         val initModule = FakeInitModule(clock = clock)
         spanSink = initModule.openTelemetryModule.spanSink

@@ -12,6 +12,7 @@ import io.embrace.android.gradle.plugin.gradle.isTaskRegistered
 import io.embrace.android.gradle.plugin.instrumentation.config.model.EmbraceVariantConfig
 import io.embrace.android.gradle.plugin.instrumentation.config.model.VariantConfig
 import io.embrace.android.gradle.plugin.model.AndroidCompactedVariantData
+import io.embrace.android.gradle.plugin.tasks.ndk.CompressSharedObjectFilesTask
 import io.embrace.android.gradle.plugin.tasks.ndk.NdkUploadTask
 import io.embrace.android.gradle.plugin.tasks.ndk.NdkUploadTaskRegistration
 import io.embrace.android.gradle.plugin.tasks.registration.RegistrationParams
@@ -87,7 +88,7 @@ class NdkUploadTaskRegistrationTest {
         val projectTypeProvider = project.provider { ProjectType.UNITY }
 
         val registration =
-            NdkUploadTaskRegistration(unitySymbolsDirProvider, projectTypeProvider)
+            NdkUploadTaskRegistration(behavior, unitySymbolsDirProvider, projectTypeProvider)
         val params = RegistrationParams(
             project = project,
             variant = mockVariant,
@@ -119,7 +120,7 @@ class NdkUploadTaskRegistrationTest {
         val projectTypeProvider = project.provider { ProjectType.NATIVE }
 
         val registration =
-            NdkUploadTaskRegistration(unitySymbolsDirProvider, projectTypeProvider)
+            NdkUploadTaskRegistration(behavior, unitySymbolsDirProvider, projectTypeProvider)
         val params = RegistrationParams(
             project,
             variant = mockVariant,
@@ -148,13 +149,13 @@ class NdkUploadTaskRegistrationTest {
         val taskName = NdkUploadTask.NAME
         val project = ProjectBuilder.builder().build()
 
+        val capitalizedString = testAndroidCompactedVariantData.name.capitalizedString()
         val mergeJniLibFoldersTaskName =
-            "merge${testAndroidCompactedVariantData.name.capitalizedString()}JniLibFolders"
+            "merge${capitalizedString}JniLibFolders"
 
         registerTestTask(project, mergeJniLibFoldersTaskName)
 
-        val transformNativeLibsTaskName =
-            "transformNativeLibsWithMergeJniLibsFor${testAndroidCompactedVariantData.name.capitalizedString()}"
+        val transformNativeLibsTaskName = "transformNativeLibsWithMergeJniLibsFor$capitalizedString"
 
         setVariantConfig(ndkEnabled = true)
 
@@ -163,8 +164,7 @@ class NdkUploadTaskRegistrationTest {
         val unitySymbolsDirProvider = project.provider { unitySymbolsDir }
         val projectTypeProvider = project.provider { ProjectType.UNITY }
 
-        val registration =
-            NdkUploadTaskRegistration(unitySymbolsDirProvider, projectTypeProvider)
+        val registration = NdkUploadTaskRegistration(behavior, unitySymbolsDirProvider, projectTypeProvider)
         val params = RegistrationParams(
             project,
             variant = mockVariant,
@@ -180,19 +180,11 @@ class NdkUploadTaskRegistrationTest {
         )
         registration.register(params)
 
-        val ndkUploadTask: NdkUploadTask =
-            project.tasks.findByName("$taskName${testAndroidCompactedVariantData.name.capitalizedString()}") as NdkUploadTask
+        assertTrue(project.isTaskRegistered(NdkUploadTask.NAME, testAndroidCompactedVariantData.name))
 
-        assertTrue(
-            project.isTaskRegistered(
-                NdkUploadTask.NAME,
-                testAndroidCompactedVariantData.name
-            )
-        )
-        assertTrue(
-            ndkUploadTask.mustRunAfter.getDependencies(ndkUploadTask).toString()
-                .contains(mergeJniLibFoldersTaskName)
-        )
+        val compressTask: CompressSharedObjectFilesTask =
+            project.tasks.findByName("${CompressSharedObjectFilesTask.NAME}$capitalizedString") as CompressSharedObjectFilesTask
+        assertTrue(compressTask.mustRunAfter.getDependencies(compressTask).toString().contains(mergeJniLibFoldersTaskName))
     }
 
     @Test
@@ -200,13 +192,14 @@ class NdkUploadTaskRegistrationTest {
         val taskName = NdkUploadTask.NAME
         val project = ProjectBuilder.builder().build()
 
+        val capitalizedString = testAndroidCompactedVariantData.name.capitalizedString()
         val mergeJniLibFoldersTaskName =
-            "merge${testAndroidCompactedVariantData.name.capitalizedString()}JniLibFolders"
+            "merge${capitalizedString}JniLibFolders"
 
         registerTestTask(project, mergeJniLibFoldersTaskName)
 
         val mergeNativeLibs =
-            "merge${testAndroidCompactedVariantData.name.capitalizedString()}NativeLibs"
+            "merge${capitalizedString}NativeLibs"
 
         registerTestTask(project, mergeNativeLibs)
         setVariantConfig(ndkEnabled = true)
@@ -214,7 +207,7 @@ class NdkUploadTaskRegistrationTest {
         val projectTypeProvider = project.provider { ProjectType.UNITY }
 
         val registration =
-            NdkUploadTaskRegistration(unitySymbolsDirProvider, projectTypeProvider)
+            NdkUploadTaskRegistration(behavior, unitySymbolsDirProvider, projectTypeProvider)
         val params = RegistrationParams(
             project,
             variant = mockVariant,
@@ -231,19 +224,17 @@ class NdkUploadTaskRegistrationTest {
         )
         registration.register(params)
 
-        val ndkUploadTask: NdkUploadTask =
-            project.tasks.findByName("$taskName${testAndroidCompactedVariantData.name.capitalizedString()}") as NdkUploadTask
-
         assertTrue(
             project.isTaskRegistered(
                 NdkUploadTask.NAME,
                 testAndroidCompactedVariantData.name
             )
         )
-        assertTrue(
-            ndkUploadTask.mustRunAfter.getDependencies(ndkUploadTask).toString()
-                .contains(mergeNativeLibs)
-        )
+
+        val compressTask: CompressSharedObjectFilesTask =
+            project.tasks.findByName("${CompressSharedObjectFilesTask.NAME}$capitalizedString") as CompressSharedObjectFilesTask
+
+        assertTrue(compressTask.mustRunAfter.getDependencies(compressTask).toString().contains(mergeNativeLibs))
     }
 
     @Test
@@ -255,7 +246,7 @@ class NdkUploadTaskRegistrationTest {
         val projectTypeProvider = project.provider { ProjectType.NATIVE }
 
         val registration =
-            NdkUploadTaskRegistration(unitySymbolsDirProvider, projectTypeProvider)
+            NdkUploadTaskRegistration(behavior, unitySymbolsDirProvider, projectTypeProvider)
         val params = RegistrationParams(
             project,
             variant = mockVariant,

@@ -11,6 +11,7 @@ import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateList
 import io.embrace.android.embracesdk.internal.spans.PersistableEmbraceSpan
 import io.embrace.android.embracesdk.internal.spans.SpanService
 import io.embrace.android.embracesdk.internal.ui.hasRenderEvent
+import io.embrace.android.embracesdk.internal.ui.supportFrameCommitCallback
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.spans.EmbraceSpan
@@ -55,6 +56,7 @@ internal class AppStartupTraceEmitter(
     private val additionalTrackedIntervals = ConcurrentLinkedQueue<TrackedInterval>()
     private val customAttributes: MutableMap<String, String> = ConcurrentHashMap()
     private val trackRender = hasRenderEvent(versionChecker)
+    private val trackFrameCommit = supportFrameCommitCallback(versionChecker)
     private val appStartupRootSpan = AtomicReference<PersistableEmbraceSpan?>(null)
     private val dataCollectionComplete = AtomicBoolean(false)
     private val traceEnd = if (manualEnd) {
@@ -365,7 +367,11 @@ internal class AppStartupTraceEmitter(
 
             if (activityInitEndMs != null && uiLoadedMs != null) {
                 val uiLoadSpanName = if (trackRender) {
-                    ACTIVITY_RENDER_SPAN
+                    if (trackFrameCommit) {
+                        ACTIVITY_RENDER_SPAN
+                    } else {
+                        ACTIVITY_FIRST_DRAW_SPAN
+                    }
                 } else {
                     ACTIVITY_LOAD_SPAN
                 }
@@ -436,6 +442,7 @@ internal class AppStartupTraceEmitter(
         const val ACTIVITY_INIT_DELAY_SPAN = "activity-init-delay"
         const val ACTIVITY_INIT_SPAN = "activity-init"
         const val ACTIVITY_RENDER_SPAN = "activity-render"
+        const val ACTIVITY_FIRST_DRAW_SPAN = "activity-first-draw"
         const val ACTIVITY_LOAD_SPAN = "activity-load"
         const val APP_READY_SPAN = "app-ready"
 

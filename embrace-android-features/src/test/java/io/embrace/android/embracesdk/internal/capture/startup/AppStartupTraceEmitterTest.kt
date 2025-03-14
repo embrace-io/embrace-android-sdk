@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.capture.activity.hasPrePostEvents
+import io.embrace.android.embracesdk.internal.capture.startup.AppStartupTraceEmitter.Companion.ACTIVITY_FIRST_DRAW_SPAN
 import io.embrace.android.embracesdk.internal.capture.startup.AppStartupTraceEmitter.Companion.ACTIVITY_INIT_DELAY_SPAN
 import io.embrace.android.embracesdk.internal.capture.startup.AppStartupTraceEmitter.Companion.ACTIVITY_INIT_SPAN
 import io.embrace.android.embracesdk.internal.capture.startup.AppStartupTraceEmitter.Companion.ACTIVITY_LOAD_SPAN
@@ -27,6 +28,7 @@ import io.embrace.android.embracesdk.internal.spans.SpanService
 import io.embrace.android.embracesdk.internal.spans.SpanSink
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.internal.ui.hasRenderEvent
+import io.embrace.android.embracesdk.internal.ui.supportFrameCommitCallback
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.sdk.common.Clock
@@ -55,6 +57,7 @@ internal class AppStartupTraceEmitterTest {
     private var firePreAndPostCreate: Boolean = true
     private var trackProcessStart: Boolean = true
     private var hasRenderEvent = true
+    private var hasFrameCommitEvent = true
 
     private lateinit var clock: FakeClock
     private lateinit var otelClock: Clock
@@ -79,6 +82,7 @@ internal class AppStartupTraceEmitterTest {
         firePreAndPostCreate = hasPrePostEvents(BuildVersionChecker)
         trackProcessStart = BuildVersionChecker.isAtLeast(VERSION_CODES.N)
         hasRenderEvent = hasRenderEvent(BuildVersionChecker)
+        hasFrameCommitEvent = supportFrameCommitCallback(BuildVersionChecker)
     }
 
     @Config(sdk = [VERSION_CODES.TIRAMISU])
@@ -191,7 +195,7 @@ internal class AppStartupTraceEmitterTest {
             assertNotNull(embraceInitSpan())
             assertNotNull(initGapSpan())
             assertNotNull(activityInitSpan())
-            assertNull(firstFrameRenderSpan())
+            assertNull(firstFrameRenderedSpan())
         }
     }
 
@@ -219,7 +223,7 @@ internal class AppStartupTraceEmitterTest {
             assertNotNull(embraceInitSpan())
             assertNotNull(initGapSpan())
             assertNotNull(activityInitSpan())
-            assertNotNull(firstFrameRenderSpan())
+            assertNotNull(firstFrameRenderedSpan())
             assertNull(appReadySpan())
         }
     }
@@ -264,7 +268,7 @@ internal class AppStartupTraceEmitterTest {
                 assertEquals(abandonTime, endTimeNanos.nanosToMillis())
             }
             assertNotNull(activityInitSpan())
-            assertNotNull(firstFrameRenderSpan())
+            assertNotNull(firstFrameRenderedSpan())
             assertNull(appReadySpan())
         }
     }
@@ -654,11 +658,16 @@ internal class AppStartupTraceEmitterTest {
         with(activityInitTimestamps) {
             assertChildSpan(spanMap.activityInitSpan(), startupActivityStart, startupActivityEnd)
             if (hasRenderEvent) {
-                assertChildSpan(spanMap.firstFrameRenderSpan(), startupActivityEnd, uiLoadEnd)
+                val renderSpan = if (hasFrameCommitEvent) {
+                    spanMap.firstFrameRenderedSpan()
+                } else {
+                    spanMap.firstFrameDrawSpan()
+                }
+                assertChildSpan(renderSpan, startupActivityEnd, uiLoadEnd)
                 assertNull(spanMap.activityResumeSpan())
             } else {
                 assertChildSpan(spanMap.activityResumeSpan(), startupActivityEnd, uiLoadEnd)
-                assertNull(spanMap.firstFrameRenderSpan())
+                assertNull(spanMap.firstFrameRenderedSpan())
             }
 
             if (manualEnd) {
@@ -810,7 +819,8 @@ internal class AppStartupTraceEmitterTest {
     private fun Map<String, EmbraceSpanData?>.embraceInitSpan() = this["emb-${EMBRACE_INIT_SPAN}"]
     private fun Map<String, EmbraceSpanData?>.initGapSpan() = this["emb-${ACTIVITY_INIT_DELAY_SPAN}"]
     private fun Map<String, EmbraceSpanData?>.activityInitSpan() = this["emb-${ACTIVITY_INIT_SPAN}"]
-    private fun Map<String, EmbraceSpanData?>.firstFrameRenderSpan() = this["emb-${ACTIVITY_RENDER_SPAN}"]
+    private fun Map<String, EmbraceSpanData?>.firstFrameRenderedSpan() = this["emb-${ACTIVITY_RENDER_SPAN}"]
+    private fun Map<String, EmbraceSpanData?>.firstFrameDrawSpan() = this["emb-${ACTIVITY_FIRST_DRAW_SPAN}"]
     private fun Map<String, EmbraceSpanData?>.activityResumeSpan() = this["emb-${ACTIVITY_LOAD_SPAN}"]
     private fun Map<String, EmbraceSpanData?>.appReadySpan() = this["emb-${APP_READY_SPAN}"]
     private fun Map<String, EmbraceSpanData?>.customSpan() = this["custom-span"]

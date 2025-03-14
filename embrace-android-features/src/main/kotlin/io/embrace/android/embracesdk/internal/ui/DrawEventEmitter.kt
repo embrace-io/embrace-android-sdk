@@ -40,5 +40,5 @@ fun createDrawEventEmitter(
 
 fun hasRenderEvent(versionChecker: VersionChecker) = versionChecker.isAtLeast(VERSION_CODES.M)
 
-private fun supportFrameCommitCallback(versionChecker: VersionChecker) = versionChecker.isAtLeast(VERSION_CODES.Q) &&
+fun supportFrameCommitCallback(versionChecker: VersionChecker) = versionChecker.isAtLeast(VERSION_CODES.Q) &&
     (Build.VERSION.SDK_INT != VERSION_CODES.S && Build.VERSION.SDK_INT != VERSION_CODES.S_V2)

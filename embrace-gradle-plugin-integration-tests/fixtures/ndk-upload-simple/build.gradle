@@ -10,17 +10,14 @@ plugins {
 
 project.tasks.register("testTask", NdkUploadTask) { task ->
     integrationTest.configureGradleUploadTask(project, task, EmbraceEndpoint.NDK, null)
-    task.ndkEnabled.set(true)
     task.failBuildOnUploadErrors.set(true)
-    task.projectType.set(ProjectType.NATIVE)
-
-    task.architecturesDirectoryForNative.from(
-            project.layout.projectDirectory.dir("native-libs")
-    )
     task.generatedEmbraceResourcesDirectory.set(
             project.layout.buildDirectory.dir("generated-embrace-resources")
     )
-    task.deobfuscatedFilesDirPath.set(
-            project.layout.buildDirectory.dir("deobfuscated-files")
+    task.compressedSharedObjectFilesDirectory.set(
+        project.layout.projectDirectory.dir("compressedSharedObjectFiles")
+    )
+    task.architecturesToHashedSharedObjectFilesMapJson.set(
+        project.layout.projectDirectory.file("output.json")
     )
 }

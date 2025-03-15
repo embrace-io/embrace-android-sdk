@@ -1,34 +1,24 @@
 package io.embrace.android.gradle.plugin.tasks.ndk
 
 import io.embrace.android.gradle.plugin.Logger
-import io.embrace.android.gradle.plugin.config.ProjectType
-import io.embrace.android.gradle.plugin.config.UnitySymbolsDir
-import io.embrace.android.gradle.plugin.hash.calculateSha1ForFile
 import io.embrace.android.gradle.plugin.network.OkHttpNetworkService
 import io.embrace.android.gradle.plugin.tasks.EmbraceUploadTask
 import io.embrace.android.gradle.plugin.tasks.EmbraceUploadTaskImpl
 import io.embrace.android.gradle.plugin.tasks.handleHttpCallResult
-import io.embrace.android.gradle.plugin.tasks.il2cpp.UnitySymbolFilesManager
-import io.embrace.android.gradle.plugin.util.compression.ZstdFileCompressor
-import org.gradle.api.file.ConfigurableFileCollection
+import io.embrace.android.gradle.plugin.util.serialization.MoshiSerializer
 import org.gradle.api.file.DirectoryProperty
-import org.gradle.api.file.ProjectLayout
+import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.model.ObjectFactory
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.InputFiles
-import org.gradle.api.tasks.Internal
-import org.gradle.api.tasks.Optional
+import org.gradle.api.tasks.InputDirectory
+import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.SkipWhenEmpty
 import org.gradle.api.tasks.TaskAction
 import java.io.File
-import java.io.FileNotFoundException
 import java.io.IOException
-import java.io.UnsupportedEncodingException
 import javax.inject.Inject
-import javax.xml.parsers.ParserConfigurationException
-import javax.xml.transform.TransformerException
 
 /**
  * A task that uploads NDK symbols to Embrace.
@@ -38,26 +28,7 @@ abstract class NdkUploadTask @Inject constructor(
 ) : EmbraceUploadTask, EmbraceUploadTaskImpl(objectFactory) {
 
     private val logger = Logger(NdkUploadTask::class.java)
-
-    private val deobfuscatedHashedObjects: MutableMap<String, Map<String, String>> = HashMap()
-
-    private val unitySymbolFilesManager = UnitySymbolFilesManager.of()
-
-    @get:Optional
-    @get:Input
-    val projectType: Property<ProjectType> = objectFactory.property(ProjectType::class.java).convention(ProjectType.OTHER)
-
-    @get:Internal
-    val deobfuscatedFilesDirPath: DirectoryProperty = objectFactory.directoryProperty()
-
-    @get:Input
-    @get:Optional
-    val unitySymbolsDir: Property<UnitySymbolsDir?> = objectFactory.property(
-        UnitySymbolsDir::class.java
-    )
-
-    @get:Input
-    val ndkEnabled: Property<Boolean> = objectFactory.property(Boolean::class.java)
+    private val serializer = MoshiSerializer()
 
     @get:Input
     val failBuildOnUploadErrors: Property<Boolean> = objectFactory.property(Boolean::class.java)
@@ -65,118 +36,21 @@ abstract class NdkUploadTask @Inject constructor(
     @get:OutputDirectory
     val generatedEmbraceResourcesDirectory: DirectoryProperty = objectFactory.directoryProperty()
 
-    @get:InputFiles
-    @get:SkipWhenEmpty
-    val architecturesDirectoryForNative: ConfigurableFileCollection = objectFactory.fileCollection()
+    @SkipWhenEmpty
+    @get:InputDirectory
+    val compressedSharedObjectFilesDirectory: DirectoryProperty = objectFactory.directoryProperty()
 
-    @Inject
-    open fun getProjectLayout(): ProjectLayout {
-        throw UnsupportedOperationException()
-    }
+    @SkipWhenEmpty
+    @get:InputFile
+    val architecturesToHashedSharedObjectFilesMapJson: RegularFileProperty = objectFactory.fileProperty()
+
+    private lateinit var architecturesToHashedSharedObjectFilesMap: Map<String, Map<String, String>>
 
     @TaskAction
     fun onRun() {
-        if (!ndkEnabled.get()) {
-            logger.warn("NDK upload task will not run when the NDK is disabled.")
-            return
-        }
-
-        generateHashedObjects()
+        architecturesToHashedSharedObjectFilesMap = getArchToFilenameToHashMap()
         uploadHandshake()
         injectSymbolsAsResources()
-    }
-
-    @Throws(IllegalArgumentException::class)
-    private fun generateHashedObjects() {
-        // retrieve .so files by architecture
-        getSoFilesByArchitecture().forEach { (arch, sharedObjects) ->
-            val hashedObjects = mutableMapOf<String, String>()
-            sharedObjects.forEach { sharedObject ->
-                try {
-                    val outputDir = deobfuscatedFilesDirPath.dir(arch).get().asFile.absolutePath
-                    val zstdFileCompressor = ZstdFileCompressor()
-                    val compressedFile = zstdFileCompressor.compress(
-                        sharedObject,
-                        File(outputDir, sharedObject.name)
-                    )
-                    if (compressedFile != null) {
-                        // add hashed file by architecture
-                        hashedObjects[compressedFile.name] = calculateSha1ForFile(compressedFile)
-                    }
-                } catch (ex: Throwable) {
-                    logger.error("Failed to generate hash for ${sharedObject.name} object.", ex)
-                }
-            }
-            if (hashedObjects.isNotEmpty()) {
-                deobfuscatedHashedObjects[arch] = hashedObjects
-            } else {
-                logger.error("Failed to generate hashed objects for any architectures")
-            }
-        }
-    }
-
-    private fun getSoFilesByArchitecture(): Map<String, List<File>> {
-        val archFiles = when (projectType.get()) {
-            ProjectType.UNITY -> getSoFilesByArchitectureForUnity()
-            ProjectType.NATIVE -> getSoFilesByArchitectureForNative()
-            else -> throw IllegalArgumentException("Cannot generate NDK map file. Unsupported NDK type.")
-        }
-
-        return generateArchSoMap(archFiles)
-    }
-
-    private fun getSoFilesByArchitectureForUnity(): Array<File> {
-        val symbolsDir = unitySymbolsDir.orNull
-        val unitySymbolFiles = if (this.unitySymbolsDir.isPresent && symbolsDir != null) {
-            unitySymbolFilesManager.getSymbolFiles(
-                symbolsDir,
-                getProjectLayout().buildDirectory.get()
-            )
-        } else {
-            emptyArray()
-        }
-
-        if (unitySymbolFiles.isEmpty()) {
-            logger.error("Unity symbol files not found")
-        }
-
-        return unitySymbolFiles
-    }
-
-    private fun getSoFilesByArchitectureForNative(): Array<File> {
-        val files = if (!architecturesDirectoryForNative.isEmpty) {
-            architecturesDirectoryForNative.singleFile.listFiles() ?: emptyArray()
-        } else {
-            emptyArray()
-        }
-
-        if (files.isEmpty()) {
-            logger.error("No mapping files found for native NDK")
-        }
-
-        return files
-    }
-
-    /**
-     * Generates a map of .so files based on architectures.
-     *
-     * @param listOfArch list of architectures files to process
-     */
-    private fun generateArchSoMap(listOfArch: Array<File>): HashMap<String, List<File>> {
-        val archSoMap = HashMap<String, List<File>>()
-
-        listOfArch
-            .filter { it.exists() }
-            .forEach { arch ->
-                arch.listFiles { _, name -> name.endsWith(".so") }?.toList()?.let { soFileList ->
-                    archSoMap[arch.name] = soFileList
-                    soFileList.forEach {
-                        logger.info("Symbol file found for arch ${arch.name} at path ${it.path}")
-                    }
-                }
-            }
-
-        return archSoMap
     }
 
     /**
@@ -187,13 +61,22 @@ abstract class NdkUploadTask @Inject constructor(
             requestParams.get().appId,
             requestParams.get().apiToken,
             variantData.get().name,
-            deobfuscatedHashedObjects
+            architecturesToHashedSharedObjectFilesMap
         )
         val networkService = OkHttpNetworkService(requestParams.get().baseUrl)
 
         NdkUploadHandshake(networkService).getRequestedSymbols(params, failBuildOnUploadErrors.get())?.let { requestedSymbols ->
             uploadSymbols(requestedSymbols)
         }
+    }
+
+    private fun getArchToFilenameToHashMap() = try {
+        serializer.fromJson(
+            architecturesToHashedSharedObjectFilesMapJson.get().asFile.bufferedReader().use { it.readText() },
+            ArchitecturesToHashedSharedObjectFilesMap::class.java
+        ).architecturesToHashedSharedObjectFiles
+    } catch (exception: Exception) {
+        error("Failed to read the architectures to hashed shared object files map: ${exception.message}")
     }
 
     /**
@@ -219,96 +102,39 @@ abstract class NdkUploadTask @Inject constructor(
      * Filter the symbol files retrieved from build dir based on the required by service.
      *
      * @param requestedSymbols the required symbols
-     * @return a map of requested symbols grouped by architecture
+     * @return a map of architectures to hashes to shared object files
      */
     private fun filterRequestedSymbolsFiles(
         requestedSymbols: Map<String, List<String>>,
     ): Map<String, Map<String, File>> {
-        val selectedSymbols = mutableMapOf<String, Map<String, File>>()
-        getDeobfuscatedSymbolsFiles()?.let { deobfuscatedSymbols ->
-            requestedSymbols.forEach { (arch, symbols) ->
-                val requested = mutableMapOf<String, File>()
-                deobfuscatedSymbols[arch]?.let { symbolFiles ->
-                    symbolFiles.forEach { symbolFile ->
-                        if (symbols.contains(symbolFile.name)) {
-                            getSha1ByFile(symbolFile, arch)?.let { sha1 ->
-                                requested[sha1] = symbolFile
-                            }
-                        }
-                    }
-                    if (requested.isNotEmpty()) {
-                        selectedSymbols[arch] = requested
-                    }
-                }
+        val symbolsToUpload = mutableMapOf<String, Map<String, File>>()
+        val compressedDir = compressedSharedObjectFilesDirectory.get().asFile
 
-                if (requested.isEmpty()) {
-                    logger.warn("None of the requested symbols for architecture $arch were found")
+        requestedSymbols.forEach { (arch, symbols) ->
+            val requested = mutableMapOf<String, File>()
+            val archDir = File(compressedDir, arch)
+            // TODO: what happens when a requested symbol is not found?
+            val archHashedObjects = architecturesToHashedSharedObjectFilesMap[arch] ?: emptyMap()
+
+            symbols.forEach { symbolName ->
+                val compressedFile = File(archDir, symbolName)
+                val hash = archHashedObjects[symbolName]
+                if (compressedFile.exists() && hash != null) {
+                    requested[hash] = compressedFile
                 }
+            }
+            if (requested.isNotEmpty()) {
+                symbolsToUpload[arch] = requested
             }
         }
 
-        if (selectedSymbols.isEmpty()) {
+        if (symbolsToUpload.isEmpty()) {
             logger.error("None of the requested symbols were found")
         }
 
-        return selectedSymbols
+        return symbolsToUpload
     }
 
-    /**
-     * Get sha1 hash for the provided symbol file.
-     *
-     * @return sha1 hash
-     */
-    private fun getSha1ByFile(symbolFile: File, archName: String): String? {
-        val sha1Value = deobfuscatedHashedObjects[archName]?.get(symbolFile.name)
-        if (sha1Value != null) {
-            logger.info("SHA1 found for architecture $archName for at ${symbolFile.path}: $sha1Value")
-        } else {
-            logger.info("SHA1 not found for architecture $archName for at ${symbolFile.path}")
-        }
-
-        return sha1Value
-    }
-
-    /**
-     * Retrieve symbols files by architecture from build dir.
-     *
-     * @return symbols files
-     */
-    private fun getDeobfuscatedSymbolsFiles(): Map<String, List<File>>? {
-        val symbolsDir = File(deobfuscatedFilesDirPath.asFile.get().absolutePath)
-
-        if (!symbolsDir.exists()) {
-            logger.error("Deobfuscation directory does not exist, will return an empty map")
-            return null
-        }
-
-        val archSoMap = mutableMapOf<String, List<File>>()
-        symbolsDir.listFiles()
-            ?.filter { it.exists() }
-            ?.forEach { arch: File ->
-                val archName = arch.name
-                val soFiles = arch.listFiles()
-                if (soFiles != null) {
-                    archSoMap[archName] = soFiles.toList()
-                } else {
-                    logger.warn("No symbol files for architecture=$archName")
-                }
-            }
-
-        if (archSoMap.isEmpty()) {
-            logger.error("No symbol files are found")
-        }
-
-        return archSoMap
-    }
-
-    @Throws(
-        FileNotFoundException::class,
-        UnsupportedEncodingException::class,
-        TransformerException::class,
-        ParserConfigurationException::class
-    )
     private fun injectSymbolsAsResources() {
         val ndkSymbolsFile = generatedEmbraceResourcesDirectory.dir("values").get().asFile
 
@@ -322,7 +148,7 @@ abstract class NdkUploadTask @Inject constructor(
 
         val buildInfoFile = File(ndkSymbolsFile, FILE_NDK_SYMBOLS)
         val injector = SymbolResourceInjector()
-        injector.writeSymbolResourceFile(buildInfoFile, deobfuscatedHashedObjects)
+        injector.writeSymbolResourceFile(buildInfoFile, architecturesToHashedSharedObjectFilesMap)
     }
 
     companion object {

@@ -332,8 +332,6 @@ PLio/embrace/android/embracesdk/internal/TypeUtils;->typedList(Lkotlin/reflect/K
 Lio/embrace/android/embracesdk/internal/anr/AnrIntervalExtKt;
 HSPLio/embrace/android/embracesdk/internal/anr/AnrIntervalExtKt;->deepCopy(Lio/embrace/android/embracesdk/internal/payload/AnrInterval;)Lio/embrace/android/embracesdk/internal/payload/AnrInterval;
 PLio/embrace/android/embracesdk/internal/anr/AnrIntervalExtKt;->deepCopy(Lio/embrace/android/embracesdk/internal/payload/AnrInterval;)Lio/embrace/android/embracesdk/internal/payload/AnrInterval;
-HSPLio/embrace/android/embracesdk/internal/anr/AnrIntervalExtKt;->hasSamples(Lio/embrace/android/embracesdk/internal/payload/AnrInterval;)Z
-PLio/embrace/android/embracesdk/internal/anr/AnrIntervalExtKt;->hasSamples(Lio/embrace/android/embracesdk/internal/payload/AnrInterval;)Z
 Lio/embrace/android/embracesdk/internal/anr/AnrOtelMapper;
 HSPLio/embrace/android/embracesdk/internal/anr/AnrOtelMapper;-><init>(Lio/embrace/android/embracesdk/internal/anr/AnrService;Lio/embrace/android/embracesdk/internal/clock/Clock;)V
 PLio/embrace/android/embracesdk/internal/anr/AnrOtelMapper;-><init>(Lio/embrace/android/embracesdk/internal/anr/AnrService;Lio/embrace/android/embracesdk/internal/clock/Clock;)V
@@ -341,8 +339,8 @@ HSPLio/embrace/android/embracesdk/internal/anr/AnrOtelMapper;->mapIntervalToSpan
 PLio/embrace/android/embracesdk/internal/anr/AnrOtelMapper;->mapIntervalToSpanAttributes(Lio/embrace/android/embracesdk/internal/payload/AnrInterval;)Ljava/util/List;
 HSPLio/embrace/android/embracesdk/internal/anr/AnrOtelMapper;->mapIntervalToSpanEvents(Lio/embrace/android/embracesdk/internal/payload/AnrInterval;)Ljava/util/List;
 PLio/embrace/android/embracesdk/internal/anr/AnrOtelMapper;->mapIntervalToSpanEvents(Lio/embrace/android/embracesdk/internal/payload/AnrInterval;)Ljava/util/List;
-HPLio/embrace/android/embracesdk/internal/anr/AnrOtelMapper;->mapSampleToSpanEvent(Lio/embrace/android/embracesdk/internal/payload/AnrSample;)Lio/embrace/android/embracesdk/internal/payload/SpanEvent;
 HSPLio/embrace/android/embracesdk/internal/anr/AnrOtelMapper;->mapSampleToSpanEvent(Lio/embrace/android/embracesdk/internal/payload/AnrSample;)Lio/embrace/android/embracesdk/internal/payload/SpanEvent;
+PLio/embrace/android/embracesdk/internal/anr/AnrOtelMapper;->mapSampleToSpanEvent(Lio/embrace/android/embracesdk/internal/payload/AnrSample;)Lio/embrace/android/embracesdk/internal/payload/SpanEvent;
 HSPLio/embrace/android/embracesdk/internal/anr/AnrOtelMapper;->snapshot(Z)Ljava/util/List;
 PLio/embrace/android/embracesdk/internal/anr/AnrOtelMapper;->snapshot(Z)Ljava/util/List;
 Lio/embrace/android/embracesdk/internal/anr/AnrService;
@@ -357,18 +355,12 @@ HSPLio/embrace/android/embracesdk/internal/anr/AnrStacktraceSampler;->cleanColle
 PLio/embrace/android/embracesdk/internal/anr/AnrStacktraceSampler;->cleanCollections$lambda$3(Lio/embrace/android/embracesdk/internal/anr/AnrStacktraceSampler;)V
 HSPLio/embrace/android/embracesdk/internal/anr/AnrStacktraceSampler;->cleanCollections()V
 PLio/embrace/android/embracesdk/internal/anr/AnrStacktraceSampler;->cleanCollections()V
-HSPLio/embrace/android/embracesdk/internal/anr/AnrStacktraceSampler;->findIntervalsWithSamples()Ljava/util/List;
-PLio/embrace/android/embracesdk/internal/anr/AnrStacktraceSampler;->findIntervalsWithSamples()Ljava/util/List;
 HSPLio/embrace/android/embracesdk/internal/anr/AnrStacktraceSampler;->getAnrIntervals(Lio/embrace/android/embracesdk/internal/anr/detection/ThreadMonitoringState;Lio/embrace/android/embracesdk/internal/clock/Clock;)Ljava/util/List;
 PLio/embrace/android/embracesdk/internal/anr/AnrStacktraceSampler;->getAnrIntervals(Lio/embrace/android/embracesdk/internal/anr/detection/ThreadMonitoringState;Lio/embrace/android/embracesdk/internal/clock/Clock;)Ljava/util/List;
 HSPLio/embrace/android/embracesdk/internal/anr/AnrStacktraceSampler;->onThreadBlocked(Ljava/lang/Thread;J)V
 PLio/embrace/android/embracesdk/internal/anr/AnrStacktraceSampler;->onThreadBlocked(Ljava/lang/Thread;J)V
 HSPLio/embrace/android/embracesdk/internal/anr/AnrStacktraceSampler;->onThreadBlockedInterval(Ljava/lang/Thread;J)V
 PLio/embrace/android/embracesdk/internal/anr/AnrStacktraceSampler;->onThreadBlockedInterval(Ljava/lang/Thread;J)V
-HSPLio/embrace/android/embracesdk/internal/anr/AnrStacktraceSampler;->onThreadUnblocked(Ljava/lang/Thread;J)V
-PLio/embrace/android/embracesdk/internal/anr/AnrStacktraceSampler;->onThreadUnblocked(Ljava/lang/Thread;J)V
-HSPLio/embrace/android/embracesdk/internal/anr/AnrStacktraceSampler;->reachedAnrStacktraceCaptureLimit()Z
-PLio/embrace/android/embracesdk/internal/anr/AnrStacktraceSampler;->reachedAnrStacktraceCaptureLimit()Z
 HSPLio/embrace/android/embracesdk/internal/anr/AnrStacktraceSampler;->size()I
 PLio/embrace/android/embracesdk/internal/anr/AnrStacktraceSampler;->size()I
 Lio/embrace/android/embracesdk/internal/anr/AnrStacktraceSampler$$ExternalSyntheticLambda0;
@@ -414,8 +406,6 @@ HSPLio/embrace/android/embracesdk/internal/anr/EmbraceAnrService;->onThreadBlock
 PLio/embrace/android/embracesdk/internal/anr/EmbraceAnrService;->onThreadBlocked(Ljava/lang/Thread;J)V
 HSPLio/embrace/android/embracesdk/internal/anr/EmbraceAnrService;->onThreadBlockedInterval(Ljava/lang/Thread;J)V
 PLio/embrace/android/embracesdk/internal/anr/EmbraceAnrService;->onThreadBlockedInterval(Ljava/lang/Thread;J)V
-HSPLio/embrace/android/embracesdk/internal/anr/EmbraceAnrService;->onThreadUnblocked(Ljava/lang/Thread;J)V
-PLio/embrace/android/embracesdk/internal/anr/EmbraceAnrService;->onThreadUnblocked(Ljava/lang/Thread;J)V
 HSPLio/embrace/android/embracesdk/internal/anr/EmbraceAnrService;->processAnrTick(J)V
 PLio/embrace/android/embracesdk/internal/anr/EmbraceAnrService;->processAnrTick(J)V
 HSPLio/embrace/android/embracesdk/internal/anr/EmbraceAnrService;->startAnrCapture$lambda$0(Lio/embrace/android/embracesdk/internal/anr/EmbraceAnrService;)V
@@ -462,8 +452,8 @@ HSPLio/embrace/android/embracesdk/internal/anr/detection/BlockedThreadDetector;-
 PLio/embrace/android/embracesdk/internal/anr/detection/BlockedThreadDetector;->isAnrDurationThresholdExceeded(J)Z
 HSPLio/embrace/android/embracesdk/internal/anr/detection/BlockedThreadDetector;->isDebuggerEnabled()Z
 PLio/embrace/android/embracesdk/internal/anr/detection/BlockedThreadDetector;->isDebuggerEnabled()Z
-HPLio/embrace/android/embracesdk/internal/anr/detection/BlockedThreadDetector;->onTargetThreadResponse(J)V
 HSPLio/embrace/android/embracesdk/internal/anr/detection/BlockedThreadDetector;->onTargetThreadResponse(J)V
+PLio/embrace/android/embracesdk/internal/anr/detection/BlockedThreadDetector;->onTargetThreadResponse(J)V
 HSPLio/embrace/android/embracesdk/internal/anr/detection/BlockedThreadDetector;->setListener(Lio/embrace/android/embracesdk/internal/anr/BlockedThreadListener;)V
 PLio/embrace/android/embracesdk/internal/anr/detection/BlockedThreadDetector;->setListener(Lio/embrace/android/embracesdk/internal/anr/BlockedThreadListener;)V
 HSPLio/embrace/android/embracesdk/internal/anr/detection/BlockedThreadDetector;->shouldAttemptAnrSample(J)Z
@@ -473,8 +463,8 @@ PLio/embrace/android/embracesdk/internal/anr/detection/BlockedThreadDetector;->u
 Lio/embrace/android/embracesdk/internal/anr/detection/LivenessCheckScheduler;
 HSPLio/embrace/android/embracesdk/internal/anr/detection/LivenessCheckScheduler;-><init>(Lio/embrace/android/embracesdk/internal/config/ConfigService;Lio/embrace/android/embracesdk/internal/worker/BackgroundWorker;Lio/embrace/android/embracesdk/internal/clock/Clock;Lio/embrace/android/embracesdk/internal/anr/detection/ThreadMonitoringState;Lio/embrace/android/embracesdk/internal/anr/detection/TargetThreadHandler;Lio/embrace/android/embracesdk/internal/anr/detection/BlockedThreadDetector;Lio/embrace/android/embracesdk/internal/logging/EmbLogger;)V
 PLio/embrace/android/embracesdk/internal/anr/detection/LivenessCheckScheduler;-><init>(Lio/embrace/android/embracesdk/internal/config/ConfigService;Lio/embrace/android/embracesdk/internal/worker/BackgroundWorker;Lio/embrace/android/embracesdk/internal/clock/Clock;Lio/embrace/android/embracesdk/internal/anr/detection/ThreadMonitoringState;Lio/embrace/android/embracesdk/internal/anr/detection/TargetThreadHandler;Lio/embrace/android/embracesdk/internal/anr/detection/BlockedThreadDetector;Lio/embrace/android/embracesdk/internal/logging/EmbLogger;)V
-HPLio/embrace/android/embracesdk/internal/anr/detection/LivenessCheckScheduler;->checkHeartbeat()V
 HSPLio/embrace/android/embracesdk/internal/anr/detection/LivenessCheckScheduler;->checkHeartbeat()V
+PLio/embrace/android/embracesdk/internal/anr/detection/LivenessCheckScheduler;->checkHeartbeat()V
 HSPLio/embrace/android/embracesdk/internal/anr/detection/LivenessCheckScheduler;->getConfigService()Lio/embrace/android/embracesdk/internal/config/ConfigService;
 PLio/embrace/android/embracesdk/internal/anr/detection/LivenessCheckScheduler;->getConfigService()Lio/embrace/android/embracesdk/internal/config/ConfigService;
 HSPLio/embrace/android/embracesdk/internal/anr/detection/LivenessCheckScheduler;->scheduleRegularHeartbeats()V
@@ -2002,8 +1992,6 @@ HSPLio/embrace/android/embracesdk/internal/config/behavior/AnrBehaviorImpl;-><cl
 PLio/embrace/android/embracesdk/internal/config/behavior/AnrBehaviorImpl;-><clinit>()V
 HSPLio/embrace/android/embracesdk/internal/config/behavior/AnrBehaviorImpl;-><init>(Lio/embrace/android/embracesdk/internal/config/behavior/BehaviorThresholdCheck;Lio/embrace/android/embracesdk/internal/config/instrumented/schema/InstrumentedConfig;Lio/embrace/android/embracesdk/internal/config/remote/RemoteConfig;)V
 PLio/embrace/android/embracesdk/internal/config/behavior/AnrBehaviorImpl;-><init>(Lio/embrace/android/embracesdk/internal/config/behavior/BehaviorThresholdCheck;Lio/embrace/android/embracesdk/internal/config/instrumented/schema/InstrumentedConfig;Lio/embrace/android/embracesdk/internal/config/remote/RemoteConfig;)V
-HSPLio/embrace/android/embracesdk/internal/config/behavior/AnrBehaviorImpl;->getMaxAnrIntervalsPerSession()I
-PLio/embrace/android/embracesdk/internal/config/behavior/AnrBehaviorImpl;->getMaxAnrIntervalsPerSession()I
 HSPLio/embrace/android/embracesdk/internal/config/behavior/AnrBehaviorImpl;->getMaxStacktracesPerInterval()I
 PLio/embrace/android/embracesdk/internal/config/behavior/AnrBehaviorImpl;->getMaxStacktracesPerInterval()I
 HSPLio/embrace/android/embracesdk/internal/config/behavior/AnrBehaviorImpl;->getMinDuration()I
@@ -6345,8 +6333,8 @@ HSPLio/embrace/android/embracesdk/internal/payload/AttributeJsonAdapter;-><init>
 PLio/embrace/android/embracesdk/internal/payload/AttributeJsonAdapter;-><init>(Lcom/squareup/moshi/Moshi;)V
 HPLio/embrace/android/embracesdk/internal/payload/AttributeJsonAdapter;->toJson(Lcom/squareup/moshi/JsonWriter;Lio/embrace/android/embracesdk/internal/payload/Attribute;)V
 HSPLio/embrace/android/embracesdk/internal/payload/AttributeJsonAdapter;->toJson(Lcom/squareup/moshi/JsonWriter;Lio/embrace/android/embracesdk/internal/payload/Attribute;)V
-HPLio/embrace/android/embracesdk/internal/payload/AttributeJsonAdapter;->toJson(Lcom/squareup/moshi/JsonWriter;Ljava/lang/Object;)V
 HSPLio/embrace/android/embracesdk/internal/payload/AttributeJsonAdapter;->toJson(Lcom/squareup/moshi/JsonWriter;Ljava/lang/Object;)V
+PLio/embrace/android/embracesdk/internal/payload/AttributeJsonAdapter;->toJson(Lcom/squareup/moshi/JsonWriter;Ljava/lang/Object;)V
 Lio/embrace/android/embracesdk/internal/payload/Envelope;
 HSPLio/embrace/android/embracesdk/internal/payload/Envelope;-><clinit>()V
 PLio/embrace/android/embracesdk/internal/payload/Envelope;-><clinit>()V
@@ -6557,8 +6545,6 @@ HSPLio/embrace/android/embracesdk/internal/payload/ThreadInfo;-><clinit>()V
 PLio/embrace/android/embracesdk/internal/payload/ThreadInfo;-><clinit>()V
 HSPLio/embrace/android/embracesdk/internal/payload/ThreadInfo;-><init>(JLjava/lang/Thread$State;Ljava/lang/String;ILjava/util/List;I)V
 PLio/embrace/android/embracesdk/internal/payload/ThreadInfo;-><init>(JLjava/lang/Thread$State;Ljava/lang/String;ILjava/util/List;I)V
-HSPLio/embrace/android/embracesdk/internal/payload/ThreadInfo;->equals(Ljava/lang/Object;)Z
-PLio/embrace/android/embracesdk/internal/payload/ThreadInfo;->equals(Ljava/lang/Object;)Z
 HSPLio/embrace/android/embracesdk/internal/payload/ThreadInfo;->getFrameCount()I
 PLio/embrace/android/embracesdk/internal/payload/ThreadInfo;->getFrameCount()I
 HSPLio/embrace/android/embracesdk/internal/payload/ThreadInfo;->getLines()Ljava/util/List;
@@ -7307,8 +7293,8 @@ HSPLio/embrace/android/embracesdk/internal/spans/EmbraceSpanImpl;->redactIfSensi
 PLio/embrace/android/embracesdk/internal/spans/EmbraceSpanImpl;->redactIfSensitive(Ljava/util/Map;)Ljava/util/Map;
 HSPLio/embrace/android/embracesdk/internal/spans/EmbraceSpanImpl;->setSystemAttribute(Lio/opentelemetry/api/common/AttributeKey;Ljava/lang/String;)V
 PLio/embrace/android/embracesdk/internal/spans/EmbraceSpanImpl;->setSystemAttribute(Lio/opentelemetry/api/common/AttributeKey;Ljava/lang/String;)V
-HPLio/embrace/android/embracesdk/internal/spans/EmbraceSpanImpl;->snapshot()Lio/embrace/android/embracesdk/internal/payload/Span;
 HSPLio/embrace/android/embracesdk/internal/spans/EmbraceSpanImpl;->snapshot()Lio/embrace/android/embracesdk/internal/payload/Span;
+PLio/embrace/android/embracesdk/internal/spans/EmbraceSpanImpl;->snapshot()Lio/embrace/android/embracesdk/internal/payload/Span;
 HSPLio/embrace/android/embracesdk/internal/spans/EmbraceSpanImpl;->spanStarted()Z
 PLio/embrace/android/embracesdk/internal/spans/EmbraceSpanImpl;->spanStarted()Z
 HSPLio/embrace/android/embracesdk/internal/spans/EmbraceSpanImpl;->start(Ljava/lang/Long;)Z

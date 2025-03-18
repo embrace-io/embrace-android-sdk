@@ -1,6 +1,4 @@
 import io.embrace.android.gradle.plugin.tasks.ndk.NdkUploadTask
-import io.embrace.android.gradle.plugin.network.EmbraceEndpoint
-import io.embrace.android.gradle.plugin.config.ProjectType
 
 plugins {
     id("java")
@@ -9,13 +7,9 @@ plugins {
 }
 
 project.tasks.register("testTask", NdkUploadTask) { task ->
-    integrationTest.configureGradleUploadTask(project, task, EmbraceEndpoint.NDK, null)
-    task.failBuildOnUploadErrors.set(true)
+    integrationTest.configureEmbraceTask(task)
     task.generatedEmbraceResourcesDirectory.set(
             project.layout.buildDirectory.dir("generated-embrace-resources")
-    )
-    task.compressedSharedObjectFilesDirectory.set(
-        project.layout.projectDirectory.dir("compressedSharedObjectFiles")
     )
     task.architecturesToHashedSharedObjectFilesMapJson.set(
         project.layout.projectDirectory.file("output.json")

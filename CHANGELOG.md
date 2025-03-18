@@ -1,5 +1,19 @@
 # Embrace Android SDK Changelog
 
+## 7.3.0
+*March 18, 2025*
+
+- Improved app startup instrumentation
+  - Updated name of root and child spans logged for cold and warm app startups
+  - Added support for programmatic termination of app startup as opt-in configuration option
+  - Record failed and abandoned app startup spans if the app crashes or backgrounds before startup completes
+  - Added new annotation (`@IgnoreForStartup`) for trampoline or splash-screen Activities, which will make the app startup instrumentation ignore them for the purposes of ending a startup
+  - Deprecated (`@StartupActivity`). This annotation will no longer affect how the app startup instrumentation works.
+  - Fixed issue with app startup instrumentation recording on Android 12 for Activities that use Jetpack Compose Navigation
+- Fail app build if symbol upload request fails
+- Modified logic of uploading `ApplicationExitInfo` (non-visible change)
+- Updated OpenTelemetry API and SDK to `1.48.0`
+
 ## 7.2.0
 *February 27, 2025*
 

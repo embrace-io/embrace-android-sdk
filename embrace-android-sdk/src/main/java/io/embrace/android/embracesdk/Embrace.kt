@@ -13,6 +13,7 @@ import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
+import io.embrace.android.embracesdk.spans.Workflow
 import io.opentelemetry.api.OpenTelemetry
 import io.opentelemetry.sdk.logs.export.LogRecordExporter
 import io.opentelemetry.sdk.trace.export.SpanExporter
@@ -375,6 +376,10 @@ public class Embrace private constructor(
 
     override fun getSpan(spanId: String): EmbraceSpan? {
         return impl.getSpan(spanId)
+    }
+
+    override fun createOperation(name: String): Workflow {
+        return impl.createOperation(name)
     }
 
     /**

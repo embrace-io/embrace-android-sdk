@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.testcases
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.arch.assertIsTypePerformance
 import io.embrace.android.embracesdk.assertions.assertEmbraceSpanData
+import io.embrace.android.embracesdk.assertions.findSpansByName
 import io.embrace.android.embracesdk.concurrency.SingleThreadTestScheduledExecutor
 import io.embrace.android.embracesdk.fakes.FakeSpanExporter
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
@@ -328,6 +329,35 @@ internal class TracingApiTest {
             }
         )
     }
+
+    @Test
+    fun `record operation`() {
+        testRule.runTest(
+            testCaseAction = {
+                recordSession {
+                    clock.tick(100L)
+                    val op = embrace.createOperation("my-op")
+                    clock.tick(100L)
+                    op.start("first")
+                    clock.tick(100L)
+                    op.start("second")
+                    clock.tick(100L)
+                    op.start("third")
+                    clock.tick(100L)
+                    op.end(ErrorCode.FAILURE)
+                }
+            },
+            assertAction = {
+                with(getSingleSessionEnvelope()) {
+                    assertNotNull(findSpansByName(name = "my-op"))
+                    assertNotNull(findSpansByName(name = "my-op-first"))
+                    assertNotNull(findSpansByName(name = "my-op-second"))
+                    assertNotNull(findSpansByName(name = "my-op-third"))
+                }
+            }
+        )
+    }
+
 
     private fun EmbracePayloadAssertionInterface.getSdkInitSpanFromBackgroundActivity(): List<Span> {
         val lastSentBackgroundActivity = getSingleSessionEnvelope(ApplicationState.BACKGROUND)

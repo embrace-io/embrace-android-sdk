@@ -17,10 +17,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import io.embrace.android.embracesdk.spans.Workflow
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CodeExampleDetailScreen(navController: NavController, example: CodeExample) {
+fun CodeExampleDetailScreen(navController: NavController, example: CodeExample, operation: Workflow? = null) {
     Scaffold(
         topBar = {
             TopAppBar(
@@ -29,7 +30,12 @@ fun CodeExampleDetailScreen(navController: NavController, example: CodeExample) 
                 },
                 colors = appBarColors(),
                 navigationIcon = {
-                    IconButton(onClick = navController::popBackStack) {
+                    IconButton(
+                        onClick = {
+                            operation?.startSegment("main")
+                            navController.popBackStack()
+                        }
+                    ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back",

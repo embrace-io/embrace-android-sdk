@@ -12,6 +12,7 @@ import io.embrace.android.gradle.plugin.instrumentation.AsmTaskRegistration
 import io.embrace.android.gradle.plugin.instrumentation.config.model.VariantConfig
 import io.embrace.android.gradle.plugin.model.AndroidCompactedVariantData
 import io.embrace.android.gradle.plugin.tasks.il2cpp.Il2CppUploadTaskRegistration
+import io.embrace.android.gradle.plugin.tasks.mapping.CreatePackageToFileMappingTaskRegistration
 import io.embrace.android.gradle.plugin.tasks.ndk.NdkUploadTasksRegistration
 import io.embrace.android.gradle.plugin.tasks.r8.JvmMappingUploadTaskRegistration
 import io.embrace.android.gradle.plugin.tasks.reactnative.GenerateRnSourcemapTaskRegistration
@@ -100,6 +101,7 @@ class TaskRegistrar(
         JvmMappingUploadTaskRegistration().register(params)
         val variantConfig = variantConfigurationsListProperty.get().first { it.variantName == variant.name }
         NdkUploadTasksRegistration(behavior, variantConfig).register(params)
+        CreatePackageToFileMappingTaskRegistration().register(params)
         if (behavior.isIl2CppMappingFilesUploadEnabled) {
             Il2CppUploadTaskRegistration().register(params)
         }

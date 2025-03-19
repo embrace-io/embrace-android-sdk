@@ -13,6 +13,7 @@ import io.embrace.android.gradle.plugin.instrumentation.config.model.VariantConf
 import io.embrace.android.gradle.plugin.model.AndroidCompactedVariantData
 import io.embrace.android.gradle.plugin.tasks.il2cpp.Il2CppUploadTaskRegistration
 import io.embrace.android.gradle.plugin.tasks.il2cpp.UnitySymbolFilesManager
+import io.embrace.android.gradle.plugin.tasks.mapping.CreatePackageToFileMappingTaskRegistration
 import io.embrace.android.gradle.plugin.tasks.ndk.NdkUploadTaskRegistration
 import io.embrace.android.gradle.plugin.tasks.r8.JvmMappingUploadTaskRegistration
 import io.embrace.android.gradle.plugin.tasks.reactnative.EmbraceRnSourcemapGeneratorTaskRegistration
@@ -71,6 +72,7 @@ class TaskRegistrar(
         val symbolsDir = getSymbolsDir(variantConfig)
         val projectType = getProjectType(symbolsDir, agpWrapper, variantConfig.variantName, project)
         NdkUploadTaskRegistration(symbolsDir, projectType).register(params)
+        CreatePackageToFileMappingTaskRegistration().register(params)
         if (behavior.isIl2CppMappingFilesUploadEnabled) {
             Il2CppUploadTaskRegistration().register(params)
         }

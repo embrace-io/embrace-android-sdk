@@ -264,4 +264,6 @@ public interface TracingApi {
      * if was completed in a prior session.
      */
     public fun getSpan(spanId: String): EmbraceSpan?
+
+    public fun createOperation(name: String): Workflow
 }

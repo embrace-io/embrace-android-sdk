@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.android.embracesdk.spans.TracingApi
+import io.embrace.android.embracesdk.spans.Workflow
 
 class EmbraceTracer(
     private val spanService: SpanService,
@@ -78,4 +79,6 @@ class EmbraceTracer(
     )
 
     override fun getSpan(spanId: String): EmbraceSpan? = spanService.getSpan(spanId = spanId)
+
+    override fun createOperation(name: String): Workflow = Operation(name = name, spanService = spanService)
 }

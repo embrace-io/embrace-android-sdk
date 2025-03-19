@@ -15,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import io.embrace.android.embracesdk.spans.Workflow
 import io.embrace.android.exampleapp.R
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -22,6 +23,7 @@ import io.embrace.android.exampleapp.R
 fun CodeExampleListScreen(
     navController: NavController,
     examples: List<CodeExample>,
+    operation: Workflow?,
 ) {
     Scaffold(modifier = Modifier.fillMaxSize(),
         topBar = {
@@ -37,6 +39,7 @@ fun CodeExampleListScreen(
                         val item = examples[index]
                         Button(
                             onClick = {
+                                operation?.startSegment(item.route)
                                 navController.navigate(item.route)
                             },
                             modifier = Modifier

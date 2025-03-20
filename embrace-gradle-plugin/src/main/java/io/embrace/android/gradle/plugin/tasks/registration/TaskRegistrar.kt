@@ -68,9 +68,9 @@ class TaskRegistrar(
             taskRegistration.register(params)
         }
         val variantConfig = variantConfigurationsListProperty.get().first { it.variantName == variant.name }
-        val symbolsDir = getUnitySymbolsDir(variantConfig)
-        val projectType = getProjectType(symbolsDir, agpWrapper, variantConfig.variantName, project)
-        NdkUploadTasksRegistration(behavior, symbolsDir, projectType).register(params)
+        val unitySymbolsDirProvider = getUnitySymbolsDirProvider(variantConfig)
+        val projectType = getProjectType(unitySymbolsDirProvider, agpWrapper, variantConfig.variantName, project)
+        NdkUploadTasksRegistration(behavior, unitySymbolsDirProvider, projectType, variantConfig).register(params)
         if (behavior.isIl2CppMappingFilesUploadEnabled) {
             Il2CppUploadTaskRegistration().register(params)
         }
@@ -94,7 +94,7 @@ class TaskRegistrar(
         }
     }
 
-    private fun getUnitySymbolsDir(variantConfig: VariantConfig): Provider<UnitySymbolsDir> = project.provider {
+    private fun getUnitySymbolsDirProvider(variantConfig: VariantConfig): Provider<UnitySymbolsDir> = project.provider {
         val unityConfig = variantConfig.embraceConfig?.unityConfig
         val realProject = project.parent ?: project
         UnitySymbolFilesManager.of().getSymbolsDir(
@@ -105,13 +105,13 @@ class TaskRegistrar(
     }
 
     private fun getProjectType(
-        symbolsDir: Provider<UnitySymbolsDir>,
+        unitySymbolsDirProvider: Provider<UnitySymbolsDir>,
         agpWrapper: AgpWrapper,
         variantName: String,
         project: Project,
     ) = this.project.provider {
         ProjectTypeVerifier.getProjectType(
-            symbolsDir,
+            unitySymbolsDirProvider,
             agpWrapper,
             behavior,
             variantName,

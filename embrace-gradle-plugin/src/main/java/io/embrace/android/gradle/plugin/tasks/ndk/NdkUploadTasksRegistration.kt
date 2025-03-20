@@ -6,6 +6,7 @@ import io.embrace.android.gradle.plugin.config.ProjectType
 import io.embrace.android.gradle.plugin.config.UnitySymbolsDir
 import io.embrace.android.gradle.plugin.gradle.registerTask
 import io.embrace.android.gradle.plugin.gradle.tryGetTaskProvider
+import io.embrace.android.gradle.plugin.instrumentation.config.model.VariantConfig
 import io.embrace.android.gradle.plugin.model.AndroidCompactedVariantData
 import io.embrace.android.gradle.plugin.network.EmbraceEndpoint
 import io.embrace.android.gradle.plugin.tasks.common.RequestParams
@@ -28,6 +29,7 @@ class NdkUploadTasksRegistration(
     private val behavior: PluginBehavior,
     private val unitySymbolsDir: Provider<UnitySymbolsDir>,
     private val projectType: Provider<ProjectType>,
+    private val variantConfig: VariantConfig,
 ) : EmbraceTaskRegistration {
 
     override fun register(params: RegistrationParams) {
@@ -39,11 +41,8 @@ class NdkUploadTasksRegistration(
      * build process.
      */
     fun RegistrationParams.execute() {
-        val variantConfig = variantConfigurationsListProperty.get().first { it.variantName == variant.name }
-        val embraceConfig = variantConfig.embraceConfig
-
         // Skip registration if NDK is disabled
-        if (embraceConfig?.ndkEnabled == false) return
+        if (variantConfig.embraceConfig?.ndkEnabled == false) return
 
         val sharedObjectFilesProvider = getSharedObjectFilesProvider(project, data, variant)
 
@@ -61,6 +60,7 @@ class NdkUploadTasksRegistration(
         compressionTaskProvider.configure { compressionTask: CompressSharedObjectFilesTask ->
             val shouldExecuteCompressionTaskProvider = getShouldExecuteCompressionTaskProvider(project)
             compressionTask.onlyIf { shouldExecuteCompressionTaskProvider.orNull ?: true }
+            // TODO: check if these are only needed for Unity and comment accordingly.
             compressionTask.mustRunAfter(object : Callable<Any> {
                 override fun call(): Any {
                     return listOfNotNull(
@@ -101,12 +101,13 @@ class NdkUploadTasksRegistration(
                 task.compressedSharedObjectFilesDirectory.asFile.get().exists() &&
                     task.architecturesToHashedSharedObjectFilesMapJson.asFile.get().exists()
             }
+            // TODO: An error thrown in registration will make the build will fail. Should we use failBuildOnUploadErrors for this too?
             task.failBuildOnUploadErrors.set(behavior.failBuildOnUploadErrors)
             task.requestParams.set(
                 project.provider {
                     RequestParams(
-                        appId = embraceConfig?.appId.orEmpty(),
-                        apiToken = embraceConfig?.apiToken.orEmpty(),
+                        appId = variantConfig.embraceConfig?.appId.orEmpty(),
+                        apiToken = variantConfig.embraceConfig?.apiToken.orEmpty(),
                         endpoint = EmbraceEndpoint.NDK,
                         failBuildOnUploadErrors = behavior.failBuildOnUploadErrors.get(),
                         baseUrl = behavior.baseUrl,
@@ -172,7 +173,7 @@ class NdkUploadTasksRegistration(
 
         val decompressedObjectsDirectory = project.layout.buildDirectory
             .dir("/intermediates/embrace/unity/${getMappingFileFolder(data)}")
-            .orNull ?: error("Decompressed Unity shared object directory not found")
+            .get() // this won't be null as we are using a constant string
 
         return UnitySymbolFilesManager.of()
             .getSymbolFiles(sharedObjectsDirectory, decompressedObjectsDirectory)

@@ -131,4 +131,33 @@ public interface EmbraceSpan {
      * Update the name of the span. Returns false if the update was not successful, like when it has already been stopped
      */
     public fun updateName(newName: String): Boolean
+
+    /**
+     * Add a link to the given [EmbraceSpan]
+     */
+    public fun addLink(linkedSpan: EmbraceSpan): Boolean = addLink(linkedSpan = linkedSpan, attributes = null)
+
+    /**
+     * Add a link to the span with the given [SpanContext]
+     */
+    public fun addLink(
+        linkedSpanContext: SpanContext
+    ): Boolean = addLink(linkedSpanContext = linkedSpanContext, attributes = null)
+
+    /**
+     * Add a link to the given [EmbraceSpan] with the given attributes
+     */
+    public fun addLink(linkedSpan: EmbraceSpan, attributes: Map<String, String>?): Boolean {
+        val spanContext = linkedSpan.spanContext
+        return if (spanContext != null) {
+            addLink(linkedSpanContext = spanContext, attributes = attributes)
+        } else {
+            false
+        }
+    }
+
+    /**
+     * Add a link to the span with the given [SpanContext] with the given attributes
+     */
+    public fun addLink(linkedSpanContext: SpanContext, attributes: Map<String, String>?): Boolean
 }

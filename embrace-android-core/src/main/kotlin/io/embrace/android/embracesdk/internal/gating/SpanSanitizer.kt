@@ -34,7 +34,8 @@ internal class SpanSanitizer(
             sessionSpan.endTimeNanos,
             sessionSpan.status,
             sanitizedEvents,
-            sessionSpan.attributes
+            sessionSpan.attributes,
+            sessionSpan.links,
         )
         sanitizedSpans.add(sanitizedSessionSpan)
         return sanitizedSpans

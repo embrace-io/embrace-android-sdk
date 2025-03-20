@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.testcases
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.arch.assertIsTypePerformance
 import io.embrace.android.embracesdk.assertions.assertEmbraceSpanData
+import io.embrace.android.embracesdk.assertions.findSpanByName
 import io.embrace.android.embracesdk.concurrency.SingleThreadTestScheduledExecutor
 import io.embrace.android.embracesdk.fakes.FakeSpanExporter
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
@@ -328,6 +329,43 @@ internal class TracingApiTest {
             }
         )
     }
+
+    @Test
+    fun `span links`() {
+        var linkedSpanId: String? = null
+        testRule.runTest(
+            testCaseAction = {
+                recordSession {
+                    clock.tick(100L)
+                    val op = checkNotNull(embrace.startSpan("my-op"))
+                    clock.tick(100L)
+                    val op2 = checkNotNull(embrace.startSpan("my-op-2"))
+                    clock.tick(100L)
+                    op2.addLink(op, mapOf("test" to "value"))
+                    op2.stop()
+                    op.stop()
+                    linkedSpanId = op.spanId
+                }
+            },
+            assertAction = {
+                with(getSingleSessionEnvelope()) {
+                    val op = findSpanByName(name = "my-op")
+                    val op2 = findSpanByName(name = "my-op-2")
+                    assertNotNull(op)
+                    assertNotNull(op2)
+                    assertEquals(op.spanId, op2.links?.single()?.spanId)
+                }
+            },
+            otelExportAssertion = {
+                val spanWithLink = awaitSpans(1) { it.links.size == 1 }.single()
+                with(spanWithLink.links.single()) {
+                    assertEquals(linkedSpanId, spanContext.spanId)
+                    assertEquals("value", attributes.toNewPayload().single().data)
+                }
+            }
+        )
+    }
+
 
     private fun EmbracePayloadAssertionInterface.getSdkInitSpanFromBackgroundActivity(): List<Span> {
         val lastSentBackgroundActivity = getSingleSessionEnvelope(ApplicationState.BACKGROUND)

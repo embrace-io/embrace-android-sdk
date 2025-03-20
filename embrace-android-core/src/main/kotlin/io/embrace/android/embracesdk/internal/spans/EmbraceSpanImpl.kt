@@ -16,6 +16,7 @@ import io.embrace.android.embracesdk.internal.config.instrumented.schema.OtelLim
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.toNewPayload
+import io.embrace.android.embracesdk.internal.payload.toPayload
 import io.embrace.android.embracesdk.internal.utils.truncatedStacktraceText
 import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
@@ -64,6 +65,7 @@ internal class EmbraceSpanImpl(
     private val customAttributes = ConcurrentHashMap<String, String>().apply {
         putAll(spanBuilder.getCustomAttributes())
     }
+    private val systemLinks = ConcurrentLinkedQueue<EmbraceLinkData>()
 
     // size for ConcurrentLinkedQueues is not a constant operation, so it could be subject to race conditions
     // do the bookkeeping separately so we don't have to worry about this
@@ -127,29 +129,9 @@ internal class EmbraceSpanImpl(
             }
 
             startedSpan.get()?.let { spanToStop ->
-                systemAttributes.forEach { systemAttribute ->
-                    spanToStop.setAttribute(systemAttribute.key, systemAttribute.value)
-                }
-                customAttributes.redactIfSensitive().forEach { attribute ->
-                    spanToStop.setAttribute(attribute.key, attribute.value)
-                }
-
-                val redactedCustomEvents = customEvents.map { it.copy(attributes = it.attributes.redactIfSensitive()) }
-
-                (systemEvents + redactedCustomEvents).forEach { event ->
-                    val eventAttributes = if (event.attributes.isNotEmpty()) {
-                        Attributes.builder().fromMap(event.attributes, spanBuilder.internal).build()
-                    } else {
-                        Attributes.empty()
-                    }
-
-                    spanToStop.addEvent(
-                        event.name,
-                        eventAttributes,
-                        event.timestampNanos,
-                        TimeUnit.NANOSECONDS
-                    )
-                }
+                populateAttributes(spanToStop)
+                populateEvents(spanToStop)
+                populateLinks(spanToStop)
 
                 if (errorCode != null) {
                     setStatus(StatusCode.ERROR)
@@ -169,6 +151,17 @@ internal class EmbraceSpanImpl(
         }
 
         return successful
+    }
+
+    private fun populateLinks(spanToStop: io.opentelemetry.api.trace.Span) {
+        systemLinks.forEach {
+            val linkAttributes = if (it.attributes != null) {
+                Attributes.builder().fromMap(attributes = it.attributes, false).build()
+            } else {
+                Attributes.empty()
+            }
+            spanToStop.addLink(it.spanContext, linkAttributes)
+        }
     }
 
     override fun addEvent(name: String, timestampMs: Long?, attributes: Map<String, String>?): Boolean =
@@ -268,6 +261,20 @@ internal class EmbraceSpanImpl(
         return false
     }
 
+    override fun addLink(linkedSpanContext: SpanContext, attributes: Map<String, String>?): Boolean {
+        if (systemLinks.size < limits.getMaxTotalLinkCount()) {
+            synchronized(systemLinks) {
+                if (systemLinks.size < limits.getMaxTotalLinkCount()) {
+                    systemLinks.add(EmbraceLinkData(linkedSpanContext, attributes))
+                    spanRepository.notifySpanUpdate()
+                    return true
+                }
+            }
+        }
+
+        return false
+    }
+
     override fun asNewContext(): Context? = startedSpan.get()?.run { spanBuilder.parentContext.with(this) }
 
     override fun snapshot(): Span? {
@@ -282,7 +289,8 @@ internal class EmbraceSpanImpl(
                 endTimeNanos = spanEndTimeMs?.millisToNanos(),
                 status = status,
                 events = systemEvents.map(EmbraceSpanEvent::toNewPayload) + redactedCustomEvents.map(EmbraceSpanEvent::toNewPayload),
-                attributes = getAttributesPayload()
+                attributes = getAttributesPayload(),
+                links = systemLinks.toList().map { it.toPayload() }
             )
         } else {
             null
@@ -346,6 +354,34 @@ internal class EmbraceSpanImpl(
             } else {
                 it.value
             }
+        }
+    }
+
+    private fun populateAttributes(spanToStop: io.opentelemetry.api.trace.Span) {
+        systemAttributes.forEach { systemAttribute ->
+            spanToStop.setAttribute(systemAttribute.key, systemAttribute.value)
+        }
+        customAttributes.redactIfSensitive().forEach { attribute ->
+            spanToStop.setAttribute(attribute.key, attribute.value)
+        }
+    }
+
+    private fun populateEvents(spanToStop: io.opentelemetry.api.trace.Span) {
+        val redactedCustomEvents = customEvents.map { it.copy(attributes = it.attributes.redactIfSensitive()) }
+
+        (systemEvents + redactedCustomEvents).forEach { event ->
+            val eventAttributes = if (event.attributes.isNotEmpty()) {
+                Attributes.builder().fromMap(event.attributes, spanBuilder.internal).build()
+            } else {
+                Attributes.empty()
+            }
+
+            spanToStop.addEvent(
+                event.name,
+                eventAttributes,
+                event.timestampNanos,
+                TimeUnit.NANOSECONDS
+            )
         }
     }
 }

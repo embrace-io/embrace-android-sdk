@@ -32,24 +32,24 @@ abstract class CompressSharedObjectFilesTask @Inject constructor(
     @TaskAction
     fun onRun() {
         architecturesDirectory.get().asFile
-            .listFiles()
-            ?.filter { it.isDirectory && it.listFiles()?.isNotEmpty() == true }
-            ?.forEach { archDir ->
+            .listFiles().orEmpty()
+            .filter { it.isDirectory && it.listFiles()?.isNotEmpty() == true }
+            .ifEmpty { error("Specified architectures directory does not contain any architecture directories") }
+            .forEach { archDir ->
                 compressSharedObjectFiles(archDir)
-            } ?: error("Compression of shared object files failed")
+            }
     }
 
     private fun compressSharedObjectFiles(architectureDir: File) {
         val outputDirectory = compressedSharedObjectFilesDirectory.dir(architectureDir.name).get().asFile
-        val sharedObjectFiles = architectureDir.listFiles { file ->
-            file.name.endsWith(".so")
-        } ?: error("Shared object files not found") // Should never happen, we already filter empty dirs above
-
-        sharedObjectFiles.forEach { sharedObjectFile ->
-            val compressedFile = File(outputDirectory, sharedObjectFile.name)
-            compressor.compress(sharedObjectFile, compressedFile)
-                ?: error("Compression of shared object file ${sharedObjectFile.name} failed")
-        }
+        architectureDir
+            .listFiles { file -> file.name.endsWith(".so") }.orEmpty()
+            .ifEmpty { error("No shared object files found in architecture directory ${architectureDir.name}") }
+            .forEach { sharedObjectFile ->
+                val compressedFile = File(outputDirectory, sharedObjectFile.name)
+                compressor.compress(sharedObjectFile, compressedFile)
+                    ?: error("Compression of shared object file ${sharedObjectFile.name} failed")
+            }
     }
 
     companion object {

@@ -2,6 +2,7 @@ package io.embrace.android.gradle.integration.testcases
 
 import io.embrace.android.gradle.integration.framework.PluginIntegrationTestRule
 import io.embrace.android.gradle.integration.framework.file
+import org.gradle.testkit.runner.TaskOutcome
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -71,6 +72,111 @@ class CompressSharedObjectFilesTaskTest {
                         assertTrue(compressedFile.exists())
                     }
                 }
+            }
+        )
+    }
+
+    @Test
+    fun `task is not executed when architecturesDirectory doesn't exist`() {
+        rule.runTest(
+            fixture = "compress-shared-object-files",
+            task = "compressTask",
+            setup = { projectDir ->
+                projectDir.file("testArchitecturesDir").deleteRecursively()
+            },
+            expectedOutcome = TaskOutcome.NO_SOURCE,
+            assertions = {
+                verifyNoUploads()
+            }
+        )
+    }
+
+    @Test
+    fun `task is not executed when architecturesDirectory is empty`() {
+        rule.runTest(
+            fixture = "compress-shared-object-files",
+            task = "compressTask",
+            setup = { projectDir ->
+                // keep testArchitecturesDir but delete its contents
+                projectDir.file("testArchitecturesDir").listFiles()?.forEach { it.deleteRecursively() }
+            },
+            expectedOutcome = TaskOutcome.NO_SOURCE,
+            assertions = {
+                verifyNoUploads()
+            }
+        )
+    }
+
+    @Test
+    fun `task is not executed when architecturesDirectory only contains empty directories `() {
+        rule.runTest(
+            fixture = "compress-shared-object-files",
+            task = "compressTask",
+            setup = { projectDir ->
+                // delete architecture directories
+                projectDir.file("testArchitecturesDir").listFiles()?.forEach { it.deleteRecursively() }
+                // add empty directories
+                projectDir.file("testArchitecturesDir/someArch").mkdirs()
+                projectDir.file("testArchitecturesDir/someArch2").mkdirs()
+            },
+            expectedOutcome = TaskOutcome.NO_SOURCE,
+            assertions = {
+                verifyNoUploads()
+            }
+        )
+    }
+
+    @Test
+    fun `an error is thrown when architecturesDirectory is not a directory`() {
+        rule.runTest(
+            fixture = "compress-shared-object-files",
+            task = "compressTask",
+            setup = { projectDir ->
+                // delete testArchitecturesDir
+                projectDir.file("testArchitecturesDir").deleteRecursively()
+                // create a file instead of a directory
+                projectDir.file("testArchitecturesDir").writeText("not a directory")
+            },
+            expectedExceptionMessage = "Expected an input to be a directory but it was a file.",
+            assertions = {
+                verifyNoUploads()
+            }
+        )
+    }
+
+    @Test
+    fun `an error is thrown when architecturesDirectory does not contain directories`() {
+        rule.runTest(
+            fixture = "compress-shared-object-files",
+            task = "compressTask",
+            setup = { projectDir ->
+                // delete architecture directories
+                projectDir.file("testArchitecturesDir").listFiles()?.forEach { it.deleteRecursively() }
+                // create a file instead of a directory
+                projectDir.file("testArchitecturesDir/aFile.txt").writeText("not a directory")
+            },
+            expectedExceptionMessage = "Specified architectures directory does not contain any architecture directories",
+            assertions = {
+                verifyNoUploads()
+            }
+        )
+    }
+
+    @Test
+    fun `an error is thrown when architecture directories contain files other than shared objects`() {
+        rule.runTest(
+            fixture = "compress-shared-object-files",
+            task = "compressTask",
+            setup = { projectDir ->
+                // delete architecture directories
+                projectDir.file("testArchitecturesDir").listFiles()?.forEach { it.deleteRecursively() }
+                // create a file that is not a .so file
+                projectDir.file("testArchitecturesDir/someArch").mkdirs()
+                projectDir.file("testArchitecturesDir/someArch/notASharedObject.txt").writeText("not a .so file :)")
+            },
+            expectedExceptionMessage = "No shared object files found in architecture directory someArch",
+            assertions = {
+                verifyNoUploads()
             }
         )
     }

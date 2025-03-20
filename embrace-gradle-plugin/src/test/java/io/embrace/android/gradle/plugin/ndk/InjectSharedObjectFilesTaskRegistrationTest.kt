@@ -13,8 +13,8 @@ import io.embrace.android.gradle.plugin.instrumentation.config.model.EmbraceVari
 import io.embrace.android.gradle.plugin.instrumentation.config.model.VariantConfig
 import io.embrace.android.gradle.plugin.model.AndroidCompactedVariantData
 import io.embrace.android.gradle.plugin.tasks.ndk.CompressSharedObjectFilesTask
-import io.embrace.android.gradle.plugin.tasks.ndk.NdkUploadTask
-import io.embrace.android.gradle.plugin.tasks.ndk.NdkUploadTaskRegistration
+import io.embrace.android.gradle.plugin.tasks.ndk.InjectSharedObjectFilesTask
+import io.embrace.android.gradle.plugin.tasks.ndk.NdkUploadTasksRegistration
 import io.embrace.android.gradle.plugin.tasks.registration.RegistrationParams
 import io.embrace.android.gradle.plugin.util.capitalizedString
 import io.embrace.android.gradle.swazzler.plugin.extension.SwazzlerExtension
@@ -33,7 +33,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
-class NdkUploadTaskRegistrationTest {
+class InjectSharedObjectFilesTaskRegistrationTest {
 
     private val project = ProjectBuilder.builder().build()
     private val behavior =
@@ -79,7 +79,7 @@ class NdkUploadTaskRegistrationTest {
 
     @Test
     fun `test configure ndkUploadTask with ndk disabled`() {
-        val taskName = NdkUploadTask.NAME
+        val taskName = InjectSharedObjectFilesTask.NAME
         val project = ProjectBuilder.builder().build()
 
         setVariantConfig(ndkEnabled = false)
@@ -88,7 +88,7 @@ class NdkUploadTaskRegistrationTest {
         val projectTypeProvider = project.provider { ProjectType.UNITY }
 
         val registration =
-            NdkUploadTaskRegistration(behavior, unitySymbolsDirProvider, projectTypeProvider)
+            NdkUploadTasksRegistration(behavior, unitySymbolsDirProvider, projectTypeProvider)
         val params = RegistrationParams(
             project = project,
             variant = mockVariant,
@@ -105,13 +105,13 @@ class NdkUploadTaskRegistrationTest {
         registration.register(params)
 
         val ndkUploadTask =
-            project.tasks.findByName("$taskName${testAndroidCompactedVariantData.name.capitalizedString()}") as? NdkUploadTask
+            project.tasks.findByName("$taskName${testAndroidCompactedVariantData.name.capitalizedString()}") as? InjectSharedObjectFilesTask
         assertNull(ndkUploadTask)
     }
 
     @Test
     fun `test configure ndkUploadTask for native project type`() {
-        val taskName = NdkUploadTask.NAME
+        val taskName = InjectSharedObjectFilesTask.NAME
         val project = ProjectBuilder.builder().build()
 
         setVariantConfig(ndkEnabled = true)
@@ -120,7 +120,7 @@ class NdkUploadTaskRegistrationTest {
         val projectTypeProvider = project.provider { ProjectType.NATIVE }
 
         val registration =
-            NdkUploadTaskRegistration(behavior, unitySymbolsDirProvider, projectTypeProvider)
+            NdkUploadTasksRegistration(behavior, unitySymbolsDirProvider, projectTypeProvider)
         val params = RegistrationParams(
             project,
             variant = mockVariant,
@@ -138,7 +138,7 @@ class NdkUploadTaskRegistrationTest {
 
         assertTrue(
             project.isTaskRegistered(
-                NdkUploadTask.NAME,
+                InjectSharedObjectFilesTask.NAME,
                 testAndroidCompactedVariantData.name
             )
         )
@@ -146,7 +146,7 @@ class NdkUploadTaskRegistrationTest {
 
     @Test
     fun `test configure ndkUploadTask for unity 2018-2019 project type`() {
-        val taskName = NdkUploadTask.NAME
+        val taskName = InjectSharedObjectFilesTask.NAME
         val project = ProjectBuilder.builder().build()
 
         val capitalizedString = testAndroidCompactedVariantData.name.capitalizedString()
@@ -164,7 +164,7 @@ class NdkUploadTaskRegistrationTest {
         val unitySymbolsDirProvider = project.provider { unitySymbolsDir }
         val projectTypeProvider = project.provider { ProjectType.UNITY }
 
-        val registration = NdkUploadTaskRegistration(behavior, unitySymbolsDirProvider, projectTypeProvider)
+        val registration = NdkUploadTasksRegistration(behavior, unitySymbolsDirProvider, projectTypeProvider)
         val params = RegistrationParams(
             project,
             variant = mockVariant,
@@ -180,7 +180,7 @@ class NdkUploadTaskRegistrationTest {
         )
         registration.register(params)
 
-        assertTrue(project.isTaskRegistered(NdkUploadTask.NAME, testAndroidCompactedVariantData.name))
+        assertTrue(project.isTaskRegistered(InjectSharedObjectFilesTask.NAME, testAndroidCompactedVariantData.name))
 
         val compressTask: CompressSharedObjectFilesTask =
             project.tasks.findByName("${CompressSharedObjectFilesTask.NAME}$capitalizedString") as CompressSharedObjectFilesTask
@@ -189,7 +189,7 @@ class NdkUploadTaskRegistrationTest {
 
     @Test
     fun `test configure ndkUploadTask for unity 2020 project type`() {
-        val taskName = NdkUploadTask.NAME
+        val taskName = InjectSharedObjectFilesTask.NAME
         val project = ProjectBuilder.builder().build()
 
         val capitalizedString = testAndroidCompactedVariantData.name.capitalizedString()
@@ -207,7 +207,7 @@ class NdkUploadTaskRegistrationTest {
         val projectTypeProvider = project.provider { ProjectType.UNITY }
 
         val registration =
-            NdkUploadTaskRegistration(behavior, unitySymbolsDirProvider, projectTypeProvider)
+            NdkUploadTasksRegistration(behavior, unitySymbolsDirProvider, projectTypeProvider)
         val params = RegistrationParams(
             project,
             variant = mockVariant,
@@ -226,7 +226,7 @@ class NdkUploadTaskRegistrationTest {
 
         assertTrue(
             project.isTaskRegistered(
-                NdkUploadTask.NAME,
+                InjectSharedObjectFilesTask.NAME,
                 testAndroidCompactedVariantData.name
             )
         )
@@ -246,7 +246,7 @@ class NdkUploadTaskRegistrationTest {
         val projectTypeProvider = project.provider { ProjectType.NATIVE }
 
         val registration =
-            NdkUploadTaskRegistration(behavior, unitySymbolsDirProvider, projectTypeProvider)
+            NdkUploadTasksRegistration(behavior, unitySymbolsDirProvider, projectTypeProvider)
         val params = RegistrationParams(
             project,
             variant = mockVariant,

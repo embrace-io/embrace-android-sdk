@@ -38,6 +38,11 @@ class EmbSpan(
         return this
     }
 
+    override fun addLink(spanContext: SpanContext, attributes: Attributes): Span {
+        embraceSpan.addLink(spanContext, attributes.toStringMap())
+        return this
+    }
+
     override fun setStatus(statusCode: StatusCode, description: String): Span {
         if (isRecording) {
             embraceSpan.setStatus(statusCode, description)

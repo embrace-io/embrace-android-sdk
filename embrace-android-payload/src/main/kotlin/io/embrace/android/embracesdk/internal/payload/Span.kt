@@ -53,6 +53,9 @@ data class Span(
 
     @Json(name = "attributes")
     val attributes: List<Attribute>? = null,
+
+    @Json(name = "links")
+    val links: List<Link>? = null,
 ) {
 
     /**

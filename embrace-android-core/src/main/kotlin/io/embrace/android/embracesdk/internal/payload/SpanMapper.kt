@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
+import io.embrace.android.embracesdk.internal.spans.EmbraceLinkData
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.spans.hasFixedAttribute
 import io.embrace.android.embracesdk.internal.spans.setFixedAttribute
@@ -22,7 +23,8 @@ fun EmbraceSpanData.toNewPayload(): Span = Span(
     endTimeNanos = endTimeNanos,
     status = status.toStatus(),
     events = events.map(EmbraceSpanEvent::toNewPayload),
-    attributes = attributes.toNewPayload()
+    attributes = attributes.toNewPayload(),
+    links = links,
 )
 
 fun EmbraceSpanEvent.toNewPayload(): SpanEvent = SpanEvent(
@@ -43,6 +45,8 @@ fun Map<String, String>.toNewPayload(): List<Attribute> =
 fun List<Attribute>.toOldPayload(): Map<String, String> =
     associate { Pair(it.key ?: "", it.data ?: "") }.filterKeys { it.isNotBlank() }
 
+fun EmbraceLinkData.toPayload() = Link(spanContext.spanId, attributes?.toNewPayload())
+
 fun Span.toOldPayload(): EmbraceSpanData {
     return EmbraceSpanData(
         traceId = traceId ?: "",
@@ -58,7 +62,8 @@ fun Span.toOldPayload(): EmbraceSpanData {
             else -> StatusCode.UNSET
         },
         events = events?.mapNotNull { it.toOldPayload() } ?: emptyList(),
-        attributes = attributes?.toOldPayload() ?: emptyMap()
+        attributes = attributes?.toOldPayload() ?: emptyMap(),
+        links = links ?: emptyList()
     )
 }
 

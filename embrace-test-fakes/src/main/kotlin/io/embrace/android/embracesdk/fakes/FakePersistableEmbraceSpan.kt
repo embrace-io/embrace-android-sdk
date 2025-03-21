@@ -12,6 +12,7 @@ import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedCo
 import io.embrace.android.embracesdk.internal.opentelemetry.embHeartbeatTimeUnixNano
 import io.embrace.android.embracesdk.internal.opentelemetry.embProcessIdentifier
 import io.embrace.android.embracesdk.internal.opentelemetry.embState
+import io.embrace.android.embracesdk.internal.payload.Link
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.toNewPayload
 import io.embrace.android.embracesdk.internal.spans.PersistableEmbraceSpan
@@ -47,7 +48,8 @@ class FakePersistableEmbraceSpan(
     var statusDescription: String = ""
     var errorCode: ErrorCode? = null
     val attributes: MutableMap<String, String> = mutableMapOf(type.toEmbraceKeyValuePair())
-    val events: ConcurrentLinkedQueue<EmbraceSpanEvent> = ConcurrentLinkedQueue<EmbraceSpanEvent>()
+    val events: ConcurrentLinkedQueue<EmbraceSpanEvent> = ConcurrentLinkedQueue()
+    val links: ConcurrentLinkedQueue<Link> = ConcurrentLinkedQueue()
 
     override val parent: EmbraceSpan?
         get() = parentContext.getEmbraceSpan()
@@ -97,8 +99,6 @@ class FakePersistableEmbraceSpan(
         return true
     }
 
-    override fun addEvent(name: String): Boolean = addEvent(name, null, null)
-
     override fun addEvent(name: String, timestampMs: Long?, attributes: Map<String, String>?): Boolean {
         events.add(
             EmbraceSpanEvent.create(
@@ -138,6 +138,11 @@ class FakePersistableEmbraceSpan(
         return true
     }
 
+    override fun addLink(linkedSpanContext: SpanContext, attributes: Map<String, String>?): Boolean {
+        links.add(Link(linkedSpanContext.spanId, attributes?.toNewPayload()))
+        return true
+    }
+
     override fun asNewContext(): Context? = sdkSpan?.let { parentContext.with(this).with(it) }
 
     override fun snapshot(): Span? {
@@ -153,7 +158,8 @@ class FakePersistableEmbraceSpan(
                 endTimeNanos = spanEndTimeMs?.millisToNanos(),
                 status = status,
                 events = events.map(EmbraceSpanEvent::toNewPayload),
-                attributes = attributes.toNewPayload()
+                attributes = attributes.toNewPayload(),
+                links = links.toList()
             )
         }
     }

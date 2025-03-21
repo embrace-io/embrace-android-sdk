@@ -104,3 +104,9 @@ fun StatusCode.toStatus(): Span.Status {
         StatusCode.ERROR -> io.embrace.android.embracesdk.internal.payload.Span.Status.ERROR
     }
 }
+
+fun OtelLimitsConfig.getMaxTotalAttributeCount() = getMaxSystemAttributeCount() + getMaxCustomAttributeCount()
+
+fun OtelLimitsConfig.getMaxTotalEventCount() = getMaxSystemEventCount() + getMaxCustomEventCount()
+
+fun OtelLimitsConfig.getMaxTotalLinkCount() = getMaxSystemLinkCount() + getMaxCustomLinkCount()

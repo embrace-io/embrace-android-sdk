@@ -40,7 +40,7 @@ class TapDataSource(
                     val second = finalPoint.second?.toInt()?.toFloat() ?: 0.0f
                     first.toInt().toString() + "," + second.toInt()
                 }
-                addEvent(SchemaType.Tap(element, type.value, coords), timestamp)
+                addSessionEvent(SchemaType.Tap(element, type.value, coords), timestamp)
             }
         )
     }

@@ -45,7 +45,7 @@ fun Map<String, String>.toNewPayload(): List<Attribute> =
 fun List<Attribute>.toOldPayload(): Map<String, String> =
     associate { Pair(it.key ?: "", it.data ?: "") }.filterKeys { it.isNotBlank() }
 
-fun EmbraceLinkData.toPayload() = Link(spanContext.spanId, attributes?.toNewPayload())
+fun EmbraceLinkData.toPayload() = Link(spanContext.spanId, attributes.toNewPayload())
 
 fun Span.toOldPayload(): EmbraceSpanData {
     return EmbraceSpanData(

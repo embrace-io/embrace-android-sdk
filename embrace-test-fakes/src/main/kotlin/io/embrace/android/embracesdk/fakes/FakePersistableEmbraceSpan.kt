@@ -143,6 +143,9 @@ class FakePersistableEmbraceSpan(
         return true
     }
 
+    override fun addSystemLink(linkedSpanContext: SpanContext, attributes: Map<String, String>): Boolean =
+        addLink(linkedSpanContext, attributes)
+
     override fun asNewContext(): Context? = sdkSpan?.let { parentContext.with(this).with(it) }
 
     override fun snapshot(): Span? {
@@ -211,7 +214,7 @@ class FakePersistableEmbraceSpan(
             lastHeartbeatTimeMs: Long?,
             endTimeMs: Long? = null,
             sessionProperties: Map<String, String>? = null,
-            processIdentifier: String = "fake-process-id"
+            processIdentifier: String = "fake-process-id",
         ): FakePersistableEmbraceSpan =
             FakePersistableEmbraceSpan(
                 name = "emb-session",

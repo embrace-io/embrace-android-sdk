@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.FixedAttribute
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.opentelemetry.api.common.AttributeKey
+import io.opentelemetry.api.trace.SpanContext
 import io.opentelemetry.api.trace.StatusCode
 import io.opentelemetry.context.Context
 import io.opentelemetry.context.ContextKey
@@ -71,6 +72,14 @@ interface PersistableEmbraceSpan : EmbraceSpan, ImplicitContextKeyed {
     fun setStatus(statusCode: StatusCode, description: String = "")
 
     fun getStartTimeMs(): Long?
+
+    /**
+     * Add a system link to the span that will subjected to a different maximum than typical links.
+     */
+    fun addSystemLink(
+        linkedSpanContext: SpanContext,
+        attributes: Map<String, String> = emptyMap(),
+    ): Boolean
 
     override fun storeInContext(context: Context): Context = context.with(embraceSpanContextKey, this)
 }

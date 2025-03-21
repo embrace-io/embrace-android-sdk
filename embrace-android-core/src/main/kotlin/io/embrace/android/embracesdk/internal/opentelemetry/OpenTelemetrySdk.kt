@@ -3,6 +3,9 @@ package io.embrace.android.embracesdk.internal.opentelemetry
 import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.OtelLimitsConfig
+import io.embrace.android.embracesdk.internal.spans.getMaxTotalAttributeCount
+import io.embrace.android.embracesdk.internal.spans.getMaxTotalEventCount
+import io.embrace.android.embracesdk.internal.spans.getMaxTotalLinkCount
 import io.opentelemetry.api.logs.Logger
 import io.opentelemetry.api.trace.Tracer
 import io.opentelemetry.sdk.OpenTelemetrySdk
@@ -38,6 +41,7 @@ internal class OpenTelemetrySdk(
                         .toBuilder()
                         .setMaxNumberOfEvents(limits.getMaxTotalEventCount())
                         .setMaxNumberOfAttributes(limits.getMaxTotalAttributeCount())
+                        .setMaxNumberOfLinks(limits.getMaxTotalLinkCount())
                         .build()
                 )
                 .setClock(openTelemetryClock)

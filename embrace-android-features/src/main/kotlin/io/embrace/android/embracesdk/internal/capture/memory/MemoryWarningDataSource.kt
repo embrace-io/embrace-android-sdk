@@ -39,7 +39,7 @@ internal class MemoryWarningDataSource(
         captureData(
             inputValidation = NoInputValidation,
             captureAction = {
-                addEvent(SchemaType.MemoryWarning(), timestamp)
+                addSessionEvent(SchemaType.MemoryWarning(), timestamp)
             }
         )
     }

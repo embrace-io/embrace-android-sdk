@@ -25,20 +25,20 @@ class FakeCurrentSessionSpan(
         sessionSpan = newSessionSpan(sdkInitStartTimeMs)
     }
 
-    override fun addEvent(schemaType: SchemaType, startTimeMs: Long): Boolean {
+    override fun addSessionEvent(schemaType: SchemaType, startTimeMs: Long): Boolean {
         addedEvents.add(SpanEventData(schemaType, startTimeMs))
         return true
     }
 
-    override fun removeEvents(type: EmbType) {
+    override fun removeSessionEvents(type: EmbType) {
         addedEvents.removeAll { it.schemaType.telemetryType.key == type.key }
     }
 
-    override fun addSystemAttribute(attribute: SpanAttributeData) {
+    override fun addSessionAttribute(attribute: SpanAttributeData) {
         attributes[attribute.key] = attribute.value
     }
 
-    override fun removeSystemAttribute(key: String) {
+    override fun removeSessionAttribute(key: String) {
         attributes.remove(key)
     }
 

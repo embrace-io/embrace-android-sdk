@@ -27,7 +27,7 @@ class BreadcrumbDataSource(
             },
             captureAction = {
                 val sanitizedMessage = ellipsizeBreadcrumbMessage(message)
-                addEvent(SchemaType.Breadcrumb(sanitizedMessage ?: ""), timestamp)
+                addSessionEvent(SchemaType.Breadcrumb(sanitizedMessage ?: ""), timestamp)
             }
         )
     }

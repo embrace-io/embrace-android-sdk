@@ -36,7 +36,7 @@ class PushNotificationDataSource(
             inputValidation = NoInputValidation,
             captureAction = {
                 val captureFcmPiiData = breadcrumbBehavior.isFcmPiiDataCaptureEnabled()
-                addEvent(
+                addSessionEvent(
                     SchemaType.PushNotification(
                         title = if (captureFcmPiiData) title else null,
                         type = type.type,

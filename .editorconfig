@@ -11,3 +11,6 @@ ij_java_class_count_to_use_import_on_demand = 99
 ij_kotlin_allow_trailing_comma = true
 ij_kotlin_allow_trailing_comma_on_call_site = false
 
+[*.json]
+insert_final_newline = false
+

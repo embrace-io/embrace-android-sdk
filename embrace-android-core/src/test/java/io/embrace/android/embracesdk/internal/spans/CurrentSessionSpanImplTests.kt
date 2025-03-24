@@ -480,7 +480,7 @@ internal class CurrentSessionSpanImplTests {
 
     @Test
     fun `add event forwarded to span`() {
-        currentSessionSpan.addEvent(SchemaType.Breadcrumb("test-event"), 1000L)
+        currentSessionSpan.addSessionEvent(SchemaType.Breadcrumb("test-event"), 1000L)
         val span = currentSessionSpan.endSession(true).single()
         assertEquals("emb-session", span.name)
 
@@ -495,9 +495,9 @@ internal class CurrentSessionSpanImplTests {
 
     @Test
     fun `validate maximum events on session span`() {
-        val limit = InstrumentedConfigImpl.otelLimits.getMaxTotalEventCount()
+        val limit = InstrumentedConfigImpl.otelLimits.getMaxSystemEventCount()
         repeat(limit + 1) {
-            currentSessionSpan.addEvent(SchemaType.Breadcrumb("test-event"), 1000L + it)
+            currentSessionSpan.addSessionEvent(SchemaType.Breadcrumb("test-event"), 1000L + it)
         }
 
         val span = currentSessionSpan.endSession(true).single()
@@ -509,9 +509,9 @@ internal class CurrentSessionSpanImplTests {
 
     @Test
     fun `add and remove attribute forwarded to span`() {
-        currentSessionSpan.addSystemAttribute(SpanAttributeData("my_key", "my_value"))
-        currentSessionSpan.addSystemAttribute(SpanAttributeData("missing", "my_value"))
-        currentSessionSpan.removeSystemAttribute("missing")
+        currentSessionSpan.addSessionAttribute(SpanAttributeData("my_key", "my_value"))
+        currentSessionSpan.addSessionAttribute(SpanAttributeData("missing", "my_value"))
+        currentSessionSpan.removeSessionAttribute("missing")
         val span = currentSessionSpan.endSession(true).single()
         assertEquals("emb-session", span.name)
 
@@ -524,7 +524,7 @@ internal class CurrentSessionSpanImplTests {
     fun `validate maximum attributes on session span`() {
         val limit = InstrumentedConfigImpl.otelLimits.getMaxTotalAttributeCount()
         repeat(limit + 1) {
-            currentSessionSpan.addSystemAttribute(SpanAttributeData("attribute-$it", "value"))
+            currentSessionSpan.addSessionAttribute(SpanAttributeData("attribute-$it", "value"))
         }
 
         val span = currentSessionSpan.endSession(true).single()
@@ -538,21 +538,21 @@ internal class CurrentSessionSpanImplTests {
         assertEquals("", getSessionId())
         assertFalse(canStartNewSpan(parent = null, internal = true))
         assertTrue(endSession(true).isEmpty())
-        assertFalse(addEvent(SchemaType.Breadcrumb("test"), clock.now()))
+        assertFalse(addSessionEvent(SchemaType.Breadcrumb("test"), clock.now()))
         // check doesn't throw exception
-        addSystemAttribute(attribute = SpanAttributeData("test", "test"))
-        removeSystemAttribute("test")
-        removeEvents(EmbType.System.Breadcrumb)
+        addSessionAttribute(attribute = SpanAttributeData("test", "test"))
+        removeSessionAttribute("test")
+        removeSessionEvents(EmbType.System.Breadcrumb)
     }
 
     private fun CurrentSessionSpan.assertSessionSpan() {
         assertTrue(getSessionId().isNotBlank())
         assertTrue(canStartNewSpan(parent = null, internal = true))
-        assertTrue(addEvent(SchemaType.Breadcrumb("test"), clock.now()))
+        assertTrue(addSessionEvent(SchemaType.Breadcrumb("test"), clock.now()))
         // check doesn't throw exception
-        addSystemAttribute(attribute = SpanAttributeData("test", "test"))
-        removeSystemAttribute("test")
-        removeEvents(EmbType.System.Breadcrumb)
+        addSessionAttribute(attribute = SpanAttributeData("test", "test"))
+        removeSessionAttribute("test")
+        removeSessionEvents(EmbType.System.Breadcrumb)
     }
 
     private class BadEmbraceSpanFactory : EmbraceSpanFactory {

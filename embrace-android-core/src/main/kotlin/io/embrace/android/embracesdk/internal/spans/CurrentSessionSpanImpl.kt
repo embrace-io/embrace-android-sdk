@@ -137,7 +137,7 @@ internal class CurrentSessionSpanImpl(
         }
     }
 
-    override fun addEvent(schemaType: SchemaType, startTimeMs: Long): Boolean {
+    override fun addSessionEvent(schemaType: SchemaType, startTimeMs: Long): Boolean {
         val currentSession = sessionSpan.get() ?: return false
         return currentSession.addSystemEvent(
             schemaType.fixedObjectName.toEmbraceObjectName(),
@@ -146,17 +146,17 @@ internal class CurrentSessionSpanImpl(
         )
     }
 
-    override fun removeEvents(type: EmbType) {
+    override fun removeSessionEvents(type: EmbType) {
         val currentSession = sessionSpan.get() ?: return
         currentSession.removeSystemEvents(type)
     }
 
-    override fun addSystemAttribute(attribute: SpanAttributeData) {
+    override fun addSessionAttribute(attribute: SpanAttributeData) {
         val currentSession = sessionSpan.get() ?: return
         currentSession.addSystemAttribute(attribute.key, attribute.value)
     }
 
-    override fun removeSystemAttribute(key: String) {
+    override fun removeSessionAttribute(key: String) {
         val currentSession = sessionSpan.get() ?: return
         currentSession.removeSystemAttribute(key)
     }

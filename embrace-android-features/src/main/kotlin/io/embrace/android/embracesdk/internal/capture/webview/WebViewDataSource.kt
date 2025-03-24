@@ -28,7 +28,7 @@ class WebViewDataSource(
 
     fun loadDataIntoSession(webViewInfoList: List<WebViewInfo>) {
         runCatching {
-            writer.removeEvents(EmbType.System.WebViewInfo)
+            writer.removeSessionEvents(EmbType.System.WebViewInfo)
             webViewInfoList.forEach { webViewInfo ->
                 captureData(
                     inputValidation = NoInputValidation,
@@ -38,7 +38,7 @@ class WebViewDataSource(
                             .toByteArray()
                             .toUTF8String()
 
-                        addEvent(
+                        addSessionEvent(
                             SchemaType.WebViewInfo(
                                 url = webViewInfo.url,
                                 webVitals = webVitalsString,

@@ -12,20 +12,20 @@ interface SessionSpanWriter {
      * Add a span event for the given [schemaType] to the session span. If [spanStartTimeMs] is null, the
      * current time will be used. Returns true if the event was added, otherwise false.
      */
-    fun addEvent(schemaType: SchemaType, startTimeMs: Long): Boolean
+    fun addSessionEvent(schemaType: SchemaType, startTimeMs: Long): Boolean
 
     /**
      * Remove all span events with the given [EmbType].
      */
-    fun removeEvents(type: EmbType)
+    fun removeSessionEvents(type: EmbType)
 
     /**
      * Add the given key-value pair as an Attribute to the session span
      */
-    fun addSystemAttribute(attribute: SpanAttributeData)
+    fun addSessionAttribute(attribute: SpanAttributeData)
 
     /**
      * Remove the attribute with the given key
      */
-    fun removeSystemAttribute(key: String)
+    fun removeSessionAttribute(key: String)
 }

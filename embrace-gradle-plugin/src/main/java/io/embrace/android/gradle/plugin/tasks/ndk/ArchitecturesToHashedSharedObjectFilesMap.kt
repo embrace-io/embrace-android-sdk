@@ -12,5 +12,5 @@ import com.squareup.moshi.JsonClass
  */
 @JsonClass(generateAdapter = true)
 data class ArchitecturesToHashedSharedObjectFilesMap(
-    val architecturesToHashedSharedObjectFiles: Map<String, Map<String, String>>
+    val symbols: Map<String, Map<String, String>>
 )

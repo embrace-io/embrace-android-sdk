@@ -136,6 +136,8 @@ class NdkUploadTasksRegistration(
                 hashTaskProvider.flatMap { it.architecturesToHashedSharedObjectFilesMap }
             )
 
+            task.failBuildOnUploadErrors.set(behavior.failBuildOnUploadErrors)
+
             task.generatedEmbraceResourcesDirectory.set(
                 project.layout.buildDirectory.dir("$GENERATED_RESOURCE_PATH/${data.name}/ndk")
             )

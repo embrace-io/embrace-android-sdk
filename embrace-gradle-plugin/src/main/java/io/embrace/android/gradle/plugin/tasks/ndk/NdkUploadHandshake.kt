@@ -49,7 +49,9 @@ import io.embrace.android.gradle.plugin.tasks.handleHttpCallResult
  * {
  *    "archs": {}
  * }
- * and getRequestedSymbols will return null.
+ * and getRequestedSymbols will return an empty map.
+ *
+ * If there's an error, and failBuildOnUploadErrors is false, getRequestedSymbols will return null.
  */
 class NdkUploadHandshake(
     private val networkService: NetworkService,
@@ -66,7 +68,7 @@ class NdkUploadHandshake(
             val response = result.body as? NdkUploadHandshakeResponse ?: return null
             val symbolsToUpload = response.symbols
             return if (symbolsToUpload.isNullOrEmpty()) {
-                null
+                emptyMap()
             } else {
                 symbolsToUpload
             }

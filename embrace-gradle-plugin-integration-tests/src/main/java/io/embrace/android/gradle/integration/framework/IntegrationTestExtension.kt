@@ -55,6 +55,22 @@ abstract class IntegrationTestExtension(objectFactory: ObjectFactory) {
         )
     }
 
+    fun configureSharedObjectObjectFilesUploadTask(
+        project: Project,
+        task: EmbraceUploadTask
+    ) {
+        configureEmbraceTask(task)
+        task.requestParams.set(
+            RequestParams(
+                appId = appId.get(),
+                apiToken = apiToken.get(),
+                endpoint = EmbraceEndpoint.NDK,
+                failBuildOnUploadErrors = true,
+                baseUrl = checkNotNull(project.findProperty("embrace.baseUrl")?.toString())
+            )
+        )
+    }
+
     fun configureAndroidProject(project: Project) = with(project) {
         repositories.apply {
             google()

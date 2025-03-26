@@ -8,12 +8,12 @@ plugins {
 }
 
 project.tasks.register("testTask", UploadSharedObjectFilesTask) { task ->
-    integrationTest.configureGradleUploadTask(project, task, EmbraceEndpoint.NDK, null)
+    integrationTest.configureSharedObjectObjectFilesUploadTask(project, task)
     task.failBuildOnUploadErrors.set(true)
     task.compressedSharedObjectFilesDirectory.set(
         project.layout.projectDirectory.dir("compressedSharedObjectFiles")
     )
     task.architecturesToHashedSharedObjectFilesMapJson.set(
-        project.layout.projectDirectory.file("output.json")
+        project.layout.projectDirectory.file("architecturesMap.json")
     )
 }

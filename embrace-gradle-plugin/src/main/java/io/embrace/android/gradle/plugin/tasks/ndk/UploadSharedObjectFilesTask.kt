@@ -55,7 +55,7 @@ abstract class UploadSharedObjectFilesTask @Inject constructor(
     @TaskAction
     fun onRun() {
         architecturesToHashedSharedObjectFilesMap = getArchToFilenameToHashMap()
-        val requestedSharedObjectFiles = getRequestedSharedObjectFiles() ?: return
+        val requestedSharedObjectFiles = getRequestedSharedObjectFiles().takeIf { !it.isNullOrEmpty() } ?: return
         val foundRequestedSharedObjectFiles = findRequestedSharedObjectFiles(requestedSharedObjectFiles) ?: return
         uploadSharedObjectFiles(foundRequestedSharedObjectFiles)
     }
@@ -82,8 +82,13 @@ abstract class UploadSharedObjectFilesTask @Inject constructor(
             architecturesToHashedSharedObjectFilesMap
         )
 
-        // TODO: we are swallowing backend errors, we should fix this.
-        return NdkUploadHandshake(okHttpNetworkService).getRequestedSymbols(params, failBuildOnUploadErrors.get())
+        val handshakeResult = NdkUploadHandshake(okHttpNetworkService).getRequestedSymbols(params, failBuildOnUploadErrors.get())
+        if (handshakeResult == null) {
+            // if failBuildOnUploadErrors were true, we would've already thrown an exception inside getRequestedSymbols
+            logger.error("No symbols were requested")
+            return null
+        }
+        return handshakeResult
     }
 
     /**
@@ -120,14 +125,13 @@ abstract class UploadSharedObjectFilesTask @Inject constructor(
 
         requestedSharedObjectFiles.forEach { (arch, symbols) ->
             val requested = mutableMapOf<String, File>()
-            val archDir = File(compressedDir, arch)
             // TODO: what happens when a requested symbol is not found?
             val archHashedObjects = architecturesToHashedSharedObjectFilesMap[arch] ?: emptyMap()
 
             symbols.forEach { symbolName ->
-                val compressedFile = File(archDir, symbolName)
+                val compressedFile = File("$compressedDir/$arch", symbolName)
                 val hash = archHashedObjects[symbolName]
-                if (compressedFile.exists() && hash != null) {
+                if (hash != null && compressedFile.exists()) {
                     requested[hash] = compressedFile
                 }
             }

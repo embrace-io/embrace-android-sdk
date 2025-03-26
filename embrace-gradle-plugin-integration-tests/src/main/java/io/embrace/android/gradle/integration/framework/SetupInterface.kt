@@ -6,7 +6,7 @@ import io.embrace.android.gradle.plugin.util.serialization.MoshiSerializer
 import okhttp3.mockwebserver.MockResponse
 
 class SetupInterface(
-    private val apiServer: FakeApiServer
+    private val apiServer: FakeApiServer,
 ) {
 
     val moshiSerializer = MoshiSerializer()
@@ -25,7 +25,7 @@ class SetupInterface(
     fun SetupInterface.setupMockResponses(
         expectedLibs: List<String>,
         expectedArchs: List<String>,
-        expectedVariants: List<String>
+        expectedVariants: List<String>,
     ) {
         val requestedSymbols = expectedArchs.associateWith { expectedLibs }
         val json = serializeRequestBody(NdkUploadHandshakeResponse(requestedSymbols))
@@ -33,5 +33,15 @@ class SetupInterface(
         repeat(expectedVariants.size) {
             enqueueResponse(EmbraceEndpoint.NDK_HANDSHAKE, response)
         }
+    }
+
+    fun SetupInterface.setupResponseWithMalformedBody(endpoint: EmbraceEndpoint) {
+        val response = MockResponse().setBody("invalid json")
+        enqueueResponse(endpoint, response)
+    }
+
+    fun SetupInterface.setupErrorResponse(endpoint: EmbraceEndpoint) {
+        val response = MockResponse().setResponseCode(400)
+        enqueueResponse(endpoint, response)
     }
 }

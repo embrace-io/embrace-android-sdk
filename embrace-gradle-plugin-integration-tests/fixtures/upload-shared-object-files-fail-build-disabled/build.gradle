@@ -1,0 +1,19 @@
+import io.embrace.android.gradle.plugin.tasks.ndk.UploadSharedObjectFilesTask
+import io.embrace.android.gradle.plugin.network.EmbraceEndpoint
+
+plugins {
+    id("java")
+    id("io.embrace.swazzler")
+    id("io.embrace.android.testplugin")
+}
+
+project.tasks.register("testTask", UploadSharedObjectFilesTask) { task ->
+    integrationTest.configureSharedObjectObjectFilesUploadTask(project, task)
+    task.failBuildOnUploadErrors.set(false)
+    task.compressedSharedObjectFilesDirectory.set(
+        project.layout.projectDirectory.dir("compressedSharedObjectFiles")
+    )
+    task.architecturesToHashedSharedObjectFilesMapJson.set(
+        project.layout.projectDirectory.file("architecturesMap.json")
+    )
+}

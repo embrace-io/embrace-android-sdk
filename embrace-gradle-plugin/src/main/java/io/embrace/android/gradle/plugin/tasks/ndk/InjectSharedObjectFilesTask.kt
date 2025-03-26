@@ -6,6 +6,8 @@ import io.embrace.android.gradle.plugin.util.serialization.MoshiSerializer
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.model.ObjectFactory
+import org.gradle.api.provider.Property
+import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.SkipWhenEmpty
@@ -37,7 +39,11 @@ abstract class InjectSharedObjectFilesTask @Inject constructor(
     @get:InputFile
     val architecturesToHashedSharedObjectFilesMapJson: RegularFileProperty = objectFactory.fileProperty()
 
+    @get:Input
+    val failBuildOnUploadErrors: Property<Boolean> = objectFactory.property(Boolean::class.java)
+
     private lateinit var architecturesToHashedSharedObjectFilesMap: Map<String, Map<String, String>>
+    private val symbolResourceInjector by lazy { SymbolResourceInjector(failBuildOnUploadErrors.get()) }
 
     @TaskAction
     fun onRun() {
@@ -49,25 +55,24 @@ abstract class InjectSharedObjectFilesTask @Inject constructor(
         serializer.fromJson(
             architecturesToHashedSharedObjectFilesMapJson.get().asFile.bufferedReader().use { it.readText() },
             ArchitecturesToHashedSharedObjectFilesMap::class.java
-        ).architecturesToHashedSharedObjectFiles
+        ).symbols
     } catch (exception: Exception) {
         error("Failed to read the architectures to hashed shared object files map: ${exception.message}")
     }
 
     private fun injectSymbolsAsResources() {
-        val ndkSymbolsFile = generatedEmbraceResourcesDirectory.dir("values").get().asFile
+        val valuesDir = generatedEmbraceResourcesDirectory.dir("values").get().asFile
 
         try {
-            ndkSymbolsFile.delete()
+            valuesDir.delete()
         } catch (e: IOException) {
             logger.info(
-                "Failed to delete previous config file for variant=${variantData.get().name} and path=${ndkSymbolsFile.path}"
+                "Failed to delete previous config file for variant=${variantData.get().name} and path=${valuesDir.path}"
             )
         }
 
-        val buildInfoFile = File(ndkSymbolsFile, FILE_NDK_SYMBOLS)
-        val injector = SymbolResourceInjector()
-        injector.writeSymbolResourceFile(buildInfoFile, architecturesToHashedSharedObjectFilesMap)
+        val ndkSymbolsFile = File(valuesDir, FILE_NDK_SYMBOLS)
+        symbolResourceInjector.writeSymbolResourceFile(ndkSymbolsFile, architecturesToHashedSharedObjectFilesMapJson.get().asFile)
     }
 
     companion object {

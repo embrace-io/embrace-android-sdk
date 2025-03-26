@@ -8,10 +8,11 @@ plugins {
 
 project.tasks.register("testTask", InjectSharedObjectFilesTask) { task ->
     integrationTest.configureEmbraceTask(task)
+    task.failBuildOnUploadErrors.set(true)
     task.generatedEmbraceResourcesDirectory.set(
             project.layout.buildDirectory.dir("generated-embrace-resources")
     )
     task.architecturesToHashedSharedObjectFilesMapJson.set(
-        project.layout.projectDirectory.file("output.json")
+        project.layout.projectDirectory.file("architecturesMap.json")
     )
 }

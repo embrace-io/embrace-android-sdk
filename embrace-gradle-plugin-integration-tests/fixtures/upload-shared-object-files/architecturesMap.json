@@ -1,5 +1,5 @@
 {
-  "architecturesToHashedSharedObjectFiles": {
+  "symbols": {
     "armeabi-v7a": {
       "libemb-donuts.so": "5d81100c51addb5726448071a2947bcce6c32e2c",
       "libemb-crisps.so": "ca489562821310423711b687887f5ca333b7fd69"

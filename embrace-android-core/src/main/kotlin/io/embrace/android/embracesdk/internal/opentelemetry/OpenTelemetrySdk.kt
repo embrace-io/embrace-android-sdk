@@ -6,6 +6,8 @@ import io.embrace.android.embracesdk.internal.config.instrumented.schema.OtelLim
 import io.embrace.android.embracesdk.internal.spans.getMaxTotalAttributeCount
 import io.embrace.android.embracesdk.internal.spans.getMaxTotalEventCount
 import io.embrace.android.embracesdk.internal.spans.getMaxTotalLinkCount
+import io.embrace.opentelemetry.kotlin.ExperimentalApi
+import io.embrace.opentelemetry.kotlin.k2j.tracing.TracerProviderAdapter
 import io.opentelemetry.api.logs.Logger
 import io.opentelemetry.api.trace.Tracer
 import io.opentelemetry.sdk.OpenTelemetrySdk
@@ -72,6 +74,11 @@ internal class OpenTelemetrySdk(
                 )
                 .build()
         }
+    }
+
+    @OptIn(ExperimentalApi::class)
+    private val compat: TracerProviderAdapter by lazy {
+        TracerProviderAdapter(sdkTracerProvider)
     }
 
     private val logger: Logger by lazy {

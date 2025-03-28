@@ -54,10 +54,17 @@ abstract class UploadSharedObjectFilesTask @Inject constructor(
 
     @TaskAction
     fun onRun() {
-        architecturesToHashedSharedObjectFilesMap = getArchToFilenameToHashMap()
-        val requestedSharedObjectFiles = getRequestedSharedObjectFiles().takeIf { !it.isNullOrEmpty() } ?: return
-        val foundRequestedSharedObjectFiles = findRequestedSharedObjectFiles(requestedSharedObjectFiles) ?: return
-        uploadSharedObjectFiles(foundRequestedSharedObjectFiles)
+        try {
+            architecturesToHashedSharedObjectFilesMap = getArchToFilenameToHashMap()
+            val requestedSharedObjectFiles = getRequestedSharedObjectFiles().takeIf { it.isNotEmpty() } ?: return
+            val foundRequestedSharedObjectFiles = findRequestedSharedObjectFiles(requestedSharedObjectFiles)
+            uploadSharedObjectFiles(foundRequestedSharedObjectFiles)
+        } catch (exception: Exception) {
+            logger.error(exception.message)
+            if (failBuildOnUploadErrors.get()) {
+                throw exception
+            }
+        }
     }
 
     private fun getArchToFilenameToHashMap() = try {
@@ -74,7 +81,7 @@ abstract class UploadSharedObjectFilesTask @Inject constructor(
      *
      * @return a map of architectures to requested symbols
      */
-    private fun getRequestedSharedObjectFiles(): Map<String, List<String>>? {
+    private fun getRequestedSharedObjectFiles(): Map<String, List<String>> {
         val params = NdkUploadHandshakeRequest(
             requestParams.get().appId,
             requestParams.get().apiToken,
@@ -83,11 +90,7 @@ abstract class UploadSharedObjectFilesTask @Inject constructor(
         )
 
         val handshakeResult = NdkUploadHandshake(okHttpNetworkService).getRequestedSymbols(params, failBuildOnUploadErrors.get())
-        if (handshakeResult == null) {
-            // if failBuildOnUploadErrors were true, we would've already thrown an exception inside getRequestedSymbols
-            logger.error("No symbols were requested")
-            return null
-        }
+            ?: error("There was an error while reporting shared object files")
         return handshakeResult
     }
 
@@ -119,30 +122,26 @@ abstract class UploadSharedObjectFilesTask @Inject constructor(
      */
     private fun findRequestedSharedObjectFiles(
         requestedSharedObjectFiles: Map<String, List<String>>,
-    ): Map<String, Map<String, File>>? {
+    ): Map<String, Map<String, File>> {
         val symbolsToUpload = mutableMapOf<String, Map<String, File>>()
         val compressedDir = compressedSharedObjectFilesDirectory.get().asFile
 
         requestedSharedObjectFiles.forEach { (arch, symbols) ->
             val requested = mutableMapOf<String, File>()
-            // TODO: what happens when a requested symbol is not found?
-            val archHashedObjects = architecturesToHashedSharedObjectFilesMap[arch] ?: emptyMap()
+            val archHashedObjects = architecturesToHashedSharedObjectFilesMap[arch]
+                ?: error("Requested architecture was not found")
 
-            symbols.forEach { symbolName ->
-                val compressedFile = File("$compressedDir/$arch", symbolName)
-                val hash = archHashedObjects[symbolName]
-                if (hash != null && compressedFile.exists()) {
-                    requested[hash] = compressedFile
+            symbols.ifEmpty { error("An arch with no symbols was requested") }
+                .forEach { symbolName ->
+                    val compressedFile = File("$compressedDir/$arch", symbolName)
+                    val hash = archHashedObjects[symbolName]
+                    if (hash != null && compressedFile.exists()) {
+                        requested[hash] = compressedFile
+                    } else {
+                        error("Compressed file not found for requested symbol: $arch/$symbolName")
+                    }
                 }
-            }
-            if (requested.isNotEmpty()) {
-                symbolsToUpload[arch] = requested
-            }
-        }
-
-        if (symbolsToUpload.isEmpty()) {
-            logger.error("None of the requested symbols were found")
-            return null
+            symbolsToUpload[arch] = requested
         }
 
         return symbolsToUpload

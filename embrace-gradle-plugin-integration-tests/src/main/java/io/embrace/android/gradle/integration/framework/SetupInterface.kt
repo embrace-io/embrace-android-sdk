@@ -40,6 +40,17 @@ class SetupInterface(
         enqueueResponse(endpoint, response)
     }
 
+    fun SetupInterface.setupMapResponseWithEmptyValues(endpoint: EmbraceEndpoint) {
+        val response = """
+            {
+              "archs": {
+                "arm64-v8a": []
+              }
+            }
+        """.replace("\\s".toRegex(), "")
+        enqueueResponse(endpoint, MockResponse().setBody(response))
+    }
+
     fun SetupInterface.setupErrorResponse(endpoint: EmbraceEndpoint) {
         val response = MockResponse().setResponseCode(400)
         enqueueResponse(endpoint, response)

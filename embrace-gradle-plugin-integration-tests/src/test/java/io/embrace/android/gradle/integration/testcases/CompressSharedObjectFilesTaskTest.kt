@@ -224,4 +224,22 @@ class CompressSharedObjectFilesTaskTest {
             }
         )
     }
+
+    @Test
+    fun `don't throw an error when failBuildOnUploadErrors is disabled`() {
+        rule.runTest(
+            fixture = "compress-shared-object-files",
+            task = "compressTask",
+            additionalArgs = listOf("-PfailBuildOnUploadErrors=false"),
+            setup = { projectDir ->
+                // delete architecture directories
+                projectDir.file("testArchitecturesDir").listFiles()?.forEach { it.deleteRecursively() }
+                // create a file instead of a directory
+                projectDir.file("testArchitecturesDir/aFile.txt").writeText("not a directory")
+            },
+            assertions = {
+                verifyNoUploads()
+            }
+        )
+    }
 }

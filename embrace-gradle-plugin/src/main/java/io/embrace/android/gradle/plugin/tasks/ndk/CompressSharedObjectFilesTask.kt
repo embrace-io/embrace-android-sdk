@@ -4,6 +4,8 @@ import io.embrace.android.gradle.plugin.tasks.EmbraceTaskImpl
 import io.embrace.android.gradle.plugin.util.compression.ZstdFileCompressor
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.model.ObjectFactory
+import org.gradle.api.provider.Property
+import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.SkipWhenEmpty
@@ -26,18 +28,28 @@ abstract class CompressSharedObjectFilesTask @Inject constructor(
     @get:SkipWhenEmpty
     val architecturesDirectory: DirectoryProperty = objectFactory.directoryProperty()
 
+    @get:Input
+    val failBuildOnUploadErrors: Property<Boolean> = objectFactory.property(Boolean::class.java)
+
     @get:OutputDirectory
     val compressedSharedObjectFilesDirectory: DirectoryProperty = objectFactory.directoryProperty()
 
     @TaskAction
     fun onRun() {
-        architecturesDirectory.get().asFile
-            .listFiles().orEmpty()
-            .filter { it.isDirectory && it.listFiles()?.isNotEmpty() == true }
-            .ifEmpty { error("Specified architectures directory does not contain any architecture directories") }
-            .forEach { archDir ->
-                compressSharedObjectFiles(archDir)
+        try {
+            architecturesDirectory.get().asFile
+                .listFiles().orEmpty()
+                .filter { it.isDirectory && it.listFiles()?.isNotEmpty() == true }
+                .ifEmpty { error("Specified architectures directory does not contain any architecture directories") }
+                .forEach { archDir ->
+                    compressSharedObjectFiles(archDir)
+                }
+        } catch (exception: Exception) {
+            logger.error(exception.message)
+            if (failBuildOnUploadErrors.get()) {
+                throw exception
             }
+        }
     }
 
     private fun compressSharedObjectFiles(architectureDir: File) {

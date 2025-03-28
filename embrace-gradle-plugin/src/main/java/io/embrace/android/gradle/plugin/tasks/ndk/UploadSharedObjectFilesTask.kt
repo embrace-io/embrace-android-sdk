@@ -1,5 +1,6 @@
 package io.embrace.android.gradle.plugin.tasks.ndk
 
+import io.embrace.android.gradle.plugin.Logger
 import io.embrace.android.gradle.plugin.network.OkHttpNetworkService
 import io.embrace.android.gradle.plugin.tasks.EmbraceUploadTask
 import io.embrace.android.gradle.plugin.tasks.EmbraceUploadTaskImpl
@@ -34,6 +35,7 @@ abstract class UploadSharedObjectFilesTask @Inject constructor(
 ) : EmbraceUploadTask, EmbraceUploadTaskImpl(objectFactory) {
 
     private val serializer = MoshiSerializer()
+    private val logger = Logger(UploadSharedObjectFilesTask::class.java)
 
     @get:Input
     val failBuildOnUploadErrors: Property<Boolean> = objectFactory.property(Boolean::class.java)
@@ -60,7 +62,7 @@ abstract class UploadSharedObjectFilesTask @Inject constructor(
             val foundRequestedSharedObjectFiles = findRequestedSharedObjectFiles(requestedSharedObjectFiles)
             uploadSharedObjectFiles(foundRequestedSharedObjectFiles)
         } catch (exception: Exception) {
-            logger.error(exception.message)
+            logger.error("An error has occurred while uploading shared object files", exception)
             if (failBuildOnUploadErrors.get()) {
                 throw exception
             }

@@ -98,4 +98,22 @@ class HashSharedObjectFilesTaskTest {
             }
         )
     }
+
+    @Test
+    fun `don't throw an error when failBuildOnUploadErrors is disabled`() {
+        rule.runTest(
+            fixture = "hash-shared-object-files",
+            task = "hashTask",
+            additionalArgs = listOf("-PfailBuildOnUploadErrors=false"),
+            setup = { projectDir ->
+                // delete architecture directories
+                projectDir.file("compressedSharedObjectFiles").listFiles()?.forEach { it.deleteRecursively() }
+                // create a file instead of a directory
+                projectDir.file("compressedSharedObjectFiles/aFile.txt").writeText("not a directory")
+            },
+            assertions = {
+                verifyNoUploads()
+            }
+        )
+    }
 }

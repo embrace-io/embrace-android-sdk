@@ -87,6 +87,7 @@ class NdkUploadTasksRegistration(
             task.compressedSharedObjectFilesDirectory.set(
                 compressionTaskProvider.flatMap { it.compressedSharedObjectFilesDirectory }
             )
+            task.failBuildOnUploadErrors.set(behavior.failBuildOnUploadErrors)
             task.architecturesToHashedSharedObjectFilesMap.set(
                 project.layout.buildDirectory.file("intermediates/embrace/hashes/${data.name}/hashes.json")
             )

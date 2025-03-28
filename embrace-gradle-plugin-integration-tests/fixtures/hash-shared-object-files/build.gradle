@@ -6,11 +6,14 @@ plugins {
     id("io.embrace.android.testplugin")
 }
 
+def failBuildOnUploadErrors = (project.findProperty("failBuildOnUploadErrors") ?: "true").toBoolean()
+
 // Register the hashing task
 project.tasks.register("hashTask", HashSharedObjectFilesTask) { task ->
     task.compressedSharedObjectFilesDirectory.set(
         project.layout.projectDirectory.dir("compressedSharedObjectFiles")
     )
+    task.failBuildOnUploadErrors.set(failBuildOnUploadErrors)
     task.architecturesToHashedSharedObjectFilesMap.set(
         project.layout.buildDirectory.file("output.json")
     )

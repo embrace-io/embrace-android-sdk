@@ -6,6 +6,8 @@ import io.embrace.android.gradle.plugin.util.serialization.MoshiSerializer
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.model.ObjectFactory
+import org.gradle.api.provider.Property
+import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.SkipWhenEmpty
@@ -28,17 +30,26 @@ abstract class HashSharedObjectFilesTask @Inject constructor(
     @get:SkipWhenEmpty
     val compressedSharedObjectFilesDirectory: DirectoryProperty = objectFactory.directoryProperty()
 
+    @get:Input
+    val failBuildOnUploadErrors: Property<Boolean> = objectFactory.property(Boolean::class.java)
+
     @get:OutputFile
     val architecturesToHashedSharedObjectFilesMap: RegularFileProperty = objectFactory.fileProperty()
 
     @TaskAction
     fun onRun() {
-        val outputMap = createOutputMap()
-
-        // Serialize the map to JSON and write it to the output file
-        val serializableMap = ArchitecturesToHashedSharedObjectFilesMap(outputMap)
-        architecturesToHashedSharedObjectFilesMap.get().asFile.outputStream().use { outputStream ->
-            serializer.toJson(serializableMap, ArchitecturesToHashedSharedObjectFilesMap::class.java, outputStream)
+        try {
+            val outputMap = createOutputMap()
+            // Serialize the map to JSON and write it to the output file
+            val serializableMap = ArchitecturesToHashedSharedObjectFilesMap(outputMap)
+            architecturesToHashedSharedObjectFilesMap.get().asFile.outputStream().use { outputStream ->
+                serializer.toJson(serializableMap, ArchitecturesToHashedSharedObjectFilesMap::class.java, outputStream)
+            }
+        } catch (exception: Exception) {
+            logger.error(exception.message)
+            if (failBuildOnUploadErrors.get()) {
+                throw exception
+            }
         }
     }
 

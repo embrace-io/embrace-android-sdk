@@ -47,8 +47,15 @@ abstract class InjectSharedObjectFilesTask @Inject constructor(
 
     @TaskAction
     fun onRun() {
-        architecturesToHashedSharedObjectFilesMap = getArchToFilenameToHashMap()
-        injectSymbolsAsResources()
+        try {
+            architecturesToHashedSharedObjectFilesMap = getArchToFilenameToHashMap()
+            injectSymbolsAsResources()
+        } catch (exception: Exception) {
+            logger.error("An error has occurred while injecting shared object files", exception)
+            if (failBuildOnUploadErrors.get()) {
+                throw exception
+            }
+        }
     }
 
     private fun getArchToFilenameToHashMap() = try {

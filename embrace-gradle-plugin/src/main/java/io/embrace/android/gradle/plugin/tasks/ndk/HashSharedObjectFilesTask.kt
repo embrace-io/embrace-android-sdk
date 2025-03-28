@@ -1,5 +1,6 @@
 package io.embrace.android.gradle.plugin.tasks.ndk
 
+import io.embrace.android.gradle.plugin.Logger
 import io.embrace.android.gradle.plugin.hash.calculateSha1ForFile
 import io.embrace.android.gradle.plugin.tasks.EmbraceTaskImpl
 import io.embrace.android.gradle.plugin.util.serialization.MoshiSerializer
@@ -25,6 +26,7 @@ abstract class HashSharedObjectFilesTask @Inject constructor(
 ) : EmbraceTaskImpl(objectFactory) {
 
     private val serializer = MoshiSerializer()
+    private val logger = Logger(HashSharedObjectFilesTask::class.java)
 
     @get:InputDirectory
     @get:SkipWhenEmpty
@@ -46,7 +48,7 @@ abstract class HashSharedObjectFilesTask @Inject constructor(
                 serializer.toJson(serializableMap, ArchitecturesToHashedSharedObjectFilesMap::class.java, outputStream)
             }
         } catch (exception: Exception) {
-            logger.error(exception.message)
+            logger.error("An error has occurred while hashing shared object files", exception)
             if (failBuildOnUploadErrors.get()) {
                 throw exception
             }

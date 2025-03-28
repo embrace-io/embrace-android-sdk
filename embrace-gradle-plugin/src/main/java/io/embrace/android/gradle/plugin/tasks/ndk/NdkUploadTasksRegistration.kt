@@ -52,6 +52,7 @@ class NdkUploadTasksRegistration(
             data
         ) { task ->
             task.architecturesDirectory.set(project.layout.dir(sharedObjectFilesProvider))
+            task.failBuildOnUploadErrors.set(behavior.failBuildOnUploadErrors)
             task.compressedSharedObjectFilesDirectory.set(
                 project.layout.buildDirectory.dir("intermediates/embrace/compressed/${data.name}")
             )

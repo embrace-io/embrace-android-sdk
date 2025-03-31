@@ -121,6 +121,9 @@
           "signature": "getMaxCustomEventCount()I"
         },
         {
+          "signature": "getMaxCustomLinkCount()I"
+        },
+        {
           "signature": "getMaxInternalAttributeKeyLength()I"
         },
         {
@@ -133,10 +136,13 @@
           "signature": "getMaxNameLength()I"
         },
         {
-          "signature": "getMaxTotalAttributeCount()I"
+          "signature": "getMaxSystemAttributeCount()I"
         },
         {
-          "signature": "getMaxTotalEventCount()I"
+          "signature": "getMaxSystemEventCount()I"
+        },
+        {
+          "signature": "getMaxSystemLinkCount()I"
         }
       ]
     },

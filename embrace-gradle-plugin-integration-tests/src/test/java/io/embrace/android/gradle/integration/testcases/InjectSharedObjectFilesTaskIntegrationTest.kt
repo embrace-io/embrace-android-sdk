@@ -7,7 +7,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 
-class NdkUploadTaskIntegrationTest {
+class InjectSharedObjectFilesTaskIntegrationTest {
 
     @Rule
     @JvmField
@@ -16,7 +16,7 @@ class NdkUploadTaskIntegrationTest {
     @Test
     fun `ndk upload`() {
         rule.runTest(
-            fixture = "ndk-upload-simple",
+            fixture = "inject-shared-object-files",
             assertions = { projectDir ->
                 val symbols = projectDir.buildFile("generated-embrace-resources/values/ndk_symbols.xml")
                 val expectedResXml = projectDir.file("expected/ndk_symbols.xml").readText()

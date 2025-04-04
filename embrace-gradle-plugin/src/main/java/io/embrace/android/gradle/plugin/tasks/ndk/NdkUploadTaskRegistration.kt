@@ -1,21 +1,22 @@
 package io.embrace.android.gradle.plugin.tasks.ndk
 
+import com.android.build.api.variant.Variant
+import io.embrace.android.gradle.plugin.config.PluginBehavior
 import io.embrace.android.gradle.plugin.config.ProjectType
 import io.embrace.android.gradle.plugin.config.UnitySymbolsDir
-import io.embrace.android.gradle.plugin.gradle.nullSafeMap
 import io.embrace.android.gradle.plugin.gradle.registerTask
-import io.embrace.android.gradle.plugin.gradle.safeFlatMap
 import io.embrace.android.gradle.plugin.gradle.tryGetTaskProvider
-import io.embrace.android.gradle.plugin.instrumentation.config.model.EmbraceVariantConfig
+import io.embrace.android.gradle.plugin.model.AndroidCompactedVariantData
 import io.embrace.android.gradle.plugin.network.EmbraceEndpoint
 import io.embrace.android.gradle.plugin.tasks.common.RequestParams
+import io.embrace.android.gradle.plugin.tasks.il2cpp.UnitySymbolFilesManager
 import io.embrace.android.gradle.plugin.tasks.registration.EmbraceTaskRegistration
 import io.embrace.android.gradle.plugin.tasks.registration.RegistrationParams
 import io.embrace.android.gradle.plugin.util.capitalizedString
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.provider.Provider
-import org.gradle.api.tasks.TaskProvider
+import java.io.File
 import java.util.concurrent.Callable
 
 private const val GENERATED_RESOURCE_PATH = "generated/embrace/res"
@@ -24,6 +25,7 @@ private const val GENERATED_RESOURCE_PATH = "generated/embrace/res"
  * In charge of registering tasks for ndk mapping file upload.
  */
 class NdkUploadTaskRegistration(
+    private val behavior: PluginBehavior,
     private val unitySymbolsDir: Provider<UnitySymbolsDir>,
     private val projectType: Provider<ProjectType>,
 ) : EmbraceTaskRegistration {
@@ -36,98 +38,30 @@ class NdkUploadTaskRegistration(
      * Given the build variant and the ndk type, attempts to register the NDK upload task into the build variant's
      * build process.
      */
-    fun RegistrationParams.execute(): TaskProvider<NdkUploadTask>? {
+    fun RegistrationParams.execute() {
         val variantConfig = variantConfigurationsListProperty.get().first { it.variantName == variant.name }
         val embraceConfig = variantConfig.embraceConfig
 
-        if (embraceConfig?.ndkEnabled == false) return null
+        // Skip registration if NDK is disabled
+        if (embraceConfig?.ndkEnabled == false) return
 
-        val mergeNativeLibsProvider = project.provider {
-            project.tryGetTaskProvider(
-                "merge${variant.name.capitalizedString()}NativeLibs"
-            )
-        }.flatMap { it as Provider<Task> }
+        val sharedObjectFilesProvider = getSharedObjectFilesProvider(project, data, variant)
 
-        val ndkUploadTaskProvider = project.registerTask(
-            NdkUploadTask.NAME,
-            NdkUploadTask::class.java,
+        val compressionTaskProvider = project.registerTask(
+            CompressSharedObjectFilesTask.NAME,
+            CompressSharedObjectFilesTask::class.java,
             data
         ) { task ->
-            task.failBuildOnUploadErrors.set(behavior.failBuildOnUploadErrors)
-            task.requestParams.set(
-                project.provider {
-                    RequestParams(
-                        appId = embraceConfig?.appId.orEmpty(),
-                        apiToken = embraceConfig?.apiToken.orEmpty(),
-                        endpoint = EmbraceEndpoint.NDK,
-                        failBuildOnUploadErrors = behavior.failBuildOnUploadErrors.get(),
-                        baseUrl = behavior.baseUrl,
-                    )
-                }
+            task.architecturesDirectory.set(project.layout.dir(sharedObjectFilesProvider))
+            task.compressedSharedObjectFilesDirectory.set(
+                project.layout.buildDirectory.dir("intermediates/embrace/compressed/${data.name}")
             )
-
-            task.generatedEmbraceResourcesDirectory.set(
-                project.layout.buildDirectory.dir("$GENERATED_RESOURCE_PATH/${data.name}/ndk")
-            )
-
-            task.unitySymbolsDir.set(
-                projectType.nullSafeMap {
-                    when (it) {
-                        ProjectType.UNITY -> unitySymbolsDir.orNull
-                        else -> null
-                    }
-                }
-            )
-            task.ndkEnabled.set(
-                embraceConfig?.ndkEnabled ?: true
-            )
-            task.deobfuscatedFilesDirPath.set(
-                project.layout.buildDirectory.dir(
-                    "outputs/embrace/native/mapping/${getMappingFileFolder(data.buildTypeName, data.flavorName)}"
-                )
-            )
-
-            val customSymbolsDirectory = behavior.customSymbolsDirectory
-            if (customSymbolsDirectory.isNullOrEmpty()) {
-                task.architecturesDirectoryForNative.from(
-                    mergeNativeLibsProvider.safeFlatMap { libTask ->
-                        // we want the directory where all architectures live. So to make it generic and
-                        // work with any native build tool, we will go to any .so file, and then go up from
-                        // there to the architectures directory. This way we don't have to hardcode any path
-                        // For example:
-                        // /Users/.../build/intermediates/embrace/NdkTest/_tmp_/app/build/
-                        // intermediates/merged_native_libs/release/out/lib/armeabi-v7a/libembrace-native.so
-                        // the .so file will always be inside its corresponding architecture folder.
-                        // By going 2 levels up, we will get all available architecture folders
-                        return@safeFlatMap libTask.outputs.files.asFileTree.elements.nullSafeMap {
-                            setOfNotNull(
-                                it.firstOrNull { possibleSoFile ->
-                                    possibleSoFile.asFile.absolutePath.endsWith(".so")
-                                }?.asFile?.parentFile?.parentFile
-                            )
-                        }
-                    }
-                )
-            } else {
-                // if automatic detection works fine we should remove the usage of customSymbolsDirectory. It is
-                // still used in case there is a bug in new automatic symbols detection
-                val customSymbolsFile = project.rootProject.file(customSymbolsDirectory)
-                if (customSymbolsFile.exists()) {
-                    task.architecturesDirectoryForNative.from(customSymbolsFile)
-                } else {
-                    val msg = "Can not retrieve native symbols. Custom symbols " +
-                        "directory=${customSymbolsFile.path} does not exist.\nMake sure native symbols are " +
-                        "located in that directory"
-                    error(msg)
-                }
-            }
         }
 
-        ndkUploadTaskProvider.configure { ndkUploadTask: NdkUploadTask ->
-            val shouldExecuteNdkUploadTaskProvider = getShouldExecuteNdkUploadTaskProvider(project, embraceConfig)
-            ndkUploadTask.onlyIf { shouldExecuteNdkUploadTaskProvider.orNull ?: true }
-            ndkUploadTask.projectType.set(projectType)
-            ndkUploadTask.mustRunAfter(object : Callable<Any> {
+        compressionTaskProvider.configure { compressionTask: CompressSharedObjectFilesTask ->
+            val shouldExecuteCompressionTaskProvider = getShouldExecuteCompressionTaskProvider(project)
+            compressionTask.onlyIf { shouldExecuteCompressionTaskProvider.orNull ?: true }
+            compressionTask.mustRunAfter(object : Callable<Any> {
                 override fun call(): Any {
                     return listOfNotNull(
                         project.tryGetTaskProvider(
@@ -143,25 +77,132 @@ class NdkUploadTaskRegistration(
                 }
             })
         }
+
+        val hashTaskProvider = project.registerTask(
+            HashSharedObjectFilesTask.NAME,
+            HashSharedObjectFilesTask::class.java,
+            data
+        ) { task ->
+            task.compressedSharedObjectFilesDirectory.set(
+                compressionTaskProvider.flatMap { it.compressedSharedObjectFilesDirectory }
+            )
+            task.architecturesToHashedSharedObjectFilesMap.set(
+                project.layout.buildDirectory.file("intermediates/embrace/hashes/${data.name}/hashes.json")
+            )
+        }
+
+        val ndkUploadTaskProvider = project.registerTask(
+            NdkUploadTask.NAME,
+            NdkUploadTask::class.java,
+            data
+        ) { task ->
+            // TODO: Check why this is needed for 7.5.1. For Gradle 8+ Gradle detects automatically when the other tasks aren't executed
+            task.onlyIf {
+                task.compressedSharedObjectFilesDirectory.asFile.get().exists() &&
+                    task.architecturesToHashedSharedObjectFilesMapJson.asFile.get().exists()
+            }
+            task.failBuildOnUploadErrors.set(behavior.failBuildOnUploadErrors)
+            task.requestParams.set(
+                project.provider {
+                    RequestParams(
+                        appId = embraceConfig?.appId.orEmpty(),
+                        apiToken = embraceConfig?.apiToken.orEmpty(),
+                        endpoint = EmbraceEndpoint.NDK,
+                        failBuildOnUploadErrors = behavior.failBuildOnUploadErrors.get(),
+                        baseUrl = behavior.baseUrl,
+                    )
+                }
+            )
+
+            task.compressedSharedObjectFilesDirectory.set(
+                compressionTaskProvider.flatMap { it.compressedSharedObjectFilesDirectory }
+            )
+
+            task.architecturesToHashedSharedObjectFilesMapJson.set(
+                hashTaskProvider.flatMap { it.architecturesToHashedSharedObjectFilesMap }
+            )
+
+            task.generatedEmbraceResourcesDirectory.set(
+                project.layout.buildDirectory.dir("$GENERATED_RESOURCE_PATH/${data.name}/ndk")
+            )
+        }
+
         ndkUploadTaskProvider.let {
             variant.sources.res?.addGeneratedSourceDirectory(
                 it,
                 NdkUploadTask::generatedEmbraceResourcesDirectory
             )
         }
-        return ndkUploadTaskProvider
     }
 
-    private fun getMappingFileFolder(
-        buildTypeName: String?,
-        flavorName: String?,
-    ) = if (flavorName.isNullOrEmpty()) {
-        buildTypeName ?: ""
+    private fun getSharedObjectFilesProvider(
+        project: Project,
+        data: AndroidCompactedVariantData,
+        variant: Variant,
+    ): Provider<File> {
+        return projectType.flatMap { projectType: ProjectType ->
+            project.tasks.named("merge${variant.name.capitalizedString()}NativeLibs").map { task ->
+                when (projectType) {
+                    ProjectType.UNITY -> getUnitySharedObjectFiles(project, data)
+                    ProjectType.NATIVE -> getNativeSharedObjectFiles(project, task)
+                    else -> File("") // ndk upload won't be executed
+                }
+            }
+        }
+    }
+
+    private fun getUnitySharedObjectFiles(project: Project, data: AndroidCompactedVariantData): File {
+        // TODO: Verify if errors should be thrown if the directories or SO files are not found. Improve error messaging.
+        val sharedObjectsDirectory = unitySymbolsDir.orNull ?: error("Unity shared objects directory not found")
+
+        val decompressedObjectsDirectory = project.layout.buildDirectory
+            .dir("/intermediates/embrace/unity/${getMappingFileFolder(data)}")
+            .orNull ?: error("Decompressed Unity shared object directory not found")
+
+        return UnitySymbolFilesManager.of()
+            .getSymbolFiles(sharedObjectsDirectory, decompressedObjectsDirectory)
+            .firstOrNull()
+            ?: error("Unity shared object files not found")
+    }
+
+    private fun getNativeSharedObjectFiles(project: Project, task: Task): File {
+        val customSymbolsDirectory = behavior.customSymbolsDirectory
+        return if (!customSymbolsDirectory.isNullOrEmpty()) {
+            getNativeSharedObjectFilesFromCustomDirectory(customSymbolsDirectory, project)
+        } else {
+            getDefaultNativeSharedObjectFiles(task)
+        }
+    }
+
+    private fun getNativeSharedObjectFilesFromCustomDirectory(
+        customSymbolsDirectory: String,
+        project: Project,
+    ): File {
+        // TODO: specify if we want customSymbolsDirectory to contain a list of .so files, or a list of architecture directories.
+        val customSymbolsDir = project.rootProject.file(customSymbolsDirectory).takeIf { it.exists() }
+            ?: error("Custom symbols directory does not exist. Specified path: $customSymbolsDirectory")
+        return customSymbolsDir
+    }
+
+    /*
+     * Find the first .so file in the mergeNativeLibs task output and go up two levels to get the architecture directory.
+     * This is a workaround to get the architecture directory without hardcoding the path.
+     * We expect the task outputs to be in the following format:
+     * app/build/intermediates/merged_native_libs/release/out/lib/armeabi-v7a/libembrace-native.so
+     */
+    private fun getDefaultNativeSharedObjectFiles(task: Task): File {
+        return task.outputs.files.asFileTree.files.firstOrNull {
+            it.extension == "so"
+        }?.parentFile?.parentFile ?: error("Shared object file not found")
+    }
+
+    private fun getMappingFileFolder(variantData: AndroidCompactedVariantData) = if (variantData.flavorName.isBlank()) {
+        variantData.buildTypeName
     } else {
-        "$flavorName/$buildTypeName"
+        "${variantData.flavorName}/${variantData.buildTypeName}"
     }
 
-    private fun getShouldExecuteNdkUploadTaskProvider(project: Project, embraceConfig: EmbraceVariantConfig?) = project.provider {
-        embraceConfig?.ndkEnabled ?: true && (projectType.orNull == ProjectType.NATIVE || projectType.orNull == ProjectType.UNITY)
+    private fun getShouldExecuteCompressionTaskProvider(project: Project) = project.provider {
+        (projectType.orNull == ProjectType.NATIVE || projectType.orNull == ProjectType.UNITY)
     }
 }

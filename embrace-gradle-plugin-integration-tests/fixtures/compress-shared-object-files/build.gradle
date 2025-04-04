@@ -1,0 +1,17 @@
+import io.embrace.android.gradle.plugin.tasks.ndk.CompressSharedObjectFilesTask
+
+plugins {
+    id("java")
+    id("io.embrace.swazzler")
+    id("io.embrace.android.testplugin")
+}
+
+project.tasks.register("compressTask", CompressSharedObjectFilesTask) { task ->
+    task.architecturesDirectory.set(
+        project.layout.projectDirectory.dir("testArchitecturesDir")
+    )
+    task.compressedSharedObjectFilesDirectory.set(
+        project.layout.buildDirectory.dir("compressedSharedObjectFiles")
+    )
+    integrationTest.configureEmbraceTask(task)
+}

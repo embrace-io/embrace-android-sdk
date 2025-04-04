@@ -1,6 +1,5 @@
 package io.embrace.android.gradle.plugin.tasks.ndk
 
-import io.embrace.android.gradle.plugin.Logger
 import io.embrace.android.gradle.plugin.network.EmbraceEndpoint
 import io.embrace.android.gradle.plugin.network.HttpCallResult
 import io.embrace.android.gradle.plugin.network.NetworkService
@@ -55,7 +54,6 @@ import io.embrace.android.gradle.plugin.tasks.handleHttpCallResult
 class NdkUploadHandshake(
     private val networkService: NetworkService,
 ) {
-    private val logger = Logger(NdkUploadHandshake::class.java)
 
     fun getRequestedSymbols(request: NdkUploadHandshakeRequest, failBuildOnUploadErrors: Boolean): Map<String, List<String>>? {
         val result = networkService.postNdkHandshake(
@@ -68,10 +66,8 @@ class NdkUploadHandshake(
             val response = result.body as? NdkUploadHandshakeResponse ?: return null
             val symbolsToUpload = response.symbols
             return if (symbolsToUpload.isNullOrEmpty()) {
-                logger.info("No NDK files requested. Skipping NDK symbols upload.")
                 null
             } else {
-                logger.info("Requested NDK symbols: " + response.symbols)
                 symbolsToUpload
             }
         }

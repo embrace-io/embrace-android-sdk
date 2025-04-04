@@ -91,9 +91,9 @@ class NdkUploadTaskRegistration(
             )
         }
 
-        val ndkUploadTaskProvider = project.registerTask(
-            NdkUploadTask.NAME,
-            NdkUploadTask::class.java,
+        val uploadTask = project.registerTask(
+            UploadSharedObjectFilesTask.NAME,
+            UploadSharedObjectFilesTask::class.java,
             data
         ) { task ->
             // TODO: Check why this is needed for 7.5.1. For Gradle 8+ Gradle detects automatically when the other tasks aren't executed
@@ -121,10 +121,25 @@ class NdkUploadTaskRegistration(
             task.architecturesToHashedSharedObjectFilesMapJson.set(
                 hashTaskProvider.flatMap { it.architecturesToHashedSharedObjectFilesMap }
             )
+        }
+
+        val ndkUploadTaskProvider = project.registerTask(
+            NdkUploadTask.NAME,
+            NdkUploadTask::class.java,
+            data
+        ) { task ->
+            // TODO: Check why this is needed for 7.5.1. For Gradle 8+ Gradle detects automatically when the other tasks aren't executed
+            task.onlyIf { task.architecturesToHashedSharedObjectFilesMapJson.asFile.get().exists() }
+
+            task.architecturesToHashedSharedObjectFilesMapJson.set(
+                hashTaskProvider.flatMap { it.architecturesToHashedSharedObjectFilesMap }
+            )
 
             task.generatedEmbraceResourcesDirectory.set(
                 project.layout.buildDirectory.dir("$GENERATED_RESOURCE_PATH/${data.name}/ndk")
             )
+
+            task.dependsOn(uploadTask)
         }
 
         ndkUploadTaskProvider.let {

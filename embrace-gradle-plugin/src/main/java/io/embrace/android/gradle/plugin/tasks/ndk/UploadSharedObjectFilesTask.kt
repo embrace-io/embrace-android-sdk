@@ -64,7 +64,7 @@ abstract class UploadSharedObjectFilesTask @Inject constructor(
         serializer.fromJson(
             architecturesToHashedSharedObjectFilesMapJson.get().asFile.bufferedReader().use { it.readText() },
             ArchitecturesToHashedSharedObjectFilesMap::class.java
-        ).architecturesToHashedSharedObjectFiles
+        ).symbols
     } catch (exception: Exception) {
         error("Failed to read the architectures to hashed shared object files map: ${exception.message}")
     }

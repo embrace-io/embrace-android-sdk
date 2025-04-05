@@ -58,4 +58,32 @@ class UploadSharedObjectFilesTaskTest {
             }
         )
     }
+
+    // --- Tests for failBuildOnUploadErrors disabled ---
+
+    @Test
+    fun `don't upload files when handshake response can't be serialized`() {
+        rule.runTest(
+            fixture = "upload-shared-object-files-fail-build-disabled",
+            setup = {
+                setupResponseWithMalformedBody(EmbraceEndpoint.NDK_HANDSHAKE)
+            },
+            assertions = {
+                verifyNoUploads()
+            }
+        )
+    }
+
+    @Test
+    fun `don't upload files when backend returns an error`() {
+        rule.runTest(
+            fixture = "upload-shared-object-files-fail-build-disabled",
+            setup = {
+                setupErrorResponse(EmbraceEndpoint.NDK_HANDSHAKE)
+            },
+            assertions = {
+                verifyNoUploads()
+            }
+        )
+    }
 }

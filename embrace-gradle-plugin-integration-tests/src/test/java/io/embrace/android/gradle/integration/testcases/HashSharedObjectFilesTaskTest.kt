@@ -2,9 +2,7 @@ package io.embrace.android.gradle.integration.testcases
 
 import io.embrace.android.gradle.integration.framework.PluginIntegrationTestRule
 import io.embrace.android.gradle.integration.framework.file
-import io.embrace.android.gradle.plugin.hash.calculateSha1ForFile
-import io.embrace.android.gradle.plugin.tasks.ndk.ArchitecturesToHashedSharedObjectFilesMap
-import io.embrace.android.gradle.plugin.util.serialization.MoshiSerializer
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -38,15 +36,12 @@ import org.junit.Test
  */
 class HashSharedObjectFilesTaskTest {
 
-    private val expectedSharedObjectFiles = listOf("libemb-donuts.so", "libemb-crisps.so")
-    private val expectedArchitectures = listOf("x86_64", "x86", "armeabi-v7a", "arm64-v8a")
-
     @Rule
     @JvmField
     val rule: PluginIntegrationTestRule = PluginIntegrationTestRule()
 
     @Test
-    fun `map output is correct`() {
+    fun `map output is correct for expectedSharedObjectFiles`() {
         rule.runTest(
             fixture = "hash-shared-object-files",
             task = "hashTask",
@@ -54,18 +49,52 @@ class HashSharedObjectFilesTaskTest {
                 assertTrue(projectDir.file("compressedSharedObjectFiles").exists())
             },
             assertions = { projectDir ->
-                val deserializedOutputMap = MoshiSerializer().fromJson(
-                    projectDir.file("build/output.json").readText(),
-                    ArchitecturesToHashedSharedObjectFilesMap::class.java
-                ).architecturesToHashedSharedObjectFiles
+                assertEquals(
+                    projectDir.file("expectedOutput.json").bufferedReader().use { it.readText() },
+                    projectDir.file("build/output.json").bufferedReader().use { it.readText() }
+                )
+            }
+        )
+    }
 
-                expectedArchitectures.forEach { architecture ->
-                    expectedSharedObjectFiles.forEach { sharedObjectFile ->
-                        val sha1Hash = deserializedOutputMap[architecture]?.get(sharedObjectFile)
-                        val compressedSoFile = projectDir.file("compressedSharedObjectFiles/$architecture/$sharedObjectFile")
-                        assertTrue(sha1Hash == calculateSha1ForFile(compressedSoFile))
-                    }
-                }
+    /*
+     * The following test cases should never happen.
+     * CompressSharedObjectFilesTask should fail if the input directory has any problems, so this task wouldn't be executed.
+     * I'm adding this check in case for some reason the output of the compression task is incorrect.
+     */
+    @Test
+    fun `an error is thrown when compressedSharedObjectFiles contain files other than shared objects`() {
+        rule.runTest(
+            fixture = "hash-shared-object-files",
+            task = "hashTask",
+            setup = { projectDir ->
+                // delete architecture directories
+                projectDir.file("compressedSharedObjectFiles").listFiles()?.forEach { it.deleteRecursively() }
+                // create a file that is not a .so file
+                projectDir.file("compressedSharedObjectFiles/someArch").mkdirs()
+                projectDir.file("compressedSharedObjectFiles/someArch/notASharedObject.txt").writeText("not a .so file :)")
+            },
+            expectedExceptionMessage = "Shared object files not found",
+            assertions = {
+                verifyNoUploads()
+            }
+        )
+    }
+
+    @Test
+    fun `an error is thrown when compressedSharedObjectFilesDirectory does not contain directories`() {
+        rule.runTest(
+            fixture = "hash-shared-object-files",
+            task = "hashTask",
+            setup = { projectDir ->
+                // delete architecture directories
+                projectDir.file("compressedSharedObjectFiles").listFiles()?.forEach { it.deleteRecursively() }
+                // create a file instead of a directory
+                projectDir.file("compressedSharedObjectFiles/aFile.txt").writeText("not a directory")
+            },
+            expectedExceptionMessage = "Compressed shared object files directory does not contain any architecture directories",
+            assertions = {
+                verifyNoUploads()
             }
         )
     }

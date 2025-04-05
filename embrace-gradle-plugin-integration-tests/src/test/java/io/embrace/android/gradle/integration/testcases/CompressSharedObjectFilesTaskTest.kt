@@ -180,4 +180,48 @@ class CompressSharedObjectFilesTaskTest {
             }
         )
     }
+
+    @Test
+    fun `an error is thrown when architecture directories only contains nested directories`() {
+        rule.runTest(
+            fixture = "compress-shared-object-files",
+            task = "compressTask",
+            setup = { projectDir ->
+                // delete architecture directories
+                projectDir.file("testArchitecturesDir").listFiles()?.forEach { it.deleteRecursively() }
+                // create an empty directory
+                projectDir.file("testArchitecturesDir/someArch").mkdirs()
+                // create another empty directory
+                projectDir.file("testArchitecturesDir/someArch/emptyDir").mkdirs()
+                // add a shared object file to emptyDir
+                projectDir.file("testArchitecturesDir/someArch/emptyDir/libexample.so").writeText("some content")
+            },
+            expectedExceptionMessage = "No shared object files found in architecture directory someArch",
+            assertions = {
+                verifyNoUploads()
+            }
+        )
+    }
+
+    @Test
+    fun `files that are not directly in architecture directories are ignored`() {
+        rule.runTest(
+            fixture = "compress-shared-object-files",
+            task = "compressTask",
+            setup = { projectDir ->
+                // create a file inside a nested directory inside an architecture directory
+                projectDir.file("testArchitecturesDir/arm64-v8a/nestedDirectory").mkdirs()
+                projectDir.file("testArchitecturesDir/arm64-v8a/nestedDirectory/libexample.so").writeText("some content")
+            },
+            expectedOutcome = TaskOutcome.SUCCESS,
+            assertions = { projectDir ->
+                assertTrue(
+                    projectDir.file("build/compressedSharedObjectFiles/arm64-v8a/")
+                        .listFiles { file -> file.name == "nestedDirectory" || file.name == "libexample.so" }
+                        .orEmpty()
+                        .isEmpty()
+                )
+            }
+        )
+    }
 }

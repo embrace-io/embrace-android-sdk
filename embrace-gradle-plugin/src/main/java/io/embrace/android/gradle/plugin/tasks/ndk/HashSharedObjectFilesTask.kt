@@ -44,16 +44,18 @@ abstract class HashSharedObjectFilesTask @Inject constructor(
 
     private fun createOutputMap(): Map<String, Map<String, String>> =
         compressedSharedObjectFilesDirectory.get().asFile
-            .listFiles()
-            ?.filter { it.isDirectory && it.listFiles()?.isNotEmpty() == true }
-            ?.associate { archDir ->
+            .listFiles().orEmpty()
+            .filter { it.isDirectory && it.listFiles()?.isNotEmpty() == true }
+            .ifEmpty { error("Compressed shared object files directory does not contain any architecture directories") }
+            .associate { archDir ->
                 archDir.name to mapSharedObjectsToHashes(archDir)
-            } ?: error("Hashing of shared object files failed")
+            }
 
     private fun mapSharedObjectsToHashes(architectureDir: File): Map<String, String> {
-        val sharedObjectFiles = architectureDir.listFiles { file ->
-            file.name.endsWith(".so")
-        } ?: error("Shared object files not found") // Should never happen
+        val sharedObjectFiles = architectureDir
+            .listFiles { file -> file.name.endsWith(".so") }
+            .orEmpty()
+            .ifEmpty { error("Shared object files not found") }
 
         return sharedObjectFiles.associate { it.name to calculateSha1ForFile(it) }
     }

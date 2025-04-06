@@ -59,15 +59,56 @@ class UploadSharedObjectFilesTaskTest {
         )
     }
 
-    // --- Tests for failBuildOnUploadErrors disabled ---
+    @Test
+    fun `an error is thrown when a shared object is requested but it is not found`() {
+        rule.runTest(
+            fixture = "upload-shared-object-files",
+            setup = {
+                setupMockResponses(listOf("libemb-not-there.so"), listOf("arm64-v8a"), listOf("demoDevelopmentRelease"))
+            },
+            expectedExceptionMessage = "Compressed file not found for requested",
+            assertions = { _ ->
+                verifyNoUploads()
+            }
+        )
+    }
 
     @Test
-    fun `don't upload files when handshake response can't be serialized`() {
+    fun `an error is thrown when an architecture is requested but it is not found`() {
         rule.runTest(
-            fixture = "upload-shared-object-files-fail-build-disabled",
+            fixture = "upload-shared-object-files",
+            setup = {
+                setupMockResponses(listOf("libemb-crisps.so"), listOf("brutalism"), listOf("demoDevelopmentRelease"))
+            },
+            expectedExceptionMessage = "Requested architecture was not found",
+            assertions = { _ ->
+                verifyNoUploads()
+            }
+        )
+    }
+
+    @Test
+    fun `an error is thrown when the handshake response can't be serialized`() {
+        rule.runTest(
+            fixture = "upload-shared-object-files",
             setup = {
                 setupResponseWithMalformedBody(EmbraceEndpoint.NDK_HANDSHAKE)
             },
+            expectedExceptionMessage = "Exception occurred while making network request",
+            assertions = {
+                verifyNoUploads()
+            }
+        )
+    }
+
+    @Test
+    fun `an error is thrown when the backend sends an arch with no symbols`() {
+        rule.runTest(
+            fixture = "upload-shared-object-files",
+            setup = {
+                setupMapResponseWithEmptyValues(EmbraceEndpoint.NDK_HANDSHAKE)
+            },
+            expectedExceptionMessage = "An arch with no symbols was requested",
             assertions = {
                 verifyNoUploads()
             }
@@ -77,7 +118,8 @@ class UploadSharedObjectFilesTaskTest {
     @Test
     fun `don't upload files when backend returns an error`() {
         rule.runTest(
-            fixture = "upload-shared-object-files-fail-build-disabled",
+            fixture = "upload-shared-object-files",
+            additionalArgs = listOf("-PfailBuildOnUploadErrors=false"),
             setup = {
                 setupErrorResponse(EmbraceEndpoint.NDK_HANDSHAKE)
             },

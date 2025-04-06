@@ -6,10 +6,13 @@ plugins {
     id("io.embrace.android.testplugin")
 }
 
+def failBuildOnUploadErrors = (project.findProperty("failBuildOnUploadErrors") ?: "true").toBoolean()
+
 project.tasks.register("compressTask", CompressSharedObjectFilesTask) { task ->
     task.architecturesDirectory.set(
         project.layout.projectDirectory.dir("testArchitecturesDir")
     )
+    task.failBuildOnUploadErrors.set(failBuildOnUploadErrors)
     task.compressedSharedObjectFilesDirectory.set(
         project.layout.buildDirectory.dir("compressedSharedObjectFiles")
     )

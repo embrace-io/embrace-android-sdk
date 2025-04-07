@@ -39,4 +39,18 @@ class InjectSharedObjectFilesTaskIntegrationTest {
             }
         )
     }
+
+    @Test
+    fun `don't throw an error when failBuildOnUploadErrors is disabled`() {
+        rule.runTest(
+            fixture = "inject-shared-object-files",
+            additionalArgs = listOf("-PfailBuildOnUploadErrors=false"),
+            setup = { projectDir ->
+                projectDir.file("architecturesMap.json").writeText("invalid json")
+            },
+            assertions = {
+                verifyNoUploads()
+            }
+        )
+    }
 }

@@ -1,5 +1,6 @@
 package io.embrace.android.gradle.plugin.tasks.ndk
 
+import io.embrace.android.gradle.plugin.Logger
 import io.embrace.android.gradle.plugin.tasks.EmbraceTaskImpl
 import io.embrace.android.gradle.plugin.util.compression.ZstdFileCompressor
 import org.gradle.api.file.DirectoryProperty
@@ -23,6 +24,7 @@ abstract class CompressSharedObjectFilesTask @Inject constructor(
 ) : EmbraceTaskImpl(objectFactory) {
 
     private val compressor = ZstdFileCompressor()
+    private val logger = Logger(CompressSharedObjectFilesTask::class.java)
 
     @get:InputDirectory
     @get:SkipWhenEmpty
@@ -45,7 +47,7 @@ abstract class CompressSharedObjectFilesTask @Inject constructor(
                     compressSharedObjectFiles(archDir)
                 }
         } catch (exception: Exception) {
-            logger.error(exception.message)
+            logger.error("An error has occurred while compressing shared object files", exception)
             if (failBuildOnUploadErrors.get()) {
                 throw exception
             }

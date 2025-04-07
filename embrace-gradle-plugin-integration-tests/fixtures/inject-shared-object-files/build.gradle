@@ -6,9 +6,11 @@ plugins {
     id("io.embrace.android.testplugin")
 }
 
+def failBuildOnUploadErrors = (project.findProperty("failBuildOnUploadErrors") ?: "true").toBoolean()
+
 project.tasks.register("testTask", InjectSharedObjectFilesTask) { task ->
     integrationTest.configureEmbraceTask(task)
-    task.failBuildOnUploadErrors.set(true)
+    task.failBuildOnUploadErrors.set(failBuildOnUploadErrors)
     task.generatedEmbraceResourcesDirectory.set(
             project.layout.buildDirectory.dir("generated-embrace-resources")
     )

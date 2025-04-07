@@ -6,6 +6,7 @@ import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
 import android.webkit.ConsoleMessage
+import io.embrace.android.embracesdk.flow.Workflow
 import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.api.SdkApi
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
@@ -375,6 +376,10 @@ public class Embrace private constructor(
 
     override fun getSpan(spanId: String): EmbraceSpan? {
         return impl.getSpan(spanId)
+    }
+
+    override fun startWorkflow(firstMilestoneName: String): Workflow {
+        return impl.startWorkflow(firstMilestoneName)
     }
 
     /**

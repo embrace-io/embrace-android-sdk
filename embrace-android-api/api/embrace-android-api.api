@@ -42,6 +42,27 @@ public abstract interface annotation class io/embrace/android/embracesdk/annotat
 public abstract interface annotation class io/embrace/android/embracesdk/annotation/StartupActivity : java/lang/annotation/Annotation {
 }
 
+public abstract interface class io/embrace/android/embracesdk/flow/Flow {
+	public abstract fun end (Lio/embrace/android/embracesdk/flow/Result;)Z
+}
+
+public final class io/embrace/android/embracesdk/flow/Flow$DefaultImpls {
+	public static synthetic fun end$default (Lio/embrace/android/embracesdk/flow/Flow;Lio/embrace/android/embracesdk/flow/Result;ILjava/lang/Object;)Z
+}
+
+public final class io/embrace/android/embracesdk/flow/Result : java/lang/Enum {
+	public static final field ERROR Lio/embrace/android/embracesdk/flow/Result;
+	public static final field SUCCESS Lio/embrace/android/embracesdk/flow/Result;
+	public static final field USER_ABANDON Lio/embrace/android/embracesdk/flow/Result;
+	public final fun getSpanErrorCode ()Lio/embrace/android/embracesdk/spans/ErrorCode;
+	public static fun valueOf (Ljava/lang/String;)Lio/embrace/android/embracesdk/flow/Result;
+	public static fun values ()[Lio/embrace/android/embracesdk/flow/Result;
+}
+
+public abstract interface class io/embrace/android/embracesdk/flow/Workflow : io/embrace/android/embracesdk/flow/Flow {
+	public abstract fun nextMilestone (Ljava/lang/String;)Z
+}
+
 public abstract interface class io/embrace/android/embracesdk/internal/api/BreadcrumbApi {
 	public abstract fun addBreadcrumb (Ljava/lang/String;)V
 }
@@ -341,6 +362,7 @@ public abstract interface class io/embrace/android/embracesdk/spans/TracingApi {
 	public abstract fun startSpan (Ljava/lang/String;Lio/embrace/android/embracesdk/spans/AutoTerminationMode;)Lio/embrace/android/embracesdk/spans/EmbraceSpan;
 	public abstract fun startSpan (Ljava/lang/String;Lio/embrace/android/embracesdk/spans/EmbraceSpan;Lio/embrace/android/embracesdk/spans/AutoTerminationMode;)Lio/embrace/android/embracesdk/spans/EmbraceSpan;
 	public abstract fun startSpan (Ljava/lang/String;Lio/embrace/android/embracesdk/spans/EmbraceSpan;Ljava/lang/Long;Lio/embrace/android/embracesdk/spans/AutoTerminationMode;)Lio/embrace/android/embracesdk/spans/EmbraceSpan;
+	public abstract fun startWorkflow (Ljava/lang/String;)Lio/embrace/android/embracesdk/flow/Workflow;
 }
 
 public final class io/embrace/android/embracesdk/spans/TracingApi$DefaultImpls {

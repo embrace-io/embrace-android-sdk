@@ -4,12 +4,14 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.arch.assertIsTypePerformance
 import io.embrace.android.embracesdk.assertions.assertEmbraceSpanData
 import io.embrace.android.embracesdk.assertions.findSpanByName
+import io.embrace.android.embracesdk.assertions.findSpansByName
 import io.embrace.android.embracesdk.concurrency.SingleThreadTestScheduledExecutor
 import io.embrace.android.embracesdk.fakes.FakeSpanExporter
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fixtures.TOO_LONG_ATTRIBUTE_KEY
 import io.embrace.android.embracesdk.fixtures.TOO_LONG_ATTRIBUTE_VALUE
+import io.embrace.android.embracesdk.flow.Result
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.payload.ApplicationState
 import io.embrace.android.embracesdk.internal.payload.Attribute
@@ -331,6 +333,34 @@ internal class TracingApiTest {
     }
 
     @Test
+    fun `fail workflow`() {
+        testRule.runTest(
+            testCaseAction = {
+                recordSession {
+                    clock.tick(100L)
+                    val op = embrace.startWorkflow("zeroth")
+                    clock.tick(100L)
+                    op.nextMilestone("first")
+                    clock.tick(100L)
+                    op.nextMilestone("second")
+                    clock.tick(100L)
+                    op.nextMilestone("third")
+                    clock.tick(100L)
+                    op.end(Result.USER_ABANDON)
+                }
+            },
+            assertAction = {
+                with(getSingleSessionEnvelope()) {
+                    assertNotNull(findSpansByName(name = "zeroth"))
+                    assertNotNull(findSpansByName(name = "first"))
+                    assertNotNull(findSpansByName(name = "second"))
+                    assertNotNull(findSpansByName(name = "third"))
+                }
+            }
+        )
+    }
+
+    @Test
     fun `span links`() {
         var linkedSpanId: String? = null
         testRule.runTest(
@@ -365,7 +395,6 @@ internal class TracingApiTest {
             }
         )
     }
-
 
     private fun EmbracePayloadAssertionInterface.getSdkInitSpanFromBackgroundActivity(): List<Span> {
         val lastSentBackgroundActivity = getSingleSessionEnvelope(ApplicationState.BACKGROUND)

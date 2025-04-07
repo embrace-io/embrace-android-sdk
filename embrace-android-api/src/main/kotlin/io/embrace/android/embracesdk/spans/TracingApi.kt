@@ -1,5 +1,7 @@
 package io.embrace.android.embracesdk.spans
 
+import io.embrace.android.embracesdk.flow.Workflow
+
 /**
  * The public API used to add traces to your application. Note that [recordCompletedSpan] can be used before the SDK is initialized.
  * The actual trace won't be recorded until the SDK is started, but it's safe to use this prior to SDK initialization.
@@ -264,4 +266,6 @@ public interface TracingApi {
      * if was completed in a prior session.
      */
     public fun getSpan(spanId: String): EmbraceSpan?
+
+    public fun startWorkflow(firstMilestoneName: String): Workflow
 }

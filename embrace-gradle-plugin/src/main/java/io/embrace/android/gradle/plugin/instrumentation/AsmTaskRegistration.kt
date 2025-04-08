@@ -2,37 +2,21 @@ package io.embrace.android.gradle.plugin.instrumentation
 
 import com.android.build.api.instrumentation.FramesComputationMode
 import com.android.build.api.instrumentation.InstrumentationScope
-import com.android.build.api.variant.AndroidComponentsExtension
-import io.embrace.android.gradle.plugin.config.PluginBehavior
-import io.embrace.android.gradle.plugin.instrumentation.config.model.VariantConfig
-import org.gradle.api.Project
-import org.gradle.api.provider.ListProperty
+import io.embrace.android.gradle.plugin.tasks.registration.EmbraceTaskRegistration
+import io.embrace.android.gradle.plugin.tasks.registration.RegistrationParams
 
-/**
- * Registers an ASM class visitor for all build variants, which ensures that the
- * relevant classes are instrumented.
- */
-fun registerAsmTasks(
-    project: Project,
-    behavior: PluginBehavior,
-    variantConfigurationsListProperty: ListProperty<VariantConfig>,
-) {
-    // register for asm
-    project.extensions.getByType(AndroidComponentsExtension::class.java).onVariants { variant ->
-        project.logger.info("Registered ASM task for ${variant.name}")
+class AsmTaskRegistration : EmbraceTaskRegistration {
+    override fun register(params: RegistrationParams) {
+        params.execute()
+    }
 
-        // compute frames automatically only for modified methods
-        variant.instrumentation.setAsmFramesComputationMode(
-            FramesComputationMode.COMPUTE_FRAMES_FOR_INSTRUMENTED_METHODS
-        )
+    private fun RegistrationParams.execute() {
         try {
-            // register the ASM class visitor factory
+            variant.instrumentation.setAsmFramesComputationMode(FramesComputationMode.COMPUTE_FRAMES_FOR_INSTRUMENTED_METHODS)
             variant.instrumentation.transformClassesWith(
                 EmbraceClassVisitorFactory::class.java,
                 InstrumentationScope.ALL
             ) { params: BytecodeInstrumentationParams ->
-                project.logger.debug("Configuring ASM instrumentation")
-
                 params.config.set(
                     variantConfigurationsListProperty.map { variantConfigs ->
                         variantConfigs.first { it.variantName == variant.name }
@@ -52,12 +36,11 @@ fun registerAsmTasks(
                 params.shouldInstrumentOnLongClick.set(behavior.instrumentation.onLongClickEnabled)
                 params.shouldInstrumentOnClick.set(behavior.instrumentation.onClickEnabled)
             }
-            project.logger.debug("Asm transformClassesWith successfully called.")
-        } catch (e: TransformClassesWithReflectionException) {
-            project.logger.warn(
-                "There was a reflection issue while performing ASM bytecode transformation.\nThis " + "shouldn't affect build output.",
-                e
-            )
+        } catch (exception: Exception) {
+            project.logger.error("An error has occurred while performing ASM bytecode transformation.", exception)
+            if (behavior.failBuildOnUploadErrors.get()) {
+                throw exception
+            }
         }
     }
 }

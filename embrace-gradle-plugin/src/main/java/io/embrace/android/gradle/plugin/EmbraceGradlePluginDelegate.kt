@@ -12,7 +12,6 @@ import io.embrace.android.gradle.plugin.config.PluginBehaviorImpl
 import io.embrace.android.gradle.plugin.config.variant.EmbraceVariantConfigurationBuilder
 import io.embrace.android.gradle.plugin.gradle.getProperty
 import io.embrace.android.gradle.plugin.instrumentation.config.model.VariantConfig
-import io.embrace.android.gradle.plugin.instrumentation.registerAsmTasks
 import io.embrace.android.gradle.plugin.tasks.registration.TaskRegistrar
 import io.embrace.android.gradle.swazzler.plugin.extension.SwazzlerExtension
 import org.gradle.api.Project
@@ -42,9 +41,6 @@ class EmbraceGradlePluginDelegate {
             behavior,
             agpWrapper
         )
-
-        // bytecode instrumentation must be registered before project evaluation
-        registerAsmTasks(project, behavior, variantConfigurationsListProperty)
 
         val embraceVariantConfigurationBuilder =
             EmbraceVariantConfigurationBuilder(

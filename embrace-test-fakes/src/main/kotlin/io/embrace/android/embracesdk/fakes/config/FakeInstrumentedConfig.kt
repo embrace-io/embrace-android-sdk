@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.fakes.config
 
 import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
+import io.embrace.android.embracesdk.internal.config.instrumented.schema.Base64SharedObjectFilesMap
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.InstrumentedConfig
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.NetworkCaptureConfig
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.OtelLimitsConfig
@@ -20,4 +21,5 @@ data class FakeInstrumentedConfig(
     override val project: ProjectConfig = FakeProjectConfig(base.project, appId = "abcde"),
     override val redaction: RedactionConfig = FakeRedactionConfig(base.redaction),
     override val session: SessionConfig = FakeSessionConfig(base.session),
+    override val symbols: Base64SharedObjectFilesMap = FakeBase64SharedObjectFilesMap(),
 ) : InstrumentedConfig

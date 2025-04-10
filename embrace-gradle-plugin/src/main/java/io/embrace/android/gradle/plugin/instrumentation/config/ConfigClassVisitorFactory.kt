@@ -6,6 +6,7 @@ import io.embrace.android.gradle.plugin.instrumentation.config.arch.sdk.createNe
 import io.embrace.android.gradle.plugin.instrumentation.config.arch.sdk.createProjectConfigInstrumentation
 import io.embrace.android.gradle.plugin.instrumentation.config.arch.sdk.createRedactionConfigInstrumentation
 import io.embrace.android.gradle.plugin.instrumentation.config.arch.sdk.createSessionConfigInstrumentation
+import io.embrace.android.gradle.plugin.instrumentation.config.arch.sdk.createSharedObjectFilesMapInstrumentation
 import io.embrace.android.gradle.plugin.instrumentation.config.model.VariantConfig
 import io.embrace.android.gradle.plugin.instrumentation.config.visitor.ConfigInstrumentationClassVisitor
 import org.objectweb.asm.ClassVisitor
@@ -17,12 +18,14 @@ object ConfigClassVisitorFactory {
         NetworkCaptureConfig,
         ProjectConfig,
         RedactionConfig,
-        SessionConfig;
+        SessionConfig,
+        Base64SharedObjectFilesMap;
 
         val className = "io.embrace.android.embracesdk.internal.config.instrumented.${name}Impl"
 
         fun createClassVisitor(
             cfg: VariantConfig,
+            encodedSharedObjectFilesMap: String?,
             api: Int,
             cv: ClassVisitor?
         ): ClassVisitor {
@@ -33,6 +36,7 @@ object ConfigClassVisitorFactory {
                 ProjectConfig -> createProjectConfigInstrumentation(cfg)
                 RedactionConfig -> createRedactionConfigInstrumentation(cfg)
                 SessionConfig -> createSessionConfigInstrumentation(cfg)
+                Base64SharedObjectFilesMap -> createSharedObjectFilesMapInstrumentation(encodedSharedObjectFilesMap)
             }
             return ConfigInstrumentationClassVisitor(instrumentation, api, cv)
         }
@@ -45,10 +49,11 @@ object ConfigClassVisitorFactory {
     fun createClassVisitor(
         className: String,
         cfg: VariantConfig,
+        encodedSharedObjectFilesMap: String?,
         api: Int,
         cv: ClassVisitor?
     ): ClassVisitor? {
         val type = ConfigClassType.values().singleOrNull { it.className == className }
-        return type?.createClassVisitor(cfg, api, cv)
+        return type?.createClassVisitor(cfg, encodedSharedObjectFilesMap, api, cv)
     }
 }

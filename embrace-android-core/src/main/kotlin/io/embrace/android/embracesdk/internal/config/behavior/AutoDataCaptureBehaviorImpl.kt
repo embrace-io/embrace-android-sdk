@@ -15,7 +15,7 @@ class AutoDataCaptureBehaviorImpl(
 
     private companion object {
         const val THERMAL_STATUS_ENABLED_DEFAULT = true
-        const val UI_LOAD_REMOTE_ENABLED_DEFAULT = false
+        const val UI_LOAD_REMOTE_ENABLED_DEFAULT = true
     }
 
     override val local = local.enabledFeatures

@@ -1,6 +1,7 @@
 package io.embrace.android.gradle.plugin.tasks.ndk
 
 import io.embrace.android.gradle.plugin.Logger
+import io.embrace.android.gradle.plugin.tasks.BuildResourceWriter
 import io.embrace.android.gradle.plugin.tasks.EmbraceTaskImpl
 import io.embrace.android.gradle.plugin.util.serialization.MoshiSerializer
 import org.gradle.api.file.DirectoryProperty
@@ -14,6 +15,7 @@ import org.gradle.api.tasks.SkipWhenEmpty
 import org.gradle.api.tasks.TaskAction
 import java.io.File
 import java.io.IOException
+import java.util.Base64
 import javax.inject.Inject
 
 /**
@@ -43,7 +45,6 @@ abstract class InjectSharedObjectFilesTask @Inject constructor(
     val failBuildOnUploadErrors: Property<Boolean> = objectFactory.property(Boolean::class.java)
 
     private lateinit var architecturesToHashedSharedObjectFilesMap: Map<String, Map<String, String>>
-    private val symbolResourceInjector by lazy { SymbolResourceInjector(failBuildOnUploadErrors.get()) }
 
     @TaskAction
     fun onRun() {
@@ -79,11 +80,21 @@ abstract class InjectSharedObjectFilesTask @Inject constructor(
         }
 
         val ndkSymbolsFile = File(valuesDir, FILE_NDK_SYMBOLS)
-        symbolResourceInjector.writeSymbolResourceFile(ndkSymbolsFile, architecturesToHashedSharedObjectFilesMapJson.get().asFile)
+        writeSymbolResourceFile(ndkSymbolsFile, architecturesToHashedSharedObjectFilesMapJson.get().asFile)
+    }
+
+    @Suppress("NewApi")
+    private fun writeSymbolResourceFile(
+        ndkSymbolsFile: File,
+        architecturesToHashedSharedObjectFilesJson: File,
+    ) {
+        val encodedSymbols = Base64.getEncoder().encodeToString(architecturesToHashedSharedObjectFilesJson.readBytes())
+        BuildResourceWriter().writeBuildInfoFile(ndkSymbolsFile, mapOf(KEY_NDK_SYMBOLS to encodedSymbols))
     }
 
     companion object {
         const val NAME: String = "injectSharedObjectFilesTask"
         const val FILE_NDK_SYMBOLS: String = "ndk_symbols.xml"
+        const val KEY_NDK_SYMBOLS = "emb_ndk_symbols"
     }
 }

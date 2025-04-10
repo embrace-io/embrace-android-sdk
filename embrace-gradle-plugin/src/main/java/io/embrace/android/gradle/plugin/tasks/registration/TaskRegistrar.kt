@@ -9,6 +9,7 @@ import io.embrace.android.gradle.plugin.config.UnitySymbolsDir
 import io.embrace.android.gradle.plugin.config.variant.EmbraceVariantConfigurationBuilder
 import io.embrace.android.gradle.plugin.dependency.installDependenciesForVariant
 import io.embrace.android.gradle.plugin.gradle.GradleCompatibilityHelper
+import io.embrace.android.gradle.plugin.instrumentation.AsmTaskRegistration
 import io.embrace.android.gradle.plugin.instrumentation.config.model.VariantConfig
 import io.embrace.android.gradle.plugin.model.AndroidCompactedVariantData
 import io.embrace.android.gradle.plugin.tasks.il2cpp.Il2CppUploadTaskRegistration
@@ -74,6 +75,7 @@ class TaskRegistrar(
         if (behavior.isIl2CppMappingFilesUploadEnabled) {
             Il2CppUploadTaskRegistration().register(params)
         }
+        AsmTaskRegistration().register(params)
     }
 
     private fun shouldRegisterUploadTasks(

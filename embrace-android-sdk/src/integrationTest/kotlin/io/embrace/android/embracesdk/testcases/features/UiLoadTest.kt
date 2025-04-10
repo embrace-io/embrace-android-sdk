@@ -40,7 +40,7 @@ internal class UiLoadTest {
 
     @Config(sdk = [Build.VERSION_CODES.LOLLIPOP])
     @Test
-    fun `activity open does not create a trace by default`() {
+    fun `activity open create a trace by default`() {
         testRule.runTest(
             instrumentedConfig = FakeInstrumentedConfig(
                 enabledFeatures = FakeEnabledFeatureConfig(bgActivityCapture = true),
@@ -50,7 +50,7 @@ internal class UiLoadTest {
                 simulateOpeningActivities()
             },
             assertAction = {
-                assertTrue(getSingleSessionEnvelope().findSpansOfType(EmbType.Performance.UiLoad).isEmpty())
+                assertEquals(1, getSingleSessionEnvelope().findSpansOfType(EmbType.Performance.UiLoad).size)
             }
         )
     }

@@ -24,6 +24,8 @@ class TestBytecodeInstrumentationParams(
         DefaultProperty(PropertyHost.NO_OP, VariantConfig::class.javaObjectType).convention(
             VariantConfig("", "", null, null, null, null)
         )
+    override val encodedSharedObjectFilesMap: Property<String> =
+        DefaultProperty(PropertyHost.NO_OP, String::class.javaObjectType).convention("")
     override val disabled: Property<Boolean> =
         DefaultProperty(PropertyHost.NO_OP, Boolean::class.javaObjectType).convention(disabled)
     override val classInstrumentationFilter: Property<ClassInstrumentationFilter> =

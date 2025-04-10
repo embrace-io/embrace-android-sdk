@@ -48,25 +48,27 @@ class TaskRegistrar(
 
         setupVariantConfigurationListProperty(variant, variantConfigurationsListProperty)
 
+        val params = RegistrationParams(
+            project,
+            ref,
+            variant,
+            variantConfigurationsListProperty,
+            behavior,
+        )
+
+        AsmTaskRegistration().register(params)
+
         if (behavior.isPluginDisabledForVariant(variant.name) || !shouldRegisterUploadTasks(variant, variantConfigurationsListProperty)) {
             return
         } else {
-            val params = RegistrationParams(
-                project,
-                ref,
-                variant,
-                variantConfigurationsListProperty,
-                behavior,
-            )
-            registerTasks(params, variant)
+            registerUploadTasks(params, variant)
         }
     }
 
-    private fun registerTasks(params: RegistrationParams, variant: AndroidCompactedVariantData) {
+    private fun registerUploadTasks(params: RegistrationParams, variant: AndroidCompactedVariantData) {
         JvmMappingUploadTaskRegistration().register(params)
         if (behavior.isReactNativeProject) {
-            val taskRegistration = EmbraceRnSourcemapGeneratorTaskRegistration()
-            taskRegistration.register(params)
+            EmbraceRnSourcemapGeneratorTaskRegistration().register(params)
         }
         val variantConfig = variantConfigurationsListProperty.get().first { it.variantName == variant.name }
         val unitySymbolsDirProvider = getUnitySymbolsDirProvider(variantConfig)
@@ -75,7 +77,6 @@ class TaskRegistrar(
         if (behavior.isIl2CppMappingFilesUploadEnabled) {
             Il2CppUploadTaskRegistration().register(params)
         }
-        AsmTaskRegistration().register(params)
     }
 
     private fun shouldRegisterUploadTasks(

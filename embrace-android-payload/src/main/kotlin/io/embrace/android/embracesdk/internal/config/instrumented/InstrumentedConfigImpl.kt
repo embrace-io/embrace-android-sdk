@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.config.instrumented
 
+import io.embrace.android.embracesdk.internal.config.instrumented.schema.Base64SharedObjectFilesMap
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.BaseUrlConfig
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.EnabledFeatureConfig
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.InstrumentedConfig
@@ -28,6 +29,7 @@ object InstrumentedConfigImpl : InstrumentedConfig {
     override val project: ProjectConfig = ProjectConfigImpl
     override val redaction: RedactionConfig = RedactionConfigImpl
     override val session: SessionConfig = SessionConfigImpl
+    override val symbols: Base64SharedObjectFilesMap = Base64SharedObjectFilesMapImpl
 }
 
 @EmbraceInstrumented
@@ -50,3 +52,6 @@ object RedactionConfigImpl : RedactionConfig
 
 @EmbraceInstrumented
 object SessionConfigImpl : SessionConfig
+
+@EmbraceInstrumented
+object Base64SharedObjectFilesMapImpl : Base64SharedObjectFilesMap

@@ -16,7 +16,7 @@ internal fun createClassVisitorImpl(
     nextClassVisitor: ClassVisitor,
     instrumentationContext: InstrumentationContext,
     parameters: Property<BytecodeInstrumentationParams>,
-    logger: (() -> String) -> Unit
+    logger: (() -> String) -> Unit,
 ): ClassVisitor {
     val api = instrumentationContext.apiVersion.get()
     var visitor = nextClassVisitor
@@ -24,7 +24,8 @@ internal fun createClassVisitorImpl(
 
     // Add a visitor if this is a config class provided by the SDK
     val cfg = parameters.get().config.get()
-    ConfigClassVisitorFactory.createClassVisitor(className, cfg, api, visitor)?.let {
+    val encodedSharedObjectFilesMap = parameters.get().encodedSharedObjectFilesMap.orNull
+    ConfigClassVisitorFactory.createClassVisitor(className, cfg, encodedSharedObjectFilesMap, api, visitor)?.let {
         visitor = it
     }
 

@@ -21,5 +21,6 @@ data class FakeInstrumentedConfig(
     override val project: ProjectConfig = FakeProjectConfig(base.project, appId = "abcde"),
     override val redaction: RedactionConfig = FakeRedactionConfig(base.redaction),
     override val session: SessionConfig = FakeSessionConfig(base.session),
-    override val symbols: Base64SharedObjectFilesMap = FakeBase64SharedObjectFilesMap(),
+    override val symbols: Base64SharedObjectFilesMap =
+        FakeBase64SharedObjectFilesMap(base.symbols.getBase64SharedObjectFilesMap()),
 ) : InstrumentedConfig

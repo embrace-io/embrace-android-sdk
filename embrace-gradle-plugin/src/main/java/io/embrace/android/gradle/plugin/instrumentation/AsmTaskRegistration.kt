@@ -41,27 +41,29 @@ class AsmTaskRegistration : EmbraceTaskRegistration {
                 params.shouldInstrumentOnLongClick.set(behavior.instrumentation.onLongClickEnabled)
                 params.shouldInstrumentOnClick.set(behavior.instrumentation.onClickEnabled)
 
-                // Find the Asm transformation task by name and make it depend on encodeSharedObjectFilesTask
-                val encodeSharedObjectFilesTask = project.tryGetTaskProvider(
-                    "${EncodeSharedObjectFilesTask.NAME}${data.name.capitalizedString()}",
-                    EncodeSharedObjectFilesTask::class.java
-                ) ?: return@transformClassesWith
+                project.afterEvaluate {
+                    // Find the Asm transformation task by name and make it depend on encodeSharedObjectFilesTask
+                    val encodeSharedObjectFilesTask = project.tryGetTaskProvider(
+                        "${EncodeSharedObjectFilesTask.NAME}${data.name.capitalizedString()}",
+                        EncodeSharedObjectFilesTask::class.java
+                    ) ?: return@afterEvaluate
 
-                val asmTransformationTask = project.tryGetTaskProvider(
-                    "transform${variant.name.capitalizedString()}ClassesWithAsm"
-                ) ?: error("Unable to find ASM transformation task for variant ${variant.name}")
+                    val asmTransformationTask = project.tryGetTaskProvider(
+                        "transform${variant.name.capitalizedString()}ClassesWithAsm"
+                    ) ?: error("Unable to find ASM transformation task for variant ${variant.name}.")
 
-                asmTransformationTask.configure { it.dependsOn(encodeSharedObjectFilesTask) }
+                    asmTransformationTask.configure { it.dependsOn(encodeSharedObjectFilesTask) }
 
-                params.encodedSharedObjectFilesMap.set(
-                    encodeSharedObjectFilesTask.nullSafeMap { task ->
-                        task.encodedSharedObjectFilesMap.asFile.orNull?.let { file ->
-                            file.takeIf { it.exists() }
-                                ?.bufferedReader()
-                                ?.use { it.readText() }
+                    params.encodedSharedObjectFilesMap.set(
+                        encodeSharedObjectFilesTask.nullSafeMap { task ->
+                            task.encodedSharedObjectFilesMap.asFile.orNull?.let { file ->
+                                file.takeIf { it.exists() }
+                                    ?.bufferedReader()
+                                    ?.use { it.readText() }
+                            }
                         }
-                    }
-                )
+                    )
+                }
             }
         } catch (exception: Exception) {
             project.logger.error("An error has occurred while performing ASM bytecode transformation.", exception)

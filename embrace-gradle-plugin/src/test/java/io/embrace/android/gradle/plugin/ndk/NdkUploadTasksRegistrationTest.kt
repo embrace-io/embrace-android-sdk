@@ -15,8 +15,8 @@ import io.embrace.android.gradle.plugin.instrumentation.config.model.UnityConfig
 import io.embrace.android.gradle.plugin.instrumentation.config.model.VariantConfig
 import io.embrace.android.gradle.plugin.model.AndroidCompactedVariantData
 import io.embrace.android.gradle.plugin.tasks.ndk.CompressSharedObjectFilesTask
+import io.embrace.android.gradle.plugin.tasks.ndk.EncodeSharedObjectFilesTask
 import io.embrace.android.gradle.plugin.tasks.ndk.HashSharedObjectFilesTask
-import io.embrace.android.gradle.plugin.tasks.ndk.InjectSharedObjectFilesTask
 import io.embrace.android.gradle.plugin.tasks.ndk.NdkUploadTasksRegistration
 import io.embrace.android.gradle.plugin.tasks.ndk.UploadSharedObjectFilesTask
 import io.embrace.android.gradle.plugin.tasks.registration.RegistrationParams
@@ -115,7 +115,7 @@ class NdkUploadTasksRegistrationTest {
         assertTaskNotRegistered(CompressSharedObjectFilesTask.NAME, testAndroidCompactedVariantData.name)
         assertTaskNotRegistered(HashSharedObjectFilesTask.NAME, testAndroidCompactedVariantData.name)
         assertTaskNotRegistered(UploadSharedObjectFilesTask.NAME, testAndroidCompactedVariantData.name)
-        assertTaskNotRegistered(InjectSharedObjectFilesTask.NAME, testAndroidCompactedVariantData.name)
+        assertTaskNotRegistered(EncodeSharedObjectFilesTask.NAME, testAndroidCompactedVariantData.name)
     }
 
     @Test
@@ -144,10 +144,10 @@ class NdkUploadTasksRegistrationTest {
         assertFalse(uploadTask.onlyIf.isSatisfiedBy(uploadTask))
 
         // The injection task should not run
-        val injectionTask = project.tasks.findByName(
-            "${InjectSharedObjectFilesTask.NAME}${testAndroidCompactedVariantData.name.capitalizedString()}"
-        ) as InjectSharedObjectFilesTask
-        assertFalse(injectionTask.onlyIf.isSatisfiedBy(injectionTask))
+        val encodingTask = project.tasks.findByName(
+            "${EncodeSharedObjectFilesTask.NAME}${testAndroidCompactedVariantData.name.capitalizedString()}"
+        ) as EncodeSharedObjectFilesTask
+        assertFalse(encodingTask.onlyIf.isSatisfiedBy(encodingTask))
     }
 
     @Test
@@ -184,7 +184,7 @@ class NdkUploadTasksRegistrationTest {
         assertTaskRegistered(CompressSharedObjectFilesTask.NAME, testAndroidCompactedVariantData.name)
         assertTaskRegistered(HashSharedObjectFilesTask.NAME, testAndroidCompactedVariantData.name)
         assertTaskRegistered(UploadSharedObjectFilesTask.NAME, testAndroidCompactedVariantData.name)
-        assertTaskRegistered(InjectSharedObjectFilesTask.NAME, testAndroidCompactedVariantData.name)
+        assertTaskRegistered(EncodeSharedObjectFilesTask.NAME, testAndroidCompactedVariantData.name)
     }
 
     // TODO: Do all Unity projects have a mergeNativeLibs task?

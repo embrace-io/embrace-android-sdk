@@ -23,6 +23,10 @@ dependencies {
     compileOnly(libs.opentelemetry.semconv.incubating)
     implementation(libs.lifecycle.process)
 
+    implementation(libs.opentelemetry.kotlin.api)
+    implementation(libs.opentelemetry.kotlin.api.ext)
+    implementation(libs.opentelemetry.kotlin.compat)
+
     testImplementation(project(":embrace-android-api"))
     testImplementation(project(":embrace-android-core"))
     testImplementation(project(":embrace-android-infra"))

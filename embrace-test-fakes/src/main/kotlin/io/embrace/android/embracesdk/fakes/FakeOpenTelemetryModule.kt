@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalApi::class)
+
 package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.internal.SystemInfo
@@ -14,8 +16,9 @@ import io.embrace.android.embracesdk.internal.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.spans.SpanService
 import io.embrace.android.embracesdk.internal.spans.SpanSink
 import io.embrace.android.embracesdk.internal.spans.SpanSinkImpl
+import io.embrace.opentelemetry.kotlin.ExperimentalApi
+import io.embrace.opentelemetry.kotlin.logging.Logger
 import io.opentelemetry.api.OpenTelemetry
-import io.opentelemetry.api.logs.Logger
 import io.opentelemetry.api.trace.Tracer
 import io.opentelemetry.api.trace.TracerProvider
 import io.opentelemetry.sdk.common.Clock

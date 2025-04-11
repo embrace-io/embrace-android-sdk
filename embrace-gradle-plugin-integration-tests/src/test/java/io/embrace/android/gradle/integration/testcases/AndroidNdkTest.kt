@@ -1,18 +1,16 @@
 package io.embrace.android.gradle.integration.testcases
 
-import io.embrace.android.gradle.integration.framework.ApkDisassembler
-import io.embrace.android.gradle.integration.framework.BundleToolApkBuilder
 import io.embrace.android.gradle.integration.framework.PluginIntegrationTestRule
 import io.embrace.android.gradle.integration.framework.ProjectType
-import io.embrace.android.gradle.integration.framework.findArtifact
-import io.embrace.android.gradle.integration.utils.NdkSymbols
+import io.embrace.android.gradle.integration.framework.smali.SmaliConfigReader
+import io.embrace.android.gradle.integration.framework.smali.SmaliMethod
+import io.embrace.android.gradle.integration.framework.smali.SmaliParser
+import io.embrace.android.gradle.plugin.tasks.ndk.ArchitecturesToHashedSharedObjectFilesMap
 import io.embrace.android.gradle.plugin.util.serialization.MoshiSerializer
-import okio.ByteString.Companion.decodeBase64
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
-import java.io.File
+import java.util.Base64
 
 class AndroidNdkTest {
     @Rule
@@ -61,6 +59,43 @@ class AndroidNdkTest {
                 verifyBuildTelemetryRequestSent(defaultExpectedVariants)
                 verifyHandshakes(defaultExpectedLibs, defaultExpectedArchs, defaultExpectedVariants)
                 verifyUploads(defaultExpectedLibs, defaultExpectedArchs, defaultExpectedVariants)
+            }
+        )
+    }
+
+    @Test
+    fun `symbols are injected through ASM`() {
+        rule.runTest(
+            fixture = "android-cmake-with-code",
+            task = "assembleRelease",
+            projectType = ProjectType.ANDROID,
+            setup = {
+                setupMockResponses(defaultExpectedLibs, defaultExpectedArchs, defaultExpectedVariants)
+            },
+            assertions = { projectDir ->
+                // Read and parse the smali file containing the injected symbols
+                val smaliFile = SmaliConfigReader().readSmaliFiles(
+                    projectDir,
+                    listOf("/io/embrace/android/embracesdk/internal/config/instrumented/Base64SharedObjectFilesMapImpl")
+                ).first()
+
+                // Get the return value of the getBase64SharedObjectFilesMap method
+                val method = SmaliParser().parse(
+                    smaliFile,
+                    listOf(SmaliMethod("getBase64SharedObjectFilesMap()Ljava/lang/String;"))
+                ).methods.first()
+
+                // Decode the base64 string into a map
+                val json = Base64.getDecoder().decode(method.returnValue).toString(Charsets.UTF_8)
+                val symbols = MoshiSerializer().fromJson(json, ArchitecturesToHashedSharedObjectFilesMap::class.java).symbols
+
+                // Verify all expected architectures and libraries are present
+                defaultExpectedArchs.forEach { arch ->
+                    assertTrue(symbols.containsKey(arch))
+                    defaultExpectedLibs.forEach { lib ->
+                        assertTrue(symbols[arch]?.containsKey(lib) ?: false)
+                    }
+                }
             }
         )
     }
@@ -151,92 +186,17 @@ class AndroidNdkTest {
     }
 
     @Test
-    fun `symbols are injected into the APK`() {
-        rule.runTest(
-            fixture = "android-cmake",
-            task = "assembleRelease",
-            projectType = ProjectType.ANDROID,
-            setup = {
-                setupMockResponses(
-                    defaultExpectedLibs,
-                    defaultExpectedArchs,
-                    defaultExpectedVariants
-                )
-            },
-            assertions = { projectDir ->
-                val apk = findArtifact(projectDir, "build/outputs/apk/release/", ".apk")
-                verifyNdkApkSymbolsInjection(apk)
-            }
-        )
-    }
-
-    @Test
-    fun `symbols are injected into the bundle`() {
-        rule.runTest(
-            fixture = "android-cmake",
-            task = "bundleRelease",
-            projectType = ProjectType.ANDROID,
-            setup = {
-                setupMockResponses(
-                    defaultExpectedLibs,
-                    defaultExpectedArchs,
-                    defaultExpectedVariants
-                )
-            },
-            assertions = { projectDir ->
-                verifyBundleSymbolsInjection(projectDir)
-            }
-        )
-    }
-
-    @Test
     fun `ndk disabled test`() {
         rule.runTest(
             fixture = "android-cmake-ndk-disabled",
             task = "assembleRelease",
             projectType = ProjectType.ANDROID,
-            assertions = { projectDir ->
+            assertions = {
                 verifyBuildTelemetryRequestSent(defaultExpectedVariants)
                 verifyNoHandshakes()
                 verifyNoUploads()
                 verifyJvmMappingRequestsSent(1)
-                val apk = findArtifact(projectDir, "build/outputs/apk/release/", ".apk")
-                verifyNoSymbolsInjected(apk)
             }
         )
-    }
-
-    private fun verifyNoSymbolsInjected(apkFile: File) {
-        val decodedApk = ApkDisassembler().disassembleApk(apkFile)
-        val resourceName = "emb_ndk_symbols"
-        assertNull(decodedApk.getStringResource(resourceName))
-    }
-
-    private fun verifyNdkApkSymbolsInjection(apkFile: File) {
-        val decodedApk = ApkDisassembler().disassembleApk(apkFile)
-        val resourceName = "emb_ndk_symbols"
-        val symbols = decodedApk.getStringResource(resourceName)
-            ?: error("Resource named '$resourceName' not found")
-        validateBase64Symbols(symbols)
-    }
-
-    private fun verifyBundleSymbolsInjection(projectDir: File) {
-        val bundle = findArtifact(projectDir, "build/outputs/bundle/release/", ".aab")
-        val apkFile = BundleToolApkBuilder().generateApkFromBundle(bundle)
-        verifyNdkApkSymbolsInjection(apkFile)
-    }
-
-    private fun validateBase64Symbols(base64Symbols: String) {
-        val symbolString =
-            base64Symbols.decodeBase64()?.utf8() ?: error("Failed to decode base64 symbols")
-
-        val symbolsMap = MoshiSerializer().fromJson(symbolString, NdkSymbols::class.java).symbols
-            ?: error("Failed to deserialize symbols")
-
-        defaultExpectedArchs.forEach { arch ->
-            defaultExpectedLibs.forEach { lib ->
-                assertTrue(symbolsMap[arch]?.containsKey(lib) ?: false)
-            }
-        }
     }
 }

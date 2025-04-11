@@ -11,6 +11,7 @@ import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.opentelemetry.OpenTelemetryConfiguration
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.opentelemetry.api.OpenTelemetry
+import io.opentelemetry.semconv.ServiceAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
@@ -79,5 +80,25 @@ internal class OTelApiDelegateTest {
     @Test
     fun `get tracer after start`() {
         assertTrue(delegate.getOpenTelemetry().getTracer("foo").spanBuilder("test").startSpan().spanContext.isValid)
+    }
+
+    @Test
+    fun `set resource attribute before sdk starts`() {
+        sdkCallChecker.started.set(false)
+        delegate.setResourceAttribute("test", "foo")
+        assertEquals("foo", cfg.resourceBuilder.build().attributes.asMap().filter { it.key.key == "test" }.values.single())
+    }
+
+    @Test
+    fun `override resource attribute before sdk starts`() {
+        sdkCallChecker.started.set(false)
+        delegate.setResourceAttribute(ServiceAttributes.SERVICE_NAME, "foo")
+        assertEquals("foo", cfg.resourceBuilder.build().attributes[ServiceAttributes.SERVICE_NAME])
+    }
+
+    @Test
+    fun `set resource attribute after sdk starts`() {
+        delegate.setResourceAttribute("test", "foo")
+        assertTrue(cfg.resourceBuilder.build().attributes.asMap().filter { it.key.key == "test" }.isEmpty())
     }
 }

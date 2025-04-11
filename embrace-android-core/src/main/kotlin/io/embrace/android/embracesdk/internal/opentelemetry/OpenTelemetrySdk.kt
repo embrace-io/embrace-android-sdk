@@ -11,6 +11,7 @@ import io.opentelemetry.api.trace.Tracer
 import io.opentelemetry.sdk.OpenTelemetrySdk
 import io.opentelemetry.sdk.common.Clock
 import io.opentelemetry.sdk.logs.SdkLoggerProvider
+import io.opentelemetry.sdk.resources.Resource
 import io.opentelemetry.sdk.trace.SdkTracerProvider
 import io.opentelemetry.sdk.trace.SpanLimits
 
@@ -33,7 +34,7 @@ internal class OpenTelemetrySdk(
         Systrace.traceSynchronous("otel-tracer-provider-init") {
             SdkTracerProvider
                 .builder()
-                .addResource(configuration.resource)
+                .addResource(resource)
                 .addSpanProcessor(configuration.spanProcessor)
                 .setSpanLimits(
                     SpanLimits
@@ -57,6 +58,10 @@ internal class OpenTelemetrySdk(
 
     fun getOpenTelemetryLogger(): Logger = logger
 
+    private val resource: Resource by lazy {
+        configuration.resourceBuilder.build()
+    }
+
     private val sdk: OpenTelemetrySdk by lazy {
         Systrace.traceSynchronous("otel-sdk-init") {
             OpenTelemetrySdk
@@ -65,7 +70,7 @@ internal class OpenTelemetrySdk(
                 .setLoggerProvider(
                     SdkLoggerProvider
                         .builder()
-                        .addResource(configuration.resource)
+                        .addResource(resource)
                         .addLogRecordProcessor(configuration.logProcessor)
                         .setClock(openTelemetryClock)
                         .build()

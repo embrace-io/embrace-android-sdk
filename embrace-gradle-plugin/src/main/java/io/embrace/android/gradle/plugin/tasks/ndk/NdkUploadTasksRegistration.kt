@@ -20,8 +20,6 @@ import org.gradle.api.provider.Provider
 import java.io.File
 import java.util.concurrent.Callable
 
-private const val GENERATED_RESOURCE_PATH = "generated/embrace/res"
-
 /**
  * In charge of registering tasks for ndk mapping file upload and injection.
  */
@@ -126,9 +124,9 @@ class NdkUploadTasksRegistration(
             )
         }
 
-        val injectSharedObjectFilesTaskProvider = project.registerTask(
-            InjectSharedObjectFilesTask.NAME,
-            InjectSharedObjectFilesTask::class.java,
+        project.registerTask(
+            EncodeSharedObjectFilesTask.NAME,
+            EncodeSharedObjectFilesTask::class.java,
             data
         ) { task ->
             // TODO: Check why this is needed for 7.5.1. For Gradle 8+ Gradle detects automatically when the other tasks aren't executed
@@ -140,18 +138,11 @@ class NdkUploadTasksRegistration(
 
             task.failBuildOnUploadErrors.set(behavior.failBuildOnUploadErrors)
 
-            task.generatedEmbraceResourcesDirectory.set(
-                project.layout.buildDirectory.dir("$GENERATED_RESOURCE_PATH/${data.name}/ndk")
+            task.encodedSharedObjectFilesMap.set(
+                project.layout.buildDirectory.file("intermediates/embrace/ndk/${data.name}/encoded_map.txt")
             )
 
             task.dependsOn(uploadTask)
-        }
-
-        injectSharedObjectFilesTaskProvider.let {
-            variant.sources.res?.addGeneratedSourceDirectory(
-                it,
-                InjectSharedObjectFilesTask::generatedEmbraceResourcesDirectory
-            )
         }
     }
 

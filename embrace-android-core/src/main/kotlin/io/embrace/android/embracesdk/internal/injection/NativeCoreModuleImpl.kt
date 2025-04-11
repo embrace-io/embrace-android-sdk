@@ -38,7 +38,6 @@ internal class NativeCoreModuleImpl(
 
     override val symbolService: SymbolService by singleton {
         symbolServiceProvider() ?: SymbolServiceImpl(
-            coreModule.context,
             payloadSourceModule.deviceArchitecture,
             initModule.jsonSerializer,
             initModule.logger

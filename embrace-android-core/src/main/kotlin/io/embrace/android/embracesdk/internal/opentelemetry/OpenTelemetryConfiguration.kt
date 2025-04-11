@@ -13,6 +13,7 @@ import io.embrace.android.embracesdk.internal.spans.SpanSink
 import io.opentelemetry.sdk.logs.LogRecordProcessor
 import io.opentelemetry.sdk.logs.export.LogRecordExporter
 import io.opentelemetry.sdk.resources.Resource
+import io.opentelemetry.sdk.resources.ResourceBuilder
 import io.opentelemetry.sdk.trace.SpanProcessor
 import io.opentelemetry.sdk.trace.export.SpanExporter
 import io.opentelemetry.semconv.ServiceAttributes
@@ -29,7 +30,7 @@ class OpenTelemetryConfiguration(
 ) {
     val embraceSdkName: String = BuildConfig.LIBRARY_PACKAGE_NAME
     val embraceSdkVersion: String = BuildConfig.VERSION_NAME
-    val resource: Resource = Resource.getDefault().toBuilder()
+    val resourceBuilder: ResourceBuilder = Resource.getDefault().toBuilder()
         .put(ServiceAttributes.SERVICE_NAME, embraceSdkName)
         .put(ServiceAttributes.SERVICE_VERSION, embraceSdkVersion)
         .put(OsIncubatingAttributes.OS_NAME, systemInfo.osName)
@@ -42,7 +43,6 @@ class OpenTelemetryConfiguration(
         .put(DeviceIncubatingAttributes.DEVICE_MODEL_NAME, systemInfo.deviceModel)
         .put(TelemetryIncubatingAttributes.TELEMETRY_DISTRO_NAME, embraceSdkName)
         .put(TelemetryIncubatingAttributes.TELEMETRY_DISTRO_VERSION, embraceSdkVersion)
-        .build()
 
     /**
      * Unique ID generated for an instance of the app process and not related to the actual process ID assigned by the OS.

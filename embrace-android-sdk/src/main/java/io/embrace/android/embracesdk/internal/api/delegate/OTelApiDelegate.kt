@@ -18,6 +18,13 @@ internal class OTelApiDelegate(
         bootstrapper.openTelemetryModule.openTelemetryConfiguration.addSpanExporter(spanExporter)
     }
 
+    override fun addLogRecordExporter(logRecordExporter: LogRecordExporter) {
+        if (sdkCallChecker.started.get()) {
+            return
+        }
+        bootstrapper.openTelemetryModule.openTelemetryConfiguration.addLogExporter(logRecordExporter)
+    }
+
     override fun getOpenTelemetry(): OpenTelemetry {
         return if (sdkCallChecker.started.get()) {
             bootstrapper.openTelemetryModule.externalOpenTelemetry
@@ -26,10 +33,10 @@ internal class OTelApiDelegate(
         }
     }
 
-    override fun addLogRecordExporter(logRecordExporter: LogRecordExporter) {
+    override fun setResourceAttribute(key: String, value: String) {
         if (sdkCallChecker.started.get()) {
             return
         }
-        bootstrapper.openTelemetryModule.openTelemetryConfiguration.addLogExporter(logRecordExporter)
+        bootstrapper.openTelemetryModule.openTelemetryConfiguration.resourceBuilder.put(key, value)
     }
 }

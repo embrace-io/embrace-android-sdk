@@ -390,6 +390,10 @@ public class Embrace private constructor(
         return impl.getOpenTelemetry()
     }
 
+    override fun setResourceAttribute(key: String, value: String) {
+        impl.setResourceAttribute(key, value)
+    }
+
     /**
      * Adds a [LogRecordExporter] to the open telemetry logger.
      *

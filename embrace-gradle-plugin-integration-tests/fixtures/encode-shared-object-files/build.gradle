@@ -1,0 +1,20 @@
+import io.embrace.android.gradle.plugin.tasks.ndk.EncodeSharedObjectFilesTask
+
+plugins {
+    id("java")
+    id("io.embrace.swazzler")
+    id("io.embrace.android.testplugin")
+}
+
+def failBuildOnUploadErrors = (project.findProperty("failBuildOnUploadErrors") ?: "true").toBoolean()
+
+project.tasks.register("testTask", EncodeSharedObjectFilesTask) { task ->
+    integrationTest.configureEmbraceTask(task)
+    task.failBuildOnUploadErrors.set(failBuildOnUploadErrors)
+    task.architecturesToHashedSharedObjectFilesMapJson.set(
+        project.layout.projectDirectory.file("architecturesMap.json")
+    )
+    task.encodedSharedObjectFilesMap.set(
+        project.layout.buildDirectory.file("encoded_map.txt")
+    )
+}

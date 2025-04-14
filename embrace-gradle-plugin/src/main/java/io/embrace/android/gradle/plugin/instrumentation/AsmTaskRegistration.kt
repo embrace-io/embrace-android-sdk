@@ -4,7 +4,7 @@ import com.android.build.api.instrumentation.FramesComputationMode
 import com.android.build.api.instrumentation.InstrumentationScope
 import io.embrace.android.gradle.plugin.gradle.nullSafeMap
 import io.embrace.android.gradle.plugin.gradle.tryGetTaskProvider
-import io.embrace.android.gradle.plugin.tasks.ndk.EncodeSharedObjectFilesTask
+import io.embrace.android.gradle.plugin.tasks.ndk.EncodeFileToBase64Task
 import io.embrace.android.gradle.plugin.tasks.registration.EmbraceTaskRegistration
 import io.embrace.android.gradle.plugin.tasks.registration.RegistrationParams
 import io.embrace.android.gradle.plugin.util.capitalizedString
@@ -26,7 +26,6 @@ class AsmTaskRegistration : EmbraceTaskRegistration {
                         variantConfigs.first { it.variantName == variant.name }
                     }
                 )
-                // TODO: why are we passing disabled to ASM, if we could just not use transformClassesWith if behavior is disabled?
                 params.disabled.set(
                     project.provider {
                         behavior.isPluginDisabledForVariant(variant.name) || behavior.isInstrumentationDisabledForVariant(variant.name)
@@ -43,20 +42,20 @@ class AsmTaskRegistration : EmbraceTaskRegistration {
 
                 project.afterEvaluate {
                     // Find the Asm transformation task by name and make it depend on encodeSharedObjectFilesTask
-                    val encodeSharedObjectFilesTask = project.tryGetTaskProvider(
-                        "${EncodeSharedObjectFilesTask.NAME}${data.name.capitalizedString()}",
-                        EncodeSharedObjectFilesTask::class.java
+                    val encodeFileToBase64Task = project.tryGetTaskProvider(
+                        "${EncodeFileToBase64Task.NAME}${data.name.capitalizedString()}",
+                        EncodeFileToBase64Task::class.java
                     ) ?: return@afterEvaluate
 
                     val asmTransformationTask = project.tryGetTaskProvider(
                         "transform${variant.name.capitalizedString()}ClassesWithAsm"
                     ) ?: error("Unable to find ASM transformation task for variant ${variant.name}.")
 
-                    asmTransformationTask.configure { it.dependsOn(encodeSharedObjectFilesTask) }
+                    asmTransformationTask.configure { it.dependsOn(encodeFileToBase64Task) }
 
                     params.encodedSharedObjectFilesMap.set(
-                        encodeSharedObjectFilesTask.nullSafeMap { task ->
-                            task.encodedSharedObjectFilesMap.asFile.orNull?.let { file ->
+                        encodeFileToBase64Task.nullSafeMap { encodeTask ->
+                            encodeTask.outputFile.asFile.orNull?.let { file ->
                                 file.takeIf { it.exists() }
                                     ?.bufferedReader()
                                     ?.use { it.readText() }

@@ -6,7 +6,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 
-class EncodeSharedObjectFilesTaskIntegrationTest {
+class EncodeFileToBase64TaskIntegrationTest {
 
     @Rule
     @JvmField

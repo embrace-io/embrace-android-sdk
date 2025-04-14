@@ -125,20 +125,20 @@ class NdkUploadTasksRegistration(
         }
 
         project.registerTask(
-            EncodeSharedObjectFilesTask.NAME,
-            EncodeSharedObjectFilesTask::class.java,
+            EncodeFileToBase64Task.NAME,
+            EncodeFileToBase64Task::class.java,
             data
         ) { task ->
             // TODO: Check why this is needed for 7.5.1. For Gradle 8+ Gradle detects automatically when the other tasks aren't executed
-            task.onlyIf { task.architecturesToHashedSharedObjectFilesMapJson.asFile.get().exists() }
+            task.onlyIf { task.inputFile.asFile.get().exists() }
 
-            task.architecturesToHashedSharedObjectFilesMapJson.set(
+            task.inputFile.set(
                 hashTaskProvider.flatMap { it.architecturesToHashedSharedObjectFilesMap }
             )
 
             task.failBuildOnUploadErrors.set(behavior.failBuildOnUploadErrors)
 
-            task.encodedSharedObjectFilesMap.set(
+            task.outputFile.set(
                 project.layout.buildDirectory.file("intermediates/embrace/ndk/${data.name}/encoded_map.txt")
             )
 

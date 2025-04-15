@@ -15,8 +15,7 @@ internal fun createClassVisitorImpl(
     classContext: ClassContext,
     nextClassVisitor: ClassVisitor,
     instrumentationContext: InstrumentationContext,
-    parameters: Property<BytecodeInstrumentationParams>,
-    logger: (() -> String) -> Unit,
+    parameters: Property<BytecodeInstrumentationParams>
 ): ClassVisitor {
     val api = instrumentationContext.apiVersion.get()
     var visitor = nextClassVisitor
@@ -34,25 +33,20 @@ internal fun createClassVisitorImpl(
     if (parameters.get().shouldInstrumentFirebaseMessaging.get() &&
         FirebaseMessagingServiceClassAdapter.accept(classContext)
     ) {
-        visitor = FirebaseMessagingServiceClassAdapter(api, visitor, logger)
-        logger { "Added FirebaseMessagingServiceClassAdapter for $className." }
+        visitor = FirebaseMessagingServiceClassAdapter(api, visitor)
     }
 
     if (parameters.get().shouldInstrumentWebview.get() && WebViewClientClassAdapter.accept(classContext)) {
-        visitor = WebViewClientClassAdapter(api, visitor, logger)
-        logger { "Added WebViewClientClassAdapter for $className." }
+        visitor = WebViewClientClassAdapter(api, visitor)
     }
     if (parameters.get().shouldInstrumentOkHttp.get() && OkHttpClassAdapter.accept(classContext)) {
-        visitor = OkHttpClassAdapter(api, visitor, logger)
-        logger { "Added OkHttpClassAdapter for $className." }
+        visitor = OkHttpClassAdapter(api, visitor)
     }
     if (parameters.get().shouldInstrumentOnLongClick.get() && OnLongClickClassAdapter.accept(classContext)) {
-        visitor = OnLongClickClassAdapter(api, visitor, logger)
-        logger { "Added OnLongClickClassAdapter for $className." }
+        visitor = OnLongClickClassAdapter(api, visitor)
     }
     if (parameters.get().shouldInstrumentOnClick.get() && OnClickClassAdapter.accept(classContext)) {
-        visitor = OnClickClassAdapter(api, visitor, logger)
-        logger { "Added OnClickClassAdapter for $className." }
+        visitor = OnClickClassAdapter(api, visitor)
     }
     return visitor
 }

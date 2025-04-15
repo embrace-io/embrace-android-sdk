@@ -32,19 +32,19 @@ import okhttp3.OkHttpClient
 import org.objectweb.asm.ClassVisitor
 
 private val onClickFactory: ClassVisitorFactory = { visitor ->
-    OnClickClassAdapter(ASM_API_VERSION, visitor) {}
+    OnClickClassAdapter(ASM_API_VERSION, visitor)
 }
 
 private val onLongClickFactory: ClassVisitorFactory = { visitor ->
-    OnLongClickClassAdapter(ASM_API_VERSION, visitor) {}
+    OnLongClickClassAdapter(ASM_API_VERSION, visitor)
 }
 
 private val webviewFactory: ClassVisitorFactory = { visitor ->
-    WebViewClientClassAdapter(ASM_API_VERSION, visitor) {}
+    WebViewClientClassAdapter(ASM_API_VERSION, visitor)
 }
 
 private val okHttpFactory: ClassVisitorFactory = { visitor ->
-    OkHttpClassAdapter(ASM_API_VERSION, visitor) {}
+    OkHttpClassAdapter(ASM_API_VERSION, visitor)
 }
 
 /**

@@ -11,7 +11,6 @@ import org.objectweb.asm.MethodVisitor
 class OnLongClickClassAdapter(
     api: Int,
     internal val nextClassVisitor: ClassVisitor?,
-    private val logger: (() -> String) -> Unit
 ) : ClassVisitor(api, nextClassVisitor) {
 
     companion object : ClassVisitFilter {
@@ -26,15 +25,21 @@ class OnLongClickClassAdapter(
         name: String,
         desc: String,
         signature: String?,
-        exceptions: Array<String>?
+        exceptions: Array<String>?,
     ): MethodVisitor? {
         val nextMethodVisitor = super.visitMethod(access, name, desc, signature, exceptions)
 
         return if (METHOD_NAME == name && METHOD_DESC == desc && !isStatic(access)) {
-            logger { "OnLongClickClassAdapter: instrumented method $name $desc" }
-            OnLongClickMethodAdapter(api, nextMethodVisitor)
+            InstrumentationTargetMethodVisitor(
+                api = api,
+                methodVisitor = nextMethodVisitor,
+                params = BytecodeMethodInsertionParams(
+                    owner = "io/embrace/android/embracesdk/ViewSwazzledHooks\$OnLongClickListener",
+                    name = "_preOnLongClick",
+                    descriptor = "(Landroid/view/View\$OnLongClickListener;Landroid/view/View;)V",
+                )
+            )
         } else if (METHOD_DESC == desc && isStatic(access) && isSynthetic(access)) {
-            logger { "OnLongClickClassAdapter: instrumented synthetic method $name $desc" }
             OnLongClickStaticMethodAdapter(api, nextMethodVisitor)
         } else {
             nextMethodVisitor

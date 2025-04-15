@@ -10,10 +10,23 @@ import org.objectweb.asm.Opcodes
 class WebViewClientOverrideMethodAdapter(
     api: Int,
     methodVisitor: MethodVisitor?
-) : WebViewClientMethodAdapter(api, methodVisitor) {
+) : MethodVisitor(api, methodVisitor) {
 
     override fun visitEnd() {
-        instrumentOnPageStarted()
+        // load local variable 'view' and push it onto the operand stack
+        visitVarInsn(Opcodes.ALOAD, 1)
+        // load local variable 'url' and push it onto the operand stack
+        visitVarInsn(Opcodes.ALOAD, 2)
+        // load local variable 'favicon' and push it onto the operand stack
+        visitVarInsn(Opcodes.ALOAD, 3)
+        // invoke WebViewClientSwazzledHooks._preOnPageStarted()
+        visitMethodInsn(
+            Opcodes.INVOKESTATIC,
+            "io/embrace/android/embracesdk/WebViewClientSwazzledHooks",
+            "_preOnPageStarted",
+            "(Landroid/webkit/WebView;Ljava/lang/String;Landroid/graphics/Bitmap;)V",
+            false
+        )
         addSuperCall()
         super.visitEnd()
         visitInsn(Opcodes.RETURN)

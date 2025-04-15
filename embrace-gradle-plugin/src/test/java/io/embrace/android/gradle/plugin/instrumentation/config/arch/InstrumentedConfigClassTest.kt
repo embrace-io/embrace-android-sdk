@@ -5,7 +5,6 @@ import io.embrace.android.gradle.plugin.instrumentation.config.BooleanReturnValu
 import io.embrace.android.gradle.plugin.instrumentation.config.IntReturnValueMethodVisitor
 import io.embrace.android.gradle.plugin.instrumentation.config.LongReturnValueMethodVisitor
 import io.embrace.android.gradle.plugin.instrumentation.config.MapReturnValueMethodVisitor
-import io.embrace.android.gradle.plugin.instrumentation.config.StringListReturnValueMethodVisitor
 import io.embrace.android.gradle.plugin.instrumentation.config.StringReturnValueMethodVisitor
 import io.mockk.mockk
 import org.junit.Assert.assertEquals

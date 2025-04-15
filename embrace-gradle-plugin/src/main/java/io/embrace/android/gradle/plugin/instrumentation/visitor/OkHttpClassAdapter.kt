@@ -10,7 +10,6 @@ import org.objectweb.asm.MethodVisitor
 class OkHttpClassAdapter(
     api: Int,
     internal val nextClassVisitor: ClassVisitor?,
-    private val logger: (() -> String) -> Unit
 ) : ClassVisitor(api, nextClassVisitor) {
 
     companion object : ClassVisitFilter {
@@ -28,13 +27,20 @@ class OkHttpClassAdapter(
         name: String,
         desc: String,
         signature: String?,
-        exceptions: Array<String>?
+        exceptions: Array<String>?,
     ): MethodVisitor? {
         val nextMethodVisitor = super.visitMethod(access, name, desc, signature, exceptions)
 
         return if (METHOD_NAME_BUILD == name && METHOD_DESC_BUILD == desc) {
-            logger { "OkHttpClassAdapter: instrumented method $name $desc" }
-            OkHttpMethodAdapter(api, nextMethodVisitor)
+            InstrumentationTargetMethodVisitor(
+                api = api,
+                methodVisitor = nextMethodVisitor,
+                params = BytecodeMethodInsertionParams(
+                    owner = "io/embrace/android/embracesdk/okhttp3/swazzle/callback/okhttp3/OkHttpClient\$Builder",
+                    name = "_preBuild",
+                    descriptor = "(Lokhttp3/OkHttpClient\$Builder;)V",
+                )
+            )
         } else {
             nextMethodVisitor
         }

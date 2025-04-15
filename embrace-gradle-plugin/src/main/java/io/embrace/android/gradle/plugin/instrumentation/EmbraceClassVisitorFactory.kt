@@ -54,7 +54,6 @@ abstract class EmbraceClassVisitorFactory : AsmClassVisitorFactory<BytecodeInstr
                     owner = "io/embrace/android/embracesdk/fcm/swazzle/callback/com/android/fcm/FirebaseSwazzledHooks",
                     name = "_onMessageReceived",
                     descriptor = "(Lcom/google/firebase/messaging/RemoteMessage;)V",
-                    startVarIndex = 1,
                 )
             )
         }
@@ -73,6 +72,7 @@ abstract class EmbraceClassVisitorFactory : AsmClassVisitorFactory<BytecodeInstr
                     owner = "io/embrace/android/embracesdk/okhttp3/swazzle/callback/okhttp3/OkHttpClient\$Builder",
                     name = "_preBuild",
                     descriptor = "(Lokhttp3/OkHttpClient\$Builder;)V",
+                    startVarIndex = 0
                 )
             )
         }

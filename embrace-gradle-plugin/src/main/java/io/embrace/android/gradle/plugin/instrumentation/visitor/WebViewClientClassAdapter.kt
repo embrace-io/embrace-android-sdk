@@ -40,7 +40,6 @@ class WebViewClientClassAdapter(
                     owner = "io/embrace/android/embracesdk/WebViewClientSwazzledHooks",
                     name = "_preOnPageStarted",
                     descriptor = "(Landroid/webkit/WebView;Ljava/lang/String;Landroid/graphics/Bitmap;)V",
-                    startVarIndex = 1,
                 )
             )
         } else {

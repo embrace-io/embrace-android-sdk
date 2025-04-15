@@ -1,5 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<issues format="6" by="lint 8.7.3" type="baseline" client="gradle" dependencies="false" name="AGP (8.7.3)" variant="all" version="8.7.3">
+<issues format="6" by="lint 8.9.1" type="baseline" client="gradle" dependencies="false" name="AGP (8.9.1)" variant="all" version="8.9.1">
+
+    <issue
+        id="EmbracePublicApiPackageRule"
+        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
+        errorLine1="public final class AutoStartInstrumentationHook {"
+        errorLine2="                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/AutoStartInstrumentationHook.java"
+            line="12"
+            column="20"/>
+    </issue>
 
     <issue
         id="EmbracePublicApiPackageRule"
@@ -65,6 +76,17 @@
             file="src/main/java/io/embrace/android/embracesdk/ViewSwazzledHooks.java"
             line="66"
             column="88"/>
+    </issue>
+
+    <issue
+        id="UnknownNullness"
+        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
+        errorLine1="    public static void _preOnCreate(android.app.Application application) {"
+        errorLine2="                                    ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/AutoStartInstrumentationHook.java"
+            line="17"
+            column="37"/>
     </issue>
 
     <issue

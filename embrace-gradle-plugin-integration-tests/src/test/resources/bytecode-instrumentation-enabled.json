@@ -45,6 +45,15 @@
           "embraceHook": "invoke-static {p1}, Lio/embrace/android/embracesdk/fcm/swazzle/callback/com/android/fcm/FirebaseSwazzledHooks;->_onMessageReceived(Lcom/google/firebase/messaging/RemoteMessage;)V"
         }
       ]
+    },
+    {
+      "className": "ApplicationFixture",
+      "methods": [
+        {
+          "signature": "onCreate()V",
+          "embraceHook": "invoke-static {p0}, Lio/embrace/android/embracesdk/AutoStartInstrumentationHook;->_preOnCreate(Landroid/app/Application;)V"
+        }
+      ]
     }
   ]
 }

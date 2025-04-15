@@ -39,6 +39,7 @@ class AsmTaskRegistration : EmbraceTaskRegistration {
                 params.shouldInstrumentOkHttp.set(behavior.instrumentation.okHttpEnabled)
                 params.shouldInstrumentOnLongClick.set(behavior.instrumentation.onLongClickEnabled)
                 params.shouldInstrumentOnClick.set(behavior.instrumentation.onClickEnabled)
+                params.shouldAutoStart.set(behavior.instrumentation.autoStartEnabled)
 
                 project.afterEvaluate {
                     // Find the Asm transformation task by name and make it depend on encodeSharedObjectFilesTask

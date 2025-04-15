@@ -1,5 +1,6 @@
 package io.embrace.gradle.plugin.instrumentation
 
+import io.embrace.android.gradle.plugin.instrumentation.visitor.ApplicationClassAdapter
 import io.embrace.android.gradle.plugin.instrumentation.visitor.OkHttpClassAdapter
 import io.embrace.android.gradle.plugin.instrumentation.visitor.OnClickClassAdapter
 import io.embrace.android.gradle.plugin.instrumentation.visitor.OnLongClickClassAdapter
@@ -27,6 +28,7 @@ import io.embrace.test.fixtures.MissingInterfaceOnLongClickListener
 import io.embrace.test.fixtures.MissingOverrideOnClickListener
 import io.embrace.test.fixtures.MissingOverrideOnLongClickListener
 import io.embrace.test.fixtures.NoOverrideWebViewClient
+import io.embrace.test.fixtures.TestApplication
 import io.embrace.test.fixtures.VirtualMethodRefNamedOnClick
 import okhttp3.OkHttpClient
 import org.objectweb.asm.ClassVisitor
@@ -47,6 +49,10 @@ private val okHttpFactory: ClassVisitorFactory = { visitor ->
     OkHttpClassAdapter(ASM_API_VERSION, visitor) {}
 }
 
+private val applicationFactory: ClassVisitorFactory = { visitor ->
+    ApplicationClassAdapter(ASM_API_VERSION, visitor)
+}
+
 /**
  * Declares the test cases for bytecode in [InstrumentedBytecodeTest]. You should define the
  * input class, the expected output, and the [ClassVisitor] which will instrument the bytecode.
@@ -60,8 +66,15 @@ internal fun instrumentedBytecodeTestCases(): List<BytecodeTestParams> {
         .plus(onLongClickInnerTestCases)
         .plus(webclientTestCases)
         .plus(okHttpTestCases)
+        .plus(applicationTestCases)
         .distinct() // filter out any unintentional duplicate test cases
         .sortedBy(BytecodeTestParams::simpleClzName)
+}
+
+private val applicationTestCases = listOf(
+    TestApplication::class
+).map {
+    BytecodeTestParams(it.java, factory = applicationFactory)
 }
 
 private val okHttpTestCases = listOf(
@@ -69,6 +82,7 @@ private val okHttpTestCases = listOf(
 ).map {
     BytecodeTestParams(it.java, factory = okHttpFactory)
 }
+
 private val webclientTestCases = listOf(
     CustomWebViewClient::class,
     ExtendedCustomWebViewClient::class,

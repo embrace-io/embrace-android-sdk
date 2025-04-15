@@ -22,6 +22,7 @@ class BytecodeInstrumentationTest {
         "/com/example/app/OnLongClickListenerFixture",
         "/okhttp3/OkHttpClient\$Builder",
         "/com/example/app/FcmServiceFixture",
+        "/com/example/app/ApplicationFixture"
     )
     private val defaultArgs = listOf("-x", "lintVitalRelease")
 

@@ -1,3 +1,7 @@
+public final class io/embrace/android/embracesdk/AutoStartInstrumentationHook {
+	public static fun _preOnCreate (Landroid/app/Application;)V
+}
+
 public final class io/embrace/android/embracesdk/Embrace : io/embrace/android/embracesdk/internal/api/SdkApi {
 	public static final field Companion Lio/embrace/android/embracesdk/Embrace$Companion;
 	public fun activityLoaded (Landroid/app/Activity;)V

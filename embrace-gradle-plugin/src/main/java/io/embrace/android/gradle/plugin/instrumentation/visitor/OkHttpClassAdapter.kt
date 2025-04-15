@@ -1,6 +1,5 @@
 package io.embrace.android.gradle.plugin.instrumentation.visitor
 
-import com.android.build.api.instrumentation.ClassContext
 import org.objectweb.asm.ClassVisitor
 import org.objectweb.asm.MethodVisitor
 
@@ -12,14 +11,10 @@ class OkHttpClassAdapter(
     internal val nextClassVisitor: ClassVisitor?,
 ) : ClassVisitor(api, nextClassVisitor) {
 
-    companion object : ClassVisitFilter {
-        private const val CLASS_NAME = "okhttp3.OkHttpClient\$Builder"
+    companion object {
+        const val CLASS_NAME = "okhttp3.OkHttpClient\$Builder"
         private const val METHOD_NAME_BUILD = "build"
         private const val METHOD_DESC_BUILD = "()Lokhttp3/OkHttpClient;"
-
-        override fun accept(classContext: ClassContext): Boolean {
-            return classContext.currentClassData.className == CLASS_NAME
-        }
     }
 
     override fun visitMethod(

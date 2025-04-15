@@ -1,6 +1,5 @@
 package io.embrace.android.gradle.plugin.instrumentation.visitor
 
-import com.android.build.api.instrumentation.ClassContext
 import org.objectweb.asm.ClassVisitor
 import org.objectweb.asm.MethodVisitor
 
@@ -13,14 +12,10 @@ class FirebaseMessagingServiceClassAdapter(
     internal val nextClassVisitor: ClassVisitor?,
 ) : ClassVisitor(api, nextClassVisitor) {
 
-    companion object : ClassVisitFilter {
-        private const val CLASS_NAME = "com.google.firebase.messaging.FirebaseMessagingService"
+    companion object {
+        const val CLASS_NAME = "com.google.firebase.messaging.FirebaseMessagingService"
         private const val METHOD_NAME = "onMessageReceived"
         private const val METHOD_DESC = "(Lcom/google/firebase/messaging/RemoteMessage;)V"
-
-        override fun accept(classContext: ClassContext): Boolean {
-            return classContext.currentClassData.superClasses.contains(CLASS_NAME)
-        }
     }
 
     override fun visitMethod(

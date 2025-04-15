@@ -1,6 +1,5 @@
 package io.embrace.android.gradle.plugin.instrumentation.visitor
 
-import com.android.build.api.instrumentation.ClassContext
 import org.objectweb.asm.ClassVisitor
 import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes
@@ -14,15 +13,11 @@ class WebViewClientClassAdapter(
     internal val nextClassVisitor: ClassVisitor?,
 ) : ClassVisitor(api, nextClassVisitor) {
 
-    companion object : ClassVisitFilter {
-        private const val CLASS_NAME = "android.webkit.WebViewClient"
+    companion object {
+        const val CLASS_NAME = "android.webkit.WebViewClient"
         private const val METHOD_NAME = "onPageStarted"
         private const val METHOD_DESC =
             "(Landroid/webkit/WebView;Ljava/lang/String;Landroid/graphics/Bitmap;)V"
-
-        override fun accept(classContext: ClassContext): Boolean {
-            return classContext.currentClassData.superClasses.contains(CLASS_NAME)
-        }
     }
 
     private var hasOverride = false

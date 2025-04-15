@@ -4,8 +4,9 @@ import com.android.build.api.instrumentation.AsmClassVisitorFactory
 import com.android.build.api.instrumentation.ClassContext
 import com.android.build.api.instrumentation.ClassData
 import io.embrace.android.gradle.plugin.instrumentation.config.ConfigClassVisitorFactory
-import io.embrace.android.gradle.plugin.instrumentation.visitor.FirebaseMessagingServiceClassAdapter
-import io.embrace.android.gradle.plugin.instrumentation.visitor.OkHttpClassAdapter
+import io.embrace.android.gradle.plugin.instrumentation.visitor.BytecodeClassInsertionParams
+import io.embrace.android.gradle.plugin.instrumentation.visitor.BytecodeMethodInsertionParams
+import io.embrace.android.gradle.plugin.instrumentation.visitor.InstrumentationTargetClassVisitor
 import io.embrace.android.gradle.plugin.instrumentation.visitor.OnClickClassAdapter
 import io.embrace.android.gradle.plugin.instrumentation.visitor.OnLongClickClassAdapter
 import io.embrace.android.gradle.plugin.instrumentation.visitor.WebViewClientClassAdapter
@@ -23,7 +24,7 @@ abstract class EmbraceClassVisitorFactory : AsmClassVisitorFactory<BytecodeInstr
 
     override fun createClassVisitor(
         classContext: ClassContext,
-        nextClassVisitor: ClassVisitor
+        nextClassVisitor: ClassVisitor,
     ): ClassVisitor {
         val api = instrumentationContext.apiVersion.get()
         var visitor = nextClassVisitor
@@ -42,13 +43,38 @@ abstract class EmbraceClassVisitorFactory : AsmClassVisitorFactory<BytecodeInstr
         // chain our own visitors to avoid unlikely (but possible) cases such as a custom
         // WebViewClient implementing an OnClickListener
         if (behavior.shouldInstrumentFirebasePushNotifications(classContext)) {
-            visitor = FirebaseMessagingServiceClassAdapter(api, visitor)
+            visitor = InstrumentationTargetClassVisitor(
+                api = api,
+                nextClassVisitor = visitor,
+                targetParams = BytecodeClassInsertionParams(
+                    name = "onMessageReceived",
+                    descriptor = "(Lcom/google/firebase/messaging/RemoteMessage;)V",
+                ),
+                insertionParams = BytecodeMethodInsertionParams(
+                    owner = "io/embrace/android/embracesdk/fcm/swazzle/callback/com/android/fcm/FirebaseSwazzledHooks",
+                    name = "_onMessageReceived",
+                    descriptor = "(Lcom/google/firebase/messaging/RemoteMessage;)V",
+                    startVarIndex = 1,
+                )
+            )
         }
         if (behavior.shouldInstrumentWebview(classContext)) {
             visitor = WebViewClientClassAdapter(api, visitor)
         }
         if (behavior.shouldInstrumentOkHttp(classContext)) {
-            visitor = OkHttpClassAdapter(api, visitor)
+            visitor = InstrumentationTargetClassVisitor(
+                api = api,
+                nextClassVisitor = visitor,
+                targetParams = BytecodeClassInsertionParams(
+                    name = "build",
+                    descriptor = "()Lokhttp3/OkHttpClient;",
+                ),
+                insertionParams = BytecodeMethodInsertionParams(
+                    owner = "io/embrace/android/embracesdk/okhttp3/swazzle/callback/okhttp3/OkHttpClient\$Builder",
+                    name = "_preBuild",
+                    descriptor = "(Lokhttp3/OkHttpClient\$Builder;)V",
+                )
+            )
         }
         if (params.shouldInstrumentOnLongClick.get()) {
             visitor = OnLongClickClassAdapter(api, visitor)

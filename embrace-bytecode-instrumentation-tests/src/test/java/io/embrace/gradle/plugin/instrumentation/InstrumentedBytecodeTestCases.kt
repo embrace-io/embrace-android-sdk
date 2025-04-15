@@ -1,6 +1,5 @@
 package io.embrace.gradle.plugin.instrumentation
 
-import io.embrace.android.gradle.plugin.instrumentation.visitor.OkHttpClassAdapter
 import io.embrace.android.gradle.plugin.instrumentation.visitor.OnClickClassAdapter
 import io.embrace.android.gradle.plugin.instrumentation.visitor.OnLongClickClassAdapter
 import io.embrace.android.gradle.plugin.instrumentation.visitor.WebViewClientClassAdapter
@@ -28,7 +27,6 @@ import io.embrace.test.fixtures.MissingOverrideOnClickListener
 import io.embrace.test.fixtures.MissingOverrideOnLongClickListener
 import io.embrace.test.fixtures.NoOverrideWebViewClient
 import io.embrace.test.fixtures.VirtualMethodRefNamedOnClick
-import okhttp3.OkHttpClient
 import org.objectweb.asm.ClassVisitor
 
 private val onClickFactory: ClassVisitorFactory = { visitor ->
@@ -43,10 +41,6 @@ private val webviewFactory: ClassVisitorFactory = { visitor ->
     WebViewClientClassAdapter(ASM_API_VERSION, visitor)
 }
 
-private val okHttpFactory: ClassVisitorFactory = { visitor ->
-    OkHttpClassAdapter(ASM_API_VERSION, visitor)
-}
-
 /**
  * Declares the test cases for bytecode in [InstrumentedBytecodeTest]. You should define the
  * input class, the expected output, and the [ClassVisitor] which will instrument the bytecode.
@@ -59,16 +53,10 @@ internal fun instrumentedBytecodeTestCases(): List<BytecodeTestParams> {
         .plus(onLongClickTestCases)
         .plus(onLongClickInnerTestCases)
         .plus(webclientTestCases)
-        .plus(okHttpTestCases)
         .distinct() // filter out any unintentional duplicate test cases
         .sortedBy(BytecodeTestParams::simpleClzName)
 }
 
-private val okHttpTestCases = listOf(
-    OkHttpClient.Builder::class
-).map {
-    BytecodeTestParams(it.java, factory = okHttpFactory)
-}
 private val webclientTestCases = listOf(
     CustomWebViewClient::class,
     ExtendedCustomWebViewClient::class,

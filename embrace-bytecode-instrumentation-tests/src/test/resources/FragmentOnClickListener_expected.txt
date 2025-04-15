@@ -26,9 +26,8 @@ public final class io/embrace/test/fixtures/FragmentOnClickListener extends andr
   public onClick(Landroid/view/View;)V
     // annotable parameter count: 1 (invisible)
     @Lorg/jetbrains/annotations/NotNull;() // invisible, parameter 0
-    ALOAD 0
     ALOAD 1
-    INVOKESTATIC io/embrace/android/embracesdk/ViewSwazzledHooks$OnClickListener._preOnClick (Landroid/view/View$OnClickListener;Landroid/view/View;)V
+    INVOKESTATIC io/embrace/android/embracesdk/ViewSwazzledHooks$OnClickListener._preOnClick (Landroid/view/View;)V
    L0
     ALOAD 1
     LDC "view"

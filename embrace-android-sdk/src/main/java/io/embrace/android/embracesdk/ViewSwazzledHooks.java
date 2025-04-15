@@ -20,13 +20,13 @@ public final class ViewSwazzledHooks {
 
     static void logOnClickEvent(android.view.View view, TapBreadcrumbType breadcrumbType) {
         try {
-            String viewName = "";
+            String viewName;
             try {
                 viewName = view.getResources().getResourceName(view.getId());
             } catch (Exception e) {
                 viewName = UNKNOWN_ELEMENT_NAME;
             }
-            Pair<Float, Float> point = null;
+            Pair<Float, Float> point;
             try {
                 point = new Pair<>(view.getX(), view.getY());
             } catch (Exception e) {
@@ -52,7 +52,7 @@ public final class ViewSwazzledHooks {
         }
 
         @SuppressWarnings("MethodNameCheck")
-        public static void _preOnClick(android.view.View.OnClickListener thiz, android.view.View view) {
+        public static void _preOnClick(android.view.View view) {
             logOnClickEvent(view, TapBreadcrumbType.TAP);
         }
     }
@@ -63,10 +63,8 @@ public final class ViewSwazzledHooks {
         }
 
         @SuppressWarnings("MethodNameCheck")
-        public static void _preOnLongClick(android.view.View.OnLongClickListener thiz, android.view.View view) {
-            if (thiz != null) {
-                logOnClickEvent(view, TapBreadcrumbType.LONG_PRESS);
-            }
+        public static void _preOnLongClick(android.view.View view) {
+            logOnClickEvent(view, TapBreadcrumbType.LONG_PRESS);
         }
     }
 }

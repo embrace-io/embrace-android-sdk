@@ -29,5 +29,5 @@ internal data class BytecodeMethodInsertionParams(
      *
      * In future we can revisit this decision, given that the current object is not usually used.
      */
-    val startVarIndex: Int = 0,
+    val startVarIndex: Int = 1,
 )

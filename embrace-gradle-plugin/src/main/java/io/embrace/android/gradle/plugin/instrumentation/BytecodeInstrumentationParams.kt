@@ -4,6 +4,7 @@ import com.android.build.api.instrumentation.InstrumentationParameters
 import io.embrace.android.gradle.plugin.instrumentation.config.model.VariantConfig
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.Optional
 
 /**
  * Contains parameters that affect how bytecode is manipulated during instrumentation.
@@ -19,6 +20,13 @@ interface BytecodeInstrumentationParams : InstrumentationParameters {
      */
     @get:Input
     val config: Property<VariantConfig>
+
+    /**
+     * Base64 encoded string of the shared object files map to be injected in the SDK.
+     */
+    @get:Optional
+    @get:Input
+    val encodedSharedObjectFilesMap: Property<String>
 
     /**
      * Whether or not the plugin should operate for this variant.

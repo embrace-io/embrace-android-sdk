@@ -3,8 +3,6 @@ package io.embrace.android.gradle.plugin.gradle
 import io.embrace.android.gradle.plugin.util.capitalizedString
 import org.gradle.api.Project
 import org.gradle.api.Task
-import org.gradle.api.UnknownDomainObjectException
-import org.gradle.api.UnknownTaskException
 import org.gradle.api.tasks.TaskContainer
 import org.gradle.api.tasks.TaskProvider
 
@@ -30,17 +28,20 @@ fun isTaskRegistered(taskProvider: TaskProvider<Task>?) = taskProvider != null
  * It returns task provider for given taskName without realizing the task.
  */
 fun Project.tryGetTaskProvider(taskName: String): TaskProvider<Task>? {
-    logger.debug("Will try to get TaskProvider for taskName=$taskName")
     return try {
-        val task = tasks.named(taskName)
-        logger.debug("TaskProvider obtained with name=${task.name}")
-
-        task
-    } catch (e: UnknownDomainObjectException) {
-        logger.debug("Task provider not found")
+        tasks.named(taskName)
+    } catch (e: Exception) {
         null
-    } catch (e: UnknownTaskException) {
-        logger.debug("Task provider not found")
+    }
+}
+
+/**
+ * Returns a task provider for given taskName and type without realizing the task.
+ */
+fun <T : Task> Project.tryGetTaskProvider(taskName: String, taskType: Class<T>): TaskProvider<T>? {
+    return try {
+        tasks.named(taskName, taskType)
+    } catch (e: Exception) {
         null
     }
 }

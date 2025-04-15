@@ -1,15 +1,13 @@
 package io.embrace.android.gradle.plugin.instrumentation
 
 import com.android.build.api.instrumentation.ClassContext
-import io.embrace.android.gradle.plugin.instrumentation.visitor.FirebaseMessagingServiceClassAdapter
-import io.embrace.android.gradle.plugin.instrumentation.visitor.OkHttpClassAdapter.Companion.CLASS_NAME
 import io.embrace.android.gradle.plugin.instrumentation.visitor.WebViewClientClassAdapter
 
 internal class ClassVisitBehavior(private val params: BytecodeInstrumentationParams) {
 
     fun shouldInstrumentFirebasePushNotifications(classContext: ClassContext): Boolean {
         return params.shouldInstrumentFirebaseMessaging.get() &&
-            classContext.currentClassData.superClasses.contains(FirebaseMessagingServiceClassAdapter.CLASS_NAME)
+            classContext.currentClassData.superClasses.contains("com.google.firebase.messaging.FirebaseMessagingService")
     }
 
     fun shouldInstrumentWebview(classContext: ClassContext): Boolean {
@@ -18,6 +16,6 @@ internal class ClassVisitBehavior(private val params: BytecodeInstrumentationPar
     }
 
     fun shouldInstrumentOkHttp(classContext: ClassContext): Boolean {
-        return params.shouldInstrumentOkHttp.get() && classContext.currentClassData.className == CLASS_NAME
+        return params.shouldInstrumentOkHttp.get() && classContext.currentClassData.className == "okhttp3.OkHttpClient\$Builder"
     }
 }

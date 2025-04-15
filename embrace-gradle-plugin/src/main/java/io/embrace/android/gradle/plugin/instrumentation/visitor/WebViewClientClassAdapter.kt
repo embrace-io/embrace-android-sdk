@@ -12,7 +12,6 @@ import org.objectweb.asm.Opcodes
 class WebViewClientClassAdapter(
     api: Int,
     internal val nextClassVisitor: ClassVisitor?,
-    private val logger: (() -> String) -> Unit
 ) : ClassVisitor(api, nextClassVisitor) {
 
     companion object : ClassVisitFilter {
@@ -22,28 +21,33 @@ class WebViewClientClassAdapter(
             "(Landroid/webkit/WebView;Ljava/lang/String;Landroid/graphics/Bitmap;)V"
 
         override fun accept(classContext: ClassContext): Boolean {
-            if (classContext.currentClassData.superClasses.contains(CLASS_NAME)) {
-                return true
-            }
-            return false
+            return classContext.currentClassData.superClasses.contains(CLASS_NAME)
         }
     }
 
-    var hasOverride = false
+    private var hasOverride = false
 
     override fun visitMethod(
         access: Int,
         name: String,
         desc: String,
         signature: String?,
-        exceptions: Array<String>?
+        exceptions: Array<String>?,
     ): MethodVisitor? {
         val nextMethodVisitor = super.visitMethod(access, name, desc, signature, exceptions)
 
         return if (METHOD_NAME == name && METHOD_DESC == desc) {
-            logger { "WebViewClientClassAdapter: instrumented method $name $desc" }
             hasOverride = true
-            WebViewClientMethodAdapter(api, nextMethodVisitor)
+            InstrumentationTargetMethodVisitor(
+                api = api,
+                methodVisitor = nextMethodVisitor,
+                params = BytecodeMethodInsertionParams(
+                    owner = "io/embrace/android/embracesdk/WebViewClientSwazzledHooks",
+                    name = "_preOnPageStarted",
+                    descriptor = "(Landroid/webkit/WebView;Ljava/lang/String;Landroid/graphics/Bitmap;)V",
+                    startVarIndex = 1,
+                )
+            )
         } else {
             nextMethodVisitor
         }
@@ -52,8 +56,6 @@ class WebViewClientClassAdapter(
     override fun visitEnd() {
         // add an override of onPageStarted if the class does not have one already.
         if (!hasOverride) {
-            logger { "WebViewClientClassAdapter: instrumented method $METHOD_NAME $METHOD_DESC (added override)" }
-
             val nextMethodVisitor = super.visitMethod(
                 Opcodes.ACC_PUBLIC,
                 METHOD_NAME,

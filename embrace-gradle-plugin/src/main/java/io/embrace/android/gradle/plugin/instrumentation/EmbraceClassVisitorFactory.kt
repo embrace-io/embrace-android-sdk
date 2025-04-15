@@ -3,7 +3,6 @@ package io.embrace.android.gradle.plugin.instrumentation
 import com.android.build.api.instrumentation.AsmClassVisitorFactory
 import com.android.build.api.instrumentation.ClassContext
 import com.android.build.api.instrumentation.ClassData
-import io.embrace.android.gradle.plugin.Logger
 import org.objectweb.asm.ClassVisitor
 
 /**
@@ -25,9 +24,7 @@ abstract class EmbraceClassVisitorFactory : AsmClassVisitorFactory<BytecodeInstr
             nextClassVisitor,
             instrumentationContext,
             parameters
-        ) {
-            logger.info(it())
-        }
+        )
     }
 
     override fun isInstrumentable(classData: ClassData): Boolean {
@@ -46,5 +43,3 @@ abstract class EmbraceClassVisitorFactory : AsmClassVisitorFactory<BytecodeInstr
         return true
     }
 }
-
-private val logger = Logger(EmbraceClassVisitorFactory::class.java)

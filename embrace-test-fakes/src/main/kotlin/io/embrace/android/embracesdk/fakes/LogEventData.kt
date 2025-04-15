@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
-import io.opentelemetry.api.logs.Severity
+import io.embrace.opentelemetry.kotlin.logging.SeverityNumber
 
 /**
  * Represents a Log event that can be added to the current session span.
@@ -14,6 +14,6 @@ import io.opentelemetry.api.logs.Severity
  */
 class LogEventData(
     val schemaType: SchemaType,
-    val severity: Severity,
+    val severity: SeverityNumber,
     val message: String,
 )

@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.spans
 
 import io.embrace.android.embracesdk.internal.arch.schema.EmbraceAttributeKey
 import io.embrace.android.embracesdk.internal.arch.schema.FixedAttribute
+import io.embrace.opentelemetry.kotlin.logging.SeverityNumber
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.logs.Severity
 import io.opentelemetry.api.trace.Span
@@ -23,10 +24,10 @@ private const val EMBRACE_USAGE_ATTRIBUTE_NAME_PREFIX = "emb.usage."
  */
 internal fun String.toEmbraceObjectName(): String = EMBRACE_OBJECT_NAME_PREFIX + this
 
-fun io.embrace.android.embracesdk.Severity.toOtelSeverity(): Severity = when (this) {
-    io.embrace.android.embracesdk.Severity.INFO -> Severity.INFO
-    io.embrace.android.embracesdk.Severity.WARNING -> Severity.WARN
-    io.embrace.android.embracesdk.Severity.ERROR -> Severity.ERROR
+fun io.embrace.android.embracesdk.Severity.toOtelSeverity(): SeverityNumber = when (this) {
+    io.embrace.android.embracesdk.Severity.INFO -> SeverityNumber.INFO
+    io.embrace.android.embracesdk.Severity.WARNING -> SeverityNumber.WARN
+    io.embrace.android.embracesdk.Severity.ERROR -> SeverityNumber.ERROR
 }
 
 /**

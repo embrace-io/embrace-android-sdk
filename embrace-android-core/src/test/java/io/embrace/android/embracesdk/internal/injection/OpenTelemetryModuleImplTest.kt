@@ -6,11 +6,13 @@ import io.embrace.android.embracesdk.internal.opentelemetry.EmbTracerProvider
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpanImpl
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanService
 import io.embrace.android.embracesdk.internal.spans.SpanSinkImpl
+import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 internal class OpenTelemetryModuleImplTest {
+    @OptIn(ExperimentalApi::class)
     @Test
     fun testInitModuleImplDefaults() {
         val openTelemetryModule: OpenTelemetryModule = OpenTelemetryModuleImpl(InitModuleImpl())

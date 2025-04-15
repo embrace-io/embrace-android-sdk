@@ -3,6 +3,7 @@ package io.embrace.android.gradle.plugin.instrumentation
 import com.android.build.api.instrumentation.ClassContext
 import com.android.build.api.instrumentation.InstrumentationContext
 import io.embrace.android.gradle.plugin.instrumentation.config.ConfigClassVisitorFactory
+import io.embrace.android.gradle.plugin.instrumentation.visitor.ApplicationClassAdapter
 import io.embrace.android.gradle.plugin.instrumentation.visitor.FirebaseMessagingServiceClassAdapter
 import io.embrace.android.gradle.plugin.instrumentation.visitor.OkHttpClassAdapter
 import io.embrace.android.gradle.plugin.instrumentation.visitor.OnClickClassAdapter
@@ -31,6 +32,11 @@ internal fun createClassVisitorImpl(
 
     // chain our own visitors to avoid unlikely (but possible) cases such as a custom
     // WebViewClient implementing an OnClickListener
+    if (parameters.get().shouldAutoStart.get() && ApplicationClassAdapter.accept(classContext)) {
+        visitor = ApplicationClassAdapter(api, visitor)
+        logger { "Added ApplicationClassAdapter for $className." }
+    }
+
     if (parameters.get().shouldInstrumentFirebaseMessaging.get() &&
         FirebaseMessagingServiceClassAdapter.accept(classContext)
     ) {

@@ -31,4 +31,6 @@ interface InstrumentationBehavior {
      * A list of string regexes that are used to filter classes during bytecode instrumentation
      */
     val ignoredClasses: List<String>
+
+    val autoStartEnabled: Boolean
 }

@@ -106,7 +106,13 @@ data class SdkLocalConfig(
     val appExitInfoConfig: AppExitInfoLocalConfig? = null,
 
     @Json(name = "app_framework")
-    val appFramework: String? = null
+    val appFramework: String? = null,
+
+    /**
+     * Whether auto-start instrumentation should be enabled or not
+     */
+    @Json(name = "auto_start")
+    val autoStart: Boolean? = null
 ) : Serializable {
 
     private companion object {

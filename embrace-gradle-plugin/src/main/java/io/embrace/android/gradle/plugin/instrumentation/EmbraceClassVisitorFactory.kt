@@ -3,6 +3,12 @@ package io.embrace.android.gradle.plugin.instrumentation
 import com.android.build.api.instrumentation.AsmClassVisitorFactory
 import com.android.build.api.instrumentation.ClassContext
 import com.android.build.api.instrumentation.ClassData
+import io.embrace.android.gradle.plugin.instrumentation.config.ConfigClassVisitorFactory
+import io.embrace.android.gradle.plugin.instrumentation.visitor.FirebaseMessagingServiceClassAdapter
+import io.embrace.android.gradle.plugin.instrumentation.visitor.OkHttpClassAdapter
+import io.embrace.android.gradle.plugin.instrumentation.visitor.OnClickClassAdapter
+import io.embrace.android.gradle.plugin.instrumentation.visitor.OnLongClickClassAdapter
+import io.embrace.android.gradle.plugin.instrumentation.visitor.WebViewClientClassAdapter
 import org.objectweb.asm.ClassVisitor
 
 /**
@@ -19,12 +25,38 @@ abstract class EmbraceClassVisitorFactory : AsmClassVisitorFactory<BytecodeInstr
         classContext: ClassContext,
         nextClassVisitor: ClassVisitor
     ): ClassVisitor {
-        return createClassVisitorImpl(
-            classContext,
-            nextClassVisitor,
-            instrumentationContext,
-            parameters
-        )
+        val api = instrumentationContext.apiVersion.get()
+        var visitor = nextClassVisitor
+        val className = classContext.currentClassData.className
+
+        // Add a visitor if this is a config class provided by the SDK
+        val params = parameters.get()
+        val cfg = params.config.get()
+        val encodedSharedObjectFilesMap = parameters.get().encodedSharedObjectFilesMap.orNull
+        ConfigClassVisitorFactory.createClassVisitor(className, cfg, encodedSharedObjectFilesMap, api, visitor)?.let {
+            visitor = it
+        }
+
+        val behavior = ClassVisitBehavior(params)
+
+        // chain our own visitors to avoid unlikely (but possible) cases such as a custom
+        // WebViewClient implementing an OnClickListener
+        if (behavior.shouldInstrumentFirebasePushNotifications(classContext)) {
+            visitor = FirebaseMessagingServiceClassAdapter(api, visitor)
+        }
+        if (behavior.shouldInstrumentWebview(classContext)) {
+            visitor = WebViewClientClassAdapter(api, visitor)
+        }
+        if (behavior.shouldInstrumentOkHttp(classContext)) {
+            visitor = OkHttpClassAdapter(api, visitor)
+        }
+        if (params.shouldInstrumentOnLongClick.get()) {
+            visitor = OnLongClickClassAdapter(api, visitor)
+        }
+        if (params.shouldInstrumentOnClick.get()) {
+            visitor = OnClickClassAdapter(api, visitor)
+        }
+        return visitor
     }
 
     override fun isInstrumentable(classData: ClassData): Boolean {
@@ -39,7 +71,7 @@ abstract class EmbraceClassVisitorFactory : AsmClassVisitorFactory<BytecodeInstr
 
         // any class could implement OnClickListener, so we need to search everything.
         // in future we could confine this search to Activity/Fragment/View implementations at the
-        // cost of Swazzling 100% of onClick implementations.
+        // cost of instrumenting 100% of onClick implementations.
         return true
     }
 }

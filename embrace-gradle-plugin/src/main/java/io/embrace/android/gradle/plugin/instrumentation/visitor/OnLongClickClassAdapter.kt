@@ -1,6 +1,5 @@
 package io.embrace.android.gradle.plugin.instrumentation.visitor
 
-import com.android.build.api.instrumentation.ClassContext
 import org.objectweb.asm.ClassVisitor
 import org.objectweb.asm.MethodVisitor
 
@@ -13,11 +12,9 @@ class OnLongClickClassAdapter(
     internal val nextClassVisitor: ClassVisitor?,
 ) : ClassVisitor(api, nextClassVisitor) {
 
-    companion object : ClassVisitFilter {
+    companion object {
         private const val METHOD_NAME = "onLongClick"
         private const val METHOD_DESC = "(Landroid/view/View;)Z"
-
-        override fun accept(classContext: ClassContext) = true
     }
 
     override fun visitMethod(

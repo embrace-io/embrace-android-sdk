@@ -25,7 +25,7 @@ public class io/embrace/test/fixtures/JavaNested$JavaStaticListener implements a
   public onClick(Landroid/view/View;)V
     ALOAD 0
     ALOAD 1
-    INVOKESTATIC io/embrace/android/embracesdk/ViewSwazzledHooks$OnClickListener._preOnClick (Landroid/view/View$OnClickListener;Landroid/view/View;)V
+    INVOKESTATIC io/embrace/android/embracesdk/internal/instrumentation/bytecode/OnClickBytecodeEntrypoint.onClick (Landroid/view/View$OnClickListener;Landroid/view/View;)V
    L0
     LINENUMBER 22 L0
     RETURN

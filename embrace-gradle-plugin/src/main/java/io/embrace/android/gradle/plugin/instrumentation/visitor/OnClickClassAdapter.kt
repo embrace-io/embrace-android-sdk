@@ -31,8 +31,8 @@ class OnClickClassAdapter(
                 api = api,
                 methodVisitor = nextMethodVisitor,
                 params = BytecodeMethodInsertionParams(
-                    owner = "io/embrace/android/embracesdk/ViewSwazzledHooks\$OnClickListener",
-                    name = "_preOnClick",
+                    owner = "io/embrace/android/embracesdk/internal/instrumentation/bytecode/OnClickBytecodeEntrypoint",
+                    name = "onClick",
                     descriptor = "(Landroid/view/View\$OnClickListener;Landroid/view/View;)V",
                 )
             )

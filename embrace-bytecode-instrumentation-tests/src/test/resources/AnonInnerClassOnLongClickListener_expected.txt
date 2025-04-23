@@ -33,7 +33,7 @@ class io/embrace/test/fixtures/AnonInnerClassOnLongClickListener$1 implements an
   public onLongClick(Landroid/view/View;)Z
     ALOAD 0
     ALOAD 1
-    INVOKESTATIC io/embrace/android/embracesdk/ViewSwazzledHooks$OnLongClickListener._preOnLongClick (Landroid/view/View$OnLongClickListener;Landroid/view/View;)V
+    INVOKESTATIC io/embrace/android/embracesdk/internal/instrumentation/bytecode/OnLongClickBytecodeEntrypoint.onLongClick (Landroid/view/View$OnLongClickListener;Landroid/view/View;)V
    L0
     LINENUMBER 13 L0
     ICONST_0

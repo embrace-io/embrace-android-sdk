@@ -70,8 +70,8 @@ abstract class EmbraceClassVisitorFactory : AsmClassVisitorFactory<BytecodeInstr
                     descriptor = "()Lokhttp3/OkHttpClient;",
                 ),
                 insertionParams = BytecodeMethodInsertionParams(
-                    owner = "io/embrace/android/embracesdk/okhttp3/swazzle/callback/okhttp3/OkHttpClient\$Builder",
-                    name = "_preBuild",
+                    owner = "io/embrace/android/embracesdk/internal/instrumentation/bytecode/OkHttpBytecodeEntrypoint",
+                    name = "build",
                     descriptor = "(Lokhttp3/OkHttpClient\$Builder;)V",
                 )
             )

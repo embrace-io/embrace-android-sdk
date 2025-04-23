@@ -3380,7 +3380,7 @@ kotlin/jvm/internal/FakeKt
   public final build()Lokhttp3/OkHttpClient;
   @Lorg/jetbrains/annotations/NotNull;() // invisible
     ALOAD 0
-    INVOKESTATIC io/embrace/android/embracesdk/okhttp3/swazzle/callback/okhttp3/OkHttpClient$Builder._preBuild (Lokhttp3/OkHttpClient$Builder;)V
+    INVOKESTATIC io/embrace/android/embracesdk/internal/instrumentation/bytecode/OkHttpBytecodeEntrypoint.build (Lokhttp3/OkHttpClient$Builder;)V
    L0
     LINENUMBER 1069 L0
     NEW okhttp3/OkHttpClient

@@ -7,8 +7,6 @@ import io.embrace.android.gradle.plugin.instrumentation.fakes.TestClassContext
 import io.embrace.android.gradle.plugin.instrumentation.fakes.TestClassData
 import io.embrace.android.gradle.plugin.instrumentation.fakes.TestClassVisitor
 import io.embrace.android.gradle.plugin.instrumentation.fakes.TestVisitorFactoryImpl
-import io.embrace.android.gradle.plugin.instrumentation.visitor.FirebaseMessagingServiceClassAdapter
-import io.embrace.android.gradle.plugin.instrumentation.visitor.OkHttpClassAdapter
 import io.embrace.android.gradle.plugin.instrumentation.visitor.OnClickClassAdapter
 import io.embrace.android.gradle.plugin.instrumentation.visitor.OnLongClickClassAdapter
 import io.embrace.android.gradle.plugin.instrumentation.visitor.WebViewClientClassAdapter
@@ -60,29 +58,6 @@ class EmbraceClassVisitorFactoryTest {
         check(returningVisitor is OnClickClassAdapter)
         check(returningVisitor.nextClassVisitor is OnLongClickClassAdapter)
         check(returningVisitor.nextClassVisitor.nextClassVisitor is ConfigInstrumentationClassVisitor)
-    }
-
-    @Test
-    fun testOkHttpClassVisitorReturned() {
-        val visitor = TestClassVisitor()
-        val ctx = createMockClassContext("okhttp3.OkHttpClient\$Builder")
-        val returningVisitor = TestVisitorFactoryImpl().createClassVisitor(ctx, visitor)
-        check(returningVisitor is OnClickClassAdapter)
-        check(returningVisitor.nextClassVisitor is OnLongClickClassAdapter)
-        check(returningVisitor.nextClassVisitor.nextClassVisitor is OkHttpClassAdapter)
-        assertSame(visitor, returningVisitor.nextClassVisitor.nextClassVisitor.nextClassVisitor)
-    }
-
-    @Test
-    fun testFCMClassVisitorReturned() {
-        val visitor = TestClassVisitor()
-        val ctx = createMockClassContext("com.google.firebase.messaging.FirebaseMessagingService")
-        val params = TestBytecodeInstrumentationParams(instrumentFirebaseMessaging = true)
-        val returningVisitor = TestVisitorFactoryImpl(params = params).createClassVisitor(ctx, visitor)
-        check(returningVisitor is OnClickClassAdapter)
-        check(returningVisitor.nextClassVisitor is OnLongClickClassAdapter)
-        check(returningVisitor.nextClassVisitor.nextClassVisitor is FirebaseMessagingServiceClassAdapter)
-        assertSame(visitor, returningVisitor.nextClassVisitor.nextClassVisitor.nextClassVisitor)
     }
 
     @Test

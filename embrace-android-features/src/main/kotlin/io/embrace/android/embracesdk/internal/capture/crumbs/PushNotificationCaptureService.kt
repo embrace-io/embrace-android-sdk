@@ -104,7 +104,7 @@ class PushNotificationCaptureService(
         // whenever we come through this flow of push notification, we know certainly that it has
         // notification block. This is because if the push notification is data only
         // (w/o notification block), then it wouldn't come through this flow, but through
-        // FirebaseSwazzledHooks._onMessageReceived instead. Now it is a matter of determining if
+        // FcmBytecodeEntrypoint.onMessageReceived instead. Now it is a matter of determining if
         // it's a notification only or notification + data.
         return if (hasData) {
             PushNotificationBreadcrumb.NotificationType.NOTIFICATION_AND_DATA

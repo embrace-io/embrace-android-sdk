@@ -1,9 +1,12 @@
 package io.embrace.android.embracesdk.internal.config.instrumented.schema
 
+import androidx.annotation.Keep
+
 /**
  * Declares how the SDK should capture network requests
  */
 @Suppress("FunctionOnlyReturningConstant")
+@Keep
 interface NetworkCaptureConfig {
 
     /**

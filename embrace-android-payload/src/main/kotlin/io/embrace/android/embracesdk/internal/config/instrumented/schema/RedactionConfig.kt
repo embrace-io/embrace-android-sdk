@@ -1,8 +1,11 @@
 package io.embrace.android.embracesdk.internal.config.instrumented.schema
 
+import androidx.annotation.Keep
+
 /**
  * Declares how the SDK should redact sensitive data
  */
+@Keep
 interface RedactionConfig {
 
     /**

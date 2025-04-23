@@ -1,8 +1,11 @@
 package io.embrace.android.embracesdk.internal.config.instrumented.schema
 
+import androidx.annotation.Keep
+
 /**
  * Declares what features are enabled/disabled across the entire SDK.
  */
+@Keep
 interface EnabledFeatureConfig {
 
     /**

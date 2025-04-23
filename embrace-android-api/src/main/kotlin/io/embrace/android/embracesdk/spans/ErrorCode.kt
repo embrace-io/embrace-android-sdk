@@ -1,8 +1,11 @@
 package io.embrace.android.embracesdk.spans
 
+import androidx.annotation.Keep
+
 /**
  * Categorize the broad reason a Span completed unsuccessfully.
  */
+@Keep
 public enum class ErrorCode {
     /**
      * An application failure caused the Span to terminate

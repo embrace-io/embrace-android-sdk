@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk;
 
+import androidx.annotation.Keep;
 import androidx.annotation.Nullable;
 
 import io.embrace.android.embracesdk.annotation.InternalApi;
@@ -8,6 +9,7 @@ import io.embrace.android.embracesdk.annotation.InternalApi;
  * @hide
  */
 @InternalApi
+@Keep
 public final class WebViewClientSwazzledHooks {
 
     private WebViewClientSwazzledHooks() {

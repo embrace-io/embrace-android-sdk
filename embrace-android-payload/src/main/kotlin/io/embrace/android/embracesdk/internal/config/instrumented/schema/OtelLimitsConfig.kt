@@ -1,11 +1,14 @@
 package io.embrace.android.embracesdk.internal.config.instrumented.schema
 
+import androidx.annotation.Keep
+
 /**
  * Declares the limits for OTel data capture.
  *
  * Currently this is not instrumented by the gradle plugin so the values won't change - that will
  * be implemented in a future PR.
  */
+@Keep
 interface OtelLimitsConfig {
     fun getMaxInternalNameLength(): Int = 2000
     fun getMaxNameLength(): Int = 50

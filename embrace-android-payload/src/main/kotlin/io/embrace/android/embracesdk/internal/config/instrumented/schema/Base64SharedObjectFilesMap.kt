@@ -1,8 +1,11 @@
 package io.embrace.android.embracesdk.internal.config.instrumented.schema
 
+import androidx.annotation.Keep
+
 /**
  * A Base64 encoded string of the shared object files that are used to symbolicate crashes.
  */
+@Keep
 interface Base64SharedObjectFilesMap {
 
     /**

@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.fcm.swazzle.callback.com.android.fcm;
 
+import androidx.annotation.Keep;
 import androidx.annotation.NonNull;
 
 import com.google.firebase.messaging.RemoteMessage;
@@ -7,6 +8,7 @@ import com.google.firebase.messaging.RemoteMessage;
 import io.embrace.android.embracesdk.Embrace;
 import io.embrace.android.embracesdk.internal.EmbraceInternalApi;
 
+@Keep
 public final class FirebaseSwazzledHooks {
 
     private FirebaseSwazzledHooks() {

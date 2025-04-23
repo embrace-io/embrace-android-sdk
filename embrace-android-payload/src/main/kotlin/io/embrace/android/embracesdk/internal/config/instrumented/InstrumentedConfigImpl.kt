@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.config.instrumented
 
+import androidx.annotation.Keep
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.Base64SharedObjectFilesMap
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.BaseUrlConfig
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.EnabledFeatureConfig
@@ -20,7 +21,7 @@ import io.embrace.android.embracesdk.internal.config.instrumented.schema.Session
  * (1) always use functions, as this is somewhat easier to instrument than Kotlin properties
  * (2) always keep the embrace gradle plugin in sync when adding new config values or altering existing ones
  */
-@EmbraceInstrumented
+@Keep
 object InstrumentedConfigImpl : InstrumentedConfig {
     override val baseUrls: BaseUrlConfig = BaseUrlConfigImpl
     override val enabledFeatures: EnabledFeatureConfig = EnabledFeatureConfigImpl
@@ -32,26 +33,26 @@ object InstrumentedConfigImpl : InstrumentedConfig {
     override val symbols: Base64SharedObjectFilesMap = Base64SharedObjectFilesMapImpl
 }
 
-@EmbraceInstrumented
+@Keep
 object BaseUrlConfigImpl : BaseUrlConfig
 
-@EmbraceInstrumented
+@Keep
 object EnabledFeatureConfigImpl : EnabledFeatureConfig
 
-@EmbraceInstrumented
+@Keep
 object NetworkCaptureConfigImpl : NetworkCaptureConfig
 
-@EmbraceInstrumented
+@Keep
 object OtelLimitsConfigImpl : OtelLimitsConfig
 
-@EmbraceInstrumented
+@Keep
 object ProjectConfigImpl : ProjectConfig
 
-@EmbraceInstrumented
+@Keep
 object RedactionConfigImpl : RedactionConfig
 
-@EmbraceInstrumented
+@Keep
 object SessionConfigImpl : SessionConfig
 
-@EmbraceInstrumented
+@Keep
 object Base64SharedObjectFilesMapImpl : Base64SharedObjectFilesMap

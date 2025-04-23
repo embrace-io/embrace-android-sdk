@@ -6,6 +6,7 @@ import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
 import android.webkit.ConsoleMessage
+import androidx.annotation.Keep
 import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.api.SdkApi
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
@@ -23,6 +24,7 @@ import io.opentelemetry.sdk.trace.export.SpanExporter
  * Contains a singleton instance of itself, and is used for initializing the SDK.
  */
 @SuppressLint("EmbracePublicApiPackageRule")
+@Keep
 public class Embrace private constructor(
     internal var impl: EmbraceImpl = Systrace.traceSynchronous("embrace-impl-init") { EmbraceImpl() },
 ) : SdkApi {

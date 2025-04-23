@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk;
 
+import androidx.annotation.Keep;
 import androidx.annotation.NonNull;
 
 import io.embrace.android.embracesdk.annotation.InternalApi;
@@ -11,6 +12,7 @@ import kotlin.Pair;
  * @hide
  */
 @InternalApi
+@Keep
 public final class ViewSwazzledHooks {
 
     private static final String UNKNOWN_ELEMENT_NAME = "Unknown element";

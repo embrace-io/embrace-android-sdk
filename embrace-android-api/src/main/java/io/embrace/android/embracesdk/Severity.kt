@@ -1,8 +1,11 @@
 package io.embrace.android.embracesdk
 
+import androidx.annotation.Keep
+
 /**
  * The severity of the log message.
  */
+@Keep
 public enum class Severity {
 
     /**

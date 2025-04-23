@@ -1,11 +1,14 @@
 package io.embrace.android.embracesdk.network.http
 
+import androidx.annotation.Keep
+
 /**
  * Enumeration of supported HTTP request methods.
  *
  *
  * This class is part of the Embrace Public API.
  */
+@Keep
 public enum class HttpMethod {
     GET,
     HEAD,

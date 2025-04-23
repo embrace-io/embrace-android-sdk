@@ -1,8 +1,11 @@
 package io.embrace.android.embracesdk.internal.config.instrumented.schema
 
+import androidx.annotation.Keep
+
 /**
  * Declares metadata about the app project
  */
+@Keep
 interface ProjectConfig {
 
     /**

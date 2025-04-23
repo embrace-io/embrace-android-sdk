@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.network
 
+import androidx.annotation.Keep
 import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData
 import io.embrace.android.embracesdk.network.http.HttpMethod
 import java.util.Locale
@@ -7,6 +8,7 @@ import java.util.Locale
 /**
  * This class is used to create manually-recorded network requests.
  */
+@Keep
 public class EmbraceNetworkRequest private constructor(
 
     /**

@@ -24,4 +24,6 @@ dependencies {
     testImplementation(libs.opentelemetry.sdk)
     testImplementation(libs.opentelemetry.semconv)
     testImplementation(libs.opentelemetry.semconv.incubating)
+    implementation(libs.lifecycle.runtime)
+    implementation(libs.lifecycle.process)
 }

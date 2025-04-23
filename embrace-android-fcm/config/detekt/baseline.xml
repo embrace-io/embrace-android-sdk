@@ -1,0 +1,7 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>FunctionNaming:FirebaseSwazzledHooks.kt$FirebaseSwazzledHooks$@JvmStatic fun _onMessageReceived(message: RemoteMessage)</ID>
+  </CurrentIssues>
+</SmellBaseline>

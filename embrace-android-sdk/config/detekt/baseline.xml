@@ -1,5 +1,9 @@
 <?xml version="1.0" ?>
 <SmellBaseline>
-  <ManuallySuppressedIssues></ManuallySuppressedIssues>
-  <CurrentIssues></CurrentIssues>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>FunctionNaming:ViewSwazzledHooks.kt$ViewSwazzledHooks.OnClickListener$@Suppress("UNUSED_PARAMETER") @JvmStatic public fun _preOnClick(thiz: View.OnClickListener?, view: View)</ID>
+    <ID>FunctionNaming:ViewSwazzledHooks.kt$ViewSwazzledHooks.OnLongClickListener$@JvmStatic public fun _preOnLongClick(thiz: View.OnLongClickListener?, view: View)</ID>
+    <ID>FunctionNaming:WebViewClientSwazzledHooks.kt$WebViewClientSwazzledHooks$@Suppress("UNUSED_PARAMETER") @JvmStatic public fun _preOnPageStarted( view: WebView?, url: String?, favicon: Bitmap?, )</ID>
+  </CurrentIssues>
 </SmellBaseline>

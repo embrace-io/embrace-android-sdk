@@ -83,17 +83,21 @@ public final class io/embrace/android/embracesdk/Embrace$Companion {
 }
 
 public final class io/embrace/android/embracesdk/ViewSwazzledHooks {
+	public static final field INSTANCE Lio/embrace/android/embracesdk/ViewSwazzledHooks;
 }
 
 public final class io/embrace/android/embracesdk/ViewSwazzledHooks$OnClickListener {
-	public static fun _preOnClick (Landroid/view/View$OnClickListener;Landroid/view/View;)V
+	public static final field INSTANCE Lio/embrace/android/embracesdk/ViewSwazzledHooks$OnClickListener;
+	public static final fun _preOnClick (Landroid/view/View$OnClickListener;Landroid/view/View;)V
 }
 
 public final class io/embrace/android/embracesdk/ViewSwazzledHooks$OnLongClickListener {
-	public static fun _preOnLongClick (Landroid/view/View$OnLongClickListener;Landroid/view/View;)V
+	public static final field INSTANCE Lio/embrace/android/embracesdk/ViewSwazzledHooks$OnLongClickListener;
+	public static final fun _preOnLongClick (Landroid/view/View$OnLongClickListener;Landroid/view/View;)V
 }
 
 public final class io/embrace/android/embracesdk/WebViewClientSwazzledHooks {
-	public static fun _preOnPageStarted (Landroid/webkit/WebView;Ljava/lang/String;Landroid/graphics/Bitmap;)V
+	public static final field INSTANCE Lio/embrace/android/embracesdk/WebViewClientSwazzledHooks;
+	public static final fun _preOnPageStarted (Landroid/webkit/WebView;Ljava/lang/String;Landroid/graphics/Bitmap;)V
 }
 

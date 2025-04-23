@@ -27,7 +27,7 @@ public class io/embrace/test/fixtures/CustomWebViewClient extends android/webkit
     ALOAD 1
     ALOAD 2
     ALOAD 3
-    INVOKESTATIC io/embrace/android/embracesdk/WebViewClientSwazzledHooks._preOnPageStarted (Landroid/webkit/WebView;Ljava/lang/String;Landroid/graphics/Bitmap;)V
+    INVOKESTATIC io/embrace/android/embracesdk/internal/instrumentation/bytecode/WebViewClientBytecodeEntrypoint.onPageStarted (Landroid/webkit/WebView;Ljava/lang/String;Landroid/graphics/Bitmap;)V
    L0
     LINENUMBER 10 L0
     ALOAD 0

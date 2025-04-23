@@ -5,7 +5,7 @@
       "methods": [
         {
           "signature": "onPageStarted(Landroid/webkit/WebView;Ljava/lang/String;Landroid/graphics/Bitmap;)V",
-          "embraceHook": "invoke-static {p1, p2, p3}, Lio/embrace/android/embracesdk/WebViewClientSwazzledHooks;->_preOnPageStarted(Landroid/webkit/WebView;Ljava/lang/String;Landroid/graphics/Bitmap;)V"
+          "embraceHook": "invoke-static {p1, p2, p3}, Lio/embrace/android/embracesdk/internal/instrumentation/bytecode/WebViewClientBytecodeEntrypoint;->onPageStarted(Landroid/webkit/WebView;Ljava/lang/String;Landroid/graphics/Bitmap;)V"
         }
       ]
     },

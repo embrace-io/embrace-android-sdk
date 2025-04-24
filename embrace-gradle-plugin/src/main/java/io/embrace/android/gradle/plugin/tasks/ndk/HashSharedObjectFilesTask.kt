@@ -60,6 +60,7 @@ abstract class HashSharedObjectFilesTask @Inject constructor(
             .listFiles().orEmpty()
             .filter { it.isDirectory && it.listFiles()?.isNotEmpty() == true }
             .ifEmpty { error("Compressed shared object files directory does not contain any architecture directories") }
+            .sortedBy { it.name }
             .associate { archDir ->
                 archDir.name to mapSharedObjectsToHashes(archDir)
             }
@@ -69,6 +70,7 @@ abstract class HashSharedObjectFilesTask @Inject constructor(
             .listFiles { file -> file.name.endsWith(".so") }
             .orEmpty()
             .ifEmpty { error("Shared object files not found") }
+            .sortedBy { it.name }
 
         return sharedObjectFiles.associate { it.name to calculateSha1ForFile(it) }
     }

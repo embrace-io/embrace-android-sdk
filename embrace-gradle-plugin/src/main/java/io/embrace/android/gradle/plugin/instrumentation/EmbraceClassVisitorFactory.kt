@@ -77,10 +77,10 @@ abstract class EmbraceClassVisitorFactory : AsmClassVisitorFactory<BytecodeInstr
                 )
             )
         }
-        if (params.shouldInstrumentOnLongClick.get()) {
+        if (behavior.shouldInstrumentOnClick(classContext)) {
             visitor = OnLongClickClassAdapter(api, visitor)
         }
-        if (params.shouldInstrumentOnClick.get()) {
+        if (behavior.shouldInstrumentOnLongClick(classContext)) {
             visitor = OnClickClassAdapter(api, visitor)
         }
         return visitor

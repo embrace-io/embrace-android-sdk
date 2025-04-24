@@ -1,21 +1,30 @@
 package io.embrace.android.gradle.plugin.instrumentation
 
 import com.android.build.api.instrumentation.ClassContext
-import io.embrace.android.gradle.plugin.instrumentation.visitor.WebViewClientClassAdapter
+import io.embrace.android.gradle.plugin.instrumentation.strategy.ClassVisitStrategy
 
 internal class ClassVisitBehavior(private val params: BytecodeInstrumentationParams) {
 
-    fun shouldInstrumentFirebasePushNotifications(classContext: ClassContext): Boolean {
+    fun shouldInstrumentFirebasePushNotifications(ctx: ClassContext): Boolean {
         return params.shouldInstrumentFirebaseMessaging.get() &&
-            classContext.currentClassData.superClasses.contains("com.google.firebase.messaging.FirebaseMessagingService")
+            ClassVisitStrategy.MatchSuperClassName("com.google.firebase.messaging.FirebaseMessagingService").shouldVisit(ctx)
     }
 
-    fun shouldInstrumentWebview(classContext: ClassContext): Boolean {
+    fun shouldInstrumentWebview(ctx: ClassContext): Boolean {
         return params.shouldInstrumentWebview.get() &&
-            classContext.currentClassData.superClasses.contains(WebViewClientClassAdapter.CLASS_NAME)
+            ClassVisitStrategy.MatchSuperClassName("android.webkit.WebViewClient").shouldVisit(ctx)
     }
 
-    fun shouldInstrumentOkHttp(classContext: ClassContext): Boolean {
-        return params.shouldInstrumentOkHttp.get() && classContext.currentClassData.className == "okhttp3.OkHttpClient\$Builder"
+    fun shouldInstrumentOkHttp(ctx: ClassContext): Boolean {
+        return params.shouldInstrumentOkHttp.get() &&
+            ClassVisitStrategy.MatchClassName("okhttp3.OkHttpClient\$Builder").shouldVisit(ctx)
+    }
+
+    fun shouldInstrumentOnClick(ctx: ClassContext): Boolean {
+        return params.shouldInstrumentOnClick.get() && ClassVisitStrategy.Exhaustive.shouldVisit(ctx)
+    }
+
+    fun shouldInstrumentOnLongClick(ctx: ClassContext): Boolean {
+        return params.shouldInstrumentOnLongClick.get() && ClassVisitStrategy.Exhaustive.shouldVisit(ctx)
     }
 }

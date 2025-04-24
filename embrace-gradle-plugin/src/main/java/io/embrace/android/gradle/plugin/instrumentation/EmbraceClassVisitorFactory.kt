@@ -54,7 +54,7 @@ abstract class EmbraceClassVisitorFactory : AsmClassVisitorFactory<BytecodeInstr
                     owner = "io/embrace/android/embracesdk/internal/instrumentation/bytecode/FcmBytecodeEntrypoint",
                     name = "onMessageReceived",
                     descriptor = "(Lcom/google/firebase/messaging/RemoteMessage;)V",
-                    startVarIndex = 1,
+                    operandStackIndices = listOf(1),
                 )
             )
         }
@@ -73,6 +73,7 @@ abstract class EmbraceClassVisitorFactory : AsmClassVisitorFactory<BytecodeInstr
                     owner = "io/embrace/android/embracesdk/internal/instrumentation/bytecode/OkHttpBytecodeEntrypoint",
                     name = "build",
                     descriptor = "(Lokhttp3/OkHttpClient\$Builder;)V",
+                    operandStackIndices = listOf(0)
                 )
             )
         }

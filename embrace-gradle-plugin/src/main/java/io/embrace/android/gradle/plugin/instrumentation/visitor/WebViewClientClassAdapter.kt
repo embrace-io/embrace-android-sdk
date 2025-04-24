@@ -40,7 +40,7 @@ class WebViewClientClassAdapter(
                     owner = "io/embrace/android/embracesdk/internal/instrumentation/bytecode/WebViewClientBytecodeEntrypoint",
                     name = "onPageStarted",
                     descriptor = "(Landroid/webkit/WebView;Ljava/lang/String;Landroid/graphics/Bitmap;)V",
-                    startVarIndex = 1,
+                    operandStackIndices = listOf(1, 2, 3),
                 )
             )
         } else {

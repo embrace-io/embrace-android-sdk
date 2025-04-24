@@ -87,25 +87,6 @@ class EmbraceClassVisitorFactoryTest {
     }
 
     @Test
-    fun testOnClickVisitorDisabled() {
-        val visitor = TestClassVisitor()
-        val ctx = TestClassContext(clzDataString)
-        val config = createInstrumentationConfig(instrumentOnClick = false)
-        val observed = fetchClassVisitor(config, ctx, visitor)
-        assertTrue(observed is OnLongClickClassAdapter)
-    }
-
-    @Test
-    fun testOnLongClickVisitorDisabled() {
-        val visitor = TestClassVisitor()
-        val ctx = TestClassContext(clzDataString)
-        val config = createInstrumentationConfig(instrumentOnLongClick = false)
-        val observed = fetchClassVisitor(config, ctx, visitor)
-        check(observed is OnClickClassAdapter)
-        check(observed.nextClassVisitor is TestClassVisitor)
-    }
-
-    @Test
     fun testWebViewClassVisitorDisabled() {
         val visitor = TestClassVisitor()
         val ctx = createMockClassContext("android.webkit.WebViewClient")

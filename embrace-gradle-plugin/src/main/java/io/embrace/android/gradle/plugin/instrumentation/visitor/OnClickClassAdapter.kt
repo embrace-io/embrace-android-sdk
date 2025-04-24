@@ -25,20 +25,25 @@ class OnClickClassAdapter(
         exceptions: Array<String>?,
     ): MethodVisitor? {
         val nextMethodVisitor = super.visitMethod(access, name, desc, signature, exceptions)
+        val static = isStatic(access)
+        val isVirtualMethod = METHOD_NAME == name && METHOD_DESC == desc && !static
+        val isStaticMethod = METHOD_DESC == desc && static && isSynthetic(access)
 
-        return if (METHOD_NAME == name && METHOD_DESC == desc && !isStatic(access)) {
+        return if (isVirtualMethod || isStaticMethod) {
+            val indices = when (static) {
+                true -> listOf(0)
+                else -> listOf(1)
+            }
             InstrumentationTargetMethodVisitor(
                 api = api,
                 methodVisitor = nextMethodVisitor,
                 params = BytecodeMethodInsertionParams(
                     owner = "io/embrace/android/embracesdk/internal/instrumentation/bytecode/OnClickBytecodeEntrypoint",
                     name = "onClick",
-                    descriptor = "(Landroid/view/View\$OnClickListener;Landroid/view/View;)V",
-                    operandStackIndices = listOf(0, 1),
+                    descriptor = "(Landroid/view/View;)V",
+                    operandStackIndices = indices,
                 )
             )
-        } else if (METHOD_DESC == desc && isStatic(access) && isSynthetic(access)) {
-            OnClickStaticMethodAdapter(api, nextMethodVisitor)
         } else {
             nextMethodVisitor
         }

@@ -24,9 +24,8 @@ public class io/embrace/test/fixtures/CustomOnLongClickListener implements andro
   public onLongClick(Landroid/view/View;)Z
     // annotable parameter count: 1 (invisible)
     @Lorg/jetbrains/annotations/Nullable;() // invisible, parameter 0
-    ALOAD 0
     ALOAD 1
-    INVOKESTATIC io/embrace/android/embracesdk/internal/instrumentation/bytecode/OnLongClickBytecodeEntrypoint.onLongClick (Landroid/view/View$OnLongClickListener;Landroid/view/View;)V
+    INVOKESTATIC io/embrace/android/embracesdk/internal/instrumentation/bytecode/OnLongClickBytecodeEntrypoint.onLongClick (Landroid/view/View;)V
    L0
     LINENUMBER 11 L0
     ALOAD 1

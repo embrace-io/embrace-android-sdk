@@ -9,7 +9,7 @@ import org.objectweb.asm.Opcodes
  */
 class WebViewClientOverrideMethodAdapter(
     api: Int,
-    methodVisitor: MethodVisitor?
+    methodVisitor: MethodVisitor?,
 ) : MethodVisitor(api, methodVisitor) {
 
     override fun visitEnd() {
@@ -24,7 +24,7 @@ class WebViewClientOverrideMethodAdapter(
             Opcodes.INVOKESTATIC,
             "io/embrace/android/embracesdk/internal/instrumentation/bytecode/WebViewClientBytecodeEntrypoint",
             "onPageStarted",
-            "(Landroid/webkit/WebView;Ljava/lang/String;Landroid/graphics/Bitmap;)V",
+            "(Ljava/lang/String;)V",
             false
         )
         addSuperCall()

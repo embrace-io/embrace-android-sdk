@@ -5,11 +5,6 @@ import io.embrace.android.gradle.plugin.instrumentation.strategy.ClassVisitStrat
 
 internal class ClassVisitBehavior(private val params: BytecodeInstrumentationParams) {
 
-    fun shouldInstrumentFirebasePushNotifications(ctx: ClassContext): Boolean {
-        return params.shouldInstrumentFirebaseMessaging.get() &&
-            ClassVisitStrategy.MatchSuperClassName("com.google.firebase.messaging.FirebaseMessagingService").shouldVisit(ctx)
-    }
-
     fun shouldInstrumentWebview(ctx: ClassContext): Boolean {
         return params.shouldInstrumentWebview.get() &&
             ClassVisitStrategy.MatchSuperClassName("android.webkit.WebViewClient").shouldVisit(ctx)

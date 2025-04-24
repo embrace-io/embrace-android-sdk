@@ -4,12 +4,12 @@ import com.android.build.api.instrumentation.AsmClassVisitorFactory
 import com.android.build.api.instrumentation.ClassContext
 import com.android.build.api.instrumentation.ClassData
 import io.embrace.android.gradle.plugin.instrumentation.config.ConfigClassVisitorFactory
-import io.embrace.android.gradle.plugin.instrumentation.visitor.BytecodeClassInsertionParams
-import io.embrace.android.gradle.plugin.instrumentation.visitor.BytecodeMethodInsertionParams
 import io.embrace.android.gradle.plugin.instrumentation.visitor.InstrumentationTargetClassVisitor
 import io.embrace.android.gradle.plugin.instrumentation.visitor.OnClickClassAdapter
 import io.embrace.android.gradle.plugin.instrumentation.visitor.OnLongClickClassAdapter
 import io.embrace.android.gradle.plugin.instrumentation.visitor.WebViewClientClassAdapter
+import io.embrace.android.gradle.plugin.instrumentation.visitor.fcmFeature
+import io.embrace.android.gradle.plugin.instrumentation.visitor.okhttpFeature
 import org.objectweb.asm.ClassVisitor
 
 /**
@@ -40,41 +40,23 @@ abstract class EmbraceClassVisitorFactory : AsmClassVisitorFactory<BytecodeInstr
 
         val behavior = ClassVisitBehavior(params)
 
-        // chain our own visitors to avoid unlikely (but possible) cases such as a custom
-        // WebViewClient implementing an OnClickListener
-        if (behavior.shouldInstrumentFirebasePushNotifications(classContext)) {
+        // We take the approach of chaining 1 visitor per feature, if a feature is enabled/necessary
+        // for a given class.
+        if (params.shouldInstrumentFirebaseMessaging.get() && fcmFeature.visitStrategy.shouldVisit(classContext)) {
             visitor = InstrumentationTargetClassVisitor(
                 api = api,
                 nextClassVisitor = visitor,
-                targetParams = BytecodeClassInsertionParams(
-                    name = "onMessageReceived",
-                    descriptor = "(Lcom/google/firebase/messaging/RemoteMessage;)V",
-                ),
-                insertionParams = BytecodeMethodInsertionParams(
-                    owner = "io/embrace/android/embracesdk/internal/instrumentation/bytecode/FcmBytecodeEntrypoint",
-                    name = "onMessageReceived",
-                    descriptor = "(Lcom/google/firebase/messaging/RemoteMessage;)V",
-                    operandStackIndices = listOf(1),
-                )
+                feature = fcmFeature,
             )
         }
         if (behavior.shouldInstrumentWebview(classContext)) {
             visitor = WebViewClientClassAdapter(api, visitor)
         }
-        if (behavior.shouldInstrumentOkHttp(classContext)) {
+        if (params.shouldInstrumentOkHttp.get() && okhttpFeature.visitStrategy.shouldVisit(classContext)) {
             visitor = InstrumentationTargetClassVisitor(
                 api = api,
                 nextClassVisitor = visitor,
-                targetParams = BytecodeClassInsertionParams(
-                    name = "build",
-                    descriptor = "()Lokhttp3/OkHttpClient;",
-                ),
-                insertionParams = BytecodeMethodInsertionParams(
-                    owner = "io/embrace/android/embracesdk/internal/instrumentation/bytecode/OkHttpBytecodeEntrypoint",
-                    name = "build",
-                    descriptor = "(Lokhttp3/OkHttpClient\$Builder;)V",
-                    operandStackIndices = listOf(0)
-                )
+                feature = okhttpFeature,
             )
         }
         if (behavior.shouldInstrumentOnClick(classContext)) {

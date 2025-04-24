@@ -5,7 +5,7 @@ import org.objectweb.asm.Opcodes
 
 /**
  * Creates an onPageStarted method override and inserts a call to
- * ViewSwazzledHooks._preOnPageStarted at the very start of the method.
+ * WebViewClientBytecodeEntrypoint.onPageStarted at the very start of the method.
  */
 class WebViewClientOverrideMethodAdapter(
     api: Int,
@@ -19,11 +19,11 @@ class WebViewClientOverrideMethodAdapter(
         visitVarInsn(Opcodes.ALOAD, 2)
         // load local variable 'favicon' and push it onto the operand stack
         visitVarInsn(Opcodes.ALOAD, 3)
-        // invoke WebViewClientSwazzledHooks._preOnPageStarted()
+        // invoke WebViewClientBytecodeEntrypoint.onPageStarted()
         visitMethodInsn(
             Opcodes.INVOKESTATIC,
-            "io/embrace/android/embracesdk/WebViewClientSwazzledHooks",
-            "_preOnPageStarted",
+            "io/embrace/android/embracesdk/internal/instrumentation/bytecode/WebViewClientBytecodeEntrypoint",
+            "onPageStarted",
             "(Landroid/webkit/WebView;Ljava/lang/String;Landroid/graphics/Bitmap;)V",
             false
         )

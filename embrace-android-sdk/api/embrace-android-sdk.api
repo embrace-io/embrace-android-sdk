@@ -93,7 +93,8 @@ public final class io/embrace/android/embracesdk/ViewSwazzledHooks$OnLongClickLi
 	public static fun _preOnLongClick (Landroid/view/View$OnLongClickListener;Landroid/view/View;)V
 }
 
-public final class io/embrace/android/embracesdk/WebViewClientSwazzledHooks {
-	public static fun _preOnPageStarted (Landroid/webkit/WebView;Ljava/lang/String;Landroid/graphics/Bitmap;)V
+public final class io/embrace/android/embracesdk/internal/instrumentation/bytecode/WebViewClientBytecodeEntrypoint {
+	public static final field INSTANCE Lio/embrace/android/embracesdk/internal/instrumentation/bytecode/WebViewClientBytecodeEntrypoint;
+	public static final fun onPageStarted (Landroid/webkit/WebView;Ljava/lang/String;Landroid/graphics/Bitmap;)V
 }
 

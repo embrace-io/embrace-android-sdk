@@ -37,8 +37,8 @@ class WebViewClientClassAdapter(
                 api = api,
                 methodVisitor = nextMethodVisitor,
                 params = BytecodeMethodInsertionParams(
-                    owner = "io/embrace/android/embracesdk/WebViewClientSwazzledHooks",
-                    name = "_preOnPageStarted",
+                    owner = "io/embrace/android/embracesdk/internal/instrumentation/bytecode/WebViewClientBytecodeEntrypoint",
+                    name = "onPageStarted",
                     descriptor = "(Landroid/webkit/WebView;Ljava/lang/String;Landroid/graphics/Bitmap;)V",
                     startVarIndex = 1,
                 )

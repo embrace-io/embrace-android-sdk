@@ -12,10 +12,9 @@ import io.embrace.android.embracesdk.internal.payload.TapBreadcrumb.TapBreadcrum
 @Keep
 public object OnLongClickBytecodeEntrypoint {
 
-    @Suppress("UNUSED_PARAMETER")
     @Keep
     @JvmStatic
-    public fun onLongClick(thiz: View.OnLongClickListener?, view: View) {
+    public fun onLongClick(view: View) {
         logTouchEvent(view, TapBreadcrumbType.LONG_PRESS)
     }
 }

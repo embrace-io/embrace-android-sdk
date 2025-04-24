@@ -24,10 +24,8 @@ public class io/embrace/test/fixtures/CustomWebViewClient extends android/webkit
     @Lorg/jetbrains/annotations/Nullable;() // invisible, parameter 0
     @Lorg/jetbrains/annotations/Nullable;() // invisible, parameter 1
     @Lorg/jetbrains/annotations/Nullable;() // invisible, parameter 2
-    ALOAD 1
     ALOAD 2
-    ALOAD 3
-    INVOKESTATIC io/embrace/android/embracesdk/internal/instrumentation/bytecode/WebViewClientBytecodeEntrypoint.onPageStarted (Landroid/webkit/WebView;Ljava/lang/String;Landroid/graphics/Bitmap;)V
+    INVOKESTATIC io/embrace/android/embracesdk/internal/instrumentation/bytecode/WebViewClientBytecodeEntrypoint.onPageStarted (Ljava/lang/String;)V
    L0
     LINENUMBER 10 L0
     ALOAD 0

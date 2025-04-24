@@ -39,8 +39,8 @@ class WebViewClientClassAdapter(
                 params = BytecodeMethodInsertionParams(
                     owner = "io/embrace/android/embracesdk/internal/instrumentation/bytecode/WebViewClientBytecodeEntrypoint",
                     name = "onPageStarted",
-                    descriptor = "(Landroid/webkit/WebView;Ljava/lang/String;Landroid/graphics/Bitmap;)V",
-                    operandStackIndices = listOf(1, 2, 3),
+                    descriptor = "(Ljava/lang/String;)V",
+                    operandStackIndices = listOf(2),
                 )
             )
         } else {

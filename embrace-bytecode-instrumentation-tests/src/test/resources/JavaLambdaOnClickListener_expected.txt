@@ -65,9 +65,8 @@ public class io/embrace/test/fixtures/JavaLambdaOnClickListener extends androidx
 
   // access flags 0x100A
   private static synthetic lambda$onCreateView$0(Landroid/view/View;)V
-    ACONST_NULL
     ALOAD 0
-    INVOKESTATIC io/embrace/android/embracesdk/internal/instrumentation/bytecode/OnClickBytecodeEntrypoint.onClick (Landroid/view/View$OnClickListener;Landroid/view/View;)V
+    INVOKESTATIC io/embrace/android/embracesdk/internal/instrumentation/bytecode/OnClickBytecodeEntrypoint.onClick (Landroid/view/View;)V
    L0
     LINENUMBER 22 L0
     LDC "Embrace"

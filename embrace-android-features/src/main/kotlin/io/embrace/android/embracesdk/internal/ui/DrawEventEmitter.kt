@@ -18,7 +18,7 @@ interface DrawEventEmitter {
     fun registerFirstDrawCallback(
         activity: Activity,
         drawBeginCallback: () -> Unit,
-        firstFrameDeliveredCallback: () -> Unit
+        drawCompleteCallback: () -> Unit
     )
 
     /**

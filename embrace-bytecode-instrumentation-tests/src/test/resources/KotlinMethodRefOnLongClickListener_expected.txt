@@ -24,7 +24,7 @@ final class io/embrace/test/fixtures/KotlinMethodRefOnLongClickListener$sam$andr
   public final synthetic onLongClick(Landroid/view/View;)Z
     ALOAD 0
     ALOAD 1
-    INVOKESTATIC io/embrace/android/embracesdk/ViewSwazzledHooks$OnLongClickListener._preOnLongClick (Landroid/view/View$OnLongClickListener;Landroid/view/View;)V
+    INVOKESTATIC io/embrace/android/embracesdk/internal/instrumentation/bytecode/OnLongClickBytecodeEntrypoint.onLongClick (Landroid/view/View$OnLongClickListener;Landroid/view/View;)V
    L0
     ALOAD 0
     GETFIELD io/embrace/test/fixtures/KotlinMethodRefOnLongClickListener$sam$android_view_View_OnLongClickListener$0.function : Lkotlin/jvm/functions/Function1;

@@ -31,8 +31,8 @@ class OnLongClickClassAdapter(
                 api = api,
                 methodVisitor = nextMethodVisitor,
                 params = BytecodeMethodInsertionParams(
-                    owner = "io/embrace/android/embracesdk/ViewSwazzledHooks\$OnLongClickListener",
-                    name = "_preOnLongClick",
+                    owner = "io/embrace/android/embracesdk/internal/instrumentation/bytecode/OnLongClickBytecodeEntrypoint",
+                    name = "onLongClick",
                     descriptor = "(Landroid/view/View\$OnLongClickListener;Landroid/view/View;)V",
                 )
             )

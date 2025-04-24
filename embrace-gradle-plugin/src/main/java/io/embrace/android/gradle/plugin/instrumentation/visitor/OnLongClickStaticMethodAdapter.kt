@@ -4,7 +4,7 @@ import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes
 
 /**
- * Visits a static onLongClick method and inserts a call to ViewSwazzledHooks._preOnLongClick
+ * Visits a static onLongClick method and inserts a call to OnLongClickBytecodeEntrypoint.onLongClick
  * at the very start of the method.
  */
 class OnLongClickStaticMethodAdapter(
@@ -22,11 +22,11 @@ class OnLongClickStaticMethodAdapter(
         // load local variable 'view' and push it onto the operand stack
         visitVarInsn(Opcodes.ALOAD, 0)
 
-        // invoke ViewSwazzledHooks$OnLongClickListener._preOnLongClick()
+        // invoke OnLongClickBytecodeEntrypoint.onLongClick()
         visitMethodInsn(
             Opcodes.INVOKESTATIC,
-            "io/embrace/android/embracesdk/ViewSwazzledHooks\$OnLongClickListener",
-            "_preOnLongClick",
+            "io/embrace/android/embracesdk/internal/instrumentation/bytecode/OnLongClickBytecodeEntrypoint",
+            "onLongClick",
             "(Landroid/view/View\$OnLongClickListener;Landroid/view/View;)V",
             false
         )

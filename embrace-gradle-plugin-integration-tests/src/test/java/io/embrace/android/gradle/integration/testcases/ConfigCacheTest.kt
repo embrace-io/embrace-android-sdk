@@ -7,6 +7,10 @@ import org.junit.Test
 
 class ConfigCacheTest {
 
+    private val defaultExpectedVariants = listOf("debug", "release")
+    private val defaultExpectedLibs = listOf("libemb-donuts.so", "libemb-crisps.so")
+    private val defaultExpectedArchs = listOf("x86_64", "x86", "armeabi-v7a", "arm64-v8a")
+
     @Rule
     @JvmField
     val rule: PluginIntegrationTestRule = PluginIntegrationTestRule()
@@ -17,12 +21,19 @@ class ConfigCacheTest {
     @Test
     fun assembleRelease() {
         rule.runTest(
-            fixture = "android-simple",
+            fixture = "android-cmake",
             task = "assembleRelease",
             additionalArgs = listOf(
                 "-Dorg.gradle.configuration-cache=true",
                 "-Dorg.gradle.configuration-cache.problems=fail",
             ),
+            setup = {
+                setupMockResponses(
+                    defaultExpectedLibs,
+                    defaultExpectedArchs,
+                    defaultExpectedVariants
+                )
+            },
             projectType = ProjectType.ANDROID,
             assertions = {
             }

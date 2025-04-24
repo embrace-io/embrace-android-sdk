@@ -9,8 +9,7 @@ import org.objectweb.asm.MethodVisitor
 internal class InstrumentationTargetClassVisitor(
     api: Int,
     nextClassVisitor: ClassVisitor?,
-    private val targetParams: BytecodeClassInsertionParams,
-    private val insertionParams: BytecodeMethodInsertionParams,
+    private val feature: BytecodeInstrumentationFeature,
 ) : ClassVisitor(api, nextClassVisitor) {
 
     override fun visitMethod(
@@ -22,11 +21,11 @@ internal class InstrumentationTargetClassVisitor(
     ): MethodVisitor? {
         val nextMethodVisitor = super.visitMethod(access, name, desc, signature, exceptions)
 
-        return if (targetParams.name == name && targetParams.descriptor == desc) {
+        return if (feature.targetParams.name == name && feature.targetParams.descriptor == desc) {
             InstrumentationTargetMethodVisitor(
                 api = api,
                 methodVisitor = nextMethodVisitor,
-                params = insertionParams
+                params = feature.insertionParams
             )
         } else {
             nextMethodVisitor

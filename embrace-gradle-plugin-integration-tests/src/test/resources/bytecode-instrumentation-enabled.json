@@ -33,7 +33,7 @@
       "methods": [
         {
           "signature": "build()Lokhttp3/OkHttpClient;",
-          "embraceHook": "invoke-static {p0}, Lio/embrace/android/embracesdk/okhttp3/swazzle/callback/okhttp3/OkHttpClient$Builder;->_preBuild(Lokhttp3/OkHttpClient$Builder;)V"
+          "embraceHook": "invoke-static {p0}, Lio/embrace/android/embracesdk/internal/instrumentation/bytecode/OkHttpBytecodeEntrypoint;->build(Lokhttp3/OkHttpClient$Builder;)V"
         }
       ]
     },

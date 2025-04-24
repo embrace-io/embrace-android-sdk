@@ -20,4 +20,5 @@ dependencies {
     testImplementation(project(":embrace-android-infra"))
     testImplementation(project(":embrace-android-sdk"))
     testImplementation(project(":embrace-internal-api"))
+    implementation(libs.lifecycle.runtime)
 }

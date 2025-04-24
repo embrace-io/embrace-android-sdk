@@ -34,6 +34,7 @@ class OnLongClickClassAdapter(
                     owner = "io/embrace/android/embracesdk/internal/instrumentation/bytecode/OnLongClickBytecodeEntrypoint",
                     name = "onLongClick",
                     descriptor = "(Landroid/view/View\$OnLongClickListener;Landroid/view/View;)V",
+                    operandStackIndices = listOf(0, 1),
                 )
             )
         } else if (METHOD_DESC == desc && isStatic(access) && isSynthetic(access)) {

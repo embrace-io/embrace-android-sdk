@@ -21,13 +21,14 @@ internal data class BytecodeMethodInsertionParams(
     val descriptor: String,
 
     /**
-     * The starting index of the local variable on the operand stack. We assume that by default the bytecode
-     * entrypoint will take the current object as its first parameter, then all other parameters.
+     * Declares the indices of variables on the operand stack that should be added as part of the inserted call.
+     * This MUST be entered in ascending order.
      *
-     * For example, an instrumentation entrypoint for a View.OnClickListener would have the following
-     * signature: instrumentedMethodName(android.view.View.OnClickListener thiz, android.view.View view).
+     * Virtual methods have an implicit reference as the 0th value on the stack, whereas static methods do not.
+     * After this point, the stack should contain the ordered arguments to the containing method.
      *
-     * In future we can revisit this decision, given that the current object is not usually used.
+     * As an example, listOf(1, 3) should be supplied if we wanted to pass the String and Boolean parameters of this virtual method:
+     * foo(String, Int, Boolean)
      */
-    val startVarIndex: Int = 0,
+    val operandStackIndices: List<Int>,
 )

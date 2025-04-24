@@ -2,7 +2,6 @@ package io.embrace.android.gradle.plugin.instrumentation.visitor
 
 import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes
-import org.objectweb.asm.Type
 
 /**
  * Visits a method that should be rewritten to include an API call to instrumentation
@@ -15,12 +14,9 @@ internal class InstrumentationTargetMethodVisitor(
 ) : MethodVisitor(api, methodVisitor) {
 
     override fun visitCode() {
-        // count how many parameters are in the method descriptor
-        val paramCount = Type.getArgumentTypes(params.descriptor).size
-
-        // load local variables and push onto the operand stack
-        repeat(paramCount) {
-            visitVarInsn(Opcodes.ALOAD, it + params.startVarIndex)
+        // load local variables required for method call (if any) and push onto the operand stack
+        params.operandStackIndices.forEach {
+            visitVarInsn(Opcodes.ALOAD, it)
         }
 
         // invoke the target method

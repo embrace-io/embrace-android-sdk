@@ -15,7 +15,7 @@ import io.embrace.android.gradle.plugin.instrumentation.config.model.UnityConfig
 import io.embrace.android.gradle.plugin.instrumentation.config.model.VariantConfig
 import io.embrace.android.gradle.plugin.model.AndroidCompactedVariantData
 import io.embrace.android.gradle.plugin.tasks.ndk.CompressSharedObjectFilesTask
-import io.embrace.android.gradle.plugin.tasks.ndk.EncodeSharedObjectFilesTask
+import io.embrace.android.gradle.plugin.tasks.ndk.EncodeFileToBase64Task
 import io.embrace.android.gradle.plugin.tasks.ndk.HashSharedObjectFilesTask
 import io.embrace.android.gradle.plugin.tasks.ndk.NdkUploadTasksRegistration
 import io.embrace.android.gradle.plugin.tasks.ndk.UploadSharedObjectFilesTask
@@ -115,7 +115,7 @@ class NdkUploadTasksRegistrationTest {
         assertTaskNotRegistered(CompressSharedObjectFilesTask.NAME, testAndroidCompactedVariantData.name)
         assertTaskNotRegistered(HashSharedObjectFilesTask.NAME, testAndroidCompactedVariantData.name)
         assertTaskNotRegistered(UploadSharedObjectFilesTask.NAME, testAndroidCompactedVariantData.name)
-        assertTaskNotRegistered(EncodeSharedObjectFilesTask.NAME, testAndroidCompactedVariantData.name)
+        assertTaskNotRegistered(EncodeFileToBase64Task.NAME, testAndroidCompactedVariantData.name)
     }
 
     @Test
@@ -145,8 +145,8 @@ class NdkUploadTasksRegistrationTest {
 
         // The injection task should not run
         val encodingTask = project.tasks.findByName(
-            "${EncodeSharedObjectFilesTask.NAME}${testAndroidCompactedVariantData.name.capitalizedString()}"
-        ) as EncodeSharedObjectFilesTask
+            "${EncodeFileToBase64Task.NAME}${testAndroidCompactedVariantData.name.capitalizedString()}"
+        ) as EncodeFileToBase64Task
         assertFalse(encodingTask.onlyIf.isSatisfiedBy(encodingTask))
     }
 
@@ -184,7 +184,7 @@ class NdkUploadTasksRegistrationTest {
         assertTaskRegistered(CompressSharedObjectFilesTask.NAME, testAndroidCompactedVariantData.name)
         assertTaskRegistered(HashSharedObjectFilesTask.NAME, testAndroidCompactedVariantData.name)
         assertTaskRegistered(UploadSharedObjectFilesTask.NAME, testAndroidCompactedVariantData.name)
-        assertTaskRegistered(EncodeSharedObjectFilesTask.NAME, testAndroidCompactedVariantData.name)
+        assertTaskRegistered(EncodeFileToBase64Task.NAME, testAndroidCompactedVariantData.name)
     }
 
     // TODO: Do all Unity projects have a mergeNativeLibs task?

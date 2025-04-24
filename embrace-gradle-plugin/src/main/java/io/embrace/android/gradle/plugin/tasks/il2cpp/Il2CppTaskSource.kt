@@ -2,7 +2,7 @@ package io.embrace.android.gradle.plugin.tasks.il2cpp
 
 import io.embrace.android.gradle.plugin.gradle.tryGetTaskProvider
 import io.embrace.android.gradle.plugin.model.AndroidCompactedVariantData
-import io.embrace.android.gradle.plugin.tasks.ndk.EncodeSharedObjectFilesTask
+import io.embrace.android.gradle.plugin.tasks.ndk.EncodeFileToBase64Task
 import io.embrace.android.gradle.plugin.util.capitalizedString
 import org.gradle.api.Project
 import org.gradle.api.Task
@@ -14,7 +14,7 @@ import org.gradle.api.tasks.TaskProvider
  */
 class Il2CppTaskSource {
     fun fetchTask(project: Project, variant: AndroidCompactedVariantData): TaskProvider<Task>? {
-        val taskName = "${EncodeSharedObjectFilesTask.NAME}${variant.name.capitalizedString()}"
+        val taskName = "${EncodeFileToBase64Task.NAME}${variant.name.capitalizedString()}"
         return project.tryGetTaskProvider(taskName)
     }
 }

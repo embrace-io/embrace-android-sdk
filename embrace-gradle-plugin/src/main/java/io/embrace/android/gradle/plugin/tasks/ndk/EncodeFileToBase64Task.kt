@@ -14,24 +14,26 @@ import java.util.Base64
 import javax.inject.Inject
 
 /**
- * Task that encodes in Base64 a map of architectures to hashed shared object files. It reads the map from a JSON file and outputs a base64
- * encoded string of the map. This encoded string will be then used by the Embrace SDK for NDK crash reporting.
+ * Task that reads the contents of an input file, encodes them to Base64, and stores them in an output file.
  *
- * Input: architecturesToHashedSharedObjectFilesMapJson, a JSON file containing the map of architectures to hashed shared object files.
- * Output: encodedSharedObjectFilesMap, a file containing the base64 encoded map.
+ * This task is currently used to encode a JSON file containing a map of architectures
+ * to hashed shared object files. This encoded string is then used by the Embrace SDK for NDK crash reporting.
+ *
+ * Input: inputFile, the file to be encoded
+ * Output: outputFile, the file containing the Base64 encoded content
  */
-abstract class EncodeSharedObjectFilesTask @Inject constructor(
+abstract class EncodeFileToBase64Task @Inject constructor(
     objectFactory: ObjectFactory,
 ) : EmbraceTaskImpl(objectFactory) {
 
-    private val logger = Logger(EncodeSharedObjectFilesTask::class.java)
+    private val logger = Logger(EncodeFileToBase64Task::class.java)
 
     @SkipWhenEmpty
     @get:InputFile
-    val architecturesToHashedSharedObjectFilesMapJson: RegularFileProperty = objectFactory.fileProperty()
+    val inputFile: RegularFileProperty = objectFactory.fileProperty()
 
     @get:OutputFile
-    val encodedSharedObjectFilesMap: RegularFileProperty = objectFactory.fileProperty()
+    val outputFile: RegularFileProperty = objectFactory.fileProperty()
 
     @get:Input
     val failBuildOnUploadErrors: Property<Boolean> = objectFactory.property(Boolean::class.java)
@@ -40,9 +42,11 @@ abstract class EncodeSharedObjectFilesTask @Inject constructor(
     @TaskAction
     fun onRun() {
         try {
-            val jsonContent = architecturesToHashedSharedObjectFilesMapJson.get().asFile.bufferedReader().use { it.readText() }
-            val encodedContent = Base64.getEncoder().encodeToString(jsonContent.toByteArray())
-            encodedSharedObjectFilesMap.get().asFile.bufferedWriter().use { it.write(encodedContent) }
+            inputFile.get().asFile.inputStream().use { inputStream ->
+                Base64.getEncoder().wrap(outputFile.get().asFile.outputStream()).use { encoder ->
+                    inputStream.copyTo(encoder)
+                }
+            }
         } catch (exception: Exception) {
             logger.error("An error has occurred while encoding shared object files map", exception)
             if (failBuildOnUploadErrors.get()) {

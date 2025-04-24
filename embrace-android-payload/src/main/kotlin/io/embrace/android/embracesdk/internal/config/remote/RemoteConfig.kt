@@ -95,6 +95,6 @@ data class RemoteConfig(
     @Json(name = "webview_vitals_beta")
     val webViewVitals: WebViewVitals? = null,
 
-    @Json(name = "ui_load_instrumentation_enabled")
+    @Json(name = "ui_load_instrumentation_enabled_v2")
     val uiLoadInstrumentationEnabled: Boolean? = null,
 )

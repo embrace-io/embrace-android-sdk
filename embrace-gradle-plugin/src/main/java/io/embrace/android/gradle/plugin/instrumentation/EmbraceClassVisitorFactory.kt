@@ -51,8 +51,8 @@ abstract class EmbraceClassVisitorFactory : AsmClassVisitorFactory<BytecodeInstr
                     descriptor = "(Lcom/google/firebase/messaging/RemoteMessage;)V",
                 ),
                 insertionParams = BytecodeMethodInsertionParams(
-                    owner = "io/embrace/android/embracesdk/fcm/swazzle/callback/com/android/fcm/FirebaseSwazzledHooks",
-                    name = "_onMessageReceived",
+                    owner = "io/embrace/android/embracesdk/internal/instrumentation/bytecode/FcmBytecodeEntrypoint",
+                    name = "onMessageReceived",
                     descriptor = "(Lcom/google/firebase/messaging/RemoteMessage;)V",
                     startVarIndex = 1,
                 )

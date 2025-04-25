@@ -50,10 +50,6 @@ abstract class UploadSharedObjectFilesTask @Inject constructor(
 
     private lateinit var architecturesToHashedSharedObjectFilesMap: Map<String, Map<String, String>>
 
-    private val okHttpNetworkService by lazy {
-        OkHttpNetworkService(requestParams.get().baseUrl)
-    }
-
     @TaskAction
     fun onRun() {
         try {
@@ -90,7 +86,7 @@ abstract class UploadSharedObjectFilesTask @Inject constructor(
             variantData.get().name,
             architecturesToHashedSharedObjectFilesMap
         )
-
+        val okHttpNetworkService = OkHttpNetworkService(requestParams.get().baseUrl)
         val handshakeResult = NdkUploadHandshake(okHttpNetworkService).getRequestedSymbols(params, failBuildOnUploadErrors.get())
             ?: error("There was an error while reporting shared object files")
         return handshakeResult
@@ -100,6 +96,7 @@ abstract class UploadSharedObjectFilesTask @Inject constructor(
      * Attempt to upload requested symbols per architecture
      */
     private fun uploadSharedObjectFiles(requestedSharedObjectFiles: Map<String, Map<String, File>>) {
+        val okHttpNetworkService = OkHttpNetworkService(requestParams.get().baseUrl)
         // TODO: We're spanning multiple http requests, shouldn't we batch these? Having a single request per file doesn't look optimal.
         requestedSharedObjectFiles.forEach { (arch, files) ->
             files.forEach { (id: String, symbolFile: File) ->

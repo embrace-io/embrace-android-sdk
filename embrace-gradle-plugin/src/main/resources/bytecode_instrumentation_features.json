@@ -37,6 +37,25 @@
         "type": "match_class_name",
         "value": "okhttp3.OkHttpClient$Builder"
       }
+    },
+    {
+      "name": "webview_page_start",
+      "target": {
+        "name": "onPageStarted",
+        "descriptor": "(Landroid/webkit/WebView;Ljava/lang/String;Landroid/graphics/Bitmap;)V"
+      },
+      "insert": {
+        "owner": "io/embrace/android/embracesdk/internal/instrumentation/bytecode/WebViewClientBytecodeEntrypoint",
+        "name": "onPageStarted",
+        "descriptor": "(Ljava/lang/String;)V",
+        "operandStackIndices": [
+          2
+        ]
+      },
+      "visitStrategy": {
+        "type": "match_super_class_name",
+        "value": "android.webkit.WebViewClient"
+      }
     }
   ]
 }

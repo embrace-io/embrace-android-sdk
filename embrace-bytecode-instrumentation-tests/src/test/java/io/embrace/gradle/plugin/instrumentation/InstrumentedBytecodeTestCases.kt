@@ -2,7 +2,7 @@ package io.embrace.gradle.plugin.instrumentation
 
 import io.embrace.android.gradle.plugin.instrumentation.visitor.OnClickClassAdapter
 import io.embrace.android.gradle.plugin.instrumentation.visitor.OnLongClickClassAdapter
-import io.embrace.android.gradle.plugin.instrumentation.visitor.WebViewClientClassAdapter
+import io.embrace.android.gradle.plugin.instrumentation.visitor.WebViewClientOverrideClassAdapter
 import io.embrace.test.fixtures.ActivityOnClickListener
 import io.embrace.test.fixtures.AnonInnerClassOnClickListener
 import io.embrace.test.fixtures.AnonInnerClassOnLongClickListener
@@ -38,7 +38,7 @@ private val onLongClickFactory: ClassVisitorFactory = { visitor ->
 }
 
 private val webviewFactory: ClassVisitorFactory = { visitor ->
-    WebViewClientClassAdapter(ASM_API_VERSION, visitor)
+    WebViewClientOverrideClassAdapter(ASM_API_VERSION, visitor)
 }
 
 /**

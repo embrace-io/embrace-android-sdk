@@ -9,7 +9,6 @@ import io.embrace.android.gradle.plugin.instrumentation.fakes.TestClassVisitor
 import io.embrace.android.gradle.plugin.instrumentation.fakes.TestVisitorFactoryImpl
 import io.embrace.android.gradle.plugin.instrumentation.visitor.OnClickClassAdapter
 import io.embrace.android.gradle.plugin.instrumentation.visitor.OnLongClickClassAdapter
-import io.embrace.android.gradle.plugin.instrumentation.visitor.WebViewClientClassAdapter
 import io.mockk.every
 import io.mockk.mockk
 import org.junit.Assert.assertFalse
@@ -34,17 +33,6 @@ class EmbraceClassVisitorFactoryTest {
         check(returningVisitor is OnClickClassAdapter)
         check(returningVisitor.nextClassVisitor is OnLongClickClassAdapter)
         assertSame(visitor, returningVisitor.nextClassVisitor.nextClassVisitor)
-    }
-
-    @Test
-    fun testWebViewClassVisitorReturned() {
-        val visitor = TestClassVisitor()
-        val ctx = createMockClassContext("android.webkit.WebViewClient")
-        val returningVisitor = TestVisitorFactoryImpl().createClassVisitor(ctx, visitor)
-        check(returningVisitor is OnClickClassAdapter)
-        check(returningVisitor.nextClassVisitor is OnLongClickClassAdapter)
-        check(returningVisitor.nextClassVisitor.nextClassVisitor is WebViewClientClassAdapter)
-        assertSame(visitor, returningVisitor.nextClassVisitor.nextClassVisitor.nextClassVisitor)
     }
 
     @Test

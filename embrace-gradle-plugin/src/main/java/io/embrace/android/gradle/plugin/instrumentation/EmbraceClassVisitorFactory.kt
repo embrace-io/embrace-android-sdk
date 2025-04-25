@@ -8,7 +8,7 @@ import io.embrace.android.gradle.plugin.instrumentation.json.readBytecodeInstrum
 import io.embrace.android.gradle.plugin.instrumentation.visitor.InstrumentationTargetClassVisitor
 import io.embrace.android.gradle.plugin.instrumentation.visitor.OnClickClassAdapter
 import io.embrace.android.gradle.plugin.instrumentation.visitor.OnLongClickClassAdapter
-import io.embrace.android.gradle.plugin.instrumentation.visitor.WebViewClientClassAdapter
+import io.embrace.android.gradle.plugin.instrumentation.visitor.WebViewClientOverrideClassAdapter
 import org.objectweb.asm.ClassVisitor
 
 /**
@@ -41,6 +41,7 @@ abstract class EmbraceClassVisitorFactory : AsmClassVisitorFactory<BytecodeInstr
         val features = readBytecodeInstrumentationFeatures()
         val fcmFeature = features.single { it.name == "fcm_push_notifications" }
         val okhttpFeature = features.single { it.name == "okhttp" }
+        val webviewFeature = features.single { it.name == "webview_page_start" }
 
         // We take the approach of chaining 1 visitor per feature, if a feature is enabled/necessary
         // for a given class.
@@ -51,8 +52,16 @@ abstract class EmbraceClassVisitorFactory : AsmClassVisitorFactory<BytecodeInstr
                 feature = fcmFeature,
             )
         }
-        if (behavior.shouldInstrumentWebview(classContext)) {
-            visitor = WebViewClientClassAdapter(api, visitor)
+        if (params.shouldInstrumentWebview.get() && webviewFeature.visitStrategy.shouldVisit(classContext)) {
+            // first, add override for onPageStarted if class doesn't contain it already
+            visitor = WebViewClientOverrideClassAdapter(api, visitor)
+
+            // then, instrument the onPageStarted method
+            visitor = InstrumentationTargetClassVisitor(
+                api = api,
+                nextClassVisitor = visitor,
+                feature = webviewFeature,
+            )
         }
         if (params.shouldInstrumentOkHttp.get() && okhttpFeature.visitStrategy.shouldVisit(classContext)) {
             visitor = InstrumentationTargetClassVisitor(

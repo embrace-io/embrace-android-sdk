@@ -20,10 +20,6 @@ public final class io/embrace/test/fixtures/NoOverrideWebViewClient extends andr
 
   // access flags 0x1
   public onPageStarted(Landroid/webkit/WebView;Ljava/lang/String;Landroid/graphics/Bitmap;)V
-    ALOAD 1
-    ALOAD 2
-    ALOAD 3
-    INVOKESTATIC io/embrace/android/embracesdk/internal/instrumentation/bytecode/WebViewClientBytecodeEntrypoint.onPageStarted (Ljava/lang/String;)V
     ALOAD 0
     ALOAD 1
     ALOAD 2

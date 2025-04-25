@@ -8,13 +8,12 @@ import org.objectweb.asm.Opcodes
  * Visits the [WebViewClient] class and returns a [WebViewClientMethodAdapter] for the
  * onPageStarted method.
  */
-class WebViewClientClassAdapter(
+class WebViewClientOverrideClassAdapter(
     api: Int,
     internal val nextClassVisitor: ClassVisitor?,
 ) : ClassVisitor(api, nextClassVisitor) {
 
     companion object {
-        const val CLASS_NAME = "android.webkit.WebViewClient"
         private const val METHOD_NAME = "onPageStarted"
         private const val METHOD_DESC =
             "(Landroid/webkit/WebView;Ljava/lang/String;Landroid/graphics/Bitmap;)V"
@@ -29,23 +28,10 @@ class WebViewClientClassAdapter(
         signature: String?,
         exceptions: Array<String>?,
     ): MethodVisitor? {
-        val nextMethodVisitor = super.visitMethod(access, name, desc, signature, exceptions)
-
-        return if (METHOD_NAME == name && METHOD_DESC == desc) {
+        if (METHOD_NAME == name && METHOD_DESC == desc) {
             hasOverride = true
-            InstrumentationTargetMethodVisitor(
-                api = api,
-                methodVisitor = nextMethodVisitor,
-                params = BytecodeMethodInsertionParams(
-                    owner = "io/embrace/android/embracesdk/internal/instrumentation/bytecode/WebViewClientBytecodeEntrypoint",
-                    name = "onPageStarted",
-                    descriptor = "(Ljava/lang/String;)V",
-                    operandStackIndices = listOf(2),
-                )
-            )
-        } else {
-            nextMethodVisitor
         }
+        return super.visitMethod(access, name, desc, signature, exceptions)
     }
 
     override fun visitEnd() {
@@ -58,8 +44,33 @@ class WebViewClientClassAdapter(
                 null,
                 emptyArray()
             )
-            WebViewClientOverrideMethodAdapter(api, nextMethodVisitor).visitEnd()
+            nextMethodVisitor.addSuperCall()
         }
         super.visitEnd()
+    }
+
+    private fun MethodVisitor.addSuperCall() {
+        // load local variable 'this' and push it onto the operand stack
+        visitVarInsn(Opcodes.ALOAD, 0)
+
+        // load local variable 'view' and push it onto the operand stack
+        visitVarInsn(Opcodes.ALOAD, 1)
+
+        // load local variable 'url' and push it onto the operand stack
+        visitVarInsn(Opcodes.ALOAD, 2)
+
+        // load local variable 'favicon' and push it onto the operand stack
+        visitVarInsn(Opcodes.ALOAD, 3)
+
+        visitMethodInsn(
+            Opcodes.INVOKESPECIAL,
+            "android/webkit/WebViewClient",
+            "onPageStarted",
+            "(Landroid/webkit/WebView;Ljava/lang/String;Landroid/graphics/Bitmap;)V",
+            false
+        )
+        visitEnd()
+        visitInsn(Opcodes.RETURN)
+        visitMaxs(4, 0)
     }
 }

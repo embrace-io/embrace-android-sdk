@@ -6,7 +6,7 @@ import org.objectweb.asm.MethodVisitor
 /**
  * Visits a class and adds [InstrumentationTargetMethodVisitor] to any methods that require bytecode instrumentation.
  */
-internal class InstrumentationTargetClassVisitor(
+class InstrumentationTargetClassVisitor(
     api: Int,
     nextClassVisitor: ClassVisitor?,
     private val feature: BytecodeInstrumentationFeature,
@@ -21,7 +21,7 @@ internal class InstrumentationTargetClassVisitor(
     ): MethodVisitor? {
         val nextMethodVisitor = super.visitMethod(access, name, desc, signature, exceptions)
 
-        return if (feature.targetParams.name == name && feature.targetParams.descriptor == desc) {
+        return if (feature.targetParams.name == name && feature.targetParams.descriptor == desc && !isStatic(access)) {
             InstrumentationTargetMethodVisitor(
                 api = api,
                 methodVisitor = nextMethodVisitor,

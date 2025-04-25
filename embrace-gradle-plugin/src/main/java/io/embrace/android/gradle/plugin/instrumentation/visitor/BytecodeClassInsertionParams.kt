@@ -3,7 +3,7 @@ package io.embrace.android.gradle.plugin.instrumentation.visitor
 /**
  * Parameters used to detect that a method in a class is a target for bytecode instrumentation.
  */
-internal data class BytecodeClassInsertionParams(
+data class BytecodeClassInsertionParams(
 
     /**
      * The function name that will be targeted for bytecode instrumentation.

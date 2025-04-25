@@ -3,7 +3,7 @@ package io.embrace.android.gradle.plugin.instrumentation.visitor
 /**
  * The parameters that should be used to insert a function call into the body of a method.
  */
-internal data class BytecodeMethodInsertionParams(
+data class BytecodeMethodInsertionParams(
 
     /**
      * The fully qualified class name containing the method to be instrumented.

@@ -5,7 +5,7 @@ import io.embrace.android.gradle.plugin.instrumentation.strategy.ClassVisitStrat
 /**
  * Declares all the necessary information for performing bytecode instrumentation on a specific feature.
  */
-internal data class BytecodeInstrumentationFeature(
+data class BytecodeInstrumentationFeature(
 
     /**
      * The name of the feature.

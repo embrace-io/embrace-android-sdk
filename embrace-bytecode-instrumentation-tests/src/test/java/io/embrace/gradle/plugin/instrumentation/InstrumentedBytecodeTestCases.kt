@@ -1,7 +1,7 @@
 package io.embrace.gradle.plugin.instrumentation
 
-import io.embrace.android.gradle.plugin.instrumentation.visitor.OnClickClassAdapter
-import io.embrace.android.gradle.plugin.instrumentation.visitor.OnLongClickClassAdapter
+import io.embrace.android.gradle.plugin.instrumentation.json.readBytecodeInstrumentationFeatures
+import io.embrace.android.gradle.plugin.instrumentation.visitor.InstrumentationTargetClassVisitor
 import io.embrace.android.gradle.plugin.instrumentation.visitor.WebViewClientOverrideClassAdapter
 import io.embrace.test.fixtures.ActivityOnClickListener
 import io.embrace.test.fixtures.AnonInnerClassOnClickListener
@@ -29,12 +29,22 @@ import io.embrace.test.fixtures.NoOverrideWebViewClient
 import io.embrace.test.fixtures.VirtualMethodRefNamedOnClick
 import org.objectweb.asm.ClassVisitor
 
+private val features = readBytecodeInstrumentationFeatures()
+
 private val onClickFactory: ClassVisitorFactory = { visitor ->
-    OnClickClassAdapter(ASM_API_VERSION, visitor)
+    InstrumentationTargetClassVisitor(
+        api = ASM_API_VERSION,
+        nextClassVisitor = visitor,
+        feature = features.single { it.name == "on_click" }
+    )
 }
 
 private val onLongClickFactory: ClassVisitorFactory = { visitor ->
-    OnLongClickClassAdapter(ASM_API_VERSION, visitor)
+    InstrumentationTargetClassVisitor(
+        api = ASM_API_VERSION,
+        nextClassVisitor = visitor,
+        feature = features.single { it.name == "on_long_click" }
+    )
 }
 
 private val webviewFactory: ClassVisitorFactory = { visitor ->

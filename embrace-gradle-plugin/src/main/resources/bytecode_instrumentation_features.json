@@ -56,6 +56,42 @@
         "type": "match_super_class_name",
         "value": "android.webkit.WebViewClient"
       }
+    },
+    {
+      "name": "on_click",
+      "target": {
+        "name": "onClick",
+        "descriptor": "(Landroid/view/View;)V"
+      },
+      "insert": {
+        "owner": "io/embrace/android/embracesdk/internal/instrumentation/bytecode/OnClickBytecodeEntrypoint",
+        "name": "onClick",
+        "descriptor": "(Landroid/view/View;)V",
+        "operandStackIndices": [
+          1
+        ]
+      },
+      "visitStrategy": {
+        "type": "exhaustive"
+      }
+    },
+    {
+      "name": "on_long_click",
+      "target": {
+        "name": "onLongClick",
+        "descriptor": "(Landroid/view/View;)Z"
+      },
+      "insert": {
+        "owner": "io/embrace/android/embracesdk/internal/instrumentation/bytecode/OnLongClickBytecodeEntrypoint",
+        "name": "onLongClick",
+        "descriptor": "(Landroid/view/View;)V",
+        "operandStackIndices": [
+          1
+        ]
+      },
+      "visitStrategy": {
+        "type": "exhaustive"
+      }
     }
   ]
 }

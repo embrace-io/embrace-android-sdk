@@ -8,7 +8,7 @@ import io.embrace.android.gradle.plugin.instrumentation.visitor.BytecodeMethodIn
 import okio.buffer
 import okio.source
 
-internal fun readBytecodeInstrumentationFeatures(): List<BytecodeInstrumentationFeature> {
+fun readBytecodeInstrumentationFeatures(): List<BytecodeInstrumentationFeature> {
     val configFeatures = readBytecodeInstrumentationConfig()
     return configFeatures.features.map(InstrumentationConfigFeature::convertInstrumentationConfigFeature)
 }
@@ -44,8 +44,8 @@ private fun InstrumentationConfigFeature.convertInstrumentationConfigFeature(): 
 
 private fun InstrumentationConfigFeature.convertVisitStrategy(): ClassVisitStrategy {
     return when (visitStrategy.type) {
-        "match_super_class_name" -> ClassVisitStrategy.MatchSuperClassName(visitStrategy.value)
-        "match_class_name" -> ClassVisitStrategy.MatchClassName(visitStrategy.value)
+        "match_super_class_name" -> ClassVisitStrategy.MatchSuperClassName(checkNotNull(visitStrategy.value))
+        "match_class_name" -> ClassVisitStrategy.MatchClassName(checkNotNull(visitStrategy.value))
         "exhaustive" -> ClassVisitStrategy.Exhaustive
         else -> error("Unsupported visit strategy type: ${visitStrategy.type}")
     }

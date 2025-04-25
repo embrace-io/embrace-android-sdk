@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.internal.injection
 
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ProcessLifecycleOwner
-import io.embrace.android.embracesdk.internal.Systrace
+import io.embrace.android.embracesdk.internal.EmbTrace
 import io.embrace.android.embracesdk.internal.arch.destination.LogWriter
 import io.embrace.android.embracesdk.internal.arch.destination.LogWriterImpl
 import io.embrace.android.embracesdk.internal.capture.connectivity.EmbraceNetworkConnectivityService
@@ -34,7 +34,7 @@ class EssentialServiceModuleImpl(
     private val configService by lazy { configModule.configService }
 
     override val processStateService: ProcessStateService by singleton {
-        Systrace.traceSynchronous("process-state-service-init") {
+        EmbTrace.trace("process-state-service-init") {
             val lifecycleOwner = lifecycleOwnerProvider() ?: ProcessLifecycleOwner.get()
             EmbraceProcessStateService(initModule.clock, initModule.logger, lifecycleOwner)
         }
@@ -45,7 +45,7 @@ class EssentialServiceModuleImpl(
     }
 
     override val userService: UserService by singleton {
-        Systrace.traceSynchronous("user-service-init") {
+        EmbTrace.trace("user-service-init") {
             EmbraceUserService(
                 androidServicesModule.preferencesService,
                 initModule.logger
@@ -54,7 +54,7 @@ class EssentialServiceModuleImpl(
     }
 
     override val networkConnectivityService: NetworkConnectivityService by singleton {
-        networkConnectivityServiceProvider() ?: Systrace.traceSynchronous("network-connectivity-service-init") {
+        networkConnectivityServiceProvider() ?: EmbTrace.trace("network-connectivity-service-init") {
             EmbraceNetworkConnectivityService(
                 coreModule.context,
                 workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker),
@@ -69,7 +69,7 @@ class EssentialServiceModuleImpl(
     }
 
     override val sessionPropertiesService: SessionPropertiesService by singleton {
-        Systrace.traceSynchronous("session-properties-init") {
+        EmbTrace.trace("session-properties-init") {
             SessionPropertiesServiceImpl(
                 preferencesService = androidServicesModule.preferencesService,
                 configService = configService,

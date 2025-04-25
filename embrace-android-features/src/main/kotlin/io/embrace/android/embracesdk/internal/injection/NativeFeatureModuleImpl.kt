@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.injection
 
-import io.embrace.android.embracesdk.internal.Systrace
+import io.embrace.android.embracesdk.internal.EmbTrace
 import io.embrace.android.embracesdk.internal.anr.ndk.EmbraceNativeThreadSamplerService
 import io.embrace.android.embracesdk.internal.anr.ndk.NativeAnrOtelMapper
 import io.embrace.android.embracesdk.internal.anr.ndk.NativeThreadSamplerInstaller
@@ -21,7 +21,7 @@ internal class NativeFeatureModuleImpl(
 ) : NativeFeatureModule {
 
     override val nativeThreadSamplerService: NativeThreadSamplerService? by singleton {
-        Systrace.traceSynchronous("native-thread-sampler-init") {
+        EmbTrace.trace("native-thread-sampler-init") {
             if (nativeThreadSamplingEnabled(configModule.configService)) {
                 EmbraceNativeThreadSamplerService(
                     configService = configModule.configService,
@@ -41,7 +41,7 @@ internal class NativeFeatureModuleImpl(
     }
 
     override val nativeThreadSamplerInstaller: NativeThreadSamplerInstaller? by singleton {
-        Systrace.traceSynchronous("native-thread-sampler-installer-init") {
+        EmbTrace.trace("native-thread-sampler-installer-init") {
             if (nativeThreadSamplingEnabled(configModule.configService)) {
                 NativeThreadSamplerInstaller(
                     sharedObjectLoader = nativeCoreModule.sharedObjectLoader

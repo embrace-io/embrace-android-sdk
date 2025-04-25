@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.session.orchestrator
 
-import io.embrace.android.embracesdk.internal.Systrace
+import io.embrace.android.embracesdk.internal.EmbTrace
 import io.embrace.android.embracesdk.internal.arch.DataCaptureOrchestrator
 import io.embrace.android.embracesdk.internal.arch.SessionType
 import io.embrace.android.embracesdk.internal.arch.destination.SessionSpanWriter
@@ -47,7 +47,7 @@ internal class SessionOrchestratorImpl(
 
     init {
         processStateService.addListener(this)
-        Systrace.traceSynchronous("start-first-session") { createInitialSession() }
+        EmbTrace.trace("start-first-session") { createInitialSession() }
     }
 
     private fun createInitialSession() {
@@ -161,13 +161,13 @@ internal class SessionOrchestratorImpl(
                 return
             }
 
-            Systrace.startSynchronous("transition-state-start")
+            EmbTrace.start("transition-state-start")
 
             // first, disable any previous periodic caching so the job doesn't overwrite the to-be saved session
             payloadCachingService?.stopCaching()
 
             // second, end the current session or background activity, if either exist.
-            Systrace.startSynchronous("end-current-session")
+            EmbTrace.start("end-current-session")
             val initial = activeSession
             if (initial != null) {
                 sessionSpanAttrPopulator.populateSessionSpanEndAttrs(
@@ -178,20 +178,20 @@ internal class SessionOrchestratorImpl(
                 val endMessage = oldSessionAction?.invoke(initial)
                 processEndMessage(endMessage, transitionType)
             }
-            Systrace.endSynchronous()
+            EmbTrace.end()
 
             // the previous session has fully ended at this point
             // now, we can clear the SDK state and prepare for the next session
-            Systrace.startSynchronous("prepare-new-session")
+            EmbTrace.start("prepare-new-session")
             boundaryDelegate.cleanupAfterSessionEnd(clearUserInfo)
-            Systrace.endSynchronous()
+            EmbTrace.end()
 
             // calculate new session state
             val endProcessState = transitionType.endState(state)
             val inForeground = endProcessState == ProcessState.FOREGROUND
 
             // create the next session span if we should, and update the SDK state to reflect the transition
-            Systrace.startSynchronous("create-new-session")
+            EmbTrace.start("create-new-session")
             val newState = newSessionAction?.invoke()
             activeSession = newState
             val sessionId = newState?.sessionId
@@ -201,7 +201,7 @@ internal class SessionOrchestratorImpl(
                 boundaryDelegate.prepareForNewSession()
                 sessionSpanAttrPopulator.populateSessionSpanStartAttrs(newState)
                 // initiate periodic caching of the payload if a new session has started
-                Systrace.startSynchronous("initiate-periodic-caching")
+                EmbTrace.start("initiate-periodic-caching")
                 if (transitionType != TransitionType.CRASH) {
                     updatePeriodicCacheAttrs()
                     payloadCachingService?.startCaching(newState, endProcessState) { state, timestamp, zygote ->
@@ -211,7 +211,7 @@ internal class SessionOrchestratorImpl(
                         }
                     }
                 }
-                Systrace.endSynchronous()
+                EmbTrace.end()
             }
 
             if (activeSession == null && transitionType == TransitionType.ON_BACKGROUND) {
@@ -219,9 +219,9 @@ internal class SessionOrchestratorImpl(
                 // in case a native crash needs to be sent in the future after the current process dies
                 payloadStore?.cacheEmptyCrashEnvelope(payloadFactory.createEmptyLogEnvelope())
             }
-            Systrace.endSynchronous()
+            EmbTrace.end()
 
-            Systrace.startSynchronous("alter-session-state")
+            EmbTrace.start("alter-session-state")
             // update the current state of the SDK. this should match the value in sessionIdTracker
             state = endProcessState
 
@@ -231,10 +231,10 @@ internal class SessionOrchestratorImpl(
                 ProcessState.BACKGROUND -> SessionType.BACKGROUND
             }
             dataCaptureOrchestrator.currentSessionType = sessionType
-            Systrace.endSynchronous()
+            EmbTrace.end()
 
             // et voila! a new session is born
-            Systrace.endSynchronous()
+            EmbTrace.end()
         }
     }
 

@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.internal.capture.startup
 
 import android.os.Build.VERSION_CODES
 import android.os.Process
-import io.embrace.android.embracesdk.internal.Systrace
+import io.embrace.android.embracesdk.internal.EmbTrace
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
@@ -223,7 +223,7 @@ internal class AppStartupTraceEmitter(
      */
     private fun dataCollectionComplete(traceEndTimeMs: Long, completed: Boolean = true) {
         if (!dataCollectionComplete.getAndSet(true)) {
-            Systrace.traceSynchronous("record-startup") {
+            EmbTrace.trace("record-startup") {
                 recordStartup(traceEndTimeMs, completed)
                 if (appStartupRootSpan.get()?.isRecording != false) {
                     logger.trackInternalError(

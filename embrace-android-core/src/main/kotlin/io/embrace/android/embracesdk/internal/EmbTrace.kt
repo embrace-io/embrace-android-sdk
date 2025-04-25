@@ -10,7 +10,7 @@ import kotlin.random.Random
 /**
  * Shim to add custom events to system traces for API 29+. Basic alternative to using androidx.tracing that is safe to interleave.
  */
-object Systrace {
+object EmbTrace {
     data class Instance(val name: String, val id: Int)
 
     /**
@@ -18,8 +18,7 @@ object Systrace {
      * The name of the section in the logged trace will be [name] prefixed by "emb-".
      * If the application is running on version earlier than [VERSION_CODES.Q], no trace section will be started.
      */
-    @JvmStatic
-    fun start(name: String): Instance? {
+    fun startAsync(name: String): Instance? {
         return if (enabled()) {
             val instance = Instance("emb-$name".take(127), Random.nextInt())
             Trace.beginAsyncSection(instance.name, instance.id)
@@ -32,8 +31,7 @@ object Systrace {
     /**
      * Close trace section identified by [instance]
      */
-    @JvmStatic
-    fun end(instance: Instance) {
+    fun endAsync(instance: Instance) {
         if (enabled()) {
             Trace.endAsyncSection(instance.name, instance.id)
         }
@@ -42,10 +40,9 @@ object Systrace {
     /**
      * Start a synchronous trace. If there is an in-progress synchronous trace, this will be nested underneath it.
      *
-     * Note: this must be manually ended by calling [endSynchronous]
+     * Note: this must be manually ended by calling [end]
      */
-    @JvmStatic
-    fun startSynchronous(name: String) {
+    fun start(name: String) {
         if (enabled()) {
             Trace.beginSection("emb-$name".take(127))
         }
@@ -54,8 +51,7 @@ object Systrace {
     /**
      * Stop the last-started synchronous trace.
      */
-    @JvmStatic
-    fun endSynchronous() {
+    fun end() {
         if (enabled()) {
             Trace.endSection()
         }
@@ -67,18 +63,17 @@ object Systrace {
      *
      * Note: rethrowing the same [Throwable] that was caught is appropriate here because use of this should not change the code path.
      */
-    @JvmStatic
     @Suppress("RethrowCaughtException")
-    inline fun <T> trace(sectionName: String, code: Provider<T>): T {
+    inline fun <T> traceAsync(sectionName: String, code: Provider<T>): T {
         val returnValue: T
         var instance: Instance? = null
         try {
-            instance = start(sectionName)
+            instance = startAsync(sectionName)
             returnValue = code()
         } catch (t: Throwable) {
             throw t
         } finally {
-            instance?.let { end(it) }
+            instance?.let { endAsync(it) }
         }
 
         return returnValue
@@ -90,17 +85,16 @@ object Systrace {
      *
      * Note: rethrowing the same [Throwable] that was caught is appropriate here because use of this should not change the code path.
      */
-    @JvmStatic
     @Suppress("RethrowCaughtException")
-    inline fun <T> traceSynchronous(sectionName: String, code: Provider<T>): T {
+    inline fun <T> trace(sectionName: String, code: Provider<T>): T {
         val returnValue: T
         try {
-            startSynchronous(sectionName)
+            start(sectionName)
             returnValue = code()
         } catch (t: Throwable) {
             throw t
         } finally {
-            endSynchronous()
+            end()
         }
 
         return returnValue

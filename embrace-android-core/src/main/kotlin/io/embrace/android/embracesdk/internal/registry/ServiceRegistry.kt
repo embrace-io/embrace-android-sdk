@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.registry
 
-import io.embrace.android.embracesdk.internal.Systrace
+import io.embrace.android.embracesdk.internal.EmbTrace
 import io.embrace.android.embracesdk.internal.session.MemoryCleanerListener
 import io.embrace.android.embracesdk.internal.session.MemoryCleanerService
 import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityLifecycleListener
@@ -34,7 +34,7 @@ class ServiceRegistry : Closeable {
     }
 
     fun registerServices(vararg services: Lazy<Any?>) {
-        Systrace.trace("register-services") {
+        EmbTrace.traceAsync("register-services") {
             services.forEach(::registerService)
         }
     }

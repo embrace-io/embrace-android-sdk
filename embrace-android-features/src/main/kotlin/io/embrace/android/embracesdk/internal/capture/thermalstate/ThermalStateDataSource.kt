@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.capture.thermalstate
 import android.os.Build
 import android.os.PowerManager
 import androidx.annotation.RequiresApi
-import io.embrace.android.embracesdk.internal.Systrace
+import io.embrace.android.embracesdk.internal.EmbTrace
 import io.embrace.android.embracesdk.internal.arch.datasource.NoInputValidation
 import io.embrace.android.embracesdk.internal.arch.datasource.SpanDataSourceImpl
 import io.embrace.android.embracesdk.internal.arch.datasource.startSpanCapture
@@ -41,7 +41,7 @@ class ThermalStateDataSource(
 
     override fun enableDataCapture() {
         backgroundWorker.submit {
-            Systrace.traceSynchronous("thermal-service-registration") {
+            EmbTrace.trace("thermal-service-registration") {
                 thermalStatusListener = PowerManager.OnThermalStatusChangedListener {
                     handleThermalStateChange(it)
                 }

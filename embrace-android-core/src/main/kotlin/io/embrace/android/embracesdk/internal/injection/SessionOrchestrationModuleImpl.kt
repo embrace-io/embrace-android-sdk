@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.injection
 
-import io.embrace.android.embracesdk.internal.Systrace
+import io.embrace.android.embracesdk.internal.EmbTrace
 import io.embrace.android.embracesdk.internal.capture.startup.StartupService
 import io.embrace.android.embracesdk.internal.gating.EmbraceGatingService
 import io.embrace.android.embracesdk.internal.gating.GatingService
@@ -41,8 +41,8 @@ internal class SessionOrchestrationModuleImpl(
 
     override val payloadMessageCollator: PayloadMessageCollatorImpl by singleton {
         PayloadMessageCollatorImpl(
-            Systrace.traceSynchronous("gatingService") { gatingService },
-            Systrace.traceSynchronous("sessionEnvelopeSource") { payloadSourceModule.sessionEnvelopeSource },
+            EmbTrace.trace("gatingService") { gatingService },
+            EmbTrace.trace("sessionEnvelopeSource") { payloadSourceModule.sessionEnvelopeSource },
             androidServicesModule.preferencesService,
             openTelemetryModule.currentSessionSpan,
         )
@@ -50,9 +50,9 @@ internal class SessionOrchestrationModuleImpl(
 
     override val payloadFactory: PayloadFactory by singleton {
         PayloadFactoryImpl(
-            Systrace.traceSynchronous("payloadMessageCollator") { payloadMessageCollator },
-            Systrace.traceSynchronous("logEnvelopeSource") { payloadSourceModule.logEnvelopeSource },
-            Systrace.traceSynchronous("configService") { configModule.configService },
+            EmbTrace.trace("payloadMessageCollator") { payloadMessageCollator },
+            EmbTrace.trace("logEnvelopeSource") { payloadSourceModule.logEnvelopeSource },
+            EmbTrace.trace("configService") { configModule.configService },
             initModule.logger
         )
     }
@@ -77,7 +77,7 @@ internal class SessionOrchestrationModuleImpl(
     override val sessionOrchestrator: SessionOrchestrator by singleton(LoadType.EAGER) {
         SessionOrchestratorImpl(
             essentialServiceModule.processStateService,
-            Systrace.traceSynchronous("payloadFactory") { payloadFactory },
+            EmbTrace.trace("payloadFactory") { payloadFactory },
             initModule.clock,
             configModule.configService,
             essentialServiceModule.sessionIdTracker,

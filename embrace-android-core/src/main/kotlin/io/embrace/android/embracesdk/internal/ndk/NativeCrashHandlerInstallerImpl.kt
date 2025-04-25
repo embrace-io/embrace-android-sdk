@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.ndk
 
+import io.embrace.android.embracesdk.internal.EmbTrace
 import io.embrace.android.embracesdk.internal.SharedObjectLoader
-import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.delivery.PayloadType
@@ -34,7 +34,7 @@ class NativeCrashHandlerInstallerImpl(
 
     override fun install() {
         backgroundWorker.submit {
-            Systrace.traceSynchronous("install-native-crash-signal-handlers") {
+            EmbTrace.trace("install-native-crash-signal-handlers") {
                 startNativeCrashMonitoring()
             }
         }
@@ -85,7 +85,7 @@ class NativeCrashHandlerInstallerImpl(
     }
 
     private fun installSignals() {
-        Systrace.traceSynchronous("native-install-handlers") {
+        EmbTrace.trace("native-install-handlers") {
             with(nativeInstallMessage) {
                 delegate.installSignalHandlers(
                     markerFilePath,

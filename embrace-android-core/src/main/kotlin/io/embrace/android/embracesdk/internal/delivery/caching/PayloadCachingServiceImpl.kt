@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.delivery.caching
 
-import io.embrace.android.embracesdk.internal.Systrace
+import io.embrace.android.embracesdk.internal.EmbTrace
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
 import io.embrace.android.embracesdk.internal.payload.Envelope
@@ -57,7 +57,7 @@ internal class PayloadCachingServiceImpl(
     ): Envelope<SessionPayload>? {
         deliveryTracer?.onSessionCache()
 
-        Systrace.traceSynchronous("on-session-cache") {
+        EmbTrace.trace("on-session-cache") {
             if (initial.sessionId != sessionIdTracker.getActiveSessionId()) {
                 return null
             }

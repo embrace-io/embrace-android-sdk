@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.injection
 
 import android.content.Context
-import io.embrace.android.embracesdk.internal.Systrace
+import io.embrace.android.embracesdk.internal.EmbTrace
 import io.embrace.android.embracesdk.internal.capture.envelope.session.OtelPayloadMapperImpl
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
@@ -20,9 +20,9 @@ import kotlin.reflect.KClass
  * A class that wires together and initializes modules in a manner that makes them work as a cohesive whole.
  */
 internal class ModuleInitBootstrapper(
-    val logger: EmbLogger = Systrace.traceSynchronous("logger-init", ::EmbLoggerImpl),
-    val initModule: InitModule = Systrace.traceSynchronous("init-module", { createInitModule(logger = logger) }),
-    val openTelemetryModule: OpenTelemetryModule = Systrace.traceSynchronous("otel-module", {
+    val logger: EmbLogger = EmbTrace.trace("logger-init", ::EmbLoggerImpl),
+    val initModule: InitModule = EmbTrace.trace("init-module", { createInitModule(logger = logger) }),
+    val openTelemetryModule: OpenTelemetryModule = EmbTrace.trace("otel-module", {
         createOpenTelemetryModule(initModule)
     }),
     private val coreModuleSupplier: CoreModuleSupplier = ::createCoreModule,
@@ -114,7 +114,7 @@ internal class ModuleInitBootstrapper(
         versionChecker: VersionChecker = BuildVersionChecker,
     ): Boolean {
         try {
-            Systrace.startSynchronous("modules-init")
+            EmbTrace.start("modules-init")
             if (isInitialized()) {
                 return false
             }
@@ -128,7 +128,7 @@ internal class ModuleInitBootstrapper(
                     }
 
                     postInit(OpenTelemetryModule::class) {
-                        Systrace.traceSynchronous("span-service-init") {
+                        EmbTrace.trace("span-service-init") {
                             openTelemetryModule.spanService.initializeService(sdkStartTimeMs)
                         }
                     }
@@ -148,13 +148,13 @@ internal class ModuleInitBootstrapper(
                         )
                     }
 
-                    Systrace.traceSynchronous("sdk-disable-check") {
+                    EmbTrace.trace("sdk-disable-check") {
                         // kick off config HTTP request first so the SDK can't get in a permanently disabled state
-                        Systrace.traceSynchronous("load-config-response") {
+                        EmbTrace.trace("load-config-response") {
                             configModule.combinedRemoteConfigSource?.scheduleConfigRequests()
                         }
 
-                        Systrace.traceSynchronous("behavior-check") {
+                        EmbTrace.trace("behavior-check") {
                             if (configModule.configService.sdkModeBehavior.isSdkDisabled()) {
                                 return false
                             }
@@ -199,12 +199,12 @@ internal class ModuleInitBootstrapper(
 
                             val networkBehavior = configModule.configService.networkBehavior
                             if (networkBehavior.isHttpUrlConnectionCaptureEnabled()) {
-                                Systrace.traceSynchronous("network-monitoring-installation") {
+                                EmbTrace.trace("network-monitoring-installation") {
                                     registerFactory(networkBehavior.isRequestContentLengthCaptureEnabled())
                                 }
                             }
                             workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker).submit {
-                                Systrace.traceSynchronous("network-connectivity-registration") {
+                                EmbTrace.trace("network-connectivity-registration") {
                                     essentialServiceModule.networkConnectivityService.register()
                                 }
                             }
@@ -254,7 +254,7 @@ internal class ModuleInitBootstrapper(
                         )
                     }
 
-                    Systrace.traceSynchronous("startup-tracker") {
+                    EmbTrace.trace("startup-tracker") {
                         coreModule.application.registerActivityLifecycleCallbacks(
                             dataCaptureServiceModule.startupTracker
                         )
@@ -420,7 +420,7 @@ internal class ModuleInitBootstrapper(
 
                     // Sets up the registered services. This method is called after the SDK has been started and no more services can
                     // be added to the registry. It sets listeners for any services that were registered.
-                    Systrace.traceSynchronous("service-registration") {
+                    EmbTrace.trace("service-registration") {
                         serviceRegistry.closeRegistration()
                         serviceRegistry.registerActivityListeners(essentialServiceModule.processStateService)
                         serviceRegistry.registerMemoryCleanerListeners(sessionOrchestrationModule.memoryCleanerService)
@@ -442,7 +442,7 @@ internal class ModuleInitBootstrapper(
                 return result
             }
         } finally {
-            Systrace.endSynchronous()
+            EmbTrace.end()
         }
     }
 
@@ -460,10 +460,10 @@ internal class ModuleInitBootstrapper(
     fun isInitialized(): Boolean = initialized.get()
 
     private fun <T> init(module: KClass<*>, provider: Provider<T>): T =
-        Systrace.traceSynchronous("${toSectionName(module)}-init") { provider() }
+        EmbTrace.trace("${toSectionName(module)}-init") { provider() }
 
     private fun <T> postInit(module: KClass<*>, code: () -> T): T =
-        Systrace.traceSynchronous("${toSectionName(module)}-post-init") { code() }
+        EmbTrace.trace("${toSectionName(module)}-post-init") { code() }
 
     // This is called twice for each input - memoizing/caching is not worth the hassle
     private fun toSectionName(klass: KClass<*>): String =

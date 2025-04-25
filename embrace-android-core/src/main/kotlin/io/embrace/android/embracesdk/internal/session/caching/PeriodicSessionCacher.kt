@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.session.caching
 
-import io.embrace.android.embracesdk.internal.Systrace
+import io.embrace.android.embracesdk.internal.EmbTrace
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.payload.Envelope
@@ -31,7 +31,7 @@ class PeriodicSessionCacher(
     }
 
     private fun onPeriodicCache(provider: Provider<Envelope<SessionPayload>?>) = Runnable {
-        Systrace.traceSynchronous("snapshot-session") {
+        EmbTrace.trace("snapshot-session") {
             try {
                 provider()
             } catch (ex: Exception) {

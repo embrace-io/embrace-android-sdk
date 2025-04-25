@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.capture.user
 
-import io.embrace.android.embracesdk.internal.Systrace
+import io.embrace.android.embracesdk.internal.EmbTrace
 import io.embrace.android.embracesdk.internal.payload.UserInfo
 import io.embrace.android.embracesdk.internal.prefs.PreferencesService
 
@@ -14,7 +14,7 @@ internal const val PERSONA_FIRST_DAY_USER = "first_day"
  * @return user info created from the cache and configuration
  */
 internal fun PreferencesService.getStoredUserInfo(): UserInfo {
-    Systrace.traceSynchronous("load-user-info-from-pref") {
+    EmbTrace.trace("load-user-info-from-pref") {
         val id = userIdentifier
         val name = username
         val email = userEmailAddress

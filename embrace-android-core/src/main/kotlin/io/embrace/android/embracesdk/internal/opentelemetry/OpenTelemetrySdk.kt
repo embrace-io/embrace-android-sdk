@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.opentelemetry
 
-import io.embrace.android.embracesdk.internal.Systrace
+import io.embrace.android.embracesdk.internal.EmbTrace
 import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.OtelLimitsConfig
 import io.embrace.android.embracesdk.internal.spans.getMaxTotalAttributeCount
@@ -31,7 +31,7 @@ internal class OpenTelemetrySdk(
     }
 
     val sdkTracerProvider: SdkTracerProvider by lazy {
-        Systrace.traceSynchronous("otel-tracer-provider-init") {
+        EmbTrace.trace("otel-tracer-provider-init") {
             SdkTracerProvider
                 .builder()
                 .addResource(resource)
@@ -51,7 +51,7 @@ internal class OpenTelemetrySdk(
     }
 
     val sdkTracer: Tracer by lazy {
-        Systrace.traceSynchronous("otel-tracer-init") {
+        EmbTrace.trace("otel-tracer-init") {
             sdk.getTracer(configuration.embraceSdkName, configuration.embraceSdkVersion)
         }
     }
@@ -63,7 +63,7 @@ internal class OpenTelemetrySdk(
     }
 
     private val sdk: OpenTelemetrySdk by lazy {
-        Systrace.traceSynchronous("otel-sdk-init") {
+        EmbTrace.trace("otel-sdk-init") {
             OpenTelemetrySdk
                 .builder()
                 .setTracerProvider(sdkTracerProvider)
@@ -80,7 +80,7 @@ internal class OpenTelemetrySdk(
     }
 
     private val logger: Logger by lazy {
-        Systrace.traceSynchronous("otel-logger-init") {
+        EmbTrace.trace("otel-logger-init") {
             sdk.logsBridge.loggerBuilder(configuration.embraceSdkName).build()
         }
     }

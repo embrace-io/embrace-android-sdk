@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.injection
 
+import io.embrace.android.embracesdk.internal.EmbTrace
 import io.embrace.android.embracesdk.internal.OpenTelemetryClock
-import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehavior
 import io.embrace.android.embracesdk.internal.logs.LogSink
 import io.embrace.android.embracesdk.internal.logs.LogSinkImpl
@@ -49,7 +49,7 @@ internal class OpenTelemetryModuleImpl(
     }
 
     private val openTelemetrySdk: OpenTelemetrySdk by lazy {
-        Systrace.traceSynchronous("otel-sdk-wrapper-init") {
+        EmbTrace.trace("otel-sdk-wrapper-init") {
             try {
                 OpenTelemetrySdk(
                     openTelemetryClock = openTelemetryClock,

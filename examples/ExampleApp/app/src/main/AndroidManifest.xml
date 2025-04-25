@@ -28,6 +28,15 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".ui.examples.bytecode.BytecodeViewClickActivity"
+            android:theme="@style/Theme.ExampleApp" />
+        <activity
+            android:name=".ui.examples.bytecode.BytecodeWebViewActivity"
+            android:theme="@style/Theme.ExampleApp" />
+        <activity
+            android:name=".ui.examples.bytecode.BytecodeOkHttpActivity"
+            android:theme="@style/Theme.ExampleApp" />
     </application>
 
 </manifest>

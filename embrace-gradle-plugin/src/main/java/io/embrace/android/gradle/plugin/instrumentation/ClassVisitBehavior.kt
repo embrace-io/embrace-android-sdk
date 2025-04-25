@@ -5,11 +5,6 @@ import io.embrace.android.gradle.plugin.instrumentation.strategy.ClassVisitStrat
 
 internal class ClassVisitBehavior(private val params: BytecodeInstrumentationParams) {
 
-    fun shouldInstrumentWebview(ctx: ClassContext): Boolean {
-        return params.shouldInstrumentWebview.get() &&
-            ClassVisitStrategy.MatchSuperClassName("android.webkit.WebViewClient").shouldVisit(ctx)
-    }
-
     fun shouldInstrumentOkHttp(ctx: ClassContext): Boolean {
         return params.shouldInstrumentOkHttp.get() &&
             ClassVisitStrategy.MatchClassName("okhttp3.OkHttpClient\$Builder").shouldVisit(ctx)

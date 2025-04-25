@@ -15,7 +15,8 @@ enum class CodeExample(
     END_SESSION("End Session"),
     ALTER_USER("Alter User"),
     VIEW_TRACKING("View Tracking"),
-    SDK_STATE_API("SDK State API");
+    SDK_STATE_API("SDK State API"),
+    BYTECODE_INSTRUMENTATION_SAMPLES("Bytecode Instrumentation");
 
     val route: String = name.lowercase()
 }

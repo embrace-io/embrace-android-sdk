@@ -272,15 +272,30 @@ internal class AppStartupTraceEmitter(
         val startupService = startupServiceProvider() ?: return
         val sdkInitEndMs = startupService.getSdkInitEndMs()
         if (sdkInitEndMs != null) {
-            appStartupRootSpan.get()?.let { startupTrace ->
-                recordTtid(
+            val startupTrace = appStartupRootSpan.get()
+            if (startupTrace != null) {
+                val uiLoadedMs = if (trackRender) {
+                    firstFrameRenderedMs
+                } else {
+                    startupActivityResumedMs
+                }
+                val activityInitStartMs = cappedBy(
+                    value = startupActivityPreCreatedMs ?: startupActivityInitStartMs,
+                    ceiling = uiLoadedMs
+                )
+                val activityInitEndMs = cappedBy(
+                    value = startupActivityInitEndMs,
+                    ceiling = uiLoadedMs
+                )
+
+                recordTrace(
                     applicationInitEndMs = if (recordColdStart) applicationInitEndMs else null,
                     sdkInitStartMs = if (recordColdStart) startupService.getSdkInitStartMs() else null,
                     sdkInitEndMs = if (recordColdStart) sdkInitEndMs else null,
                     firstActivityInitMs = firstActivityInitStartMs,
-                    activityInitStartMs = startupActivityPreCreatedMs ?: startupActivityInitStartMs,
-                    activityInitEndMs = startupActivityInitEndMs,
-                    uiLoadedMs = if (trackRender) firstFrameRenderedMs else startupActivityResumedMs,
+                    activityInitStartMs = activityInitStartMs,
+                    activityInitEndMs = activityInitEndMs,
+                    uiLoadedMs = uiLoadedMs,
                     traceEndTimeMs = traceEndTimeMs,
                     completed = completed,
                 )
@@ -288,6 +303,17 @@ internal class AppStartupTraceEmitter(
             }
         }
     }
+
+    /**
+     * Limit a value based on some ceiling if it is defined.
+     * That is, return [ceiling] if it is non-null and less than [value].
+     */
+    private fun cappedBy(value: Long?, ceiling: Long?) =
+        if (ceiling != null && (value == null || value > ceiling)) {
+            ceiling
+        } else {
+            value
+        }
 
     private fun recordAdditionalIntervals(startupTrace: EmbraceSpan) {
         do {
@@ -307,7 +333,7 @@ internal class AppStartupTraceEmitter(
     }
 
     @Suppress("CyclomaticComplexMethod", "ComplexMethod")
-    private fun recordTtid(
+    private fun recordTrace(
         applicationInitEndMs: Long?,
         sdkInitStartMs: Long?,
         sdkInitEndMs: Long?,

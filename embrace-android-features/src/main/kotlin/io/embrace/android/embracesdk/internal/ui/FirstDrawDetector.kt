@@ -30,7 +30,7 @@ class FirstDrawDetector(
     override fun registerFirstDrawCallback(
         activity: Activity,
         drawBeginCallback: () -> Unit,
-        firstFrameDeliveredCallback: () -> Unit
+        drawCompleteCallback: () -> Unit
     ) {
         val instanceId = traceInstanceId(activity)
         if (!trackingLoad(instanceId)) {
@@ -41,8 +41,8 @@ class FirstDrawDetector(
                     decorView.onNextDraw {
                         if (!trackingLoad(instanceId)) {
                             drawBeginCallback()
-                            loadingActivities[instanceId] = Runnable { firstFrameDeliveredCallback() }
-                            decorView.viewTreeObserver.registerFrameCommitCallback(firstFrameDeliveredCallback)
+                            loadingActivities[instanceId] = Runnable { drawCompleteCallback() }
+                            decorView.viewTreeObserver.registerFrameCommitCallback(drawCompleteCallback)
                         }
                     }
                 }

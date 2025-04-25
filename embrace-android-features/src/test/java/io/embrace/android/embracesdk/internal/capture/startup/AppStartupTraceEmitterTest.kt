@@ -209,7 +209,8 @@ internal class AppStartupTraceEmitterTest {
             )
             initActivity(
                 loadSplashScreen = false,
-                abortFirstLoad = false
+                abortFirstLoad = false,
+                activityInitOptions = ActivityInitOptions.NORMAL,
             )
         }
         val abandonTime = clock.tick()
@@ -257,7 +258,8 @@ internal class AppStartupTraceEmitterTest {
             )
             initActivity(
                 loadSplashScreen = false,
-                abortFirstLoad = false
+                abortFirstLoad = false,
+                activityInitOptions = ActivityInitOptions.NORMAL
             )
         }
         val abandonTime = clock.tick()
@@ -308,6 +310,30 @@ internal class AppStartupTraceEmitterTest {
     @Test
     fun `verify cold start trace with manual end in S`() {
         createTraceEmitter(manualEnd = true).simulateAppStartup(manualEnd = true)
+    }
+
+    @Config(sdk = [VERSION_CODES.S])
+    @Test
+    fun `verify cold start trace with missing activity init events in S`() {
+        createTraceEmitter().simulateAppStartup(activityInitOptions = ActivityInitOptions.OMIT)
+    }
+
+    @Config(sdk = [VERSION_CODES.S])
+    @Test
+    fun `verify cold start trace with missing activity init end event in S`() {
+        createTraceEmitter().simulateAppStartup(activityInitOptions = ActivityInitOptions.OMIT_END)
+    }
+
+    @Config(sdk = [VERSION_CODES.S])
+    @Test
+    fun `verify cold start trace with delayed activity init events in S`() {
+        createTraceEmitter().simulateAppStartup(activityInitOptions = ActivityInitOptions.DELAY)
+    }
+
+    @Config(sdk = [VERSION_CODES.S])
+    @Test
+    fun `verify cold start trace with delayed activity init end event in S`() {
+        createTraceEmitter().simulateAppStartup(activityInitOptions = ActivityInitOptions.DELAY_END)
     }
 
     @Config(sdk = [VERSION_CODES.S])
@@ -463,6 +489,30 @@ internal class AppStartupTraceEmitterTest {
 
     @Config(sdk = [VERSION_CODES.M])
     @Test
+    fun `verify cold start trace with missing activity init events in M`() {
+        createTraceEmitter().simulateAppStartup(activityInitOptions = ActivityInitOptions.OMIT)
+    }
+
+    @Config(sdk = [VERSION_CODES.M])
+    @Test
+    fun `verify cold start trace with missing activity init end event in M`() {
+        createTraceEmitter().simulateAppStartup(activityInitOptions = ActivityInitOptions.OMIT_END)
+    }
+
+    @Config(sdk = [VERSION_CODES.M])
+    @Test
+    fun `verify cold start trace with delayed activity init events in M`() {
+        createTraceEmitter().simulateAppStartup(activityInitOptions = ActivityInitOptions.DELAY)
+    }
+
+    @Config(sdk = [VERSION_CODES.M])
+    @Test
+    fun `verify cold start trace with delayed activity init end event in M`() {
+        createTraceEmitter().simulateAppStartup(activityInitOptions = ActivityInitOptions.DELAY_END)
+    }
+
+    @Config(sdk = [VERSION_CODES.M])
+    @Test
     fun `verify warm start trace without application init start and end triggered in M`() {
         createTraceEmitter()
             .simulateAppStartup(
@@ -570,6 +620,7 @@ internal class AppStartupTraceEmitterTest {
         manualEnd: Boolean = false,
         abortFirstActivityLoad: Boolean = false,
         loadSplashScreen: Boolean = false,
+        activityInitOptions: ActivityInitOptions = ActivityInitOptions.NORMAL,
     ) {
         val appInitTimestamps = initApp(
             hasAppInitEvents = hasAppInitEvents,
@@ -583,7 +634,8 @@ internal class AppStartupTraceEmitterTest {
 
         val activityInitTimestamps = initActivity(
             loadSplashScreen = loadSplashScreen,
-            abortFirstLoad = abortFirstActivityLoad
+            abortFirstLoad = abortFirstActivityLoad,
+            activityInitOptions = activityInitOptions
         )
 
         val traceStart = if (isColdStart) {
@@ -737,35 +789,70 @@ internal class AppStartupTraceEmitterTest {
     private fun AppStartupTraceEmitter.initActivity(
         loadSplashScreen: Boolean,
         abortFirstLoad: Boolean,
+        activityInitOptions: ActivityInitOptions,
     ): ActivityInitTimestamps {
         val activityInitTimestamps = ActivityInitTimestamps()
         with(activityInitTimestamps) {
             firstActivityInit = preActivityInit(loadSplashScreen)
-            startupActivityStart = createActivity()
 
-            clock.tick(180)
-
-            if (abortFirstLoad) {
-                startupActivityStart = createActivity()
+            if (activityInitOptions.startTime == TimestampOption.NORMAL) {
+                fireStartEvent(activityInitTimestamps = this, abortFirstLoad = abortFirstLoad)
             }
 
-            if (firePreAndPostCreate) {
-                startupActivityPostCreated()
-                clock.tick()
+            if (activityInitOptions.endTime == TimestampOption.NORMAL) {
+                fireEndEvent(activityInitTimestamps = this)
             }
-            startupActivityInitEnd()
-            startupActivityEnd = clock.now()
-            clock.tick(15L)
 
-            startupActivityResumed(STARTUP_ACTIVITY_NAME)
             if (hasRenderEvent) {
                 clock.tick(199L)
                 firstFrameRendered(STARTUP_ACTIVITY_NAME)
             }
 
             uiLoadEnd = clock.now()
+
+            if (activityInitOptions.startTime == TimestampOption.DELAY) {
+                fireStartEvent(activityInitTimestamps = this, abortFirstLoad = abortFirstLoad)
+            }
+
+            if (activityInitOptions.endTime == TimestampOption.DELAY) {
+                fireEndEvent(activityInitTimestamps = this)
+            }
+
+            if (activityInitOptions.startTime != TimestampOption.NORMAL) {
+                startupActivityStart = uiLoadEnd
+            }
+
+            if (activityInitOptions.endTime != TimestampOption.NORMAL) {
+                startupActivityEnd = uiLoadEnd
+            }
         }
         return activityInitTimestamps
+    }
+
+    private fun AppStartupTraceEmitter.fireStartEvent(
+        activityInitTimestamps: ActivityInitTimestamps,
+        abortFirstLoad: Boolean,
+    ) {
+        activityInitTimestamps.startupActivityStart = createActivity()
+        clock.tick(180)
+
+        if (abortFirstLoad) {
+            activityInitTimestamps.startupActivityStart = createActivity()
+        }
+
+        if (firePreAndPostCreate) {
+            startupActivityPostCreated()
+            clock.tick()
+        }
+    }
+
+    private fun AppStartupTraceEmitter.fireEndEvent(
+        activityInitTimestamps: ActivityInitTimestamps
+    ) {
+        startupActivityInitEnd()
+        activityInitTimestamps.startupActivityEnd = clock.now()
+        clock.tick(15L)
+        startupActivityResumed(STARTUP_ACTIVITY_NAME)
     }
 
     private fun AppStartupTraceEmitter.createActivity(): Long {
@@ -846,6 +933,23 @@ internal class AppStartupTraceEmitterTest {
         var startupActivityEnd: Long? = null,
         var uiLoadEnd: Long? = null,
     )
+
+    private enum class ActivityInitOptions(
+        val startTime: TimestampOption = TimestampOption.NORMAL,
+        val endTime: TimestampOption = TimestampOption.NORMAL,
+    ) {
+        NORMAL,
+        OMIT(startTime = TimestampOption.MISSING, endTime = TimestampOption.MISSING),
+        OMIT_END(endTime = TimestampOption.MISSING),
+        DELAY(startTime = TimestampOption.DELAY, endTime = TimestampOption.DELAY),
+        DELAY_END(endTime = TimestampOption.DELAY)
+    }
+
+    private enum class TimestampOption {
+        NORMAL,
+        DELAY,
+        MISSING
+    }
 
     companion object {
         private const val STARTUP_ACTIVITY_NAME = "StartupActivity"

@@ -14,11 +14,11 @@ class HandlerMessageDrawDetector(
     override fun registerFirstDrawCallback(
         activity: Activity,
         drawBeginCallback: () -> Unit,
-        firstFrameDeliveredCallback: () -> Unit,
+        drawCompleteCallback: () -> Unit,
     ) {
         drawBeginCallback()
         handler.sendMessageAtFrontOfQueue(
-            Message.obtain(handler.wrappedHandler, firstFrameDeliveredCallback).apply {
+            Message.obtain(handler.wrappedHandler, drawCompleteCallback).apply {
                 isAsynchronous = true
             }
         )

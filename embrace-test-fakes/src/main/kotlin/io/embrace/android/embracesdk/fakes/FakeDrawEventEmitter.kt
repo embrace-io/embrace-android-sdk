@@ -15,11 +15,11 @@ class FakeDrawEventEmitter : DrawEventEmitter {
     override fun registerFirstDrawCallback(
         activity: Activity,
         drawBeginCallback: () -> Unit,
-        firstFrameDeliveredCallback: () -> Unit
+        drawCompleteCallback: () -> Unit
     ) {
-        registeredActivities[traceInstanceId(activity)] = drawBeginCallback to firstFrameDeliveredCallback
+        registeredActivities[traceInstanceId(activity)] = drawBeginCallback to drawCompleteCallback
         lastRegisteredActivity = activity
-        lastFirstFrameDeliveredCallback = firstFrameDeliveredCallback
+        lastFirstFrameDeliveredCallback = drawCompleteCallback
     }
 
     override fun unregisterFirstDrawCallback(activity: Activity) {

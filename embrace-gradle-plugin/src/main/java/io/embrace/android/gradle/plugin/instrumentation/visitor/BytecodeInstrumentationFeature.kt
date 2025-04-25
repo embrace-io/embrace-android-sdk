@@ -8,6 +8,11 @@ import io.embrace.android.gradle.plugin.instrumentation.strategy.ClassVisitStrat
 internal data class BytecodeInstrumentationFeature(
 
     /**
+     * The name of the feature.
+     */
+    val name: String,
+
+    /**
      * Instructions for identifying a target method in the class that will be instrumented.
      */
     val targetParams: BytecodeClassInsertionParams,

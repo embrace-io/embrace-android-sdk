@@ -1,0 +1,42 @@
+{
+  "features": [
+    {
+      "name": "fcm_push_notifications",
+      "target": {
+        "name": "onMessageReceived",
+        "descriptor": "(Lcom/google/firebase/messaging/RemoteMessage;)V"
+      },
+      "insert": {
+        "owner": "io/embrace/android/embracesdk/internal/instrumentation/bytecode/FcmBytecodeEntrypoint",
+        "name": "onMessageReceived",
+        "descriptor": "(Lcom/google/firebase/messaging/RemoteMessage;)V",
+        "operandStackIndices": [
+          1
+        ]
+      },
+      "visitStrategy": {
+        "type": "match_super_class_name",
+        "value": "com.google.firebase.messaging.FirebaseMessagingService"
+      }
+    },
+    {
+      "name": "okhttp",
+      "target": {
+        "name": "build",
+        "descriptor": "()Lokhttp3/OkHttpClient;"
+      },
+      "insert": {
+        "owner": "io/embrace/android/embracesdk/internal/instrumentation/bytecode/OkHttpBytecodeEntrypoint",
+        "name": "build",
+        "descriptor": "(Lokhttp3/OkHttpClient$Builder;)V",
+        "operandStackIndices": [
+          0
+        ]
+      },
+      "visitStrategy": {
+        "type": "match_class_name",
+        "value": "okhttp3.OkHttpClient$Builder"
+      }
+    }
+  ]
+}

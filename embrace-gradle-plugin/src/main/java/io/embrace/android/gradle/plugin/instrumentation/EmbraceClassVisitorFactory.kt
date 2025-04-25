@@ -4,12 +4,11 @@ import com.android.build.api.instrumentation.AsmClassVisitorFactory
 import com.android.build.api.instrumentation.ClassContext
 import com.android.build.api.instrumentation.ClassData
 import io.embrace.android.gradle.plugin.instrumentation.config.ConfigClassVisitorFactory
+import io.embrace.android.gradle.plugin.instrumentation.json.readBytecodeInstrumentationFeatures
 import io.embrace.android.gradle.plugin.instrumentation.visitor.InstrumentationTargetClassVisitor
 import io.embrace.android.gradle.plugin.instrumentation.visitor.OnClickClassAdapter
 import io.embrace.android.gradle.plugin.instrumentation.visitor.OnLongClickClassAdapter
 import io.embrace.android.gradle.plugin.instrumentation.visitor.WebViewClientClassAdapter
-import io.embrace.android.gradle.plugin.instrumentation.visitor.fcmFeature
-import io.embrace.android.gradle.plugin.instrumentation.visitor.okhttpFeature
 import org.objectweb.asm.ClassVisitor
 
 /**
@@ -39,6 +38,9 @@ abstract class EmbraceClassVisitorFactory : AsmClassVisitorFactory<BytecodeInstr
         }
 
         val behavior = ClassVisitBehavior(params)
+        val features = readBytecodeInstrumentationFeatures()
+        val fcmFeature = features.single { it.name == "fcm_push_notifications" }
+        val okhttpFeature = features.single { it.name == "okhttp" }
 
         // We take the approach of chaining 1 visitor per feature, if a feature is enabled/necessary
         // for a given class.

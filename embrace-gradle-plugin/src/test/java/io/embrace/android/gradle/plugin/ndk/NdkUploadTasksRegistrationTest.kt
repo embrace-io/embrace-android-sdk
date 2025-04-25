@@ -187,7 +187,6 @@ class NdkUploadTasksRegistrationTest {
         assertTaskRegistered(EncodeFileToBase64Task.NAME, testAndroidCompactedVariantData.name)
     }
 
-    // TODO: Do all Unity projects have a mergeNativeLibs task?
     @Test
     fun `an error is thrown when merge native libs task is not found`() {
         // Given a project where merge native libs task is not registered

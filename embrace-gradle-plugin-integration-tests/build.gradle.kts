@@ -38,6 +38,7 @@ tasks.withType(Test::class.java).configureEach {
         ":embrace-android-sdk",
         ":embrace-android-core",
         ":embrace-android-api",
+        ":embrace-android-fcm",
         ":embrace-android-okhttp3",
         ":embrace-android-infra",
         ":embrace-android-features",

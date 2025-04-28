@@ -14,7 +14,6 @@ import io.embrace.android.gradle.plugin.tasks.registration.EmbraceTaskRegistrati
 import io.embrace.android.gradle.plugin.tasks.registration.RegistrationParams
 import io.embrace.android.gradle.plugin.util.capitalizedString
 import org.gradle.api.Project
-import org.gradle.api.Task
 import org.gradle.api.provider.Provider
 import java.io.File
 import java.util.concurrent.Callable
@@ -150,12 +149,10 @@ class NdkUploadTasksRegistration(
         data: AndroidCompactedVariantData,
     ): Provider<File> {
         return projectType.flatMap { projectType: ProjectType ->
-            project.tasks.named("merge${data.name.capitalizedString()}NativeLibs").flatMap { mergeNativeLibsTask ->
-                when (projectType) {
-                    ProjectType.UNITY -> getUnitySharedObjectFiles(project, data)
-                    ProjectType.NATIVE -> getNativeSharedObjectFiles(project, mergeNativeLibsTask)
-                    else -> project.provider { File("") } // this shouldn't happen
-                }
+            when (projectType) {
+                ProjectType.UNITY -> getUnitySharedObjectFiles(project, data)
+                ProjectType.NATIVE -> getNativeSharedObjectFiles(project, data)
+                else -> project.provider { File("") } // this shouldn't happen
             }
         }
     }
@@ -177,12 +174,12 @@ class NdkUploadTasksRegistration(
         }
     }
 
-    private fun getNativeSharedObjectFiles(project: Project, task: Task): Provider<File> {
+    private fun getNativeSharedObjectFiles(project: Project, variant: AndroidCompactedVariantData): Provider<File> {
         val customSymbolsDirectory = behavior.customSymbolsDirectory
         return if (!customSymbolsDirectory.isNullOrEmpty()) {
             project.provider { getNativeSharedObjectFilesFromCustomDirectory(customSymbolsDirectory, project) }
         } else {
-            getDefaultNativeSharedObjectFiles(task)
+            getDefaultNativeSharedObjectFiles(project, variant)
         }
     }
 
@@ -202,14 +199,19 @@ class NdkUploadTasksRegistration(
      * We expect the task outputs to be in the following format:
      * app/build/intermediates/merged_native_libs/release/out/lib/armeabi-v7a/libembrace-native.so
      */
-    private fun getDefaultNativeSharedObjectFiles(task: Task): Provider<File> {
-        return task.outputs.files.asFileTree.elements.map { files ->
-            files
-                .first { it.asFile.extension == "so" }
-                ?.asFile
-                ?.parentFile
-                ?.parentFile
-                ?: error("Shared object file not found")
+    private fun getDefaultNativeSharedObjectFiles(
+        project: Project,
+        variant: AndroidCompactedVariantData
+    ): Provider<File> {
+        return project.tasks.named("merge${variant.name.capitalizedString()}NativeLibs").flatMap { mergeNativeLibsTask ->
+            mergeNativeLibsTask.outputs.files.asFileTree.elements.map { files ->
+                files
+                    .first { it.asFile.extension == "so" }
+                    ?.asFile
+                    ?.parentFile
+                    ?.parentFile
+                    ?: error("Shared object file not found")
+            }
         }
     }
 

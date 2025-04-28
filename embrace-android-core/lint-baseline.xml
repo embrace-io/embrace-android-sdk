@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<issues format="6" by="lint 8.7.3" type="baseline" client="gradle" dependencies="false" name="AGP (8.7.3)" variant="all" version="8.7.3">
+<issues format="6" by="lint 8.9.2" type="baseline" client="gradle" dependencies="false" name="AGP (8.9.2)" variant="all" version="8.9.2">
 
     <issue
         id="EmbracePublicApiPackageRule"
@@ -18,8 +18,8 @@
         errorLine1="            Trace.beginSection(&quot;emb-$name&quot;.take(127))"
         errorLine2="                  ~~~~~~~~~~~~">
         <location
-            file="src/main/kotlin/io/embrace/android/embracesdk/internal/Systrace.kt"
-            line="50"
+            file="src/main/kotlin/io/embrace/android/embracesdk/internal/EmbTrace.kt"
+            line="47"
             column="19"/>
     </issue>
 

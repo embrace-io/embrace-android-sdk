@@ -190,7 +190,7 @@ class NdkUploadTasksRegistrationTest {
     @Test
     fun `an error is thrown when merge native libs task is not found`() {
         // Given a project where merge native libs task is not registered
-        val projectTypeProvider = project.provider { ProjectType.UNITY }
+        val projectTypeProvider = project.provider { ProjectType.NATIVE }
 
         // When NDK upload tasks are registered
         val registration = createNdkUploadTasksRegistration(projectType = projectTypeProvider)

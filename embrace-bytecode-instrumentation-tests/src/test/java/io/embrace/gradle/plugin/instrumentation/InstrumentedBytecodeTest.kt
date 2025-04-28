@@ -1,5 +1,32 @@
 package io.embrace.gradle.plugin.instrumentation
 
+import io.embrace.android.gradle.plugin.instrumentation.VisitorFactoryImpl
+import io.embrace.android.gradle.plugin.instrumentation.json.readBytecodeInstrumentationFeatures
+import io.embrace.android.gradle.plugin.instrumentation.visitor.WebViewClientOverrideClassAdapter
+import io.embrace.test.fixtures.ActivityOnClickListener
+import io.embrace.test.fixtures.AnonInnerClassOnClickListener
+import io.embrace.test.fixtures.AnonInnerClassOnLongClickListener
+import io.embrace.test.fixtures.ControlObject
+import io.embrace.test.fixtures.CustomOnClickListener
+import io.embrace.test.fixtures.CustomOnLongClickListener
+import io.embrace.test.fixtures.CustomWebViewClient
+import io.embrace.test.fixtures.ExtendedCustomWebViewClient
+import io.embrace.test.fixtures.ExtendedOnClickListener
+import io.embrace.test.fixtures.ExtendedOnLongClickListener
+import io.embrace.test.fixtures.FragmentOnClickListener
+import io.embrace.test.fixtures.JavaAnonOnClickListener
+import io.embrace.test.fixtures.JavaLambdaOnClickListener
+import io.embrace.test.fixtures.JavaLambdaOnLongClickListener
+import io.embrace.test.fixtures.JavaNested
+import io.embrace.test.fixtures.KotlinNested
+import io.embrace.test.fixtures.KotlinNestedOnLongClick
+import io.embrace.test.fixtures.KotlinObjectOnClickListener
+import io.embrace.test.fixtures.MissingInterfaceOnClickListener
+import io.embrace.test.fixtures.MissingInterfaceOnLongClickListener
+import io.embrace.test.fixtures.MissingOverrideOnClickListener
+import io.embrace.test.fixtures.MissingOverrideOnLongClickListener
+import io.embrace.test.fixtures.NoOverrideWebViewClient
+import io.embrace.test.fixtures.VirtualMethodRefNamedOnClick
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
@@ -7,12 +34,35 @@ import org.objectweb.asm.ClassReader
 import org.objectweb.asm.ClassVisitor
 import org.objectweb.asm.util.TraceClassVisitor
 
+private val features = readBytecodeInstrumentationFeatures()
+private val factory = VisitorFactoryImpl(ASM_API_VERSION, FakeBytecodeInstrumentationParams())
+
+private val onClickFactory: ClassVisitorFactory = { visitor, params ->
+    factory.createClassVisitor(
+        feature = features.single { it.name == "on_click" },
+        classContext = FakeClassContext(params.qualifiedClzName),
+        visitor = visitor
+    )
+}
+
+private val onLongClickFactory: ClassVisitorFactory = { visitor, params ->
+    factory.createClassVisitor(
+        feature = features.single { it.name == "on_long_click" },
+        classContext = FakeClassContext(params.qualifiedClzName),
+        visitor = visitor
+    )
+}
+
+private val webviewFactory: ClassVisitorFactory = { visitor, _ ->
+    WebViewClientOverrideClassAdapter(ASM_API_VERSION, visitor)
+}
+
 /**
  * Verifies that a [ClassVisitor] produces the correct bytecode output for a given class.
  *
- * For example, if a class implements [View.OnClickListener] then the embrace gradle plugin should
- * instrument the bytecode so that the first line of the onClick method contains a call to
- * [ViewSwazzledHooks._preOnClick]. If a class does not implement the interface, then its
+ * For example, if a class implements View.OnClickListener then the embrace gradle plugin should
+ * instrument the bytecode so that the first line of the onClick method contains a call to our API
+ * If a class does not implement the interface, then its
  * bytecode should remain the same.
  *
  * The test achieves this verification using the following approach:
@@ -22,22 +72,54 @@ import org.objectweb.asm.util.TraceClassVisitor
  * 3. Process the class using the [ClassVisitor] instance that instruments the bytecode
  * 4. Compare the bytecode representation obtained from a [TraceClassVisitor] with a known output
  *
- * To add more test cases please use [instrumentedBytecodeTestCases] and read the README.
- *
  * For more information on WebObject ASM, see https://asm.ow2.io/
  */
 @RunWith(Parameterized::class)
 class InstrumentedBytecodeTest(
-    private val params: BytecodeTestParams
+    private val params: BytecodeTestParams,
 ) {
 
-    /**
-     * To add more test cases please use [instrumentedBytecodeTestCases] and read the README.
-     */
     companion object {
+
         @JvmStatic
         @Parameterized.Parameters(name = "{index}: {0}")
-        fun testCases() = instrumentedBytecodeTestCases()
+        fun testCases() = listOf(
+            BytecodeTestParams(clz = ActivityOnClickListener::class, factory = onClickFactory),
+            BytecodeTestParams(clz = ControlObject::class, factory = onClickFactory),
+            BytecodeTestParams(clz = CustomOnClickListener::class, factory = onClickFactory),
+            BytecodeTestParams(clz = ExtendedOnClickListener::class, factory = onClickFactory),
+            BytecodeTestParams(clz = FragmentOnClickListener::class, factory = onClickFactory),
+            BytecodeTestParams(clz = JavaNested.JavaInnerListener::class, factory = onClickFactory),
+            BytecodeTestParams(clz = JavaNested.JavaStaticListener::class, factory = onClickFactory),
+            BytecodeTestParams(clz = KotlinNested.KotlinInnerListener::class, factory = onClickFactory),
+            BytecodeTestParams(clz = KotlinNested.KotlinStaticListener::class, factory = onClickFactory),
+            BytecodeTestParams(clz = MissingInterfaceOnClickListener::class, factory = onClickFactory),
+            BytecodeTestParams(clz = MissingOverrideOnClickListener::class, factory = onClickFactory),
+            BytecodeTestParams(clz = VirtualMethodRefNamedOnClick::class, factory = onClickFactory),
+            BytecodeTestParams(clz = JavaLambdaOnClickListener::class, factory = onClickFactory),
+            BytecodeTestParams.forInnerClass(clz = AnonInnerClassOnClickListener::class, innerClzName = "$1", factory = onClickFactory),
+            BytecodeTestParams.forInnerClass(clz = JavaAnonOnClickListener::class, innerClzName = "$1", factory = onClickFactory),
+            BytecodeTestParams.forInnerClass(
+                clz = KotlinObjectOnClickListener::class,
+                innerClzName = "\$onCreateView\$1",
+                factory = onClickFactory
+            ),
+            BytecodeTestParams(clz = CustomOnLongClickListener::class, factory = onLongClickFactory),
+            BytecodeTestParams(clz = ExtendedOnLongClickListener::class, factory = onLongClickFactory),
+            BytecodeTestParams(clz = JavaLambdaOnLongClickListener::class, factory = onLongClickFactory),
+            BytecodeTestParams(clz = KotlinNestedOnLongClick.OnLongClickInnerListener::class, factory = onLongClickFactory),
+            BytecodeTestParams(clz = KotlinNestedOnLongClick.OnLongClickStaticListener::class, factory = onLongClickFactory),
+            BytecodeTestParams(clz = MissingInterfaceOnLongClickListener::class, factory = onLongClickFactory),
+            BytecodeTestParams(clz = MissingOverrideOnLongClickListener::class, factory = onLongClickFactory),
+            BytecodeTestParams.forInnerClass(
+                clz = AnonInnerClassOnLongClickListener::class,
+                innerClzName = "$1",
+                factory = onLongClickFactory
+            ),
+            BytecodeTestParams(clz = CustomWebViewClient::class, factory = webviewFactory),
+            BytecodeTestParams(clz = ExtendedCustomWebViewClient::class, factory = webviewFactory),
+            BytecodeTestParams(clz = NoOverrideWebViewClient::class, factory = webviewFactory),
+        )
     }
 
     @Test

@@ -17,32 +17,32 @@ internal const val ASM_CLASS_READER_FLAGS = ClassReader.EXPAND_FRAMES
 // com.android.build.gradle.internal.instrumentation.AsmInstrumentationManager#getClassWriterFlags
 internal const val ASM_CLASS_WRITER_FLAGS = ClassWriter.COMPUTE_FRAMES
 
-internal typealias ClassVisitorFactory = (nextVisitor: ClassVisitor) -> ClassVisitor
+internal typealias ClassVisitorFactory = (nextVisitor: ClassVisitor, params: BytecodeTestParams) -> ClassVisitor
 
 /**
  * Test parameters used to instrument bytecode.
  */
 class BytecodeTestParams(
-    clz: Class<*>,
-    val qualifiedClzName: String = clz.name,
-    val simpleClzName: String = clz.simpleName,
+    clz: KClass<*>,
+    val qualifiedClzName: String = clz.java.name,
+    val simpleClzName: String = clz.java.simpleName,
     val expectedOutput: String = "${simpleClzName}_expected.txt",
-    val factory: ClassVisitorFactory = { nextVisitor ->
+    val factory: ClassVisitorFactory = { nextVisitor, _ ->
         nextVisitor
-    }
+    },
 ) {
 
     companion object {
         fun forInnerClass(
-            kClass: KClass<*>,
+            clz: KClass<*>,
             innerClzName: String,
-            factory: ClassVisitorFactory = { nextVisitor ->
+            factory: ClassVisitorFactory = { nextVisitor, _ ->
                 nextVisitor
-            }
+            },
         ): BytecodeTestParams {
             return BytecodeTestParams(
-                kClass.java,
-                qualifiedClzName = "${kClass.java.name}$innerClzName",
+                clz,
+                qualifiedClzName = "${clz.java.name}$innerClzName",
                 factory = factory
             )
         }

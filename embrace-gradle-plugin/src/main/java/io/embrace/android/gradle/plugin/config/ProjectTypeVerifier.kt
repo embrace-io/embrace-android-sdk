@@ -14,16 +14,18 @@ internal object ProjectTypeVerifier {
         behavior: PluginBehavior,
         variantName: String,
         project: Project,
-    ): ProjectType {
-        return when {
-            isNative(agpWrapper, behavior, variantName, project) -> ProjectType.NATIVE
-            isUnity(unitySymbolsDir.orNull) -> ProjectType.UNITY
-            else -> ProjectType.OTHER
+    ): Provider<ProjectType> {
+        return unitySymbolsDir.map { dir ->
+            when {
+                isNative(agpWrapper, behavior, variantName, project) -> ProjectType.NATIVE
+                isUnity(dir) -> ProjectType.UNITY
+                else -> ProjectType.OTHER
+            }
         }
     }
 
-    private fun isUnity(unitySymbolsDir: UnitySymbolsDir?): Boolean {
-        return unitySymbolsDir != null && unitySymbolsDir.isDirPresent()
+    private fun isUnity(unitySymbolsDir: UnitySymbolsDir): Boolean {
+        return unitySymbolsDir.isDirPresent()
     }
 
     /**

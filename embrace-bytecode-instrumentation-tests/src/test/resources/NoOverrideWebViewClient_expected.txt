@@ -25,6 +25,8 @@ public final class io/embrace/test/fixtures/NoOverrideWebViewClient extends andr
     ALOAD 2
     ALOAD 3
     INVOKESPECIAL android/webkit/WebViewClient.onPageStarted (Landroid/webkit/WebView;Ljava/lang/String;Landroid/graphics/Bitmap;)V
+    ALOAD 2
+    INVOKESTATIC io/embrace/android/embracesdk/internal/instrumentation/bytecode/WebViewClientBytecodeEntrypoint.onPageStarted (Ljava/lang/String;)V
     RETURN
     MAXSTACK = 4
     MAXLOCALS = 0

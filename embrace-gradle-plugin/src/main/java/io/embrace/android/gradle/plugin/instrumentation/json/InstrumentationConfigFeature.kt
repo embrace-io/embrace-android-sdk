@@ -8,4 +8,5 @@ internal data class InstrumentationConfigFeature(
     val target: InstrumentationConfigTarget,
     val insert: InstrumentationConfigInsert,
     val visitStrategy: InstrumentationConfigVisitStrategy,
+    val addOverride: InstrumentationConfigAddOverride?,
 )

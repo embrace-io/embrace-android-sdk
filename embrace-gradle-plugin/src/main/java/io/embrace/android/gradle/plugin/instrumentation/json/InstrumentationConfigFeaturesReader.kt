@@ -5,6 +5,7 @@ import io.embrace.android.gradle.plugin.instrumentation.strategy.ClassVisitStrat
 import io.embrace.android.gradle.plugin.instrumentation.visitor.BytecodeClassInsertionParams
 import io.embrace.android.gradle.plugin.instrumentation.visitor.BytecodeInstrumentationFeature
 import io.embrace.android.gradle.plugin.instrumentation.visitor.BytecodeMethodInsertionParams
+import io.embrace.android.gradle.plugin.instrumentation.visitor.BytecodeMethodOverrideParams
 import okio.buffer
 import okio.source
 
@@ -25,8 +26,8 @@ private fun readBytecodeInstrumentationConfig(): InstrumentationConfigFeatures {
     } ?: error("Failed to parse bytecode instrumentation config file")
 }
 
-private fun InstrumentationConfigFeature.convertInstrumentationConfigFeature(): BytecodeInstrumentationFeature {
-    return BytecodeInstrumentationFeature(
+private fun InstrumentationConfigFeature.convertInstrumentationConfigFeature(): BytecodeInstrumentationFeature =
+    BytecodeInstrumentationFeature(
         name = name,
         targetParams = BytecodeClassInsertionParams(
             name = target.name,
@@ -36,11 +37,17 @@ private fun InstrumentationConfigFeature.convertInstrumentationConfigFeature(): 
             owner = insert.owner,
             name = insert.name,
             descriptor = insert.descriptor,
-            operandStackIndices = insert.operandStackIndices
+            operandStackIndices = insert.operandStackIndices,
         ),
-        visitStrategy = convertVisitStrategy()
+        visitStrategy = convertVisitStrategy(),
+        addOverrideParams = addOverride?.let {
+            BytecodeMethodOverrideParams(
+                owner = it.owner,
+                name = it.name,
+                descriptor = it.descriptor,
+            )
+        }
     )
-}
 
 private fun InstrumentationConfigFeature.convertVisitStrategy(): ClassVisitStrategy {
     return when (visitStrategy.type) {

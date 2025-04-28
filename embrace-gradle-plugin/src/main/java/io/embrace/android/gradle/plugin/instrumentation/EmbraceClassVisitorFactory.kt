@@ -5,8 +5,6 @@ import com.android.build.api.instrumentation.ClassContext
 import com.android.build.api.instrumentation.ClassData
 import io.embrace.android.gradle.plugin.instrumentation.config.ConfigClassVisitorFactory
 import io.embrace.android.gradle.plugin.instrumentation.json.readBytecodeInstrumentationFeatures
-import io.embrace.android.gradle.plugin.instrumentation.visitor.InstrumentationTargetClassVisitor
-import io.embrace.android.gradle.plugin.instrumentation.visitor.WebViewClientOverrideClassAdapter
 import org.objectweb.asm.ClassVisitor
 
 /**
@@ -36,30 +34,11 @@ abstract class EmbraceClassVisitorFactory : AsmClassVisitorFactory<BytecodeInstr
         }
 
         val features = readBytecodeInstrumentationFeatures()
-        val fcmFeature = features.single { it.name == "fcm_push_notifications" }
-        val okhttpFeature = features.single { it.name == "okhttp" }
-        val webviewFeature = features.single { it.name == "webview_page_start" }
-        val onClickFeature = features.single { it.name == "on_click" }
-        val onLongClickFeature = features.single { it.name == "on_long_click" }
         val factory = VisitorFactoryImpl(api, params)
 
-        // We take the approach of chaining 1 visitor per feature, if a feature is enabled/necessary
-        // for a given class.
-        visitor = factory.createClassVisitor(fcmFeature, classContext, visitor)
-        if (params.shouldInstrumentWebview.get() && webviewFeature.visitStrategy.shouldVisit(classContext)) {
-            // first, add override for onPageStarted if class doesn't contain it already
-            visitor = WebViewClientOverrideClassAdapter(api, visitor)
-
-            // then, instrument the onPageStarted method
-            visitor = InstrumentationTargetClassVisitor(
-                api = api,
-                nextClassVisitor = visitor,
-                feature = webviewFeature,
-            )
+        features.forEach { feature ->
+            visitor = factory.createClassVisitor(feature, classContext, visitor)
         }
-        visitor = factory.createClassVisitor(okhttpFeature, classContext, visitor)
-        visitor = factory.createClassVisitor(onClickFeature, classContext, visitor)
-        visitor = factory.createClassVisitor(onLongClickFeature, classContext, visitor)
         return visitor
     }
 

@@ -20,25 +20,6 @@
       }
     },
     {
-      "name": "okhttp",
-      "target": {
-        "name": "build",
-        "descriptor": "()Lokhttp3/OkHttpClient;"
-      },
-      "insert": {
-        "owner": "io/embrace/android/embracesdk/internal/instrumentation/bytecode/OkHttpBytecodeEntrypoint",
-        "name": "build",
-        "descriptor": "(Lokhttp3/OkHttpClient$Builder;)V",
-        "operandStackIndices": [
-          0
-        ]
-      },
-      "visitStrategy": {
-        "type": "match_class_name",
-        "value": "okhttp3.OkHttpClient$Builder"
-      }
-    },
-    {
       "name": "webview_page_start",
       "target": {
         "name": "onPageStarted",
@@ -55,6 +36,25 @@
       "visitStrategy": {
         "type": "match_super_class_name",
         "value": "android.webkit.WebViewClient"
+      }
+    },
+    {
+      "name": "okhttp",
+      "target": {
+        "name": "build",
+        "descriptor": "()Lokhttp3/OkHttpClient;"
+      },
+      "insert": {
+        "owner": "io/embrace/android/embracesdk/internal/instrumentation/bytecode/OkHttpBytecodeEntrypoint",
+        "name": "build",
+        "descriptor": "(Lokhttp3/OkHttpClient$Builder;)V",
+        "operandStackIndices": [
+          0
+        ]
+      },
+      "visitStrategy": {
+        "type": "match_class_name",
+        "value": "okhttp3.OkHttpClient$Builder"
       }
     },
     {

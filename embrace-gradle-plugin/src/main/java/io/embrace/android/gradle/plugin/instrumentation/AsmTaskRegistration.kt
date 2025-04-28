@@ -2,7 +2,6 @@ package io.embrace.android.gradle.plugin.instrumentation
 
 import com.android.build.api.instrumentation.FramesComputationMode
 import com.android.build.api.instrumentation.InstrumentationScope
-import io.embrace.android.gradle.plugin.gradle.nullSafeMap
 import io.embrace.android.gradle.plugin.gradle.tryGetTaskProvider
 import io.embrace.android.gradle.plugin.tasks.ndk.EncodeFileToBase64Task
 import io.embrace.android.gradle.plugin.tasks.registration.EmbraceTaskRegistration
@@ -54,11 +53,12 @@ class AsmTaskRegistration : EmbraceTaskRegistration {
                     asmTransformationTask.configure { it.dependsOn(encodeFileToBase64Task) }
 
                     params.encodedSharedObjectFilesMap.set(
-                        encodeFileToBase64Task.nullSafeMap { encodeTask ->
-                            encodeTask.outputFile.asFile.orNull?.let { file ->
+                        encodeFileToBase64Task.flatMap { encodeTask ->
+                            encodeTask.outputFile.asFile.map { file ->
                                 file.takeIf { it.exists() }
                                     ?.bufferedReader()
                                     ?.use { it.readText() }
+                                    ?: error("Unable to read the output file from EncodeFileToBase64Task.")
                             }
                         }
                     )

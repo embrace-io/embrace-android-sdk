@@ -102,12 +102,12 @@ class NdkUploadTasksRegistration(
             // TODO: An error thrown in registration will make the build will fail. Should we use failBuildOnUploadErrors for this too?
             task.failBuildOnUploadErrors.set(behavior.failBuildOnUploadErrors)
             task.requestParams.set(
-                project.provider {
+                behavior.failBuildOnUploadErrors.map { failBuildOnUploadErrors ->
                     RequestParams(
                         appId = variantConfig.embraceConfig?.appId.orEmpty(),
                         apiToken = variantConfig.embraceConfig?.apiToken.orEmpty(),
                         endpoint = EmbraceEndpoint.NDK,
-                        failBuildOnUploadErrors = behavior.failBuildOnUploadErrors.get(),
+                        failBuildOnUploadErrors = failBuildOnUploadErrors,
                         baseUrl = behavior.baseUrl,
                     )
                 }

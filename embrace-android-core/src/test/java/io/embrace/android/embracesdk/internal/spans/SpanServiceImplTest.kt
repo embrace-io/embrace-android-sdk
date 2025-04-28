@@ -14,10 +14,14 @@ import io.embrace.android.embracesdk.fixtures.TOO_LONG_ATTRIBUTE_KEY
 import io.embrace.android.embracesdk.fixtures.TOO_LONG_ATTRIBUTE_VALUE
 import io.embrace.android.embracesdk.fixtures.TOO_LONG_INTERNAL_SPAN_NAME
 import io.embrace.android.embracesdk.fixtures.TOO_LONG_SPAN_NAME
-import io.embrace.android.embracesdk.fixtures.maxSizeAttributes
-import io.embrace.android.embracesdk.fixtures.maxSizeEvents
-import io.embrace.android.embracesdk.fixtures.tooBigAttributes
-import io.embrace.android.embracesdk.fixtures.tooBigEvents
+import io.embrace.android.embracesdk.fixtures.maxSizeCustomAttributes
+import io.embrace.android.embracesdk.fixtures.maxSizeCustomEvents
+import io.embrace.android.embracesdk.fixtures.maxSizeSystemAttributes
+import io.embrace.android.embracesdk.fixtures.maxSizeSystemEvents
+import io.embrace.android.embracesdk.fixtures.tooBigCustomAttributes
+import io.embrace.android.embracesdk.fixtures.tooBigCustomEvents
+import io.embrace.android.embracesdk.fixtures.tooBigSystemAttributes
+import io.embrace.android.embracesdk.fixtures.tooBigSystemEvents
 import io.embrace.android.embracesdk.internal.arch.schema.AppTerminationCause
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
@@ -495,7 +499,7 @@ internal class SpanServiceImplTest {
     }
 
     @Test
-    fun `check name length limit for spans by internally by the SDK`() {
+    fun `check limits for internal spans`() {
         assertNull(spansService.createSpan(name = TOO_LONG_INTERNAL_SPAN_NAME, internal = true))
         assertFalse(
             spansService.recordCompletedSpan(
@@ -503,6 +507,24 @@ internal class SpanServiceImplTest {
                 startTimeMs = 100L,
                 endTimeMs = 200L,
                 internal = true,
+            )
+        )
+        assertFalse(
+            spansService.recordCompletedSpan(
+                name = MAX_LENGTH_INTERNAL_SPAN_NAME,
+                startTimeMs = 100L,
+                endTimeMs = 200L,
+                internal = true,
+                attributes = tooBigSystemAttributes
+            )
+        )
+        assertFalse(
+            spansService.recordCompletedSpan(
+                name = MAX_LENGTH_INTERNAL_SPAN_NAME,
+                startTimeMs = 100L,
+                endTimeMs = 200L,
+                internal = true,
+                events = tooBigSystemEvents
             )
         )
         assertNotNull(
@@ -523,6 +545,8 @@ internal class SpanServiceImplTest {
                 startTimeMs = 100L,
                 endTimeMs = 200L,
                 internal = true,
+                attributes = maxSizeSystemAttributes,
+                events = maxSizeSystemEvents
             )
         )
         assertEquals(2, spanSink.completedSpans().size)
@@ -535,7 +559,7 @@ internal class SpanServiceImplTest {
                 name = "too many events",
                 startTimeMs = 100L,
                 endTimeMs = 200L,
-                events = tooBigEvents,
+                events = tooBigCustomEvents,
                 internal = false,
             )
         )
@@ -544,7 +568,7 @@ internal class SpanServiceImplTest {
                 name = MAX_LENGTH_SPAN_NAME,
                 startTimeMs = 100L,
                 endTimeMs = 200L,
-                events = maxSizeEvents,
+                events = maxSizeCustomEvents,
                 internal = false,
             )
         )
@@ -586,7 +610,7 @@ internal class SpanServiceImplTest {
                 name = "too many attributes",
                 startTimeMs = 100L,
                 endTimeMs = 200L,
-                attributes = tooBigAttributes,
+                attributes = tooBigCustomAttributes,
                 internal = false,
             )
         )
@@ -595,7 +619,7 @@ internal class SpanServiceImplTest {
                 name = MAX_LENGTH_SPAN_NAME,
                 startTimeMs = 100L,
                 endTimeMs = 200L,
-                attributes = maxSizeAttributes,
+                attributes = maxSizeCustomAttributes,
                 internal = false,
             )
         )

@@ -152,7 +152,7 @@ class NdkUploadTasksRegistration(
         return projectType.flatMap { projectType: ProjectType ->
             project.tasks.named("merge${data.name.capitalizedString()}NativeLibs").flatMap { mergeNativeLibsTask ->
                 when (projectType) {
-                    ProjectType.UNITY -> project.provider { getUnitySharedObjectFiles(project, data) }
+                    ProjectType.UNITY -> getUnitySharedObjectFiles(project, data)
                     ProjectType.NATIVE -> getNativeSharedObjectFiles(project, mergeNativeLibsTask)
                     else -> project.provider { File("") } // this shouldn't happen
                 }
@@ -160,18 +160,21 @@ class NdkUploadTasksRegistration(
         }
     }
 
-    private fun getUnitySharedObjectFiles(project: Project, data: AndroidCompactedVariantData): File {
-        // TODO: Verify if errors should be thrown if the directories or SO files are not found. Improve error messaging.
-        val sharedObjectsDirectory = unitySymbolsDir.orNull ?: error("Unity shared objects directory not found")
-
-        val decompressedObjectsDirectory = project.layout.buildDirectory
-            .dir("/intermediates/embrace/unity/${getMappingFileFolder(data)}")
-            .get() // this won't be null as we are using a constant string
-
-        return UnitySymbolFilesManager.of()
-            .getSymbolFiles(sharedObjectsDirectory, decompressedObjectsDirectory)
-            .firstOrNull()
-            ?: error("Unity shared object files not found")
+    private fun getUnitySharedObjectFiles(project: Project, data: AndroidCompactedVariantData): Provider<File> {
+        return unitySymbolsDir.flatMap { sharedObjectsDirectory ->
+            if (sharedObjectsDirectory.isDirPresent()) {
+                project.layout.buildDirectory
+                    .dir("/intermediates/embrace/unity/${getMappingFileFolder(data)}")
+                    .map { decompressedObjectsDirectory ->
+                        UnitySymbolFilesManager.of()
+                            .getSymbolFiles(sharedObjectsDirectory, decompressedObjectsDirectory)
+                            .firstOrNull()
+                            ?: error("Unity shared object files not found")
+                    }
+            } else {
+                error("Unity shared object files not found")
+            }
+        }
     }
 
     private fun getNativeSharedObjectFiles(project: Project, task: Task): Provider<File> {

@@ -55,7 +55,7 @@ class NdkUploadTasksRegistration(
         }
 
         compressionTaskProvider.configure { compressionTask: CompressSharedObjectFilesTask ->
-            val shouldExecuteCompressionTaskProvider = getShouldExecuteCompressionTaskProvider(project)
+            val shouldExecuteCompressionTaskProvider = getShouldExecuteCompressionTaskProvider()
             compressionTask.onlyIf { shouldExecuteCompressionTaskProvider.orNull ?: true }
             // TODO: check if these are only needed for Unity and comment accordingly.
             compressionTask.mustRunAfter(object : Callable<Any> {
@@ -221,7 +221,7 @@ class NdkUploadTasksRegistration(
         "${variantData.flavorName}/${variantData.buildTypeName}"
     }
 
-    private fun getShouldExecuteCompressionTaskProvider(project: Project) = project.provider {
-        (projectType.orNull == ProjectType.NATIVE || projectType.orNull == ProjectType.UNITY)
+    private fun getShouldExecuteCompressionTaskProvider() = projectType.map {
+        (it == ProjectType.NATIVE || it == ProjectType.UNITY)
     }
 }

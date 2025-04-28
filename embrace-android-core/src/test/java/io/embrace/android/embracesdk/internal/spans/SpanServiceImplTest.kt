@@ -536,6 +536,7 @@ internal class SpanServiceImplTest {
                 startTimeMs = 100L,
                 endTimeMs = 200L,
                 events = tooBigEvents,
+                internal = false,
             )
         )
         assertTrue(
@@ -544,6 +545,7 @@ internal class SpanServiceImplTest {
                 startTimeMs = 100L,
                 endTimeMs = 200L,
                 events = maxSizeEvents,
+                internal = false,
             )
         )
 
@@ -585,6 +587,7 @@ internal class SpanServiceImplTest {
                 startTimeMs = 100L,
                 endTimeMs = 200L,
                 attributes = tooBigAttributes,
+                internal = false,
             )
         )
         assertTrue(
@@ -593,6 +596,7 @@ internal class SpanServiceImplTest {
                 startTimeMs = 100L,
                 endTimeMs = 200L,
                 attributes = maxSizeAttributes,
+                internal = false,
             )
         )
 

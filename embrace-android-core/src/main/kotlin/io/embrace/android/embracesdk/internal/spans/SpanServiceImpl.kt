@@ -3,6 +3,8 @@ package io.embrace.android.embracesdk.internal.spans
 import io.embrace.android.embracesdk.internal.arch.schema.TelemetryType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
+import io.embrace.android.embracesdk.internal.config.instrumented.isAttributeCountValid
+import io.embrace.android.embracesdk.internal.config.instrumented.isEventCountValid
 import io.embrace.android.embracesdk.internal.config.instrumented.isNameValid
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.OtelLimitsConfig
 import io.embrace.android.embracesdk.spans.AutoTerminationMode
@@ -39,7 +41,7 @@ internal class SpanServiceImpl(
         internal: Boolean,
         private: Boolean,
     ): PersistableEmbraceSpan? {
-        return if (inputsValid(name, internal) && currentSessionSpan.canStartNewSpan(parent, internal)) {
+        return if (limits.isNameValid(name, internal) && currentSessionSpan.canStartNewSpan(parent, internal)) {
             embraceSpanFactory.create(
                 name = name,
                 type = type,
@@ -55,7 +57,7 @@ internal class SpanServiceImpl(
 
     override fun createSpan(embraceSpanBuilder: EmbraceSpanBuilder): PersistableEmbraceSpan? {
         return if (
-            inputsValid(embraceSpanBuilder.spanName, embraceSpanBuilder.internal) &&
+            limits.isNameValid(embraceSpanBuilder.spanName, embraceSpanBuilder.internal) &&
             currentSessionSpan.canStartNewSpan(embraceSpanBuilder.getParentSpan(), embraceSpanBuilder.internal)
         ) {
             embraceSpanFactory.create(embraceSpanBuilder)
@@ -153,13 +155,11 @@ internal class SpanServiceImpl(
     private fun inputsValid(
         name: String,
         internal: Boolean,
-        events: List<EmbraceSpanEvent>? = null,
-        attributes: Map<String, String>? = null,
-    ): Boolean {
-        return (limits.isNameValid(name, internal)) &&
-            ((events == null) || (events.size <= limits.getMaxCustomEventCount())) &&
-            ((attributes == null) || (attributes.size <= limits.getMaxCustomAttributeCount()))
-    }
+        events: List<EmbraceSpanEvent>,
+        attributes: Map<String, String>,
+    ): Boolean = limits.isNameValid(name, internal) &&
+        limits.isEventCountValid(events, internal) &&
+        limits.isAttributeCountValid(attributes, internal)
 
     companion object {
         const val MAX_INTERNAL_SPANS_PER_SESSION: Int = 5000

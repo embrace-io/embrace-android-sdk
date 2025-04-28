@@ -1,14 +1,10 @@
 package io.embrace.android.gradle.plugin.instrumentation
 
 import com.android.build.api.instrumentation.ClassContext
-import io.embrace.android.gradle.plugin.instrumentation.config.visitor.ConfigInstrumentationClassVisitor
 import io.embrace.android.gradle.plugin.instrumentation.fakes.TestBytecodeInstrumentationParams
-import io.embrace.android.gradle.plugin.instrumentation.fakes.TestClassContext
 import io.embrace.android.gradle.plugin.instrumentation.fakes.TestClassData
 import io.embrace.android.gradle.plugin.instrumentation.fakes.TestClassVisitor
 import io.embrace.android.gradle.plugin.instrumentation.fakes.TestVisitorFactoryImpl
-import io.embrace.android.gradle.plugin.instrumentation.visitor.OnClickClassAdapter
-import io.embrace.android.gradle.plugin.instrumentation.visitor.OnLongClickClassAdapter
 import io.mockk.every
 import io.mockk.mockk
 import org.junit.Assert.assertFalse
@@ -20,33 +16,6 @@ class EmbraceClassVisitorFactoryTest {
 
     private val clzDataString = TestClassData(checkNotNull(String::class.qualifiedName))
     private val clzDataBool = TestClassData(checkNotNull(Boolean::class.qualifiedName))
-
-    /**
-     * Verifies that the OnClick visitor should be returned if there is nothing to instrument,
-     * and that it should chain the original visitor.
-     */
-    @Test
-    fun testDefaultClassVisitorReturned() {
-        val visitor = TestClassVisitor()
-        val ctx = TestClassContext(clzDataString)
-        val returningVisitor = TestVisitorFactoryImpl().createClassVisitor(ctx, visitor)
-        check(returningVisitor is OnClickClassAdapter)
-        check(returningVisitor.nextClassVisitor is OnLongClickClassAdapter)
-        assertSame(visitor, returningVisitor.nextClassVisitor.nextClassVisitor)
-    }
-
-    @Test
-    fun testConfigClassVisitorReturned() {
-        val visitor = TestClassVisitor()
-        val ctx =
-            createMockClassContext(
-                "io.embrace.android.embracesdk.internal.config.instrumented.EnabledFeatureConfigImpl"
-            )
-        val returningVisitor = TestVisitorFactoryImpl().createClassVisitor(ctx, visitor)
-        check(returningVisitor is OnClickClassAdapter)
-        check(returningVisitor.nextClassVisitor is OnLongClickClassAdapter)
-        check(returningVisitor.nextClassVisitor.nextClassVisitor is ConfigInstrumentationClassVisitor)
-    }
 
     @Test
     fun testAsmApiEnabled() {

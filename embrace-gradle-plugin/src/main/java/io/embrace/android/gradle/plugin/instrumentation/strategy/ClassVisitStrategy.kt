@@ -6,7 +6,7 @@ import com.android.build.api.instrumentation.ClassContext
  * Defines all the potential strategies for deciding whether a class should be visited by a particular feature
  * during bytecode instrumentation.
  */
-internal sealed class ClassVisitStrategy {
+sealed class ClassVisitStrategy {
 
     /**
      * Returns true if the class should be visited for _potential_ instrumentation.

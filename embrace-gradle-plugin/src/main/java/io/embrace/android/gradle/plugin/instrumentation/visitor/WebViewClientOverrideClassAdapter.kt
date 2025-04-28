@@ -10,7 +10,7 @@ import org.objectweb.asm.Opcodes
  */
 class WebViewClientOverrideClassAdapter(
     api: Int,
-    internal val nextClassVisitor: ClassVisitor?,
+    nextClassVisitor: ClassVisitor?,
 ) : ClassVisitor(api, nextClassVisitor) {
 
     companion object {

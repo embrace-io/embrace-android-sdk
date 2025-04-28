@@ -6,8 +6,6 @@ import com.android.build.api.instrumentation.ClassData
 import io.embrace.android.gradle.plugin.instrumentation.config.ConfigClassVisitorFactory
 import io.embrace.android.gradle.plugin.instrumentation.json.readBytecodeInstrumentationFeatures
 import io.embrace.android.gradle.plugin.instrumentation.visitor.InstrumentationTargetClassVisitor
-import io.embrace.android.gradle.plugin.instrumentation.visitor.OnClickClassAdapter
-import io.embrace.android.gradle.plugin.instrumentation.visitor.OnLongClickClassAdapter
 import io.embrace.android.gradle.plugin.instrumentation.visitor.WebViewClientOverrideClassAdapter
 import org.objectweb.asm.ClassVisitor
 
@@ -37,11 +35,12 @@ abstract class EmbraceClassVisitorFactory : AsmClassVisitorFactory<BytecodeInstr
             visitor = it
         }
 
-        val behavior = ClassVisitBehavior(params)
         val features = readBytecodeInstrumentationFeatures()
         val fcmFeature = features.single { it.name == "fcm_push_notifications" }
         val okhttpFeature = features.single { it.name == "okhttp" }
         val webviewFeature = features.single { it.name == "webview_page_start" }
+        val onClickFeature = features.single { it.name == "on_click" }
+        val onLongClickFeature = features.single { it.name == "on_long_click" }
 
         // We take the approach of chaining 1 visitor per feature, if a feature is enabled/necessary
         // for a given class.
@@ -70,11 +69,19 @@ abstract class EmbraceClassVisitorFactory : AsmClassVisitorFactory<BytecodeInstr
                 feature = okhttpFeature,
             )
         }
-        if (behavior.shouldInstrumentOnClick(classContext)) {
-            visitor = OnLongClickClassAdapter(api, visitor)
+        if (params.shouldInstrumentOnClick.get() && onClickFeature.visitStrategy.shouldVisit(classContext)) {
+            visitor = InstrumentationTargetClassVisitor(
+                api = api,
+                nextClassVisitor = visitor,
+                feature = onClickFeature,
+            )
         }
-        if (behavior.shouldInstrumentOnLongClick(classContext)) {
-            visitor = OnClickClassAdapter(api, visitor)
+        if (params.shouldInstrumentOnLongClick.get() && onLongClickFeature.visitStrategy.shouldVisit(classContext)) {
+            visitor = InstrumentationTargetClassVisitor(
+                api = api,
+                nextClassVisitor = visitor,
+                feature = onLongClickFeature,
+            )
         }
         return visitor
     }
@@ -88,10 +95,6 @@ abstract class EmbraceClassVisitorFactory : AsmClassVisitorFactory<BytecodeInstr
         if (params.classInstrumentationFilter.get().shouldSkip(classData.className)) {
             return false
         }
-
-        // any class could implement OnClickListener, so we need to search everything.
-        // in future we could confine this search to Activity/Fragment/View implementations at the
-        // cost of instrumenting 100% of onClick implementations.
         return true
     }
 }

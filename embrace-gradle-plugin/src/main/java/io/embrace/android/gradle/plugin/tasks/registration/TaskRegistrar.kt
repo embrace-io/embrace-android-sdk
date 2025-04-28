@@ -112,15 +112,13 @@ class TaskRegistrar(
         agpWrapper: AgpWrapper,
         variantName: String,
         project: Project,
-    ) = this.project.provider {
-        ProjectTypeVerifier.getProjectType(
-            unitySymbolsDirProvider,
-            agpWrapper,
-            behavior,
-            variantName,
-            project
-        )
-    }
+    ) = ProjectTypeVerifier.getProjectType(
+        unitySymbolsDirProvider,
+        agpWrapper,
+        behavior,
+        variantName,
+        project
+    )
 
     private fun setupVariantConfigurationListProperty(
         androidCompactedVariantData: AndroidCompactedVariantData,

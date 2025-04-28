@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.testcases.features
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.internal.anr.detection.BlockedThreadDetector
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
@@ -67,6 +68,9 @@ internal class AnrFeatureTest {
                 assertEquals(2, spans.size)
                 assertAnrReceived(spans[0], startTimeMs, firstSampleCount)
                 assertAnrReceived(spans[1], checkNotNull(secondAnrStartTime), secondSampleCount)
+            },
+            otelExportAssertion = {
+                awaitSpansWithType(2, EmbType.Performance.ThreadBlockage)
             }
         )
     }

@@ -21,10 +21,10 @@ import kotlin.reflect.KClass
  */
 internal class ModuleInitBootstrapper(
     val logger: EmbLogger = EmbTrace.trace("logger-init", ::EmbLoggerImpl),
-    val initModule: InitModule = EmbTrace.trace("init-module", { createInitModule(logger = logger) }),
-    val openTelemetryModule: OpenTelemetryModule = EmbTrace.trace("otel-module", {
+    val initModule: InitModule = EmbTrace.trace("init-module") { createInitModule(logger = logger) },
+    val openTelemetryModule: OpenTelemetryModule = EmbTrace.trace("otel-module") {
         createOpenTelemetryModule(initModule)
-    }),
+    },
     private val coreModuleSupplier: CoreModuleSupplier = ::createCoreModule,
     private val configModuleSupplier: ConfigModuleSupplier = ::createConfigModule,
     private val systemServiceModuleSupplier: SystemServiceModuleSupplier = ::createSystemServiceModule,
@@ -214,6 +214,7 @@ internal class ModuleInitBootstrapper(
                     anrModule = init(AnrModule::class) {
                         anrModuleSupplier(
                             initModule,
+                            openTelemetryModule,
                             configModule.configService,
                             workerThreadModule
                         )
@@ -311,7 +312,7 @@ internal class ModuleInitBootstrapper(
                             configModule,
                             { nativeFeatureModule.nativeThreadSamplerService?.getNativeSymbols() },
                             openTelemetryModule,
-                            { OtelPayloadMapperImpl(anrModule.anrOtelMapper, nativeFeatureModule.nativeAnrOtelMapper) },
+                            { OtelPayloadMapperImpl(anrModule.anrOtelMapper) },
                             deliveryModule
                         )
                     }

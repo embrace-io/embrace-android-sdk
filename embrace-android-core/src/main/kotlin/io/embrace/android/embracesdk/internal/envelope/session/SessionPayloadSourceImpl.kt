@@ -63,12 +63,13 @@ internal class SessionPayloadSourceImpl(
         crashId: String?,
     ): List<Span>? {
         val spans: List<Span>? = captureDataSafely(logger) {
-            val result = when {
+            when {
                 !isCacheAttempt -> {
                     val appTerminationCause = when {
                         crashId != null -> AppTerminationCause.Crash
                         else -> null
                     }
+                    otelPayloadMapper.record()
                     val spans = currentSessionSpan.endSession(
                         startNewSession = startNewSession,
                         appTerminationCause = appTerminationCause
@@ -76,10 +77,10 @@ internal class SessionPayloadSourceImpl(
                     spans.map(EmbraceSpanData::toNewPayload)
                 }
 
-                else -> spanSink.completedSpans().map(EmbraceSpanData::toNewPayload)
+                else -> spanSink.completedSpans()
+                    .map(EmbraceSpanData::toNewPayload)
+                    .plus(otelPayloadMapper.snapshotSpans(endType, crashId))
             }
-            // add spans that need mapping to OTel if the payload is capturing spans.
-            result.plus(otelPayloadMapper.getSessionPayload(endType, crashId))
         }
         return spans
     }

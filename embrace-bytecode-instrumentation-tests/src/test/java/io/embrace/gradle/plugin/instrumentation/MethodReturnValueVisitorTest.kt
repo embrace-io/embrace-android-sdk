@@ -30,7 +30,7 @@ class MethodReturnValueVisitorTest {
 
     @Test
     fun `instrument bytecode`() {
-        val params = BytecodeTestParams(MethodReturnValueVisitorObj::class.java) { nextVisitor ->
+        val params = BytecodeTestParams(MethodReturnValueVisitorObj::class) { nextVisitor, _ ->
             TestClassVisitor(ASM_API_VERSION, nextVisitor)
         }
         InstrumentationRunner.runInstrumentationAndCompareOutput(params)
@@ -74,7 +74,7 @@ class MethodReturnValueVisitorTest {
             } else if (name == STRING_METHOD_NAME && descriptor == STRING_METHOD_DESCRIPTOR) {
                 return StringReturnValueMethodVisitor("Hello world! I'm a string.", api, nextVisitor)
             } else if (name == LIST_METHOD_NAME && descriptor == LIST_METHOD_DESCRIPTOR) {
-                return io.embrace.android.gradle.plugin.instrumentation.config.StringListReturnValueMethodVisitor(
+                return StringListReturnValueMethodVisitor(
                     listOf("adam aardvark", "bob banana"),
                     api,
                     nextVisitor

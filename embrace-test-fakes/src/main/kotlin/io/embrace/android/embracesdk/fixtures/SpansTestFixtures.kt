@@ -94,9 +94,13 @@ val MAX_LENGTH_ATTRIBUTE_VALUE_FOR_INTERNAL_SPAN: String =
 val TOO_LONG_ATTRIBUTE_VALUE_FOR_INTERNAL_SPAN: String =
     "s".repeat(limits.getMaxInternalAttributeValueLength() + 1)
 
-val maxSizeAttributes: Map<String, String> = createMapOfSize(limits.getMaxCustomAttributeCount())
-val tooBigAttributes: Map<String, String> = createMapOfSize(limits.getMaxCustomAttributeCount() + 1)
+val maxSizeCustomAttributes: Map<String, String> = createMapOfSize(limits.getMaxCustomAttributeCount())
+val tooBigCustomAttributes: Map<String, String> = createMapOfSize(limits.getMaxCustomAttributeCount() + 1)
 val maxSizeEventAttributes: Map<String, String> = createMapOfSize(MAX_EVENT_ATTRIBUTE_COUNT)
 val tooBigEventAttributes: Map<String, String> = createMapOfSize(MAX_EVENT_ATTRIBUTE_COUNT + 1)
-val maxSizeEvents: List<EmbraceSpanEvent> = createEventsListOfSize(limits.getMaxCustomEventCount())
-val tooBigEvents: List<EmbraceSpanEvent> = createEventsListOfSize(limits.getMaxCustomEventCount() + 1)
+val maxSizeSystemAttributes: Map<String, String> = createMapOfSize(limits.getMaxSystemAttributeCount())
+val tooBigSystemAttributes: Map<String, String> = createMapOfSize(limits.getMaxSystemAttributeCount() + 1)
+val maxSizeCustomEvents: List<EmbraceSpanEvent> = createEventsListOfSize(limits.getMaxCustomEventCount())
+val tooBigCustomEvents: List<EmbraceSpanEvent> = createEventsListOfSize(limits.getMaxCustomEventCount() + 1)
+val maxSizeSystemEvents: List<EmbraceSpanEvent> = createEventsListOfSize(limits.getMaxSystemEventCount())
+val tooBigSystemEvents: List<EmbraceSpanEvent> = createEventsListOfSize(limits.getMaxSystemEventCount() + 1)

@@ -3,6 +3,7 @@ package io.embrace.gradle.plugin.instrumentation
 import io.embrace.android.gradle.plugin.instrumentation.BytecodeInstrumentationParams
 import io.embrace.android.gradle.plugin.instrumentation.ClassInstrumentationFilter
 import io.embrace.android.gradle.plugin.instrumentation.config.model.VariantConfig
+import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.Property
 
 class FakeBytecodeInstrumentationParams(
@@ -15,7 +16,7 @@ class FakeBytecodeInstrumentationParams(
 ) : BytecodeInstrumentationParams {
     override val config: Property<VariantConfig>
         get() = TODO("Not yet implemented")
-    override val encodedSharedObjectFilesMap: Property<String>
+    override val encodedSharedObjectFilesMap: RegularFileProperty
         get() = TODO("Not yet implemented")
     override val classInstrumentationFilter: Property<ClassInstrumentationFilter>
         get() = TODO("Not yet implemented")

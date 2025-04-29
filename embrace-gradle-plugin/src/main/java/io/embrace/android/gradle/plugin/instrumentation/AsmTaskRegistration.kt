@@ -2,7 +2,6 @@ package io.embrace.android.gradle.plugin.instrumentation
 
 import com.android.build.api.instrumentation.FramesComputationMode
 import com.android.build.api.instrumentation.InstrumentationScope
-import io.embrace.android.gradle.plugin.gradle.nullSafeMap
 import io.embrace.android.gradle.plugin.gradle.tryGetTaskProvider
 import io.embrace.android.gradle.plugin.tasks.ndk.EncodeFileToBase64Task
 import io.embrace.android.gradle.plugin.tasks.registration.EmbraceTaskRegistration
@@ -50,16 +49,11 @@ class AsmTaskRegistration : EmbraceTaskRegistration {
                     val asmTransformationTask = project.tryGetTaskProvider(
                         "transform${variant.name.capitalizedString()}ClassesWithAsm"
                     ) ?: error("Unable to find ASM transformation task for variant ${variant.name}.")
-
                     asmTransformationTask.configure { it.dependsOn(encodeFileToBase64Task) }
 
                     params.encodedSharedObjectFilesMap.set(
-                        encodeFileToBase64Task.nullSafeMap { encodeTask ->
-                            encodeTask.outputFile.asFile.orNull?.let { file ->
-                                file.takeIf { it.exists() }
-                                    ?.bufferedReader()
-                                    ?.use { it.readText() }
-                            }
+                        encodeFileToBase64Task.flatMap {
+                            it.outputFile
                         }
                     )
                 }

@@ -41,16 +41,11 @@ abstract class EmbraceClassVisitorFactory : AsmClassVisitorFactory<BytecodeInstr
         val webviewFeature = features.single { it.name == "webview_page_start" }
         val onClickFeature = features.single { it.name == "on_click" }
         val onLongClickFeature = features.single { it.name == "on_long_click" }
+        val factory = VisitorFactoryImpl(api, params)
 
         // We take the approach of chaining 1 visitor per feature, if a feature is enabled/necessary
         // for a given class.
-        if (params.shouldInstrumentFirebaseMessaging.get() && fcmFeature.visitStrategy.shouldVisit(classContext)) {
-            visitor = InstrumentationTargetClassVisitor(
-                api = api,
-                nextClassVisitor = visitor,
-                feature = fcmFeature,
-            )
-        }
+        visitor = factory.createClassVisitor(fcmFeature, classContext, visitor)
         if (params.shouldInstrumentWebview.get() && webviewFeature.visitStrategy.shouldVisit(classContext)) {
             // first, add override for onPageStarted if class doesn't contain it already
             visitor = WebViewClientOverrideClassAdapter(api, visitor)
@@ -62,27 +57,9 @@ abstract class EmbraceClassVisitorFactory : AsmClassVisitorFactory<BytecodeInstr
                 feature = webviewFeature,
             )
         }
-        if (params.shouldInstrumentOkHttp.get() && okhttpFeature.visitStrategy.shouldVisit(classContext)) {
-            visitor = InstrumentationTargetClassVisitor(
-                api = api,
-                nextClassVisitor = visitor,
-                feature = okhttpFeature,
-            )
-        }
-        if (params.shouldInstrumentOnClick.get() && onClickFeature.visitStrategy.shouldVisit(classContext)) {
-            visitor = InstrumentationTargetClassVisitor(
-                api = api,
-                nextClassVisitor = visitor,
-                feature = onClickFeature,
-            )
-        }
-        if (params.shouldInstrumentOnLongClick.get() && onLongClickFeature.visitStrategy.shouldVisit(classContext)) {
-            visitor = InstrumentationTargetClassVisitor(
-                api = api,
-                nextClassVisitor = visitor,
-                feature = onLongClickFeature,
-            )
-        }
+        visitor = factory.createClassVisitor(okhttpFeature, classContext, visitor)
+        visitor = factory.createClassVisitor(onClickFeature, classContext, visitor)
+        visitor = factory.createClassVisitor(onLongClickFeature, classContext, visitor)
         return visitor
     }
 

@@ -55,7 +55,7 @@ class NdkUploadTasksRegistration(
         }
 
         compressionTaskProvider.configure { compressionTask: CompressSharedObjectFilesTask ->
-            val shouldExecuteCompressionTaskProvider = getShouldExecuteCompressionTaskProvider(project)
+            val shouldExecuteCompressionTaskProvider = getShouldExecuteCompressionTaskProvider()
             compressionTask.onlyIf { shouldExecuteCompressionTaskProvider.orNull ?: true }
             // TODO: check if these are only needed for Unity and comment accordingly.
             compressionTask.mustRunAfter(object : Callable<Any> {
@@ -102,12 +102,12 @@ class NdkUploadTasksRegistration(
             // TODO: An error thrown in registration will make the build will fail. Should we use failBuildOnUploadErrors for this too?
             task.failBuildOnUploadErrors.set(behavior.failBuildOnUploadErrors)
             task.requestParams.set(
-                project.provider {
+                behavior.failBuildOnUploadErrors.map { failBuildOnUploadErrors ->
                     RequestParams(
                         appId = variantConfig.embraceConfig?.appId.orEmpty(),
                         apiToken = variantConfig.embraceConfig?.apiToken.orEmpty(),
                         endpoint = EmbraceEndpoint.NDK,
-                        failBuildOnUploadErrors = behavior.failBuildOnUploadErrors.get(),
+                        failBuildOnUploadErrors = failBuildOnUploadErrors,
                         baseUrl = behavior.baseUrl,
                     )
                 }
@@ -221,7 +221,7 @@ class NdkUploadTasksRegistration(
         "${variantData.flavorName}/${variantData.buildTypeName}"
     }
 
-    private fun getShouldExecuteCompressionTaskProvider(project: Project) = project.provider {
-        (projectType.orNull == ProjectType.NATIVE || projectType.orNull == ProjectType.UNITY)
+    private fun getShouldExecuteCompressionTaskProvider() = projectType.map {
+        (it == ProjectType.NATIVE || it == ProjectType.UNITY)
     }
 }

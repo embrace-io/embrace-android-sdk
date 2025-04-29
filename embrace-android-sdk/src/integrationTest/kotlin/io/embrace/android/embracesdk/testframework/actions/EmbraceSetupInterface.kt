@@ -4,13 +4,13 @@ import android.content.Context
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.testing.TestLifecycleOwner
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
+import io.embrace.android.embracesdk.fakes.FakeAnrService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeJniDelegate
 import io.embrace.android.embracesdk.fakes.FakeNetworkConnectivityService
 import io.embrace.android.embracesdk.fakes.FakePayloadStorageService
-import io.embrace.android.embracesdk.fakes.FakeRequestExecutionService
 import io.embrace.android.embracesdk.fakes.FakeSharedObjectLoader
 import io.embrace.android.embracesdk.fakes.FakeSymbolService
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
@@ -18,6 +18,7 @@ import io.embrace.android.embracesdk.fakes.injection.FakeAnrModule
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
+import io.embrace.android.embracesdk.internal.anr.AnrOtelMapper
 import io.embrace.android.embracesdk.internal.anr.detection.BlockedThreadDetector
 import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
 import io.embrace.android.embracesdk.internal.injection.AndroidServicesModule
@@ -82,11 +83,20 @@ internal class EmbraceSetupInterface @JvmOverloads constructor(
     private val anrModule: AnrModule = if (anrMonitoringThread != null) {
         createAnrModule(
             fakeInitModule,
+            fakeInitModule.openTelemetryModule,
             FakeConfigService(),
             workerThreadModule
         )
     } else {
-        FakeAnrModule()
+        val fakeAnrService = FakeAnrService()
+        FakeAnrModule(
+            anrService = fakeAnrService,
+            anrOtelMapper = AnrOtelMapper(
+                anrService = fakeAnrService,
+                clock = fakeInitModule.clock,
+                spanService = fakeInitModule.openTelemetryModule.spanService
+            )
+        )
     }
 
     private val coreModule: CoreModule = FakeCoreModule()
@@ -135,7 +145,7 @@ internal class EmbraceSetupInterface @JvmOverloads constructor(
                 deliveryTracer = deliveryTracer,
             )
         },
-        anrModuleSupplier = { _, _, _ -> anrModule },
+        anrModuleSupplier = { _, _, _, _ -> anrModule },
         nativeCoreModuleSupplier = { initModule, coreModule, payloadSourceModule, workerThreadModule, configModule, storageModule, essentialServiceModule, openTelemetryModule, _, _, _ ->
             createNativeCoreModule(
                 initModule = initModule,

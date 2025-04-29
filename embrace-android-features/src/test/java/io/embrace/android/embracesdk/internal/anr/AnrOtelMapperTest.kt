@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.anr
 import io.embrace.android.embracesdk.arch.assertSuccessful
 import io.embrace.android.embracesdk.fakes.FakeAnrService
 import io.embrace.android.embracesdk.fakes.FakeClock
+import io.embrace.android.embracesdk.fakes.FakeSpanService
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.payload.AnrInterval
@@ -31,6 +32,7 @@ private const val SECOND_SAMPLE_OVERHEAD_MS = 5L
 internal class AnrOtelMapperTest {
 
     private lateinit var anrService: FakeAnrService
+    private lateinit var spanService: FakeSpanService
     private lateinit var mapper: AnrOtelMapper
 
     private val stacktrace = ThreadInfo(
@@ -106,13 +108,14 @@ internal class AnrOtelMapperTest {
     @Before
     fun setUp() {
         anrService = FakeAnrService()
+        spanService = FakeSpanService()
         clock = FakeClock()
-        mapper = AnrOtelMapper(anrService, clock)
+        mapper = AnrOtelMapper(anrService, clock, spanService)
     }
 
     @Test
     fun `empty intervals`() {
-        assertEquals(emptyList<Span>(), mapper.snapshot(false))
+        mapper.snapshot().verifySnapshotPayload(0)
     }
 
     @Test
@@ -123,15 +126,15 @@ internal class AnrOtelMapperTest {
             clearedInterval,
             intervalWithLimitedSample
         )
-        val spans = mapper.snapshot(false)
-        assertEquals(4, spans.size)
+        mapper.snapshot().verifySnapshotPayload(4)
+        mapper.record()
+        assertEquals(4, spanService.createdSpans.size)
     }
 
     @Test
     fun `map completed interval`() {
         anrService.data = listOf(completedInterval)
-        val spans = mapper.snapshot(false)
-        val span = spans.single()
+        val span = mapper.snapshot().verifySingleAnrSnapshot()
         span.assertCommonOtelCharacteristics()
         assertEquals(END_TIME_MS, span.endTimeNanos?.nanosToMillis())
         assertEquals("0", span.attributes?.findAttribute("interval_code")?.data)
@@ -146,8 +149,7 @@ internal class AnrOtelMapperTest {
     @Test
     fun `map in progress interval`() {
         anrService.data = listOf(inProgressInterval)
-        val spans = mapper.snapshot(false)
-        val span = spans.single()
+        val span = mapper.snapshot().verifySingleAnrSnapshot()
         span.assertCommonOtelCharacteristics()
 
         assertEquals(clock.now().millisToNanos(), span.endTimeNanos)
@@ -166,8 +168,7 @@ internal class AnrOtelMapperTest {
     @Test
     fun `map cleared interval`() {
         anrService.data = listOf(clearedInterval)
-        val spans = mapper.snapshot(false)
-        val span = spans.single()
+        val span = mapper.snapshot().verifySingleAnrSnapshot()
         span.assertCommonOtelCharacteristics()
         assertEquals("1", span.attributes?.findAttribute("interval_code")?.data)
         assertEquals(0, span.events?.size)
@@ -176,8 +177,7 @@ internal class AnrOtelMapperTest {
     @Test
     fun `map limited sample`() {
         anrService.data = listOf(intervalWithLimitedSample)
-        val spans = mapper.snapshot(false)
-        val span = spans.single()
+        val span = mapper.snapshot().verifySingleAnrSnapshot()
         span.assertCommonOtelCharacteristics()
         assertEquals("0", span.attributes?.findAttribute("interval_code")?.data)
 
@@ -196,10 +196,20 @@ internal class AnrOtelMapperTest {
     @Test
     fun `truncated stack shows the pre-truncated frame count`() {
         anrService.data = listOf(completedIntervalWithTruncatedSample)
-        val spans = mapper.snapshot(false)
-        val events = checkNotNull(spans.single().events)
+        val span = mapper.snapshot().verifySingleAnrSnapshot()
+        val events = checkNotNull(span.events)
         assertEquals(2, events.size)
         assertSampleMapped(events[1], truncatedSecondSample)
+    }
+
+    private fun List<Span>.verifySingleAnrSnapshot(): Span {
+        verifySnapshotPayload(1)
+        return single()
+    }
+
+    private fun List<Span>.verifySnapshotPayload(expectedCount: Int) {
+        assertEquals(expectedCount, size)
+        assertEquals(0, spanService.createdSpans.size)
     }
 
     private fun Span.assertCommonOtelCharacteristics() {

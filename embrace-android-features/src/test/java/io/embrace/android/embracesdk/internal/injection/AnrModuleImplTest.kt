@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.injection
 
 import android.os.Looper
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
 import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
@@ -25,6 +26,7 @@ internal class AnrModuleImplTest {
     fun testDefaultImplementations() {
         val module = AnrModuleImpl(
             FakeInitModule(),
+            FakeOpenTelemetryModule(),
             FakeConfigService(),
             FakeWorkerThreadModule()
         )
@@ -36,6 +38,7 @@ internal class AnrModuleImplTest {
     fun testBehaviorDisabled() {
         val module = AnrModuleImpl(
             FakeInitModule(),
+            FakeOpenTelemetryModule(),
             FakeConfigService(
                 autoDataCaptureBehavior = FakeAutoDataCaptureBehavior(anrServiceEnabled = false)
             ),

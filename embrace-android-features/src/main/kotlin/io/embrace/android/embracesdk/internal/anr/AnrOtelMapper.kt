@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.anr
 
-import io.embrace.android.embracesdk.internal.arch.DataCaptureServiceOtelConverter
+import io.embrace.android.embracesdk.internal.EmbTrace
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.payload.AnrInterval
@@ -8,6 +9,8 @@ import io.embrace.android.embracesdk.internal.payload.AnrSample
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
+import io.embrace.android.embracesdk.internal.payload.toOldPayload
+import io.embrace.android.embracesdk.internal.spans.SpanService
 import io.opentelemetry.api.trace.SpanId
 import io.opentelemetry.sdk.trace.IdGenerator
 import io.opentelemetry.semconv.ExceptionAttributes
@@ -19,12 +22,10 @@ import io.opentelemetry.semconv.JvmAttributes
 class AnrOtelMapper(
     private val anrService: AnrService,
     private val clock: Clock,
-) : DataCaptureServiceOtelConverter {
-
-    override fun snapshot(isFinalPayload: Boolean): List<Span> {
-        val intervals = anrService.getCapturedData()
-
-        return intervals.map { interval ->
+    private val spanService: SpanService,
+) {
+    fun snapshot(): List<Span> = EmbTrace.trace("anr-snapshot") {
+        anrService.getCapturedData().map { interval ->
             val attrs = mapIntervalToSpanAttributes(interval)
             val events = mapIntervalToSpanEvents(interval)
             Span(
@@ -37,6 +38,21 @@ class AnrOtelMapper(
                 status = Span.Status.UNSET,
                 attributes = attrs,
                 events = events
+            )
+        }
+    }
+
+    fun record() = EmbTrace.trace("anr-record") {
+        anrService.getCapturedData().forEach { interval ->
+            val attributes = mapIntervalToSpanAttributes(interval).toOldPayload()
+            val events = interval.anrSampleList?.samples?.mapNotNull { mapSampleToSpanEvent(it).toOldPayload() }
+            spanService.recordCompletedSpan(
+                name = "thread-blockage",
+                startTimeMs = interval.startTime,
+                endTimeMs = interval.endTime ?: clock.now(),
+                type = EmbType.Performance.ThreadBlockage,
+                attributes = attributes,
+                events = events ?: emptyList(),
             )
         }
     }

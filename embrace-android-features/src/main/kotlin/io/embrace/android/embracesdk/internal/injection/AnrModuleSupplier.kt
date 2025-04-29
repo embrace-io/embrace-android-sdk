@@ -7,12 +7,14 @@ import io.embrace.android.embracesdk.internal.config.ConfigService
  */
 typealias AnrModuleSupplier = (
     initModule: InitModule,
+    openTelemetryModule: OpenTelemetryModule,
     configService: ConfigService,
     workerModule: WorkerThreadModule,
 ) -> AnrModule
 
 fun createAnrModule(
     initModule: InitModule,
+    openTelemetryModule: OpenTelemetryModule,
     configService: ConfigService,
     workerModule: WorkerThreadModule,
-): AnrModule = AnrModuleImpl(initModule, configService, workerModule)
+): AnrModule = AnrModuleImpl(initModule, openTelemetryModule, configService, workerModule)

@@ -13,6 +13,7 @@ import io.embrace.android.embracesdk.internal.worker.Worker
 
 internal class AnrModuleImpl(
     initModule: InitModule,
+    openTelemetryModule: OpenTelemetryModule,
     configService: ConfigService,
     workerModule: WorkerThreadModule,
 ) : AnrModule {
@@ -39,7 +40,7 @@ internal class AnrModuleImpl(
 
     override val anrOtelMapper: AnrOtelMapper? by singleton {
         if (configService.autoDataCaptureBehavior.isAnrCaptureEnabled()) {
-            AnrOtelMapper(checkNotNull(anrService), initModule.clock)
+            AnrOtelMapper(checkNotNull(anrService), initModule.clock, openTelemetryModule.spanService)
         } else {
             null
         }

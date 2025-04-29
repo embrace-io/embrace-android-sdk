@@ -33,6 +33,11 @@
           2
         ]
       },
+      "addOverride": {
+        "owner": "android/webkit/WebViewClient",
+        "name": "onPageStarted",
+        "descriptor": "(Landroid/webkit/WebView;Ljava/lang/String;Landroid/graphics/Bitmap;)V"
+      },
       "visitStrategy": {
         "type": "match_super_class_name",
         "value": "android.webkit.WebViewClient"

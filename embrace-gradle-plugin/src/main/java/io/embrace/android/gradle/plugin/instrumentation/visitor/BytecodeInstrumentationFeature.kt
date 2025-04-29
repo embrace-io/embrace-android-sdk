@@ -26,4 +26,9 @@ data class BytecodeInstrumentationFeature(
      * Instructions for determining whether a class should be visited for instrumentation for this feature.
      */
     val visitStrategy: ClassVisitStrategy,
+
+    /**
+     * Instructions for how to insert an override into a class that calls to super.
+     */
+    val addOverrideParams: BytecodeMethodOverrideParams? = null,
 )

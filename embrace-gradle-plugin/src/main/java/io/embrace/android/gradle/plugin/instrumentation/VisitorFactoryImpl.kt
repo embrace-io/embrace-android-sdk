@@ -2,6 +2,7 @@ package io.embrace.android.gradle.plugin.instrumentation
 
 import com.android.build.api.instrumentation.ClassContext
 import io.embrace.android.gradle.plugin.instrumentation.visitor.BytecodeInstrumentationFeature
+import io.embrace.android.gradle.plugin.instrumentation.visitor.InsertSuperOverrideClassVisitor
 import io.embrace.android.gradle.plugin.instrumentation.visitor.InstrumentationTargetClassVisitor
 import org.objectweb.asm.ClassVisitor
 
@@ -13,22 +14,30 @@ class VisitorFactoryImpl(
     fun createClassVisitor(
         feature: BytecodeInstrumentationFeature,
         classContext: ClassContext,
-        visitor: ClassVisitor,
+        nextVisitor: ClassVisitor,
     ): ClassVisitor {
-        var nextVisitor = visitor
         if (feature.isEnabled(params, classContext)) {
-            nextVisitor = InstrumentationTargetClassVisitor(
-                api = api,
-                nextClassVisitor = nextVisitor,
-                feature = feature,
-            )
+            return if (feature.addOverrideParams != null) {
+                // if specified, add an override for a method if it doesn't already exist in the class
+                InsertSuperOverrideClassVisitor(
+                    api = api,
+                    nextClassVisitor = nextVisitor,
+                    feature = feature,
+                )
+            } else {
+                InstrumentationTargetClassVisitor(
+                    api = api,
+                    nextClassVisitor = nextVisitor,
+                    feature = feature,
+                )
+            }
         }
         return nextVisitor
     }
 
     private fun BytecodeInstrumentationFeature.isEnabled(
         params: BytecodeInstrumentationParams,
-        ctx: ClassContext
+        ctx: ClassContext,
     ): Boolean {
         val enabledViaDsl = when (name) {
             "fcm_push_notifications" -> params.shouldInstrumentFirebaseMessaging.get()
@@ -36,7 +45,7 @@ class VisitorFactoryImpl(
             "webview_page_start" -> params.shouldInstrumentWebview.get()
             "on_click" -> params.shouldInstrumentOnClick.get()
             "on_long_click" -> params.shouldInstrumentOnLongClick.get()
-            else -> true
+            else -> error("Unknown feature: $name. Please add a property that enables/disables it on EmbraceBytecodeInstrumentation.")
         }
         return enabledViaDsl && visitStrategy.shouldVisit(ctx)
     }

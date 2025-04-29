@@ -15,6 +15,7 @@ private val items = listOf(
     BytecodeSample("OnClick/OnLongClick", BytecodeViewClickActivity::class),
     BytecodeSample("WebView", BytecodeWebViewActivity::class),
     BytecodeSample("OkHttp", BytecodeOkHttpActivity::class),
+    BytecodeSample("FCM Push Notifications", BytecodeFcmPushNotificationActivity::class),
 )
 
 @Composable

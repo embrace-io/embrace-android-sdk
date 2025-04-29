@@ -55,4 +55,7 @@ interface BytecodeInstrumentationParams : InstrumentationParameters {
 
     @get:Input
     val shouldInstrumentOnClick: Property<Boolean>
+
+    @get:Input
+    val shouldAutoStart: Property<Boolean>
 }

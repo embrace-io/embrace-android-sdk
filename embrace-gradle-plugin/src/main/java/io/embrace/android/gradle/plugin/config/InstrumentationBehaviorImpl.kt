@@ -41,4 +41,8 @@ class InstrumentationBehaviorImpl(
     override val ignoredClasses: List<String> by lazy {
         instrumentation.classIgnorePatterns.get().plus(extension.classSkipList.get())
     }
+
+    override val autoStartEnabled: Boolean by lazy {
+        enabled && (instrumentation.autoStartEnabled.orNull ?: true)
+    }
 }

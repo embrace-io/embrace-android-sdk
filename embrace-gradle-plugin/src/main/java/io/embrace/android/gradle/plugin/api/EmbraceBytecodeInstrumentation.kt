@@ -43,6 +43,11 @@ abstract class EmbraceBytecodeInstrumentation @Inject internal constructor(objec
         objectFactory.property(Boolean::class.java)
 
     /**
+     * Whether Embrace should automatically start in the Application class. Defaults to true.
+     */
+    val autoStartEnabled: Property<Boolean> = objectFactory.property(Boolean::class.java)
+
+    /**
      * A list of string patterns that are used to filter classes during bytecode instrumentation. For example, 'com.example.foo.*'
      * would avoid instrumenting any classes in the 'com.example.foo' package.
      *

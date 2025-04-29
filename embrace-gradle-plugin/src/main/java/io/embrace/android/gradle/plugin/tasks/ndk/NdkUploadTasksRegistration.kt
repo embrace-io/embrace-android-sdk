@@ -1,6 +1,5 @@
 package io.embrace.android.gradle.plugin.tasks.ndk
 
-import com.android.build.api.variant.Variant
 import io.embrace.android.gradle.plugin.config.PluginBehavior
 import io.embrace.android.gradle.plugin.config.ProjectType
 import io.embrace.android.gradle.plugin.config.UnitySymbolsDir
@@ -15,7 +14,6 @@ import io.embrace.android.gradle.plugin.tasks.registration.EmbraceTaskRegistrati
 import io.embrace.android.gradle.plugin.tasks.registration.RegistrationParams
 import io.embrace.android.gradle.plugin.util.capitalizedString
 import org.gradle.api.Project
-import org.gradle.api.Task
 import org.gradle.api.provider.Provider
 import java.io.File
 import java.util.concurrent.Callable
@@ -42,7 +40,7 @@ class NdkUploadTasksRegistration(
         // Skip registration if NDK is disabled
         if (variantConfig.embraceConfig?.ndkEnabled == false) return
 
-        val sharedObjectFilesProvider = getSharedObjectFilesProvider(project, data, variant)
+        val sharedObjectFilesProvider = getSharedObjectFilesProvider(project, data)
 
         val compressionTaskProvider = project.registerTask(
             CompressSharedObjectFilesTask.NAME,
@@ -57,7 +55,7 @@ class NdkUploadTasksRegistration(
         }
 
         compressionTaskProvider.configure { compressionTask: CompressSharedObjectFilesTask ->
-            val shouldExecuteCompressionTaskProvider = getShouldExecuteCompressionTaskProvider(project)
+            val shouldExecuteCompressionTaskProvider = getShouldExecuteCompressionTaskProvider()
             compressionTask.onlyIf { shouldExecuteCompressionTaskProvider.orNull ?: true }
             // TODO: check if these are only needed for Unity and comment accordingly.
             compressionTask.mustRunAfter(object : Callable<Any> {
@@ -104,12 +102,12 @@ class NdkUploadTasksRegistration(
             // TODO: An error thrown in registration will make the build will fail. Should we use failBuildOnUploadErrors for this too?
             task.failBuildOnUploadErrors.set(behavior.failBuildOnUploadErrors)
             task.requestParams.set(
-                project.provider {
+                behavior.failBuildOnUploadErrors.map { failBuildOnUploadErrors ->
                     RequestParams(
                         appId = variantConfig.embraceConfig?.appId.orEmpty(),
                         apiToken = variantConfig.embraceConfig?.apiToken.orEmpty(),
                         endpoint = EmbraceEndpoint.NDK,
-                        failBuildOnUploadErrors = behavior.failBuildOnUploadErrors.get(),
+                        failBuildOnUploadErrors = failBuildOnUploadErrors,
                         baseUrl = behavior.baseUrl,
                     )
                 }
@@ -149,39 +147,39 @@ class NdkUploadTasksRegistration(
     private fun getSharedObjectFilesProvider(
         project: Project,
         data: AndroidCompactedVariantData,
-        variant: Variant,
     ): Provider<File> {
         return projectType.flatMap { projectType: ProjectType ->
-            project.tasks.named("merge${variant.name.capitalizedString()}NativeLibs").map { task ->
-                when (projectType) {
-                    ProjectType.UNITY -> getUnitySharedObjectFiles(project, data)
-                    ProjectType.NATIVE -> getNativeSharedObjectFiles(project, task)
-                    else -> File("") // ndk upload won't be executed
-                }
+            when (projectType) {
+                ProjectType.UNITY -> getUnitySharedObjectFiles(project, data)
+                ProjectType.NATIVE -> getNativeSharedObjectFiles(project, data)
+                else -> project.provider { File("") } // this shouldn't happen
             }
         }
     }
 
-    private fun getUnitySharedObjectFiles(project: Project, data: AndroidCompactedVariantData): File {
-        // TODO: Verify if errors should be thrown if the directories or SO files are not found. Improve error messaging.
-        val sharedObjectsDirectory = unitySymbolsDir.orNull ?: error("Unity shared objects directory not found")
-
-        val decompressedObjectsDirectory = project.layout.buildDirectory
-            .dir("/intermediates/embrace/unity/${getMappingFileFolder(data)}")
-            .get() // this won't be null as we are using a constant string
-
-        return UnitySymbolFilesManager.of()
-            .getSymbolFiles(sharedObjectsDirectory, decompressedObjectsDirectory)
-            .firstOrNull()
-            ?: error("Unity shared object files not found")
+    private fun getUnitySharedObjectFiles(project: Project, data: AndroidCompactedVariantData): Provider<File> {
+        return unitySymbolsDir.flatMap { sharedObjectsDirectory ->
+            if (sharedObjectsDirectory.isDirPresent()) {
+                project.layout.buildDirectory
+                    .dir("/intermediates/embrace/unity/${getMappingFileFolder(data)}")
+                    .map { decompressedObjectsDirectory ->
+                        UnitySymbolFilesManager.of()
+                            .getSymbolFiles(sharedObjectsDirectory, decompressedObjectsDirectory)
+                            .firstOrNull()
+                            ?: error("Unity shared object files not found")
+                    }
+            } else {
+                error("Unity shared object files not found")
+            }
+        }
     }
 
-    private fun getNativeSharedObjectFiles(project: Project, task: Task): File {
+    private fun getNativeSharedObjectFiles(project: Project, variant: AndroidCompactedVariantData): Provider<File> {
         val customSymbolsDirectory = behavior.customSymbolsDirectory
         return if (!customSymbolsDirectory.isNullOrEmpty()) {
-            getNativeSharedObjectFilesFromCustomDirectory(customSymbolsDirectory, project)
+            project.provider { getNativeSharedObjectFilesFromCustomDirectory(customSymbolsDirectory, project) }
         } else {
-            getDefaultNativeSharedObjectFiles(task)
+            getDefaultNativeSharedObjectFiles(project, variant)
         }
     }
 
@@ -201,10 +199,20 @@ class NdkUploadTasksRegistration(
      * We expect the task outputs to be in the following format:
      * app/build/intermediates/merged_native_libs/release/out/lib/armeabi-v7a/libembrace-native.so
      */
-    private fun getDefaultNativeSharedObjectFiles(task: Task): File {
-        return task.outputs.files.asFileTree.files.firstOrNull {
-            it.extension == "so"
-        }?.parentFile?.parentFile ?: error("Shared object file not found")
+    private fun getDefaultNativeSharedObjectFiles(
+        project: Project,
+        variant: AndroidCompactedVariantData
+    ): Provider<File> {
+        return project.tasks.named("merge${variant.name.capitalizedString()}NativeLibs").flatMap { mergeNativeLibsTask ->
+            mergeNativeLibsTask.outputs.files.asFileTree.elements.map { files ->
+                files
+                    .first { it.asFile.extension == "so" }
+                    ?.asFile
+                    ?.parentFile
+                    ?.parentFile
+                    ?: error("Shared object file not found")
+            }
+        }
     }
 
     private fun getMappingFileFolder(variantData: AndroidCompactedVariantData) = if (variantData.flavorName.isBlank()) {
@@ -213,7 +221,7 @@ class NdkUploadTasksRegistration(
         "${variantData.flavorName}/${variantData.buildTypeName}"
     }
 
-    private fun getShouldExecuteCompressionTaskProvider(project: Project) = project.provider {
-        (projectType.orNull == ProjectType.NATIVE || projectType.orNull == ProjectType.UNITY)
+    private fun getShouldExecuteCompressionTaskProvider() = projectType.map {
+        (it == ProjectType.NATIVE || it == ProjectType.UNITY)
     }
 }

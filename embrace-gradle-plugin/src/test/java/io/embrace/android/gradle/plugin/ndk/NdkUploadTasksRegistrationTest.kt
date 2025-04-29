@@ -187,11 +187,10 @@ class NdkUploadTasksRegistrationTest {
         assertTaskRegistered(EncodeFileToBase64Task.NAME, testAndroidCompactedVariantData.name)
     }
 
-    // TODO: Do all Unity projects have a mergeNativeLibs task?
     @Test
     fun `an error is thrown when merge native libs task is not found`() {
         // Given a project where merge native libs task is not registered
-        val projectTypeProvider = project.provider { ProjectType.UNITY }
+        val projectTypeProvider = project.provider { ProjectType.NATIVE }
 
         // When NDK upload tasks are registered
         val registration = createNdkUploadTasksRegistration(projectType = projectTypeProvider)
@@ -211,32 +210,6 @@ class NdkUploadTasksRegistrationTest {
             exception.message
         )
         assertEquals("Task with name 'mergeVariantNameNativeLibs' not found in root project 'test'.", exception.cause?.message)
-    }
-
-    @Test
-    fun `an error is thrown when unitySymbolsDir provider returns null for a unity project`() {
-        // Given a unity project where unitySymbolsDir provider returns null
-        val unitySymbolsDirProvider: Provider<UnitySymbolsDir> = project.provider { null }
-        val projectTypeProvider = project.provider { ProjectType.UNITY }
-        val variantName = testAndroidCompactedVariantData.name.capitalizedString()
-
-        // When NDK upload tasks are registered
-        val registration = createNdkUploadTasksRegistration(
-            unitySymbolsDir = unitySymbolsDirProvider,
-            projectType = projectTypeProvider
-        )
-        registration.register(testRegistrationParams)
-        registerTestTask(project, "merge${variantName}NativeLibs")
-
-        // Then an exception is thrown when trying to access architecturesDirectory
-        val compressionTask = project.tasks.findByName(
-            "${CompressSharedObjectFilesTask.NAME}$variantName"
-        ) as CompressSharedObjectFilesTask
-
-        val exception = assertThrows(PropertyQueryException::class.java) {
-            compressionTask.architecturesDirectory.get()
-        }
-        assertEquals("Unity shared objects directory not found", exception.cause?.message)
     }
 
     @Test

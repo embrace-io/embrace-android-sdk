@@ -101,21 +101,27 @@ class NdkUploadTasksRegistrationTest {
 
     @Test
     fun `skip registration when NDK is disabled`() {
-        // Given a variantConfig with NDK disabled
-        val variantConfig = VariantConfig(
-            testVariantName,
-            embraceConfig = createEmbraceVariantConfig(ndkEnabled = false)
+        verifyNoUploadTasksRegistered(
+            VariantConfig(
+                variantName = testVariantName,
+                embraceConfig = createEmbraceVariantConfig(ndkEnabled = false)
+            )
         )
+    }
 
-        // When NDK upload tasks are registered
-        val ndkUploadTasksRegistration = createNdkUploadTasksRegistration(variantConfig = variantConfig)
-        ndkUploadTasksRegistration.register(testRegistrationParams)
+    @Test
+    fun `skip registration if NDK property not specified`() {
+        verifyNoUploadTasksRegistered(
+            VariantConfig(
+                variantName = testVariantName,
+                embraceConfig = createEmbraceVariantConfig(ndkEnabled = null)
+            )
+        )
+    }
 
-        // Then no tasks should be registered
-        assertTaskNotRegistered(CompressSharedObjectFilesTask.NAME, testAndroidCompactedVariantData.name)
-        assertTaskNotRegistered(HashSharedObjectFilesTask.NAME, testAndroidCompactedVariantData.name)
-        assertTaskNotRegistered(UploadSharedObjectFilesTask.NAME, testAndroidCompactedVariantData.name)
-        assertTaskNotRegistered(EncodeFileToBase64Task.NAME, testAndroidCompactedVariantData.name)
+    @Test
+    fun `skip registration if no config file specified`() {
+        verifyNoUploadTasksRegistered(VariantConfig(testVariantName))
     }
 
     @Test
@@ -297,5 +303,17 @@ class NdkUploadTasksRegistrationTest {
     private fun assertTaskRegistered(taskName: String, variantName: String) {
         assertTrue(project.isTaskRegistered(taskName, variantName))
         assertNotNull(project.tasks.findByName("${taskName}${variantName.capitalizedString()}"))
+    }
+
+    private fun verifyNoUploadTasksRegistered(variantConfig: VariantConfig) {
+        // When NDK upload tasks are registered
+        val ndkUploadTasksRegistration = createNdkUploadTasksRegistration(variantConfig = variantConfig)
+        ndkUploadTasksRegistration.register(testRegistrationParams)
+
+        // Then no tasks should be registered
+        assertTaskNotRegistered(CompressSharedObjectFilesTask.NAME, testAndroidCompactedVariantData.name)
+        assertTaskNotRegistered(HashSharedObjectFilesTask.NAME, testAndroidCompactedVariantData.name)
+        assertTaskNotRegistered(UploadSharedObjectFilesTask.NAME, testAndroidCompactedVariantData.name)
+        assertTaskNotRegistered(EncodeFileToBase64Task.NAME, testAndroidCompactedVariantData.name)
     }
 }

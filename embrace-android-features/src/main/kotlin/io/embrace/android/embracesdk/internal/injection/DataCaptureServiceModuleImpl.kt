@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.injection
 
-import io.embrace.android.embracesdk.internal.Systrace
+import io.embrace.android.embracesdk.internal.EmbTrace
 import io.embrace.android.embracesdk.internal.capture.activity.UiLoadDataListener
 import io.embrace.android.embracesdk.internal.capture.activity.UiLoadTraceEmitter
 import io.embrace.android.embracesdk.internal.capture.activity.createActivityLoadEventEmitter
@@ -36,7 +36,7 @@ internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
     }
 
     override val activityBreadcrumbTracker: ActivityBreadcrumbTracker by singleton {
-        Systrace.traceSynchronous("breadcrumb-service-init") {
+        EmbTrace.trace("breadcrumb-service-init") {
             ActivityBreadcrumbTracker(configService) { featureModule.viewDataSource.dataSource }
         }
     }

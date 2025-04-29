@@ -20,7 +20,7 @@ class SharedObjectLoaderImpl(
         synchronized(loaded) {
             if (!loaded.get()) {
                 try {
-                    Systrace.traceSynchronous("load-embrace-native-lib") {
+                    EmbTrace.trace("load-embrace-native-lib") {
                         System.loadLibrary("embrace-native")
                     }
                     loaded.set(true)

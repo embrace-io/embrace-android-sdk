@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.config.source
 
-import io.embrace.android.embracesdk.internal.Systrace
+import io.embrace.android.embracesdk.internal.EmbTrace
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.store.RemoteConfigStore
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
@@ -17,7 +17,7 @@ class CombinedRemoteConfigSource(
 
     // the remote config that is used for the lifetime of the process.
     private val response by lazy {
-        Systrace.traceSynchronous("load-config-from-store") {
+        EmbTrace.trace("load-config-from-store") {
             store.loadResponse()
         }
     }
@@ -25,7 +25,7 @@ class CombinedRemoteConfigSource(
     fun getConfig(): RemoteConfig? = response?.cfg
 
     fun scheduleConfigRequests() {
-        Systrace.traceSynchronous("schedule-http-request") {
+        EmbTrace.trace("schedule-http-request") {
             worker.scheduleWithFixedDelay(
                 ::attemptConfigRequest,
                 0,

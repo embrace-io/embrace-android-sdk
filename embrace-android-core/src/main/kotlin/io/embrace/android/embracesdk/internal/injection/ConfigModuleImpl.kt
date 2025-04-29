@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.injection
 
-import io.embrace.android.embracesdk.internal.Systrace
+import io.embrace.android.embracesdk.internal.EmbTrace
 import io.embrace.android.embracesdk.internal.comms.api.ApiUrlBuilder
 import io.embrace.android.embracesdk.internal.comms.api.EmbraceApiUrlBuilder
 import io.embrace.android.embracesdk.internal.config.ConfigService
@@ -31,7 +31,7 @@ internal class ConfigModuleImpl(
     }
 
     override val okHttpClient by singleton {
-        Systrace.traceSynchronous("okhttp-client-init") {
+        EmbTrace.trace("okhttp-client-init") {
             OkHttpClient()
                 .newBuilder()
                 .protocols(listOf(Protocol.HTTP_2, Protocol.HTTP_1_1))
@@ -51,7 +51,7 @@ internal class ConfigModuleImpl(
     }
 
     override val configService: ConfigService by singleton {
-        Systrace.traceSynchronous("config-service-init") {
+        EmbTrace.trace("config-service-init") {
             ConfigServiceImpl(
                 openTelemetryCfg = openTelemetryModule.openTelemetryConfiguration,
                 preferencesService = androidServicesModule.preferencesService,
@@ -80,7 +80,7 @@ internal class ConfigModuleImpl(
 
     override val urlBuilder: ApiUrlBuilder? by singleton {
         if (initModule.onlyOtelExportEnabled()) return@singleton null
-        Systrace.traceSynchronous("url-builder-init") {
+        EmbTrace.trace("url-builder-init") {
             EmbraceApiUrlBuilder(
                 deviceId = androidServicesModule.preferencesService.deviceIdentifier,
                 appVersionName = coreModule.packageVersionInfo.versionName,

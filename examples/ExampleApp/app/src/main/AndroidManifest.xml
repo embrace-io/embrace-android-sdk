@@ -37,6 +37,12 @@
         <activity
             android:name=".ui.examples.bytecode.BytecodeOkHttpActivity"
             android:theme="@style/Theme.ExampleApp" />
+        <activity
+            android:name=".ui.examples.bytecode.BytecodeFcmPushNotificationActivity"
+            android:theme="@style/Theme.ExampleApp" />
+
+        <service android:name=".ui.examples.bytecode.ExamplePushNotificationService"
+            />
     </application>
 
 </manifest>

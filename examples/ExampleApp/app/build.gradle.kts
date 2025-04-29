@@ -5,6 +5,12 @@ plugins {
     alias(libs.plugins.embrace)
 }
 
+embrace {
+    bytecodeInstrumentation {
+        firebasePushNotificationsEnabled.set(true)
+    }
+}
+
 android {
     namespace = "io.embrace.android.exampleapp"
     compileSdk = 35
@@ -60,6 +66,7 @@ dependencies {
     implementation(platform(libs.opentelemetry.bom))
     implementation(libs.opentelemetry.api)
     implementation(libs.opentelemetry.sdk)
+    implementation(libs.firebase.messaging)
 
     // uncomment to enable debugging through source contained in those modules
 //    implementation(libs.embrace.android.api)
@@ -68,6 +75,7 @@ dependencies {
 //    implementation(libs.embrace.android.features)
 //    implementation(libs.embrace.android.payload)
 //    implementation(libs.embrace.android.delivery)
+    implementation(libs.embrace.android.fcm)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

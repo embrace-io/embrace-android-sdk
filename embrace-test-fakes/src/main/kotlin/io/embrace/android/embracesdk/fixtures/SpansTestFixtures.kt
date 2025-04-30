@@ -8,8 +8,8 @@ import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.toNewPayload
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
+import io.embrace.opentelemetry.kotlin.StatusCode
 import io.opentelemetry.api.trace.SpanId
-import io.opentelemetry.api.trace.StatusCode
 import io.opentelemetry.context.ContextKey
 
 val testSpan: Span = EmbraceSpanData(
@@ -19,7 +19,7 @@ val testSpan: Span = EmbraceSpanData(
     name = "emb-sdk-init",
     startTimeNanos = 1681972471806000000L,
     endTimeNanos = 1681972471871000000L,
-    status = StatusCode.UNSET,
+    status = StatusCode.Unset,
     events = listOf(
         checkNotNull(
             EmbraceSpanEvent.create(

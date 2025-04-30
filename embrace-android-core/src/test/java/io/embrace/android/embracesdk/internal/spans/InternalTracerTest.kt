@@ -9,7 +9,7 @@ import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.spans.ErrorCode
-import io.opentelemetry.api.trace.StatusCode
+import io.embrace.opentelemetry.kotlin.StatusCode
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -213,7 +213,7 @@ internal class InternalTracerTest {
         with(verifyPublicSpan(expectedName, ErrorCode.FAILURE)) {
             assertEquals(expectedStartTimeMs, startTimeNanos.nanosToMillis())
             assertEquals(expectedEndTimeMs, endTimeNanos.nanosToMillis())
-            assertEquals(StatusCode.ERROR, status)
+            assertTrue(status is StatusCode.Error)
         }
     }
 

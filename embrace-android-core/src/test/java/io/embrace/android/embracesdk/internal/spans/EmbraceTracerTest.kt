@@ -11,8 +11,8 @@ import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
+import io.embrace.opentelemetry.kotlin.StatusCode
 import io.opentelemetry.api.trace.SpanId
-import io.opentelemetry.api.trace.StatusCode
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -181,7 +181,7 @@ internal class EmbraceTracerTest {
         with(verifyPublicSpan(expectedName, true, ErrorCode.FAILURE)) {
             assertEquals(expectedStartTimeMs, startTimeNanos.nanosToMillis())
             assertEquals(expectedEndTimeMs, endTimeNanos.nanosToMillis())
-            assertEquals(StatusCode.ERROR, status)
+            assertTrue(status is StatusCode.Error)
         }
     }
 
@@ -229,7 +229,7 @@ internal class EmbraceTracerTest {
         with(verifyPublicSpan(expectedName, false, ErrorCode.USER_ABANDON)) {
             assertEquals(expectedStartTimeMs, startTimeNanos.nanosToMillis())
             assertEquals(expectedEndTimeMs, endTimeNanos.nanosToMillis())
-            assertEquals(StatusCode.ERROR, status)
+            assertTrue(status is StatusCode.Error)
         }
     }
 

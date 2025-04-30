@@ -11,8 +11,8 @@ import io.embrace.android.embracesdk.internal.spans.hasFixedAttribute
 import io.embrace.android.embracesdk.internal.spans.setFixedAttribute
 import io.embrace.android.embracesdk.internal.spans.toStatus
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
+import io.embrace.opentelemetry.kotlin.StatusCode
 import io.opentelemetry.api.trace.SpanId
-import io.opentelemetry.api.trace.StatusCode
 
 fun EmbraceSpanData.toNewPayload(): Span = Span(
     traceId = traceId,
@@ -56,10 +56,10 @@ fun Span.toOldPayload(): EmbraceSpanData {
         startTimeNanos = startTimeNanos ?: 0,
         endTimeNanos = endTimeNanos ?: 0L,
         status = when (status) {
-            Span.Status.UNSET -> StatusCode.UNSET
-            Span.Status.OK -> StatusCode.OK
-            Span.Status.ERROR -> StatusCode.ERROR
-            else -> StatusCode.UNSET
+            Span.Status.UNSET -> StatusCode.Unset
+            Span.Status.OK -> StatusCode.Ok
+            Span.Status.ERROR -> StatusCode.Error(null)
+            else -> StatusCode.Unset
         },
         events = events?.mapNotNull { it.toOldPayload() } ?: emptyList(),
         attributes = attributes?.toOldPayload() ?: emptyMap(),

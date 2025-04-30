@@ -23,9 +23,9 @@ import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
+import io.embrace.opentelemetry.kotlin.StatusCode
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.trace.SpanContext
-import io.opentelemetry.api.trace.StatusCode
 import io.opentelemetry.context.Context
 import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -84,7 +84,7 @@ class FakePersistableEmbraceSpan(
         if (isRecording) {
             this.errorCode = errorCode
             if (errorCode != null) {
-                setStatus(StatusCode.ERROR)
+                setStatus(StatusCode.Error(null))
             }
 
             if (status == Span.Status.ERROR) {

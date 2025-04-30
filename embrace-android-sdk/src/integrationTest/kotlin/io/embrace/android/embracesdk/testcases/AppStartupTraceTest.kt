@@ -95,7 +95,7 @@ internal class AppStartupTraceTest {
                         assertEquals("attribute", attributesList.findAttributeValue("custom"))
                         assertEquals(true, attributesList.hasFixedAttribute(ErrorCodeAttribute.Failure))
                         assertNotNull(events?.single())
-                        assertEquals(Span.Status.ERROR, status.statusCode.toStatus())
+                        assertEquals(Span.Status.ERROR.name, status.statusCode.name)
                     }
                     assertNotNull(activityInitSpan())
                     assertNotNull(activityResumeSpan())

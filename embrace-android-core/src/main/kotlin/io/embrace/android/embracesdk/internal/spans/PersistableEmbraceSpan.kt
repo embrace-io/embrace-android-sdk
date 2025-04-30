@@ -4,9 +4,9 @@ import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.FixedAttribute
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.spans.EmbraceSpan
+import io.embrace.opentelemetry.kotlin.StatusCode
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.trace.SpanContext
-import io.opentelemetry.api.trace.StatusCode
 import io.opentelemetry.context.Context
 import io.opentelemetry.context.ContextKey
 import io.opentelemetry.context.ImplicitContextKeyed

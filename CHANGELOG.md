@@ -1,5 +1,15 @@
 # Embrace Android SDK Changelog
 
+## 7.4.0
+*April 30, 2025*
+
+- OTel integration improvements
+  - API to add custom Resource attributes
+  - API to create Span Links
+  - ANRs exported as spans to configured `SpanExporters`
+- Enabled UI Load traces by default
+- Updated OpenTelemetry API and SDK to `1.49.0`
+
 ## 7.3.0
 *March 18, 2025*
 

@@ -4,7 +4,6 @@ import io.embrace.android.embracesdk.internal.arch.schema.EmbraceAttributeKey
 import io.embrace.android.embracesdk.internal.arch.schema.FixedAttribute
 import io.embrace.opentelemetry.kotlin.logging.SeverityNumber
 import io.opentelemetry.api.common.Attributes
-import io.opentelemetry.api.logs.Severity
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.sdk.logs.data.LogRecordData
 import io.opentelemetry.sdk.trace.data.SpanData

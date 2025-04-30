@@ -24,7 +24,6 @@ import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.opentelemetry.kotlin.StatusCode
-import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.SpanContext
 import io.opentelemetry.api.trace.SpanId
@@ -61,7 +60,7 @@ internal class EmbraceSpanImpl(
     private val systemEvents = ConcurrentLinkedQueue<EmbraceSpanEvent>()
     private val customEvents = ConcurrentLinkedQueue<EmbraceSpanEvent>()
     private val systemAttributes = ConcurrentHashMap<String, String>().apply {
-        putAll(spanBuilder.getFixedAttributes().associate { it.key.attributeKey.key to it.value })
+        putAll(spanBuilder.getFixedAttributes().associate { it.key.attributeKey to it.value })
     }
     private val customAttributes = ConcurrentHashMap<String, String>().apply {
         putAll(spanBuilder.getCustomAttributes())
@@ -288,12 +287,12 @@ internal class EmbraceSpanImpl(
     }
 
     override fun hasFixedAttribute(fixedAttribute: FixedAttribute): Boolean =
-        systemAttributes[fixedAttribute.key.attributeKey.key] == fixedAttribute.value
+        systemAttributes[fixedAttribute.key.attributeKey] == fixedAttribute.value
 
-    override fun getSystemAttribute(key: AttributeKey<String>): String? = systemAttributes[key.key]
+    override fun getSystemAttribute(key: String): String? = systemAttributes[key]
 
-    override fun setSystemAttribute(key: AttributeKey<String>, value: String) {
-        addSystemAttribute(key.key, value)
+    override fun setSystemAttribute(key: String, value: String) {
+        addSystemAttribute(key, value)
     }
 
     override fun addSystemAttribute(key: String, value: String) {

@@ -107,7 +107,7 @@ internal class SessionApiTest {
 
         // Attributes that are unstable that we should not try to verify
         val ignoredAttributes = setOf(
-            embFreeDiskBytes.attributeKey.key
+            embFreeDiskBytes.attributeKey
         ).plus(validateExistenceOnly)
     }
 }

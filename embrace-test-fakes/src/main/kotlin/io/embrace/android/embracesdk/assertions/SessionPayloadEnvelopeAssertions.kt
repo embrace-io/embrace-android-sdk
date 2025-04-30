@@ -42,7 +42,7 @@ fun Envelope<SessionPayload>.getStartTime(): Long {
  */
 fun Envelope<SessionPayload>.getLastHeartbeatTimeMs(): Long {
     return checkNotNull(
-        findSessionSpan().attributes?.findAttributeValue(embHeartbeatTimeUnixNano.attributeKey.key)?.toLongOrNull()
+        findSessionSpan().attributes?.findAttributeValue(embHeartbeatTimeUnixNano.attributeKey)?.toLongOrNull()
             ?.nanosToMillis()
     ) {
         "No last heartbeat time found in session payload"

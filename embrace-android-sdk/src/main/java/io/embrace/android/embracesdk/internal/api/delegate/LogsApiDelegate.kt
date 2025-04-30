@@ -13,7 +13,6 @@ import io.embrace.android.embracesdk.internal.logs.attachments.AttachmentErrorCo
 import io.embrace.android.embracesdk.internal.payload.PushNotificationBreadcrumb
 import io.embrace.android.embracesdk.internal.serialization.truncatedStacktrace
 import io.embrace.android.embracesdk.internal.utils.getSafeStackTrace
-import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.semconv.ExceptionAttributes
 
 internal class LogsApiDelegate(
@@ -179,18 +178,18 @@ internal class LogsApiDelegate(
         logExceptionType: LogExceptionType = LogExceptionType.NONE,
         exceptionName: String? = null,
         exceptionMessage: String? = null,
-        customLogAttrs: Map<AttributeKey<String>, String> = emptyMap(),
+        customLogAttrs: Map<String, String> = emptyMap(),
         attachment: Attachment? = null,
     ) {
         if (sdkCallChecker.check("log_message")) {
             runCatching {
-                val attrs = mutableMapOf<AttributeKey<String>, String>()
-                exceptionName?.let { attrs[ExceptionAttributes.EXCEPTION_TYPE] = it }
-                exceptionMessage?.let { attrs[ExceptionAttributes.EXCEPTION_MESSAGE] = it }
+                val attrs = mutableMapOf<String, String>()
+                exceptionName?.let { attrs[ExceptionAttributes.EXCEPTION_TYPE.key] = it }
+                exceptionMessage?.let { attrs[ExceptionAttributes.EXCEPTION_MESSAGE.key] = it }
 
                 val stacktrace =
                     stackTraceElements?.let(checkNotNull(serializer)::truncatedStacktrace) ?: customStackTrace
-                stacktrace?.let { attrs[ExceptionAttributes.EXCEPTION_STACKTRACE] = it }
+                stacktrace?.let { attrs[ExceptionAttributes.EXCEPTION_STACKTRACE.key] = it }
 
                 if (attachment != null) {
                     attrs.putAll(attachment.attributes.mapKeys { it.key.attributeKey })

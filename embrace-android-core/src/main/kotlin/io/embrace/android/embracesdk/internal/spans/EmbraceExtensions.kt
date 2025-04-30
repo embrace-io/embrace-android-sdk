@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.spans
 
-import io.embrace.android.embracesdk.internal.arch.schema.EmbraceAttributeKey
 import io.embrace.android.embracesdk.internal.arch.schema.FixedAttribute
 import io.embrace.android.embracesdk.internal.arch.schema.toSessionPropertyAttributeName
 import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
@@ -12,7 +11,6 @@ import io.embrace.android.embracesdk.internal.payload.SpanEvent
 import io.embrace.android.embracesdk.internal.utils.isBlankish
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.opentelemetry.kotlin.StatusCode
-import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.AttributesBuilder
 import io.opentelemetry.api.logs.LogRecordBuilder
 import io.opentelemetry.semconv.ExceptionAttributes
@@ -24,7 +22,7 @@ import io.opentelemetry.semconv.ExceptionAttributes
  */
 
 internal fun LogRecordBuilder.setAttribute(
-    attributeKey: AttributeKey<String>,
+    attributeKey: String,
     value: String,
     keepBlankishValues: Boolean = true,
 ): LogRecordBuilder {
@@ -83,10 +81,6 @@ fun MutableMap<String, String>.setFixedAttribute(fixedAttribute: FixedAttribute)
 }
 
 fun Map<String, String>.getSessionProperty(key: String): String? = this[key.toSessionPropertyAttributeName()]
-
-fun Map<String, String>.getAttribute(key: AttributeKey<String>): String? = this[key.key]
-
-fun Map<String, String>.getAttribute(key: EmbraceAttributeKey): String? = getAttribute(key.attributeKey)
 
 private fun String.isValidLongValueAttribute(): Boolean = longValueAttributes.contains(this)
 

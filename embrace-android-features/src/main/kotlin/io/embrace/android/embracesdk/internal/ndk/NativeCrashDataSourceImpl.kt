@@ -14,7 +14,6 @@ import io.embrace.android.embracesdk.internal.payload.NativeCrashData
 import io.embrace.android.embracesdk.internal.prefs.PreferencesService
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.spans.toOtelSeverity
-import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes
 
 internal class NativeCrashDataSourceImpl(
@@ -40,7 +39,7 @@ internal class NativeCrashDataSourceImpl(
     override fun sendNativeCrash(
         nativeCrash: NativeCrashData,
         sessionProperties: Map<String, String>,
-        metadata: Map<AttributeKey<String>, String>,
+        metadata: Map<String, String>,
     ) {
         val nativeCrashNumber = preferencesService.incrementAndGetNativeCrashNumber()
         val crashAttributes = TelemetryAttributes(
@@ -48,7 +47,7 @@ internal class NativeCrashDataSourceImpl(
             sessionPropertiesProvider = { sessionProperties }
         )
         crashAttributes.setAttribute(
-            key = SessionIncubatingAttributes.SESSION_ID,
+            key = SessionIncubatingAttributes.SESSION_ID.key,
             value = nativeCrash.sessionId,
             keepBlankishValues = false,
         )

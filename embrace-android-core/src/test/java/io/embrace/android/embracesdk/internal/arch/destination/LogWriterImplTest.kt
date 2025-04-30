@@ -64,9 +64,9 @@ internal class LogWriterImplTest {
             assertEquals(SeverityNumber.ERROR, severityNumber)
             assertEquals(SeverityNumber.ERROR.name, severityNumber?.name)
             assertEquals("fake-session-id", attributes()[SessionIncubatingAttributes.SESSION_ID.key])
-            assertNotNull(attributes()[embState.attributeKey.key])
+            assertNotNull(attributes()[embState.attributeKey])
             assertNotNull(attributes()[LogIncubatingAttributes.LOG_RECORD_UID.key])
-            assertTrue(attributes()[PrivateSpan.key.attributeKey.key] != null)
+            assertTrue(attributes()[PrivateSpan.key.attributeKey] != null)
             assertEquals(clock.nowInNanos(), timestampNs)
             assertNull(observedTimestampNs)
         }
@@ -85,7 +85,7 @@ internal class LogWriterImplTest {
             isPrivate = true
         )
         with(logger.logs.single()) {
-            assertTrue(attributes()[PrivateSpan.key.attributeKey.key] != null)
+            assertTrue(attributes()[PrivateSpan.key.attributeKey] != null)
         }
         logWriterImpl.addLog(
             schemaType = SchemaType.Log(
@@ -98,7 +98,7 @@ internal class LogWriterImplTest {
             isPrivate = false
         )
         with(logger.logs.last()) {
-            assertFalse(attributes()[PrivateSpan.key.attributeKey.key] != null)
+            assertFalse(attributes()[PrivateSpan.key.attributeKey] != null)
         }
     }
 
@@ -121,7 +121,7 @@ internal class LogWriterImplTest {
                 "foreground-session",
                 attributes()[SessionIncubatingAttributes.SESSION_ID.key]
             )
-            assertEquals("foreground", attributes()[embState.attributeKey.key])
+            assertEquals("foreground", attributes()[embState.attributeKey])
         }
     }
 
@@ -141,7 +141,7 @@ internal class LogWriterImplTest {
 
         with(logger.logs.last()) {
             assertNull(attributes()[SessionIncubatingAttributes.SESSION_ID.key])
-            assertEquals("background", attributes()[embState.attributeKey.key])
+            assertEquals("background", attributes()[embState.attributeKey])
         }
     }
 
@@ -181,7 +181,7 @@ internal class LogWriterImplTest {
 
         with(logger.logs.last()) {
             assertNull(attributes()[SessionIncubatingAttributes.SESSION_ID.key])
-            assertNull(attributes()[embState.attributeKey.key])
+            assertNull(attributes()[embState.attributeKey])
         }
     }
 
@@ -200,7 +200,7 @@ internal class LogWriterImplTest {
 
         with(logger.logs.last()) {
             assertNull(attributes()[SessionIncubatingAttributes.SESSION_ID.key])
-            assertEquals("background", attributes()[embState.attributeKey.key])
+            assertEquals("background", attributes()[embState.attributeKey])
         }
     }
 }

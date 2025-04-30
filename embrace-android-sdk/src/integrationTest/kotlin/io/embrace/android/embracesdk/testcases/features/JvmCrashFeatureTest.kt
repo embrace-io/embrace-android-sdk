@@ -167,7 +167,7 @@ internal class JvmCrashFeatureTest {
         val expectedExceptionCause = serializer.toJson(listOf(exceptionInfo), List::class.java)
 
         attributes?.assertMatches(mapOf(
-            embState.attributeKey.key to state,
+            embState.attributeKey to state,
             "emb.android.crash_number" to 1,
             "emb.android.crash.exception_cause" to expectedExceptionCause,
             LogIncubatingAttributes.LOG_RECORD_UID.key to crashId

@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.internal.arch.schema
 
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.utils.isBlankish
-import io.opentelemetry.api.common.AttributeKey
 
 /**
  * Object that aggregates various attributes and returns a [Map] that represents the values at the current state
@@ -12,7 +11,7 @@ class TelemetryAttributes(
     private val sessionPropertiesProvider: () -> Map<String, String>? = { null },
     private val customAttributes: Map<String, String>? = null,
 ) {
-    private val map: MutableMap<AttributeKey<String>, String> = mutableMapOf()
+    private val map: MutableMap<String, String> = mutableMapOf()
 
     /**
      * Return a snapshot of the current values of the attributes set on this as a [Map]. Schema keys will always overwrite any previous
@@ -33,7 +32,7 @@ class TelemetryAttributes(
             }
         }
 
-        result.putAll(map.mapKeys { it.key.key })
+        result.putAll(map.mapKeys { it.key })
 
         return result
     }
@@ -42,7 +41,7 @@ class TelemetryAttributes(
         setAttribute(key.attributeKey, value, keepBlankishValues)
     }
 
-    fun setAttribute(key: AttributeKey<String>, value: String, keepBlankishValues: Boolean = true) {
+    fun setAttribute(key: String, value: String, keepBlankishValues: Boolean = true) {
         if (keepBlankishValues || !value.isBlankish()) {
             map[key] = value
         }
@@ -50,5 +49,5 @@ class TelemetryAttributes(
 
     fun getAttribute(key: EmbraceAttributeKey): String? = map[key.attributeKey]
 
-    fun getAttribute(key: AttributeKey<String>): String? = map[key]
+    fun getAttribute(key: String): String? = map[key]
 }

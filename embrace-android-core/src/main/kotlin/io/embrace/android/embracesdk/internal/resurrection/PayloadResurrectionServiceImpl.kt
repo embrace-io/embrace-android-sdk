@@ -271,7 +271,7 @@ internal class PayloadResurrectionServiceImpl(
         val sessionSpan = envelope.getSessionSpan() ?: return 0L
         val endTimeMs = sessionSpan.endTimeNanos ?: 0L
         val lastHeartbeatTimeMs =
-            sessionSpan.attributes?.findAttributeValue(embHeartbeatTimeUnixNano.attributeKey.key)?.toLongOrNull() ?: 0L
+            sessionSpan.attributes?.findAttributeValue(embHeartbeatTimeUnixNano.attributeKey)?.toLongOrNull() ?: 0L
         return max(endTimeMs, lastHeartbeatTimeMs).nanosToMillis()
     }
 }

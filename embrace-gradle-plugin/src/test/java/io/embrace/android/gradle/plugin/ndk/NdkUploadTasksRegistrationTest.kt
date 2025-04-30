@@ -110,8 +110,8 @@ class NdkUploadTasksRegistrationTest {
     }
 
     @Test
-    fun `skip registration if NDK property not specified`() {
-        verifyNoUploadTasksRegistered(
+    fun `tasks are registered but not executed when ndk_enabled property not specified`() {
+        verifyTasksRegisteredButNotExecuted(
             VariantConfig(
                 variantName = testVariantName,
                 embraceConfig = createEmbraceVariantConfig(ndkEnabled = null)
@@ -120,8 +120,8 @@ class NdkUploadTasksRegistrationTest {
     }
 
     @Test
-    fun `skip registration if no config file specified`() {
-        verifyNoUploadTasksRegistered(VariantConfig(testVariantName))
+    fun `tasks are registered but not executed if no config file specified`() {
+        verifyTasksRegisteredButNotExecuted(VariantConfig(testVariantName))
     }
 
     @Test
@@ -315,5 +315,24 @@ class NdkUploadTasksRegistrationTest {
         assertTaskNotRegistered(HashSharedObjectFilesTask.NAME, testAndroidCompactedVariantData.name)
         assertTaskNotRegistered(UploadSharedObjectFilesTask.NAME, testAndroidCompactedVariantData.name)
         assertTaskNotRegistered(EncodeFileToBase64Task.NAME, testAndroidCompactedVariantData.name)
+    }
+
+    private fun verifyTasksRegisteredButNotExecuted(variantConfig: VariantConfig) {
+        // When NDK upload tasks are registered
+        val ndkUploadTasksRegistration = createNdkUploadTasksRegistration(variantConfig = variantConfig)
+        ndkUploadTasksRegistration.register(testRegistrationParams)
+
+        // Then tasks should be registered
+        assertTaskRegistered(CompressSharedObjectFilesTask.NAME, testAndroidCompactedVariantData.name)
+        assertTaskRegistered(HashSharedObjectFilesTask.NAME, testAndroidCompactedVariantData.name)
+        assertTaskRegistered(UploadSharedObjectFilesTask.NAME, testAndroidCompactedVariantData.name)
+        assertTaskRegistered(EncodeFileToBase64Task.NAME, testAndroidCompactedVariantData.name)
+
+        // Compression task will not be executed
+        val compressionTask = project.tasks.findByName(
+            "${CompressSharedObjectFilesTask.NAME}${testAndroidCompactedVariantData.name.capitalizedString()}"
+        ) as CompressSharedObjectFilesTask
+
+        assertFalse(compressionTask.onlyIf.isSatisfiedBy(compressionTask))
     }
 }

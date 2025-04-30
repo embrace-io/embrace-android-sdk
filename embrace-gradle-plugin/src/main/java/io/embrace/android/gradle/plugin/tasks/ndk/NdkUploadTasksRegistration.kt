@@ -37,7 +37,7 @@ class NdkUploadTasksRegistration(
      * build process.
      */
     fun RegistrationParams.execute() {
-        // Only proceed if the NDK is enabled - if the config or attribute is unspecified, the default is false
+        // Bail if ndk_enabled is explicitly set to false. Otherwise, let projectType specific logic decide on the default
         if (variantConfig.embraceConfig?.ndkEnabled == false) return
 
         val sharedObjectFilesProvider = getSharedObjectFilesProvider(project, data)

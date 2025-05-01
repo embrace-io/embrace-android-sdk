@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.spans
 
+import io.embrace.android.embracesdk.internal.EmbTrace
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute.Failure.fromErrorCode
@@ -91,68 +92,77 @@ internal class EmbraceSpanImpl(
     override val autoTerminationMode: AutoTerminationMode = spanBuilder.autoTerminationMode
 
     override fun start(startTimeMs: Long?): Boolean {
-        if (spanStarted()) {
-            return false
-        }
-
-        val attemptedStartTimeMs =
-            (startTimeMs?.normalizeTimestampAsMillis() ?: spanBuilder.startTimeMs)?.takeIf { it > 0 }
-                ?: openTelemetryClock.now().nanosToMillis()
-
-        synchronized(startedSpan) {
-            val newSpan = spanBuilder.startSpan(attemptedStartTimeMs)
-            if (newSpan.isRecording) {
-                startedSpan.set(newSpan)
-            } else {
+        EmbTrace.trace("span-start") {
+            if (spanStarted()) {
                 return false
             }
 
-            spanRepository.trackStartedSpan(this)
-            updatedName?.let { newName ->
-                newSpan.updateName(newName)
-            }
-            spanStartTimeMs = attemptedStartTimeMs
-            spanRepository.notifySpanUpdate()
-        }
+            val attemptedStartTimeMs =
+                (startTimeMs?.normalizeTimestampAsMillis() ?: spanBuilder.startTimeMs)?.takeIf { it > 0 }
+                    ?: openTelemetryClock.now().nanosToMillis()
 
-        return true
+            synchronized(startedSpan) {
+                val newSpan = EmbTrace.trace("otel-span-start") {
+                    spanBuilder.startSpan(attemptedStartTimeMs)
+                }
+                if (newSpan.isRecording) {
+                    startedSpan.set(newSpan)
+                } else {
+                    return false
+                }
+
+                spanRepository.trackStartedSpan(this)
+                updatedName?.let { newName ->
+                    newSpan.updateName(newName)
+                }
+                spanStartTimeMs = attemptedStartTimeMs
+                spanRepository.notifySpanUpdate()
+            }
+
+            return true
+        }
     }
 
     override fun stop(errorCode: ErrorCode?, endTimeMs: Long?): Boolean {
-        if (!isRecording) {
-            return false
-        }
-        var successful = false
-        val attemptedEndTimeMs = endTimeMs?.normalizeTimestampAsMillis() ?: openTelemetryClock.now().nanosToMillis()
-
-        synchronized(startedSpan) {
+        EmbTrace.trace("span-stop") {
             if (!isRecording) {
                 return false
             }
+            var successful = false
+            val attemptedEndTimeMs = endTimeMs?.normalizeTimestampAsMillis() ?: openTelemetryClock.now().nanosToMillis()
 
-            startedSpan.get()?.let { spanToStop ->
-                populateAttributes(spanToStop)
-                populateEvents(spanToStop)
-                populateLinks(spanToStop)
-
-                if (errorCode != null) {
-                    setStatus(StatusCode.ERROR)
-                    spanToStop.setFixedAttribute(errorCode.fromErrorCode())
-                } else if (status == Span.Status.ERROR) {
-                    spanToStop.setFixedAttribute(ErrorCodeAttribute.Failure)
+            synchronized(startedSpan) {
+                if (!isRecording) {
+                    return false
                 }
 
-                spanToStop.end(attemptedEndTimeMs, TimeUnit.MILLISECONDS)
-                successful = !isRecording
-                if (successful) {
-                    spanId?.let { spanRepository.trackedSpanStopped(it) }
-                    spanEndTimeMs = attemptedEndTimeMs
-                    spanRepository.notifySpanUpdate()
+                startedSpan.get()?.let { spanToStop ->
+                    populateAttributes(spanToStop)
+                    populateEvents(spanToStop)
+                    populateLinks(spanToStop)
+
+                    if (errorCode != null) {
+                        setStatus(StatusCode.ERROR)
+                        spanToStop.setFixedAttribute(errorCode.fromErrorCode())
+                    } else if (status == Span.Status.ERROR) {
+                        spanToStop.setFixedAttribute(ErrorCodeAttribute.Failure)
+                    }
+
+                    EmbTrace.trace("otel-span-end") {
+                        spanToStop.end(attemptedEndTimeMs, TimeUnit.MILLISECONDS)
+                    }
+
+                    successful = !isRecording
+                    if (successful) {
+                        spanId?.let { spanRepository.trackedSpanStopped(it) }
+                        spanEndTimeMs = attemptedEndTimeMs
+                        spanRepository.notifySpanUpdate()
+                    }
                 }
             }
-        }
 
-        return successful
+            return successful
+        }
     }
 
     override fun addEvent(name: String, timestampMs: Long?, attributes: Map<String, String>?): Boolean =

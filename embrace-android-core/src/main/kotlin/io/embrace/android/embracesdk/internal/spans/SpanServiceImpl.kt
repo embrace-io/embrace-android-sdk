@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.spans
 
+import io.embrace.android.embracesdk.internal.EmbTrace
 import io.embrace.android.embracesdk.internal.arch.schema.TelemetryType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
@@ -41,28 +42,32 @@ internal class SpanServiceImpl(
         internal: Boolean,
         private: Boolean,
     ): PersistableEmbraceSpan? {
-        return if (limits.isNameValid(name, internal) && currentSessionSpan.canStartNewSpan(parent, internal)) {
-            embraceSpanFactory.create(
-                name = name,
-                type = type,
-                internal = internal,
-                private = private,
-                parent = parent,
-                autoTerminationMode = autoTerminationMode,
-            )
-        } else {
-            null
+        EmbTrace.trace("span-create") {
+            return if (limits.isNameValid(name, internal) && currentSessionSpan.canStartNewSpan(parent, internal)) {
+                embraceSpanFactory.create(
+                    name = name,
+                    type = type,
+                    internal = internal,
+                    private = private,
+                    parent = parent,
+                    autoTerminationMode = autoTerminationMode,
+                )
+            } else {
+                null
+            }
         }
     }
 
     override fun createSpan(embraceSpanBuilder: EmbraceSpanBuilder): PersistableEmbraceSpan? {
-        return if (
-            limits.isNameValid(embraceSpanBuilder.spanName, embraceSpanBuilder.internal) &&
-            currentSessionSpan.canStartNewSpan(embraceSpanBuilder.getParentSpan(), embraceSpanBuilder.internal)
-        ) {
-            embraceSpanFactory.create(embraceSpanBuilder)
-        } else {
-            null
+        EmbTrace.trace("span-create") {
+            return if (
+                limits.isNameValid(embraceSpanBuilder.spanName, embraceSpanBuilder.internal) &&
+                currentSessionSpan.canStartNewSpan(embraceSpanBuilder.getParentSpan(), embraceSpanBuilder.internal)
+            ) {
+                embraceSpanFactory.create(embraceSpanBuilder)
+            } else {
+                null
+            }
         }
     }
 
@@ -123,31 +128,33 @@ internal class SpanServiceImpl(
         events: List<EmbraceSpanEvent>,
         errorCode: ErrorCode?,
     ): Boolean {
-        if (startTimeMs > endTimeMs) {
+        EmbTrace.trace("span-completed") {
+            if (startTimeMs > endTimeMs) {
+                return false
+            }
+
+            if (inputsValid(name, internal, events, attributes) && currentSessionSpan.canStartNewSpan(parent, internal)) {
+                val newSpan = embraceSpanFactory.create(
+                    name = name,
+                    type = type,
+                    internal = internal,
+                    private = private,
+                    parent = parent,
+                    autoTerminationMode = autoTerminationMode,
+                )
+                if (newSpan.start(startTimeMs)) {
+                    attributes.forEach {
+                        newSpan.addAttribute(it.key, it.value)
+                    }
+                    events.forEach {
+                        newSpan.addEvent(it.name, it.timestampNanos.nanosToMillis(), it.attributes)
+                    }
+                    return newSpan.stop(errorCode, endTimeMs)
+                }
+            }
+
             return false
         }
-
-        if (inputsValid(name, internal, events, attributes) && currentSessionSpan.canStartNewSpan(parent, internal)) {
-            val newSpan = embraceSpanFactory.create(
-                name = name,
-                type = type,
-                internal = internal,
-                private = private,
-                parent = parent,
-                autoTerminationMode = autoTerminationMode,
-            )
-            if (newSpan.start(startTimeMs)) {
-                attributes.forEach {
-                    newSpan.addAttribute(it.key, it.value)
-                }
-                events.forEach {
-                    newSpan.addEvent(it.name, it.timestampNanos.nanosToMillis(), it.attributes)
-                }
-                return newSpan.stop(errorCode, endTimeMs)
-            }
-        }
-
-        return false
     }
 
     override fun getSpan(spanId: String): EmbraceSpan? = spanRepository.getSpan(spanId = spanId)

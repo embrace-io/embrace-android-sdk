@@ -37,110 +37,110 @@ class NdkUploadTasksRegistration(
      * build process.
      */
     fun RegistrationParams.execute() {
-        // Only proceed if the NDK is enabled - if the config or attribute is unspecified, the default is false
-        if (variantConfig.embraceConfig?.ndkEnabled == true) {
-            val sharedObjectFilesProvider = getSharedObjectFilesProvider(project, data)
+        // Bail if ndk_enabled is explicitly set to false. Otherwise, let projectType specific logic decide on the default
+        if (variantConfig.embraceConfig?.ndkEnabled == false) return
 
-            val compressionTaskProvider = project.registerTask(
-                CompressSharedObjectFilesTask.NAME,
-                CompressSharedObjectFilesTask::class.java,
-                data
-            ) { task ->
-                task.architecturesDirectory.set(project.layout.dir(sharedObjectFilesProvider))
-                task.failBuildOnUploadErrors.set(behavior.failBuildOnUploadErrors)
-                task.compressedSharedObjectFilesDirectory.set(
-                    project.layout.buildDirectory.dir("intermediates/embrace/compressed/${data.name}")
-                )
-            }
+        val sharedObjectFilesProvider = getSharedObjectFilesProvider(project, data)
 
-            compressionTaskProvider.configure { compressionTask: CompressSharedObjectFilesTask ->
-                val shouldExecuteCompressionTaskProvider = getShouldExecuteCompressionTaskProvider()
-                compressionTask.onlyIf { shouldExecuteCompressionTaskProvider.orNull ?: true }
-                // TODO: check if these are only needed for Unity and comment accordingly.
-                compressionTask.mustRunAfter(object : Callable<Any> {
-                    override fun call(): Any {
-                        return listOfNotNull(
-                            project.tryGetTaskProvider(
-                                "merge${variantConfig.variantName.capitalizedString()}JniLibFolders"
-                            ),
-                            project.tryGetTaskProvider(
-                                "transformNativeLibsWithMergeJniLibsFor${variantConfig.variantName.capitalizedString()}"
-                            ),
-                            project.tryGetTaskProvider(
-                                "merge${variantConfig.variantName.capitalizedString()}NativeLibs"
-                            )
+        val compressionTaskProvider = project.registerTask(
+            CompressSharedObjectFilesTask.NAME,
+            CompressSharedObjectFilesTask::class.java,
+            data
+        ) { task ->
+            task.architecturesDirectory.set(project.layout.dir(sharedObjectFilesProvider))
+            task.failBuildOnUploadErrors.set(behavior.failBuildOnUploadErrors)
+            task.compressedSharedObjectFilesDirectory.set(
+                project.layout.buildDirectory.dir("intermediates/embrace/compressed/${data.name}")
+            )
+        }
+
+        compressionTaskProvider.configure { compressionTask: CompressSharedObjectFilesTask ->
+            val shouldExecuteCompressionTaskProvider = getShouldExecuteCompressionTaskProvider()
+            compressionTask.onlyIf { shouldExecuteCompressionTaskProvider.orNull ?: false }
+            // TODO: check if these are only needed for Unity and comment accordingly.
+            compressionTask.mustRunAfter(object : Callable<Any> {
+                override fun call(): Any {
+                    return listOfNotNull(
+                        project.tryGetTaskProvider(
+                            "merge${variantConfig.variantName.capitalizedString()}JniLibFolders"
+                        ),
+                        project.tryGetTaskProvider(
+                            "transformNativeLibsWithMergeJniLibsFor${variantConfig.variantName.capitalizedString()}"
+                        ),
+                        project.tryGetTaskProvider(
+                            "merge${variantConfig.variantName.capitalizedString()}NativeLibs"
                         )
-                    }
-                })
-            }
-
-            val hashTaskProvider = project.registerTask(
-                HashSharedObjectFilesTask.NAME,
-                HashSharedObjectFilesTask::class.java,
-                data
-            ) { task ->
-                task.compressedSharedObjectFilesDirectory.set(
-                    compressionTaskProvider.flatMap { it.compressedSharedObjectFilesDirectory }
-                )
-                task.failBuildOnUploadErrors.set(behavior.failBuildOnUploadErrors)
-                task.architecturesToHashedSharedObjectFilesMap.set(
-                    project.layout.buildDirectory.file("intermediates/embrace/hashes/${data.name}/hashes.json")
-                )
-            }
-
-            val uploadTask = project.registerTask(
-                UploadSharedObjectFilesTask.NAME,
-                UploadSharedObjectFilesTask::class.java,
-                data
-            ) { task ->
-                // TODO: Check why this is needed for 7.5.1. For Gradle 8+ Gradle detects automatically when the other tasks aren't executed
-                task.onlyIf {
-                    task.compressedSharedObjectFilesDirectory.asFile.get().exists() &&
-                        task.architecturesToHashedSharedObjectFilesMapJson.asFile.get().exists()
+                    )
                 }
-                // TODO: An error thrown in registration will make the build will fail. Should we use failBuildOnUploadErrors for this too?
-                task.failBuildOnUploadErrors.set(behavior.failBuildOnUploadErrors)
-                task.requestParams.set(
-                    behavior.failBuildOnUploadErrors.map { failBuildOnUploadErrors ->
-                        RequestParams(
-                            appId = variantConfig.embraceConfig.appId.orEmpty(),
-                            apiToken = variantConfig.embraceConfig.apiToken.orEmpty(),
-                            endpoint = EmbraceEndpoint.NDK,
-                            failBuildOnUploadErrors = failBuildOnUploadErrors,
-                            baseUrl = behavior.baseUrl,
-                        )
-                    }
-                )
+            })
+        }
 
-                task.compressedSharedObjectFilesDirectory.set(
-                    compressionTaskProvider.flatMap { it.compressedSharedObjectFilesDirectory }
-                )
+        val hashTaskProvider = project.registerTask(
+            HashSharedObjectFilesTask.NAME,
+            HashSharedObjectFilesTask::class.java,
+            data
+        ) { task ->
+            task.compressedSharedObjectFilesDirectory.set(
+                compressionTaskProvider.flatMap { it.compressedSharedObjectFilesDirectory }
+            )
+            task.failBuildOnUploadErrors.set(behavior.failBuildOnUploadErrors)
+            task.architecturesToHashedSharedObjectFilesMap.set(
+                project.layout.buildDirectory.file("intermediates/embrace/hashes/${data.name}/hashes.json")
+            )
+        }
 
-                task.architecturesToHashedSharedObjectFilesMapJson.set(
-                    hashTaskProvider.flatMap { it.architecturesToHashedSharedObjectFilesMap }
-                )
+        val uploadTask = project.registerTask(
+            UploadSharedObjectFilesTask.NAME,
+            UploadSharedObjectFilesTask::class.java,
+            data
+        ) { task ->
+            // TODO: Check why this is needed for 7.5.1. For Gradle 8+ Gradle detects automatically when the other tasks aren't executed
+            task.onlyIf {
+                task.compressedSharedObjectFilesDirectory.asFile.get().exists() &&
+                    task.architecturesToHashedSharedObjectFilesMapJson.asFile.get().exists()
             }
+            // TODO: An error thrown in registration will make the build will fail. Should we use failBuildOnUploadErrors for this too?
+            task.failBuildOnUploadErrors.set(behavior.failBuildOnUploadErrors)
+            task.requestParams.set(
+                behavior.failBuildOnUploadErrors.map { failBuildOnUploadErrors ->
+                    RequestParams(
+                        appId = variantConfig.embraceConfig?.appId.orEmpty(),
+                        apiToken = variantConfig.embraceConfig?.apiToken.orEmpty(),
+                        endpoint = EmbraceEndpoint.NDK,
+                        failBuildOnUploadErrors = failBuildOnUploadErrors,
+                        baseUrl = behavior.baseUrl,
+                    )
+                }
+            )
 
-            project.registerTask(
-                EncodeFileToBase64Task.NAME,
-                EncodeFileToBase64Task::class.java,
-                data
-            ) { task ->
-                // TODO: Check why this is needed for 7.5.1. For Gradle 8+ Gradle detects automatically when the other tasks aren't executed
-                task.onlyIf { task.inputFile.asFile.get().exists() }
+            task.compressedSharedObjectFilesDirectory.set(
+                compressionTaskProvider.flatMap { it.compressedSharedObjectFilesDirectory }
+            )
 
-                task.inputFile.set(
-                    hashTaskProvider.flatMap { it.architecturesToHashedSharedObjectFilesMap }
-                )
+            task.architecturesToHashedSharedObjectFilesMapJson.set(
+                hashTaskProvider.flatMap { it.architecturesToHashedSharedObjectFilesMap }
+            )
+        }
 
-                task.failBuildOnUploadErrors.set(behavior.failBuildOnUploadErrors)
+        project.registerTask(
+            EncodeFileToBase64Task.NAME,
+            EncodeFileToBase64Task::class.java,
+            data
+        ) { task ->
+            // TODO: Check why this is needed for 7.5.1. For Gradle 8+ Gradle detects automatically when the other tasks aren't executed
+            task.onlyIf { task.inputFile.asFile.get().exists() }
 
-                task.outputFile.set(
-                    project.layout.buildDirectory.file("intermediates/embrace/ndk/${data.name}/encoded_map.txt")
-                )
+            task.inputFile.set(
+                hashTaskProvider.flatMap { it.architecturesToHashedSharedObjectFilesMap }
+            )
 
-                task.dependsOn(uploadTask)
-            }
+            task.failBuildOnUploadErrors.set(behavior.failBuildOnUploadErrors)
+
+            task.outputFile.set(
+                project.layout.buildDirectory.file("intermediates/embrace/ndk/${data.name}/encoded_map.txt")
+            )
+
+            task.dependsOn(uploadTask)
         }
     }
 
@@ -201,7 +201,7 @@ class NdkUploadTasksRegistration(
      */
     private fun getDefaultNativeSharedObjectFiles(
         project: Project,
-        variant: AndroidCompactedVariantData
+        variant: AndroidCompactedVariantData,
     ): Provider<File> {
         return project.tasks.named("merge${variant.name.capitalizedString()}NativeLibs").flatMap { mergeNativeLibsTask ->
             mergeNativeLibsTask.outputs.files.asFileTree.elements.map { files ->
@@ -221,7 +221,11 @@ class NdkUploadTasksRegistration(
         "${variantData.flavorName}/${variantData.buildTypeName}"
     }
 
-    private fun getShouldExecuteCompressionTaskProvider() = projectType.map {
-        (it == ProjectType.NATIVE || it == ProjectType.UNITY)
+    private fun getShouldExecuteCompressionTaskProvider() = projectType.map { type ->
+        when (type) {
+            ProjectType.NATIVE -> { variantConfig.embraceConfig?.ndkEnabled == true }
+            ProjectType.UNITY -> { true }
+            else -> false
+        }
     }
 }

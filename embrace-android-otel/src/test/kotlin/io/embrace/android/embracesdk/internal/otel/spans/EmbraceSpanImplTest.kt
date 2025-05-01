@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.otel.spans
 
 import io.embrace.android.embracesdk.fakes.FakeClock
+import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryClock
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.fixtures.MAX_LENGTH_ATTRIBUTE_KEY
@@ -193,6 +194,17 @@ internal class EmbraceSpanImplTest {
     }
 
     @Test
+    fun `check adding links`() {
+        with(embraceSpan) {
+            assertTrue(start())
+            val linkedSpan = FakeEmbraceSdkSpan.stopped()
+            val spanContext = checkNotNull(linkedSpan.spanContext)
+            assertTrue(embraceSpan.addSystemLink(spanContext))
+            assertTrue(updateNotified)
+        }
+    }
+
+    @Test
     fun `span name update`() {
         with(embraceSpan) {
             assertTrue(embraceSpan.updateName("new-name"))
@@ -356,6 +368,27 @@ internal class EmbraceSpanImplTest {
     }
 
     @Test
+    fun `check system link limits`() {
+        assertTrue(embraceSpan.start())
+        repeat(InstrumentedConfigImpl.otelLimits.getMaxSystemLinkCount()) {
+            val spanContext = checkNotNull(FakeEmbraceSdkSpan.stopped().spanContext)
+            assertTrue(embraceSpan.addSystemLink(spanContext))
+        }
+
+        assertFalse(embraceSpan.addSystemLink(checkNotNull(FakeEmbraceSdkSpan.stopped().spanContext)))
+    }
+
+    @Test
+    fun `check custom link limits`() {
+        assertTrue(embraceSpan.start())
+        repeat(InstrumentedConfigImpl.otelLimits.getMaxCustomLinkCount()) {
+            assertTrue(embraceSpan.addLink(FakeEmbraceSdkSpan.stopped()))
+        }
+
+        assertFalse(embraceSpan.addLink(FakeEmbraceSdkSpan.stopped()))
+    }
+
+    @Test
     fun `validate full snapshot`() {
         embraceSpan = createInternalEmbraceSdkSpan()
         assertTrue(embraceSpan.start())
@@ -372,6 +405,10 @@ internal class EmbraceSpanImplTest {
                 )
             )
             assertTrue(addAttribute(key = EXPECTED_ATTRIBUTE_NAME, value = EXPECTED_ATTRIBUTE_VALUE))
+
+            val linkedSpan = FakeEmbraceSdkSpan.stopped()
+            val spanContext = checkNotNull(linkedSpan.spanContext)
+            assertTrue(embraceSpan.addSystemLink(spanContext, mapOf("link-attr" to "value")))
 
             val snapshot = checkNotNull(embraceSpan.snapshot())
 
@@ -397,6 +434,15 @@ internal class EmbraceSpanImplTest {
                 checkNotNull(snapshot.attributes).single { !checkNotNull(it.key).startsWith("emb.") }
             assertEquals(EXPECTED_ATTRIBUTE_NAME, snapshotAttributes.key)
             assertEquals(EXPECTED_ATTRIBUTE_VALUE, snapshotAttributes.data)
+
+            with(checkNotNull(snapshot.links).single()) {
+                assertEquals(linkedSpan.traceId, traceId)
+                assertEquals(linkedSpan.spanId, spanId)
+                val attr = attributes?.single()
+                assertEquals("link-attr", attr?.key)
+                assertEquals("value", attr?.data)
+                assertEquals(false, isRemote)
+            }
         }
     }
 

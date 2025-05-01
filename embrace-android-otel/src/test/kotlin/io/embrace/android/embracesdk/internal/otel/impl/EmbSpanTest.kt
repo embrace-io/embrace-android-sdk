@@ -183,10 +183,9 @@ internal class EmbSpanTest {
             val linkedSpanContext = checkNotNull(FakeEmbraceSdkSpan.started().spanContext)
             addLink(linkedSpanContext, Attributes.builder().put("boolean", true).build())
             with(fakeEmbraceSpan.links.single()) {
-                assertEquals(linkedSpanContext.spanId, spanId)
-                val attribute = checkNotNull(attributes?.single())
-                assertEquals("boolean", attribute.key)
-                assertEquals("true", attribute.data)
+                assertEquals(linkedSpanContext.spanId, spanContext.spanId)
+                assertEquals(1, attributes.size)
+                assertEquals("true", attributes["boolean"])
             }
         }
     }

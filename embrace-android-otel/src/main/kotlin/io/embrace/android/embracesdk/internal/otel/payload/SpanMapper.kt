@@ -63,4 +63,9 @@ fun Map<String, String>.toEmbracePayload(): List<Attribute> =
 fun List<Attribute>.toEmbracePayload(): Map<String, String> =
     associate { Pair(it.key ?: "", it.data ?: "") }.filterKeys { it.isNotBlank() }
 
-fun EmbraceLinkData.toEmbracePayload() = Link(spanContext.spanId, attributes.toEmbracePayload())
+fun EmbraceLinkData.toEmbracePayload() = Link(
+    spanId = spanContext.spanId,
+    traceId = spanContext.traceId,
+    attributes = attributes.toEmbracePayload(),
+    isRemote = spanContext.isRemote
+)

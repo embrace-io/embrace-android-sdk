@@ -67,7 +67,11 @@ class OpenTelemetryConfiguration(
         EmbraceSpanProcessor(
             EmbraceSpanExporter(
                 spanSink = spanSink,
-                externalSpanExporter = SpanExporter.composite(externalSpanExporters),
+                externalSpanExporter = if (externalSpanExporters.isNotEmpty()) {
+                    SpanExporter.composite(externalSpanExporters)
+                } else {
+                    null
+                },
                 exportCheck = exportCheck,
             ),
             processIdentifier
@@ -78,7 +82,11 @@ class OpenTelemetryConfiguration(
         EmbraceLogRecordProcessor(
             EmbraceLogRecordExporter(
                 logSink = logSink,
-                externalLogRecordExporter = LogRecordExporter.composite(externalLogExporters),
+                externalLogRecordExporter = if (externalLogExporters.isNotEmpty()) {
+                    LogRecordExporter.composite(externalLogExporters)
+                } else {
+                    null
+                },
                 exportCheck = exportCheck,
             )
         )

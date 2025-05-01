@@ -14,7 +14,7 @@ import io.embrace.android.embracesdk.internal.opentelemetry.embProcessIdentifier
 import io.embrace.android.embracesdk.internal.opentelemetry.embState
 import io.embrace.android.embracesdk.internal.payload.Link
 import io.embrace.android.embracesdk.internal.payload.Span
-import io.embrace.android.embracesdk.internal.payload.toNewPayload
+import io.embrace.android.embracesdk.internal.payload.toEmbracePayload
 import io.embrace.android.embracesdk.internal.spans.PersistableEmbraceSpan
 import io.embrace.android.embracesdk.internal.spans.getEmbraceSpan
 import io.embrace.android.embracesdk.internal.spans.hasFixedAttribute
@@ -139,7 +139,7 @@ class FakePersistableEmbraceSpan(
     }
 
     override fun addLink(linkedSpanContext: SpanContext, attributes: Map<String, String>?): Boolean {
-        links.add(Link(linkedSpanContext.spanId, attributes?.toNewPayload()))
+        links.add(Link(linkedSpanContext.spanId, attributes?.toEmbracePayload()))
         return true
     }
 
@@ -160,8 +160,8 @@ class FakePersistableEmbraceSpan(
                 startTimeNanos = spanStartTimeMs?.millisToNanos(),
                 endTimeNanos = spanEndTimeMs?.millisToNanos(),
                 status = status,
-                events = events.map(EmbraceSpanEvent::toNewPayload),
-                attributes = attributes.toNewPayload(),
+                events = events.map(EmbraceSpanEvent::toEmbracePayload),
+                attributes = attributes.toEmbracePayload(),
                 links = links.toList()
             )
         }

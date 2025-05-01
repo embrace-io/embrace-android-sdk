@@ -15,8 +15,7 @@ import io.embrace.android.embracesdk.internal.config.instrumented.isNameValid
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.OtelLimitsConfig
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Span
-import io.embrace.android.embracesdk.internal.payload.toNewPayload
-import io.embrace.android.embracesdk.internal.payload.toPayload
+import io.embrace.android.embracesdk.internal.payload.toEmbracePayload
 import io.embrace.android.embracesdk.internal.utils.truncatedStacktraceText
 import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
@@ -277,9 +276,10 @@ internal class EmbraceSpanImpl(
                 startTimeNanos = spanStartTimeMs?.millisToNanos(),
                 endTimeNanos = spanEndTimeMs?.millisToNanos(),
                 status = status,
-                events = systemEvents.map(EmbraceSpanEvent::toNewPayload) + redactedCustomEvents.map(EmbraceSpanEvent::toNewPayload),
+                events = systemEvents.map(EmbraceSpanEvent::toEmbracePayload) +
+                    redactedCustomEvents.map(EmbraceSpanEvent::toEmbracePayload),
                 attributes = getAttributesPayload(),
-                links = (systemLinks + redactedCustomLinks).map(EmbraceLinkData::toPayload)
+                links = (systemLinks + redactedCustomLinks).map(EmbraceLinkData::toEmbracePayload)
             )
         } else {
             null
@@ -306,7 +306,7 @@ internal class EmbraceSpanImpl(
     }
 
     private fun getAttributesPayload(): List<Attribute> =
-        systemAttributes.map { Attribute(it.key, it.value) } + customAttributes.redactIfSensitive().toNewPayload()
+        systemAttributes.map { Attribute(it.key, it.value) } + customAttributes.redactIfSensitive().toEmbracePayload()
 
     private fun canSnapshot(): Boolean = spanId != null && spanStartTimeMs != null
 

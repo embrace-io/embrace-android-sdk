@@ -12,7 +12,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.payload.Span
-import io.embrace.android.embracesdk.internal.payload.toNewPayload
+import io.embrace.android.embracesdk.internal.payload.toEmbracePayload
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.internal.spans.hasFixedAttribute
 import io.embrace.android.embracesdk.internal.spans.toStatus
@@ -83,7 +83,7 @@ internal class AppStartupTraceTest {
             },
             otelExportAssertion = {
                 with(awaitSpansWithType(7, EmbType.Performance.Default).associateBy { it.name }) {
-                    assertEquals("yes", coldAppStartupRootSpan().attributes.toNewPayload().findAttributeValue("custom-attribute"))
+                    assertEquals("yes", coldAppStartupRootSpan().attributes.toEmbracePayload().findAttributeValue("custom-attribute"))
                     assertNotNull(embraceInitSpan())
                     with(initGapSpan()) {
                         assertEquals(sdkStartTimeMs, startEpochNanos.nanosToMillis())
@@ -91,7 +91,7 @@ internal class AppStartupTraceTest {
                     }
                     assertNotNull(getSpan("custom-span"))
                     with(getSpan("custom-span-with-stuff")) {
-                        val attributesList = attributes.toNewPayload()
+                        val attributesList = attributes.toEmbracePayload()
                         assertEquals("attribute", attributesList.findAttributeValue("custom"))
                         assertEquals(true, attributesList.hasFixedAttribute(ErrorCodeAttribute.Failure))
                         assertNotNull(events?.single())

@@ -5,7 +5,7 @@ import io.embrace.android.embracesdk.fakes.FakeLogRecordExporter
 import io.embrace.android.embracesdk.fixtures.testLog
 import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.payload.Attribute
-import io.embrace.android.embracesdk.internal.payload.toNewPayload
+import io.embrace.android.embracesdk.internal.payload.toEmbracePayload
 import io.opentelemetry.sdk.logs.export.LogRecordExporter
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -23,7 +23,7 @@ internal class EmbraceLogRecordExporterTest {
         embraceLogRecordExporter.export(listOf(logRecordData))
 
         assertFalse(logSink.logsForNextBatch().isEmpty())
-        assertEquals(logRecordData.toNewPayload(), logSink.logsForNextBatch()[0])
+        assertEquals(logRecordData.toEmbracePayload(), logSink.logsForNextBatch()[0])
     }
 
     @Test
@@ -47,8 +47,8 @@ internal class EmbraceLogRecordExporterTest {
         embraceLogRecordExporter.export(listOf(logRecordData, privateLogRecordData))
 
         assertEquals(2, logSink.logsForNextBatch().size)
-        assertEquals(logRecordData.toNewPayload(), logSink.logsForNextBatch()[0])
-        assertEquals(privateLogRecordData.toNewPayload(), logSink.logsForNextBatch()[1])
+        assertEquals(logRecordData.toEmbracePayload(), logSink.logsForNextBatch()[0])
+        assertEquals(privateLogRecordData.toEmbracePayload(), logSink.logsForNextBatch()[1])
 
         assertEquals(1, externalExporter.exportedLogs?.size)
         assertEquals(logRecordData, externalExporter.exportedLogs?.first())

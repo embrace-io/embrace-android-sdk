@@ -10,7 +10,7 @@ internal class LogMapperTest {
     @Test
     fun `convert to new payload`() {
         val input = FakeLogRecordData()
-        val output = input.toNewPayload()
+        val output = input.toEmbracePayload()
         assertEquals(input.timestampEpochNanos, output.timeUnixNano)
         assertEquals(input.severity.severityNumber, output.severityNumber)
         assertEquals(input.severityText, output.severityText)

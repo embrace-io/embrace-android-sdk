@@ -4,7 +4,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.SendMode
 import io.embrace.android.embracesdk.internal.arch.schema.toSendMode
 import io.embrace.android.embracesdk.internal.opentelemetry.embSendMode
 import io.embrace.android.embracesdk.internal.payload.Log
-import io.embrace.android.embracesdk.internal.payload.toNewPayload
+import io.embrace.android.embracesdk.internal.payload.toEmbracePayload
 import io.embrace.android.embracesdk.internal.utils.threadSafeTake
 import io.opentelemetry.sdk.common.CompletableResultCode
 import io.opentelemetry.sdk.logs.data.LogRecordData
@@ -23,12 +23,12 @@ class LogSinkImpl : LogSink {
                 if (sendMode != SendMode.DEFAULT) {
                     logRequests.add(
                         LogRequest(
-                            payload = log.toNewPayload(),
+                            payload = log.toEmbracePayload(),
                             defer = sendMode == SendMode.DEFER
                         )
                     )
                 } else {
-                    storedLogs.add(log.toNewPayload())
+                    storedLogs.add(log.toEmbracePayload())
                 }
             }
             onLogsStored?.invoke()

@@ -4,7 +4,7 @@ import io.embrace.android.embracesdk.internal.arch.destination.SpanAttributeData
 import io.embrace.android.embracesdk.internal.arch.schema.AppTerminationCause
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
-import io.embrace.android.embracesdk.internal.payload.toOldPayload
+import io.embrace.android.embracesdk.internal.payload.toEmbracePayload
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.spans.EmbraceSpan
@@ -63,7 +63,7 @@ class FakeCurrentSessionSpan(
             null
         }
         endingSessionSpan.stop(errorCode, clock.now())
-        val payload = listOf(checkNotNull(endingSessionSpan.snapshot()).toOldPayload())
+        val payload = listOf(checkNotNull(endingSessionSpan.snapshot()).toEmbracePayload())
         sessionIteration.incrementAndGet()
         sessionSpan = if (appTerminationCause == null) newSessionSpan(clock.now()) else null
         return payload

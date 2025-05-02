@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.Flutter
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.FlutterException.embFlutterExceptionLibrary
 import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
+import io.embrace.android.embracesdk.internal.otel.attrs.asOtelAttributeKey
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.mockk.every
 import io.mockk.mockk
@@ -72,8 +73,8 @@ internal class FlutterInternalInterfaceImplTest {
                 "exception name",
                 "message",
                 mapOf(
-                    embFlutterExceptionContext.attributeKey to "ctx",
-                    embFlutterExceptionLibrary.attributeKey to "lib"
+                    embFlutterExceptionContext.asOtelAttributeKey() to "ctx",
+                    embFlutterExceptionLibrary.asOtelAttributeKey() to "lib"
                 ),
             )
         }
@@ -93,8 +94,8 @@ internal class FlutterInternalInterfaceImplTest {
                 exceptionName = "exception name",
                 exceptionMessage = "message",
                 customLogAttrs = mapOf(
-                    embFlutterExceptionContext.attributeKey to "ctx",
-                    embFlutterExceptionLibrary.attributeKey to "lib"
+                    embFlutterExceptionContext.asOtelAttributeKey() to "ctx",
+                    embFlutterExceptionLibrary.asOtelAttributeKey() to "lib"
                 ),
             )
         }

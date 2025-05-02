@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.logs
 
 import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
-import io.embrace.android.embracesdk.internal.spans.hasFixedAttribute
+import io.embrace.android.embracesdk.internal.spans.hasEmbraceAttribute
 import io.opentelemetry.sdk.common.CompletableResultCode
 import io.opentelemetry.sdk.logs.data.LogRecordData
 import io.opentelemetry.sdk.logs.export.LogRecordExporter
@@ -23,7 +23,7 @@ internal class EmbraceLogRecordExporter(
         if (externalLogRecordExporter != null && result == CompletableResultCode.ofSuccess()) {
             return externalLogRecordExporter.export(
                 logs.filterNot {
-                    it.hasFixedAttribute(PrivateSpan)
+                    it.hasEmbraceAttribute(PrivateSpan)
                 }
             )
         }

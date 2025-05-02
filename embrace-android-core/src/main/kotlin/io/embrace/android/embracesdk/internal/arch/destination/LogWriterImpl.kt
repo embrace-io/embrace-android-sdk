@@ -4,12 +4,13 @@ import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.opentelemetry.embState
+import io.embrace.android.embracesdk.internal.otel.attrs.asOtelAttributeKey
 import io.embrace.android.embracesdk.internal.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.internal.session.lifecycle.EmbraceProcessStateService.Companion.BACKGROUND_STATE
 import io.embrace.android.embracesdk.internal.session.lifecycle.EmbraceProcessStateService.Companion.FOREGROUND_STATE
 import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateService
 import io.embrace.android.embracesdk.internal.spans.setAttribute
-import io.embrace.android.embracesdk.internal.spans.setFixedAttribute
+import io.embrace.android.embracesdk.internal.spans.setEmbraceAttribute
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.logs.Logger
@@ -53,15 +54,15 @@ class LogWriterImpl(
                 }
             }
 
-            builder.setAttribute(embState.attributeKey, sessionState ?: processStateService.getAppState())
+            builder.setAttribute(embState.asOtelAttributeKey(), sessionState ?: processStateService.getAppState())
         }
 
         if (isPrivate) {
-            builder.setFixedAttribute(PrivateSpan)
+            builder.setEmbraceAttribute(PrivateSpan)
         }
 
         with(schemaType) {
-            builder.setFixedAttribute(telemetryType)
+            builder.setEmbraceAttribute(telemetryType)
             attributes().forEach {
                 builder.setAttribute(AttributeKey.stringKey(it.key), it.value)
             }

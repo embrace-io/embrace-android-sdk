@@ -12,9 +12,11 @@ import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.arch.schema.TelemetryAttributes
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.opentelemetry.embState
+import io.embrace.android.embracesdk.internal.otel.attrs.asOtelAttributeKey
+import io.embrace.android.embracesdk.internal.otel.attrs.asPair
 import io.embrace.android.embracesdk.internal.session.id.SessionData
 import io.embrace.android.embracesdk.internal.spans.getAttribute
-import io.embrace.android.embracesdk.internal.spans.hasFixedAttribute
+import io.embrace.android.embracesdk.internal.spans.hasEmbraceAttribute
 import io.opentelemetry.api.logs.Severity
 import io.opentelemetry.semconv.incubating.LogIncubatingAttributes
 import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes
@@ -54,7 +56,7 @@ internal class LogWriterImplTest {
             schemaType = SchemaType.Log(
                 TelemetryAttributes(
                     configService = FakeConfigService(),
-                    customAttributes = mapOf(PrivateSpan.toEmbraceKeyValuePair())
+                    customAttributes = mapOf(PrivateSpan.asPair())
                 )
             ),
             severity = Severity.ERROR,
@@ -67,7 +69,7 @@ internal class LogWriterImplTest {
             assertEquals("fake-session-id", attributes.getAttribute(SessionIncubatingAttributes.SESSION_ID))
             assertNotNull(attributes.getAttribute(embState))
             assertNotNull(attributes.getAttribute(LogIncubatingAttributes.LOG_RECORD_UID))
-            assertTrue(attributes.hasFixedAttribute(PrivateSpan))
+            assertTrue(attributes.hasEmbraceAttribute(PrivateSpan))
             assertEquals(clock.nowInNanos(), timestampEpochNanos)
             assertEquals(0, observedTimestampEpochNanos)
         }
@@ -86,7 +88,7 @@ internal class LogWriterImplTest {
             isPrivate = true
         )
         with(logger.builders.single()) {
-            assertTrue(attributes.hasFixedAttribute(PrivateSpan))
+            assertTrue(attributes.hasEmbraceAttribute(PrivateSpan))
         }
         logWriterImpl.addLog(
             schemaType = SchemaType.Log(
@@ -99,7 +101,7 @@ internal class LogWriterImplTest {
             isPrivate = false
         )
         with(logger.builders.last()) {
-            assertFalse(attributes.hasFixedAttribute(PrivateSpan))
+            assertFalse(attributes.hasEmbraceAttribute(PrivateSpan))
         }
     }
 
@@ -122,7 +124,7 @@ internal class LogWriterImplTest {
                 "foreground-session",
                 attributes.findAttributeValue(SessionIncubatingAttributes.SESSION_ID.key)
             )
-            assertEquals("foreground", attributes.findAttributeValue(embState.attributeKey.key))
+            assertEquals("foreground", attributes.findAttributeValue(embState.asOtelAttributeKey().key))
         }
     }
 
@@ -142,7 +144,7 @@ internal class LogWriterImplTest {
 
         with(logger.builders.last()) {
             assertNull(attributes.findAttributeValue(SessionIncubatingAttributes.SESSION_ID.key))
-            assertEquals("background", attributes.findAttributeValue(embState.attributeKey.key))
+            assertEquals("background", attributes.findAttributeValue(embState.asOtelAttributeKey().key))
         }
     }
 
@@ -201,7 +203,7 @@ internal class LogWriterImplTest {
 
         with(logger.builders.last()) {
             assertNull(attributes.findAttributeValue(SessionIncubatingAttributes.SESSION_ID.key))
-            assertEquals("background", attributes.findAttributeValue(embState.attributeKey.key))
+            assertEquals("background", attributes.findAttributeValue(embState.asOtelAttributeKey().key))
         }
     }
 }

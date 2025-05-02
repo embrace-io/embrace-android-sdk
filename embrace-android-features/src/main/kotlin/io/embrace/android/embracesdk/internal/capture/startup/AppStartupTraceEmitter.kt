@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.opentelemetry.embStartupActivityName
+import io.embrace.android.embracesdk.internal.otel.attrs.asOtelAttributeKey
 import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateListener
 import io.embrace.android.embracesdk.internal.spans.PersistableEmbraceSpan
 import io.embrace.android.embracesdk.internal.spans.SpanService
@@ -429,7 +430,7 @@ internal class AppStartupTraceEmitter(
         addCustomAttributes()
 
         startupActivityName?.let { name ->
-            setSystemAttribute(embStartupActivityName.attributeKey, name)
+            setSystemAttribute(embStartupActivityName.asOtelAttributeKey(), name)
         }
     }
 

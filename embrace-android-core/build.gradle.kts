@@ -28,6 +28,7 @@ dependencies {
     implementation(project(":embrace-android-delivery"))
     implementation(project(":embrace-android-infra"))
     implementation(project(":embrace-internal-api"))
+    implementation(project(":embrace-android-otel"))
     compileOnly(project(":embrace-android-api"))
     testImplementation(project(":embrace-android-payload"))
     testImplementation(project(":embrace-android-api"))

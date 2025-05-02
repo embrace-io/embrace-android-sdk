@@ -6,7 +6,7 @@ import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
 import io.embrace.android.embracesdk.internal.payload.Span
-import io.embrace.android.embracesdk.internal.spans.hasFixedAttribute
+import io.embrace.android.embracesdk.internal.spans.hasEmbraceAttribute
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.StatusCode
@@ -71,7 +71,7 @@ internal class EmbSpanTest {
         }
         with(fakeEmbraceSpan) {
             assertEquals(status, Span.Status.ERROR)
-            assertTrue(attributes.hasFixedAttribute(ErrorCodeAttribute.Failure))
+            assertTrue(attributes.hasEmbraceAttribute(ErrorCodeAttribute.Failure))
         }
     }
 
@@ -85,7 +85,7 @@ internal class EmbSpanTest {
 
         with(fakeEmbraceSpan) {
             assertEquals(status, Span.Status.UNSET)
-            assertFalse(attributes.hasFixedAttribute(ErrorCodeAttribute.Failure))
+            assertFalse(attributes.hasEmbraceAttribute(ErrorCodeAttribute.Failure))
         }
     }
 

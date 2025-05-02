@@ -7,8 +7,8 @@ import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.spans.EmbraceLinkData
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
-import io.embrace.android.embracesdk.internal.spans.hasFixedAttribute
-import io.embrace.android.embracesdk.internal.spans.setFixedAttribute
+import io.embrace.android.embracesdk.internal.spans.hasEmbraceAttribute
+import io.embrace.android.embracesdk.internal.spans.setEmbraceAttribute
 import io.embrace.android.embracesdk.internal.spans.toStatus
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.opentelemetry.api.trace.SpanId
@@ -69,9 +69,9 @@ fun Span.toEmbracePayload(): EmbraceSpanData {
 
 fun Span.toFailedSpan(endTimeMs: Long): Span {
     val newAttributes = mutableMapOf<String, String>().apply {
-        setFixedAttribute(ErrorCodeAttribute.Failure)
-        if (hasFixedAttribute(EmbType.Ux.Session)) {
-            setFixedAttribute(AppTerminationCause.Crash)
+        setEmbraceAttribute(ErrorCodeAttribute.Failure)
+        if (hasEmbraceAttribute(EmbType.Ux.Session)) {
+            setEmbraceAttribute(AppTerminationCause.Crash)
         }
     }
 

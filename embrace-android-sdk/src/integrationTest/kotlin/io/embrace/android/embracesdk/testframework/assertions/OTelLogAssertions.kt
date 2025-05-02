@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.opentelemetry.embExceptionHandling
 import io.embrace.android.embracesdk.internal.opentelemetry.embState
+import io.embrace.android.embracesdk.internal.otel.attrs.asOtelAttributeKey
 import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.serialization.truncatedStacktrace
@@ -37,7 +38,7 @@ internal fun assertOtelLogReceived(
         assertEquals(expectedTimeMs.millisToNanos(), log.timeUnixNano)
         assertFalse(log.attributes?.findAttributeValue(SessionIncubatingAttributes.SESSION_ID.key).isNullOrBlank())
         expectedType?.let { assertAttribute(log, embExceptionHandling.name, it) }
-        assertEquals(expectedState, log.attributes?.findAttributeValue(embState.attributeKey.key))
+        assertEquals(expectedState, log.attributes?.findAttributeValue(embState.asOtelAttributeKey().key))
         expectedExceptionName?.let {
             assertAttribute(log, ExceptionAttributes.EXCEPTION_TYPE.key, expectedExceptionName)
         }

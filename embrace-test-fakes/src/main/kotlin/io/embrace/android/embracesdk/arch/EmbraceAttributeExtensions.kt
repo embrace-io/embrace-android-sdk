@@ -5,13 +5,13 @@ import io.embrace.android.embracesdk.fakes.SpanEventData
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute.Failure.fromErrorCode
-import io.embrace.android.embracesdk.internal.arch.schema.FixedAttribute
 import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.arch.schema.TelemetryType
-import io.embrace.android.embracesdk.internal.arch.schema.toPayload
+import io.embrace.android.embracesdk.internal.otel.attrs.EmbraceAttribute
+import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
-import io.embrace.android.embracesdk.internal.spans.hasFixedAttribute
+import io.embrace.android.embracesdk.internal.spans.hasEmbraceAttribute
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.api.trace.StatusCode
 import org.junit.Assert.assertEquals
@@ -35,14 +35,14 @@ fun EmbraceSpanData.assertIsPrivateSpan(): Unit = assertHasEmbraceAttribute(Priv
 fun EmbraceSpanData.assertNotPrivateSpan(): Unit = assertDoesNotHaveEmbraceAttribute(PrivateSpan)
 
 /**
- * Assert [EmbraceSpanData] has the [FixedAttribute] defined by [fixedAttribute]
+ * Assert [EmbraceSpanData] has the [EmbraceAttribute] defined by [embraceAttribute]
  */
-fun EmbraceSpanData.assertHasEmbraceAttribute(fixedAttribute: FixedAttribute) {
-    assertTrue(hasFixedAttribute(fixedAttribute))
+fun EmbraceSpanData.assertHasEmbraceAttribute(embraceAttribute: EmbraceAttribute) {
+    assertTrue(hasEmbraceAttribute(embraceAttribute))
 }
 
-fun EmbraceSpanData.assertDoesNotHaveEmbraceAttribute(fixedAttribute: FixedAttribute) {
-    assertFalse(attributes[fixedAttribute.key.name]?.equals(fixedAttribute.value) ?: false)
+fun EmbraceSpanData.assertDoesNotHaveEmbraceAttribute(embraceAttribute: EmbraceAttribute) {
+    assertFalse(attributes[embraceAttribute.key.name]?.equals(embraceAttribute.value) ?: false)
 }
 
 /**
@@ -69,12 +69,17 @@ fun Span.assertIsPrivateSpan(): Unit = assertHasEmbraceAttribute(PrivateSpan)
 
 fun Span.assertNotPrivateSpan(): Unit = assertDoesNotHaveEmbraceAttribute(PrivateSpan)
 
-fun Span.assertHasEmbraceAttribute(fixedAttribute: FixedAttribute) {
-    assertTrue(checkNotNull(attributes).contains(fixedAttribute.toPayload()))
+/**
+ * Return as a [Attribute] representation, to be used used for Embrace payloads
+ */
+fun EmbraceAttribute.toPayload(): Attribute = Attribute(key.name, value)
+
+fun Span.assertHasEmbraceAttribute(embraceAttribute: EmbraceAttribute) {
+    assertTrue(checkNotNull(attributes).contains(embraceAttribute.toPayload()))
 }
 
-fun Span.assertDoesNotHaveEmbraceAttribute(fixedAttribute: FixedAttribute) {
-    assertFalse(checkNotNull(attributes).contains(fixedAttribute.toPayload()))
+fun Span.assertDoesNotHaveEmbraceAttribute(embraceAttribute: EmbraceAttribute) {
+    assertFalse(checkNotNull(attributes).contains(embraceAttribute.toPayload()))
 }
 
 fun Span.assertError(errorCode: ErrorCode) {

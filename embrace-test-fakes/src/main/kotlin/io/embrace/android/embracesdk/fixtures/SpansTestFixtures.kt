@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.fakes.FakeClock.Companion.DEFAULT_FAKE_CURR
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
 import io.embrace.android.embracesdk.internal.opentelemetry.embSequenceId
+import io.embrace.android.embracesdk.internal.otel.attrs.asPair
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.toEmbracePayload
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
@@ -38,7 +39,7 @@ val testSpan: Span = EmbraceSpanData(
     ),
     attributes = mapOf(
         Pair(embSequenceId.name, "3"),
-        EmbType.Performance.Default.toEmbraceKeyValuePair(),
+        EmbType.Performance.Default.asPair(),
     )
 ).toEmbracePayload()
 

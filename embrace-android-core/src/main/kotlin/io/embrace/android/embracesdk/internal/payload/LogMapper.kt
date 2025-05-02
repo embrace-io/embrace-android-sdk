@@ -4,7 +4,7 @@ import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.sdk.logs.data.LogRecordData
 
 @Suppress("DEPRECATION") // suppress for backwards compat
-fun LogRecordData.toNewPayload(): Log {
+fun LogRecordData.toEmbracePayload(): Log {
     val isSpanContextValid = spanContext.isValid
     return Log(
         traceId = if (isSpanContextValid) spanContext.traceId else null,
@@ -13,9 +13,9 @@ fun LogRecordData.toNewPayload(): Log {
         severityNumber = severity.severityNumber,
         severityText = severityText,
         body = body.asString(),
-        attributes = attributes.toNewPayload()
+        attributes = attributes.toEmbracePayload()
     )
 }
 
-fun Attributes.toNewPayload(): List<Attribute> =
+fun Attributes.toEmbracePayload(): List<Attribute> =
     this.asMap().entries.map { Attribute(it.key.key, it.value.toString()) }

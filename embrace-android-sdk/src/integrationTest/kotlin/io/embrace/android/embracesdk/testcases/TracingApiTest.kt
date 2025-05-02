@@ -15,7 +15,7 @@ import io.embrace.android.embracesdk.internal.payload.ApplicationState
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
-import io.embrace.android.embracesdk.internal.payload.toNewPayload
+import io.embrace.android.embracesdk.internal.payload.toEmbracePayload
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
@@ -155,7 +155,7 @@ internal class TracingApiTest {
                 )
                 val allSpans = getSdkInitSpanFromBackgroundActivity() +
                     checkNotNull(session.data.spans) +
-                    testRule.setup.getSpanSink().completedSpans().map(EmbraceSpanData::toNewPayload)
+                    testRule.setup.getSpanSink().completedSpans().map(EmbraceSpanData::toEmbracePayload)
 
                 val spansMap = allSpans.associateBy { it.name }
                 val sessionSpan = checkNotNull(spansMap["emb-session"])
@@ -360,7 +360,7 @@ internal class TracingApiTest {
                 val spanWithLink = awaitSpans(1) { it.links.size == 1 }.single()
                 with(spanWithLink.links.single()) {
                     assertEquals(linkedSpanId, spanContext.spanId)
-                    assertEquals("value", attributes.toNewPayload().single().data)
+                    assertEquals("value", attributes.toEmbracePayload().single().data)
                 }
             }
         )

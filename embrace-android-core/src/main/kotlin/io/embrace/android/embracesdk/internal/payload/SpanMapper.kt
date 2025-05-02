@@ -14,7 +14,7 @@ import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.opentelemetry.api.trace.SpanId
 import io.opentelemetry.api.trace.StatusCode
 
-fun EmbraceSpanData.toNewPayload(): Span = Span(
+fun EmbraceSpanData.toEmbracePayload(): Span = Span(
     traceId = traceId,
     spanId = spanId,
     parentSpanId = parentSpanId ?: SpanId.getInvalid(),
@@ -22,32 +22,32 @@ fun EmbraceSpanData.toNewPayload(): Span = Span(
     startTimeNanos = startTimeNanos,
     endTimeNanos = endTimeNanos,
     status = status.toStatus(),
-    events = events.map(EmbraceSpanEvent::toNewPayload),
-    attributes = attributes.toNewPayload(),
+    events = events.map(EmbraceSpanEvent::toEmbracePayload),
+    attributes = attributes.toEmbracePayload(),
     links = links,
 )
 
-fun EmbraceSpanEvent.toNewPayload(): SpanEvent = SpanEvent(
+fun EmbraceSpanEvent.toEmbracePayload(): SpanEvent = SpanEvent(
     name = name,
     timestampNanos = timestampNanos,
-    attributes = attributes.toNewPayload()
+    attributes = attributes.toEmbracePayload()
 )
 
-fun SpanEvent.toOldPayload(): EmbraceSpanEvent? = EmbraceSpanEvent.create(
+fun SpanEvent.toEmbracePayload(): EmbraceSpanEvent? = EmbraceSpanEvent.create(
     name = name ?: "",
     timestampMs = (timestampNanos ?: 0).nanosToMillis(),
-    attributes = attributes?.toOldPayload() ?: emptyMap()
+    attributes = attributes?.toEmbracePayload() ?: emptyMap()
 )
 
-fun Map<String, String>.toNewPayload(): List<Attribute> =
+fun Map<String, String>.toEmbracePayload(): List<Attribute> =
     map { (key, value) -> Attribute(key, value) }
 
-fun List<Attribute>.toOldPayload(): Map<String, String> =
+fun List<Attribute>.toEmbracePayload(): Map<String, String> =
     associate { Pair(it.key ?: "", it.data ?: "") }.filterKeys { it.isNotBlank() }
 
-fun EmbraceLinkData.toPayload() = Link(spanContext.spanId, attributes.toNewPayload())
+fun EmbraceLinkData.toEmbracePayload() = Link(spanContext.spanId, attributes.toEmbracePayload())
 
-fun Span.toOldPayload(): EmbraceSpanData {
+fun Span.toEmbracePayload(): EmbraceSpanData {
     return EmbraceSpanData(
         traceId = traceId ?: "",
         spanId = spanId ?: "",
@@ -61,8 +61,8 @@ fun Span.toOldPayload(): EmbraceSpanData {
             Span.Status.ERROR -> StatusCode.ERROR
             else -> StatusCode.UNSET
         },
-        events = events?.mapNotNull { it.toOldPayload() } ?: emptyList(),
-        attributes = attributes?.toOldPayload() ?: emptyMap(),
+        events = events?.mapNotNull { it.toEmbracePayload() } ?: emptyList(),
+        attributes = attributes?.toEmbracePayload() ?: emptyMap(),
         links = links ?: emptyList()
     )
 }

@@ -6,7 +6,7 @@ import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.payload.Span
-import io.embrace.android.embracesdk.internal.payload.toNewPayload
+import io.embrace.android.embracesdk.internal.payload.toEmbracePayload
 import io.embrace.android.embracesdk.internal.session.captureDataSafely
 import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateService
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSnapshotType
@@ -73,11 +73,11 @@ internal class SessionPayloadSourceImpl(
                         startNewSession = startNewSession,
                         appTerminationCause = appTerminationCause
                     )
-                    spans.map(EmbraceSpanData::toNewPayload)
+                    spans.map(EmbraceSpanData::toEmbracePayload)
                 }
 
                 else -> spanSink.completedSpans()
-                    .map(EmbraceSpanData::toNewPayload)
+                    .map(EmbraceSpanData::toEmbracePayload)
                     .plus(otelPayloadMapper.snapshotSpans())
             }
         }

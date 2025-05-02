@@ -5,7 +5,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
 import io.embrace.android.embracesdk.internal.opentelemetry.embSequenceId
 import io.embrace.android.embracesdk.internal.payload.Span
-import io.embrace.android.embracesdk.internal.payload.toNewPayload
+import io.embrace.android.embracesdk.internal.payload.toEmbracePayload
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.opentelemetry.api.trace.SpanId
@@ -40,7 +40,7 @@ val testSpan: Span = EmbraceSpanData(
         Pair(embSequenceId.name, "3"),
         EmbType.Performance.Default.toEmbraceKeyValuePair(),
     )
-).toNewPayload()
+).toEmbracePayload()
 
 val testSpanSnapshot: Span = Span(
     traceId = "snapshot-trace-id",

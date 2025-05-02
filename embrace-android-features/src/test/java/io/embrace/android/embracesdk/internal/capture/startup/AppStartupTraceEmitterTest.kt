@@ -22,7 +22,7 @@ import io.embrace.android.embracesdk.internal.capture.startup.AppStartupTraceEmi
 import io.embrace.android.embracesdk.internal.capture.startup.AppStartupTraceEmitter.Companion.WARM_APP_STARTUP_ROOT_SPAN
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.opentelemetry.embStartupActivityName
-import io.embrace.android.embracesdk.internal.payload.toNewPayload
+import io.embrace.android.embracesdk.internal.payload.toEmbracePayload
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.spans.SpanService
 import io.embrace.android.embracesdk.internal.spans.SpanSink
@@ -880,7 +880,7 @@ internal class AppStartupTraceEmitterTest {
         expectedCustomAttributes: Map<String, String> = emptyMap(),
     ) {
         checkNotNull(input)
-        val trace = input.toNewPayload()
+        val trace = input.toEmbracePayload()
         assertEquals(expectedStartTimeMs, trace.startTimeNanos?.nanosToMillis())
         assertEquals(expectedEndTimeMs, trace.endTimeNanos?.nanosToMillis())
         trace.assertDoesNotHaveEmbraceAttribute(PrivateSpan)

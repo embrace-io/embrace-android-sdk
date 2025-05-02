@@ -9,7 +9,7 @@ import io.embrace.android.embracesdk.internal.payload.AnrSample
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
-import io.embrace.android.embracesdk.internal.payload.toOldPayload
+import io.embrace.android.embracesdk.internal.payload.toEmbracePayload
 import io.embrace.android.embracesdk.internal.spans.SpanService
 import io.opentelemetry.api.trace.SpanId
 import io.opentelemetry.sdk.trace.IdGenerator
@@ -44,8 +44,8 @@ class AnrOtelMapper(
 
     fun record() = EmbTrace.trace("anr-record") {
         anrService.getCapturedData().forEach { interval ->
-            val attributes = mapIntervalToSpanAttributes(interval).toOldPayload()
-            val events = interval.anrSampleList?.samples?.mapNotNull { mapSampleToSpanEvent(it).toOldPayload() }
+            val attributes = mapIntervalToSpanAttributes(interval).toEmbracePayload()
+            val events = interval.anrSampleList?.samples?.mapNotNull { mapSampleToSpanEvent(it).toEmbracePayload() }
             spanService.recordCompletedSpan(
                 name = "thread-blockage",
                 startTimeMs = interval.startTime,

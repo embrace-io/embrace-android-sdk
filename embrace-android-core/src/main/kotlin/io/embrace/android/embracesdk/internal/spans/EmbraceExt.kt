@@ -1,7 +1,8 @@
 package io.embrace.android.embracesdk.internal.spans
 
-import io.embrace.android.embracesdk.internal.arch.schema.EmbraceAttributeKey
-import io.embrace.android.embracesdk.internal.arch.schema.FixedAttribute
+import io.embrace.android.embracesdk.internal.otel.attrs.EmbraceAttribute
+import io.embrace.android.embracesdk.internal.otel.attrs.EmbraceAttributeKey
+import io.embrace.android.embracesdk.internal.otel.attrs.asOtelAttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.logs.Severity
 import io.opentelemetry.api.trace.Span
@@ -41,19 +42,19 @@ internal fun Attributes.toStringMap(): Map<String, String> = asMap().entries.ass
     it.key.key.toString() to it.value.toString()
 }
 
-fun EmbraceSpanData.hasFixedAttribute(fixedAttribute: FixedAttribute): Boolean =
-    fixedAttribute.value == attributes[fixedAttribute.key.name]
+fun EmbraceSpanData.hasEmbraceAttribute(embraceAttribute: EmbraceAttribute): Boolean =
+    embraceAttribute.value == attributes[embraceAttribute.key.name]
 
 internal fun Span.setEmbraceAttribute(key: EmbraceAttributeKey, value: String): Span {
     setAttribute(key.name, value)
     return this
 }
 
-internal fun Span.setFixedAttribute(fixedAttribute: FixedAttribute): Span =
-    setEmbraceAttribute(fixedAttribute.key, fixedAttribute.value)
+internal fun Span.setEmbraceAttribute(embraceAttribute: EmbraceAttribute): Span =
+    this@setEmbraceAttribute.setEmbraceAttribute(embraceAttribute.key, embraceAttribute.value)
 
-internal fun SpanData.hasFixedAttribute(fixedAttribute: FixedAttribute): Boolean =
-    attributes.asMap()[fixedAttribute.key.attributeKey] == fixedAttribute.value
+internal fun SpanData.hasEmbraceAttribute(embraceAttribute: EmbraceAttribute): Boolean =
+    attributes.asMap()[embraceAttribute.key.asOtelAttributeKey()] == embraceAttribute.value
 
-fun LogRecordData.hasFixedAttribute(fixedAttribute: FixedAttribute): Boolean =
-    attributes[fixedAttribute.key.attributeKey] == fixedAttribute.value
+fun LogRecordData.hasEmbraceAttribute(embraceAttribute: EmbraceAttribute): Boolean =
+    attributes[embraceAttribute.key.asOtelAttributeKey()] == embraceAttribute.value

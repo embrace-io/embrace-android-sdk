@@ -4,7 +4,6 @@ import io.embrace.android.embracesdk.internal.EmbTrace
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute.Failure.fromErrorCode
-import io.embrace.android.embracesdk.internal.arch.schema.FixedAttribute
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.clock.normalizeTimestampAsMillis
@@ -14,6 +13,7 @@ import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedCo
 import io.embrace.android.embracesdk.internal.config.instrumented.isAttributeValid
 import io.embrace.android.embracesdk.internal.config.instrumented.isNameValid
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.OtelLimitsConfig
+import io.embrace.android.embracesdk.internal.otel.attrs.EmbraceAttribute
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.toEmbracePayload
@@ -60,7 +60,7 @@ internal class EmbraceSpanImpl(
     private val systemEvents = ConcurrentLinkedQueue<EmbraceSpanEvent>()
     private val customEvents = ConcurrentLinkedQueue<EmbraceSpanEvent>()
     private val systemAttributes = ConcurrentHashMap<String, String>().apply {
-        putAll(spanBuilder.getFixedAttributes().associate { it.key.attributeKey.key to it.value })
+        putAll(spanBuilder.getEmbraceAttributes().associate { it.key.name to it.value })
     }
     private val customAttributes = ConcurrentHashMap<String, String>().apply {
         putAll(spanBuilder.getCustomAttributes())
@@ -143,9 +143,9 @@ internal class EmbraceSpanImpl(
 
                     if (errorCode != null) {
                         setStatus(StatusCode.ERROR)
-                        spanToStop.setFixedAttribute(errorCode.fromErrorCode())
+                        spanToStop.setEmbraceAttribute(errorCode.fromErrorCode())
                     } else if (status == Span.Status.ERROR) {
-                        spanToStop.setFixedAttribute(ErrorCodeAttribute.Failure)
+                        spanToStop.setEmbraceAttribute(ErrorCodeAttribute.Failure)
                     }
 
                     EmbTrace.trace("otel-span-end") {
@@ -210,7 +210,7 @@ internal class EmbraceSpanImpl(
     override fun removeSystemEvents(type: EmbType): Boolean {
         synchronized(systemEventCount) {
             systemEvents.forEach { event ->
-                if (event.hasFixedAttribute(type)) {
+                if (event.hasEmbraceAttribute(type)) {
                     systemEvents.remove(event)
                     systemEventCount.decrementAndGet()
                     spanRepository.notifySpanUpdate()
@@ -296,8 +296,8 @@ internal class EmbraceSpanImpl(
         }
     }
 
-    override fun hasFixedAttribute(fixedAttribute: FixedAttribute): Boolean =
-        systemAttributes[fixedAttribute.key.attributeKey.key] == fixedAttribute.value
+    override fun hasEmbraceAttribute(embraceAttribute: EmbraceAttribute): Boolean =
+        systemAttributes[embraceAttribute.key.name] == embraceAttribute.value
 
     override fun getSystemAttribute(key: AttributeKey<String>): String? = systemAttributes[key.key]
 

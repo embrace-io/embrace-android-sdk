@@ -378,8 +378,8 @@ internal class EmbraceSpanImplTest {
             assertEquals(spanId, snapshot.spanId)
             assertEquals(SpanId.getInvalid(), snapshot.parentSpanId)
             assertEquals(EXPECTED_SPAN_NAME.toEmbraceObjectName(), snapshot.name)
-            assertTrue(hasFixedAttribute(EmbType.System.LowPower))
-            assertTrue(hasFixedAttribute(PrivateSpan))
+            assertTrue(hasEmbraceAttribute(EmbType.System.LowPower))
+            assertTrue(hasEmbraceAttribute(PrivateSpan))
             assertEquals(expectedStartTimeMs.millisToNanos(), snapshot.startTimeNanos)
             assertEquals(Span.Status.UNSET, snapshot.status)
 
@@ -517,8 +517,8 @@ internal class EmbraceSpanImplTest {
             assertEquals(expectedEndTimeMs, endTimeNanos?.nanosToMillis())
             assertEquals(expectedStatus, status)
             assertEquals(eventCount, events?.size)
-            assertTrue(hasFixedAttribute(expectedType))
-            assertEquals(isPrivate, hasFixedAttribute(PrivateSpan))
+            assertTrue(hasEmbraceAttribute(expectedType))
+            assertEquals(isPrivate, hasEmbraceAttribute(PrivateSpan))
             val attrs = checkNotNull(attributes)
             val embraceAttributeCount = attrs.filter { checkNotNull(it.key).startsWith("emb.") }.size
             val customAttributeCount = attrs.size - embraceAttributeCount

@@ -57,9 +57,9 @@ internal class EmbraceSpanFactoryImplTest {
         )
         assertTrue(span.start(clock.now()))
         with(span) {
-            assertTrue(hasFixedAttribute(EmbType.Performance.Default))
+            assertTrue(hasEmbraceAttribute(EmbType.Performance.Default))
             assertNull(parent)
-            assertFalse(hasFixedAttribute(PrivateSpan))
+            assertFalse(hasEmbraceAttribute(PrivateSpan))
             assertEquals("test", snapshot()?.name)
         }
         assertNotNull(spanRepository.getSpan(spanId = checkNotNull(span.spanId)))
@@ -76,9 +76,9 @@ internal class EmbraceSpanFactoryImplTest {
         )
         assertTrue(span.start(clock.now()))
         with(span) {
-            assertTrue(hasFixedAttribute(EmbType.Performance.Default))
+            assertTrue(hasEmbraceAttribute(EmbType.Performance.Default))
             assertNull(parent)
-            assertTrue(hasFixedAttribute(PrivateSpan))
+            assertTrue(hasEmbraceAttribute(PrivateSpan))
             assertEquals("emb-test", snapshot()?.name)
         }
     }
@@ -93,9 +93,9 @@ internal class EmbraceSpanFactoryImplTest {
         )
         assertTrue(span.start(clock.now()))
         with(span) {
-            assertTrue(hasFixedAttribute(EmbType.Performance.Default))
+            assertTrue(hasEmbraceAttribute(EmbType.Performance.Default))
             assertNull(parent)
-            assertFalse(hasFixedAttribute(PrivateSpan))
+            assertFalse(hasEmbraceAttribute(PrivateSpan))
             assertEquals("emb-test", snapshot()?.name)
         }
     }
@@ -113,9 +113,9 @@ internal class EmbraceSpanFactoryImplTest {
 
         with(embraceSpanFactory.create(embraceSpanBuilder = spanBuilder)) {
             assertTrue(start(clock.now()))
-            assertTrue(hasFixedAttribute(EmbType.System.LowPower))
+            assertTrue(hasEmbraceAttribute(EmbType.System.LowPower))
             assertEquals(spanParent, parent)
-            assertFalse(hasFixedAttribute(PrivateSpan))
+            assertFalse(hasEmbraceAttribute(PrivateSpan))
             assertEquals("from-span-builder", snapshot()?.name)
             assertTrue(updateNotified)
         }

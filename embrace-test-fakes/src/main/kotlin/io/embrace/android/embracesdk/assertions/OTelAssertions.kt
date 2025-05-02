@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.assertions
 
 import io.embrace.android.embracesdk.internal.SystemInfo
-import io.embrace.android.embracesdk.internal.arch.schema.EmbraceAttributeKey
+import io.embrace.android.embracesdk.internal.otel.attrs.EmbraceAttributeKey
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.sdk.resources.Resource
 import io.opentelemetry.sdk.trace.data.SpanData

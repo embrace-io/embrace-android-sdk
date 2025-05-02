@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.fakes.FakeSpanService
 import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
+import io.embrace.android.embracesdk.internal.otel.attrs.asPair
 import io.mockk.mockk
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -81,7 +82,7 @@ internal class LowPowerDataSourceTest {
         assertEquals(EmbType.System.LowPower, span.type)
         assertEquals("device-low-power", span.name)
         assertEquals(
-            mapOf(EmbType.System.LowPower.toEmbraceKeyValuePair()),
+            mapOf(EmbType.System.LowPower.asPair()),
             span.attributes
         )
     }

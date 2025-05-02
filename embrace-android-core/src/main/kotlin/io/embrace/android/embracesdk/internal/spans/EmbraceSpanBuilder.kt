@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.internal.spans
 
-import io.embrace.android.embracesdk.internal.arch.schema.FixedAttribute
 import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.arch.schema.TelemetryType
+import io.embrace.android.embracesdk.internal.otel.attrs.EmbraceAttribute
 import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.opentelemetry.api.trace.Span
@@ -36,7 +36,7 @@ class EmbraceSpanBuilder(
     var startTimeMs: Long? = null
 
     private val sdkSpanBuilder = tracer.spanBuilder(spanName)
-    private val fixedAttributes = mutableListOf<FixedAttribute>(telemetryType)
+    private val embraceAttributes = mutableListOf<EmbraceAttribute>(telemetryType)
     private val customAttributes = mutableMapOf<String, String>()
 
     init {
@@ -49,7 +49,7 @@ class EmbraceSpanBuilder(
         }
 
         if (private) {
-            fixedAttributes.add(PrivateSpan)
+            embraceAttributes.add(PrivateSpan)
         }
     }
 
@@ -58,7 +58,7 @@ class EmbraceSpanBuilder(
         return sdkSpanBuilder.startSpan()
     }
 
-    fun getFixedAttributes(): List<FixedAttribute> = fixedAttributes
+    fun getEmbraceAttributes(): List<EmbraceAttribute> = embraceAttributes
 
     fun getCustomAttributes(): Map<String, String> = customAttributes
 

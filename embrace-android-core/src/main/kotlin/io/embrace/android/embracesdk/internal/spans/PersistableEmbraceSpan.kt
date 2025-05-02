@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.spans
 
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
-import io.embrace.android.embracesdk.internal.arch.schema.FixedAttribute
+import io.embrace.android.embracesdk.internal.otel.attrs.EmbraceAttribute
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.opentelemetry.api.common.AttributeKey
@@ -28,9 +28,9 @@ interface PersistableEmbraceSpan : EmbraceSpan, ImplicitContextKeyed {
     fun snapshot(): Span?
 
     /**
-     * Checks to see if the given span has a particular [FixedAttribute]
+     * Checks to see if the given span has a particular [EmbraceAttribute]
      */
-    fun hasFixedAttribute(fixedAttribute: FixedAttribute): Boolean
+    fun hasEmbraceAttribute(embraceAttribute: EmbraceAttribute): Boolean
 
     /**
      * Get the value of the attribute with the given key. Returns null if the attribute does not exist.

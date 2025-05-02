@@ -1,11 +1,12 @@
 package io.embrace.android.embracesdk.internal.spans
 
-import io.embrace.android.embracesdk.internal.arch.schema.EmbraceAttributeKey
-import io.embrace.android.embracesdk.internal.arch.schema.FixedAttribute
-import io.embrace.android.embracesdk.internal.arch.schema.toSessionPropertyAttributeName
+import io.embrace.android.embracesdk.internal.capture.session.toSessionPropertyAttributeName
 import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
 import io.embrace.android.embracesdk.internal.config.instrumented.isAttributeValid
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.OtelLimitsConfig
+import io.embrace.android.embracesdk.internal.otel.attrs.EmbraceAttribute
+import io.embrace.android.embracesdk.internal.otel.attrs.EmbraceAttributeKey
+import io.embrace.android.embracesdk.internal.otel.attrs.asOtelAttributeKey
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
@@ -23,8 +24,8 @@ import io.opentelemetry.semconv.ExceptionAttributes
  * Note: there's no explicit tests for these extensions as their functionality will be validated as part of other tests.
  */
 
-internal fun LogRecordBuilder.setFixedAttribute(fixedAttribute: FixedAttribute): LogRecordBuilder {
-    setAttribute(fixedAttribute.key.attributeKey, fixedAttribute.value)
+internal fun LogRecordBuilder.setEmbraceAttribute(embraceAttribute: EmbraceAttribute): LogRecordBuilder {
+    setAttribute(embraceAttribute.key.asOtelAttributeKey(), embraceAttribute.value)
     return this
 }
 
@@ -55,19 +56,19 @@ fun AttributesBuilder.fromMap(
     return this
 }
 
-fun Span.hasFixedAttribute(fixedAttribute: FixedAttribute): Boolean {
-    return fixedAttribute.value == attributes?.singleOrNull { it.key == fixedAttribute.key.name }?.data
+fun Span.hasEmbraceAttribute(embraceAttribute: EmbraceAttribute): Boolean {
+    return embraceAttribute.value == attributes?.singleOrNull { it.key == embraceAttribute.key.name }?.data
 }
 
-fun List<Attribute>.hasFixedAttribute(fixedAttribute: FixedAttribute): Boolean = any {
-    it.key == fixedAttribute.key.name
+fun List<Attribute>.hasEmbraceAttribute(embraceAttribute: EmbraceAttribute): Boolean = any {
+    it.key == embraceAttribute.key.name
 }
 
-fun EmbraceSpanEvent.hasFixedAttribute(fixedAttribute: FixedAttribute): Boolean =
-    fixedAttribute.value == attributes[fixedAttribute.key.name]
+fun EmbraceSpanEvent.hasEmbraceAttribute(embraceAttribute: EmbraceAttribute): Boolean =
+    embraceAttribute.value == attributes[embraceAttribute.key.name]
 
-fun SpanEvent.hasFixedAttribute(fixedAttribute: FixedAttribute): Boolean =
-    fixedAttribute.value == attributes?.singleOrNull { it.key == fixedAttribute.key.name }?.data
+fun SpanEvent.hasEmbraceAttribute(embraceAttribute: EmbraceAttribute): Boolean =
+    embraceAttribute.value == attributes?.singleOrNull { it.key == embraceAttribute.key.name }?.data
 
 fun List<Attribute>.findAttributeValue(key: String): String? = singleOrNull { it.key == key }?.data
 
@@ -79,19 +80,18 @@ fun Span.getSessionProperty(key: String): String? {
 fun Span.getSessionProperties(): Map<String, String> =
     attributes?.filter { it.key != null && it.data != null }?.associate { it.key to it.data } as Map<String, String>
 
-fun Map<String, String>.hasFixedAttribute(fixedAttribute: FixedAttribute): Boolean =
-    this[fixedAttribute.key.name] == fixedAttribute.value
+fun Map<String, String>.hasEmbraceAttribute(embraceAttribute: EmbraceAttribute): Boolean =
+    this[embraceAttribute.key.name] == embraceAttribute.value
 
-fun MutableMap<String, String>.setFixedAttribute(fixedAttribute: FixedAttribute): Map<String, String> {
-    this[fixedAttribute.key.name] = fixedAttribute.value
+fun MutableMap<String, String>.setEmbraceAttribute(embraceAttribute: EmbraceAttribute): Map<String, String> {
+    this[embraceAttribute.key.name] = embraceAttribute.value
     return this
 }
 
 fun Map<String, String>.getSessionProperty(key: String): String? = this[key.toSessionPropertyAttributeName()]
 
 fun Map<String, String>.getAttribute(key: AttributeKey<String>): String? = this[key.key]
-
-fun Map<String, String>.getAttribute(key: EmbraceAttributeKey): String? = getAttribute(key.attributeKey)
+fun Map<String, String>.getAttribute(key: EmbraceAttributeKey): String? = this[key.name]
 
 private fun String.isValidLongValueAttribute(): Boolean = longValueAttributes.contains(this)
 

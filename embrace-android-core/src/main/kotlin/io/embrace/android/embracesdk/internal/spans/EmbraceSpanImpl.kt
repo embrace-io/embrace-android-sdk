@@ -13,6 +13,7 @@ import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedCo
 import io.embrace.android.embracesdk.internal.config.instrumented.isAttributeValid
 import io.embrace.android.embracesdk.internal.config.instrumented.isNameValid
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.OtelLimitsConfig
+import io.embrace.android.embracesdk.internal.opentelemetry.toOtelJava
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.toNewPayload
@@ -22,11 +23,11 @@ import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
+import io.embrace.opentelemetry.kotlin.StatusCode
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.SpanContext
 import io.opentelemetry.api.trace.SpanId
-import io.opentelemetry.api.trace.StatusCode
 import io.opentelemetry.context.Context
 import io.opentelemetry.sdk.common.Clock
 import io.opentelemetry.semconv.ExceptionAttributes
@@ -137,7 +138,7 @@ internal class EmbraceSpanImpl(
                 populateLinks(spanToStop)
 
                 if (errorCode != null) {
-                    setStatus(StatusCode.ERROR)
+                    setStatus(StatusCode.Error(null))
                     spanToStop.setFixedAttribute(errorCode.fromErrorCode())
                 } else if (status == Span.Status.ERROR) {
                     spanToStop.setFixedAttribute(ErrorCodeAttribute.Failure)
@@ -216,7 +217,7 @@ internal class EmbraceSpanImpl(
         startedSpan.get()?.let { sdkSpan ->
             synchronized(startedSpan) {
                 status = statusCode.toStatus()
-                sdkSpan.setStatus(statusCode, description)
+                sdkSpan.setStatus(statusCode.toOtelJava(), description)
                 spanRepository.notifySpanUpdate()
             }
         }

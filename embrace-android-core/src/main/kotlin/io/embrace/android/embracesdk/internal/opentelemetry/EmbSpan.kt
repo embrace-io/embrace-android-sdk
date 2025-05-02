@@ -45,7 +45,7 @@ class EmbSpan(
 
     override fun setStatus(statusCode: StatusCode, description: String): Span {
         if (isRecording) {
-            embraceSpan.setStatus(statusCode, description)
+            embraceSpan.setStatus(statusCode.toOtelKotlin(), description)
         }
         return this
     }

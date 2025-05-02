@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.spans
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.payload.Link
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
-import io.opentelemetry.api.trace.StatusCode
+import io.embrace.opentelemetry.kotlin.StatusCode
 import io.opentelemetry.sdk.trace.data.EventData
 
 /**
@@ -22,7 +22,7 @@ data class EmbraceSpanData(
 
     val endTimeNanos: Long,
 
-    val status: StatusCode = StatusCode.UNSET,
+    val status: StatusCode = StatusCode.Unset,
 
     val events: List<EmbraceSpanEvent> = emptyList(),
 

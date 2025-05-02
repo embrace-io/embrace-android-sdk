@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.arch.assertNotPrivateSpan
 import io.embrace.android.embracesdk.arch.assertSuccessful
 import io.embrace.android.embracesdk.fakes.FakeSpanData
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
+import io.embrace.android.embracesdk.internal.opentelemetry.toOtelJava
 import io.embrace.android.embracesdk.internal.spans.toEmbraceSpanData
 import io.embrace.android.embracesdk.spans.ErrorCode
 import org.junit.Assert.assertEquals
@@ -24,7 +25,7 @@ internal class SpanMapperTest {
         assertEquals(input.name, output.name)
         assertEquals(input.startTimeNanos, output.startTimeNanos)
         assertEquals(input.endTimeNanos, output.endTimeNanos)
-        assertEquals(input.status.name, checkNotNull(output.status).name)
+        assertEquals(input.status.toOtelJava().name, checkNotNull(output.status).name)
 
         // validate event copied
         val inputEvent = input.events.single()

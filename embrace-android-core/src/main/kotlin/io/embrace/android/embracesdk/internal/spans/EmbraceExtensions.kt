@@ -11,10 +11,10 @@ import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
 import io.embrace.android.embracesdk.internal.utils.isBlankish
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
+import io.embrace.opentelemetry.kotlin.StatusCode
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.AttributesBuilder
 import io.opentelemetry.api.logs.LogRecordBuilder
-import io.opentelemetry.api.trace.StatusCode
 import io.opentelemetry.semconv.ExceptionAttributes
 
 /**
@@ -94,9 +94,9 @@ private val longValueAttributes: Set<String> = setOf(ExceptionAttributes.EXCEPTI
 
 fun StatusCode.toStatus(): Span.Status {
     return when (this) {
-        StatusCode.UNSET -> io.embrace.android.embracesdk.internal.payload.Span.Status.UNSET
-        StatusCode.OK -> io.embrace.android.embracesdk.internal.payload.Span.Status.OK
-        StatusCode.ERROR -> io.embrace.android.embracesdk.internal.payload.Span.Status.ERROR
+        StatusCode.Unset -> io.embrace.android.embracesdk.internal.payload.Span.Status.UNSET
+        StatusCode.Ok -> io.embrace.android.embracesdk.internal.payload.Span.Status.OK
+        is StatusCode.Error -> io.embrace.android.embracesdk.internal.payload.Span.Status.ERROR
     }
 }
 

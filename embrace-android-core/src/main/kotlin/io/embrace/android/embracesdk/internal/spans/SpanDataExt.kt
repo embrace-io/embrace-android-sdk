@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.spans
 
+import io.embrace.android.embracesdk.internal.opentelemetry.toOtelKotlin
 import io.embrace.android.embracesdk.internal.payload.Link
 import io.embrace.android.embracesdk.internal.payload.toNewPayload
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData.Companion.fromEventData
@@ -12,7 +13,7 @@ fun SpanData.toEmbraceSpanData(): EmbraceSpanData = EmbraceSpanData(
     name = name,
     startTimeNanos = startEpochNanos,
     endTimeNanos = endEpochNanos,
-    status = status.statusCode,
+    status = status.statusCode.toOtelKotlin(),
     events = fromEventData(eventDataList = events),
     attributes = attributes.toStringMap(),
     links = links.map { Link(it.spanContext.spanId, it.attributes.toNewPayload()) }

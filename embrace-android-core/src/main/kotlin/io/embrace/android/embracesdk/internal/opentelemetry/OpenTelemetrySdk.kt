@@ -58,8 +58,6 @@ internal class OpenTelemetrySdk(
         }
     }
 
-    fun getOpenTelemetryLogger(): io.embrace.opentelemetry.kotlin.logging.Logger = logger
-
     private val resource: Resource by lazy {
         configuration.resourceBuilder.build()
     }
@@ -82,15 +80,7 @@ internal class OpenTelemetrySdk(
     }
 
     @OptIn(ExperimentalApi::class)
-    private val api: OpenTelemetry by lazy {
+    val kotlinApi: OpenTelemetry by lazy {
         io.embrace.opentelemetry.kotlin.k2j.OpenTelemetrySdk(sdk)
-    }
-
-    private val logger: io.embrace.opentelemetry.kotlin.logging.Logger by lazy {
-        Systrace.traceSynchronous("otel-logger-init") {
-            api.loggerProvider.getLogger(
-                name = configuration.embraceSdkName
-            )
-        }
     }
 }

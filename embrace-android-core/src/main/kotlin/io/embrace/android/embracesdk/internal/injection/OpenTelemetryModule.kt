@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.internal.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.spans.SpanService
 import io.embrace.android.embracesdk.internal.spans.SpanSink
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
+import io.embrace.opentelemetry.kotlin.logging.Logger
 import io.opentelemetry.api.OpenTelemetry
 import io.opentelemetry.api.trace.Tracer
 import io.opentelemetry.api.trace.TracerProvider
@@ -68,7 +69,7 @@ interface OpenTelemetryModule {
     /**
      * An instance of the OpenTelemetry component obtained from the wrapped SDK to create log records
      */
-    val logger: io.embrace.opentelemetry.kotlin.logging.Logger
+    val logger: Logger
 
     /**
      * Provides storage for completed logs that have not been forwarded yet to the delivery service

@@ -493,7 +493,7 @@ internal class EmbraceSpanImplTest {
     )
 
     private fun createEmbraceSpanImpl(
-        spanBuilder: EmbraceSpanBuilder,
+        spanBuilder: OtelSpanBuilderWrapper,
         clock: Clock = openTelemetryClock,
     ) = EmbraceSpanImpl(
         spanBuilder = spanBuilder,

@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.opentelemetry
 
 import io.embrace.android.embracesdk.fakes.FakeClock
-import io.embrace.android.embracesdk.fakes.FakePersistableEmbraceSpan
+import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
@@ -23,14 +23,14 @@ import java.util.concurrent.TimeUnit
 internal class EmbSpanTest {
     private lateinit var fakeClock: FakeClock
     private lateinit var openTelemetryClock: Clock
-    private lateinit var fakeEmbraceSpan: FakePersistableEmbraceSpan
+    private lateinit var fakeEmbraceSpan: FakeEmbraceSdkSpan
     private lateinit var embSpan: EmbSpan
 
     @Before
     fun setup() {
         fakeClock = FakeClock()
         openTelemetryClock = FakeInitModule(fakeClock).openTelemetryModule.openTelemetryClock
-        fakeEmbraceSpan = FakePersistableEmbraceSpan.started(clock = fakeClock)
+        fakeEmbraceSpan = FakeEmbraceSdkSpan.started(clock = fakeClock)
         embSpan = EmbSpan(
             embraceSpan = fakeEmbraceSpan,
             clock = openTelemetryClock
@@ -180,7 +180,7 @@ internal class EmbSpanTest {
     @Test
     fun `add span link`() {
         with(embSpan) {
-            val linkedSpanContext = checkNotNull(FakePersistableEmbraceSpan.started().spanContext)
+            val linkedSpanContext = checkNotNull(FakeEmbraceSdkSpan.started().spanContext)
             addLink(linkedSpanContext, Attributes.builder().put("boolean", true).build())
             with(fakeEmbraceSpan.links.single()) {
                 assertEquals(linkedSpanContext.spanId, spanId)

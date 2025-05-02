@@ -9,7 +9,7 @@ import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.opentelemetry.embStartupActivityName
 import io.embrace.android.embracesdk.internal.otel.attrs.asOtelAttributeKey
 import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateListener
-import io.embrace.android.embracesdk.internal.spans.PersistableEmbraceSpan
+import io.embrace.android.embracesdk.internal.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.spans.SpanService
 import io.embrace.android.embracesdk.internal.ui.hasRenderEvent
 import io.embrace.android.embracesdk.internal.ui.supportFrameCommitCallback
@@ -58,7 +58,7 @@ internal class AppStartupTraceEmitter(
     private val customAttributes: MutableMap<String, String> = ConcurrentHashMap()
     private val trackRender = hasRenderEvent(versionChecker)
     private val trackFrameCommit = supportFrameCommitCallback(versionChecker)
-    private val appStartupRootSpan = AtomicReference<PersistableEmbraceSpan?>(null)
+    private val appStartupRootSpan = AtomicReference<EmbraceSdkSpan?>(null)
     private val dataCollectionComplete = AtomicBoolean(false)
     private val traceEnd = if (manualEnd) {
         TraceEnd.READY
@@ -426,7 +426,7 @@ internal class AppStartupTraceEmitter(
 
     private fun nowMs(): Long = clock.now().nanosToMillis()
 
-    private fun PersistableEmbraceSpan.addTraceMetadata() {
+    private fun EmbraceSdkSpan.addTraceMetadata() {
         addCustomAttributes()
 
         startupActivityName?.let { name ->
@@ -434,7 +434,7 @@ internal class AppStartupTraceEmitter(
         }
     }
 
-    private fun PersistableEmbraceSpan.addCustomAttributes() {
+    private fun EmbraceSdkSpan.addCustomAttributes() {
         customAttributes.forEach {
             addAttribute(it.key, it.value)
         }

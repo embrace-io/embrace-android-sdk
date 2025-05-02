@@ -41,7 +41,7 @@ internal class SpanServiceImpl(
         type: TelemetryType,
         internal: Boolean,
         private: Boolean,
-    ): PersistableEmbraceSpan? {
+    ): EmbraceSdkSpan? {
         EmbTrace.trace("span-create") {
             return if (limits.isNameValid(name, internal) && currentSessionSpan.canStartNewSpan(parent, internal)) {
                 embraceSpanFactory.create(
@@ -58,13 +58,13 @@ internal class SpanServiceImpl(
         }
     }
 
-    override fun createSpan(embraceSpanBuilder: EmbraceSpanBuilder): PersistableEmbraceSpan? {
+    override fun createSpan(otelSpanBuilderWrapper: OtelSpanBuilderWrapper): EmbraceSdkSpan? {
         EmbTrace.trace("span-create") {
             return if (
-                limits.isNameValid(embraceSpanBuilder.spanName, embraceSpanBuilder.internal) &&
-                currentSessionSpan.canStartNewSpan(embraceSpanBuilder.getParentSpan(), embraceSpanBuilder.internal)
+                limits.isNameValid(otelSpanBuilderWrapper.spanName, otelSpanBuilderWrapper.internal) &&
+                currentSessionSpan.canStartNewSpan(otelSpanBuilderWrapper.getParentSpan(), otelSpanBuilderWrapper.internal)
             ) {
-                embraceSpanFactory.create(embraceSpanBuilder)
+                embraceSpanFactory.create(otelSpanBuilderWrapper)
             } else {
                 null
             }

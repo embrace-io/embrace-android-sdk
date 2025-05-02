@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.internal.spans
 
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakePayloadCachingService
-import io.embrace.android.embracesdk.fakes.FakePersistableEmbraceSpan
+import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
 import io.embrace.android.embracesdk.fakes.FakeTracer
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.config.FakeRedactionConfig
@@ -102,7 +102,7 @@ internal class EmbraceSpanFactoryImplTest {
 
     @Test
     fun `span creation with embrace span builder`() {
-        val spanParent = FakePersistableEmbraceSpan.started()
+        val spanParent = FakeEmbraceSdkSpan.started()
         val spanBuilder = tracer.embraceSpanBuilder(
             name = "from-span-builder",
             type = EmbType.System.LowPower,
@@ -111,7 +111,7 @@ internal class EmbraceSpanFactoryImplTest {
             parent = spanParent,
         )
 
-        with(embraceSpanFactory.create(embraceSpanBuilder = spanBuilder)) {
+        with(embraceSpanFactory.create(otelSpanBuilderWrapper = spanBuilder)) {
             assertTrue(start(clock.now()))
             assertTrue(hasEmbraceAttribute(EmbType.System.LowPower))
             assertEquals(spanParent, parent)

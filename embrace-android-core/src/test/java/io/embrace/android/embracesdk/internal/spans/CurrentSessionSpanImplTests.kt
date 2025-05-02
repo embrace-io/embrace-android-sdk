@@ -6,7 +6,7 @@ import io.embrace.android.embracesdk.arch.assertIsType
 import io.embrace.android.embracesdk.assertions.assertEmbraceSpanData
 import io.embrace.android.embracesdk.assertions.findEventOfType
 import io.embrace.android.embracesdk.fakes.FakeClock
-import io.embrace.android.embracesdk.fakes.FakePersistableEmbraceSpan
+import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.arch.destination.SpanAttributeData
 import io.embrace.android.embracesdk.internal.arch.schema.AppTerminationCause
@@ -124,7 +124,7 @@ internal class CurrentSessionSpanImplTests {
         repeat(SpanServiceImpl.MAX_NON_INTERNAL_SPANS_PER_SESSION) {
             assertNotNull(
                 spanService.createSpan(
-                    embraceSpanBuilder = tracer.embraceSpanBuilder(
+                    otelSpanBuilderWrapper = tracer.embraceSpanBuilder(
                         name = "external-span",
                         type = EmbType.Performance.Default,
                         parent = null,
@@ -136,7 +136,7 @@ internal class CurrentSessionSpanImplTests {
         }
         assertNull(
             spanService.createSpan(
-                embraceSpanBuilder = tracer.embraceSpanBuilder(
+                otelSpanBuilderWrapper = tracer.embraceSpanBuilder(
                     name = "external-span",
                     type = EmbType.Performance.Default,
                     parent = null,
@@ -147,7 +147,7 @@ internal class CurrentSessionSpanImplTests {
         )
         assertNotNull(
             spanService.createSpan(
-                embraceSpanBuilder = tracer.embraceSpanBuilder(
+                otelSpanBuilderWrapper = tracer.embraceSpanBuilder(
                     name = "internal-span",
                     type = EmbType.Performance.Default,
                     parent = null,
@@ -557,7 +557,7 @@ internal class CurrentSessionSpanImplTests {
     }
 
     private class BadEmbraceSpanFactory : EmbraceSpanFactory {
-        private val stoppedSpan = FakePersistableEmbraceSpan.stopped()
+        private val stoppedSpan = FakeEmbraceSdkSpan.stopped()
         override fun create(
             name: String,
             type: TelemetryType,
@@ -565,9 +565,9 @@ internal class CurrentSessionSpanImplTests {
             private: Boolean,
             autoTerminationMode: AutoTerminationMode,
             parent: EmbraceSpan?,
-        ): PersistableEmbraceSpan = stoppedSpan
+        ): EmbraceSdkSpan = stoppedSpan
 
-        override fun create(embraceSpanBuilder: EmbraceSpanBuilder) = stoppedSpan
+        override fun create(otelSpanBuilderWrapper: OtelSpanBuilderWrapper) = stoppedSpan
         override fun setupSensitiveKeysBehavior(sensitiveKeysBehavior: SensitiveKeysBehavior) {
             // no-op
         }

@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.opentelemetry
 
-import io.embrace.android.embracesdk.internal.spans.EmbraceSpanBuilder
+import io.embrace.android.embracesdk.internal.spans.OtelSpanBuilderWrapper
 import io.embrace.android.embracesdk.internal.spans.SpanService
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
@@ -13,18 +13,18 @@ import io.opentelemetry.sdk.common.Clock
 import java.util.concurrent.TimeUnit
 
 class EmbSpanBuilder(
-    private val embraceSpanBuilder: EmbraceSpanBuilder,
+    private val otelSpanBuilderWrapper: OtelSpanBuilderWrapper,
     private val spanService: SpanService,
     private val clock: Clock,
 ) : SpanBuilder {
 
     override fun setParent(context: Context): SpanBuilder {
-        embraceSpanBuilder.setParentContext(context)
+        otelSpanBuilderWrapper.setParentContext(context)
         return this
     }
 
     override fun setNoParent(): SpanBuilder {
-        embraceSpanBuilder.setNoParent()
+        otelSpanBuilderWrapper.setNoParent()
         return this
     }
 
@@ -33,7 +33,7 @@ class EmbSpanBuilder(
     override fun addLink(spanContext: SpanContext, attributes: Attributes): SpanBuilder = this
 
     override fun setAttribute(key: String, value: String): SpanBuilder {
-        embraceSpanBuilder.setCustomAttribute(key, value)
+        otelSpanBuilderWrapper.setCustomAttribute(key, value)
         return this
     }
 
@@ -47,17 +47,17 @@ class EmbSpanBuilder(
         setAttribute(key.key, value.toString())
 
     override fun setSpanKind(spanKind: SpanKind): SpanBuilder {
-        embraceSpanBuilder.setSpanKind(spanKind)
+        otelSpanBuilderWrapper.setSpanKind(spanKind)
         return this
     }
 
     override fun setStartTimestamp(startTimestamp: Long, unit: TimeUnit): SpanBuilder {
-        embraceSpanBuilder.startTimeMs = unit.toMillis(startTimestamp)
+        otelSpanBuilderWrapper.startTimeMs = unit.toMillis(startTimestamp)
         return this
     }
 
     override fun startSpan(): Span {
-        spanService.createSpan(embraceSpanBuilder)?.let { embraceSpan ->
+        spanService.createSpan(otelSpanBuilderWrapper)?.let { embraceSpan ->
             if (embraceSpan.start()) {
                 return EmbSpan(
                     embraceSpan = embraceSpan,

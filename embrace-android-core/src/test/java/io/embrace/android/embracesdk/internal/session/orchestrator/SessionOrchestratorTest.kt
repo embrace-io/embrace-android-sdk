@@ -35,7 +35,7 @@ import io.embrace.android.embracesdk.internal.opentelemetry.embCrashId
 import io.embrace.android.embracesdk.internal.payload.LifeEventType
 import io.embrace.android.embracesdk.internal.session.caching.PeriodicSessionCacher
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactoryImpl
-import io.embrace.android.embracesdk.internal.spans.PersistableEmbraceSpan
+import io.embrace.android.embracesdk.internal.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -453,7 +453,7 @@ internal class SessionOrchestratorTest {
     }
 
     private fun validateSession(
-        sessionSpan: PersistableEmbraceSpan?,
+        sessionSpan: EmbraceSdkSpan?,
         endTimeMs: Long,
         endType: LifeEventType,
     ) {

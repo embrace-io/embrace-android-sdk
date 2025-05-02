@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.opentelemetry
 
-import io.embrace.android.embracesdk.internal.spans.PersistableEmbraceSpan
+import io.embrace.android.embracesdk.internal.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.spans.toStringMap
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
@@ -13,7 +13,7 @@ import io.opentelemetry.sdk.common.Clock
 import java.util.concurrent.TimeUnit
 
 class EmbSpan(
-    private val embraceSpan: PersistableEmbraceSpan,
+    private val embraceSpan: EmbraceSdkSpan,
     private val clock: Clock,
 ) : Span {
 

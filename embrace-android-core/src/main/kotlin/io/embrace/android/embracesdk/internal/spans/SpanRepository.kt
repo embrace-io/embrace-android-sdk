@@ -12,15 +12,15 @@ import java.util.concurrent.atomic.AtomicInteger
  * Allows the tracking of [EmbraceSpan] instances so that their references can be retrieved with its associated spanId
  */
 class SpanRepository {
-    private val activeSpans: MutableMap<String, PersistableEmbraceSpan> = ConcurrentHashMap()
-    private val completedSpans: MutableMap<String, PersistableEmbraceSpan> = ConcurrentHashMap()
+    private val activeSpans: MutableMap<String, EmbraceSdkSpan> = ConcurrentHashMap()
+    private val completedSpans: MutableMap<String, EmbraceSdkSpan> = ConcurrentHashMap()
     private val spanIdsInProcess: MutableMap<String, AtomicInteger> = ConcurrentHashMap()
     private var spanUpdateNotifier: (() -> Unit)? = null
 
     /**
      * Track the [EmbraceSpan] if it has been started and it's not already tracked.
      */
-    fun trackStartedSpan(embraceSpan: PersistableEmbraceSpan) {
+    fun trackStartedSpan(embraceSpan: EmbraceSdkSpan) {
         val spanId = embraceSpan.spanId ?: return
 
         if (notTracked(spanId)) {
@@ -58,14 +58,14 @@ class SpanRepository {
     /**
      * Get a list of active spans that are being tracked
      */
-    fun getActiveSpans(): List<PersistableEmbraceSpan> = synchronized(spanIdsInProcess) {
+    fun getActiveSpans(): List<EmbraceSdkSpan> = synchronized(spanIdsInProcess) {
         activeSpans.values.toList()
     }
 
     /**
      * Get a list of completed spans that are being tracked.
      */
-    fun getCompletedSpans(): List<PersistableEmbraceSpan> = synchronized(spanIdsInProcess) {
+    fun getCompletedSpans(): List<EmbraceSdkSpan> = synchronized(spanIdsInProcess) {
         completedSpans.values.toList()
     }
 

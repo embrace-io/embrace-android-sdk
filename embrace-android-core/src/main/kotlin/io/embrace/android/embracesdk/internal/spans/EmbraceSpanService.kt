@@ -50,7 +50,7 @@ internal class EmbraceSpanService(
         type: TelemetryType,
         internal: Boolean,
         private: Boolean,
-    ): PersistableEmbraceSpan? =
+    ): EmbraceSdkSpan? =
         currentDelegate.createSpan(
             name = name,
             autoTerminationMode = autoTerminationMode,
@@ -60,9 +60,9 @@ internal class EmbraceSpanService(
             private = private
         )
 
-    override fun createSpan(embraceSpanBuilder: EmbraceSpanBuilder): PersistableEmbraceSpan? =
+    override fun createSpan(otelSpanBuilderWrapper: OtelSpanBuilderWrapper): EmbraceSdkSpan? =
         currentDelegate.createSpan(
-            embraceSpanBuilder
+            otelSpanBuilderWrapper
         )
 
     override fun <T> recordSpan(

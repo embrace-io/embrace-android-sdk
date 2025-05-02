@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.internal.capture.activity
 
 import android.app.Application.ActivityLifecycleCallbacks
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
-import io.embrace.android.embracesdk.internal.spans.PersistableEmbraceSpan
+import io.embrace.android.embracesdk.internal.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.spans.SpanService
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
@@ -322,8 +322,8 @@ class UiLoadTraceEmitter(
     private data class UiLoadTrace(
         val activityName: String,
         val traceCompleteTrigger: TraceCompleteTrigger,
-        val root: PersistableEmbraceSpan,
-        val children: Map<LifecycleStage, PersistableEmbraceSpan> = ConcurrentHashMap(),
+        val root: EmbraceSdkSpan,
+        val children: Map<LifecycleStage, EmbraceSdkSpan> = ConcurrentHashMap(),
     )
 
     private data class UiInstance(val name: String, val id: Int)

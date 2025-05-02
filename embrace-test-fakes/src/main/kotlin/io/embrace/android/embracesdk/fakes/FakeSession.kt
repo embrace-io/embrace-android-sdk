@@ -24,7 +24,7 @@ fun fakeSessionEnvelope(
     endMs: Long = 161000400000L,
     sessionProperties: Map<String, String>? = null,
 ): Envelope<SessionPayload> {
-    val sessionSpan = FakePersistableEmbraceSpan.sessionSpan(
+    val sessionSpan = FakeEmbraceSdkSpan.sessionSpan(
         sessionId = sessionId,
         startTimeMs = startMs,
         lastHeartbeatTimeMs = endMs,
@@ -32,7 +32,7 @@ fun fakeSessionEnvelope(
         sessionProperties = sessionProperties,
     )
     val spans = listOf(testSpan, checkNotNull(sessionSpan.snapshot()))
-    val spanSnapshots = listOfNotNull(FakePersistableEmbraceSpan.started().snapshot())
+    val spanSnapshots = listOfNotNull(FakeEmbraceSdkSpan.started().snapshot())
 
     return Envelope(
         resource = fakeEnvelopeResource,
@@ -56,7 +56,7 @@ fun fakeIncompleteSessionEnvelope(
     metadata: EnvelopeMetadata = fakeEnvelopeMetadata,
 ): Envelope<SessionPayload> {
     val fakeClock = FakeClock(currentTime = startMs)
-    val incompleteSessionSpan = FakePersistableEmbraceSpan.sessionSpan(
+    val incompleteSessionSpan = FakeEmbraceSdkSpan.sessionSpan(
         sessionId = sessionId,
         startTimeMs = startMs,
         lastHeartbeatTimeMs = lastHeartbeatTimeMs,
@@ -71,7 +71,7 @@ fun fakeIncompleteSessionEnvelope(
         data = SessionPayload(
             spanSnapshots = listOfNotNull(
                 incompleteSessionSpan.snapshot(),
-                FakePersistableEmbraceSpan.started(clock = fakeClock).snapshot()
+                FakeEmbraceSdkSpan.started(clock = fakeClock).snapshot()
             )
         )
     )

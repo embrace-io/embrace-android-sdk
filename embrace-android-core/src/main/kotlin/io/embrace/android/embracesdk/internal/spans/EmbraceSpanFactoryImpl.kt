@@ -22,8 +22,8 @@ internal class EmbraceSpanFactoryImpl(
         private: Boolean,
         autoTerminationMode: AutoTerminationMode,
         parent: EmbraceSpan?,
-    ): PersistableEmbraceSpan = create(
-        embraceSpanBuilder = tracer.embraceSpanBuilder(
+    ): EmbraceSdkSpan = create(
+        otelSpanBuilderWrapper = tracer.embraceSpanBuilder(
             name = name,
             type = type,
             internal = internal,
@@ -33,9 +33,9 @@ internal class EmbraceSpanFactoryImpl(
         )
     )
 
-    override fun create(embraceSpanBuilder: EmbraceSpanBuilder): PersistableEmbraceSpan =
+    override fun create(otelSpanBuilderWrapper: OtelSpanBuilderWrapper): EmbraceSdkSpan =
         EmbraceSpanImpl(
-            spanBuilder = embraceSpanBuilder,
+            spanBuilder = otelSpanBuilderWrapper,
             openTelemetryClock = openTelemetryClock,
             spanRepository = spanRepository,
             sensitiveKeysBehavior = sensitiveKeysBehavior

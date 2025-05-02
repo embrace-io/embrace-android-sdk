@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.spans
 
 import io.embrace.android.embracesdk.fakes.FakeClock
-import io.embrace.android.embracesdk.fakes.FakePersistableEmbraceSpan
+import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
 import io.embrace.android.embracesdk.fakes.FakeSpan
 import io.embrace.android.embracesdk.fakes.FakeTracer
 import io.embrace.android.embracesdk.fixtures.fakeContextKey
@@ -15,7 +15,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
-internal class EmbraceSpanBuilderTest {
+internal class OtelSpanBuilderWrapperTest {
     private val clock = FakeClock()
     private lateinit var tracer: FakeTracer
 
@@ -26,7 +26,7 @@ internal class EmbraceSpanBuilderTest {
 
     @Test
     fun `check private and internal span creation`() {
-        val spanBuilder = EmbraceSpanBuilder(
+        val spanBuilder = OtelSpanBuilderWrapper(
             tracer = tracer,
             name = "test",
             telemetryType = EmbType.Performance.Default,
@@ -51,7 +51,7 @@ internal class EmbraceSpanBuilderTest {
 
     @Test
     fun `add parent after initial creation`() {
-        val spanBuilder = EmbraceSpanBuilder(
+        val spanBuilder = OtelSpanBuilderWrapper(
             tracer = tracer,
             name = "test",
             telemetryType = EmbType.Performance.Default,
@@ -59,7 +59,7 @@ internal class EmbraceSpanBuilderTest {
             private = false,
             parentSpan = null,
         )
-        val parent = FakePersistableEmbraceSpan.started()
+        val parent = FakeEmbraceSdkSpan.started()
         val parentContext = checkNotNull(parent.asNewContext()?.with(fakeContextKey, "value"))
         spanBuilder.setParentContext(parentContext)
         val startTime = clock.now()
@@ -73,9 +73,9 @@ internal class EmbraceSpanBuilderTest {
 
     @Test
     fun `remove parent after initial creation`() {
-        val parent = FakePersistableEmbraceSpan.started()
+        val parent = FakeEmbraceSdkSpan.started()
         val startTime = clock.now()
-        val spanBuilder = EmbraceSpanBuilder(
+        val spanBuilder = OtelSpanBuilderWrapper(
             tracer = tracer,
             name = "test",
             telemetryType = EmbType.Performance.Default,
@@ -92,7 +92,7 @@ internal class EmbraceSpanBuilderTest {
             )
         }
 
-        val uxSpanBuilder = EmbraceSpanBuilder(
+        val uxSpanBuilder = OtelSpanBuilderWrapper(
             tracer = tracer,
             name = "ux-test",
             telemetryType = EmbType.Ux.View,
@@ -112,7 +112,7 @@ internal class EmbraceSpanBuilderTest {
 
     @Test
     fun `add span kind`() {
-        val spanBuilder = EmbraceSpanBuilder(
+        val spanBuilder = OtelSpanBuilderWrapper(
             tracer = tracer,
             name = "test",
             telemetryType = EmbType.Performance.Default,
@@ -131,7 +131,7 @@ internal class EmbraceSpanBuilderTest {
 
     @Test
     fun `custom attribute setting`() {
-        val spanBuilder = EmbraceSpanBuilder(
+        val spanBuilder = OtelSpanBuilderWrapper(
             tracer = tracer,
             name = "test",
             telemetryType = EmbType.Performance.Default,
@@ -146,7 +146,7 @@ internal class EmbraceSpanBuilderTest {
     @Test
     fun `context value propagated even if it does not context a span`() {
         val fakeRootContext = Context.root().with(fakeContextKey, "fake-value")
-        val spanBuilder = EmbraceSpanBuilder(
+        val spanBuilder = OtelSpanBuilderWrapper(
             tracer = tracer,
             name = "parent",
             telemetryType = EmbType.Performance.Default,

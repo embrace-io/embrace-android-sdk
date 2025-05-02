@@ -53,15 +53,15 @@ class LogWriterImpl(
                         BACKGROUND_STATE
                     }
                 }
-                setStringAttribute(embState.attributeKey.key, sessionState ?: processStateService.getAppState())
+                setStringAttribute(embState.attributeKey, sessionState ?: processStateService.getAppState())
             }
 
             if (isPrivate) {
-                setStringAttribute(PrivateSpan.key.attributeKey.key, PrivateSpan.value)
+                setStringAttribute(PrivateSpan.key.attributeKey, PrivateSpan.value)
             }
 
             with(schemaType) {
-                setStringAttribute(telemetryType.key.attributeKey.key, telemetryType.value)
+                setStringAttribute(telemetryType.key.attributeKey, telemetryType.value)
                 attributes().forEach {
                     setStringAttribute(it.key, it.value)
                 }

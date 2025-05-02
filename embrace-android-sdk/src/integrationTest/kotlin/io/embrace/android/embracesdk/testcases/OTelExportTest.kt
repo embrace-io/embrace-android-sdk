@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.fakes.FakeSpanExporter
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
+import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.semconv.ServiceAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -84,7 +85,7 @@ internal class OTelExportTest {
                 }
             },
             otelExportAssertion = {
-                val log = awaitLogs(1) { it.attributes.get(EmbType.System.Log.key.attributeKey) == EmbType.System.Log.value }
+                val log = awaitLogs(1) { it.attributes.get(AttributeKey.stringKey(EmbType.System.Log.key.attributeKey)) == EmbType.System.Log.value }
                 with(log.single()) {
                     assertEquals("test message", body.asString())
                     assertEquals(logTimestampNanos, timestampEpochNanos)

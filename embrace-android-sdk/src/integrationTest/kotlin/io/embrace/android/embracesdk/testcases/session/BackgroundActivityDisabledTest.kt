@@ -84,7 +84,7 @@ internal class BackgroundActivityDisabledTest {
                     assertEquals("error", body)
                     attributes?.assertMatches(
                         mapOf(
-                            embState.attributeKey.key to "background"
+                            embState.attributeKey to "background"
                         )
                     )
                     assertNull(attributes?.findAttributeValue(SessionIncubatingAttributes.SESSION_ID.key))
@@ -93,7 +93,7 @@ internal class BackgroundActivityDisabledTest {
                     assertEquals("info", body)
                     attributes?.assertMatches(
                         mapOf(
-                            embState.attributeKey.key to "background"
+                            embState.attributeKey to "background"
                         )
                     )
                     assertNull(attributes?.findAttributeValue(SessionIncubatingAttributes.SESSION_ID.key))
@@ -102,7 +102,7 @@ internal class BackgroundActivityDisabledTest {
                     assertEquals("warning", body)
                     attributes?.assertMatches(
                         mapOf(
-                            embState.attributeKey.key to "foreground",
+                            embState.attributeKey to "foreground",
                             SessionIncubatingAttributes.SESSION_ID.key to sessions[1].getSessionId()
                         )
                     )
@@ -113,7 +113,7 @@ internal class BackgroundActivityDisabledTest {
                     assertEquals("sent-after-session", body)
                     attributes?.assertMatches(
                         mapOf(
-                            embState.attributeKey.key to "foreground",
+                            embState.attributeKey to "foreground",
                             SessionIncubatingAttributes.SESSION_ID.key to secondSession.getSessionId()
                         )
                     )
@@ -197,8 +197,8 @@ internal class BackgroundActivityDisabledTest {
                 )
 
                 assertEquals(
-                    sessionSpan1.attributes?.findAttributeValue(embProcessIdentifier.attributeKey.key),
-                    sessionSpan2.attributes?.findAttributeValue(embProcessIdentifier.attributeKey.key)
+                    sessionSpan1.attributes?.findAttributeValue(embProcessIdentifier.attributeKey),
+                    sessionSpan2.attributes?.findAttributeValue(embProcessIdentifier.attributeKey)
                 )
             }
         )
@@ -215,18 +215,18 @@ internal class BackgroundActivityDisabledTest {
         assertEquals(endMs, endTimeNanos?.nanosToMillis())
         attributes?.assertMatches(
             mapOf(
-                embSessionNumber.attributeKey.key to sessionNumber,
-                embSequenceId.attributeKey.key to sequenceId,
-                embColdStart.attributeKey.key to coldStart,
-                embState.attributeKey.key to "foreground",
-                embCleanExit.attributeKey.key to "true",
-                embTerminated.attributeKey.key to "false",
-                embSessionStartType.attributeKey.key to "state",
-                embSessionEndType.attributeKey.key to "state",
+                embSessionNumber.attributeKey to sessionNumber,
+                embSequenceId.attributeKey to sequenceId,
+                embColdStart.attributeKey to coldStart,
+                embState.attributeKey to "foreground",
+                embCleanExit.attributeKey to "true",
+                embTerminated.attributeKey to "false",
+                embSessionStartType.attributeKey to "state",
+                embSessionEndType.attributeKey to "state",
             )
         )
         with(checkNotNull(attributes)) {
-            assertFalse(findAttributeValue(embProcessIdentifier.attributeKey.key).isNullOrBlank())
+            assertFalse(findAttributeValue(embProcessIdentifier.attributeKey).isNullOrBlank())
             assertFalse(findAttributeValue(SessionIncubatingAttributes.SESSION_ID.key).isNullOrBlank())
         }
     }

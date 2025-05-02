@@ -82,7 +82,7 @@ internal class CurrentSessionSpanImpl(
     }
 
     override fun getSessionId(): String {
-        return sessionSpan.get()?.getSystemAttribute(SessionIncubatingAttributes.SESSION_ID) ?: ""
+        return sessionSpan.get()?.getSystemAttribute(SessionIncubatingAttributes.SESSION_ID.key) ?: ""
     }
 
     override fun readySession(): Boolean {
@@ -175,7 +175,7 @@ internal class CurrentSessionSpanImpl(
             private = false,
         ).apply {
             start(startTimeMs = startTimeMs)
-            setSystemAttribute(SessionIncubatingAttributes.SESSION_ID, Uuid.getEmbUuid())
+            setSystemAttribute(SessionIncubatingAttributes.SESSION_ID.key, Uuid.getEmbUuid())
         }
     }
 

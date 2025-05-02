@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.spans
 
 import io.embrace.android.embracesdk.internal.arch.schema.EmbraceAttributeKey
 import io.embrace.android.embracesdk.internal.arch.schema.FixedAttribute
+import io.embrace.android.embracesdk.internal.opentelemetry.toOtelJavaAttributeKey
 import io.embrace.opentelemetry.kotlin.logging.SeverityNumber
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
@@ -53,7 +54,7 @@ internal fun Span.setFixedAttribute(fixedAttribute: FixedAttribute): Span =
     setEmbraceAttribute(fixedAttribute.key, fixedAttribute.value)
 
 internal fun SpanData.hasFixedAttribute(fixedAttribute: FixedAttribute): Boolean =
-    attributes.asMap()[fixedAttribute.key.attributeKey] == fixedAttribute.value
+    attributes.asMap()[fixedAttribute.key.attributeKey.toOtelJavaAttributeKey()] == fixedAttribute.value
 
 fun LogRecordData.hasFixedAttribute(fixedAttribute: FixedAttribute): Boolean =
-    attributes[fixedAttribute.key.attributeKey] == fixedAttribute.value
+    attributes[fixedAttribute.key.attributeKey.toOtelJavaAttributeKey()] == fixedAttribute.value

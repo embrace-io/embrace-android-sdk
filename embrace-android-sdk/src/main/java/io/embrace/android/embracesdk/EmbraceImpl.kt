@@ -46,7 +46,6 @@ import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.spans.TracingApi
-import io.opentelemetry.api.common.AttributeKey
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -275,7 +274,7 @@ internal class EmbraceImpl @JvmOverloads constructor(
         logExceptionType: LogExceptionType = LogExceptionType.NONE,
         exceptionName: String? = null,
         exceptionMessage: String? = null,
-        customLogAttrs: Map<AttributeKey<String>, String> = emptyMap(),
+        customLogAttrs: Map<String, String> = emptyMap(),
     ) {
         logsApiDelegate.logMessageImpl(
             severity = severity,

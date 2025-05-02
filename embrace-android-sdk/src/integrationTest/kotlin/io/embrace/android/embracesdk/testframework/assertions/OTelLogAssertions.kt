@@ -38,7 +38,7 @@ internal fun assertOtelLogReceived(
         assertEquals(expectedTimeMs.millisToNanos(), log.timeUnixNano)
         assertFalse(log.attributes?.findAttributeValue(SessionIncubatingAttributes.SESSION_ID.key).isNullOrBlank())
         expectedType?.let { assertAttribute(log, embExceptionHandling.name, it) }
-        assertEquals(expectedState, log.attributes?.findAttributeValue(embState.attributeKey.key))
+        assertEquals(expectedState, log.attributes?.findAttributeValue(embState.attributeKey))
         expectedExceptionName?.let {
             assertAttribute(log, ExceptionAttributes.EXCEPTION_TYPE.key, expectedExceptionName)
         }

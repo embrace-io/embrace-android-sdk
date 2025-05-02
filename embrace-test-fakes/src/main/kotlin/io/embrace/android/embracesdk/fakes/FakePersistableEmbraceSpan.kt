@@ -24,7 +24,6 @@ import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.opentelemetry.kotlin.StatusCode
-import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.trace.SpanContext
 import io.opentelemetry.context.Context
 import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes
@@ -170,10 +169,10 @@ class FakePersistableEmbraceSpan(
     override fun hasFixedAttribute(fixedAttribute: FixedAttribute): Boolean =
         attributes.hasFixedAttribute(fixedAttribute)
 
-    override fun getSystemAttribute(key: AttributeKey<String>): String? = attributes[key.key]
+    override fun getSystemAttribute(key: String): String? = attributes[key]
 
-    override fun setSystemAttribute(key: AttributeKey<String>, value: String) {
-        addSystemAttribute(key.key, value)
+    override fun setSystemAttribute(key: String, value: String) {
+        addSystemAttribute(key, value)
     }
 
     override fun addSystemAttribute(key: String, value: String) {
@@ -228,7 +227,7 @@ class FakePersistableEmbraceSpan(
                     )
                 }
 
-                setSystemAttribute(SessionIncubatingAttributes.SESSION_ID, sessionId)
+                setSystemAttribute(SessionIncubatingAttributes.SESSION_ID.key, sessionId)
                 setSystemAttribute(embProcessIdentifier.attributeKey, processIdentifier)
                 setSystemAttribute(embState.attributeKey, "foreground")
                 setSystemAttribute(

@@ -331,8 +331,8 @@ internal class AeiFeatureTest {
                     "description" to description,
                     "reason" to reason,
                     "emb.type" to "sys.exit",
-                    embCrashNumber.attributeKey.key to crashNumber,
-                    embAeiNumber.attributeKey.key to aeiNumber,
+                    embCrashNumber.attributeKey to crashNumber,
+                    embAeiNumber.attributeKey to aeiNumber,
                 )
             )
             assertEquals(trace, body)

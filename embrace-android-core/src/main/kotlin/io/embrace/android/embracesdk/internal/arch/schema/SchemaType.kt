@@ -130,8 +130,8 @@ sealed class SchemaType(
             "timestamp" to message.timestamp.toString(),
             "description" to message.description,
             "trace_status" to message.traceStatus,
-            embCrashNumber.attributeKey.key to crashNumber.toString(),
-            embAeiNumber.attributeKey.key to aeiNumber.toString()
+            embCrashNumber.attributeKey to crashNumber.toString(),
+            embAeiNumber.attributeKey to aeiNumber.toString()
         ).toNonNullMap()
     }
 

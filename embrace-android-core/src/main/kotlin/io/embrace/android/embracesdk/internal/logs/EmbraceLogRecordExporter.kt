@@ -11,7 +11,7 @@ import io.opentelemetry.sdk.logs.export.LogRecordExporter
  */
 internal class EmbraceLogRecordExporter(
     private val logSink: LogSink,
-    private val externalLogRecordExporter: LogRecordExporter,
+    private val externalLogRecordExporter: LogRecordExporter?,
     private val exportCheck: () -> Boolean,
 ) : LogRecordExporter {
 
@@ -20,7 +20,7 @@ internal class EmbraceLogRecordExporter(
             return CompletableResultCode.ofSuccess()
         }
         val result = logSink.storeLogs(logs.toList())
-        if (result == CompletableResultCode.ofSuccess()) {
+        if (externalLogRecordExporter != null && result == CompletableResultCode.ofSuccess()) {
             return externalLogRecordExporter.export(
                 logs.filterNot {
                     it.hasEmbraceAttribute(PrivateSpan)

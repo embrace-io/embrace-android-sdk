@@ -12,7 +12,7 @@ import io.opentelemetry.sdk.trace.export.SpanExporter
  */
 internal class EmbraceSpanExporter(
     private val spanSink: SpanSink,
-    private val externalSpanExporter: SpanExporter,
+    private val externalSpanExporter: SpanExporter?,
     private val exportCheck: () -> Boolean,
 ) : SpanExporter {
     @Synchronized
@@ -21,7 +21,7 @@ internal class EmbraceSpanExporter(
             return CompletableResultCode.ofSuccess()
         }
         val result = spanSink.storeCompletedSpans(spans.toList())
-        if (result == CompletableResultCode.ofSuccess()) {
+        if (externalSpanExporter != null && result == CompletableResultCode.ofSuccess()) {
             return EmbTrace.trace("otel-external-export") {
                 externalSpanExporter.export(spans.filterNot { it.hasEmbraceAttribute(PrivateSpan) })
             }

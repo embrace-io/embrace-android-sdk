@@ -37,7 +37,7 @@ internal class EmbraceSpanBuilderTest {
         val originalStartTime = clock.now()
         spanBuilder.startTimeMs = originalStartTime
         val startTime = clock.tick()
-        with(spanBuilder.getFixedAttributes().toSet()) {
+        with(spanBuilder.getEmbraceAttributes().toSet()) {
             assertTrue(contains(PrivateSpan))
             assertTrue(contains(EmbType.Performance.Default))
         }

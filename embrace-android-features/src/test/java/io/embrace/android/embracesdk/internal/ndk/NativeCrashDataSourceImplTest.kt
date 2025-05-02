@@ -15,17 +15,18 @@ import io.embrace.android.embracesdk.internal.arch.destination.LogWriterImpl
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.NativeCrash.embNativeCrashException
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.NativeCrash.embNativeCrashSymbols
+import io.embrace.android.embracesdk.internal.capture.session.toSessionPropertyAttributeName
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.opentelemetry.embCrashNumber
 import io.embrace.android.embracesdk.internal.opentelemetry.embState
-import io.embrace.android.embracesdk.internal.otel.attrs.toSessionPropertyAttributeName
+import io.embrace.android.embracesdk.internal.otel.attrs.asOtelAttributeKey
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.internal.spans.getAttribute
-import io.embrace.android.embracesdk.internal.spans.hasFixedAttribute
+import io.embrace.android.embracesdk.internal.spans.hasEmbraceAttribute
 import io.embrace.android.embracesdk.internal.utils.toUTF8String
 import io.opentelemetry.semconv.incubating.LogIncubatingAttributes
 import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes
@@ -91,14 +92,14 @@ internal class NativeCrashDataSourceImplTest {
         nativeCrashDataSource.sendNativeCrash(
             nativeCrash = testNativeCrashData,
             sessionProperties = mapOf("prop" to "value"),
-            metadata = mapOf(embState.attributeKey to "background")
+            metadata = mapOf(embState.asOtelAttributeKey() to "background")
         )
 
         with(otelLogger.builders.single()) {
             assertEquals(1, emitCalled)
             assertEquals(testNativeCrashData.timestamp, timestampEpochNanos.nanosToMillis())
             assertEquals(0, observedTimestampEpochNanos.nanosToMillis())
-            assertTrue(attributes.hasFixedAttribute(EmbType.System.NativeCrash))
+            assertTrue(attributes.hasEmbraceAttribute(EmbType.System.NativeCrash))
             assertEquals("value", attributes.findAttributeValue("prop".toSessionPropertyAttributeName()))
             assertEquals("background", attributes.getAttribute(embState))
             assertNotNull(attributes.getAttribute(LogIncubatingAttributes.LOG_RECORD_UID))
@@ -128,7 +129,7 @@ internal class NativeCrashDataSourceImplTest {
 
         with(otelLogger.builders.single()) {
             assertEquals(1, emitCalled)
-            assertTrue(attributes.hasFixedAttribute(EmbType.System.NativeCrash))
+            assertTrue(attributes.hasEmbraceAttribute(EmbType.System.NativeCrash))
             assertNotNull(attributes.getAttribute(LogIncubatingAttributes.LOG_RECORD_UID))
             assertNull(attributes.getAttribute(SessionIncubatingAttributes.SESSION_ID))
             assertEquals("1", attributes.getAttribute(embCrashNumber))
@@ -153,7 +154,7 @@ internal class NativeCrashDataSourceImplTest {
 
         with(otelLogger.builders.single()) {
             assertEquals(1, emitCalled)
-            assertTrue(attributes.hasFixedAttribute(EmbType.System.NativeCrash))
+            assertTrue(attributes.hasEmbraceAttribute(EmbType.System.NativeCrash))
             assertNotNull(attributes.getAttribute(LogIncubatingAttributes.LOG_RECORD_UID))
             assertNull(attributes.getAttribute(SessionIncubatingAttributes.SESSION_ID))
             assertEquals("1", attributes.getAttribute(embCrashNumber))

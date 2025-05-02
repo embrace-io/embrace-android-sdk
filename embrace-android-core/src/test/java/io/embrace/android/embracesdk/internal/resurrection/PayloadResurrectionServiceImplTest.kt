@@ -22,6 +22,7 @@ import io.embrace.android.embracesdk.fakes.fakeLaterEnvelopeMetadata
 import io.embrace.android.embracesdk.fakes.fakeLaterEnvelopeResource
 import io.embrace.android.embracesdk.fixtures.fakeCachedSessionStoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.capture.session.isSessionPropertyAttributeName
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.delivery.PayloadType
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
@@ -29,7 +30,7 @@ import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType.CRASH
 import io.embrace.android.embracesdk.internal.opentelemetry.embCrashId
 import io.embrace.android.embracesdk.internal.opentelemetry.embState
-import io.embrace.android.embracesdk.internal.otel.attrs.isSessionPropertyAttributeName
+import io.embrace.android.embracesdk.internal.otel.attrs.asPair
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
@@ -97,7 +98,7 @@ class PayloadResurrectionServiceImplTest {
             expectedParentId = SpanId.getInvalid(),
             expectedErrorCode = ErrorCode.FAILURE,
             expectedCustomAttributes = mapOf(
-                EmbType.Ux.Session.toEmbraceKeyValuePair()
+                EmbType.Ux.Session.asPair()
             )
         )
     }
@@ -139,7 +140,7 @@ class PayloadResurrectionServiceImplTest {
             expectedParentId = SpanId.getInvalid(),
             expectedErrorCode = ErrorCode.FAILURE,
             expectedCustomAttributes = mapOf(
-                EmbType.Performance.Default.toEmbraceKeyValuePair()
+                EmbType.Performance.Default.asPair()
             )
         )
     }

@@ -87,7 +87,7 @@ internal class SessionPayloadSourceImpl(
     private fun retrieveSpanSnapshots(isCacheAttempt: Boolean) = captureDataSafely(logger) {
         // Only snapshot session spans if we are caching an in-progress session payload
         spanRepository.getActiveSpans()
-            .filter { isCacheAttempt || !it.hasFixedAttribute(EmbType.Ux.Session) }
+            .filter { isCacheAttempt || !it.hasEmbraceAttribute(EmbType.Ux.Session) }
             .mapNotNull { it.snapshot() }
     }
 }

@@ -1,8 +1,9 @@
 package io.embrace.android.embracesdk.internal.arch.schema
 
+import io.embrace.android.embracesdk.internal.capture.session.toSessionPropertyAttributeName
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.otel.attrs.EmbraceAttributeKey
-import io.embrace.android.embracesdk.internal.otel.attrs.toSessionPropertyAttributeName
+import io.embrace.android.embracesdk.internal.otel.attrs.asOtelAttributeKey
 import io.embrace.android.embracesdk.internal.utils.isBlankish
 import io.opentelemetry.api.common.AttributeKey
 
@@ -41,7 +42,7 @@ class TelemetryAttributes(
     }
 
     fun setAttribute(key: EmbraceAttributeKey, value: String, keepBlankishValues: Boolean = true) {
-        setAttribute(key.attributeKey, value, keepBlankishValues)
+        setAttribute(key.asOtelAttributeKey(), value, keepBlankishValues)
     }
 
     fun setAttribute(key: AttributeKey<String>, value: String, keepBlankishValues: Boolean = true) {
@@ -50,7 +51,7 @@ class TelemetryAttributes(
         }
     }
 
-    fun getAttribute(key: EmbraceAttributeKey): String? = map[key.attributeKey]
+    fun getAttribute(key: EmbraceAttributeKey): String? = map[key.asOtelAttributeKey()]
 
     fun getAttribute(key: AttributeKey<String>): String? = map[key]
 }

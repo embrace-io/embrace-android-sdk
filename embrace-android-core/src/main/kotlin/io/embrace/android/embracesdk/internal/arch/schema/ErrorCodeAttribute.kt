@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.arch.schema
 
+import io.embrace.android.embracesdk.internal.otel.attrs.EmbraceAttribute
 import io.embrace.android.embracesdk.internal.otel.attrs.EmbraceAttributeKey
-import io.embrace.android.embracesdk.internal.otel.attrs.FixedAttribute
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.android.embracesdk.spans.ErrorCode.FAILURE
 import io.embrace.android.embracesdk.spans.ErrorCode.UNKNOWN
@@ -13,8 +13,8 @@ import java.util.Locale
  */
 sealed class ErrorCodeAttribute(
     errorCode: ErrorCode,
-) : FixedAttribute {
-    override val key: EmbraceAttributeKey = EmbraceAttributeKey(id = "error_code")
+) : EmbraceAttribute {
+    override val key: EmbraceAttributeKey = EmbraceAttributeKey.create(id = "error_code")
     override val value: String = errorCode.name.lowercase(Locale.ENGLISH)
 
     object Failure : ErrorCodeAttribute(FAILURE)

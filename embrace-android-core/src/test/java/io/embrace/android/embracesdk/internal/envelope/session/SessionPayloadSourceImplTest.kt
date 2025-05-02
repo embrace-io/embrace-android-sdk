@@ -12,7 +12,7 @@ import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSnapshotType
 import io.embrace.android.embracesdk.internal.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.spans.SpanSinkImpl
-import io.embrace.android.embracesdk.internal.spans.hasFixedAttribute
+import io.embrace.android.embracesdk.internal.spans.hasEmbraceAttribute
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -82,15 +82,15 @@ internal class SessionPayloadSourceImplTest {
         assertEquals(mapOf("armeabi-v7a" to "my-symbols"), payload.sharedLibSymbolMapping)
         val snapshots = checkNotNull(payload.spanSnapshots)
         if (hasSessionSnapshot) {
-            assertNotNull(snapshots.single { it.hasFixedAttribute(EmbType.Ux.Session) })
+            assertNotNull(snapshots.single { it.hasEmbraceAttribute(EmbType.Ux.Session) })
         } else {
-            assertEquals(0, snapshots.filter { it.hasFixedAttribute(EmbType.Ux.Session) }.size)
+            assertEquals(0, snapshots.filter { it.hasEmbraceAttribute(EmbType.Ux.Session) }.size)
         }
 
         if (hasNonSessionSnapshots) {
-            assertNotNull(snapshots.single { !it.hasFixedAttribute(EmbType.Ux.Session) })
+            assertNotNull(snapshots.single { !it.hasEmbraceAttribute(EmbType.Ux.Session) })
         } else {
-            assertNull(snapshots.singleOrNull { !it.hasFixedAttribute(EmbType.Ux.Session) })
+            assertNull(snapshots.singleOrNull { !it.hasEmbraceAttribute(EmbType.Ux.Session) })
         }
     }
 }

@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.spans
 
+import io.embrace.android.embracesdk.internal.EmbTrace
 import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.sdk.common.CompletableResultCode
@@ -21,7 +22,9 @@ internal class EmbraceSpanExporter(
         }
         val result = spanSink.storeCompletedSpans(spans.toList())
         if (result == CompletableResultCode.ofSuccess()) {
-            return externalSpanExporter.export(spans.filterNot { it.hasFixedAttribute(PrivateSpan) })
+            return EmbTrace.trace("otel-external-export") {
+                externalSpanExporter.export(spans.filterNot { it.hasFixedAttribute(PrivateSpan) })
+            }
         }
 
         return result

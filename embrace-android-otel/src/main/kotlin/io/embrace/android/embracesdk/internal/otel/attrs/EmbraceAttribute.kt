@@ -1,17 +1,15 @@
 package io.embrace.android.embracesdk.internal.otel.attrs
 
 /**
- * An attribute to be used in telemetry objects and payload envelopes
+ * Embrace-specific implementation of an OTel Attribute. This contains a key with specific encoded prefixes
+ * and a String value (other types are not supported yet).
  */
 interface EmbraceAttribute {
-    /**
-     * The unique name given to the attribute.
-     * Don't use this to look up the existence of an attribute in a log or span - use [name] instead
-     */
-    val id: String
+
+    val key: EmbraceAttributeKey
 
     /**
-     * Return the appropriate name for this attribute to be use in the representation of a telemetry object
+     * The value of the particular instance of the attribute
      */
-    val name: String
+    val value: String
 }

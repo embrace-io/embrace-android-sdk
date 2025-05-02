@@ -14,7 +14,7 @@ import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.toEmbracePayload
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
-import io.embrace.android.embracesdk.internal.spans.hasFixedAttribute
+import io.embrace.android.embracesdk.internal.spans.hasEmbraceAttribute
 import io.embrace.android.embracesdk.internal.spans.toStatus
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
@@ -93,7 +93,7 @@ internal class AppStartupTraceTest {
                     with(getSpan("custom-span-with-stuff")) {
                         val attributesList = attributes.toEmbracePayload()
                         assertEquals("attribute", attributesList.findAttributeValue("custom"))
-                        assertEquals(true, attributesList.hasFixedAttribute(ErrorCodeAttribute.Failure))
+                        assertEquals(true, attributesList.hasEmbraceAttribute(ErrorCodeAttribute.Failure))
                         assertNotNull(events?.single())
                         assertEquals(Span.Status.ERROR, status.statusCode.toStatus())
                     }

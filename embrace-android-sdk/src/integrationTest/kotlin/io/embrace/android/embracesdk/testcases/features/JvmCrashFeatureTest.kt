@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRe
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.opentelemetry.embCrashId
 import io.embrace.android.embracesdk.internal.opentelemetry.embState
+import io.embrace.android.embracesdk.internal.otel.attrs.asOtelAttributeKey
 import io.embrace.android.embracesdk.internal.payload.ApplicationState
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.LegacyExceptionInfo
@@ -169,7 +170,7 @@ internal class JvmCrashFeatureTest {
         val expectedExceptionCause = serializer.toJson(listOf(exceptionInfo), List::class.java)
 
         attributes?.assertMatches(mapOf(
-            embState.attributeKey.key to state,
+            embState.asOtelAttributeKey().key to state,
             "emb.android.crash_number" to 1,
             "emb.android.crash.exception_cause" to expectedExceptionCause,
             LogIncubatingAttributes.LOG_RECORD_UID.key to crashId

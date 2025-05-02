@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.arch.schema
 import io.embrace.android.embracesdk.internal.otel.attrs.EmbraceAttributeKey
 
 sealed class EmbType(type: String, subtype: String?) : TelemetryType {
-    override val key: EmbraceAttributeKey = EmbraceAttributeKey(id = "type")
+    override val key: EmbraceAttributeKey = EmbraceAttributeKey.create(id = "type")
     override val value: String = type + (subtype?.run { ".$this" } ?: "")
     override val sendMode: SendMode = SendMode.DEFAULT
 
@@ -67,12 +67,12 @@ sealed class EmbType(type: String, subtype: String?) : TelemetryType {
             /**
              * Attribute name for the exception context in a log representing an exception
              */
-            val embFlutterExceptionContext: EmbraceAttributeKey = EmbraceAttributeKey("exception.context")
+            val embFlutterExceptionContext: EmbraceAttributeKey = EmbraceAttributeKey.create("exception.context")
 
             /**
              * Attribute name for the exception library in a log representing an exception
              */
-            val embFlutterExceptionLibrary: EmbraceAttributeKey = EmbraceAttributeKey("exception.library")
+            val embFlutterExceptionLibrary: EmbraceAttributeKey = EmbraceAttributeKey.create("exception.library")
         }
 
         object Exit : System("exit", SendMode.IMMEDIATE)
@@ -84,14 +84,14 @@ sealed class EmbType(type: String, subtype: String?) : TelemetryType {
              * The list of [Throwable] that caused the exception responsible for a crash
              */
             val embAndroidCrashExceptionCause: EmbraceAttributeKey =
-                EmbraceAttributeKey("android.crash.exception_cause")
+                EmbraceAttributeKey.create("android.crash.exception_cause")
         }
 
         object ReactNativeCrash : System("android.react_native_crash", SendMode.DEFER) {
             /**
              * The JavaScript unhandled exception from the ReactNative layer
              */
-            val embAndroidReactNativeCrashJsException: EmbraceAttributeKey = EmbraceAttributeKey(
+            val embAndroidReactNativeCrashJsException: EmbraceAttributeKey = EmbraceAttributeKey.create(
                 "android.react_native_crash.js_exception"
             )
         }
@@ -103,12 +103,12 @@ sealed class EmbType(type: String, subtype: String?) : TelemetryType {
              * Exception coming from the native layer
              */
             val embNativeCrashException: EmbraceAttributeKey =
-                EmbraceAttributeKey("android.native_crash.exception")
+                EmbraceAttributeKey.create("android.native_crash.exception")
 
             /**
              * Native symbols used to symbolicate a native crash
              */
-            val embNativeCrashSymbols: EmbraceAttributeKey = EmbraceAttributeKey("android.native_crash.symbols")
+            val embNativeCrashSymbols: EmbraceAttributeKey = EmbraceAttributeKey.create("android.native_crash.symbols")
         }
 
         object LowPower : System("low_power")

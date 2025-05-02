@@ -6,6 +6,8 @@ import io.embrace.android.embracesdk.internal.arch.schema.AppTerminationCause
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
+import io.embrace.android.embracesdk.internal.otel.attrs.asOtelAttributeKey
+import io.embrace.android.embracesdk.internal.otel.attrs.asPair
 import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.utils.Uuid
@@ -125,7 +127,7 @@ internal class CurrentSessionSpanImpl(
                     val crashTime = openTelemetryClock.now().nanosToMillis()
                     spanRepository.failActiveSpans(crashTime)
                     endingSessionSpan.setSystemAttribute(
-                        appTerminationCause.key.attributeKey,
+                        appTerminationCause.key.asOtelAttributeKey(),
                         appTerminationCause.value
                     )
                     endingSessionSpan.stop(errorCode = ErrorCode.FAILURE, endTimeMs = crashTime)
@@ -142,7 +144,7 @@ internal class CurrentSessionSpanImpl(
         return currentSession.addSystemEvent(
             schemaType.fixedObjectName.toEmbraceObjectName(),
             startTimeMs,
-            schemaType.attributes() + schemaType.telemetryType.toEmbraceKeyValuePair()
+            schemaType.attributes() + schemaType.telemetryType.asPair()
         )
     }
 

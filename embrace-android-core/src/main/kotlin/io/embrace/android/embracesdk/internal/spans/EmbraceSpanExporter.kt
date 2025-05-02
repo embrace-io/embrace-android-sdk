@@ -23,7 +23,7 @@ internal class EmbraceSpanExporter(
         val result = spanSink.storeCompletedSpans(spans.toList())
         if (result == CompletableResultCode.ofSuccess()) {
             return EmbTrace.trace("otel-external-export") {
-                externalSpanExporter.export(spans.filterNot { it.hasFixedAttribute(PrivateSpan) })
+                externalSpanExporter.export(spans.filterNot { it.hasEmbraceAttribute(PrivateSpan) })
             }
         }
 

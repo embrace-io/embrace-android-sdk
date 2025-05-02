@@ -1,24 +1,35 @@
 package io.embrace.android.embracesdk.internal.otel.attrs
 
-import io.opentelemetry.api.common.AttributeKey
-
 /**
- * Defines a unique object to represent a [EmbraceAttribute]
+ * Embrace-specific implementation of an OTel Attribute key. Contains business logic on how the key name should be prefixed.
  */
-class EmbraceAttributeKey(
-    override val id: String,
-    otelAttributeKey: AttributeKey<String>? = null,
-    useIdAsAttributeName: Boolean = false,
-    isPrivate: Boolean = false,
-) : EmbraceAttribute {
-    override val name: String = if (!useIdAsAttributeName && otelAttributeKey?.key != null) {
-        otelAttributeKey.key
-    } else {
-        id.toEmbraceAttributeName(isPrivate)
-    }
+@JvmInline
+value class EmbraceAttributeKey private constructor(
+    val name: String,
+) {
 
-    /**
-     * The [AttributeKey] equivalent for this object to be used in conjunction with OTel objects
-     */
-    val attributeKey: AttributeKey<String> = otelAttributeKey ?: AttributeKey.stringKey(name)
+    companion object {
+
+        /**
+         * Prefix added to all attribute keys for all attributes with a specific meaning to the Embrace platform
+         */
+        private const val EMBRACE_ATTRIBUTE_NAME_PREFIX = "emb."
+
+        /**
+         * Prefix added to all Embrace attribute keys that are meant to be internal to Embrace
+         */
+        private const val EMBRACE_PRIVATE_ATTRIBUTE_NAME_PREFIX = "emb.private."
+
+        fun create(
+            id: String,
+            isPrivate: Boolean = false,
+        ): EmbraceAttributeKey {
+            val prefix = when {
+                isPrivate -> EMBRACE_PRIVATE_ATTRIBUTE_NAME_PREFIX
+                else -> EMBRACE_ATTRIBUTE_NAME_PREFIX
+            }
+            val name = prefix + id
+            return EmbraceAttributeKey(name)
+        }
+    }
 }

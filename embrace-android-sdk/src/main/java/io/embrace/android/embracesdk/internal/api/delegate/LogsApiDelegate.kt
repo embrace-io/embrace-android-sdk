@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.internal.logs.attachments.Attachment.Embrac
 import io.embrace.android.embracesdk.internal.logs.attachments.AttachmentErrorCode.ATTACHMENT_TOO_LARGE
 import io.embrace.android.embracesdk.internal.logs.attachments.AttachmentErrorCode.OVER_MAX_ATTACHMENTS
 import io.embrace.android.embracesdk.internal.logs.attachments.AttachmentErrorCode.UNKNOWN
+import io.embrace.android.embracesdk.internal.otel.attrs.asOtelAttributeKey
 import io.embrace.android.embracesdk.internal.payload.PushNotificationBreadcrumb
 import io.embrace.android.embracesdk.internal.serialization.truncatedStacktrace
 import io.embrace.android.embracesdk.internal.utils.getSafeStackTrace
@@ -193,7 +194,7 @@ internal class LogsApiDelegate(
                 stacktrace?.let { attrs[ExceptionAttributes.EXCEPTION_STACKTRACE] = it }
 
                 if (attachment != null) {
-                    attrs.putAll(attachment.attributes.mapKeys { it.key.attributeKey })
+                    attrs.putAll(attachment.attributes.mapKeys { it.key.asOtelAttributeKey() })
                 }
 
                 val logAttachment = when {

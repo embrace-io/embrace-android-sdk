@@ -43,9 +43,9 @@ class FakeSpanService : SpanService {
     ): PersistableEmbraceSpan = FakePersistableEmbraceSpan(
         name = embraceSpanBuilder.spanName,
         parentContext = embraceSpanBuilder.parentContext,
-        type = embraceSpanBuilder.getFixedAttributes().filterIsInstance<TelemetryType>().single(),
+        type = embraceSpanBuilder.getEmbraceAttributes().filterIsInstance<TelemetryType>().single(),
         internal = embraceSpanBuilder.internal,
-        private = embraceSpanBuilder.getFixedAttributes().contains(PrivateSpan),
+        private = embraceSpanBuilder.getEmbraceAttributes().contains(PrivateSpan),
         autoTerminationMode = embraceSpanBuilder.autoTerminationMode,
     ).apply {
         createdSpans.add(this)

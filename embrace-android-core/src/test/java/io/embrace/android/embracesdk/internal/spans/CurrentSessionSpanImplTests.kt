@@ -17,6 +17,7 @@ import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehavior
 import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
 import io.embrace.android.embracesdk.internal.opentelemetry.embraceSpanBuilder
+import io.embrace.android.embracesdk.internal.otel.attrs.asPair
 import io.embrace.android.embracesdk.internal.payload.toEmbracePayload
 import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
 import io.embrace.android.embracesdk.spans.AutoTerminationMode
@@ -383,8 +384,8 @@ internal class CurrentSessionSpanImplTests {
             expectedParentId = SpanId.getInvalid(),
             expectedErrorCode = ErrorCode.FAILURE,
             expectedCustomAttributes = mapOf(
-                AppTerminationCause.Crash.toEmbraceKeyValuePair(),
-                EmbType.Ux.Session.toEmbraceKeyValuePair()
+                AppTerminationCause.Crash.asPair(),
+                EmbType.Ux.Session.asPair()
             ),
             private = false
         )
@@ -396,7 +397,7 @@ internal class CurrentSessionSpanImplTests {
             expectedParentId = SpanId.getInvalid(),
             expectedErrorCode = ErrorCode.FAILURE,
             expectedCustomAttributes = mapOf(
-                EmbType.Performance.Default.toEmbraceKeyValuePair()
+                EmbType.Performance.Default.asPair()
             )
         )
 
@@ -409,7 +410,7 @@ internal class CurrentSessionSpanImplTests {
         val originalSessionSpanId = spanRepository.getActiveSpans().single().spanId
         currentSessionSpan.endSession(startNewSession = true)
         with(spanRepository.getActiveSpans().single()) {
-            assertTrue(hasFixedAttribute(EmbType.Ux.Session))
+            assertTrue(hasEmbraceAttribute(EmbType.Ux.Session))
             assertNotEquals(originalSessionSpanId, spanId)
         }
 

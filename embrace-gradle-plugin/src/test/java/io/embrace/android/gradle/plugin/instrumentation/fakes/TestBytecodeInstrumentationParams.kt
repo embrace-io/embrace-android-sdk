@@ -6,9 +6,11 @@ import io.embrace.android.gradle.plugin.instrumentation.BytecodeInstrumentationP
 import io.embrace.android.gradle.plugin.instrumentation.ClassInstrumentationFilter
 import io.embrace.android.gradle.plugin.instrumentation.config.model.VariantConfig
 import io.embrace.android.gradle.swazzler.plugin.extension.SwazzlerExtension
+import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.internal.provider.DefaultProperty
 import org.gradle.api.internal.provider.PropertyHost
 import org.gradle.api.provider.Property
+import org.gradle.testfixtures.ProjectBuilder
 
 class TestBytecodeInstrumentationParams(
     disabled: Boolean = false,
@@ -24,8 +26,7 @@ class TestBytecodeInstrumentationParams(
         DefaultProperty(PropertyHost.NO_OP, VariantConfig::class.javaObjectType).convention(
             VariantConfig("", "", null, null, null, null)
         )
-    override val encodedSharedObjectFilesMap: Property<String> =
-        DefaultProperty(PropertyHost.NO_OP, String::class.javaObjectType).convention("")
+    override val encodedSharedObjectFilesMap: RegularFileProperty = ProjectBuilder.builder().build().objects.fileProperty()
     override val disabled: Property<Boolean> =
         DefaultProperty(PropertyHost.NO_OP, Boolean::class.javaObjectType).convention(disabled)
     override val classInstrumentationFilter: Property<ClassInstrumentationFilter> =

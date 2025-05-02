@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.logs
 import io.embrace.android.embracesdk.fakes.FakeLogRecordData
 import io.embrace.android.embracesdk.fixtures.deferredLogRecordData
 import io.embrace.android.embracesdk.fixtures.sendImmediatelyLogRecordData
-import io.embrace.android.embracesdk.internal.payload.toNewPayload
+import io.embrace.android.embracesdk.internal.payload.toEmbracePayload
 import io.opentelemetry.sdk.common.CompletableResultCode
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -33,7 +33,7 @@ internal class LogSinkImplTest {
         val resultCode = logSink.storeLogs(listOf(FakeLogRecordData()))
         assertEquals(CompletableResultCode.ofSuccess(), resultCode)
         assertEquals(1, logSink.logsForNextBatch().size)
-        assertEquals(FakeLogRecordData().toNewPayload(), logSink.logsForNextBatch().first())
+        assertEquals(FakeLogRecordData().toEmbracePayload(), logSink.logsForNextBatch().first())
     }
 
     @Test

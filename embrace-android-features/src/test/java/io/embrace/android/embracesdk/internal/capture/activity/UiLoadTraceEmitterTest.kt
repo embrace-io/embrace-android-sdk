@@ -6,7 +6,7 @@ import io.embrace.android.embracesdk.assertions.assertEmbraceSpanData
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
-import io.embrace.android.embracesdk.internal.payload.toNewPayload
+import io.embrace.android.embracesdk.internal.payload.toEmbracePayload
 import io.embrace.android.embracesdk.internal.spans.SpanService
 import io.embrace.android.embracesdk.internal.spans.SpanSink
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
@@ -217,10 +217,10 @@ internal class UiLoadTraceEmitterTest {
                     timestampMs = timestamps.first,
                     attributes = customAttributes
                 )
-            ).toNewPayload()
+            ).toEmbracePayload()
 
             assertEmbraceSpanData(
-                span = trace.toNewPayload(),
+                span = trace.toEmbracePayload(),
                 expectedStartTimeMs = timestamps.first,
                 expectedEndTimeMs = timestamps.second,
                 expectedParentId = SpanId.getInvalid(),
@@ -228,7 +228,7 @@ internal class UiLoadTraceEmitterTest {
             )
 
             assertEmbraceSpanData(
-                span = checkNotNull(spanMap["custom-span"]).toNewPayload(),
+                span = checkNotNull(spanMap["custom-span"]).toEmbracePayload(),
                 expectedStartTimeMs = timestamps.first,
                 expectedEndTimeMs = timestamps.first + 1,
                 expectedParentId = trace.spanId,
@@ -243,7 +243,7 @@ internal class UiLoadTraceEmitterTest {
             if (uiLoadType == UiLoadType.COLD) {
                 checkNotNull(events[LifecycleStage.CREATE]).run {
                     assertEmbraceSpanData(
-                        span = checkNotNull(spanMap["emb-$activityName-create"]).toNewPayload(),
+                        span = checkNotNull(spanMap["emb-$activityName-create"]).toEmbracePayload(),
                         expectedStartTimeMs = startMs(),
                         expectedEndTimeMs = endMs(),
                         expectedParentId = trace.spanId
@@ -255,7 +255,7 @@ internal class UiLoadTraceEmitterTest {
 
             checkNotNull(events[LifecycleStage.START]).run {
                 assertEmbraceSpanData(
-                    span = checkNotNull(spanMap["emb-$activityName-start"]).toNewPayload(),
+                    span = checkNotNull(spanMap["emb-$activityName-start"]).toEmbracePayload(),
                     expectedStartTimeMs = startMs(),
                     expectedEndTimeMs = endMs(),
                     expectedParentId = trace.spanId
@@ -265,7 +265,7 @@ internal class UiLoadTraceEmitterTest {
             if (hasPreAndPostEvents) {
                 checkNotNull(events[LifecycleStage.RESUME]).run {
                     assertEmbraceSpanData(
-                        span = checkNotNull(spanMap["emb-$activityName-resume"]).toNewPayload(),
+                        span = checkNotNull(spanMap["emb-$activityName-resume"]).toEmbracePayload(),
                         expectedStartTimeMs = startMs(),
                         expectedEndTimeMs = endMs(),
                         expectedParentId = trace.spanId
@@ -278,7 +278,7 @@ internal class UiLoadTraceEmitterTest {
             if (hasRenderEvent) {
                 checkNotNull(events[LifecycleStage.RENDER]).run {
                     assertEmbraceSpanData(
-                        span = checkNotNull(spanMap["emb-$activityName-render"]).toNewPayload(),
+                        span = checkNotNull(spanMap["emb-$activityName-render"]).toEmbracePayload(),
                         expectedStartTimeMs = startMs(),
                         expectedEndTimeMs = endMs(),
                         expectedParentId = trace.spanId
@@ -301,7 +301,7 @@ internal class UiLoadTraceEmitterTest {
             val traceEndTime = trace.endTimeNanos.nanosToMillis()
             if (manualEnd) {
                 assertEmbraceSpanData(
-                    span = checkNotNull(spanMap["emb-$activityName-ready"]).toNewPayload(),
+                    span = checkNotNull(spanMap["emb-$activityName-ready"]).toEmbracePayload(),
                     expectedStartTimeMs = lastEventEndTimeMs,
                     expectedEndTimeMs = traceEndTime,
                     expectedParentId = trace.spanId

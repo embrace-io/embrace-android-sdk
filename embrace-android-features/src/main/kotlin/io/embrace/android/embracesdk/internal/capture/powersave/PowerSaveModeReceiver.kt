@@ -5,7 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.PowerManager
-import io.embrace.android.embracesdk.internal.Systrace
+import io.embrace.android.embracesdk.internal.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 
@@ -24,7 +24,7 @@ internal class PowerSaveModeReceiver(
 
     fun register(context: Context, backgroundWorker: BackgroundWorker) {
         backgroundWorker.submit {
-            Systrace.traceSynchronous("power-service-registration") {
+            EmbTrace.trace("power-service-registration") {
                 runCatching {
                     if (powerManagerProvider() != null) {
                         val filter = IntentFilter(PowerManager.ACTION_POWER_SAVE_MODE_CHANGED)

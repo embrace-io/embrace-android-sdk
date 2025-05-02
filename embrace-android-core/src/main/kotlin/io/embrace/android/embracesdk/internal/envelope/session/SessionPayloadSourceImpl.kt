@@ -6,7 +6,7 @@ import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.payload.Span
-import io.embrace.android.embracesdk.internal.payload.toNewPayload
+import io.embrace.android.embracesdk.internal.payload.toEmbracePayload
 import io.embrace.android.embracesdk.internal.session.captureDataSafely
 import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateService
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSnapshotType
@@ -47,7 +47,7 @@ internal class SessionPayloadSourceImpl(
         }
 
         // Ensure the span retrieving is last as that potentially ends the session span, which effectively ends the session
-        val spans: List<Span>? = retrieveSpanData(isCacheAttempt, endType, startNewSession, crashId)
+        val spans: List<Span>? = retrieveSpanData(isCacheAttempt, startNewSession, crashId)
 
         return SessionPayload(
             spans = spans,
@@ -58,28 +58,28 @@ internal class SessionPayloadSourceImpl(
 
     private fun retrieveSpanData(
         isCacheAttempt: Boolean,
-        endType: SessionSnapshotType,
         startNewSession: Boolean,
         crashId: String?,
     ): List<Span>? {
         val spans: List<Span>? = captureDataSafely(logger) {
-            val result = when {
+            when {
                 !isCacheAttempt -> {
                     val appTerminationCause = when {
                         crashId != null -> AppTerminationCause.Crash
                         else -> null
                     }
+                    otelPayloadMapper.record()
                     val spans = currentSessionSpan.endSession(
                         startNewSession = startNewSession,
                         appTerminationCause = appTerminationCause
                     )
-                    spans.map(EmbraceSpanData::toNewPayload)
+                    spans.map(EmbraceSpanData::toEmbracePayload)
                 }
 
-                else -> spanSink.completedSpans().map(EmbraceSpanData::toNewPayload)
+                else -> spanSink.completedSpans()
+                    .map(EmbraceSpanData::toEmbracePayload)
+                    .plus(otelPayloadMapper.snapshotSpans())
             }
-            // add spans that need mapping to OTel if the payload is capturing spans.
-            result.plus(otelPayloadMapper.getSessionPayload(endType, crashId))
         }
         return spans
     }

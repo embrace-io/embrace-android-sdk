@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.internal.injection
 
 import io.embrace.android.embracesdk.internal.DeviceArchitecture
 import io.embrace.android.embracesdk.internal.DeviceArchitectureImpl
-import io.embrace.android.embracesdk.internal.Systrace
+import io.embrace.android.embracesdk.internal.EmbTrace
 import io.embrace.android.embracesdk.internal.capture.metadata.AppEnvironment
 import io.embrace.android.embracesdk.internal.capture.metadata.EmbraceMetadataService
 import io.embrace.android.embracesdk.internal.capture.metadata.MetadataService
@@ -49,7 +49,7 @@ internal class PayloadSourceModuleImpl(
     }
 
     private val sessionPayloadSource by singleton {
-        Systrace.traceSynchronous("session-payload-source") {
+        EmbTrace.trace("session-payload-source") {
             SessionPayloadSourceImpl(
                 nativeSymbolsProvider,
                 otelModule.spanSink,
@@ -87,15 +87,15 @@ internal class PayloadSourceModuleImpl(
     }
 
     override val resourceSource by singleton {
-        Systrace.traceSynchronous("resource-source") {
+        EmbTrace.trace("resource-source") {
             EnvelopeResourceSourceImpl(
                 hostedSdkVersionInfo,
                 AppEnvironment(coreModule.context.applicationInfo).environment,
-                Systrace.traceSynchronous("buildInfo") { coreModule.buildInfoService.getBuildInfo() },
-                Systrace.traceSynchronous("packageInfo") { coreModule.packageVersionInfo },
+                EmbTrace.trace("buildInfo") { coreModule.buildInfoService.getBuildInfo() },
+                EmbTrace.trace("packageInfo") { coreModule.packageVersionInfo },
                 configModule.configService.appFramework,
                 deviceArchitecture,
-                Systrace.traceSynchronous("deviceImpl") {
+                EmbTrace.trace("deviceImpl") {
                     DeviceImpl(
                         systemServiceModule.windowManager,
                         androidServicesModule.preferencesService,
@@ -110,13 +110,13 @@ internal class PayloadSourceModuleImpl(
     }
 
     override val metadataSource by singleton {
-        Systrace.traceSynchronous("metadata-source") {
+        EmbTrace.trace("metadata-source") {
             EnvelopeMetadataSourceImpl { essentialServiceModule.userService.getUserInfo() }
         }
     }
 
     override val metadataService: MetadataService by singleton {
-        Systrace.traceSynchronous("metadata-service-init") {
+        EmbTrace.trace("metadata-service-init") {
             EmbraceMetadataService(
                 lazy { resourceSource },
                 coreModule.context,

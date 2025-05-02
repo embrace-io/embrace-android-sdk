@@ -34,7 +34,7 @@ import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.payload.getSessionSpan
-import io.embrace.android.embracesdk.internal.payload.toNewPayload
+import io.embrace.android.embracesdk.internal.payload.toEmbracePayload
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.internal.spans.toEmbraceSpanData
@@ -383,9 +383,9 @@ class PayloadResurrectionServiceImplTest {
             copy(
                 data = data.copy(
                     spans = listOf(
-                        startedSnapshot.copy(endTimeNanos = startedSnapshot.startTimeNanos + 10000000L).toNewPayload()
+                        startedSnapshot.copy(endTimeNanos = startedSnapshot.startTimeNanos + 10000000L).toEmbracePayload()
                     ),
-                    spanSnapshots = data.spanSnapshots?.plus(listOfNotNull(startedSnapshot).map(EmbraceSpanData::toNewPayload))
+                    spanSnapshots = data.spanSnapshots?.plus(listOfNotNull(startedSnapshot).map(EmbraceSpanData::toEmbracePayload))
                 )
             )
         }

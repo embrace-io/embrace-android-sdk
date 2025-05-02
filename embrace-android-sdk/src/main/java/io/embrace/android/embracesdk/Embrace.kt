@@ -6,7 +6,7 @@ import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
 import android.webkit.ConsoleMessage
-import io.embrace.android.embracesdk.internal.Systrace
+import io.embrace.android.embracesdk.internal.EmbTrace
 import io.embrace.android.embracesdk.internal.api.SdkApi
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.spans.AutoTerminationMode
@@ -24,7 +24,7 @@ import io.opentelemetry.sdk.trace.export.SpanExporter
  */
 @SuppressLint("EmbracePublicApiPackageRule")
 public class Embrace private constructor(
-    internal var impl: EmbraceImpl = Systrace.traceSynchronous("embrace-impl-init") { EmbraceImpl() },
+    internal var impl: EmbraceImpl = EmbTrace.trace("embrace-impl-init") { EmbraceImpl() },
 ) : SdkApi {
 
     public companion object {

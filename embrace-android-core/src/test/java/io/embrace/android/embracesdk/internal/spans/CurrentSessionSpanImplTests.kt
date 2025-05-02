@@ -17,7 +17,7 @@ import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehavior
 import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
 import io.embrace.android.embracesdk.internal.opentelemetry.embraceSpanBuilder
-import io.embrace.android.embracesdk.internal.payload.toNewPayload
+import io.embrace.android.embracesdk.internal.payload.toEmbracePayload
 import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
 import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
@@ -377,7 +377,7 @@ internal class CurrentSessionSpanImplTests {
         val flushedSpans = currentSessionSpan.endSession(true, AppTerminationCause.Crash).associateBy { it.name }
 
         assertEmbraceSpanData(
-            span = flushedSpans["emb-session"]?.toNewPayload(),
+            span = flushedSpans["emb-session"]?.toEmbracePayload(),
             expectedStartTimeMs = sessionStartTimeMs,
             expectedEndTimeMs = crashTimeMs,
             expectedParentId = SpanId.getInvalid(),
@@ -390,7 +390,7 @@ internal class CurrentSessionSpanImplTests {
         )
 
         assertEmbraceSpanData(
-            span = flushedSpans[crashedSpanName]?.toNewPayload(),
+            span = flushedSpans[crashedSpanName]?.toEmbracePayload(),
             expectedStartTimeMs = crashSpanStartTimeMs,
             expectedEndTimeMs = crashTimeMs,
             expectedParentId = SpanId.getInvalid(),
@@ -485,7 +485,7 @@ internal class CurrentSessionSpanImplTests {
         assertEquals("emb-session", span.name)
 
         // verify event was added to the span
-        val testEvent = span.toNewPayload().findEventOfType(EmbType.System.Breadcrumb)
+        val testEvent = span.toEmbracePayload().findEventOfType(EmbType.System.Breadcrumb)
         assertEquals(1000L, testEvent.timestampNanos?.nanosToMillis())
 
         val attrs = checkNotNull(testEvent.attributes)
@@ -504,7 +504,7 @@ internal class CurrentSessionSpanImplTests {
         assertEquals("emb-session", span.name)
 
         // verify event was added to the span
-        assertEquals(limit, span.toNewPayload().events?.size)
+        assertEquals(limit, span.toEmbracePayload().events?.size)
     }
 
     @Test
@@ -531,7 +531,7 @@ internal class CurrentSessionSpanImplTests {
         assertEquals("emb-session", span.name)
 
         // verify event was added to the span
-        assertEquals(limit, span.toNewPayload().attributes?.size)
+        assertEquals(limit, span.toEmbracePayload().attributes?.size)
     }
 
     private fun CurrentSessionSpan.assertNoSessionSpan() {

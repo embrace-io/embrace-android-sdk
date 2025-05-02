@@ -37,7 +37,7 @@ class NdkUploadTasksRegistration(
      * build process.
      */
     fun RegistrationParams.execute() {
-        // Skip registration if NDK is disabled
+        // Bail if ndk_enabled is explicitly set to false. Otherwise, let projectType specific logic decide on the default
         if (variantConfig.embraceConfig?.ndkEnabled == false) return
 
         val sharedObjectFilesProvider = getSharedObjectFilesProvider(project, data)
@@ -56,7 +56,7 @@ class NdkUploadTasksRegistration(
 
         compressionTaskProvider.configure { compressionTask: CompressSharedObjectFilesTask ->
             val shouldExecuteCompressionTaskProvider = getShouldExecuteCompressionTaskProvider()
-            compressionTask.onlyIf { shouldExecuteCompressionTaskProvider.orNull ?: true }
+            compressionTask.onlyIf { shouldExecuteCompressionTaskProvider.orNull ?: false }
             // TODO: check if these are only needed for Unity and comment accordingly.
             compressionTask.mustRunAfter(object : Callable<Any> {
                 override fun call(): Any {
@@ -201,7 +201,7 @@ class NdkUploadTasksRegistration(
      */
     private fun getDefaultNativeSharedObjectFiles(
         project: Project,
-        variant: AndroidCompactedVariantData
+        variant: AndroidCompactedVariantData,
     ): Provider<File> {
         return project.tasks.named("merge${variant.name.capitalizedString()}NativeLibs").flatMap { mergeNativeLibsTask ->
             mergeNativeLibsTask.outputs.files.asFileTree.elements.map { files ->
@@ -221,7 +221,11 @@ class NdkUploadTasksRegistration(
         "${variantData.flavorName}/${variantData.buildTypeName}"
     }
 
-    private fun getShouldExecuteCompressionTaskProvider() = projectType.map {
-        (it == ProjectType.NATIVE || it == ProjectType.UNITY)
+    private fun getShouldExecuteCompressionTaskProvider() = projectType.map { type ->
+        when (type) {
+            ProjectType.NATIVE -> { variantConfig.embraceConfig?.ndkEnabled == true }
+            ProjectType.UNITY -> { true }
+            else -> false
+        }
     }
 }

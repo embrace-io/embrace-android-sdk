@@ -29,6 +29,10 @@ abstract class EmbraceClassVisitorFactory : AsmClassVisitorFactory<BytecodeInstr
         val params = parameters.get()
         val cfg = params.config.get()
         val encodedSharedObjectFilesMap = parameters.get().encodedSharedObjectFilesMap.orNull
+            ?.asFile
+            ?.takeIf { it.exists() }
+            ?.bufferedReader()
+            ?.use { it.readText() }
         ConfigClassVisitorFactory.createClassVisitor(className, cfg, encodedSharedObjectFilesMap, api, visitor)?.let {
             visitor = it
         }

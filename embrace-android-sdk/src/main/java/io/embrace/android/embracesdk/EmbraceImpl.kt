@@ -4,14 +4,14 @@ import android.annotation.SuppressLint
 import android.app.Application
 import android.content.Context
 import io.embrace.android.embracesdk.core.BuildConfig
+import io.embrace.android.embracesdk.internal.EmbTrace
+import io.embrace.android.embracesdk.internal.EmbTrace.end
+import io.embrace.android.embracesdk.internal.EmbTrace.start
 import io.embrace.android.embracesdk.internal.EmbraceInternalApi
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
 import io.embrace.android.embracesdk.internal.FlutterInternalInterface
 import io.embrace.android.embracesdk.internal.InternalInterfaceApi
 import io.embrace.android.embracesdk.internal.ReactNativeInternalInterface
-import io.embrace.android.embracesdk.internal.Systrace
-import io.embrace.android.embracesdk.internal.Systrace.endSynchronous
-import io.embrace.android.embracesdk.internal.Systrace.startSynchronous
 import io.embrace.android.embracesdk.internal.UnityInternalInterface
 import io.embrace.android.embracesdk.internal.anr.ndk.isUnityMainThread
 import io.embrace.android.embracesdk.internal.api.BreadcrumbApi
@@ -58,7 +58,7 @@ import java.util.concurrent.atomic.AtomicBoolean
  */
 @SuppressLint("EmbracePublicApiPackageRule")
 internal class EmbraceImpl @JvmOverloads constructor(
-    private val bootstrapper: ModuleInitBootstrapper = Systrace.traceSynchronous(
+    private val bootstrapper: ModuleInitBootstrapper = EmbTrace.trace(
         "bootstrapper-init",
         ::ModuleInitBootstrapper
     ),
@@ -129,9 +129,9 @@ internal class EmbraceImpl @JvmOverloads constructor(
     @Deprecated("Use {@link #start(Context)} instead.", ReplaceWith("start(context)"))
     override fun start(context: Context, appFramework: io.embrace.android.embracesdk.AppFramework) {
         try {
-            startSynchronous("sdk-start")
+            start("sdk-start")
             startImpl(context, appFramework)
-            endSynchronous()
+            end()
         } catch (t: Throwable) {
             runCatching {
                 logger.trackInternalError(InternalErrorType.SDK_START_FAIL, t)
@@ -157,7 +157,7 @@ internal class EmbraceImpl @JvmOverloads constructor(
             }
             return
         }
-        startSynchronous("post-services-setup")
+        start("post-services-setup")
 
         val coreModule = bootstrapper.coreModule
         application = coreModule.application
@@ -199,9 +199,9 @@ internal class EmbraceImpl @JvmOverloads constructor(
 
         val endTimeMs = sdkClock.now()
         sdkCallChecker.started.set(true)
-        endSynchronous()
+        end()
         val inForeground = !bootstrapper.essentialServiceModule.processStateService.isInBackground
-        startSynchronous("startup-tracking")
+        start("startup-tracking")
         val dataCaptureServiceModule = bootstrapper.dataCaptureServiceModule
         dataCaptureServiceModule.startupService.setSdkStartupInfo(
             startTimeMs,
@@ -209,7 +209,7 @@ internal class EmbraceImpl @JvmOverloads constructor(
             inForeground,
             Thread.currentThread().name
         )
-        endSynchronous()
+        end()
 
         val worker = bootstrapper
             .workerThreadModule

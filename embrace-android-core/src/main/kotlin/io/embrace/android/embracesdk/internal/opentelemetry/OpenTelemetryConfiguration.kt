@@ -1,9 +1,9 @@
 package io.embrace.android.embracesdk.internal.opentelemetry
 
 import io.embrace.android.embracesdk.core.BuildConfig
+import io.embrace.android.embracesdk.internal.EmbTrace
 import io.embrace.android.embracesdk.internal.IdGenerator
 import io.embrace.android.embracesdk.internal.SystemInfo
-import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.logs.EmbraceLogRecordExporter
 import io.embrace.android.embracesdk.internal.logs.EmbraceLogRecordProcessor
 import io.embrace.android.embracesdk.internal.logs.LogSink
@@ -50,7 +50,7 @@ class OpenTelemetryConfiguration(
      * this out by proximity for stitched sessions.
      */
     val processIdentifier: String by lazy {
-        Systrace.traceSynchronous("process-identifier-init", processIdentifierProvider)
+        EmbTrace.trace("process-identifier-init", processIdentifierProvider)
     }
 
     private val externalSpanExporters = mutableListOf<SpanExporter>()

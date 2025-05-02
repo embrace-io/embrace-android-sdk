@@ -17,7 +17,7 @@ internal class SpanMapperTest {
     @Test
     fun toSpan() {
         val input = FakeSpanData.perfSpanCompleted.toEmbraceSpanData()
-        val output = input.toNewPayload()
+        val output = input.toEmbracePayload()
 
         assertEquals(input.traceId, output.traceId)
         assertEquals(input.spanId, output.spanId)
@@ -30,7 +30,7 @@ internal class SpanMapperTest {
         // validate event copied
         val inputEvent = input.events.single()
         val outputEvent = checkNotNull(output.events).single()
-        assertEquals(inputEvent, outputEvent.toOldPayload())
+        assertEquals(inputEvent, outputEvent.toEmbracePayload())
 
         // test attributes
         output.assertSuccessful()
@@ -43,7 +43,7 @@ internal class SpanMapperTest {
 
     @Test
     fun `terminating span snapshot works as expected`() {
-        val snapshot = FakeSpanData.perfSpanSnapshot.toEmbraceSpanData().toNewPayload()
+        val snapshot = FakeSpanData.perfSpanSnapshot.toEmbraceSpanData().toEmbracePayload()
         val terminationTimeMs = snapshot.startTimeNanos!!.nanosToMillis() + 60000L
         val failedSpan = snapshot.toFailedSpan(terminationTimeMs)
 

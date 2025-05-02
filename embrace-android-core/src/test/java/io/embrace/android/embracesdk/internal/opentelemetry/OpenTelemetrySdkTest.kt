@@ -10,13 +10,11 @@ import io.embrace.android.embracesdk.internal.logs.LogSink
 import io.embrace.android.embracesdk.internal.logs.LogSinkImpl
 import io.embrace.android.embracesdk.internal.spans.SpanSink
 import io.embrace.android.embracesdk.internal.spans.SpanSinkImpl
-import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
 
-@OptIn(ExperimentalApi::class)
 internal class OpenTelemetrySdkTest {
 
     private lateinit var spanSink: SpanSink
@@ -60,7 +58,7 @@ internal class OpenTelemetrySdkTest {
 
     @Test
     fun `check resource added by default logger`() {
-        sdk.getOpenTelemetryLogger().log()
+        sdk.getOpenTelemetryLogger().logRecordBuilder().emit()
         checkNotNull(logExporter.exportedLogs).single().resource.assertExpectedAttributes(
             expectedServiceName = configuration.embraceSdkName,
             expectedServiceVersion = configuration.embraceSdkVersion,

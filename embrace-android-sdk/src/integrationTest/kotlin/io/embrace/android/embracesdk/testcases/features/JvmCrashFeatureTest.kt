@@ -21,7 +21,7 @@ import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.assertions.assertMatches
 import io.embrace.android.embracesdk.testframework.assertions.assertOtelLogReceived
 import io.embrace.android.embracesdk.testframework.assertions.getLastLog
-import io.embrace.opentelemetry.kotlin.logging.SeverityNumber
+import io.opentelemetry.api.logs.Severity
 import io.opentelemetry.semconv.incubating.LogIncubatingAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -112,7 +112,8 @@ internal class JvmCrashFeatureTest {
                 assertOtelLogReceived(
                     logReceived = log,
                     expectedMessage = "",
-                    expectedSeverityNumber = SeverityNumber.ERROR,
+                    expectedSeverityNumber = Severity.ERROR.severityNumber,
+                    expectedSeverityText = Severity.ERROR.name,
                     expectedTimeMs = crashTimeMs,
                     expectedExceptionName = testException.javaClass.canonicalName,
                     expectedExceptionMessage = checkNotNull(testException.message),
@@ -153,7 +154,8 @@ internal class JvmCrashFeatureTest {
         assertOtelLogReceived(
             logReceived = this,
             expectedMessage = "",
-            expectedSeverityNumber = SeverityNumber.ERROR,
+            expectedSeverityNumber = Severity.ERROR.severityNumber,
+            expectedSeverityText = Severity.ERROR.name,
             expectedTimeMs = crashTimeMs,
             expectedExceptionName = testException.javaClass.canonicalName,
             expectedExceptionMessage = checkNotNull(testException.message),

@@ -9,11 +9,8 @@ import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface
 import io.embrace.android.embracesdk.testframework.assertions.assertOtelLogReceived
 import io.embrace.android.embracesdk.testframework.assertions.getLogOfType
+import io.embrace.android.embracesdk.testframework.assertions.getOtelSeverity
 import io.embrace.android.embracesdk.testframework.server.FormPart
-import io.embrace.opentelemetry.kotlin.logging.SeverityNumber
-import java.util.LinkedList
-import java.util.Queue
-import java.util.UUID
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -21,6 +18,9 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.util.LinkedList
+import java.util.Queue
+import java.util.UUID
 
 @RunWith(AndroidJUnit4::class)
 internal class FileAttachmentFeatureTest {
@@ -248,14 +248,15 @@ internal class FileAttachmentFeatureTest {
         assertOtelLogReceived(
             logReceived = log,
             expectedMessage = "test message",
-            expectedSeverityNumber = SeverityNumber.INFO,
+            expectedSeverityNumber = getOtelSeverity(Severity.INFO).severityNumber,
+            expectedSeverityText = Severity.INFO.name,
+            expectedState = "foreground",
             expectedTimeMs = timestamp,
             expectedProperties = mapOf(
                 "key" to "value",
                 ATTR_KEY_URL to url,
                 ATTR_KEY_ID to id,
             ),
-            expectedState = "foreground",
         )
     }
 
@@ -267,13 +268,14 @@ internal class FileAttachmentFeatureTest {
         assertOtelLogReceived(
             logReceived = log,
             expectedMessage = "test message",
-            expectedSeverityNumber = SeverityNumber.INFO,
+            expectedSeverityNumber = getOtelSeverity(Severity.INFO).severityNumber,
+            expectedSeverityText = Severity.INFO.name,
+            expectedState = "foreground",
             expectedTimeMs = timestamp,
             expectedProperties = mapOf(
                 "key" to "value",
                 ATTR_KEY_SIZE to size.toString(),
             ),
-            expectedState = "foreground",
         )
         val id = log.attributes?.findAttributeValue(ATTR_KEY_ID)
         checkNotNull(UUID.fromString(id))

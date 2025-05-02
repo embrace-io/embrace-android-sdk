@@ -20,12 +20,10 @@ import io.embrace.android.embracesdk.internal.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.spans.SpanService
 import io.embrace.android.embracesdk.internal.spans.SpanSink
 import io.embrace.android.embracesdk.internal.spans.SpanSinkImpl
-import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.opentelemetry.api.OpenTelemetry
 import io.opentelemetry.api.logs.Logger
 import io.opentelemetry.api.trace.Tracer
 
-@OptIn(ExperimentalApi::class)
 internal class OpenTelemetryModuleImpl(
     private val initModule: InitModule,
     override val openTelemetryClock: io.opentelemetry.sdk.common.Clock = OpenTelemetryClock(
@@ -119,7 +117,7 @@ internal class OpenTelemetryModuleImpl(
         )
     }
 
-    override val logger: io.embrace.opentelemetry.kotlin.logging.Logger by lazy {
+    override val logger: Logger by lazy {
         openTelemetrySdk.getOpenTelemetryLogger()
     }
 

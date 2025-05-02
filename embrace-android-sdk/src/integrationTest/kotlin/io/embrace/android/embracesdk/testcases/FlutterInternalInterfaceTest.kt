@@ -11,7 +11,7 @@ import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.assertions.assertMatches
 import io.embrace.android.embracesdk.testframework.assertions.assertOtelLogReceived
 import io.embrace.android.embracesdk.testframework.assertions.getLogOfType
-import io.embrace.opentelemetry.kotlin.logging.SeverityNumber
+import io.opentelemetry.api.logs.Severity
 import io.opentelemetry.semconv.ExceptionAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -179,7 +179,8 @@ internal class FlutterInternalInterfaceTest {
                 assertOtelLogReceived(
                     logReceived = log,
                     expectedMessage = "Dart error",
-                    expectedSeverityNumber = SeverityNumber.ERROR,
+                    expectedSeverityNumber = Severity.ERROR.severityNumber,
+                    expectedSeverityText = Severity.ERROR.name,
                     expectedTimeMs = sessionStartTimeMs,
                     expectedType = LogExceptionType.HANDLED.value,
                     expectedExceptionName = expectedName,
@@ -225,7 +226,8 @@ internal class FlutterInternalInterfaceTest {
                 assertOtelLogReceived(
                     logReceived = log,
                     expectedMessage = "Dart error",
-                    expectedSeverityNumber = SeverityNumber.ERROR,
+                    expectedSeverityNumber = Severity.ERROR.severityNumber,
+                    expectedSeverityText = Severity.ERROR.name,
                     expectedTimeMs = sessionStartTimeMs,
                     expectedType = LogExceptionType.UNHANDLED.value,
                     expectedExceptionName = expectedName,

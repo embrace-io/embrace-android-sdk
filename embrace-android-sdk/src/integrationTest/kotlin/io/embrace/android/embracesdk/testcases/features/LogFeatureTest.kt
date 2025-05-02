@@ -13,7 +13,6 @@ import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.assertions.assertOtelLogReceived
 import io.embrace.android.embracesdk.testframework.assertions.getLogOfType
 import io.embrace.android.embracesdk.testframework.assertions.getOtelSeverity
-import io.embrace.opentelemetry.kotlin.logging.SeverityNumber
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -57,7 +56,7 @@ internal class LogFeatureTest {
                     logReceived = log,
                     expectedTimeMs = logTimestamps.remove(),
                     expectedMessage = "test message",
-                    expectedSeverityNumber = SeverityNumber.INFO,
+                    expectedSeverityNumber = getOtelSeverity(Severity.INFO).severityNumber,
                     expectedSeverityText = Severity.INFO.name,
                     expectedState = "foreground",
                 )
@@ -79,7 +78,7 @@ internal class LogFeatureTest {
                 assertOtelLogReceived(
                     logReceived = log,
                     expectedMessage = "test message",
-                    expectedSeverityNumber = SeverityNumber.WARN,
+                    expectedSeverityNumber = getOtelSeverity(Severity.WARNING).severityNumber,
                     expectedSeverityText = Severity.WARNING.name,
                     expectedTimeMs = logTimestamps.remove(),
                 )
@@ -102,7 +101,7 @@ internal class LogFeatureTest {
                 assertOtelLogReceived(
                     log,
                     expectedMessage = "test message",
-                    expectedSeverityNumber = SeverityNumber.ERROR,
+                    expectedSeverityNumber = getOtelSeverity(Severity.ERROR).severityNumber,
                     expectedSeverityText = Severity.ERROR.name,
                     expectedTimeMs = logTimestamps.remove(),
                 )
@@ -130,7 +129,7 @@ internal class LogFeatureTest {
                     assertOtelLogReceived(
                         logs[severity],
                         expectedMessage = expectedMessage,
-                        expectedSeverityNumber = getOtelSeverity(severity),
+                        expectedSeverityNumber = getOtelSeverity(severity).severityNumber,
                         expectedSeverityText = severity.name,
                         expectedTimeMs = logTimestamps.remove(),
                     )
@@ -159,7 +158,7 @@ internal class LogFeatureTest {
                     assertOtelLogReceived(
                         logs[severity],
                         expectedMessage = expectedMessage,
-                        expectedSeverityNumber = getOtelSeverity(severity),
+                        expectedSeverityNumber = getOtelSeverity(severity).severityNumber,
                         expectedSeverityText = severity.name,
                         expectedTimeMs = logTimestamps.remove(),
                         expectedProperties = customProperties,
@@ -182,7 +181,7 @@ internal class LogFeatureTest {
                 assertOtelLogReceived(
                     log,
                     expectedMessage = checkNotNull(testException.message),
-                    expectedSeverityNumber = SeverityNumber.ERROR,
+                    expectedSeverityNumber = io.opentelemetry.api.logs.Severity.ERROR.severityNumber,
                     expectedSeverityText = Severity.ERROR.name,
                     expectedTimeMs = logTimestamps.remove(),
                     expectedType = LogExceptionType.HANDLED.value,
@@ -209,7 +208,7 @@ internal class LogFeatureTest {
                 assertOtelLogReceived(
                     log,
                     expectedMessage = checkNotNull(testException.message),
-                    expectedSeverityNumber = SeverityNumber.INFO,
+                    expectedSeverityNumber = io.opentelemetry.api.logs.Severity.INFO.severityNumber,
                     expectedSeverityText = Severity.INFO.name,
                     expectedTimeMs = logTimestamps.remove(),
                     expectedType = LogExceptionType.HANDLED.value,
@@ -243,7 +242,7 @@ internal class LogFeatureTest {
                     assertOtelLogReceived(
                         logs[severity],
                         expectedMessage = checkNotNull(testException.message),
-                        expectedSeverityNumber = getOtelSeverity(severity),
+                        expectedSeverityNumber = getOtelSeverity(severity).severityNumber,
                         expectedSeverityText = severity.name,
                         expectedTimeMs = logTimestamps.remove(),
                         expectedType = LogExceptionType.HANDLED.value,
@@ -278,7 +277,7 @@ internal class LogFeatureTest {
                     assertOtelLogReceived(
                         logs[severity],
                         expectedMessage = expectedMessage,
-                        expectedSeverityNumber = getOtelSeverity(severity),
+                        expectedSeverityNumber = getOtelSeverity(severity).severityNumber,
                         expectedSeverityText = severity.name,
                         expectedTimeMs = logTimestamps.remove(),
                         expectedType = LogExceptionType.HANDLED.value,
@@ -307,7 +306,7 @@ internal class LogFeatureTest {
                 assertOtelLogReceived(
                     log,
                     expectedMessage = "",
-                    expectedSeverityNumber = getOtelSeverity(Severity.ERROR),
+                    expectedSeverityNumber = getOtelSeverity(Severity.ERROR).severityNumber,
                     expectedSeverityText = Severity.ERROR.name,
                     expectedTimeMs = logTimestamps.remove(),
                     expectedType = LogExceptionType.HANDLED.value,
@@ -336,7 +335,7 @@ internal class LogFeatureTest {
                     assertOtelLogReceived(
                         logs[severity],
                         expectedMessage = "",
-                        expectedSeverityNumber = getOtelSeverity(severity),
+                        expectedSeverityNumber = getOtelSeverity(severity).severityNumber,
                         expectedSeverityText = severity.name,
                         expectedTimeMs = logTimestamps.remove(),
                         expectedType = LogExceptionType.HANDLED.value,
@@ -366,7 +365,7 @@ internal class LogFeatureTest {
                     assertOtelLogReceived(
                         logs[severity],
                         expectedMessage = "",
-                        expectedSeverityNumber = getOtelSeverity(severity),
+                        expectedSeverityNumber = getOtelSeverity(severity).severityNumber,
                         expectedSeverityText = severity.name,
                         expectedTimeMs = logTimestamps.remove(),
                         expectedType = LogExceptionType.HANDLED.value,
@@ -405,7 +404,7 @@ internal class LogFeatureTest {
                     assertOtelLogReceived(
                         logs[severity],
                         expectedMessage = expectedMessage,
-                        expectedSeverityNumber = getOtelSeverity(severity),
+                        expectedSeverityNumber = getOtelSeverity(severity).severityNumber,
                         expectedSeverityText = severity.name,
                         expectedTimeMs = logTimestamps.remove(),
                         expectedType = LogExceptionType.HANDLED.value,

@@ -8,7 +8,6 @@ import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.serialization.truncatedStacktrace
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
-import io.embrace.opentelemetry.kotlin.logging.SeverityNumber
 import io.opentelemetry.semconv.ExceptionAttributes
 import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes
 import org.junit.Assert.assertEquals
@@ -18,9 +17,9 @@ import org.junit.Assert.assertNotNull
 internal fun assertOtelLogReceived(
     logReceived: Log?,
     expectedMessage: String,
-    expectedSeverityNumber: SeverityNumber,
+    expectedSeverityNumber: Int,
+    expectedSeverityText: String,
     expectedTimeMs: Long,
-    expectedSeverityText: String? = null,
     expectedType: String? = null,
     expectedExceptionName: String? = null,
     expectedExceptionMessage: String? = null,
@@ -33,8 +32,8 @@ internal fun assertOtelLogReceived(
     logReceived?.let { log ->
         assertEquals(expectedEmbType, log.attributes?.find { it.key == "emb.type" }?.data)
         assertEquals(expectedMessage, log.body)
-        assertEquals(expectedSeverityNumber.severityNumber, log.severityNumber)
-        assertEquals(expectedSeverityText ?: expectedSeverityNumber.name, log.severityText)
+        assertEquals(expectedSeverityNumber, log.severityNumber)
+        assertEquals(expectedSeverityText, log.severityText)
         assertEquals(expectedTimeMs.millisToNanos(), log.timeUnixNano)
         assertFalse(log.attributes?.findAttributeValue(SessionIncubatingAttributes.SESSION_ID.key).isNullOrBlank())
         expectedType?.let { assertAttribute(log, embExceptionHandling.name, it) }
@@ -55,11 +54,11 @@ internal fun assertOtelLogReceived(
     }
 }
 
-internal fun getOtelSeverity(severity: Severity): SeverityNumber {
+internal fun getOtelSeverity(severity: Severity): io.opentelemetry.api.logs.Severity {
     return when (severity) {
-        Severity.INFO -> SeverityNumber.INFO
-        Severity.WARNING -> SeverityNumber.WARN
-        Severity.ERROR -> SeverityNumber.ERROR
+        Severity.INFO -> io.opentelemetry.api.logs.Severity.INFO
+        Severity.WARNING -> io.opentelemetry.api.logs.Severity.WARN
+        Severity.ERROR -> io.opentelemetry.api.logs.Severity.ERROR
     }
 }
 

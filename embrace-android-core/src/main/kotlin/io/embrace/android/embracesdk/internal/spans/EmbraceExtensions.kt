@@ -23,6 +23,11 @@ import io.opentelemetry.semconv.ExceptionAttributes
  * Note: there's no explicit tests for these extensions as their functionality will be validated as part of other tests.
  */
 
+internal fun LogRecordBuilder.setFixedAttribute(fixedAttribute: FixedAttribute): LogRecordBuilder {
+    setAttribute(fixedAttribute.key.attributeKey, fixedAttribute.value)
+    return this
+}
+
 internal fun LogRecordBuilder.setAttribute(
     attributeKey: AttributeKey<String>,
     value: String,

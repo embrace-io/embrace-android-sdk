@@ -18,9 +18,7 @@ import io.embrace.android.embracesdk.internal.session.lifecycle.EmbraceProcessSt
 import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateService
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.worker.Worker
-import io.embrace.opentelemetry.kotlin.ExperimentalApi
 
-@OptIn(ExperimentalApi::class)
 class EssentialServiceModuleImpl(
     initModule: InitModule,
     configModule: ConfigModule,

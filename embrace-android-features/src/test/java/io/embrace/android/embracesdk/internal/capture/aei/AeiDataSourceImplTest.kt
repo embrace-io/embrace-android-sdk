@@ -10,10 +10,10 @@ import io.embrace.android.embracesdk.fakes.behavior.FakeAppExitInfoBehavior
 import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
-import io.embrace.opentelemetry.kotlin.logging.SeverityNumber
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.unmockkAll
+import io.opentelemetry.api.logs.Severity
 import org.junit.AfterClass
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -352,7 +352,7 @@ internal class AeiDataSourceImplTest {
 
     private fun getAeiLogAttrs(): Map<String, String> {
         val logEventData = logWriter.logEvents.single()
-        assertEquals(SeverityNumber.INFO, logEventData.severity)
+        assertEquals(Severity.INFO, logEventData.severity)
         logEventData.assertIsType(EmbType.System.Exit)
         return logEventData.schemaType.attributes()
     }

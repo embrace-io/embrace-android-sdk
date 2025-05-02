@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.arch.destination
 
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
-import io.embrace.opentelemetry.kotlin.logging.SeverityNumber
+import io.opentelemetry.api.logs.Severity
 
 /**
  * Declares functions for writing a log to the current session span.
@@ -9,7 +9,7 @@ import io.embrace.opentelemetry.kotlin.logging.SeverityNumber
 interface LogWriter {
     fun addLog(
         schemaType: SchemaType,
-        severity: SeverityNumber,
+        severity: Severity,
         message: String,
         isPrivate: Boolean = false,
         addCurrentSessionInfo: Boolean = true,

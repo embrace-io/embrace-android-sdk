@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.arch.destination
 
+import io.embrace.android.embracesdk.assertions.findAttributeValue
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeClock.Companion.DEFAULT_FAKE_CURRENT_TIME
 import io.embrace.android.embracesdk.fakes.FakeConfigService
@@ -12,8 +13,9 @@ import io.embrace.android.embracesdk.internal.arch.schema.TelemetryAttributes
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.opentelemetry.embState
 import io.embrace.android.embracesdk.internal.session.id.SessionData
-import io.embrace.opentelemetry.kotlin.ExperimentalApi
-import io.embrace.opentelemetry.kotlin.logging.SeverityNumber
+import io.embrace.android.embracesdk.internal.spans.getAttribute
+import io.embrace.android.embracesdk.internal.spans.hasFixedAttribute
+import io.opentelemetry.api.logs.Severity
 import io.opentelemetry.semconv.incubating.LogIncubatingAttributes
 import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes
 import org.junit.Assert.assertEquals
@@ -24,7 +26,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
-@OptIn(ExperimentalApi::class)
 internal class LogWriterImplTest {
     private lateinit var logger: FakeOpenTelemetryLogger
     private lateinit var sessionIdTracker: FakeSessionIdTracker
@@ -56,19 +57,19 @@ internal class LogWriterImplTest {
                     customAttributes = mapOf(PrivateSpan.toEmbraceKeyValuePair())
                 )
             ),
-            severity = SeverityNumber.ERROR,
+            severity = Severity.ERROR,
             message = "test"
         )
-        with(logger.logs.single()) {
+        with(logger.builders.single()) {
             assertEquals("test", body)
-            assertEquals(SeverityNumber.ERROR, severityNumber)
-            assertEquals(SeverityNumber.ERROR.name, severityNumber?.name)
-            assertEquals("fake-session-id", attributes()[SessionIncubatingAttributes.SESSION_ID.key])
-            assertNotNull(attributes()[embState.attributeKey.key])
-            assertNotNull(attributes()[LogIncubatingAttributes.LOG_RECORD_UID.key])
-            assertTrue(attributes()[PrivateSpan.key.attributeKey.key] != null)
-            assertEquals(clock.nowInNanos(), timestampNs)
-            assertNull(observedTimestampNs)
+            assertEquals(Severity.ERROR, severity)
+            assertEquals(Severity.ERROR.name, severity.name)
+            assertEquals("fake-session-id", attributes.getAttribute(SessionIncubatingAttributes.SESSION_ID))
+            assertNotNull(attributes.getAttribute(embState))
+            assertNotNull(attributes.getAttribute(LogIncubatingAttributes.LOG_RECORD_UID))
+            assertTrue(attributes.hasFixedAttribute(PrivateSpan))
+            assertEquals(clock.nowInNanos(), timestampEpochNanos)
+            assertEquals(0, observedTimestampEpochNanos)
         }
     }
 
@@ -80,12 +81,12 @@ internal class LogWriterImplTest {
                     configService = FakeConfigService()
                 )
             ),
-            severity = SeverityNumber.ERROR,
+            severity = Severity.ERROR,
             message = "test",
             isPrivate = true
         )
-        with(logger.logs.single()) {
-            assertTrue(attributes()[PrivateSpan.key.attributeKey.key] != null)
+        with(logger.builders.single()) {
+            assertTrue(attributes.hasFixedAttribute(PrivateSpan))
         }
         logWriterImpl.addLog(
             schemaType = SchemaType.Log(
@@ -93,12 +94,12 @@ internal class LogWriterImplTest {
                     configService = FakeConfigService()
                 )
             ),
-            severity = SeverityNumber.ERROR,
+            severity = Severity.ERROR,
             message = "test",
             isPrivate = false
         )
-        with(logger.logs.last()) {
-            assertFalse(attributes()[PrivateSpan.key.attributeKey.key] != null)
+        with(logger.builders.last()) {
+            assertFalse(attributes.hasFixedAttribute(PrivateSpan))
         }
     }
 
@@ -112,16 +113,16 @@ internal class LogWriterImplTest {
                     configService = FakeConfigService()
                 )
             ),
-            severity = SeverityNumber.ERROR,
+            severity = Severity.ERROR,
             message = "test"
         )
 
-        with(logger.logs.last()) {
+        with(logger.builders.last()) {
             assertEquals(
                 "foreground-session",
-                attributes()[SessionIncubatingAttributes.SESSION_ID.key]
+                attributes.findAttributeValue(SessionIncubatingAttributes.SESSION_ID.key)
             )
-            assertEquals("foreground", attributes()[embState.attributeKey.key])
+            assertEquals("foreground", attributes.findAttributeValue(embState.attributeKey.key))
         }
     }
 
@@ -135,13 +136,13 @@ internal class LogWriterImplTest {
                     configService = FakeConfigService()
                 )
             ),
-            severity = SeverityNumber.ERROR,
+            severity = Severity.ERROR,
             message = "test"
         )
 
-        with(logger.logs.last()) {
-            assertNull(attributes()[SessionIncubatingAttributes.SESSION_ID.key])
-            assertEquals("background", attributes()[embState.attributeKey.key])
+        with(logger.builders.last()) {
+            assertNull(attributes.findAttributeValue(SessionIncubatingAttributes.SESSION_ID.key))
+            assertEquals("background", attributes.findAttributeValue(embState.attributeKey.key))
         }
     }
 
@@ -154,14 +155,14 @@ internal class LogWriterImplTest {
                     configService = FakeConfigService()
                 )
             ),
-            severity = SeverityNumber.ERROR,
+            severity = Severity.ERROR,
             message = "test",
             timestampMs = fakeTimeMs
         )
 
-        with(logger.logs.last()) {
-            assertEquals(fakeTimeMs.millisToNanos(), timestampNs)
-            assertNull(observedTimestampNs)
+        with(logger.builders.last()) {
+            assertEquals(fakeTimeMs.millisToNanos(), timestampEpochNanos)
+            assertEquals(0, observedTimestampEpochNanos)
         }
     }
 
@@ -174,14 +175,14 @@ internal class LogWriterImplTest {
                     configService = FakeConfigService()
                 )
             ),
-            severity = SeverityNumber.ERROR,
+            severity = Severity.ERROR,
             message = "test",
             addCurrentSessionInfo = false,
         )
 
-        with(logger.logs.last()) {
-            assertNull(attributes()[SessionIncubatingAttributes.SESSION_ID.key])
-            assertNull(attributes()[embState.attributeKey.key])
+        with(logger.builders.last()) {
+            assertNull(attributes.findAttributeValue(SessionIncubatingAttributes.SESSION_ID.key))
+            assertNull(attributes.getAttribute(embState))
         }
     }
 
@@ -194,13 +195,13 @@ internal class LogWriterImplTest {
                     configService = FakeConfigService()
                 )
             ),
-            severity = SeverityNumber.ERROR,
+            severity = Severity.ERROR,
             message = "test"
         )
 
-        with(logger.logs.last()) {
-            assertNull(attributes()[SessionIncubatingAttributes.SESSION_ID.key])
-            assertEquals("background", attributes()[embState.attributeKey.key])
+        with(logger.builders.last()) {
+            assertNull(attributes.findAttributeValue(SessionIncubatingAttributes.SESSION_ID.key))
+            assertEquals("background", attributes.findAttributeValue(embState.attributeKey.key))
         }
     }
 }

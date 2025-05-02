@@ -1,9 +1,9 @@
-package io.embrace.android.embracesdk.internal.arch.schema
+package io.embrace.android.embracesdk.internal.otel.attrs
 
 /**
  * An attribute to be used in telemetry objects and payload envelopes
  */
-internal interface EmbraceAttribute {
+interface EmbraceAttribute {
     /**
      * The unique name given to the attribute.
      * Don't use this to look up the existence of an attribute in a log or span - use [name] instead

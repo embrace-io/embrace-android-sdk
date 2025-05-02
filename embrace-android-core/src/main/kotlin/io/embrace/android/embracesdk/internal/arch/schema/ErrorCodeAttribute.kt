@@ -1,5 +1,7 @@
 package io.embrace.android.embracesdk.internal.arch.schema
 
+import io.embrace.android.embracesdk.internal.otel.attrs.EmbraceAttributeKey
+import io.embrace.android.embracesdk.internal.otel.attrs.FixedAttribute
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.android.embracesdk.spans.ErrorCode.FAILURE
 import io.embrace.android.embracesdk.spans.ErrorCode.UNKNOWN

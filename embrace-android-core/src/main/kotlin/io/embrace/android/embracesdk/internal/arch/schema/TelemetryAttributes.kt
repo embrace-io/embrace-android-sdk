@@ -1,6 +1,8 @@
 package io.embrace.android.embracesdk.internal.arch.schema
 
 import io.embrace.android.embracesdk.internal.config.ConfigService
+import io.embrace.android.embracesdk.internal.otel.attrs.EmbraceAttributeKey
+import io.embrace.android.embracesdk.internal.otel.attrs.toSessionPropertyAttributeName
 import io.embrace.android.embracesdk.internal.utils.isBlankish
 import io.opentelemetry.api.common.AttributeKey
 

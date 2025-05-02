@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.internal.arch.schema
+package io.embrace.android.embracesdk.internal.otel.attrs
 
 import io.opentelemetry.api.common.AttributeKey
 

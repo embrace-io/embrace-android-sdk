@@ -5,10 +5,10 @@ import io.embrace.android.embracesdk.fakes.SpanEventData
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute.Failure.fromErrorCode
-import io.embrace.android.embracesdk.internal.arch.schema.FixedAttribute
 import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.arch.schema.TelemetryType
-import io.embrace.android.embracesdk.internal.arch.schema.toPayload
+import io.embrace.android.embracesdk.internal.otel.attrs.FixedAttribute
+import io.embrace.android.embracesdk.internal.otel.attrs.toPayload
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.spans.hasFixedAttribute

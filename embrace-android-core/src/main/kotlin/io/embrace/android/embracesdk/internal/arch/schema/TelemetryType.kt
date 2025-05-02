@@ -1,5 +1,7 @@
 package io.embrace.android.embracesdk.internal.arch.schema
 
+import io.embrace.android.embracesdk.internal.otel.attrs.FixedAttribute
+
 /**
  * Represents a telemetry type (emb.type). For example, "ux.view" is a type that represents
  * a visual event around a UI element. ux is the type, and view is the subtype. This tells the

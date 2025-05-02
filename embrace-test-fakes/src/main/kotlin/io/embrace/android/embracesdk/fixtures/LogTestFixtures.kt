@@ -3,9 +3,9 @@ package io.embrace.android.embracesdk.fixtures
 import io.embrace.android.embracesdk.fakes.FakeLogRecordData
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.SendMode
-import io.embrace.android.embracesdk.internal.arch.schema.toPayload
 import io.embrace.android.embracesdk.internal.opentelemetry.embProcessIdentifier
 import io.embrace.android.embracesdk.internal.opentelemetry.embSendMode
+import io.embrace.android.embracesdk.internal.otel.attrs.toPayload
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData

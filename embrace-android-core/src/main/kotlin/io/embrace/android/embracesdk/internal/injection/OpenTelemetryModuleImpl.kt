@@ -120,7 +120,7 @@ internal class OpenTelemetryModuleImpl(
     }
 
     override val logger: Logger by lazy {
-        Systrace.traceSynchronous("otel-logger-init") {
+        EmbTrace.trace("otel-logger-init") {
             openTelemetrySdk.kotlinApi.loggerProvider.getLogger(
                 name = openTelemetryConfiguration.embraceSdkName
             )

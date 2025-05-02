@@ -96,16 +96,16 @@ internal class NativeCrashDataSourceImplTest {
         with(otelLogger.logs.single()) {
             assertEquals(testNativeCrashData.timestamp, timestampNs?.nanosToMillis())
             assertNull(observedTimestampNs?.nanosToMillis())
-            assertTrue(attributes()[EmbType.System.NativeCrash.key.attributeKey.key] != null)
+            assertTrue(attributes()[EmbType.System.NativeCrash.key.attributeKey] != null)
             assertEquals("value", attributes()["prop".toSessionPropertyAttributeName()])
-            assertEquals("background", attributes()[embState.attributeKey.key])
+            assertEquals("background", attributes()[embState.attributeKey])
             assertNotNull(attributes()[LogIncubatingAttributes.LOG_RECORD_UID.key])
             assertEquals(testNativeCrashData.sessionId, attributes()[SessionIncubatingAttributes.SESSION_ID.key])
-            assertEquals("1", attributes()[embCrashNumber.attributeKey.key])
-            assertEquals(testNativeCrashData.crash, attributes()[embNativeCrashException.attributeKey.key])
+            assertEquals("1", attributes()[embCrashNumber.attributeKey])
+            assertEquals(testNativeCrashData.crash, attributes()[embNativeCrashException.attributeKey])
             assertEquals(
                 serializer.toJson(testNativeCrashData.symbols, Map::class.java).toByteArray().toUTF8String(),
-                attributes()[embNativeCrashSymbols.attributeKey.key]
+                attributes()[embNativeCrashSymbols.attributeKey]
             )
         }
     }
@@ -125,12 +125,12 @@ internal class NativeCrashDataSourceImplTest {
         )
 
         with(otelLogger.logs.single()) {
-            assertTrue(attributes()[EmbType.System.NativeCrash.key.attributeKey.key] != null)
+            assertTrue(attributes()[EmbType.System.NativeCrash.key.attributeKey] != null)
             assertNotNull(attributes()[LogIncubatingAttributes.LOG_RECORD_UID.key])
             assertNull(attributes()[SessionIncubatingAttributes.SESSION_ID.key])
-            assertEquals("1", attributes()[embCrashNumber.attributeKey.key])
-            assertNull(attributes()[embNativeCrashException.attributeKey.key])
-            assertNull(attributes()[embNativeCrashSymbols.attributeKey.key])
+            assertEquals("1", attributes()[embCrashNumber.attributeKey])
+            assertNull(attributes()[embNativeCrashException.attributeKey])
+            assertNull(attributes()[embNativeCrashSymbols.attributeKey])
         }
     }
 
@@ -149,13 +149,13 @@ internal class NativeCrashDataSourceImplTest {
         )
 
         with(otelLogger.logs.single()) {
-            assertTrue(attributes()[EmbType.System.NativeCrash.key.attributeKey.key] != null)
+            assertTrue(attributes()[EmbType.System.NativeCrash.key.attributeKey] != null)
             assertNotNull(attributes()[LogIncubatingAttributes.LOG_RECORD_UID.key])
             assertNull(attributes()[SessionIncubatingAttributes.SESSION_ID.key])
-            assertEquals("1", attributes()[embCrashNumber.attributeKey.key])
-            assertNull(attributes()[embState.attributeKey.key])
-            assertNull(attributes()[embNativeCrashException.attributeKey.key])
-            assertNull(attributes()[embNativeCrashSymbols.attributeKey.key])
+            assertEquals("1", attributes()[embCrashNumber.attributeKey])
+            assertNull(attributes()[embState.attributeKey])
+            assertNull(attributes()[embNativeCrashException.attributeKey])
+            assertNull(attributes()[embNativeCrashSymbols.attributeKey])
         }
     }
 }

@@ -60,7 +60,7 @@ internal class OpenTelemetrySdkTest {
 
     @Test
     fun `check resource added by default logger`() {
-        sdk.getOpenTelemetryLogger().log()
+        sdk.kotlinApi.loggerProvider.getLogger("my_logger").log()
         checkNotNull(logExporter.exportedLogs).single().resource.assertExpectedAttributes(
             expectedServiceName = configuration.embraceSdkName,
             expectedServiceVersion = configuration.embraceSdkVersion,

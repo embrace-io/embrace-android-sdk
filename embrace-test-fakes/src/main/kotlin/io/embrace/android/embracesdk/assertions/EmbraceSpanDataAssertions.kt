@@ -3,12 +3,12 @@ package io.embrace.android.embracesdk.assertions
 import io.embrace.android.embracesdk.arch.assertError
 import io.embrace.android.embracesdk.arch.assertIsPrivateSpan
 import io.embrace.android.embracesdk.arch.assertNotPrivateSpan
-import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
+import io.embrace.android.embracesdk.internal.otel.schema.ErrorCodeAttribute
+import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanData
+import io.embrace.android.embracesdk.internal.otel.spans.findAttributeValue
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
-import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
-import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.spans.ErrorCode
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull

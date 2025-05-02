@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.internal.capture.user
 
-import io.embrace.android.embracesdk.internal.EmbTrace
 import io.embrace.android.embracesdk.internal.payload.UserInfo
 import io.embrace.android.embracesdk.internal.prefs.PreferencesService
+import io.embrace.android.embracesdk.internal.utils.EmbTrace
 
 internal const val PERSONA_PAYER = "payer"
 internal const val PERSONA_FIRST_DAY_USER = "first_day"

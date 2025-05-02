@@ -1,9 +1,9 @@
 package io.embrace.android.embracesdk.internal.payload
 
-import io.embrace.android.embracesdk.internal.arch.schema.EmbType
-import io.embrace.android.embracesdk.internal.spans.findAttributeValue
-import io.embrace.android.embracesdk.internal.spans.getSessionProperties
-import io.embrace.android.embracesdk.internal.spans.hasEmbraceAttribute
+import io.embrace.android.embracesdk.internal.otel.schema.EmbType
+import io.embrace.android.embracesdk.internal.otel.spans.findAttributeValue
+import io.embrace.android.embracesdk.internal.otel.spans.getSessionProperties
+import io.embrace.android.embracesdk.internal.otel.spans.hasEmbraceAttribute
 import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes
 
 fun Envelope<SessionPayload>.getSessionSpan(): Span? {

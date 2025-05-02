@@ -4,7 +4,7 @@ import io.embrace.android.embracesdk.arch.assertIsType
 import io.embrace.android.embracesdk.fakes.FakeCurrentSessionSpan
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.behavior.FakeBreadcrumbBehavior
-import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test

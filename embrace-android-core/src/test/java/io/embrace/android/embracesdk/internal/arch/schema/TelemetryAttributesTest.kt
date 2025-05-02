@@ -7,8 +7,8 @@ import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesS
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.SessionRemoteConfig
-import io.embrace.android.embracesdk.internal.opentelemetry.embProcessIdentifier
-import io.embrace.android.embracesdk.internal.spans.getSessionProperty
+import io.embrace.android.embracesdk.internal.otel.attrs.embProcessIdentifier
+import io.embrace.android.embracesdk.internal.session.getSessionProperty
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.opentelemetry.semconv.ExceptionAttributes
 import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes

@@ -4,8 +4,8 @@ import android.os.PowerManager
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeSpanService
 import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
-import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
+import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.mockk.mockk
 import io.mockk.verify
 import org.junit.Assert.assertEquals

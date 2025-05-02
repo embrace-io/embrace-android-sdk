@@ -10,5 +10,3 @@ interface LogOrchestrator : CrashTeardownHandler {
     fun flush(saveOnly: Boolean)
     fun onLogsAdded()
 }
-
-internal const val MAX_LOGS_PER_BATCH = 50

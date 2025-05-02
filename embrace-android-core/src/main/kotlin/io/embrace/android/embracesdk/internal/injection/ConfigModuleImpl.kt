@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.injection
 
-import io.embrace.android.embracesdk.internal.EmbTrace
 import io.embrace.android.embracesdk.internal.comms.api.ApiUrlBuilder
 import io.embrace.android.embracesdk.internal.comms.api.EmbraceApiUrlBuilder
 import io.embrace.android.embracesdk.internal.config.ConfigService
@@ -10,6 +9,7 @@ import io.embrace.android.embracesdk.internal.config.source.OkHttpRemoteConfigSo
 import io.embrace.android.embracesdk.internal.config.store.RemoteConfigStore
 import io.embrace.android.embracesdk.internal.config.store.RemoteConfigStoreImpl
 import io.embrace.android.embracesdk.internal.payload.AppFramework
+import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.worker.Worker
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
@@ -53,7 +53,7 @@ internal class ConfigModuleImpl(
     override val configService: ConfigService by singleton {
         EmbTrace.trace("config-service-init") {
             ConfigServiceImpl(
-                openTelemetryCfg = openTelemetryModule.openTelemetryConfiguration,
+                openTelemetryCfg = openTelemetryModule.otelSdkConfig,
                 preferencesService = androidServicesModule.preferencesService,
                 suppliedFramework = framework,
                 instrumentedConfig = initModule.instrumentedConfig,

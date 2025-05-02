@@ -1,14 +1,14 @@
 package io.embrace.android.embracesdk.assertions
 
-import io.embrace.android.embracesdk.internal.arch.schema.TelemetryType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
-import io.embrace.android.embracesdk.internal.opentelemetry.embHeartbeatTimeUnixNano
+import io.embrace.android.embracesdk.internal.otel.attrs.embHeartbeatTimeUnixNano
+import io.embrace.android.embracesdk.internal.otel.schema.TelemetryType
+import io.embrace.android.embracesdk.internal.otel.spans.findAttributeValue
+import io.embrace.android.embracesdk.internal.otel.spans.hasEmbraceAttribute
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.getSessionSpan
-import io.embrace.android.embracesdk.internal.spans.findAttributeValue
-import io.embrace.android.embracesdk.internal.spans.hasEmbraceAttribute
 
 /**
  * Returns the Session Span

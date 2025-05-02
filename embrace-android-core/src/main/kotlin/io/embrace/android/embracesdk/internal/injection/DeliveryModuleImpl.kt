@@ -37,7 +37,7 @@ internal class DeliveryModuleImpl(
     override val deliveryTracer: DeliveryTracer? = null,
 ) : DeliveryModule {
 
-    private val processIdProvider = { otelModule.openTelemetryConfiguration.processIdentifier }
+    private val processIdProvider = { otelModule.otelSdkConfig.processIdentifier }
 
     override val payloadStore: PayloadStore? by singleton {
         val configService = configModule.configService

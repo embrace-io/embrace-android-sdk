@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.resurrection
 
-import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
@@ -11,11 +10,15 @@ import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageSer
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.ndk.NativeCrashService
-import io.embrace.android.embracesdk.internal.opentelemetry.embCrashId
-import io.embrace.android.embracesdk.internal.opentelemetry.embHeartbeatTimeUnixNano
-import io.embrace.android.embracesdk.internal.opentelemetry.embProcessIdentifier
-import io.embrace.android.embracesdk.internal.opentelemetry.embState
 import io.embrace.android.embracesdk.internal.otel.attrs.asOtelAttributeKey
+import io.embrace.android.embracesdk.internal.otel.attrs.embCrashId
+import io.embrace.android.embracesdk.internal.otel.attrs.embHeartbeatTimeUnixNano
+import io.embrace.android.embracesdk.internal.otel.attrs.embProcessIdentifier
+import io.embrace.android.embracesdk.internal.otel.attrs.embState
+import io.embrace.android.embracesdk.internal.otel.payload.toFailedSpan
+import io.embrace.android.embracesdk.internal.otel.schema.EmbType
+import io.embrace.android.embracesdk.internal.otel.spans.findAttributeValue
+import io.embrace.android.embracesdk.internal.otel.spans.hasEmbraceAttribute
 import io.embrace.android.embracesdk.internal.payload.ApplicationState
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Envelope
@@ -28,10 +31,7 @@ import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.getSessionId
 import io.embrace.android.embracesdk.internal.payload.getSessionProperties
 import io.embrace.android.embracesdk.internal.payload.getSessionSpan
-import io.embrace.android.embracesdk.internal.payload.toFailedSpan
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
-import io.embrace.android.embracesdk.internal.spans.findAttributeValue
-import io.embrace.android.embracesdk.internal.spans.hasEmbraceAttribute
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes
 import java.util.Locale

@@ -1,32 +1,35 @@
 package io.embrace.android.embracesdk.internal.injection
 
-import io.embrace.android.embracesdk.internal.EmbTrace
-import io.embrace.android.embracesdk.internal.OpenTelemetryClock
+import io.embrace.android.embracesdk.core.BuildConfig
+import io.embrace.android.embracesdk.internal.config.behavior.REDACTED_LABEL
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehavior
-import io.embrace.android.embracesdk.internal.logs.LogSink
-import io.embrace.android.embracesdk.internal.logs.LogSinkImpl
-import io.embrace.android.embracesdk.internal.opentelemetry.EmbOpenTelemetry
-import io.embrace.android.embracesdk.internal.opentelemetry.EmbTracerProvider
-import io.embrace.android.embracesdk.internal.opentelemetry.OpenTelemetryConfiguration
-import io.embrace.android.embracesdk.internal.opentelemetry.OpenTelemetrySdk
+import io.embrace.android.embracesdk.internal.otel.config.OtelSdkConfig
+import io.embrace.android.embracesdk.internal.otel.impl.EmbClock
+import io.embrace.android.embracesdk.internal.otel.impl.EmbOpenTelemetry
+import io.embrace.android.embracesdk.internal.otel.impl.EmbTracerProvider
+import io.embrace.android.embracesdk.internal.otel.logs.LogSink
+import io.embrace.android.embracesdk.internal.otel.logs.LogSinkImpl
+import io.embrace.android.embracesdk.internal.otel.sdk.OtelSdkWrapper
+import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanFactory
+import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanFactoryImpl
+import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
+import io.embrace.android.embracesdk.internal.otel.spans.SpanService
+import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
+import io.embrace.android.embracesdk.internal.otel.spans.SpanSinkImpl
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpanImpl
-import io.embrace.android.embracesdk.internal.spans.EmbraceSpanFactory
-import io.embrace.android.embracesdk.internal.spans.EmbraceSpanFactoryImpl
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanService
 import io.embrace.android.embracesdk.internal.spans.EmbraceTracer
 import io.embrace.android.embracesdk.internal.spans.InternalTracer
-import io.embrace.android.embracesdk.internal.spans.SpanRepository
-import io.embrace.android.embracesdk.internal.spans.SpanService
-import io.embrace.android.embracesdk.internal.spans.SpanSink
-import io.embrace.android.embracesdk.internal.spans.SpanSinkImpl
+import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.opentelemetry.api.OpenTelemetry
 import io.opentelemetry.api.logs.Logger
 import io.opentelemetry.api.trace.Tracer
+import io.opentelemetry.api.trace.TracerProvider
 
 internal class OpenTelemetryModuleImpl(
     private val initModule: InitModule,
-    override val openTelemetryClock: io.opentelemetry.sdk.common.Clock = OpenTelemetryClock(
+    override val openTelemetryClock: io.opentelemetry.sdk.common.Clock = EmbClock(
         embraceClock = initModule.clock
     ),
 ) : OpenTelemetryModule {
@@ -39,21 +42,23 @@ internal class OpenTelemetryModuleImpl(
         SpanSinkImpl()
     }
 
-    override val openTelemetryConfiguration: OpenTelemetryConfiguration by lazy {
-        OpenTelemetryConfiguration(
+    override val otelSdkConfig: OtelSdkConfig by lazy {
+        OtelSdkConfig(
             spanSink = spanSink,
             logSink = logSink,
+            sdkName = BuildConfig.LIBRARY_PACKAGE_NAME,
+            sdkVersion = BuildConfig.VERSION_NAME,
             systemInfo = initModule.systemInfo,
             processIdentifierProvider = initModule.processIdentifierProvider
         )
     }
 
-    private val openTelemetrySdk: OpenTelemetrySdk by lazy {
+    private val otelSdkWrapper: OtelSdkWrapper by lazy {
         EmbTrace.trace("otel-sdk-wrapper-init") {
             try {
-                OpenTelemetrySdk(
+                OtelSdkWrapper(
                     openTelemetryClock = openTelemetryClock,
-                    configuration = openTelemetryConfiguration
+                    configuration = otelSdkConfig
                 )
             } catch (exc: NoClassDefFoundError) {
                 throw LinkageError(
@@ -67,14 +72,13 @@ internal class OpenTelemetryModuleImpl(
     }
 
     override val sdkTracer: Tracer by lazy {
-        openTelemetrySdk.sdkTracer
+        otelSdkWrapper.sdkTracer
     }
 
     private var sensitiveKeysBehavior: SensitiveKeysBehavior? = null
 
     override fun setupSensitiveKeysBehavior(sensitiveKeysBehavior: SensitiveKeysBehavior) {
         this.sensitiveKeysBehavior = sensitiveKeysBehavior
-        embraceSpanFactory.setupSensitiveKeysBehavior(sensitiveKeysBehavior)
     }
 
     private val embraceSpanFactory: EmbraceSpanFactory by singleton {
@@ -82,8 +86,16 @@ internal class OpenTelemetryModuleImpl(
             tracer = sdkTracer,
             openTelemetryClock = openTelemetryClock,
             spanRepository = spanRepository,
-            sensitiveKeysBehavior = sensitiveKeysBehavior
+            redactionFunction = ::redactionFunction
         )
+    }
+
+    fun redactionFunction(key: String, value: String): String {
+        return if (sensitiveKeysBehavior?.isSensitiveKey(key) == true) {
+            REDACTED_LABEL
+        } else {
+            value
+        }
     }
 
     override val currentSessionSpan: CurrentSessionSpan by lazy {
@@ -118,7 +130,7 @@ internal class OpenTelemetryModuleImpl(
     }
 
     override val logger: Logger by lazy {
-        openTelemetrySdk.getOpenTelemetryLogger()
+        otelSdkWrapper.getOpenTelemetryLogger()
     }
 
     override val logSink: LogSink by lazy {
@@ -131,9 +143,9 @@ internal class OpenTelemetryModuleImpl(
         )
     }
 
-    override val externalTracerProvider: EmbTracerProvider by lazy {
+    override val externalTracerProvider: TracerProvider by lazy {
         EmbTracerProvider(
-            sdkTracerProvider = openTelemetrySdk.sdkTracerProvider,
+            sdkTracerProvider = otelSdkWrapper.sdkTracerProvider,
             spanService = spanService,
             clock = openTelemetryClock,
         )

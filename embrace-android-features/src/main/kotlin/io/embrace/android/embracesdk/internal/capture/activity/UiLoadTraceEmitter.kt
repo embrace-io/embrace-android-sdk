@@ -1,9 +1,9 @@
 package io.embrace.android.embracesdk.internal.capture.activity
 
 import android.app.Application.ActivityLifecycleCallbacks
-import io.embrace.android.embracesdk.internal.arch.schema.EmbType
-import io.embrace.android.embracesdk.internal.spans.EmbraceSdkSpan
-import io.embrace.android.embracesdk.internal.spans.SpanService
+import io.embrace.android.embracesdk.internal.otel.schema.EmbType
+import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
+import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode

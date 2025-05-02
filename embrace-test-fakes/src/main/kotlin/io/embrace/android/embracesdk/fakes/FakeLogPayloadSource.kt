@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.fakes
 import io.embrace.android.embracesdk.fixtures.sendImmediatelyLog
 import io.embrace.android.embracesdk.fixtures.testLog
 import io.embrace.android.embracesdk.internal.envelope.log.LogPayloadSource
-import io.embrace.android.embracesdk.internal.logs.LogRequest
+import io.embrace.android.embracesdk.internal.otel.logs.LogRequest
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 
 class FakeLogPayloadSource : LogPayloadSource {

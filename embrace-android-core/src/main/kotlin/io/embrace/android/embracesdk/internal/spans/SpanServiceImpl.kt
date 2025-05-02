@@ -1,13 +1,18 @@
 package io.embrace.android.embracesdk.internal.spans
 
-import io.embrace.android.embracesdk.internal.EmbTrace
-import io.embrace.android.embracesdk.internal.arch.schema.TelemetryType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
-import io.embrace.android.embracesdk.internal.config.instrumented.isAttributeCountValid
-import io.embrace.android.embracesdk.internal.config.instrumented.isEventCountValid
-import io.embrace.android.embracesdk.internal.config.instrumented.isNameValid
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.OtelLimitsConfig
+import io.embrace.android.embracesdk.internal.otel.config.isAttributeCountValid
+import io.embrace.android.embracesdk.internal.otel.config.isEventCountValid
+import io.embrace.android.embracesdk.internal.otel.config.isNameValid
+import io.embrace.android.embracesdk.internal.otel.schema.TelemetryType
+import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
+import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanFactory
+import io.embrace.android.embracesdk.internal.otel.spans.OtelSpanBuilderWrapper
+import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
+import io.embrace.android.embracesdk.internal.otel.spans.SpanService
+import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent

@@ -4,10 +4,10 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeIntakeService
 import io.embrace.android.embracesdk.fakes.FakePayloadIntake
 import io.embrace.android.embracesdk.fakes.fakeSessionEnvelope
-import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System
-import io.embrace.android.embracesdk.internal.arch.schema.TelemetryType
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
+import io.embrace.android.embracesdk.internal.otel.schema.EmbType.System
+import io.embrace.android.embracesdk.internal.otel.schema.TelemetryType
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.Log

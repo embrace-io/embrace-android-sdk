@@ -1,11 +1,11 @@
 package io.embrace.android.embracesdk.internal.gating
 
-import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.gating.SessionGatingKeys.BREADCRUMBS_CUSTOM
 import io.embrace.android.embracesdk.internal.gating.SessionGatingKeys.BREADCRUMBS_TAPS
+import io.embrace.android.embracesdk.internal.otel.schema.EmbType
+import io.embrace.android.embracesdk.internal.otel.spans.hasEmbraceAttribute
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
-import io.embrace.android.embracesdk.internal.spans.hasEmbraceAttribute
 import io.opentelemetry.api.trace.SpanId
 
 internal class SpanSanitizer(

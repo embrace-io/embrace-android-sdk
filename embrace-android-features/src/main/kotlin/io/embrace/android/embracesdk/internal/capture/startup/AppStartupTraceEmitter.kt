@@ -2,17 +2,17 @@ package io.embrace.android.embracesdk.internal.capture.startup
 
 import android.os.Build.VERSION_CODES
 import android.os.Process
-import io.embrace.android.embracesdk.internal.EmbTrace
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
-import io.embrace.android.embracesdk.internal.opentelemetry.embStartupActivityName
 import io.embrace.android.embracesdk.internal.otel.attrs.asOtelAttributeKey
+import io.embrace.android.embracesdk.internal.otel.attrs.embStartupActivityName
+import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
+import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateListener
-import io.embrace.android.embracesdk.internal.spans.EmbraceSdkSpan
-import io.embrace.android.embracesdk.internal.spans.SpanService
 import io.embrace.android.embracesdk.internal.ui.hasRenderEvent
 import io.embrace.android.embracesdk.internal.ui.supportFrameCommitCallback
+import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.spans.EmbraceSpan

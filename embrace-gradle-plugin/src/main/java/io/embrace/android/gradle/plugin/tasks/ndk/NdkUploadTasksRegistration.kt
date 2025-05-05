@@ -42,6 +42,10 @@ class NdkUploadTasksRegistration(
 
         val sharedObjectFilesProvider = getSharedObjectFilesProvider(project, data)
 
+        // we need to create a variable here so we don't leak the contents of the class into the onlyIf lambda
+        // https://github.com/gradle/gradle/issues/16080
+        val shouldExecuteTasks = getShouldExecuteTasks()
+
         val compressionTaskProvider = project.registerTask(
             CompressSharedObjectFilesTask.NAME,
             CompressSharedObjectFilesTask::class.java,
@@ -55,8 +59,7 @@ class NdkUploadTasksRegistration(
         }
 
         compressionTaskProvider.configure { compressionTask: CompressSharedObjectFilesTask ->
-            val shouldExecuteCompressionTaskProvider = getShouldExecuteCompressionTaskProvider()
-            compressionTask.onlyIf { shouldExecuteCompressionTaskProvider.orNull ?: false }
+            compressionTask.onlyIf { shouldExecuteTasks.orNull ?: false }
             // TODO: check if these are only needed for Unity and comment accordingly.
             compressionTask.mustRunAfter(object : Callable<Any> {
                 override fun call(): Any {
@@ -87,6 +90,7 @@ class NdkUploadTasksRegistration(
             task.architecturesToHashedSharedObjectFilesMap.set(
                 project.layout.buildDirectory.file("intermediates/embrace/hashes/${data.name}/hashes.json")
             )
+            task.onlyIf { shouldExecuteTasks.orNull ?: false }
         }
 
         val uploadTask = project.registerTask(
@@ -96,7 +100,8 @@ class NdkUploadTasksRegistration(
         ) { task ->
             // TODO: Check why this is needed for 7.5.1. For Gradle 8+ Gradle detects automatically when the other tasks aren't executed
             task.onlyIf {
-                task.compressedSharedObjectFilesDirectory.asFile.get().exists() &&
+                shouldExecuteTasks.orNull ?: false &&
+                    task.compressedSharedObjectFilesDirectory.asFile.get().exists() &&
                     task.architecturesToHashedSharedObjectFilesMapJson.asFile.get().exists()
             }
             // TODO: An error thrown in registration will make the build will fail. Should we use failBuildOnUploadErrors for this too?
@@ -120,6 +125,7 @@ class NdkUploadTasksRegistration(
             task.architecturesToHashedSharedObjectFilesMapJson.set(
                 hashTaskProvider.flatMap { it.architecturesToHashedSharedObjectFilesMap }
             )
+            task.dependsOn(hashTaskProvider)
         }
 
         project.registerTask(
@@ -128,7 +134,7 @@ class NdkUploadTasksRegistration(
             data
         ) { task ->
             // TODO: Check why this is needed for 7.5.1. For Gradle 8+ Gradle detects automatically when the other tasks aren't executed
-            task.onlyIf { task.inputFile.asFile.get().exists() }
+            task.onlyIf { shouldExecuteTasks.orNull ?: false && task.inputFile.asFile.get().exists() }
 
             task.inputFile.set(
                 hashTaskProvider.flatMap { it.architecturesToHashedSharedObjectFilesMap }
@@ -221,7 +227,7 @@ class NdkUploadTasksRegistration(
         "${variantData.flavorName}/${variantData.buildTypeName}"
     }
 
-    private fun getShouldExecuteCompressionTaskProvider() = projectType.map { type ->
+    private fun getShouldExecuteTasks() = projectType.map { type ->
         when (type) {
             ProjectType.NATIVE -> { variantConfig.embraceConfig?.ndkEnabled == true }
             ProjectType.UNITY -> { true }

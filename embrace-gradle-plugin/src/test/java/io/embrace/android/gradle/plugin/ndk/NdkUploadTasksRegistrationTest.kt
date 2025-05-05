@@ -26,6 +26,7 @@ import io.mockk.every
 import io.mockk.mockk
 import org.gradle.api.DefaultTask
 import org.gradle.api.Project
+import org.gradle.api.internal.AbstractTask
 import org.gradle.api.internal.provider.AbstractProperty.PropertyQueryException
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Provider
@@ -328,11 +329,16 @@ class NdkUploadTasksRegistrationTest {
         assertTaskRegistered(UploadSharedObjectFilesTask.NAME, testAndroidCompactedVariantData.name)
         assertTaskRegistered(EncodeFileToBase64Task.NAME, testAndroidCompactedVariantData.name)
 
-        // Compression task will not be executed
-        val compressionTask = project.tasks.findByName(
-            "${CompressSharedObjectFilesTask.NAME}${testAndroidCompactedVariantData.name.capitalizedString()}"
-        ) as CompressSharedObjectFilesTask
+        // Tasks will not be executed
+        assertOnlyIfNotSatisfied(CompressSharedObjectFilesTask.NAME, testAndroidCompactedVariantData.name)
+        assertOnlyIfNotSatisfied(HashSharedObjectFilesTask.NAME, testAndroidCompactedVariantData.name)
+        assertOnlyIfNotSatisfied(UploadSharedObjectFilesTask.NAME, testAndroidCompactedVariantData.name)
+        assertOnlyIfNotSatisfied(EncodeFileToBase64Task.NAME, testAndroidCompactedVariantData.name)
+    }
 
-        assertFalse(compressionTask.onlyIf.isSatisfiedBy(compressionTask))
+    private fun assertOnlyIfNotSatisfied(taskNamePrefix: String, variantName: String) {
+        val taskName = "$taskNamePrefix${variantName.capitalizedString()}"
+        val task = project.tasks.findByName(taskName) as AbstractTask
+        assertFalse(task.onlyIf.isSatisfiedBy(task))
     }
 }

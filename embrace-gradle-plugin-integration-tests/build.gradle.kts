@@ -44,6 +44,7 @@ tasks.withType(Test::class.java).configureEach {
         ":embrace-android-features",
         ":embrace-android-payload",
         ":embrace-android-delivery",
+        ":embrace-android-otel",
         ":embrace-internal-api"
     )
     modules.forEach { dependsOn("$it:publishToMavenLocal") }

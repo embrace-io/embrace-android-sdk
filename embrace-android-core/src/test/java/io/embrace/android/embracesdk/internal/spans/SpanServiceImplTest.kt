@@ -562,8 +562,8 @@ internal class SpanServiceImplTest {
                 name = "too many events",
                 startTimeMs = 100L,
                 endTimeMs = 200L,
-                events = tooBigCustomEvents,
                 internal = false,
+                events = tooBigCustomEvents,
             )
         )
         assertTrue(
@@ -571,8 +571,8 @@ internal class SpanServiceImplTest {
                 name = MAX_LENGTH_SPAN_NAME,
                 startTimeMs = 100L,
                 endTimeMs = 200L,
-                events = maxSizeCustomEvents,
                 internal = false,
+                events = maxSizeCustomEvents,
             )
         )
 
@@ -595,8 +595,8 @@ internal class SpanServiceImplTest {
                 name = MAX_LENGTH_SPAN_NAME,
                 startTimeMs = 100L,
                 endTimeMs = 200L,
-                events = events,
                 internal = false,
+                events = events,
             )
         )
 
@@ -613,8 +613,8 @@ internal class SpanServiceImplTest {
                 name = "too many attributes",
                 startTimeMs = 100L,
                 endTimeMs = 200L,
-                attributes = tooBigCustomAttributes,
                 internal = false,
+                attributes = tooBigCustomAttributes,
             )
         )
         assertTrue(
@@ -622,8 +622,8 @@ internal class SpanServiceImplTest {
                 name = MAX_LENGTH_SPAN_NAME,
                 startTimeMs = 100L,
                 endTimeMs = 200L,
-                attributes = maxSizeCustomAttributes,
                 internal = false,
+                attributes = maxSizeCustomAttributes,
             )
         )
 
@@ -642,8 +642,8 @@ internal class SpanServiceImplTest {
                 name = MAX_LENGTH_SPAN_NAME,
                 startTimeMs = 100L,
                 endTimeMs = 200L,
-                attributes = attributesMap,
                 internal = false,
+                attributes = attributesMap,
             )
         )
 

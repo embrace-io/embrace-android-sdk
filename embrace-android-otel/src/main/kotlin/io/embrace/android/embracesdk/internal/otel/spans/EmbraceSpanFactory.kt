@@ -14,11 +14,12 @@ interface EmbraceSpanFactory {
         type: TelemetryType,
         internal: Boolean,
         private: Boolean,
-        autoTerminationMode: AutoTerminationMode = AutoTerminationMode.NONE,
         parent: EmbraceSpan? = null,
+        autoTerminationMode: AutoTerminationMode = AutoTerminationMode.NONE
     ): EmbraceSdkSpan
 
-    fun create(otelSpanBuilderWrapper: OtelSpanBuilderWrapper): EmbraceSdkSpan
-
-    fun setRedactionFunction(redactionFunction: (key: String, value: String) -> String)
+    fun create(
+        otelSpanBuilderWrapper: OtelSpanBuilderWrapper,
+        autoTerminationMode: AutoTerminationMode = AutoTerminationMode.NONE
+    ): EmbraceSdkSpan
 }

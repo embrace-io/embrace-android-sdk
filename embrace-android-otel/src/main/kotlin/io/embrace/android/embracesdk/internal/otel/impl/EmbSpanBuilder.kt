@@ -33,7 +33,7 @@ class EmbSpanBuilder(
     override fun addLink(spanContext: SpanContext, attributes: Attributes): SpanBuilder = this
 
     override fun setAttribute(key: String, value: String): SpanBuilder {
-        otelSpanBuilderWrapper.setCustomAttribute(key, value)
+        otelSpanBuilderWrapper.customAttributes[key] = value
         return this
     }
 

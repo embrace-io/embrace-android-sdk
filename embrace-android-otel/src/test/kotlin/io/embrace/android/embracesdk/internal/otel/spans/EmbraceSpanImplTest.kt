@@ -435,7 +435,7 @@ internal class EmbraceSpanImplTest {
     @Test
     fun `validate context objects are propagated from the parent to the child span`() {
         val spanBuilder = createEmbraceSpanBuilder()
-        val newParentContext = spanBuilder.parentContext.with(fakeContextKey, "fake-value")
+        val newParentContext = spanBuilder.getParentContext().with(fakeContextKey, "fake-value")
         spanBuilder.setParentContext(newParentContext)
 
         embraceSpan = createEmbraceSpanImpl(spanBuilder)
@@ -450,8 +450,8 @@ internal class EmbraceSpanImplTest {
     fun `custom attributes are redacted if their key is sensitive when getting a span snapshot`() {
         // given a span with a sensitive key
         val spanBuilder = createEmbraceSpanBuilder()
-        spanBuilder.setCustomAttribute("password", "123456")
-        spanBuilder.setCustomAttribute("status", "ok")
+        spanBuilder.customAttributes["password"] = "123456"
+        spanBuilder.customAttributes["status"] = "ok"
         embraceSpan = createEmbraceSpanImpl(spanBuilder)
         embraceSpan.start()
 

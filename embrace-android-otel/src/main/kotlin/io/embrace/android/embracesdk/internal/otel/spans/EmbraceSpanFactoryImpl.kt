@@ -19,8 +19,8 @@ class EmbraceSpanFactoryImpl(
         type: TelemetryType,
         internal: Boolean,
         private: Boolean,
-        autoTerminationMode: AutoTerminationMode,
         parent: EmbraceSpan?,
+        autoTerminationMode: AutoTerminationMode,
     ): EmbraceSdkSpan = create(
         otelSpanBuilderWrapper = tracer.otelSpanBuilderWrapper(
             name = name,
@@ -28,19 +28,19 @@ class EmbraceSpanFactoryImpl(
             internal = internal,
             private = private,
             parent = parent,
-            autoTerminationMode = autoTerminationMode
-        )
+        ),
+        autoTerminationMode = autoTerminationMode
     )
 
-    override fun create(otelSpanBuilderWrapper: OtelSpanBuilderWrapper): EmbraceSdkSpan =
+    override fun create(
+        otelSpanBuilderWrapper: OtelSpanBuilderWrapper,
+        autoTerminationMode: AutoTerminationMode
+    ): EmbraceSdkSpan =
         EmbraceSpanImpl(
             otelSpanBuilderWrapper = otelSpanBuilderWrapper,
             openTelemetryClock = openTelemetryClock,
             spanRepository = spanRepository,
-            redactionFunction = redactionFunction
+            redactionFunction = redactionFunction,
+            autoTerminationMode = autoTerminationMode
         )
-
-    override fun setRedactionFunction(redactionFunction: (key: String, value: String) -> String) {
-        this.redactionFunction = redactionFunction
-    }
 }

@@ -77,9 +77,9 @@ internal class EmbraceNetworkLoggingService(
                 name = "${networkRequest.httpMethod} ${getUrlPath(strippedUrl)}",
                 startTimeMs = networkRequest.startTime,
                 endTimeMs = networkRequest.endTime,
-                errorCode = errorCode,
-                attributes = networkRequestSchemaType.attributes(),
                 type = EmbType.Performance.Network,
+                attributes = networkRequestSchemaType.attributes(),
+                errorCode = errorCode,
             )
         }
     }

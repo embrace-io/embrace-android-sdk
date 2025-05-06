@@ -8,9 +8,9 @@ import io.embrace.android.embracesdk.fakes.FakeSpanService
 import io.embrace.android.embracesdk.fakes.FakeTracer
 import io.embrace.android.embracesdk.fixtures.fakeContextKey
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
+import io.embrace.android.embracesdk.internal.otel.sdk.otelSpanBuilderWrapper
 import io.embrace.android.embracesdk.internal.otel.spans.OtelSpanBuilderWrapper
 import io.embrace.android.embracesdk.internal.otel.spans.getEmbraceSpan
-import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
@@ -36,13 +36,12 @@ internal class EmbSpanBuilderTest {
     fun setup() {
         spanService = FakeSpanService()
         tracer = FakeTracer()
-        otelSpanBuilderWrapper = OtelSpanBuilderWrapper(
-            tracer = tracer,
+        otelSpanBuilderWrapper = tracer.otelSpanBuilderWrapper(
             name = "test",
-            telemetryType = EmbType.Performance.Default,
+            type = EmbType.Performance.Default,
             internal = false,
             private = false,
-            parentSpan = null,
+            parent = null,
         )
         embSpanBuilder = EmbSpanBuilder(
             otelSpanBuilderWrapper = otelSpanBuilderWrapper,
@@ -54,14 +53,12 @@ internal class EmbSpanBuilderTest {
     @Test
     fun `parameters set on embrace span builder respected`() {
         val spanParent = FakeEmbraceSdkSpan.started()
-        val newOtelSpanBuilderWrapper = OtelSpanBuilderWrapper(
-            tracer = tracer,
+        val newOtelSpanBuilderWrapper = tracer.otelSpanBuilderWrapper(
             name = "custom",
-            telemetryType = EmbType.Performance.Default,
+            type = EmbType.Performance.Default,
             internal = true,
             private = true,
-            parentSpan = spanParent,
-            autoTerminationMode = AutoTerminationMode.ON_BACKGROUND,
+            parent = spanParent,
         )
         embSpanBuilder = EmbSpanBuilder(
             otelSpanBuilderWrapper = newOtelSpanBuilderWrapper,
@@ -75,7 +72,6 @@ internal class EmbSpanBuilderTest {
             assertEquals(spanParent, parent)
             assertEquals("emb-custom", name)
             assertEquals(EmbType.Performance.Default, type)
-            assertEquals(AutoTerminationMode.ON_BACKGROUND, autoTerminationMode)
         }
     }
 
@@ -87,13 +83,12 @@ internal class EmbSpanBuilderTest {
                 "value"
             )
         )
-        val newOtelSpanBuilderWrapper = OtelSpanBuilderWrapper(
-            tracer = tracer,
+        val newOtelSpanBuilderWrapper = tracer.otelSpanBuilderWrapper(
             name = "custom",
-            telemetryType = EmbType.Performance.Default,
+            type = EmbType.Performance.Default,
             internal = false,
             private = false,
-            parentSpan = oldParent,
+            parent = oldParent,
         )
         embSpanBuilder = EmbSpanBuilder(
             otelSpanBuilderWrapper = newOtelSpanBuilderWrapper,
@@ -118,13 +113,12 @@ internal class EmbSpanBuilderTest {
         )
         val newParentContext = checkNotNull(newParentSpan.asNewContext())
 
-        val newOtelSpanBuilderWrapper = OtelSpanBuilderWrapper(
-            tracer = tracer,
+        val newOtelSpanBuilderWrapper = tracer.otelSpanBuilderWrapper(
             name = "custom",
-            telemetryType = EmbType.Performance.Default,
+            type = EmbType.Performance.Default,
             internal = false,
             private = false,
-            parentSpan = null,
+            parent = null,
         )
         embSpanBuilder = EmbSpanBuilder(
             otelSpanBuilderWrapper = newOtelSpanBuilderWrapper,
@@ -167,7 +161,7 @@ internal class EmbSpanBuilderTest {
             setAttribute(AttributeKey.stringArrayKey("stringArray"), listOf("value", "vee"))
         }
 
-        assertEquals(10, otelSpanBuilderWrapper.getCustomAttributes().count())
+        assertEquals(10, otelSpanBuilderWrapper.customAttributes.count())
     }
 
     @Test

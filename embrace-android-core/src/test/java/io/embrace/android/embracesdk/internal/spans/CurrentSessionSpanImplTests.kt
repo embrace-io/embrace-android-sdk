@@ -569,11 +569,10 @@ internal class CurrentSessionSpanImplTests {
             type: TelemetryType,
             internal: Boolean,
             private: Boolean,
-            autoTerminationMode: AutoTerminationMode,
             parent: EmbraceSpan?,
+            autoTerminationMode: AutoTerminationMode,
         ): EmbraceSdkSpan = stoppedSpan
 
-        override fun create(otelSpanBuilderWrapper: OtelSpanBuilderWrapper) = stoppedSpan
-        override fun setRedactionFunction(redactionFunction: (key: String, value: String) -> String) {}
+        override fun create(otelSpanBuilderWrapper: OtelSpanBuilderWrapper, autoTerminationMode: AutoTerminationMode) = stoppedSpan
     }
 }

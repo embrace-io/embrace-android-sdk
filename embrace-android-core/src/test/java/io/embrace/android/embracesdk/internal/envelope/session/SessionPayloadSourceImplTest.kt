@@ -2,17 +2,17 @@ package io.embrace.android.embracesdk.internal.envelope.session
 
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeCurrentSessionSpan
+import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
 import io.embrace.android.embracesdk.fakes.FakeOtelPayloadMapper
-import io.embrace.android.embracesdk.fakes.FakePersistableEmbraceSpan
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.FakeSpanData
-import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
+import io.embrace.android.embracesdk.internal.otel.schema.EmbType
+import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
+import io.embrace.android.embracesdk.internal.otel.spans.SpanSinkImpl
+import io.embrace.android.embracesdk.internal.otel.spans.hasEmbraceAttribute
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSnapshotType
-import io.embrace.android.embracesdk.internal.spans.SpanRepository
-import io.embrace.android.embracesdk.internal.spans.SpanSinkImpl
-import io.embrace.android.embracesdk.internal.spans.hasFixedAttribute
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -25,7 +25,7 @@ internal class SessionPayloadSourceImplTest {
     private lateinit var sink: SpanSinkImpl
     private lateinit var currentSessionSpan: FakeCurrentSessionSpan
     private lateinit var spanRepository: SpanRepository
-    private lateinit var activeSpan: FakePersistableEmbraceSpan
+    private lateinit var activeSpan: FakeEmbraceSdkSpan
     private val cacheSpan = FakeSpanData(name = "cache-span")
 
     @Before
@@ -36,7 +36,7 @@ internal class SessionPayloadSourceImplTest {
         currentSessionSpan = FakeCurrentSessionSpan().apply {
             initializeService(1000L)
         }
-        activeSpan = FakePersistableEmbraceSpan.started()
+        activeSpan = FakeEmbraceSdkSpan.started()
         spanRepository = SpanRepository()
         spanRepository.trackStartedSpan(checkNotNull(currentSessionSpan.sessionSpan))
         spanRepository.trackStartedSpan(activeSpan)
@@ -82,15 +82,15 @@ internal class SessionPayloadSourceImplTest {
         assertEquals(mapOf("armeabi-v7a" to "my-symbols"), payload.sharedLibSymbolMapping)
         val snapshots = checkNotNull(payload.spanSnapshots)
         if (hasSessionSnapshot) {
-            assertNotNull(snapshots.single { it.hasFixedAttribute(EmbType.Ux.Session) })
+            assertNotNull(snapshots.single { it.hasEmbraceAttribute(EmbType.Ux.Session) })
         } else {
-            assertEquals(0, snapshots.filter { it.hasFixedAttribute(EmbType.Ux.Session) }.size)
+            assertEquals(0, snapshots.filter { it.hasEmbraceAttribute(EmbType.Ux.Session) }.size)
         }
 
         if (hasNonSessionSnapshots) {
-            assertNotNull(snapshots.single { !it.hasFixedAttribute(EmbType.Ux.Session) })
+            assertNotNull(snapshots.single { !it.hasEmbraceAttribute(EmbType.Ux.Session) })
         } else {
-            assertNull(snapshots.singleOrNull { !it.hasFixedAttribute(EmbType.Ux.Session) })
+            assertNull(snapshots.singleOrNull { !it.hasEmbraceAttribute(EmbType.Ux.Session) })
         }
     }
 }

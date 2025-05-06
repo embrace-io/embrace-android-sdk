@@ -1,12 +1,12 @@
 package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.internal.arch.destination.SpanAttributeData
-import io.embrace.android.embracesdk.internal.arch.schema.AppTerminationCause
-import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
-import io.embrace.android.embracesdk.internal.payload.toEmbracePayload
+import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
+import io.embrace.android.embracesdk.internal.otel.schema.AppTerminationCause
+import io.embrace.android.embracesdk.internal.otel.schema.EmbType
+import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
-import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.ErrorCode
 import java.util.concurrent.atomic.AtomicInteger
@@ -17,7 +17,7 @@ class FakeCurrentSessionSpan(
     var initializedCallCount: Int = 0
     var addedEvents: MutableList<SpanEventData> = mutableListOf()
     var attributes: MutableMap<String, String> = mutableMapOf()
-    var sessionSpan: FakePersistableEmbraceSpan? = null
+    var sessionSpan: FakeEmbraceSdkSpan? = null
 
     private val sessionIteration = AtomicInteger(1)
 
@@ -82,7 +82,7 @@ class FakeCurrentSessionSpan(
     fun attributeCount(): Int = attributes.size
 
     private fun newSessionSpan(startTimeMs: Long) =
-        FakePersistableEmbraceSpan.sessionSpan(
+        FakeEmbraceSdkSpan.sessionSpan(
             sessionId = "fake-session-span-id",
             startTimeMs = startTimeMs,
             lastHeartbeatTimeMs = startTimeMs

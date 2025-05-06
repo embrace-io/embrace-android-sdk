@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.network
 
-import io.embrace.android.embracesdk.internal.IdGenerator
 import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData
+import io.embrace.android.embracesdk.internal.otel.sdk.IdGenerator
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.http.HttpMethod
 import org.junit.Assert.assertEquals

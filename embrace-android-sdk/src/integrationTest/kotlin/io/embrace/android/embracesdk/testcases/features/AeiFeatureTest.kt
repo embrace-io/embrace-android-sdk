@@ -12,14 +12,15 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
-import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.embrace.android.embracesdk.internal.config.remote.AppExitInfoConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
-import io.embrace.android.embracesdk.internal.opentelemetry.embAeiNumber
-import io.embrace.android.embracesdk.internal.opentelemetry.embCrashNumber
+import io.embrace.android.embracesdk.internal.otel.attrs.embAeiNumber
+import io.embrace.android.embracesdk.internal.otel.attrs.embCrashNumber
+import io.embrace.android.embracesdk.internal.otel.attrs.asOtelAttributeKey
 import io.embrace.android.embracesdk.internal.payload.Log
-import io.embrace.android.embracesdk.internal.spans.findAttributeValue
+import io.embrace.android.embracesdk.internal.otel.spans.findAttributeValue
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import io.embrace.android.embracesdk.testframework.assertions.assertMatches
@@ -331,8 +332,8 @@ internal class AeiFeatureTest {
                     "description" to description,
                     "reason" to reason,
                     "emb.type" to "sys.exit",
-                    embCrashNumber.attributeKey to crashNumber,
-                    embAeiNumber.attributeKey to aeiNumber,
+                    embCrashNumber.asOtelAttributeKey().key to crashNumber,
+                    embAeiNumber.asOtelAttributeKey().key to aeiNumber,
                 )
             )
             assertEquals(trace, body)

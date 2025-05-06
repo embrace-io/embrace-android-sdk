@@ -1,12 +1,18 @@
 package io.embrace.android.embracesdk.internal.spans
 
-import io.embrace.android.embracesdk.internal.arch.schema.TelemetryType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
-import io.embrace.android.embracesdk.internal.config.instrumented.isAttributeCountValid
-import io.embrace.android.embracesdk.internal.config.instrumented.isEventCountValid
-import io.embrace.android.embracesdk.internal.config.instrumented.isNameValid
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.OtelLimitsConfig
+import io.embrace.android.embracesdk.internal.otel.config.isAttributeCountValid
+import io.embrace.android.embracesdk.internal.otel.config.isEventCountValid
+import io.embrace.android.embracesdk.internal.otel.config.isNameValid
+import io.embrace.android.embracesdk.internal.otel.schema.TelemetryType
+import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
+import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanFactory
+import io.embrace.android.embracesdk.internal.otel.spans.OtelSpanBuilderWrapper
+import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
+import io.embrace.android.embracesdk.internal.otel.spans.SpanService
+import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
@@ -40,29 +46,33 @@ internal class SpanServiceImpl(
         type: TelemetryType,
         internal: Boolean,
         private: Boolean,
-    ): PersistableEmbraceSpan? {
-        return if (limits.isNameValid(name, internal) && currentSessionSpan.canStartNewSpan(parent, internal)) {
-            embraceSpanFactory.create(
-                name = name,
-                type = type,
-                internal = internal,
-                private = private,
-                parent = parent,
-                autoTerminationMode = autoTerminationMode,
-            )
-        } else {
-            null
+    ): EmbraceSdkSpan? {
+        EmbTrace.trace("span-create") {
+            return if (limits.isNameValid(name, internal) && currentSessionSpan.canStartNewSpan(parent, internal)) {
+                embraceSpanFactory.create(
+                    name = name,
+                    type = type,
+                    internal = internal,
+                    private = private,
+                    parent = parent,
+                    autoTerminationMode = autoTerminationMode,
+                )
+            } else {
+                null
+            }
         }
     }
 
-    override fun createSpan(embraceSpanBuilder: EmbraceSpanBuilder): PersistableEmbraceSpan? {
-        return if (
-            limits.isNameValid(embraceSpanBuilder.spanName, embraceSpanBuilder.internal) &&
-            currentSessionSpan.canStartNewSpan(embraceSpanBuilder.getParentSpan(), embraceSpanBuilder.internal)
-        ) {
-            embraceSpanFactory.create(embraceSpanBuilder)
-        } else {
-            null
+    override fun createSpan(otelSpanBuilderWrapper: OtelSpanBuilderWrapper): EmbraceSdkSpan? {
+        EmbTrace.trace("span-create") {
+            return if (
+                limits.isNameValid(otelSpanBuilderWrapper.spanName, otelSpanBuilderWrapper.internal) &&
+                currentSessionSpan.canStartNewSpan(otelSpanBuilderWrapper.getParentSpan(), otelSpanBuilderWrapper.internal)
+            ) {
+                embraceSpanFactory.create(otelSpanBuilderWrapper)
+            } else {
+                null
+            }
         }
     }
 
@@ -123,31 +133,33 @@ internal class SpanServiceImpl(
         events: List<EmbraceSpanEvent>,
         errorCode: ErrorCode?,
     ): Boolean {
-        if (startTimeMs > endTimeMs) {
+        EmbTrace.trace("span-completed") {
+            if (startTimeMs > endTimeMs) {
+                return false
+            }
+
+            if (inputsValid(name, internal, events, attributes) && currentSessionSpan.canStartNewSpan(parent, internal)) {
+                val newSpan = embraceSpanFactory.create(
+                    name = name,
+                    type = type,
+                    internal = internal,
+                    private = private,
+                    parent = parent,
+                    autoTerminationMode = autoTerminationMode,
+                )
+                if (newSpan.start(startTimeMs)) {
+                    attributes.forEach {
+                        newSpan.addAttribute(it.key, it.value)
+                    }
+                    events.forEach {
+                        newSpan.addEvent(it.name, it.timestampNanos.nanosToMillis(), it.attributes)
+                    }
+                    return newSpan.stop(errorCode, endTimeMs)
+                }
+            }
+
             return false
         }
-
-        if (inputsValid(name, internal, events, attributes) && currentSessionSpan.canStartNewSpan(parent, internal)) {
-            val newSpan = embraceSpanFactory.create(
-                name = name,
-                type = type,
-                internal = internal,
-                private = private,
-                parent = parent,
-                autoTerminationMode = autoTerminationMode,
-            )
-            if (newSpan.start(startTimeMs)) {
-                attributes.forEach {
-                    newSpan.addAttribute(it.key, it.value)
-                }
-                events.forEach {
-                    newSpan.addEvent(it.name, it.timestampNanos.nanosToMillis(), it.attributes)
-                }
-                return newSpan.stop(errorCode, endTimeMs)
-            }
-        }
-
-        return false
     }
 
     override fun getSpan(spanId: String): EmbraceSpan? = spanRepository.getSpan(spanId = spanId)

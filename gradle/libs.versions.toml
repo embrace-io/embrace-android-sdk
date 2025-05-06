@@ -37,6 +37,7 @@ buildconfig = "5.6.4"
 agp-api = "7.4.2"
 apktoolLib = "2.11.1"
 bundletool = "1.18.1"
+annotationJvm = "1.8.2"
 
 [libraries]
 binary-compatibility-validator = { module = "org.jetbrains.kotlinx:binary-compatibility-validator", version.ref = "binaryCompatibilityValidator" }
@@ -85,6 +86,7 @@ bundletool = { module = "com.android.tools.build:bundletool", version.ref = "bun
 opentelemetry-kotlin-api = { module = "io.embrace.opentelemetry.kotlin:opentelemetry-kotlin-api", version.ref = "otelKotlin" }
 opentelemetry-kotlin-api-ext = { module = "io.embrace.opentelemetry.kotlin:opentelemetry-kotlin-api-ext", version.ref = "otelKotlin" }
 opentelemetry-kotlin-compat = { module = "io.embrace.opentelemetry.kotlin:compat-kotlin-to-official", version.ref = "otelKotlin" }
+androidx-annotation-jvm = { group = "androidx.annotation", name = "annotation-jvm", version.ref = "annotationJvm" }
 
 [plugins]
 google-ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }

@@ -13,10 +13,10 @@ import io.embrace.android.embracesdk.fixtures.testLog
 import io.embrace.android.embracesdk.internal.delivery.PayloadType
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
 import io.embrace.android.embracesdk.internal.delivery.storage.CachedLogEnvelopeStore.Companion.createNativeCrashEnvelopeMetadata
-import io.embrace.android.embracesdk.internal.logs.LogRequest
-import io.embrace.android.embracesdk.internal.opentelemetry.embProcessIdentifier
+import io.embrace.android.embracesdk.internal.otel.attrs.embProcessIdentifier
+import io.embrace.android.embracesdk.internal.otel.logs.LogRequest
+import io.embrace.android.embracesdk.internal.otel.spans.findAttributeValue
 import io.embrace.android.embracesdk.internal.payload.LogPayload
-import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue

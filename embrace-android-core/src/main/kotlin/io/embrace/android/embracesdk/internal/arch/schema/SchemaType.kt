@@ -1,8 +1,12 @@
 package io.embrace.android.embracesdk.internal.arch.schema
 
-import io.embrace.android.embracesdk.internal.opentelemetry.embAeiNumber
-import io.embrace.android.embracesdk.internal.opentelemetry.embCrashNumber
-import io.embrace.android.embracesdk.internal.opentelemetry.embSendMode
+import io.embrace.android.embracesdk.internal.capture.session.toSessionPropertyAttributeName
+import io.embrace.android.embracesdk.internal.otel.attrs.embAeiNumber
+import io.embrace.android.embracesdk.internal.otel.attrs.embCrashNumber
+import io.embrace.android.embracesdk.internal.otel.attrs.embSendMode
+import io.embrace.android.embracesdk.internal.otel.schema.EmbType
+import io.embrace.android.embracesdk.internal.otel.schema.SendMode
+import io.embrace.android.embracesdk.internal.otel.schema.TelemetryType
 import io.embrace.android.embracesdk.internal.payload.AppExitInfoData
 import io.embrace.android.embracesdk.internal.payload.NetworkCapturedCall
 import io.embrace.android.embracesdk.internal.utils.toNonNullMap
@@ -130,8 +134,8 @@ sealed class SchemaType(
             "timestamp" to message.timestamp.toString(),
             "description" to message.description,
             "trace_status" to message.traceStatus,
-            embCrashNumber.attributeKey to crashNumber.toString(),
-            embAeiNumber.attributeKey to aeiNumber.toString()
+            embCrashNumber.name to crashNumber.toString(),
+            embAeiNumber.name to aeiNumber.toString()
         ).toNonNullMap()
     }
 

@@ -9,6 +9,8 @@ import io.embrace.android.embracesdk.fakes.injection.FakePayloadSourceModule
 import io.embrace.android.embracesdk.fixtures.deferredLogRecordData
 import io.embrace.android.embracesdk.fixtures.sendImmediatelyLogRecordData
 import io.embrace.android.embracesdk.internal.envelope.log.LogPayloadSourceImpl
+import io.embrace.android.embracesdk.internal.otel.logs.LogSink
+import io.embrace.android.embracesdk.internal.otel.logs.LogSinkImpl
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.opentelemetry.sdk.logs.data.LogRecordData
 import org.junit.Assert.assertEquals
@@ -24,7 +26,7 @@ import java.util.concurrent.TimeUnit
 internal class LogOrchestratorTest {
 
     companion object {
-        private const val now = 123L
+        private const val NOW = 123L
     }
 
     private lateinit var logOrchestrator: LogOrchestrator
@@ -41,7 +43,7 @@ internal class LogOrchestratorTest {
             BackgroundWorker(executorService)
         logSink = LogSinkImpl()
         store = FakePayloadStore()
-        clock.setCurrentTime(now)
+        clock.setCurrentTime(NOW)
         logOrchestrator = LogOrchestratorImpl(
             worker,
             clock,

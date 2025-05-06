@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.android.embracesdk.internal.opentelemetry.TracerKey
+import io.embrace.android.embracesdk.internal.otel.sdk.TracerKey
 import io.opentelemetry.api.trace.Tracer
 import io.opentelemetry.api.trace.TracerBuilder
 

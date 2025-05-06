@@ -15,7 +15,6 @@ import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.payload.AppExitInfoData
 import io.embrace.android.embracesdk.internal.prefs.PreferencesService
-import io.embrace.android.embracesdk.internal.spans.toOtelSeverity
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
@@ -72,7 +71,7 @@ internal class AeiDataSourceImpl(
                     val capture = configService.autoDataCaptureBehavior.isNativeCrashCaptureEnabled() || !obj.hasNativeTombstone()
                     if (capture) {
                         val schemaType = AeiLog(obj, crashNumber, aeiNumber)
-                        addLog(schemaType, INFO.toOtelSeverity(), obj.trace ?: "")
+                        addLog(schemaType, INFO, obj.trace ?: "")
                     }
 
                     // always count AEI as delivered once we process it & submit to the OTel logging system, or discard

@@ -1,11 +1,11 @@
 package io.embrace.android.embracesdk.internal.gating
 
-import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.gating.SessionGatingKeys.BREADCRUMBS_CUSTOM
 import io.embrace.android.embracesdk.internal.gating.SessionGatingKeys.BREADCRUMBS_TAPS
+import io.embrace.android.embracesdk.internal.otel.schema.EmbType
+import io.embrace.android.embracesdk.internal.otel.spans.hasEmbraceAttribute
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
-import io.embrace.android.embracesdk.internal.spans.hasFixedAttribute
 import io.opentelemetry.api.trace.SpanId
 
 internal class SpanSanitizer(
@@ -43,7 +43,7 @@ internal class SpanSanitizer(
 
     private fun sanitizeSpans(span: Span): Boolean {
         return when {
-            span.hasFixedAttribute(EmbType.Ux.View) && !shouldAddViewBreadcrumbs() -> false
+            span.hasEmbraceAttribute(EmbType.Ux.View) && !shouldAddViewBreadcrumbs() -> false
             span.name == "emb-thread-blockage" && !shouldSendANRs() -> false
             else -> true
         }
@@ -51,9 +51,9 @@ internal class SpanSanitizer(
 
     private fun sanitizeEvents(event: SpanEvent): Boolean {
         return !(
-            (event.hasFixedAttribute(EmbType.System.Breadcrumb) && !shouldAddCustomBreadcrumbs()) ||
-                (event.hasFixedAttribute(EmbType.Ux.Tap) && !shouldAddTapBreadcrumbs()) ||
-                (event.hasFixedAttribute(EmbType.Ux.WebView) && !shouldAddWebViewUrls())
+            (event.hasEmbraceAttribute(EmbType.System.Breadcrumb) && !shouldAddCustomBreadcrumbs()) ||
+                (event.hasEmbraceAttribute(EmbType.Ux.Tap) && !shouldAddTapBreadcrumbs()) ||
+                (event.hasEmbraceAttribute(EmbType.Ux.WebView) && !shouldAddWebViewUrls())
             )
     }
 

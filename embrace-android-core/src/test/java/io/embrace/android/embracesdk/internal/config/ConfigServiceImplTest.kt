@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.config
 
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
+import io.embrace.android.embracesdk.core.BuildConfig
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeLogRecordExporter
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
@@ -12,12 +13,12 @@ import io.embrace.android.embracesdk.internal.config.behavior.BehaviorThresholdC
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
-import io.embrace.android.embracesdk.internal.logs.LogSinkImpl
-import io.embrace.android.embracesdk.internal.opentelemetry.OpenTelemetryConfiguration
+import io.embrace.android.embracesdk.internal.otel.config.OtelSdkConfig
+import io.embrace.android.embracesdk.internal.otel.logs.LogSinkImpl
+import io.embrace.android.embracesdk.internal.otel.spans.SpanSinkImpl
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.prefs.PreferencesService
 import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateService
-import io.embrace.android.embracesdk.internal.spans.SpanSinkImpl
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.mockk.clearAllMocks
 import io.mockk.mockkStatic
@@ -152,9 +153,11 @@ internal class ConfigServiceImplTest {
 
     @Test
     fun testNoAppIdRequiredWithExporters() {
-        val cfg = OpenTelemetryConfiguration(
+        val cfg = OtelSdkConfig(
             SpanSinkImpl(),
             LogSinkImpl(),
+            BuildConfig.LIBRARY_PACKAGE_NAME,
+            BuildConfig.VERSION_NAME,
             SystemInfo()
         )
         cfg.addLogExporter(FakeLogRecordExporter())
@@ -168,9 +171,11 @@ internal class ConfigServiceImplTest {
      * tasks for its internal [BackgroundWorker]
      */
     private fun createService(
-        config: OpenTelemetryConfiguration = OpenTelemetryConfiguration(
+        config: OtelSdkConfig = OtelSdkConfig(
             SpanSinkImpl(),
             LogSinkImpl(),
+            BuildConfig.LIBRARY_PACKAGE_NAME,
+            BuildConfig.VERSION_NAME,
             SystemInfo()
         ),
         appId: String? = "AbCdE",

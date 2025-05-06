@@ -2,10 +2,17 @@ package io.embrace.android.embracesdk.internal.spans
 
 import io.embrace.android.embracesdk.internal.arch.destination.SessionSpanWriter
 import io.embrace.android.embracesdk.internal.arch.destination.SpanAttributeData
-import io.embrace.android.embracesdk.internal.arch.schema.AppTerminationCause
-import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
+import io.embrace.android.embracesdk.internal.otel.attrs.asPair
+import io.embrace.android.embracesdk.internal.otel.schema.AppTerminationCause
+import io.embrace.android.embracesdk.internal.otel.schema.EmbType
+import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
+import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanData
+import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanFactory
+import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
+import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
+import io.embrace.android.embracesdk.internal.otel.spans.toEmbraceObjectName
 import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.utils.Uuid
@@ -35,7 +42,7 @@ internal class CurrentSessionSpanImpl(
     /**
      * The span that models the lifetime of the current session or background activity
      */
-    private val sessionSpan: AtomicReference<PersistableEmbraceSpan?> = AtomicReference(null)
+    private val sessionSpan: AtomicReference<EmbraceSdkSpan?> = AtomicReference(null)
 
     override fun initializeService(sdkInitStartTimeMs: Long) {
         if (!initialized.get()) {
@@ -125,7 +132,7 @@ internal class CurrentSessionSpanImpl(
                     val crashTime = openTelemetryClock.now().nanosToMillis()
                     spanRepository.failActiveSpans(crashTime)
                     endingSessionSpan.setSystemAttribute(
-                        appTerminationCause.key.attributeKey,
+                        appTerminationCause.key.name,
                         appTerminationCause.value
                     )
                     endingSessionSpan.stop(errorCode = ErrorCode.FAILURE, endTimeMs = crashTime)
@@ -142,7 +149,7 @@ internal class CurrentSessionSpanImpl(
         return currentSession.addSystemEvent(
             schemaType.fixedObjectName.toEmbraceObjectName(),
             startTimeMs,
-            schemaType.attributes() + schemaType.telemetryType.toEmbraceKeyValuePair()
+            schemaType.attributes() + schemaType.telemetryType.asPair()
         )
     }
 
@@ -164,7 +171,7 @@ internal class CurrentSessionSpanImpl(
     /**
      * This method should always be used when starting a new session span
      */
-    private fun startSessionSpan(startTimeMs: Long): PersistableEmbraceSpan {
+    private fun startSessionSpan(startTimeMs: Long): EmbraceSdkSpan {
         traceCount.set(0)
         internalTraceCount.set(0)
 

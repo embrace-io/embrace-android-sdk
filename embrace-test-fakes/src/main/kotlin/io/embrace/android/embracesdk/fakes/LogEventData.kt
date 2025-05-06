@@ -1,11 +1,10 @@
 package io.embrace.android.embracesdk.fakes
 
+import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
-import io.embrace.opentelemetry.kotlin.logging.SeverityNumber
 
 /**
  * Represents a Log event that can be added to the current session span.
- *
  *
  * @param schemaType the type of the span. Used to differentiate data from different sources
  * by the backend.
@@ -14,6 +13,6 @@ import io.embrace.opentelemetry.kotlin.logging.SeverityNumber
  */
 class LogEventData(
     val schemaType: SchemaType,
-    val severity: SeverityNumber,
+    val severity: Severity,
     val message: String,
 )

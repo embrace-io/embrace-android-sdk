@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal
 
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import java.util.concurrent.atomic.AtomicBoolean
 
 class SharedObjectLoaderImpl(

@@ -12,11 +12,10 @@ import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesS
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.config.behavior.REDACTED_LABEL
 import io.embrace.android.embracesdk.internal.logs.attachments.Attachment
-import io.embrace.android.embracesdk.internal.opentelemetry.embExceptionHandling
+import io.embrace.android.embracesdk.internal.otel.attrs.embExceptionHandling
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.session.orchestrator.PayloadStore
-import io.embrace.android.embracesdk.internal.spans.toOtelSeverity
 import io.embrace.android.embracesdk.internal.utils.PropertyUtils.normalizeProperties
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.opentelemetry.semconv.incubating.LogIncubatingAttributes
@@ -111,7 +110,7 @@ class EmbraceLogService(
         if (logId == null || !logCounters.getValue(severity).addIfAllowed()) {
             return
         }
-        logWriter.addLog(schemaProvider(attributes), severity.toOtelSeverity(), trimToMaxLength(message))
+        logWriter.addLog(schemaProvider(attributes), severity, trimToMaxLength(message))
     }
 
     /**

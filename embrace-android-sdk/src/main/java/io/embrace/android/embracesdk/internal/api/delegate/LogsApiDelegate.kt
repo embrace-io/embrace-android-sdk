@@ -192,7 +192,7 @@ internal class LogsApiDelegate(
                 stacktrace?.let { attrs[ExceptionAttributes.EXCEPTION_STACKTRACE.key] = it }
 
                 if (attachment != null) {
-                    attrs.putAll(attachment.attributes.mapKeys { it.key.attributeKey })
+                    attrs.putAll(attachment.attributes.mapKeys { it.key.name })
                 }
 
                 val logAttachment = when {

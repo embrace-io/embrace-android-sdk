@@ -4,16 +4,15 @@ import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.internal.arch.datasource.LogDataSourceImpl
 import io.embrace.android.embracesdk.internal.arch.destination.LogWriter
 import io.embrace.android.embracesdk.internal.arch.limits.NoopLimitStrategy
-import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.arch.schema.TelemetryAttributes
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
-import io.embrace.android.embracesdk.internal.opentelemetry.embCrashNumber
+import io.embrace.android.embracesdk.internal.otel.attrs.embCrashNumber
+import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
 import io.embrace.android.embracesdk.internal.prefs.PreferencesService
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
-import io.embrace.android.embracesdk.internal.spans.toOtelSeverity
 import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes
 
 internal class NativeCrashDataSourceImpl(
@@ -84,7 +83,7 @@ internal class NativeCrashDataSourceImpl(
 
         logWriter.addLog(
             schemaType = SchemaType.NativeCrash(crashAttributes),
-            severity = Severity.ERROR.toOtelSeverity(),
+            severity = Severity.ERROR,
             message = "",
             addCurrentSessionInfo = false,
             timestampMs = nativeCrash.timestamp

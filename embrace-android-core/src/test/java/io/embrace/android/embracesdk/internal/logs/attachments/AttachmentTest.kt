@@ -5,10 +5,10 @@ import io.embrace.android.embracesdk.internal.logs.attachments.Attachment.UserHo
 import io.embrace.android.embracesdk.internal.logs.attachments.AttachmentErrorCode.ATTACHMENT_TOO_LARGE
 import io.embrace.android.embracesdk.internal.logs.attachments.AttachmentErrorCode.OVER_MAX_ATTACHMENTS
 import io.embrace.android.embracesdk.internal.logs.attachments.AttachmentErrorCode.UNKNOWN
-import io.embrace.android.embracesdk.internal.opentelemetry.embAttachmentErrorCode
-import io.embrace.android.embracesdk.internal.opentelemetry.embAttachmentId
-import io.embrace.android.embracesdk.internal.opentelemetry.embAttachmentSize
-import io.embrace.android.embracesdk.internal.opentelemetry.embAttachmentUrl
+import io.embrace.android.embracesdk.internal.otel.attrs.embAttachmentErrorCode
+import io.embrace.android.embracesdk.internal.otel.attrs.embAttachmentId
+import io.embrace.android.embracesdk.internal.otel.attrs.embAttachmentSize
+import io.embrace.android.embracesdk.internal.otel.attrs.embAttachmentUrl
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Test

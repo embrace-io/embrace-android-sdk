@@ -57,6 +57,7 @@ val codeCoverageModules = listOf( // FIXME: future: add gradle plugin to code co
     ":embrace-android-okhttp3",
     ":embrace-android-fcm",
     ":embrace-android-compose",
+    ":embrace-android-otel",
 )
 codeCoverageModules.forEach { projectName ->
     dependencies.add("kover", project(projectName))
@@ -70,6 +71,7 @@ dependencies {
     implementation(project(":embrace-android-payload"))
     implementation(project(":embrace-android-delivery"))
     implementation(project(":embrace-internal-api"))
+    implementation(project(":embrace-android-otel"))
 
     implementation(platform(libs.opentelemetry.bom))
 

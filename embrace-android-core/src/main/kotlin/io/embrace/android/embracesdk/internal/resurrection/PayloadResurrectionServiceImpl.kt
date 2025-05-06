@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.resurrection
 
-import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
@@ -11,10 +10,14 @@ import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageSer
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.ndk.NativeCrashService
-import io.embrace.android.embracesdk.internal.opentelemetry.embCrashId
-import io.embrace.android.embracesdk.internal.opentelemetry.embHeartbeatTimeUnixNano
-import io.embrace.android.embracesdk.internal.opentelemetry.embProcessIdentifier
-import io.embrace.android.embracesdk.internal.opentelemetry.embState
+import io.embrace.android.embracesdk.internal.otel.attrs.embCrashId
+import io.embrace.android.embracesdk.internal.otel.attrs.embHeartbeatTimeUnixNano
+import io.embrace.android.embracesdk.internal.otel.attrs.embProcessIdentifier
+import io.embrace.android.embracesdk.internal.otel.attrs.embState
+import io.embrace.android.embracesdk.internal.otel.payload.toFailedSpan
+import io.embrace.android.embracesdk.internal.otel.schema.EmbType
+import io.embrace.android.embracesdk.internal.otel.spans.findAttributeValue
+import io.embrace.android.embracesdk.internal.otel.spans.hasEmbraceAttribute
 import io.embrace.android.embracesdk.internal.payload.ApplicationState
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Envelope
@@ -27,10 +30,7 @@ import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.getSessionId
 import io.embrace.android.embracesdk.internal.payload.getSessionProperties
 import io.embrace.android.embracesdk.internal.payload.getSessionSpan
-import io.embrace.android.embracesdk.internal.payload.toFailedSpan
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
-import io.embrace.android.embracesdk.internal.spans.findAttributeValue
-import io.embrace.android.embracesdk.internal.spans.hasFixedAttribute
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes
 import java.util.Locale
@@ -126,7 +126,7 @@ internal class PayloadResurrectionServiceImpl(
                         nativeCrash = nativeCrash,
                         sessionProperties = emptyMap(),
                         metadata = mapOf(
-                            embState.attributeKey to ApplicationState.BACKGROUND.name.lowercase(Locale.ENGLISH)
+                            embState.name to ApplicationState.BACKGROUND.name.lowercase(Locale.ENGLISH)
                         ),
                     )
                 }
@@ -180,8 +180,8 @@ internal class PayloadResurrectionServiceImpl(
                             sessionProperties = deadSession.getSessionProperties(),
                             metadata = if (appState != null) {
                                 mapOf(
-                                    embState.attributeKey to appState,
-                                    embProcessIdentifier.attributeKey to processId
+                                    embState.name to appState,
+                                    embProcessIdentifier.name to processId
                                 )
                             } else {
                                 emptyMap()
@@ -224,7 +224,7 @@ internal class PayloadResurrectionServiceImpl(
             ?.map { it.toFailedSpan(endTimeMs = getFailedSpanEndTimeMs(this)) }
             ?: emptyList()
         val completedSpans = (data.spans ?: emptyList()) + failedSpans
-        val sessionSpan = completedSpans.singleOrNull { it.hasFixedAttribute(EmbType.Ux.Session) } ?: return null
+        val sessionSpan = completedSpans.singleOrNull { it.hasEmbraceAttribute(EmbType.Ux.Session) } ?: return null
         val spans = if (nativeCrashData != null) {
             completedSpans.minus(sessionSpan).plus(
                 sessionSpan.attachCrashToSession(
@@ -271,7 +271,7 @@ internal class PayloadResurrectionServiceImpl(
         val sessionSpan = envelope.getSessionSpan() ?: return 0L
         val endTimeMs = sessionSpan.endTimeNanos ?: 0L
         val lastHeartbeatTimeMs =
-            sessionSpan.attributes?.findAttributeValue(embHeartbeatTimeUnixNano.attributeKey)?.toLongOrNull() ?: 0L
+            sessionSpan.attributes?.findAttributeValue(embHeartbeatTimeUnixNano.name)?.toLongOrNull() ?: 0L
         return max(endTimeMs, lastHeartbeatTimeMs).nanosToMillis()
     }
 }

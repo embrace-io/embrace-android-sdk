@@ -3,8 +3,9 @@ package io.embrace.android.embracesdk.internal.capture.crumbs
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeSpanService
-import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
+import io.embrace.android.embracesdk.internal.otel.attrs.asPair
+import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -41,7 +42,7 @@ internal class ViewDataSourceTest {
         assertEquals(
             mapOf(
                 "view.name" to "my_fragment",
-                EmbType.Ux.View.toEmbraceKeyValuePair(),
+                EmbType.Ux.View.asPair(),
             ),
             span.attributes
         )
@@ -104,7 +105,7 @@ internal class ViewDataSourceTest {
         assertEquals(
             mapOf(
                 "view.name" to "my_fragment",
-                EmbType.Ux.View.toEmbraceKeyValuePair()
+                EmbType.Ux.View.asPair()
             ),
             span.attributes
         )
@@ -126,7 +127,7 @@ internal class ViewDataSourceTest {
         assertEquals(
             mapOf(
                 "view.name" to "some_view",
-                EmbType.Ux.View.toEmbraceKeyValuePair(),
+                EmbType.Ux.View.asPair(),
             ),
             span.attributes
         )

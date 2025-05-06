@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.internal.arch.datasource
 
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
-import io.embrace.android.embracesdk.internal.spans.PersistableEmbraceSpan
-import io.embrace.android.embracesdk.internal.spans.SpanService
+import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
+import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 
@@ -39,7 +39,7 @@ fun SpanService.startSpanCapture(
     schemaType: SchemaType,
     startTimeMs: Long,
     autoTerminationMode: AutoTerminationMode = AutoTerminationMode.NONE,
-): PersistableEmbraceSpan? {
+): EmbraceSdkSpan? {
     return startSpan(
         name = schemaType.fixedObjectName,
         startTimeMs = startTimeMs,

@@ -9,3 +9,7 @@ description = "Embrace Android SDK: Infra"
 android {
     namespace = "io.embrace.android.embracesdk.infra"
 }
+
+dependencies {
+    implementation(libs.androidx.annotation.jvm)
+}

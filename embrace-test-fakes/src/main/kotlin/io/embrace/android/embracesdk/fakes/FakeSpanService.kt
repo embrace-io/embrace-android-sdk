@@ -1,10 +1,10 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
-import io.embrace.android.embracesdk.internal.arch.schema.TelemetryType
-import io.embrace.android.embracesdk.internal.spans.EmbraceSpanBuilder
-import io.embrace.android.embracesdk.internal.spans.PersistableEmbraceSpan
-import io.embrace.android.embracesdk.internal.spans.SpanService
+import io.embrace.android.embracesdk.internal.otel.schema.PrivateSpan
+import io.embrace.android.embracesdk.internal.otel.schema.TelemetryType
+import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
+import io.embrace.android.embracesdk.internal.otel.spans.OtelSpanBuilderWrapper
+import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
@@ -13,7 +13,7 @@ import io.opentelemetry.context.Context
 
 class FakeSpanService : SpanService {
 
-    val createdSpans: MutableList<FakePersistableEmbraceSpan> = mutableListOf()
+    val createdSpans: MutableList<FakeEmbraceSdkSpan> = mutableListOf()
 
     override fun initializeService(sdkInitStartTimeMs: Long) {
     }
@@ -27,9 +27,9 @@ class FakeSpanService : SpanService {
         type: TelemetryType,
         internal: Boolean,
         private: Boolean,
-    ): PersistableEmbraceSpan = FakePersistableEmbraceSpan(
+    ): EmbraceSdkSpan = FakeEmbraceSdkSpan(
         name = name,
-        parentContext = parent?.run { Context.root().with(parent as PersistableEmbraceSpan) } ?: Context.root(),
+        parentContext = parent?.run { Context.root().with(parent as EmbraceSdkSpan) } ?: Context.root(),
         type = type,
         internal = internal,
         private = private,
@@ -39,14 +39,14 @@ class FakeSpanService : SpanService {
     }
 
     override fun createSpan(
-        embraceSpanBuilder: EmbraceSpanBuilder,
-    ): PersistableEmbraceSpan = FakePersistableEmbraceSpan(
-        name = embraceSpanBuilder.spanName,
-        parentContext = embraceSpanBuilder.parentContext,
-        type = embraceSpanBuilder.getFixedAttributes().filterIsInstance<TelemetryType>().single(),
-        internal = embraceSpanBuilder.internal,
-        private = embraceSpanBuilder.getFixedAttributes().contains(PrivateSpan),
-        autoTerminationMode = embraceSpanBuilder.autoTerminationMode,
+        otelSpanBuilderWrapper: OtelSpanBuilderWrapper,
+    ): EmbraceSdkSpan = FakeEmbraceSdkSpan(
+        name = otelSpanBuilderWrapper.spanName,
+        parentContext = otelSpanBuilderWrapper.parentContext,
+        type = otelSpanBuilderWrapper.getEmbraceAttributes().filterIsInstance<TelemetryType>().single(),
+        internal = otelSpanBuilderWrapper.internal,
+        private = otelSpanBuilderWrapper.getEmbraceAttributes().contains(PrivateSpan),
+        autoTerminationMode = otelSpanBuilderWrapper.autoTerminationMode,
     ).apply {
         createdSpans.add(this)
     }
@@ -79,9 +79,9 @@ class FakeSpanService : SpanService {
         errorCode: ErrorCode?,
     ): Boolean {
         createdSpans.add(
-            FakePersistableEmbraceSpan(
+            FakeEmbraceSdkSpan(
                 name = name,
-                parentContext = parent?.run { Context.root().with(parent as PersistableEmbraceSpan) } ?: Context.root(),
+                parentContext = parent?.run { Context.root().with(parent as EmbraceSdkSpan) } ?: Context.root(),
                 type = type,
                 internal = internal,
                 private = private

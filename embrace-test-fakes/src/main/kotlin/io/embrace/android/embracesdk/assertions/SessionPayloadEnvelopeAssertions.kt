@@ -1,14 +1,14 @@
 package io.embrace.android.embracesdk.assertions
 
-import io.embrace.android.embracesdk.internal.arch.schema.TelemetryType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
-import io.embrace.android.embracesdk.internal.opentelemetry.embHeartbeatTimeUnixNano
+import io.embrace.android.embracesdk.internal.otel.attrs.embHeartbeatTimeUnixNano
+import io.embrace.android.embracesdk.internal.otel.schema.TelemetryType
+import io.embrace.android.embracesdk.internal.otel.spans.findAttributeValue
+import io.embrace.android.embracesdk.internal.otel.spans.hasEmbraceAttribute
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.getSessionSpan
-import io.embrace.android.embracesdk.internal.spans.findAttributeValue
-import io.embrace.android.embracesdk.internal.spans.hasFixedAttribute
 
 /**
  * Returns the Session Span
@@ -42,7 +42,7 @@ fun Envelope<SessionPayload>.getStartTime(): Long {
  */
 fun Envelope<SessionPayload>.getLastHeartbeatTimeMs(): Long {
     return checkNotNull(
-        findSessionSpan().attributes?.findAttributeValue(embHeartbeatTimeUnixNano.attributeKey)?.toLongOrNull()
+        findSessionSpan().attributes?.findAttributeValue(embHeartbeatTimeUnixNano.name)?.toLongOrNull()
             ?.nanosToMillis()
     ) {
         "No last heartbeat time found in session payload"
@@ -63,7 +63,7 @@ fun Envelope<SessionPayload>.findSpansOfType(telemetryType: TelemetryType): List
     val spans = checkNotNull(data.spans) {
         "No spans found in session message"
     }
-    return checkNotNull(spans.filter { it.hasFixedAttribute(telemetryType) }) {
+    return checkNotNull(spans.filter { it.hasEmbraceAttribute(telemetryType) }) {
         "Span of type not found: $telemetryType"
     }
 }
@@ -99,7 +99,7 @@ fun Envelope<SessionPayload>.findSpanSnapshotsOfType(telemetryType: TelemetryTyp
     val snapshots = checkNotNull(data.spanSnapshots) {
         "No span snapshots found in session message"
     }
-    return checkNotNull(snapshots.filter { it.hasFixedAttribute(telemetryType) }) {
+    return checkNotNull(snapshots.filter { it.hasEmbraceAttribute(telemetryType) }) {
         "Span snapshots of type not found: ${telemetryType.key}"
     }
 }

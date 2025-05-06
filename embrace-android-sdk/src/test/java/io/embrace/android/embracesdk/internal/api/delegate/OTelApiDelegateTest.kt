@@ -8,7 +8,7 @@ import io.embrace.android.embracesdk.fakes.FakeSpanExporter
 import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.fakeModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
-import io.embrace.android.embracesdk.internal.opentelemetry.OpenTelemetryConfiguration
+import io.embrace.android.embracesdk.internal.otel.config.OtelSdkConfig
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.opentelemetry.api.OpenTelemetry
 import io.opentelemetry.semconv.ServiceAttributes
@@ -25,14 +25,14 @@ internal class OTelApiDelegateTest {
 
     private lateinit var bootstrapper: ModuleInitBootstrapper
     private lateinit var delegate: OTelApiDelegate
-    private lateinit var cfg: OpenTelemetryConfiguration
+    private lateinit var cfg: OtelSdkConfig
     private lateinit var sdkCallChecker: SdkCallChecker
 
     @Before
     fun setUp() {
         bootstrapper = fakeModuleInitBootstrapper()
         bootstrapper.init(ApplicationProvider.getApplicationContext(), AppFramework.NATIVE, 0)
-        cfg = bootstrapper.openTelemetryModule.openTelemetryConfiguration
+        cfg = bootstrapper.openTelemetryModule.otelSdkConfig
 
         sdkCallChecker = SdkCallChecker(FakeEmbLogger(), FakeTelemetryService())
         sdkCallChecker.started.set(true)
@@ -43,21 +43,21 @@ internal class OTelApiDelegateTest {
     fun `add span exporter before start`() {
         sdkCallChecker.started.set(false)
         delegate.addSpanExporter(FakeSpanExporter())
-        assertTrue(bootstrapper.openTelemetryModule.openTelemetryConfiguration.hasConfiguredOtelExporters())
+        assertTrue(bootstrapper.openTelemetryModule.otelSdkConfig.hasConfiguredOtelExporters())
     }
 
     @Test
     fun `add log exporter before start`() {
         sdkCallChecker.started.set(false)
         delegate.addLogRecordExporter(FakeLogRecordExporter())
-        assertTrue(bootstrapper.openTelemetryModule.openTelemetryConfiguration.hasConfiguredOtelExporters())
+        assertTrue(bootstrapper.openTelemetryModule.otelSdkConfig.hasConfiguredOtelExporters())
     }
 
     @Test
     fun `add exporters after start`() {
         delegate.addSpanExporter(FakeSpanExporter())
         delegate.addLogRecordExporter(FakeLogRecordExporter())
-        assertFalse(bootstrapper.openTelemetryModule.openTelemetryConfiguration.hasConfiguredOtelExporters())
+        assertFalse(bootstrapper.openTelemetryModule.otelSdkConfig.hasConfiguredOtelExporters())
     }
 
     @Test

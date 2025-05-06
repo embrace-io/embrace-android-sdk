@@ -6,18 +6,25 @@ import io.embrace.android.embracesdk.arch.assertIsType
 import io.embrace.android.embracesdk.assertions.assertEmbraceSpanData
 import io.embrace.android.embracesdk.assertions.findEventOfType
 import io.embrace.android.embracesdk.fakes.FakeClock
-import io.embrace.android.embracesdk.fakes.FakePersistableEmbraceSpan
+import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.arch.destination.SpanAttributeData
-import io.embrace.android.embracesdk.internal.arch.schema.AppTerminationCause
-import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
-import io.embrace.android.embracesdk.internal.arch.schema.TelemetryType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
-import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehavior
 import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
-import io.embrace.android.embracesdk.internal.opentelemetry.embraceSpanBuilder
-import io.embrace.android.embracesdk.internal.payload.toEmbracePayload
+import io.embrace.android.embracesdk.internal.otel.attrs.asPair
+import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
+import io.embrace.android.embracesdk.internal.otel.schema.AppTerminationCause
+import io.embrace.android.embracesdk.internal.otel.schema.EmbType
+import io.embrace.android.embracesdk.internal.otel.schema.TelemetryType
+import io.embrace.android.embracesdk.internal.otel.sdk.otelSpanBuilderWrapper
+import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
+import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanFactory
+import io.embrace.android.embracesdk.internal.otel.spans.OtelSpanBuilderWrapper
+import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
+import io.embrace.android.embracesdk.internal.otel.spans.SpanService
+import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
+import io.embrace.android.embracesdk.internal.otel.spans.getMaxTotalAttributeCount
 import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
 import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
@@ -123,7 +130,7 @@ internal class CurrentSessionSpanImplTests {
         repeat(SpanServiceImpl.MAX_NON_INTERNAL_SPANS_PER_SESSION) {
             assertNotNull(
                 spanService.createSpan(
-                    embraceSpanBuilder = tracer.embraceSpanBuilder(
+                    otelSpanBuilderWrapper = tracer.otelSpanBuilderWrapper(
                         name = "external-span",
                         type = EmbType.Performance.Default,
                         parent = null,
@@ -135,7 +142,7 @@ internal class CurrentSessionSpanImplTests {
         }
         assertNull(
             spanService.createSpan(
-                embraceSpanBuilder = tracer.embraceSpanBuilder(
+                otelSpanBuilderWrapper = tracer.otelSpanBuilderWrapper(
                     name = "external-span",
                     type = EmbType.Performance.Default,
                     parent = null,
@@ -146,7 +153,7 @@ internal class CurrentSessionSpanImplTests {
         )
         assertNotNull(
             spanService.createSpan(
-                embraceSpanBuilder = tracer.embraceSpanBuilder(
+                otelSpanBuilderWrapper = tracer.otelSpanBuilderWrapper(
                     name = "internal-span",
                     type = EmbType.Performance.Default,
                     parent = null,
@@ -383,8 +390,8 @@ internal class CurrentSessionSpanImplTests {
             expectedParentId = SpanId.getInvalid(),
             expectedErrorCode = ErrorCode.FAILURE,
             expectedCustomAttributes = mapOf(
-                AppTerminationCause.Crash.toEmbraceKeyValuePair(),
-                EmbType.Ux.Session.toEmbraceKeyValuePair()
+                AppTerminationCause.Crash.asPair(),
+                EmbType.Ux.Session.asPair()
             ),
             private = false
         )
@@ -396,7 +403,7 @@ internal class CurrentSessionSpanImplTests {
             expectedParentId = SpanId.getInvalid(),
             expectedErrorCode = ErrorCode.FAILURE,
             expectedCustomAttributes = mapOf(
-                EmbType.Performance.Default.toEmbraceKeyValuePair()
+                EmbType.Performance.Default.asPair()
             )
         )
 
@@ -409,7 +416,7 @@ internal class CurrentSessionSpanImplTests {
         val originalSessionSpanId = spanRepository.getActiveSpans().single().spanId
         currentSessionSpan.endSession(startNewSession = true)
         with(spanRepository.getActiveSpans().single()) {
-            assertTrue(hasFixedAttribute(EmbType.Ux.Session))
+            assertTrue(hasEmbraceAttribute(EmbType.Ux.Session))
             assertNotEquals(originalSessionSpanId, spanId)
         }
 
@@ -556,7 +563,7 @@ internal class CurrentSessionSpanImplTests {
     }
 
     private class BadEmbraceSpanFactory : EmbraceSpanFactory {
-        private val stoppedSpan = FakePersistableEmbraceSpan.stopped()
+        private val stoppedSpan = FakeEmbraceSdkSpan.stopped()
         override fun create(
             name: String,
             type: TelemetryType,
@@ -564,11 +571,9 @@ internal class CurrentSessionSpanImplTests {
             private: Boolean,
             autoTerminationMode: AutoTerminationMode,
             parent: EmbraceSpan?,
-        ): PersistableEmbraceSpan = stoppedSpan
+        ): EmbraceSdkSpan = stoppedSpan
 
-        override fun create(embraceSpanBuilder: EmbraceSpanBuilder) = stoppedSpan
-        override fun setupSensitiveKeysBehavior(sensitiveKeysBehavior: SensitiveKeysBehavior) {
-            // no-op
-        }
+        override fun create(otelSpanBuilderWrapper: OtelSpanBuilderWrapper) = stoppedSpan
+        override fun setRedactionFunction(redactionFunction: (key: String, value: String) -> String) {}
     }
 }

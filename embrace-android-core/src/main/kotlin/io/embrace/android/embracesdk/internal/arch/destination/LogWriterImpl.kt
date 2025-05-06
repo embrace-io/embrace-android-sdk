@@ -1,9 +1,10 @@
 package io.embrace.android.embracesdk.internal.arch.destination
 
-import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
+import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.clock.Clock
-import io.embrace.android.embracesdk.internal.opentelemetry.embState
+import io.embrace.android.embracesdk.internal.otel.attrs.embState
+import io.embrace.android.embracesdk.internal.otel.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.internal.session.lifecycle.EmbraceProcessStateService.Companion.BACKGROUND_STATE
 import io.embrace.android.embracesdk.internal.session.lifecycle.EmbraceProcessStateService.Companion.FOREGROUND_STATE
@@ -26,17 +27,22 @@ class LogWriterImpl(
 
     override fun addLog(
         schemaType: SchemaType,
-        severity: SeverityNumber,
+        severity: Severity,
         message: String,
         isPrivate: Boolean,
         addCurrentSessionInfo: Boolean,
         timestampMs: Long?,
     ) {
         val logTimeMs = timestampMs ?: clock.now()
+        val severityNumber = when (severity) {
+            Severity.INFO -> SeverityNumber.INFO
+            Severity.WARNING -> SeverityNumber.WARN
+            Severity.ERROR -> SeverityNumber.ERROR
+        }
         logger.log(
             body = message,
-            severityNumber = severity,
-            severityText = getSeverityText(severity),
+            severityNumber = severityNumber,
+            severityText = getSeverityText(severityNumber),
             timestampNs = TimeUnit.MILLISECONDS.toNanos(logTimeMs)
         ) {
             setStringAttribute(LogIncubatingAttributes.LOG_RECORD_UID.key, Uuid.getEmbUuid())
@@ -53,15 +59,15 @@ class LogWriterImpl(
                         BACKGROUND_STATE
                     }
                 }
-                setStringAttribute(embState.attributeKey, sessionState ?: processStateService.getAppState())
+                setStringAttribute(embState.name, sessionState ?: processStateService.getAppState())
             }
 
             if (isPrivate) {
-                setStringAttribute(PrivateSpan.key.attributeKey, PrivateSpan.value)
+                setStringAttribute(PrivateSpan.key.name, PrivateSpan.value)
             }
 
             with(schemaType) {
-                setStringAttribute(telemetryType.key.attributeKey, telemetryType.value)
+                setStringAttribute(telemetryType.key.name, telemetryType.value)
                 attributes().forEach {
                     setStringAttribute(it.key, it.value)
                 }

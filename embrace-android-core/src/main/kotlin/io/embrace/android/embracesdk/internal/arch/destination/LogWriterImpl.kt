@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.internal.otel.attrs.embState
 import io.embrace.android.embracesdk.internal.otel.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.otel.sdk.setAttribute
 import io.embrace.android.embracesdk.internal.otel.sdk.setEmbraceAttribute
+import io.embrace.android.embracesdk.internal.otel.sdk.toOtelSeverity
 import io.embrace.android.embracesdk.internal.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.internal.session.lifecycle.EmbraceProcessStateService.Companion.BACKGROUND_STATE
 import io.embrace.android.embracesdk.internal.session.lifecycle.EmbraceProcessStateService.Companion.FOREGROUND_STATE
@@ -28,17 +29,18 @@ class LogWriterImpl(
 
     override fun addLog(
         schemaType: SchemaType,
-        severity: Severity,
+        severity: io.embrace.android.embracesdk.Severity,
         message: String,
         isPrivate: Boolean,
         addCurrentSessionInfo: Boolean,
         timestampMs: Long?,
     ) {
         val logTimeMs = timestampMs ?: clock.now()
+        val otelSeverity = severity.toOtelSeverity()
         val builder = logger.logRecordBuilder()
             .setBody(message)
-            .setSeverity(severity)
-            .setSeverityText(getSeverityText(severity))
+            .setSeverity(otelSeverity)
+            .setSeverityText(getSeverityText(otelSeverity))
             .setTimestamp(logTimeMs, TimeUnit.MILLISECONDS)
 
         builder.setAttribute(LogIncubatingAttributes.LOG_RECORD_UID, Uuid.getEmbUuid())

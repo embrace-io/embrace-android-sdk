@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.fakes.behavior.FakeAppExitInfoBehavior
 import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
+import io.embrace.android.embracesdk.internal.otel.sdk.toOtelSeverity
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.unmockkAll
@@ -352,7 +353,7 @@ internal class AeiDataSourceImplTest {
 
     private fun getAeiLogAttrs(): Map<String, String> {
         val logEventData = logWriter.logEvents.single()
-        assertEquals(Severity.INFO, logEventData.severity)
+        assertEquals(Severity.INFO, logEventData.severity.toOtelSeverity())
         logEventData.assertIsType(EmbType.System.Exit)
         return logEventData.schemaType.attributes()
     }

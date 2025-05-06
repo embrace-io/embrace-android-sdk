@@ -72,9 +72,6 @@
           "signature": "isUiLoadTracingTraceAll()Z"
         },
         {
-          "signature": "isUnityAnrCaptureEnabled()Z"
-        },
-        {
           "signature": "isViewClickCoordinateCaptureEnabled()Z"
         },
         {

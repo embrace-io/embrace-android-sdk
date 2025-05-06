@@ -16,8 +16,6 @@ GREATEST_MAIN_DEFS();
 /* Forward declarations of test suites. These should live in separate files to avoid
  * bloating this file. */
 SUITE(suite_utilities);
-SUITE(suite_unwinder_dlinfo);
-SUITE(suite_sampler_stack_unwind);
 SUITE(suite_file_writer);
 
 /* Runs a suite of tests and returns 0 if they succeeded, 1 otherwise.*/
@@ -34,23 +32,6 @@ int run_test_suite(void (*suite)(void)) {
 JNIEXPORT int JNICALL
 Java_io_embrace_android_embracesdk_ndk_utils_StringUtilsTestSuite_run(JNIEnv *_env, jobject _this) {
     return run_test_suite(suite_utilities);
-}
-
-JNIEXPORT int JNICALL
-Java_io_embrace_android_embracesdk_ndk_sampler_UnwinderDlinfoTestSuite_run(JNIEnv *_env, jobject _this) {
-    return run_test_suite(suite_unwinder_dlinfo);
-}
-
-JNIEXPORT int JNICALL
-Java_io_embrace_android_embracesdk_ndk_sampler_SamplerStackUnwindTestSuite_run(JNIEnv *_env, jobject _this) {
-    return run_test_suite(suite_sampler_stack_unwind);
-}
-
-void emb_setup_fake_intervals();
-
-JNIEXPORT void JNICALL
-Java_io_embrace_android_embracesdk_ndk_sampler_SamplerJniCallTestSuite_run(JNIEnv *_env, jobject _this) {
-    emb_setup_fake_intervals();
 }
 
 void emb_setup_file_writer_tests(const char *path, const char *json);

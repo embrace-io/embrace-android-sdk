@@ -1,9 +1,7 @@
 package io.embrace.android.embracesdk.internal.config.behavior
 
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.InstrumentedConfig
-import io.embrace.android.embracesdk.internal.config.remote.AllowedNdkSampleMethod
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
-import io.embrace.android.embracesdk.internal.config.remote.Unwinder
 
 /**
  * Provides the behavior that the ANR feature should follow.
@@ -21,12 +19,6 @@ class AnrBehaviorImpl(
         private const val DEFAULT_STACKTRACE_FRAME_LIMIT = 200
         private const val DEFAULT_ANR_MAX_ANR_INTERVALS_PER_SESSION = 5
         private const val DEFAULT_ANR_MIN_CAPTURE_DURATION = 1000
-        private const val DEFAULT_NATIVE_THREAD_ANR_SAMPLING_FACTOR = 5
-        private const val DEFAULT_NATIVE_THREAD_ANR_OFFSET_ENABLED = true
-        private const val DEFAULT_IGNORE_NATIVE_THREAD_ANR_SAMPLING_ALLOWLIST = true
-        private val DEFAULT_NATIVE_THREAD_ANR_SAMPLING_ALLOWLIST = listOf(
-            AllowedNdkSampleMethod("UnityPlayer", "pauseUnity")
-        )
     }
 
     override val local = local.enabledFeatures
@@ -49,33 +41,4 @@ class AnrBehaviorImpl(
         remote?.anrPerSession ?: DEFAULT_ANR_MAX_ANR_INTERVALS_PER_SESSION
 
     override fun getMinDuration(): Int = remote?.minDuration ?: DEFAULT_ANR_MIN_CAPTURE_DURATION
-
-    override fun getNativeThreadAnrSamplingFactor(): Int =
-        remote?.nativeThreadAnrSamplingFactor ?: DEFAULT_NATIVE_THREAD_ANR_SAMPLING_FACTOR
-
-    override fun getNativeThreadAnrSamplingUnwinder(): Unwinder {
-        return runCatching {
-            Unwinder.values().find {
-                it.name.equals(remote?.nativeThreadAnrSamplingUnwinder, true)
-            } ?: Unwinder.LIBUNWIND
-        }.getOrDefault(Unwinder.LIBUNWIND)
-    }
-
-    override fun isUnityAnrCaptureEnabled(): Boolean {
-        return thresholdCheck.isBehaviorEnabled(remote?.pctNativeThreadAnrSamplingEnabled)
-            ?: local.isUnityAnrCaptureEnabled()
-    }
-
-    override fun isNativeThreadAnrSamplingOffsetEnabled(): Boolean =
-        remote?.nativeThreadAnrSamplingOffsetEnabled ?: DEFAULT_NATIVE_THREAD_ANR_OFFSET_ENABLED
-
-    override fun isNativeThreadAnrSamplingAllowlistIgnored(): Boolean =
-        remote?.ignoreNativeThreadAnrSamplingAllowlist
-            ?: DEFAULT_IGNORE_NATIVE_THREAD_ANR_SAMPLING_ALLOWLIST
-
-    override fun getNativeThreadAnrSamplingAllowlist(): List<AllowedNdkSampleMethod> =
-        remote?.nativeThreadAnrSamplingAllowlist ?: DEFAULT_NATIVE_THREAD_ANR_SAMPLING_ALLOWLIST
-
-    override fun getNativeThreadAnrSamplingIntervalMs(): Long =
-        getSamplingIntervalMs() * getNativeThreadAnrSamplingFactor()
 }

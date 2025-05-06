@@ -6,13 +6,6 @@ package io.embrace.android.embracesdk.internal.config.instrumented.schema
 interface EnabledFeatureConfig {
 
     /**
-     * Gates Unity ANR capture.
-     *
-     * sdk_config.anr.capture_unity_thread
-     */
-    fun isUnityAnrCaptureEnabled(): Boolean = false
-
-    /**
      * Gates activity lifecycle breadcrumb capture.
      *
      * sdk_config.view_config.enable_automatic_activity_capture

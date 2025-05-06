@@ -61,5 +61,6 @@ interface UnityInternalInterface :
     /**
      * @suppress
      */
+    @Deprecated("Obsolete, will be removed in a future release.")
     fun installUnityThreadSampler()
 }

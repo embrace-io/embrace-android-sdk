@@ -27,7 +27,6 @@ class EnabledFeatureConfigInstrumentationKtTest {
     )
 
     private val methods = listOf(
-        ConfigMethod("isUnityAnrCaptureEnabled", "()Z", true),
         ConfigMethod("isActivityBreadcrumbCaptureEnabled", "()Z", true),
         ConfigMethod("isComposeClickCaptureEnabled", "()Z", true),
         ConfigMethod("isViewClickCoordinateCaptureEnabled", "()Z", true),

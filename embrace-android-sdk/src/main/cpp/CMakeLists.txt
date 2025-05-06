@@ -25,12 +25,6 @@ add_library(# Sets the name of the library.
         signals/signal_utils.c
         signals/signals_c.c
         signals/signals_cpp.cpp
-        sampler/sampler_unwinder_unwind.c
-        sampler/sampler_unwinder_stack.cpp
-        sampler/stacktrace_sampler.c
-        sampler/stacktrace_sampler_jni.c
-        sampler/unwinder_dlinfo.c
-        sampler/emb_timer.c
         unwinders/unwinder.c
         unwinders/stack_unwinder.cpp
         safejni/safe_jni.c

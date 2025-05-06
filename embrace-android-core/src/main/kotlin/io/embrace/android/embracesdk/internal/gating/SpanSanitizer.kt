@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.internal.gating.SessionGatingKeys.BREADCRUM
 import io.embrace.android.embracesdk.internal.gating.SessionGatingKeys.BREADCRUMBS_TAPS
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.embrace.android.embracesdk.internal.otel.sdk.hasEmbraceAttribute
+import io.embrace.android.embracesdk.internal.otel.spans.hasEmbraceAttribute
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
 import io.opentelemetry.api.trace.SpanId

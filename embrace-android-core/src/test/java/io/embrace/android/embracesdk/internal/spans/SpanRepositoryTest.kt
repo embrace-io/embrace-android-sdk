@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.spans
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.fakes.FakePersistableEmbraceSpan
+import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
 import io.embrace.android.embracesdk.spans.ErrorCode
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -29,7 +29,7 @@ internal class SpanRepositoryTest {
 
     @Test
     fun `started span tracked`() {
-        val startedSpan = FakePersistableEmbraceSpan.started()
+        val startedSpan = FakeEmbraceSdkSpan.started()
         repository.trackStartedSpan(startedSpan)
         assertSame(startedSpan, checkNotNull(repository.getSpan(checkNotNull(startedSpan.spanId))))
         assertEquals(1, repository.getActiveSpans().size)
@@ -38,7 +38,7 @@ internal class SpanRepositoryTest {
 
     @Test
     fun `completed span tracked`() {
-        val completedSpan = FakePersistableEmbraceSpan.stopped()
+        val completedSpan = FakeEmbraceSdkSpan.stopped()
         repository.trackStartedSpan(completedSpan)
         assertSame(completedSpan, checkNotNull(repository.getSpan(checkNotNull(completedSpan.spanId))))
         assertEquals(0, repository.getActiveSpans().size)
@@ -47,14 +47,14 @@ internal class SpanRepositoryTest {
 
     @Test
     fun `not started span not tracked`() {
-        repository.trackStartedSpan(FakePersistableEmbraceSpan.notStarted())
+        repository.trackStartedSpan(FakeEmbraceSdkSpan.notStarted())
         assertEquals(0, repository.getActiveSpans().size)
         assertEquals(0, repository.getCompletedSpans().size)
     }
 
     @Test
     fun `tracked span moved to complete only if it is actually complete`() {
-        val span = FakePersistableEmbraceSpan.started()
+        val span = FakeEmbraceSdkSpan.started()
         val spanId = checkNotNull(span.spanId)
         repository.trackStartedSpan(span)
         repository.trackedSpanStopped(spanId)
@@ -70,7 +70,7 @@ internal class SpanRepositoryTest {
 
     @Test
     fun `spans not tracked twice`() {
-        val span = FakePersistableEmbraceSpan.started()
+        val span = FakeEmbraceSdkSpan.started()
         val spanId = checkNotNull(span.spanId)
         repository.trackStartedSpan(span)
         repository.trackStartedSpan(span)
@@ -85,7 +85,7 @@ internal class SpanRepositoryTest {
 
     @Test
     fun `completed span not available after clearing but existing reference still valid`() {
-        val completedSpan = FakePersistableEmbraceSpan.stopped()
+        val completedSpan = FakeEmbraceSdkSpan.stopped()
         repository.trackStartedSpan(completedSpan)
         checkNotNull(repository.getSpan(checkNotNull(completedSpan.spanId)))
         assertEquals(1, repository.getCompletedSpans().size)
@@ -96,7 +96,7 @@ internal class SpanRepositoryTest {
 
     @Test
     fun `active spans become failed and complete when they are forced to fail`() {
-        val startedSpan = FakePersistableEmbraceSpan.started()
+        val startedSpan = FakeEmbraceSdkSpan.started()
         repository.trackStartedSpan(startedSpan)
 
         assertSame(startedSpan, repository.getActiveSpans().single())

@@ -17,7 +17,7 @@ import io.embrace.android.embracesdk.internal.otel.attrs.asPair
 import io.embrace.android.embracesdk.internal.payload.Link
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.toEmbracePayload
-import io.embrace.android.embracesdk.internal.spans.PersistableEmbraceSpan
+import io.embrace.android.embracesdk.internal.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.spans.getEmbraceSpan
 import io.embrace.android.embracesdk.internal.spans.hasEmbraceAttribute
 import io.embrace.android.embracesdk.internal.spans.toStatus
@@ -33,7 +33,7 @@ import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.TimeUnit
 
-class FakePersistableEmbraceSpan(
+class FakeEmbraceSdkSpan(
     var name: String = "fake-span",
     var parentContext: Context = Context.root(),
     val type: TelemetryType = EmbType.Performance.Default,
@@ -41,7 +41,7 @@ class FakePersistableEmbraceSpan(
     val private: Boolean = internal,
     override val autoTerminationMode: AutoTerminationMode = AutoTerminationMode.NONE,
     private val fakeClock: FakeClock = FakeClock(),
-) : PersistableEmbraceSpan {
+) : EmbraceSdkSpan {
 
     private var sdkSpan: io.opentelemetry.api.trace.Span? = null
     var spanStartTimeMs: Long? = null
@@ -189,14 +189,14 @@ class FakePersistableEmbraceSpan(
     private fun started(): Boolean = sdkSpan != null
 
     companion object {
-        fun notStarted(): FakePersistableEmbraceSpan = FakePersistableEmbraceSpan(name = "not-started")
+        fun notStarted(): FakeEmbraceSdkSpan = FakeEmbraceSdkSpan(name = "not-started")
 
         fun started(
-            parent: PersistableEmbraceSpan? = null,
+            parent: EmbraceSdkSpan? = null,
             parentContext: Context = parent?.run { parent.asNewContext() } ?: Context.root(),
             clock: FakeClock = FakeClock(),
-        ): FakePersistableEmbraceSpan =
-            FakePersistableEmbraceSpan(
+        ): FakeEmbraceSdkSpan =
+            FakeEmbraceSdkSpan(
                 name = "started",
                 fakeClock = clock,
                 parentContext = parentContext
@@ -204,8 +204,8 @@ class FakePersistableEmbraceSpan(
                 start()
             }
 
-        fun stopped(): FakePersistableEmbraceSpan =
-            FakePersistableEmbraceSpan(name = "stopped").apply {
+        fun stopped(): FakeEmbraceSdkSpan =
+            FakeEmbraceSdkSpan(name = "stopped").apply {
                 start()
                 stop()
             }
@@ -217,8 +217,8 @@ class FakePersistableEmbraceSpan(
             endTimeMs: Long? = null,
             sessionProperties: Map<String, String>? = null,
             processIdentifier: String = "fake-process-id",
-        ): FakePersistableEmbraceSpan =
-            FakePersistableEmbraceSpan(
+        ): FakeEmbraceSdkSpan =
+            FakeEmbraceSdkSpan(
                 name = "emb-session",
                 type = EmbType.Ux.Session
             ).apply {

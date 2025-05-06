@@ -12,9 +12,9 @@ import io.opentelemetry.context.ContextKey
 import io.opentelemetry.context.ImplicitContextKeyed
 
 /**
- * An [EmbraceSpan] that has can generate a snapshot of its current state for persistence
+ * An [EmbraceSpan] that has additional functionality to be used internally by the SDK
  */
-interface PersistableEmbraceSpan : EmbraceSpan, ImplicitContextKeyed {
+interface EmbraceSdkSpan : EmbraceSpan, ImplicitContextKeyed {
 
     /**
      * Create a new [Context] object based in this span and its parent's context. This can be used for the parent [Context] for a new span
@@ -84,6 +84,6 @@ interface PersistableEmbraceSpan : EmbraceSpan, ImplicitContextKeyed {
     override fun storeInContext(context: Context): Context = context.with(embraceSpanContextKey, this)
 }
 
-fun Context.getEmbraceSpan(): PersistableEmbraceSpan? = get(embraceSpanContextKey)
+fun Context.getEmbraceSpan(): EmbraceSdkSpan? = get(embraceSpanContextKey)
 
-private val embraceSpanContextKey = ContextKey.named<PersistableEmbraceSpan>("embrace-span-key")
+private val embraceSpanContextKey = ContextKey.named<EmbraceSdkSpan>("embrace-span-key")

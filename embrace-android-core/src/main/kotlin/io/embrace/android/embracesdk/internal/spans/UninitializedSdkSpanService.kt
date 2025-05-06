@@ -28,9 +28,9 @@ internal class UninitializedSdkSpanService : SpanService {
         type: TelemetryType,
         internal: Boolean,
         private: Boolean,
-    ): PersistableEmbraceSpan? = null
+    ): EmbraceSdkSpan? = null
 
-    override fun createSpan(embraceSpanBuilder: EmbraceSpanBuilder): PersistableEmbraceSpan? = null
+    override fun createSpan(otelSpanBuilderWrapper: OtelSpanBuilderWrapper): EmbraceSdkSpan? = null
 
     override fun <T> recordSpan(
         name: String,

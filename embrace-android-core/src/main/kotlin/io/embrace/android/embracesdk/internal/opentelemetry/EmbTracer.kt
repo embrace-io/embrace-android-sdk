@@ -16,7 +16,7 @@ class EmbTracer(
 
     override fun spanBuilder(spanName: String): SpanBuilder =
         EmbSpanBuilder(
-            embraceSpanBuilder = sdkTracer.embraceSpanBuilder(
+            otelSpanBuilderWrapper = sdkTracer.embraceSpanBuilder(
                 name = spanName,
                 type = EmbType.Performance.Default,
                 private = false,

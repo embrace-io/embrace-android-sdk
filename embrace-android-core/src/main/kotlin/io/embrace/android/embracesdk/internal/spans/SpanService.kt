@@ -24,13 +24,13 @@ interface SpanService : Initializable {
         type: TelemetryType = EmbType.Performance.Default,
         internal: Boolean = true,
         private: Boolean = false,
-    ): PersistableEmbraceSpan?
+    ): EmbraceSdkSpan?
 
     /**
-     * Return an [EmbraceSpan] instance that can be used to record spans given the [EmbraceSpanBuilder]. Returns null if the builder will
-     * not build a valid span or if the SDK and session is not in a state where a new span can be recorded.
+     * Return an [EmbraceSpan] instance that can be used to record spans given the [OtelSpanBuilderWrapper]. Returns null if the builder
+     * will not build a valid span or if the SDK and session is not in a state where a new span can be recorded.
      */
-    fun createSpan(embraceSpanBuilder: EmbraceSpanBuilder): PersistableEmbraceSpan?
+    fun createSpan(otelSpanBuilderWrapper: OtelSpanBuilderWrapper): EmbraceSdkSpan?
 
     /**
      * Create, start, and return a new [EmbraceSpan] with the given parameters
@@ -43,7 +43,7 @@ interface SpanService : Initializable {
         type: TelemetryType = EmbType.Performance.Default,
         internal: Boolean = true,
         private: Boolean = false,
-    ): PersistableEmbraceSpan? {
+    ): EmbraceSdkSpan? {
         createSpan(
             name = name,
             autoTerminationMode = autoTerminationMode,

@@ -15,7 +15,7 @@ import java.util.concurrent.TimeUnit
 /**
  * Wrapper for the [SpanBuilder] that stores the input data so that they can be accessed
  */
-class EmbraceSpanBuilder(
+class OtelSpanBuilderWrapper(
     tracer: Tracer,
     name: String,
     telemetryType: TelemetryType,
@@ -41,7 +41,7 @@ class EmbraceSpanBuilder(
 
     init {
         // If there is a parent, extract the wrapped OTel span and set it as the parent in the wrapped OTel SpanBuilder
-        if (parentSpan is PersistableEmbraceSpan) {
+        if (parentSpan is EmbraceSdkSpan) {
             val newParentContext = parentSpan.asNewContext() ?: Context.root()
             setParentContext(newParentContext.with(parentSpan))
         } else {

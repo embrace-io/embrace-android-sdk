@@ -37,7 +37,7 @@ internal class CurrentSessionSpanImpl(
     /**
      * The span that models the lifetime of the current session or background activity
      */
-    private val sessionSpan: AtomicReference<PersistableEmbraceSpan?> = AtomicReference(null)
+    private val sessionSpan: AtomicReference<EmbraceSdkSpan?> = AtomicReference(null)
 
     override fun initializeService(sdkInitStartTimeMs: Long) {
         if (!initialized.get()) {
@@ -166,7 +166,7 @@ internal class CurrentSessionSpanImpl(
     /**
      * This method should always be used when starting a new session span
      */
-    private fun startSessionSpan(startTimeMs: Long): PersistableEmbraceSpan {
+    private fun startSessionSpan(startTimeMs: Long): EmbraceSdkSpan {
         traceCount.set(0)
         internalTraceCount.set(0)
 

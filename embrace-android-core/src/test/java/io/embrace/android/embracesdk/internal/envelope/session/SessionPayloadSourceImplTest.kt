@@ -2,8 +2,8 @@ package io.embrace.android.embracesdk.internal.envelope.session
 
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeCurrentSessionSpan
+import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
 import io.embrace.android.embracesdk.fakes.FakeOtelPayloadMapper
-import io.embrace.android.embracesdk.fakes.FakePersistableEmbraceSpan
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.FakeSpanData
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
@@ -25,7 +25,7 @@ internal class SessionPayloadSourceImplTest {
     private lateinit var sink: SpanSinkImpl
     private lateinit var currentSessionSpan: FakeCurrentSessionSpan
     private lateinit var spanRepository: SpanRepository
-    private lateinit var activeSpan: FakePersistableEmbraceSpan
+    private lateinit var activeSpan: FakeEmbraceSdkSpan
     private val cacheSpan = FakeSpanData(name = "cache-span")
 
     @Before
@@ -36,7 +36,7 @@ internal class SessionPayloadSourceImplTest {
         currentSessionSpan = FakeCurrentSessionSpan().apply {
             initializeService(1000L)
         }
-        activeSpan = FakePersistableEmbraceSpan.started()
+        activeSpan = FakeEmbraceSdkSpan.started()
         spanRepository = SpanRepository()
         spanRepository.trackStartedSpan(checkNotNull(currentSessionSpan.sessionSpan))
         spanRepository.trackStartedSpan(activeSpan)

@@ -38,12 +38,12 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 
 internal class EmbraceSpanImpl(
-    private val spanBuilder: EmbraceSpanBuilder,
+    private val spanBuilder: OtelSpanBuilderWrapper,
     private val openTelemetryClock: Clock,
     private val spanRepository: SpanRepository,
     private val sensitiveKeysBehavior: SensitiveKeysBehavior?,
     private val limits: OtelLimitsConfig = InstrumentedConfigImpl.otelLimits,
-) : PersistableEmbraceSpan {
+) : EmbraceSdkSpan {
 
     private val startedSpan: AtomicReference<io.opentelemetry.api.trace.Span?> = AtomicReference(null)
 

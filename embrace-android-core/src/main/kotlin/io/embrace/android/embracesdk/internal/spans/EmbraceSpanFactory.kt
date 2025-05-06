@@ -6,7 +6,7 @@ import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 
 /**
- * Creates instances of [PersistableEmbraceSpan] for internal usage. Using this factory is preferred to invoking the constructor
+ * Creates instances of [EmbraceSdkSpan] for internal usage. Using this factory is preferred to invoking the constructor
  * because of the it requires several services that may not be easily available.
  */
 internal interface EmbraceSpanFactory {
@@ -17,9 +17,9 @@ internal interface EmbraceSpanFactory {
         private: Boolean,
         autoTerminationMode: AutoTerminationMode = AutoTerminationMode.NONE,
         parent: EmbraceSpan? = null,
-    ): PersistableEmbraceSpan
+    ): EmbraceSdkSpan
 
-    fun create(embraceSpanBuilder: EmbraceSpanBuilder): PersistableEmbraceSpan
+    fun create(otelSpanBuilderWrapper: OtelSpanBuilderWrapper): EmbraceSdkSpan
 
     fun setupSensitiveKeysBehavior(sensitiveKeysBehavior: SensitiveKeysBehavior)
 }

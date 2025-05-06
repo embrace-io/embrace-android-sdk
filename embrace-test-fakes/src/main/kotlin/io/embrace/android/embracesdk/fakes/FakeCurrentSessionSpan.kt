@@ -17,7 +17,7 @@ class FakeCurrentSessionSpan(
     var initializedCallCount: Int = 0
     var addedEvents: MutableList<SpanEventData> = mutableListOf()
     var attributes: MutableMap<String, String> = mutableMapOf()
-    var sessionSpan: FakePersistableEmbraceSpan? = null
+    var sessionSpan: FakeEmbraceSdkSpan? = null
 
     private val sessionIteration = AtomicInteger(1)
 
@@ -82,7 +82,7 @@ class FakeCurrentSessionSpan(
     fun attributeCount(): Int = attributes.size
 
     private fun newSessionSpan(startTimeMs: Long) =
-        FakePersistableEmbraceSpan.sessionSpan(
+        FakeEmbraceSdkSpan.sessionSpan(
             sessionId = "fake-session-span-id",
             startTimeMs = startTimeMs,
             lastHeartbeatTimeMs = startTimeMs

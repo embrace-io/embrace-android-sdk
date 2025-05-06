@@ -8,10 +8,10 @@ import io.embrace.android.embracesdk.assertions.getSessionId
 import io.embrace.android.embracesdk.assertions.getStartTime
 import io.embrace.android.embracesdk.fakes.FakeCachedLogEnvelopeStore
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
+import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
 import io.embrace.android.embracesdk.fakes.FakeIntakeService
 import io.embrace.android.embracesdk.fakes.FakeNativeCrashService
 import io.embrace.android.embracesdk.fakes.FakePayloadStorageService
-import io.embrace.android.embracesdk.fakes.FakePersistableEmbraceSpan
 import io.embrace.android.embracesdk.fakes.FakeSpanData.Companion.perfSpanSnapshot
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.fakes.fakeEmptyLogEnvelope
@@ -399,7 +399,7 @@ class PayloadResurrectionServiceImplTest {
             data = deadSessionEnvelope.data.copy(
                 spanSnapshots = deadSessionEnvelope.data.spanSnapshots?.plus(
                     checkNotNull(
-                        FakePersistableEmbraceSpan.sessionSpan(
+                        FakeEmbraceSdkSpan.sessionSpan(
                             sessionId = "fake-session-span-id",
                             startTimeMs = deadSessionEnvelope.getStartTime() + 1001L,
                             lastHeartbeatTimeMs = deadSessionEnvelope.getStartTime() + 1001L,

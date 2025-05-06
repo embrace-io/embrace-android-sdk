@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.otel.payload
 
 import io.embrace.android.embracesdk.fakes.FakeLogRecordData
-import io.embrace.android.embracesdk.internal.otel.spans.toStringMap
+import io.embrace.android.embracesdk.internal.otel.sdk.toStringMap
 import org.junit.Assert.assertEquals
 import org.junit.Test
 

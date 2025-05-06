@@ -1,11 +1,18 @@
 package io.embrace.android.embracesdk.internal.otel.schema
 
+import io.embrace.android.embracesdk.internal.otel.attrs.EmbraceAttribute
 import io.embrace.android.embracesdk.internal.otel.attrs.EmbraceAttributeKey
 
-sealed class EmbType(type: String, subtype: String?) : TelemetryType {
+/**
+ * Represents a telemetry type (emb.type). For example, "ux.view" is a type that represents
+ * a visual event around a UI element. ux is the type, and view is the subtype. This tells the
+ * backend that it can assume the data in the event follows a particular schema.
+ */
+sealed class EmbType(type: String, subtype: String?) : EmbraceAttribute {
+
     override val key: EmbraceAttributeKey = EmbraceAttributeKey.create(id = "type")
     override val value: String = type + (subtype?.run { ".$this" } ?: "")
-    override val sendMode: SendMode = SendMode.DEFAULT
+    open val sendMode: SendMode = SendMode.DEFAULT
 
     /**
      * Keys that track how fast a time interval is. Only applies to spans.

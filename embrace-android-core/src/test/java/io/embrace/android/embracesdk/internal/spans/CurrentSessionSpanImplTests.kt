@@ -16,7 +16,6 @@ import io.embrace.android.embracesdk.internal.otel.attrs.asPair
 import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
 import io.embrace.android.embracesdk.internal.otel.schema.AppTerminationCause
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
-import io.embrace.android.embracesdk.internal.otel.schema.TelemetryType
 import io.embrace.android.embracesdk.internal.otel.sdk.getMaxTotalAttributeCount
 import io.embrace.android.embracesdk.internal.otel.sdk.otelSpanBuilderWrapper
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
@@ -566,7 +565,7 @@ internal class CurrentSessionSpanImplTests {
         private val stoppedSpan = FakeEmbraceSdkSpan.stopped()
         override fun create(
             name: String,
-            type: TelemetryType,
+            type: EmbType,
             internal: Boolean,
             private: Boolean,
             parent: EmbraceSpan?,

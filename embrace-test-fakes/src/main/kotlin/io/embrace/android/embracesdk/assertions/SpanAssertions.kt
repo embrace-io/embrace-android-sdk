@@ -1,14 +1,14 @@
 package io.embrace.android.embracesdk.assertions
 
-import io.embrace.android.embracesdk.internal.otel.schema.TelemetryType
+import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.embrace.android.embracesdk.internal.otel.sdk.hasEmbraceAttribute
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
 
 /**
- * Finds the first Span Event matching the given [TelemetryType]
+ * Finds the first Span Event matching the given [EmbType]
  */
-fun Span.findEventOfType(telemetryType: TelemetryType): SpanEvent {
+fun Span.findEventOfType(telemetryType: EmbType): SpanEvent {
     val sanitizedEvents = checkNotNull(events) {
         "No events found in span"
     }
@@ -18,9 +18,9 @@ fun Span.findEventOfType(telemetryType: TelemetryType): SpanEvent {
 }
 
 /**
- * Finds the Span Events matching the given [TelemetryType]
+ * Finds the Span Events matching the given [EmbType]
  */
-fun Span.findEventsOfType(telemetryType: TelemetryType): List<SpanEvent> {
+fun Span.findEventsOfType(telemetryType: EmbType): List<SpanEvent> {
     val sanitizedEvents = checkNotNull(events) {
         "No events found in span"
     }
@@ -30,9 +30,9 @@ fun Span.findEventsOfType(telemetryType: TelemetryType): List<SpanEvent> {
 }
 
 /**
- * Returns true if an event exists with the given [TelemetryType]
+ * Returns true if an event exists with the given [EmbType]
  */
-fun Span.hasEventOfType(telemetryType: TelemetryType): Boolean {
+fun Span.hasEventOfType(telemetryType: EmbType): Boolean {
     val sanitizedEvents = checkNotNull(events) {
         "No events found in span"
     }

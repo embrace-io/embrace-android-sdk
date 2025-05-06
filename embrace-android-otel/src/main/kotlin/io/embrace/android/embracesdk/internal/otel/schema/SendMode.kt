@@ -1,9 +1,5 @@
 package io.embrace.android.embracesdk.internal.otel.schema
 
-import io.embrace.android.embracesdk.internal.otel.schema.SendMode.DEFAULT
-import io.embrace.android.embracesdk.internal.otel.schema.SendMode.DEFER
-import io.embrace.android.embracesdk.internal.otel.schema.SendMode.IMMEDIATE
-
 /**
  * How a given payload should be delivered to the Embrace server
  */
@@ -21,13 +17,15 @@ enum class SendMode {
     /**
      * Queue for delivery at the next convenient time. Used when the delivery environment is unstable, e.g. when an app is about to crash.
      */
-    DEFER
-}
+    DEFER;
 
-fun String.toSendMode(): SendMode {
-    return when (lowercase()) {
-        "immediate" -> IMMEDIATE
-        "defer" -> DEFER
-        else -> DEFAULT
+    companion object {
+        fun fromString(value: String?): SendMode {
+            return when (value?.lowercase()) {
+                "immediate" -> IMMEDIATE
+                "defer" -> DEFER
+                else -> DEFAULT
+            }
+        }
     }
 }

@@ -13,7 +13,11 @@ import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.embrace.android.embracesdk.internal.otel.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.otel.schema.ErrorCodeAttribute.Failure.fromErrorCode
 import io.embrace.android.embracesdk.internal.otel.schema.TelemetryType
+import io.embrace.android.embracesdk.internal.otel.sdk.fromMap
+import io.embrace.android.embracesdk.internal.otel.sdk.hasEmbraceAttribute
 import io.embrace.android.embracesdk.internal.otel.sdk.otelSpanBuilderWrapper
+import io.embrace.android.embracesdk.internal.otel.sdk.setEmbraceAttribute
+import io.embrace.android.embracesdk.internal.otel.sdk.toStatus
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.truncatedStacktraceText
@@ -65,7 +69,7 @@ class EmbraceSpanFactoryImpl(
 
     override fun create(
         otelSpanBuilderWrapper: OtelSpanBuilderWrapper,
-        autoTerminationMode: AutoTerminationMode
+        autoTerminationMode: AutoTerminationMode,
     ): EmbraceSdkSpan =
         EmbraceSpanImpl(
             otelSpanBuilderWrapper = otelSpanBuilderWrapper,

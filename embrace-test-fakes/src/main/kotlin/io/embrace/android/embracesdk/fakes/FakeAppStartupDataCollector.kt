@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.fakes
 import io.embrace.android.embracesdk.internal.capture.startup.AppStartupDataCollector
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.otel.schema.ErrorCodeAttribute.UserAbandon.fromErrorCode
-import io.embrace.android.embracesdk.internal.otel.spans.fromMap
+import io.embrace.android.embracesdk.internal.otel.sdk.fromMap
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.api.common.Attributes

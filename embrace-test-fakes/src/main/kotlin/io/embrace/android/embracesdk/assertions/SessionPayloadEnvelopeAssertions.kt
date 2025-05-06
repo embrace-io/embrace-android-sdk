@@ -3,8 +3,8 @@ package io.embrace.android.embracesdk.assertions
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.otel.attrs.embHeartbeatTimeUnixNano
 import io.embrace.android.embracesdk.internal.otel.schema.TelemetryType
-import io.embrace.android.embracesdk.internal.otel.spans.findAttributeValue
-import io.embrace.android.embracesdk.internal.otel.spans.hasEmbraceAttribute
+import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
+import io.embrace.android.embracesdk.internal.otel.sdk.hasEmbraceAttribute
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.payload.Span

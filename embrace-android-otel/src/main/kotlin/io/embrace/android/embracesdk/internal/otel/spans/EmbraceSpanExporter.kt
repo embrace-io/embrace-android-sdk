@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.otel.spans
 
 import io.embrace.android.embracesdk.internal.otel.schema.PrivateSpan
+import io.embrace.android.embracesdk.internal.otel.sdk.hasEmbraceAttribute
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.sdk.common.CompletableResultCode

@@ -13,7 +13,7 @@ import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.config.behavior.REDACTED_LABEL
 import io.embrace.android.embracesdk.internal.logs.attachments.Attachment
 import io.embrace.android.embracesdk.internal.otel.attrs.embExceptionHandling
-import io.embrace.android.embracesdk.internal.otel.spans.toOtelSeverity
+import io.embrace.android.embracesdk.internal.otel.sdk.toOtelSeverity
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.session.orchestrator.PayloadStore

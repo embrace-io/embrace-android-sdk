@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.otel.attrs.embFreeDiskBytes
 import io.embrace.android.embracesdk.internal.otel.attrs.asOtelAttributeKey
-import io.embrace.android.embracesdk.internal.otel.spans.findAttributeValue
+import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.assertions.toMap
 import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes

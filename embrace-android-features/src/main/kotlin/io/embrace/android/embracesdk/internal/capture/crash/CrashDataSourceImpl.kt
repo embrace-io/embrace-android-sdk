@@ -13,7 +13,7 @@ import io.embrace.android.embracesdk.internal.otel.attrs.embAndroidThreads
 import io.embrace.android.embracesdk.internal.otel.attrs.embCrashNumber
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType.System.ReactNativeCrash.embAndroidReactNativeCrashJsException
-import io.embrace.android.embracesdk.internal.otel.spans.toOtelSeverity
+import io.embrace.android.embracesdk.internal.otel.sdk.toOtelSeverity
 import io.embrace.android.embracesdk.internal.payload.JsException
 import io.embrace.android.embracesdk.internal.payload.LegacyExceptionInfo
 import io.embrace.android.embracesdk.internal.payload.ThreadInfo

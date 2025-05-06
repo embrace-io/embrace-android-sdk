@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.assertions.assertEmbraceSpanData
 import io.embrace.android.embracesdk.assertions.findEventOfType
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
+import io.embrace.android.embracesdk.fakes.FakeEmbraceSpanFactory
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.arch.destination.SpanAttributeData
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
@@ -19,14 +20,12 @@ import io.embrace.android.embracesdk.internal.otel.schema.AppTerminationCause
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
 import io.embrace.android.embracesdk.internal.otel.sdk.otelSpanBuilderWrapper
-import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
-import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanFactory
-import io.embrace.android.embracesdk.internal.otel.spans.OtelSpanBuilderWrapper
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
+import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpanImpl.Companion.MAX_INTERNAL_SPANS_PER_SESSION
+import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpanImpl.Companion.MAX_NON_INTERNAL_SPANS_PER_SESSION
 import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
-import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.api.trace.Tracer
@@ -84,8 +83,24 @@ internal class CurrentSessionSpanImplTests {
     }
 
     @Test
+    fun `cannot create child if parent not started`() {
+        assertFalse(currentSessionSpan.canStartNewSpan(FakeEmbraceSdkSpan(), false))
+    }
+
+    @Test
+    fun `can create child if parent has stopped`() {
+        assertTrue(currentSessionSpan.canStartNewSpan(FakeEmbraceSdkSpan.stopped(), false))
+    }
+
+    @Test
+    fun `after ending session with app termination, spans cannot be recorded`() {
+        currentSessionSpan.endSession(true, AppTerminationCause.UserTermination)
+        assertFalse(currentSessionSpan.canStartNewSpan(null, true))
+    }
+
+    @Test
     fun `check trace limits with maximum not started traces`() {
-        repeat(SpanServiceImpl.MAX_NON_INTERNAL_SPANS_PER_SESSION) {
+        repeat(MAX_NON_INTERNAL_SPANS_PER_SESSION) {
             assertNotNull(
                 spanService.createSpan(
                     name = "spanzzz$it",
@@ -103,7 +118,7 @@ internal class CurrentSessionSpanImplTests {
 
     @Test
     fun `check trace limits with maximum internal not started traces`() {
-        repeat(SpanServiceImpl.MAX_NON_INTERNAL_SPANS_PER_SESSION) {
+        repeat(MAX_NON_INTERNAL_SPANS_PER_SESSION) {
             assertNotNull(
                 spanService.createSpan(
                     name = "spanzzz$it",
@@ -118,7 +133,7 @@ internal class CurrentSessionSpanImplTests {
             )
         )
 
-        repeat(SpanServiceImpl.MAX_INTERNAL_SPANS_PER_SESSION) {
+        repeat(MAX_INTERNAL_SPANS_PER_SESSION) {
             assertNotNull(spanService.createSpan(name = "internal$it"))
         }
         assertNull(spanService.createSpan(name = "failed-span"))
@@ -126,7 +141,7 @@ internal class CurrentSessionSpanImplTests {
 
     @Test
     fun `check trace limited applied to spans created with span builder`() {
-        repeat(SpanServiceImpl.MAX_NON_INTERNAL_SPANS_PER_SESSION) {
+        repeat(MAX_NON_INTERNAL_SPANS_PER_SESSION) {
             assertNotNull(
                 spanService.createSpan(
                     otelSpanBuilderWrapper = tracer.otelSpanBuilderWrapper(
@@ -165,7 +180,7 @@ internal class CurrentSessionSpanImplTests {
 
     @Test
     fun `check trace limits with maximum traces recorded around a lambda`() {
-        repeat(SpanServiceImpl.MAX_NON_INTERNAL_SPANS_PER_SESSION) {
+        repeat(MAX_NON_INTERNAL_SPANS_PER_SESSION) {
             assertEquals(
                 "derp",
                 spanService.recordSpan(
@@ -184,7 +199,7 @@ internal class CurrentSessionSpanImplTests {
 
     @Test
     fun `check trace limits with maximum completed traces`() {
-        repeat(SpanServiceImpl.MAX_NON_INTERNAL_SPANS_PER_SESSION) {
+        repeat(MAX_NON_INTERNAL_SPANS_PER_SESSION) {
             assertTrue(
                 spanService.recordCompletedSpan(
                     name = "complete$it",
@@ -211,7 +226,7 @@ internal class CurrentSessionSpanImplTests {
             )
         )
         assertTrue(parent.start())
-        repeat(SpanServiceImpl.MAX_NON_INTERNAL_SPANS_PER_SESSION - 1) {
+        repeat(MAX_NON_INTERNAL_SPANS_PER_SESSION - 1) {
             assertNotNull(
                 "Adding span $it failed",
                 spanService.createSpan(
@@ -251,7 +266,7 @@ internal class CurrentSessionSpanImplTests {
     @Test
     fun `check total limit can be reached with descendant spans`() {
         var parentSpan: EmbraceSpan? = null
-        repeat(SpanServiceImpl.MAX_NON_INTERNAL_SPANS_PER_SESSION) {
+        repeat(MAX_NON_INTERNAL_SPANS_PER_SESSION) {
             val span = spanService.createSpan(
                 name = "spanzzz$it",
                 parent = parentSpan,
@@ -321,7 +336,7 @@ internal class CurrentSessionSpanImplTests {
             )
         )
 
-        repeat(SpanServiceImpl.MAX_NON_INTERNAL_SPANS_PER_SESSION) {
+        repeat(MAX_NON_INTERNAL_SPANS_PER_SESSION) {
             assertNotNull(
                 spanService.createSpan(
                     name = "spanzzz$it",
@@ -440,13 +455,12 @@ internal class CurrentSessionSpanImplTests {
 
     @Test
     fun `readySession will return false if session span is not recording`() {
-        val badEmbraceSpanFactory = BadEmbraceSpanFactory()
         val sessionSpan = CurrentSessionSpanImpl(
             openTelemetryClock = openTelemetryClock,
             telemetryService = telemetryService,
             spanRepository = spanRepository,
             spanSink = spanSink,
-            embraceSpanFactorySupplier = { badEmbraceSpanFactory }
+            embraceSpanFactorySupplier = { FakeEmbraceSpanFactory() }
         )
         assertFalse(sessionSpan.readySession())
     }
@@ -559,19 +573,5 @@ internal class CurrentSessionSpanImplTests {
         addSessionAttribute(attribute = SpanAttributeData("test", "test"))
         removeSessionAttribute("test")
         removeSessionEvents(EmbType.System.Breadcrumb)
-    }
-
-    private class BadEmbraceSpanFactory : EmbraceSpanFactory {
-        private val stoppedSpan = FakeEmbraceSdkSpan.stopped()
-        override fun create(
-            name: String,
-            type: EmbType,
-            internal: Boolean,
-            private: Boolean,
-            parent: EmbraceSpan?,
-            autoTerminationMode: AutoTerminationMode,
-        ): EmbraceSdkSpan = stoppedSpan
-
-        override fun create(otelSpanBuilderWrapper: OtelSpanBuilderWrapper, autoTerminationMode: AutoTerminationMode) = stoppedSpan
     }
 }

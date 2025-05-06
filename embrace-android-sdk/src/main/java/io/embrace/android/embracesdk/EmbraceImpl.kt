@@ -4,9 +4,6 @@ import android.annotation.SuppressLint
 import android.app.Application
 import android.content.Context
 import io.embrace.android.embracesdk.core.BuildConfig
-import io.embrace.android.embracesdk.internal.EmbTrace
-import io.embrace.android.embracesdk.internal.EmbTrace.end
-import io.embrace.android.embracesdk.internal.EmbTrace.start
 import io.embrace.android.embracesdk.internal.EmbraceInternalApi
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
 import io.embrace.android.embracesdk.internal.FlutterInternalInterface
@@ -44,6 +41,9 @@ import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.injection.embraceImplInject
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.payload.AppFramework
+import io.embrace.android.embracesdk.internal.utils.EmbTrace
+import io.embrace.android.embracesdk.internal.utils.EmbTrace.end
+import io.embrace.android.embracesdk.internal.utils.EmbTrace.start
 import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.spans.TracingApi
 import io.opentelemetry.api.common.AttributeKey
@@ -251,7 +251,7 @@ internal class EmbraceImpl @JvmOverloads constructor(
 
     override fun disable() {
         if (sdkCallChecker.started.get()) {
-            bootstrapper.openTelemetryModule.openTelemetryConfiguration.disableDataExport()
+            bootstrapper.openTelemetryModule.otelSdkConfig.disableDataExport()
             stop()
         }
 

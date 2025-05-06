@@ -36,6 +36,7 @@ buildconfig = "5.6.4"
 agp-api = "7.4.2"
 apktoolLib = "2.11.1"
 bundletool = "1.18.1"
+annotationJvm = "1.8.2"
 
 [libraries]
 binary-compatibility-validator = { module = "org.jetbrains.kotlinx:binary-compatibility-validator", version.ref = "binaryCompatibilityValidator" }
@@ -81,6 +82,7 @@ zstd-jni = { module = "com.github.luben:zstd-jni", version.ref = "zstdJni" }
 agp-api = { module = "com.android.tools.build:gradle-api", version.ref = "agp-api" }
 apktool-lib = { module = "org.apktool:apktool-lib", version.ref = "apktoolLib" }
 bundletool = { module = "com.android.tools.build:bundletool", version.ref = "bundletool" }
+androidx-annotation-jvm = { group = "androidx.annotation", name = "annotation-jvm", version.ref = "annotationJvm" }
 
 [plugins]
 google-ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }

@@ -5,7 +5,7 @@ import io.embrace.android.embracesdk.fixtures.deferredLog
 import io.embrace.android.embracesdk.fixtures.deferredLogRecordData
 import io.embrace.android.embracesdk.fixtures.sendImmediatelyLog
 import io.embrace.android.embracesdk.fixtures.sendImmediatelyLogRecordData
-import io.embrace.android.embracesdk.internal.logs.LogSinkImpl
+import io.embrace.android.embracesdk.internal.otel.logs.LogSinkImpl
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse

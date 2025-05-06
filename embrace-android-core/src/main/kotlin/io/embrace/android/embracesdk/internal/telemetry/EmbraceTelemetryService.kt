@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.telemetry
 import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.isEmulator
 import io.embrace.android.embracesdk.internal.otel.attrs.EmbraceAttributeKey
-import io.embrace.android.embracesdk.internal.spans.toEmbraceUsageAttributeName
+import io.embrace.android.embracesdk.internal.otel.spans.toEmbraceUsageAttributeName
 import java.util.concurrent.ConcurrentHashMap
 
 /**

@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.internal.logs
 
 import io.embrace.android.embracesdk.fakes.FakeLogRecordData
 import io.embrace.android.embracesdk.fixtures.testLog
-import io.embrace.android.embracesdk.internal.payload.toEmbracePayload
+import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
 import org.junit.Assert.assertEquals
 import org.junit.Test
 

@@ -12,7 +12,7 @@ complexity:
     active: false
   LongParameterList:
     constructorThreshold: 30
-    functionThreshold: 11
+    functionThreshold: 15
     ignoreDataClasses: true
   TooManyFunctions:
     thresholdInFiles: 31

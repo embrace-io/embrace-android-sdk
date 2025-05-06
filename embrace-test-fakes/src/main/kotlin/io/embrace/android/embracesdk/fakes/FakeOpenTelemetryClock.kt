@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.android.embracesdk.internal.OpenTelemetryClock
 import io.embrace.android.embracesdk.internal.clock.Clock
+import io.embrace.android.embracesdk.internal.otel.impl.EmbClock
 
 /**
  * An OpenTelemetry-compatible clock used for tests that calculates the elapsed time using the difference between the current time and when
@@ -12,7 +12,7 @@ class FakeOpenTelemetryClock(
     private val startingElapsedTimeNanos: Long = 0L,
 ) : io.opentelemetry.sdk.common.Clock {
 
-    private val realOpenTelemetryClock = OpenTelemetryClock(embraceClock = embraceClock)
+    private val realOpenTelemetryClock = EmbClock(embraceClock = embraceClock)
     private val startingTimeNanos = now()
     override fun now(): Long = realOpenTelemetryClock.now()
 

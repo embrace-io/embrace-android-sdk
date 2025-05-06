@@ -72,7 +72,7 @@ internal class NativeCoreModuleImpl(
                 mainThreadHandler = AndroidMainThreadHandler(),
                 clock = initModule.clock,
                 sessionIdTracker = essentialServiceModule.sessionIdTracker,
-                processIdProvider = { otelModule.openTelemetryConfiguration.processIdentifier },
+                processIdProvider = { otelModule.otelSdkConfig.processIdentifier },
                 outputDir = nativeOutputDir
             )
         } else {

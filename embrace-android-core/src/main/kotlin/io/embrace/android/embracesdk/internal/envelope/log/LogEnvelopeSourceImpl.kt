@@ -5,12 +5,12 @@ import io.embrace.android.embracesdk.internal.delivery.storage.CachedLogEnvelope
 import io.embrace.android.embracesdk.internal.delivery.storage.CachedLogEnvelopeStore.Companion.createNativeCrashEnvelopeMetadata
 import io.embrace.android.embracesdk.internal.envelope.metadata.EnvelopeMetadataSource
 import io.embrace.android.embracesdk.internal.envelope.resource.EnvelopeResourceSource
-import io.embrace.android.embracesdk.internal.logs.LogRequest
-import io.embrace.android.embracesdk.internal.opentelemetry.embProcessIdentifier
+import io.embrace.android.embracesdk.internal.otel.attrs.embProcessIdentifier
+import io.embrace.android.embracesdk.internal.otel.logs.LogRequest
+import io.embrace.android.embracesdk.internal.otel.spans.findAttributeValue
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.Envelope.Companion.createLogEnvelope
 import io.embrace.android.embracesdk.internal.payload.LogPayload
-import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes
 
 internal class LogEnvelopeSourceImpl(

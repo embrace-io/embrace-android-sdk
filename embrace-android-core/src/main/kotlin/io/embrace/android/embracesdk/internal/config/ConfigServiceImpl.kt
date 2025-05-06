@@ -16,7 +16,7 @@ import io.embrace.android.embracesdk.internal.config.behavior.SessionBehaviorImp
 import io.embrace.android.embracesdk.internal.config.behavior.WebViewVitalsBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.InstrumentedConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
-import io.embrace.android.embracesdk.internal.opentelemetry.OpenTelemetryConfiguration
+import io.embrace.android.embracesdk.internal.otel.config.OtelSdkConfig
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.prefs.PreferencesService
 
@@ -24,7 +24,7 @@ import io.embrace.android.embracesdk.internal.prefs.PreferencesService
  * Loads configuration for the app from the Embrace API.
  */
 internal class ConfigServiceImpl(
-    openTelemetryCfg: OpenTelemetryConfiguration,
+    openTelemetryCfg: OtelSdkConfig,
     preferencesService: PreferencesService,
     suppliedFramework: AppFramework,
     instrumentedConfig: InstrumentedConfig,
@@ -58,7 +58,7 @@ internal class ConfigServiceImpl(
      *
      * @return the local configuration
      */
-    fun resolveAppId(id: String?, openTelemetryCfg: OpenTelemetryConfiguration): String? {
+    fun resolveAppId(id: String?, openTelemetryCfg: OtelSdkConfig): String? {
         require(!id.isNullOrEmpty() || openTelemetryCfg.hasConfiguredOtelExporters()) {
             "No appId supplied in embrace-config.json. This is required if you want to " +
                 "send data to Embrace, unless you configure an OTel exporter and add" +

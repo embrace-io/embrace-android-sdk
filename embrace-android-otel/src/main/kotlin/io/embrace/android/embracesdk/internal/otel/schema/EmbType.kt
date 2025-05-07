@@ -29,10 +29,6 @@ sealed class EmbType(type: String, subtype: String?) : EmbraceAttribute {
 
         object MemoryWarning : Performance("memory_warning")
 
-        object NativeThreadBlockage : Performance("native_thread_blockage")
-
-        object NativeThreadBlockageSample : Performance("native_thread_blockage_sample")
-
         object ThermalState : Performance("thermal_state")
 
         object UiLoad : Performance("ui_load")

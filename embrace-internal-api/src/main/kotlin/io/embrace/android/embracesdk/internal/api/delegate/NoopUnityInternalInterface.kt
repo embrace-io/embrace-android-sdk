@@ -39,6 +39,7 @@ internal class NoopUnityInternalInterface(
     ) {
     }
 
+    @Deprecated("Obsolete, will be removed in a future release.")
     override fun installUnityThreadSampler() {
     }
 }

@@ -3,7 +3,6 @@
 #include <asm-generic/fcntl.h>
 #include <fcntl.h>
 #include "greatest/greatest.h"
-#include "unwinder_dlinfo.h"
 #include "utilities.h"
 #include "file_writer.h"
 #include "emb_log.h"

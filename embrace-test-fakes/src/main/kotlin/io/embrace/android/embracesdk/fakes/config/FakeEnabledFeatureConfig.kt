@@ -6,7 +6,6 @@ import io.embrace.android.embracesdk.internal.config.instrumented.schema.Enabled
 @Suppress("DEPRECATION")
 class FakeEnabledFeatureConfig(
     base: EnabledFeatureConfig = InstrumentedConfigImpl.enabledFeatures,
-    private val unityAnrCapture: Boolean = base.isUnityAnrCaptureEnabled(),
     private val activityBreadcrumbCapture: Boolean = base.isActivityBreadcrumbCaptureEnabled(),
     private val composeClickCapture: Boolean = base.isComposeClickCaptureEnabled(),
     private val viewClickCoordCapture: Boolean = base.isViewClickCoordinateCaptureEnabled(),
@@ -31,7 +30,6 @@ class FakeEnabledFeatureConfig(
     private val endStartupWithAppReady: Boolean = base.isEndStartupWithAppReadyEnabled(),
 ) : EnabledFeatureConfig {
 
-    override fun isUnityAnrCaptureEnabled(): Boolean = unityAnrCapture
     override fun isActivityBreadcrumbCaptureEnabled(): Boolean = activityBreadcrumbCapture
     override fun isComposeClickCaptureEnabled(): Boolean = composeClickCapture
     override fun isViewClickCoordinateCaptureEnabled(): Boolean = viewClickCoordCapture

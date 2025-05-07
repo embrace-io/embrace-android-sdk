@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.arch.destination
 
+import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.assertions.findAttributeValue
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeClock.Companion.DEFAULT_FAKE_CURRENT_TIME
@@ -16,8 +17,8 @@ import io.embrace.android.embracesdk.internal.otel.attrs.embState
 import io.embrace.android.embracesdk.internal.otel.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.otel.sdk.getAttribute
 import io.embrace.android.embracesdk.internal.otel.sdk.hasEmbraceAttribute
+import io.embrace.android.embracesdk.internal.otel.sdk.toOtelSeverity
 import io.embrace.android.embracesdk.internal.session.id.SessionData
-import io.opentelemetry.api.logs.Severity
 import io.opentelemetry.semconv.incubating.LogIncubatingAttributes
 import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes
 import org.junit.Assert.assertEquals
@@ -64,7 +65,7 @@ internal class LogWriterImplTest {
         )
         with(logger.builders.single()) {
             assertEquals("test", body)
-            assertEquals(Severity.ERROR, severity)
+            assertEquals(Severity.ERROR.toOtelSeverity(), severity)
             assertEquals(Severity.ERROR.name, severity.name)
             assertEquals("fake-session-id", attributes.getAttribute(SessionIncubatingAttributes.SESSION_ID))
             assertNotNull(attributes.getAttribute(embState))

@@ -21,16 +21,8 @@ class FakeJniDelegate : JniDelegate {
         signalHandlerInstalled = true
     }
 
-    override fun updateMetaData(metadata: String?) {
-        // do nothing
-    }
-
     override fun onSessionChange(sessionId: String, reportPath: String) {
         this.reportPath = reportPath
-    }
-
-    override fun updateAppState(appState: String?) {
-        // do nothing
     }
 
     fun addCrashRaw(path: String, raw: String?) {

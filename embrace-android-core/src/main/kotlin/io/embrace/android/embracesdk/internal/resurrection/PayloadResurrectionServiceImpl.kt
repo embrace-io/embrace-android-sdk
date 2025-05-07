@@ -10,15 +10,14 @@ import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageSer
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.ndk.NativeCrashService
-import io.embrace.android.embracesdk.internal.otel.attrs.asOtelAttributeKey
 import io.embrace.android.embracesdk.internal.otel.attrs.embCrashId
 import io.embrace.android.embracesdk.internal.otel.attrs.embHeartbeatTimeUnixNano
 import io.embrace.android.embracesdk.internal.otel.attrs.embProcessIdentifier
 import io.embrace.android.embracesdk.internal.otel.attrs.embState
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
-import io.embrace.android.embracesdk.internal.otel.sdk.hasEmbraceAttribute
-import io.embrace.android.embracesdk.internal.otel.sdk.toFailedSpan
+import io.embrace.android.embracesdk.internal.otel.spans.hasEmbraceAttribute
+import io.embrace.android.embracesdk.internal.otel.spans.toFailedSpan
 import io.embrace.android.embracesdk.internal.payload.ApplicationState
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Envelope
@@ -127,7 +126,7 @@ internal class PayloadResurrectionServiceImpl(
                         nativeCrash = nativeCrash,
                         sessionProperties = emptyMap(),
                         metadata = mapOf(
-                            embState.asOtelAttributeKey() to ApplicationState.BACKGROUND.name.lowercase(Locale.ENGLISH)
+                            embState.name to ApplicationState.BACKGROUND.name.lowercase(Locale.ENGLISH)
                         ),
                     )
                 }
@@ -181,8 +180,8 @@ internal class PayloadResurrectionServiceImpl(
                             sessionProperties = deadSession.getSessionProperties(),
                             metadata = if (appState != null) {
                                 mapOf(
-                                    embState.asOtelAttributeKey() to appState,
-                                    embProcessIdentifier.asOtelAttributeKey() to processId
+                                    embState.name to appState,
+                                    embProcessIdentifier.name to processId
                                 )
                             } else {
                                 emptyMap()

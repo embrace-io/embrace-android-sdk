@@ -7,7 +7,6 @@ import io.embrace.android.gradle.plugin.instrumentation.config.model.VariantConf
 fun createEnabledFeatureConfigInstrumentation(cfg: VariantConfig) = modelSdkConfigClass {
     boolMethod("isNativeCrashCaptureEnabled") { cfg.embraceConfig?.ndkEnabled }
     with(cfg.embraceConfig?.sdkConfig ?: return@modelSdkConfigClass) {
-        boolMethod("isUnityAnrCaptureEnabled") { anr?.captureUnityThread }
         boolMethod("isActivityBreadcrumbCaptureEnabled") { viewConfig?.enableAutomaticActivityCapture }
         boolMethod("isComposeClickCaptureEnabled") { composeConfig?.captureComposeOnClick }
         boolMethod("isViewClickCoordinateCaptureEnabled") { taps?.captureCoordinates }

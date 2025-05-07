@@ -8,7 +8,6 @@ import io.embrace.android.embracesdk.internal.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
-import io.embrace.android.embracesdk.internal.otel.sdk.toOtelSeverity
 
 /**
  * Tracks internal errors & sends them as OTel logs.
@@ -26,7 +25,7 @@ internal class InternalErrorDataSourceImpl(
     override fun trackInternalError(type: InternalErrorType, throwable: Throwable) {
         captureData(NoInputValidation) {
             val schemaType = SchemaType.InternalError(throwable)
-            addLog(schemaType, Severity.ERROR.toOtelSeverity(), "", true)
+            addLog(schemaType, Severity.ERROR, "", true)
         }
     }
 }

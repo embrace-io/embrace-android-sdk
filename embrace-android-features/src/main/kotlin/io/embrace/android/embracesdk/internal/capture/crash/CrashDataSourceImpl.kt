@@ -13,7 +13,6 @@ import io.embrace.android.embracesdk.internal.otel.attrs.embAndroidThreads
 import io.embrace.android.embracesdk.internal.otel.attrs.embCrashNumber
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType.System.ReactNativeCrash.embAndroidReactNativeCrashJsException
-import io.embrace.android.embracesdk.internal.otel.sdk.toOtelSeverity
 import io.embrace.android.embracesdk.internal.payload.JsException
 import io.embrace.android.embracesdk.internal.payload.LegacyExceptionInfo
 import io.embrace.android.embracesdk.internal.payload.ThreadInfo
@@ -71,19 +70,19 @@ internal class CrashDataSourceImpl(
             )
 
             val crashException = LegacyExceptionInfo.ofThrowable(exception)
-            crashAttributes.setAttribute(ExceptionAttributes.EXCEPTION_TYPE, crashException.name)
+            crashAttributes.setAttribute(ExceptionAttributes.EXCEPTION_TYPE.key, crashException.name)
             crashAttributes.setAttribute(
-                ExceptionAttributes.EXCEPTION_MESSAGE,
+                ExceptionAttributes.EXCEPTION_MESSAGE.key,
                 crashException.message
                     ?: ""
             )
             crashAttributes.setAttribute(
-                ExceptionAttributes.EXCEPTION_STACKTRACE,
+                ExceptionAttributes.EXCEPTION_STACKTRACE.key,
                 encodeToUTF8String(
                     serializer.toJson(crashException.lines, List::class.java),
                 ),
             )
-            crashAttributes.setAttribute(LogIncubatingAttributes.LOG_RECORD_UID, crashId)
+            crashAttributes.setAttribute(LogIncubatingAttributes.LOG_RECORD_UID.key, crashId)
             crashAttributes.setAttribute(embCrashNumber, crashNumber.toString())
             crashAttributes.setAttribute(
                 EmbType.System.Crash.embAndroidCrashExceptionCause,
@@ -107,7 +106,7 @@ internal class CrashDataSourceImpl(
                 )
             }
 
-            logWriter.addLog(getSchemaType(crashAttributes), Severity.ERROR.toOtelSeverity(), "")
+            logWriter.addLog(getSchemaType(crashAttributes), Severity.ERROR, "")
 
             // finally, notify other services that need to perform tear down
             handlers.forEach { it.value?.handleCrash(crashId) }

@@ -16,7 +16,6 @@ import io.embrace.android.embracesdk.internal.capture.session.toSessionPropertyA
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
-import io.embrace.android.embracesdk.internal.otel.attrs.asOtelAttributeKey
 import io.embrace.android.embracesdk.internal.otel.attrs.embCrashNumber
 import io.embrace.android.embracesdk.internal.otel.attrs.embState
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
@@ -92,7 +91,7 @@ internal class NativeCrashDataSourceImplTest {
         nativeCrashDataSource.sendNativeCrash(
             nativeCrash = testNativeCrashData,
             sessionProperties = mapOf("prop" to "value"),
-            metadata = mapOf(embState.asOtelAttributeKey() to "background")
+            metadata = mapOf(embState.name to "background")
         )
 
         with(otelLogger.builders.single()) {

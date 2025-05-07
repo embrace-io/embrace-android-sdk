@@ -1,7 +1,8 @@
 {
   "data": {
     "span_snapshots": "__EMBRACE_TEST_IGNORE__",
-    "spans": "__EMBRACE_TEST_IGNORE__"
+    "spans": "__EMBRACE_TEST_IGNORE__",
+    "shared_lib_symbol_mapping": {}
   },
   "metadata": {
     "email": "user@email.com",

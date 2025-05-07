@@ -10,7 +10,6 @@ import io.embrace.android.embracesdk.internal.FlutterInternalInterface
 import io.embrace.android.embracesdk.internal.InternalInterfaceApi
 import io.embrace.android.embracesdk.internal.ReactNativeInternalInterface
 import io.embrace.android.embracesdk.internal.UnityInternalInterface
-import io.embrace.android.embracesdk.internal.anr.ndk.isUnityMainThread
 import io.embrace.android.embracesdk.internal.api.BreadcrumbApi
 import io.embrace.android.embracesdk.internal.api.InstrumentationApi
 import io.embrace.android.embracesdk.internal.api.InternalWebViewApi
@@ -46,7 +45,6 @@ import io.embrace.android.embracesdk.internal.utils.EmbTrace.end
 import io.embrace.android.embracesdk.internal.utils.EmbTrace.start
 import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.spans.TracingApi
-import io.opentelemetry.api.common.AttributeKey
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -78,7 +76,7 @@ internal class EmbraceImpl @JvmOverloads constructor(
     private val webviewApiDelegate: InternalWebViewApiDelegate =
         InternalWebViewApiDelegate(bootstrapper, sdkCallChecker),
     private val instrumentationApiDelegate: InstrumentationApiDelegate =
-        InstrumentationApiDelegate(bootstrapper, sdkCallChecker)
+        InstrumentationApiDelegate(bootstrapper, sdkCallChecker),
 ) : SdkApi,
     LogsApi by logsApiDelegate,
     NetworkRequestApi by networkRequestApiDelegate,
@@ -116,12 +114,7 @@ internal class EmbraceImpl @JvmOverloads constructor(
     val processStateService by embraceImplInject { bootstrapper.essentialServiceModule.processStateService }
     val activityLifecycleTracker by embraceImplInject { bootstrapper.essentialServiceModule.activityLifecycleTracker }
 
-    private val anrService by embraceImplInject { bootstrapper.anrModule.anrService }
     private val configService by embraceImplInject { bootstrapper.configModule.configService }
-    private val nativeThreadSampler by embraceImplInject { bootstrapper.nativeFeatureModule.nativeThreadSamplerService }
-    private val nativeThreadSamplerInstaller by embraceImplInject {
-        bootstrapper.nativeFeatureModule.nativeThreadSamplerInstaller
-    }
 
     @Suppress("DEPRECATION")
     override fun start(context: Context) = start(context, io.embrace.android.embracesdk.AppFramework.NATIVE)
@@ -275,7 +268,7 @@ internal class EmbraceImpl @JvmOverloads constructor(
         logExceptionType: LogExceptionType = LogExceptionType.NONE,
         exceptionName: String? = null,
         exceptionMessage: String? = null,
-        customLogAttrs: Map<AttributeKey<String>, String> = emptyMap(),
+        customLogAttrs: Map<String, String> = emptyMap(),
     ) {
         logsApiDelegate.logMessageImpl(
             severity = severity,
@@ -343,33 +336,4 @@ internal class EmbraceImpl @JvmOverloads constructor(
         get() {
             return checkNotNull(internalInterfaceModule?.flutterInternalInterface)
         }
-
-    fun installUnityThreadSampler() {
-        if (sdkCallChecker.check("install_unity_thread_sampler")) {
-            sampleCurrentThreadDuringAnrs()
-        }
-    }
-
-    private fun sampleCurrentThreadDuringAnrs() {
-        try {
-            val service = anrService ?: return
-            val installer = nativeThreadSamplerInstaller ?: return
-            val sampler = nativeThreadSampler ?: return
-            val cfgService = configService ?: return
-
-            // install the native thread sampler
-            sampler.setupNativeSampler()
-
-            // In Unity this should always run on the Unity thread.
-            if (isUnityMainThread()) {
-                try {
-                    installer.monitorCurrentThread(sampler, cfgService, service)
-                } catch (t: Throwable) {
-                    logger.trackInternalError(InternalErrorType.NATIVE_THREAD_SAMPLE_FAIL, t)
-                }
-            }
-        } catch (exc: Exception) {
-            logger.trackInternalError(InternalErrorType.NATIVE_THREAD_SAMPLE_FAIL, exc)
-        }
-    }
 }

@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.fakes
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.embrace.android.embracesdk.internal.otel.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
-import io.embrace.android.embracesdk.internal.otel.spans.OtelSpanBuilderWrapper
+import io.embrace.android.embracesdk.internal.otel.spans.OtelSpanCreator
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
@@ -39,15 +39,19 @@ class FakeSpanService : SpanService {
     }
 
     override fun createSpan(
-        otelSpanBuilderWrapper: OtelSpanBuilderWrapper,
-    ): EmbraceSdkSpan = FakeEmbraceSdkSpan(
-        name = otelSpanBuilderWrapper.initialSpanName,
-        parentContext = otelSpanBuilderWrapper.getParentContext(),
-        type = otelSpanBuilderWrapper.embraceAttributes.filterIsInstance<EmbType>().single(),
-        internal = otelSpanBuilderWrapper.internal,
-        private = otelSpanBuilderWrapper.embraceAttributes.contains(PrivateSpan),
-    ).apply {
-        createdSpans.add(this)
+        otelSpanCreator: OtelSpanCreator
+    ): EmbraceSdkSpan {
+        val otelSpanStartArgs = otelSpanCreator.spanStartArgs
+        return FakeEmbraceSdkSpan(
+            name = otelSpanStartArgs.spanName,
+            parentContext = otelSpanStartArgs.parentContext,
+            type = otelSpanStartArgs.embraceAttributes.filterIsInstance<EmbType>().single(),
+            internal = otelSpanStartArgs.internal,
+            private = otelSpanStartArgs.embraceAttributes.contains(PrivateSpan),
+            autoTerminationMode = otelSpanStartArgs.autoTerminationMode,
+        ).apply {
+            createdSpans.add(this)
+        }
     }
 
     override fun <T> recordSpan(

@@ -1,11 +1,6 @@
-package io.embrace.android.embracesdk.internal.spans
+package io.embrace.android.embracesdk.internal.otel.spans
 
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
-import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
-import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanFactory
-import io.embrace.android.embracesdk.internal.otel.spans.OtelSpanCreator
-import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
-import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
@@ -17,9 +12,10 @@ import io.embrace.android.embracesdk.spans.ErrorCode
  * the SDK has not been started ([UninitializedSdkSpanService]. When [initializeService] is called during SDK startup, it will
  * instantiate and initialize [SpanServiceImpl] to provide the span recording functionality.
  */
-internal class EmbraceSpanService(
+class EmbraceSpanService(
     private val spanRepository: SpanRepository,
-    private val currentSessionSpan: CurrentSessionSpan,
+    private val canStartNewSpan: (parentSpan: EmbraceSpan?, internal: Boolean) -> Boolean,
+    private val initCallback: (initTimeMs: Long) -> Unit,
     private val embraceSpanFactorySupplier: Provider<EmbraceSpanFactory>,
 ) : SpanService {
     private val uninitializedSdkSpansService: UninitializedSdkSpanService = UninitializedSdkSpanService()
@@ -34,7 +30,8 @@ internal class EmbraceSpanService(
                     val realSpansService = SpanServiceImpl(
                         spanRepository = spanRepository,
                         embraceSpanFactory = embraceSpanFactorySupplier(),
-                        currentSessionSpan = currentSessionSpan,
+                        canStartNewSpan = canStartNewSpan,
+                        initCallback = initCallback
                     )
                     realSpansService.initializeService(sdkInitStartTimeMs)
                     if (realSpansService.initialized()) {

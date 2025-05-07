@@ -71,9 +71,9 @@ internal class CurrentSessionSpanImpl(
 
         // If a span can be created, always let internal spans be to be created
         return if (internal) {
-            checkTraceCount(internalTraceCount, SpanServiceImpl.MAX_INTERNAL_SPANS_PER_SESSION)
+            checkTraceCount(internalTraceCount, MAX_INTERNAL_SPANS_PER_SESSION)
         } else {
-            checkTraceCount(traceCount, SpanServiceImpl.MAX_NON_INTERNAL_SPANS_PER_SESSION)
+            checkTraceCount(traceCount, MAX_NON_INTERNAL_SPANS_PER_SESSION)
         }
     }
 
@@ -187,4 +187,9 @@ internal class CurrentSessionSpanImpl(
     }
 
     private fun sessionSpanReady() = sessionSpan.get()?.isRecording ?: false
+
+    companion object {
+        const val MAX_INTERNAL_SPANS_PER_SESSION: Int = 5000
+        const val MAX_NON_INTERNAL_SPANS_PER_SESSION: Int = 500
+    }
 }

@@ -12,13 +12,13 @@ import io.embrace.android.embracesdk.internal.otel.logs.LogSinkImpl
 import io.embrace.android.embracesdk.internal.otel.sdk.OtelSdkWrapper
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanFactory
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanFactoryImpl
+import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanService
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
 import io.embrace.android.embracesdk.internal.otel.spans.SpanSinkImpl
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpanImpl
-import io.embrace.android.embracesdk.internal.spans.EmbraceSpanService
 import io.embrace.android.embracesdk.internal.spans.EmbraceTracer
 import io.embrace.android.embracesdk.internal.spans.InternalTracer
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
@@ -27,11 +27,12 @@ import io.embrace.opentelemetry.kotlin.logging.Logger
 import io.opentelemetry.api.OpenTelemetry
 import io.opentelemetry.api.trace.Tracer
 import io.opentelemetry.api.trace.TracerProvider
+import io.opentelemetry.sdk.common.Clock
 
 @OptIn(ExperimentalApi::class)
 internal class OpenTelemetryModuleImpl(
     private val initModule: InitModule,
-    override val openTelemetryClock: io.opentelemetry.sdk.common.Clock = EmbClock(
+    override val openTelemetryClock: Clock = EmbClock(
         embraceClock = initModule.clock
     ),
 ) : OpenTelemetryModule {
@@ -113,7 +114,8 @@ internal class OpenTelemetryModuleImpl(
     override val spanService: SpanService by singleton {
         EmbraceSpanService(
             spanRepository = spanRepository,
-            currentSessionSpan = currentSessionSpan,
+            canStartNewSpan = currentSessionSpan::canStartNewSpan,
+            initCallback = currentSessionSpan::initializeService,
         ) { embraceSpanFactory }
     }
 

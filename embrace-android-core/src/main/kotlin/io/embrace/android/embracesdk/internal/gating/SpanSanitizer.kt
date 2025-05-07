@@ -3,10 +3,11 @@ package io.embrace.android.embracesdk.internal.gating
 import io.embrace.android.embracesdk.internal.gating.SessionGatingKeys.BREADCRUMBS_CUSTOM
 import io.embrace.android.embracesdk.internal.gating.SessionGatingKeys.BREADCRUMBS_TAPS
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
+import io.embrace.android.embracesdk.internal.otel.sdk.hasEmbraceAttribute
+import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
 import io.embrace.android.embracesdk.internal.otel.spans.hasEmbraceAttribute
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
-import io.opentelemetry.api.trace.SpanId
 
 internal class SpanSanitizer(
     private val spans: List<Span>?,
@@ -28,7 +29,7 @@ internal class SpanSanitizer(
         val sanitizedSessionSpan = Span(
             sessionSpan.traceId,
             sessionSpan.spanId,
-            sessionSpan.parentSpanId ?: SpanId.getInvalid(),
+            sessionSpan.parentSpanId ?: OtelIds.invalidSpanId,
             sessionSpan.name,
             sessionSpan.startTimeNanos,
             sessionSpan.endTimeNanos,

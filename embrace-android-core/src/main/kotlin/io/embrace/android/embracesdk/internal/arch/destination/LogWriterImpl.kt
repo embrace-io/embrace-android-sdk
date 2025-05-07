@@ -27,7 +27,7 @@ class LogWriterImpl(
 
     override fun addLog(
         schemaType: SchemaType,
-        severity: Severity,
+        severity: io.embrace.android.embracesdk.Severity,
         message: String,
         isPrivate: Boolean,
         addCurrentSessionInfo: Boolean,

@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.internal.payload
 
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
-import io.embrace.android.embracesdk.internal.otel.spans.findAttributeValue
-import io.embrace.android.embracesdk.internal.otel.spans.getSessionProperties
+import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
+import io.embrace.android.embracesdk.internal.otel.sdk.hasEmbraceAttribute
 import io.embrace.android.embracesdk.internal.otel.spans.hasEmbraceAttribute
 import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes
 
@@ -18,3 +18,7 @@ fun Envelope<SessionPayload>.getSessionId(): String? {
 fun Envelope<SessionPayload>.getSessionProperties(): Map<String, String> {
     return getSessionSpan()?.getSessionProperties() ?: emptyMap()
 }
+
+@Suppress("UNCHECKED_CAST")
+private fun Span.getSessionProperties(): Map<String, String> =
+    attributes?.filter { it.key != null && it.data != null }?.associate { it.key to it.data } as Map<String, String>

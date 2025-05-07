@@ -10,8 +10,6 @@ import io.embrace.android.embracesdk.fakes.injection.FakeAndroidServicesModule
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeNativeCoreModule
-import io.embrace.android.embracesdk.fakes.injection.FakePayloadSourceModule
-import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Before
@@ -37,9 +35,6 @@ internal class NativeFeatureModuleImplTest {
 
     @Test
     fun testDefaultImplementations() {
-        assertNull(module.nativeThreadSamplerService)
-        assertNull(module.nativeThreadSamplerInstaller)
-        assertNotNull(module.nativeAnrOtelMapper)
         assertNull(module.nativeCrashService)
     }
 
@@ -101,10 +96,7 @@ internal class NativeFeatureModuleImplTest {
         )
 
         module = createNativeFeatureModule(fakeConfigModule)
-
         assertNotNull(module.nativeCrashService)
-        assertNotNull(module.nativeThreadSamplerService)
-        assertNotNull(module.nativeThreadSamplerInstaller)
     }
 
     private fun createNativeFeatureModule(fakeConfigModule: FakeConfigModule): NativeFeatureModuleImpl {
@@ -113,9 +105,7 @@ internal class NativeFeatureModuleImplTest {
             initModule,
             fakeEssentialServiceModule,
             fakeConfigModule,
-            FakePayloadSourceModule(),
             FakeAndroidServicesModule(),
-            FakeWorkerThreadModule(),
             FakeNativeCoreModule()
         )
     }

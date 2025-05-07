@@ -310,7 +310,7 @@ internal class ModuleInitBootstrapper(
                             androidServicesModule,
                             essentialServiceModule,
                             configModule,
-                            { nativeFeatureModule.nativeThreadSamplerService?.getNativeSymbols() },
+                            { nativeCoreModule.symbolService.symbolsForCurrentArch },
                             openTelemetryModule,
                             { OtelPayloadMapperImpl(anrModule.anrOtelMapper) },
                             deliveryModule
@@ -341,18 +341,13 @@ internal class ModuleInitBootstrapper(
                             initModule,
                             essentialServiceModule,
                             configModule,
-                            payloadSourceModule,
                             androidServicesModule,
-                            workerThreadModule,
                             nativeCoreModule
                         )
                     }
 
                     postInit(NativeFeatureModule::class) {
                         nativeCoreModule.sharedObjectLoader.loadEmbraceNative()
-                        serviceRegistry.registerServices(
-                            lazy { nativeFeatureModule.nativeThreadSamplerService }
-                        )
                         nativeCoreModule.nativeCrashHandlerInstaller?.install()
                     }
 

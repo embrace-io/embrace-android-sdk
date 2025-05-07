@@ -228,8 +228,8 @@ class UiLoadTraceEmitter(
                 name = name,
                 startTimeMs = startTimeMs,
                 endTimeMs = endTimeMs,
-                internal = false,
                 parent = root,
+                internal = false,
                 attributes = attributes,
                 events = events,
                 errorCode = errorCode
@@ -252,8 +252,8 @@ class UiLoadTraceEmitter(
 
             spanService.startSpan(
                 name = traceName(activityName, uiLoadType),
-                type = EmbType.Performance.UiLoad,
                 startTimeMs = timestampMs,
+                type = EmbType.Performance.UiLoad,
             )?.let { root ->
                 activeTraces[instanceId] = UiLoadTrace(
                     root = root,

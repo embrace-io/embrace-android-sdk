@@ -3,9 +3,9 @@ package io.embrace.android.embracesdk.internal.otel.sdk
 import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.OtelLimitsConfig
 import io.embrace.android.embracesdk.internal.otel.config.OtelSdkConfig
-import io.embrace.android.embracesdk.internal.otel.spans.getMaxTotalAttributeCount
-import io.embrace.android.embracesdk.internal.otel.spans.getMaxTotalEventCount
-import io.embrace.android.embracesdk.internal.otel.spans.getMaxTotalLinkCount
+import io.embrace.android.embracesdk.internal.otel.config.getMaxTotalAttributeCount
+import io.embrace.android.embracesdk.internal.otel.config.getMaxTotalEventCount
+import io.embrace.android.embracesdk.internal.otel.config.getMaxTotalLinkCount
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.OpenTelemetry

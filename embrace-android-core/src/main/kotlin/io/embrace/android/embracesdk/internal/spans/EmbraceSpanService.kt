@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.spans
 
-import io.embrace.android.embracesdk.internal.otel.schema.TelemetryType
+import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanFactory
 import io.embrace.android.embracesdk.internal.otel.spans.OtelSpanBuilderWrapper
@@ -50,19 +50,19 @@ internal class EmbraceSpanService(
 
     override fun createSpan(
         name: String,
-        autoTerminationMode: AutoTerminationMode,
         parent: EmbraceSpan?,
-        type: TelemetryType,
+        type: EmbType,
         internal: Boolean,
         private: Boolean,
+        autoTerminationMode: AutoTerminationMode,
     ): EmbraceSdkSpan? =
         currentDelegate.createSpan(
             name = name,
-            autoTerminationMode = autoTerminationMode,
             parent = parent,
             type = type,
             internal = internal,
-            private = private
+            private = private,
+            autoTerminationMode = autoTerminationMode
         )
 
     override fun createSpan(otelSpanBuilderWrapper: OtelSpanBuilderWrapper): EmbraceSdkSpan? =
@@ -72,23 +72,23 @@ internal class EmbraceSpanService(
 
     override fun <T> recordSpan(
         name: String,
-        autoTerminationMode: AutoTerminationMode,
         parent: EmbraceSpan?,
-        type: TelemetryType,
+        type: EmbType,
         internal: Boolean,
         private: Boolean,
         attributes: Map<String, String>,
         events: List<EmbraceSpanEvent>,
+        autoTerminationMode: AutoTerminationMode,
         code: () -> T,
     ): T = currentDelegate.recordSpan(
         name = name,
-        autoTerminationMode = autoTerminationMode,
         parent = parent,
         type = type,
         internal = internal,
         private = private,
         attributes = attributes,
         events = events,
+        autoTerminationMode = autoTerminationMode,
         code = code
     )
 
@@ -96,9 +96,8 @@ internal class EmbraceSpanService(
         name: String,
         startTimeMs: Long,
         endTimeMs: Long,
-        autoTerminationMode: AutoTerminationMode,
         parent: EmbraceSpan?,
-        type: TelemetryType,
+        type: EmbType,
         internal: Boolean,
         private: Boolean,
         attributes: Map<String, String>,
@@ -108,7 +107,6 @@ internal class EmbraceSpanService(
         name = name,
         startTimeMs = startTimeMs,
         endTimeMs = endTimeMs,
-        autoTerminationMode = autoTerminationMode,
         parent = parent,
         type = type,
         internal = internal,

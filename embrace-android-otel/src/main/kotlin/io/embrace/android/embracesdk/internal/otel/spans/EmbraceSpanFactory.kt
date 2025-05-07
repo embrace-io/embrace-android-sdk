@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.otel.spans
 
-import io.embrace.android.embracesdk.internal.otel.schema.TelemetryType
+import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 
@@ -11,14 +11,15 @@ import io.embrace.android.embracesdk.spans.EmbraceSpan
 interface EmbraceSpanFactory {
     fun create(
         name: String,
-        type: TelemetryType,
+        type: EmbType,
         internal: Boolean,
         private: Boolean,
-        autoTerminationMode: AutoTerminationMode = AutoTerminationMode.NONE,
         parent: EmbraceSpan? = null,
+        autoTerminationMode: AutoTerminationMode = AutoTerminationMode.NONE
     ): EmbraceSdkSpan
 
-    fun create(otelSpanBuilderWrapper: OtelSpanBuilderWrapper): EmbraceSdkSpan
-
-    fun setRedactionFunction(redactionFunction: (key: String, value: String) -> String)
+    fun create(
+        otelSpanBuilderWrapper: OtelSpanBuilderWrapper,
+        autoTerminationMode: AutoTerminationMode = AutoTerminationMode.NONE
+    ): EmbraceSdkSpan
 }

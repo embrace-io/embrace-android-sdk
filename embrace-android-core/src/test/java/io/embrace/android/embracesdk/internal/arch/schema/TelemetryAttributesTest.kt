@@ -54,7 +54,8 @@ internal class TelemetryAttributesTest {
             sessionPropertiesProvider = sessionPropertiesService::getProperties,
             customAttributes = customAttributes
         )
-        telemetryAttributes.setAttribute(SessionIncubatingAttributes.SESSION_ID.key, sessionId)
+        val sessionIdKey = SessionIncubatingAttributes.SESSION_ID.key
+        telemetryAttributes.setAttribute(sessionIdKey, sessionId)
         sessionPropertiesService.addProperty("perm", "permVal", true)
         sessionPropertiesService.addProperty("temp", "tempVal", false)
 
@@ -62,7 +63,7 @@ internal class TelemetryAttributesTest {
         assertEquals("attributeValue", attributes["custom"])
         assertEquals("permVal", attributes.getSessionProperty("perm"))
         assertEquals("tempVal", attributes.getSessionProperty("temp"))
-        assertEquals(sessionId, attributes[SessionIncubatingAttributes.SESSION_ID.key])
+        assertEquals(sessionId, attributes[sessionIdKey])
         sessionPropertiesService.addProperty("temp", "newVal", false)
         assertEquals("newVal", telemetryAttributes.snapshot().getSessionProperty("temp"))
     }
@@ -74,8 +75,9 @@ internal class TelemetryAttributesTest {
             configService = configService,
             sessionPropertiesProvider = sessionPropertiesService::getProperties,
         )
-        telemetryAttributes.setAttribute(SessionIncubatingAttributes.SESSION_ID.key, sessionId)
-        telemetryAttributes.setAttribute(SessionIncubatingAttributes.SESSION_ID.key, newSessionId)
+        val sessionIdKey = SessionIncubatingAttributes.SESSION_ID.key
+        telemetryAttributes.setAttribute(sessionIdKey, sessionId)
+        telemetryAttributes.setAttribute(sessionIdKey, newSessionId)
         sessionPropertiesService.addProperty("perm", "permVal", true)
         sessionPropertiesService.addProperty("temp", "tempVal", false)
         sessionPropertiesService.addProperty("perm", "newPermVal", true)
@@ -85,7 +87,7 @@ internal class TelemetryAttributesTest {
         assertEquals(3, attributes.size)
         assertEquals("newPermVal", attributes.getSessionProperty("perm"))
         assertEquals("newTempVal", attributes.getSessionProperty("temp"))
-        assertEquals(newSessionId, attributes[SessionIncubatingAttributes.SESSION_ID.key])
+        assertEquals(newSessionId, attributes[sessionIdKey])
     }
 
     @Test
@@ -161,16 +163,17 @@ internal class TelemetryAttributesTest {
         val blankishValues = listOf("", " ", "null", "NULL")
 
         // Give me Union types, plz
+        val sessionIdKey = SessionIncubatingAttributes.SESSION_ID.key
         blankishValues.forEach { value ->
-            telemetryAttributes.setAttribute(SessionIncubatingAttributes.SESSION_ID.key, value, true)
-            assertEquals(value, telemetryAttributes.getAttribute(SessionIncubatingAttributes.SESSION_ID.key))
+            telemetryAttributes.setAttribute(sessionIdKey, value, true)
+            assertEquals(value, telemetryAttributes.getAttribute(sessionIdKey))
         }
 
-        telemetryAttributes.setAttribute(SessionIncubatingAttributes.SESSION_ID.key, "test")
+        telemetryAttributes.setAttribute(sessionIdKey, "test")
 
         blankishValues.forEach { value ->
-            telemetryAttributes.setAttribute(SessionIncubatingAttributes.SESSION_ID.key, value, false)
-            assertEquals("test", telemetryAttributes.getAttribute(SessionIncubatingAttributes.SESSION_ID.key))
+            telemetryAttributes.setAttribute(sessionIdKey, value, false)
+            assertEquals("test", telemetryAttributes.getAttribute(sessionIdKey))
         }
 
         blankishValues.forEach { value ->

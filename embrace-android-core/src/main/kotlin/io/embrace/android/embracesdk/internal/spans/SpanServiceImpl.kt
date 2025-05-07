@@ -6,12 +6,13 @@ import io.embrace.android.embracesdk.internal.config.instrumented.schema.OtelLim
 import io.embrace.android.embracesdk.internal.otel.config.isAttributeCountValid
 import io.embrace.android.embracesdk.internal.otel.config.isEventCountValid
 import io.embrace.android.embracesdk.internal.otel.config.isNameValid
-import io.embrace.android.embracesdk.internal.otel.schema.TelemetryType
+import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanFactory
 import io.embrace.android.embracesdk.internal.otel.spans.OtelSpanBuilderWrapper
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
+import io.embrace.android.embracesdk.internal.otel.spans.getEmbraceSpan
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
@@ -41,11 +42,11 @@ internal class SpanServiceImpl(
 
     override fun createSpan(
         name: String,
-        autoTerminationMode: AutoTerminationMode,
         parent: EmbraceSpan?,
-        type: TelemetryType,
+        type: EmbType,
         internal: Boolean,
         private: Boolean,
+        autoTerminationMode: AutoTerminationMode,
     ): EmbraceSdkSpan? {
         EmbTrace.trace("span-create") {
             return if (limits.isNameValid(name, internal) && currentSessionSpan.canStartNewSpan(parent, internal)) {
@@ -66,8 +67,11 @@ internal class SpanServiceImpl(
     override fun createSpan(otelSpanBuilderWrapper: OtelSpanBuilderWrapper): EmbraceSdkSpan? {
         EmbTrace.trace("span-create") {
             return if (
-                limits.isNameValid(otelSpanBuilderWrapper.spanName, otelSpanBuilderWrapper.internal) &&
-                currentSessionSpan.canStartNewSpan(otelSpanBuilderWrapper.getParentSpan(), otelSpanBuilderWrapper.internal)
+                limits.isNameValid(otelSpanBuilderWrapper.initialSpanName, otelSpanBuilderWrapper.internal) &&
+                currentSessionSpan.canStartNewSpan(
+                    otelSpanBuilderWrapper.getParentContext().getEmbraceSpan(),
+                    otelSpanBuilderWrapper.internal
+                )
             ) {
                 embraceSpanFactory.create(otelSpanBuilderWrapper)
             } else {
@@ -78,23 +82,23 @@ internal class SpanServiceImpl(
 
     override fun <T> recordSpan(
         name: String,
-        autoTerminationMode: AutoTerminationMode,
         parent: EmbraceSpan?,
-        type: TelemetryType,
+        type: EmbType,
         internal: Boolean,
         private: Boolean,
         attributes: Map<String, String>,
         events: List<EmbraceSpanEvent>,
+        autoTerminationMode: AutoTerminationMode,
         code: () -> T,
     ): T {
         val returnValue: T
         val span = createSpan(
             name = name,
-            autoTerminationMode = autoTerminationMode,
             parent = parent,
             type = type,
             internal = internal,
-            private = private
+            private = private,
+            autoTerminationMode = autoTerminationMode
         )
         try {
             val started = span?.start() ?: false
@@ -124,9 +128,8 @@ internal class SpanServiceImpl(
         name: String,
         startTimeMs: Long,
         endTimeMs: Long,
-        autoTerminationMode: AutoTerminationMode,
         parent: EmbraceSpan?,
-        type: TelemetryType,
+        type: EmbType,
         internal: Boolean,
         private: Boolean,
         attributes: Map<String, String>,
@@ -145,7 +148,6 @@ internal class SpanServiceImpl(
                     internal = internal,
                     private = private,
                     parent = parent,
-                    autoTerminationMode = autoTerminationMode,
                 )
                 if (newSpan.start(startTimeMs)) {
                     attributes.forEach {

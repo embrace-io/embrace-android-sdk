@@ -11,7 +11,6 @@
 #include "../utils/utilities.h"
 #include "inttypes.h"
 #include "../safejni/jni_util.h"
-#include "../sampler/stacktrace_sampler.h"
 #include "../utils/emb_log.h"
 #include "../safejni/safe_jni.h"
 
@@ -81,13 +80,6 @@ Java_io_embrace_android_embracesdk_internal_ndk_jni_JniDelegateImpl_installSigna
 }
 
 JNIEXPORT void JNICALL
-Java_io_embrace_android_embracesdk_internal_ndk_jni_JniDelegateImpl_updateMetaData(JNIEnv *env,
-                                                                               jobject thiz,
-                                                                               jstring _device_meta_data) {
-    // do nothing
-}
-
-JNIEXPORT void JNICALL
 Java_io_embrace_android_embracesdk_internal_ndk_jni_JniDelegateImpl_onSessionChange(JNIEnv *env,
                                                                                    jobject thiz,
                                                                                    jstring _session_id,
@@ -96,13 +88,6 @@ Java_io_embrace_android_embracesdk_internal_ndk_jni_JniDelegateImpl_onSessionCha
     snprintf(__emb_env->crash.session_id, EMB_SESSION_ID_SIZE, "%s", session_id);
     const char *report_path = (*env)->GetStringUTFChars(env, _report_path, 0);
     snprintf(__emb_env->report_path, EMB_PATH_SIZE, "%s", report_path);
-}
-
-JNIEXPORT void JNICALL
-Java_io_embrace_android_embracesdk_internal_ndk_jni_JniDelegateImpl_updateAppState(JNIEnv *env,
-                                                                               jobject thiz,
-                                                                               jstring _app_state) {
-    // do nothing
 }
 
 JNIEXPORT jstring JNICALL
@@ -157,31 +142,6 @@ Java_io_embrace_android_embracesdk_internal_ndk_jni_JniDelegateImpl_getCrashRepo
     emb_jni_release_string_utf_chars(env, _report_path, crash_path);
 
     return payload_str;
-}
-
-JNIEXPORT jboolean JNICALL
-Java_io_embrace_android_embracesdk_internal_anr_ndk_NativeThreadSamplerNdkDelegate_setupNativeThreadSampler(
-        JNIEnv *env,
-        jobject thiz,
-        jboolean is32bit) {
-    return emb_setup_native_thread_sampler(__emb_env, is32bit);
-}
-
-JNIEXPORT jboolean JNICALL
-Java_io_embrace_android_embracesdk_internal_anr_ndk_NativeThreadSamplerNdkDelegate_monitorCurrentThread(
-        JNIEnv *env,
-        jobject thiz) {
-    return emb_monitor_current_thread();
-}
-
-JNIEXPORT void JNICALL
-Java_io_embrace_android_embracesdk_internal_anr_ndk_NativeThreadSamplerNdkDelegate_startSampling(
-        JNIEnv *env,
-        jobject thiz,
-        jint unwinder,
-        jlong interval_ms) {
-    emb_set_unwinder(unwinder);
-    emb_start_thread_sampler((long) interval_ms);
 }
 
 JNIEXPORT jstring JNICALL

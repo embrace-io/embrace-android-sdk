@@ -7,10 +7,9 @@ import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.embrace.android.embracesdk.internal.otel.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.otel.schema.ErrorCodeAttribute.Failure.fromErrorCode
 import io.embrace.android.embracesdk.internal.otel.schema.PrivateSpan
-import io.embrace.android.embracesdk.internal.otel.schema.TelemetryType
+import io.embrace.android.embracesdk.internal.otel.sdk.hasEmbraceAttribute
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanData
-import io.embrace.android.embracesdk.internal.otel.spans.hasEmbraceAttribute
-import io.embrace.android.embracesdk.internal.otel.spans.toStatus
+import io.embrace.android.embracesdk.internal.otel.toEmbracePayload
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.spans.ErrorCode
@@ -29,7 +28,7 @@ fun EmbraceSpanData.assertIsTypePerformance(): Unit = assertIsType(EmbType.Perfo
 /**
  * Assert [EmbraceSpanData] is of type [telemetryType]
  */
-fun EmbraceSpanData.assertIsType(telemetryType: TelemetryType): Unit = assertHasEmbraceAttribute(telemetryType)
+fun EmbraceSpanData.assertIsType(telemetryType: EmbType): Unit = assertHasEmbraceAttribute(telemetryType)
 
 fun EmbraceSpanData.assertIsPrivateSpan(): Unit = assertHasEmbraceAttribute(PrivateSpan)
 
@@ -50,7 +49,7 @@ fun EmbraceSpanData.assertDoesNotHaveEmbraceAttribute(embraceAttribute: EmbraceA
  * Assert [EmbraceSpanData] has ended with the error defined by [errorCode]
  */
 fun EmbraceSpanData.assertError(errorCode: ErrorCode) {
-    assertEquals(StatusCode.Error(null).toStatus(), status.toStatus())
+    assertEquals(StatusCode.Error(null).toEmbracePayload(), status.toEmbracePayload())
     assertHasEmbraceAttribute(errorCode.fromErrorCode())
 }
 
@@ -64,7 +63,7 @@ fun EmbraceSpanData.assertSuccessful() {
 
 fun Span.assertIsTypePerformance(): Unit = assertIsType(EmbType.Performance.Default)
 
-fun Span.assertIsType(telemetryType: TelemetryType): Unit = assertHasEmbraceAttribute(telemetryType)
+fun Span.assertIsType(telemetryType: EmbType): Unit = assertHasEmbraceAttribute(telemetryType)
 
 fun Span.assertIsPrivateSpan(): Unit = assertHasEmbraceAttribute(PrivateSpan)
 
@@ -97,12 +96,12 @@ fun Span.assertSuccessful() {
  * Assert [SpanEventData] is of type [telemetryType]
  */
 fun SpanEventData.assertIsType(
-    telemetryType: TelemetryType,
+    telemetryType: EmbType,
 ): Unit = assertEquals(telemetryType, schemaType.telemetryType)
 
 /**
  * Assert [LogEventData] is of type [telemetryType]
  */
 fun LogEventData.assertIsType(
-    telemetryType: TelemetryType,
+    telemetryType: EmbType,
 ): Unit = assertEquals(telemetryType, schemaType.telemetryType)

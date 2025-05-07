@@ -13,11 +13,10 @@ import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.embrace.android.embracesdk.internal.otel.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.otel.schema.ErrorCodeAttribute.Failure.fromErrorCode
-import io.embrace.android.embracesdk.internal.otel.schema.TelemetryType
+import io.embrace.android.embracesdk.internal.otel.sdk.hasEmbraceAttribute
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.otel.spans.getEmbraceSpan
-import io.embrace.android.embracesdk.internal.otel.spans.hasEmbraceAttribute
-import io.embrace.android.embracesdk.internal.otel.spans.toStatus
+import io.embrace.android.embracesdk.internal.otel.toEmbracePayload
 import io.embrace.android.embracesdk.internal.payload.Link
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.spans.AutoTerminationMode
@@ -34,7 +33,7 @@ import java.util.concurrent.TimeUnit
 class FakeEmbraceSdkSpan(
     var name: String = "fake-span",
     var parentContext: Context = Context.root(),
-    val type: TelemetryType = EmbType.Performance.Default,
+    val type: EmbType = EmbType.Performance.Default,
     val internal: Boolean = false,
     val private: Boolean = internal,
     override val autoTerminationMode: AutoTerminationMode = AutoTerminationMode.NONE,
@@ -122,7 +121,7 @@ class FakeEmbraceSdkSpan(
     }
 
     override fun setStatus(statusCode: StatusCode, description: String) {
-        status = statusCode.toStatus()
+        status = statusCode.toEmbracePayload()
         statusDescription = description
     }
 

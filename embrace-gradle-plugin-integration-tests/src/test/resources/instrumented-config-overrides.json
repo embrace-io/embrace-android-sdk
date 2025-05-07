@@ -93,10 +93,6 @@
           "returnValue": "false"
         },
         {
-          "signature": "isUnityAnrCaptureEnabled()Z",
-          "returnValue": "true"
-        },
-        {
           "signature": "isViewClickCoordinateCaptureEnabled()Z",
           "returnValue": "true"
         },

@@ -5,11 +5,12 @@ import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.otel.schema.AppTerminationCause
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.embrace.android.embracesdk.internal.otel.schema.ErrorCodeAttribute
+import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
+import io.embrace.android.embracesdk.internal.otel.sdk.setEmbraceAttribute
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceLinkData
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.otel.spans.hasEmbraceAttribute
-import io.embrace.android.embracesdk.internal.otel.spans.setEmbraceAttribute
-import io.embrace.android.embracesdk.internal.otel.spans.toStatus
+import io.embrace.android.embracesdk.internal.otel.toEmbracePayload
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Link
 import io.embrace.android.embracesdk.internal.payload.Span
@@ -21,26 +22,26 @@ import io.opentelemetry.api.trace.SpanId
 fun EmbraceSpanData.toEmbracePayload(): Span = Span(
     traceId = traceId,
     spanId = spanId,
-    parentSpanId = parentSpanId ?: SpanId.getInvalid(),
+    parentSpanId = parentSpanId ?: OtelIds.invalidSpanId,
     name = name,
     startTimeNanos = startTimeNanos,
     endTimeNanos = endTimeNanos,
-    status = status.toStatus(),
+    status = status.toEmbracePayload(),
     events = events.map(EmbraceSpanEvent::toEmbracePayload),
     attributes = attributes.toEmbracePayload(),
     links = links,
-)
-
-fun EmbraceSpanEvent.toEmbracePayload(): SpanEvent = SpanEvent(
-    name = name,
-    timestampNanos = timestampNanos,
-    attributes = attributes.toEmbracePayload()
 )
 
 fun SpanEvent.toEmbracePayload(): EmbraceSpanEvent? = EmbraceSpanEvent.create(
     name = name ?: "",
     timestampMs = (timestampNanos ?: 0).nanosToMillis(),
     attributes = attributes?.toEmbracePayload() ?: emptyMap()
+)
+
+fun EmbraceSpanEvent.toEmbracePayload(): SpanEvent = SpanEvent(
+    name = name,
+    timestampNanos = timestampNanos,
+    attributes = attributes.toEmbracePayload()
 )
 
 fun Map<String, String>.toEmbracePayload(): List<Attribute> =

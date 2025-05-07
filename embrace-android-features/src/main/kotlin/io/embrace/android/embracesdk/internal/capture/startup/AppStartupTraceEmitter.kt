@@ -320,9 +320,9 @@ internal class AppStartupTraceEmitter(
             additionalTrackedIntervals.poll()?.let { trackedInterval ->
                 spanService.recordCompletedSpan(
                     name = trackedInterval.name,
-                    parent = startupTrace,
                     startTimeMs = trackedInterval.startTimeMs,
                     endTimeMs = trackedInterval.endTimeMs,
+                    parent = startupTrace,
                     internal = false,
                     attributes = trackedInterval.attributes,
                     events = trackedInterval.events,
@@ -356,9 +356,9 @@ internal class AppStartupTraceEmitter(
                 if (applicationInitEndMs != null) {
                     spanService.recordCompletedSpan(
                         name = PROCESS_INIT_SPAN,
-                        parent = this,
                         startTimeMs = traceStartTimeMs,
                         endTimeMs = applicationInitEndMs,
+                        parent = this,
                     )
                 }
             }
@@ -366,9 +366,9 @@ internal class AppStartupTraceEmitter(
             if (sdkInitStartMs != null && sdkInitEndMs != null) {
                 spanService.recordCompletedSpan(
                     name = EMBRACE_INIT_SPAN,
-                    parent = this,
                     startTimeMs = sdkInitStartMs,
                     endTimeMs = sdkInitEndMs,
+                    parent = this,
                 )
             }
 
@@ -376,18 +376,18 @@ internal class AppStartupTraceEmitter(
             if (lastEventBeforeActivityInit != null && firstActivityInitMs != null) {
                 spanService.recordCompletedSpan(
                     name = ACTIVITY_INIT_DELAY_SPAN,
-                    parent = this,
                     startTimeMs = lastEventBeforeActivityInit,
                     endTimeMs = firstActivityInitMs,
+                    parent = this,
                 )
             }
 
             if (activityInitStartMs != null && activityInitEndMs != null) {
                 spanService.recordCompletedSpan(
                     name = ACTIVITY_INIT_SPAN,
-                    parent = this,
                     startTimeMs = activityInitStartMs,
                     endTimeMs = activityInitEndMs,
+                    parent = this,
                 )
             }
 
@@ -403,18 +403,18 @@ internal class AppStartupTraceEmitter(
                 }
                 spanService.recordCompletedSpan(
                     name = uiLoadSpanName,
-                    parent = this,
                     startTimeMs = activityInitEndMs,
                     endTimeMs = uiLoadedMs,
+                    parent = this,
                 )
             }
 
             if (traceEnd == TraceEnd.READY && uiLoadedMs != null && completed) {
                 spanService.recordCompletedSpan(
                     name = APP_READY_SPAN,
-                    parent = this,
                     startTimeMs = uiLoadedMs,
                     endTimeMs = traceEndTimeMs,
+                    parent = this,
                 )
             }
         }

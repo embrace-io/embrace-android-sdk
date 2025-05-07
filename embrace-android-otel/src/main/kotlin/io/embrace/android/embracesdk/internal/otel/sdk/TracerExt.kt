@@ -1,28 +1,56 @@
 package io.embrace.android.embracesdk.internal.otel.sdk
 
-import io.embrace.android.embracesdk.internal.otel.schema.TelemetryType
+import io.embrace.android.embracesdk.internal.otel.schema.EmbType
+import io.embrace.android.embracesdk.internal.otel.schema.PrivateSpan
+import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.otel.spans.OtelSpanBuilderWrapper
-import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
-import io.opentelemetry.api.trace.SpanBuilder
 import io.opentelemetry.api.trace.Tracer
+import io.opentelemetry.context.Context
 
 /**
- * Creates a new [SpanBuilder] that marks the resulting span as private if [internal] is true
+ * Factory method for the wrapper for the OTel SpanBuilder
  */
 fun Tracer.otelSpanBuilderWrapper(
     name: String,
-    type: TelemetryType,
+    type: EmbType,
     internal: Boolean,
     private: Boolean,
-    autoTerminationMode: AutoTerminationMode = AutoTerminationMode.NONE,
     parent: EmbraceSpan? = null,
-): OtelSpanBuilderWrapper = OtelSpanBuilderWrapper(
-    tracer = this,
-    name = name,
-    telemetryType = type,
-    internal = internal,
-    private = private,
-    autoTerminationMode = autoTerminationMode,
-    parentSpan = parent,
-)
+): OtelSpanBuilderWrapper {
+    val spanName: String = if (internal) {
+        name.toEmbraceObjectName()
+    } else {
+        name
+    }
+
+    // If there is a parent, extract the wrapped OTel span and set it as the parent in the wrapped OTel SpanBuilder
+    val parentContext = if (parent is EmbraceSdkSpan) {
+        val newParentContext = parent.asNewContext() ?: Context.root()
+        newParentContext.with(parent)
+    } else {
+        Context.root()
+    }
+
+    val spanBuilder = spanBuilder(spanName).apply {
+        if (parentContext != null) {
+            setParent(parentContext)
+        } else {
+            setNoParent()
+        }
+    }
+
+    val embraceAttributes = listOf(type) + if (private) {
+        listOf(PrivateSpan)
+    } else {
+        emptyList()
+    }
+
+    return OtelSpanBuilderWrapper(
+        spanBuilder = spanBuilder,
+        parentContext = parentContext,
+        initialSpanName = spanName,
+        internal = internal,
+        embraceAttributes = embraceAttributes
+    )
+}

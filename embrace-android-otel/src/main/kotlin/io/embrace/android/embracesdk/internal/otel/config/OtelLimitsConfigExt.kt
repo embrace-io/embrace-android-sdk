@@ -29,3 +29,9 @@ fun OtelLimitsConfig.isAttributeCountValid(attributes: Map<String, String>, inte
 fun OtelLimitsConfig.isAttributeValid(key: String, value: String, internal: Boolean) =
     ((internal && key.length <= getMaxInternalAttributeKeyLength()) || key.length <= getMaxCustomAttributeKeyLength()) &&
         ((internal && value.length <= getMaxInternalAttributeValueLength()) || value.length <= getMaxCustomAttributeValueLength())
+
+fun OtelLimitsConfig.getMaxTotalAttributeCount() = getMaxSystemAttributeCount() + getMaxCustomAttributeCount()
+
+fun OtelLimitsConfig.getMaxTotalEventCount() = getMaxSystemEventCount() + getMaxCustomEventCount()
+
+fun OtelLimitsConfig.getMaxTotalLinkCount() = getMaxSystemLinkCount() + getMaxCustomLinkCount()

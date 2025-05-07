@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.spans
 
-import io.embrace.android.embracesdk.internal.otel.schema.TelemetryType
+import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.otel.spans.OtelSpanBuilderWrapper
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
@@ -26,24 +26,24 @@ internal class UninitializedSdkSpanService : SpanService {
 
     override fun createSpan(
         name: String,
-        autoTerminationMode: AutoTerminationMode,
         parent: EmbraceSpan?,
-        type: TelemetryType,
+        type: EmbType,
         internal: Boolean,
         private: Boolean,
+        autoTerminationMode: AutoTerminationMode,
     ): EmbraceSdkSpan? = null
 
     override fun createSpan(otelSpanBuilderWrapper: OtelSpanBuilderWrapper): EmbraceSdkSpan? = null
 
     override fun <T> recordSpan(
         name: String,
-        autoTerminationMode: AutoTerminationMode,
         parent: EmbraceSpan?,
-        type: TelemetryType,
+        type: EmbType,
         internal: Boolean,
         private: Boolean,
         attributes: Map<String, String>,
         events: List<EmbraceSpanEvent>,
+        autoTerminationMode: AutoTerminationMode,
         code: () -> T,
     ) = code()
 
@@ -51,9 +51,8 @@ internal class UninitializedSdkSpanService : SpanService {
         name: String,
         startTimeMs: Long,
         endTimeMs: Long,
-        autoTerminationMode: AutoTerminationMode,
         parent: EmbraceSpan?,
-        type: TelemetryType,
+        type: EmbType,
         internal: Boolean,
         private: Boolean,
         attributes: Map<String, String>,
@@ -64,7 +63,6 @@ internal class UninitializedSdkSpanService : SpanService {
             name = name,
             startTimeMs = startTimeMs,
             endTimeMs = endTimeMs,
-            autoTerminationMode = autoTerminationMode,
             parent = parent,
             type = type,
             internal = internal,
@@ -81,7 +79,6 @@ internal class UninitializedSdkSpanService : SpanService {
                         name = name,
                         startTimeMs = startTimeMs,
                         endTimeMs = endTimeMs,
-                        autoTerminationMode = autoTerminationMode,
                         parent = parent,
                         type = type,
                         internal = internal,
@@ -112,7 +109,6 @@ internal class UninitializedSdkSpanService : SpanService {
                         name = it.name,
                         startTimeMs = it.startTimeMs,
                         endTimeMs = it.endTimeMs,
-                        autoTerminationMode = it.autoTerminationMode,
                         parent = it.parent,
                         type = it.type,
                         internal = it.internal,
@@ -133,13 +129,12 @@ internal class UninitializedSdkSpanService : SpanService {
     /**
      * Represents a call to [SpanService.recordCompletedSpan] that can be saved and replayed later when the SDK is initialized.
      */
-    data class BufferedRecordCompletedSpan(
+    private data class BufferedRecordCompletedSpan(
         val name: String,
         val startTimeMs: Long,
         val endTimeMs: Long,
-        val autoTerminationMode: AutoTerminationMode,
         val parent: EmbraceSpan?,
-        val type: TelemetryType,
+        val type: EmbType,
         val internal: Boolean,
         val private: Boolean,
         val attributes: Map<String, String>,

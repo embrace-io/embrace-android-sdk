@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.internal.otel.spans
 
 import io.embrace.android.embracesdk.internal.Initializable
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
-import io.embrace.android.embracesdk.internal.otel.schema.TelemetryType
 import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
@@ -19,11 +18,11 @@ interface SpanService : Initializable {
      */
     fun createSpan(
         name: String,
-        autoTerminationMode: AutoTerminationMode = AutoTerminationMode.NONE,
         parent: EmbraceSpan? = null,
-        type: TelemetryType = EmbType.Performance.Default,
+        type: EmbType = EmbType.Performance.Default,
         internal: Boolean = true,
         private: Boolean = false,
+        autoTerminationMode: AutoTerminationMode = AutoTerminationMode.NONE,
     ): EmbraceSdkSpan?
 
     /**
@@ -37,20 +36,20 @@ interface SpanService : Initializable {
      */
     fun startSpan(
         name: String,
-        autoTerminationMode: AutoTerminationMode = AutoTerminationMode.NONE,
         parent: EmbraceSpan? = null,
         startTimeMs: Long? = null,
-        type: TelemetryType = EmbType.Performance.Default,
+        type: EmbType = EmbType.Performance.Default,
         internal: Boolean = true,
         private: Boolean = false,
+        autoTerminationMode: AutoTerminationMode = AutoTerminationMode.NONE,
     ): EmbraceSdkSpan? {
         createSpan(
             name = name,
-            autoTerminationMode = autoTerminationMode,
             parent = parent,
             type = type,
             internal = internal,
             private = private,
+            autoTerminationMode = autoTerminationMode,
         )?.let { newSpan ->
             if (newSpan.start(startTimeMs)) {
                 return newSpan
@@ -66,13 +65,13 @@ interface SpanService : Initializable {
      */
     fun <T> recordSpan(
         name: String,
-        autoTerminationMode: AutoTerminationMode = AutoTerminationMode.NONE,
         parent: EmbraceSpan? = null,
-        type: TelemetryType = EmbType.Performance.Default,
+        type: EmbType = EmbType.Performance.Default,
         internal: Boolean = true,
         private: Boolean = false,
         attributes: Map<String, String> = emptyMap(),
         events: List<EmbraceSpanEvent> = emptyList(),
+        autoTerminationMode: AutoTerminationMode = AutoTerminationMode.NONE,
         code: () -> T,
     ): T
 
@@ -84,9 +83,8 @@ interface SpanService : Initializable {
         name: String,
         startTimeMs: Long,
         endTimeMs: Long,
-        autoTerminationMode: AutoTerminationMode = AutoTerminationMode.NONE,
         parent: EmbraceSpan? = null,
-        type: TelemetryType = EmbType.Performance.Default,
+        type: EmbType = EmbType.Performance.Default,
         internal: Boolean = true,
         private: Boolean = false,
         attributes: Map<String, String> = emptyMap(),

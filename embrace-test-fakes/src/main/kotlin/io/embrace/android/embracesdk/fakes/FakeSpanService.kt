@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.fakes
 
+import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.embrace.android.embracesdk.internal.otel.schema.PrivateSpan
-import io.embrace.android.embracesdk.internal.otel.schema.TelemetryType
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.otel.spans.OtelSpanBuilderWrapper
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
@@ -22,11 +22,11 @@ class FakeSpanService : SpanService {
 
     override fun createSpan(
         name: String,
-        autoTerminationMode: AutoTerminationMode,
         parent: EmbraceSpan?,
-        type: TelemetryType,
+        type: EmbType,
         internal: Boolean,
         private: Boolean,
+        autoTerminationMode: AutoTerminationMode,
     ): EmbraceSdkSpan = FakeEmbraceSdkSpan(
         name = name,
         parentContext = parent?.run { Context.root().with(parent as EmbraceSdkSpan) } ?: Context.root(),
@@ -41,25 +41,24 @@ class FakeSpanService : SpanService {
     override fun createSpan(
         otelSpanBuilderWrapper: OtelSpanBuilderWrapper,
     ): EmbraceSdkSpan = FakeEmbraceSdkSpan(
-        name = otelSpanBuilderWrapper.spanName,
-        parentContext = otelSpanBuilderWrapper.parentContext,
-        type = otelSpanBuilderWrapper.getEmbraceAttributes().filterIsInstance<TelemetryType>().single(),
+        name = otelSpanBuilderWrapper.initialSpanName,
+        parentContext = otelSpanBuilderWrapper.getParentContext(),
+        type = otelSpanBuilderWrapper.embraceAttributes.filterIsInstance<EmbType>().single(),
         internal = otelSpanBuilderWrapper.internal,
-        private = otelSpanBuilderWrapper.getEmbraceAttributes().contains(PrivateSpan),
-        autoTerminationMode = otelSpanBuilderWrapper.autoTerminationMode,
+        private = otelSpanBuilderWrapper.embraceAttributes.contains(PrivateSpan),
     ).apply {
         createdSpans.add(this)
     }
 
     override fun <T> recordSpan(
         name: String,
-        autoTerminationMode: AutoTerminationMode,
         parent: EmbraceSpan?,
-        type: TelemetryType,
+        type: EmbType,
         internal: Boolean,
         private: Boolean,
         attributes: Map<String, String>,
         events: List<EmbraceSpanEvent>,
+        autoTerminationMode: AutoTerminationMode,
         code: () -> T,
     ): T {
         return code()
@@ -69,9 +68,8 @@ class FakeSpanService : SpanService {
         name: String,
         startTimeMs: Long,
         endTimeMs: Long,
-        autoTerminationMode: AutoTerminationMode,
         parent: EmbraceSpan?,
-        type: TelemetryType,
+        type: EmbType,
         internal: Boolean,
         private: Boolean,
         attributes: Map<String, String>,

@@ -33,6 +33,7 @@ import io.embrace.android.embracesdk.internal.otel.attrs.embState
 import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
+import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
 import io.embrace.android.embracesdk.internal.otel.sdk.toEmbraceSpanData
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.payload.Envelope
@@ -40,7 +41,6 @@ import io.embrace.android.embracesdk.internal.payload.NativeCrashData
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.payload.getSessionSpan
 import io.embrace.android.embracesdk.spans.ErrorCode
-import io.opentelemetry.api.trace.SpanId
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -95,7 +95,7 @@ class PayloadResurrectionServiceImplTest {
             span = sessionSpan,
             expectedStartTimeMs = expectedStartTimeMs,
             expectedEndTimeMs = expectedEndTimeMs,
-            expectedParentId = SpanId.getInvalid(),
+            expectedParentId = OtelIds.invalidSpanId,
             expectedErrorCode = ErrorCode.FAILURE,
             expectedCustomAttributes = mapOf(
                 EmbType.Ux.Session.asPair()
@@ -137,7 +137,7 @@ class PayloadResurrectionServiceImplTest {
             span = resurrectedSnapshot,
             expectedStartTimeMs = checkNotNull(spanSnapshot.startTimeNanos?.nanosToMillis()),
             expectedEndTimeMs = checkNotNull(sessionSpan.endTimeNanos?.nanosToMillis()),
-            expectedParentId = SpanId.getInvalid(),
+            expectedParentId = OtelIds.invalidSpanId,
             expectedErrorCode = ErrorCode.FAILURE,
             expectedCustomAttributes = mapOf(
                 EmbType.Performance.Default.asPair()

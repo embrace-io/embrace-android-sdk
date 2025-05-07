@@ -4,6 +4,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.assertEmbraceSpanData
 import io.embrace.android.embracesdk.fakes.FakeSpanExporter
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
+import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
 import io.embrace.android.embracesdk.internal.otel.impl.EmbSpan
 import io.embrace.android.embracesdk.internal.otel.impl.EmbSpanBuilder
 import io.embrace.android.embracesdk.internal.otel.impl.EmbTracer
@@ -19,7 +20,6 @@ import io.embrace.android.embracesdk.testframework.actions.EmbracePreSdkStartInt
 import io.opentelemetry.api.OpenTelemetry
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
-import io.opentelemetry.api.trace.SpanId
 import io.opentelemetry.api.trace.StatusCode
 import io.opentelemetry.api.trace.Tracer
 import io.opentelemetry.context.Context
@@ -143,7 +143,7 @@ internal class ExternalTracerTest {
                     span = parent,
                     expectedStartTimeMs = checkNotNull(startTimeMs),
                     expectedEndTimeMs = checkNotNull(endTimeMs),
-                    expectedParentId = SpanId.getInvalid(),
+                    expectedParentId = OtelIds.invalidSpanId,
                     expectedCustomAttributes = mapOf("failures" to "1")
                 )
                 assertEmbraceSpanData(

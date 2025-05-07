@@ -6,17 +6,17 @@ import io.embrace.android.embracesdk.internal.otel.attrs.asPair
 import io.embrace.android.embracesdk.internal.otel.attrs.embSequenceId
 import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
+import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
-import io.opentelemetry.api.trace.SpanId
 import io.opentelemetry.api.trace.StatusCode
 import io.opentelemetry.context.ContextKey
 
 val testSpan: Span = EmbraceSpanData(
     traceId = "19bb482ec1c7e6b2f10fb89e0ccc85fa",
     spanId = "342eb9c7f8cb54ff",
-    parentSpanId = SpanId.getInvalid(),
+    parentSpanId = OtelIds.invalidSpanId,
     name = "emb-sdk-init",
     startTimeNanos = 1681972471806000000L,
     endTimeNanos = 1681972471871000000L,

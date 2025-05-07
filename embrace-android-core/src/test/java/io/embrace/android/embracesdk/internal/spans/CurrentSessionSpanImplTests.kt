@@ -17,6 +17,7 @@ import io.embrace.android.embracesdk.internal.otel.config.getMaxTotalAttributeCo
 import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
 import io.embrace.android.embracesdk.internal.otel.schema.AppTerminationCause
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
+import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
 import io.embrace.android.embracesdk.internal.otel.sdk.otelSpanBuilderWrapper
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanFactory
@@ -28,7 +29,6 @@ import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
 import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.ErrorCode
-import io.opentelemetry.api.trace.SpanId
 import io.opentelemetry.api.trace.Tracer
 import io.opentelemetry.sdk.common.Clock
 import org.junit.Assert.assertEquals
@@ -386,7 +386,7 @@ internal class CurrentSessionSpanImplTests {
             span = flushedSpans["emb-session"]?.toEmbracePayload(),
             expectedStartTimeMs = sessionStartTimeMs,
             expectedEndTimeMs = crashTimeMs,
-            expectedParentId = SpanId.getInvalid(),
+            expectedParentId = OtelIds.invalidSpanId,
             expectedErrorCode = ErrorCode.FAILURE,
             expectedCustomAttributes = mapOf(
                 AppTerminationCause.Crash.asPair(),
@@ -399,7 +399,7 @@ internal class CurrentSessionSpanImplTests {
             span = flushedSpans[crashedSpanName]?.toEmbracePayload(),
             expectedStartTimeMs = crashSpanStartTimeMs,
             expectedEndTimeMs = crashTimeMs,
-            expectedParentId = SpanId.getInvalid(),
+            expectedParentId = OtelIds.invalidSpanId,
             expectedErrorCode = ErrorCode.FAILURE,
             expectedCustomAttributes = mapOf(
                 EmbType.Performance.Default.asPair()

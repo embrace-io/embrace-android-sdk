@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.otel.payload
 
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
+import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
 import io.embrace.android.embracesdk.internal.otel.sdk.toStatus
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceLinkData
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanData
@@ -9,14 +10,13 @@ import io.embrace.android.embracesdk.internal.payload.Link
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
-import io.opentelemetry.api.trace.SpanId
 import io.opentelemetry.api.trace.StatusCode
 
 fun Span.toEmbracePayload(): EmbraceSpanData {
     return EmbraceSpanData(
         traceId = traceId ?: "",
         spanId = spanId ?: "",
-        parentSpanId = parentSpanId ?: SpanId.getInvalid(),
+        parentSpanId = parentSpanId ?: OtelIds.invalidSpanId,
         name = name ?: "",
         startTimeNanos = startTimeNanos ?: 0,
         endTimeNanos = endTimeNanos ?: 0L,
@@ -35,7 +35,7 @@ fun Span.toEmbracePayload(): EmbraceSpanData {
 fun EmbraceSpanData.toEmbracePayload(): Span = Span(
     traceId = traceId,
     spanId = spanId,
-    parentSpanId = parentSpanId ?: SpanId.getInvalid(),
+    parentSpanId = parentSpanId ?: OtelIds.invalidSpanId,
     name = name,
     startTimeNanos = startTimeNanos,
     endTimeNanos = endTimeNanos,

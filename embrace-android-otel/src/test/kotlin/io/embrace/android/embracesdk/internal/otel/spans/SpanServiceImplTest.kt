@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.internal.spans
+package io.embrace.android.embracesdk.internal.otel.spans
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.arch.assertError
@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.arch.assertIsType
 import io.embrace.android.embracesdk.arch.assertIsTypePerformance
 import io.embrace.android.embracesdk.arch.assertNotPrivateSpan
 import io.embrace.android.embracesdk.fakes.FakeClock
-import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
+import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryClock
 import io.embrace.android.embracesdk.fixtures.MAX_LENGTH_INTERNAL_SPAN_NAME
 import io.embrace.android.embracesdk.fixtures.MAX_LENGTH_SPAN_NAME
 import io.embrace.android.embracesdk.fixtures.TOO_LONG_ATTRIBUTE_KEY
@@ -22,14 +22,15 @@ import io.embrace.android.embracesdk.fixtures.tooBigCustomAttributes
 import io.embrace.android.embracesdk.fixtures.tooBigCustomEvents
 import io.embrace.android.embracesdk.fixtures.tooBigSystemAttributes
 import io.embrace.android.embracesdk.fixtures.tooBigSystemEvents
+import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
-import io.embrace.android.embracesdk.internal.otel.schema.AppTerminationCause
+import io.embrace.android.embracesdk.internal.otel.config.OtelSdkConfig
+import io.embrace.android.embracesdk.internal.otel.logs.LogSinkImpl
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
+import io.embrace.android.embracesdk.internal.otel.sdk.OtelSdkWrapper
 import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
-import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanData
-import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanFactoryImpl
-import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
+import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 import org.junit.Assert.assertEquals
@@ -45,25 +46,39 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 internal class SpanServiceImplTest {
     private lateinit var spanSink: SpanSink
-    private lateinit var currentSessionSpan: CurrentSessionSpan
     private lateinit var spansService: SpanServiceImpl
     private val clock = FakeClock()
+    private var spanCreationAllowed: Boolean = true
+    private var initTimeMs: Long = 0L
 
     @Before
     fun setup() {
-        val initModule = FakeInitModule(clock)
-        spanSink = initModule.openTelemetryModule.spanSink
-        currentSessionSpan = initModule.openTelemetryModule.currentSessionSpan
-        spansService = SpanServiceImpl(
-            spanRepository = initModule.openTelemetryModule.spanRepository,
-            currentSessionSpan = currentSessionSpan,
-            embraceSpanFactory = EmbraceSpanFactoryImpl(
-                tracer = initModule.openTelemetryModule.sdkTracer,
-                openTelemetryClock = initModule.openTelemetryModule.openTelemetryClock,
-                spanRepository = initModule.openTelemetryModule.spanRepository,
-            )
+        val fakeClock = FakeOpenTelemetryClock(clock)
+        spanSink = SpanSinkImpl()
+        val otelSdkConfig = OtelSdkConfig(
+            spanSink = spanSink,
+            logSink = LogSinkImpl(),
+            sdkName = "test-sdk",
+            sdkVersion = "1.0",
+            systemInfo = SystemInfo(),
+            processIdentifierProvider = { "fake-pid" }
         )
-        spansService.initializeService(initModule.clock.now())
+        val otelSdkWrapper = OtelSdkWrapper(
+            openTelemetryClock = fakeClock,
+            configuration = otelSdkConfig,
+        )
+
+        spansService = SpanServiceImpl(
+            spanRepository = SpanRepository(),
+            embraceSpanFactory = EmbraceSpanFactoryImpl(
+                tracer = otelSdkWrapper.sdkTracer,
+                openTelemetryClock = fakeClock,
+                spanRepository = SpanRepository()
+            ),
+            canStartNewSpan = ::canStartNewSpan,
+            initCallback = ::initCallback
+        )
+        spansService.initializeService(fakeClock.now().nanosToMillis())
     }
 
     @Test
@@ -162,15 +177,9 @@ internal class SpanServiceImplTest {
     }
 
     @Test
-    fun `start span created from previous session`() {
-        val embraceSpan = checkNotNull(spansService.createSpan(name = "test-span"))
-        currentSessionSpan.endSession(startNewSession = true)
-        assertTrue(embraceSpan.start())
-    }
-
-    @Test
-    fun `cannot create span before initialization`() {
-        assertNull(FakeInitModule(clock = clock).openTelemetryModule.spanService.createSpan(name = "test"))
+    fun `cannot create span with if validation fails`() {
+        spanCreationAllowed = false
+        assertNull(spansService.createSpan(name = "test"))
     }
 
     @Test
@@ -180,27 +189,10 @@ internal class SpanServiceImplTest {
     }
 
     @Test
-    fun `cannot create child if parent not started`() {
-        val parentSpan = spansService.createSpan(name = "test-span")
-        val childSpan = spansService.createSpan(name = "child-span", parent = parentSpan)
-        assertNull(childSpan)
-    }
-
-    @Test
-    fun `can create child if parent has stopped`() {
-        val parentSpan = checkNotNull(spansService.createSpan(name = "test-span"))
-        assertTrue(parentSpan.start())
-        assertTrue(parentSpan.stop())
-        val childSpan = spansService.createSpan(name = "child-span", parent = parentSpan)
-        assertNotNull(childSpan)
-    }
-
-    @Test
     fun `start a span directly`() {
         spanSink.flushSpans()
         val parentStartTime = clock.now()
-        val parent =
-            checkNotNull(spansService.startSpan(name = "test-span", private = false))
+        val parent = checkNotNull(spansService.startSpan(name = "test-span", private = false))
         val childStartTimeMs = clock.now() + 10L
         val child = checkNotNull(
             spansService.startSpan(
@@ -299,39 +291,6 @@ internal class SpanServiceImplTest {
     }
 
     @Test
-    fun `record completed child span with stopped parent`() {
-        val expectedName = "child-span"
-        val expectedStartTimeMs = clock.now()
-        val expectedEndTimeMs = expectedStartTimeMs + 100L
-        val parentSpan = checkNotNull(spansService.createSpan(name = "test-span"))
-        assertTrue(parentSpan.start())
-        assertTrue(parentSpan.stop())
-        currentSessionSpan.endSession(startNewSession = true)
-        assertTrue(
-            spansService.recordCompletedSpan(
-                name = expectedName,
-                startTimeMs = expectedStartTimeMs,
-                endTimeMs = expectedEndTimeMs,
-                parent = parentSpan,
-            )
-        )
-    }
-
-    @Test
-    fun `can't record completed child span with not-started parent`() {
-        val expectedName = "child-span"
-        val parentSpan = checkNotNull(spansService.createSpan(name = "test-span"))
-        assertFalse(
-            spansService.recordCompletedSpan(
-                name = expectedName,
-                startTimeMs = 10L,
-                endTimeMs = 100L,
-                parent = parentSpan,
-            )
-        )
-    }
-
-    @Test
     fun `record spans with different ending error codes `() {
         ErrorCode.values().forEach { errorCode ->
             assertTrue(
@@ -356,21 +315,6 @@ internal class SpanServiceImplTest {
                 name = "test-pan",
                 startTimeMs = 500,
                 endTimeMs = 499,
-            )
-        )
-    }
-
-    @Test
-    fun `cannot record completed span if there is not current session span`() {
-        currentSessionSpan.endSession(
-            startNewSession = true,
-            appTerminationCause = AppTerminationCause.UserTermination
-        )
-        assertFalse(
-            spansService.recordCompletedSpan(
-                name = "test-span",
-                startTimeMs = 500,
-                endTimeMs = 600,
             )
         )
     }
@@ -412,32 +356,6 @@ internal class SpanServiceImplTest {
     }
 
     @Test
-    fun `lambda with not-started parent will still run and return value`() {
-        val parentSpan = checkNotNull(spansService.createSpan(name = "test-span"))
-        val returnThis = 1
-        val returnValue = spansService.recordSpan(name = "child-span", parent = parentSpan) {
-            returnThis + 1
-        }
-
-        assertEquals(2, returnValue)
-        assertEquals(0, spanSink.completedSpans().size)
-    }
-
-    @Test
-    fun `lambda with stopped parent will still be recorded`() {
-        val parentSpan = checkNotNull(spansService.createSpan(name = "test-span"))
-        assertTrue(parentSpan.start())
-        assertTrue(parentSpan.stop())
-        val returnThis = 1
-        val returnValue = spansService.recordSpan(name = "child-span", parent = parentSpan) {
-            returnThis + 1
-        }
-
-        assertEquals(2, returnValue)
-        assertEquals(2, spanSink.completedSpans().size)
-    }
-
-    @Test
     fun `recording span as lambda throws an exception will record a failed span and rethrows exception`() {
         assertThrows(RuntimeException::class.java) {
             spansService.recordSpan(name = "test-span") {
@@ -451,27 +369,14 @@ internal class SpanServiceImplTest {
     }
 
     @Test
-    fun `recording span as lambda with no current active session will run code but not log span`() {
-        currentSessionSpan.endSession(
-            startNewSession = true,
-            appTerminationCause = AppTerminationCause.UserTermination
-        )
+    fun `recording span as lambda when span cannot be recorded will run code but not log span`() {
+        spanCreationAllowed = false
         var executed = false
         spansService.recordSpan(name = "test-span") {
             executed = true
         }
 
         assertTrue(executed)
-        assertEquals(0, spanSink.completedSpans().size)
-    }
-
-    @Test
-    fun `after ending session with app termination, spans cannot be recorded`() {
-        currentSessionSpan.endSession(true, AppTerminationCause.UserTermination)
-        spansService.recordSpan("test-span") {
-            // do thing
-        }
-        assertFalse(spansService.recordCompletedSpan("test-span-2", startTimeMs = 0, endTimeMs = 1))
         assertEquals(0, spanSink.completedSpans().size)
     }
 
@@ -657,5 +562,14 @@ internal class SpanServiceImplTest {
         assertEquals(1, currentSpans.size)
         assertEquals(name, currentSpans[0].name)
         return currentSpans[0]
+    }
+
+    @Suppress("UNUSED_PARAMETER")
+    private fun canStartNewSpan(parentSpan: EmbraceSpan?, internal: Boolean): Boolean {
+        return spanCreationAllowed
+    }
+
+    private fun initCallback(initTimeMs: Long) {
+        this.initTimeMs = initTimeMs
     }
 }

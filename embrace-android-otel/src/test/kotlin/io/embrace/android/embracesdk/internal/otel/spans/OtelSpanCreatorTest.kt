@@ -7,7 +7,6 @@ import io.embrace.android.embracesdk.fakes.FakeTracer
 import io.embrace.android.embracesdk.fixtures.fakeContextKey
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.embrace.android.embracesdk.internal.otel.schema.PrivateSpan
-import io.embrace.android.embracesdk.internal.otel.sdk.otelSpanBuilderWrapper
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.SpanKind
 import io.opentelemetry.context.Context
@@ -16,7 +15,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
-internal class OtelSpanBuilderWrapperTest {
+internal class OtelSpanCreatorTest {
     private val clock = FakeClock()
     private lateinit var tracer: FakeTracer
 
@@ -27,42 +26,48 @@ internal class OtelSpanBuilderWrapperTest {
 
     @Test
     fun `check private and internal span creation`() {
-        val wrapper = tracer.otelSpanBuilderWrapper(
+        val args = OtelSpanStartArgs(
             name = "test",
             type = EmbType.Performance.Default,
             internal = true,
             private = true,
-            parent = null,
+        )
+        val creator = OtelSpanCreator(
+            tracer = tracer,
+            spanStartArgs = args,
         )
         val originalStartTime = clock.now()
-        wrapper.startTimeMs = originalStartTime
+        args.startTimeMs = originalStartTime
         val startTime = clock.tick()
-        with(wrapper.embraceAttributes.toSet()) {
+        with(args.embraceAttributes.toSet()) {
             assertTrue(contains(PrivateSpan))
             assertTrue(contains(EmbType.Performance.Default))
         }
-        assertEquals("emb-test", wrapper.initialSpanName)
-        wrapper.startSpan(startTime).assertFakeSpanBuilder(
+        assertEquals("emb-test", args.spanName)
+        creator.startSpan(startTime).assertFakeSpanBuilder(
             expectedName = "emb-test",
             expectedStartTimeMs = startTime
         )
-        assertEquals(originalStartTime, wrapper.startTimeMs)
+        assertEquals(originalStartTime, args.startTimeMs)
     }
 
     @Test
     fun `add parent after initial creation`() {
-        val wrapper = tracer.otelSpanBuilderWrapper(
+        val args = OtelSpanStartArgs(
             name = "test",
             type = EmbType.Performance.Default,
             internal = false,
             private = false,
-            parent = null,
+        )
+        val creator = OtelSpanCreator(
+            tracer = tracer,
+            spanStartArgs = args,
         )
         val parent = FakeEmbraceSdkSpan.started()
         val parentContext = checkNotNull(parent.asNewContext()?.with(fakeContextKey, "value"))
-        wrapper.setParentContext(parentContext)
+        args.parentContext = parentContext
         val startTime = clock.now()
-        wrapper.startSpan(startTime).assertFakeSpanBuilder(
+        creator.startSpan(startTime).assertFakeSpanBuilder(
             expectedName = "test",
             expectedParentContext = parentContext,
             expectedStartTimeMs = startTime,
@@ -74,31 +79,39 @@ internal class OtelSpanBuilderWrapperTest {
     fun `remove parent after initial creation`() {
         val parent = FakeEmbraceSdkSpan.started()
         val startTime = clock.now()
-        val wrapper = tracer.otelSpanBuilderWrapper(
+        val args = OtelSpanStartArgs(
             name = "test",
             type = EmbType.Performance.Default,
             internal = false,
             private = false,
-            parent = parent,
+            parentSpan = parent,
+        )
+        val creator = OtelSpanCreator(
+            tracer = tracer,
+            spanStartArgs = args,
         )
 
-        wrapper.setNoParent()
-        with(wrapper.startSpan(startTime)) {
+        args.parentContext = Context.root()
+        with(creator.startSpan(startTime)) {
             assertFakeSpanBuilder(
                 expectedName = "test",
                 expectedStartTimeMs = startTime
             )
         }
 
-        val uxSpanBuilder = tracer.otelSpanBuilderWrapper(
+        val uxArgs = OtelSpanStartArgs(
             name = "ux-test",
             type = EmbType.Ux.View,
             internal = false,
             private = false,
-            parent = parent,
+            parentSpan = parent,
+        )
+        val uxSpanBuilder = OtelSpanCreator(
+            tracer = tracer,
+            spanStartArgs = uxArgs,
         )
 
-        uxSpanBuilder.setNoParent()
+        uxArgs.parentContext = Context.root()
         with(uxSpanBuilder.startSpan(startTime)) {
             assertFakeSpanBuilder(
                 expectedName = "ux-test",
@@ -109,17 +122,20 @@ internal class OtelSpanBuilderWrapperTest {
 
     @Test
     fun `add span kind`() {
-        val spanBuilder = tracer.otelSpanBuilderWrapper(
+        val args = OtelSpanStartArgs(
             name = "test",
             type = EmbType.Performance.Default,
             internal = false,
             private = false,
-            parent = null,
+        )
+        val creator = OtelSpanCreator(
+            tracer = tracer,
+            spanStartArgs = args
         )
 
         val startTime = clock.now()
-        spanBuilder.setSpanKind(SpanKind.CLIENT)
-        spanBuilder.startSpan(startTime).assertFakeSpanBuilder(
+        args.spanKind = SpanKind.CLIENT
+        creator.startSpan(startTime).assertFakeSpanBuilder(
             expectedName = "test",
             expectedStartTimeMs = startTime,
             expectedSpanKind = SpanKind.CLIENT
@@ -128,32 +144,34 @@ internal class OtelSpanBuilderWrapperTest {
 
     @Test
     fun `custom attribute setting`() {
-        val spanBuilder = tracer.otelSpanBuilderWrapper(
+        val args = OtelSpanStartArgs(
             name = "test",
             type = EmbType.Performance.Default,
             internal = false,
             private = false,
-            parent = null,
         )
-        spanBuilder.customAttributes["test-key"] = "test-value"
-        assertEquals("test-value", spanBuilder.customAttributes["test-key"])
+        args.customAttributes["test-key"] = "test-value"
+        assertEquals("test-value", args.customAttributes["test-key"])
     }
 
     @Test
     fun `context value propagated even if it does not context a span`() {
         val fakeRootContext = Context.root().with(fakeContextKey, "fake-value")
-        val spanBuilder = tracer.otelSpanBuilderWrapper(
+        val args = OtelSpanStartArgs(
             name = "parent",
             type = EmbType.Performance.Default,
             internal = false,
             private = false,
-            parent = null,
+        )
+        val creator = OtelSpanCreator(
+            tracer = tracer,
+            spanStartArgs = args
         )
 
-        spanBuilder.setParentContext(fakeRootContext)
-        assertEquals("fake-value", spanBuilder.getParentContext().get(fakeContextKey))
+        args.parentContext = fakeRootContext
+        assertEquals("fake-value", args.parentContext.get(fakeContextKey))
 
-        val span = spanBuilder.startSpan(clock.now()) as FakeSpan
+        val span = creator.startSpan(clock.now()) as FakeSpan
         assertEquals("fake-value", span.fakeSpanBuilder.parentContext.get(fakeContextKey))
     }
 

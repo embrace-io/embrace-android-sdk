@@ -18,10 +18,10 @@ import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
 import io.embrace.android.embracesdk.internal.otel.schema.AppTerminationCause
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
-import io.embrace.android.embracesdk.internal.otel.sdk.otelSpanBuilderWrapper
+import io.embrace.android.embracesdk.internal.otel.sdk.otelSpanCreator
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanFactory
-import io.embrace.android.embracesdk.internal.otel.spans.OtelSpanBuilderWrapper
+import io.embrace.android.embracesdk.internal.otel.spans.OtelSpanCreator
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
@@ -129,7 +129,7 @@ internal class CurrentSessionSpanImplTests {
         repeat(SpanServiceImpl.MAX_NON_INTERNAL_SPANS_PER_SESSION) {
             assertNotNull(
                 spanService.createSpan(
-                    otelSpanBuilderWrapper = tracer.otelSpanBuilderWrapper(
+                    otelSpanCreator = tracer.otelSpanCreator(
                         name = "external-span",
                         type = EmbType.Performance.Default,
                         parent = null,
@@ -141,7 +141,7 @@ internal class CurrentSessionSpanImplTests {
         }
         assertNull(
             spanService.createSpan(
-                otelSpanBuilderWrapper = tracer.otelSpanBuilderWrapper(
+                otelSpanCreator = tracer.otelSpanCreator(
                     name = "external-span",
                     type = EmbType.Performance.Default,
                     parent = null,
@@ -152,7 +152,7 @@ internal class CurrentSessionSpanImplTests {
         )
         assertNotNull(
             spanService.createSpan(
-                otelSpanBuilderWrapper = tracer.otelSpanBuilderWrapper(
+                otelSpanCreator = tracer.otelSpanCreator(
                     name = "internal-span",
                     type = EmbType.Performance.Default,
                     parent = null,
@@ -572,6 +572,9 @@ internal class CurrentSessionSpanImplTests {
             autoTerminationMode: AutoTerminationMode,
         ): EmbraceSdkSpan = stoppedSpan
 
-        override fun create(otelSpanBuilderWrapper: OtelSpanBuilderWrapper, autoTerminationMode: AutoTerminationMode) = stoppedSpan
+        override fun create(
+            otelSpanCreator: OtelSpanCreator,
+            autoTerminationMode: AutoTerminationMode,
+        ) = stoppedSpan
     }
 }

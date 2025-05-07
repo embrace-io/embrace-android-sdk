@@ -15,7 +15,7 @@ import io.embrace.android.embracesdk.internal.otel.schema.ErrorCodeAttribute.Fai
 import io.embrace.android.embracesdk.internal.otel.sdk.fromMap
 import io.embrace.android.embracesdk.internal.otel.sdk.hasEmbraceAttribute
 import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
-import io.embrace.android.embracesdk.internal.otel.sdk.otelSpanBuilderWrapper
+import io.embrace.android.embracesdk.internal.otel.sdk.otelSpanCreator
 import io.embrace.android.embracesdk.internal.otel.sdk.setEmbraceAttribute
 import io.embrace.android.embracesdk.internal.otel.toEmbracePayload
 import io.embrace.android.embracesdk.internal.otel.toOtelJava
@@ -56,7 +56,7 @@ class EmbraceSpanFactoryImpl(
         parent: EmbraceSpan?,
         autoTerminationMode: AutoTerminationMode,
     ): EmbraceSdkSpan = create(
-        otelSpanBuilderWrapper = tracer.otelSpanBuilderWrapper(
+        otelSpanCreator = tracer.otelSpanCreator(
             name = name,
             type = type,
             internal = internal,
@@ -67,20 +67,21 @@ class EmbraceSpanFactoryImpl(
     )
 
     override fun create(
-        otelSpanBuilderWrapper: OtelSpanBuilderWrapper,
+        otelSpanCreator: OtelSpanCreator,
         autoTerminationMode: AutoTerminationMode,
-    ): EmbraceSdkSpan =
-        EmbraceSpanImpl(
-            otelSpanBuilderWrapper = otelSpanBuilderWrapper,
+    ): EmbraceSdkSpan {
+        return EmbraceSpanImpl(
+            otelSpanCreator = otelSpanCreator,
             openTelemetryClock = openTelemetryClock,
             spanRepository = spanRepository,
             redactionFunction = redactionFunction,
             autoTerminationMode = autoTerminationMode
         )
+    }
 }
 
 private class EmbraceSpanImpl(
-    private val otelSpanBuilderWrapper: OtelSpanBuilderWrapper,
+    private val otelSpanCreator: OtelSpanCreator,
     private val openTelemetryClock: Clock,
     private val spanRepository: SpanRepository,
     private val redactionFunction: ((key: String, value: String) -> String)? = null,
@@ -103,10 +104,10 @@ private class EmbraceSpanImpl(
     private val systemEvents = ConcurrentLinkedQueue<EmbraceSpanEvent>()
     private val customEvents = ConcurrentLinkedQueue<EmbraceSpanEvent>()
     private val systemAttributes = ConcurrentHashMap<String, String>().apply {
-        putAll(otelSpanBuilderWrapper.embraceAttributes.associate { it.key.name to it.value })
+        putAll(otelSpanCreator.spanStartArgs.embraceAttributes.associate { it.key.name to it.value })
     }
     private val customAttributes = ConcurrentHashMap<String, String>().apply {
-        putAll(otelSpanBuilderWrapper.customAttributes)
+        putAll(otelSpanCreator.spanStartArgs.customAttributes)
     }
     private val systemLinks = ConcurrentLinkedQueue<EmbraceLinkData>()
     private val customLinks = ConcurrentLinkedQueue<EmbraceLinkData>()
@@ -118,7 +119,7 @@ private class EmbraceSpanImpl(
     private val systemLinkCount = AtomicInteger(0)
     private val customLinkCount = AtomicInteger(0)
 
-    override val parent: EmbraceSpan? = otelSpanBuilderWrapper.getParentContext().getEmbraceSpan()
+    override val parent: EmbraceSpan? = otelSpanCreator.spanStartArgs.parentContext.getEmbraceSpan()
 
     override val spanContext: SpanContext?
         get() = startedSpan.get()?.spanContext
@@ -139,12 +140,12 @@ private class EmbraceSpanImpl(
             }
 
             val attemptedStartTimeMs =
-                (startTimeMs?.normalizeTimestampAsMillis() ?: otelSpanBuilderWrapper.startTimeMs)?.takeIf { it > 0 }
+                (startTimeMs?.normalizeTimestampAsMillis() ?: otelSpanCreator.spanStartArgs.startTimeMs)?.takeIf { it > 0 }
                     ?: openTelemetryClock.now().nanosToMillis()
 
             synchronized(startedSpan) {
                 val newSpan = EmbTrace.trace("otel-span-start") {
-                    otelSpanBuilderWrapper.startSpan(attemptedStartTimeMs)
+                    otelSpanCreator.startSpan(attemptedStartTimeMs)
                 }
                 if (newSpan.isRecording) {
                     startedSpan.set(newSpan)
@@ -276,7 +277,7 @@ private class EmbraceSpanImpl(
 
     override fun addAttribute(key: String, value: String): Boolean {
         if (customAttributes.size < limits.getMaxCustomAttributeCount() &&
-            limits.isAttributeValid(key, value, otelSpanBuilderWrapper.internal)
+            limits.isAttributeValid(key, value, otelSpanCreator.spanStartArgs.internal)
         ) {
             synchronized(customAttributes) {
                 if (customAttributes.size < limits.getMaxCustomAttributeCount() && isRecording) {
@@ -291,7 +292,7 @@ private class EmbraceSpanImpl(
     }
 
     override fun updateName(newName: String): Boolean {
-        if (limits.isNameValid(newName, otelSpanBuilderWrapper.internal)) {
+        if (limits.isNameValid(newName, otelSpanCreator.spanStartArgs.internal)) {
             synchronized(startedSpan) {
                 if (!spanStarted() || isRecording) {
                     updatedName = newName
@@ -315,7 +316,9 @@ private class EmbraceSpanImpl(
             EmbraceLinkData(linkedSpanContext, attributes ?: emptyMap())
         }
 
-    override fun asNewContext(): Context? = startedSpan.get()?.run { otelSpanBuilderWrapper.getParentContext().with(this) }
+    override fun asNewContext(): Context? = startedSpan.get()?.run {
+        otelSpanCreator.spanStartArgs.parentContext.with(this)
+    }
 
     override fun snapshot(): io.embrace.android.embracesdk.internal.payload.Span? {
         val redactedCustomEvents = customEvents.map { it.copy(attributes = it.attributes.redactIfSensitive()) }
@@ -387,7 +390,7 @@ private class EmbraceSpanImpl(
 
     private fun spanStarted() = startedSpan.get() != null
 
-    private fun getSpanName() = synchronized(startedSpan) { updatedName ?: otelSpanBuilderWrapper.initialSpanName }
+    private fun getSpanName() = synchronized(startedSpan) { updatedName ?: otelSpanCreator.spanStartArgs.spanName }
 
     private fun Map<String, String>.redactIfSensitive(): Map<String, String> {
         return mapValues {
@@ -409,7 +412,7 @@ private class EmbraceSpanImpl(
 
         (systemEvents + redactedCustomEvents).forEach { event ->
             val eventAttributes = if (event.attributes.isNotEmpty()) {
-                Attributes.builder().fromMap(event.attributes, otelSpanBuilderWrapper.internal).build()
+                Attributes.builder().fromMap(event.attributes, otelSpanCreator.spanStartArgs.internal).build()
             } else {
                 Attributes.empty()
             }

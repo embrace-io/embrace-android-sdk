@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.spans
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanFactory
-import io.embrace.android.embracesdk.internal.otel.spans.OtelSpanBuilderWrapper
+import io.embrace.android.embracesdk.internal.otel.spans.OtelSpanCreator
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.utils.Provider
@@ -65,10 +65,7 @@ internal class EmbraceSpanService(
             autoTerminationMode = autoTerminationMode
         )
 
-    override fun createSpan(otelSpanBuilderWrapper: OtelSpanBuilderWrapper): EmbraceSdkSpan? =
-        currentDelegate.createSpan(
-            otelSpanBuilderWrapper
-        )
+    override fun createSpan(otelSpanCreator: OtelSpanCreator): EmbraceSdkSpan? = currentDelegate.createSpan(otelSpanCreator)
 
     override fun <T> recordSpan(
         name: String,

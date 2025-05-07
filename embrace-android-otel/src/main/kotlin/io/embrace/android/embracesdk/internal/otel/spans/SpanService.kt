@@ -26,10 +26,10 @@ interface SpanService : Initializable {
     ): EmbraceSdkSpan?
 
     /**
-     * Return an [EmbraceSpan] instance that can be used to record spans given the [OtelSpanBuilderWrapper]. Returns null if the builder
+     * Return an [EmbraceSpan] instance that can be used to record spans given the [OtelSpanStartArgs]. Returns null if the builder
      * will not build a valid span or if the SDK and session is not in a state where a new span can be recorded.
      */
-    fun createSpan(otelSpanBuilderWrapper: OtelSpanBuilderWrapper): EmbraceSdkSpan?
+    fun createSpan(otelSpanCreator: OtelSpanCreator): EmbraceSdkSpan?
 
     /**
      * Create, start, and return a new [EmbraceSpan] with the given parameters

@@ -6,7 +6,7 @@ import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryClock
 import io.embrace.android.embracesdk.fakes.FakeTracer
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.embrace.android.embracesdk.internal.otel.schema.PrivateSpan
-import io.embrace.android.embracesdk.internal.otel.sdk.otelSpanBuilderWrapper
+import io.embrace.android.embracesdk.internal.otel.sdk.otelSpanCreator
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -94,7 +94,7 @@ internal class EmbraceSpanFactoryImplTest {
     @Test
     fun `span creation with embrace span builder`() {
         val spanParent = FakeEmbraceSdkSpan.started()
-        val spanBuilder = tracer.otelSpanBuilderWrapper(
+        val spanBuilder = tracer.otelSpanCreator(
             name = "from-span-builder",
             type = EmbType.System.LowPower,
             internal = false,
@@ -102,7 +102,7 @@ internal class EmbraceSpanFactoryImplTest {
             parent = spanParent,
         )
 
-        with(embraceSpanFactory.create(otelSpanBuilderWrapper = spanBuilder)) {
+        with(embraceSpanFactory.create(otelSpanCreator = spanBuilder)) {
             assertTrue(start(clock.now()))
             assertTrue(hasEmbraceAttribute(EmbType.System.LowPower))
             assertEquals(spanParent, parent)

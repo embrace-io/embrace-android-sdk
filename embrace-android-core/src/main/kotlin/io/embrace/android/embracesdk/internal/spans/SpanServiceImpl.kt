@@ -9,10 +9,9 @@ import io.embrace.android.embracesdk.internal.otel.config.isNameValid
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanFactory
-import io.embrace.android.embracesdk.internal.otel.spans.OtelSpanBuilderWrapper
+import io.embrace.android.embracesdk.internal.otel.spans.OtelSpanCreator
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
-import io.embrace.android.embracesdk.internal.otel.spans.getEmbraceSpan
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
@@ -64,16 +63,14 @@ internal class SpanServiceImpl(
         }
     }
 
-    override fun createSpan(otelSpanBuilderWrapper: OtelSpanBuilderWrapper): EmbraceSdkSpan? {
+    override fun createSpan(otelSpanCreator: OtelSpanCreator): EmbraceSdkSpan? {
         EmbTrace.trace("span-create") {
+            val otelSpanStartArgs = otelSpanCreator.spanStartArgs
             return if (
-                limits.isNameValid(otelSpanBuilderWrapper.initialSpanName, otelSpanBuilderWrapper.internal) &&
-                currentSessionSpan.canStartNewSpan(
-                    otelSpanBuilderWrapper.getParentContext().getEmbraceSpan(),
-                    otelSpanBuilderWrapper.internal
-                )
+                limits.isNameValid(otelSpanStartArgs.spanName, otelSpanStartArgs.internal) &&
+                currentSessionSpan.canStartNewSpan(otelSpanStartArgs.getParentSpan(), otelSpanStartArgs.internal)
             ) {
-                embraceSpanFactory.create(otelSpanBuilderWrapper)
+                embraceSpanFactory.create(otelSpanCreator)
             } else {
                 null
             }

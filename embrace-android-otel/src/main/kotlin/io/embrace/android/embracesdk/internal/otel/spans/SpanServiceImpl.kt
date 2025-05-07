@@ -59,16 +59,17 @@ internal class SpanServiceImpl(
         }
     }
 
-    override fun createSpan(otelSpanBuilderWrapper: OtelSpanBuilderWrapper): EmbraceSdkSpan? {
+    override fun createSpan(otelSpanCreator: OtelSpanCreator): EmbraceSdkSpan? {
         EmbTrace.trace("span-create") {
+            val otelSpanStartArgs = otelSpanCreator.spanStartArgs
             return if (
-                limits.isNameValid(otelSpanBuilderWrapper.initialSpanName, otelSpanBuilderWrapper.internal) &&
+                limits.isNameValid(otelSpanStartArgs.spanName, otelSpanStartArgs.internal) &&
                 canStartNewSpan(
-                    otelSpanBuilderWrapper.getParentContext().getEmbraceSpan(),
-                    otelSpanBuilderWrapper.internal
+                    otelSpanStartArgs.parentContext.getEmbraceSpan(),
+                    otelSpanStartArgs.internal
                 )
             ) {
-                embraceSpanFactory.create(otelSpanBuilderWrapper)
+                embraceSpanFactory.create(otelSpanCreator)
             } else {
                 null
             }

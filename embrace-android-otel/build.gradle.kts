@@ -31,4 +31,8 @@ dependencies {
     testImplementation(libs.opentelemetry.sdk)
     testImplementation(libs.opentelemetry.semconv)
     testImplementation(libs.opentelemetry.semconv.incubating)
+
+    implementation(libs.opentelemetry.kotlin.api)
+    implementation(libs.opentelemetry.kotlin.api.ext)
+    implementation(libs.opentelemetry.kotlin.compat)
 }

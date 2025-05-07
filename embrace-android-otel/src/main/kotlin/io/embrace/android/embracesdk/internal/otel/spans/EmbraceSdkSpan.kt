@@ -4,9 +4,8 @@ import io.embrace.android.embracesdk.internal.otel.attrs.EmbraceAttribute
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.spans.EmbraceSpan
-import io.opentelemetry.api.common.AttributeKey
+import io.embrace.opentelemetry.kotlin.StatusCode
 import io.opentelemetry.api.trace.SpanContext
-import io.opentelemetry.api.trace.StatusCode
 import io.opentelemetry.context.Context
 import io.opentelemetry.context.ContextKey
 import io.opentelemetry.context.ImplicitContextKeyed
@@ -35,12 +34,12 @@ interface EmbraceSdkSpan : EmbraceSpan, ImplicitContextKeyed {
     /**
      * Get the value of the attribute with the given key. Returns null if the attribute does not exist.
      */
-    fun getSystemAttribute(key: AttributeKey<String>): String?
+    fun getSystemAttribute(key: String): String?
 
     /**
      * Set the value of the attribute with the given key, overwriting the original value if it's already set
      */
-    fun setSystemAttribute(key: AttributeKey<String>, value: String)
+    fun setSystemAttribute(key: String, value: String)
 
     /**
      * Add the given key value pair as a system attribute to ths span

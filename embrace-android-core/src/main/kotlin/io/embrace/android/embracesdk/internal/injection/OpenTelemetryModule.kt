@@ -9,14 +9,16 @@ import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
 import io.embrace.android.embracesdk.internal.spans.EmbraceTracer
 import io.embrace.android.embracesdk.internal.spans.InternalTracer
+import io.embrace.opentelemetry.kotlin.ExperimentalApi
+import io.embrace.opentelemetry.kotlin.logging.Logger
 import io.opentelemetry.api.OpenTelemetry
-import io.opentelemetry.api.logs.Logger
 import io.opentelemetry.api.trace.Tracer
 import io.opentelemetry.api.trace.TracerProvider
 
 /**
  * Module that instantiates various OpenTelemetry related components
  */
+@OptIn(ExperimentalApi::class)
 interface OpenTelemetryModule {
 
     /**

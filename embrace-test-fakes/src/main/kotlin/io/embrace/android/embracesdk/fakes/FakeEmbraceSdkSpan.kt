@@ -5,7 +5,6 @@ import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.clock.normalizeTimestampAsMillis
 import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
 import io.embrace.android.embracesdk.internal.otel.attrs.EmbraceAttribute
-import io.embrace.android.embracesdk.internal.otel.attrs.asOtelAttributeKey
 import io.embrace.android.embracesdk.internal.otel.attrs.asPair
 import io.embrace.android.embracesdk.internal.otel.attrs.embHeartbeatTimeUnixNano
 import io.embrace.android.embracesdk.internal.otel.attrs.embProcessIdentifier
@@ -15,18 +14,17 @@ import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.embrace.android.embracesdk.internal.otel.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.otel.schema.ErrorCodeAttribute.Failure.fromErrorCode
 import io.embrace.android.embracesdk.internal.otel.sdk.hasEmbraceAttribute
-import io.embrace.android.embracesdk.internal.otel.sdk.toStatus
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.otel.spans.getEmbraceSpan
+import io.embrace.android.embracesdk.internal.otel.toEmbracePayload
 import io.embrace.android.embracesdk.internal.payload.Link
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
-import io.opentelemetry.api.common.AttributeKey
+import io.embrace.opentelemetry.kotlin.StatusCode
 import io.opentelemetry.api.trace.SpanContext
-import io.opentelemetry.api.trace.StatusCode
 import io.opentelemetry.context.Context
 import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -85,12 +83,12 @@ class FakeEmbraceSdkSpan(
         if (isRecording) {
             this.errorCode = errorCode
             if (errorCode != null) {
-                setStatus(StatusCode.ERROR)
+                setStatus(StatusCode.Error(null))
             }
 
             if (status == Span.Status.ERROR) {
                 val error = errorCode?.fromErrorCode() ?: ErrorCodeAttribute.Failure
-                setSystemAttribute(error.key.asOtelAttributeKey(), error.value)
+                setSystemAttribute(error.key.name, error.value)
             }
 
             val timestamp = endTimeMs ?: fakeClock.now()
@@ -123,7 +121,7 @@ class FakeEmbraceSdkSpan(
     }
 
     override fun setStatus(statusCode: StatusCode, description: String) {
-        status = statusCode.toStatus()
+        status = statusCode.toEmbracePayload()
         statusDescription = description
     }
 
@@ -171,10 +169,10 @@ class FakeEmbraceSdkSpan(
     override fun hasEmbraceAttribute(embraceAttribute: EmbraceAttribute): Boolean =
         attributes.hasEmbraceAttribute(embraceAttribute)
 
-    override fun getSystemAttribute(key: AttributeKey<String>): String? = attributes[key.key]
+    override fun getSystemAttribute(key: String): String? = attributes[key]
 
-    override fun setSystemAttribute(key: AttributeKey<String>, value: String) {
-        addSystemAttribute(key.key, value)
+    override fun setSystemAttribute(key: String, value: String) {
+        addSystemAttribute(key, value)
     }
 
     override fun addSystemAttribute(key: String, value: String) {
@@ -229,11 +227,11 @@ class FakeEmbraceSdkSpan(
                     )
                 }
 
-                setSystemAttribute(SessionIncubatingAttributes.SESSION_ID, sessionId)
-                setSystemAttribute(embProcessIdentifier.asOtelAttributeKey(), processIdentifier)
-                setSystemAttribute(embState.asOtelAttributeKey(), "foreground")
+                setSystemAttribute(SessionIncubatingAttributes.SESSION_ID.key, sessionId)
+                setSystemAttribute(embProcessIdentifier.name, processIdentifier)
+                setSystemAttribute(embState.name, "foreground")
                 setSystemAttribute(
-                    embHeartbeatTimeUnixNano.asOtelAttributeKey(),
+                    embHeartbeatTimeUnixNano.name,
                     (lastHeartbeatTimeMs ?: this.spanStartTimeMs)!!.millisToNanos().toString()
                 )
                 if (endTimeMs != null) {

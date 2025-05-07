@@ -7,7 +7,8 @@ import io.embrace.android.embracesdk.internal.otel.config.getMaxTotalAttributeCo
 import io.embrace.android.embracesdk.internal.otel.config.getMaxTotalEventCount
 import io.embrace.android.embracesdk.internal.otel.config.getMaxTotalLinkCount
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
-import io.opentelemetry.api.logs.Logger
+import io.embrace.opentelemetry.kotlin.ExperimentalApi
+import io.embrace.opentelemetry.kotlin.OpenTelemetry
 import io.opentelemetry.api.trace.Tracer
 import io.opentelemetry.sdk.OpenTelemetrySdk
 import io.opentelemetry.sdk.common.Clock
@@ -21,6 +22,7 @@ import io.opentelemetry.sdk.trace.SpanLimits
  * the Embrace SDK can hook into its lifecycle. From this, the Embrace SDK can obtain an implementations of the OpenTelemetry API to
  * create OpenTelemetry primitives that it can use internally or export to any OpenTelemetry Collectors.
  */
+@OptIn(ExperimentalApi::class)
 class OtelSdkWrapper(
     openTelemetryClock: Clock,
     configuration: OtelSdkConfig,
@@ -57,8 +59,6 @@ class OtelSdkWrapper(
         }
     }
 
-    fun getOpenTelemetryLogger(): Logger = logger
-
     private val resource: Resource by lazy {
         configuration.resourceBuilder.build()
     }
@@ -80,9 +80,8 @@ class OtelSdkWrapper(
         }
     }
 
-    private val logger: Logger by lazy {
-        EmbTrace.trace("otel-logger-init") {
-            sdk.logsBridge.loggerBuilder(configuration.sdkName).build()
-        }
+    @OptIn(ExperimentalApi::class)
+    val kotlinApi: OpenTelemetry by lazy {
+        io.embrace.opentelemetry.kotlin.k2j.OpenTelemetrySdk(sdk)
     }
 }

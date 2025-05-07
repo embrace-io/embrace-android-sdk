@@ -4,7 +4,6 @@ import io.embrace.android.embracesdk.internal.arch.destination.SessionSpanWriter
 import io.embrace.android.embracesdk.internal.arch.destination.SpanAttributeData
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
-import io.embrace.android.embracesdk.internal.otel.attrs.asOtelAttributeKey
 import io.embrace.android.embracesdk.internal.otel.attrs.asPair
 import io.embrace.android.embracesdk.internal.otel.schema.AppTerminationCause
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
@@ -90,7 +89,7 @@ internal class CurrentSessionSpanImpl(
     }
 
     override fun getSessionId(): String {
-        return sessionSpan.get()?.getSystemAttribute(SessionIncubatingAttributes.SESSION_ID) ?: ""
+        return sessionSpan.get()?.getSystemAttribute(SessionIncubatingAttributes.SESSION_ID.key) ?: ""
     }
 
     override fun readySession(): Boolean {
@@ -133,7 +132,7 @@ internal class CurrentSessionSpanImpl(
                     val crashTime = openTelemetryClock.now().nanosToMillis()
                     spanRepository.failActiveSpans(crashTime)
                     endingSessionSpan.setSystemAttribute(
-                        appTerminationCause.key.asOtelAttributeKey(),
+                        appTerminationCause.key.name,
                         appTerminationCause.value
                     )
                     endingSessionSpan.stop(errorCode = ErrorCode.FAILURE, endTimeMs = crashTime)
@@ -183,7 +182,7 @@ internal class CurrentSessionSpanImpl(
             private = false,
         ).apply {
             start(startTimeMs = startTimeMs)
-            setSystemAttribute(SessionIncubatingAttributes.SESSION_ID, Uuid.getEmbUuid())
+            setSystemAttribute(SessionIncubatingAttributes.SESSION_ID.key, Uuid.getEmbUuid())
         }
     }
 

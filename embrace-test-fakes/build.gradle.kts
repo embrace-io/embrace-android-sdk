@@ -32,4 +32,8 @@ dependencies {
     implementation(libs.okhttp)
     implementation(libs.robolectric)
     implementation(libs.lifecycle.runtime)
+
+    implementation(libs.opentelemetry.kotlin.api)
+    implementation(libs.opentelemetry.kotlin.api.ext)
+    implementation(libs.opentelemetry.kotlin.compat)
 }

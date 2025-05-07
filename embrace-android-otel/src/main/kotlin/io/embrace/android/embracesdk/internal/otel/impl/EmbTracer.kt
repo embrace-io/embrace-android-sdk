@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.otel.impl
 
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
-import io.embrace.android.embracesdk.internal.otel.sdk.otelSpanBuilderWrapper
+import io.embrace.android.embracesdk.internal.otel.sdk.otelSpanCreator
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.otel.spans.getEmbraceSpan
 import io.opentelemetry.api.trace.SpanBuilder
@@ -17,7 +17,7 @@ class EmbTracer(
 
     override fun spanBuilder(spanName: String): SpanBuilder =
         EmbSpanBuilder(
-            otelSpanBuilderWrapper = sdkTracer.otelSpanBuilderWrapper(
+            otelSpanCreator = sdkTracer.otelSpanCreator(
                 name = spanName,
                 type = EmbType.Performance.Default,
                 private = false,

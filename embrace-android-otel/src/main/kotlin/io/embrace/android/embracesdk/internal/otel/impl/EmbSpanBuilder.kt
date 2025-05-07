@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.otel.impl
 
-import io.embrace.android.embracesdk.internal.otel.spans.OtelSpanBuilderWrapper
+import io.embrace.android.embracesdk.internal.otel.spans.OtelSpanCreator
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
@@ -13,18 +13,20 @@ import io.opentelemetry.sdk.common.Clock
 import java.util.concurrent.TimeUnit
 
 class EmbSpanBuilder(
-    private val otelSpanBuilderWrapper: OtelSpanBuilderWrapper,
+    private val otelSpanCreator: OtelSpanCreator,
     private val spanService: SpanService,
     private val clock: Clock,
 ) : SpanBuilder {
 
+    private val otelSpanStartArgs = otelSpanCreator.spanStartArgs
+
     override fun setParent(context: Context): SpanBuilder {
-        otelSpanBuilderWrapper.setParentContext(context)
+        otelSpanStartArgs.parentContext = context
         return this
     }
 
     override fun setNoParent(): SpanBuilder {
-        otelSpanBuilderWrapper.setNoParent()
+        otelSpanStartArgs.parentContext = Context.root()
         return this
     }
 
@@ -33,7 +35,7 @@ class EmbSpanBuilder(
     override fun addLink(spanContext: SpanContext, attributes: Attributes): SpanBuilder = this
 
     override fun setAttribute(key: String, value: String): SpanBuilder {
-        otelSpanBuilderWrapper.customAttributes[key] = value
+        otelSpanStartArgs.customAttributes[key] = value
         return this
     }
 
@@ -47,17 +49,17 @@ class EmbSpanBuilder(
         setAttribute(key.key, value.toString())
 
     override fun setSpanKind(spanKind: SpanKind): SpanBuilder {
-        otelSpanBuilderWrapper.setSpanKind(spanKind)
+        otelSpanStartArgs.spanKind = spanKind
         return this
     }
 
     override fun setStartTimestamp(startTimestamp: Long, unit: TimeUnit): SpanBuilder {
-        otelSpanBuilderWrapper.startTimeMs = unit.toMillis(startTimestamp)
+        otelSpanStartArgs.startTimeMs = unit.toMillis(startTimestamp)
         return this
     }
 
     override fun startSpan(): Span {
-        spanService.createSpan(otelSpanBuilderWrapper)?.let { embraceSpan ->
+        spanService.createSpan(otelSpanCreator)?.let { embraceSpan ->
             if (embraceSpan.start()) {
                 return EmbSpan(
                     embraceSpan = embraceSpan,

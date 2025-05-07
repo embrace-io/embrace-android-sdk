@@ -5,16 +5,18 @@ import io.embrace.android.embracesdk.internal.otel.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.otel.schema.TelemetryType
 import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
+import io.embrace.opentelemetry.kotlin.ExperimentalApi
+import io.embrace.opentelemetry.kotlin.tracing.Tracer
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.SpanBuilder
 import io.opentelemetry.api.trace.SpanKind
-import io.opentelemetry.api.trace.Tracer
 import io.opentelemetry.context.Context
 import java.util.concurrent.TimeUnit
 
 /**
  * Wrapper for the [SpanBuilder] that stores the input data so that they can be accessed
  */
+@OptIn(ExperimentalApi::class)
 class OtelSpanBuilderWrapper(
     tracer: Tracer,
     name: String,

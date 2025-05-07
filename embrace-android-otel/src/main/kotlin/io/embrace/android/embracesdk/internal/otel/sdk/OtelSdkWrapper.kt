@@ -53,12 +53,6 @@ class OtelSdkWrapper(
         }
     }
 
-    val sdkTracer: Tracer by lazy {
-        EmbTrace.trace("otel-tracer-init") {
-            sdk.getTracer(configuration.sdkName, configuration.sdkVersion)
-        }
-    }
-
     private val resource: Resource by lazy {
         configuration.resourceBuilder.build()
     }

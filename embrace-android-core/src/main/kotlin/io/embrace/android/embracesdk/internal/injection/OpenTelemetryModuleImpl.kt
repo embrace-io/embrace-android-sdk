@@ -25,7 +25,6 @@ import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.logging.Logger
 import io.opentelemetry.api.OpenTelemetry
-import io.opentelemetry.api.trace.Tracer
 import io.opentelemetry.api.trace.TracerProvider
 
 @OptIn(ExperimentalApi::class)
@@ -73,8 +72,13 @@ internal class OpenTelemetryModuleImpl(
         }
     }
 
-    override val sdkTracer: Tracer by lazy {
-        otelSdkWrapper.sdkTracer
+    private val sdkTracer: io.embrace.opentelemetry.kotlin.tracing.Tracer by lazy {
+        EmbTrace.trace("otel-tracer-init") {
+            otelSdkWrapper.kotlinApi.tracerProvider.getTracer(
+                name = otelSdkConfig.sdkName,
+                version = otelSdkConfig.sdkVersion
+            )
+        }
     }
 
     private var sensitiveKeysBehavior: SensitiveKeysBehavior? = null

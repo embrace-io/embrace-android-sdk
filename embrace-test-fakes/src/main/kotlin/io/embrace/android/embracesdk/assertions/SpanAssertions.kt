@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.assertions
 
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
+import io.embrace.android.embracesdk.internal.otel.schema.LinkType
 import io.embrace.android.embracesdk.internal.otel.sdk.hasEmbraceAttribute
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
@@ -38,3 +39,13 @@ fun Span.hasEventOfType(telemetryType: EmbType): Boolean {
     }
     return sanitizedEvents.find { checkNotNull(it.attributes).hasEmbraceAttribute(telemetryType) } != null
 }
+
+fun Span.assertPreviousSession(previousSessionSpan: Span, previousSessionId: String) {
+    val prevSessionLink = checkNotNull(links).single {
+        it.attributes?.toMap()?.containsKey(LinkType.PreviousSession.key.name) == true
+    }
+    prevSessionLink.validatePreviousSessionLink(previousSessionSpan, previousSessionId)
+}
+
+fun Span.assertNoPreviousSession() =
+    links?.filter { it.attributes?.toMap()?.containsKey(LinkType.PreviousSession.key.name) == false }?.size == 0

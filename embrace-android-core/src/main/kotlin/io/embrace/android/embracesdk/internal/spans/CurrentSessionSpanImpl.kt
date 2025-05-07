@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.internal.otel.attrs.asOtelAttributeKey
 import io.embrace.android.embracesdk.internal.otel.attrs.asPair
 import io.embrace.android.embracesdk.internal.otel.schema.AppTerminationCause
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
+import io.embrace.android.embracesdk.internal.otel.schema.LinkType
 import io.embrace.android.embracesdk.internal.otel.sdk.toEmbraceObjectName
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanData
@@ -44,6 +45,7 @@ internal class CurrentSessionSpanImpl(
      * The span that models the lifetime of the current session or background activity
      */
     private val sessionSpan: AtomicReference<EmbraceSdkSpan?> = AtomicReference(null)
+    private val lastSessionSpan: AtomicReference<EmbraceSdkSpan?> = AtomicReference(null)
 
     override fun initializeService(sdkInitStartTimeMs: Long) {
         if (!initialized.get()) {
@@ -122,6 +124,7 @@ internal class CurrentSessionSpanImpl(
 
                 if (appTerminationCause == null) {
                     endingSessionSpan.stop()
+                    lastSessionSpan.set(endingSessionSpan)
                     spanRepository.clearCompletedSpans()
                     val newSession = if (startNewSession) {
                         startSessionSpan(openTelemetryClock.now().nanosToMillis())
@@ -184,6 +187,15 @@ internal class CurrentSessionSpanImpl(
         ).apply {
             start(startTimeMs = startTimeMs)
             setSystemAttribute(SessionIncubatingAttributes.SESSION_ID, Uuid.getEmbUuid())
+            val previousSessionSpan = lastSessionSpan.get()
+            previousSessionSpan?.spanContext?.let {
+                val prevSessionId = previousSessionSpan.getSystemAttribute(SessionIncubatingAttributes.SESSION_ID) ?: ""
+                addSystemLink(
+                    linkedSpanContext = it,
+                    type = LinkType.PreviousSession,
+                    attributes = mapOf(SessionIncubatingAttributes.SESSION_ID.key to prevSessionId)
+                )
+            }
         }
     }
 

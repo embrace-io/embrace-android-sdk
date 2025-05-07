@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.arch.assertHasEmbraceAttribute
 import io.embrace.android.embracesdk.arch.assertIsType
 import io.embrace.android.embracesdk.assertions.assertEmbraceSpanData
 import io.embrace.android.embracesdk.assertions.findEventOfType
+import io.embrace.android.embracesdk.assertions.validatePreviousSessionLink
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
 import io.embrace.android.embracesdk.fakes.FakeEmbraceSpanFactory
@@ -426,14 +427,20 @@ internal class CurrentSessionSpanImplTests {
     }
 
     @Test
-    fun `ending a session will only start a new session span if told to`() {
-        val originalSessionSpanId = spanRepository.getActiveSpans().single().spanId
+    fun `new session started after ending has correct metadata`() {
+        val originalSessionSpan = checkNotNull(spanRepository.getActiveSpans().single().snapshot())
+        val originalSessionId = currentSessionSpan.getSessionId()
         currentSessionSpan.endSession(startNewSession = true)
         with(spanRepository.getActiveSpans().single()) {
             assertTrue(hasEmbraceAttribute(EmbType.Ux.Session))
-            assertNotEquals(originalSessionSpanId, spanId)
+            assertNotEquals(originalSessionSpan.spanId, spanId)
+            checkNotNull(snapshot()?.links?.single()).validatePreviousSessionLink(originalSessionSpan, originalSessionId)
         }
+    }
 
+    @Test
+    fun `new session will only start if told to`() {
+        assertNotNull(spanRepository.getActiveSpans().single())
         currentSessionSpan.endSession(startNewSession = false)
         assertTrue(spanRepository.getActiveSpans().isEmpty())
     }

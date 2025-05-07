@@ -2,14 +2,14 @@ package io.embrace.android.embracesdk.testcases
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.ResourceReader
+import io.embrace.android.embracesdk.assertions.toMap
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
-import io.embrace.android.embracesdk.internal.otel.attrs.embFreeDiskBytes
 import io.embrace.android.embracesdk.internal.otel.attrs.asOtelAttributeKey
+import io.embrace.android.embracesdk.internal.otel.attrs.embFreeDiskBytes
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
-import io.embrace.android.embracesdk.testframework.assertions.toMap
 import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull

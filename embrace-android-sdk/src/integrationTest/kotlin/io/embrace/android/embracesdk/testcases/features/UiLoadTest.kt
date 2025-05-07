@@ -14,6 +14,7 @@ import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.embrace.android.embracesdk.internal.capture.activity.LifecycleStage
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
@@ -21,7 +22,6 @@ import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterfac
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface.Companion.LIFECYCLE_EVENT_GAP
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface.Companion.POST_ACTIVITY_ACTION_DWELL
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface.Companion.STARTUP_BACKGROUND_TIME
-import io.opentelemetry.api.trace.SpanId
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
@@ -145,7 +145,7 @@ internal class UiLoadTest {
                         span = trace,
                         expectedStartTimeMs = expectedTraceStartTime,
                         expectedEndTimeMs = expectedTraceStartTime + calculateTotalTime(lifecycleStages = 4),
-                        expectedParentId = SpanId.getInvalid(),
+                        expectedParentId = OtelIds.invalidSpanId,
                         expectedCustomAttributes = mapOf("manual-end" to "true")
                     )
 
@@ -200,7 +200,7 @@ internal class UiLoadTest {
                             lifecycleStages = 3,
                             activitiesFullyLoaded = 1
                         ),
-                        expectedParentId = SpanId.getInvalid(),
+                        expectedParentId = OtelIds.invalidSpanId,
                         expectedStatus = Span.Status.ERROR,
                         expectedErrorCode = ErrorCode.USER_ABANDON,
                     )
@@ -269,7 +269,7 @@ internal class UiLoadTest {
                     span = trace,
                     expectedStartTimeMs = expectedTraceStartTime,
                     expectedEndTimeMs = expectedTraceStartTime + calculateTotalTime(lifecycleStages = 2),
-                    expectedParentId = SpanId.getInvalid(),
+                    expectedParentId = OtelIds.invalidSpanId,
                 )
 
                 assertEmbraceSpanData(
@@ -322,7 +322,7 @@ internal class UiLoadTest {
                     span = trace,
                     expectedStartTimeMs = expectedTraceStartTime,
                     expectedEndTimeMs = expectedTraceStartTime + calculateTotalTime(lifecycleStages = 2),
-                    expectedParentId = SpanId.getInvalid(),
+                    expectedParentId = OtelIds.invalidSpanId,
                 )
 
                 assertEmbraceSpanData(
@@ -377,7 +377,7 @@ internal class UiLoadTest {
                     span = trace,
                     expectedStartTimeMs = expectedTraceStartTime,
                     expectedEndTimeMs = expectedTraceStartTime + calculateTotalTime(lifecycleStages = 1),
-                    expectedParentId = SpanId.getInvalid(),
+                    expectedParentId = OtelIds.invalidSpanId,
                 )
 
                 assertEmbraceSpanData(

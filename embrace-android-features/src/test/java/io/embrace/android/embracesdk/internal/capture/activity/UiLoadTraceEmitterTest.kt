@@ -7,12 +7,12 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
+import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
-import io.opentelemetry.api.trace.SpanId
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNull
@@ -223,7 +223,7 @@ internal class UiLoadTraceEmitterTest {
                 span = trace.toEmbracePayload(),
                 expectedStartTimeMs = timestamps.first,
                 expectedEndTimeMs = timestamps.second,
-                expectedParentId = SpanId.getInvalid(),
+                expectedParentId = OtelIds.invalidSpanId,
                 expectedCustomAttributes = customAttributes,
             )
 

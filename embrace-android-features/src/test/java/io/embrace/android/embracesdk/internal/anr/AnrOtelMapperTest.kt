@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeSpanService
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
+import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
 import io.embrace.android.embracesdk.internal.payload.AnrInterval
 import io.embrace.android.embracesdk.internal.payload.AnrSample
 import io.embrace.android.embracesdk.internal.payload.AnrSampleList
@@ -13,7 +14,6 @@ import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
 import io.embrace.android.embracesdk.internal.payload.ThreadInfo
-import io.opentelemetry.api.trace.SpanId
 import io.opentelemetry.semconv.ExceptionAttributes
 import io.opentelemetry.semconv.JvmAttributes
 import org.junit.Assert.assertEquals
@@ -215,7 +215,7 @@ internal class AnrOtelMapperTest {
     private fun Span.assertCommonOtelCharacteristics() {
         assertNotNull(traceId)
         assertNotNull(spanId)
-        assertEquals(SpanId.getInvalid(), parentSpanId)
+        assertEquals(OtelIds.invalidSpanId, parentSpanId)
         assertEquals("emb-thread-blockage", name)
         assertEquals(START_TIME_MS, startTimeNanos?.nanosToMillis())
         assertSuccessful()

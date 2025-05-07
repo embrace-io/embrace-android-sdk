@@ -26,12 +26,12 @@ import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
 import io.embrace.android.embracesdk.internal.otel.schema.AppTerminationCause
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
+import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanFactoryImpl
 import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
-import io.opentelemetry.api.trace.SpanId
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -73,7 +73,7 @@ internal class SpanServiceImplTest {
         assertTrue(embraceSpan.start())
         assertTrue(embraceSpan.stop())
         with(verifyAndReturnSoleCompletedSpan("emb-test-span")) {
-            assertEquals(SpanId.getInvalid(), parentSpanId)
+            assertEquals(OtelIds.invalidSpanId, parentSpanId)
             assertIsTypePerformance()
             assertNotPrivateSpan()
         }
@@ -125,7 +125,7 @@ internal class SpanServiceImplTest {
         assertTrue(embraceSpan.start())
         assertTrue(embraceSpan.stop())
         with(verifyAndReturnSoleCompletedSpan("emb-test-span")) {
-            assertEquals(SpanId.getInvalid(), parentSpanId)
+            assertEquals(OtelIds.invalidSpanId, parentSpanId)
             assertIsTypePerformance()
         }
     }
@@ -154,7 +154,7 @@ internal class SpanServiceImplTest {
 
         with(currentSpans[1]) {
             assertEquals("emb-test-span", name)
-            assertEquals(SpanId.getInvalid(), parentSpanId)
+            assertEquals(OtelIds.invalidSpanId, parentSpanId)
             assertEquals(parentSpan.spanId, spanId)
             assertEquals(parentSpan.traceId, traceId)
             assertNotPrivateSpan()
@@ -260,7 +260,7 @@ internal class SpanServiceImplTest {
             assertEquals(expectedStartTimeMs, startTimeNanos.nanosToMillis())
             assertEquals(expectedEndTimeMs, endTimeNanos.nanosToMillis())
             assertIsTypePerformance()
-            assertEquals(SpanId.getInvalid(), parentSpanId)
+            assertEquals(OtelIds.invalidSpanId, parentSpanId)
             assertNotPrivateSpan()
             expectedAttributes.forEach {
                 assertEquals(it.value, attributes[it.key])
@@ -384,7 +384,7 @@ internal class SpanServiceImplTest {
 
         assertEquals(returnThis, lambdaReturn)
         with(verifyAndReturnSoleCompletedSpan("emb-test-span")) {
-            assertEquals(SpanId.getInvalid(), parentSpanId)
+            assertEquals(OtelIds.invalidSpanId, parentSpanId)
             assertIsTypePerformance()
             assertNotPrivateSpan()
         }

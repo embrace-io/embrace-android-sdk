@@ -6,10 +6,10 @@ import io.embrace.android.embracesdk.internal.otel.schema.AppTerminationCause
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.embrace.android.embracesdk.internal.otel.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.otel.sdk.hasEmbraceAttribute
+import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
 import io.embrace.android.embracesdk.internal.otel.sdk.setEmbraceAttribute
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Span
-import io.opentelemetry.api.trace.SpanId
 
 fun Span.hasEmbraceAttribute(embraceAttribute: EmbraceAttribute): Boolean {
     return embraceAttribute.value == attributes?.singleOrNull { it.key == embraceAttribute.key.name }?.data
@@ -25,7 +25,7 @@ fun Span.toFailedSpan(endTimeMs: Long): Span {
 
     return copy(
         endTimeNanos = endTimeMs.millisToNanos(),
-        parentSpanId = parentSpanId ?: SpanId.getInvalid(),
+        parentSpanId = parentSpanId ?: OtelIds.invalidSpanId,
         status = Span.Status.ERROR,
         attributes = newAttributes.map { Attribute(it.key, it.value) }.plus(attributes ?: emptyList())
     )

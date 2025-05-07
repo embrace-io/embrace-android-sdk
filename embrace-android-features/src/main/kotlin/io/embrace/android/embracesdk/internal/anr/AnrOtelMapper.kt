@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
+import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.payload.AnrInterval
 import io.embrace.android.embracesdk.internal.payload.AnrSample
@@ -11,8 +12,6 @@ import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
-import io.opentelemetry.api.trace.SpanId
-import io.opentelemetry.sdk.trace.IdGenerator
 import io.opentelemetry.semconv.ExceptionAttributes
 import io.opentelemetry.semconv.JvmAttributes
 
@@ -29,9 +28,9 @@ class AnrOtelMapper(
             val attrs = mapIntervalToSpanAttributes(interval)
             val events = mapIntervalToSpanEvents(interval)
             Span(
-                traceId = IdGenerator.random().generateTraceId(),
-                spanId = IdGenerator.random().generateSpanId(),
-                parentSpanId = SpanId.getInvalid(),
+                traceId = OtelIds.generateTraceId(),
+                spanId = OtelIds.generateSpanId(),
+                parentSpanId = OtelIds.invalidSpanId,
                 name = "emb-thread-blockage",
                 startTimeNanos = interval.startTime.millisToNanos(),
                 endTimeNanos = (interval.endTime ?: clock.now()).millisToNanos(),

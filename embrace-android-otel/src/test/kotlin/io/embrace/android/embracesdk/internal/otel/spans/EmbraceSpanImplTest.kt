@@ -23,13 +23,13 @@ import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedCo
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.embrace.android.embracesdk.internal.otel.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
+import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
 import io.embrace.android.embracesdk.internal.otel.sdk.otelSpanBuilderWrapper
 import io.embrace.android.embracesdk.internal.otel.sdk.toEmbraceObjectName
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.utils.truncatedStacktraceText
 import io.embrace.android.embracesdk.spans.ErrorCode
-import io.opentelemetry.api.trace.SpanId
 import io.opentelemetry.sdk.OpenTelemetrySdk
 import io.opentelemetry.sdk.trace.SdkTracerProvider
 import io.opentelemetry.semconv.ExceptionAttributes
@@ -377,7 +377,7 @@ internal class EmbraceSpanImplTest {
 
             assertEquals(traceId, snapshot.traceId)
             assertEquals(spanId, snapshot.spanId)
-            assertEquals(SpanId.getInvalid(), snapshot.parentSpanId)
+            assertEquals(OtelIds.invalidSpanId, snapshot.parentSpanId)
             assertEquals(EXPECTED_SPAN_NAME.toEmbraceObjectName(), snapshot.name)
             assertTrue(hasEmbraceAttribute(EmbType.System.LowPower))
             assertTrue(hasEmbraceAttribute(PrivateSpan))

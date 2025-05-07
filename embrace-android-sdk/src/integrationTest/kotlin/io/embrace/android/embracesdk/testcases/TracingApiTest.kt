@@ -11,6 +11,7 @@ import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fixtures.TOO_LONG_ATTRIBUTE_KEY
 import io.embrace.android.embracesdk.fixtures.TOO_LONG_ATTRIBUTE_VALUE
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
+import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
 import io.embrace.android.embracesdk.internal.payload.ApplicationState
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Span
@@ -184,7 +185,7 @@ internal class TracingApiTest {
                     span = traceRootSpan,
                     expectedStartTimeMs = testStartTimeMs + 1,
                     expectedEndTimeMs = testStartTimeMs + 300,
-                    expectedParentId = SpanId.getInvalid(),
+                    expectedParentId = OtelIds.invalidSpanId,
                     expectedCustomAttributes = mapOf(Pair("oMg", "OmG")),
                     expectedEvents = listOf(
                         SpanEvent(
@@ -250,7 +251,7 @@ internal class TracingApiTest {
                     span = sessionSpan,
                     expectedStartTimeMs = sessionStartTimeMs,
                     expectedEndTimeMs = sessionEndTimeMs,
-                    expectedParentId = SpanId.getInvalid(),
+                    expectedParentId = OtelIds.invalidSpanId,
                     private = false
                 )
 
@@ -261,7 +262,7 @@ internal class TracingApiTest {
                     span = unendingSpanSnapshot,
                     expectedStartTimeMs = testStartTimeMs + 600,
                     expectedEndTimeMs = null,
-                    expectedParentId = SpanId.getInvalid(),
+                    expectedParentId = OtelIds.invalidSpanId,
                     expectedStatus = Span.Status.UNSET,
                     expectedCustomAttributes = mapOf(Pair("unending-key", "unending-value")),
                     expectedEvents = listOf(

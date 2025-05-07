@@ -9,13 +9,13 @@ import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fixtures.TOO_LONG_SPAN_NAME
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
+import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
-import io.opentelemetry.api.trace.SpanId
 import io.opentelemetry.api.trace.StatusCode
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -354,7 +354,7 @@ internal class EmbraceTracerTest {
         assertEquals(name, currentSpan.name)
         currentSpan.assertIsTypePerformance()
         if (traceRoot) {
-            assertEquals(SpanId.getInvalid(), currentSpan.parentSpanId)
+            assertEquals(OtelIds.invalidSpanId, currentSpan.parentSpanId)
         } else {
             assertNotNull(currentSpan.parentSpanId)
         }

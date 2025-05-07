@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.otel.spans
 
-import io.embrace.android.embracesdk.internal.otel.schema.TelemetryType
+import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 
@@ -11,7 +11,7 @@ import io.embrace.android.embracesdk.spans.EmbraceSpan
 interface EmbraceSpanFactory {
     fun create(
         name: String,
-        type: TelemetryType,
+        type: EmbType,
         internal: Boolean,
         private: Boolean,
         parent: EmbraceSpan? = null,

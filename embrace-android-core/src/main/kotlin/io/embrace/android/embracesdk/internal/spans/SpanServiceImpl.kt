@@ -6,7 +6,7 @@ import io.embrace.android.embracesdk.internal.config.instrumented.schema.OtelLim
 import io.embrace.android.embracesdk.internal.otel.config.isAttributeCountValid
 import io.embrace.android.embracesdk.internal.otel.config.isEventCountValid
 import io.embrace.android.embracesdk.internal.otel.config.isNameValid
-import io.embrace.android.embracesdk.internal.otel.schema.TelemetryType
+import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanFactory
 import io.embrace.android.embracesdk.internal.otel.spans.OtelSpanBuilderWrapper
@@ -43,7 +43,7 @@ internal class SpanServiceImpl(
     override fun createSpan(
         name: String,
         parent: EmbraceSpan?,
-        type: TelemetryType,
+        type: EmbType,
         internal: Boolean,
         private: Boolean,
         autoTerminationMode: AutoTerminationMode,
@@ -83,7 +83,7 @@ internal class SpanServiceImpl(
     override fun <T> recordSpan(
         name: String,
         parent: EmbraceSpan?,
-        type: TelemetryType,
+        type: EmbType,
         internal: Boolean,
         private: Boolean,
         attributes: Map<String, String>,
@@ -129,7 +129,7 @@ internal class SpanServiceImpl(
         startTimeMs: Long,
         endTimeMs: Long,
         parent: EmbraceSpan?,
-        type: TelemetryType,
+        type: EmbType,
         internal: Boolean,
         private: Boolean,
         attributes: Map<String, String>,

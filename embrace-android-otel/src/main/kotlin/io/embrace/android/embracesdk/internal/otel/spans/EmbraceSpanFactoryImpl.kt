@@ -12,7 +12,6 @@ import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.embrace.android.embracesdk.internal.otel.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.otel.schema.ErrorCodeAttribute.Failure.fromErrorCode
-import io.embrace.android.embracesdk.internal.otel.schema.TelemetryType
 import io.embrace.android.embracesdk.internal.otel.sdk.fromMap
 import io.embrace.android.embracesdk.internal.otel.sdk.hasEmbraceAttribute
 import io.embrace.android.embracesdk.internal.otel.sdk.otelSpanBuilderWrapper
@@ -51,7 +50,7 @@ class EmbraceSpanFactoryImpl(
 
     override fun create(
         name: String,
-        type: TelemetryType,
+        type: EmbType,
         internal: Boolean,
         private: Boolean,
         parent: EmbraceSpan?,

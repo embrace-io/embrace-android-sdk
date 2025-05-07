@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.fakes
 
+import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.embrace.android.embracesdk.internal.otel.schema.PrivateSpan
-import io.embrace.android.embracesdk.internal.otel.schema.TelemetryType
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.otel.spans.OtelSpanBuilderWrapper
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
@@ -23,7 +23,7 @@ class FakeSpanService : SpanService {
     override fun createSpan(
         name: String,
         parent: EmbraceSpan?,
-        type: TelemetryType,
+        type: EmbType,
         internal: Boolean,
         private: Boolean,
         autoTerminationMode: AutoTerminationMode,
@@ -43,7 +43,7 @@ class FakeSpanService : SpanService {
     ): EmbraceSdkSpan = FakeEmbraceSdkSpan(
         name = otelSpanBuilderWrapper.initialSpanName,
         parentContext = otelSpanBuilderWrapper.getParentContext(),
-        type = otelSpanBuilderWrapper.embraceAttributes.filterIsInstance<TelemetryType>().single(),
+        type = otelSpanBuilderWrapper.embraceAttributes.filterIsInstance<EmbType>().single(),
         internal = otelSpanBuilderWrapper.internal,
         private = otelSpanBuilderWrapper.embraceAttributes.contains(PrivateSpan),
     ).apply {
@@ -53,7 +53,7 @@ class FakeSpanService : SpanService {
     override fun <T> recordSpan(
         name: String,
         parent: EmbraceSpan?,
-        type: TelemetryType,
+        type: EmbType,
         internal: Boolean,
         private: Boolean,
         attributes: Map<String, String>,
@@ -69,7 +69,7 @@ class FakeSpanService : SpanService {
         startTimeMs: Long,
         endTimeMs: Long,
         parent: EmbraceSpan?,
-        type: TelemetryType,
+        type: EmbType,
         internal: Boolean,
         private: Boolean,
         attributes: Map<String, String>,

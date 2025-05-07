@@ -6,8 +6,8 @@ import io.embrace.android.embracesdk.fakes.FakePayloadIntake
 import io.embrace.android.embracesdk.fakes.fakeSessionEnvelope
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
+import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType.System
-import io.embrace.android.embracesdk.internal.otel.schema.TelemetryType
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.Log
@@ -121,7 +121,7 @@ class V2PayloadStoreTest {
         assertEquals(0, intakeService.shutdownCount)
     }
 
-    private fun storeLogWithType(type: TelemetryType) {
+    private fun storeLogWithType(type: EmbType) {
         val envelope = Envelope(
             data = LogPayload(
                 logs = listOf(

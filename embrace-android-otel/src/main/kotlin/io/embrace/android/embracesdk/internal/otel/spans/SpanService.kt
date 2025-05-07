@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.internal.otel.spans
 
 import io.embrace.android.embracesdk.internal.Initializable
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
-import io.embrace.android.embracesdk.internal.otel.schema.TelemetryType
 import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
@@ -20,7 +19,7 @@ interface SpanService : Initializable {
     fun createSpan(
         name: String,
         parent: EmbraceSpan? = null,
-        type: TelemetryType = EmbType.Performance.Default,
+        type: EmbType = EmbType.Performance.Default,
         internal: Boolean = true,
         private: Boolean = false,
         autoTerminationMode: AutoTerminationMode = AutoTerminationMode.NONE,
@@ -39,7 +38,7 @@ interface SpanService : Initializable {
         name: String,
         parent: EmbraceSpan? = null,
         startTimeMs: Long? = null,
-        type: TelemetryType = EmbType.Performance.Default,
+        type: EmbType = EmbType.Performance.Default,
         internal: Boolean = true,
         private: Boolean = false,
         autoTerminationMode: AutoTerminationMode = AutoTerminationMode.NONE,
@@ -67,7 +66,7 @@ interface SpanService : Initializable {
     fun <T> recordSpan(
         name: String,
         parent: EmbraceSpan? = null,
-        type: TelemetryType = EmbType.Performance.Default,
+        type: EmbType = EmbType.Performance.Default,
         internal: Boolean = true,
         private: Boolean = false,
         attributes: Map<String, String> = emptyMap(),
@@ -85,7 +84,7 @@ interface SpanService : Initializable {
         startTimeMs: Long,
         endTimeMs: Long,
         parent: EmbraceSpan? = null,
-        type: TelemetryType = EmbType.Performance.Default,
+        type: EmbType = EmbType.Performance.Default,
         internal: Boolean = true,
         private: Boolean = false,
         attributes: Map<String, String> = emptyMap(),

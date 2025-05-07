@@ -4,7 +4,6 @@ import io.embrace.android.embracesdk.internal.otel.attrs.asOtelAttributeKey
 import io.embrace.android.embracesdk.internal.otel.attrs.embSendMode
 import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
 import io.embrace.android.embracesdk.internal.otel.schema.SendMode
-import io.embrace.android.embracesdk.internal.otel.schema.toSendMode
 import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.internal.utils.threadSafeTake
 import io.opentelemetry.sdk.common.CompletableResultCode
@@ -20,7 +19,8 @@ class LogSinkImpl : LogSink {
     override fun storeLogs(logs: List<LogRecordData>): CompletableResultCode {
         try {
             logs.forEach { log ->
-                val sendMode = log.attributes[embSendMode.asOtelAttributeKey()]?.toSendMode() ?: SendMode.DEFAULT
+                val mode = log.attributes[embSendMode.asOtelAttributeKey()]
+                val sendMode = SendMode.fromString(mode)
                 if (sendMode != SendMode.DEFAULT) {
                     logRequests.add(
                         LogRequest(

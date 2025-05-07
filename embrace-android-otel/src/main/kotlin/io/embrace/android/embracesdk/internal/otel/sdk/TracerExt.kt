@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.otel.sdk
 
+import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.embrace.android.embracesdk.internal.otel.schema.PrivateSpan
-import io.embrace.android.embracesdk.internal.otel.schema.TelemetryType
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.otel.spans.OtelSpanBuilderWrapper
 import io.embrace.android.embracesdk.spans.EmbraceSpan
@@ -13,7 +13,7 @@ import io.opentelemetry.context.Context
  */
 fun Tracer.otelSpanBuilderWrapper(
     name: String,
-    type: TelemetryType,
+    type: EmbType,
     internal: Boolean,
     private: Boolean,
     parent: EmbraceSpan? = null,

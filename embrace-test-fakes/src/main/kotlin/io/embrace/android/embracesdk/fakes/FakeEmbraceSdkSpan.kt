@@ -14,7 +14,6 @@ import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.embrace.android.embracesdk.internal.otel.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.otel.schema.ErrorCodeAttribute.Failure.fromErrorCode
-import io.embrace.android.embracesdk.internal.otel.schema.TelemetryType
 import io.embrace.android.embracesdk.internal.otel.sdk.hasEmbraceAttribute
 import io.embrace.android.embracesdk.internal.otel.sdk.toStatus
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
@@ -36,7 +35,7 @@ import java.util.concurrent.TimeUnit
 class FakeEmbraceSdkSpan(
     var name: String = "fake-span",
     var parentContext: Context = Context.root(),
-    val type: TelemetryType = EmbType.Performance.Default,
+    val type: EmbType = EmbType.Performance.Default,
     val internal: Boolean = false,
     val private: Boolean = internal,
     override val autoTerminationMode: AutoTerminationMode = AutoTerminationMode.NONE,

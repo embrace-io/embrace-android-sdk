@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.spans
 
-import io.embrace.android.embracesdk.internal.otel.schema.TelemetryType
+import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.otel.spans.OtelSpanBuilderWrapper
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
@@ -27,7 +27,7 @@ internal class UninitializedSdkSpanService : SpanService {
     override fun createSpan(
         name: String,
         parent: EmbraceSpan?,
-        type: TelemetryType,
+        type: EmbType,
         internal: Boolean,
         private: Boolean,
         autoTerminationMode: AutoTerminationMode,
@@ -38,7 +38,7 @@ internal class UninitializedSdkSpanService : SpanService {
     override fun <T> recordSpan(
         name: String,
         parent: EmbraceSpan?,
-        type: TelemetryType,
+        type: EmbType,
         internal: Boolean,
         private: Boolean,
         attributes: Map<String, String>,
@@ -52,7 +52,7 @@ internal class UninitializedSdkSpanService : SpanService {
         startTimeMs: Long,
         endTimeMs: Long,
         parent: EmbraceSpan?,
-        type: TelemetryType,
+        type: EmbType,
         internal: Boolean,
         private: Boolean,
         attributes: Map<String, String>,
@@ -134,7 +134,7 @@ internal class UninitializedSdkSpanService : SpanService {
         val startTimeMs: Long,
         val endTimeMs: Long,
         val parent: EmbraceSpan?,
-        val type: TelemetryType,
+        val type: EmbType,
         val internal: Boolean,
         val private: Boolean,
         val attributes: Map<String, String>,

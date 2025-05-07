@@ -6,7 +6,6 @@ import io.embrace.android.embracesdk.internal.otel.attrs.embCrashNumber
 import io.embrace.android.embracesdk.internal.otel.attrs.embSendMode
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.embrace.android.embracesdk.internal.otel.schema.SendMode
-import io.embrace.android.embracesdk.internal.otel.schema.TelemetryType
 import io.embrace.android.embracesdk.internal.payload.AppExitInfoData
 import io.embrace.android.embracesdk.internal.payload.NetworkCapturedCall
 import io.embrace.android.embracesdk.internal.utils.toNonNullMap
@@ -19,12 +18,12 @@ import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes
 /**
  * The collections of attribute schemas used by the associated telemetry types.
  *
- * Each schema contains a [TelemetryType] that it is being applied to, as well as an optional [fixedObjectName] used for the recorded
+ * Each schema contains an [EmbType] that it is being applied to, as well as an optional [fixedObjectName] used for the recorded
  * telemetry data object if the same, fixed name is used for every instance.
  */
 
 sealed class SchemaType(
-    val telemetryType: TelemetryType,
+    val telemetryType: EmbType,
     val fixedObjectName: String = "",
 ) {
     protected abstract val schemaAttributes: Map<String, String>

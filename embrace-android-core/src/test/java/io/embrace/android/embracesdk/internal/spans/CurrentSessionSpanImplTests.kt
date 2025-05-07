@@ -13,10 +13,10 @@ import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
 import io.embrace.android.embracesdk.internal.otel.attrs.asPair
+import io.embrace.android.embracesdk.internal.otel.config.getMaxTotalAttributeCount
 import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
 import io.embrace.android.embracesdk.internal.otel.schema.AppTerminationCause
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
-import io.embrace.android.embracesdk.internal.otel.sdk.getMaxTotalAttributeCount
 import io.embrace.android.embracesdk.internal.otel.sdk.otelSpanBuilderWrapper
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanFactory

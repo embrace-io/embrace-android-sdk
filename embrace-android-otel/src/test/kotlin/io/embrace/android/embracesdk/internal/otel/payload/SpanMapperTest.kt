@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.arch.assertSuccessful
 import io.embrace.android.embracesdk.fakes.FakeSpanData
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.otel.sdk.toEmbraceSpanData
-import io.embrace.android.embracesdk.internal.otel.sdk.toFailedSpan
+import io.embrace.android.embracesdk.internal.otel.spans.toFailedSpan
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.spans.ErrorCode
 import org.junit.Assert.assertEquals

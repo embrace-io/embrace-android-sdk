@@ -7,7 +7,6 @@ import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.internal.api.delegate.FlutterInternalInterfaceImpl
 import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
-import io.embrace.android.embracesdk.internal.otel.attrs.asOtelAttributeKey
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType.System.FlutterException.embFlutterExceptionContext
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType.System.FlutterException.embFlutterExceptionLibrary
 import io.embrace.android.embracesdk.internal.payload.AppFramework
@@ -73,8 +72,8 @@ internal class FlutterInternalInterfaceImplTest {
                 "exception name",
                 "message",
                 mapOf(
-                    embFlutterExceptionContext.asOtelAttributeKey() to "ctx",
-                    embFlutterExceptionLibrary.asOtelAttributeKey() to "lib"
+                    embFlutterExceptionContext.name to "ctx",
+                    embFlutterExceptionLibrary.name to "lib"
                 ),
             )
         }
@@ -94,8 +93,8 @@ internal class FlutterInternalInterfaceImplTest {
                 exceptionName = "exception name",
                 exceptionMessage = "message",
                 customLogAttrs = mapOf(
-                    embFlutterExceptionContext.asOtelAttributeKey() to "ctx",
-                    embFlutterExceptionLibrary.asOtelAttributeKey() to "lib"
+                    embFlutterExceptionContext.name to "ctx",
+                    embFlutterExceptionLibrary.name to "lib"
                 ),
             )
         }

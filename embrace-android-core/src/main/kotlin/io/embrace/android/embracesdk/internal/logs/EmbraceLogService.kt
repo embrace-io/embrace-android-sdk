@@ -13,13 +13,11 @@ import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.config.behavior.REDACTED_LABEL
 import io.embrace.android.embracesdk.internal.logs.attachments.Attachment
 import io.embrace.android.embracesdk.internal.otel.attrs.embExceptionHandling
-import io.embrace.android.embracesdk.internal.otel.sdk.toOtelSeverity
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.session.orchestrator.PayloadStore
 import io.embrace.android.embracesdk.internal.utils.PropertyUtils.normalizeProperties
 import io.embrace.android.embracesdk.internal.utils.Uuid
-import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.semconv.incubating.LogIncubatingAttributes
 
 /**
@@ -44,7 +42,7 @@ class EmbraceLogService(
         severity: Severity,
         logExceptionType: LogExceptionType,
         properties: Map<String, Any>?,
-        customLogAttrs: Map<AttributeKey<String>, String>,
+        customLogAttrs: Map<String, String>,
         logAttachment: Attachment.EmbraceHosted?,
     ) {
         val redactedProperties = redactSensitiveProperties(normalizeProperties(properties))
@@ -85,14 +83,14 @@ class EmbraceLogService(
      */
     private fun createTelemetryAttributes(
         customProperties: Map<String, Any>?,
-        logAttrs: Map<AttributeKey<String>, String>,
+        logAttrs: Map<String, String>,
     ): TelemetryAttributes {
         val attributes = TelemetryAttributes(
             configService = configService,
             sessionPropertiesProvider = sessionPropertiesService::getProperties,
             customAttributes = customProperties?.mapValues { it.value.toString() } ?: emptyMap()
         )
-        attributes.setAttribute(LogIncubatingAttributes.LOG_RECORD_UID, Uuid.getEmbUuid())
+        attributes.setAttribute(LogIncubatingAttributes.LOG_RECORD_UID.key, Uuid.getEmbUuid())
         logAttrs.forEach {
             attributes.setAttribute(it.key, it.value)
         }
@@ -108,11 +106,11 @@ class EmbraceLogService(
         if (shouldLogBeGated(severity)) {
             return
         }
-        val logId = attributes.getAttribute(LogIncubatingAttributes.LOG_RECORD_UID)
+        val logId = attributes.getAttribute(LogIncubatingAttributes.LOG_RECORD_UID.key)
         if (logId == null || !logCounters.getValue(severity).addIfAllowed()) {
             return
         }
-        logWriter.addLog(schemaProvider(attributes), severity.toOtelSeverity(), trimToMaxLength(message))
+        logWriter.addLog(schemaProvider(attributes), severity, trimToMaxLength(message))
     }
 
     /**

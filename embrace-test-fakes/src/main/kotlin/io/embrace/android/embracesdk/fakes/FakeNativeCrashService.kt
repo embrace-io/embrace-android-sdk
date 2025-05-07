@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.internal.ndk.NativeCrashService
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
-import io.opentelemetry.api.common.AttributeKey
 import java.util.concurrent.ConcurrentLinkedQueue
 
 class FakeNativeCrashService : NativeCrashService {
@@ -21,7 +20,7 @@ class FakeNativeCrashService : NativeCrashService {
     override fun sendNativeCrash(
         nativeCrash: NativeCrashData,
         sessionProperties: Map<String, String>,
-        metadata: Map<AttributeKey<String>, String>,
+        metadata: Map<String, String>,
     ) {
         nativeCrashesSent.add(Pair(nativeCrash, metadata.mapKeys { it.value } + sessionProperties))
     }

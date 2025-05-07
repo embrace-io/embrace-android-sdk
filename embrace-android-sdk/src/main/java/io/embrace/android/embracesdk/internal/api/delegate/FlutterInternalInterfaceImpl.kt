@@ -7,10 +7,8 @@ import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
 import io.embrace.android.embracesdk.internal.FlutterInternalInterface
 import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
-import io.embrace.android.embracesdk.internal.otel.attrs.asOtelAttributeKey
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType.System.FlutterException.embFlutterExceptionContext
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType.System.FlutterException.embFlutterExceptionLibrary
-import io.opentelemetry.api.common.AttributeKey
 
 internal class FlutterInternalInterfaceImpl(
     private val embrace: EmbraceImpl,
@@ -68,9 +66,9 @@ internal class FlutterInternalInterfaceImpl(
         exceptionType: LogExceptionType,
     ) {
         if (embrace.isStarted) {
-            val attrs = mutableMapOf<AttributeKey<String>, String>()
-            context?.let { attrs[embFlutterExceptionContext.asOtelAttributeKey()] = it }
-            library?.let { attrs[embFlutterExceptionLibrary.asOtelAttributeKey()] = it }
+            val attrs = mutableMapOf<String, String>()
+            context?.let { attrs[embFlutterExceptionContext.name] = it }
+            library?.let { attrs[embFlutterExceptionLibrary.name] = it }
 
             embrace.logMessage(
                 severity = Severity.ERROR,

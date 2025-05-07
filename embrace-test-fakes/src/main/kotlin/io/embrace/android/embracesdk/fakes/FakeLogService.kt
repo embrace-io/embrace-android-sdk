@@ -4,7 +4,6 @@ import io.embrace.android.embracesdk.LogExceptionType
 import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.internal.logs.LogService
 import io.embrace.android.embracesdk.internal.logs.attachments.Attachment
-import io.opentelemetry.api.common.AttributeKey
 
 class FakeLogService : LogService {
     class LogData(
@@ -23,7 +22,7 @@ class FakeLogService : LogService {
         severity: Severity,
         logExceptionType: LogExceptionType,
         properties: Map<String, Any>?,
-        customLogAttrs: Map<AttributeKey<String>, String>,
+        customLogAttrs: Map<String, String>,
         logAttachment: Attachment.EmbraceHosted?,
     ) {
         loggedMessages.add(

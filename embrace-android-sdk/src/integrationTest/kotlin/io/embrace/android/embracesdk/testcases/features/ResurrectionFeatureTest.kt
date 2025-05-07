@@ -18,7 +18,7 @@ import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import io.embrace.android.embracesdk.testframework.actions.createStoredNativeCrashData
-import io.embrace.android.embracesdk.testframework.assertions.getLastLog
+import io.embrace.android.embracesdk.assertions.getLastLog
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue

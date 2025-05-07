@@ -10,6 +10,12 @@ data class Link(
     @Json(name = "span_id")
     val spanId: String? = null,
 
+    @Json(name = "trace_id")
+    val traceId: String? = null,
+
     @Json(name = "attributes")
     val attributes: List<Attribute>? = null,
+
+    @Json(name = "is_remote")
+    val isRemote: Boolean? = null,
 )

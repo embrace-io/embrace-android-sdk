@@ -26,14 +26,15 @@ object ConfigClassVisitorFactory {
         fun createClassVisitor(
             cfg: VariantConfig,
             encodedSharedObjectFilesMap: String?,
+            reactNativeBundleId: String?,
             api: Int,
-            cv: ClassVisitor?
+            cv: ClassVisitor?,
         ): ClassVisitor {
             val instrumentation = when (this) {
                 BaseUrlConfig -> createBaseUrlConfigInstrumentation(cfg)
                 EnabledFeatureConfig -> createEnabledFeatureConfigInstrumentation(cfg)
                 NetworkCaptureConfig -> createNetworkCaptureConfigInstrumentation(cfg)
-                ProjectConfig -> createProjectConfigInstrumentation(cfg)
+                ProjectConfig -> createProjectConfigInstrumentation(cfg, reactNativeBundleId)
                 RedactionConfig -> createRedactionConfigInstrumentation(cfg)
                 SessionConfig -> createSessionConfigInstrumentation(cfg)
                 Base64SharedObjectFilesMap -> createSharedObjectFilesMapInstrumentation(encodedSharedObjectFilesMap)
@@ -50,10 +51,11 @@ object ConfigClassVisitorFactory {
         className: String,
         cfg: VariantConfig,
         encodedSharedObjectFilesMap: String?,
+        reactNativeBundleId: String?,
         api: Int,
-        cv: ClassVisitor?
+        cv: ClassVisitor?,
     ): ClassVisitor? {
         val type = ConfigClassType.values().singleOrNull { it.className == className }
-        return type?.createClassVisitor(cfg, encodedSharedObjectFilesMap, api, cv)
+        return type?.createClassVisitor(cfg, encodedSharedObjectFilesMap, reactNativeBundleId, api, cv)
     }
 }

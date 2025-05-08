@@ -15,7 +15,6 @@ import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.TaskProvider
 import java.io.File
 
-private const val SOURCEMAP_GENERATOR_NAME = "embraceRNSourcemapGeneratorFor"
 private const val REACT_PROPERTY = "react"
 private const val RN_BUNDLE_FILE_EXTENSION = ".bundle"
 private const val RN_SOURCEMAP_FILE_EXTENSION = "bundle.map"
@@ -23,11 +22,9 @@ private const val BUNDLE_ASSET_NAME = "bundleAssetName"
 private const val DEFAULT_BUNDLE_NAME = "index.android.bundle"
 private const val SOURCE_MAP_NAME = "android-embrace.bundle.map"
 
-private const val GENERATED_RESOURCE_PATH = "generated/embrace/res"
+class GenerateRnSourcemapTaskRegistration : EmbraceTaskRegistration {
 
-class EmbraceRnSourcemapGeneratorTaskRegistration : EmbraceTaskRegistration {
-
-    private val logger = Logger(EmbraceRnSourcemapGeneratorTaskRegistration::class.java)
+    private val logger = Logger(GenerateRnSourcemapTaskRegistration::class.java)
 
     override fun register(params: RegistrationParams) {
         params.project.afterEvaluate {
@@ -44,7 +41,7 @@ class EmbraceRnSourcemapGeneratorTaskRegistration : EmbraceTaskRegistration {
      * for the ReactNativeBundleRetrieverTask because it's a safe stage to assume that both, the
      * bundle and the Source Map, have been already generated.
      */
-    private fun RegistrationParams.execute(): TaskProvider<EmbraceRnSourcemapGeneratorTask>? {
+    private fun RegistrationParams.execute(): TaskProvider<GenerateRnSourcemapTask>? {
         // Prevent upload the bundle in debug variant
         if (data.isBuildTypeDebuggable) {
             return null
@@ -71,21 +68,14 @@ class EmbraceRnSourcemapGeneratorTaskRegistration : EmbraceTaskRegistration {
             return null
         }
 
-        val taskProvider = createRnSourcemapGeneratorTaskProvider(generatorTask)
-        taskProvider.let { task ->
-            variant.sources.res?.addGeneratedSourceDirectory(
-                task,
-                EmbraceRnSourcemapGeneratorTask::generatedEmbraceResourcesDirectory
-            )
-        }
-        return taskProvider
+        return createRnSourcemapGeneratorTaskProvider(generatorTask)
     }
 
     private fun RegistrationParams.createRnSourcemapGeneratorTaskProvider(
         generatorTask: TaskProvider<Task>,
     ) = project.registerTask(
-        SOURCEMAP_GENERATOR_NAME,
-        EmbraceRnSourcemapGeneratorTask::class.java,
+        GenerateRnSourcemapTask.NAME,
+        GenerateRnSourcemapTask::class.java,
         data
     ) { rnTask ->
         try {
@@ -103,12 +93,6 @@ class EmbraceRnSourcemapGeneratorTaskRegistration : EmbraceTaskRegistration {
                 }
             )
 
-            rnTask.generatedEmbraceResourcesDirectory.set(
-                project.layout.buildDirectory.dir(
-                    "${GENERATED_RESOURCE_PATH}/${data.name}/react_native"
-                )
-            )
-
             rnTask.bundleFile.set(project.layout.file(getBundleFileProvider(generatorTask, project)))
             rnTask.sourcemap.set(project.layout.file(getSourcemapFileProvider(generatorTask, project, data)))
 
@@ -119,6 +103,10 @@ class EmbraceRnSourcemapGeneratorTaskRegistration : EmbraceTaskRegistration {
                 project.layout.buildDirectory.file(
                     "outputs/embrace/$bundleFileFolder/$FILE_NAME_SOURCE_MAP_JSON"
                 )
+            )
+
+            rnTask.bundleIdOutputFile.set(
+                project.layout.buildDirectory.file("intermediates/embrace/react/${data.name}/bundleId.txt")
             )
 
             rnTask.dependsOn(generatorTask)

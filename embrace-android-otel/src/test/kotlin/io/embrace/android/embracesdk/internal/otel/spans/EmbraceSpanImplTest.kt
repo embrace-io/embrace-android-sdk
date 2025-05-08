@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.otel.spans
 
 import io.embrace.android.embracesdk.fakes.FakeClock
+import io.embrace.android.embracesdk.fakes.FakeKotlinTracer
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryClock
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.fixtures.MAX_LENGTH_ATTRIBUTE_KEY
@@ -30,8 +31,7 @@ import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.utils.truncatedStacktraceText
 import io.embrace.android.embracesdk.spans.ErrorCode
-import io.opentelemetry.sdk.OpenTelemetrySdk
-import io.opentelemetry.sdk.trace.SdkTracerProvider
+import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.opentelemetry.semconv.ExceptionAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -41,6 +41,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
+@OptIn(ExperimentalApi::class)
 internal class EmbraceSpanImplTest {
     private lateinit var fakeClock: FakeClock
     private lateinit var embraceSpan: EmbraceSdkSpan
@@ -48,9 +49,7 @@ internal class EmbraceSpanImplTest {
     private lateinit var serializer: PlatformSerializer
     private lateinit var embraceSpanFactory: EmbraceSpanFactory
     private var updateNotified: Boolean = false
-    private val tracer = OpenTelemetrySdk.builder()
-        .setTracerProvider(SdkTracerProvider.builder().build()).build()
-        .getTracer(EmbraceSpanImplTest::class.java.name)
+    private val tracer = FakeKotlinTracer()
 
     private val redactionFunction = fun(key: String, value: String): String {
         return if (key == "password") {

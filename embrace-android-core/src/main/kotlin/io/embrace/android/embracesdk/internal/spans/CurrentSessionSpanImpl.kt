@@ -95,6 +95,21 @@ internal class CurrentSessionSpanImpl(
         return sessionSpan.get()?.getSystemAttribute(SessionIncubatingAttributes.SESSION_ID) ?: ""
     }
 
+    override fun spanStopCallback(spanId: String) {
+        val currentSessionSpan = sessionSpan.get()
+        val spanToStop = spanRepository.getSpan(spanId)
+
+        if (currentSessionSpan != spanToStop) {
+            spanToStop?.spanContext?.let { spanToStopContext ->
+                currentSessionSpan?.addSystemLink(spanToStopContext, LinkType.EndedIn)
+            }
+
+            currentSessionSpan?.spanContext?.let { sessionSpanContext ->
+                spanToStop?.addSystemLink(sessionSpanContext, LinkType.EndSession)
+            }
+        }
+    }
+
     override fun readySession(): Boolean {
         if (sessionSpan.get() == null) {
             synchronized(sessionSpan) {

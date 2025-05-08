@@ -1,39 +1,54 @@
 package io.embrace.android.embracesdk.assertions
 
-import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
+import io.embrace.android.embracesdk.internal.otel.attrs.asPair
 import io.embrace.android.embracesdk.internal.otel.schema.LinkType
 import io.embrace.android.embracesdk.internal.payload.Link
 import io.embrace.android.embracesdk.internal.payload.Span
+import io.opentelemetry.api.trace.SpanContext
 import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes
-import org.junit.Assert.assertEquals
-
-fun Link.validateSystemLink(
-    linkedSpan: Span,
-    type: LinkType
-) {
-    assertEquals(linkedSpan.traceId, traceId)
-    assertEquals(linkedSpan.spanId, spanId)
-    assertEquals(false, isRemote)
-    assertEquals(type.value, checkNotNull(attributes).toEmbracePayload()[type.key.name])
-}
+import org.junit.Assert.assertTrue
 
 fun Link.validatePreviousSessionLink(
     previousSessionSpan: Span,
     previousSessionId: String,
 ) {
-    validateSystemLink(previousSessionSpan, LinkType.PreviousSession)
-    val attrs = checkNotNull(attributes).toEmbracePayload()
-    assertEquals(2, attrs.size)
-    assertEquals(previousSessionId, attrs[SessionIncubatingAttributes.SESSION_ID.key])
+    validateSystemLink(
+        linkedSpan = previousSessionSpan,
+        type = LinkType.PreviousSession,
+        expectedAttributes = mapOf(SessionIncubatingAttributes.SESSION_ID.key to previousSessionId)
+    )
 }
 
-fun Link.validateCustomLink(
+fun Link.validateSystemLink(
+    linkedSpan: Span,
+    type: LinkType,
+    expectedAttributes: Map<String, String> = emptyMap(),
+) {
+    validateLinkToSpan(
+        linkedSpan = linkedSpan,
+        expectedAttributes = mapOf(type.asPair()) + expectedAttributes
+    )
+}
+
+fun Link.validateLinkToSpan(
     linkedSpan: Span,
     isLinkedSpanRemote: Boolean = false,
-    expectedAttributes: Map<String, String> = emptyMap()
+    expectedAttributes: Map<String, String> = emptyMap(),
 ) {
-    assertEquals(linkedSpan.traceId, traceId)
-    assertEquals(linkedSpan.spanId, spanId)
-    assertEquals(isLinkedSpanRemote, isRemote)
+    assertTrue(isLinkedToSpan(linkedSpan, isLinkedSpanRemote))
     checkNotNull(attributes).assertMatches(expectedAttributes)
 }
+
+fun Link.validateLinkToSpanContext(
+    linkedSpanContext: SpanContext,
+    expectedAttributes: Map<String, String> = emptyMap(),
+) {
+    assertTrue(isLinkedToSpanContext(linkedSpanContext))
+    checkNotNull(attributes).assertMatches(expectedAttributes)
+}
+
+fun Link.isLinkedToSpan(expectedSpan: Span, expectedIsRemote: Boolean): Boolean =
+    traceId == expectedSpan.traceId && spanId == expectedSpan.spanId && isRemote == expectedIsRemote
+
+fun Link.isLinkedToSpanContext(expectedSpanContext: SpanContext): Boolean =
+    traceId == expectedSpanContext.traceId && spanId == expectedSpanContext.spanId && isRemote == expectedSpanContext.isRemote

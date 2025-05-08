@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.otel.spans
 
-import io.embrace.android.embracesdk.assertions.validateCustomLink
+import io.embrace.android.embracesdk.assertions.validateLinkToSpan
 import io.embrace.android.embracesdk.assertions.validateSystemLink
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
@@ -52,17 +52,10 @@ internal class EmbraceSpanImplTest {
     private lateinit var serializer: PlatformSerializer
     private lateinit var embraceSpanFactory: EmbraceSpanFactory
     private var updateNotified: Boolean = false
+    private var stoppedSpanId: String? = null
     private val tracer = OpenTelemetrySdk.builder()
         .setTracerProvider(SdkTracerProvider.builder().build()).build()
         .getTracer(EmbraceSpanImplTest::class.java.name)
-
-    private val redactionFunction = fun(key: String, value: String): String {
-        return if (key == "password") {
-            REDACTED_LABEL
-        } else {
-            value
-        }
-    }
 
     @Before
     fun setup() {
@@ -73,7 +66,8 @@ internal class EmbraceSpanImplTest {
             tracer = tracer,
             openTelemetryClock = FakeOpenTelemetryClock(fakeClock),
             spanRepository = spanRepository,
-            redactionFunction = redactionFunction
+            stopCallback = ::stopCallback,
+            redactionFunction = ::redactionFunction
         )
         embraceSpan = embraceSpanFactory.create(
             otelSpanBuilderWrapper = tracer.otelSpanBuilderWrapper(
@@ -98,6 +92,8 @@ internal class EmbraceSpanImplTest {
             assertEquals(0, spanRepository.getCompletedSpans().size)
             assertNull(embraceSpan.snapshot())
         }
+        assertFalse(updateNotified)
+        assertNull(stoppedSpanId)
     }
 
     @Test
@@ -120,8 +116,9 @@ internal class EmbraceSpanImplTest {
             )
             assertEquals(1, spanRepository.getActiveSpans().size)
             assertEquals(0, spanRepository.getCompletedSpans().size)
-            assertTrue(updateNotified)
         }
+        assertTrue(updateNotified)
+        assertNull(stoppedSpanId)
     }
 
     @Test
@@ -453,7 +450,7 @@ internal class EmbraceSpanImplTest {
 
             // TODO: fix links to be returned in insertion order
             val snapshotLinks = checkNotNull(snapshot.links)
-            snapshotLinks[1].validateCustomLink(checkNotNull(value = linkedSpan.snapshot()), expectedAttributes = linkAttrs)
+            snapshotLinks[1].validateLinkToSpan(checkNotNull(value = linkedSpan.snapshot()), expectedAttributes = linkAttrs)
             snapshotLinks[0].validateSystemLink(checkNotNull(linkedSpan.snapshot()), LinkType.PreviousSession)
         }
     }
@@ -581,6 +578,19 @@ internal class EmbraceSpanImplTest {
         assertEquals(0, spanRepository.getActiveSpans().size)
         assertEquals(1, spanRepository.getCompletedSpans().size)
         assertTrue(updateNotified)
+        assertEquals(stoppedSpanId, spanId)
+    }
+
+    private fun redactionFunction(key: String, value: String): String {
+        return if (key == "password") {
+            REDACTED_LABEL
+        } else {
+            value
+        }
+    }
+
+    private fun stopCallback(spanId: String) {
+        stoppedSpanId = spanId
     }
 
     companion object {

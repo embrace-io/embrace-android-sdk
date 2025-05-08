@@ -12,6 +12,7 @@ import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanData.Compani
 import io.embrace.android.embracesdk.internal.otel.toOtelKotlin
 import io.embrace.android.embracesdk.internal.payload.Link
 import io.embrace.android.embracesdk.internal.utils.isBlankish
+import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.common.AttributesBuilder
@@ -78,6 +79,10 @@ fun Span.setEmbraceAttribute(key: EmbraceAttributeKey, value: String): Span {
 
 fun Span.setEmbraceAttribute(embraceAttribute: EmbraceAttribute): Span =
     this@setEmbraceAttribute.setEmbraceAttribute(embraceAttribute.key, embraceAttribute.value)
+
+@OptIn(ExperimentalApi::class)
+fun io.embrace.opentelemetry.kotlin.tracing.Span.setEmbraceAttribute(embraceAttribute: EmbraceAttribute) =
+    setStringAttribute(embraceAttribute.key.name, embraceAttribute.value)
 
 fun SpanData.toEmbraceSpanData(): EmbraceSpanData = EmbraceSpanData(
     traceId = spanContext.traceId,

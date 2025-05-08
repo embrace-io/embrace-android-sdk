@@ -15,8 +15,7 @@ internal class PropertyUtilsTest {
     @Test
     fun testPropertyLimitExceeded() {
         val input = (0..20).associateBy { "$it" }
-        val expected = (0..9).associateBy { "$it" }
-        assertEquals(expected, sanitizeProperties(input as Map<String, Any>?))
+        assertEquals("PropertyUtils should not cap the attribute count", input.size, sanitizeProperties(input as Map<String, Any>?).size)
     }
 
     @Test

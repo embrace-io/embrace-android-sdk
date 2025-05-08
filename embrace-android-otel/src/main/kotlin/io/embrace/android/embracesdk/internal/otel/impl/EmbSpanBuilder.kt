@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.otel.impl
 
 import io.embrace.android.embracesdk.internal.otel.spans.OtelSpanCreator
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
+import io.embrace.android.embracesdk.internal.otel.toOtelKotlin
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
@@ -49,7 +50,7 @@ class EmbSpanBuilder(
         setAttribute(key.key, value.toString())
 
     override fun setSpanKind(spanKind: SpanKind): SpanBuilder {
-        otelSpanStartArgs.spanKind = spanKind
+        otelSpanStartArgs.spanKind = spanKind.toOtelKotlin()
         return this
     }
 

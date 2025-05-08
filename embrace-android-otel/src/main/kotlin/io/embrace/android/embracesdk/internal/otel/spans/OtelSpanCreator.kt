@@ -1,10 +1,14 @@
 package io.embrace.android.embracesdk.internal.otel.spans
 
-import io.opentelemetry.api.trace.Span
-import io.opentelemetry.api.trace.Tracer
-import io.opentelemetry.context.Context
+import io.embrace.android.embracesdk.internal.otel.wrapper.KotlinContextWrapper
+import io.embrace.opentelemetry.kotlin.ExperimentalApi
+import io.embrace.opentelemetry.kotlin.k2j.tracing.SpanContextAdapter
+import io.embrace.opentelemetry.kotlin.tracing.Span
+import io.embrace.opentelemetry.kotlin.tracing.SpanKind
+import io.embrace.opentelemetry.kotlin.tracing.Tracer
 import java.util.concurrent.TimeUnit
 
+@OptIn(ExperimentalApi::class)
 class OtelSpanCreator(
     val spanStartArgs: OtelSpanStartArgs,
     private val tracer: Tracer,
@@ -12,16 +16,13 @@ class OtelSpanCreator(
 
     internal fun startSpan(startTimeMs: Long): Span {
         with(spanStartArgs) {
-            val builder = tracer.spanBuilder(spanName)
-            if (parentContext == Context.root()) {
-                builder.setNoParent()
-            } else {
-                builder.setParent(parentContext)
-            }
-
-            spanKind?.let(builder::setSpanKind)
-            builder.setStartTimestamp(startTimeMs, TimeUnit.MILLISECONDS)
-            return builder.startSpan()
+            return tracer.createSpan(
+                name = spanName,
+                parent = spanStartArgs.parentContext.getEmbraceSpan()?.spanContext?.let(::SpanContextAdapter),
+                spanKind = spanKind ?: SpanKind.INTERNAL,
+                startTimestamp = TimeUnit.MILLISECONDS.toNanos(startTimeMs),
+                context = KotlinContextWrapper(spanStartArgs.parentContext),
+            )
         }
     }
 }

@@ -2,14 +2,16 @@ package io.embrace.android.embracesdk.internal.otel.impl
 
 import io.embrace.android.embracesdk.internal.otel.sdk.TracerKey
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
+import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.opentelemetry.api.trace.Tracer
 import io.opentelemetry.api.trace.TracerBuilder
 import io.opentelemetry.api.trace.TracerProvider
 import io.opentelemetry.sdk.common.Clock
 import java.util.concurrent.ConcurrentHashMap
 
+@OptIn(ExperimentalApi::class)
 class EmbTracerProvider(
-    private val sdkTracerProvider: TracerProvider,
+    private val sdkTracerProvider: io.embrace.opentelemetry.kotlin.tracing.TracerProvider,
     private val spanService: SpanService,
     private val clock: Clock,
 ) : TracerProvider {
@@ -45,14 +47,11 @@ class EmbTracerProvider(
         return tracer
     }
 
-    private fun buildSdkTracer(key: TracerKey): Tracer {
-        val builder = sdkTracerProvider.tracerBuilder(key.instrumentationScopeName)
-        key.instrumentationScopeVersion?.apply {
-            builder.setInstrumentationVersion(this)
-        }
-        key.schemaUrl?.apply {
-            builder.setSchemaUrl(this)
-        }
-        return builder.build()
+    private fun buildSdkTracer(key: TracerKey): io.embrace.opentelemetry.kotlin.tracing.Tracer {
+        return sdkTracerProvider.getTracer(
+            name = key.instrumentationScopeName,
+            version = key.instrumentationScopeVersion,
+            schemaUrl = key.schemaUrl
+        )
     }
 }

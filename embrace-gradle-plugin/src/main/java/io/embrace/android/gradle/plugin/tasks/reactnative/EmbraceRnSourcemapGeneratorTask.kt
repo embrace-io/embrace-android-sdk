@@ -15,8 +15,6 @@ import okio.source
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.model.ObjectFactory
-import org.gradle.api.provider.MapProperty
-import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.OutputDirectory
@@ -49,23 +47,10 @@ abstract class EmbraceRnSourcemapGeneratorTask @Inject constructor(
     @get:OutputFile
     val sourcemapAndBundleFile: RegularFileProperty = objectFactory.fileProperty()
 
-    @get:Input
-    val reactProperties: MapProperty<String, Any> = objectFactory.mapProperty(
-        String::class.java,
-        Any::class.java
-    ).convention(emptyMap())
-
     @TaskAction
     fun onRun() {
-        val rnFilesFinderUtil = RnFilesFinder(
-            reactProperties.get(),
-            project.layout.buildDirectory.get().asFile
-        )
-
-        val bundleFile = rnFilesFinderUtil.fetchJSBundleFile(
-            bundleFile.orNull?.asFile
-        )
-        if (bundleFile == null) {
+        val bundleFile = bundleFile.orNull?.asFile
+        if (bundleFile == null || !bundleFile.exists()) {
             logger.error("Couldn't find the JSBundle. React native files were not uploaded.")
             return
         }
@@ -76,10 +61,7 @@ abstract class EmbraceRnSourcemapGeneratorTask @Inject constructor(
          * In old React Native Versions, the source map is not exposed as output in the task.
          * If the source map is not present, we will search for it in the known location
          */
-        val sourceMapFile: File? = rnFilesFinderUtil.fetchSourceMapFile(
-            sourcemap.orNull?.asFile,
-            variantData.get()
-        )
+        val sourceMapFile: File? = sourcemap.orNull?.asFile
 
         if (sourceMapFile == null || !sourceMapFile.exists()) {
             logger.error("Couldn't find the Source Map. React native files were not uploaded.")

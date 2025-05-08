@@ -16,7 +16,7 @@ import io.embrace.android.gradle.plugin.tasks.il2cpp.Il2CppUploadTaskRegistratio
 import io.embrace.android.gradle.plugin.tasks.il2cpp.UnitySymbolFilesManager
 import io.embrace.android.gradle.plugin.tasks.ndk.NdkUploadTasksRegistration
 import io.embrace.android.gradle.plugin.tasks.r8.JvmMappingUploadTaskRegistration
-import io.embrace.android.gradle.plugin.tasks.reactnative.EmbraceRnSourcemapGeneratorTaskRegistration
+import io.embrace.android.gradle.plugin.tasks.reactnative.GenerateRnSourcemapTaskRegistration
 import org.gradle.api.Project
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Provider
@@ -68,7 +68,7 @@ class TaskRegistrar(
     private fun registerUploadTasks(params: RegistrationParams, variant: AndroidCompactedVariantData) {
         JvmMappingUploadTaskRegistration().register(params)
         if (behavior.isReactNativeProject) {
-            EmbraceRnSourcemapGeneratorTaskRegistration().register(params)
+            GenerateRnSourcemapTaskRegistration().register(params)
         }
         val variantConfig = variantConfigurationsListProperty.get().first { it.variantName == variant.name }
         val unitySymbolsDirProvider = getUnitySymbolsDirProvider(variantConfig)

@@ -4,6 +4,7 @@ import com.android.build.api.instrumentation.FramesComputationMode
 import com.android.build.api.instrumentation.InstrumentationScope
 import io.embrace.android.gradle.plugin.gradle.tryGetTaskProvider
 import io.embrace.android.gradle.plugin.tasks.ndk.EncodeFileToBase64Task
+import io.embrace.android.gradle.plugin.tasks.reactnative.GenerateRnSourcemapTask
 import io.embrace.android.gradle.plugin.tasks.registration.EmbraceTaskRegistration
 import io.embrace.android.gradle.plugin.tasks.registration.RegistrationParams
 import io.embrace.android.gradle.plugin.util.capitalizedString
@@ -56,6 +57,15 @@ class AsmTaskRegistration : EmbraceTaskRegistration {
                             it.outputFile
                         }
                     )
+
+                    val reactNativeTask = project.tryGetTaskProvider(
+                        "${GenerateRnSourcemapTask.NAME}${data.name.capitalizedString()}",
+                        GenerateRnSourcemapTask::class.java
+                    ) ?: return@afterEvaluate
+
+                    asmTransformationTask.configure { it.dependsOn(reactNativeTask) }
+
+                    params.reactNativeBundleId.set(reactNativeTask.flatMap { it.bundleIdOutputFile })
                 }
             }
         } catch (exception: Exception) {

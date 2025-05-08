@@ -40,6 +40,6 @@ class CoreModuleImpl(
     }
 
     override val buildInfoService: BuildInfoService by lazy {
-        BuildInfoServiceImpl(initModule.instrumentedConfig, resources, context.packageName)
+        BuildInfoServiceImpl(initModule.instrumentedConfig)
     }
 }

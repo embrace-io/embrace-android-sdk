@@ -34,6 +34,14 @@ interface BytecodeInstrumentationParams : InstrumentationParameters {
     val encodedSharedObjectFilesMap: RegularFileProperty
 
     /**
+     * React native bundle ID to be injected in the SDK.
+     */
+    @get:Optional
+    @get:InputFiles
+    @get:PathSensitive(PathSensitivity.NONE)
+    val reactNativeBundleId: RegularFileProperty
+
+    /**
      * Whether or not the plugin should operate for this variant.
      */
     @get:Input

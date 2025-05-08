@@ -1,12 +1,16 @@
 package io.embrace.android.embracesdk.fakes
 
+import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.StatusCode
 import io.embrace.opentelemetry.kotlin.attributes.AttributeContainer
+import io.embrace.opentelemetry.kotlin.k2j.tracing.SpanContextAdapter
 import io.embrace.opentelemetry.kotlin.tracing.Link
 import io.embrace.opentelemetry.kotlin.tracing.SpanContext
 import io.embrace.opentelemetry.kotlin.tracing.SpanEvent
 import io.embrace.opentelemetry.kotlin.tracing.SpanKind
+import io.opentelemetry.api.trace.TraceFlags
+import io.opentelemetry.api.trace.TraceState
 
 @ExperimentalApi
 class FakeKotlinSpan(
@@ -20,8 +24,14 @@ class FakeKotlinSpan(
 
     override fun attributes(): Map<String, Any> = emptyMap()
 
-    // FIXME: temp, requires access to SpanContextAdapter in opentelemetry-kotlin
-    override val spanContext: SpanContext = throw UnsupportedOperationException()
+    override val spanContext: SpanContext = SpanContextAdapter(
+        io.opentelemetry.api.trace.SpanContext.create(
+            parent?.traceId ?: OtelIds.generateTraceId(),
+            OtelIds.generateSpanId(),
+            TraceFlags.getDefault(),
+            TraceState.getDefault()
+        )
+    )
 
     override var status: StatusCode = StatusCode.Unset
 

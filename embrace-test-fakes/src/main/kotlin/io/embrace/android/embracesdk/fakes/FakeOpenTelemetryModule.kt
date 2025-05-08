@@ -36,8 +36,8 @@ class FakeOpenTelemetryModule(
         // no-op
     }
 
-    override val sdkTracer: Tracer
-        get() = FakeTracer()
+    override val sdkTracer: io.embrace.opentelemetry.kotlin.tracing.Tracer
+        get() = FakeKotlinTracer()
     override val spanService: SpanService
         get() = FakeSpanService()
     override val embraceTracer: EmbraceTracer

@@ -21,7 +21,7 @@ import io.embrace.android.embracesdk.testframework.actions.EmbracePayloadAsserti
 import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import io.embrace.android.embracesdk.testframework.actions.StoredNativeCrashData
 import io.embrace.android.embracesdk.testframework.actions.createStoredNativeCrashData
-import io.embrace.android.embracesdk.testframework.assertions.getLogOfType
+import io.embrace.android.embracesdk.assertions.getLogOfType
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue

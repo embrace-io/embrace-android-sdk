@@ -1,21 +1,21 @@
-package io.embrace.android.embracesdk.testframework.assertions
+package io.embrace.android.embracesdk.assertions
 
 import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
+import io.embrace.android.embracesdk.internal.otel.attrs.asOtelAttributeKey
 import io.embrace.android.embracesdk.internal.otel.attrs.embExceptionHandling
 import io.embrace.android.embracesdk.internal.otel.attrs.embState
-import io.embrace.android.embracesdk.internal.otel.attrs.asOtelAttributeKey
+import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.serialization.truncatedStacktrace
-import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.opentelemetry.semconv.ExceptionAttributes
 import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 
-internal fun assertOtelLogReceived(
+fun assertOtelLogReceived(
     logReceived: Log?,
     expectedMessage: String,
     expectedSeverityNumber: Int,
@@ -55,7 +55,7 @@ internal fun assertOtelLogReceived(
     }
 }
 
-internal fun getOtelSeverity(severity: Severity): io.opentelemetry.api.logs.Severity {
+fun getOtelSeverity(severity: Severity): io.opentelemetry.api.logs.Severity {
     return when (severity) {
         Severity.INFO -> io.opentelemetry.api.logs.Severity.INFO
         Severity.WARNING -> io.opentelemetry.api.logs.Severity.WARN

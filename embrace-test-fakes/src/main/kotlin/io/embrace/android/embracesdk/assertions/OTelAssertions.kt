@@ -1,10 +1,7 @@
 package io.embrace.android.embracesdk.assertions
 
 import io.embrace.android.embracesdk.internal.SystemInfo
-import io.embrace.android.embracesdk.internal.otel.attrs.EmbraceAttributeKey
-import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.sdk.resources.Resource
-import io.opentelemetry.sdk.trace.data.SpanData
 import io.opentelemetry.semconv.ServiceAttributes
 import io.opentelemetry.semconv.incubating.AndroidIncubatingAttributes
 import io.opentelemetry.semconv.incubating.DeviceIncubatingAttributes
@@ -29,8 +26,4 @@ fun Resource.assertExpectedAttributes(
     assertEquals(systemInfo.deviceManufacturer, getAttribute(DeviceIncubatingAttributes.DEVICE_MANUFACTURER))
     assertEquals(systemInfo.deviceModel, getAttribute(DeviceIncubatingAttributes.DEVICE_MODEL_IDENTIFIER))
     assertEquals(systemInfo.deviceModel, getAttribute(DeviceIncubatingAttributes.DEVICE_MODEL_NAME))
-}
-
-fun SpanData.assertHasEmbraceAttribute(key: EmbraceAttributeKey, value: String) {
-    assertEquals(value, attributes.get(AttributeKey.stringKey(key.name)))
 }

@@ -7,9 +7,9 @@ import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface
-import io.embrace.android.embracesdk.testframework.assertions.assertOtelLogReceived
-import io.embrace.android.embracesdk.testframework.assertions.getLogOfType
-import io.embrace.android.embracesdk.testframework.assertions.getOtelSeverity
+import io.embrace.android.embracesdk.assertions.assertOtelLogReceived
+import io.embrace.android.embracesdk.assertions.getLogOfType
+import io.embrace.android.embracesdk.assertions.getOtelSeverity
 import io.embrace.android.embracesdk.testframework.server.FormPart
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull

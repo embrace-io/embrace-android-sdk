@@ -11,7 +11,7 @@ import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.utils.threadLocal
-import io.embrace.android.embracesdk.testframework.assertions.getLastLog
+import io.embrace.android.embracesdk.assertions.getLastLog
 import io.opentelemetry.semconv.incubating.LogIncubatingAttributes
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.zip.GZIPInputStream

@@ -24,9 +24,9 @@ import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import io.embrace.android.embracesdk.assertions.assertMatches
-import io.embrace.android.embracesdk.testframework.assertions.getLastLog
-import io.embrace.android.embracesdk.testframework.assertions.getLogOfType
-import io.embrace.android.embracesdk.testframework.assertions.getLogsOfType
+import io.embrace.android.embracesdk.assertions.getLastLog
+import io.embrace.android.embracesdk.assertions.getLogOfType
+import io.embrace.android.embracesdk.assertions.getLogsOfType
 import io.mockk.every
 import io.mockk.mockk
 import org.junit.Assert.assertEquals

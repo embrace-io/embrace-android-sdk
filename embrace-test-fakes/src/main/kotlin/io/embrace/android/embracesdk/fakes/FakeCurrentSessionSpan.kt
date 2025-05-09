@@ -14,9 +14,10 @@ import java.util.concurrent.atomic.AtomicInteger
 class FakeCurrentSessionSpan(
     private val clock: FakeClock = FakeClock(),
 ) : CurrentSessionSpan {
+    val addedEvents = mutableListOf<SpanEventData>()
+    val attributes = mutableMapOf<String, String>()
+    val stoppedSpans = mutableSetOf<String>()
     var initializedCallCount: Int = 0
-    var addedEvents: MutableList<SpanEventData> = mutableListOf()
-    var attributes: MutableMap<String, String> = mutableMapOf()
     var sessionSpan: FakeEmbraceSdkSpan? = null
 
     private val sessionIteration = AtomicInteger(1)
@@ -75,6 +76,10 @@ class FakeCurrentSessionSpan(
 
     override fun getSessionId(): String {
         return "testSessionId$sessionIteration"
+    }
+
+    override fun spanStopCallback(spanId: String) {
+        stoppedSpans.add(spanId)
     }
 
     fun getAttribute(key: String): String? = attributes[key]

@@ -48,9 +48,9 @@ class SpanRepository {
     }
 
     /**
-     * Return the [EmbraceSpan] with the corresponding [spanId] if it's tracked. Return null otherwise.
+     * Return the [EmbraceSdkSpan] with the corresponding [spanId] if it's tracked. Return null otherwise.
      */
-    fun getSpan(spanId: String): EmbraceSpan? =
+    fun getSpan(spanId: String): EmbraceSdkSpan? =
         spanIdsInProcess.lockAndRun(spanId) {
             activeSpans[spanId] ?: completedSpans[spanId]
         }

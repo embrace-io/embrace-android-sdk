@@ -47,6 +47,7 @@ class EmbraceSpanFactoryImpl(
     private val tracer: Tracer,
     private val openTelemetryClock: Clock,
     private val spanRepository: SpanRepository,
+    private val stopCallback: ((spanId: String) -> Unit)? = null,
     private var redactionFunction: ((key: String, value: String) -> String)? = null,
 ) : EmbraceSpanFactory {
 
@@ -76,6 +77,7 @@ class EmbraceSpanFactoryImpl(
             otelSpanBuilderWrapper = otelSpanBuilderWrapper,
             openTelemetryClock = openTelemetryClock,
             spanRepository = spanRepository,
+            stopCallback = stopCallback,
             redactionFunction = redactionFunction,
             autoTerminationMode = autoTerminationMode
         )
@@ -85,6 +87,7 @@ private class EmbraceSpanImpl(
     private val otelSpanBuilderWrapper: OtelSpanBuilderWrapper,
     private val openTelemetryClock: Clock,
     private val spanRepository: SpanRepository,
+    private val stopCallback: ((spanId: String) -> Unit)? = null,
     private val redactionFunction: ((key: String, value: String) -> String)? = null,
     private val limits: OtelLimitsConfig = InstrumentedConfigImpl.otelLimits,
     override val autoTerminationMode: AutoTerminationMode = AutoTerminationMode.NONE,
@@ -180,6 +183,7 @@ private class EmbraceSpanImpl(
                 }
 
                 startedSpan.get()?.let { spanToStop ->
+                    spanId?.let { stopCallback?.invoke(it) }
                     populateAttributes(spanToStop)
                     populateEvents(spanToStop)
                     populateLinks(spanToStop)

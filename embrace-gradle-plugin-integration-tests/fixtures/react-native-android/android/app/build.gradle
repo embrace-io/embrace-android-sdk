@@ -116,7 +116,7 @@ android {
 }
 
 embrace {
-    autoAddEmbraceDependencies.set(false)
+    autoAddEmbraceDependencies.set(true)
 }
 
 dependencies {

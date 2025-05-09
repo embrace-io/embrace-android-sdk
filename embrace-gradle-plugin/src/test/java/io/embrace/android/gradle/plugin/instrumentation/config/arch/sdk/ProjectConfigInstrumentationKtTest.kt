@@ -33,7 +33,7 @@ class ProjectConfigInstrumentationKtTest {
 
     @Test
     fun `test empty cfg`() {
-        val instrumentation = createProjectConfigInstrumentation(cfg)
+        val instrumentation = createProjectConfigInstrumentation(cfg, null)
         verifyConfigMethodVisitor(instrumentation, ConfigMethod("getAppId", "()Ljava/lang/String;", ""))
 
         methods.map { it.copy(result = null) }.forEach { method ->
@@ -55,7 +55,8 @@ class ProjectConfigInstrumentationKtTest {
                 buildId = "my_id",
                 buildType = "build_type",
                 buildFlavor = "build_flavor"
-            )
+            ),
+            reactNativeBundleId = "a1B2c3"
         )
         verifyConfigMethodVisitor(instrumentation, ConfigMethod("getAppId", "()Ljava/lang/String;", "abcde"))
         methods.forEach { method ->

@@ -5,6 +5,7 @@ import com.android.build.api.instrumentation.ClassContext
 import com.android.build.api.instrumentation.ClassData
 import io.embrace.android.gradle.plugin.instrumentation.config.ConfigClassVisitorFactory
 import io.embrace.android.gradle.plugin.instrumentation.json.readBytecodeInstrumentationFeatures
+import org.gradle.api.file.RegularFileProperty
 import org.objectweb.asm.ClassVisitor
 
 /**
@@ -28,12 +29,9 @@ abstract class EmbraceClassVisitorFactory : AsmClassVisitorFactory<BytecodeInstr
         // Add a visitor if this is a config class provided by the SDK
         val params = parameters.get()
         val cfg = params.config.get()
-        val encodedSharedObjectFilesMap = parameters.get().encodedSharedObjectFilesMap.orNull
-            ?.asFile
-            ?.takeIf { it.exists() }
-            ?.bufferedReader()
-            ?.use { it.readText() }
-        ConfigClassVisitorFactory.createClassVisitor(className, cfg, encodedSharedObjectFilesMap, api, visitor)?.let {
+        val reactNativeBundleId = readTextFromFile(params.reactNativeBundleId)
+        val encodedSharedObjectFilesMap = readTextFromFile(params.encodedSharedObjectFilesMap)
+        ConfigClassVisitorFactory.createClassVisitor(className, cfg, encodedSharedObjectFilesMap, reactNativeBundleId, api, visitor)?.let {
             visitor = it
         }
 
@@ -57,4 +55,10 @@ abstract class EmbraceClassVisitorFactory : AsmClassVisitorFactory<BytecodeInstr
         }
         return true
     }
+
+    private fun readTextFromFile(file: RegularFileProperty) =
+        file.orNull?.asFile
+            ?.takeIf { it.exists() }
+            ?.bufferedReader()
+            ?.use { it.readText() }
 }

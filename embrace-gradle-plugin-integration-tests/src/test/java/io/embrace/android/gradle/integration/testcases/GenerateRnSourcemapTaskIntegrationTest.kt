@@ -4,7 +4,6 @@ import com.squareup.moshi.JsonClass
 import io.embrace.android.gradle.integration.framework.IntegrationTestDefaults
 import io.embrace.android.gradle.integration.framework.PluginIntegrationTestRule
 import io.embrace.android.gradle.integration.framework.buildFile
-import io.embrace.android.gradle.integration.framework.file
 import io.embrace.android.gradle.network.FormPart
 import io.embrace.android.gradle.network.validateBodyApiToken
 import io.embrace.android.gradle.network.validateBodyAppId
@@ -20,7 +19,7 @@ import org.junit.Rule
 import org.junit.Test
 import java.io.File
 
-class RnSourcemapTaskIntegrationTest {
+class GenerateRnSourcemapTaskIntegrationTest {
 
     @Rule
     @JvmField
@@ -31,19 +30,14 @@ class RnSourcemapTaskIntegrationTest {
         rule.runTest(
             fixture = "rn-upload-simple",
             assertions = { projectDir ->
-                // 1. assert that RN bundle ID was injected as a string resource
-                val symbols = projectDir.buildFile("generated-embrace-resources/values/rn_sourcemap.xml")
-                val expectedResXml = projectDir.file("expected/rn_sourcemap.xml").readText()
-                assertEquals(expectedResXml, symbols.readText())
-
-                // 2. assert that the task output was the bundle + sourcemap file zipped as JSON
+                // 1. assert that the task output was the bundle + sourcemap file zipped as JSON
                 verifyOutputFile(projectDir.buildFile("output"))
 
-                // 3. assert that a request took place
+                // 2. assert that a request took place
                 val request = fetchRequest(EmbraceEndpoint.SOURCE_MAP)
                 assertHeaders(request, "multipart/form-data", "abcde")
 
-                // 4. assert the multipart form data contains bundle info
+                // 3. assert the multipart form data contains bundle info
                 val parts: List<FormPart> = readMultipartRequest(request)
                 assertEquals(4, parts.size)
                 parts[0].validateBodyAppId(IntegrationTestDefaults.APP_ID)

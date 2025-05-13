@@ -18,6 +18,8 @@ class FakeBytecodeInstrumentationParams(
         get() = TODO("Not yet implemented")
     override val encodedSharedObjectFilesMap: RegularFileProperty
         get() = TODO("Not yet implemented")
+    override val reactNativeBundleId: RegularFileProperty
+        get() = TODO("Not yet implemented")
     override val classInstrumentationFilter: Property<ClassInstrumentationFilter>
         get() = TODO("Not yet implemented")
 }

@@ -38,8 +38,4 @@ internal class NoopUnityInternalInterface(
         traceId: String?,
     ) {
     }
-
-    @Deprecated("Obsolete, will be removed in a future release.")
-    override fun installUnityThreadSampler() {
-    }
 }

@@ -7,8 +7,7 @@ class KotlinTraceFlagsWrapper(
 ) : io.opentelemetry.api.trace.TraceFlags {
     override fun isSampled(): Boolean = impl.isSampled
 
-    // FIXME: temporary. requires change in opentelemetry-kotlin first
-    override fun asHex(): String = throw UnsupportedOperationException()
+    override fun asHex(): String = impl.hex
 
-    override fun asByte(): Byte = asHex().toByte()
+    override fun asByte(): Byte = impl.hex.toByte()
 }

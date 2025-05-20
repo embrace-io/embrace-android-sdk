@@ -1,27 +1,29 @@
 package io.embrace.android.embracesdk.internal.otel.impl
 
 import io.embrace.android.embracesdk.fakes.FakeClock
+import io.embrace.android.embracesdk.fakes.FakeKotlinTracerProvider
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryClock
 import io.embrace.android.embracesdk.fakes.FakeSpanService
-import io.embrace.android.embracesdk.fakes.FakeTracerProvider
+import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import org.junit.Assert.assertNotSame
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
+@OptIn(ExperimentalApi::class)
 internal class EmbTracerProviderTest {
     private val clock = FakeClock()
     private val openTelemetryClock = FakeOpenTelemetryClock(clock)
 
     private lateinit var spanService: FakeSpanService
-    private lateinit var sdkTracerProvider: FakeTracerProvider
+    private lateinit var sdkTracerProvider: FakeKotlinTracerProvider
     private lateinit var embTracerProvider: EmbTracerProvider
 
     @Before
     fun setup() {
         spanService = FakeSpanService()
-        sdkTracerProvider = FakeTracerProvider()
+        sdkTracerProvider = FakeKotlinTracerProvider()
         embTracerProvider = EmbTracerProvider(
             sdkTracerProvider = sdkTracerProvider,
             spanService = spanService,

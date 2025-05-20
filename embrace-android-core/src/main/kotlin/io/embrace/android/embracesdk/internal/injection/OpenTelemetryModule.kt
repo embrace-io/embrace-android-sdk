@@ -11,8 +11,8 @@ import io.embrace.android.embracesdk.internal.spans.EmbraceTracer
 import io.embrace.android.embracesdk.internal.spans.InternalTracer
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.logging.Logger
+import io.embrace.opentelemetry.kotlin.tracing.Tracer
 import io.opentelemetry.api.OpenTelemetry
-import io.opentelemetry.api.trace.Tracer
 import io.opentelemetry.api.trace.TracerProvider
 
 /**

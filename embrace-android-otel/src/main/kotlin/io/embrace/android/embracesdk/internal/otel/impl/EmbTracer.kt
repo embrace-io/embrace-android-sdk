@@ -4,13 +4,15 @@ import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.embrace.android.embracesdk.internal.otel.sdk.otelSpanCreator
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.otel.spans.getEmbraceSpan
+import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.opentelemetry.api.trace.SpanBuilder
 import io.opentelemetry.api.trace.Tracer
 import io.opentelemetry.context.Context
 import io.opentelemetry.sdk.common.Clock
 
+@OptIn(ExperimentalApi::class)
 class EmbTracer(
-    private val sdkTracer: Tracer,
+    private val sdkTracer: io.embrace.opentelemetry.kotlin.tracing.Tracer,
     private val spanService: SpanService,
     private val clock: Clock,
 ) : Tracer {

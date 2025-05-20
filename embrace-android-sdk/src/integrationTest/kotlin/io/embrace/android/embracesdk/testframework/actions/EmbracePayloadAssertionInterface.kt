@@ -23,7 +23,7 @@ import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.getSessionSpan
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.testframework.assertions.JsonComparator
-import io.embrace.android.embracesdk.testframework.assertions.assertMatches
+import io.embrace.android.embracesdk.assertions.assertMatches
 import io.embrace.android.embracesdk.testframework.server.FakeApiServer
 import io.embrace.android.embracesdk.testframework.server.FormPart
 import java.io.File

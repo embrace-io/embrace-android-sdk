@@ -19,6 +19,7 @@ import io.opentelemetry.api.logs.LogRecordBuilder
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.StatusCode
 import io.opentelemetry.sdk.logs.data.LogRecordData
+import io.opentelemetry.sdk.trace.data.LinkData
 import io.opentelemetry.sdk.trace.data.SpanData
 
 /**
@@ -43,6 +44,13 @@ fun AttributesBuilder.fromMap(
 fun Attributes.toStringMap(): Map<String, String> = asMap().entries.associate {
     it.key.key.toString() to it.value.toString()
 }
+
+fun LinkData.toEmbracePayload() = Link(
+    spanId = spanContext.spanId,
+    traceId = spanContext.traceId,
+    attributes = attributes.toEmbracePayload(),
+    isRemote = spanContext.isRemote
+)
 
 fun LogRecordBuilder.setEmbraceAttribute(embraceAttribute: EmbraceAttribute): LogRecordBuilder {
     setAttribute(embraceAttribute.key.asOtelAttributeKey(), embraceAttribute.value)
@@ -81,7 +89,7 @@ fun SpanData.toEmbraceSpanData(): EmbraceSpanData = EmbraceSpanData(
     status = status.statusCode.toOtelKotlin(),
     events = fromEventData(eventDataList = events),
     attributes = attributes.toStringMap(),
-    links = links.map { Link(it.spanContext.spanId, it.attributes.toEmbracePayload()) }
+    links = links.map { it.toEmbracePayload() }
 )
 
 fun SpanData.hasEmbraceAttribute(embraceAttribute: EmbraceAttribute): Boolean =

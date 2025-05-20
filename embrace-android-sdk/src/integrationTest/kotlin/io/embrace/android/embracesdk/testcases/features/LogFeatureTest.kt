@@ -10,9 +10,9 @@ import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.utils.getSafeStackTrace
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
-import io.embrace.android.embracesdk.testframework.assertions.assertOtelLogReceived
-import io.embrace.android.embracesdk.testframework.assertions.getLogOfType
-import io.embrace.android.embracesdk.testframework.assertions.getOtelSeverity
+import io.embrace.android.embracesdk.assertions.assertOtelLogReceived
+import io.embrace.android.embracesdk.assertions.getLogOfType
+import io.embrace.android.embracesdk.assertions.getOtelSeverity
 import io.embrace.opentelemetry.kotlin.logging.SeverityNumber
 import org.junit.Before
 import org.junit.Rule

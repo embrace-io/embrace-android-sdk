@@ -6,7 +6,7 @@ import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.config.FakeRedactionConfig
 import io.embrace.android.embracesdk.internal.config.behavior.REDACTED_LABEL
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
-import io.embrace.android.embracesdk.testframework.assertions.assertMatches
+import io.embrace.android.embracesdk.assertions.assertMatches
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith

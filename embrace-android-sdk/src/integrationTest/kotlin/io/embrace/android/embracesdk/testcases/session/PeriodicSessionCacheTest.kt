@@ -15,7 +15,7 @@ import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.session.getSessionProperty
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
-import io.embrace.android.embracesdk.testframework.assertions.assertMatches
+import io.embrace.android.embracesdk.assertions.assertMatches
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test

@@ -1,8 +1,10 @@
 package io.embrace.android.gradle.integration.testcases
 
-import io.embrace.android.gradle.integration.framework.ApkDisassembler
 import io.embrace.android.gradle.integration.framework.PluginIntegrationTestRule
-import org.junit.Assert.assertNotNull
+import io.embrace.android.gradle.integration.framework.smali.SmaliConfigReader
+import io.embrace.android.gradle.integration.framework.smali.SmaliMethod
+import io.embrace.android.gradle.integration.framework.smali.SmaliParser
+import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import java.io.File
@@ -50,17 +52,9 @@ class ReactNativeAndroidTest {
                 verifyBuildTelemetryRequestSent(defaultExpectedVariants)
                 verifyHandshakes(defaultExpectedLibs, defaultExpectedArchs, defaultExpectedVariants)
                 verifyUploads(handshakeLibs, handshakeArchs, defaultExpectedVariants)
-
-                val filename = "app/build/outputs/apk/release/app-release.apk"
-                verifyBundleIdInjection(File(projectDir, filename))
+                verifyAsmInjection(projectDir)
             }
         )
-    }
-
-    private fun verifyBundleIdInjection(apkFile: File) {
-        val decodedApk = ApkDisassembler().disassembleApk(apkFile)
-        val bundleId = decodedApk.getStringResource("emb_rn_bundle_id")
-        assertNotNull(bundleId)
     }
 
     private fun installNodeModules(projectDir: File) {
@@ -75,5 +69,21 @@ class ReactNativeAndroidTest {
         if (exitCode != 0) {
             error("npm install failed with exit code $exitCode\n$output")
         }
+    }
+
+    private fun verifyAsmInjection(projectDir: File) {
+        // Read and parse the smali file containing the injected symbols
+        val smaliFile = SmaliConfigReader().readSmaliFiles(
+            File(projectDir, "app"),
+            listOf("/io/embrace/android/embracesdk/internal/config/instrumented/ProjectConfigImpl")
+        ).first()
+
+        // Get the return value of the getBase64SharedObjectFilesMap method
+        val method = SmaliParser().parse(
+            smaliFile,
+            listOf(SmaliMethod("getReactNativeBundleId()Ljava/lang/String;"))
+        ).methods.first()
+
+        assertEquals("765FB008173DC25D016D112F67250241", method.returnValue)
     }
 }

@@ -6,12 +6,14 @@ import io.embrace.android.embracesdk.internal.clock.normalizeTimestampAsMillis
 import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.OtelLimitsConfig
 import io.embrace.android.embracesdk.internal.otel.attrs.EmbraceAttribute
+import io.embrace.android.embracesdk.internal.otel.attrs.asPair
 import io.embrace.android.embracesdk.internal.otel.config.isAttributeValid
 import io.embrace.android.embracesdk.internal.otel.config.isNameValid
 import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.embrace.android.embracesdk.internal.otel.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.otel.schema.ErrorCodeAttribute.Failure.fromErrorCode
+import io.embrace.android.embracesdk.internal.otel.schema.LinkType
 import io.embrace.android.embracesdk.internal.otel.sdk.fromMap
 import io.embrace.android.embracesdk.internal.otel.sdk.hasEmbraceAttribute
 import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
@@ -45,6 +47,7 @@ class EmbraceSpanFactoryImpl(
     private val tracer: Tracer,
     private val openTelemetryClock: Clock,
     private val spanRepository: SpanRepository,
+    private val stopCallback: ((spanId: String) -> Unit)? = null,
     private var redactionFunction: ((key: String, value: String) -> String)? = null,
 ) : EmbraceSpanFactory {
 
@@ -74,6 +77,7 @@ class EmbraceSpanFactoryImpl(
             otelSpanCreator = otelSpanCreator,
             openTelemetryClock = openTelemetryClock,
             spanRepository = spanRepository,
+            stopCallback = stopCallback,
             redactionFunction = redactionFunction,
             autoTerminationMode = autoTerminationMode
         )
@@ -84,6 +88,7 @@ private class EmbraceSpanImpl(
     private val otelSpanCreator: OtelSpanCreator,
     private val openTelemetryClock: Clock,
     private val spanRepository: SpanRepository,
+    private val stopCallback: ((spanId: String) -> Unit)? = null,
     private val redactionFunction: ((key: String, value: String) -> String)? = null,
     private val limits: OtelLimitsConfig = InstrumentedConfigImpl.otelLimits,
     override val autoTerminationMode: AutoTerminationMode = AutoTerminationMode.NONE,
@@ -179,6 +184,7 @@ private class EmbraceSpanImpl(
                 }
 
                 startedSpan.get()?.let { spanToStop ->
+                    spanId?.let { stopCallback?.invoke(it) }
                     populateAttributes(spanToStop)
                     populateEvents(spanToStop)
                     populateLinks(spanToStop)
@@ -306,9 +312,9 @@ private class EmbraceSpanImpl(
         return false
     }
 
-    override fun addSystemLink(linkedSpanContext: SpanContext, attributes: Map<String, String>): Boolean =
+    override fun addSystemLink(linkedSpanContext: SpanContext, type: LinkType, attributes: Map<String, String>): Boolean =
         addObject(systemLinks, systemLinkCount, limits.getMaxSystemLinkCount()) {
-            EmbraceLinkData(linkedSpanContext, attributes)
+            EmbraceLinkData(linkedSpanContext, mutableMapOf(type.asPair()).apply { putAll(attributes) })
         }
 
     override fun addLink(linkedSpanContext: SpanContext, attributes: Map<String, String>?): Boolean =

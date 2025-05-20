@@ -10,7 +10,7 @@ import io.embrace.android.embracesdk.internal.otel.attrs.embSessionEndType
 import io.embrace.android.embracesdk.internal.otel.attrs.embSessionStartType
 import io.embrace.android.embracesdk.internal.payload.LifeEventType
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
-import io.embrace.android.embracesdk.testframework.assertions.assertMatches
+import io.embrace.android.embracesdk.assertions.assertMatches
 import java.util.Locale
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals

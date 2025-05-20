@@ -19,9 +19,10 @@ import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.utils.getSafeStackTrace
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
-import io.embrace.android.embracesdk.testframework.assertions.assertMatches
-import io.embrace.android.embracesdk.testframework.assertions.assertOtelLogReceived
-import io.embrace.android.embracesdk.testframework.assertions.getLastLog
+import io.embrace.android.embracesdk.assertions.assertMatches
+import io.embrace.android.embracesdk.assertions.assertOtelLogReceived
+import io.embrace.android.embracesdk.assertions.getLastLog
+import io.opentelemetry.api.logs.Severity
 import io.embrace.opentelemetry.kotlin.logging.SeverityNumber
 import io.opentelemetry.semconv.incubating.LogIncubatingAttributes
 import org.junit.Assert.assertEquals

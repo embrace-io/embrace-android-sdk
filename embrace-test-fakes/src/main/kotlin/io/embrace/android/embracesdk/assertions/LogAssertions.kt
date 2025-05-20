@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.testframework.assertions
+package io.embrace.android.embracesdk.assertions
 
 import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
@@ -15,7 +15,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 
-internal fun assertOtelLogReceived(
+fun assertOtelLogReceived(
     logReceived: Log?,
     expectedMessage: String,
     expectedSeverityNumber: SeverityNumber,
@@ -55,7 +55,7 @@ internal fun assertOtelLogReceived(
     }
 }
 
-internal fun getOtelSeverity(severity: Severity): SeverityNumber {
+fun getOtelSeverity(severity: Severity): SeverityNumber {
     return when (severity) {
         Severity.INFO -> SeverityNumber.INFO
         Severity.WARNING -> SeverityNumber.WARN

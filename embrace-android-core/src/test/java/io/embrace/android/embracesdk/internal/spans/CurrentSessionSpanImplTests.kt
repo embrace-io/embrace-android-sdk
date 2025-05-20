@@ -5,6 +5,8 @@ import io.embrace.android.embracesdk.arch.assertHasEmbraceAttribute
 import io.embrace.android.embracesdk.arch.assertIsType
 import io.embrace.android.embracesdk.assertions.assertEmbraceSpanData
 import io.embrace.android.embracesdk.assertions.findEventOfType
+import io.embrace.android.embracesdk.assertions.validatePreviousSessionLink
+import io.embrace.android.embracesdk.assertions.validateSystemLink
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
 import io.embrace.android.embracesdk.fakes.FakeEmbraceSpanFactory
@@ -18,6 +20,7 @@ import io.embrace.android.embracesdk.internal.otel.config.getMaxTotalAttributeCo
 import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
 import io.embrace.android.embracesdk.internal.otel.schema.AppTerminationCause
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
+import io.embrace.android.embracesdk.internal.otel.schema.LinkType
 import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
 import io.embrace.android.embracesdk.internal.otel.sdk.otelSpanCreator
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
@@ -426,14 +429,20 @@ internal class CurrentSessionSpanImplTests {
     }
 
     @Test
-    fun `ending a session will only start a new session span if told to`() {
-        val originalSessionSpanId = spanRepository.getActiveSpans().single().spanId
+    fun `new session started after ending has correct metadata`() {
+        val originalSessionSpan = checkNotNull(spanRepository.getActiveSpans().single().snapshot())
+        val originalSessionId = currentSessionSpan.getSessionId()
         currentSessionSpan.endSession(startNewSession = true)
         with(spanRepository.getActiveSpans().single()) {
             assertTrue(hasEmbraceAttribute(EmbType.Ux.Session))
-            assertNotEquals(originalSessionSpanId, spanId)
+            assertNotEquals(originalSessionSpan.spanId, spanId)
+            checkNotNull(snapshot()?.links?.single()).validatePreviousSessionLink(originalSessionSpan, originalSessionId)
         }
+    }
 
+    @Test
+    fun `new session will only start if told to`() {
+        assertNotNull(spanRepository.getActiveSpans().single())
         currentSessionSpan.endSession(startNewSession = false)
         assertTrue(spanRepository.getActiveSpans().isEmpty())
     }
@@ -552,6 +561,48 @@ internal class CurrentSessionSpanImplTests {
 
         // verify event was added to the span
         assertEquals(limit, span.toEmbracePayload().attributes?.size)
+    }
+
+    @Test
+    fun `span stop callback creates the correct span links`() {
+        val sessionSpan = checkNotNull(spanRepository.getActiveSpans().single())
+        val span = spanService.startSpan("test")?.apply {
+            stop()
+        }
+
+        val spanSnapshot = checkNotNull(span?.snapshot())
+        val sessionSpanSnapshot = checkNotNull(sessionSpan.snapshot())
+
+        checkNotNull(spanSnapshot.links).single().validateSystemLink(sessionSpanSnapshot, LinkType.EndSession)
+        checkNotNull(sessionSpanSnapshot.links).single().validateSystemLink(spanSnapshot, LinkType.EndedIn)
+    }
+
+    @Test
+    fun `session ending will not create span link to its own session span`() {
+        val sessionSpan = checkNotNull(spanRepository.getActiveSpans().single())
+        currentSessionSpan.endSession(startNewSession = true)
+        val sessionSpanSnapshot = checkNotNull(sessionSpan.snapshot())
+        assertEquals(0, sessionSpanSnapshot.links?.size)
+    }
+
+    @Test
+    fun `span stop callback will not create links for untracked span`() {
+        val sessionSpan = checkNotNull(spanRepository.getActiveSpans().single())
+        currentSessionSpan.spanStopCallback(checkNotNull(FakeEmbraceSdkSpan.started().spanId))
+
+        val sessionSpanSnapshot = checkNotNull(sessionSpan.snapshot())
+        assertEquals(0, sessionSpanSnapshot.links?.size)
+    }
+
+    @Test
+    fun `span stop callback will not create links if there's no active session`() {
+        val span = spanService.startSpan("test")?.apply {
+            currentSessionSpan.endSession(false)
+            stop()
+        }
+
+        val spanSnapshot = checkNotNull(span?.snapshot())
+        assertEquals(0, spanSnapshot.links?.size)
     }
 
     private fun CurrentSessionSpan.assertNoSessionSpan() {

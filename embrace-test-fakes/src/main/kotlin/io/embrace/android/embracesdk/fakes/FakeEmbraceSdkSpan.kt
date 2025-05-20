@@ -13,11 +13,12 @@ import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.embrace.android.embracesdk.internal.otel.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.otel.schema.ErrorCodeAttribute.Failure.fromErrorCode
+import io.embrace.android.embracesdk.internal.otel.schema.LinkType
 import io.embrace.android.embracesdk.internal.otel.sdk.hasEmbraceAttribute
+import io.embrace.android.embracesdk.internal.otel.spans.EmbraceLinkData
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.otel.spans.getEmbraceSpan
 import io.embrace.android.embracesdk.internal.otel.toEmbracePayload
-import io.embrace.android.embracesdk.internal.payload.Link
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
@@ -48,7 +49,7 @@ class FakeEmbraceSdkSpan(
     var errorCode: ErrorCode? = null
     val attributes: MutableMap<String, String> = mutableMapOf(type.asPair())
     val events: ConcurrentLinkedQueue<EmbraceSpanEvent> = ConcurrentLinkedQueue()
-    val links: ConcurrentLinkedQueue<Link> = ConcurrentLinkedQueue()
+    val links: ConcurrentLinkedQueue<EmbraceLinkData> = ConcurrentLinkedQueue()
 
     override val parent: EmbraceSpan?
         get() = parentContext.getEmbraceSpan()
@@ -138,12 +139,12 @@ class FakeEmbraceSdkSpan(
     }
 
     override fun addLink(linkedSpanContext: SpanContext, attributes: Map<String, String>?): Boolean {
-        links.add(Link(linkedSpanContext.spanId, attributes?.toEmbracePayload()))
+        links.add(EmbraceLinkData(linkedSpanContext, attributes ?: emptyMap()))
         return true
     }
 
-    override fun addSystemLink(linkedSpanContext: SpanContext, attributes: Map<String, String>): Boolean =
-        addLink(linkedSpanContext, attributes)
+    override fun addSystemLink(linkedSpanContext: SpanContext, type: LinkType, attributes: Map<String, String>): Boolean =
+        addLink(linkedSpanContext, mutableMapOf(type.asPair()).apply { putAll(attributes) })
 
     override fun asNewContext(): Context? = sdkSpan?.let { parentContext.with(this).with(it) }
 
@@ -161,7 +162,7 @@ class FakeEmbraceSdkSpan(
                 status = status,
                 events = events.map(EmbraceSpanEvent::toEmbracePayload),
                 attributes = attributes.toEmbracePayload(),
-                links = links.toList()
+                links = links.toList().map { it.toEmbracePayload() }
             )
         }
     }

@@ -33,4 +33,9 @@ interface CurrentSessionSpan : Initializable, SessionSpanWriter {
      * Returns the current session ID
      */
     fun getSessionId(): String
+
+    /**
+     * Callback to be invoked when a span is just about to be stopped
+     */
+    fun spanStopCallback(spanId: String)
 }

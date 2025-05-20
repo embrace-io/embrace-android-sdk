@@ -30,8 +30,12 @@ fun String.isValidLongValueAttribute(): Boolean = longValueAttributes.contains(t
 
 private val longValueAttributes: Set<String> = setOf(ExceptionAttributes.EXCEPTION_STACKTRACE.key)
 
+fun List<Attribute>.hasEmbraceAttributeKey(embraceAttributeKey: EmbraceAttributeKey): Boolean = any {
+    it.key == embraceAttributeKey.name
+}
+
 fun List<Attribute>.hasEmbraceAttribute(embraceAttribute: EmbraceAttribute): Boolean = any {
-    it.key == embraceAttribute.key.name
+    it.key == embraceAttribute.key.name && it.data == embraceAttribute.value
 }
 
 fun List<Attribute>.findAttributeValue(key: String): String? = singleOrNull { it.key == key }?.data

@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.otel.spans
 
 import io.embrace.android.embracesdk.internal.otel.attrs.EmbraceAttribute
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
+import io.embrace.android.embracesdk.internal.otel.schema.LinkType
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.opentelemetry.kotlin.StatusCode
@@ -77,6 +78,7 @@ interface EmbraceSdkSpan : EmbraceSpan, ImplicitContextKeyed {
      */
     fun addSystemLink(
         linkedSpanContext: SpanContext,
+        type: LinkType,
         attributes: Map<String, String> = emptyMap(),
     ): Boolean
 

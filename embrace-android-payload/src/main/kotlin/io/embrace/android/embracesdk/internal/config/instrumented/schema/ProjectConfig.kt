@@ -39,4 +39,11 @@ interface ProjectConfig {
      * This is not possible to specify in the embrace-config.json.
      */
     fun getBuildFlavor(): String? = null
+
+    /**
+     * The project's React Native bundleId
+     *
+     * This is not possible to specify in the embrace-config.json.
+     */
+    fun getReactNativeBundleId(): String? = null
 }

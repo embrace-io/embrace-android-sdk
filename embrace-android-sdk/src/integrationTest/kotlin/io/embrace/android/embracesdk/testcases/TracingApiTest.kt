@@ -3,26 +3,38 @@ package io.embrace.android.embracesdk.testcases
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.arch.assertIsTypePerformance
 import io.embrace.android.embracesdk.assertions.assertEmbraceSpanData
+import io.embrace.android.embracesdk.assertions.findCustomLinks
 import io.embrace.android.embracesdk.assertions.findSpanByName
+import io.embrace.android.embracesdk.assertions.hasLinkToEmbraceSpan
+import io.embrace.android.embracesdk.assertions.isLinkedToSpanContext
+import io.embrace.android.embracesdk.assertions.validateLinkToSpan
+import io.embrace.android.embracesdk.assertions.validateLinkToSpanContext
 import io.embrace.android.embracesdk.concurrency.SingleThreadTestScheduledExecutor
+import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
 import io.embrace.android.embracesdk.fakes.FakeSpanExporter
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fixtures.TOO_LONG_ATTRIBUTE_KEY
 import io.embrace.android.embracesdk.fixtures.TOO_LONG_ATTRIBUTE_VALUE
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
+import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
+import io.embrace.android.embracesdk.internal.otel.schema.EmbType
+import io.embrace.android.embracesdk.internal.otel.schema.LinkType
 import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
+import io.embrace.android.embracesdk.internal.otel.sdk.toEmbraceSpanData
+import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.payload.ApplicationState
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
-import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
-import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanData
+import io.embrace.android.embracesdk.internal.payload.getSessionSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbracePayloadAssertionInterface
-import io.opentelemetry.api.trace.SpanId
+import io.opentelemetry.api.trace.SpanContext
+import io.opentelemetry.api.trace.TraceFlags
+import io.opentelemetry.api.trace.TraceState
 import io.opentelemetry.context.Context
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
@@ -333,7 +345,13 @@ internal class TracingApiTest {
 
     @Test
     fun `span links`() {
-        var linkedSpanId: String? = null
+        val fakeSpan = FakeEmbraceSdkSpan.started()
+        val remoteSpanContext = SpanContext.createFromRemoteParent(
+            checkNotNull(fakeSpan.traceId),
+            checkNotNull(fakeSpan.spanId),
+            TraceFlags.getDefault(),
+            TraceState.getDefault()
+        )
         testRule.runTest(
             testCaseAction = {
                 recordSession {
@@ -343,30 +361,34 @@ internal class TracingApiTest {
                     val op2 = checkNotNull(embrace.startSpan("my-op-2"))
                     clock.tick(100L)
                     op2.addLink(op, mapOf("test" to "value"))
+                    op2.addLink(remoteSpanContext)
                     op2.stop()
                     op.stop()
-                    linkedSpanId = op.spanId
                 }
             },
             assertAction = {
                 with(getSingleSessionEnvelope()) {
                     val op = findSpanByName(name = "my-op")
                     val op2 = findSpanByName(name = "my-op-2")
-                    assertNotNull(op)
-                    assertNotNull(op2)
-                    assertEquals(op.spanId, op2.links?.single()?.spanId)
+                    op2.hasLinkToEmbraceSpan(checkNotNull(getSessionSpan()), LinkType.EndedIn)
+
+                    val links = checkNotNull(op2.findCustomLinks())
+                    links[0].validateLinkToSpan(linkedSpan = op, expectedAttributes = mapOf("test" to "value"))
+                    links[1].validateLinkToSpanContext(remoteSpanContext)
                 }
             },
             otelExportAssertion = {
-                val spanWithLink = awaitSpans(1) { it.links.size == 1 }.single()
-                with(spanWithLink.links.single()) {
-                    assertEquals(linkedSpanId, spanContext.spanId)
-                    assertEquals("value", attributes.toEmbracePayload().single().data)
-                }
+                val sessionSpan = awaitSpansWithType(1, EmbType.Ux.Session).single().toEmbraceSpanData().toEmbracePayload()
+                val linkedToSpan = awaitSpans(1) { it.name == "my-op" }.single().toEmbraceSpanData().toEmbracePayload()
+                val spanWithLinks = awaitSpans(1) { it.name == "my-op-2" }.single().toEmbraceSpanData().toEmbracePayload()
+                spanWithLinks.hasLinkToEmbraceSpan(sessionSpan, LinkType.EndedIn)
+
+                val links = checkNotNull(spanWithLinks.findCustomLinks())
+                links[0].validateLinkToSpan(linkedSpan = linkedToSpan, expectedAttributes = mapOf("test" to "value"))
+                assertTrue(links[1].isLinkedToSpanContext(remoteSpanContext))
             }
         )
     }
-
 
     private fun EmbracePayloadAssertionInterface.getSdkInitSpanFromBackgroundActivity(): List<Span> {
         val lastSentBackgroundActivity = getSingleSessionEnvelope(ApplicationState.BACKGROUND)

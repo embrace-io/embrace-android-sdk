@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.internal.otel.config.isAttributeValid
 import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanData.Companion.fromEventData
+import io.embrace.android.embracesdk.internal.otel.toOtelKotlin
 import io.embrace.android.embracesdk.internal.payload.Link
 import io.embrace.android.embracesdk.internal.utils.isBlankish
 import io.opentelemetry.api.common.AttributeKey
@@ -85,7 +86,7 @@ fun SpanData.toEmbraceSpanData(): EmbraceSpanData = EmbraceSpanData(
     name = name,
     startTimeNanos = startEpochNanos,
     endTimeNanos = endEpochNanos,
-    status = status.statusCode,
+    status = status.statusCode.toOtelKotlin(),
     events = fromEventData(eventDataList = events),
     attributes = attributes.toStringMap(),
     links = links.map { it.toEmbracePayload() }

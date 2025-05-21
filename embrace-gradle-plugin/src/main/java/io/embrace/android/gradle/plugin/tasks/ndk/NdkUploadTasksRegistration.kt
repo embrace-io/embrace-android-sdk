@@ -2,19 +2,20 @@ package io.embrace.android.gradle.plugin.tasks.ndk
 
 import io.embrace.android.gradle.plugin.config.PluginBehavior
 import io.embrace.android.gradle.plugin.gradle.registerTask
+import io.embrace.android.gradle.plugin.gradle.safeFlatMap
 import io.embrace.android.gradle.plugin.gradle.tryGetTaskProvider
 import io.embrace.android.gradle.plugin.instrumentation.config.model.VariantConfig
-import io.embrace.android.gradle.plugin.model.AndroidCompactedVariantData
 import io.embrace.android.gradle.plugin.network.EmbraceEndpoint
 import io.embrace.android.gradle.plugin.tasks.common.RequestParams
 import io.embrace.android.gradle.plugin.tasks.registration.EmbraceTaskRegistration
 import io.embrace.android.gradle.plugin.tasks.registration.RegistrationParams
 import io.embrace.android.gradle.plugin.util.capitalizedString
 import org.gradle.api.Project
+import org.gradle.api.Task
 import org.gradle.api.file.Directory
 import org.gradle.api.provider.Provider
+import org.gradle.api.tasks.TaskProvider
 import java.io.File
-import java.util.concurrent.Callable
 
 /**
  * In charge of registering tasks for ndk mapping file upload and injection.
@@ -36,7 +37,11 @@ class NdkUploadTasksRegistration(
         // Bail if ndk_enabled is not true.
         if (variantConfig.embraceConfig?.ndkEnabled != true) return
 
-        val sharedObjectFilesProvider = getSharedObjectFilesProvider(project, data)
+        val mergeNativeLibsTaskProvider: Provider<TaskProvider<Task>?> = project.provider {
+            project.tryGetTaskProvider("merge${variant.name.capitalizedString()}NativeLibs")
+        }
+
+        val sharedObjectFilesProvider = getSharedObjectFilesProvider(project, mergeNativeLibsTaskProvider)
 
         val compressionTaskProvider = project.registerTask(
             CompressSharedObjectFilesTask.NAME,
@@ -48,25 +53,7 @@ class NdkUploadTasksRegistration(
             task.compressedSharedObjectFilesDirectory.set(
                 project.layout.buildDirectory.dir("intermediates/embrace/compressed/${data.name}")
             )
-        }
-
-        compressionTaskProvider.configure { compressionTask: CompressSharedObjectFilesTask ->
-            // TODO: check if these are only needed for Unity and comment accordingly.
-            compressionTask.mustRunAfter(object : Callable<Any> {
-                override fun call(): Any {
-                    return listOfNotNull(
-                        project.tryGetTaskProvider(
-                            "merge${variantConfig.variantName.capitalizedString()}JniLibFolders"
-                        ),
-                        project.tryGetTaskProvider(
-                            "transformNativeLibsWithMergeJniLibsFor${variantConfig.variantName.capitalizedString()}"
-                        ),
-                        project.tryGetTaskProvider(
-                            "merge${variantConfig.variantName.capitalizedString()}NativeLibs"
-                        )
-                    )
-                }
-            })
+            task.dependsOn(mergeNativeLibsTaskProvider)
         }
 
         val hashTaskProvider = project.registerTask(
@@ -141,14 +128,14 @@ class NdkUploadTasksRegistration(
 
     private fun getSharedObjectFilesProvider(
         project: Project,
-        variant: AndroidCompactedVariantData,
+        mergeNativeLibsTaskProvider: Provider<TaskProvider<Task>?>,
     ): Provider<Directory?> {
         val customSymbolsDirectory = behavior.customSymbolsDirectory
         return project.layout.dir(
             if (!customSymbolsDirectory.isNullOrEmpty()) {
                 project.provider { getNativeSharedObjectFilesFromCustomDirectory(customSymbolsDirectory, project) }
             } else {
-                getDefaultNativeSharedObjectFiles(project, variant)
+                getDefaultNativeSharedObjectFiles(project, mergeNativeLibsTaskProvider)
             }
         )
     }
@@ -170,12 +157,10 @@ class NdkUploadTasksRegistration(
      */
     private fun getDefaultNativeSharedObjectFiles(
         project: Project,
-        variant: AndroidCompactedVariantData,
-    ): Provider<File> {
-        return project.provider {
-            project.tasks.named("merge${variant.name.capitalizedString()}NativeLibs")
-        }.flatMap { taskProvider ->
-            taskProvider.flatMap { task ->
+        mergeNativeLibsTaskProvider: Provider<TaskProvider<Task>?>,
+    ): Provider<File?> {
+        return mergeNativeLibsTaskProvider.safeFlatMap { maybeTaskProvider ->
+            maybeTaskProvider?.flatMap { task ->
                 task.outputs.files.asFileTree.elements.map { files ->
                     files
                         .first { it.asFile.extension == "so" }
@@ -184,7 +169,7 @@ class NdkUploadTasksRegistration(
                         ?.parentFile
                         ?: error("Shared object file not found")
                 }
-            }
+            } ?: project.provider { null }
         }
     }
 }

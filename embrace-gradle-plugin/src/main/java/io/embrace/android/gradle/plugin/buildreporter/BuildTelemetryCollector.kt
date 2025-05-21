@@ -79,7 +79,9 @@ class BuildTelemetryCollector {
 
     private fun Project.isConfigurationCacheEnabled(): Boolean {
         return try {
-            if (isAtLeast(GradleVersion.GRADLE_7_6)) {
+            if (isAtLeast(GradleVersion.GRADLE_8_5)) {
+                return BuildFeaturesWrapper().isConfigurationCacheEnabled(project).get()
+            } else if (isAtLeast(GradleVersion.GRADLE_7_6)) {
                 val isConfigurationCacheRequestedMethod =
                     this.gradle.startParameter::class.java.getMethod("isConfigurationCacheRequested")
                 return isConfigurationCacheRequestedMethod.invoke(this.gradle.startParameter) as Boolean

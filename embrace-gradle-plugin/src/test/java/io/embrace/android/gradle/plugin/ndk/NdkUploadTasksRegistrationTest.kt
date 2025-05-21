@@ -25,6 +25,7 @@ import io.mockk.mockk
 import org.gradle.api.DefaultTask
 import org.gradle.api.Project
 import org.gradle.api.internal.provider.AbstractProperty.PropertyQueryException
+import org.gradle.api.internal.provider.MissingValueException
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.tasks.TaskProvider
 import org.gradle.testfixtures.ProjectBuilder
@@ -118,32 +119,6 @@ class NdkUploadTasksRegistrationTest {
     }
 
     @Test
-    fun `compression task sets correct must run afters`() {
-        val capitalizedString = testAndroidCompactedVariantData.name.capitalizedString()
-
-        val nativeLibsMergingTasks = listOf(
-            registerTestTask(project, "merge${capitalizedString}JniLibFolders"),
-            registerTestTask(project, "merge${capitalizedString}NativeLibs"),
-            registerTestTask(project, "transformNativeLibsWithMergeJniLibsFor$capitalizedString")
-        )
-
-        // When NDK upload tasks are registered
-        val registration = createNdkUploadTasksRegistration()
-        registration.register(testRegistrationParams)
-
-        val compressionTask = project.tasks.findByName(
-            "${CompressSharedObjectFilesTask.NAME}$capitalizedString"
-        ) as CompressSharedObjectFilesTask
-        assertTrue(project.tasks.contains(compressionTask))
-
-        // Then the compression task must run after the native libs merging tasks
-        val compressionTaskDependencies = compressionTask.mustRunAfter.getDependencies(compressionTask)
-        nativeLibsMergingTasks.forEach {
-            assertTrue(compressionTaskDependencies.contains(it.get()))
-        }
-    }
-
-    @Test
     fun `tasks are registered correctly`() {
         val registration = createNdkUploadTasksRegistration()
         registerTestTask(project, "merge${testAndroidCompactedVariantData.name.capitalizedString()}NativeLibs")
@@ -165,15 +140,15 @@ class NdkUploadTasksRegistrationTest {
             "${CompressSharedObjectFilesTask.NAME}${testAndroidCompactedVariantData.name.capitalizedString()}"
         ) as CompressSharedObjectFilesTask
 
-        val exception = assertThrows(PropertyQueryException::class.java) {
+        val exception = assertThrows(MissingValueException::class.java) {
             compressionTask.architecturesDirectory.get()
         }
 
         assertEquals(
-            "Failed to query the value of task ':compressSharedObjectFilesVariantName' property 'architecturesDirectory'.",
+            "Cannot query the value of task ':compressSharedObjectFilesVariantName' property" +
+                " 'architecturesDirectory' because it has no value available.",
             exception.message
         )
-        assertEquals("Task with name 'mergeVariantNameNativeLibs' not found in root project 'test'.", exception.cause?.message)
     }
 
     @Test

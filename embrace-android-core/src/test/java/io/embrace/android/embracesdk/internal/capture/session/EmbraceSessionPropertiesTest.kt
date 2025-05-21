@@ -150,7 +150,11 @@ internal class EmbraceSessionPropertiesTest {
         }
         assertFalse(
             "should not be able to add new key when limit is hit",
-            sessionProperties.add("propNew", VALUE_VALID, true)
+            sessionProperties.add("propPermNew", VALUE_VALID, true)
+        )
+        assertFalse(
+            "should not be able to add new key when limit is hit",
+            sessionProperties.add("propTempNew", VALUE_VALID, false)
         )
         val otherValue = "other"
         assertTrue(
@@ -180,7 +184,11 @@ internal class EmbraceSessionPropertiesTest {
         }
         assertFalse(
             "should not be able to add new key when limit is hit",
-            sessionProperties.add("propNew", VALUE_VALID, true)
+            sessionProperties.add("propPermNew", VALUE_VALID, true)
+        )
+        assertFalse(
+            "should not be able to add new key when limit is hit",
+            sessionProperties.add("propTempNew", VALUE_VALID, false)
         )
         val otherValue = "other"
         assertTrue(

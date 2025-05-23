@@ -202,11 +202,10 @@ class PluginBehaviorImplTest {
         assertEquals("", behavior.customSymbolsDirectory)
     }
 
-    @Suppress("DEPRECATION")
     @Test
     fun `customSymbolDirectory override`() {
         val dir = "/foo"
-        extension.customSymbolsDirectory.set(dir)
+        embrace.customSymbolsDirectory.set(dir)
         assertEquals(dir, behavior.customSymbolsDirectory)
     }
 

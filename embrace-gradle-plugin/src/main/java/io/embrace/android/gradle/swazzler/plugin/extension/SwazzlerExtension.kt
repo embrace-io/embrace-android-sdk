@@ -39,7 +39,7 @@ abstract class SwazzlerExtension(objectFactory: ObjectFactory) {
     @Deprecated("Use embrace.bytecodeInstrumentation.firebasePushNotificationsEnabled instead.")
     val instrumentFirebaseMessaging: Property<Boolean> = objectFactory.property(Boolean::class.java)
 
-    @Deprecated("This property is deprecated and is no longer respected.")
+    @Deprecated("Use embrace.customSymbolsDirectory instead.")
     val customSymbolsDirectory: Property<String> =
         objectFactory.property(String::class.java).convention(DEFAULT_CUSTOM_SYMBOLS_DIRECTORY)
 

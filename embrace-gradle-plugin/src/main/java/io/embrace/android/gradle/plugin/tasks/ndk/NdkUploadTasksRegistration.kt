@@ -1,6 +1,7 @@
 package io.embrace.android.gradle.plugin.tasks.ndk
 
 import io.embrace.android.gradle.plugin.config.PluginBehavior
+import io.embrace.android.gradle.plugin.gradle.nullSafeMap
 import io.embrace.android.gradle.plugin.gradle.registerTask
 import io.embrace.android.gradle.plugin.gradle.safeFlatMap
 import io.embrace.android.gradle.plugin.gradle.tryGetTaskProvider
@@ -14,7 +15,6 @@ import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.file.Directory
 import org.gradle.api.provider.Provider
-import org.gradle.api.tasks.TaskProvider
 import java.io.File
 
 /**
@@ -37,9 +37,9 @@ class NdkUploadTasksRegistration(
         // Bail if ndk_enabled is not true.
         if (variantConfig.embraceConfig?.ndkEnabled != true) return
 
-        val mergeNativeLibsTaskProvider: Provider<TaskProvider<Task>?> = project.provider {
+        val mergeNativeLibsTaskProvider: Provider<Task?> = project.provider {
             project.tryGetTaskProvider("merge${variant.name.capitalizedString()}NativeLibs")
-        }
+        }.safeFlatMap { it as Provider<Task?> }
 
         val sharedObjectFilesProvider = getSharedObjectFilesProvider(project, mergeNativeLibsTaskProvider)
 
@@ -53,7 +53,12 @@ class NdkUploadTasksRegistration(
             task.compressedSharedObjectFilesDirectory.set(
                 project.layout.buildDirectory.dir("intermediates/embrace/compressed/${data.name}")
             )
-            task.dependsOn(mergeNativeLibsTaskProvider)
+
+            // dependsOn doesn't accept null providers, so we use an empty list if the task is not found.
+            val dependsOnTaskProvider = project.provider {
+                project.tryGetTaskProvider("merge${variant.name.capitalizedString()}NativeLibs") ?: emptyList<Task>()
+            }
+            task.dependsOn(dependsOnTaskProvider)
         }
 
         val hashTaskProvider = project.registerTask(
@@ -75,11 +80,6 @@ class NdkUploadTasksRegistration(
             UploadSharedObjectFilesTask::class.java,
             data
         ) { task ->
-            // TODO: Check why this is needed for 7.5.1. For Gradle 8+ Gradle detects automatically when the other tasks aren't executed
-            task.onlyIf {
-                task.compressedSharedObjectFilesDirectory.asFile.get().exists() &&
-                    task.architecturesToHashedSharedObjectFilesMapJson.asFile.get().exists()
-            }
             // TODO: An error thrown in registration will make the build will fail. Should we use failBuildOnUploadErrors for this too?
             task.failBuildOnUploadErrors.set(behavior.failBuildOnUploadErrors)
             task.requestParams.set(
@@ -101,7 +101,6 @@ class NdkUploadTasksRegistration(
             task.architecturesToHashedSharedObjectFilesMapJson.set(
                 hashTaskProvider.flatMap { it.architecturesToHashedSharedObjectFilesMap }
             )
-            task.dependsOn(hashTaskProvider)
         }
 
         project.registerTask(
@@ -109,9 +108,6 @@ class NdkUploadTasksRegistration(
             EncodeFileToBase64Task::class.java,
             data
         ) { task ->
-            // TODO: Check why this is needed for 7.5.1. For Gradle 8+ Gradle detects automatically when the other tasks aren't executed
-            task.onlyIf { task.inputFile.asFile.get().exists() }
-
             task.inputFile.set(
                 hashTaskProvider.flatMap { it.architecturesToHashedSharedObjectFilesMap }
             )
@@ -126,9 +122,14 @@ class NdkUploadTasksRegistration(
         }
     }
 
+    /**
+     * If a custom symbols directory is specified, use that directory to find the shared object files. If not, use the
+     * output of the mergeNativeLibs task to find the shared object files. This could return null, but project.layout.dir
+     * will handle that case.
+     */
     private fun getSharedObjectFilesProvider(
         project: Project,
-        mergeNativeLibsTaskProvider: Provider<TaskProvider<Task>?>,
+        mergeNativeLibsTaskProvider: Provider<Task?>,
     ): Provider<Directory?> {
         val customSymbolsDirectory = behavior.customSymbolsDirectory
         return project.layout.dir(
@@ -157,18 +158,15 @@ class NdkUploadTasksRegistration(
      */
     private fun getDefaultNativeSharedObjectFiles(
         project: Project,
-        mergeNativeLibsTaskProvider: Provider<TaskProvider<Task>?>,
+        mergeNativeLibsTaskProvider: Provider<Task?>,
     ): Provider<File?> {
-        return mergeNativeLibsTaskProvider.safeFlatMap { maybeTaskProvider ->
-            maybeTaskProvider?.flatMap { task ->
-                task.outputs.files.asFileTree.elements.map { files ->
-                    files
-                        .first { it.asFile.extension == "so" }
-                        ?.asFile
-                        ?.parentFile
-                        ?.parentFile
-                        ?: error("Shared object file not found")
-                }
+        return mergeNativeLibsTaskProvider.safeFlatMap { task ->
+            task?.outputs?.files?.asFileTree?.elements?.nullSafeMap { files ->
+                files
+                    .first { it.asFile.extension == "so" }
+                    ?.asFile
+                    ?.parentFile
+                    ?.parentFile
             } ?: project.provider { null }
         }
     }

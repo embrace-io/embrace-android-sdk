@@ -155,7 +155,7 @@ class NdkUploadTasksRegistrationTest {
     fun `an error is thrown when customSymbolsDirectory doesn't exist`() {
         // Given a project with a customSymbolsDirectory that doesn't exist
         val variantName = testAndroidCompactedVariantData.name.capitalizedString()
-        swazzlerExtension.customSymbolsDirectory.set("nonExistentDir")
+        embraceExtension.customSymbolsDirectory.set("nonExistentDir")
 
         // When NDK upload tasks are registered
         val registration = createNdkUploadTasksRegistration()

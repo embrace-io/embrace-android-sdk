@@ -57,7 +57,7 @@ interface PluginBehavior {
     val autoAddEmbraceComposeDependency: Boolean
 
     /**
-     * A custom directory containing SO files, set via `swazzler.customSymbolsDirectory`
+     * A custom directory containing SO files, set via `embrace.customSymbolsDirectory`
      */
     val customSymbolsDirectory: String?
 

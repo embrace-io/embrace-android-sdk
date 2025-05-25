@@ -16,6 +16,8 @@ import org.gradle.api.model.ObjectFactory
 import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.OutputFile
+import org.gradle.api.tasks.PathSensitive
+import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.TaskAction
 import java.io.File
 import javax.inject.Inject
@@ -29,12 +31,14 @@ abstract class GenerateRnSourcemapTask @Inject constructor(
 
     private val logger = Logger(GenerateRnSourcemapTask::class.java)
 
-    @get:Optional
+    @Optional
     @get:InputFile
+    @get:PathSensitive(PathSensitivity.NONE)
     val sourcemap: RegularFileProperty = objectFactory.fileProperty()
 
-    @get:Optional
+    @Optional
     @get:InputFile
+    @get:PathSensitive(PathSensitivity.NONE)
     val bundleFile: RegularFileProperty = objectFactory.fileProperty()
 
     @get:OutputFile
@@ -45,22 +49,17 @@ abstract class GenerateRnSourcemapTask @Inject constructor(
 
     @TaskAction
     fun onRun() {
-        val bundleFile = bundleFile.orNull?.asFile
+        val bundleFile = bundleFile.asFile.orNull
         if (bundleFile == null || !bundleFile.exists()) {
-            logger.error("Couldn't find the JSBundle. React native files were not uploaded.")
+            logger.error("JSBundle not found. React Native files were not uploaded.")
             return
         }
 
         val bundleId = calculateMD5ForFile(bundleFile)
 
-        /**
-         * In old React Native Versions, the source map is not exposed as output in the task.
-         * If the source map is not present, we will search for it in the known location
-         */
-        val sourceMapFile: File? = sourcemap.orNull?.asFile
-
+        val sourceMapFile = sourcemap.asFile.orNull
         if (sourceMapFile == null || !sourceMapFile.exists()) {
-            logger.error("Couldn't find the Source Map. React native files were not uploaded.")
+            logger.error("Sourcemap not found. React Native files were not uploaded.")
             return
         }
 

@@ -52,8 +52,7 @@ class EmbraceGradlePluginDelegate {
             project,
             behavior,
             embraceVariantConfigurationBuilder,
-            variantConfigurationsListProperty,
-            agpWrapper
+            variantConfigurationsListProperty
         )
 
         taskRegistrar.registerTasks()

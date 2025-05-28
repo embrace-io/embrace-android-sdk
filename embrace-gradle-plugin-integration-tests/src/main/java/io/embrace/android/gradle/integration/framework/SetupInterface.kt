@@ -40,6 +40,11 @@ class SetupInterface(
         enqueueResponse(endpoint, response)
     }
 
+    fun SetupInterface.setupEmptyHandshakeResponse() {
+        val json = serializeRequestBody(NdkUploadHandshakeResponse(null))
+        enqueueResponse(EmbraceEndpoint.NDK_HANDSHAKE, MockResponse().setBody(json))
+    }
+
     fun SetupInterface.setupMapResponseWithEmptyValues(endpoint: EmbraceEndpoint) {
         val response = """
             {

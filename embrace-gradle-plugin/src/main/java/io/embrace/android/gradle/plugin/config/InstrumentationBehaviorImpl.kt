@@ -34,6 +34,10 @@ class InstrumentationBehaviorImpl(
         enabled && (instrumentation.webviewOnPageStartedEnabled.orNull ?: extension.instrumentWebview.orNull ?: true)
     }
 
+    override val sdkInitializationEnabled: Boolean by lazy {
+        enabled && (instrumentation.sdkInitializationEnabled.orNull ?: false)
+    }
+
     override val fcmPushNotificationsEnabled: Boolean by lazy {
         enabled && (instrumentation.firebasePushNotificationsEnabled.orNull ?: extension.instrumentFirebaseMessaging.orNull ?: false)
     }

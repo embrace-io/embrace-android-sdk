@@ -10,6 +10,7 @@ class FakeBytecodeInstrumentationParams(
     override val disabled: Property<Boolean> = fakeProperty(false),
     override val shouldInstrumentFirebaseMessaging: Property<Boolean> = fakeProperty(false),
     override val shouldInstrumentWebview: Property<Boolean> = fakeProperty(true),
+    override val shouldInstrumentAutoSdkInitialization: Property<Boolean> = fakeProperty(true),
     override val shouldInstrumentOkHttp: Property<Boolean> = fakeProperty(true),
     override val shouldInstrumentOnLongClick: Property<Boolean> = fakeProperty(true),
     override val shouldInstrumentOnClick: Property<Boolean> = fakeProperty(true),

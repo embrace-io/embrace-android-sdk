@@ -120,6 +120,17 @@ class InstrumentationBehaviorImplTest {
     }
 
     @Test
+    fun `autoSdkInitializationEnabled default`() {
+        assertFalse(behavior.autoSdkInitializationEnabled)
+    }
+
+    @Test
+    fun `autoSdkInitializationEnabled via embrace`() {
+        embrace.bytecodeInstrumentation.autoSdkInitializationEnabled.set(true)
+        assertTrue(behavior.autoSdkInitializationEnabled)
+    }
+
+    @Test
     fun `fcmPushNotificationsEnabled default`() {
         assertFalse(behavior.fcmPushNotificationsEnabled)
     }

@@ -61,6 +61,9 @@ interface BytecodeInstrumentationParams : InstrumentationParameters {
     val shouldInstrumentWebview: Property<Boolean>
 
     @get:Input
+    val shouldInstrumentAutoSdkInitialization: Property<Boolean>
+
+    @get:Input
     val shouldInstrumentOkHttp: Property<Boolean>
 
     @get:Input

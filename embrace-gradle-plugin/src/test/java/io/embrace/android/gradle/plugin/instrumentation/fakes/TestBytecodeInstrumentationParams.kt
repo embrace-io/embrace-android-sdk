@@ -17,6 +17,7 @@ class TestBytecodeInstrumentationParams(
     classInstrumentationFilter: ClassInstrumentationFilter = ClassInstrumentationFilter(emptyList()),
     instrumentFirebaseMessaging: Boolean = SwazzlerExtension.DEFAULT_INSTRUMENT_FIREBASE_MESSAGING,
     instrumentWebview: Boolean = SwazzlerExtension.DEFAULT_INSTRUMENT_WEBVIEW,
+    instrumentAutoSdkInitialization: Boolean = false,
     instrumentOkHttp: Boolean = SwazzlerExtension.DEFAULT_INSTRUMENT_OKHTTP,
     instrumentOnLongClick: Boolean = SwazzlerExtension.DEFAULT_INSTRUMENT_ON_LONG_CLICK,
     instrumentOnClick: Boolean = SwazzlerExtension.DEFAULT_INSTRUMENT_ON_CLICK,
@@ -38,6 +39,8 @@ class TestBytecodeInstrumentationParams(
         DefaultProperty(PropertyHost.NO_OP, Boolean::class.javaObjectType).convention(instrumentFirebaseMessaging)
     override val shouldInstrumentWebview: Property<Boolean> =
         DefaultProperty(PropertyHost.NO_OP, Boolean::class.javaObjectType).convention(instrumentWebview)
+    override val shouldInstrumentAutoSdkInitialization: Property<Boolean> =
+        DefaultProperty(PropertyHost.NO_OP, Boolean::class.javaObjectType).convention(instrumentAutoSdkInitialization)
     override val shouldInstrumentOkHttp: Property<Boolean> =
         DefaultProperty(PropertyHost.NO_OP, Boolean::class.javaObjectType).convention(instrumentOkHttp)
     override val shouldInstrumentOnLongClick: Property<Boolean> =

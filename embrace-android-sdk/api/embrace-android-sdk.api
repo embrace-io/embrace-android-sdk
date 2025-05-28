@@ -92,6 +92,11 @@ public final class io/embrace/android/embracesdk/internal/instrumentation/byteco
 	public static final fun onLongClick (Landroid/view/View;)V
 }
 
+public final class io/embrace/android/embracesdk/internal/instrumentation/bytecode/SdkInitializationBytecodeEntrypoint {
+	public static final field INSTANCE Lio/embrace/android/embracesdk/internal/instrumentation/bytecode/SdkInitializationBytecodeEntrypoint;
+	public static final fun onCreate (Landroid/app/Application;)V
+}
+
 public final class io/embrace/android/embracesdk/internal/instrumentation/bytecode/WebViewClientBytecodeEntrypoint {
 	public static final field INSTANCE Lio/embrace/android/embracesdk/internal/instrumentation/bytecode/WebViewClientBytecodeEntrypoint;
 	public static final fun onPageStarted (Ljava/lang/String;)V

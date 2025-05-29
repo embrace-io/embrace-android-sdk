@@ -71,5 +71,5 @@ class InstrumentedConfigClassVisitorFactoryTest {
     }
 
     private fun createVisitor(className: String) =
-        ConfigClassVisitorFactory.createClassVisitor(className, config, null, api, null)
+        ConfigClassVisitorFactory.createClassVisitor(className, config, null, null, api, null)
 }

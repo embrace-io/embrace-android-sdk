@@ -4,7 +4,6 @@ import com.squareup.moshi.JsonWriter
 import io.embrace.android.gradle.plugin.Logger
 import io.embrace.android.gradle.plugin.hash.calculateMD5ForFile
 import io.embrace.android.gradle.plugin.network.OkHttpNetworkService
-import io.embrace.android.gradle.plugin.tasks.BuildResourceWriter
 import io.embrace.android.gradle.plugin.tasks.EmbraceUploadTask
 import io.embrace.android.gradle.plugin.tasks.EmbraceUploadTaskImpl
 import io.embrace.android.gradle.plugin.tasks.handleHttpCallResult
@@ -12,31 +11,23 @@ import okio.buffer
 import okio.gzip
 import okio.sink
 import okio.source
-import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.model.ObjectFactory
-import org.gradle.api.provider.MapProperty
-import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.Optional
-import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
 import java.io.File
-import java.io.IOException
 import javax.inject.Inject
 
 /**
  * Task to upload React Native sourcemap artefacts to Embrace.
  */
-abstract class EmbraceRnSourcemapGeneratorTask @Inject constructor(
+abstract class GenerateRnSourcemapTask @Inject constructor(
     objectFactory: ObjectFactory,
 ) : EmbraceUploadTask, EmbraceUploadTaskImpl(objectFactory) {
 
-    private val logger = Logger(EmbraceRnSourcemapGeneratorTask::class.java)
-
-    @get:OutputDirectory
-    val generatedEmbraceResourcesDirectory: DirectoryProperty = objectFactory.directoryProperty()
+    private val logger = Logger(GenerateRnSourcemapTask::class.java)
 
     @get:Optional
     @get:InputFile
@@ -49,23 +40,13 @@ abstract class EmbraceRnSourcemapGeneratorTask @Inject constructor(
     @get:OutputFile
     val sourcemapAndBundleFile: RegularFileProperty = objectFactory.fileProperty()
 
-    @get:Input
-    val reactProperties: MapProperty<String, Any> = objectFactory.mapProperty(
-        String::class.java,
-        Any::class.java
-    ).convention(emptyMap())
+    @get:OutputFile
+    val bundleIdOutputFile: RegularFileProperty = objectFactory.fileProperty()
 
     @TaskAction
     fun onRun() {
-        val rnFilesFinderUtil = RnFilesFinder(
-            reactProperties.get(),
-            project.layout.buildDirectory.get().asFile
-        )
-
-        val bundleFile = rnFilesFinderUtil.fetchJSBundleFile(
-            bundleFile.orNull?.asFile
-        )
-        if (bundleFile == null) {
+        val bundleFile = bundleFile.orNull?.asFile
+        if (bundleFile == null || !bundleFile.exists()) {
             logger.error("Couldn't find the JSBundle. React native files were not uploaded.")
             return
         }
@@ -76,10 +57,7 @@ abstract class EmbraceRnSourcemapGeneratorTask @Inject constructor(
          * In old React Native Versions, the source map is not exposed as output in the task.
          * If the source map is not present, we will search for it in the known location
          */
-        val sourceMapFile: File? = rnFilesFinderUtil.fetchSourceMapFile(
-            sourcemap.orNull?.asFile,
-            variantData.get()
-        )
+        val sourceMapFile: File? = sourcemap.orNull?.asFile
 
         if (sourceMapFile == null || !sourceMapFile.exists()) {
             logger.error("Couldn't find the Source Map. React native files were not uploaded.")
@@ -94,21 +72,9 @@ abstract class EmbraceRnSourcemapGeneratorTask @Inject constructor(
             sourceMapAndBundleJsonFile
         )
         uploadBundleFiles(jsonFile, bundleId)
-        injectSymbolsAsResources(bundleId)
-    }
 
-    private fun injectSymbolsAsResources(bundleId: String) {
-        try {
-            val resValues = mapOf(
-                BUNDLE_INFO_APP_ID to bundleId
-            )
-            val dir = File(generatedEmbraceResourcesDirectory.asFile.get(), "values")
-            BuildResourceWriter().writeBuildInfoFile(
-                File(dir, FILE_RN_INFO_XML),
-                resValues
-            )
-        } catch (ex: IOException) {
-            throw IllegalStateException("The build info file generation failed.", ex)
+        bundleIdOutputFile.get().asFile.bufferedWriter().use {
+            it.write(bundleId)
         }
     }
 
@@ -149,9 +115,8 @@ abstract class EmbraceRnSourcemapGeneratorTask @Inject constructor(
     }
 
     companion object {
+        const val NAME = "generateRnSourcemap"
         private const val KEY_NAME_BUNDLE = "bundle"
         private const val KEY_NAME_SOURCE_MAP = "sourcemap"
-        private const val FILE_RN_INFO_XML: String = "rn_sourcemap.xml"
-        private const val BUNDLE_INFO_APP_ID = "emb_rn_bundle_id"
     }
 }

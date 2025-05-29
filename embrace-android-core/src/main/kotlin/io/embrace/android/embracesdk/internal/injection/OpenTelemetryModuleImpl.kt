@@ -82,21 +82,16 @@ internal class OpenTelemetryModuleImpl(
         this.sensitiveKeysBehavior = sensitiveKeysBehavior
     }
 
+    private var internalSpanStopCallback: ((spanId: String) -> Unit)? = null
+
     private val embraceSpanFactory: EmbraceSpanFactory by singleton {
         EmbraceSpanFactoryImpl(
             tracer = sdkTracer,
             openTelemetryClock = openTelemetryClock,
             spanRepository = spanRepository,
+            stopCallback = ::spanStopCallbackWrapper,
             redactionFunction = ::redactionFunction
         )
-    }
-
-    fun redactionFunction(key: String, value: String): String {
-        return if (sensitiveKeysBehavior?.isSensitiveKey(key) == true) {
-            REDACTED_LABEL
-        } else {
-            value
-        }
     }
 
     override val currentSessionSpan: CurrentSessionSpan by lazy {
@@ -106,7 +101,9 @@ internal class OpenTelemetryModuleImpl(
             spanRepository = spanRepository,
             spanSink = spanSink,
             embraceSpanFactorySupplier = { embraceSpanFactory }
-        )
+        ).also {
+            internalSpanStopCallback = it::spanStopCallback
+        }
     }
 
     override val spanService: SpanService by singleton {
@@ -151,5 +148,17 @@ internal class OpenTelemetryModuleImpl(
             spanService = spanService,
             clock = openTelemetryClock,
         )
+    }
+
+    fun redactionFunction(key: String, value: String): String {
+        return if (sensitiveKeysBehavior?.isSensitiveKey(key) == true) {
+            REDACTED_LABEL
+        } else {
+            value
+        }
+    }
+
+    fun spanStopCallbackWrapper(spanId: String) {
+        internalSpanStopCallback?.invoke(spanId)
     }
 }

@@ -18,4 +18,5 @@ add_library(embrace-native-test SHARED
         testcases/utilities/test_string_utils.c
         testcases/serializer/test_file_writer.c
 )
+target_link_options(embrace-native-test PRIVATE "-Wl,-z,max-page-size=16384")
 target_link_libraries(embrace-native-test embrace-native)

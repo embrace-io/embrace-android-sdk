@@ -14,6 +14,7 @@ import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.embrace.android.embracesdk.internal.otel.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.otel.schema.ErrorCodeAttribute.Failure.fromErrorCode
+import io.embrace.android.embracesdk.internal.otel.schema.LinkType
 import io.embrace.android.embracesdk.internal.otel.sdk.hasEmbraceAttribute
 import io.embrace.android.embracesdk.internal.otel.sdk.toStatus
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceLinkData
@@ -144,8 +145,8 @@ class FakeEmbraceSdkSpan(
         return true
     }
 
-    override fun addSystemLink(linkedSpanContext: SpanContext, attributes: Map<String, String>): Boolean =
-        addLink(linkedSpanContext, attributes)
+    override fun addSystemLink(linkedSpanContext: SpanContext, type: LinkType, attributes: Map<String, String>): Boolean =
+        addLink(linkedSpanContext, mutableMapOf(type.asPair()).apply { putAll(attributes) })
 
     override fun asNewContext(): Context? = sdkSpan?.let { parentContext.with(this).with(it) }
 

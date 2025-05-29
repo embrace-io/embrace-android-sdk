@@ -19,5 +19,9 @@ fun LogRecordData.toEmbracePayload(): Log {
     )
 }
 
+const val MAX_PROPERTY_SIZE = 10
+
 fun Attributes.toEmbracePayload(): List<Attribute> =
-    this.asMap().entries.map { Attribute(it.key.key, it.value.toString()) }
+    this.asMap().entries
+        .map { Attribute(it.key.key, it.value.toString()) }
+        .take(MAX_PROPERTY_SIZE)

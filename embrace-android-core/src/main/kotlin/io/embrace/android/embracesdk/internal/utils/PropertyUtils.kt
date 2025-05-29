@@ -7,15 +7,11 @@ import java.io.Serializable
  * Utility to for sanitizing user-supplied properties.
  */
 object PropertyUtils {
-
-    const val MAX_PROPERTY_SIZE: Int = 10
-
     /**
      * This method will normalize the map by applying the following rules:
      *
      * - Null key registries will be discarded.
      * - Null value registries will be renamed to null as a String.
-     * - Cap the properties map to a maximum of [PropertyUtils.MAX_PROPERTY_SIZE] properties.
      *
      * @param properties properties to be normalized.
      * @return a normalized Map of the provided properties.
@@ -25,7 +21,6 @@ object PropertyUtils {
         properties ?: return emptyMap()
 
         return properties.entries
-            .take(MAX_PROPERTY_SIZE)
             .associate { Pair(it.key, checkIfSerializable(it.value)) }
     }
 

@@ -1,6 +1,7 @@
 package io.embrace.android.gradle.plugin.tasks.ndk
 
 import io.embrace.android.gradle.plugin.config.PluginBehavior
+import io.embrace.android.gradle.plugin.gradle.lazyTaskLookup
 import io.embrace.android.gradle.plugin.gradle.nullSafeMap
 import io.embrace.android.gradle.plugin.gradle.registerTask
 import io.embrace.android.gradle.plugin.gradle.safeFlatMap
@@ -37,9 +38,7 @@ class NdkUploadTasksRegistration(
         // Bail if ndk_enabled is not true.
         if (variantConfig.embraceConfig?.ndkEnabled != true) return
 
-        val mergeNativeLibsTaskProvider: Provider<Task?> = project.provider {
-            project.tryGetTaskProvider("merge${variant.name.capitalizedString()}NativeLibs")
-        }.safeFlatMap { it as Provider<Task?> }
+        val mergeNativeLibsTaskProvider = project.lazyTaskLookup<Task>("merge${variant.name.capitalizedString()}NativeLibs")
 
         val sharedObjectFilesProvider = getSharedObjectFilesProvider(project, mergeNativeLibsTaskProvider)
 

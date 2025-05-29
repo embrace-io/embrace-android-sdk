@@ -1,5 +1,6 @@
 package io.embrace.android.gradle.plugin.tasks.reactnative
 
+import io.embrace.android.gradle.plugin.gradle.lazyTaskLookup
 import io.embrace.android.gradle.plugin.gradle.nullSafeMap
 import io.embrace.android.gradle.plugin.gradle.registerTask
 import io.embrace.android.gradle.plugin.gradle.safeFlatMap
@@ -58,9 +59,7 @@ class GenerateRnSourcemapTaskRegistration : EmbraceTaskRegistration {
             )
 
             val variantCapitalized = variant.name.capitalizedString()
-            val generatorTaskProvider: Provider<Task?> = project.provider {
-                project.tryGetTaskProvider("createBundle${variantCapitalized}JsAndAssets")
-            }.safeFlatMap { it as Provider<Task?> }
+            val generatorTaskProvider = project.lazyTaskLookup<Task>("createBundle${variantCapitalized}JsAndAssets")
 
             rnTask.bundleFile.set(project.layout.file(getBundleFileProvider(generatorTaskProvider, project)))
             rnTask.sourcemap.set(project.layout.file(getSourcemapFileProvider(generatorTaskProvider, project, data)))

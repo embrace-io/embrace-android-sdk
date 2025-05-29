@@ -2,7 +2,8 @@ package io.embrace.android.gradle.plugin.instrumentation
 
 import com.android.build.api.instrumentation.FramesComputationMode
 import com.android.build.api.instrumentation.InstrumentationScope
-import io.embrace.android.gradle.plugin.gradle.tryGetTaskProvider
+import io.embrace.android.gradle.plugin.gradle.lazyTaskLookup
+import io.embrace.android.gradle.plugin.gradle.safeFlatMap
 import io.embrace.android.gradle.plugin.tasks.ndk.EncodeFileToBase64Task
 import io.embrace.android.gradle.plugin.tasks.reactnative.GenerateRnSourcemapTask
 import io.embrace.android.gradle.plugin.tasks.registration.EmbraceTaskRegistration
@@ -41,33 +42,25 @@ class AsmTaskRegistration : EmbraceTaskRegistration {
                 params.shouldInstrumentOnLongClick.set(behavior.instrumentation.onLongClickEnabled)
                 params.shouldInstrumentOnClick.set(behavior.instrumentation.onClickEnabled)
 
-                project.afterEvaluate {
-                    // Find the Asm transformation task by name and make it depend on encodeSharedObjectFilesTask
-                    val encodeFileToBase64Task = project.tryGetTaskProvider(
-                        "${EncodeFileToBase64Task.NAME}${data.name.capitalizedString()}",
-                        EncodeFileToBase64Task::class.java
-                    ) ?: return@afterEvaluate
+                val encodeFileToBase64Task = project.lazyTaskLookup<EncodeFileToBase64Task>(
+                    "${EncodeFileToBase64Task.NAME}${data.name.capitalizedString()}"
+                )
 
-                    val asmTransformationTask = project.tryGetTaskProvider(
-                        "transform${variant.name.capitalizedString()}ClassesWithAsm"
-                    ) ?: error("Unable to find ASM transformation task for variant ${variant.name}.")
-                    asmTransformationTask.configure { it.dependsOn(encodeFileToBase64Task) }
+                params.encodedSharedObjectFilesMap.set(
+                    encodeFileToBase64Task.safeFlatMap {
+                        it?.outputFile ?: project.provider { null }
+                    }
+                )
 
-                    params.encodedSharedObjectFilesMap.set(
-                        encodeFileToBase64Task.flatMap {
-                            it.outputFile
-                        }
-                    )
+                val reactNativeTask = project.lazyTaskLookup<GenerateRnSourcemapTask>(
+                    "${GenerateRnSourcemapTask.NAME}${data.name.capitalizedString()}"
+                )
 
-                    val reactNativeTask = project.tryGetTaskProvider(
-                        "${GenerateRnSourcemapTask.NAME}${data.name.capitalizedString()}",
-                        GenerateRnSourcemapTask::class.java
-                    ) ?: return@afterEvaluate
-
-                    asmTransformationTask.configure { it.dependsOn(reactNativeTask) }
-
-                    params.reactNativeBundleId.set(reactNativeTask.flatMap { it.bundleIdOutputFile })
-                }
+                params.reactNativeBundleId.set(
+                    reactNativeTask.safeFlatMap {
+                        it?.bundleIdOutputFile ?: project.provider { null }
+                    }
+                )
             }
         } catch (exception: Exception) {
             project.logger.error("An error has occurred while performing ASM bytecode transformation.", exception)

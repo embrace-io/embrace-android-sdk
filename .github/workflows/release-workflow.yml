@@ -24,20 +24,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
-      - name: Ensure required variables and secrets are set
-        run: |
-          if [ -z "${{ vars.SDK_VERSION_URL }}" ]; then
-            echo "Missing required variable: SDK_VERSION_URL"
-            exit 1
-          fi
-          
-          if [ -z "${{ secrets.SDK_VERSION_TOKEN }}" ]; then
-            echo "Missing required secret: SDK_VERSION_TOKEN"
-            exit 1
-          fi
-
       - name: Validate access to version data service
-        uses: embrace-io/public-actions/upload-sdk-version@v1
+        uses: embrace-io/public-actions/upload-sdk-version@f4229398f257b24dbbe8b873f78e719f9af6cbbb
         with:
           platform: 'android'
           version: ${{ inputs.rc_version }}
@@ -66,7 +54,7 @@ jobs:
           ./gradlew findSonatypeStagingRepository releaseSonatypeStagingRepository -Dorg.gradle.parallel=false --no-build-cache --no-configuration-cache --stacktrace
 
       - name: Record SDK Version History
-        uses: embrace-io/public-actions/upload-sdk-version@v1
+        uses: embrace-io/public-actions/upload-sdk-version@f4229398f257b24dbbe8b873f78e719f9af6cbbb
         with:
           platform: 'android'
           version: ${{ inputs.rc_version }}

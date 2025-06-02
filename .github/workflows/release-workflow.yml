@@ -24,6 +24,16 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
+      - name: Validate access to version data service
+        uses: embrace-io/public-actions/upload-sdk-version@f4229398f257b24dbbe8b873f78e719f9af6cbbb
+        with:
+          platform: 'android'
+          version: ${{ inputs.rc_version }}
+          dryRun: true
+          sdkVersionUrl: ${{ vars.SDK_VERSION_URL }}
+        env:
+          SDK_VERSION_TOKEN: ${{ secrets.SDK_VERSION_TOKEN }}
+
       - name: Checkout SDK
         uses: actions/checkout@v4
         with:
@@ -42,6 +52,16 @@ jobs:
       - name: Release to Maven Central
         run: |
           ./gradlew findSonatypeStagingRepository releaseSonatypeStagingRepository -Dorg.gradle.parallel=false --no-build-cache --no-configuration-cache --stacktrace
+
+      - name: Record SDK Version History
+        uses: embrace-io/public-actions/upload-sdk-version@f4229398f257b24dbbe8b873f78e719f9af6cbbb
+        with:
+          platform: 'android'
+          version: ${{ inputs.rc_version }}
+          dryRun: false
+          sdkVersionUrl: ${{ vars.SDK_VERSION_URL }}
+        env:
+          SDK_VERSION_TOKEN: ${{ secrets.SDK_VERSION_TOKEN }}
 
   publish-api-docs:
     name: Publish API Docs to GitHub Pages

@@ -202,11 +202,10 @@ class PluginBehaviorImplTest {
         assertEquals("", behavior.customSymbolsDirectory)
     }
 
-    @Suppress("DEPRECATION")
     @Test
     fun `customSymbolDirectory override`() {
         val dir = "/foo"
-        extension.customSymbolsDirectory.set(dir)
+        embrace.customSymbolsDirectory.set(dir)
         assertEquals(dir, behavior.customSymbolsDirectory)
     }
 
@@ -273,9 +272,7 @@ class PluginBehaviorImplTest {
     }
 
     private fun findRnNodeModulesDir(): File {
-        val rootFile = project.layout.projectDirectory.asFile.parentFile?.parentFile
-            ?: error("Parent directory of project root is null")
-
+        val rootFile = project.rootDir.parentFile ?: error("Parent directory of project root is null")
         return File("${File("${rootFile.path}/node_modules").path}/react-native")
     }
 }

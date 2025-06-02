@@ -2,10 +2,7 @@ package io.embrace.android.gradle.plugin.tasks.registration
 
 import com.android.build.api.variant.AndroidComponentsExtension
 import com.android.build.api.variant.Variant
-import io.embrace.android.gradle.plugin.agp.AgpWrapper
 import io.embrace.android.gradle.plugin.config.PluginBehavior
-import io.embrace.android.gradle.plugin.config.ProjectTypeVerifier
-import io.embrace.android.gradle.plugin.config.UnitySymbolsDir
 import io.embrace.android.gradle.plugin.config.variant.EmbraceVariantConfigurationBuilder
 import io.embrace.android.gradle.plugin.dependency.installDependenciesForVariant
 import io.embrace.android.gradle.plugin.gradle.GradleCompatibilityHelper
@@ -13,13 +10,11 @@ import io.embrace.android.gradle.plugin.instrumentation.AsmTaskRegistration
 import io.embrace.android.gradle.plugin.instrumentation.config.model.VariantConfig
 import io.embrace.android.gradle.plugin.model.AndroidCompactedVariantData
 import io.embrace.android.gradle.plugin.tasks.il2cpp.Il2CppUploadTaskRegistration
-import io.embrace.android.gradle.plugin.tasks.il2cpp.UnitySymbolFilesManager
 import io.embrace.android.gradle.plugin.tasks.ndk.NdkUploadTasksRegistration
 import io.embrace.android.gradle.plugin.tasks.r8.JvmMappingUploadTaskRegistration
 import io.embrace.android.gradle.plugin.tasks.reactnative.GenerateRnSourcemapTaskRegistration
 import org.gradle.api.Project
 import org.gradle.api.provider.ListProperty
-import org.gradle.api.provider.Provider
 
 /**
  * Contains the logic for configuring tasks for each variant.
@@ -28,8 +23,7 @@ class TaskRegistrar(
     private val project: Project,
     private val behavior: PluginBehavior,
     private val embraceVariantConfigurationBuilder: EmbraceVariantConfigurationBuilder,
-    private val variantConfigurationsListProperty: ListProperty<VariantConfig>,
-    private val agpWrapper: AgpWrapper,
+    private val variantConfigurationsListProperty: ListProperty<VariantConfig>
 ) {
 
     /**
@@ -71,9 +65,7 @@ class TaskRegistrar(
             GenerateRnSourcemapTaskRegistration().register(params)
         }
         val variantConfig = variantConfigurationsListProperty.get().first { it.variantName == variant.name }
-        val unitySymbolsDirProvider = getUnitySymbolsDirProvider(variantConfig)
-        val projectType = getProjectType(unitySymbolsDirProvider, agpWrapper, variantConfig.variantName, project)
-        NdkUploadTasksRegistration(behavior, unitySymbolsDirProvider, projectType, variantConfig).register(params)
+        NdkUploadTasksRegistration(behavior, variantConfig).register(params)
         if (behavior.isIl2CppMappingFilesUploadEnabled) {
             Il2CppUploadTaskRegistration().register(params)
         }
@@ -96,29 +88,6 @@ class TaskRegistrar(
             }
         }
     }
-
-    private fun getUnitySymbolsDirProvider(variantConfig: VariantConfig): Provider<UnitySymbolsDir> = project.provider {
-        val unityConfig = variantConfig.embraceConfig?.unityConfig
-        val realProject = project.parent ?: project
-        UnitySymbolFilesManager.of().getSymbolsDir(
-            realProject.layout.projectDirectory,
-            project.layout.projectDirectory,
-            unityConfig
-        )
-    }
-
-    private fun getProjectType(
-        unitySymbolsDirProvider: Provider<UnitySymbolsDir>,
-        agpWrapper: AgpWrapper,
-        variantName: String,
-        project: Project,
-    ) = ProjectTypeVerifier.getProjectType(
-        unitySymbolsDirProvider,
-        agpWrapper,
-        behavior,
-        variantName,
-        project
-    )
 
     private fun setupVariantConfigurationListProperty(
         androidCompactedVariantData: AndroidCompactedVariantData,

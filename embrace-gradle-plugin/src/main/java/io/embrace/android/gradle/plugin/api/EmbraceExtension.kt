@@ -36,6 +36,12 @@ abstract class EmbraceExtension @Inject internal constructor(objectFactory: Obje
     val failBuildOnUploadErrors: Property<Boolean> = objectFactory.property(Boolean::class.java).convention(true)
 
     /**
+     * A custom directory that, if set, should contain architecture directories (arm64-v8a/, etc.) with shared object files (.so files).
+     * This directory will be used to upload the shared object files to Embrace, and use them for crash symbolication.
+     */
+    val customSymbolsDirectory: Property<String> = objectFactory.property(String::class.java)
+
+    /**
      * DSL for configuring how Embrace instruments bytecode.
      */
     val bytecodeInstrumentation: EmbraceBytecodeInstrumentation =

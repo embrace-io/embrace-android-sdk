@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.utils
 
-import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Test
 
 internal class PropertiesTest {

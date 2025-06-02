@@ -73,7 +73,7 @@ class PluginBehaviorImpl(
     }
 
     override val customSymbolsDirectory: String? by lazy {
-        extension.customSymbolsDirectory.orNull
+        embrace.customSymbolsDirectory.orNull ?: extension.customSymbolsDirectory.orNull
     }
 
     override fun isInstrumentationDisabledForVariant(variantName: String): Boolean {

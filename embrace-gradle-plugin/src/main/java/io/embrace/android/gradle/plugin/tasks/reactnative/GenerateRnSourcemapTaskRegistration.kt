@@ -1,18 +1,18 @@
 package io.embrace.android.gradle.plugin.tasks.reactnative
 
-import io.embrace.android.gradle.plugin.Logger
 import io.embrace.android.gradle.plugin.gradle.nullSafeMap
 import io.embrace.android.gradle.plugin.gradle.registerTask
+import io.embrace.android.gradle.plugin.gradle.safeFlatMap
 import io.embrace.android.gradle.plugin.gradle.tryGetTaskProvider
 import io.embrace.android.gradle.plugin.model.AndroidCompactedVariantData
 import io.embrace.android.gradle.plugin.network.EmbraceEndpoint
 import io.embrace.android.gradle.plugin.tasks.common.RequestParams
 import io.embrace.android.gradle.plugin.tasks.registration.EmbraceTaskRegistration
 import io.embrace.android.gradle.plugin.tasks.registration.RegistrationParams
+import io.embrace.android.gradle.plugin.util.capitalizedString
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.provider.Provider
-import org.gradle.api.tasks.TaskProvider
 import java.io.File
 
 private const val REACT_PROPERTY = "react"
@@ -24,84 +24,50 @@ private const val SOURCE_MAP_NAME = "android-embrace.bundle.map"
 
 class GenerateRnSourcemapTaskRegistration : EmbraceTaskRegistration {
 
-    private val logger = Logger(GenerateRnSourcemapTaskRegistration::class.java)
-
     override fun register(params: RegistrationParams) {
-        params.project.afterEvaluate {
-            params.execute()
-        }
+        params.execute()
     }
 
     /**
      * Given the build variant, attempts to register the RN Source Map generator task into the
-     * build variant's build
-     * process.
-     * <p>
-     * We choose process${variant}JavaRes and compile${variant}JavaWithJavac tasks as anchor
-     * for the ReactNativeBundleRetrieverTask because it's a safe stage to assume that both, the
-     * bundle and the Source Map, have been already generated.
+     * build variant's build process.
      */
-    private fun RegistrationParams.execute(): TaskProvider<GenerateRnSourcemapTask>? {
+    private fun RegistrationParams.execute() {
         // Prevent upload the bundle in debug variant
         if (data.isBuildTypeDebuggable) {
-            return null
+            return
         }
 
-        val variantCapitalized = variant.name
-            .replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
-
-        // React Native started to use this task after version 0.71 +
-        val newRNSourceFilesGeneratorTask = "createBundle${variantCapitalized}JsAndAssets"
-
-        // For React Native versions prior to 0.71, this task is used to generate and copy the
-        // source map and bundle files into the APK/AAB before packaging
-        val oldRNSourceFilesGeneratorTask = "bundle${variantCapitalized}JsAndAssets"
-
-        val generatorTask = project.tryGetTaskProvider(newRNSourceFilesGeneratorTask)
-            ?: project.tryGetTaskProvider(oldRNSourceFilesGeneratorTask)
-
-        if (generatorTask == null || !generatorTask.isPresent) {
-            logger.error(
-                "We could not find the task that generates the Bundle. Please submit the Bundle and Source Map manually." +
-                    "https://embrace.io/docs/react-native/integration/upload-symbol-files/?platform=android#symbolication-with-codepush"
-            )
-            return null
-        }
-
-        return createRnSourcemapGeneratorTaskProvider(generatorTask)
-    }
-
-    private fun RegistrationParams.createRnSourcemapGeneratorTaskProvider(
-        generatorTask: TaskProvider<Task>,
-    ) = project.registerTask(
-        GenerateRnSourcemapTask.NAME,
-        GenerateRnSourcemapTask::class.java,
-        data
-    ) { rnTask ->
-        try {
+        project.registerTask(
+            GenerateRnSourcemapTask.NAME,
+            GenerateRnSourcemapTask::class.java,
+            data
+        ) { rnTask ->
             val embraceConfig = variantConfigurationsListProperty.get().first { it.variantName == variant.name }.embraceConfig
             rnTask.requestParams.set(
-                project.provider {
+                behavior.failBuildOnUploadErrors.map { failBuildOnUploadErrors ->
                     RequestParams(
                         appId = embraceConfig?.appId.orEmpty(),
                         apiToken = embraceConfig?.apiToken.orEmpty(),
                         endpoint = EmbraceEndpoint.SOURCE_MAP,
                         fileName = FILE_NAME_SOURCE_MAP_JSON,
                         baseUrl = behavior.baseUrl,
-                        failBuildOnUploadErrors = behavior.failBuildOnUploadErrors.get(),
+                        failBuildOnUploadErrors = failBuildOnUploadErrors,
                     )
                 }
             )
 
-            rnTask.bundleFile.set(project.layout.file(getBundleFileProvider(generatorTask, project)))
-            rnTask.sourcemap.set(project.layout.file(getSourcemapFileProvider(generatorTask, project, data)))
+            val variantCapitalized = variant.name.capitalizedString()
+            val generatorTaskProvider: Provider<Task?> = project.provider {
+                project.tryGetTaskProvider("createBundle${variantCapitalized}JsAndAssets")
+            }.safeFlatMap { it as Provider<Task?> }
 
-            val flavorName = data.flavorName
-            val buildTypeName = data.buildTypeName
-            val bundleFileFolder = if (flavorName.isBlank()) buildTypeName else "$flavorName/$buildTypeName"
+            rnTask.bundleFile.set(project.layout.file(getBundleFileProvider(generatorTaskProvider, project)))
+            rnTask.sourcemap.set(project.layout.file(getSourcemapFileProvider(generatorTaskProvider, project, data)))
+
             rnTask.sourcemapAndBundleFile.set(
                 project.layout.buildDirectory.file(
-                    "outputs/embrace/$bundleFileFolder/$FILE_NAME_SOURCE_MAP_JSON"
+                    "outputs/embrace/${data.name}/$FILE_NAME_SOURCE_MAP_JSON"
                 )
             )
 
@@ -109,15 +75,19 @@ class GenerateRnSourcemapTaskRegistration : EmbraceTaskRegistration {
                 project.layout.buildDirectory.file("intermediates/embrace/react/${data.name}/bundleId.txt")
             )
 
-            rnTask.dependsOn(generatorTask)
-        } catch (e: Exception) {
-            logger.error("EmbraceRNSourcemapGeneratorTask failed while getting the Bundle and the SourceMap", e)
+            // We need an explicit dependsOn because it seems task.outputs.files.asFileTree.elements, inside getBundleFileProvider
+            // and getSourcemapFileProvider, is not carrying dependencies, even when we access it through safeFlatMap.
+            // As dependsOn doesn't accept a provider { null }, we need to create a new provider that returns an empty list.
+            val dependsOnTaskProvider = project.provider {
+                project.tryGetTaskProvider("createBundle${variantCapitalized}JsAndAssets") ?: emptyList<Task>()
+            }
+            rnTask.dependsOn(dependsOnTaskProvider)
         }
     }
 
-    private fun getBundleFileProvider(generatorTask: TaskProvider<Task>, project: Project): Provider<File?> =
-        generatorTask.flatMap { task ->
-            task.outputs.files.asFileTree.elements.flatMap { fileLocations ->
+    private fun getBundleFileProvider(generatorTask: Provider<Task?>, project: Project): Provider<File?> =
+        generatorTask.safeFlatMap { task ->
+            task?.outputs?.files?.asFileTree?.elements?.safeFlatMap { fileLocations ->
                 val bundleFile = fileLocations.firstOrNull { location ->
                     location.asFile.name.endsWith(RN_BUNDLE_FILE_EXTENSION)
                 }?.asFile
@@ -127,7 +97,7 @@ class GenerateRnSourcemapTaskRegistration : EmbraceTaskRegistration {
                 } else {
                     findBundleFile(project)
                 }
-            }
+            } ?: findBundleFile(project)
         }
 
     /**
@@ -142,12 +112,12 @@ class GenerateRnSourcemapTaskRegistration : EmbraceTaskRegistration {
     }
 
     private fun getSourcemapFileProvider(
-        generatorTask: TaskProvider<Task>,
+        generatorTask: Provider<Task?>,
         project: Project,
         data: AndroidCompactedVariantData,
     ): Provider<File?> =
-        generatorTask.flatMap { task ->
-            task.outputs.files.asFileTree.elements.flatMap { fileLocations ->
+        generatorTask.safeFlatMap { task ->
+            task?.outputs?.files?.asFileTree?.elements?.flatMap { fileLocations ->
                 val sourcemapFile = fileLocations.firstOrNull { location ->
                     location.asFile.name.endsWith(RN_SOURCEMAP_FILE_EXTENSION)
                 }?.asFile
@@ -157,7 +127,7 @@ class GenerateRnSourcemapTaskRegistration : EmbraceTaskRegistration {
                 } else {
                     findSourcemapFile(project, data)
                 }
-            }
+            } ?: findSourcemapFile(project, data)
         }
 
     private fun findSourcemapFile(project: Project, data: AndroidCompactedVariantData): Provider<File?> {

@@ -48,11 +48,43 @@ class ReactNativeAndroidTest {
                 installNodeModules(projectDir)
                 setupMockResponses(handshakeLibs, handshakeArchs, defaultExpectedVariants)
             },
-            assertions = { projectDir ->
+            assertions = {
                 verifyBuildTelemetryRequestSent(defaultExpectedVariants)
                 verifyHandshakes(defaultExpectedLibs, defaultExpectedArchs, defaultExpectedVariants)
                 verifyUploads(handshakeLibs, handshakeArchs, defaultExpectedVariants)
-                verifyAsmInjection(projectDir)
+            }
+        )
+    }
+
+    @Test
+    fun `react native asm injection test`() {
+        rule.runTest(
+            fixture = "react-native-android",
+            androidProjectRoot = "android",
+            task = "assembleRelease",
+            setup = { projectDir ->
+                setupEmptyHandshakeResponse()
+                installNodeModules(projectDir)
+            },
+            assertions = { projectDir ->
+                verifyAsmInjection(File(projectDir, "app"), "765FB008173DC25D016D112F67250241")
+            }
+        )
+    }
+
+    @Test
+    fun `react native project without bundle or sourcemap`() {
+        rule.runTest(
+            fixture = "not-react-native-android",
+            androidProjectRoot = "android",
+            additionalArgs = listOf("-Pandroid.useAndroidX=true"),
+            task = "assembleRelease",
+            setup = {
+                setupEmptyHandshakeResponse()
+            },
+            assertions = { projectDir ->
+                verifyNoUploads()
+                verifyAsmInjection(projectDir, null)
             }
         )
     }
@@ -71,10 +103,10 @@ class ReactNativeAndroidTest {
         }
     }
 
-    private fun verifyAsmInjection(projectDir: File) {
+    private fun verifyAsmInjection(buildDir: File, expectedBundleId: String?) {
         // Read and parse the smali file containing the injected symbols
         val smaliFile = SmaliConfigReader().readSmaliFiles(
-            File(projectDir, "app"),
+            buildDir,
             listOf("/io/embrace/android/embracesdk/internal/config/instrumented/ProjectConfigImpl")
         ).first()
 
@@ -84,6 +116,6 @@ class ReactNativeAndroidTest {
             listOf(SmaliMethod("getReactNativeBundleId()Ljava/lang/String;"))
         ).methods.first()
 
-        assertEquals("765FB008173DC25D016D112F67250241", method.returnValue)
+        assertEquals(expectedBundleId, method.returnValue)
     }
 }

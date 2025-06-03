@@ -1,11 +1,8 @@
 package io.embrace.android.embracesdk.internal.otel.sdk
 
-import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
-import io.embrace.android.embracesdk.internal.config.instrumented.schema.OtelLimitsConfig
 import io.embrace.android.embracesdk.internal.otel.attrs.EmbraceAttribute
 import io.embrace.android.embracesdk.internal.otel.attrs.EmbraceAttributeKey
 import io.embrace.android.embracesdk.internal.otel.attrs.asOtelAttributeKey
-import io.embrace.android.embracesdk.internal.otel.config.isAttributeValid
 import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanData.Companion.fromEventData
@@ -27,10 +24,10 @@ import io.opentelemetry.sdk.trace.data.SpanData
 fun AttributesBuilder.fromMap(
     attributes: Map<String, String>,
     internal: Boolean,
-    limits: OtelLimitsConfig = InstrumentedConfigImpl.otelLimits,
+    limitsValidator: DataValidator
 ): AttributesBuilder {
     attributes.filter {
-        limits.isAttributeValid(it.key, it.value, internal) || it.key.isValidLongValueAttribute()
+        limitsValidator.isAttributeValid(it.key, it.value, internal) || it.key.isValidLongValueAttribute()
     }.forEach {
         put(it.key, it.value)
     }

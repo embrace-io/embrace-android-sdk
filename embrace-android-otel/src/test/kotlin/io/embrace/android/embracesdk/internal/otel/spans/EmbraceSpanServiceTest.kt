@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.otel.config.OtelSdkConfig
 import io.embrace.android.embracesdk.internal.otel.logs.LogSinkImpl
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
+import io.embrace.android.embracesdk.internal.otel.sdk.DataValidator
 import io.embrace.android.embracesdk.internal.otel.sdk.OtelSdkWrapper
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
@@ -48,6 +49,7 @@ internal class EmbraceSpanServiceTest {
             openTelemetryClock = fakeClock,
             configuration = otelSdkConfig,
         )
+        val dataValidator = DataValidator()
 
         return EmbraceSpanService(
             spanRepository = SpanRepository(),
@@ -57,9 +59,11 @@ internal class EmbraceSpanServiceTest {
                 EmbraceSpanFactoryImpl(
                     tracer = otelSdkWrapper.sdkTracer,
                     openTelemetryClock = fakeClock,
-                    spanRepository = SpanRepository()
+                    spanRepository = SpanRepository(),
+                    dataValidator = dataValidator
                 )
-            }
+            },
+            dataValidator = dataValidator
         )
     }
 
@@ -67,6 +71,7 @@ internal class EmbraceSpanServiceTest {
     fun `verify default behaviour before initialization`() {
         val uninitializedService = EmbraceSpanService(
             spanRepository = SpanRepository(),
+            dataValidator = DataValidator(),
             canStartNewSpan = ::canStartNewSpan,
             initCallback = ::initCallback,
             embraceSpanFactorySupplier = { FakeEmbraceSpanFactory() }

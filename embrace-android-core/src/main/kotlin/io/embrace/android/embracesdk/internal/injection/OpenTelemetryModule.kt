@@ -25,11 +25,6 @@ interface OpenTelemetryModule {
     val otelSdkConfig: OtelSdkConfig
 
     /**
-     * Setup configuration for redacting sensitive keys
-     */
-    fun setupSensitiveKeysBehavior(sensitiveKeysBehavior: SensitiveKeysBehavior)
-
-    /**
      * Caches span instances that are in progress or completed in the current session
      */
     val spanRepository: SpanRepository
@@ -90,4 +85,12 @@ interface OpenTelemetryModule {
      * OpenTelemetry SDK compatible clock based on the internal Embrace clock instance
      */
     val openTelemetryClock: io.opentelemetry.sdk.common.Clock
+
+    /**
+     * Setup configuration configuration-dependent behavior
+     */
+    fun applyConfiguration(
+        sensitiveKeysBehavior: SensitiveKeysBehavior,
+        bypassValidation: Boolean,
+    )
 }

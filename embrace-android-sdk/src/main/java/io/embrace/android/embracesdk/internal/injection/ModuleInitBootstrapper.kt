@@ -165,7 +165,10 @@ internal class ModuleInitBootstrapper(
                     postInit(ConfigModule::class) {
                         serviceRegistry.registerService(lazy { configModule.configService })
                         serviceRegistry.registerService(lazy { configModule.remoteConfigSource })
-                        openTelemetryModule.setupSensitiveKeysBehavior(configModule.configService.sensitiveKeysBehavior)
+                        openTelemetryModule.applyConfiguration(
+                            sensitiveKeysBehavior = configModule.configService.sensitiveKeysBehavior,
+                            bypassValidation = configModule.configService.isOnlyUsingOtelExporters()
+                        )
                     }
 
                     systemServiceModule = init(SystemServiceModule::class) {

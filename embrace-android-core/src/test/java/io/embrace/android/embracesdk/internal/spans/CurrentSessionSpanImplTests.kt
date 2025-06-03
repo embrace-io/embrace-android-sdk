@@ -22,7 +22,7 @@ import io.embrace.android.embracesdk.internal.otel.schema.AppTerminationCause
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.embrace.android.embracesdk.internal.otel.schema.LinkType
 import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
-import io.embrace.android.embracesdk.internal.otel.sdk.otelSpanBuilderWrapper
+import io.embrace.android.embracesdk.internal.otel.sdk.otelSpanCreator
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
@@ -147,7 +147,7 @@ internal class CurrentSessionSpanImplTests {
         repeat(MAX_NON_INTERNAL_SPANS_PER_SESSION) {
             assertNotNull(
                 spanService.createSpan(
-                    otelSpanBuilderWrapper = tracer.otelSpanBuilderWrapper(
+                    otelSpanCreator = tracer.otelSpanCreator(
                         name = "external-span",
                         type = EmbType.Performance.Default,
                         parent = null,
@@ -159,7 +159,7 @@ internal class CurrentSessionSpanImplTests {
         }
         assertNull(
             spanService.createSpan(
-                otelSpanBuilderWrapper = tracer.otelSpanBuilderWrapper(
+                otelSpanCreator = tracer.otelSpanCreator(
                     name = "external-span",
                     type = EmbType.Performance.Default,
                     parent = null,
@@ -170,7 +170,7 @@ internal class CurrentSessionSpanImplTests {
         )
         assertNotNull(
             spanService.createSpan(
-                otelSpanBuilderWrapper = tracer.otelSpanBuilderWrapper(
+                otelSpanCreator = tracer.otelSpanCreator(
                     name = "internal-span",
                     type = EmbType.Performance.Default,
                     parent = null,

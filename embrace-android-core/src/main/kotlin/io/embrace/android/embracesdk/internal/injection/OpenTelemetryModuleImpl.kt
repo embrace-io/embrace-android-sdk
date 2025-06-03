@@ -22,12 +22,14 @@ import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpanImpl
 import io.embrace.android.embracesdk.internal.spans.EmbraceTracer
 import io.embrace.android.embracesdk.internal.spans.InternalTracer
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
+import io.embrace.opentelemetry.kotlin.ExperimentalApi
+import io.embrace.opentelemetry.kotlin.logging.Logger
 import io.opentelemetry.api.OpenTelemetry
-import io.opentelemetry.api.logs.Logger
 import io.opentelemetry.api.trace.Tracer
 import io.opentelemetry.api.trace.TracerProvider
 import io.opentelemetry.sdk.common.Clock
 
+@OptIn(ExperimentalApi::class)
 internal class OpenTelemetryModuleImpl(
     private val initModule: InitModule,
     override val openTelemetryClock: Clock = EmbClock(
@@ -129,7 +131,11 @@ internal class OpenTelemetryModuleImpl(
     }
 
     override val logger: Logger by lazy {
-        otelSdkWrapper.getOpenTelemetryLogger()
+        EmbTrace.trace("otel-logger-init") {
+            otelSdkWrapper.kotlinApi.loggerProvider.getLogger(
+                name = otelSdkConfig.sdkName
+            )
+        }
     }
 
     override val logSink: LogSink by lazy {

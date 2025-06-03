@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.fakes
 import io.embrace.android.embracesdk.internal.capture.startup.AppStartupDataCollector
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.otel.schema.ErrorCodeAttribute.UserAbandon.fromErrorCode
-import io.embrace.android.embracesdk.internal.otel.sdk.LimitsValidator
+import io.embrace.android.embracesdk.internal.otel.sdk.DataValidator
 import io.embrace.android.embracesdk.internal.otel.sdk.fromMap
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
@@ -31,7 +31,7 @@ class FakeAppStartupDataCollector(
     var appStartupCompleteCallback: (() -> Unit)? = null
     var customChildSpans = ConcurrentLinkedQueue<SpanData>()
     var customAttributes: MutableMap<String, String> = ConcurrentHashMap()
-    var limitsValidator: LimitsValidator = LimitsValidator()
+    var dataValidator: DataValidator = DataValidator()
 
     override fun applicationInitStart(timestampMs: Long?) {
         applicationInitStartMs = timestampMs ?: clock.now()
@@ -96,7 +96,7 @@ class FakeAppStartupDataCollector(
         val attributesBuilder = Attributes.builder().fromMap(
             attributes = attributes,
             internal = false,
-            limitsValidator = limitsValidator
+            limitsValidator = dataValidator
         )
         val status = if (errorCode != null) {
             val errorCodeAttr = errorCode.fromErrorCode()
@@ -118,7 +118,7 @@ class FakeAppStartupDataCollector(
                         Attributes.builder().fromMap(
                             attributes = it.attributes,
                             internal = false,
-                            limitsValidator = limitsValidator
+                            limitsValidator = dataValidator
                         ).build()
                     )
                 }.toMutableList(),

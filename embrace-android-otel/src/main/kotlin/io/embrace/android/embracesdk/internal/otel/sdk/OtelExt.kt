@@ -24,7 +24,7 @@ import io.opentelemetry.sdk.trace.data.SpanData
 fun AttributesBuilder.fromMap(
     attributes: Map<String, String>,
     internal: Boolean,
-    limitsValidator: LimitsValidator
+    limitsValidator: DataValidator
 ): AttributesBuilder {
     attributes.filter {
         limitsValidator.isAttributeValid(it.key, it.value, internal) || it.key.isValidLongValueAttribute()

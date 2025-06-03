@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.otel.spans
 
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
-import io.embrace.android.embracesdk.internal.otel.sdk.LimitsValidator
+import io.embrace.android.embracesdk.internal.otel.sdk.DataValidator
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
@@ -15,7 +15,7 @@ import io.embrace.android.embracesdk.spans.ErrorCode
  */
 class EmbraceSpanService(
     private val spanRepository: SpanRepository,
-    private val limitsValidator: LimitsValidator,
+    private val dataValidator: DataValidator,
     private val canStartNewSpan: (parentSpan: EmbraceSpan?, internal: Boolean) -> Boolean,
     private val initCallback: (initTimeMs: Long) -> Unit,
     private val embraceSpanFactorySupplier: Provider<EmbraceSpanFactory>,
@@ -31,7 +31,7 @@ class EmbraceSpanService(
                 if (!initialized()) {
                     val realSpansService = SpanServiceImpl(
                         spanRepository = spanRepository,
-                        limitsValidator = limitsValidator,
+                        dataValidator = dataValidator,
                         embraceSpanFactory = embraceSpanFactorySupplier(),
                         canStartNewSpan = canStartNewSpan,
                         initCallback = initCallback

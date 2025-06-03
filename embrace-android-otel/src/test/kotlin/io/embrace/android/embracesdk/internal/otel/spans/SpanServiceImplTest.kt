@@ -28,7 +28,7 @@ import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedCo
 import io.embrace.android.embracesdk.internal.otel.config.OtelSdkConfig
 import io.embrace.android.embracesdk.internal.otel.logs.LogSinkImpl
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
-import io.embrace.android.embracesdk.internal.otel.sdk.LimitsValidator
+import io.embrace.android.embracesdk.internal.otel.sdk.DataValidator
 import io.embrace.android.embracesdk.internal.otel.sdk.OtelSdkWrapper
 import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
 import io.embrace.android.embracesdk.spans.EmbraceSpan
@@ -536,7 +536,7 @@ internal class SpanServiceImplTest {
 
     @Test
     fun `bypass validation for non-internal spans`() {
-        spansService = createSpanService(LimitsValidator(bypassLimitsValidation = { true }))
+        spansService = createSpanService(DataValidator(bypassValidation = { true }))
 
         assertNotNull(spansService.createSpan(name = TOO_LONG_SPAN_NAME, internal = false))
         assertTrue(
@@ -569,7 +569,7 @@ internal class SpanServiceImplTest {
 
     @Test
     fun `validation for internal spans still enforced even when non-internal limits bypassed`() {
-        spansService = createSpanService(LimitsValidator(bypassLimitsValidation = { true }))
+        spansService = createSpanService(DataValidator(bypassValidation = { true }))
 
         assertNull(spansService.createSpan(name = TOO_LONG_INTERNAL_SPAN_NAME, internal = true))
         assertFalse(
@@ -600,7 +600,7 @@ internal class SpanServiceImplTest {
         )
     }
 
-    private fun createSpanService(limitsValidator: LimitsValidator = LimitsValidator()): SpanServiceImpl {
+    private fun createSpanService(dataValidator: DataValidator = DataValidator()): SpanServiceImpl {
         val fakeClock = FakeOpenTelemetryClock(clock)
         val otelSdkConfig = OtelSdkConfig(
             spanSink = spanSink,
@@ -621,9 +621,9 @@ internal class SpanServiceImplTest {
                 tracer = otelSdkWrapper.sdkTracer,
                 openTelemetryClock = fakeClock,
                 spanRepository = SpanRepository(),
-                limitsValidator = limitsValidator
+                dataValidator = dataValidator
             ),
-            limitsValidator = limitsValidator,
+            dataValidator = dataValidator,
             canStartNewSpan = ::canStartNewSpan,
             initCallback = ::initCallback
         ).apply {

@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.internal.otel.spans
 
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
-import io.embrace.android.embracesdk.internal.otel.sdk.LimitsValidator
+import io.embrace.android.embracesdk.internal.otel.sdk.DataValidator
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
@@ -16,7 +16,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 internal class SpanServiceImpl(
     private val spanRepository: SpanRepository,
     private val embraceSpanFactory: EmbraceSpanFactory,
-    private val limitsValidator: LimitsValidator,
+    private val dataValidator: DataValidator,
     private val canStartNewSpan: (parentSpan: EmbraceSpan?, internal: Boolean) -> Boolean,
     private val initCallback: (initTimeMs: Long) -> Unit
 ) : SpanService {
@@ -40,7 +40,7 @@ internal class SpanServiceImpl(
         autoTerminationMode: AutoTerminationMode,
     ): EmbraceSdkSpan? {
         EmbTrace.trace("span-create") {
-            return if (limitsValidator.isNameValid(name, internal) && canStartNewSpan(parent, internal)) {
+            return if (dataValidator.isNameValid(name, internal) && canStartNewSpan(parent, internal)) {
                 embraceSpanFactory.create(
                     name = name,
                     type = type,
@@ -58,7 +58,7 @@ internal class SpanServiceImpl(
     override fun createSpan(otelSpanBuilderWrapper: OtelSpanBuilderWrapper): EmbraceSdkSpan? {
         EmbTrace.trace("span-create") {
             return if (
-                limitsValidator.isNameValid(otelSpanBuilderWrapper.initialSpanName, otelSpanBuilderWrapper.internal) &&
+                dataValidator.isNameValid(otelSpanBuilderWrapper.initialSpanName, otelSpanBuilderWrapper.internal) &&
                 canStartNewSpan(
                     otelSpanBuilderWrapper.getParentContext().getEmbraceSpan(),
                     otelSpanBuilderWrapper.internal
@@ -162,7 +162,7 @@ internal class SpanServiceImpl(
         internal: Boolean,
         events: List<EmbraceSpanEvent>,
         attributes: Map<String, String>,
-    ): Boolean = limitsValidator.isNameValid(name, internal) &&
-        limitsValidator.isEventCountValid(events, internal) &&
-        limitsValidator.isAttributeCountValid(attributes, internal)
+    ): Boolean = dataValidator.isNameValid(name, internal) &&
+        dataValidator.isEventCountValid(events, internal) &&
+        dataValidator.isAttributeCountValid(attributes, internal)
 }

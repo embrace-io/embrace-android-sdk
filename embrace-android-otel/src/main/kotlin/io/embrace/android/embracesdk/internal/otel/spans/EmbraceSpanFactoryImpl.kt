@@ -10,7 +10,7 @@ import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.embrace.android.embracesdk.internal.otel.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.otel.schema.ErrorCodeAttribute.Failure.fromErrorCode
 import io.embrace.android.embracesdk.internal.otel.schema.LinkType
-import io.embrace.android.embracesdk.internal.otel.sdk.LimitsValidator
+import io.embrace.android.embracesdk.internal.otel.sdk.DataValidator
 import io.embrace.android.embracesdk.internal.otel.sdk.fromMap
 import io.embrace.android.embracesdk.internal.otel.sdk.hasEmbraceAttribute
 import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
@@ -44,7 +44,7 @@ class EmbraceSpanFactoryImpl(
     private val tracer: Tracer,
     private val openTelemetryClock: Clock,
     private val spanRepository: SpanRepository,
-    private val limitsValidator: LimitsValidator = LimitsValidator(),
+    private val dataValidator: DataValidator = DataValidator(),
     private val stopCallback: ((spanId: String) -> Unit)? = null,
     private var redactionFunction: ((key: String, value: String) -> String)? = null,
 ) : EmbraceSpanFactory {
@@ -75,7 +75,7 @@ class EmbraceSpanFactoryImpl(
             otelSpanBuilderWrapper = otelSpanBuilderWrapper,
             openTelemetryClock = openTelemetryClock,
             spanRepository = spanRepository,
-            limitsValidator = limitsValidator,
+            dataValidator = dataValidator,
             stopCallback = stopCallback,
             redactionFunction = redactionFunction,
             autoTerminationMode = autoTerminationMode
@@ -86,7 +86,7 @@ private class EmbraceSpanImpl(
     private val otelSpanBuilderWrapper: OtelSpanBuilderWrapper,
     private val openTelemetryClock: Clock,
     private val spanRepository: SpanRepository,
-    private val limitsValidator: LimitsValidator,
+    private val dataValidator: DataValidator,
     private val stopCallback: ((spanId: String) -> Unit)? = null,
     private val redactionFunction: ((key: String, value: String) -> String)? = null,
     override val autoTerminationMode: AutoTerminationMode = AutoTerminationMode.NONE,
@@ -212,7 +212,7 @@ private class EmbraceSpanImpl(
     }
 
     override fun addEvent(name: String, timestampMs: Long?, attributes: Map<String, String>?): Boolean =
-        addObject(customEvents, customEventCount, limitsValidator.otelLimitsConfig.getMaxCustomEventCount()) {
+        addObject(customEvents, customEventCount, dataValidator.otelLimitsConfig.getMaxCustomEventCount()) {
             EmbraceSpanEvent.create(
                 name = name,
                 timestampMs = timestampMs?.normalizeTimestampAsMillis() ?: openTelemetryClock.now().nanosToMillis(),
@@ -221,7 +221,7 @@ private class EmbraceSpanImpl(
         }
 
     override fun recordException(exception: Throwable, attributes: Map<String, String>?): Boolean =
-        addObject(customEvents, customEventCount, limitsValidator.otelLimitsConfig.getMaxCustomEventCount()) {
+        addObject(customEvents, customEventCount, dataValidator.otelLimitsConfig.getMaxCustomEventCount()) {
             val eventAttributes = mutableMapOf<String, String>()
             if (attributes != null) {
                 eventAttributes.putAll(attributes)
@@ -238,14 +238,14 @@ private class EmbraceSpanImpl(
             eventAttributes[ExceptionAttributes.EXCEPTION_STACKTRACE.key] = exception.truncatedStacktraceText()
 
             EmbraceSpanEvent.create(
-                name = limitsValidator.otelLimitsConfig.getExceptionEventName(),
+                name = dataValidator.otelLimitsConfig.getExceptionEventName(),
                 timestampMs = openTelemetryClock.now().nanosToMillis(),
                 attributes = eventAttributes
             )
         }
 
     override fun addSystemEvent(name: String, timestampMs: Long?, attributes: Map<String, String>?): Boolean =
-        addObject(systemEvents, systemEventCount, limitsValidator.otelLimitsConfig.getMaxSystemEventCount()) {
+        addObject(systemEvents, systemEventCount, dataValidator.otelLimitsConfig.getMaxSystemEventCount()) {
             EmbraceSpanEvent.create(
                 name = name,
                 timestampMs = timestampMs?.normalizeTimestampAsMillis() ?: openTelemetryClock.now().nanosToMillis(),
@@ -280,11 +280,11 @@ private class EmbraceSpanImpl(
     override fun getStartTimeMs(): Long? = spanStartTimeMs
 
     override fun addAttribute(key: String, value: String): Boolean {
-        if (customAttributes.size < limitsValidator.otelLimitsConfig.getMaxCustomAttributeCount() &&
-            limitsValidator.isAttributeValid(key, value, otelSpanBuilderWrapper.internal)
+        if (customAttributes.size < dataValidator.otelLimitsConfig.getMaxCustomAttributeCount() &&
+            dataValidator.isAttributeValid(key, value, otelSpanBuilderWrapper.internal)
         ) {
             synchronized(customAttributes) {
-                if (customAttributes.size < limitsValidator.otelLimitsConfig.getMaxCustomAttributeCount() && isRecording) {
+                if (customAttributes.size < dataValidator.otelLimitsConfig.getMaxCustomAttributeCount() && isRecording) {
                     customAttributes[key] = value
                     spanRepository.notifySpanUpdate()
                     return true
@@ -296,7 +296,7 @@ private class EmbraceSpanImpl(
     }
 
     override fun updateName(newName: String): Boolean {
-        if (limitsValidator.isNameValid(newName, otelSpanBuilderWrapper.internal)) {
+        if (dataValidator.isNameValid(newName, otelSpanBuilderWrapper.internal)) {
             synchronized(startedSpan) {
                 if (!spanStarted() || isRecording) {
                     updatedName = newName
@@ -311,12 +311,12 @@ private class EmbraceSpanImpl(
     }
 
     override fun addSystemLink(linkedSpanContext: SpanContext, type: LinkType, attributes: Map<String, String>): Boolean =
-        addObject(systemLinks, systemLinkCount, limitsValidator.otelLimitsConfig.getMaxSystemLinkCount()) {
+        addObject(systemLinks, systemLinkCount, dataValidator.otelLimitsConfig.getMaxSystemLinkCount()) {
             EmbraceLinkData(linkedSpanContext, mutableMapOf(type.asPair()).apply { putAll(attributes) })
         }
 
     override fun addLink(linkedSpanContext: SpanContext, attributes: Map<String, String>?): Boolean =
-        addObject(customLinks, customLinkCount, limitsValidator.otelLimitsConfig.getMaxCustomLinkCount()) {
+        addObject(customLinks, customLinkCount, dataValidator.otelLimitsConfig.getMaxCustomLinkCount()) {
             EmbraceLinkData(linkedSpanContext, attributes ?: emptyMap())
         }
 
@@ -414,7 +414,7 @@ private class EmbraceSpanImpl(
 
         (systemEvents + redactedCustomEvents).forEach { event ->
             val eventAttributes = if (event.attributes.isNotEmpty()) {
-                Attributes.builder().fromMap(event.attributes, otelSpanBuilderWrapper.internal, limitsValidator).build()
+                Attributes.builder().fromMap(event.attributes, otelSpanBuilderWrapper.internal, dataValidator).build()
             } else {
                 Attributes.empty()
             }
@@ -433,7 +433,7 @@ private class EmbraceSpanImpl(
 
         (systemLinks + redactedCustomLinks).forEach {
             val linkAttributes = if (it.attributes.isNotEmpty()) {
-                Attributes.builder().fromMap(attributes = it.attributes, false, limitsValidator).build()
+                Attributes.builder().fromMap(attributes = it.attributes, false, dataValidator).build()
             } else {
                 Attributes.empty()
             }

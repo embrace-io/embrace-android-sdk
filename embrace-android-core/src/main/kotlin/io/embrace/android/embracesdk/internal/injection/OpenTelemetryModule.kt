@@ -91,6 +91,6 @@ interface OpenTelemetryModule {
      */
     fun applyConfiguration(
         sensitiveKeysBehavior: SensitiveKeysBehavior,
-        bypassLimitsValidation: Boolean,
+        bypassValidation: Boolean,
     )
 }

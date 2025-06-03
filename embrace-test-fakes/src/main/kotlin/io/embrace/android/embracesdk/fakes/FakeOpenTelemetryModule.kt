@@ -29,7 +29,7 @@ class FakeOpenTelemetryModule(
     override val otelSdkConfig: OtelSdkConfig =
         OtelSdkConfig(spanSink, logSink, "sdk", "1.0", SystemInfo())
 
-    override fun applyConfiguration(sensitiveKeysBehavior: SensitiveKeysBehavior, bypassLimitsValidation: Boolean) {
+    override fun applyConfiguration(sensitiveKeysBehavior: SensitiveKeysBehavior, bypassValidation: Boolean) {
         // no-op
     }
 

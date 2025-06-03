@@ -5,7 +5,7 @@ package io.embrace.android.embracesdk.fakes
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.otel.attrs.asPair
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
-import io.embrace.android.embracesdk.internal.otel.sdk.LimitsValidator
+import io.embrace.android.embracesdk.internal.otel.sdk.DataValidator
 import io.embrace.android.embracesdk.internal.otel.sdk.fromMap
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.SpanContext
@@ -36,7 +36,7 @@ class FakeSpanData(
                 Pair("my-key", "my-value")
             ),
             internal = true,
-            limitsValidator = LimitsValidator()
+            limitsValidator = DataValidator()
         ).build(),
     private var events: MutableList<EventData> = mutableListOf(
         EventData.create(

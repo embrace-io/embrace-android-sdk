@@ -167,7 +167,7 @@ internal class ModuleInitBootstrapper(
                         serviceRegistry.registerService(lazy { configModule.remoteConfigSource })
                         openTelemetryModule.applyConfiguration(
                             sensitiveKeysBehavior = configModule.configService.sensitiveKeysBehavior,
-                            bypassLimitsValidation = configModule.configService.isOnlyUsingOtelExporters()
+                            bypassValidation = configModule.configService.isOnlyUsingOtelExporters()
                         )
                     }
 

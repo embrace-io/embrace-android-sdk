@@ -25,6 +25,7 @@ import io.embrace.test.fixtures.MissingInterfaceOnLongClickListener
 import io.embrace.test.fixtures.MissingOverrideOnClickListener
 import io.embrace.test.fixtures.MissingOverrideOnLongClickListener
 import io.embrace.test.fixtures.NoOverrideWebViewClient
+import io.embrace.test.fixtures.TestApplication
 import io.embrace.test.fixtures.VirtualMethodRefNamedOnClick
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -63,6 +64,10 @@ private val onLongClickFactory: ClassVisitorFactory = { visitor, params ->
 
 private val webviewFactory: ClassVisitorFactory = { visitor, params ->
     createFactory(params, visitor, "webview_page_start", "android.webkit.WebViewClient")
+}
+
+private val autoSdkInitializationFactory: ClassVisitorFactory = { visitor, params ->
+    createFactory(params, visitor, "auto_sdk_initialization", "android.app.Application")
 }
 
 /**
@@ -126,6 +131,7 @@ class InstrumentedBytecodeTest(
             ),
             BytecodeTestParams(clz = CustomWebViewClient::class, factory = webviewFactory),
             BytecodeTestParams(clz = ExtendedCustomWebViewClient::class, factory = webviewFactory),
+            BytecodeTestParams(clz = TestApplication::class, factory = autoSdkInitializationFactory),
             BytecodeTestParams(clz = NoOverrideWebViewClient::class, factory = webviewFactory),
         )
     }

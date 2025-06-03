@@ -43,6 +43,7 @@ class VisitorFactoryImpl(
             "fcm_push_notifications" -> params.shouldInstrumentFirebaseMessaging.get()
             "okhttp" -> params.shouldInstrumentOkHttp.get()
             "webview_page_start" -> params.shouldInstrumentWebview.get()
+            "auto_sdk_initialization" -> params.shouldInstrumentAutoSdkInitialization.get()
             "on_click" -> params.shouldInstrumentOnClick.get()
             "on_long_click" -> params.shouldInstrumentOnLongClick.get()
             else -> error("Unknown feature: $name. Please add a property that enables/disables it on EmbraceBytecodeInstrumentation.")

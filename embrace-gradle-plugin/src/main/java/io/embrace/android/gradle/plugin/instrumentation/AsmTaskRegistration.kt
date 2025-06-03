@@ -36,6 +36,7 @@ class AsmTaskRegistration : EmbraceTaskRegistration {
                 )
                 params.shouldInstrumentFirebaseMessaging.set(behavior.instrumentation.fcmPushNotificationsEnabled)
                 params.shouldInstrumentWebview.set(behavior.instrumentation.webviewEnabled)
+                params.shouldInstrumentAutoSdkInitialization.set(behavior.instrumentation.autoSdkInitializationEnabled)
                 params.shouldInstrumentOkHttp.set(behavior.instrumentation.okHttpEnabled)
                 params.shouldInstrumentOnLongClick.set(behavior.instrumentation.onLongClickEnabled)
                 params.shouldInstrumentOnClick.set(behavior.instrumentation.onClickEnabled)

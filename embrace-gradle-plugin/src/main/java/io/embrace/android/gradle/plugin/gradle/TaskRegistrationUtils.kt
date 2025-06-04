@@ -3,6 +3,7 @@ package io.embrace.android.gradle.plugin.gradle
 import io.embrace.android.gradle.plugin.util.capitalizedString
 import org.gradle.api.Project
 import org.gradle.api.Task
+import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.TaskContainer
 import org.gradle.api.tasks.TaskProvider
 
@@ -44,4 +45,18 @@ fun <T : Task> Project.tryGetTaskProvider(taskName: String, taskType: Class<T>):
     } catch (e: Exception) {
         null
     }
+}
+
+/**
+ * Lazily looks up a task by name and type, returning a [Provider] that yields the task if it exists,
+ * or `null` if not found. Useful for wiring optional tasks into the task graph without realizing them early.
+ *
+ * @param T The expected type of the task.
+ * @param name The name of the task to look up.
+ * @return A [Provider] of the task, or `provider { null }` if the task is not present.
+ */
+inline fun <reified T : Task> Project.lazyTaskLookup(name: String): Provider<T?> {
+    return provider {
+        tryGetTaskProvider(name, T::class.java)
+    }.safeFlatMap { it as Provider<T?> }
 }

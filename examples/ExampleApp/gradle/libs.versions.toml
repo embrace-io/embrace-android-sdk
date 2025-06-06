@@ -11,7 +11,7 @@ composeBom = "2025.05.01"
 embrace = "7.4.0"
 navigationCompose = "2.9.0"
 okhttp = "4.12.0"
-otel = "1.49.0"
+otel = "1.50.0"
 firebase = "24.1.1"
 
 [libraries]

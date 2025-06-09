@@ -30,7 +30,7 @@ jobs:
           platform: 'android'
           version: ${{ inputs.rc_version }}
           dryRun: true
-          sdkVersionUrl: ${{ vars.SDK_VERSION_URL }}
+          uploadUrl: ${{ vars.SDK_VERSION_URL }}
         env:
           SDK_VERSION_TOKEN: ${{ secrets.SDK_VERSION_TOKEN }}
 
@@ -59,7 +59,7 @@ jobs:
           platform: 'android'
           version: ${{ inputs.rc_version }}
           dryRun: false
-          sdkVersionUrl: ${{ vars.SDK_VERSION_URL }}
+          uploadUrl: ${{ vars.SDK_VERSION_URL }}
         env:
           SDK_VERSION_TOKEN: ${{ secrets.SDK_VERSION_TOKEN }}
 

@@ -19,7 +19,7 @@ nexusPublishing {
         sonatype {
             username = System.getenv("SONATYPE_USERNAME")
             password = System.getenv("SONATYPE_PASSWORD")
-            nexusUrl.set(uri("https://s01.oss.sonatype.org/service/local/"))
+            nexusUrl.set(uri("https://ossrh-staging-api.central.sonatype.com/service/local/"))
         }
     }
     transitionCheckOptions {

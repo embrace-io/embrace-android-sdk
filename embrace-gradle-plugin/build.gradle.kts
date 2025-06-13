@@ -155,7 +155,7 @@ publishing {
                 password = System.getenv("SONATYPE_PASSWORD")
             }
             name = "sonatype"
-            url = uri("https://s01.oss.sonatype.org/service/local/staging/deploy/maven2")
+            url = uri("https://ossrh-staging-api.central.sonatype.com/service/local/staging/deploy/maven2/")
         }
     }
     signing {

@@ -16,8 +16,8 @@ internal class PropertyUtilsTest {
 
     @Test
     fun testPropertyLimitExceeded() {
-        val input = (0..20).associateBy { "$it" }
-        val expected = (0..9).associateBy { "$it" }
+        val input = (0..70).associateBy { "$it" }
+        val expected = (0..49).associateBy { "$it" }
         assertEquals(expected, sanitizeProperties(input as Map<String, Any>?))
     }
 
@@ -44,7 +44,7 @@ internal class PropertyUtilsTest {
         sourceMap[""] = "Empty key"
         sourceMap["EmptyValue"] = ""
         sourceMap["NullValue"] = ""
-        for (i in 1..9) {
+        for (i in 1..99) {
             sourceMap["Key$i"] = "Value$i"
         }
         val resultMap = sanitizeProperties(sourceMap)

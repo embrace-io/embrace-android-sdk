@@ -11,6 +11,7 @@ import io.opentelemetry.api.logs.Logger
 import io.opentelemetry.api.trace.Tracer
 import io.opentelemetry.sdk.OpenTelemetrySdk
 import io.opentelemetry.sdk.common.Clock
+import io.opentelemetry.sdk.logs.LogLimits
 import io.opentelemetry.sdk.logs.SdkLoggerProvider
 import io.opentelemetry.sdk.resources.Resource
 import io.opentelemetry.sdk.trace.SdkTracerProvider
@@ -63,19 +64,28 @@ class OtelSdkWrapper(
         configuration.resourceBuilder.build()
     }
 
+    private val sdkLoggerProvider: SdkLoggerProvider by lazy {
+        SdkLoggerProvider
+            .builder()
+            .addResource(resource)
+            .addLogRecordProcessor(configuration.logProcessor)
+            .setClock(openTelemetryClock)
+            .setLogLimits {
+                LogLimits
+                    .getDefault()
+                    .toBuilder()
+                    .setMaxNumberOfAttributes(limits.getMaxTotalAttributeCount())
+                    .build()
+            }
+            .build()
+    }
+
     private val sdk: OpenTelemetrySdk by lazy {
         EmbTrace.trace("otel-sdk-init") {
             OpenTelemetrySdk
                 .builder()
                 .setTracerProvider(sdkTracerProvider)
-                .setLoggerProvider(
-                    SdkLoggerProvider
-                        .builder()
-                        .addResource(resource)
-                        .addLogRecordProcessor(configuration.logProcessor)
-                        .setClock(openTelemetryClock)
-                        .build()
-                )
+                .setLoggerProvider(sdkLoggerProvider)
                 .build()
         }
     }

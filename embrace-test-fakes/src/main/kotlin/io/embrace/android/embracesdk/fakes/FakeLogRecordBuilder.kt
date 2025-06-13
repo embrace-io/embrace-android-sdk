@@ -1,5 +1,7 @@
 package io.embrace.android.embracesdk.fakes
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.logs.LogRecordBuilder
 import io.opentelemetry.api.logs.Severity
@@ -23,6 +25,7 @@ class FakeLogRecordBuilder : LogRecordBuilder {
         return this
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     override fun setTimestamp(instant: Instant): LogRecordBuilder {
         timestampEpochNanos = instant.toEpochMilli() * 1_000_000
         return this
@@ -33,6 +36,7 @@ class FakeLogRecordBuilder : LogRecordBuilder {
         return this
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     override fun setObservedTimestamp(instant: Instant): LogRecordBuilder {
         observedTimestampEpochNanos = instant.toEpochMilli() * 1_000_000
         return this
@@ -58,7 +62,7 @@ class FakeLogRecordBuilder : LogRecordBuilder {
         return this
     }
 
-    override fun <T : Any> setAttribute(key: AttributeKey<T>, value: T): LogRecordBuilder {
+    override fun <T : Any> setAttribute(key: AttributeKey<T>, value: T?): LogRecordBuilder {
         attributes[key.key.toString()] = value.toString()
         return this
     }

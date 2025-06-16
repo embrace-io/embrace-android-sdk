@@ -44,6 +44,30 @@
       }
     },
     {
+      "name": "auto_sdk_initialization",
+      "target": {
+        "name": "onCreate",
+        "descriptor": "()V"
+      },
+      "insert": {
+        "owner": "io/embrace/android/embracesdk/internal/instrumentation/bytecode/AutoSdkInitializationBytecodeEntrypoint",
+        "name": "onCreate",
+        "descriptor": "(Landroid/app/Application;)V",
+        "operandStackIndices": [
+          0
+        ]
+      },
+      "addOverride": {
+        "owner": "android/app/Application",
+        "name": "onCreate",
+        "descriptor": "()V"
+      },
+      "visitStrategy": {
+        "type": "match_super_class_name",
+        "value": "android.app.Application"
+      }
+    },
+    {
       "name": "okhttp",
       "target": {
         "name": "build",

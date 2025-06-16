@@ -57,6 +57,19 @@ class EmbraceClassVisitorFactoryTest {
     }
 
     @Test
+    fun testAutoSdkInitializationClassVisitorDisabled() {
+        val visitor = TestClassVisitor()
+        val ctx = createMockClassContext("android.app.Application")
+        val config = createInstrumentationConfig(
+            instrumentOnClick = false,
+            instrumentOnLongClick = false,
+            instrumentAutoSdkInitialization = false,
+        )
+        val observed = fetchClassVisitor(config, ctx, visitor)
+        assertSame(visitor, observed)
+    }
+
+    @Test
     fun testOkHttpClassVisitorDisabled() {
         val visitor = TestClassVisitor()
         val ctx = createMockClassContext("okhttp3.OkHttpClient\$Builder")
@@ -96,11 +109,13 @@ class EmbraceClassVisitorFactoryTest {
         instrumentOnClick: Boolean = true,
         instrumentOnLongClick: Boolean = true,
         instrumentWebview: Boolean = true,
+        instrumentAutoSdkInitialization: Boolean = true,
         instrumentFirebaseMessaging: Boolean = true
     ): TestBytecodeInstrumentationParams {
         return TestBytecodeInstrumentationParams(
             instrumentFirebaseMessaging = instrumentFirebaseMessaging,
             instrumentWebview = instrumentWebview,
+            instrumentAutoSdkInitialization = instrumentAutoSdkInitialization,
             instrumentOkHttp = instrumentOkHttp,
             instrumentOnLongClick = instrumentOnLongClick,
             instrumentOnClick = instrumentOnClick

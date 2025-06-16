@@ -19,7 +19,6 @@ internal class NoopUnityInternalInterfaceTest {
         )
     }
 
-    @Suppress("DEPRECATION")
     @Test
     fun `check no errors thrown when invoked`() {
         impl.setUnityMetaData("unityVersion", "buildGuid", "unitySdkVersion")
@@ -44,6 +43,5 @@ internal class NoopUnityInternalInterfaceTest {
             200,
             "traceId"
         )
-        impl.installUnityThreadSampler()
     }
 }

@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.internal.otel.impl.EmbOpenTelemetry
 import io.embrace.android.embracesdk.internal.otel.impl.EmbTracerProvider
 import io.embrace.android.embracesdk.internal.otel.logs.LogSink
 import io.embrace.android.embracesdk.internal.otel.logs.LogSinkImpl
+import io.embrace.android.embracesdk.internal.otel.sdk.DataValidator
 import io.embrace.android.embracesdk.internal.otel.sdk.OtelSdkWrapper
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanFactory
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanFactoryImpl
@@ -80,17 +81,23 @@ internal class OpenTelemetryModuleImpl(
 
     private var sensitiveKeysBehavior: SensitiveKeysBehavior? = null
 
-    override fun setupSensitiveKeysBehavior(sensitiveKeysBehavior: SensitiveKeysBehavior) {
+    override fun applyConfiguration(sensitiveKeysBehavior: SensitiveKeysBehavior, bypassValidation: Boolean) {
         this.sensitiveKeysBehavior = sensitiveKeysBehavior
+        this.bypassLimitsValidation = bypassValidation
     }
 
     private var internalSpanStopCallback: ((spanId: String) -> Unit)? = null
+
+    private var bypassLimitsValidation: Boolean = false
+
+    private val dataValidator: DataValidator = DataValidator(bypassValidation = ::bypassLimitsValidation)
 
     private val embraceSpanFactory: EmbraceSpanFactory by singleton {
         EmbraceSpanFactoryImpl(
             tracer = sdkTracer,
             openTelemetryClock = openTelemetryClock,
             spanRepository = spanRepository,
+            dataValidator = dataValidator,
             stopCallback = ::spanStopCallbackWrapper,
             redactionFunction = ::redactionFunction
         )
@@ -113,6 +120,7 @@ internal class OpenTelemetryModuleImpl(
             spanRepository = spanRepository,
             canStartNewSpan = currentSessionSpan::canStartNewSpan,
             initCallback = currentSessionSpan::initializeService,
+            dataValidator = dataValidator
         ) { embraceSpanFactory }
     }
 

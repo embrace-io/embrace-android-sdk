@@ -18,7 +18,7 @@ class EmbSpan(
     private val clock: Clock,
 ) : Span {
 
-    override fun <T : Any> setAttribute(key: AttributeKey<T>, value: T): Span {
+    override fun <T : Any> setAttribute(key: AttributeKey<T>, value: T?): Span {
         embraceSpan.addAttribute(key = key.key, value = value.toString())
         return this
     }

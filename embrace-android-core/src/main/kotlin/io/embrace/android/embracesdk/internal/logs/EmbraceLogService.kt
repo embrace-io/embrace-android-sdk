@@ -16,7 +16,7 @@ import io.embrace.android.embracesdk.internal.otel.attrs.embExceptionHandling
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.session.orchestrator.PayloadStore
-import io.embrace.android.embracesdk.internal.utils.PropertyUtils.normalizeProperties
+import io.embrace.android.embracesdk.internal.utils.PropertyUtils.sanitizeProperties
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.opentelemetry.semconv.incubating.LogIncubatingAttributes
 
@@ -31,6 +31,7 @@ class EmbraceLogService(
 ) : LogService {
 
     private val behavior = configService.logMessageBehavior
+    private val bypassLimitsValidation = configService.isOnlyUsingOtelExporters()
     private val logCounters = mapOf(
         Severity.INFO to LogCounter(behavior::getInfoLogLimit),
         Severity.WARNING to LogCounter(behavior::getWarnLogLimit),
@@ -45,7 +46,7 @@ class EmbraceLogService(
         customLogAttrs: Map<String, String>,
         logAttachment: Attachment.EmbraceHosted?,
     ) {
-        val redactedProperties = redactSensitiveProperties(normalizeProperties(properties))
+        val redactedProperties = redactSensitiveProperties(sanitizeProperties(properties, bypassLimitsValidation))
         val attrs = createTelemetryAttributes(redactedProperties, customLogAttrs)
 
         val schemaProvider: (TelemetryAttributes) -> SchemaType = when {

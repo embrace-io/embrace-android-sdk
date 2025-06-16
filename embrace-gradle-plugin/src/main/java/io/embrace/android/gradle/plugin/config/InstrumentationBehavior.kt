@@ -23,6 +23,11 @@ interface InstrumentationBehavior {
     val webviewEnabled: Boolean
 
     /**
+     * Whether the Embrace SDK initialization should be auto-instrumented
+     */
+    val autoSdkInitializationEnabled: Boolean
+
+    /**
      * Whether FCM push notifications should be auto-instrumented
      */
     val fcmPushNotificationsEnabled: Boolean

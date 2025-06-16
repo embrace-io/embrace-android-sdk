@@ -1,12 +1,8 @@
 package io.embrace.android.embracesdk.internal.otel.spans
 
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
-import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
-import io.embrace.android.embracesdk.internal.config.instrumented.schema.OtelLimitsConfig
-import io.embrace.android.embracesdk.internal.otel.config.isAttributeCountValid
-import io.embrace.android.embracesdk.internal.otel.config.isEventCountValid
-import io.embrace.android.embracesdk.internal.otel.config.isNameValid
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
+import io.embrace.android.embracesdk.internal.otel.sdk.DataValidator
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
@@ -20,9 +16,9 @@ import java.util.concurrent.atomic.AtomicBoolean
 internal class SpanServiceImpl(
     private val spanRepository: SpanRepository,
     private val embraceSpanFactory: EmbraceSpanFactory,
+    private val dataValidator: DataValidator,
     private val canStartNewSpan: (parentSpan: EmbraceSpan?, internal: Boolean) -> Boolean,
-    private val initCallback: (initTimeMs: Long) -> Unit,
-    private val limits: OtelLimitsConfig = InstrumentedConfigImpl.otelLimits,
+    private val initCallback: (initTimeMs: Long) -> Unit
 ) : SpanService {
     private val initialized = AtomicBoolean(false)
 
@@ -44,7 +40,7 @@ internal class SpanServiceImpl(
         autoTerminationMode: AutoTerminationMode,
     ): EmbraceSdkSpan? {
         EmbTrace.trace("span-create") {
-            return if (limits.isNameValid(name, internal) && canStartNewSpan(parent, internal)) {
+            return if (dataValidator.isNameValid(name, internal) && canStartNewSpan(parent, internal)) {
                 embraceSpanFactory.create(
                     name = name,
                     type = type,
@@ -63,7 +59,7 @@ internal class SpanServiceImpl(
         EmbTrace.trace("span-create") {
             val otelSpanStartArgs = otelSpanCreator.spanStartArgs
             return if (
-                limits.isNameValid(otelSpanStartArgs.spanName, otelSpanStartArgs.internal) &&
+                dataValidator.isNameValid(otelSpanStartArgs.spanName, otelSpanStartArgs.internal) &&
                 canStartNewSpan(
                     otelSpanStartArgs.parentContext.getEmbraceSpan(),
                     otelSpanStartArgs.internal
@@ -167,7 +163,7 @@ internal class SpanServiceImpl(
         internal: Boolean,
         events: List<EmbraceSpanEvent>,
         attributes: Map<String, String>,
-    ): Boolean = limits.isNameValid(name, internal) &&
-        limits.isEventCountValid(events, internal) &&
-        limits.isAttributeCountValid(attributes, internal)
+    ): Boolean = dataValidator.isNameValid(name, internal) &&
+        dataValidator.isEventCountValid(events, internal) &&
+        dataValidator.isAttributeCountValid(attributes, internal)
 }

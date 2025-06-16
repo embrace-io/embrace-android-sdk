@@ -119,8 +119,4 @@ internal class UnityInternalInterfaceImpl(
             )
         )
     }
-
-    @Deprecated("Obsolete, will be removed in a future release.")
-    override fun installUnityThreadSampler() {
-    }
 }

@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk
 import android.annotation.SuppressLint
 import android.app.Application
 import android.content.Context
+import android.util.Log
 import io.embrace.android.embracesdk.core.BuildConfig
 import io.embrace.android.embracesdk.internal.EmbraceInternalApi
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
@@ -246,13 +247,13 @@ internal class EmbraceImpl @JvmOverloads constructor(
         if (sdkCallChecker.started.get()) {
             bootstrapper.openTelemetryModule.otelSdkConfig.disableDataExport()
             stop()
-        }
-
-        // delete any persisted data
-        runCatching {
             Executors.newSingleThreadExecutor().execute {
-                StorageLocation.values().map { it.asFile(bootstrapper.coreModule.context, logger).value }.forEach {
-                    it.deleteRecursively()
+                runCatching {
+                    StorageLocation.values().map { it.asFile(bootstrapper.coreModule.context, logger).value }.forEach {
+                        it.deleteRecursively()
+                    }
+                }.onFailure { exception ->
+                    Log.e("[Embrace]", "An error occurred while trying to disable Embrace SDK.", exception)
                 }
             }
         }

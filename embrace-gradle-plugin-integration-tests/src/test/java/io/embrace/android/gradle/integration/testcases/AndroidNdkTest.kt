@@ -100,9 +100,8 @@ class AndroidNdkTest {
         )
     }
 
-    // When a 3rd party dependency has native libraries, but the project has no externalNativeBuild block, we don't send symbols (yet).
     @Test
-    fun `don't send 3rd party native library symbols when the project has no native libraries`() {
+    fun `send 3rd party native library symbols even when the project has no native libraries`() {
         rule.runTest(
             fixture = "android-3rd-party-symbols",
             task = "build",
@@ -116,8 +115,8 @@ class AndroidNdkTest {
             },
             assertions = {
                 verifyBuildTelemetryRequestSent(defaultExpectedVariants)
-                verifyNoHandshakes()
-                verifyNoUploads()
+                verifyHandshakes(defaultExpectedLibs, defaultExpectedArchs, defaultExpectedVariants)
+                verifyUploads(defaultExpectedLibs, defaultExpectedArchs, defaultExpectedVariants)
             }
         )
     }

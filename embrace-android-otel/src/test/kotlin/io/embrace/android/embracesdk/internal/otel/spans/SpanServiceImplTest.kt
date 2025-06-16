@@ -28,6 +28,7 @@ import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedCo
 import io.embrace.android.embracesdk.internal.otel.config.OtelSdkConfig
 import io.embrace.android.embracesdk.internal.otel.logs.LogSinkImpl
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
+import io.embrace.android.embracesdk.internal.otel.sdk.DataValidator
 import io.embrace.android.embracesdk.internal.otel.sdk.OtelSdkWrapper
 import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
 import io.embrace.android.embracesdk.spans.EmbraceSpan
@@ -53,32 +54,8 @@ internal class SpanServiceImplTest {
 
     @Before
     fun setup() {
-        val fakeClock = FakeOpenTelemetryClock(clock)
         spanSink = SpanSinkImpl()
-        val otelSdkConfig = OtelSdkConfig(
-            spanSink = spanSink,
-            logSink = LogSinkImpl(),
-            sdkName = "test-sdk",
-            sdkVersion = "1.0",
-            systemInfo = SystemInfo(),
-            processIdentifierProvider = { "fake-pid" }
-        )
-        val otelSdkWrapper = OtelSdkWrapper(
-            openTelemetryClock = fakeClock,
-            configuration = otelSdkConfig,
-        )
-
-        spansService = SpanServiceImpl(
-            spanRepository = SpanRepository(),
-            embraceSpanFactory = EmbraceSpanFactoryImpl(
-                tracer = otelSdkWrapper.sdkTracer,
-                openTelemetryClock = fakeClock,
-                spanRepository = SpanRepository()
-            ),
-            canStartNewSpan = ::canStartNewSpan,
-            initCallback = ::initCallback
-        )
-        spansService.initializeService(fakeClock.now().nanosToMillis())
+        spansService = createSpanService()
     }
 
     @Test
@@ -555,6 +532,103 @@ internal class SpanServiceImplTest {
         val completedSpans = spanSink.completedSpans()
         assertEquals(1, completedSpans.size)
         assertEquals(48, completedSpans[0].attributes.filterNot { it.key.startsWith("emb.") }.size)
+    }
+
+    @Test
+    fun `bypass validation for non-internal spans`() {
+        spansService = createSpanService(DataValidator(bypassValidation = { true }))
+
+        assertNotNull(spansService.createSpan(name = TOO_LONG_SPAN_NAME, internal = false))
+        assertTrue(
+            spansService.recordCompletedSpan(
+                name = TOO_LONG_SPAN_NAME,
+                startTimeMs = 100L,
+                endTimeMs = 200L,
+                internal = false,
+            )
+        )
+        assertTrue(
+            spansService.recordCompletedSpan(
+                name = "too many events",
+                startTimeMs = 100L,
+                endTimeMs = 200L,
+                internal = false,
+                events = tooBigCustomEvents,
+            )
+        )
+        assertTrue(
+            spansService.recordCompletedSpan(
+                name = "too many attributes",
+                startTimeMs = 100L,
+                endTimeMs = 200L,
+                internal = false,
+                attributes = tooBigCustomAttributes,
+            )
+        )
+    }
+
+    @Test
+    fun `validation for internal spans still enforced even when non-internal limits bypassed`() {
+        spansService = createSpanService(DataValidator(bypassValidation = { true }))
+
+        assertNull(spansService.createSpan(name = TOO_LONG_INTERNAL_SPAN_NAME, internal = true))
+        assertFalse(
+            spansService.recordCompletedSpan(
+                name = TOO_LONG_INTERNAL_SPAN_NAME,
+                startTimeMs = 100L,
+                endTimeMs = 200L,
+                internal = true,
+            )
+        )
+        assertFalse(
+            spansService.recordCompletedSpan(
+                name = "too many events",
+                startTimeMs = 100L,
+                endTimeMs = 200L,
+                internal = true,
+                events = tooBigSystemEvents,
+            )
+        )
+        assertFalse(
+            spansService.recordCompletedSpan(
+                name = "too many attributes",
+                startTimeMs = 100L,
+                endTimeMs = 200L,
+                internal = true,
+                attributes = tooBigSystemAttributes,
+            )
+        )
+    }
+
+    private fun createSpanService(dataValidator: DataValidator = DataValidator()): SpanServiceImpl {
+        val fakeClock = FakeOpenTelemetryClock(clock)
+        val otelSdkConfig = OtelSdkConfig(
+            spanSink = spanSink,
+            logSink = LogSinkImpl(),
+            sdkName = "test-sdk",
+            sdkVersion = "1.0",
+            systemInfo = SystemInfo(),
+            processIdentifierProvider = { "fake-pid" }
+        )
+        val otelSdkWrapper = OtelSdkWrapper(
+            openTelemetryClock = fakeClock,
+            configuration = otelSdkConfig,
+        )
+
+        return SpanServiceImpl(
+            spanRepository = SpanRepository(),
+            embraceSpanFactory = EmbraceSpanFactoryImpl(
+                tracer = otelSdkWrapper.sdkTracer,
+                openTelemetryClock = fakeClock,
+                spanRepository = SpanRepository(),
+                dataValidator = dataValidator
+            ),
+            dataValidator = dataValidator,
+            canStartNewSpan = ::canStartNewSpan,
+            initCallback = ::initCallback
+        ).apply {
+            initializeService(fakeClock.now().nanosToMillis())
+        }
     }
 
     private fun verifyAndReturnSoleCompletedSpan(name: String): EmbraceSpanData {

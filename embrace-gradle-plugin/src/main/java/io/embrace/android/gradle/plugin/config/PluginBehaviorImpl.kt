@@ -53,7 +53,7 @@ class PluginBehaviorImpl(
     }
 
     override val isReactNativeProject: Boolean by lazy {
-        val rootFile = project.layout.projectDirectory.asFile.parentFile?.parentFile
+        val rootFile = project.rootDir.parentFile
         if (rootFile != null) {
             val nodeModules = File("${rootFile.path}/node_modules")
             val nodeModulesEmbrace = File("${nodeModules.path}/react-native")
@@ -73,7 +73,7 @@ class PluginBehaviorImpl(
     }
 
     override val customSymbolsDirectory: String? by lazy {
-        extension.customSymbolsDirectory.orNull
+        embrace.customSymbolsDirectory.orNull ?: extension.customSymbolsDirectory.orNull
     }
 
     override fun isInstrumentationDisabledForVariant(variantName: String): Boolean {

@@ -1,5 +1,13 @@
 # Embrace Android SDK Changelog
 
+## 7.5.0
+*June 9, 2025*
+
+- New configuration option to start the SDK automatically (default off)
+- Link Spans with Sessions in which they ended via Span Links
+- Bypass instrumentation-time restrictions for Spans and Embrace Logs for non-Embrace Users
+- Use `BuildFeatures` API for Gradle 8.5+ instead of a deprecated feature to be removed in Gradle 10
+
 ## 7.4.0
 *May 5, 2025*
 

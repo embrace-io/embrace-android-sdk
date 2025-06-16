@@ -27,11 +27,8 @@ class FakeSpan(
     private var status: StatusCode = StatusCode.UNSET
     private var statusDescription: String = ""
 
-    override fun <T : Any> setAttribute(key: AttributeKey<T>, value: T?): Span {
-        if (value != null) {
-            fakeSpanBuilder.setAttribute(key, value)
-        }
-
+    override fun <T : Any> setAttribute(key: AttributeKey<T>, value: T): Span {
+        fakeSpanBuilder.setAttribute(key, value)
         return this
     }
 

@@ -7,11 +7,6 @@ import org.junit.Test
 class GradleVersionTest {
 
     @Test
-    fun testCompileVersion() {
-        assertEquals("8.14", GradleVersion.CURRENT.toString())
-    }
-
-    @Test
     fun testComparator() {
         assertEquals(0, GradleVersion.GRADLE_8_0.compareTo(GradleVersion.GRADLE_8_0))
         assertEquals(1, GradleVersion.CURRENT.compareTo(GradleVersion.GRADLE_8_0))

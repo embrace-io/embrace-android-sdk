@@ -2,16 +2,17 @@ package io.embrace.android.embracesdk.internal.otel.impl
 
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
+import io.embrace.android.embracesdk.fakes.FakeKotlinSpan
+import io.embrace.android.embracesdk.fakes.FakeKotlinTracer
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryClock
-import io.embrace.android.embracesdk.fakes.FakeSpan
 import io.embrace.android.embracesdk.fakes.FakeSpanService
-import io.embrace.android.embracesdk.fakes.FakeTracer
 import io.embrace.android.embracesdk.fixtures.fakeContextKey
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.embrace.android.embracesdk.internal.otel.spans.OtelSpanCreator
 import io.embrace.android.embracesdk.internal.otel.spans.OtelSpanStartArgs
 import io.embrace.android.embracesdk.internal.otel.spans.getEmbraceSpan
 import io.embrace.android.embracesdk.spans.AutoTerminationMode
+import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
@@ -25,10 +26,11 @@ import org.junit.Test
 import java.time.Instant
 import java.util.concurrent.TimeUnit
 
+@OptIn(ExperimentalApi::class)
 internal class EmbSpanBuilderTest {
     private val clock = FakeClock()
     private val openTelemetryClock = FakeOpenTelemetryClock(clock)
-    private lateinit var tracer: FakeTracer
+    private lateinit var tracer: FakeKotlinTracer
     private lateinit var spanService: FakeSpanService
     private lateinit var creator: OtelSpanCreator
     private lateinit var embSpanBuilder: EmbSpanBuilder
@@ -36,7 +38,7 @@ internal class EmbSpanBuilderTest {
     @Before
     fun setup() {
         spanService = FakeSpanService()
-        tracer = FakeTracer()
+        tracer = FakeKotlinTracer()
         creator = OtelSpanCreator(
             tracer = tracer,
             spanStartArgs = OtelSpanStartArgs(
@@ -179,8 +181,8 @@ internal class EmbSpanBuilderTest {
     @Test
     fun `set span kind`() {
         embSpanBuilder.setSpanKind(SpanKind.CLIENT)
-        val fakeSpan = creator.startSpan(clock.now()) as FakeSpan
-        assertEquals(SpanKind.CLIENT, fakeSpan.fakeSpanBuilder.spanKind)
+        val fakeSpan = creator.startSpan(clock.now()) as FakeKotlinSpan
+        assertEquals(io.embrace.opentelemetry.kotlin.tracing.SpanKind.CLIENT, fakeSpan.spanKind)
     }
 
     @Test

@@ -2,26 +2,28 @@ package io.embrace.android.embracesdk.internal.otel.spans
 
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
-import io.embrace.android.embracesdk.fakes.FakeSpan
-import io.embrace.android.embracesdk.fakes.FakeTracer
+import io.embrace.android.embracesdk.fakes.FakeKotlinSpan
+import io.embrace.android.embracesdk.fakes.FakeKotlinTracer
 import io.embrace.android.embracesdk.fixtures.fakeContextKey
+import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.embrace.android.embracesdk.internal.otel.schema.PrivateSpan
-import io.opentelemetry.api.trace.Span
-import io.opentelemetry.api.trace.SpanKind
+import io.embrace.opentelemetry.kotlin.ExperimentalApi
+import io.embrace.opentelemetry.kotlin.tracing.SpanKind
 import io.opentelemetry.context.Context
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
+@OptIn(ExperimentalApi::class)
 internal class OtelSpanCreatorTest {
     private val clock = FakeClock()
-    private lateinit var tracer: FakeTracer
+    private lateinit var tracer: FakeKotlinTracer
 
     @Before
     fun setup() {
-        tracer = FakeTracer()
+        tracer = FakeKotlinTracer()
     }
 
     @Test
@@ -171,23 +173,25 @@ internal class OtelSpanCreatorTest {
         args.parentContext = fakeRootContext
         assertEquals("fake-value", args.parentContext.get(fakeContextKey))
 
-        val span = creator.startSpan(clock.now()) as FakeSpan
-        assertEquals("fake-value", span.fakeSpanBuilder.parentContext.get(fakeContextKey))
+        val span = creator.startSpan(clock.now()) as FakeKotlinSpan
+        assertEquals("fake-value", span.parent) // .get(fakeContextKey))
     }
 
-    private fun Span.assertFakeSpanBuilder(
+    private fun io.embrace.opentelemetry.kotlin.tracing.Span.assertFakeSpanBuilder(
         expectedName: String,
         expectedParentContext: Context = Context.root(),
-        expectedSpanKind: SpanKind? = null,
+        expectedSpanKind: SpanKind = SpanKind.INTERNAL,
         expectedStartTimeMs: Long,
         expectedTraceId: String? = null,
     ) {
-        val fakeSpan = this as FakeSpan
-        with(fakeSpan.fakeSpanBuilder) {
-            assertEquals(expectedName, spanName)
-            assertEquals(expectedParentContext, parentContext)
+        val fakeSpan = this as FakeKotlinSpan
+        with(fakeSpan) {
+            assertEquals(expectedName, name)
+            val ctx = expectedParentContext.getEmbraceSpan()?.spanContext
+            assertEquals(ctx?.spanId, parent?.spanId)
+            assertEquals(ctx?.traceId, parent?.traceId)
             assertEquals(expectedSpanKind, spanKind)
-            assertEquals(expectedStartTimeMs, startTimestampMs)
+            assertEquals(expectedStartTimeMs.millisToNanos(), startTimestamp)
             if (expectedTraceId != null) {
                 assertEquals(expectedTraceId, spanContext.traceId)
             }

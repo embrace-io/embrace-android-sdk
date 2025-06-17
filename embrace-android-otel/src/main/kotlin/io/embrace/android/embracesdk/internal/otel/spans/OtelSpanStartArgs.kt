@@ -6,7 +6,7 @@ import io.embrace.android.embracesdk.internal.otel.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.otel.sdk.toEmbraceObjectName
 import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
-import io.opentelemetry.api.trace.SpanKind
+import io.embrace.opentelemetry.kotlin.tracing.SpanKind
 import io.opentelemetry.context.Context
 
 /**

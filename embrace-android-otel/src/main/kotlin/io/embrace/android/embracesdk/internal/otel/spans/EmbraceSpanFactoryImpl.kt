@@ -16,8 +16,9 @@ import io.embrace.android.embracesdk.internal.otel.sdk.hasEmbraceAttribute
 import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
 import io.embrace.android.embracesdk.internal.otel.sdk.otelSpanCreator
 import io.embrace.android.embracesdk.internal.otel.sdk.setEmbraceAttribute
+import io.embrace.android.embracesdk.internal.otel.sdk.toStringMap
 import io.embrace.android.embracesdk.internal.otel.toEmbracePayload
-import io.embrace.android.embracesdk.internal.otel.toOtelJava
+import io.embrace.android.embracesdk.internal.otel.wrapper.KotlinSpanContextWrapper
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.truncatedStacktraceText
@@ -25,11 +26,14 @@ import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
+import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.StatusCode
+import io.embrace.opentelemetry.kotlin.k2j.tracing.SpanAdapter
+import io.embrace.opentelemetry.kotlin.k2j.tracing.SpanContextAdapter
+import io.embrace.opentelemetry.kotlin.tracing.Span
+import io.embrace.opentelemetry.kotlin.tracing.Tracer
 import io.opentelemetry.api.common.Attributes
-import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.SpanContext
-import io.opentelemetry.api.trace.Tracer
 import io.opentelemetry.context.Context
 import io.opentelemetry.sdk.common.Clock
 import io.opentelemetry.semconv.ExceptionAttributes
@@ -40,6 +44,7 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 
+@OptIn(ExperimentalApi::class)
 class EmbraceSpanFactoryImpl(
     private val tracer: Tracer,
     private val openTelemetryClock: Clock,
@@ -83,6 +88,7 @@ class EmbraceSpanFactoryImpl(
     }
 }
 
+@OptIn(ExperimentalApi::class)
 private class EmbraceSpanImpl(
     private val otelSpanCreator: OtelSpanCreator,
     private val openTelemetryClock: Clock,
@@ -126,7 +132,7 @@ private class EmbraceSpanImpl(
     override val parent: EmbraceSpan? = otelSpanCreator.spanStartArgs.parentContext.getEmbraceSpan()
 
     override val spanContext: SpanContext?
-        get() = startedSpan.get()?.spanContext
+        get() = startedSpan.get()?.spanContext?.let(::KotlinSpanContextWrapper)
 
     override val traceId: String?
         get() = spanContext?.traceId
@@ -135,7 +141,7 @@ private class EmbraceSpanImpl(
         get() = spanContext?.spanId
 
     override val isRecording: Boolean
-        get() = startedSpan.get()?.isRecording == true
+        get() = startedSpan.get()?.isRecording() == true
 
     override fun start(startTimeMs: Long?): Boolean {
         EmbTrace.trace("span-start") {
@@ -151,7 +157,7 @@ private class EmbraceSpanImpl(
                 val newSpan = EmbTrace.trace("otel-span-start") {
                     otelSpanCreator.startSpan(attemptedStartTimeMs)
                 }
-                if (newSpan.isRecording) {
+                if (newSpan.isRecording()) {
                     startedSpan.set(newSpan)
                 } else {
                     return false
@@ -159,7 +165,7 @@ private class EmbraceSpanImpl(
 
                 spanRepository.trackStartedSpan(this)
                 updatedName?.let { newName ->
-                    newSpan.updateName(newName)
+                    newSpan.name = newName
                 }
                 spanStartTimeMs = attemptedStartTimeMs
                 spanRepository.notifySpanUpdate()
@@ -196,7 +202,7 @@ private class EmbraceSpanImpl(
                     }
 
                     EmbTrace.trace("otel-span-end") {
-                        spanToStop.end(attemptedEndTimeMs, TimeUnit.MILLISECONDS)
+                        spanToStop.end(TimeUnit.MILLISECONDS.toNanos(attemptedEndTimeMs))
                     }
 
                     successful = !isRecording
@@ -272,7 +278,7 @@ private class EmbraceSpanImpl(
         startedSpan.get()?.let { sdkSpan ->
             synchronized(startedSpan) {
                 status = statusCode.toEmbracePayload()
-                sdkSpan.setStatus(statusCode.toOtelJava(), description)
+                sdkSpan.status = statusCode
                 spanRepository.notifySpanUpdate()
             }
         }
@@ -301,7 +307,7 @@ private class EmbraceSpanImpl(
             synchronized(startedSpan) {
                 if (!spanStarted() || isRecording) {
                     updatedName = newName
-                    startedSpan.get()?.updateName(newName)
+                    startedSpan.get()?.name = newName
                     spanRepository.notifySpanUpdate()
                     return true
                 }
@@ -322,7 +328,11 @@ private class EmbraceSpanImpl(
         }
 
     override fun asNewContext(): Context? = startedSpan.get()?.run {
-        otelSpanCreator.spanStartArgs.parentContext.with(this)
+        if (this is SpanAdapter) {
+            otelSpanCreator.spanStartArgs.parentContext.with(this.impl)
+        } else {
+            null
+        }
     }
 
     override fun snapshot(): io.embrace.android.embracesdk.internal.payload.Span? {
@@ -405,10 +415,10 @@ private class EmbraceSpanImpl(
 
     private fun populateAttributes(spanToStop: Span) {
         systemAttributes.forEach { systemAttribute ->
-            spanToStop.setAttribute(systemAttribute.key, systemAttribute.value)
+            spanToStop.setStringAttribute(systemAttribute.key, systemAttribute.value)
         }
         customAttributes.redactIfSensitive().forEach { attribute ->
-            spanToStop.setAttribute(attribute.key, attribute.value)
+            spanToStop.setStringAttribute(attribute.key, attribute.value)
         }
     }
 
@@ -423,14 +433,17 @@ private class EmbraceSpanImpl(
             }
 
             spanToStop.addEvent(
-                event.name,
-                eventAttributes,
-                event.timestampNanos,
-                TimeUnit.NANOSECONDS
-            )
+                name = event.name,
+                timestamp = event.timestampNanos
+            ) {
+                eventAttributes.toStringMap().forEach { entry ->
+                    setStringAttribute(entry.key, entry.value)
+                }
+            }
         }
     }
 
+    @Suppress("UNUSED_PARAMETER", "UNUSED_VARIABLE")
     private fun populateLinks(spanToStop: Span) {
         val redactedCustomLinks = customLinks.map { it.copy(attributes = it.attributes.redactIfSensitive()) }
 
@@ -440,7 +453,11 @@ private class EmbraceSpanImpl(
             } else {
                 Attributes.empty()
             }
-            spanToStop.addLink(it.spanContext, linkAttributes)
+            spanToStop.addLink(SpanContextAdapter(it.spanContext)) {
+                linkAttributes.toStringMap().forEach { entry ->
+                    setStringAttribute(entry.key, entry.value)
+                }
+            }
         }
     }
 }

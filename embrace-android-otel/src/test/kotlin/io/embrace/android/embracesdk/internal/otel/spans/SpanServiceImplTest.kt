@@ -34,6 +34,7 @@ import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
+import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -44,6 +45,7 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 
+@OptIn(ExperimentalApi::class)
 @RunWith(AndroidJUnit4::class)
 internal class SpanServiceImplTest {
     private lateinit var spanSink: SpanSink
@@ -128,8 +130,8 @@ internal class SpanServiceImplTest {
         checkNotNull(parentSpan).start()
         val childSpan = spansService.createSpan(name = "child-span", parent = parentSpan)
         checkNotNull(childSpan).start()
-        assertTrue(parentSpan.traceId == childSpan.traceId)
-        assertTrue(parentSpan.spanId == checkNotNull(childSpan.parent).spanId)
+        assertEquals(parentSpan.traceId, childSpan.traceId)
+        assertEquals(parentSpan.spanId, checkNotNull(childSpan.parent).spanId)
         assertTrue(childSpan.stop())
         assertTrue(parentSpan.stop())
 
@@ -263,8 +265,8 @@ internal class SpanServiceImplTest {
 
         val currentSpans = spanSink.completedSpans()
         assertEquals(2, currentSpans.size)
-        assertTrue(currentSpans[0].traceId == currentSpans[1].traceId)
-        assertTrue(currentSpans[0].parentSpanId == currentSpans[1].spanId)
+        assertEquals(currentSpans[0].traceId, currentSpans[1].traceId)
+        assertEquals(currentSpans[0].parentSpanId, currentSpans[1].spanId)
     }
 
     @Test
@@ -323,8 +325,8 @@ internal class SpanServiceImplTest {
 
         val currentSpans = spanSink.completedSpans()
         assertEquals(2, currentSpans.size)
-        assertTrue(currentSpans[0].traceId == currentSpans[1].traceId)
-        assertTrue(currentSpans[0].parentSpanId == currentSpans[1].spanId)
+        assertEquals(currentSpans[0].traceId, currentSpans[1].traceId)
+        assertEquals(currentSpans[0].parentSpanId, currentSpans[1].spanId)
 
         with(currentSpans[0]) {
             assertEquals("emb-child-span", name)
@@ -618,7 +620,7 @@ internal class SpanServiceImplTest {
         return SpanServiceImpl(
             spanRepository = SpanRepository(),
             embraceSpanFactory = EmbraceSpanFactoryImpl(
-                tracer = otelSdkWrapper.sdkTracer,
+                tracer = otelSdkWrapper.kotlinApi.tracerProvider.getTracer("my_tracer"),
                 openTelemetryClock = fakeClock,
                 spanRepository = SpanRepository(),
                 dataValidator = dataValidator

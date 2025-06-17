@@ -6,7 +6,7 @@ import io.opentelemetry.api.trace.TraceState
 
 class KotlinSpanContextWrapper(
     private val impl: SpanContext,
-) : io.opentelemetry.api.trace.SpanContext {
+) : OtelJavaSpanContext {
 
     override fun getTraceId(): String = impl.traceId
     override fun getSpanId(): String = impl.spanId

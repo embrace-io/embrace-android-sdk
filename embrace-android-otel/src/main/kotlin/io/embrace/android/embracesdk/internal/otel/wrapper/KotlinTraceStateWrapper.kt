@@ -7,7 +7,7 @@ import java.util.function.BiConsumer
 
 class KotlinTraceStateWrapper(
     private val impl: TraceState,
-) : io.opentelemetry.api.trace.TraceState {
+) : OtelJavaTraceState {
 
     override fun get(key: String): String? = impl.get(key)
 
@@ -24,7 +24,7 @@ class KotlinTraceStateWrapper(
     override fun asMap(): MutableMap<String, String> = impl.asMap().toMutableMap()
 
     override fun toBuilder(): TraceStateBuilder {
-        val builder = io.opentelemetry.api.trace.TraceState.builder()
+        val builder = OtelJavaTraceState.builder()
         asMap().forEach { entry ->
             builder.put(entry.key, entry.value)
         }

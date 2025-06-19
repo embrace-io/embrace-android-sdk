@@ -19,39 +19,29 @@ import java.util.concurrent.TimeUnit
  * Checks whether the target thread is still responding by using the following strategy:
  *
  *  1. Creating a [android.os.Handler], on the target thread, and an executor on a monitor thread
- *  1. Using the 'monitoring' thread to message the target thread with a heartbeat
- *  1. Determining whether the target thread responds in time, and if not logging an ANR
+ *  2. Using the 'monitoring' thread to message the target thread with a heartbeat
+ *  3. Determining whether the target thread responds in time, and if not logging an ANR
  */
 internal class EmbraceAnrService(
     private val configService: ConfigService,
-    looper: Looper,
-    logger: EmbLogger,
-    livenessCheckScheduler: LivenessCheckScheduler,
+    private val looper: Looper,
+    private val logger: EmbLogger,
+    private val livenessCheckScheduler: LivenessCheckScheduler,
     private val anrMonitorWorker: BackgroundWorker,
-    state: ThreadMonitoringState,
-    val clock: Clock,
+    private val state: ThreadMonitoringState,
+    private val clock: Clock,
 ) : AnrService, MemoryCleanerListener, ProcessStateListener, BlockedThreadListener {
 
-    private val state: ThreadMonitoringState
-    private val targetThread: Thread
-    val stacktraceSampler: AnrStacktraceSampler
-    private val logger: EmbLogger
-    private val targetThreadHeartbeatScheduler: LivenessCheckScheduler
+    val stacktraceSampler: AnrStacktraceSampler = AnrStacktraceSampler(
+        configService,
+        clock,
+        looper.thread,
+        anrMonitorWorker
+    )
 
     val listeners: CopyOnWriteArrayList<BlockedThreadListener> = CopyOnWriteArrayList<BlockedThreadListener>()
 
     init {
-        targetThread = looper.thread
-        this.logger = logger
-        this.state = state
-        targetThreadHeartbeatScheduler = livenessCheckScheduler
-        stacktraceSampler = AnrStacktraceSampler(
-            configService,
-            clock,
-            targetThread,
-            anrMonitorWorker
-        )
-
         // add listeners
         listeners.add(stacktraceSampler)
         livenessCheckScheduler.listener = this
@@ -59,7 +49,7 @@ internal class EmbraceAnrService(
 
     override fun startAnrCapture() {
         this.anrMonitorWorker.submit {
-            targetThreadHeartbeatScheduler.startMonitoringThread()
+            livenessCheckScheduler.startMonitoringThread()
         }
     }
 
@@ -89,7 +79,7 @@ internal class EmbraceAnrService(
 
     override fun handleCrash(crashId: String) {
         this.anrMonitorWorker.submit {
-            targetThreadHeartbeatScheduler.stopMonitoringThread()
+            livenessCheckScheduler.stopMonitoringThread()
         }
     }
 
@@ -124,7 +114,7 @@ internal class EmbraceAnrService(
 
         // Invoke callbacks
         for (listener in listeners) {
-            listener.onThreadBlockedInterval(targetThread, timestamp)
+            listener.onThreadBlockedInterval(looper.thread, timestamp)
         }
     }
 
@@ -135,7 +125,7 @@ internal class EmbraceAnrService(
     override fun onForeground(coldStart: Boolean, timestamp: Long) {
         this.anrMonitorWorker.submit {
             state.resetState()
-            targetThreadHeartbeatScheduler.startMonitoringThread()
+            livenessCheckScheduler.startMonitoringThread()
         }
     }
 
@@ -146,7 +136,7 @@ internal class EmbraceAnrService(
      */
     override fun onBackground(timestamp: Long) {
         this.anrMonitorWorker.submit {
-            targetThreadHeartbeatScheduler.stopMonitoringThread()
+            livenessCheckScheduler.stopMonitoringThread()
         }
     }
 

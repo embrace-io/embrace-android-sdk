@@ -62,8 +62,13 @@ internal class EmbraceAnrServiceTest {
         with(rule) {
             val listener = FakeBlockedThreadListener()
             anrService.addBlockedThreadListener(listener)
-            assertEquals(anrService, blockedThreadDetector.listener)
-            assertTrue(anrService.listeners.contains(listener))
+
+            // Test that the listener actually gets notified when thread blocking events occur
+            anrService.onThreadBlocked(currentThread(), 1000L)
+            assertEquals(1, listener.blockedCount)
+
+            anrService.onThreadUnblocked(currentThread(), 2000L)
+            assertEquals(1, listener.unblockedCount)
         }
     }
 

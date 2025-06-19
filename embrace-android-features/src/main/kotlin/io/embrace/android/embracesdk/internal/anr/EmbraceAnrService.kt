@@ -33,7 +33,7 @@ internal class EmbraceAnrService(
     private val stacktraceSampler: AnrStacktraceSampler,
 ) : AnrService, MemoryCleanerListener, ProcessStateListener, BlockedThreadListener {
 
-    val listeners: CopyOnWriteArrayList<BlockedThreadListener> = CopyOnWriteArrayList<BlockedThreadListener>()
+    private val listeners: CopyOnWriteArrayList<BlockedThreadListener> = CopyOnWriteArrayList<BlockedThreadListener>()
 
     init {
         // add listeners

@@ -19,7 +19,10 @@ class AgpSupportTest {
     val rule: PluginIntegrationTestRule = PluginIntegrationTestRule()
 
     @Test
-    fun `minimum supported version`() = runTest(MinVersion)
+    fun `minimum supported version`() = runTest(
+        testMatrix = MinVersion,
+        fixture = "android-version-support-gradle-7"
+    )
 
     @Test
     fun `older version`() = runTest(OlderVersion)
@@ -35,22 +38,25 @@ class AgpSupportTest {
 
     @Test
     fun `unsupported old gradle version`() {
+        val errorMessage = "Embrace requires Gradle version ${GradleVersion.MIN_VERSION} or higher. Please update your Gradle version."
         rule.runTest(
             fixture = "android-version-support",
             task = "assembleRelease",
             testMatrix = TestMatrix.UnsupportedOldGradleVersion,
             projectType = ProjectType.ANDROID,
-            expectedExceptionMessage =
-            "Embrace requires Gradle version ${GradleVersion.MIN_VERSION} or higher. Please update your Gradle version.",
+            expectedExceptionMessage = errorMessage,
             assertions = {
                 verifyNoUploads()
             }
         )
     }
 
-    private fun runTest(testMatrix: TestMatrix) {
+    private fun runTest(
+        testMatrix: TestMatrix,
+        fixture: String = "android-version-support",
+    ) {
         rule.runTest(
-            fixture = "android-version-support",
+            fixture = fixture,
             task = "assembleRelease",
             testMatrix = testMatrix,
             projectType = ProjectType.ANDROID,

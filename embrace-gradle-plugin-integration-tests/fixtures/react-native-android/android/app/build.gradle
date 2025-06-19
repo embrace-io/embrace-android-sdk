@@ -87,8 +87,8 @@ android {
     namespace "com.rnapp"
     defaultConfig {
         applicationId "com.rnapp"
-        minSdkVersion rootProject.ext.minSdkVersion
-        targetSdkVersion rootProject.ext.targetSdkVersion
+        minSdk rootProject.ext.minSdk
+        targetSdk rootProject.ext.targetSdk
         versionCode 1
         versionName "1.0"
     }

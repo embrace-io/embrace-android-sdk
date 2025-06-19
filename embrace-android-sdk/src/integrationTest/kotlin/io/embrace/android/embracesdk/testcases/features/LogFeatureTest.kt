@@ -13,6 +13,7 @@ import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.assertions.assertOtelLogReceived
 import io.embrace.android.embracesdk.assertions.getLogOfType
 import io.embrace.android.embracesdk.assertions.getOtelSeverity
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSeverity
 import io.embrace.opentelemetry.kotlin.logging.SeverityNumber
 import org.junit.Before
 import org.junit.Rule
@@ -420,9 +421,9 @@ internal class LogFeatureTest {
 
     private fun getEmbraceSeverity(severityNumber: Int): Severity {
         return when (severityNumber) {
-            io.opentelemetry.api.logs.Severity.INFO.severityNumber -> Severity.INFO
-            io.opentelemetry.api.logs.Severity.WARN.severityNumber -> Severity.WARNING
-            io.opentelemetry.api.logs.Severity.ERROR.severityNumber -> Severity.ERROR
+            OtelJavaSeverity.INFO.severityNumber -> Severity.INFO
+            OtelJavaSeverity.WARN.severityNumber -> Severity.WARNING
+            OtelJavaSeverity.ERROR.severityNumber -> Severity.ERROR
             else -> error("Unexpected severityNumber $severityNumber")
         }
     }

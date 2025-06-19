@@ -7,6 +7,7 @@ import org.junit.Test
 
 internal class LogMapperTest {
 
+    @Suppress("DEPRECATION")
     @Test
     fun `convert to new payload`() {
         val input = FakeLogRecordData()

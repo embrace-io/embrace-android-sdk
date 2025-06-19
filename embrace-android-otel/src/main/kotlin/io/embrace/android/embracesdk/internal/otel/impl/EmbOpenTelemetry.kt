@@ -1,17 +1,17 @@
 package io.embrace.android.embracesdk.internal.otel.impl
 
-import io.opentelemetry.api.OpenTelemetry
-import io.opentelemetry.api.trace.TracerProvider
-import io.opentelemetry.context.propagation.ContextPropagators
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaContextPropagators
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaOpenTelemetry
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaTracerProvider
 
 /**
  * Embrace-specific implementation that can be used to obtain working Tracer implementations that will record spans for Embrace sessions
  */
 class EmbOpenTelemetry(
-    private val traceProviderSupplier: () -> TracerProvider,
-) : OpenTelemetry {
+    private val traceProviderSupplier: () -> OtelJavaTracerProvider,
+) : OtelJavaOpenTelemetry {
 
-    override fun getTracerProvider(): TracerProvider = traceProviderSupplier()
+    override fun getTracerProvider(): OtelJavaTracerProvider = traceProviderSupplier()
 
-    override fun getPropagators(): ContextPropagators = ContextPropagators.noop()
+    override fun getPropagators(): OtelJavaContextPropagators = OtelJavaContextPropagators.noop()
 }

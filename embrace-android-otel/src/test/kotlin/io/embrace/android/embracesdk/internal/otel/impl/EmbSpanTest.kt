@@ -7,10 +7,10 @@ import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedCo
 import io.embrace.android.embracesdk.internal.otel.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.otel.sdk.hasEmbraceAttribute
 import io.embrace.android.embracesdk.internal.payload.Span
-import io.opentelemetry.api.common.AttributeKey
-import io.opentelemetry.api.common.Attributes
-import io.opentelemetry.api.trace.StatusCode
-import io.opentelemetry.sdk.common.Clock
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaAttributeKey
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaAttributes
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaClock
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaStatusCode
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -22,7 +22,7 @@ import java.util.concurrent.TimeUnit
 
 internal class EmbSpanTest {
     private lateinit var fakeClock: FakeClock
-    private lateinit var openTelemetryClock: Clock
+    private lateinit var openTelemetryClock: OtelJavaClock
     private lateinit var fakeEmbraceSpan: FakeEmbraceSdkSpan
     private lateinit var embSpan: EmbSpan
 
@@ -66,7 +66,7 @@ internal class EmbSpanTest {
     @Test
     fun `set error status before end`() {
         with(embSpan) {
-            setStatus(StatusCode.ERROR, "error")
+            setStatus(OtelJavaStatusCode.ERROR, "error")
             end()
         }
         with(fakeEmbraceSpan) {
@@ -79,7 +79,7 @@ internal class EmbSpanTest {
     fun `status can only be set on a span that is recording`() {
         with(embSpan) {
             end()
-            setStatus(StatusCode.ERROR, "error")
+            setStatus(OtelJavaStatusCode.ERROR, "error")
             end()
         }
 
@@ -92,7 +92,7 @@ internal class EmbSpanTest {
     @Test
     fun `check adding events`() {
         val attributesBuilder =
-            Attributes
+            OtelJavaAttributes
                 .builder()
                 .put("boolean", true)
                 .put("integer", 1)
@@ -139,7 +139,7 @@ internal class EmbSpanTest {
         val firstExceptionTime = openTelemetryClock.now()
         embSpan.recordException(IllegalStateException())
         val secondExceptionTime = openTelemetryClock.now()
-        embSpan.recordException(RuntimeException(), Attributes.builder().put("myKey", "myValue").build())
+        embSpan.recordException(RuntimeException(), OtelJavaAttributes.builder().put("myKey", "myValue").build())
 
         with(checkNotNull(fakeEmbraceSpan.events)) {
             assertEquals(2, size)
@@ -167,11 +167,11 @@ internal class EmbSpanTest {
             setAttribute("long", 2L)
             setAttribute("double", 3.0)
             setAttribute("string", "value")
-            setAttribute(AttributeKey.booleanArrayKey("booleanArray"), listOf(true, false))
-            setAttribute(AttributeKey.longArrayKey("integerArray"), listOf(1, 2))
-            setAttribute(AttributeKey.longArrayKey("longArray"), listOf(2L, 3L))
-            setAttribute(AttributeKey.doubleArrayKey("doubleArray"), listOf(3.0, 4.0))
-            setAttribute(AttributeKey.stringArrayKey("stringArray"), listOf("value", "vee"))
+            setAttribute(OtelJavaAttributeKey.booleanArrayKey("booleanArray"), listOf(true, false))
+            setAttribute(OtelJavaAttributeKey.longArrayKey("integerArray"), listOf(1, 2))
+            setAttribute(OtelJavaAttributeKey.longArrayKey("longArray"), listOf(2L, 3L))
+            setAttribute(OtelJavaAttributeKey.doubleArrayKey("doubleArray"), listOf(3.0, 4.0))
+            setAttribute(OtelJavaAttributeKey.stringArrayKey("stringArray"), listOf("value", "vee"))
         }
 
         assertEquals(attributesCount + 10, fakeEmbraceSpan.attributes.size)
@@ -181,7 +181,7 @@ internal class EmbSpanTest {
     fun `add span link`() {
         with(embSpan) {
             val linkedSpanContext = checkNotNull(FakeEmbraceSdkSpan.started().spanContext)
-            addLink(linkedSpanContext, Attributes.builder().put("boolean", true).build())
+            addLink(linkedSpanContext, OtelJavaAttributes.builder().put("boolean", true).build())
             with(fakeEmbraceSpan.links.single()) {
                 assertEquals(linkedSpanContext.spanId, spanContext.spanId)
                 assertEquals(1, attributes.size)

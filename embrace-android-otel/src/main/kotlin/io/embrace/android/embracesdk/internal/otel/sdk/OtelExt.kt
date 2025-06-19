@@ -8,26 +8,27 @@ import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanData.Companion.fromEventData
 import io.embrace.android.embracesdk.internal.otel.toOtelKotlin
 import io.embrace.android.embracesdk.internal.payload.Link
+import io.embrace.android.embracesdk.internal.payload.Span.Status
 import io.embrace.android.embracesdk.internal.utils.isBlankish
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
-import io.opentelemetry.api.common.AttributeKey
-import io.opentelemetry.api.common.Attributes
-import io.opentelemetry.api.common.AttributesBuilder
-import io.opentelemetry.api.logs.LogRecordBuilder
-import io.opentelemetry.api.trace.Span
-import io.opentelemetry.api.trace.StatusCode
-import io.opentelemetry.sdk.logs.data.LogRecordData
-import io.opentelemetry.sdk.trace.data.LinkData
-import io.opentelemetry.sdk.trace.data.SpanData
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaAttributeKey
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaAttributes
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaAttributesBuilder
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaLinkData
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaLogRecordBuilder
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaLogRecordData
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpan
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanData
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaStatusCode
 
 /**
  * Populate an [AttributesBuilder] with String key-value pairs from a [Map]
  */
-fun AttributesBuilder.fromMap(
+fun OtelJavaAttributesBuilder.fromMap(
     attributes: Map<String, String>,
     internal: Boolean,
     limitsValidator: DataValidator
-): AttributesBuilder {
+): OtelJavaAttributesBuilder {
     attributes.filter {
         limitsValidator.isAttributeValid(it.key, it.value, internal) || it.key.isValidLongValueAttribute()
     }.forEach {
@@ -39,49 +40,49 @@ fun AttributesBuilder.fromMap(
 /**
  * Returns the attributes as a new Map<String, String>
  */
-fun Attributes.toStringMap(): Map<String, String> = asMap().entries.associate {
+fun OtelJavaAttributes.toStringMap(): Map<String, String> = asMap().entries.associate {
     it.key.key.toString() to it.value.toString()
 }
 
-fun LinkData.toEmbracePayload() = Link(
+fun OtelJavaLinkData.toEmbracePayload() = Link(
     spanId = spanContext.spanId,
     traceId = spanContext.traceId,
     attributes = attributes.toEmbracePayload(),
     isRemote = spanContext.isRemote
 )
 
-fun LogRecordBuilder.setEmbraceAttribute(embraceAttribute: EmbraceAttribute): LogRecordBuilder {
+fun OtelJavaLogRecordBuilder.setEmbraceAttribute(embraceAttribute: EmbraceAttribute): OtelJavaLogRecordBuilder {
     setAttribute(embraceAttribute.key.asOtelAttributeKey(), embraceAttribute.value)
     return this
 }
 
-fun LogRecordBuilder.setAttribute(
-    attributeKey: AttributeKey<String>,
+fun OtelJavaLogRecordBuilder.setAttribute(
+    attributeKey: OtelJavaAttributeKey<String>,
     value: String,
     keepBlankishValues: Boolean = true,
-): LogRecordBuilder {
+): OtelJavaLogRecordBuilder {
     if (keepBlankishValues || !value.isBlankish()) {
         setAttribute(attributeKey, value)
     }
     return this
 }
 
-fun LogRecordData.hasEmbraceAttribute(embraceAttribute: EmbraceAttribute): Boolean =
+fun OtelJavaLogRecordData.hasEmbraceAttribute(embraceAttribute: EmbraceAttribute): Boolean =
     attributes[embraceAttribute.key.asOtelAttributeKey()] == embraceAttribute.value
 
-fun Span.setEmbraceAttribute(key: EmbraceAttributeKey, value: String): Span {
+fun OtelJavaSpan.setEmbraceAttribute(key: EmbraceAttributeKey, value: String): OtelJavaSpan {
     setAttribute(key.name, value)
     return this
 }
 
-fun Span.setEmbraceAttribute(embraceAttribute: EmbraceAttribute): Span =
+fun OtelJavaSpan.setEmbraceAttribute(embraceAttribute: EmbraceAttribute): OtelJavaSpan =
     this@setEmbraceAttribute.setEmbraceAttribute(embraceAttribute.key, embraceAttribute.value)
 
 @OptIn(ExperimentalApi::class)
 fun io.embrace.opentelemetry.kotlin.tracing.Span.setEmbraceAttribute(embraceAttribute: EmbraceAttribute) =
     setStringAttribute(embraceAttribute.key.name, embraceAttribute.value)
 
-fun SpanData.toEmbraceSpanData(): EmbraceSpanData = EmbraceSpanData(
+fun OtelJavaSpanData.toEmbraceSpanData(): EmbraceSpanData = EmbraceSpanData(
     traceId = spanContext.traceId,
     spanId = spanContext.spanId,
     parentSpanId = parentSpanId,
@@ -94,13 +95,13 @@ fun SpanData.toEmbraceSpanData(): EmbraceSpanData = EmbraceSpanData(
     links = links.map { it.toEmbracePayload() }
 )
 
-fun SpanData.hasEmbraceAttribute(embraceAttribute: EmbraceAttribute): Boolean =
+fun OtelJavaSpanData.hasEmbraceAttribute(embraceAttribute: EmbraceAttribute): Boolean =
     attributes.asMap()[embraceAttribute.key.asOtelAttributeKey()] == embraceAttribute.value
 
-fun StatusCode.toStatus(): io.embrace.android.embracesdk.internal.payload.Span.Status {
+fun OtelJavaStatusCode.toStatus(): Status {
     return when (this) {
-        StatusCode.UNSET -> io.embrace.android.embracesdk.internal.payload.Span.Status.UNSET
-        StatusCode.OK -> io.embrace.android.embracesdk.internal.payload.Span.Status.OK
-        StatusCode.ERROR -> io.embrace.android.embracesdk.internal.payload.Span.Status.ERROR
+        OtelJavaStatusCode.UNSET -> Status.UNSET
+        OtelJavaStatusCode.OK -> Status.OK
+        OtelJavaStatusCode.ERROR -> Status.ERROR
     }
 }

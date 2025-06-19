@@ -6,21 +6,21 @@ import io.embrace.android.embracesdk.internal.otel.schema.LinkType
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.opentelemetry.kotlin.StatusCode
-import io.opentelemetry.api.trace.SpanContext
-import io.opentelemetry.context.Context
-import io.opentelemetry.context.ContextKey
-import io.opentelemetry.context.ImplicitContextKeyed
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaContext
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaContextKey
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaImplicitContextKeyed
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanContext
 
 /**
  * An [EmbraceSpan] that has additional functionality to be used internally by the SDK
  */
-interface EmbraceSdkSpan : EmbraceSpan, ImplicitContextKeyed {
+interface EmbraceSdkSpan : EmbraceSpan, OtelJavaImplicitContextKeyed {
 
     /**
      * Create a new [Context] object based in this span and its parent's context. This can be used for the parent [Context] for a new span
      * with this span as its parent.
      */
-    fun asNewContext(): Context?
+    fun asNewContext(): OtelJavaContext?
 
     /**
      * Create a snapshot of the current state of the object
@@ -77,14 +77,14 @@ interface EmbraceSdkSpan : EmbraceSpan, ImplicitContextKeyed {
      * Add a system link to the span that will subjected to a different maximum than typical links.
      */
     fun addSystemLink(
-        linkedSpanContext: SpanContext,
+        linkedSpanContext: OtelJavaSpanContext,
         type: LinkType,
         attributes: Map<String, String> = emptyMap(),
     ): Boolean
 
-    override fun storeInContext(context: Context): Context = context.with(embraceSpanContextKey, this)
+    override fun storeInContext(context: OtelJavaContext): OtelJavaContext = context.with(embraceSpanContextKey, this)
 }
 
-fun Context.getEmbraceSpan(): EmbraceSdkSpan? = get(embraceSpanContextKey)
+fun OtelJavaContext.getEmbraceSpan(): EmbraceSdkSpan? = get(embraceSpanContextKey)
 
-private val embraceSpanContextKey = ContextKey.named<EmbraceSdkSpan>("embrace-span-key")
+private val embraceSpanContextKey = OtelJavaContextKey.named<EmbraceSdkSpan>("embrace-span-key")

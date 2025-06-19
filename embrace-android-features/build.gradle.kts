@@ -27,6 +27,7 @@ dependencies {
     implementation(libs.opentelemetry.kotlin.api)
     implementation(libs.opentelemetry.kotlin.api.ext)
     implementation(libs.opentelemetry.kotlin.compat)
+    implementation(libs.opentelemetry.java.aliases)
 
     testImplementation(project(":embrace-android-api"))
     testImplementation(project(":embrace-android-core"))

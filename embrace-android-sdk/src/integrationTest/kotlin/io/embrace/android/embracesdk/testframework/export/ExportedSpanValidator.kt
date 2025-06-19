@@ -4,7 +4,7 @@ import com.squareup.moshi.Types
 import io.embrace.android.embracesdk.ResourceReader
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.internal.utils.threadLocal
-import io.opentelemetry.sdk.trace.data.SpanData
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanData
 import org.junit.Assert.assertEquals
 
 internal class ExportedSpanValidator {
@@ -17,7 +17,7 @@ internal class ExportedSpanValidator {
         Types.newParameterizedType(Map::class.java, String::class.java, Any::class.java)
     private val listType = Types.newParameterizedType(List::class.java, type)
 
-    fun validate(spanDataList: List<SpanData>, goldenFile: String) {
+    fun validate(spanDataList: List<OtelJavaSpanData>, goldenFile: String) {
         val expected: List<Map<String, Any>> = readExpectedSpan(goldenFile)
         val actual = spanDataList.map { it.representAsMap() }
         assertEquals(expected, actual)
@@ -28,7 +28,7 @@ internal class ExportedSpanValidator {
         return serializer.fromJson(inputStream, listType)
     }
 
-    private fun SpanData.representAsMap(): Map<String, Any> {
+    private fun OtelJavaSpanData.representAsMap(): Map<String, Any> {
         val attrs: Map<String, String> = representAttributes()
         return mapOf(
             "name" to name,
@@ -45,7 +45,7 @@ internal class ExportedSpanValidator {
         )
     }
 
-    private fun SpanData.representAttributes(): Map<String, String> {
+    private fun OtelJavaSpanData.representAttributes(): Map<String, String> {
         val ignoreList = listOf("emb.process_identifier", "emb.private.sequence_id")
         val attrs: Map<String, String> = attributes.asMap().map {
             it.key.key to it.value.toString()

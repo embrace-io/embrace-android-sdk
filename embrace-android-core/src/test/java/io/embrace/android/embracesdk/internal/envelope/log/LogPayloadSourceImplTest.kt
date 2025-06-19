@@ -27,6 +27,7 @@ internal class LogPayloadSourceImplTest {
         impl = LogPayloadSourceImpl(sink)
     }
 
+    @Suppress("DEPRECATION")
     @Test
     fun `getBatchedLogPayload returns a correct payload`() {
         sink.storeLogs(listOf(fakeLog))

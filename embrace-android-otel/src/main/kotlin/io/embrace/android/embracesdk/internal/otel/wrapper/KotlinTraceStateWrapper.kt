@@ -1,13 +1,14 @@
 package io.embrace.android.embracesdk.internal.otel.wrapper
 
 import android.os.Build
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaTraceState
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaTraceStateBuilder
 import io.embrace.opentelemetry.kotlin.tracing.TraceState
-import io.opentelemetry.api.trace.TraceStateBuilder
 import java.util.function.BiConsumer
 
 class KotlinTraceStateWrapper(
     private val impl: TraceState,
-) : io.opentelemetry.api.trace.TraceState {
+) : OtelJavaTraceState {
 
     override fun get(key: String): String? = impl.get(key)
 
@@ -23,8 +24,8 @@ class KotlinTraceStateWrapper(
 
     override fun asMap(): MutableMap<String, String> = impl.asMap().toMutableMap()
 
-    override fun toBuilder(): TraceStateBuilder {
-        val builder = io.opentelemetry.api.trace.TraceState.builder()
+    override fun toBuilder(): OtelJavaTraceStateBuilder {
+        val builder = OtelJavaTraceState.builder()
         asMap().forEach { entry ->
             builder.put(entry.key, entry.value)
         }

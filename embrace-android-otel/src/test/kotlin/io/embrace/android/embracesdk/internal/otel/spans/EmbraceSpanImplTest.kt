@@ -34,8 +34,8 @@ import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.utils.truncatedStacktraceText
 import io.embrace.android.embracesdk.spans.ErrorCode
-import io.opentelemetry.sdk.OpenTelemetrySdk
-import io.opentelemetry.sdk.trace.SdkTracerProvider
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaOpenTelemetrySdk
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSdkTracerProvider
 import io.opentelemetry.semconv.ExceptionAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -53,8 +53,8 @@ internal class EmbraceSpanImplTest {
     private lateinit var embraceSpanFactory: EmbraceSpanFactory
     private var updateNotified: Boolean = false
     private var stoppedSpanId: String? = null
-    private val tracer = OpenTelemetrySdk.builder()
-        .setTracerProvider(SdkTracerProvider.builder().build()).build()
+    private val tracer = OtelJavaOpenTelemetrySdk.builder()
+        .setTracerProvider(OtelJavaSdkTracerProvider.builder().build()).build()
         .getTracer(EmbraceSpanImplTest::class.java.name)
 
     @Before

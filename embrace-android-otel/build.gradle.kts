@@ -25,6 +25,7 @@ dependencies {
     compileOnly(libs.opentelemetry.sdk)
     compileOnly(libs.opentelemetry.semconv)
     compileOnly(libs.opentelemetry.semconv.incubating)
+    implementation(libs.opentelemetry.java.aliases)
 
     testImplementation(platform(libs.opentelemetry.bom))
     testImplementation(libs.opentelemetry.api)

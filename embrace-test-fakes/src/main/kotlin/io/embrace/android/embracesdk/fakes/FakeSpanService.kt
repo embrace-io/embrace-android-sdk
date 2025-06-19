@@ -9,7 +9,7 @@ import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
-import io.opentelemetry.context.Context
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaContext
 
 class FakeSpanService : SpanService {
 
@@ -29,7 +29,7 @@ class FakeSpanService : SpanService {
         autoTerminationMode: AutoTerminationMode,
     ): EmbraceSdkSpan = FakeEmbraceSdkSpan(
         name = name,
-        parentContext = parent?.run { Context.root().with(parent as EmbraceSdkSpan) } ?: Context.root(),
+        parentContext = parent?.run { OtelJavaContext.root().with(parent as EmbraceSdkSpan) } ?: OtelJavaContext.root(),
         type = type,
         internal = internal,
         private = private,
@@ -83,7 +83,7 @@ class FakeSpanService : SpanService {
         createdSpans.add(
             FakeEmbraceSdkSpan(
                 name = name,
-                parentContext = parent?.run { Context.root().with(parent as EmbraceSdkSpan) } ?: Context.root(),
+                parentContext = parent?.run { OtelJavaContext.root().with(parent as EmbraceSdkSpan) } ?: OtelJavaContext.root(),
                 type = type,
                 internal = internal,
                 private = private

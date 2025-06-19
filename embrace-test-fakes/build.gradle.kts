@@ -27,6 +27,7 @@ dependencies {
     compileOnly(libs.opentelemetry.sdk)
     compileOnly(libs.opentelemetry.semconv)
     compileOnly(libs.opentelemetry.semconv.incubating)
+    implementation(libs.opentelemetry.java.aliases)
 
     implementation(libs.junit)
     implementation(libs.okhttp)

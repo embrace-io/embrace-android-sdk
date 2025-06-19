@@ -31,8 +31,8 @@ import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpanImpl.Compa
 import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.ErrorCode
-import io.opentelemetry.api.trace.Tracer
-import io.opentelemetry.sdk.common.Clock
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaClock
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaTracer
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
@@ -46,10 +46,10 @@ internal class CurrentSessionSpanImplTests {
     private lateinit var spanRepository: SpanRepository
     private lateinit var spanSink: SpanSink
     private lateinit var telemetryService: TelemetryService
-    private lateinit var openTelemetryClock: Clock
+    private lateinit var openTelemetryClock: OtelJavaClock
     private lateinit var currentSessionSpan: CurrentSessionSpanImpl
     private lateinit var spanService: SpanService
-    private lateinit var tracer: Tracer
+    private lateinit var tracer: OtelJavaTracer
     private val clock = FakeClock(1000L)
 
     @Before

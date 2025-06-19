@@ -25,15 +25,16 @@ import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.opentelemetry.kotlin.StatusCode
-import io.opentelemetry.api.trace.SpanContext
-import io.opentelemetry.context.Context
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaContext
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpan
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanContext
 import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.TimeUnit
 
 class FakeEmbraceSdkSpan(
     var name: String = "fake-span",
-    var parentContext: Context = Context.root(),
+    var parentContext: OtelJavaContext = OtelJavaContext.root(),
     val type: EmbType = EmbType.Performance.Default,
     val internal: Boolean = false,
     val private: Boolean = internal,
@@ -41,7 +42,7 @@ class FakeEmbraceSdkSpan(
     private val fakeClock: FakeClock = FakeClock(),
 ) : EmbraceSdkSpan {
 
-    private var sdkSpan: io.opentelemetry.api.trace.Span? = null
+    private var sdkSpan: OtelJavaSpan? = null
     var spanStartTimeMs: Long? = null
     var spanEndTimeMs: Long? = null
     var status: Span.Status = Span.Status.UNSET
@@ -54,7 +55,7 @@ class FakeEmbraceSdkSpan(
     override val parent: EmbraceSpan?
         get() = parentContext.getEmbraceSpan()
 
-    override val spanContext: SpanContext?
+    override val spanContext: OtelJavaSpanContext?
         get() = sdkSpan?.spanContext
 
     override val traceId: String?
@@ -138,15 +139,15 @@ class FakeEmbraceSdkSpan(
         return true
     }
 
-    override fun addLink(linkedSpanContext: SpanContext, attributes: Map<String, String>?): Boolean {
+    override fun addLink(linkedSpanContext: OtelJavaSpanContext, attributes: Map<String, String>?): Boolean {
         links.add(EmbraceLinkData(linkedSpanContext, attributes ?: emptyMap()))
         return true
     }
 
-    override fun addSystemLink(linkedSpanContext: SpanContext, type: LinkType, attributes: Map<String, String>): Boolean =
+    override fun addSystemLink(linkedSpanContext: OtelJavaSpanContext, type: LinkType, attributes: Map<String, String>): Boolean =
         addLink(linkedSpanContext, mutableMapOf(type.asPair()).apply { putAll(attributes) })
 
-    override fun asNewContext(): Context? = sdkSpan?.let { parentContext.with(this).with(it) }
+    override fun asNewContext(): OtelJavaContext? = sdkSpan?.let { parentContext.with(this).with(it) }
 
     override fun snapshot(): Span? {
         return if (spanId == null) {
@@ -191,7 +192,7 @@ class FakeEmbraceSdkSpan(
 
         fun started(
             parent: EmbraceSdkSpan? = null,
-            parentContext: Context = parent?.run { parent.asNewContext() } ?: Context.root(),
+            parentContext: OtelJavaContext = parent?.run { parent.asNewContext() } ?: OtelJavaContext.root(),
             clock: FakeClock = FakeClock(),
         ): FakeEmbraceSdkSpan =
             FakeEmbraceSdkSpan(

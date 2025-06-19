@@ -4,25 +4,25 @@ import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.embrace.android.embracesdk.internal.otel.sdk.otelSpanCreator
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.otel.spans.getEmbraceSpan
-import io.opentelemetry.api.trace.SpanBuilder
-import io.opentelemetry.api.trace.Tracer
-import io.opentelemetry.context.Context
-import io.opentelemetry.sdk.common.Clock
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaClock
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaContext
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanBuilder
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaTracer
 
 class EmbTracer(
-    private val sdkTracer: Tracer,
+    private val sdkTracer: OtelJavaTracer,
     private val spanService: SpanService,
-    private val clock: Clock,
-) : Tracer {
+    private val clock: OtelJavaClock,
+) : OtelJavaTracer {
 
-    override fun spanBuilder(spanName: String): SpanBuilder =
+    override fun spanBuilder(spanName: String): OtelJavaSpanBuilder =
         EmbSpanBuilder(
             otelSpanCreator = sdkTracer.otelSpanCreator(
                 name = spanName,
                 type = EmbType.Performance.Default,
                 private = false,
                 internal = false,
-                parent = Context.current().getEmbraceSpan(),
+                parent = OtelJavaContext.current().getEmbraceSpan(),
             ),
             spanService = spanService,
             clock = clock,

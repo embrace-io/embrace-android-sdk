@@ -2,63 +2,63 @@ package io.embrace.android.embracesdk.internal.otel.impl
 
 import io.embrace.android.embracesdk.internal.otel.spans.OtelSpanCreator
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
-import io.opentelemetry.api.common.AttributeKey
-import io.opentelemetry.api.common.Attributes
-import io.opentelemetry.api.trace.Span
-import io.opentelemetry.api.trace.SpanBuilder
-import io.opentelemetry.api.trace.SpanContext
-import io.opentelemetry.api.trace.SpanKind
-import io.opentelemetry.context.Context
-import io.opentelemetry.sdk.common.Clock
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaAttributeKey
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaAttributes
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaClock
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaContext
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpan
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanBuilder
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanContext
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanKind
 import java.util.concurrent.TimeUnit
 
 class EmbSpanBuilder(
     private val otelSpanCreator: OtelSpanCreator,
     private val spanService: SpanService,
-    private val clock: Clock,
-) : SpanBuilder {
+    private val clock: OtelJavaClock,
+) : OtelJavaSpanBuilder {
 
     private val otelSpanStartArgs = otelSpanCreator.spanStartArgs
 
-    override fun setParent(context: Context): SpanBuilder {
+    override fun setParent(context: OtelJavaContext): OtelJavaSpanBuilder {
         otelSpanStartArgs.parentContext = context
         return this
     }
 
-    override fun setNoParent(): SpanBuilder {
-        otelSpanStartArgs.parentContext = Context.root()
+    override fun setNoParent(): OtelJavaSpanBuilder {
+        otelSpanStartArgs.parentContext = OtelJavaContext.root()
         return this
     }
 
-    override fun addLink(spanContext: SpanContext): SpanBuilder = addLink(spanContext, Attributes.empty())
+    override fun addLink(spanContext: OtelJavaSpanContext): OtelJavaSpanBuilder = addLink(spanContext, OtelJavaAttributes.empty())
 
-    override fun addLink(spanContext: SpanContext, attributes: Attributes): SpanBuilder = this
+    override fun addLink(spanContext: OtelJavaSpanContext, attributes: OtelJavaAttributes): OtelJavaSpanBuilder = this
 
-    override fun setAttribute(key: String, value: String): SpanBuilder {
+    override fun setAttribute(key: String, value: String): OtelJavaSpanBuilder {
         otelSpanStartArgs.customAttributes[key] = value
         return this
     }
 
-    override fun setAttribute(key: String, value: Long): SpanBuilder = setAttribute(key, value.toString())
+    override fun setAttribute(key: String, value: Long): OtelJavaSpanBuilder = setAttribute(key, value.toString())
 
-    override fun setAttribute(key: String, value: Double): SpanBuilder = setAttribute(key, value.toString())
+    override fun setAttribute(key: String, value: Double): OtelJavaSpanBuilder = setAttribute(key, value.toString())
 
-    override fun setAttribute(key: String, value: Boolean): SpanBuilder = setAttribute(key, value.toString())
+    override fun setAttribute(key: String, value: Boolean): OtelJavaSpanBuilder = setAttribute(key, value.toString())
 
-    override fun <T : Any> setAttribute(key: AttributeKey<T>, value: T): SpanBuilder =
+    override fun <T : Any> setAttribute(key: OtelJavaAttributeKey<T>, value: T): OtelJavaSpanBuilder =
         setAttribute(key.key, value.toString())
 
-    override fun setSpanKind(spanKind: SpanKind): SpanBuilder {
+    override fun setSpanKind(spanKind: OtelJavaSpanKind): OtelJavaSpanBuilder {
         otelSpanStartArgs.spanKind = spanKind
         return this
     }
 
-    override fun setStartTimestamp(startTimestamp: Long, unit: TimeUnit): SpanBuilder {
+    override fun setStartTimestamp(startTimestamp: Long, unit: TimeUnit): OtelJavaSpanBuilder {
         otelSpanStartArgs.startTimeMs = unit.toMillis(startTimestamp)
         return this
     }
 
-    override fun startSpan(): Span {
+    override fun startSpan(): OtelJavaSpan {
         spanService.createSpan(otelSpanCreator)?.let { embraceSpan ->
             if (embraceSpan.start()) {
                 return EmbSpan(
@@ -68,6 +68,6 @@ class EmbSpanBuilder(
             }
         }
 
-        return Span.getInvalid()
+        return OtelJavaSpan.getInvalid()
     }
 }

@@ -7,6 +7,10 @@ import io.embrace.android.embracesdk.fakes.FakeTracer
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.embrace.android.embracesdk.internal.otel.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.otel.sdk.otelSpanCreator
+import io.embrace.opentelemetry.kotlin.ExperimentalApi
+import io.embrace.opentelemetry.kotlin.k2j.ClockAdapter
+import io.embrace.opentelemetry.kotlin.k2j.tracing.TracerAdapter
+import io.embrace.opentelemetry.kotlin.tracing.Tracer
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -15,11 +19,12 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
+@OptIn(ExperimentalApi::class)
 internal class EmbraceSpanFactoryImplTest {
     private val clock = FakeClock()
     private lateinit var embraceSpanFactory: EmbraceSpanFactoryImpl
     private lateinit var spanRepository: SpanRepository
-    private lateinit var tracer: FakeTracer
+    private lateinit var tracer: Tracer
     private var updateNotified: Boolean = false
 
     @Before
@@ -30,7 +35,7 @@ internal class EmbraceSpanFactoryImplTest {
                 updateNotified = true
             }
         }
-        tracer = FakeTracer()
+        tracer = TracerAdapter(FakeTracer(), ClockAdapter(openTelemetryClock))
         embraceSpanFactory = EmbraceSpanFactoryImpl(
             tracer = tracer,
             openTelemetryClock = openTelemetryClock,

@@ -10,7 +10,7 @@ import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanKind
 import java.util.concurrent.TimeUnit
 
 class FakeSpanBuilder(
-    val spanName: String,
+    var spanName: String,
     val tracerKey: TracerKey = TracerKey("fake-scope"),
 ) : OtelJavaSpanBuilder {
 

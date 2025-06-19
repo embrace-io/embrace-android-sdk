@@ -36,11 +36,11 @@ class FakeSpan(
     }
 
     override fun addEvent(name: String, attributes: OtelJavaAttributes): OtelJavaSpan {
-        TODO("Not yet implemented")
+        return this
     }
 
     override fun addEvent(name: String, attributes: OtelJavaAttributes, timestamp: Long, unit: TimeUnit): OtelJavaSpan {
-        TODO("Not yet implemented")
+        return this
     }
 
     override fun setStatus(statusCode: OtelJavaStatusCode, description: String): OtelJavaSpan {
@@ -50,11 +50,11 @@ class FakeSpan(
     }
 
     override fun recordException(exception: Throwable, additionalAttributes: OtelJavaAttributes): OtelJavaSpan {
-        TODO("Not yet implemented")
+        return this
     }
 
     override fun updateName(name: String): OtelJavaSpan {
-        TODO("Not yet implemented")
+        return this
     }
 
     override fun end() {

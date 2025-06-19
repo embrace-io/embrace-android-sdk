@@ -4,6 +4,7 @@ import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.StatusCode
 import io.embrace.opentelemetry.kotlin.attributes.AttributeContainer
 import io.embrace.opentelemetry.kotlin.tracing.Link
+import io.embrace.opentelemetry.kotlin.tracing.Span
 import io.embrace.opentelemetry.kotlin.tracing.SpanContext
 import io.embrace.opentelemetry.kotlin.tracing.SpanEvent
 import io.embrace.opentelemetry.kotlin.tracing.SpanKind
@@ -14,13 +15,12 @@ class FakeKotlinSpan(
     override var parent: SpanContext?,
     override val spanKind: SpanKind,
     override val startTimestamp: Long,
-) : io.embrace.opentelemetry.kotlin.tracing.Span {
+) : Span {
 
     private var inProgress = true
 
     override fun attributes(): Map<String, Any> = emptyMap()
 
-    // FIXME: temp, requires access to SpanContextAdapter in opentelemetry-kotlin
     override val spanContext: SpanContext = throw UnsupportedOperationException()
 
     override var status: StatusCode = StatusCode.Unset

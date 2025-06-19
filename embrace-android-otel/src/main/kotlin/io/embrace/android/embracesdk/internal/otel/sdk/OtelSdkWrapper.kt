@@ -15,7 +15,7 @@ import io.embrace.opentelemetry.kotlin.aliases.OtelJavaResource
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSdkLoggerProvider
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSdkTracerProvider
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanLimits
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaTracer
+import io.embrace.opentelemetry.kotlin.tracing.Tracer
 
 /**
  * Wrapper that instantiates a copy of the OpenTelemetry SDK configured with the appropriate settings and the given components so
@@ -53,9 +53,12 @@ class OtelSdkWrapper(
         }
     }
 
-    val sdkTracer: OtelJavaTracer by lazy {
+    val sdkTracer: Tracer by lazy {
         EmbTrace.trace("otel-tracer-init") {
-            sdk.getTracer(configuration.sdkName, configuration.sdkVersion)
+            kotlinApi.tracerProvider.getTracer(
+                name = configuration.sdkName,
+                version = configuration.sdkVersion
+            )
         }
     }
 

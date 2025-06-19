@@ -1,5 +1,6 @@
 package io.embrace.android.gradle.integration.testcases
 
+import io.embrace.android.gradle.config.TestMatrix
 import io.embrace.android.gradle.integration.framework.PluginIntegrationTestRule
 import io.embrace.android.gradle.integration.framework.ProjectType
 import io.embrace.android.gradle.integration.framework.smali.SmaliConfigReader
@@ -106,6 +107,7 @@ class AndroidNdkTest {
             fixture = "android-3rd-party-symbols",
             task = "build",
             projectType = ProjectType.ANDROID,
+            testMatrix = TestMatrix.NewerVersion,
             setup = {
                 setupMockResponses(
                     defaultExpectedLibs,
@@ -114,7 +116,7 @@ class AndroidNdkTest {
                 )
             },
             assertions = {
-                verifyBuildTelemetryRequestSent(defaultExpectedVariants)
+                verifyBuildTelemetryRequestSent(defaultExpectedVariants, testMatrix = TestMatrix.NewerVersion)
                 verifyHandshakes(defaultExpectedLibs, defaultExpectedArchs, defaultExpectedVariants)
                 verifyUploads(defaultExpectedLibs, defaultExpectedArchs, defaultExpectedVariants)
             }
@@ -128,12 +130,13 @@ class AndroidNdkTest {
         rule.runTest(
             fixture = "android-local-and-3rd-party-symbols",
             task = "build",
+            testMatrix = TestMatrix.NewerVersion,
             projectType = ProjectType.ANDROID,
             setup = {
                 setupMockResponses(expectedLibs, defaultExpectedArchs, defaultExpectedVariants)
             },
             assertions = {
-                verifyBuildTelemetryRequestSent(defaultExpectedVariants)
+                verifyBuildTelemetryRequestSent(defaultExpectedVariants, testMatrix = TestMatrix.NewerVersion)
                 verifyHandshakes(expectedLibs, defaultExpectedArchs, defaultExpectedVariants)
                 verifyUploads(expectedLibs, defaultExpectedArchs, defaultExpectedVariants)
             }

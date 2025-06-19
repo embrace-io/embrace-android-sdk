@@ -1,5 +1,6 @@
 package io.embrace.android.gradle.integration.testcases
 
+import io.embrace.android.gradle.config.TestMatrix
 import io.embrace.android.gradle.integration.framework.PluginIntegrationTestRule
 import io.embrace.android.gradle.integration.framework.smali.SmaliConfigReader
 import io.embrace.android.gradle.integration.framework.smali.SmaliMethod
@@ -44,12 +45,13 @@ class ReactNativeAndroidTest {
             fixture = "react-native-android",
             androidProjectRoot = "android",
             task = "build",
+            testMatrix = TestMatrix.NewerVersion,
             setup = { projectDir ->
                 installNodeModules(projectDir)
                 setupMockResponses(handshakeLibs, handshakeArchs, defaultExpectedVariants)
             },
             assertions = {
-                verifyBuildTelemetryRequestSent(defaultExpectedVariants)
+                verifyBuildTelemetryRequestSent(defaultExpectedVariants, testMatrix = TestMatrix.NewerVersion)
                 verifyHandshakes(defaultExpectedLibs, defaultExpectedArchs, defaultExpectedVariants)
                 verifyUploads(handshakeLibs, handshakeArchs, defaultExpectedVariants)
             }
@@ -62,6 +64,7 @@ class ReactNativeAndroidTest {
             fixture = "react-native-android",
             androidProjectRoot = "android",
             task = "assembleRelease",
+            testMatrix = TestMatrix.NewerVersion,
             setup = { projectDir ->
                 setupEmptyHandshakeResponse()
                 installNodeModules(projectDir)

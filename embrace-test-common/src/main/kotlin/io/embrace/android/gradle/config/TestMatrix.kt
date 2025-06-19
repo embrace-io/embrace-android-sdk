@@ -39,11 +39,11 @@ sealed class TestMatrix(
     /**
      * Not the latest, but newer than the middle of the pack.
      */
-    object NewerVersion : TestMatrix("8.5.2", "8.7", "2.0.0", JdkEnv.JAVA_17)
+    object NewerVersion : TestMatrix("8.6.0", "8.14.2", "2.0.0", JdkEnv.JAVA_17)
 
     /**
      * The maximum version we currently run tests against. Newer versions may work, but are not
      * explicitly tested.
      */
-    object MaxVersion : TestMatrix("8.9.1", "8.13", "2.1.20", JdkEnv.JAVA_17)
+    object MaxVersion : TestMatrix("8.10.1", "9.0.0-rc-1", "2.1.21", JdkEnv.JAVA_17)
 }

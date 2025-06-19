@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal
 
 import io.embrace.android.embracesdk.concurrency.SingleThreadTestScheduledExecutor
+import io.embrace.android.embracesdk.internal.utils.compatThreadId
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
@@ -55,7 +56,7 @@ internal class ConstantNameThreadFactoryTest {
         executor.submit { secondThread.set(Thread.currentThread()) }.get(1L, TimeUnit.SECONDS)
         assertNotNull(secondThread.get())
         assertEquals(firstThread.get().name, secondThread.get().name)
-        assertNotEquals(firstThread.get().id, secondThread.get().id)
+        assertNotEquals(firstThread.get().compatThreadId(), secondThread.get().compatThreadId())
         assertNotEquals(firstThread.get(), secondThread.get())
     }
 }

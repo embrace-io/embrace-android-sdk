@@ -28,6 +28,7 @@ import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
 import io.embrace.android.embracesdk.internal.payload.getSessionSpan
+import io.embrace.android.embracesdk.internal.utils.compatThreadId
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
@@ -295,13 +296,13 @@ internal class TracingApiTest {
             testCaseAction = {
                 recordSession {
                     val latch = CountDownLatch(1)
-                    val parentThreadId = Thread.currentThread().id
+                    val parentThreadId = Thread.currentThread().compatThreadId()
                     var childThreadId: Long = -1L
                     val parent = checkNotNull(embrace.startSpan("parent"))
                     val currentContext = Context.current()
                     var currentContext2: Context? = null
                     executor.submit {
-                        childThreadId = Thread.currentThread().id
+                        childThreadId = Thread.currentThread().compatThreadId()
                         currentContext2 = Context.current()
                         val child = checkNotNull(embrace.startSpan(name = "child", parent = parent))
                         assertTrue(child.stop())

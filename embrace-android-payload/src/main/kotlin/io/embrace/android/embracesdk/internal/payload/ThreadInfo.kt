@@ -42,28 +42,4 @@ data class ThreadInfo(
      */
     @Json(name = "fc")
     val frameCount: Int,
-) {
-
-    companion object {
-        /**
-         * Creates a [ThreadInfo] from the [Thread], [StackTraceElement][] pair,
-         * using the thread name and priority, and each stacktrace element as each line.
-         *
-         * @param thread the exception
-         * @return the stacktrace instance
-         */
-        @JvmStatic
-        @JvmOverloads
-        fun ofThread(
-            thread: Thread,
-            stackTraceElements: Array<StackTraceElement>,
-            maxStacktraceSize: Int = Integer.MAX_VALUE,
-        ): ThreadInfo {
-            val name = thread.name
-            val priority = thread.priority
-            val frameCount = stackTraceElements.size
-            val lines = stackTraceElements.take(maxStacktraceSize).map(StackTraceElement::toString)
-            return ThreadInfo(thread.id, thread.state, name, priority, lines, frameCount)
-        }
-    }
-}
+)

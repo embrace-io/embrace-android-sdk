@@ -158,7 +158,7 @@ internal class EmbraceAnrServiceTest {
             blockedThreadDetector.listener = anrService
             state.anrInProgress = true
             state.lastTargetThreadResponseMs = 15000000L
-            anrService.processAnrTick(clock.now())
+            anrService.onThreadBlockedInterval(currentThread(), clock.now())
             assertEquals(1, stacktraceSampler.size())
 
             // assert only one anr interval was added from the anrInProgress flag
@@ -291,7 +291,7 @@ internal class EmbraceAnrServiceTest {
             // create an ANR service with config that disables ANR capture
             rule.anrBehavior.anrCaptureEnabled = false
             clock.setCurrentTime(15020000L)
-            anrService.processAnrTick(clock.now())
+            anrService.onThreadBlockedInterval(currentThread(), clock.now())
             assertEquals(0, stacktraceSampler.size())
 
             // assert no anr intervals were added

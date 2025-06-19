@@ -100,18 +100,6 @@ internal class EmbraceAnrService(
         }
     }
 
-    fun processAnrTick(timestamp: Long) {
-        // Check if ANR capture is enabled
-        if (!configService.anrBehavior.isAnrCaptureEnabled()) {
-            return
-        }
-
-        // Invoke callbacks
-        for (listener in listeners) {
-            listener.onThreadBlockedInterval(looper.thread, timestamp)
-        }
-    }
-
     /**
      * When app goes to foreground, we need to monitor the target thread again to
      * capture ANRs.
@@ -131,6 +119,18 @@ internal class EmbraceAnrService(
     override fun onBackground(timestamp: Long) {
         this.anrMonitorWorker.submit {
             livenessCheckScheduler.stopMonitoringThread()
+        }
+    }
+
+    private fun processAnrTick(timestamp: Long) {
+        // Check if ANR capture is enabled
+        if (!configService.anrBehavior.isAnrCaptureEnabled()) {
+            return
+        }
+
+        // Invoke callbacks
+        for (listener in listeners) {
+            listener.onThreadBlockedInterval(looper.thread, timestamp)
         }
     }
 

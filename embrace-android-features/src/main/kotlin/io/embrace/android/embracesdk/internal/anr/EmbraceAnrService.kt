@@ -30,14 +30,8 @@ internal class EmbraceAnrService(
     private val anrMonitorWorker: BackgroundWorker,
     private val state: ThreadMonitoringState,
     private val clock: Clock,
+    private val stacktraceSampler: AnrStacktraceSampler,
 ) : AnrService, MemoryCleanerListener, ProcessStateListener, BlockedThreadListener {
-
-    val stacktraceSampler: AnrStacktraceSampler = AnrStacktraceSampler(
-        configService,
-        clock,
-        looper.thread,
-        anrMonitorWorker
-    )
 
     val listeners: CopyOnWriteArrayList<BlockedThreadListener> = CopyOnWriteArrayList<BlockedThreadListener>()
 

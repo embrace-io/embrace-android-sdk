@@ -75,7 +75,7 @@ internal class EmbraceAnrServiceTest {
             anrService.onForeground(true, 0L)
 
             // assert no ANR interval was added
-            assertEquals(0, anrService.stacktraceSampler.anrIntervals.size)
+            assertEquals(0, stacktraceSampler.anrIntervals.size)
         }
     }
 
@@ -83,7 +83,7 @@ internal class EmbraceAnrServiceTest {
     fun testCleanCollections() {
         with(rule) {
             // assert the ANR interval was added
-            val anrIntervals = anrService.stacktraceSampler.anrIntervals
+            val anrIntervals = stacktraceSampler.anrIntervals
             anrIntervals.add(AnrInterval(startTime = 15000000, endTime = 15000100))
             val inProgressInterval = AnrInterval(startTime = 15000000, lastKnownTime = 15000100)
             anrIntervals.add(inProgressInterval)
@@ -101,7 +101,7 @@ internal class EmbraceAnrServiceTest {
     @Test
     fun testGetIntervals() {
         with(rule) {
-            populateAnrIntervals(anrService)
+            populateAnrIntervals()
 
             val anrIntervals = anrService.getCapturedData()
             assertEquals(5, anrIntervals.size)
@@ -154,7 +154,7 @@ internal class EmbraceAnrServiceTest {
             state.anrInProgress = true
             state.lastTargetThreadResponseMs = 15000000L
             anrService.processAnrTick(clock.now())
-            assertEquals(1, anrService.stacktraceSampler.size())
+            assertEquals(1, stacktraceSampler.size())
 
             // assert only one anr interval was added from the anrInProgress flag
             val anrIntervals = anrService.getCapturedData()
@@ -257,10 +257,9 @@ internal class EmbraceAnrServiceTest {
                 }
                 anrService.onThreadUnblocked(currentThread(), clock.now())
 
-                val sampler = anrService.stacktraceSampler
-                assertEquals(1, sampler.anrIntervals.size)
+                assertEquals(1, stacktraceSampler.anrIntervals.size)
 
-                val interval = checkNotNull(sampler.anrIntervals.first())
+                val interval = checkNotNull(stacktraceSampler.anrIntervals.first())
                 val samples = checkNotNull(interval.anrSampleList).samples
                 assertEquals(count, samples.size)
 
@@ -288,7 +287,7 @@ internal class EmbraceAnrServiceTest {
             rule.anrBehavior.anrCaptureEnabled = false
             clock.setCurrentTime(15020000L)
             anrService.processAnrTick(clock.now())
-            assertEquals(0, anrService.stacktraceSampler.size())
+            assertEquals(0, stacktraceSampler.size())
 
             // assert no anr intervals were added
             val anrIntervals = anrService.getCapturedData()
@@ -300,16 +299,15 @@ internal class EmbraceAnrServiceTest {
     fun testReachedAnrCaptureLimit() {
         with(rule) {
             rule.anrBehavior.anrPerSessionImpl = 3
-            val state = anrService.stacktraceSampler
-            assertFalse(state.reachedAnrStacktraceCaptureLimit())
+            assertFalse(stacktraceSampler.reachedAnrStacktraceCaptureLimit())
 
-            state.anrIntervals.add(AnrInterval(0, anrSampleList = AnrSampleList(listOf())))
-            state.anrIntervals.add(AnrInterval(0, anrSampleList = AnrSampleList(listOf())))
-            state.anrIntervals.add(AnrInterval(0, anrSampleList = AnrSampleList(listOf())))
-            assertFalse(state.reachedAnrStacktraceCaptureLimit())
+            stacktraceSampler.anrIntervals.add(AnrInterval(0, anrSampleList = AnrSampleList(listOf())))
+            stacktraceSampler.anrIntervals.add(AnrInterval(0, anrSampleList = AnrSampleList(listOf())))
+            stacktraceSampler.anrIntervals.add(AnrInterval(0, anrSampleList = AnrSampleList(listOf())))
+            assertFalse(stacktraceSampler.reachedAnrStacktraceCaptureLimit())
 
-            state.anrIntervals.add(AnrInterval(0, anrSampleList = AnrSampleList(listOf())))
-            assertTrue(state.reachedAnrStacktraceCaptureLimit())
+            stacktraceSampler.anrIntervals.add(AnrInterval(0, anrSampleList = AnrSampleList(listOf())))
+            assertTrue(stacktraceSampler.reachedAnrStacktraceCaptureLimit())
         }
     }
 
@@ -401,7 +399,7 @@ internal class EmbraceAnrServiceTest {
             anrExecutorService.submit {
                 assertTrue(state.started.get())
             }
-            populateAnrIntervals(anrService)
+            populateAnrIntervals()
             anrService.handleCrash("")
             val anrIntervals = anrService.getCapturedData()
             assertEquals(5, anrIntervals.size)
@@ -409,13 +407,15 @@ internal class EmbraceAnrServiceTest {
         }
     }
 
-    private fun populateAnrIntervals(anrService: EmbraceAnrService) {
-        val state = anrService.stacktraceSampler
-        state.anrIntervals.add(AnrInterval(startTime = 14000000L))
-        state.anrIntervals.add(AnrInterval(startTime = 15000000L))
-        state.anrIntervals.add(AnrInterval(startTime = 15000500L))
-        state.anrIntervals.add(AnrInterval(startTime = 15001000L))
-        state.anrIntervals.add(AnrInterval(startTime = 16000000L))
+    private fun populateAnrIntervals() {
+        with(rule) {
+            val state = stacktraceSampler
+            state.anrIntervals.add(AnrInterval(startTime = 14000000L))
+            state.anrIntervals.add(AnrInterval(startTime = 15000000L))
+            state.anrIntervals.add(AnrInterval(startTime = 15000500L))
+            state.anrIntervals.add(AnrInterval(startTime = 15001000L))
+            state.anrIntervals.add(AnrInterval(startTime = 16000000L))
+        }
     }
 
     /**

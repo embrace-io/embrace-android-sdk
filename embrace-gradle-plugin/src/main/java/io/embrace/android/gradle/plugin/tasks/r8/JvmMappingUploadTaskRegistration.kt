@@ -149,9 +149,7 @@ class JvmMappingUploadTaskRegistration : EmbraceTaskRegistration {
         val targetObfuscationTasks = listOf(
             "dexguardApk$name",
             "dexguardAab$name",
-            "transformClassesAndResourcesWithProguardFor$name",
             "minify${name}WithProguard",
-            "transformClassesAndResourcesWithR8For$name",
             "minify${name}WithR8"
         )
         val tasks = targetObfuscationTasks.filter { taskName ->

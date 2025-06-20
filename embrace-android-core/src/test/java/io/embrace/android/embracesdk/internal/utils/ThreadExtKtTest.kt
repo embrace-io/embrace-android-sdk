@@ -1,0 +1,34 @@
+package io.embrace.android.embracesdk.internal.utils
+
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
+import org.junit.Test
+import org.junit.runner.RunWith
+import java.lang.Thread.currentThread
+
+@RunWith(AndroidJUnit4::class)
+class ThreadExtKtTest {
+
+    @Test
+    fun `correct threadInfo created`() {
+        val targetThread = currentThread()
+        val threadInfo = getThreadInfo(
+            thread = targetThread,
+            stackTraceElements = targetThread.stackTrace,
+            maxStacktraceSize = 4
+        )
+        with(threadInfo) {
+            assertEquals(true, name?.contains("Main"))
+            assertEquals(Thread.State.RUNNABLE, state)
+            assertTrue(priority > 0)
+            assertEquals(4, lines?.size)
+            assertEquals(targetThread.stackTrace.size, frameCount)
+        }
+    }
+
+    @Test
+    fun `valid threadId retrieved`() {
+        assertTrue(currentThread().compatThreadId() > 0)
+    }
+}

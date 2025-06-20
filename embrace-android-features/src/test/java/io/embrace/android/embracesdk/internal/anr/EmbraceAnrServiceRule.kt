@@ -37,6 +37,7 @@ internal class EmbraceAnrServiceRule<T : ScheduledExecutorService>(
     lateinit var anrExecutorService: T
     lateinit var targetThreadHandler: TargetThreadHandler
     lateinit var anrMonitorThread: AtomicReference<Thread>
+    lateinit var stacktraceSampler: AnrStacktraceSampler
 
     override fun before() {
         clock.setCurrentTime(0)
@@ -68,6 +69,12 @@ internal class EmbraceAnrServiceRule<T : ScheduledExecutorService>(
             blockedThreadDetector = blockedThreadDetector,
             logger = logger
         )
+        stacktraceSampler = AnrStacktraceSampler(
+            configService = fakeConfigService,
+            clock = clock,
+            targetThread = looper.thread,
+            anrMonitorWorker = worker
+        )
         anrService = EmbraceAnrService(
             configService = fakeConfigService,
             looper = looper,
@@ -75,7 +82,8 @@ internal class EmbraceAnrServiceRule<T : ScheduledExecutorService>(
             livenessCheckScheduler = livenessCheckScheduler,
             anrMonitorWorker = worker,
             state = state,
-            clock = clock
+            clock = clock,
+            stacktraceSampler = stacktraceSampler
         )
     }
 }

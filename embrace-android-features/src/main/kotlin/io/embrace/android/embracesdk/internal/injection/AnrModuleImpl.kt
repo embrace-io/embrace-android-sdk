@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.injection
 import android.os.Looper
 import io.embrace.android.embracesdk.internal.anr.AnrOtelMapper
 import io.embrace.android.embracesdk.internal.anr.AnrService
+import io.embrace.android.embracesdk.internal.anr.AnrStacktraceSampler
 import io.embrace.android.embracesdk.internal.anr.EmbraceAnrService
 import io.embrace.android.embracesdk.internal.anr.detection.BlockedThreadDetector
 import io.embrace.android.embracesdk.internal.anr.detection.LivenessCheckScheduler
@@ -31,7 +32,8 @@ internal class AnrModuleImpl(
                 livenessCheckScheduler = livenessCheckScheduler,
                 anrMonitorWorker = anrMonitorWorker,
                 state = state,
-                clock = initModule.clock
+                clock = initModule.clock,
+                stacktraceSampler = stacktraceSampler
             )
         } else {
             null
@@ -49,6 +51,15 @@ internal class AnrModuleImpl(
     private val looper by singleton { Looper.getMainLooper() }
 
     private val state by singleton { ThreadMonitoringState(initModule.clock) }
+
+    private val stacktraceSampler by singleton {
+        AnrStacktraceSampler(
+            configService = configService,
+            clock = initModule.clock,
+            targetThread = looper.thread,
+            anrMonitorWorker = anrMonitorWorker
+        )
+    }
 
     private val targetThreadHandler by singleton {
         TargetThreadHandler(

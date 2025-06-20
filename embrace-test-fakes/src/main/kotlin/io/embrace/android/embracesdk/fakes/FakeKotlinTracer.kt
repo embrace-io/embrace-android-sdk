@@ -19,6 +19,6 @@ class FakeKotlinTracer : io.embrace.opentelemetry.kotlin.tracing.Tracer {
         name,
         parent,
         spanKind,
-        startTimestamp,
+        startTimestamp ?: -1,
     )
 }

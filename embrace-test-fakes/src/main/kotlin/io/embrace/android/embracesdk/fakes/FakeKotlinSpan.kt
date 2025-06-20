@@ -12,8 +12,8 @@ import io.embrace.opentelemetry.kotlin.tracing.SpanKind
 class FakeKotlinSpan(
     override var name: String,
     override var parent: SpanContext?,
-    val spanKind: SpanKind,
-    val startTimestamp: Long?,
+    override val spanKind: SpanKind,
+    override val startTimestamp: Long,
 ) : io.embrace.opentelemetry.kotlin.tracing.Span {
 
     private var inProgress = true

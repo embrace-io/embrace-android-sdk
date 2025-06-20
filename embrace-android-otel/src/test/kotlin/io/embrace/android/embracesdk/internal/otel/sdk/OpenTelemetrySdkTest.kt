@@ -53,7 +53,7 @@ internal class OpenTelemetrySdkTest {
 
     @Test
     fun `check resource added by sdk tracer`() {
-        sdk.sdkTracer.spanBuilder("test").startSpan().end()
+        sdk.sdkTracer.createSpan("test").end()
         spanExporter.exportedSpans.single().resource.assertExpectedAttributes(
             expectedServiceName = configuration.sdkName,
             expectedServiceVersion = configuration.sdkVersion,
@@ -74,8 +74,7 @@ internal class OpenTelemetrySdkTest {
     @Test
     fun `sdk name and version used as instrumentation scope for tracer instance used by embrace`() {
         sdk.sdkTracer
-            .spanBuilder("test")
-            .startSpan()
+            .createSpan("test")
             .end()
         with(spanExporter.exportedSpans.single().instrumentationScopeInfo) {
             assertEquals(configuration.sdkName, name)

@@ -19,9 +19,9 @@ import io.embrace.android.embracesdk.internal.spans.InternalTracer
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaClock
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaOpenTelemetry
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaTracer
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaTracerProvider
 import io.embrace.opentelemetry.kotlin.logging.Logger
+import io.embrace.opentelemetry.kotlin.tracing.Tracer
 
 class FakeOpenTelemetryModule(
     override val currentSessionSpan: CurrentSessionSpan = FakeCurrentSessionSpan(),
@@ -36,8 +36,8 @@ class FakeOpenTelemetryModule(
         // no-op
     }
 
-    override val sdkTracer: OtelJavaTracer
-        get() = FakeTracer()
+    override val sdkTracer: Tracer
+        get() = FakeKotlinTracer()
     override val spanService: SpanService
         get() = FakeSpanService()
     override val embraceTracer: EmbraceTracer

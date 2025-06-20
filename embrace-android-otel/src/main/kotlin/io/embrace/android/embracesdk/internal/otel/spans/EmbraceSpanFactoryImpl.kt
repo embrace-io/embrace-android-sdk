@@ -16,8 +16,9 @@ import io.embrace.android.embracesdk.internal.otel.sdk.hasEmbraceAttribute
 import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
 import io.embrace.android.embracesdk.internal.otel.sdk.otelSpanCreator
 import io.embrace.android.embracesdk.internal.otel.sdk.setEmbraceAttribute
+import io.embrace.android.embracesdk.internal.otel.sdk.toStringMap
 import io.embrace.android.embracesdk.internal.otel.toEmbracePayload
-import io.embrace.android.embracesdk.internal.otel.toOtelJava
+import io.embrace.android.embracesdk.internal.otel.wrapper.KotlinSpanContextWrapper
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.truncatedStacktraceText
@@ -25,23 +26,25 @@ import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
+import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.StatusCode
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaAttributes
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaClock
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaContext
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpan
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanContext
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaTracer
+import io.embrace.opentelemetry.kotlin.k2j.tracing.SpanContextAdapter
+import io.embrace.opentelemetry.kotlin.tracing.Span
+import io.embrace.opentelemetry.kotlin.tracing.Tracer
 import io.opentelemetry.semconv.ExceptionAttributes
 import java.util.Queue
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
-import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 
+@OptIn(ExperimentalApi::class)
 class EmbraceSpanFactoryImpl(
-    private val tracer: OtelJavaTracer,
+    private val tracer: Tracer,
     private val openTelemetryClock: OtelJavaClock,
     private val spanRepository: SpanRepository,
     private val dataValidator: DataValidator = DataValidator(),
@@ -83,6 +86,7 @@ class EmbraceSpanFactoryImpl(
     }
 }
 
+@OptIn(ExperimentalApi::class)
 private class EmbraceSpanImpl(
     private val otelSpanCreator: OtelSpanCreator,
     private val openTelemetryClock: OtelJavaClock,
@@ -93,7 +97,7 @@ private class EmbraceSpanImpl(
     override val autoTerminationMode: AutoTerminationMode = AutoTerminationMode.NONE,
 ) : EmbraceSdkSpan {
 
-    private val startedSpan: AtomicReference<OtelJavaSpan?> = AtomicReference(null)
+    private val startedSpan: AtomicReference<Span?> = AtomicReference(null)
 
     @Volatile
     private var spanStartTimeMs: Long? = null
@@ -126,7 +130,7 @@ private class EmbraceSpanImpl(
     override val parent: EmbraceSpan? = otelSpanCreator.spanStartArgs.parentContext.getEmbraceSpan()
 
     override val spanContext: OtelJavaSpanContext?
-        get() = startedSpan.get()?.spanContext
+        get() = startedSpan.get()?.spanContext?.let(::KotlinSpanContextWrapper)
 
     override val traceId: String?
         get() = spanContext?.traceId
@@ -135,7 +139,7 @@ private class EmbraceSpanImpl(
         get() = spanContext?.spanId
 
     override val isRecording: Boolean
-        get() = startedSpan.get()?.isRecording == true
+        get() = startedSpan.get()?.isRecording() == true
 
     override fun start(startTimeMs: Long?): Boolean {
         EmbTrace.trace("span-start") {
@@ -151,7 +155,7 @@ private class EmbraceSpanImpl(
                 val newSpan = EmbTrace.trace("otel-span-start") {
                     otelSpanCreator.startSpan(attemptedStartTimeMs)
                 }
-                if (newSpan.isRecording) {
+                if (newSpan.isRecording()) {
                     startedSpan.set(newSpan)
                 } else {
                     return false
@@ -159,7 +163,7 @@ private class EmbraceSpanImpl(
 
                 spanRepository.trackStartedSpan(this)
                 updatedName?.let { newName ->
-                    newSpan.updateName(newName)
+                    newSpan.name = newName
                 }
                 spanStartTimeMs = attemptedStartTimeMs
                 spanRepository.notifySpanUpdate()
@@ -196,7 +200,7 @@ private class EmbraceSpanImpl(
                     }
 
                     EmbTrace.trace("otel-span-end") {
-                        spanToStop.end(attemptedEndTimeMs, TimeUnit.MILLISECONDS)
+                        spanToStop.end(attemptedEndTimeMs.millisToNanos())
                     }
 
                     successful = !isRecording
@@ -272,7 +276,7 @@ private class EmbraceSpanImpl(
         startedSpan.get()?.let { sdkSpan ->
             synchronized(startedSpan) {
                 status = statusCode.toEmbracePayload()
-                sdkSpan.setStatus(statusCode.toOtelJava(), description)
+                sdkSpan.status = statusCode
                 spanRepository.notifySpanUpdate()
             }
         }
@@ -301,7 +305,7 @@ private class EmbraceSpanImpl(
             synchronized(startedSpan) {
                 if (!spanStarted() || isRecording) {
                     updatedName = newName
-                    startedSpan.get()?.updateName(newName)
+                    startedSpan.get()?.name = newName
                     spanRepository.notifySpanUpdate()
                     return true
                 }
@@ -322,7 +326,9 @@ private class EmbraceSpanImpl(
         }
 
     override fun asNewContext(): OtelJavaContext? = startedSpan.get()?.run {
-        otelSpanCreator.spanStartArgs.parentContext.with(this)
+        // FIXME: propagate context
+//        otelSpanCreator.spanStartArgs.parentContext.with(this)
+        null
     }
 
     override fun snapshot(): io.embrace.android.embracesdk.internal.payload.Span? {
@@ -403,16 +409,16 @@ private class EmbraceSpanImpl(
         }
     }
 
-    private fun populateAttributes(spanToStop: OtelJavaSpan) {
+    private fun populateAttributes(spanToStop: Span) {
         systemAttributes.forEach { systemAttribute ->
-            spanToStop.setAttribute(systemAttribute.key, systemAttribute.value)
+            spanToStop.setStringAttribute(systemAttribute.key, systemAttribute.value)
         }
         customAttributes.redactIfSensitive().forEach { attribute ->
-            spanToStop.setAttribute(attribute.key, attribute.value)
+            spanToStop.setStringAttribute(attribute.key, attribute.value)
         }
     }
 
-    private fun populateEvents(spanToStop: OtelJavaSpan) {
+    private fun populateEvents(spanToStop: Span) {
         val redactedCustomEvents = customEvents.map { it.copy(attributes = it.attributes.redactIfSensitive()) }
 
         (systemEvents + redactedCustomEvents).forEach { event ->
@@ -423,15 +429,17 @@ private class EmbraceSpanImpl(
             }
 
             spanToStop.addEvent(
-                event.name,
-                eventAttributes,
-                event.timestampNanos,
-                TimeUnit.NANOSECONDS
-            )
+                name = event.name,
+                timestamp = event.timestampNanos,
+            ) {
+                eventAttributes.toStringMap().forEach {
+                    setStringAttribute(it.key, it.value)
+                }
+            }
         }
     }
 
-    private fun populateLinks(spanToStop: OtelJavaSpan) {
+    private fun populateLinks(spanToStop: Span) {
         val redactedCustomLinks = customLinks.map { it.copy(attributes = it.attributes.redactIfSensitive()) }
 
         (systemLinks + redactedCustomLinks).forEach {
@@ -440,7 +448,11 @@ private class EmbraceSpanImpl(
             } else {
                 OtelJavaAttributes.empty()
             }
-            spanToStop.addLink(it.spanContext, linkAttributes)
+            spanToStop.addLink(SpanContextAdapter(it.spanContext)) {
+                linkAttributes.toStringMap().forEach { entry ->
+                    setStringAttribute(entry.key, entry.value)
+                }
+            }
         }
     }
 }

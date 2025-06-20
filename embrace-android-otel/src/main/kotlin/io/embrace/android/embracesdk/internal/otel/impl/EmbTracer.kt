@@ -8,6 +8,7 @@ import io.embrace.opentelemetry.kotlin.aliases.OtelJavaClock
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaContext
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanBuilder
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaTracer
+import io.embrace.opentelemetry.kotlin.k2j.ClockAdapter
 
 class EmbTracer(
     private val sdkTracer: OtelJavaTracer,
@@ -23,6 +24,7 @@ class EmbTracer(
                 private = false,
                 internal = false,
                 parent = OtelJavaContext.current().getEmbraceSpan(),
+                clock = ClockAdapter(clock),
             ),
             spanService = spanService,
             clock = clock,

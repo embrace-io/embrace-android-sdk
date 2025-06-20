@@ -3,26 +3,26 @@ package io.embrace.android.embracesdk.internal.otel.spans
 import io.embrace.android.embracesdk.internal.otel.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.otel.sdk.hasEmbraceAttribute
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
-import io.opentelemetry.api.trace.Span
-import io.opentelemetry.sdk.common.CompletableResultCode
-import io.opentelemetry.sdk.trace.data.SpanData
-import io.opentelemetry.sdk.trace.export.SpanExporter
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaCompletableResultCode
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanData
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanExporter
 
 /**
  * Exports the given completed [Span] to the given [SpanSink] as well as any configured external [SpanExporter]
  */
 internal class EmbraceSpanExporter(
     private val spanSink: SpanSink,
-    private val externalSpanExporter: SpanExporter?,
+    private val externalSpanExporter: OtelJavaSpanExporter?,
     private val exportCheck: () -> Boolean,
-) : SpanExporter {
+) : OtelJavaSpanExporter {
+
     @Synchronized
-    override fun export(spans: MutableCollection<SpanData>): CompletableResultCode {
+    override fun export(spans: MutableCollection<OtelJavaSpanData>): OtelJavaCompletableResultCode {
         if (!exportCheck()) {
-            return CompletableResultCode.ofSuccess()
+            return OtelJavaCompletableResultCode.ofSuccess()
         }
         val result = spanSink.storeCompletedSpans(spans.toList())
-        if (externalSpanExporter != null && result == CompletableResultCode.ofSuccess()) {
+        if (externalSpanExporter != null && result == OtelJavaCompletableResultCode.ofSuccess()) {
             return EmbTrace.trace("otel-external-export") {
                 externalSpanExporter.export(spans.filterNot { it.hasEmbraceAttribute(PrivateSpan) })
             }
@@ -31,8 +31,8 @@ internal class EmbraceSpanExporter(
         return result
     }
 
-    override fun flush(): CompletableResultCode = CompletableResultCode.ofSuccess()
+    override fun flush(): OtelJavaCompletableResultCode = OtelJavaCompletableResultCode.ofSuccess()
 
     @Synchronized
-    override fun shutdown(): CompletableResultCode = CompletableResultCode.ofSuccess()
+    override fun shutdown(): OtelJavaCompletableResultCode = OtelJavaCompletableResultCode.ofSuccess()
 }

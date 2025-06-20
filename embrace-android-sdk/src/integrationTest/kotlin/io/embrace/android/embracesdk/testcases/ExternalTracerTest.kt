@@ -17,13 +17,13 @@ import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface
 import io.embrace.android.embracesdk.testframework.actions.EmbracePreSdkStartInterface
-import io.opentelemetry.api.OpenTelemetry
-import io.opentelemetry.api.common.Attributes
-import io.opentelemetry.api.trace.Span
-import io.opentelemetry.api.trace.StatusCode
-import io.opentelemetry.api.trace.Tracer
-import io.opentelemetry.context.Context
-import io.opentelemetry.sdk.trace.data.SpanData
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaAttributes
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaContext
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaOpenTelemetry
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpan
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanData
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaStatusCode
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaTracer
 import io.opentelemetry.semconv.ExceptionAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
@@ -43,9 +43,9 @@ internal class ExternalTracerTest {
     val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule()
 
     private lateinit var spanExporter: FakeSpanExporter
-    private lateinit var embOpenTelemetry: OpenTelemetry
-    private lateinit var embTracer: Tracer
-    private lateinit var otelTracer: Tracer
+    private lateinit var embOpenTelemetry: OtelJavaOpenTelemetry
+    private lateinit var embTracer: OtelJavaTracer
+    private lateinit var otelTracer: OtelJavaTracer
 
     @Before
     fun setup() {
@@ -83,8 +83,8 @@ internal class ExternalTracerTest {
         var endTimeMs: Long? = null
         var childEndTimeMs: Long? = null
         var stacktrace: String? = null
-        var wrappedSpan: Span? = null
-        var parentContext: Context?
+        var wrappedSpan: OtelJavaSpan? = null
+        var parentContext: OtelJavaContext?
 
         testRule.runTest(
             preSdkStartAction = {
@@ -98,9 +98,9 @@ internal class ExternalTracerTest {
                     val span = spanBuilder.startSpan()
                     span.makeCurrent().use {
                         val childSpan = embTracer.spanBuilder("child-span").startSpan()
-                        childSpan.setStatus(StatusCode.ERROR)
+                        childSpan.setStatus(OtelJavaStatusCode.ERROR)
                         val exception = RuntimeException("bah")
-                        childSpan.recordException(exception, Attributes.builder().put("bad", "yes").build())
+                        childSpan.recordException(exception, OtelJavaAttributes.builder().put("bad", "yes").build())
                         stacktrace = exception.truncatedStacktraceText()
                         childEndTimeMs = clock.tick()
                         childSpan.end()
@@ -108,13 +108,13 @@ internal class ExternalTracerTest {
                         val embraceSpan = checkNotNull(embrace.startSpan("another-root"))
                         embraceSpan.stop()
                         embTracer.spanBuilder("no-parent").setNoParent().startSpan().end()
-                        parentContext = Context.current()
+                        parentContext = OtelJavaContext.current()
                     }
                     span.setAttribute("failures", 1)
                     endTimeMs = clock.tick()
                     span.end()
                     embTracer.spanBuilder("another-parent-with-tracer").startSpan().end()
-                    embTracer.spanBuilder("set-parent-explicitly").setParent(Context.root().with(span)).startSpan()
+                    embTracer.spanBuilder("set-parent-explicitly").setParent(OtelJavaContext.root().with(span)).startSpan()
                         .end()
                     checkNotNull(parentContext).wrap(Runnable {
                         wrappedSpan = embTracer.spanBuilder("wrapped").startSpan()
@@ -171,7 +171,7 @@ internal class ExternalTracerTest {
                 )
 
                 assertTrue("Timed out waiting for the span to be exported", spanExporter.awaitSpanExport(3))
-                val exportedSpan: SpanData = spanExporter.exportedSpans.single { it.name == "external-span" }
+                val exportedSpan: OtelJavaSpanData = spanExporter.exportedSpans.single { it.name == "external-span" }
                 assertEquals(parent.toEmbracePayload(), exportedSpan.toEmbraceSpanData())
                 with(exportedSpan.instrumentationScopeInfo) {
                     assertEquals("external-tracer", name)

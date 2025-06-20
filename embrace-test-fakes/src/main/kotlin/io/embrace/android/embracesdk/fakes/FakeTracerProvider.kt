@@ -1,12 +1,12 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.opentelemetry.api.trace.Tracer
-import io.opentelemetry.api.trace.TracerProvider
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaTracer
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaTracerProvider
 
-class FakeTracerProvider : TracerProvider {
-    override fun get(instrumentationScopeName: String): Tracer = tracerBuilder(instrumentationScopeName).build()
+class FakeTracerProvider : OtelJavaTracerProvider {
+    override fun get(instrumentationScopeName: String): OtelJavaTracer = tracerBuilder(instrumentationScopeName).build()
 
-    override fun get(instrumentationScopeName: String, instrumentationScopeVersion: String): Tracer =
+    override fun get(instrumentationScopeName: String, instrumentationScopeVersion: String): OtelJavaTracer =
         tracerBuilder(instrumentationScopeName).setInstrumentationVersion(instrumentationScopeVersion).build()
 
     override fun tracerBuilder(instrumentationScopeName: String): FakeTracerBuilder =

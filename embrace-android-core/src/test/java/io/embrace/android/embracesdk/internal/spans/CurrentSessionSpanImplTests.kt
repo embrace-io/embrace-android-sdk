@@ -22,7 +22,7 @@ import io.embrace.android.embracesdk.internal.otel.schema.AppTerminationCause
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.embrace.android.embracesdk.internal.otel.schema.LinkType
 import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
-import io.embrace.android.embracesdk.internal.otel.sdk.otelSpanBuilderWrapper
+import io.embrace.android.embracesdk.internal.otel.sdk.otelSpanCreator
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
@@ -31,8 +31,8 @@ import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpanImpl.Compa
 import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.ErrorCode
-import io.opentelemetry.api.trace.Tracer
-import io.opentelemetry.sdk.common.Clock
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaClock
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaTracer
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
@@ -46,10 +46,10 @@ internal class CurrentSessionSpanImplTests {
     private lateinit var spanRepository: SpanRepository
     private lateinit var spanSink: SpanSink
     private lateinit var telemetryService: TelemetryService
-    private lateinit var openTelemetryClock: Clock
+    private lateinit var openTelemetryClock: OtelJavaClock
     private lateinit var currentSessionSpan: CurrentSessionSpanImpl
     private lateinit var spanService: SpanService
-    private lateinit var tracer: Tracer
+    private lateinit var tracer: OtelJavaTracer
     private val clock = FakeClock(1000L)
 
     @Before
@@ -147,7 +147,7 @@ internal class CurrentSessionSpanImplTests {
         repeat(MAX_NON_INTERNAL_SPANS_PER_SESSION) {
             assertNotNull(
                 spanService.createSpan(
-                    otelSpanBuilderWrapper = tracer.otelSpanBuilderWrapper(
+                    otelSpanCreator = tracer.otelSpanCreator(
                         name = "external-span",
                         type = EmbType.Performance.Default,
                         parent = null,
@@ -159,7 +159,7 @@ internal class CurrentSessionSpanImplTests {
         }
         assertNull(
             spanService.createSpan(
-                otelSpanBuilderWrapper = tracer.otelSpanBuilderWrapper(
+                otelSpanCreator = tracer.otelSpanCreator(
                     name = "external-span",
                     type = EmbType.Performance.Default,
                     parent = null,
@@ -170,7 +170,7 @@ internal class CurrentSessionSpanImplTests {
         )
         assertNotNull(
             spanService.createSpan(
-                otelSpanBuilderWrapper = tracer.otelSpanBuilderWrapper(
+                otelSpanCreator = tracer.otelSpanCreator(
                     name = "internal-span",
                     type = EmbType.Performance.Default,
                     parent = null,

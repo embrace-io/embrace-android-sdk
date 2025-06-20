@@ -6,7 +6,7 @@ import io.embrace.android.embracesdk.fixtures.testLog
 import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
 import io.embrace.android.embracesdk.internal.otel.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.payload.Attribute
-import io.opentelemetry.sdk.logs.export.LogRecordExporter
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaLogRecordExporter
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Test
@@ -17,7 +17,7 @@ internal class EmbraceLogRecordExporterTest {
     fun `export() should store logs in LogSink`() {
         val logSink: LogSink = LogSinkImpl()
         val embraceLogRecordExporter =
-            EmbraceLogRecordExporter(logSink, LogRecordExporter.composite(emptyList())) { true }
+            EmbraceLogRecordExporter(logSink, OtelJavaLogRecordExporter.composite(emptyList())) { true }
         val logRecordData = FakeLogRecordData()
 
         embraceLogRecordExporter.export(listOf(logRecordData))
@@ -31,7 +31,7 @@ internal class EmbraceLogRecordExporterTest {
         val logSink: LogSink = LogSinkImpl()
         val externalExporter = FakeLogRecordExporter()
         val embraceLogRecordExporter =
-            EmbraceLogRecordExporter(logSink, LogRecordExporter.composite(externalExporter)) { true }
+            EmbraceLogRecordExporter(logSink, OtelJavaLogRecordExporter.composite(externalExporter)) { true }
         val logRecordData = FakeLogRecordData()
         val privateLogRecordData = FakeLogRecordData(
             log = testLog.copy(

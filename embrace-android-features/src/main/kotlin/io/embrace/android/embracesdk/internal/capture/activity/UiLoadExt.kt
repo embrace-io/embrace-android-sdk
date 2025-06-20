@@ -11,7 +11,7 @@ import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityLifecycleListener
 import io.embrace.android.embracesdk.internal.ui.DrawEventEmitter
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
-import io.opentelemetry.sdk.common.Clock
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaClock
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -24,7 +24,7 @@ fun createActivityLoadEventEmitter(
     uiLoadEventListener: UiLoadEventListener,
     firstDrawDetector: DrawEventEmitter?,
     autoTraceEnabled: Boolean,
-    clock: Clock,
+    clock: OtelJavaClock,
     versionChecker: VersionChecker,
 ): ActivityLifecycleListener {
     val lifecycleEventEmitter = LifecycleEventEmitter(
@@ -120,7 +120,7 @@ private class LifecycleEventEmitter(
     private val uiLoadEventListener: UiLoadEventListener,
     private val drawEventEmitter: DrawEventEmitter?,
     private val autoTraceEnabled: Boolean,
-    private val clock: Clock,
+    private val clock: OtelJavaClock,
 ) {
 
     private val instanceStartTime: MutableMap<Int, Long> = ConcurrentHashMap()

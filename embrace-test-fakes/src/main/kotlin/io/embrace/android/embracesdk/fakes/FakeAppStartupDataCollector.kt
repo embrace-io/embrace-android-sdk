@@ -7,10 +7,10 @@ import io.embrace.android.embracesdk.internal.otel.sdk.DataValidator
 import io.embrace.android.embracesdk.internal.otel.sdk.fromMap
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
-import io.opentelemetry.api.common.Attributes
-import io.opentelemetry.sdk.trace.data.EventData
-import io.opentelemetry.sdk.trace.data.SpanData
-import io.opentelemetry.sdk.trace.data.StatusData
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaAttributes
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaEventData
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanData
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaStatusData
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
 
@@ -29,7 +29,7 @@ class FakeAppStartupDataCollector(
     var firstFrameRenderedMs: Long? = null
     var appReadyMs: Long? = null
     var appStartupCompleteCallback: (() -> Unit)? = null
-    var customChildSpans = ConcurrentLinkedQueue<SpanData>()
+    var customChildSpans = ConcurrentLinkedQueue<OtelJavaSpanData>()
     var customAttributes: MutableMap<String, String> = ConcurrentHashMap()
     var dataValidator: DataValidator = DataValidator()
 
@@ -93,7 +93,7 @@ class FakeAppStartupDataCollector(
         events: List<EmbraceSpanEvent>,
         errorCode: ErrorCode?,
     ) {
-        val attributesBuilder = Attributes.builder().fromMap(
+        val attributesBuilder = OtelJavaAttributes.builder().fromMap(
             attributes = attributes,
             internal = false,
             limitsValidator = dataValidator
@@ -101,9 +101,9 @@ class FakeAppStartupDataCollector(
         val status = if (errorCode != null) {
             val errorCodeAttr = errorCode.fromErrorCode()
             attributesBuilder.put(errorCodeAttr.key.name, errorCodeAttr.value)
-            StatusData.error()
+            OtelJavaStatusData.error()
         } else {
-            StatusData.unset()
+            OtelJavaStatusData.unset()
         }
         customChildSpans.add(
             FakeSpanData(
@@ -112,10 +112,10 @@ class FakeAppStartupDataCollector(
                 endTimeNanos = endTimeMs.millisToNanos(),
                 attributes = attributesBuilder.build(),
                 events = events.map {
-                    EventData.create(
+                    OtelJavaEventData.create(
                         it.timestampNanos,
                         it.name,
-                        Attributes.builder().fromMap(
+                        OtelJavaAttributes.builder().fromMap(
                             attributes = it.attributes,
                             internal = false,
                             limitsValidator = dataValidator

@@ -31,7 +31,7 @@ import io.embrace.android.embracesdk.internal.ui.hasRenderEvent
 import io.embrace.android.embracesdk.internal.ui.supportFrameCommitCallback
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.spans.ErrorCode
-import io.opentelemetry.sdk.common.Clock
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaClock
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -60,7 +60,7 @@ internal class AppStartupTraceEmitterTest {
     private var hasFrameCommitEvent = true
 
     private lateinit var clock: FakeClock
-    private lateinit var otelClock: Clock
+    private lateinit var otelClock: OtelJavaClock
     private lateinit var spanSink: SpanSink
     private lateinit var spanService: SpanService
     private lateinit var logger: FakeEmbLogger

@@ -74,6 +74,7 @@ dependencies {
     implementation(project(":embrace-android-otel"))
 
     implementation(platform(libs.opentelemetry.bom))
+    implementation(libs.opentelemetry.java.aliases)
 
     // lifecycle
     implementation(libs.lifecycle.runtime)
@@ -91,6 +92,10 @@ dependencies {
     implementation(libs.opentelemetry.semconv)
     implementation(libs.opentelemetry.semconv.incubating)
     implementation(libs.profileinstaller)
+
+    implementation(libs.opentelemetry.kotlin.api)
+    implementation(libs.opentelemetry.kotlin.api.ext)
+    implementation(libs.opentelemetry.kotlin.compat)
 
     testImplementation(project(":embrace-test-fakes"))
     testImplementation(libs.protobuf.java)

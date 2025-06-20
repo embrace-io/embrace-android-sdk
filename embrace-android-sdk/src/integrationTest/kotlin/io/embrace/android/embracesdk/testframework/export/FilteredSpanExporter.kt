@@ -2,33 +2,33 @@ package io.embrace.android.embracesdk.testframework.export
 
 import io.embrace.android.embracesdk.assertions.returnIfConditionMet
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
-import io.opentelemetry.sdk.common.CompletableResultCode
-import io.opentelemetry.sdk.trace.data.SpanData
-import io.opentelemetry.sdk.trace.export.SpanExporter
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaCompletableResultCode
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanData
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanExporter
 import java.util.concurrent.CopyOnWriteArrayList
 
 /**
  * A [SpanExporter] used in the integration tests that allows retrieving exported spans
  * to perform assertions against.
  */
-internal class FilteredSpanExporter : SpanExporter {
+internal class FilteredSpanExporter : OtelJavaSpanExporter {
 
-    private val spanData = CopyOnWriteArrayList<SpanData>()
+    private val spanData = CopyOnWriteArrayList<OtelJavaSpanData>()
 
-    override fun export(spans: MutableCollection<SpanData>): CompletableResultCode {
+    override fun export(spans: MutableCollection<OtelJavaSpanData>): OtelJavaCompletableResultCode {
         spanData.addAll(spans)
-        return CompletableResultCode.ofSuccess()
+        return OtelJavaCompletableResultCode.ofSuccess()
     }
 
-    override fun flush(): CompletableResultCode {
-        return CompletableResultCode.ofSuccess()
+    override fun flush(): OtelJavaCompletableResultCode {
+        return OtelJavaCompletableResultCode.ofSuccess()
     }
 
-    override fun shutdown(): CompletableResultCode {
-        return CompletableResultCode.ofSuccess()
+    override fun shutdown(): OtelJavaCompletableResultCode {
+        return OtelJavaCompletableResultCode.ofSuccess()
     }
 
-    fun awaitSpans(expectedCount: Int, filter: (SpanData) -> Boolean): List<SpanData> {
+    fun awaitSpans(expectedCount: Int, filter: (OtelJavaSpanData) -> Boolean): List<OtelJavaSpanData> {
         val supplier = { spanData.filter(filter) }
         return returnIfConditionMet(
             desiredValueSupplier = supplier,
@@ -44,7 +44,7 @@ internal class FilteredSpanExporter : SpanExporter {
         )
     }
 
-    fun awaitSpansWithType(expectedCount: Int, type: EmbType): List<SpanData> {
+    fun awaitSpansWithType(expectedCount: Int, type: EmbType): List<OtelJavaSpanData> {
         return awaitSpans(expectedCount) { data ->
             data.attributes?.asMap()?.mapKeys { it.key.key }?.get("emb.type") == type.value
         }

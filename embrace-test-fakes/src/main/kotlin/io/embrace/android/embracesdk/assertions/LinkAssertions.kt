@@ -4,7 +4,7 @@ import io.embrace.android.embracesdk.internal.otel.attrs.asPair
 import io.embrace.android.embracesdk.internal.otel.schema.LinkType
 import io.embrace.android.embracesdk.internal.payload.Link
 import io.embrace.android.embracesdk.internal.payload.Span
-import io.opentelemetry.api.trace.SpanContext
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanContext
 import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes
 import org.junit.Assert.assertTrue
 
@@ -40,7 +40,7 @@ fun Link.validateLinkToSpan(
 }
 
 fun Link.validateLinkToSpanContext(
-    linkedSpanContext: SpanContext,
+    linkedSpanContext: OtelJavaSpanContext,
     expectedAttributes: Map<String, String> = emptyMap(),
 ) {
     assertTrue(isLinkedToSpanContext(linkedSpanContext))
@@ -50,5 +50,5 @@ fun Link.validateLinkToSpanContext(
 fun Link.isLinkedToSpan(expectedSpan: Span, expectedIsRemote: Boolean): Boolean =
     traceId == expectedSpan.traceId && spanId == expectedSpan.spanId && isRemote == expectedIsRemote
 
-fun Link.isLinkedToSpanContext(expectedSpanContext: SpanContext): Boolean =
+fun Link.isLinkedToSpanContext(expectedSpanContext: OtelJavaSpanContext): Boolean =
     traceId == expectedSpanContext.traceId && spanId == expectedSpanContext.spanId && isRemote == expectedSpanContext.isRemote

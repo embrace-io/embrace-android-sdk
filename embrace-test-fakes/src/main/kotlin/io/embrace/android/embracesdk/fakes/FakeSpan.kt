@@ -2,32 +2,32 @@ package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
 import io.embrace.android.embracesdk.internal.otel.spans.getEmbraceSpan
-import io.opentelemetry.api.common.AttributeKey
-import io.opentelemetry.api.common.Attributes
-import io.opentelemetry.api.trace.Span
-import io.opentelemetry.api.trace.SpanContext
-import io.opentelemetry.api.trace.StatusCode
-import io.opentelemetry.api.trace.TraceFlags
-import io.opentelemetry.api.trace.TraceState
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaAttributeKey
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaAttributes
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpan
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanContext
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaStatusCode
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaTraceFlags
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaTraceState
 import java.util.concurrent.TimeUnit
 
 class FakeSpan(
     val fakeSpanBuilder: FakeSpanBuilder,
-) : Span {
+) : OtelJavaSpan {
 
-    private val spanContext: SpanContext =
-        SpanContext.create(
+    private val spanContext: OtelJavaSpanContext =
+        OtelJavaSpanContext.create(
             fakeSpanBuilder.parentContext.getEmbraceSpan()?.traceId ?: OtelIds.generateTraceId(),
             OtelIds.generateSpanId(),
-            TraceFlags.getDefault(),
-            TraceState.getDefault()
+            OtelJavaTraceFlags.getDefault(),
+            OtelJavaTraceState.getDefault()
         )
 
     private var isRecording = true
-    private var status: StatusCode = StatusCode.UNSET
+    private var status: OtelJavaStatusCode = OtelJavaStatusCode.UNSET
     private var statusDescription: String = ""
 
-    override fun <T : Any> setAttribute(key: AttributeKey<T>, value: T?): Span {
+    override fun <T : Any> setAttribute(key: OtelJavaAttributeKey<T>, value: T?): OtelJavaSpan {
         if (value != null) {
             fakeSpanBuilder.setAttribute(key, value)
         }
@@ -35,25 +35,25 @@ class FakeSpan(
         return this
     }
 
-    override fun addEvent(name: String, attributes: Attributes): Span {
+    override fun addEvent(name: String, attributes: OtelJavaAttributes): OtelJavaSpan {
         TODO("Not yet implemented")
     }
 
-    override fun addEvent(name: String, attributes: Attributes, timestamp: Long, unit: TimeUnit): Span {
+    override fun addEvent(name: String, attributes: OtelJavaAttributes, timestamp: Long, unit: TimeUnit): OtelJavaSpan {
         TODO("Not yet implemented")
     }
 
-    override fun setStatus(statusCode: StatusCode, description: String): Span {
+    override fun setStatus(statusCode: OtelJavaStatusCode, description: String): OtelJavaSpan {
         status = statusCode
         statusDescription = description
         return this
     }
 
-    override fun recordException(exception: Throwable, additionalAttributes: Attributes): Span {
+    override fun recordException(exception: Throwable, additionalAttributes: OtelJavaAttributes): OtelJavaSpan {
         TODO("Not yet implemented")
     }
 
-    override fun updateName(name: String): Span {
+    override fun updateName(name: String): OtelJavaSpan {
         TODO("Not yet implemented")
     }
 
@@ -63,7 +63,7 @@ class FakeSpan(
 
     override fun end(timestamp: Long, unit: TimeUnit): Unit = end()
 
-    override fun getSpanContext(): SpanContext = spanContext
+    override fun getSpanContext(): OtelJavaSpanContext = spanContext
 
     override fun isRecording(): Boolean = isRecording
 }

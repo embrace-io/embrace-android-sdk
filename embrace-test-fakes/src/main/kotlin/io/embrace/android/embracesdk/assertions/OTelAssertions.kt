@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.assertions
 
 import io.embrace.android.embracesdk.internal.SystemInfo
-import io.opentelemetry.sdk.resources.Resource
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaResource
 import io.opentelemetry.semconv.ServiceAttributes
 import io.opentelemetry.semconv.incubating.AndroidIncubatingAttributes
 import io.opentelemetry.semconv.incubating.DeviceIncubatingAttributes
@@ -9,7 +9,7 @@ import io.opentelemetry.semconv.incubating.OsIncubatingAttributes
 import io.opentelemetry.semconv.incubating.TelemetryIncubatingAttributes
 import org.junit.Assert.assertEquals
 
-fun Resource.assertExpectedAttributes(
+fun OtelJavaResource.assertExpectedAttributes(
     expectedServiceName: String,
     expectedServiceVersion: String,
     systemInfo: SystemInfo,

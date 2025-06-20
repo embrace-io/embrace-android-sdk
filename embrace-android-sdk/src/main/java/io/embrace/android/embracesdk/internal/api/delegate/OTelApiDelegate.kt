@@ -2,34 +2,34 @@ package io.embrace.android.embracesdk.internal.api.delegate
 
 import io.embrace.android.embracesdk.internal.api.OTelApi
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
-import io.opentelemetry.api.OpenTelemetry
-import io.opentelemetry.sdk.logs.export.LogRecordExporter
-import io.opentelemetry.sdk.trace.export.SpanExporter
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaLogRecordExporter
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaOpenTelemetry
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanExporter
 
 internal class OTelApiDelegate(
     private val bootstrapper: ModuleInitBootstrapper,
     private val sdkCallChecker: SdkCallChecker,
 ) : OTelApi {
 
-    override fun addSpanExporter(spanExporter: SpanExporter) {
+    override fun addSpanExporter(spanExporter: OtelJavaSpanExporter) {
         if (sdkCallChecker.started.get()) {
             return
         }
         bootstrapper.openTelemetryModule.otelSdkConfig.addSpanExporter(spanExporter)
     }
 
-    override fun addLogRecordExporter(logRecordExporter: LogRecordExporter) {
+    override fun addLogRecordExporter(logRecordExporter: OtelJavaLogRecordExporter) {
         if (sdkCallChecker.started.get()) {
             return
         }
         bootstrapper.openTelemetryModule.otelSdkConfig.addLogExporter(logRecordExporter)
     }
 
-    override fun getOpenTelemetry(): OpenTelemetry {
+    override fun getOpenTelemetry(): OtelJavaOpenTelemetry {
         return if (sdkCallChecker.started.get()) {
             bootstrapper.openTelemetryModule.externalOpenTelemetry
         } else {
-            OpenTelemetry.noop()
+            OtelJavaOpenTelemetry.noop()
         }
     }
 

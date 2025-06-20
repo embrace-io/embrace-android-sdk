@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.otel.sdk
 
-import io.opentelemetry.api.trace.SpanId
-import io.opentelemetry.api.trace.TraceId
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanId
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaTraceId
 import kotlin.random.Random
 
 class IdGenerator(
@@ -13,12 +13,12 @@ class IdGenerator(
      * Note: because Embrace may be recording a span on our side for the given traceparent, we have set the "sampled" flag to indicate that.
      */
     fun generateTraceparent(): String =
-        "00-" + TraceId.fromLongs(
+        "00-" + OtelJavaTraceId.fromLongs(
             validRandomLong(),
             validRandomLong()
-        ) + "-" + SpanId.fromLong(validRandomLong()) + "-01"
+        ) + "-" + OtelJavaSpanId.fromLong(validRandomLong()) + "-01"
 
-    fun generateUUID(): String = SpanId.fromLong(validRandomLong())
+    fun generateUUID(): String = OtelJavaSpanId.fromLong(validRandomLong())
 
     private fun validRandomLong(): Long {
         var value: Long

@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.capture.crash
 
+import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.fakes.FakeLogWriter
 import io.embrace.android.embracesdk.fakes.LogEventData
 import io.embrace.android.embracesdk.internal.capture.telemetry.InternalErrorDataSourceImpl
@@ -7,8 +8,6 @@ import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
-import io.embrace.android.embracesdk.internal.otel.sdk.toOtelSeverity
-import io.opentelemetry.api.logs.Severity
 import io.opentelemetry.semconv.ExceptionAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -60,7 +59,7 @@ internal class InternalErrorDataSourceImplTest {
     }
 
     private fun assertInternalErrorLogged(data: LogEventData): Map<String, String> {
-        assertEquals(Severity.ERROR, data.severity.toOtelSeverity())
+        assertEquals(Severity.ERROR, data.severity)
         assertEquals("", data.message)
         assertEquals(EmbType.System.InternalError, data.schemaType.telemetryType)
         assertEquals("internal-error", data.schemaType.fixedObjectName)

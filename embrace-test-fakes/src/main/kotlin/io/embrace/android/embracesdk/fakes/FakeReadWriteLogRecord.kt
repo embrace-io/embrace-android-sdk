@@ -1,21 +1,21 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.opentelemetry.api.common.AttributeKey
-import io.opentelemetry.sdk.logs.ReadWriteLogRecord
-import io.opentelemetry.sdk.logs.data.LogRecordData
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaAttributeKey
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaLogRecordData
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaReadWriteLogRecord
 
-class FakeReadWriteLogRecord : ReadWriteLogRecord {
+class FakeReadWriteLogRecord : OtelJavaReadWriteLogRecord {
 
     val attributes: MutableMap<String, String> = mutableMapOf()
 
     private val logRecordData = FakeLogRecordData()
 
-    override fun <T : Any> setAttribute(key: AttributeKey<T>, value: T): ReadWriteLogRecord {
+    override fun <T : Any> setAttribute(key: OtelJavaAttributeKey<T>, value: T): OtelJavaReadWriteLogRecord {
         attributes[key.key] = value.toString()
         return this
     }
 
-    override fun toLogRecordData(): LogRecordData {
+    override fun toLogRecordData(): OtelJavaLogRecordData {
         return logRecordData
     }
 }

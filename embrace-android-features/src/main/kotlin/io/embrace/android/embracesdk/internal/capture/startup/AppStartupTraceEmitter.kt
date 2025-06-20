@@ -5,7 +5,6 @@ import android.os.Process
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
-import io.embrace.android.embracesdk.internal.otel.attrs.asOtelAttributeKey
 import io.embrace.android.embracesdk.internal.otel.attrs.embStartupActivityName
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
@@ -18,7 +17,7 @@ import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
-import io.opentelemetry.sdk.common.Clock
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaClock
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicBoolean
@@ -45,7 +44,7 @@ import java.util.concurrent.atomic.AtomicReference
  *
  */
 internal class AppStartupTraceEmitter(
-    private val clock: Clock,
+    private val clock: OtelJavaClock,
     private val startupServiceProvider: Provider<StartupService?>,
     private val spanService: SpanService,
     private val versionChecker: VersionChecker,
@@ -430,7 +429,7 @@ internal class AppStartupTraceEmitter(
         addCustomAttributes()
 
         startupActivityName?.let { name ->
-            setSystemAttribute(embStartupActivityName.asOtelAttributeKey(), name)
+            setSystemAttribute(embStartupActivityName.name, name)
         }
     }
 

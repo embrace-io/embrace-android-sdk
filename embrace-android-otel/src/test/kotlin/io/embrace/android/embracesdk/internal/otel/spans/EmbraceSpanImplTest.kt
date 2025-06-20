@@ -28,14 +28,14 @@ import io.embrace.android.embracesdk.internal.otel.schema.LinkType
 import io.embrace.android.embracesdk.internal.otel.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
-import io.embrace.android.embracesdk.internal.otel.sdk.otelSpanBuilderWrapper
+import io.embrace.android.embracesdk.internal.otel.sdk.otelSpanCreator
 import io.embrace.android.embracesdk.internal.otel.sdk.toEmbraceObjectName
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.utils.truncatedStacktraceText
 import io.embrace.android.embracesdk.spans.ErrorCode
-import io.opentelemetry.sdk.OpenTelemetrySdk
-import io.opentelemetry.sdk.trace.SdkTracerProvider
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaOpenTelemetrySdk
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSdkTracerProvider
 import io.opentelemetry.semconv.ExceptionAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -53,8 +53,8 @@ internal class EmbraceSpanImplTest {
     private lateinit var embraceSpanFactory: EmbraceSpanFactory
     private var updateNotified: Boolean = false
     private var stoppedSpanId: String? = null
-    private val tracer = OpenTelemetrySdk.builder()
-        .setTracerProvider(SdkTracerProvider.builder().build()).build()
+    private val tracer = OtelJavaOpenTelemetrySdk.builder()
+        .setTracerProvider(OtelJavaSdkTracerProvider.builder().build()).build()
         .getTracer(EmbraceSpanImplTest::class.java.name)
 
     @Before
@@ -70,7 +70,7 @@ internal class EmbraceSpanImplTest {
             redactionFunction = ::redactionFunction
         )
         embraceSpan = embraceSpanFactory.create(
-            otelSpanBuilderWrapper = tracer.otelSpanBuilderWrapper(
+            otelSpanCreator = tracer.otelSpanCreator(
                 name = EXPECTED_SPAN_NAME,
                 type = EmbType.Performance.Default,
                 internal = false,
@@ -458,7 +458,7 @@ internal class EmbraceSpanImplTest {
     @Test
     fun `start time from span start method overrides all`() {
         val wrapper = createWrapperForInternalSpan()
-        wrapper.startTimeMs = fakeClock.tick()
+        wrapper.spanStartArgs.startTimeMs = fakeClock.tick()
         embraceSpan = embraceSpanFactory.create(wrapper)
 
         val timePassedIn = fakeClock.tick()
@@ -477,7 +477,7 @@ internal class EmbraceSpanImplTest {
     fun `start time from span builder used if no start time passed into start method`() {
         val wrapper = createWrapperForInternalSpan()
         val timeOnWrapper = fakeClock.tick()
-        wrapper.startTimeMs = timeOnWrapper
+        wrapper.spanStartArgs.startTimeMs = timeOnWrapper
         embraceSpan = embraceSpanFactory.create(wrapper)
         fakeClock.tick()
         assertTrue(embraceSpan.start())
@@ -487,8 +487,8 @@ internal class EmbraceSpanImplTest {
     @Test
     fun `validate context objects are propagated from the parent to the child span`() {
         val wrapper = createWrapperForInternalSpan()
-        val newParentContext = wrapper.getParentContext().with(fakeContextKey, "fake-value")
-        wrapper.setParentContext(newParentContext)
+        val newParentContext = wrapper.spanStartArgs.parentContext.with(fakeContextKey, "fake-value")
+        wrapper.spanStartArgs.parentContext = newParentContext
         embraceSpan = embraceSpanFactory.create(wrapper)
 
         assertNull(embraceSpan.asNewContext())
@@ -501,8 +501,8 @@ internal class EmbraceSpanImplTest {
     fun `custom attributes are redacted if their key is sensitive when getting a span snapshot`() {
         // given a span with a sensitive key
         val spanBuilder = createWrapperForInternalSpan()
-        spanBuilder.customAttributes["password"] = "123456"
-        spanBuilder.customAttributes["status"] = "ok"
+        spanBuilder.spanStartArgs.customAttributes["password"] = "123456"
+        spanBuilder.spanStartArgs.customAttributes["status"] = "ok"
         embraceSpan = embraceSpanFactory.create(spanBuilder)
         embraceSpan.start()
 
@@ -536,7 +536,7 @@ internal class EmbraceSpanImplTest {
 
     private fun createInternalEmbraceSdkSpan() = embraceSpanFactory.create(createWrapperForInternalSpan())
 
-    private fun createWrapperForInternalSpan() = tracer.otelSpanBuilderWrapper(
+    private fun createWrapperForInternalSpan() = tracer.otelSpanCreator(
         name = EXPECTED_SPAN_NAME,
         type = EmbType.System.LowPower,
         internal = true,

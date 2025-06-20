@@ -98,10 +98,8 @@ class JvmMappingUploadTaskRegistration : EmbraceTaskRegistration {
 
             // link output of compression task to the input of this task
             // dependencies to mapping file compression will be added automatically
-            task.uploadFile.fileProvider(
-                compressionTask.nullSafeMap {
-                    it.compressedFile.orNull?.asFile
-                }
+            task.uploadFile.set(
+                compressionTask.flatMap { it.compressedFile }
             )
         }
 

@@ -5,7 +5,7 @@ buildscript {
         compileSdkVersion = 35
         targetSdkVersion = 34
         ndkVersion = "26.1.10909125"
-        kotlinVersion = "1.9.24"
+        kotlinVersion = "2.0.0"
     }
     repositories {
         google()
@@ -17,7 +17,7 @@ buildscript {
         classpath "io.embrace:embrace-swazzler:$plugin_snapshot_version"
         classpath "io.embrace:embrace-gradle-plugin-integration-tests:$plugin_snapshot_version"
         classpath("com.facebook.react:react-native-gradle-plugin")
-        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version")
     }
 }
 

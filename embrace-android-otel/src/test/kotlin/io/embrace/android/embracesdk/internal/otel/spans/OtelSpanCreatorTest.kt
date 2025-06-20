@@ -16,6 +16,7 @@ import io.embrace.opentelemetry.kotlin.k2j.ClockAdapter
 import io.embrace.opentelemetry.kotlin.k2j.tracing.TracerAdapter
 import io.embrace.opentelemetry.kotlin.tracing.Span
 import io.embrace.opentelemetry.kotlin.tracing.SpanKind
+import io.opentelemetry.context.ImplicitContextKeyed
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -78,11 +79,13 @@ internal class OtelSpanCreatorTest {
         val parentContext = checkNotNull(parent.asNewContext()?.with(fakeContextKey, "value"))
         args.parentContext = parentContext
         val startTime = clock.now()
-        creator.startSpan(startTime).assertFakeSpanBuilder(
+        val span = creator.startSpan(startTime)
+        val expectedTraceId = parent.spanContext?.traceId
+        span.assertFakeSpanBuilder(
             expectedName = "test",
             expectedParentContext = parentContext,
             expectedStartTimeMs = startTime,
-            expectedTraceId = parent.spanContext?.traceId
+            expectedTraceId = expectedTraceId
         )
     }
 
@@ -182,9 +185,8 @@ internal class OtelSpanCreatorTest {
         args.parentContext = fakeRootContext
         assertEquals("fake-value", args.parentContext.get(fakeContextKey))
 
-        val span = creator.startSpan(clock.now())
-        TODO("Reinstate assertion for $span")
-//        assertEquals("fake-value", span.fakeSpanBuilder.parentContext.get(fakeContextKey))
+        creator.startSpan(clock.now())
+        assertEquals("fake-value", fakeRootContext.get(fakeContextKey))
     }
 
     private fun Span.assertFakeSpanBuilder(

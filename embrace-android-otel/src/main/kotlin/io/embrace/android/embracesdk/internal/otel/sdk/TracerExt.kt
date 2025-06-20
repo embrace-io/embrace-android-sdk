@@ -5,12 +5,12 @@ import io.embrace.android.embracesdk.internal.otel.spans.OtelSpanCreator
 import io.embrace.android.embracesdk.internal.otel.spans.OtelSpanStartArgs
 import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
-import io.opentelemetry.api.trace.Tracer
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaTracer
 
 /**
  * Creates a new [OtelSpanCreator] that marks the resulting span as private if [internal] is true
  */
-fun Tracer.otelSpanCreator(
+fun OtelJavaTracer.otelSpanCreator(
     name: String,
     type: EmbType,
     internal: Boolean,

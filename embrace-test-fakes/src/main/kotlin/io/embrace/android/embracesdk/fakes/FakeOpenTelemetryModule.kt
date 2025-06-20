@@ -17,11 +17,11 @@ import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
 import io.embrace.android.embracesdk.internal.spans.EmbraceTracer
 import io.embrace.android.embracesdk.internal.spans.InternalTracer
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaClock
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaOpenTelemetry
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaTracer
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaTracerProvider
 import io.embrace.opentelemetry.kotlin.logging.Logger
-import io.opentelemetry.api.OpenTelemetry
-import io.opentelemetry.api.trace.Tracer
-import io.opentelemetry.api.trace.TracerProvider
-import io.opentelemetry.sdk.common.Clock
 
 class FakeOpenTelemetryModule(
     override val currentSessionSpan: CurrentSessionSpan = FakeCurrentSessionSpan(),
@@ -36,7 +36,7 @@ class FakeOpenTelemetryModule(
         // no-op
     }
 
-    override val sdkTracer: Tracer
+    override val sdkTracer: OtelJavaTracer
         get() = FakeTracer()
     override val spanService: SpanService
         get() = FakeSpanService()
@@ -46,10 +46,10 @@ class FakeOpenTelemetryModule(
         get() = TODO()
     override val logger: Logger
         get() = FakeOtelLogger()
-    override val externalOpenTelemetry: OpenTelemetry
+    override val externalOpenTelemetry: OtelJavaOpenTelemetry
         get() = EmbOpenTelemetry(traceProviderSupplier = { FakeTracerProvider() })
-    override val externalTracerProvider: TracerProvider
+    override val externalTracerProvider: OtelJavaTracerProvider
         get() = FakeTracerProvider()
-    override val openTelemetryClock: Clock
+    override val openTelemetryClock: OtelJavaClock
         get() = FakeOpenTelemetryClock(FakeClock())
 }

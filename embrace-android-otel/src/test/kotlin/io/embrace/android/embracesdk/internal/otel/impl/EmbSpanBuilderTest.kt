@@ -12,11 +12,11 @@ import io.embrace.android.embracesdk.internal.otel.spans.OtelSpanCreator
 import io.embrace.android.embracesdk.internal.otel.spans.OtelSpanStartArgs
 import io.embrace.android.embracesdk.internal.otel.spans.getEmbraceSpan
 import io.embrace.android.embracesdk.spans.AutoTerminationMode
-import io.opentelemetry.api.common.AttributeKey
-import io.opentelemetry.api.common.Attributes
-import io.opentelemetry.api.trace.Span
-import io.opentelemetry.api.trace.SpanKind
-import io.opentelemetry.context.Context
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaAttributeKey
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaAttributes
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaContext
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpan
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanKind
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNull
@@ -85,7 +85,7 @@ internal class EmbSpanBuilderTest {
     @Test
     fun `set parent to root`() {
         val oldParent = FakeEmbraceSdkSpan.started(
-            parentContext = Context.root().with(
+            parentContext = OtelJavaContext.root().with(
                 fakeContextKey,
                 "value"
             )
@@ -119,7 +119,7 @@ internal class EmbSpanBuilderTest {
     @Test
     fun `replace parent`() {
         val newParentSpan = FakeEmbraceSdkSpan.started(
-            parentContext = Context.root().with(fakeContextKey, "value")
+            parentContext = OtelJavaContext.root().with(fakeContextKey, "value")
         )
         val newParentContext = checkNotNull(newParentSpan.asNewContext())
 
@@ -144,7 +144,7 @@ internal class EmbSpanBuilderTest {
             assertEquals(newParentSpan, parent)
             assertEquals(checkNotNull(newParentContext.getEmbraceSpan()?.traceId), spanContext?.traceId)
             assertEquals("value", checkNotNull(asNewContext()).get(fakeContextKey))
-            assertEquals(checkNotNull(Span.fromContext(newParentContext).spanContext?.traceId), spanContext?.traceId)
+            assertEquals(checkNotNull(OtelJavaSpan.fromContext(newParentContext).spanContext?.traceId), spanContext?.traceId)
         }
     }
 
@@ -166,11 +166,11 @@ internal class EmbSpanBuilderTest {
             setAttribute("long", 2L)
             setAttribute("double", 3.0)
             setAttribute("string", "value")
-            setAttribute(AttributeKey.booleanArrayKey("booleanArray"), listOf(true, false))
-            setAttribute(AttributeKey.longArrayKey("integerArray"), listOf(1, 2))
-            setAttribute(AttributeKey.longArrayKey("longArray"), listOf(2L, 3L))
-            setAttribute(AttributeKey.doubleArrayKey("doubleArray"), listOf(3.0, 4.0))
-            setAttribute(AttributeKey.stringArrayKey("stringArray"), listOf("value", "vee"))
+            setAttribute(OtelJavaAttributeKey.booleanArrayKey("booleanArray"), listOf(true, false))
+            setAttribute(OtelJavaAttributeKey.longArrayKey("integerArray"), listOf(1, 2))
+            setAttribute(OtelJavaAttributeKey.longArrayKey("longArray"), listOf(2L, 3L))
+            setAttribute(OtelJavaAttributeKey.doubleArrayKey("doubleArray"), listOf(3.0, 4.0))
+            setAttribute(OtelJavaAttributeKey.stringArrayKey("stringArray"), listOf("value", "vee"))
         }
 
         assertEquals(10, creator.spanStartArgs.customAttributes.count())
@@ -178,9 +178,9 @@ internal class EmbSpanBuilderTest {
 
     @Test
     fun `set span kind`() {
-        embSpanBuilder.setSpanKind(SpanKind.CLIENT)
+        embSpanBuilder.setSpanKind(OtelJavaSpanKind.CLIENT)
         val fakeSpan = creator.startSpan(clock.now()) as FakeSpan
-        assertEquals(SpanKind.CLIENT, fakeSpan.fakeSpanBuilder.spanKind)
+        assertEquals(OtelJavaSpanKind.CLIENT, fakeSpan.fakeSpanBuilder.spanKind)
     }
 
     @Test
@@ -188,7 +188,7 @@ internal class EmbSpanBuilderTest {
         embSpanBuilder.addLink(checkNotNull(FakeEmbraceSdkSpan.started().spanContext))
         embSpanBuilder.addLink(
             checkNotNull(FakeEmbraceSdkSpan.started().spanContext),
-            Attributes.of(AttributeKey.stringKey("key"), "value")
+            OtelJavaAttributes.of(OtelJavaAttributeKey.stringKey("key"), "value")
         )
     }
 }

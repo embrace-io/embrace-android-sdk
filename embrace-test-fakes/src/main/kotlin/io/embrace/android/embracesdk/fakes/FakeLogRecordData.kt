@@ -1,32 +1,32 @@
-@file:Suppress("DEPRECATION")
+@file:Suppress("TYPEALIAS_EXPANSION_DEPRECATION")
 
 package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.fixtures.testLog
 import io.embrace.android.embracesdk.internal.payload.Log
-import io.opentelemetry.api.common.AttributeKey
-import io.opentelemetry.api.common.Attributes
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaAttributeKey
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaAttributes
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaBody
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaInstrumentationScopeInfo
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaLogRecordData
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaResource
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSeverity
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanContext
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaTraceFlags
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaTraceState
 import io.opentelemetry.api.internal.ImmutableSpanContext
 import io.opentelemetry.api.internal.ImmutableSpanContext.INVALID
-import io.opentelemetry.api.logs.Severity
-import io.opentelemetry.api.trace.SpanContext
-import io.opentelemetry.api.trace.TraceFlags
-import io.opentelemetry.api.trace.TraceState
-import io.opentelemetry.sdk.common.InstrumentationScopeInfo
-import io.opentelemetry.sdk.logs.data.Body
-import io.opentelemetry.sdk.logs.data.LogRecordData
-import io.opentelemetry.sdk.resources.Resource
 
 class FakeLogRecordData(
     val log: Log = testLog,
-) : LogRecordData {
+) : OtelJavaLogRecordData {
 
-    override fun getResource(): Resource {
-        return Resource.builder().build()
+    override fun getResource(): OtelJavaResource {
+        return OtelJavaResource.builder().build()
     }
 
-    override fun getInstrumentationScopeInfo(): InstrumentationScopeInfo {
-        return InstrumentationScopeInfo.create("TestLogRecordData")
+    override fun getInstrumentationScopeInfo(): OtelJavaInstrumentationScopeInfo {
+        return OtelJavaInstrumentationScopeInfo.create("TestLogRecordData")
     }
 
     override fun getTimestampEpochNanos(): Long {
@@ -37,15 +37,15 @@ class FakeLogRecordData(
         return checkNotNull(log.timeUnixNano)
     }
 
-    override fun getSpanContext(): SpanContext {
+    override fun getSpanContext(): OtelJavaSpanContext {
         val traceId = log.traceId
         val spanId = log.spanId
         return if (traceId != null && spanId != null) {
             ImmutableSpanContext.create(
                 traceId,
                 spanId,
-                TraceFlags.getDefault(),
-                TraceState.getDefault(),
+                OtelJavaTraceFlags.getDefault(),
+                OtelJavaTraceState.getDefault(),
                 false,
                 true
             )
@@ -54,22 +54,23 @@ class FakeLogRecordData(
         }
     }
 
-    override fun getSeverity(): Severity {
-        return Severity.INFO
+    override fun getSeverity(): OtelJavaSeverity {
+        return OtelJavaSeverity.INFO
     }
 
     override fun getSeverityText(): String? {
         return log.severityText
     }
 
-    override fun getBody(): Body {
-        return Body.string(checkNotNull(log.body))
+    @Deprecated("Deprecated in Java")
+    override fun getBody(): OtelJavaBody {
+        return OtelJavaBody.string(checkNotNull(log.body))
     }
 
-    override fun getAttributes(): Attributes {
-        val attrBuilder = Attributes.builder()
+    override fun getAttributes(): OtelJavaAttributes {
+        val attrBuilder = OtelJavaAttributes.builder()
         log.attributes?.forEach { (key, value) ->
-            attrBuilder.put(AttributeKey.stringKey(checkNotNull(key)), checkNotNull(value))
+            attrBuilder.put(OtelJavaAttributeKey.stringKey(checkNotNull(key)), checkNotNull(value))
         }
         return attrBuilder.build()
     }

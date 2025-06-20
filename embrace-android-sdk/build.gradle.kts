@@ -74,6 +74,7 @@ dependencies {
     implementation(project(":embrace-android-otel"))
 
     implementation(platform(libs.opentelemetry.bom))
+    implementation(libs.opentelemetry.java.aliases)
 
     // lifecycle
     implementation(libs.lifecycle.runtime)

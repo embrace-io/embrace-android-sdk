@@ -1,19 +1,19 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.opentelemetry.sdk.common.CompletableResultCode
-import io.opentelemetry.sdk.trace.data.SpanData
-import io.opentelemetry.sdk.trace.export.SpanExporter
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaCompletableResultCode
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanData
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanExporter
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import kotlin.math.min
 
-class FakeSpanExporter : SpanExporter {
-    val exportedSpans: MutableList<SpanData> = mutableListOf()
+class FakeSpanExporter : OtelJavaSpanExporter {
+    val exportedSpans: MutableList<OtelJavaSpanData> = mutableListOf()
 
     private val latches = mutableListOf<CountDownLatch>()
     private var totalExported = 0
 
-    override fun export(spans: MutableCollection<SpanData>): CompletableResultCode {
+    override fun export(spans: MutableCollection<OtelJavaSpanData>): OtelJavaCompletableResultCode {
         synchronized(exportedSpans) {
             exportedSpans.addAll(spans)
             latches.forEach { latch ->
@@ -24,18 +24,18 @@ class FakeSpanExporter : SpanExporter {
             latches.removeIf { it.count == 0L }
             totalExported += spans.size
         }
-        return CompletableResultCode.ofSuccess()
+        return OtelJavaCompletableResultCode.ofSuccess()
     }
 
-    override fun flush(): CompletableResultCode {
+    override fun flush(): OtelJavaCompletableResultCode {
         synchronized(exportedSpans) {
             exportedSpans.clear()
         }
-        return CompletableResultCode.ofSuccess()
+        return OtelJavaCompletableResultCode.ofSuccess()
     }
 
-    override fun shutdown(): CompletableResultCode {
-        return CompletableResultCode.ofSuccess()
+    override fun shutdown(): OtelJavaCompletableResultCode {
+        return OtelJavaCompletableResultCode.ofSuccess()
     }
 
     /**

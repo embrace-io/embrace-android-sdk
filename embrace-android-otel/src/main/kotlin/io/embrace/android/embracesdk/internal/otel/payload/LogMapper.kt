@@ -2,11 +2,11 @@ package io.embrace.android.embracesdk.internal.otel.payload
 
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Log
-import io.opentelemetry.api.common.Attributes
-import io.opentelemetry.sdk.logs.data.LogRecordData
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaAttributes
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaLogRecordData
 
 @Suppress("DEPRECATION") // suppress for backwards compat
-fun LogRecordData.toEmbracePayload(): Log {
+fun OtelJavaLogRecordData.toEmbracePayload(): Log {
     val isSpanContextValid = spanContext.isValid
     return Log(
         traceId = if (isSpanContextValid) spanContext.traceId else null,
@@ -19,5 +19,5 @@ fun LogRecordData.toEmbracePayload(): Log {
     )
 }
 
-fun Attributes.toEmbracePayload(): List<Attribute> =
+fun OtelJavaAttributes.toEmbracePayload(): List<Attribute> =
     this.asMap().entries.map { Attribute(it.key.key, it.value.toString()) }

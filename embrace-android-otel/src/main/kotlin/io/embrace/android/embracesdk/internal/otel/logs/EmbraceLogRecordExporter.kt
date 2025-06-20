@@ -2,25 +2,25 @@ package io.embrace.android.embracesdk.internal.otel.logs
 
 import io.embrace.android.embracesdk.internal.otel.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.otel.sdk.hasEmbraceAttribute
-import io.opentelemetry.sdk.common.CompletableResultCode
-import io.opentelemetry.sdk.logs.data.LogRecordData
-import io.opentelemetry.sdk.logs.export.LogRecordExporter
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaCompletableResultCode
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaLogRecordData
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaLogRecordExporter
 
 /**
  * Exports the given [LogRecordData] to a [LogSink]
  */
 internal class EmbraceLogRecordExporter(
     private val logSink: LogSink,
-    private val externalLogRecordExporter: LogRecordExporter?,
+    private val externalLogRecordExporter: OtelJavaLogRecordExporter?,
     private val exportCheck: () -> Boolean,
-) : LogRecordExporter {
+) : OtelJavaLogRecordExporter {
 
-    override fun export(logs: Collection<LogRecordData>): CompletableResultCode {
+    override fun export(logs: Collection<OtelJavaLogRecordData>): OtelJavaCompletableResultCode {
         if (!exportCheck()) {
-            return CompletableResultCode.ofSuccess()
+            return OtelJavaCompletableResultCode.ofSuccess()
         }
         val result = logSink.storeLogs(logs.toList())
-        if (externalLogRecordExporter != null && result == CompletableResultCode.ofSuccess()) {
+        if (externalLogRecordExporter != null && result == OtelJavaCompletableResultCode.ofSuccess()) {
             return externalLogRecordExporter.export(
                 logs.filterNot {
                     it.hasEmbraceAttribute(PrivateSpan)
@@ -31,7 +31,7 @@ internal class EmbraceLogRecordExporter(
         return result
     }
 
-    override fun flush(): CompletableResultCode = CompletableResultCode.ofSuccess()
+    override fun flush(): OtelJavaCompletableResultCode = OtelJavaCompletableResultCode.ofSuccess()
 
-    override fun shutdown(): CompletableResultCode = CompletableResultCode.ofSuccess()
+    override fun shutdown(): OtelJavaCompletableResultCode = OtelJavaCompletableResultCode.ofSuccess()
 }

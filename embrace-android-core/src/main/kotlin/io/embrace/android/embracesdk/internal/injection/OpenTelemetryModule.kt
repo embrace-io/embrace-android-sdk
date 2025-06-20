@@ -10,10 +10,11 @@ import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
 import io.embrace.android.embracesdk.internal.spans.EmbraceTracer
 import io.embrace.android.embracesdk.internal.spans.InternalTracer
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaClock
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaOpenTelemetry
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaTracer
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaTracerProvider
 import io.embrace.opentelemetry.kotlin.logging.Logger
-import io.opentelemetry.api.OpenTelemetry
-import io.opentelemetry.api.trace.Tracer
-import io.opentelemetry.api.trace.TracerProvider
 
 /**
  * Module that instantiates various OpenTelemetry related components
@@ -39,7 +40,7 @@ interface OpenTelemetryModule {
     /**
      * An instance of the OpenTelemetry component obtained from the wrapped SDK to create spans
      */
-    val sdkTracer: Tracer
+    val sdkTracer: OtelJavaTracer
 
     /**
      * Component that manages and provides access to the current session span
@@ -76,17 +77,17 @@ interface OpenTelemetryModule {
      * Embrace APIs. Currently, only the APIs related [Tracer] have operational implementations. Every other method will return no-op
      * implementations that records no data.
      */
-    val externalOpenTelemetry: OpenTelemetry
+    val externalOpenTelemetry: OtelJavaOpenTelemetry
 
     /**
      * Provides [Tracer] instances for instrumentation external to the Embrace SDK to create spans
      */
-    val externalTracerProvider: TracerProvider
+    val externalTracerProvider: OtelJavaTracerProvider
 
     /**
      * OpenTelemetry SDK compatible clock based on the internal Embrace clock instance
      */
-    val openTelemetryClock: io.opentelemetry.sdk.common.Clock
+    val openTelemetryClock: OtelJavaClock
 
     /**
      * Setup configuration configuration-dependent behavior

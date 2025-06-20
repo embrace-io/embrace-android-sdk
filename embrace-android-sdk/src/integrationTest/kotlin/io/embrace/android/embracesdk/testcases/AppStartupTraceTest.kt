@@ -15,7 +15,6 @@ import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.otel.sdk.hasEmbraceAttribute
-import io.embrace.android.embracesdk.internal.otel.sdk.toStatus
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
@@ -23,7 +22,7 @@ import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterfac
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface.Companion.LIFECYCLE_EVENT_GAP
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface.Companion.POST_ACTIVITY_ACTION_DWELL
 import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
-import io.opentelemetry.sdk.trace.data.SpanData
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanData
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Rule
@@ -408,13 +407,13 @@ internal class AppStartupTraceTest {
         )
     }
 
-    private fun Map<String, SpanData?>.coldAppStartupRootSpan() = getSpan("emb-app-startup-cold")
-    private fun Map<String, SpanData?>.warmAppStartupRootSpan() = getSpan("emb-app-startup-warm")
-    private fun Map<String, SpanData?>.processInitSpan() = getSpan("emb-process-init")
-    private fun Map<String, SpanData?>.embraceInitSpan() = getSpan("emb-embrace-init")
-    private fun Map<String, SpanData?>.initGapSpan() = getSpan("emb-activity-init-delay")
-    private fun Map<String, SpanData?>.activityInitSpan() = getSpan("emb-activity-init")
-    private fun Map<String, SpanData?>.activityResumeSpan() = getSpan("emb-activity-load")
-    private fun Map<String, SpanData?>.appReadySpan() = getSpan("emb-app-ready")
-    private fun Map<String, SpanData?>.getSpan(name: String) = this[name] ?: error("Span missing")
+    private fun Map<String, OtelJavaSpanData?>.coldAppStartupRootSpan() = getSpan("emb-app-startup-cold")
+    private fun Map<String, OtelJavaSpanData?>.warmAppStartupRootSpan() = getSpan("emb-app-startup-warm")
+    private fun Map<String, OtelJavaSpanData?>.processInitSpan() = getSpan("emb-process-init")
+    private fun Map<String, OtelJavaSpanData?>.embraceInitSpan() = getSpan("emb-embrace-init")
+    private fun Map<String, OtelJavaSpanData?>.initGapSpan() = getSpan("emb-activity-init-delay")
+    private fun Map<String, OtelJavaSpanData?>.activityInitSpan() = getSpan("emb-activity-init")
+    private fun Map<String, OtelJavaSpanData?>.activityResumeSpan() = getSpan("emb-activity-load")
+    private fun Map<String, OtelJavaSpanData?>.appReadySpan() = getSpan("emb-app-ready")
+    private fun Map<String, OtelJavaSpanData?>.getSpan(name: String) = this[name] ?: error("Span missing")
 }

@@ -17,7 +17,7 @@ import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
-import io.opentelemetry.sdk.common.Clock
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaClock
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicBoolean
@@ -44,7 +44,7 @@ import java.util.concurrent.atomic.AtomicReference
  *
  */
 internal class AppStartupTraceEmitter(
-    private val clock: Clock,
+    private val clock: OtelJavaClock,
     private val startupServiceProvider: Provider<StartupService?>,
     private val spanService: SpanService,
     private val versionChecker: VersionChecker,

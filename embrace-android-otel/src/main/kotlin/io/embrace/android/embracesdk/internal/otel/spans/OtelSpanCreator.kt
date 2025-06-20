@@ -1,19 +1,19 @@
 package io.embrace.android.embracesdk.internal.otel.spans
 
-import io.opentelemetry.api.trace.Span
-import io.opentelemetry.api.trace.Tracer
-import io.opentelemetry.context.Context
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaContext
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpan
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaTracer
 import java.util.concurrent.TimeUnit
 
 class OtelSpanCreator(
     val spanStartArgs: OtelSpanStartArgs,
-    private val tracer: Tracer,
+    private val tracer: OtelJavaTracer,
 ) {
 
-    internal fun startSpan(startTimeMs: Long): Span {
+    internal fun startSpan(startTimeMs: Long): OtelJavaSpan {
         with(spanStartArgs) {
             val builder = tracer.spanBuilder(spanName)
-            if (parentContext == Context.root()) {
+            if (parentContext == OtelJavaContext.root()) {
                 builder.setNoParent()
             } else {
                 builder.setParent(parentContext)

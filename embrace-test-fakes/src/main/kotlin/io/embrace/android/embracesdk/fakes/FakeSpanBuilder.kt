@@ -1,71 +1,71 @@
 package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.internal.otel.sdk.TracerKey
-import io.opentelemetry.api.common.AttributeKey
-import io.opentelemetry.api.common.Attributes
-import io.opentelemetry.api.trace.SpanBuilder
-import io.opentelemetry.api.trace.SpanContext
-import io.opentelemetry.api.trace.SpanKind
-import io.opentelemetry.context.Context
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaAttributeKey
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaAttributes
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaContext
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanBuilder
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanContext
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanKind
 import java.util.concurrent.TimeUnit
 
 class FakeSpanBuilder(
     val spanName: String,
     val tracerKey: TracerKey = TracerKey("fake-scope"),
-) : SpanBuilder {
+) : OtelJavaSpanBuilder {
 
-    var spanKind: SpanKind? = null
-    var parentContext: Context = Context.root()
+    var spanKind: OtelJavaSpanKind? = null
+    var parentContext: OtelJavaContext = OtelJavaContext.root()
     var startTimestampMs: Long? = null
     var attributes: MutableMap<Any, Any> = mutableMapOf()
 
-    override fun setParent(context: Context): SpanBuilder {
+    override fun setParent(context: OtelJavaContext): OtelJavaSpanBuilder {
         parentContext = context
         return this
     }
 
-    override fun setNoParent(): SpanBuilder {
-        parentContext = Context.root()
+    override fun setNoParent(): OtelJavaSpanBuilder {
+        parentContext = OtelJavaContext.root()
         return this
     }
 
-    override fun addLink(spanContext: SpanContext): SpanBuilder {
+    override fun addLink(spanContext: OtelJavaSpanContext): OtelJavaSpanBuilder {
         TODO("Not yet implemented")
     }
 
-    override fun addLink(spanContext: SpanContext, attributes: Attributes): SpanBuilder {
+    override fun addLink(spanContext: OtelJavaSpanContext, attributes: OtelJavaAttributes): OtelJavaSpanBuilder {
         TODO("Not yet implemented")
     }
 
-    override fun setAttribute(key: String, value: String): SpanBuilder {
+    override fun setAttribute(key: String, value: String): OtelJavaSpanBuilder {
         TODO("Not yet implemented")
     }
 
-    override fun setAttribute(key: String, value: Long): SpanBuilder {
+    override fun setAttribute(key: String, value: Long): OtelJavaSpanBuilder {
         TODO("Not yet implemented")
     }
 
-    override fun setAttribute(key: String, value: Double): SpanBuilder {
+    override fun setAttribute(key: String, value: Double): OtelJavaSpanBuilder {
         TODO("Not yet implemented")
     }
 
-    override fun setAttribute(key: String, value: Boolean): SpanBuilder {
+    override fun setAttribute(key: String, value: Boolean): OtelJavaSpanBuilder {
         TODO("Not yet implemented")
     }
 
-    override fun setSpanKind(spanKind: SpanKind): SpanBuilder {
+    override fun setSpanKind(spanKind: OtelJavaSpanKind): OtelJavaSpanBuilder {
         this.spanKind = spanKind
         return this
     }
 
-    override fun setStartTimestamp(startTimestamp: Long, unit: TimeUnit): SpanBuilder {
+    override fun setStartTimestamp(startTimestamp: Long, unit: TimeUnit): OtelJavaSpanBuilder {
         startTimestampMs = unit.toMillis(startTimestamp)
         return this
     }
 
     override fun startSpan(): FakeSpan = FakeSpan(this)
 
-    override fun <T : Any> setAttribute(key: AttributeKey<T>, value: T): SpanBuilder {
+    override fun <T : Any> setAttribute(key: OtelJavaAttributeKey<T>, value: T): OtelJavaSpanBuilder {
         attributes[key] = value
         return this
     }

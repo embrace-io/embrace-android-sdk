@@ -8,7 +8,7 @@ import java.io.Serializable
  */
 object PropertyUtils {
 
-    const val MAX_PROPERTY_SIZE: Int = 10
+    const val MAX_PROPERTY_SIZE: Int = 50
 
     fun sanitizeProperties(properties: Map<String, Any>?, bypassPropertyLimit: Boolean = false): Map<String, Any> {
         return if (properties == null) {

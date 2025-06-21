@@ -13,10 +13,8 @@ class OtelSpanCreator(
     val spanStartArgs: OtelSpanStartArgs,
     private val tracer: Tracer,
 ) {
-
     internal fun startSpan(startTimeMs: Long): Span {
-        val parentSpanContext = spanStartArgs.parentContext.getEmbraceSpan()?.spanContext
-
+        val parentSpanContext = spanStartArgs.getParentSpanContext()
         return tracer.createSpan(
             name = spanStartArgs.spanName,
             parent = parentSpanContext?.let(::SpanContextAdapter),

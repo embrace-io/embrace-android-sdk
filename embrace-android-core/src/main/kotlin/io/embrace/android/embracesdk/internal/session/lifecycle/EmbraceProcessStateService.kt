@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
-import io.embrace.android.embracesdk.internal.utils.ThreadUtils
+import io.embrace.android.embracesdk.internal.utils.MainThreadUtils
 import io.embrace.android.embracesdk.internal.utils.stream
 import java.util.concurrent.CopyOnWriteArrayList
 
@@ -44,7 +44,7 @@ internal class EmbraceProcessStateService(
     init {
         // add lifecycle observer on main thread to avoid IllegalStateExceptions with
         // androidx.lifecycle
-        ThreadUtils.runOnMainThread {
+        MainThreadUtils.runOnMainThread {
             lifecycleOwner.lifecycle.addObserver(this)
         }
     }

@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.anr
 
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.payload.ThreadInfo
+import io.embrace.android.embracesdk.internal.utils.getThreadInfo
 
 internal class ThreadInfoCollector(
     private val targetThread: Thread,
@@ -39,7 +40,7 @@ internal class ThreadInfoCollector(
      *
      * @return filtered threads
      */
-    fun getMainThread(configService: ConfigService): ThreadInfo = ThreadInfo.ofThread(
+    fun getMainThread(configService: ConfigService): ThreadInfo = getThreadInfo(
         targetThread,
         targetThread.stackTrace,
         configService.anrBehavior.getStacktraceFrameLimit()

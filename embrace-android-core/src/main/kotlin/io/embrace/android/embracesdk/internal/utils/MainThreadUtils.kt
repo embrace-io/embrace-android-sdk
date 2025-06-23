@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.utils
 import android.os.Handler
 import android.os.Looper
 
-object ThreadUtils {
+object MainThreadUtils {
 
     private val mainLooper = Looper.getMainLooper()
     private val mainThread = mainLooper.thread

@@ -13,7 +13,7 @@ embrace {
 
 android {
     namespace = "io.embrace.android.gradle.test.fixtures"
-    compileSdk = 34
+    compileSdk = 36
     defaultConfig.minSdk = 21
 
     buildTypes {

@@ -4,7 +4,7 @@ import com.android.build.api.dsl.LibraryExtension
 import org.gradle.api.JavaVersion
 
 fun LibraryExtension.configureAndroidCompileOptions() {
-    compileSdk = 35
+    compileSdk = 36
     defaultConfig.minSdk = 21
 
     compileOptions {

@@ -15,10 +15,10 @@ import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType.System.ReactNativeCrash.embAndroidReactNativeCrashJsException
 import io.embrace.android.embracesdk.internal.payload.JsException
 import io.embrace.android.embracesdk.internal.payload.LegacyExceptionInfo
-import io.embrace.android.embracesdk.internal.payload.ThreadInfo
 import io.embrace.android.embracesdk.internal.prefs.PreferencesService
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.utils.Uuid
+import io.embrace.android.embracesdk.internal.utils.getThreadInfo
 import io.embrace.android.embracesdk.internal.utils.toUTF8String
 import io.opentelemetry.semconv.ExceptionAttributes
 import io.opentelemetry.semconv.incubating.LogIncubatingAttributes
@@ -149,7 +149,7 @@ internal class CrashDataSourceImpl(
      * @return a String representation of the current thread list.
      */
     private fun getThreadsInfo(): String {
-        val threadsList = Thread.getAllStackTraces().map { ThreadInfo.ofThread(it.key, it.value) }
+        val threadsList = Thread.getAllStackTraces().map { getThreadInfo(it.key, it.value) }
         return serializer.toJson(threadsList, List::class.java)
     }
 

@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.config.behavior
 
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.InstrumentedConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.internal.utils.DEFAULT_STACKTRACE_SIZE_LIMIT
 
 /**
  * Provides the behavior that the ANR feature should follow.
@@ -16,7 +17,7 @@ class AnrBehaviorImpl(
         private const val DEFAULT_ANR_PCT_ENABLED = true
         private const val DEFAULT_ANR_INTERVAL_MS: Long = 100
         private const val DEFAULT_ANR_MAX_PER_INTERVAL = 80
-        private const val DEFAULT_STACKTRACE_FRAME_LIMIT = 200
+        private const val DEFAULT_STACKTRACE_FRAME_LIMIT = DEFAULT_STACKTRACE_SIZE_LIMIT
         private const val DEFAULT_ANR_MAX_ANR_INTERVALS_PER_SESSION = 5
         private const val DEFAULT_ANR_MIN_CAPTURE_DURATION = 1000
     }

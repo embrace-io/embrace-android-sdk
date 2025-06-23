@@ -26,9 +26,9 @@ import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaClock
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaOpenTelemetry
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaTracer
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaTracerProvider
 import io.embrace.opentelemetry.kotlin.logging.Logger
+import io.embrace.opentelemetry.kotlin.tracing.Tracer
 
 @OptIn(ExperimentalApi::class)
 internal class OpenTelemetryModuleImpl(
@@ -75,7 +75,7 @@ internal class OpenTelemetryModuleImpl(
         }
     }
 
-    override val sdkTracer: OtelJavaTracer by lazy {
+    override val sdkTracer: Tracer by lazy {
         otelSdkWrapper.sdkTracer
     }
 

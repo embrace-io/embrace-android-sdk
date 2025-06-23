@@ -70,7 +70,7 @@ class JvmMappingUploadTaskRegistration : EmbraceTaskRegistration {
             task.originalFile.fileProvider(mappingFile)
             task.compressedFile.convention(
                 project.layout.buildDirectory.file(
-                    "outputs/embrace/mapping/compressed/${variant.name}/$FILE_NAME_MAPPING_TXT"
+                    "outputs/embrace/mapping/compressed/${variant.name}/$anchorTaskWithoutVariant/$FILE_NAME_MAPPING_TXT"
                 )
             )
         }

@@ -3,13 +3,14 @@ package io.embrace.android.embracesdk.fakes.behavior
 import io.embrace.android.embracesdk.internal.config.behavior.AnrBehavior
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.EnabledFeatureConfig
 import io.embrace.android.embracesdk.internal.config.remote.AnrRemoteConfig
+import io.embrace.android.embracesdk.internal.utils.DEFAULT_STACKTRACE_SIZE_LIMIT
 
 class FakeAnrBehavior(
     var anrCaptureEnabled: Boolean = true,
     var bgAnrCaptureEnabled: Boolean = false,
     var sampleIntervalMsImpl: Long = 5,
     var anrPerSessionImpl: Int = 5,
-    var frameLimit: Int = 200,
+    var frameLimit: Int = DEFAULT_STACKTRACE_SIZE_LIMIT,
 ) : AnrBehavior {
 
     override val local: EnabledFeatureConfig

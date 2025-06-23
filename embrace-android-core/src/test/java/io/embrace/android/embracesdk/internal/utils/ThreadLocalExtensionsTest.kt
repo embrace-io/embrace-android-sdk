@@ -10,17 +10,17 @@ import java.util.concurrent.TimeUnit
 internal class ThreadLocalExtensionsTest {
 
     private val id: Long by threadLocal {
-        Thread.currentThread().id
+        Thread.currentThread().compatThreadId()
     }
 
     @Test
     fun testThreadLocalProperties() {
-        val testThreadId = Thread.currentThread().id
+        val testThreadId = Thread.currentThread().compatThreadId()
         assertEquals(id, testThreadId)
 
         val latch = CountDownLatch(1)
         Executors.newSingleThreadExecutor().submit {
-            assertEquals(id, Thread.currentThread().id)
+            assertEquals(id, Thread.currentThread().compatThreadId())
             assertNotEquals(id, testThreadId)
             latch.countDown()
         }

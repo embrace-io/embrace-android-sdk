@@ -12,11 +12,10 @@ allprojects {
 
 android {
     namespace 'com.example.customLibrary'
-    compileSdk 34
+    compileSdk 36
 
     defaultConfig {
         minSdk 24
-        targetSdk 34
         ndk {
             abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64' // Supported architectures
         }

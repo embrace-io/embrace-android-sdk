@@ -35,6 +35,7 @@ import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanContext
 import io.embrace.opentelemetry.kotlin.k2j.tracing.SpanContextAdapter
 import io.embrace.opentelemetry.kotlin.tracing.Span
 import io.embrace.opentelemetry.kotlin.tracing.Tracer
+import io.opentelemetry.context.ImplicitContextKeyed
 import io.opentelemetry.semconv.ExceptionAttributes
 import java.util.Queue
 import java.util.concurrent.ConcurrentHashMap
@@ -326,9 +327,13 @@ private class EmbraceSpanImpl(
         }
 
     override fun asNewContext(): OtelJavaContext? = startedSpan.get()?.run {
-        // FIXME: propagate context
-//        otelSpanCreator.spanStartArgs.parentContext.with(this)
-        null
+        val parentContext: OtelJavaContext = otelSpanCreator.spanStartArgs.parentContext
+
+        // assumes that the underlying instance of Span implements ImplicitContextKeyed. This
+        // should always be true when opentelemetry-kotlin is used to create spans, but
+        // we avoid exposing this fact in the public interface.
+        val span = this as ImplicitContextKeyed
+        return parentContext.with(span)
     }
 
     override fun snapshot(): io.embrace.android.embracesdk.internal.payload.Span? {

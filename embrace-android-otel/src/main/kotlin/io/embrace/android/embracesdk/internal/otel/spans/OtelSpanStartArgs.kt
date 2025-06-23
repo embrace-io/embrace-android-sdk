@@ -7,6 +7,8 @@ import io.embrace.android.embracesdk.internal.otel.sdk.toEmbraceObjectName
 import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaContext
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpan
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanContext
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanKind
 
 /**
@@ -35,7 +37,7 @@ class OtelSpanStartArgs(
     val customAttributes = mutableMapOf<String, String>()
 
     init {
-        // If there is a parent, extract the wrapped OTel span and set it as the parent in the wrapped OTel SpanBuilder
+        // If a EmbraceSpan is passed in as a parent, create a new Context with that span's SpanContext set as the Span in that Context
         if (parentSpan is EmbraceSdkSpan) {
             val newParentContext = parentSpan.asNewContext() ?: OtelJavaContext.root()
             parentContext = newParentContext.with(parentSpan)
@@ -48,5 +50,13 @@ class OtelSpanStartArgs(
         }
     }
 
-    fun getParentSpan(): EmbraceSpan? = parentContext.getEmbraceSpan()
+    fun getParentSpanContext(): OtelJavaSpanContext? {
+        val parentSpanContext = OtelJavaSpan.fromContext(parentContext).spanContext
+
+        return if (parentSpanContext.isValid) {
+            parentSpanContext
+        } else {
+            null
+        }
+    }
 }

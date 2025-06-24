@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.anr
 import android.os.Looper
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.behavior.FakeAnrBehavior
 import io.embrace.android.embracesdk.internal.anr.detection.BlockedThreadDetector
 import io.embrace.android.embracesdk.internal.anr.detection.LivenessCheckScheduler
@@ -29,6 +30,7 @@ internal class EmbraceAnrServiceRule<T : ScheduledExecutorService>(
     val logger = EmbLoggerImpl()
 
     lateinit var fakeConfigService: FakeConfigService
+    lateinit var fakeProcessStateService: FakeProcessStateService
     lateinit var anrService: EmbraceAnrService
     lateinit var livenessCheckScheduler: LivenessCheckScheduler
     lateinit var state: ThreadMonitoringState
@@ -45,6 +47,7 @@ internal class EmbraceAnrServiceRule<T : ScheduledExecutorService>(
         anrBehavior = FakeAnrBehavior()
         anrMonitorThread = AtomicReference(Thread.currentThread())
         fakeConfigService = FakeConfigService(anrBehavior = anrBehavior)
+        fakeProcessStateService = FakeProcessStateService(false)
         anrExecutorService = scheduledExecutorSupplier.invoke()
         state = ThreadMonitoringState(clock)
         val worker =
@@ -83,7 +86,8 @@ internal class EmbraceAnrServiceRule<T : ScheduledExecutorService>(
             anrMonitorWorker = worker,
             state = state,
             clock = clock,
-            stacktraceSampler = stacktraceSampler
+            stacktraceSampler = stacktraceSampler,
+            processStateService = fakeProcessStateService
         )
     }
 }

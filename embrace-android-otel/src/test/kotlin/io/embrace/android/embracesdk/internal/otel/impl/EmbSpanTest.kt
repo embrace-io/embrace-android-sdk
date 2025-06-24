@@ -24,14 +24,14 @@ internal class EmbSpanTest {
     private lateinit var fakeClock: FakeClock
     private lateinit var openTelemetryClock: OtelJavaClock
     private lateinit var fakeEmbraceSpan: FakeEmbraceSdkSpan
-    private lateinit var embSpan: EmbSpan
+    private lateinit var embSpan: EmbOtelJavaSpan
 
     @Before
     fun setup() {
         fakeClock = FakeClock()
         openTelemetryClock = FakeOpenTelemetryClock(fakeClock)
         fakeEmbraceSpan = FakeEmbraceSdkSpan.started(clock = fakeClock)
-        embSpan = EmbSpan(
+        embSpan = EmbOtelJavaSpan(
             embraceSpan = fakeEmbraceSpan,
             clock = openTelemetryClock
         )

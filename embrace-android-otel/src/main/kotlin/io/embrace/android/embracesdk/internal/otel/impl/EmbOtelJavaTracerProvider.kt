@@ -8,7 +8,7 @@ import io.embrace.opentelemetry.kotlin.aliases.OtelJavaTracerBuilder
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaTracerProvider
 import java.util.concurrent.ConcurrentHashMap
 
-class EmbTracerProvider(
+class EmbOtelJavaTracerProvider(
     private val sdkTracerProvider: OtelJavaTracerProvider,
     private val spanService: SpanService,
     private val clock: OtelJavaClock,
@@ -22,7 +22,7 @@ class EmbTracerProvider(
         tracerBuilder(instrumentationScopeName).setInstrumentationVersion(instrumentationScopeVersion).build()
 
     override fun tracerBuilder(instrumentationScopeName: String): OtelJavaTracerBuilder {
-        return EmbTracerBuilder(
+        return EmbOtelJavaTracerBuilder(
             instrumentationScopeName = instrumentationScopeName,
             tracerSupplier = ::getTracer
         )
@@ -36,7 +36,7 @@ class EmbTracerProvider(
     }
 
     private fun createTracer(key: TracerKey): OtelJavaTracer {
-        val tracer = EmbTracer(
+        val tracer = EmbOtelJavaTracer(
             sdkTracer = buildSdkTracer(key),
             spanService = spanService,
             clock = clock

@@ -10,7 +10,7 @@ internal class EmbTracerBuilderTest {
     @Test
     fun `check tracer attributes from builder`() {
         val expectedKey = TracerKey("foo", "v1", "url")
-        val embTracerBuilder = EmbTracerBuilder(
+        val embTracerBuilder = EmbOtelJavaTracerBuilder(
             instrumentationScopeName = "foo",
             tracerSupplier = ::createTracer
         )

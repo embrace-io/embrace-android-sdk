@@ -13,7 +13,7 @@ import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanContext
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaStatusCode
 import java.util.concurrent.TimeUnit
 
-class EmbSpan(
+class EmbOtelJavaSpan(
     private val embraceSpan: EmbraceSdkSpan,
     private val clock: OtelJavaClock,
 ) : OtelJavaSpan {

@@ -13,12 +13,12 @@ import org.junit.Test
 
 internal class EmbOpenTelemetryTest {
     private lateinit var tracerProvider: FakeTracerProvider
-    private lateinit var openTelemetry: EmbOpenTelemetry
+    private lateinit var openTelemetry: EmbOtelJavaOpenTelemetry
 
     @Before
     fun setup() {
         tracerProvider = FakeTracerProvider()
-        openTelemetry = EmbOpenTelemetry { tracerProvider }
+        openTelemetry = EmbOtelJavaOpenTelemetry { tracerProvider }
     }
 
     @Test

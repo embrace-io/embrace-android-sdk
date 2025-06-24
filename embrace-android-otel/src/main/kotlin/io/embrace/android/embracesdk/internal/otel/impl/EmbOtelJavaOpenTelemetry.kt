@@ -7,7 +7,7 @@ import io.embrace.opentelemetry.kotlin.aliases.OtelJavaTracerProvider
 /**
  * Embrace-specific implementation that can be used to obtain working Tracer implementations that will record spans for Embrace sessions
  */
-class EmbOpenTelemetry(
+class EmbOtelJavaOpenTelemetry(
     private val traceProviderSupplier: () -> OtelJavaTracerProvider,
 ) : OtelJavaOpenTelemetry {
 

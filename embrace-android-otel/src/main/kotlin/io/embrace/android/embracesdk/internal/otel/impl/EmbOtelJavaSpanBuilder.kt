@@ -12,7 +12,7 @@ import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanContext
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanKind
 import java.util.concurrent.TimeUnit
 
-class EmbSpanBuilder(
+class EmbOtelJavaSpanBuilder(
     private val otelSpanCreator: OtelSpanCreator,
     private val spanService: SpanService,
     private val clock: OtelJavaClock,
@@ -61,7 +61,7 @@ class EmbSpanBuilder(
     override fun startSpan(): OtelJavaSpan {
         spanService.createSpan(otelSpanCreator)?.let { embraceSpan ->
             if (embraceSpan.start()) {
-                return EmbSpan(
+                return EmbOtelJavaSpan(
                     embraceSpan = embraceSpan,
                     clock = clock,
                 )

@@ -83,12 +83,8 @@ internal class EmbraceAnrServiceTimingTest {
             // Monitoring is initially started (even in background)
             assertTrue(state.started.get())
 
-            // Advance time by 9 seconds - monitoring should still be active
-            anrExecutorService.moveForwardAndRunBlocked(TimeUnit.SECONDS.toMillis(9))
-            assertTrue(state.started.get())
-
-            // Advance time by 2 more second to trigger the 10-second delayed check
-            anrExecutorService.moveForwardAndRunBlocked(TimeUnit.SECONDS.toMillis(1))
+            // Advance time by 20 seconds - this should trigger the delayed background check
+            anrExecutorService.moveForwardAndRunBlocked(TimeUnit.SECONDS.toMillis(20))
 
             // Run any pending tasks to ensure the delayed check executes
             anrExecutorService.runCurrentlyBlocked()

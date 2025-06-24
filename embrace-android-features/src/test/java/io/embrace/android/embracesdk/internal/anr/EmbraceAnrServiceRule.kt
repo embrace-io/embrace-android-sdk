@@ -40,18 +40,19 @@ internal class EmbraceAnrServiceRule<T : ScheduledExecutorService>(
     lateinit var targetThreadHandler: TargetThreadHandler
     lateinit var anrMonitorThread: AtomicReference<Thread>
     lateinit var stacktraceSampler: AnrStacktraceSampler
+    lateinit var looper: Looper
+    lateinit var worker: BackgroundWorker
 
     override fun before() {
         clock.setCurrentTime(0)
-        val looper: Looper = mockk(relaxed = true)
+        looper = mockk(relaxed = true)
         anrBehavior = FakeAnrBehavior()
         anrMonitorThread = AtomicReference(Thread.currentThread())
         fakeConfigService = FakeConfigService(anrBehavior = anrBehavior)
         fakeProcessStateService = FakeProcessStateService(false)
         anrExecutorService = scheduledExecutorSupplier.invoke()
         state = ThreadMonitoringState(clock)
-        val worker =
-            BackgroundWorker(anrExecutorService)
+        worker = BackgroundWorker(anrExecutorService)
         targetThreadHandler = TargetThreadHandler(
             looper = looper,
             anrMonitorWorker = worker,
@@ -78,6 +79,23 @@ internal class EmbraceAnrServiceRule<T : ScheduledExecutorService>(
             targetThread = looper.thread,
             anrMonitorWorker = worker
         )
+        anrService = EmbraceAnrService(
+            configService = fakeConfigService,
+            looper = looper,
+            logger = logger,
+            livenessCheckScheduler = livenessCheckScheduler,
+            anrMonitorWorker = worker,
+            state = state,
+            clock = clock,
+            stacktraceSampler = stacktraceSampler,
+            processStateService = fakeProcessStateService
+        )
+    }
+
+    /**
+     * Recreates the ANR service. Useful for tests where we need to update the fakes that we pass to the EmbraceAnrService.
+     */
+    fun recreateService() {
         anrService = EmbraceAnrService(
             configService = fakeConfigService,
             looper = looper,

@@ -53,7 +53,7 @@ internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
 
     override val appStartupDataCollector: AppStartupDataCollector by singleton {
         AppStartupTraceEmitter(
-            clock = openTelemetryModule.openTelemetryClock,
+            clock = initModule.clock,
             startupServiceProvider = { startupService },
             spanService = openTelemetryModule.spanService,
             versionChecker = versionChecker,
@@ -88,7 +88,7 @@ internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
                 uiLoadEventListener = uiLoadEventListener,
                 firstDrawDetector = createDrawEventEmitter(versionChecker, initModule.logger),
                 autoTraceEnabled = configService.autoDataCaptureBehavior.isUiLoadTracingTraceAll(),
-                clock = openTelemetryModule.openTelemetryClock,
+                clock = initModule.clock,
                 versionChecker = versionChecker
             )
         } else {

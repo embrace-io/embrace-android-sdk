@@ -285,7 +285,7 @@ internal class EmbraceTracerTest {
     fun `event timestamp will be converted to millis if an inappropriate value detected`() {
         spanSink.flushSpans()
         val span = checkNotNull(embraceTracer.startSpan(name = "my-span"))
-        val eventTimeNanos = clock.nowInNanos()
+        val eventTimeNanos = clock.now().millisToNanos()
         clock.tick(10L)
         assertTrue(span.addEvent(name = "first event", timestampMs = eventTimeNanos, attributes = null))
         assertTrue(
@@ -306,7 +306,7 @@ internal class EmbraceTracerTest {
     @Test
     fun `start and stop span with nanosecond timestamp`() {
         spanSink.flushSpans()
-        val expectedStartTimeNanos = clock.nowInNanos()
+        val expectedStartTimeNanos = clock.now().millisToNanos()
         val span = checkNotNull(
             embraceTracer.startSpan(
                 name = "fallback-span",
@@ -315,7 +315,7 @@ internal class EmbraceTracerTest {
             )
         )
         clock.tick(10L)
-        val expectedEndTimeNanos = clock.nowInNanos()
+        val expectedEndTimeNanos = clock.now().millisToNanos()
         assertTrue(span.stop(endTimeMs = expectedEndTimeNanos))
         with(verifyPublicSpan("fallback-span")) {
             assertEquals(expectedStartTimeNanos, startTimeNanos)
@@ -326,7 +326,7 @@ internal class EmbraceTracerTest {
     @Test
     fun `recording completed spans fallback normalizes timestamps to millis when appropriate`() {
         val expectedName = "test-span"
-        val expectedStartTimeNanos = clock.nowInNanos()
+        val expectedStartTimeNanos = clock.now().millisToNanos()
         val expectedEndTimeNanos = expectedStartTimeNanos + 100L.millisToNanos()
 
         assertTrue(

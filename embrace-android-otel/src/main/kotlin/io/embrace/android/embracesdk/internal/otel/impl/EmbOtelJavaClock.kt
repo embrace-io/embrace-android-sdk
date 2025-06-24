@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.otel.impl
 
 import android.os.SystemClock
 import io.embrace.android.embracesdk.internal.clock.Clock
+import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaClock
 
 /**
@@ -16,7 +17,7 @@ class EmbOtelJavaClock(
     private val embraceClock: Clock,
 ) : OtelJavaClock {
 
-    override fun now(): Long = embraceClock.nowInNanos()
+    override fun now(): Long = embraceClock.now().millisToNanos()
 
     override fun nanoTime(): Long = SystemClock.elapsedRealtimeNanos()
 }

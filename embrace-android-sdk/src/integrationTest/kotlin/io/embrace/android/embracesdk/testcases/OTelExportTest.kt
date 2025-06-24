@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.testcases
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.fakes.FakeSpanExporter
+import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.embrace.android.embracesdk.internal.otel.attrs.asOtelAttributeKey
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
@@ -80,7 +81,7 @@ internal class OTelExportTest {
             },
             testCaseAction = {
                 recordSession {
-                    logTimestampNanos = clock.nowInNanos()
+                    logTimestampNanos = clock.now().millisToNanos()
                     embrace.logMessage("test message", Severity.INFO)
                 }
             },

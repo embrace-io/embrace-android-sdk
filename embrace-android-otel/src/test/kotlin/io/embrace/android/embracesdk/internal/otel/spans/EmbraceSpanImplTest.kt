@@ -241,7 +241,7 @@ internal class EmbraceSpanImplTest {
 
     @Test
     fun `recording exceptions as span events`() {
-        val timestampNanos = fakeClock.nowInNanos()
+        val timestampNanos = fakeClock.now().millisToNanos()
         val firstException = IllegalStateException("oops")
         val firstExceptionStackTrace = firstException.truncatedStacktraceText()
         val secondException = RuntimeException("haha", firstException)
@@ -476,7 +476,7 @@ internal class EmbraceSpanImplTest {
     @Test
     fun `OTel clock used if start time passed is zero`() {
         assertTrue(embraceSpan.start(startTimeMs = 0L))
-        assertEquals(fakeClock.nowInNanos(), embraceSpan.snapshot()?.startTimeNanos)
+        assertEquals(fakeClock.now().millisToNanos(), embraceSpan.snapshot()?.startTimeNanos)
     }
 
     @Test

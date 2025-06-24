@@ -67,7 +67,7 @@ internal class LogWriterImplTest {
             assertNotNull(attributes()[embState.name])
             assertNotNull(attributes()[LogIncubatingAttributes.LOG_RECORD_UID.key])
             assertTrue(attributes()[PrivateSpan.key.name] != null)
-            assertEquals(clock.nowInNanos(), timestampNs)
+            assertEquals(clock.now().millisToNanos(), timestampNs)
             assertNull(observedTimestampNs)
         }
     }

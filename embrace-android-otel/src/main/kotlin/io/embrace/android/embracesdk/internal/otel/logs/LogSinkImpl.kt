@@ -4,9 +4,9 @@ import io.embrace.android.embracesdk.internal.otel.attrs.asOtelAttributeKey
 import io.embrace.android.embracesdk.internal.otel.attrs.embSendMode
 import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
 import io.embrace.android.embracesdk.internal.otel.schema.SendMode
+import io.embrace.android.embracesdk.internal.otel.sdk.StoreDataResult
 import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.internal.utils.threadSafeTake
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaCompletableResultCode
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaLogRecordData
 import java.util.concurrent.ConcurrentLinkedQueue
 
@@ -16,7 +16,7 @@ class LogSinkImpl : LogSink {
     private var onLogsStored: (() -> Unit)? = null
     private val flushLock = Any()
 
-    override fun storeLogs(logs: List<OtelJavaLogRecordData>): OtelJavaCompletableResultCode {
+    override fun storeLogs(logs: List<OtelJavaLogRecordData>): StoreDataResult {
         try {
             logs.forEach { log ->
                 val mode = log.attributes[embSendMode.asOtelAttributeKey()]
@@ -34,10 +34,9 @@ class LogSinkImpl : LogSink {
             }
             onLogsStored?.invoke()
         } catch (t: Throwable) {
-            return OtelJavaCompletableResultCode.ofFailure()
+            return StoreDataResult.FAILURE
         }
-
-        return OtelJavaCompletableResultCode.ofSuccess()
+        return StoreDataResult.SUCCESS
     }
 
     override fun logsForNextBatch(): List<Log> {

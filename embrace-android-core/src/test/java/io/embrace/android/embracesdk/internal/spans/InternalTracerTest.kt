@@ -93,10 +93,10 @@ internal class InternalTracerTest {
     @Test
     fun `start and stop span with nanosecond timestamp`() {
         spanSink.flushSpans()
-        val expectedStartTimeNanos = clock.nowInNanos()
+        val expectedStartTimeNanos = clock.now().millisToNanos()
         val spanId = checkNotNull(internalTracer.startSpan(name = "my-span", startTimeMs = expectedStartTimeNanos))
         clock.tick(10L)
-        val expectedEndTimeNanos = clock.nowInNanos()
+        val expectedEndTimeNanos = clock.now().millisToNanos()
         assertTrue(internalTracer.stopSpan(spanId = spanId, endTimeMs = expectedEndTimeNanos))
         with(verifyPublicSpan("my-span")) {
             assertEquals(expectedStartTimeNanos, startTimeNanos)
@@ -108,7 +108,7 @@ internal class InternalTracerTest {
     fun `verify event timestamp fallback`() {
         spanSink.flushSpans()
         val spanId = checkNotNull(internalTracer.startSpan(name = "my-span"))
-        val eventTimeNanos = clock.nowInNanos()
+        val eventTimeNanos = clock.now().millisToNanos()
         clock.tick(10L)
         assertTrue(internalTracer.addSpanEvent(spanId = spanId, name = "first event", timestampMs = eventTimeNanos))
         assertTrue(internalTracer.stopSpan(spanId))

@@ -341,8 +341,8 @@ HSPLio/embrace/android/embracesdk/internal/anr/AnrOtelMapper;->mapIntervalToSpan
 PLio/embrace/android/embracesdk/internal/anr/AnrOtelMapper;->mapIntervalToSpanAttributes(Lio/embrace/android/embracesdk/internal/payload/AnrInterval;)Ljava/util/List;
 HSPLio/embrace/android/embracesdk/internal/anr/AnrOtelMapper;->mapIntervalToSpanEvents(Lio/embrace/android/embracesdk/internal/payload/AnrInterval;)Ljava/util/List;
 PLio/embrace/android/embracesdk/internal/anr/AnrOtelMapper;->mapIntervalToSpanEvents(Lio/embrace/android/embracesdk/internal/payload/AnrInterval;)Ljava/util/List;
+HPLio/embrace/android/embracesdk/internal/anr/AnrOtelMapper;->mapSampleToSpanEvent(Lio/embrace/android/embracesdk/internal/payload/AnrSample;)Lio/embrace/android/embracesdk/internal/payload/SpanEvent;
 HSPLio/embrace/android/embracesdk/internal/anr/AnrOtelMapper;->mapSampleToSpanEvent(Lio/embrace/android/embracesdk/internal/payload/AnrSample;)Lio/embrace/android/embracesdk/internal/payload/SpanEvent;
-PLio/embrace/android/embracesdk/internal/anr/AnrOtelMapper;->mapSampleToSpanEvent(Lio/embrace/android/embracesdk/internal/payload/AnrSample;)Lio/embrace/android/embracesdk/internal/payload/SpanEvent;
 HSPLio/embrace/android/embracesdk/internal/anr/AnrOtelMapper;->snapshot(Z)Ljava/util/List;
 PLio/embrace/android/embracesdk/internal/anr/AnrOtelMapper;->snapshot(Z)Ljava/util/List;
 Lio/embrace/android/embracesdk/internal/anr/AnrService;
@@ -6557,6 +6557,8 @@ HSPLio/embrace/android/embracesdk/internal/payload/ThreadInfo;-><clinit>()V
 PLio/embrace/android/embracesdk/internal/payload/ThreadInfo;-><clinit>()V
 HSPLio/embrace/android/embracesdk/internal/payload/ThreadInfo;-><init>(JLjava/lang/Thread$State;Ljava/lang/String;ILjava/util/List;I)V
 PLio/embrace/android/embracesdk/internal/payload/ThreadInfo;-><init>(JLjava/lang/Thread$State;Ljava/lang/String;ILjava/util/List;I)V
+HSPLio/embrace/android/embracesdk/internal/payload/ThreadInfo;->equals(Ljava/lang/Object;)Z
+PLio/embrace/android/embracesdk/internal/payload/ThreadInfo;->equals(Ljava/lang/Object;)Z
 HSPLio/embrace/android/embracesdk/internal/payload/ThreadInfo;->getFrameCount()I
 PLio/embrace/android/embracesdk/internal/payload/ThreadInfo;->getFrameCount()I
 HSPLio/embrace/android/embracesdk/internal/payload/ThreadInfo;->getLines()Ljava/util/List;

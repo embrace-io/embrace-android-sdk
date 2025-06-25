@@ -23,7 +23,7 @@ internal class EmbraceLogRecordExporter(
         if (externalLogRecordExporter != null && result == OtelJavaCompletableResultCode.ofSuccess()) {
             return externalLogRecordExporter.export(
                 logs.filterNot {
-                    it.hasEmbraceAttribute(PrivateSpan)
+                    it.attributes.hasEmbraceAttribute(PrivateSpan)
                 }
             )
         }

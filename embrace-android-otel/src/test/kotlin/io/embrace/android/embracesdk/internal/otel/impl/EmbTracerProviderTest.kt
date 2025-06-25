@@ -16,13 +16,13 @@ internal class EmbTracerProviderTest {
 
     private lateinit var spanService: FakeSpanService
     private lateinit var sdkTracerProvider: FakeTracerProvider
-    private lateinit var embTracerProvider: EmbTracerProvider
+    private lateinit var embTracerProvider: EmbOtelJavaTracerProvider
 
     @Before
     fun setup() {
         spanService = FakeSpanService()
         sdkTracerProvider = FakeTracerProvider()
-        embTracerProvider = EmbTracerProvider(
+        embTracerProvider = EmbOtelJavaTracerProvider(
             sdkTracerProvider = sdkTracerProvider,
             spanService = spanService,
             clock = openTelemetryClock
@@ -32,7 +32,7 @@ internal class EmbTracerProviderTest {
     @Test
     fun `same instrumentation scope names return the same tracer instance`() {
         val tracer = embTracerProvider.get("foo")
-        assertTrue(tracer is EmbTracer)
+        assertTrue(tracer is EmbOtelJavaTracer)
         val dupeTracer = embTracerProvider.get("foo")
         val differentTracer = embTracerProvider.get("food")
         assertSame(tracer, dupeTracer)

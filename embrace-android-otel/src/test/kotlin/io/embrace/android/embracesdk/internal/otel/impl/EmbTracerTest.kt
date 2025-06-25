@@ -16,13 +16,13 @@ internal class EmbTracerTest {
 
     private lateinit var spanService: FakeSpanService
     private lateinit var sdkTracer: FakeTracer
-    private lateinit var tracer: EmbTracer
+    private lateinit var tracer: EmbOtelJavaTracer
 
     @Before
     fun setup() {
         spanService = FakeSpanService()
         sdkTracer = FakeTracer()
-        tracer = EmbTracer(
+        tracer = EmbOtelJavaTracer(
             sdkTracer = sdkTracer,
             spanService = spanService,
             clock = openTelemetryClock,

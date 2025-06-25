@@ -4,9 +4,9 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.assertEmbraceSpanData
 import io.embrace.android.embracesdk.fakes.FakeSpanExporter
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
-import io.embrace.android.embracesdk.internal.otel.impl.EmbSpan
-import io.embrace.android.embracesdk.internal.otel.impl.EmbSpanBuilder
-import io.embrace.android.embracesdk.internal.otel.impl.EmbTracer
+import io.embrace.android.embracesdk.internal.otel.impl.EmbOtelJavaSpan
+import io.embrace.android.embracesdk.internal.otel.impl.EmbOtelJavaSpanBuilder
+import io.embrace.android.embracesdk.internal.otel.impl.EmbOtelJavaTracer
 import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
 import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
 import io.embrace.android.embracesdk.internal.otel.sdk.toEmbraceSpanData
@@ -68,11 +68,11 @@ internal class ExternalTracerTest {
                     otelTracer,
                     embOpenTelemetry.getTracer("foo")
                 )
-                assertTrue(embTracer is EmbTracer)
+                assertTrue(embTracer is EmbOtelJavaTracer)
                 val spanBuilder = embTracer.spanBuilder("test")
                 val span = spanBuilder.startSpan()
-                assertTrue(spanBuilder is EmbSpanBuilder)
-                assertTrue(span is EmbSpan)
+                assertTrue(spanBuilder is EmbOtelJavaSpanBuilder)
+                assertTrue(span is EmbOtelJavaSpan)
             }
         )
     }
@@ -192,11 +192,11 @@ internal class ExternalTracerTest {
                 initializeTracer()
             },
             assertAction = {
-                assertTrue(embTracer is EmbTracer)
+                assertTrue(embTracer is EmbOtelJavaTracer)
                 val spanBuilder = embTracer.spanBuilder("test")
                 val span = spanBuilder.startSpan()
-                assertTrue(spanBuilder is EmbSpanBuilder)
-                assertTrue(span is EmbSpan)
+                assertTrue(spanBuilder is EmbOtelJavaSpanBuilder)
+                assertTrue(span is EmbOtelJavaSpan)
             }
         )
     }

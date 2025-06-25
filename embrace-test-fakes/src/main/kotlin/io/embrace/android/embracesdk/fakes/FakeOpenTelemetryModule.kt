@@ -6,7 +6,7 @@ import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehavior
 import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModule
 import io.embrace.android.embracesdk.internal.otel.config.OtelSdkConfig
-import io.embrace.android.embracesdk.internal.otel.impl.EmbOpenTelemetry
+import io.embrace.android.embracesdk.internal.otel.impl.EmbOtelJavaOpenTelemetry
 import io.embrace.android.embracesdk.internal.otel.logs.LogSink
 import io.embrace.android.embracesdk.internal.otel.logs.LogSinkImpl
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
@@ -47,7 +47,7 @@ class FakeOpenTelemetryModule(
     override val logger: Logger
         get() = FakeOtelLogger()
     override val externalOpenTelemetry: OtelJavaOpenTelemetry
-        get() = EmbOpenTelemetry(traceProviderSupplier = { FakeTracerProvider() })
+        get() = EmbOtelJavaOpenTelemetry(traceProviderSupplier = { FakeTracerProvider() })
     override val externalTracerProvider: OtelJavaTracerProvider
         get() = FakeTracerProvider()
     override val openTelemetryClock: OtelJavaClock

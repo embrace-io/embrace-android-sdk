@@ -12,7 +12,7 @@ import io.embrace.opentelemetry.kotlin.aliases.OtelJavaClock
  * The one caveat about this implementation is that the precision for obtaining the current time only goes to the millisecond, which is
  * considered enough for client side operation timings at this time.
  */
-class EmbClock(
+class EmbOtelJavaClock(
     private val embraceClock: Clock,
 ) : OtelJavaClock {
 

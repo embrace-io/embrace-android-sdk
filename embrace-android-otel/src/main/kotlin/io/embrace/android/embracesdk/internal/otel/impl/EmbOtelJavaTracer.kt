@@ -10,14 +10,14 @@ import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanBuilder
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaTracer
 import io.embrace.opentelemetry.kotlin.k2j.ClockAdapter
 
-class EmbTracer(
+class EmbOtelJavaTracer(
     private val sdkTracer: OtelJavaTracer,
     private val spanService: SpanService,
     private val clock: OtelJavaClock,
 ) : OtelJavaTracer {
 
     override fun spanBuilder(spanName: String): OtelJavaSpanBuilder =
-        EmbSpanBuilder(
+        EmbOtelJavaSpanBuilder(
             otelSpanCreator = sdkTracer.otelSpanCreator(
                 name = spanName,
                 type = EmbType.Performance.Default,

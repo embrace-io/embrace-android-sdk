@@ -4,7 +4,7 @@ import io.embrace.android.embracesdk.internal.otel.sdk.TracerKey
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaTracer
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaTracerBuilder
 
-internal class EmbTracerBuilder(
+internal class EmbOtelJavaTracerBuilder(
     instrumentationScopeName: String,
     private val tracerSupplier: (tracerKey: TracerKey) -> OtelJavaTracer,
 ) : OtelJavaTracerBuilder {

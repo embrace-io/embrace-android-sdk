@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.internal.clock.Clock
-import io.embrace.android.embracesdk.internal.otel.impl.EmbClock
+import io.embrace.android.embracesdk.internal.otel.impl.EmbOtelJavaClock
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaClock
 
 /**
@@ -13,7 +13,7 @@ class FakeOpenTelemetryClock(
     private val startingElapsedTimeNanos: Long = 0L,
 ) : OtelJavaClock {
 
-    private val realOpenTelemetryClock = EmbClock(embraceClock = embraceClock)
+    private val realOpenTelemetryClock = EmbOtelJavaClock(embraceClock = embraceClock)
     private val startingTimeNanos = now()
     override fun now(): Long = realOpenTelemetryClock.now()
 

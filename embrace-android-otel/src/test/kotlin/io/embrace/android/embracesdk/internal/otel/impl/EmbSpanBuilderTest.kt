@@ -36,7 +36,7 @@ internal class EmbSpanBuilderTest {
     private lateinit var tracer: Tracer
     private lateinit var spanService: FakeSpanService
     private lateinit var creator: OtelSpanCreator
-    private lateinit var embSpanBuilder: EmbSpanBuilder
+    private lateinit var embSpanBuilder: EmbOtelJavaSpanBuilder
 
     @Before
     fun setup() {
@@ -51,7 +51,7 @@ internal class EmbSpanBuilderTest {
                 private = false,
             ),
         )
-        embSpanBuilder = EmbSpanBuilder(
+        embSpanBuilder = EmbOtelJavaSpanBuilder(
             otelSpanCreator = creator,
             spanService = spanService,
             clock = openTelemetryClock
@@ -72,7 +72,7 @@ internal class EmbSpanBuilderTest {
                 autoTerminationMode = AutoTerminationMode.ON_BACKGROUND,
             )
         )
-        embSpanBuilder = EmbSpanBuilder(
+        embSpanBuilder = EmbOtelJavaSpanBuilder(
             otelSpanCreator = newOtelSpanStartArgs,
             spanService = spanService,
             clock = openTelemetryClock
@@ -105,7 +105,7 @@ internal class EmbSpanBuilderTest {
                 parentSpan = oldParent,
             )
         )
-        embSpanBuilder = EmbSpanBuilder(
+        embSpanBuilder = EmbOtelJavaSpanBuilder(
             otelSpanCreator = newOtelSpanStartArgs,
             spanService = spanService,
             clock = openTelemetryClock
@@ -137,7 +137,7 @@ internal class EmbSpanBuilderTest {
                 private = false,
             )
         )
-        embSpanBuilder = EmbSpanBuilder(
+        embSpanBuilder = EmbOtelJavaSpanBuilder(
             otelSpanCreator = newOtelSpanStartArgs,
             spanService = spanService,
             clock = openTelemetryClock

@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.internal.otel
 
 import io.embrace.android.embracesdk.internal.payload.Span.Status
 import io.embrace.opentelemetry.kotlin.StatusCode
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaAttributeKey
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanKind
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaStatusCode
 import io.embrace.opentelemetry.kotlin.tracing.SpanKind
@@ -32,5 +31,3 @@ fun StatusCode.toEmbracePayload(): Status = when (this) {
     StatusCode.Ok -> Status.OK
     StatusCode.Unset -> Status.UNSET
 }
-
-internal fun String.toOtelJavaAttributeKey() = OtelJavaAttributeKey.stringKey(this)

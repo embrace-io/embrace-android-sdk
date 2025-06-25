@@ -16,7 +16,6 @@ import io.embrace.opentelemetry.kotlin.aliases.OtelJavaAttributes
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaAttributesBuilder
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaLinkData
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaLogRecordBuilder
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaLogRecordData
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpan
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanData
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaStatusCode
@@ -67,9 +66,6 @@ fun OtelJavaLogRecordBuilder.setAttribute(
     return this
 }
 
-fun OtelJavaLogRecordData.hasEmbraceAttribute(embraceAttribute: EmbraceAttribute): Boolean =
-    attributes[embraceAttribute.key.asOtelAttributeKey()] == embraceAttribute.value
-
 fun OtelJavaSpan.setEmbraceAttribute(key: EmbraceAttributeKey, value: String): OtelJavaSpan {
     setAttribute(key.name, value)
     return this
@@ -95,8 +91,8 @@ fun OtelJavaSpanData.toEmbraceSpanData(): EmbraceSpanData = EmbraceSpanData(
     links = links.map { it.toEmbracePayload() }
 )
 
-fun OtelJavaSpanData.hasEmbraceAttribute(embraceAttribute: EmbraceAttribute): Boolean =
-    attributes.asMap()[embraceAttribute.key.asOtelAttributeKey()] == embraceAttribute.value
+fun OtelJavaAttributes.hasEmbraceAttribute(embraceAttribute: EmbraceAttribute): Boolean =
+    asMap()[embraceAttribute.key.asOtelAttributeKey()] == embraceAttribute.value
 
 fun OtelJavaStatusCode.toStatus(): Status {
     return when (this) {

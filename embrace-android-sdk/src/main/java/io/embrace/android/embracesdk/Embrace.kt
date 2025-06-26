@@ -13,9 +13,9 @@ import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
-import io.opentelemetry.api.OpenTelemetry
-import io.opentelemetry.sdk.logs.export.LogRecordExporter
-import io.opentelemetry.sdk.trace.export.SpanExporter
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaLogRecordExporter
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaOpenTelemetry
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanExporter
 
 /**
  * Entry point for the SDK. This class is part of the Embrace Public API.
@@ -382,11 +382,11 @@ public class Embrace private constructor(
      *
      * @param spanExporter the span exporter to add
      */
-    override fun addSpanExporter(spanExporter: SpanExporter) {
+    override fun addSpanExporter(spanExporter: OtelJavaSpanExporter) {
         impl.addSpanExporter(spanExporter)
     }
 
-    override fun getOpenTelemetry(): OpenTelemetry {
+    override fun getOpenTelemetry(): OtelJavaOpenTelemetry {
         return impl.getOpenTelemetry()
     }
 
@@ -399,7 +399,7 @@ public class Embrace private constructor(
      *
      * @param logRecordExporter the LogRecord exporter to add
      */
-    override fun addLogRecordExporter(logRecordExporter: LogRecordExporter) {
+    override fun addLogRecordExporter(logRecordExporter: OtelJavaLogRecordExporter) {
         impl.addLogRecordExporter(logRecordExporter)
     }
 

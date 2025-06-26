@@ -2,41 +2,41 @@ package io.embrace.android.embracesdk.internal.otel.impl
 
 import io.embrace.android.embracesdk.internal.otel.sdk.TracerKey
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
-import io.opentelemetry.api.trace.Tracer
-import io.opentelemetry.api.trace.TracerBuilder
-import io.opentelemetry.api.trace.TracerProvider
-import io.opentelemetry.sdk.common.Clock
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaClock
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaTracer
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaTracerBuilder
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaTracerProvider
 import java.util.concurrent.ConcurrentHashMap
 
-class EmbTracerProvider(
-    private val sdkTracerProvider: TracerProvider,
+class EmbOtelJavaTracerProvider(
+    private val sdkTracerProvider: OtelJavaTracerProvider,
     private val spanService: SpanService,
-    private val clock: Clock,
-) : TracerProvider {
+    private val clock: OtelJavaClock,
+) : OtelJavaTracerProvider {
 
-    private val tracers = ConcurrentHashMap<TracerKey, Tracer>()
+    private val tracers = ConcurrentHashMap<TracerKey, OtelJavaTracer>()
 
-    override fun get(instrumentationScopeName: String): Tracer = tracerBuilder(instrumentationScopeName).build()
+    override fun get(instrumentationScopeName: String): OtelJavaTracer = tracerBuilder(instrumentationScopeName).build()
 
-    override fun get(instrumentationScopeName: String, instrumentationScopeVersion: String): Tracer =
+    override fun get(instrumentationScopeName: String, instrumentationScopeVersion: String): OtelJavaTracer =
         tracerBuilder(instrumentationScopeName).setInstrumentationVersion(instrumentationScopeVersion).build()
 
-    override fun tracerBuilder(instrumentationScopeName: String): TracerBuilder {
-        return EmbTracerBuilder(
+    override fun tracerBuilder(instrumentationScopeName: String): OtelJavaTracerBuilder {
+        return EmbOtelJavaTracerBuilder(
             instrumentationScopeName = instrumentationScopeName,
             tracerSupplier = ::getTracer
         )
     }
 
-    private fun getTracer(key: TracerKey): Tracer {
+    private fun getTracer(key: TracerKey): OtelJavaTracer {
         return tracers[key]
             ?: synchronized(tracers) {
                 return tracers[key] ?: createTracer(key)
             }
     }
 
-    private fun createTracer(key: TracerKey): Tracer {
-        val tracer = EmbTracer(
+    private fun createTracer(key: TracerKey): OtelJavaTracer {
+        val tracer = EmbOtelJavaTracer(
             sdkTracer = buildSdkTracer(key),
             spanService = spanService,
             clock = clock
@@ -45,7 +45,7 @@ class EmbTracerProvider(
         return tracer
     }
 
-    private fun buildSdkTracer(key: TracerKey): Tracer {
+    private fun buildSdkTracer(key: TracerKey): OtelJavaTracer {
         val builder = sdkTracerProvider.tracerBuilder(key.instrumentationScopeName)
         key.instrumentationScopeVersion?.apply {
             builder.setInstrumentationVersion(this)

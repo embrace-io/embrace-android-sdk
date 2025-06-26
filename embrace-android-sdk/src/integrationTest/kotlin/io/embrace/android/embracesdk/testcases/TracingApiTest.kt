@@ -33,10 +33,10 @@ import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbracePayloadAssertionInterface
-import io.opentelemetry.api.trace.SpanContext
-import io.opentelemetry.api.trace.TraceFlags
-import io.opentelemetry.api.trace.TraceState
-import io.opentelemetry.context.Context
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaContext
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanContext
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaTraceFlags
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaTraceState
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
@@ -299,11 +299,11 @@ internal class TracingApiTest {
                     val parentThreadId = Thread.currentThread().compatThreadId()
                     var childThreadId: Long = -1L
                     val parent = checkNotNull(embrace.startSpan("parent"))
-                    val currentContext = Context.current()
-                    var currentContext2: Context? = null
+                    val currentContext = OtelJavaContext.current()
+                    var currentContext2: OtelJavaContext? = null
                     executor.submit {
                         childThreadId = Thread.currentThread().compatThreadId()
-                        currentContext2 = Context.current()
+                        currentContext2 = OtelJavaContext.current()
                         val child = checkNotNull(embrace.startSpan(name = "child", parent = parent))
                         assertTrue(child.stop())
                         latch.countDown()
@@ -347,11 +347,11 @@ internal class TracingApiTest {
     @Test
     fun `span links`() {
         val fakeSpan = FakeEmbraceSdkSpan.started()
-        val remoteSpanContext = SpanContext.createFromRemoteParent(
+        val remoteSpanContext = OtelJavaSpanContext.createFromRemoteParent(
             checkNotNull(fakeSpan.traceId),
             checkNotNull(fakeSpan.spanId),
-            TraceFlags.getDefault(),
-            TraceState.getDefault()
+            OtelJavaTraceFlags.getDefault(),
+            OtelJavaTraceState.getDefault()
         )
         testRule.runTest(
             testCaseAction = {

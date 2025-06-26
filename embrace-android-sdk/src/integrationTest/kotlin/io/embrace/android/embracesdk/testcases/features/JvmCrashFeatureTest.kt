@@ -8,7 +8,6 @@ import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRe
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.otel.attrs.embCrashId
 import io.embrace.android.embracesdk.internal.otel.attrs.embState
-import io.embrace.android.embracesdk.internal.otel.attrs.asOtelAttributeKey
 import io.embrace.android.embracesdk.internal.payload.ApplicationState
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.LegacyExceptionInfo
@@ -22,7 +21,7 @@ import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.assertions.assertMatches
 import io.embrace.android.embracesdk.assertions.assertOtelLogReceived
 import io.embrace.android.embracesdk.assertions.getLastLog
-import io.opentelemetry.api.logs.Severity
+import io.embrace.opentelemetry.kotlin.logging.SeverityNumber
 import io.opentelemetry.semconv.incubating.LogIncubatingAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -113,8 +112,7 @@ internal class JvmCrashFeatureTest {
                 assertOtelLogReceived(
                     logReceived = log,
                     expectedMessage = "",
-                    expectedSeverityNumber = Severity.ERROR.severityNumber,
-                    expectedSeverityText = Severity.ERROR.name,
+                    expectedSeverityNumber = SeverityNumber.ERROR,
                     expectedTimeMs = crashTimeMs,
                     expectedExceptionName = testException.javaClass.canonicalName,
                     expectedExceptionMessage = checkNotNull(testException.message),
@@ -155,8 +153,7 @@ internal class JvmCrashFeatureTest {
         assertOtelLogReceived(
             logReceived = this,
             expectedMessage = "",
-            expectedSeverityNumber = Severity.ERROR.severityNumber,
-            expectedSeverityText = Severity.ERROR.name,
+            expectedSeverityNumber = SeverityNumber.ERROR,
             expectedTimeMs = crashTimeMs,
             expectedExceptionName = testException.javaClass.canonicalName,
             expectedExceptionMessage = checkNotNull(testException.message),
@@ -170,7 +167,7 @@ internal class JvmCrashFeatureTest {
         val expectedExceptionCause = serializer.toJson(listOf(exceptionInfo), List::class.java)
 
         attributes?.assertMatches(mapOf(
-            embState.asOtelAttributeKey().key to state,
+            embState.name to state,
             "emb.android.crash_number" to 1,
             "emb.android.crash.exception_cause" to expectedExceptionCause,
             LogIncubatingAttributes.LOG_RECORD_UID.key to crashId

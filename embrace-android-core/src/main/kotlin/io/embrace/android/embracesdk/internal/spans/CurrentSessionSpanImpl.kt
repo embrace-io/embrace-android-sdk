@@ -4,7 +4,6 @@ import io.embrace.android.embracesdk.internal.arch.destination.SessionSpanWriter
 import io.embrace.android.embracesdk.internal.arch.destination.SpanAttributeData
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
-import io.embrace.android.embracesdk.internal.otel.attrs.asOtelAttributeKey
 import io.embrace.android.embracesdk.internal.otel.attrs.asPair
 import io.embrace.android.embracesdk.internal.otel.schema.AppTerminationCause
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
@@ -20,14 +19,14 @@ import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.ErrorCode
-import io.opentelemetry.sdk.common.Clock
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaClock
 import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 
 internal class CurrentSessionSpanImpl(
-    private val openTelemetryClock: Clock,
+    private val openTelemetryClock: OtelJavaClock,
     private val telemetryService: TelemetryService,
     private val spanRepository: SpanRepository,
     private val spanSink: SpanSink,
@@ -92,7 +91,7 @@ internal class CurrentSessionSpanImpl(
     }
 
     override fun getSessionId(): String {
-        return sessionSpan.get()?.getSystemAttribute(SessionIncubatingAttributes.SESSION_ID) ?: ""
+        return sessionSpan.get()?.getSystemAttribute(SessionIncubatingAttributes.SESSION_ID.key) ?: ""
     }
 
     override fun spanStopCallback(spanId: String) {
@@ -151,7 +150,7 @@ internal class CurrentSessionSpanImpl(
                     val crashTime = openTelemetryClock.now().nanosToMillis()
                     spanRepository.failActiveSpans(crashTime)
                     endingSessionSpan.setSystemAttribute(
-                        appTerminationCause.key.asOtelAttributeKey(),
+                        appTerminationCause.key.name,
                         appTerminationCause.value
                     )
                     endingSessionSpan.stop(errorCode = ErrorCode.FAILURE, endTimeMs = crashTime)
@@ -201,10 +200,10 @@ internal class CurrentSessionSpanImpl(
             private = false,
         ).apply {
             start(startTimeMs = startTimeMs)
-            setSystemAttribute(SessionIncubatingAttributes.SESSION_ID, Uuid.getEmbUuid())
+            setSystemAttribute(SessionIncubatingAttributes.SESSION_ID.key, Uuid.getEmbUuid())
             val previousSessionSpan = lastSessionSpan.get()
             previousSessionSpan?.spanContext?.let {
-                val prevSessionId = previousSessionSpan.getSystemAttribute(SessionIncubatingAttributes.SESSION_ID) ?: ""
+                val prevSessionId = previousSessionSpan.getSystemAttribute(SessionIncubatingAttributes.SESSION_ID.key) ?: ""
                 addSystemLink(
                     linkedSpanContext = it,
                     type = LinkType.PreviousSession,

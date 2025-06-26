@@ -4,8 +4,8 @@ import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.otel.sdk.toStringMap
 import io.embrace.android.embracesdk.internal.payload.Link
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
-import io.opentelemetry.api.trace.StatusCode
-import io.opentelemetry.sdk.trace.data.EventData
+import io.embrace.opentelemetry.kotlin.StatusCode
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaEventData
 
 /**
  * Serializable representation of [EmbraceSpanData]
@@ -23,7 +23,7 @@ data class EmbraceSpanData(
 
     val endTimeNanos: Long,
 
-    val status: StatusCode = StatusCode.UNSET,
+    val status: StatusCode = StatusCode.Unset,
 
     val events: List<EmbraceSpanEvent> = emptyList(),
 
@@ -33,7 +33,7 @@ data class EmbraceSpanData(
 ) {
 
     companion object {
-        fun fromEventData(eventDataList: List<EventData>?): List<EmbraceSpanEvent> {
+        fun fromEventData(eventDataList: List<OtelJavaEventData>?): List<EmbraceSpanEvent> {
             val events = mutableListOf<EmbraceSpanEvent>()
             eventDataList?.forEach { eventData ->
                 val event = EmbraceSpanEvent.create(

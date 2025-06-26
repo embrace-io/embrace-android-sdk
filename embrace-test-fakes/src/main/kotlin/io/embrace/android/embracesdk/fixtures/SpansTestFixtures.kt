@@ -10,8 +10,8 @@ import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
-import io.opentelemetry.api.trace.StatusCode
-import io.opentelemetry.context.ContextKey
+import io.embrace.opentelemetry.kotlin.StatusCode
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaContextKey
 
 val testSpan: Span = EmbraceSpanData(
     traceId = "19bb482ec1c7e6b2f10fb89e0ccc85fa",
@@ -20,7 +20,7 @@ val testSpan: Span = EmbraceSpanData(
     name = "emb-sdk-init",
     startTimeNanos = 1681972471806000000L,
     endTimeNanos = 1681972471871000000L,
-    status = StatusCode.UNSET,
+    status = StatusCode.Unset,
     events = listOf(
         checkNotNull(
             EmbraceSpanEvent.create(
@@ -55,7 +55,7 @@ val testSpanSnapshot: Span = Span(
     attributes = emptyList()
 )
 
-val fakeContextKey: ContextKey<String> = ContextKey.named<String>("fake-context-key")
+val fakeContextKey: OtelJavaContextKey<String> = OtelJavaContextKey.named<String>("fake-context-key")
 
 private fun createMapOfSize(size: Int): Map<String, String> {
     val mutableMap = mutableMapOf<String, String>()

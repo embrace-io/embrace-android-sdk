@@ -11,12 +11,14 @@ import io.embrace.android.embracesdk.internal.otel.logs.LogSink
 import io.embrace.android.embracesdk.internal.otel.logs.LogSinkImpl
 import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
 import io.embrace.android.embracesdk.internal.otel.spans.SpanSinkImpl
+import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
 
-internal class OtelSdkWrapperTest {
+@OptIn(ExperimentalApi::class)
+internal class OpenTelemetrySdkTest {
 
     private lateinit var spanSink: SpanSink
     private lateinit var logSink: LogSink
@@ -51,7 +53,7 @@ internal class OtelSdkWrapperTest {
 
     @Test
     fun `check resource added by sdk tracer`() {
-        sdk.sdkTracer.spanBuilder("test").startSpan().end()
+        sdk.sdkTracer.createSpan("test").end()
         spanExporter.exportedSpans.single().resource.assertExpectedAttributes(
             expectedServiceName = configuration.sdkName,
             expectedServiceVersion = configuration.sdkVersion,
@@ -61,7 +63,7 @@ internal class OtelSdkWrapperTest {
 
     @Test
     fun `check resource added by default logger`() {
-        sdk.getOpenTelemetryLogger().logRecordBuilder().emit()
+        sdk.kotlinApi.loggerProvider.getLogger("my_logger").log()
         checkNotNull(logExporter.exportedLogs).single().resource.assertExpectedAttributes(
             expectedServiceName = configuration.sdkName,
             expectedServiceVersion = configuration.sdkVersion,
@@ -72,8 +74,7 @@ internal class OtelSdkWrapperTest {
     @Test
     fun `sdk name and version used as instrumentation scope for tracer instance used by embrace`() {
         sdk.sdkTracer
-            .spanBuilder("test")
-            .startSpan()
+            .createSpan("test")
             .end()
         with(spanExporter.exportedSpans.single().instrumentationScopeInfo) {
             assertEquals(configuration.sdkName, name)

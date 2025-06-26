@@ -1,13 +1,11 @@
 package io.embrace.android.embracesdk.internal.otel.sdk
 
-import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.internal.otel.attrs.EmbraceAttribute
 import io.embrace.android.embracesdk.internal.otel.attrs.EmbraceAttributeKey
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
-import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.semconv.ExceptionAttributes
 
 fun EmbraceSpanData.hasEmbraceAttribute(embraceAttribute: EmbraceAttribute): Boolean =
@@ -43,19 +41,9 @@ fun List<Attribute>.findAttributeValue(key: String): String? = singleOrNull { it
 fun Map<String, String>.hasEmbraceAttribute(embraceAttribute: EmbraceAttribute): Boolean =
     this[embraceAttribute.key.name] == embraceAttribute.value
 
-fun Map<String, String>.getAttribute(key: AttributeKey<String>): String? = this[key.key]
-
-fun Map<String, String>.getAttribute(key: EmbraceAttributeKey): String? = this[key.name]
-
 fun MutableMap<String, String>.setEmbraceAttribute(embraceAttribute: EmbraceAttribute): Map<String, String> {
     this[embraceAttribute.key.name] = embraceAttribute.value
     return this
-}
-
-fun Severity.toOtelSeverity(): io.opentelemetry.api.logs.Severity = when (this) {
-    Severity.INFO -> io.opentelemetry.api.logs.Severity.INFO
-    Severity.WARNING -> io.opentelemetry.api.logs.Severity.WARN
-    Severity.ERROR -> io.opentelemetry.api.logs.Severity.ERROR
 }
 
 fun SpanEvent.hasEmbraceAttribute(embraceAttribute: EmbraceAttribute): Boolean =

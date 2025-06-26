@@ -2,13 +2,13 @@ package io.embrace.android.embracesdk.assertions
 
 import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
-import io.embrace.android.embracesdk.internal.otel.attrs.asOtelAttributeKey
 import io.embrace.android.embracesdk.internal.otel.attrs.embExceptionHandling
 import io.embrace.android.embracesdk.internal.otel.attrs.embState
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.serialization.truncatedStacktrace
+import io.embrace.opentelemetry.kotlin.logging.SeverityNumber
 import io.opentelemetry.semconv.ExceptionAttributes
 import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes
 import org.junit.Assert.assertEquals
@@ -18,9 +18,9 @@ import org.junit.Assert.assertNotNull
 fun assertOtelLogReceived(
     logReceived: Log?,
     expectedMessage: String,
-    expectedSeverityNumber: Int,
-    expectedSeverityText: String,
+    expectedSeverityNumber: SeverityNumber,
     expectedTimeMs: Long,
+    expectedSeverityText: String? = null,
     expectedType: String? = null,
     expectedExceptionName: String? = null,
     expectedExceptionMessage: String? = null,
@@ -33,12 +33,12 @@ fun assertOtelLogReceived(
     logReceived?.let { log ->
         assertEquals(expectedEmbType, log.attributes?.find { it.key == "emb.type" }?.data)
         assertEquals(expectedMessage, log.body)
-        assertEquals(expectedSeverityNumber, log.severityNumber)
-        assertEquals(expectedSeverityText, log.severityText)
+        assertEquals(expectedSeverityNumber.severityNumber, log.severityNumber)
+        assertEquals(expectedSeverityText ?: expectedSeverityNumber.name, log.severityText)
         assertEquals(expectedTimeMs.millisToNanos(), log.timeUnixNano)
         assertFalse(log.attributes?.findAttributeValue(SessionIncubatingAttributes.SESSION_ID.key).isNullOrBlank())
         expectedType?.let { assertAttribute(log, embExceptionHandling.name, it) }
-        assertEquals(expectedState, log.attributes?.findAttributeValue(embState.asOtelAttributeKey().key))
+        assertEquals(expectedState, log.attributes?.findAttributeValue(embState.name))
         expectedExceptionName?.let {
             assertAttribute(log, ExceptionAttributes.EXCEPTION_TYPE.key, expectedExceptionName)
         }
@@ -55,11 +55,11 @@ fun assertOtelLogReceived(
     }
 }
 
-fun getOtelSeverity(severity: Severity): io.opentelemetry.api.logs.Severity {
+fun getOtelSeverity(severity: Severity): SeverityNumber {
     return when (severity) {
-        Severity.INFO -> io.opentelemetry.api.logs.Severity.INFO
-        Severity.WARNING -> io.opentelemetry.api.logs.Severity.WARN
-        Severity.ERROR -> io.opentelemetry.api.logs.Severity.ERROR
+        Severity.INFO -> SeverityNumber.INFO
+        Severity.WARNING -> SeverityNumber.WARN
+        Severity.ERROR -> SeverityNumber.ERROR
     }
 }
 

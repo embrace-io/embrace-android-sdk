@@ -1,4 +1,4 @@
-@file:Suppress("DEPRECATION")
+@file:Suppress("TYPEALIAS_EXPANSION_DEPRECATION")
 
 package io.embrace.android.embracesdk.fakes
 
@@ -7,30 +7,30 @@ import io.embrace.android.embracesdk.internal.otel.attrs.asPair
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.embrace.android.embracesdk.internal.otel.sdk.DataValidator
 import io.embrace.android.embracesdk.internal.otel.sdk.fromMap
-import io.opentelemetry.api.common.Attributes
-import io.opentelemetry.api.trace.SpanContext
-import io.opentelemetry.api.trace.SpanId
-import io.opentelemetry.api.trace.SpanKind
-import io.opentelemetry.api.trace.TraceFlags
-import io.opentelemetry.api.trace.TraceId
-import io.opentelemetry.api.trace.TraceState
-import io.opentelemetry.sdk.common.InstrumentationLibraryInfo
-import io.opentelemetry.sdk.resources.Resource
-import io.opentelemetry.sdk.trace.data.EventData
-import io.opentelemetry.sdk.trace.data.LinkData
-import io.opentelemetry.sdk.trace.data.SpanData
-import io.opentelemetry.sdk.trace.data.StatusData
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaAttributes
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaEventData
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaInstrumentationLibraryInfo
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaLinkData
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaResource
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanContext
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanData
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanId
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanKind
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaStatusData
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaTraceFlags
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaTraceId
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaTraceState
 import kotlin.random.Random
 
 class FakeSpanData(
     private var name: String = "fake-started-span",
-    private var kind: SpanKind = SpanKind.INTERNAL,
+    private var kind: OtelJavaSpanKind = OtelJavaSpanKind.INTERNAL,
     private var type: EmbType = EmbType.Performance.Default,
-    private var spanContext: SpanContext = newTraceRootContext(),
-    private var parentSpanContext: SpanContext = SpanContext.getInvalid(),
+    private var spanContext: OtelJavaSpanContext = newTraceRootContext(),
+    private var parentSpanContext: OtelJavaSpanContext = OtelJavaSpanContext.getInvalid(),
     private var startEpochNanos: Long = DEFAULT_START_TIME_MS.millisToNanos(),
-    private var attributes: Attributes =
-        Attributes.builder().fromMap(
+    private var attributes: OtelJavaAttributes =
+        OtelJavaAttributes.builder().fromMap(
             attributes = mapOf(
                 type.asPair(),
                 Pair("my-key", "my-value")
@@ -38,36 +38,37 @@ class FakeSpanData(
             internal = true,
             limitsValidator = DataValidator()
         ).build(),
-    private var events: MutableList<EventData> = mutableListOf(
-        EventData.create(
+    private var events: MutableList<OtelJavaEventData> = mutableListOf(
+        OtelJavaEventData.create(
             startEpochNanos + 1000000L,
             "fake-event",
-            Attributes.builder().put("my-key", "my-value").build()
+            OtelJavaAttributes.builder().put("my-key", "my-value").build()
         )
     ),
-    private var links: MutableList<LinkData> = mutableListOf(),
-    private var resource: Resource = Resource.empty(),
-    var spanStatus: StatusData = StatusData.unset(),
+    private var links: MutableList<OtelJavaLinkData> = mutableListOf(),
+    private var resource: OtelJavaResource = OtelJavaResource.empty(),
+    var spanStatus: OtelJavaStatusData = OtelJavaStatusData.unset(),
     var endTimeNanos: Long = 0L,
-) : SpanData {
+) : OtelJavaSpanData {
     override fun getName(): String = name
-    override fun getKind(): SpanKind = kind
-    override fun getSpanContext(): SpanContext = spanContext
-    override fun getParentSpanContext(): SpanContext = parentSpanContext
-    override fun getStatus(): StatusData = spanStatus
+    override fun getKind(): OtelJavaSpanKind = kind
+    override fun getSpanContext(): OtelJavaSpanContext = spanContext
+    override fun getParentSpanContext(): OtelJavaSpanContext = parentSpanContext
+    override fun getStatus(): OtelJavaStatusData = spanStatus
     override fun getStartEpochNanos(): Long = startEpochNanos
-    override fun getAttributes(): Attributes = attributes
-    override fun getEvents(): MutableList<EventData> = events
-    override fun getLinks(): MutableList<LinkData> = links
+    override fun getAttributes(): OtelJavaAttributes = attributes
+    override fun getEvents(): MutableList<OtelJavaEventData> = events
+    override fun getLinks(): MutableList<OtelJavaLinkData> = links
     override fun getEndEpochNanos(): Long = endTimeNanos
     override fun hasEnded(): Boolean = endTimeNanos > 0
     override fun getTotalRecordedEvents(): Int = events.size
     override fun getTotalRecordedLinks(): Int = links.size
     override fun getTotalAttributeCount(): Int = attributes.size()
 
-    @Suppress("OVERRIDE_DEPRECATION")
-    override fun getInstrumentationLibraryInfo(): InstrumentationLibraryInfo = InstrumentationLibraryInfo.empty()
-    override fun getResource(): Resource = resource
+    @Deprecated("Deprecated in Java")
+    @Suppress("TYPEALIAS_EXPANSION_DEPRECATION")
+    override fun getInstrumentationLibraryInfo(): OtelJavaInstrumentationLibraryInfo = OtelJavaInstrumentationLibraryInfo.empty()
+    override fun getResource(): OtelJavaResource = resource
 
     companion object {
         private const val DEFAULT_START_TIME_MS = FakeClock.DEFAULT_FAKE_CURRENT_TIME
@@ -78,11 +79,11 @@ class FakeSpanData(
                 endTimeNanos = (DEFAULT_START_TIME_MS + 60000L).millisToNanos()
             )
 
-        private fun newTraceRootContext() = SpanContext.create(
-            TraceId.fromLongs(Random.nextLong(), Random.nextLong()).toString(),
-            SpanId.fromLong(Random.nextLong()).toString(),
-            TraceFlags.getDefault(),
-            TraceState.getDefault()
+        private fun newTraceRootContext() = OtelJavaSpanContext.create(
+            OtelJavaTraceId.fromLongs(Random.nextLong(), Random.nextLong()).toString(),
+            OtelJavaSpanId.fromLong(Random.nextLong()).toString(),
+            OtelJavaTraceFlags.getDefault(),
+            OtelJavaTraceState.getDefault()
         )
     }
 }

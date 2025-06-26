@@ -27,9 +27,14 @@ dependencies {
     compileOnly(libs.opentelemetry.sdk)
     compileOnly(libs.opentelemetry.semconv)
     compileOnly(libs.opentelemetry.semconv.incubating)
+    implementation(libs.opentelemetry.java.aliases)
 
     implementation(libs.junit)
     implementation(libs.okhttp)
     implementation(libs.robolectric)
     implementation(libs.lifecycle.runtime)
+
+    implementation(libs.opentelemetry.kotlin.api)
+    implementation(libs.opentelemetry.kotlin.api.ext)
+    implementation(libs.opentelemetry.kotlin.compat)
 }

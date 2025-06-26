@@ -8,16 +8,16 @@
     "start": "react-native start"
   },
   "dependencies": {
-    "@embrace-io/react-native": "^5.1.0",
-    "react": "18.3.1",
-    "react-native": "0.76.5"
+    "@embrace-io/react-native": "^5.2.0",
+    "react": "19.0.0",
+    "react-native": "0.79.0"
   },
   "devDependencies": {
     "@react-native-community/cli": "15.0.1",
     "@react-native-community/cli-platform-android": "15.0.1",
-    "@react-native/metro-config": "0.76.5",
-    "@react-native/typescript-config": "0.76.5",
-    "@types/react": "^18.2.6",
+    "@react-native/metro-config": "0.79.0",
+    "@react-native/typescript-config": "0.79.0",
+    "@types/react": "^19.0.0",
     "typescript": "5.0.4"
   },
   "engines": {

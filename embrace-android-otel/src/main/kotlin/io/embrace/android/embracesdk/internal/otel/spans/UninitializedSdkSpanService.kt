@@ -30,7 +30,7 @@ internal class UninitializedSdkSpanService : SpanService {
         autoTerminationMode: AutoTerminationMode,
     ): EmbraceSdkSpan? = null
 
-    override fun createSpan(otelSpanBuilderWrapper: OtelSpanBuilderWrapper): EmbraceSdkSpan? = null
+    override fun createSpan(otelSpanCreator: OtelSpanCreator): EmbraceSdkSpan? = null
 
     override fun <T> recordSpan(
         name: String,

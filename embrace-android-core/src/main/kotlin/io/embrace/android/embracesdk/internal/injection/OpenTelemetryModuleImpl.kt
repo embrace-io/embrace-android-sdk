@@ -4,9 +4,9 @@ import io.embrace.android.embracesdk.core.BuildConfig
 import io.embrace.android.embracesdk.internal.config.behavior.REDACTED_LABEL
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehavior
 import io.embrace.android.embracesdk.internal.otel.config.OtelSdkConfig
-import io.embrace.android.embracesdk.internal.otel.impl.EmbClock
-import io.embrace.android.embracesdk.internal.otel.impl.EmbOpenTelemetry
-import io.embrace.android.embracesdk.internal.otel.impl.EmbTracerProvider
+import io.embrace.android.embracesdk.internal.otel.impl.EmbOtelJavaClock
+import io.embrace.android.embracesdk.internal.otel.impl.EmbOtelJavaOpenTelemetry
+import io.embrace.android.embracesdk.internal.otel.impl.EmbOtelJavaTracerProvider
 import io.embrace.android.embracesdk.internal.otel.logs.LogSink
 import io.embrace.android.embracesdk.internal.otel.logs.LogSinkImpl
 import io.embrace.android.embracesdk.internal.otel.sdk.DataValidator
@@ -23,15 +23,17 @@ import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpanImpl
 import io.embrace.android.embracesdk.internal.spans.EmbraceTracer
 import io.embrace.android.embracesdk.internal.spans.InternalTracer
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
-import io.opentelemetry.api.OpenTelemetry
-import io.opentelemetry.api.logs.Logger
-import io.opentelemetry.api.trace.Tracer
-import io.opentelemetry.api.trace.TracerProvider
-import io.opentelemetry.sdk.common.Clock
+import io.embrace.opentelemetry.kotlin.ExperimentalApi
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaClock
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaOpenTelemetry
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaTracerProvider
+import io.embrace.opentelemetry.kotlin.logging.Logger
+import io.embrace.opentelemetry.kotlin.tracing.Tracer
 
+@OptIn(ExperimentalApi::class)
 internal class OpenTelemetryModuleImpl(
     private val initModule: InitModule,
-    override val openTelemetryClock: Clock = EmbClock(
+    override val openTelemetryClock: OtelJavaClock = EmbOtelJavaClock(
         embraceClock = initModule.clock
     ),
 ) : OpenTelemetryModule {
@@ -137,21 +139,25 @@ internal class OpenTelemetryModuleImpl(
     }
 
     override val logger: Logger by lazy {
-        otelSdkWrapper.getOpenTelemetryLogger()
+        EmbTrace.trace("otel-logger-init") {
+            otelSdkWrapper.kotlinApi.loggerProvider.getLogger(
+                name = otelSdkConfig.sdkName
+            )
+        }
     }
 
     override val logSink: LogSink by lazy {
         LogSinkImpl()
     }
 
-    override val externalOpenTelemetry: OpenTelemetry by lazy {
-        EmbOpenTelemetry(
+    override val externalOpenTelemetry: OtelJavaOpenTelemetry by lazy {
+        EmbOtelJavaOpenTelemetry(
             traceProviderSupplier = { externalTracerProvider }
         )
     }
 
-    override val externalTracerProvider: TracerProvider by lazy {
-        EmbTracerProvider(
+    override val externalTracerProvider: OtelJavaTracerProvider by lazy {
+        EmbOtelJavaTracerProvider(
             sdkTracerProvider = otelSdkWrapper.sdkTracerProvider,
             spanService = spanService,
             clock = openTelemetryClock,

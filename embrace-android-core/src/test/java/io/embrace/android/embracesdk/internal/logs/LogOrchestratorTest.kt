@@ -12,7 +12,7 @@ import io.embrace.android.embracesdk.internal.envelope.log.LogPayloadSourceImpl
 import io.embrace.android.embracesdk.internal.otel.logs.LogSink
 import io.embrace.android.embracesdk.internal.otel.logs.LogSinkImpl
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
-import io.opentelemetry.sdk.logs.data.LogRecordData
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaLogRecordData
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -58,7 +58,7 @@ internal class LogOrchestratorTest {
 
     @Test
     fun `send a batch of logs when the batch max size is reached`() {
-        val logs = mutableListOf<LogRecordData>()
+        val logs = mutableListOf<OtelJavaLogRecordData>()
 
         // Fill the sink with max batch size - 1 logs
         repeat(LogOrchestratorImpl.MAX_LOGS_PER_BATCH - 1) {
@@ -157,7 +157,7 @@ internal class LogOrchestratorTest {
     @Test
     fun `simulate race condition`() {
         val fakeLog = FakeLogRecordData()
-        val fakeLogs = mutableListOf<LogRecordData>()
+        val fakeLogs = mutableListOf<OtelJavaLogRecordData>()
         val threads = mutableListOf<ScheduledExecutorService>()
         val latch = CountDownLatch(49)
         repeat(49) {

@@ -9,10 +9,11 @@ import io.embrace.android.embracesdk.internal.otel.schema.ErrorCodeAttribute.Fai
 import io.embrace.android.embracesdk.internal.otel.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.otel.sdk.hasEmbraceAttribute
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanData
+import io.embrace.android.embracesdk.internal.otel.toEmbracePayload
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.spans.ErrorCode
-import io.opentelemetry.api.trace.StatusCode
+import io.embrace.opentelemetry.kotlin.StatusCode
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
@@ -48,7 +49,7 @@ fun EmbraceSpanData.assertDoesNotHaveEmbraceAttribute(embraceAttribute: EmbraceA
  * Assert [EmbraceSpanData] has ended with the error defined by [errorCode]
  */
 fun EmbraceSpanData.assertError(errorCode: ErrorCode) {
-    assertEquals(StatusCode.ERROR, status)
+    assertEquals(StatusCode.Error(null).toEmbracePayload(), status.toEmbracePayload())
     assertHasEmbraceAttribute(errorCode.fromErrorCode())
 }
 
@@ -56,7 +57,7 @@ fun EmbraceSpanData.assertError(errorCode: ErrorCode) {
  * Assert [EmbraceSpanData] has ended successfully
  */
 fun EmbraceSpanData.assertSuccessful() {
-    assertNotEquals(StatusCode.ERROR, status)
+    assertNotEquals(StatusCode.Error(null), status)
     assertNull(attributes[ErrorCodeAttribute.Failure.key.name])
 }
 

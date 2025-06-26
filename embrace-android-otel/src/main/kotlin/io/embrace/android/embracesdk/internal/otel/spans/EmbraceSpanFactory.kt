@@ -19,7 +19,7 @@ interface EmbraceSpanFactory {
     ): EmbraceSdkSpan
 
     fun create(
-        otelSpanBuilderWrapper: OtelSpanBuilderWrapper,
+        otelSpanCreator: OtelSpanCreator,
         autoTerminationMode: AutoTerminationMode = AutoTerminationMode.NONE
     ): EmbraceSdkSpan
 }

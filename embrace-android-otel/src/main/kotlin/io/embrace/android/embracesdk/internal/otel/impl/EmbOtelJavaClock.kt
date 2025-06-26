@@ -2,6 +2,8 @@ package io.embrace.android.embracesdk.internal.otel.impl
 
 import android.os.SystemClock
 import io.embrace.android.embracesdk.internal.clock.Clock
+import io.embrace.android.embracesdk.internal.clock.millisToNanos
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaClock
 
 /**
  * A clock that is compatible with the OpenTelemetry SDK that defers to the internal clock used by Embrace. This allows the times recorded
@@ -11,11 +13,11 @@ import io.embrace.android.embracesdk.internal.clock.Clock
  * The one caveat about this implementation is that the precision for obtaining the current time only goes to the millisecond, which is
  * considered enough for client side operation timings at this time.
  */
-class EmbClock(
+class EmbOtelJavaClock(
     private val embraceClock: Clock,
-) : io.opentelemetry.sdk.common.Clock {
+) : OtelJavaClock {
 
-    override fun now(): Long = embraceClock.nowInNanos()
+    override fun now(): Long = embraceClock.now().millisToNanos()
 
     override fun nanoTime(): Long = SystemClock.elapsedRealtimeNanos()
 }

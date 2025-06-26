@@ -2,10 +2,11 @@ package io.embrace.android.embracesdk.internal.otel.spans
 
 import io.embrace.android.embracesdk.concurrency.SingleThreadTestScheduledExecutor
 import io.embrace.android.embracesdk.fakes.FakeSpanData
+import io.embrace.android.embracesdk.internal.otel.sdk.toCompleteableResultCode
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaCompletableResultCode
 import io.mockk.every
 import io.mockk.spyk
 import io.mockk.unmockkObject
-import io.opentelemetry.sdk.common.CompletableResultCode
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertSame
 import org.junit.Before
@@ -26,7 +27,7 @@ internal class SpanSinkImplTests {
     fun `verify default state`() {
         assertEquals(0, spanSink.completedSpans().size)
         assertEquals(0, spanSink.flushSpans().size)
-        assertEquals(CompletableResultCode.ofSuccess(), spanSink.storeCompletedSpans(listOf()))
+        assertEquals(OtelJavaCompletableResultCode.ofSuccess(), spanSink.storeCompletedSpans(listOf()).toCompleteableResultCode())
     }
 
     @Test

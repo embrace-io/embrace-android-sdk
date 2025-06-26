@@ -11,6 +11,7 @@ import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeJniDelegate
 import io.embrace.android.embracesdk.fakes.FakeNetworkConnectivityService
 import io.embrace.android.embracesdk.fakes.FakePayloadStorageService
+import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.FakeSharedObjectLoader
 import io.embrace.android.embracesdk.fakes.FakeSymbolService
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
@@ -85,7 +86,8 @@ internal class EmbraceSetupInterface @JvmOverloads constructor(
             fakeInitModule,
             fakeInitModule.openTelemetryModule,
             FakeConfigService(),
-            workerThreadModule
+            workerThreadModule,
+            FakeProcessStateService()
         )
     } else {
         val fakeAnrService = FakeAnrService()
@@ -145,7 +147,7 @@ internal class EmbraceSetupInterface @JvmOverloads constructor(
                 deliveryTracer = deliveryTracer,
             )
         },
-        anrModuleSupplier = { _, _, _, _ -> anrModule },
+        anrModuleSupplier = { _, _, _, _, _ -> anrModule },
         nativeCoreModuleSupplier = { initModule, coreModule, payloadSourceModule, workerThreadModule, configModule, storageModule, essentialServiceModule, openTelemetryModule, _, _, _ ->
             createNativeCoreModule(
                 initModule = initModule,

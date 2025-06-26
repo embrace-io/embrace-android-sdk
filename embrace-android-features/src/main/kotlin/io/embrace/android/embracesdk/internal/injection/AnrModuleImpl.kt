@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.internal.anr.detection.LivenessCheckSchedul
 import io.embrace.android.embracesdk.internal.anr.detection.TargetThreadHandler
 import io.embrace.android.embracesdk.internal.anr.detection.ThreadMonitoringState
 import io.embrace.android.embracesdk.internal.config.ConfigService
+import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateService
 import io.embrace.android.embracesdk.internal.worker.Worker
 
 internal class AnrModuleImpl(
@@ -17,6 +18,7 @@ internal class AnrModuleImpl(
     openTelemetryModule: OpenTelemetryModule,
     configService: ConfigService,
     workerModule: WorkerThreadModule,
+    processStateService: ProcessStateService,
 ) : AnrModule {
 
     private val anrMonitorWorker = workerModule.backgroundWorker(Worker.Background.AnrWatchdogWorker)
@@ -33,7 +35,8 @@ internal class AnrModuleImpl(
                 anrMonitorWorker = anrMonitorWorker,
                 state = state,
                 clock = initModule.clock,
-                stacktraceSampler = stacktraceSampler
+                stacktraceSampler = stacktraceSampler,
+                processStateService = processStateService,
             )
         } else {
             null

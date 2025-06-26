@@ -10,9 +10,11 @@ import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.payload.AnrInterval
 import io.embrace.android.embracesdk.internal.session.MemoryCleanerListener
 import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateListener
+import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateService
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import java.util.concurrent.Callable
 import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 
 /**
@@ -31,11 +33,16 @@ internal class EmbraceAnrService(
     private val state: ThreadMonitoringState,
     private val clock: Clock,
     private val stacktraceSampler: AnrStacktraceSampler,
+    private val processStateService: ProcessStateService,
 ) : AnrService, MemoryCleanerListener, ProcessStateListener, BlockedThreadListener {
 
     private val listeners: CopyOnWriteArrayList<BlockedThreadListener> = CopyOnWriteArrayList<BlockedThreadListener>()
+    private var delayedBackgroundCheckTask: ScheduledFuture<*>? = null
 
     init {
+        if (processStateService.isInBackground) {
+            scheduleDelayedBackgroundCheck()
+        }
         // add listeners
         listeners.add(stacktraceSampler)
         livenessCheckScheduler.listener = this
@@ -106,6 +113,8 @@ internal class EmbraceAnrService(
      */
     override fun onForeground(coldStart: Boolean, timestamp: Long) {
         this.anrMonitorWorker.submit {
+            // Cancel any pending delayed background check since we're now in foreground
+            cancelDelayedBackgroundCheck()
             state.resetState()
             livenessCheckScheduler.startMonitoringThread()
         }
@@ -132,6 +141,33 @@ internal class EmbraceAnrService(
         for (listener in listeners) {
             listener.onThreadBlockedInterval(looper.thread, timestamp)
         }
+    }
+
+    /**
+     * Schedules a delayed check to stop ANR monitoring if the app is still in background.
+     * This handles slow app startup scenarios where the app takes time to transition to foreground.
+     */
+    private fun scheduleDelayedBackgroundCheck() {
+        delayedBackgroundCheckTask = anrMonitorWorker.schedule<Unit>(::stopMonitoringIfStillInBackground, 10, TimeUnit.SECONDS)
+    }
+
+    /**
+     * Cancels the delayed background check task if it exists.
+     */
+    private fun cancelDelayedBackgroundCheck() {
+        delayedBackgroundCheckTask?.cancel(false)
+        delayedBackgroundCheckTask = null
+    }
+
+    /**
+     * Stops ANR monitoring if the app is currently in background state.
+     * Called after a 10-second delay to handle slow startup scenarios.
+     */
+    private fun stopMonitoringIfStillInBackground() {
+        if (processStateService.isInBackground) {
+            livenessCheckScheduler.stopMonitoringThread()
+        }
+        delayedBackgroundCheckTask = null
     }
 
     private companion object {

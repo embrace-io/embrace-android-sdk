@@ -219,7 +219,8 @@ internal class ModuleInitBootstrapper(
                             initModule,
                             openTelemetryModule,
                             configModule.configService,
-                            workerThreadModule
+                            workerThreadModule,
+                            essentialServiceModule.processStateService
                         )
                     }
 

@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.injection
 import android.os.Looper
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
+import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
@@ -28,7 +29,8 @@ internal class AnrModuleImplTest {
             FakeInitModule(),
             FakeOpenTelemetryModule(),
             FakeConfigService(),
-            FakeWorkerThreadModule()
+            FakeWorkerThreadModule(),
+            FakeProcessStateService()
         )
         assertNotNull(module.anrService)
         assertNotNull(module.anrOtelMapper)
@@ -42,7 +44,8 @@ internal class AnrModuleImplTest {
             FakeConfigService(
                 autoDataCaptureBehavior = FakeAutoDataCaptureBehavior(anrServiceEnabled = false)
             ),
-            FakeWorkerThreadModule()
+            FakeWorkerThreadModule(),
+            FakeProcessStateService()
         )
         assertNull(module.anrService)
         assertNull(module.anrOtelMapper)

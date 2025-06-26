@@ -25,7 +25,7 @@ jobs:
     timeout-minutes: 60
     steps:
       - name: Validate access to version data service
-        uses: embrace-io/public-actions/upload-sdk-version@f4229398f257b24dbbe8b873f78e719f9af6cbbb
+        uses: embrace-io/public-actions/upload-sdk-version@66e5dbf34d2e52027cba72826b55f566de780b22
         with:
           platform: 'android'
           version: ${{ inputs.rc_version }}
@@ -54,7 +54,7 @@ jobs:
           ./gradlew findSonatypeStagingRepository releaseSonatypeStagingRepository -Dorg.gradle.parallel=false --no-build-cache --no-configuration-cache --stacktrace
 
       - name: Record SDK Version History
-        uses: embrace-io/public-actions/upload-sdk-version@f4229398f257b24dbbe8b873f78e719f9af6cbbb
+        uses: embrace-io/public-actions/upload-sdk-version@66e5dbf34d2e52027cba72826b55f566de780b22
         with:
           platform: 'android'
           version: ${{ inputs.rc_version }}

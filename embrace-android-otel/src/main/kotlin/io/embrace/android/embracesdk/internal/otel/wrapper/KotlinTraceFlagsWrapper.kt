@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.otel.wrapper
 
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaTraceFlags
-import io.embrace.opentelemetry.kotlin.tracing.TraceFlags
+import io.embrace.opentelemetry.kotlin.tracing.model.TraceFlags
 
 class KotlinTraceFlagsWrapper(
     private val impl: TraceFlags,

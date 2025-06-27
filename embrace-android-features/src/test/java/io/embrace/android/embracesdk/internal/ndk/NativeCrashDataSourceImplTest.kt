@@ -94,8 +94,8 @@ internal class NativeCrashDataSourceImplTest {
         )
 
         with(otelLogger.logs.single()) {
-            assertEquals(testNativeCrashData.timestamp, timestampNs?.nanosToMillis())
-            assertNull(observedTimestampNs?.nanosToMillis())
+            assertEquals(testNativeCrashData.timestamp, timestamp?.nanosToMillis())
+            assertNull(observedTimestamp?.nanosToMillis())
             assertTrue(attributes()[EmbType.System.NativeCrash.key.name] != null)
             assertEquals("value", attributes()["prop".toSessionPropertyAttributeName()])
             assertEquals("background", attributes()[embState.name])

@@ -12,7 +12,7 @@ import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateServ
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.logging.Logger
-import io.embrace.opentelemetry.kotlin.logging.SeverityNumber
+import io.embrace.opentelemetry.kotlin.logging.model.SeverityNumber
 import io.opentelemetry.semconv.incubating.LogIncubatingAttributes
 import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes
 import java.util.concurrent.TimeUnit

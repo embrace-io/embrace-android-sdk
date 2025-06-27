@@ -1,14 +1,14 @@
 package io.embrace.android.embracesdk.fakes
 
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
-import io.embrace.opentelemetry.kotlin.logging.LogRecord
-import io.embrace.opentelemetry.kotlin.logging.SeverityNumber
+import io.embrace.opentelemetry.kotlin.logging.model.LogRecord
+import io.embrace.opentelemetry.kotlin.logging.model.SeverityNumber
 
 @OptIn(ExperimentalApi::class)
 class FakeLogRecord(
-    override val observedTimestampNs: Long?,
+    override val observedTimestamp: Long?,
     override val severityNumber: SeverityNumber?,
-    override val timestampNs: Long?,
+    override val timestamp: Long?,
     override val body: String?,
     override val context: io.embrace.opentelemetry.kotlin.context.Context?,
     override val severityText: String?,

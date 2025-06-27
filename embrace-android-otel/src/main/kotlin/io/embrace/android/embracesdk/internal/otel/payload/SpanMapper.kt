@@ -16,8 +16,8 @@ import io.embrace.android.embracesdk.internal.payload.Link
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
-import io.embrace.opentelemetry.kotlin.StatusCode
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanId
+import io.embrace.opentelemetry.kotlin.tracing.StatusCode
 
 fun EmbraceSpanData.toEmbracePayload(): Span = Span(
     traceId = traceId,

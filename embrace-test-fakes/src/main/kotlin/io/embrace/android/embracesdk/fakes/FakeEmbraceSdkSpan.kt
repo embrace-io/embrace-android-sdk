@@ -24,10 +24,10 @@ import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
-import io.embrace.opentelemetry.kotlin.StatusCode
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaContext
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpan
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanContext
+import io.embrace.opentelemetry.kotlin.tracing.StatusCode
 import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.TimeUnit

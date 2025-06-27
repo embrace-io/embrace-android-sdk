@@ -27,14 +27,14 @@ import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
-import io.embrace.opentelemetry.kotlin.StatusCode
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaAttributes
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaClock
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaContext
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanContext
 import io.embrace.opentelemetry.kotlin.k2j.tracing.SpanContextAdapter
-import io.embrace.opentelemetry.kotlin.tracing.Span
+import io.embrace.opentelemetry.kotlin.tracing.StatusCode
 import io.embrace.opentelemetry.kotlin.tracing.Tracer
+import io.embrace.opentelemetry.kotlin.tracing.model.Span
 import io.opentelemetry.context.ImplicitContextKeyed
 import io.opentelemetry.semconv.ExceptionAttributes
 import java.util.Queue

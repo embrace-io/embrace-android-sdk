@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.otel.wrapper
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanContext
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaTraceFlags
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaTraceState
-import io.embrace.opentelemetry.kotlin.tracing.SpanContext
+import io.embrace.opentelemetry.kotlin.tracing.model.SpanContext
 
 class KotlinSpanContextWrapper(
     private val impl: SpanContext,

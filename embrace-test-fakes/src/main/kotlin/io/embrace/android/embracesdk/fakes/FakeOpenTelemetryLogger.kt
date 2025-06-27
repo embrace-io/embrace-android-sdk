@@ -4,7 +4,7 @@ import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.attributes.AttributeContainer
 import io.embrace.opentelemetry.kotlin.context.Context
 import io.embrace.opentelemetry.kotlin.logging.Logger
-import io.embrace.opentelemetry.kotlin.logging.SeverityNumber
+import io.embrace.opentelemetry.kotlin.logging.model.SeverityNumber
 
 @OptIn(ExperimentalApi::class)
 class FakeOpenTelemetryLogger : Logger {
@@ -25,8 +25,8 @@ class FakeOpenTelemetryLogger : Logger {
         logs.add(
             FakeLogRecord(
                 body = body,
-                timestampNs = timestampNs,
-                observedTimestampNs = observedTimestampNs,
+                timestamp = timestampNs,
+                observedTimestamp = observedTimestampNs,
                 context = context,
                 severityNumber = severityNumber,
                 severityText = severityText,

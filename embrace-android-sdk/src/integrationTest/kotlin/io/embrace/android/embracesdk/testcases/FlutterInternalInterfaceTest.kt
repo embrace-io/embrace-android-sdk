@@ -2,16 +2,16 @@ package io.embrace.android.embracesdk.testcases
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.LogExceptionType
+import io.embrace.android.embracesdk.assertions.assertMatches
+import io.embrace.android.embracesdk.assertions.assertOtelLogReceived
+import io.embrace.android.embracesdk.assertions.getLogOfType
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.config.FakeProjectConfig
 import io.embrace.android.embracesdk.internal.EmbraceInternalApi
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
-import io.embrace.android.embracesdk.assertions.assertMatches
-import io.embrace.android.embracesdk.assertions.assertOtelLogReceived
-import io.embrace.android.embracesdk.assertions.getLogOfType
-import io.embrace.opentelemetry.kotlin.logging.SeverityNumber
+import io.embrace.opentelemetry.kotlin.logging.model.SeverityNumber
 import io.opentelemetry.semconv.ExceptionAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull

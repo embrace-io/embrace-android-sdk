@@ -9,12 +9,14 @@ import io.embrace.android.embracesdk.internal.otel.config.getMaxTotalLinkCount
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.OpenTelemetry
+import io.embrace.opentelemetry.kotlin.OpenTelemetryInstance
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaClock
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaOpenTelemetrySdk
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaResource
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSdkLoggerProvider
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSdkTracerProvider
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanLimits
+import io.embrace.opentelemetry.kotlin.compatWithOtelJava
 import io.embrace.opentelemetry.kotlin.tracing.Tracer
 
 /**
@@ -85,6 +87,6 @@ class OtelSdkWrapper(
 
     @OptIn(ExperimentalApi::class)
     val kotlinApi: OpenTelemetry by lazy {
-        io.embrace.opentelemetry.kotlin.k2j.OpenTelemetrySdk(sdk)
+        OpenTelemetryInstance.compatWithOtelJava(sdk)
     }
 }

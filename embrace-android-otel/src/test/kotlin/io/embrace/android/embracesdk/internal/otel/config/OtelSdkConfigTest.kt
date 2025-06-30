@@ -33,7 +33,7 @@ internal class OtelSdkConfigTest {
             systemInfo = systemInfo
         )
 
-        val resource = configuration.resourceBuilder.build()
+        val resource = configuration.otelJavaResourceBuilder.build()
 
         assertEquals(configuration.sdkName, resource.getAttribute(ServiceAttributes.SERVICE_NAME))
         assertEquals(

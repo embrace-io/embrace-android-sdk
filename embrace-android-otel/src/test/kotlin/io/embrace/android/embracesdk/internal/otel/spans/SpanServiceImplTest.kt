@@ -613,7 +613,7 @@ internal class SpanServiceImplTest {
             processIdentifierProvider = { "fake-pid" }
         )
         val otelSdkWrapper = OtelSdkWrapper(
-            openTelemetryClock = fakeClock,
+            otelClock = fakeClock,
             configuration = otelSdkConfig,
         )
 

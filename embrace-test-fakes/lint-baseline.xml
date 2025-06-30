@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<issues format="6" by="lint 8.9.2" type="baseline" client="gradle" dependencies="false" name="AGP (8.9.2)" variant="all" version="8.9.2">
+<issues format="6" by="lint 8.10.1" type="baseline" client="gradle" dependencies="false" name="AGP (8.10.1)" variant="all" version="8.10.1">
 
     <issue
         id="StopShip"
@@ -139,72 +139,6 @@
         errorLine1="        TODO(&quot;Not yet implemented&quot;)"
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/kotlin/io/embrace/android/embracesdk/fakes/FakeNativeThreadSamplerService.kt"
-            line="12"
-            column="9"/>
-    </issue>
-
-    <issue
-        id="StopShip"
-        message="`TODO` call found; points to code which must be fixed prior to release"
-        errorLine1="        TODO(&quot;Not yet implemented&quot;)"
-        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/embrace/android/embracesdk/fakes/FakeNativeThreadSamplerService.kt"
-            line="16"
-            column="9"/>
-    </issue>
-
-    <issue
-        id="StopShip"
-        message="`TODO` call found; points to code which must be fixed prior to release"
-        errorLine1="        TODO(&quot;Not yet implemented&quot;)"
-        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/embrace/android/embracesdk/fakes/FakeNativeThreadSamplerService.kt"
-            line="20"
-            column="9"/>
-    </issue>
-
-    <issue
-        id="StopShip"
-        message="`TODO` call found; points to code which must be fixed prior to release"
-        errorLine1="        TODO(&quot;Not yet implemented&quot;)"
-        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/embrace/android/embracesdk/fakes/FakeNativeThreadSamplerService.kt"
-            line="24"
-            column="9"/>
-    </issue>
-
-    <issue
-        id="StopShip"
-        message="`TODO` call found; points to code which must be fixed prior to release"
-        errorLine1="        TODO(&quot;Not yet implemented&quot;)"
-        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/embrace/android/embracesdk/fakes/FakeNativeThreadSamplerService.kt"
-            line="28"
-            column="9"/>
-    </issue>
-
-    <issue
-        id="StopShip"
-        message="`TODO` call found; points to code which must be fixed prior to release"
-        errorLine1="        TODO(&quot;Not yet implemented&quot;)"
-        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/embrace/android/embracesdk/fakes/FakeNativeThreadSamplerService.kt"
-            line="38"
-            column="9"/>
-    </issue>
-
-    <issue
-        id="StopShip"
-        message="`TODO` call found; points to code which must be fixed prior to release"
-        errorLine1="        TODO(&quot;Not yet implemented&quot;)"
-        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
             file="src/main/kotlin/io/embrace/android/embracesdk/fakes/FakeNetworkCaptureDataSource.kt"
             line="19"
             column="9"/>
@@ -250,7 +184,7 @@
         errorLine2="                ~~~~~~">
         <location
             file="src/main/kotlin/io/embrace/android/embracesdk/fakes/FakeOpenTelemetryModule.kt"
-            line="41"
+            line="44"
             column="17"/>
     </issue>
 
@@ -261,7 +195,7 @@
         errorLine2="                ~~~~~~">
         <location
             file="src/main/kotlin/io/embrace/android/embracesdk/fakes/FakeOpenTelemetryModule.kt"
-            line="43"
+            line="46"
             column="17"/>
     </issue>
 
@@ -296,50 +230,6 @@
             file="src/main/kotlin/io/embrace/android/embracesdk/fakes/FakeSessionOrchestrationModule.kt"
             line="20"
             column="17"/>
-    </issue>
-
-    <issue
-        id="StopShip"
-        message="`TODO` call found; points to code which must be fixed prior to release"
-        errorLine1="        TODO(&quot;Not yet implemented&quot;)"
-        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/embrace/android/embracesdk/fakes/FakeSpan.kt"
-            line="36"
-            column="9"/>
-    </issue>
-
-    <issue
-        id="StopShip"
-        message="`TODO` call found; points to code which must be fixed prior to release"
-        errorLine1="        TODO(&quot;Not yet implemented&quot;)"
-        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/embrace/android/embracesdk/fakes/FakeSpan.kt"
-            line="40"
-            column="9"/>
-    </issue>
-
-    <issue
-        id="StopShip"
-        message="`TODO` call found; points to code which must be fixed prior to release"
-        errorLine1="        TODO(&quot;Not yet implemented&quot;)"
-        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/embrace/android/embracesdk/fakes/FakeSpan.kt"
-            line="50"
-            column="9"/>
-    </issue>
-
-    <issue
-        id="StopShip"
-        message="`TODO` call found; points to code which must be fixed prior to release"
-        errorLine1="        TODO(&quot;Not yet implemented&quot;)"
-        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/embrace/android/embracesdk/fakes/FakeSpan.kt"
-            line="54"
-            column="9"/>
     </issue>
 
     <issue
@@ -495,28 +385,6 @@
 
     <issue
         id="NewApi"
-        message="Call requires API level 26, or core library desugaring (current min is 21): `java.time.Instant#toEpochMilli`"
-        errorLine1="        timestampEpochNanos = instant.toEpochMilli() * 1_000_000"
-        errorLine2="                                      ~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/embrace/android/embracesdk/fakes/FakeLogRecordBuilder.kt"
-            line="27"
-            column="39"/>
-    </issue>
-
-    <issue
-        id="NewApi"
-        message="Call requires API level 26, or core library desugaring (current min is 21): `java.time.Instant#toEpochMilli`"
-        errorLine1="        observedTimestampEpochNanos = instant.toEpochMilli() * 1_000_000"
-        errorLine2="                                              ~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/embrace/android/embracesdk/fakes/FakeLogRecordBuilder.kt"
-            line="37"
-            column="47"/>
-    </issue>
-
-    <issue
-        id="NewApi"
         message="Call requires API level 24, or core library desugaring (current min is 21): `java.util.Collection#removeIf`"
         errorLine1="            latches.removeIf { it.count == 0L }"
         errorLine2="                    ~~~~~~~~">
@@ -573,23 +441,23 @@
     <issue
         id="SyntheticAccessor"
         message="Access to `private` method `newTraceRootContext` of class `Companion` requires synthetic accessor"
-        errorLine1="    private var spanContext: SpanContext = newTraceRootContext(),"
-        errorLine2="                                           ~~~~~~~~~~~~~~~~~~~">
+        errorLine1="    private var spanContext: OtelJavaSpanContext = newTraceRootContext(),"
+        errorLine2="                                                   ~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/embrace/android/embracesdk/fakes/FakeSpanData.kt"
-            line="27"
-            column="44"/>
+            line="29"
+            column="52"/>
     </issue>
 
     <issue
         id="SyntheticAccessor"
         message="Access to `private` method `newTraceRootContext` of class `Companion` requires synthetic accessor"
-        errorLine1="    private var spanContext: SpanContext = newTraceRootContext(),"
-        errorLine2="                                           ~~~~~~~~~~~~~~~~~~~">
+        errorLine1="    private var spanContext: OtelJavaSpanContext = newTraceRootContext(),"
+        errorLine2="                                                   ~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/embrace/android/embracesdk/fakes/FakeSpanData.kt"
-            line="27"
-            column="44"/>
+            line="29"
+            column="52"/>
     </issue>
 
 </issues>

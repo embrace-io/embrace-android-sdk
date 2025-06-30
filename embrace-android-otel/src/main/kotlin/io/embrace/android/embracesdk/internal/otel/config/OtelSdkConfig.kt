@@ -9,18 +9,21 @@ import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanExporter
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanProcessor
 import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
+import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaLogRecordExporter
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaLogRecordProcessor
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaResource
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaResourceBuilder
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanExporter
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanProcessor
+import io.embrace.opentelemetry.kotlin.attributes.AttributeContainer
 import io.opentelemetry.semconv.ServiceAttributes
 import io.opentelemetry.semconv.incubating.AndroidIncubatingAttributes
 import io.opentelemetry.semconv.incubating.DeviceIncubatingAttributes
 import io.opentelemetry.semconv.incubating.OsIncubatingAttributes
 import io.opentelemetry.semconv.incubating.TelemetryIncubatingAttributes
 
+@OptIn(ExperimentalApi::class)
 class OtelSdkConfig(
     spanSink: SpanSink,
     logSink: LogSink,
@@ -29,7 +32,7 @@ class OtelSdkConfig(
     systemInfo: SystemInfo,
     private val processIdentifierProvider: () -> String = IdGenerator.Companion::generateLaunchInstanceId,
 ) {
-    val resourceBuilder: OtelJavaResourceBuilder = OtelJavaResource.getDefault().toBuilder()
+    val otelJavaResourceBuilder: OtelJavaResourceBuilder = OtelJavaResource.getDefault().toBuilder()
         .put(ServiceAttributes.SERVICE_NAME, sdkName)
         .put(ServiceAttributes.SERVICE_VERSION, sdkVersion)
         .put(OsIncubatingAttributes.OS_NAME, systemInfo.osName)
@@ -42,6 +45,21 @@ class OtelSdkConfig(
         .put(DeviceIncubatingAttributes.DEVICE_MODEL_NAME, systemInfo.deviceModel)
         .put(TelemetryIncubatingAttributes.TELEMETRY_DISTRO_NAME, sdkName)
         .put(TelemetryIncubatingAttributes.TELEMETRY_DISTRO_VERSION, sdkVersion)
+
+    val resourceAction: AttributeContainer.() -> Unit = {
+        setStringAttribute(ServiceAttributes.SERVICE_NAME.key, sdkName)
+        setStringAttribute(ServiceAttributes.SERVICE_VERSION.key, sdkVersion)
+        setStringAttribute(OsIncubatingAttributes.OS_NAME.key, systemInfo.osName)
+        setStringAttribute(OsIncubatingAttributes.OS_VERSION.key, systemInfo.osVersion)
+        setStringAttribute(OsIncubatingAttributes.OS_TYPE.key, systemInfo.osType)
+        setStringAttribute(OsIncubatingAttributes.OS_BUILD_ID.key, systemInfo.osBuild)
+        setStringAttribute(AndroidIncubatingAttributes.ANDROID_OS_API_LEVEL.key, systemInfo.androidOsApiLevel)
+        setStringAttribute(DeviceIncubatingAttributes.DEVICE_MANUFACTURER.key, systemInfo.deviceManufacturer)
+        setStringAttribute(DeviceIncubatingAttributes.DEVICE_MODEL_IDENTIFIER.key, systemInfo.deviceModel)
+        setStringAttribute(DeviceIncubatingAttributes.DEVICE_MODEL_NAME.key, systemInfo.deviceModel)
+        setStringAttribute(TelemetryIncubatingAttributes.TELEMETRY_DISTRO_NAME.key, sdkName)
+        setStringAttribute(TelemetryIncubatingAttributes.TELEMETRY_DISTRO_VERSION.key, sdkVersion)
+    }
 
     /**
      * Unique ID generated for an instance of the app process and not related to the actual process ID assigned by the OS.

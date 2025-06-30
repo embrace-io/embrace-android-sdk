@@ -11,7 +11,7 @@ import io.embrace.android.embracesdk.assertions.validateLinkToSpan
 import io.embrace.android.embracesdk.assertions.validateLinkToSpanContext
 import io.embrace.android.embracesdk.concurrency.SingleThreadTestScheduledExecutor
 import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
-import io.embrace.android.embracesdk.fakes.FakeSpanExporter
+import io.embrace.android.embracesdk.fakes.FakeOtelJavaSpanExporter
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fixtures.TOO_LONG_ATTRIBUTE_KEY
@@ -70,7 +70,7 @@ internal class TracingApiTest {
         var testStartTimeMs: Long = -1
         var sessionStartTimeMs: Long = -1
         var sessionEndTimeMs: Long = -1
-        val spanExporter = FakeSpanExporter()
+        val spanExporter = FakeOtelJavaSpanExporter()
 
         testRule.runTest(
             instrumentedConfig = FakeInstrumentedConfig(enabledFeatures = FakeEnabledFeatureConfig(bgActivityCapture = true)),

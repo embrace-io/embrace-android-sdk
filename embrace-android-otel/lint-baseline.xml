@@ -1,26 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <issues format="6" by="lint 8.10.1" type="baseline" client="gradle" dependencies="false" name="AGP (8.10.1)" variant="all" version="8.10.1">
 
-    <issue
-        id="StopShip"
-        message="`TODO` call found; points to code which must be fixed prior to release"
-        errorLine1="                addLogRecordProcessor(TODO())"
-        errorLine2="                                      ~~~~~~">
-        <location
-            file="src/main/kotlin/io/embrace/android/embracesdk/internal/otel/sdk/OtelSdkWrapper.kt"
-            line="102"
-            column="39"/>
-    </issue>
-
-    <issue
-        id="StopShip"
-        message="`TODO` call found; points to code which must be fixed prior to release"
-        errorLine1="                addSpanProcessor(TODO())"
-        errorLine2="                                 ~~~~~~">
-        <location
-            file="src/main/kotlin/io/embrace/android/embracesdk/internal/otel/sdk/OtelSdkWrapper.kt"
-            line="111"
-            column="34"/>
-    </issue>
-
 </issues>

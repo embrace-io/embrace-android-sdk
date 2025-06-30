@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.testcases
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.Severity
-import io.embrace.android.embracesdk.fakes.FakeSpanExporter
+import io.embrace.android.embracesdk.fakes.FakeOtelJavaSpanExporter
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.embrace.android.embracesdk.internal.otel.attrs.asOtelAttributeKey
@@ -24,7 +24,7 @@ internal class OTelExportTest {
 
     @Test
     fun `session span exported`() {
-        val fakeSpanExporter = FakeSpanExporter()
+        val fakeSpanExporter = FakeOtelJavaSpanExporter()
         testRule.runTest(
             preSdkStartAction = {
                 embrace.setResourceAttribute(ServiceAttributes.SERVICE_NAME, "my.app")
@@ -53,7 +53,7 @@ internal class OTelExportTest {
 
     @Test
     fun `a SpanExporter added after initialization won't be used`() {
-        val fakeSpanExporter = FakeSpanExporter()
+        val fakeSpanExporter = FakeOtelJavaSpanExporter()
 
         testRule.runTest(
             testCaseAction = {

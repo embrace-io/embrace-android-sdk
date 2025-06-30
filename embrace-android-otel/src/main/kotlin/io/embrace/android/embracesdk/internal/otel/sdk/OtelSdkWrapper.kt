@@ -7,6 +7,8 @@ import io.embrace.android.embracesdk.internal.otel.config.getMaxTotalAttributeCo
 import io.embrace.android.embracesdk.internal.otel.config.getMaxTotalEventCount
 import io.embrace.android.embracesdk.internal.otel.config.getMaxTotalLinkCount
 import io.embrace.android.embracesdk.internal.otel.impl.EmbOtelJavaClock
+import io.embrace.android.embracesdk.internal.otel.logs.DefaultLogRecordProcessor
+import io.embrace.android.embracesdk.internal.otel.spans.DefaultSpanProcessor
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.OpenTelemetry
@@ -42,7 +44,7 @@ class OtelSdkWrapper(
             OtelJavaSdkTracerProvider
                 .builder()
                 .addResource(resource)
-                .addSpanProcessor(configuration.spanProcessor)
+                .addSpanProcessor(configuration.otelJavaSpanProcessor)
                 .setSpanLimits(
                     OtelJavaSpanLimits
                         .getDefault()
@@ -79,7 +81,7 @@ class OtelSdkWrapper(
                     OtelJavaSdkLoggerProvider
                         .builder()
                         .addResource(resource)
-                        .addLogRecordProcessor(configuration.logProcessor)
+                        .addLogRecordProcessor(configuration.otelJavaLogProcessor)
                         .setClock(otelClock)
                         .build()
                 )
@@ -100,7 +102,11 @@ class OtelSdkWrapper(
         OpenTelemetryInstance.kotlinApi(
             loggerProvider = {
                 resource(configuration.resourceAction)
-//                addLogRecordProcessor(TODO())
+                addLogRecordProcessor(
+                    DefaultLogRecordProcessor(
+                        TODO()
+                    )
+                )
             },
             tracerProvider = {
                 resource(configuration.resourceAction)
@@ -109,7 +115,12 @@ class OtelSdkWrapper(
                     attributeCountLimit = limits.getMaxTotalAttributeCount()
                     linkCountLimit = limits.getMaxTotalLinkCount()
                 }
-//                addSpanProcessor(TODO())
+                addSpanProcessor(
+                    DefaultSpanProcessor(
+                        TODO(),
+                        configuration.processIdentifier
+                    )
+                )
             },
             clock = otelClock as EmbOtelJavaClock
         )

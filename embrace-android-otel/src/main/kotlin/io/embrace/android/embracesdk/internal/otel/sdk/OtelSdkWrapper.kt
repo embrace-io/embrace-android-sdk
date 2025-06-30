@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.internal.otel.config.getMaxTotalLinkCount
 import io.embrace.android.embracesdk.internal.otel.impl.EmbOtelJavaClock
 import io.embrace.android.embracesdk.internal.otel.logs.DefaultLogRecordProcessor
 import io.embrace.android.embracesdk.internal.otel.spans.DefaultSpanProcessor
+import io.embrace.android.embracesdk.internal.otel.wrapper.KotlinLogRecordExportWrapper
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.OpenTelemetry
@@ -104,7 +105,7 @@ class OtelSdkWrapper(
                 resource(configuration.resourceAction)
                 addLogRecordProcessor(
                     DefaultLogRecordProcessor(
-                        TODO()
+                        KotlinLogRecordExportWrapper(configuration.otelJavaLogRecordExporter)
                     )
                 )
             },

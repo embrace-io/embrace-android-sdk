@@ -5,9 +5,9 @@ import io.embrace.android.embracesdk.fakes.FakeCurrentSessionSpan
 import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
 import io.embrace.android.embracesdk.fakes.FakeOtelPayloadMapper
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
-import io.embrace.android.embracesdk.fakes.FakeSpanData
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
+import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.otel.spans.SpanSinkImpl
 import io.embrace.android.embracesdk.internal.otel.spans.hasEmbraceAttribute
@@ -26,7 +26,7 @@ internal class SessionPayloadSourceImplTest {
     private lateinit var currentSessionSpan: FakeCurrentSessionSpan
     private lateinit var spanRepository: SpanRepository
     private lateinit var activeSpan: FakeEmbraceSdkSpan
-    private val cacheSpan = FakeSpanData(name = "cache-span")
+    private val cacheSpan = EmbraceSpanData("", "", "", "cache-span", 0, 0)
 
     @Before
     fun setUp() {

@@ -1,10 +1,9 @@
 package io.embrace.android.embracesdk.internal.otel.logs
 
-import io.embrace.android.embracesdk.fakes.FakeLogRecordData
-import io.embrace.android.embracesdk.fixtures.deferredLogRecordData
-import io.embrace.android.embracesdk.fixtures.sendImmediatelyLogRecordData
-import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
+import io.embrace.android.embracesdk.fixtures.deferredLog
+import io.embrace.android.embracesdk.fixtures.sendImmediatelyLog
 import io.embrace.android.embracesdk.internal.otel.sdk.StoreDataResult
+import io.embrace.android.embracesdk.internal.payload.Log
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -30,15 +29,15 @@ internal class LogSinkImplTest {
 
     @Test
     fun `storing logs adds to stored logs`() {
-        val resultCode = logSink.storeLogs(listOf(FakeLogRecordData()))
+        val resultCode = logSink.storeLogs(listOf(Log()))
         assertEquals(StoreDataResult.SUCCESS, resultCode)
         assertEquals(1, logSink.logsForNextBatch().size)
-        assertEquals(FakeLogRecordData().toEmbracePayload(), logSink.logsForNextBatch().first())
+        assertEquals(Log(), logSink.logsForNextBatch().first())
     }
 
     @Test
     fun `flushing clears stored logs`() {
-        logSink.storeLogs(listOf(FakeLogRecordData(), FakeLogRecordData()))
+        logSink.storeLogs(listOf(Log(), Log()))
         val snapshot = logSink.logsForNextBatch()
         assertEquals(2, snapshot.size)
 
@@ -54,38 +53,38 @@ internal class LogSinkImplTest {
     fun `onStore is called when logs are stored`() {
         var onStoreCalled = false
         (logSink as LogSinkImpl).registerLogStoredCallback { onStoreCalled = true }
-        logSink.storeLogs(listOf(FakeLogRecordData()))
+        logSink.storeLogs(listOf(Log()))
         assertEquals(true, onStoreCalled)
     }
 
     @Test
     fun `logs with IMMEDIATE SendMode are stored in priority log queue`() {
-        val resultCode = logSink.storeLogs(listOf(sendImmediatelyLogRecordData))
+        val resultCode = logSink.storeLogs(listOf(sendImmediatelyLog))
         assertEquals(StoreDataResult.SUCCESS, resultCode)
         assertEquals(0, logSink.logsForNextBatch().size)
         val logRequest = checkNotNull(logSink.pollUnbatchedLog())
-        assertEquals(sendImmediatelyLogRecordData.log, logRequest.payload)
+        assertEquals(sendImmediatelyLog, logRequest.payload)
         assertFalse(logRequest.defer)
         assertNull(logSink.pollUnbatchedLog())
     }
 
     @Test
     fun `logs with DEFER SendMode are stored in priority log queue`() {
-        val resultCode = logSink.storeLogs(listOf(deferredLogRecordData))
+        val resultCode = logSink.storeLogs(listOf(deferredLog))
         assertEquals(StoreDataResult.SUCCESS, resultCode)
         assertEquals(0, logSink.logsForNextBatch().size)
         val logRequest = checkNotNull(logSink.pollUnbatchedLog())
-        assertEquals(deferredLogRecordData.log, logRequest.payload)
+        assertEquals(deferredLog, logRequest.payload)
         assertTrue(logRequest.defer)
         assertNull(logSink.pollUnbatchedLog())
     }
 
     @Test
     fun `unbatchable logs are stored in the unbatched log queue`() {
-        val resultCode = logSink.storeLogs(listOf(sendImmediatelyLogRecordData))
+        val resultCode = logSink.storeLogs(listOf(sendImmediatelyLog))
         assertEquals(StoreDataResult.SUCCESS, resultCode)
         assertEquals(0, logSink.logsForNextBatch().size)
-        assertEquals(sendImmediatelyLogRecordData.log, checkNotNull(logSink.pollUnbatchedLog()).payload)
+        assertEquals(sendImmediatelyLog, checkNotNull(logSink.pollUnbatchedLog()).payload)
         assertNull(logSink.pollUnbatchedLog())
     }
 }

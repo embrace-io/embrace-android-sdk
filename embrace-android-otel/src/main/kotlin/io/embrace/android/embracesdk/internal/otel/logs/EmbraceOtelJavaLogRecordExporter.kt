@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.otel.logs
 
+import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
 import io.embrace.android.embracesdk.internal.otel.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.otel.sdk.StoreDataResult
 import io.embrace.android.embracesdk.internal.otel.sdk.hasEmbraceAttribute
@@ -21,7 +22,7 @@ internal class EmbraceOtelJavaLogRecordExporter(
         if (!exportCheck()) {
             return StoreDataResult.SUCCESS.toCompleteableResultCode()
         }
-        val result = logSink.storeLogs(logs.toList())
+        val result = logSink.storeLogs(logs.map(OtelJavaLogRecordData::toEmbracePayload))
         if (externalLogRecordExporter != null && result == StoreDataResult.SUCCESS) {
             return externalLogRecordExporter.export(
                 logs.filterNot {

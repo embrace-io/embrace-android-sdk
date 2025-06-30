@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.internal.otel.logs
 
 import io.embrace.android.embracesdk.internal.otel.sdk.StoreDataResult
 import io.embrace.android.embracesdk.internal.payload.Log
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaLogRecordData
 
 /**
  * A service that stores exported logs and provides access to them so they
@@ -13,7 +12,7 @@ interface LogSink {
     /**
      * Store [Log] objects to be sent in the nexdt batch. Implementations must support concurrent invocations.
      */
-    fun storeLogs(logs: List<OtelJavaLogRecordData>): StoreDataResult
+    fun storeLogs(logs: List<Log>): StoreDataResult
 
     /**
      * Returns the list of currently stored [Log] objects, waiting to be sent in the next batch

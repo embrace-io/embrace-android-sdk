@@ -3,16 +3,15 @@ package io.embrace.android.embracesdk.internal.logs
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.concurrency.SingleThreadTestScheduledExecutor
 import io.embrace.android.embracesdk.fakes.FakeClock
-import io.embrace.android.embracesdk.fakes.FakeLogRecordData
 import io.embrace.android.embracesdk.fakes.FakePayloadStore
 import io.embrace.android.embracesdk.fakes.injection.FakePayloadSourceModule
-import io.embrace.android.embracesdk.fixtures.deferredLogRecordData
-import io.embrace.android.embracesdk.fixtures.sendImmediatelyLogRecordData
+import io.embrace.android.embracesdk.fixtures.deferredLog
+import io.embrace.android.embracesdk.fixtures.sendImmediatelyLog
 import io.embrace.android.embracesdk.internal.envelope.log.LogPayloadSourceImpl
 import io.embrace.android.embracesdk.internal.otel.logs.LogSink
 import io.embrace.android.embracesdk.internal.otel.logs.LogSinkImpl
+import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaLogRecordData
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -58,11 +57,11 @@ internal class LogOrchestratorTest {
 
     @Test
     fun `send a batch of logs when the batch max size is reached`() {
-        val logs = mutableListOf<OtelJavaLogRecordData>()
+        val logs = mutableListOf<Log>()
 
         // Fill the sink with max batch size - 1 logs
         repeat(LogOrchestratorImpl.MAX_LOGS_PER_BATCH - 1) {
-            logs.add(FakeLogRecordData())
+            logs.add(Log())
         }
         logSink.storeLogs(logs.toList())
 
@@ -71,7 +70,7 @@ internal class LogOrchestratorTest {
         verifyPayloadNotSent()
 
         // Add one more log to reach max batch size
-        logSink.storeLogs(listOf(FakeLogRecordData()))
+        logSink.storeLogs(listOf(Log()))
 
         // Verify the logs are sent
         assertTrue(logSink.logsForNextBatch().isEmpty())
@@ -80,7 +79,7 @@ internal class LogOrchestratorTest {
 
     @Test
     fun `logs are sent after inactivity time has passed`() {
-        logSink.storeLogs(listOf(FakeLogRecordData()))
+        logSink.storeLogs(listOf(Log()))
 
         moveTimeAhead(2000L)
 
@@ -94,7 +93,7 @@ internal class LogOrchestratorTest {
         val timeStep = 500L
 
         repeat(9) {
-            logSink.storeLogs(listOf(FakeLogRecordData()))
+            logSink.storeLogs(listOf(Log()))
             moveTimeAhead(timeStep)
         }
 
@@ -114,7 +113,7 @@ internal class LogOrchestratorTest {
         val timeStep = 1100L
 
         repeat(4) {
-            logSink.storeLogs(listOf(FakeLogRecordData()))
+            logSink.storeLogs(listOf(Log()))
             moveTimeAhead(timeStep)
         }
 
@@ -135,7 +134,7 @@ internal class LogOrchestratorTest {
         val timeStep = 1100L
 
         repeat(4) {
-            logSink.storeLogs(listOf(FakeLogRecordData()))
+            logSink.storeLogs(listOf(Log()))
             moveTimeAhead(timeStep)
         }
 
@@ -156,8 +155,8 @@ internal class LogOrchestratorTest {
 
     @Test
     fun `simulate race condition`() {
-        val fakeLog = FakeLogRecordData()
-        val fakeLogs = mutableListOf<OtelJavaLogRecordData>()
+        val fakeLog = Log()
+        val fakeLogs = mutableListOf<Log>()
         val threads = mutableListOf<ScheduledExecutorService>()
         val latch = CountDownLatch(49)
         repeat(49) {
@@ -188,7 +187,7 @@ internal class LogOrchestratorTest {
 
     @Test
     fun `logs with IMMEDIATE SendMode are sent immediately`() {
-        logSink.storeLogs(listOf(sendImmediatelyLogRecordData))
+        logSink.storeLogs(listOf(sendImmediatelyLog))
         executorService.runCurrentlyBlocked()
         // Verify the logs are sent
         assertNull(logSink.pollUnbatchedLog())
@@ -197,7 +196,7 @@ internal class LogOrchestratorTest {
 
     @Test
     fun `logs with DEFER SendMode are saved but not sent`() {
-        logSink.storeLogs(listOf(deferredLogRecordData))
+        logSink.storeLogs(listOf(deferredLog))
         executorService.runCurrentlyBlocked()
         // Verify the log is not in the LogSink but is saved
         assertNull(logSink.pollUnbatchedLog())

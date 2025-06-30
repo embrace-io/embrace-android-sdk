@@ -80,32 +80,39 @@ class OtelSdkConfig(
         exportEnabled = false
     }
 
-    val spanProcessor: OtelJavaSpanProcessor by lazy {
+    val otelJavaSpanExporter: OtelJavaSpanExporter by lazy {
+        EmbraceOtelJavaSpanExporter(
+            spanSink = spanSink,
+            externalSpanExporter = if (externalSpanExporters.isNotEmpty()) {
+                OtelJavaSpanExporter.composite(externalSpanExporters)
+            } else {
+                null
+            },
+            exportCheck = exportCheck,
+        )
+    }
+    val otelJavaSpanProcessor: OtelJavaSpanProcessor by lazy {
         EmbraceOtelJavaSpanProcessor(
-            EmbraceOtelJavaSpanExporter(
-                spanSink = spanSink,
-                externalSpanExporter = if (externalSpanExporters.isNotEmpty()) {
-                    OtelJavaSpanExporter.composite(externalSpanExporters)
-                } else {
-                    null
-                },
-                exportCheck = exportCheck,
-            ),
+            otelJavaSpanExporter,
             processIdentifier
         )
     }
 
-    val logProcessor: OtelJavaLogRecordProcessor by lazy {
+    val otelJavaLogRecordExporter: OtelJavaLogRecordExporter by lazy {
+        EmbraceOtelJavaLogRecordExporter(
+            logSink = logSink,
+            externalLogRecordExporter = if (externalLogExporters.isNotEmpty()) {
+                OtelJavaLogRecordExporter.composite(externalLogExporters)
+            } else {
+                null
+            },
+            exportCheck = exportCheck,
+        )
+    }
+
+    val otelJavaLogProcessor: OtelJavaLogRecordProcessor by lazy {
         EmbraceOtelJavaLogRecordProcessor(
-            EmbraceOtelJavaLogRecordExporter(
-                logSink = logSink,
-                externalLogRecordExporter = if (externalLogExporters.isNotEmpty()) {
-                    OtelJavaLogRecordExporter.composite(externalLogExporters)
-                } else {
-                    null
-                },
-                exportCheck = exportCheck,
-            )
+            otelJavaLogRecordExporter
         )
     }
 

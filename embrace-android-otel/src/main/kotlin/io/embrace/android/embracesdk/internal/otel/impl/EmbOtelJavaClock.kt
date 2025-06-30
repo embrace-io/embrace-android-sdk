@@ -15,7 +15,7 @@ import io.embrace.opentelemetry.kotlin.aliases.OtelJavaClock
  */
 class EmbOtelJavaClock(
     private val embraceClock: Clock,
-) : OtelJavaClock {
+) : OtelJavaClock, io.embrace.opentelemetry.kotlin.Clock {
 
     override fun now(): Long = embraceClock.now().millisToNanos()
 

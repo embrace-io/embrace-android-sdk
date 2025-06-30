@@ -1,5 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<issues format="6" by="lint 8.9.2" type="baseline" client="gradle" dependencies="false" name="AGP (8.9.2)" variant="all" version="8.9.2">
+<issues format="6" by="lint 8.10.1" type="baseline" client="gradle" dependencies="false" name="AGP (8.10.1)" variant="all" version="8.10.1">
+
+    <issue
+        id="TrimLambda"
+        message="The lambda argument (`{ it &lt;= &apos; &apos; }`) is unnecessary"
+        errorLine1="        packageInfo.versionName.toString().trim { it &lt;= &apos; &apos; }"
+        errorLine2="                                                ~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/embrace/android/embracesdk/internal/injection/PackageVersionInfo.kt"
+            line="15"
+            column="49"/>
+    </issue>
+
+    <issue
+        id="TrimLambda"
+        message="The lambda argument (`{ it &lt;= &apos; &apos; }`) is unnecessary"
+        errorLine1="        packageInfo.versionName.toString().trim { it &lt;= &apos; &apos; }"
+        errorLine2="                                                ~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/embrace/android/embracesdk/internal/injection/PackageVersionInfo.kt"
+            line="15"
+            column="49"/>
+    </issue>
 
     <issue
         id="EmbracePublicApiPackageRule"
@@ -10,17 +32,6 @@
             file="src/main/kotlin/io/embrace/android/embracesdk/LogExceptionType.kt"
             line="10"
             column="12"/>
-    </issue>
-
-    <issue
-        id="UnclosedTrace"
-        message="The `beginSection()` call is not always closed with a matching `endSection()` because the code in between may return early"
-        errorLine1="            Trace.beginSection(&quot;emb-$name&quot;.take(127))"
-        errorLine2="                  ~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/embrace/android/embracesdk/internal/EmbTrace.kt"
-            line="47"
-            column="19"/>
     </issue>
 
 </issues>

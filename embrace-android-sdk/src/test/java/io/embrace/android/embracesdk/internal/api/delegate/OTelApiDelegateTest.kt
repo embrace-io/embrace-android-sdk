@@ -86,19 +86,24 @@ internal class OTelApiDelegateTest {
     fun `set resource attribute before sdk starts`() {
         sdkCallChecker.started.set(false)
         delegate.setResourceAttribute("test", "foo")
-        assertEquals("foo", cfg.resourceBuilder.build().attributes.asMap().filter { it.key.key == "test" }.values.single())
+        assertEquals(
+            "foo",
+            cfg.otelJavaResourceBuilder.build().attributes.asMap().filter {
+                it.key.key == "test"
+            }.values.single()
+        )
     }
 
     @Test
     fun `override resource attribute before sdk starts`() {
         sdkCallChecker.started.set(false)
         delegate.setResourceAttribute(ServiceAttributes.SERVICE_NAME, "foo")
-        assertEquals("foo", cfg.resourceBuilder.build().attributes[ServiceAttributes.SERVICE_NAME])
+        assertEquals("foo", cfg.otelJavaResourceBuilder.build().attributes[ServiceAttributes.SERVICE_NAME])
     }
 
     @Test
     fun `set resource attribute after sdk starts`() {
         delegate.setResourceAttribute("test", "foo")
-        assertTrue(cfg.resourceBuilder.build().attributes.asMap().filter { it.key.key == "test" }.isEmpty())
+        assertTrue(cfg.otelJavaResourceBuilder.build().attributes.asMap().filter { it.key.key == "test" }.isEmpty())
     }
 }

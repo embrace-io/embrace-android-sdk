@@ -12,7 +12,7 @@ import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanExporter
 /**
  * Exports the given completed [Span] to the given [SpanSink] as well as any configured external [SpanExporter]
  */
-internal class EmbraceSpanExporter(
+internal class EmbraceOtelJavaSpanExporter(
     private val spanSink: SpanSink,
     private val externalSpanExporter: OtelJavaSpanExporter?,
     private val exportCheck: () -> Boolean,

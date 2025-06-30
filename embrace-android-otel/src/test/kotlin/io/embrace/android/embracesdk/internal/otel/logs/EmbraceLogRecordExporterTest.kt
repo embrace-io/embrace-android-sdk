@@ -16,11 +16,11 @@ internal class EmbraceLogRecordExporterTest {
     @Test
     fun `export() should store logs in LogSink`() {
         val logSink: LogSink = LogSinkImpl()
-        val embraceLogRecordExporter =
-            EmbraceLogRecordExporter(logSink, OtelJavaLogRecordExporter.composite(emptyList())) { true }
+        val embraceOtelJavaLogRecordExporter =
+            EmbraceOtelJavaLogRecordExporter(logSink, OtelJavaLogRecordExporter.composite(emptyList())) { true }
         val logRecordData = FakeLogRecordData()
 
-        embraceLogRecordExporter.export(listOf(logRecordData))
+        embraceOtelJavaLogRecordExporter.export(listOf(logRecordData))
 
         assertFalse(logSink.logsForNextBatch().isEmpty())
         assertEquals(logRecordData.toEmbracePayload(), logSink.logsForNextBatch()[0])
@@ -30,8 +30,8 @@ internal class EmbraceLogRecordExporterTest {
     fun `private logs should be filtered out from external exporters`() {
         val logSink: LogSink = LogSinkImpl()
         val externalExporter = FakeLogRecordExporter()
-        val embraceLogRecordExporter =
-            EmbraceLogRecordExporter(logSink, OtelJavaLogRecordExporter.composite(externalExporter)) { true }
+        val embraceOtelJavaLogRecordExporter =
+            EmbraceOtelJavaLogRecordExporter(logSink, OtelJavaLogRecordExporter.composite(externalExporter)) { true }
         val logRecordData = FakeLogRecordData()
         val privateLogRecordData = FakeLogRecordData(
             log = testLog.copy(
@@ -44,7 +44,7 @@ internal class EmbraceLogRecordExporterTest {
             )
         )
 
-        embraceLogRecordExporter.export(listOf(logRecordData, privateLogRecordData))
+        embraceOtelJavaLogRecordExporter.export(listOf(logRecordData, privateLogRecordData))
 
         assertEquals(2, logSink.logsForNextBatch().size)
         assertEquals(logRecordData.toEmbracePayload(), logSink.logsForNextBatch()[0])

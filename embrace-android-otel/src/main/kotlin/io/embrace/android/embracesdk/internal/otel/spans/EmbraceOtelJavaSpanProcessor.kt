@@ -13,7 +13,7 @@ import java.util.concurrent.atomic.AtomicLong
 /**
  * [SpanProcessor] that adds custom attributes to a [Span] when it starts, and exports it to the given [SpanExporter] when it finishes
  */
-class EmbraceSpanProcessor(
+class EmbraceOtelJavaSpanProcessor(
     private val spanExporter: OtelJavaSpanExporter,
     private val processIdentifier: String,
 ) : OtelJavaSpanProcessor {

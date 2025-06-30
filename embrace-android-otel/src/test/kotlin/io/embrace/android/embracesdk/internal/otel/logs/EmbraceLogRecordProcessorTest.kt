@@ -11,7 +11,7 @@ internal class EmbraceLogRecordProcessorTest {
     @Test
     fun `onEmit() should call export() on the LogRecordExporter`() {
         val logRecordExporter = FakeLogRecordExporter()
-        val logRecordProcessor = EmbraceLogRecordProcessor(logRecordExporter)
+        val logRecordProcessor = EmbraceOtelJavaLogRecordProcessor(logRecordExporter)
         val readWriteLogRecord = FakeReadWriteLogRecord()
 
         logRecordProcessor.onEmit(mockk(), readWriteLogRecord)

@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.config
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.core.BuildConfig
 import io.embrace.android.embracesdk.fakes.FakeClock
-import io.embrace.android.embracesdk.fakes.FakeLogRecordExporter
+import io.embrace.android.embracesdk.fakes.FakeOtelJavaLogRecordExporter
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
@@ -160,7 +160,7 @@ internal class ConfigServiceImplTest {
             BuildConfig.VERSION_NAME,
             SystemInfo()
         )
-        cfg.addLogExporter(FakeLogRecordExporter())
+        cfg.addLogExporter(FakeOtelJavaLogRecordExporter())
         val service = createService(config = cfg, appId = null)
         assertNotNull(service)
         assertTrue(service.isOnlyUsingOtelExporters())

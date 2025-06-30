@@ -1,19 +1,21 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaCompletableResultCode
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaLogRecordData
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaLogRecordExporter
+import io.embrace.opentelemetry.kotlin.ExperimentalApi
+import io.embrace.opentelemetry.kotlin.export.OperationResultCode
+import io.embrace.opentelemetry.kotlin.logging.export.LogRecordExporter
+import io.embrace.opentelemetry.kotlin.logging.model.ReadableLogRecord
 
-class FakeLogRecordExporter : OtelJavaLogRecordExporter {
+@OptIn(ExperimentalApi::class)
+class FakeLogRecordExporter : LogRecordExporter {
 
-    var exportedLogs: Collection<OtelJavaLogRecordData>? = null
+    val exportedLogs: MutableList<ReadableLogRecord> = mutableListOf()
 
-    override fun export(logs: MutableCollection<OtelJavaLogRecordData>): OtelJavaCompletableResultCode {
-        exportedLogs = logs
-        return OtelJavaCompletableResultCode.ofSuccess()
+    override fun export(telemetry: List<ReadableLogRecord>): OperationResultCode {
+        exportedLogs += telemetry
+        return OperationResultCode.Success
     }
 
-    override fun flush(): OtelJavaCompletableResultCode = OtelJavaCompletableResultCode.ofSuccess()
+    override fun shutdown(): OperationResultCode = OperationResultCode.Success
 
-    override fun shutdown(): OtelJavaCompletableResultCode = OtelJavaCompletableResultCode.ofSuccess()
+    override fun forceFlush(): OperationResultCode = OperationResultCode.Success
 }

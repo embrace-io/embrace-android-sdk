@@ -3,8 +3,8 @@ package io.embrace.android.embracesdk.internal.api.delegate
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
-import io.embrace.android.embracesdk.fakes.FakeLogRecordExporter
-import io.embrace.android.embracesdk.fakes.FakeSpanExporter
+import io.embrace.android.embracesdk.fakes.FakeOtelJavaLogRecordExporter
+import io.embrace.android.embracesdk.fakes.FakeOtelJavaSpanExporter
 import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.fakeModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
@@ -42,21 +42,21 @@ internal class OTelApiDelegateTest {
     @Test
     fun `add span exporter before start`() {
         sdkCallChecker.started.set(false)
-        delegate.addSpanExporter(FakeSpanExporter())
+        delegate.addSpanExporter(FakeOtelJavaSpanExporter())
         assertTrue(bootstrapper.openTelemetryModule.otelSdkConfig.hasConfiguredOtelExporters())
     }
 
     @Test
     fun `add log exporter before start`() {
         sdkCallChecker.started.set(false)
-        delegate.addLogRecordExporter(FakeLogRecordExporter())
+        delegate.addLogRecordExporter(FakeOtelJavaLogRecordExporter())
         assertTrue(bootstrapper.openTelemetryModule.otelSdkConfig.hasConfiguredOtelExporters())
     }
 
     @Test
     fun `add exporters after start`() {
-        delegate.addSpanExporter(FakeSpanExporter())
-        delegate.addLogRecordExporter(FakeLogRecordExporter())
+        delegate.addSpanExporter(FakeOtelJavaSpanExporter())
+        delegate.addLogRecordExporter(FakeOtelJavaLogRecordExporter())
         assertFalse(bootstrapper.openTelemetryModule.otelSdkConfig.hasConfiguredOtelExporters())
     }
 
@@ -86,9 +86,12 @@ internal class OTelApiDelegateTest {
     fun `set resource attribute before sdk starts`() {
         sdkCallChecker.started.set(false)
         delegate.setResourceAttribute("test", "foo")
-        assertEquals("foo", cfg.otelJavaResourceBuilder.build().attributes.asMap().filter {
-            it.key.key == "test"
-        }.values.single())
+        assertEquals(
+            "foo",
+            cfg.otelJavaResourceBuilder.build().attributes.asMap().filter {
+                it.key.key == "test"
+            }.values.single()
+        )
     }
 
     @Test

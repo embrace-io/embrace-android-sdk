@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.otel.logs
 
 import io.embrace.android.embracesdk.fakes.FakeLogRecordData
-import io.embrace.android.embracesdk.fakes.FakeLogRecordExporter
+import io.embrace.android.embracesdk.fakes.FakeOtelJavaLogRecordExporter
 import io.embrace.android.embracesdk.fixtures.testLog
 import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
 import io.embrace.android.embracesdk.internal.otel.schema.PrivateSpan
@@ -29,7 +29,7 @@ internal class EmbraceLogRecordExporterTest {
     @Test
     fun `private logs should be filtered out from external exporters`() {
         val logSink: LogSink = LogSinkImpl()
-        val externalExporter = FakeLogRecordExporter()
+        val externalExporter = FakeOtelJavaLogRecordExporter()
         val embraceOtelJavaLogRecordExporter =
             EmbraceOtelJavaLogRecordExporter(logSink, OtelJavaLogRecordExporter.composite(externalExporter)) { true }
         val logRecordData = FakeLogRecordData()

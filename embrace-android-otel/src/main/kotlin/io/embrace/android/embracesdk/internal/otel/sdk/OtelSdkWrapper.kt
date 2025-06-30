@@ -11,6 +11,7 @@ import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.OpenTelemetry
 import io.embrace.opentelemetry.kotlin.OpenTelemetryInstance
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaClock
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaOpenTelemetrySdk
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaResource
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSdkLoggerProvider
@@ -27,7 +28,7 @@ import io.embrace.opentelemetry.kotlin.tracing.Tracer
  */
 @OptIn(ExperimentalApi::class)
 class OtelSdkWrapper(
-    otelClock: EmbOtelJavaClock,
+    otelClock: OtelJavaClock,
     configuration: OtelSdkConfig,
     limits: OtelLimitsConfig = InstrumentedConfigImpl.otelLimits,
 ) {
@@ -51,7 +52,7 @@ class OtelSdkWrapper(
                         .setMaxNumberOfLinks(limits.getMaxTotalLinkCount())
                         .build()
                 )
-                .setClock(otelClock)
+                .setClock(otelClock as EmbOtelJavaClock)
                 .build()
         }
     }
@@ -99,7 +100,7 @@ class OtelSdkWrapper(
         OpenTelemetryInstance.kotlinApi(
             loggerProvider = {
                 resource(configuration.resourceAction)
-                addLogRecordProcessor(TODO())
+//                addLogRecordProcessor(TODO())
             },
             tracerProvider = {
                 resource(configuration.resourceAction)
@@ -108,9 +109,9 @@ class OtelSdkWrapper(
                     attributeCountLimit = limits.getMaxTotalAttributeCount()
                     linkCountLimit = limits.getMaxTotalLinkCount()
                 }
-                addSpanProcessor(TODO())
+//                addSpanProcessor(TODO())
             },
-            clock = otelClock
+            clock = otelClock as EmbOtelJavaClock
         )
     }
 }

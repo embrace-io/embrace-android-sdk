@@ -1,12 +1,12 @@
 package io.embrace.android.embracesdk.internal.otel.config
 
 import io.embrace.android.embracesdk.internal.SystemInfo
-import io.embrace.android.embracesdk.internal.otel.logs.EmbraceLogRecordExporter
-import io.embrace.android.embracesdk.internal.otel.logs.EmbraceLogRecordProcessor
+import io.embrace.android.embracesdk.internal.otel.logs.EmbraceOtelJavaLogRecordExporter
+import io.embrace.android.embracesdk.internal.otel.logs.EmbraceOtelJavaLogRecordProcessor
 import io.embrace.android.embracesdk.internal.otel.logs.LogSink
 import io.embrace.android.embracesdk.internal.otel.sdk.IdGenerator
-import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanExporter
-import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanProcessor
+import io.embrace.android.embracesdk.internal.otel.spans.EmbraceOtelJavaSpanExporter
+import io.embrace.android.embracesdk.internal.otel.spans.EmbraceOtelJavaSpanProcessor
 import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
@@ -81,8 +81,8 @@ class OtelSdkConfig(
     }
 
     val spanProcessor: OtelJavaSpanProcessor by lazy {
-        EmbraceSpanProcessor(
-            EmbraceSpanExporter(
+        EmbraceOtelJavaSpanProcessor(
+            EmbraceOtelJavaSpanExporter(
                 spanSink = spanSink,
                 externalSpanExporter = if (externalSpanExporters.isNotEmpty()) {
                     OtelJavaSpanExporter.composite(externalSpanExporters)
@@ -96,8 +96,8 @@ class OtelSdkConfig(
     }
 
     val logProcessor: OtelJavaLogRecordProcessor by lazy {
-        EmbraceLogRecordProcessor(
-            EmbraceLogRecordExporter(
+        EmbraceOtelJavaLogRecordProcessor(
+            EmbraceOtelJavaLogRecordExporter(
                 logSink = logSink,
                 externalLogRecordExporter = if (externalLogExporters.isNotEmpty()) {
                     OtelJavaLogRecordExporter.composite(externalLogExporters)

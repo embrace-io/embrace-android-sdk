@@ -1,9 +1,7 @@
 package io.embrace.android.embracesdk.internal.otel.spans
 
 import io.embrace.android.embracesdk.internal.otel.sdk.StoreDataResult
-import io.embrace.android.embracesdk.internal.otel.sdk.toEmbraceSpanData
 import io.embrace.android.embracesdk.internal.utils.threadSafeTake
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanData
 import java.util.Queue
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicReference
@@ -12,9 +10,9 @@ class SpanSinkImpl : SpanSink {
     private val completedSpans: Queue<EmbraceSpanData> = ConcurrentLinkedQueue()
     private val spansToFlush = AtomicReference<List<EmbraceSpanData>>(listOf())
 
-    override fun storeCompletedSpans(spans: List<OtelJavaSpanData>): StoreDataResult {
+    override fun storeCompletedSpans(spans: List<EmbraceSpanData>): StoreDataResult {
         try {
-            completedSpans += spans.map { it.toEmbraceSpanData() }
+            completedSpans += spans
         } catch (t: Throwable) {
             return StoreDataResult.FAILURE
         }

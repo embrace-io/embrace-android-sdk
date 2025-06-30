@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.otel.spans
 
 import io.embrace.android.embracesdk.internal.otel.sdk.StoreDataResult
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanData
 
 /**
  * A service that stores all the spans that are completed and exported via [EmbraceOtelJavaSpanExporter],
@@ -12,7 +11,7 @@ interface SpanSink {
     /**
      * Stores spans that have been completed. Implementations must support concurrent invocations.
      */
-    fun storeCompletedSpans(spans: List<OtelJavaSpanData>): StoreDataResult
+    fun storeCompletedSpans(spans: List<EmbraceSpanData>): StoreDataResult
 
     /**
      * Returns the list of the currently stored completed spans.

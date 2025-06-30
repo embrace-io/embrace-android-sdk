@@ -1,13 +1,11 @@
 package io.embrace.android.embracesdk.internal.otel.logs
 
-import io.embrace.android.embracesdk.internal.otel.attrs.asOtelAttributeKey
 import io.embrace.android.embracesdk.internal.otel.attrs.embSendMode
-import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
 import io.embrace.android.embracesdk.internal.otel.schema.SendMode
 import io.embrace.android.embracesdk.internal.otel.sdk.StoreDataResult
+import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.internal.utils.threadSafeTake
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaLogRecordData
 import java.util.concurrent.ConcurrentLinkedQueue
 
 class LogSinkImpl : LogSink {
@@ -16,20 +14,20 @@ class LogSinkImpl : LogSink {
     private var onLogsStored: (() -> Unit)? = null
     private val flushLock = Any()
 
-    override fun storeLogs(logs: List<OtelJavaLogRecordData>): StoreDataResult {
+    override fun storeLogs(logs: List<Log>): StoreDataResult {
         try {
             logs.forEach { log ->
-                val mode = log.attributes[embSendMode.asOtelAttributeKey()]
+                val mode = log.attributes?.findAttributeValue(embSendMode.name)
                 val sendMode = SendMode.fromString(mode)
                 if (sendMode != SendMode.DEFAULT) {
                     logRequests.add(
                         LogRequest(
-                            payload = log.toEmbracePayload(),
+                            payload = log,
                             defer = sendMode == SendMode.DEFER
                         )
                     )
                 } else {
-                    storedLogs.add(log.toEmbracePayload())
+                    storedLogs.add(log)
                 }
             }
             onLogsStored?.invoke()

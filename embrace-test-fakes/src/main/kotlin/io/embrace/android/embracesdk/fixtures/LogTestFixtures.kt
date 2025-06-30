@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.fixtures
 
 import io.embrace.android.embracesdk.arch.toPayload
-import io.embrace.android.embracesdk.fakes.FakeLogRecordData
 import io.embrace.android.embracesdk.internal.otel.attrs.embProcessIdentifier
 import io.embrace.android.embracesdk.internal.otel.attrs.embSendMode
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
@@ -40,10 +39,6 @@ val deferredLog: Log = Log(
     body = "deferred",
     attributes = listOf(Attribute(embSendMode.name, SendMode.DEFER.name))
 )
-
-val sendImmediatelyLogRecordData: FakeLogRecordData = FakeLogRecordData(log = sendImmediatelyLog)
-
-val deferredLogRecordData: FakeLogRecordData = FakeLogRecordData(log = deferredLog)
 
 val testNativeCrashData: NativeCrashData = NativeCrashData(
     nativeCrashId = "nativeCrashId",

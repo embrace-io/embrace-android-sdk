@@ -1,10 +1,8 @@
 package io.embrace.android.embracesdk.internal.envelope.log
 
-import io.embrace.android.embracesdk.fakes.FakeLogRecordData
 import io.embrace.android.embracesdk.fixtures.deferredLog
-import io.embrace.android.embracesdk.fixtures.deferredLogRecordData
 import io.embrace.android.embracesdk.fixtures.sendImmediatelyLog
-import io.embrace.android.embracesdk.fixtures.sendImmediatelyLogRecordData
+import io.embrace.android.embracesdk.fixtures.testLog
 import io.embrace.android.embracesdk.internal.otel.logs.LogSinkImpl
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 import org.junit.Assert.assertEquals
@@ -19,7 +17,6 @@ internal class LogPayloadSourceImplTest {
 
     private lateinit var impl: LogPayloadSourceImpl
     private lateinit var sink: LogSinkImpl
-    private val fakeLog = FakeLogRecordData()
 
     @Before
     fun setUp() {
@@ -27,24 +24,19 @@ internal class LogPayloadSourceImplTest {
         impl = LogPayloadSourceImpl(sink)
     }
 
-    @Suppress("DEPRECATION")
     @Test
     fun `getBatchedLogPayload returns a correct payload`() {
-        sink.storeLogs(listOf(fakeLog))
+        sink.storeLogs(listOf(testLog))
         val payload = impl.getBatchedLogPayload()
         val log = checkNotNull(payload.logs?.single())
         assertEquals(0, sink.logsForNextBatch().size)
         assertEquals(1, payload.logs?.size)
-        assertEquals(fakeLog.timestampEpochNanos, log.timeUnixNano)
-        assertEquals(fakeLog.severityText, log.severityText)
-        assertEquals(fakeLog.severity.severityNumber, log.severityNumber)
-        assertEquals(fakeLog.attributes.size(), log.attributes?.size)
-        assertEquals(fakeLog.body.asString(), log.body)
+        assertEquals(testLog, log)
     }
 
     @Test
     fun `log to with IMMEDIATE SendMode returns correctly`() {
-        sink.storeLogs(listOf(sendImmediatelyLogRecordData))
+        sink.storeLogs(listOf(sendImmediatelyLog))
         val payloads = impl.getSingleLogPayloads()
         val logRequest = checkNotNull(payloads.single())
         assertNull(sink.pollUnbatchedLog())
@@ -54,7 +46,7 @@ internal class LogPayloadSourceImplTest {
 
     @Test
     fun `log to with DEFER SendMode returns correctly`() {
-        sink.storeLogs(listOf(deferredLogRecordData))
+        sink.storeLogs(listOf(deferredLog))
         val payloads = impl.getSingleLogPayloads()
         val logRequest = checkNotNull(payloads.single())
         assertNull(sink.pollUnbatchedLog())
@@ -64,7 +56,7 @@ internal class LogPayloadSourceImplTest {
 
     @Test
     fun `getSingleLogPayloads returns the correct payload`() {
-        sink.storeLogs(listOf(sendImmediatelyLogRecordData))
+        sink.storeLogs(listOf(sendImmediatelyLog))
         val payloads = impl.getSingleLogPayloads()
         val log = checkNotNull(payloads.single())
         assertNull(sink.pollUnbatchedLog())
@@ -74,7 +66,7 @@ internal class LogPayloadSourceImplTest {
     @Test
     fun `getSingleLogPayloads returns the maximum number of payloads`() {
         repeat(11) {
-            sink.storeLogs(listOf(sendImmediatelyLogRecordData))
+            sink.storeLogs(listOf(sendImmediatelyLog))
         }
 
         val payloads = impl.getSingleLogPayloads()

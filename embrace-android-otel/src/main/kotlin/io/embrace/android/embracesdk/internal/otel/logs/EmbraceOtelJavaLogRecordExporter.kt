@@ -11,7 +11,7 @@ import io.embrace.opentelemetry.kotlin.aliases.OtelJavaLogRecordExporter
 /**
  * Exports the given [LogRecordData] to a [LogSink]
  */
-internal class EmbraceLogRecordExporter(
+internal class EmbraceOtelJavaLogRecordExporter(
     private val logSink: LogSink,
     private val externalLogRecordExporter: OtelJavaLogRecordExporter?,
     private val exportCheck: () -> Boolean,

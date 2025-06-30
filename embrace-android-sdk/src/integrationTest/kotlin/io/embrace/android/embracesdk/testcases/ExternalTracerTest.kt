@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.testcases
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.assertEmbraceSpanData
-import io.embrace.android.embracesdk.fakes.FakeSpanExporter
+import io.embrace.android.embracesdk.fakes.FakeOtelJavaSpanExporter
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.otel.impl.EmbOtelJavaSpan
 import io.embrace.android.embracesdk.internal.otel.impl.EmbOtelJavaSpanBuilder
@@ -42,14 +42,14 @@ internal class ExternalTracerTest {
     @JvmField
     val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule()
 
-    private lateinit var spanExporter: FakeSpanExporter
+    private lateinit var spanExporter: FakeOtelJavaSpanExporter
     private lateinit var embOpenTelemetry: OtelJavaOpenTelemetry
     private lateinit var embTracer: OtelJavaTracer
     private lateinit var otelTracer: OtelJavaTracer
 
     @Before
     fun setup() {
-        spanExporter = FakeSpanExporter()
+        spanExporter = FakeOtelJavaSpanExporter()
     }
 
     @Test

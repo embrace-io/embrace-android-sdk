@@ -63,7 +63,7 @@ class FakeSpanBuilder(
         return this
     }
 
-    override fun startSpan(): FakeSpan = FakeSpan(this)
+    override fun startSpan(): FakeOtelJavaSpan = FakeOtelJavaSpan(this)
 
     override fun <T : Any> setAttribute(key: OtelJavaAttributeKey<T>, value: T): OtelJavaSpanBuilder {
         attributes[key] = value

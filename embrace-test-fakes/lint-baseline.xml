@@ -389,7 +389,7 @@
         errorLine1="            latches.removeIf { it.count == 0L }"
         errorLine2="                    ~~~~~~~~">
         <location
-            file="src/main/kotlin/io/embrace/android/embracesdk/fakes/FakeSpanExporter.kt"
+            file="src/main/kotlin/io/embrace/android/embracesdk/fakes/FakeOtelJavaSpanExporter.kt"
             line="24"
             column="21"/>
     </issue>

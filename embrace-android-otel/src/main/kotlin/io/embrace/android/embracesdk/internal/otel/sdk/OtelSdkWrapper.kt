@@ -100,7 +100,7 @@ class OtelSdkWrapper(
         OpenTelemetryInstance.kotlinApi(
             loggerProvider = {
                 resource(configuration.resourceAction)
-                addLogRecordProcessor(TODO())
+//                addLogRecordProcessor(TODO())
             },
             tracerProvider = {
                 resource(configuration.resourceAction)
@@ -109,7 +109,7 @@ class OtelSdkWrapper(
                     attributeCountLimit = limits.getMaxTotalAttributeCount()
                     linkCountLimit = limits.getMaxTotalLinkCount()
                 }
-                addSpanProcessor(TODO())
+//                addSpanProcessor(TODO())
             },
             clock = otelClock as EmbOtelJavaClock
         )

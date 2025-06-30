@@ -6,17 +6,18 @@ import io.embrace.android.embracesdk.internal.otel.config.OtelSdkConfig
 import io.embrace.android.embracesdk.internal.otel.config.getMaxTotalAttributeCount
 import io.embrace.android.embracesdk.internal.otel.config.getMaxTotalEventCount
 import io.embrace.android.embracesdk.internal.otel.config.getMaxTotalLinkCount
+import io.embrace.android.embracesdk.internal.otel.impl.EmbOtelJavaClock
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.OpenTelemetry
 import io.embrace.opentelemetry.kotlin.OpenTelemetryInstance
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaClock
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaOpenTelemetrySdk
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaResource
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSdkLoggerProvider
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSdkTracerProvider
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanLimits
 import io.embrace.opentelemetry.kotlin.compatWithOtelJava
+import io.embrace.opentelemetry.kotlin.kotlinApi
 import io.embrace.opentelemetry.kotlin.tracing.Tracer
 
 /**
@@ -26,7 +27,7 @@ import io.embrace.opentelemetry.kotlin.tracing.Tracer
  */
 @OptIn(ExperimentalApi::class)
 class OtelSdkWrapper(
-    openTelemetryClock: OtelJavaClock,
+    otelClock: EmbOtelJavaClock,
     configuration: OtelSdkConfig,
     limits: OtelLimitsConfig = InstrumentedConfigImpl.otelLimits,
 ) {
@@ -50,7 +51,7 @@ class OtelSdkWrapper(
                         .setMaxNumberOfLinks(limits.getMaxTotalLinkCount())
                         .build()
                 )
-                .setClock(openTelemetryClock)
+                .setClock(otelClock)
                 .build()
         }
     }
@@ -65,7 +66,7 @@ class OtelSdkWrapper(
     }
 
     private val resource: OtelJavaResource by lazy {
-        configuration.resourceBuilder.build()
+        configuration.otelJavaResourceBuilder.build()
     }
 
     private val sdk: OtelJavaOpenTelemetrySdk by lazy {
@@ -78,15 +79,38 @@ class OtelSdkWrapper(
                         .builder()
                         .addResource(resource)
                         .addLogRecordProcessor(configuration.logProcessor)
-                        .setClock(openTelemetryClock)
+                        .setClock(otelClock)
                         .build()
                 )
                 .build()
         }
     }
 
-    @OptIn(ExperimentalApi::class)
     val kotlinApi: OpenTelemetry by lazy {
         OpenTelemetryInstance.compatWithOtelJava(sdk)
+    }
+
+    /**
+     * Creates an instance of opentelemetry-kotlin using the Kotlin API's DSL, rather than the opentelemetry-java
+     * API.
+     */
+    @Suppress("unused")
+    private val kotlinApiViaDsl: OpenTelemetry by lazy {
+        OpenTelemetryInstance.kotlinApi(
+            loggerProvider = {
+                resource(configuration.resourceAction)
+                addLogRecordProcessor(TODO())
+            },
+            tracerProvider = {
+                resource(configuration.resourceAction)
+                spanLimits {
+                    eventCountLimit = limits.getMaxTotalEventCount()
+                    attributeCountLimit = limits.getMaxTotalAttributeCount()
+                    linkCountLimit = limits.getMaxTotalLinkCount()
+                }
+                addSpanProcessor(TODO())
+            },
+            clock = otelClock
+        )
     }
 }

@@ -61,7 +61,7 @@ internal class OpenTelemetryModuleImpl(
         EmbTrace.trace("otel-sdk-wrapper-init") {
             try {
                 OtelSdkWrapper(
-                    openTelemetryClock = openTelemetryClock,
+                    otelClock = openTelemetryClock,
                     configuration = otelSdkConfig
                 )
             } catch (exc: NoClassDefFoundError) {

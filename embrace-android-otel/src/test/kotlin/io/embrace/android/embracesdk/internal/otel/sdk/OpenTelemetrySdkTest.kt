@@ -46,7 +46,7 @@ internal class OpenTelemetrySdkTest {
         configuration.addLogExporter(logExporter)
 
         sdk = OtelSdkWrapper(
-            openTelemetryClock = FakeOpenTelemetryClock(FakeClock()),
+            otelClock = FakeOpenTelemetryClock(FakeClock()),
             configuration = configuration
         )
     }

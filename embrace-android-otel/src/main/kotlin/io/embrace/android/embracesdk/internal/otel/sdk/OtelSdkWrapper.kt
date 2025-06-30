@@ -54,7 +54,7 @@ class OtelSdkWrapper(
                         .setMaxNumberOfLinks(limits.getMaxTotalLinkCount())
                         .build()
                 )
-                .setClock(otelClock)
+                .setClock(otelClock as EmbOtelJavaClock)
                 .build()
         }
     }

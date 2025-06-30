@@ -9,13 +9,21 @@ import io.embrace.opentelemetry.kotlin.logging.model.ReadableLogRecord
 class FakeLogRecordExporter : LogRecordExporter {
 
     val exportedLogs: MutableList<ReadableLogRecord> = mutableListOf()
+    var flushCount = 0
+    var shutdownCount = 0
 
     override fun export(telemetry: List<ReadableLogRecord>): OperationResultCode {
         exportedLogs += telemetry
         return OperationResultCode.Success
     }
 
-    override fun shutdown(): OperationResultCode = OperationResultCode.Success
+    override fun shutdown(): OperationResultCode {
+        shutdownCount += 1
+        return OperationResultCode.Success
+    }
 
-    override fun forceFlush(): OperationResultCode = OperationResultCode.Success
+    override fun forceFlush(): OperationResultCode {
+        flushCount += 1
+        return OperationResultCode.Success
+    }
 }

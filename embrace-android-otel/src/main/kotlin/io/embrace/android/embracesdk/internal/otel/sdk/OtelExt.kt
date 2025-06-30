@@ -19,6 +19,7 @@ import io.embrace.opentelemetry.kotlin.aliases.OtelJavaLogRecordBuilder
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpan
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanData
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaStatusCode
+import io.embrace.opentelemetry.kotlin.tracing.model.Span
 
 /**
  * Populate an [AttributesBuilder] with String key-value pairs from a [Map]
@@ -75,7 +76,7 @@ fun OtelJavaSpan.setEmbraceAttribute(embraceAttribute: EmbraceAttribute): OtelJa
     this@setEmbraceAttribute.setEmbraceAttribute(embraceAttribute.key, embraceAttribute.value)
 
 @OptIn(ExperimentalApi::class)
-fun io.embrace.opentelemetry.kotlin.tracing.Span.setEmbraceAttribute(embraceAttribute: EmbraceAttribute) =
+fun Span.setEmbraceAttribute(embraceAttribute: EmbraceAttribute) =
     setStringAttribute(embraceAttribute.key.name, embraceAttribute.value)
 
 fun OtelJavaSpanData.toEmbraceSpanData(): EmbraceSpanData = EmbraceSpanData(

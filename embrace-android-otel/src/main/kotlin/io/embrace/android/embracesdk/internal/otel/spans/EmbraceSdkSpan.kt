@@ -5,11 +5,11 @@ import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.embrace.android.embracesdk.internal.otel.schema.LinkType
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.spans.EmbraceSpan
-import io.embrace.opentelemetry.kotlin.StatusCode
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaContext
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaContextKey
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaImplicitContextKeyed
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanContext
+import io.embrace.opentelemetry.kotlin.tracing.StatusCode
 
 /**
  * An [EmbraceSpan] that has additional functionality to be used internally by the SDK

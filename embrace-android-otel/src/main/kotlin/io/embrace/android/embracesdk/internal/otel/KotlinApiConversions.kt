@@ -1,10 +1,10 @@
 package io.embrace.android.embracesdk.internal.otel
 
 import io.embrace.android.embracesdk.internal.payload.Span.Status
-import io.embrace.opentelemetry.kotlin.StatusCode
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanKind
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaStatusCode
-import io.embrace.opentelemetry.kotlin.tracing.SpanKind
+import io.embrace.opentelemetry.kotlin.tracing.StatusCode
+import io.embrace.opentelemetry.kotlin.tracing.model.SpanKind
 
 internal fun StatusCode.toOtelJava(): OtelJavaStatusCode = when (this) {
     is StatusCode.Unset -> OtelJavaStatusCode.UNSET

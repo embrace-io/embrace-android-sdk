@@ -4,7 +4,8 @@ import io.embrace.android.embracesdk.internal.otel.sdk.StoreDataResult
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanData
 
 /**
- * A service that stores all the spans that are completed and exported via [EmbraceSpanExporter], and provides access to them so they
+ * A service that stores all the spans that are completed and exported via [EmbraceOtelJavaSpanExporter],
+ * and provides access to them so they
  * can be sent off-device at the appropriate cadence.
  */
 interface SpanSink {
@@ -19,7 +20,8 @@ interface SpanSink {
     fun completedSpans(): List<EmbraceSpanData>
 
     /**
-     * Returns and clears the currently stored completed Spans. Implementations of this method must make sure the clearing and returning is
+     * Returns and clears the currently stored completed Spans. Implementations of this method must
+     * make sure the clearing and returning is
      * atomic, i.e. spans cannot be added during this operation.
      */
     fun flushSpans(): List<EmbraceSpanData>

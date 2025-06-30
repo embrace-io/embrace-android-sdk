@@ -1,69 +1,68 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
-import io.embrace.android.embracesdk.internal.otel.spans.getEmbraceSpan
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaAttributeKey
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaAttributes
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpan
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanContext
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaStatusCode
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaTraceFlags
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaTraceState
-import java.util.concurrent.TimeUnit
+import io.embrace.opentelemetry.kotlin.ExperimentalApi
+import io.embrace.opentelemetry.kotlin.attributes.AttributeContainer
+import io.embrace.opentelemetry.kotlin.tracing.StatusCode
+import io.embrace.opentelemetry.kotlin.tracing.model.Link
+import io.embrace.opentelemetry.kotlin.tracing.model.Span
+import io.embrace.opentelemetry.kotlin.tracing.model.SpanContext
+import io.embrace.opentelemetry.kotlin.tracing.model.SpanEvent
+import io.embrace.opentelemetry.kotlin.tracing.model.SpanKind
 
-class FakeSpan(
-    val fakeSpanBuilder: FakeSpanBuilder,
-) : OtelJavaSpan {
+@OptIn(ExperimentalApi::class)
+class FakeSpan : Span {
 
-    private val spanContext: OtelJavaSpanContext =
-        OtelJavaSpanContext.create(
-            fakeSpanBuilder.parentContext.getEmbraceSpan()?.traceId ?: OtelIds.generateTraceId(),
-            OtelIds.generateSpanId(),
-            OtelJavaTraceFlags.getDefault(),
-            OtelJavaTraceState.getDefault()
-        )
+    var attrs: MutableMap<String, String> = mutableMapOf()
 
-    private var isRecording = true
-    private var status: OtelJavaStatusCode = OtelJavaStatusCode.UNSET
-    private var statusDescription: String = ""
+    override fun attributes(): Map<String, Any> = attrs
 
-    override fun <T : Any> setAttribute(key: OtelJavaAttributeKey<T>, value: T?): OtelJavaSpan {
-        if (value != null) {
-            fakeSpanBuilder.setAttribute(key, value)
-        }
+    override var name: String = ""
+    override val parent: SpanContext? = null
+    override val spanContext: SpanContext = FakeSpanContext()
+    override val spanKind: SpanKind = SpanKind.INTERNAL
+    override val startTimestamp: Long = -1
+    override var status: StatusCode = StatusCode.Unset
 
-        return this
+    override fun addEvent(name: String, timestamp: Long?, action: AttributeContainer.() -> Unit) {
     }
 
-    override fun addEvent(name: String, attributes: OtelJavaAttributes): OtelJavaSpan {
-        return this
-    }
-
-    override fun addEvent(name: String, attributes: OtelJavaAttributes, timestamp: Long, unit: TimeUnit): OtelJavaSpan {
-        return this
-    }
-
-    override fun setStatus(statusCode: OtelJavaStatusCode, description: String): OtelJavaSpan {
-        status = statusCode
-        statusDescription = description
-        return this
-    }
-
-    override fun recordException(exception: Throwable, additionalAttributes: OtelJavaAttributes): OtelJavaSpan {
-        return this
-    }
-
-    override fun updateName(name: String): OtelJavaSpan {
-        return this
+    override fun addLink(spanContext: SpanContext, action: AttributeContainer.() -> Unit) {
     }
 
     override fun end() {
-        isRecording = false
     }
 
-    override fun end(timestamp: Long, unit: TimeUnit): Unit = end()
+    override fun end(timestamp: Long) {
+    }
 
-    override fun getSpanContext(): OtelJavaSpanContext = spanContext
+    override fun events(): List<SpanEvent> = emptyList()
 
-    override fun isRecording(): Boolean = isRecording
+    override fun isRecording(): Boolean = false
+
+    override fun links(): List<Link> = emptyList()
+
+    override fun setBooleanAttribute(key: String, value: Boolean) {
+    }
+
+    override fun setBooleanListAttribute(key: String, value: List<Boolean>) {
+    }
+
+    override fun setDoubleAttribute(key: String, value: Double) {
+    }
+
+    override fun setDoubleListAttribute(key: String, value: List<Double>) {
+    }
+
+    override fun setLongAttribute(key: String, value: Long) {
+    }
+
+    override fun setLongListAttribute(key: String, value: List<Long>) {
+    }
+
+    override fun setStringAttribute(key: String, value: String) {
+        attrs[key] = value
+    }
+
+    override fun setStringListAttribute(key: String, value: List<String>) {
+    }
 }

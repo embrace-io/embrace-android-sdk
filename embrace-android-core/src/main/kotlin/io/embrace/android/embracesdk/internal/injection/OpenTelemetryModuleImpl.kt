@@ -24,7 +24,6 @@ import io.embrace.android.embracesdk.internal.spans.EmbraceTracer
 import io.embrace.android.embracesdk.internal.spans.InternalTracer
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaClock
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaOpenTelemetry
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaTracerProvider
 import io.embrace.opentelemetry.kotlin.logging.Logger
@@ -33,7 +32,7 @@ import io.embrace.opentelemetry.kotlin.tracing.Tracer
 @OptIn(ExperimentalApi::class)
 internal class OpenTelemetryModuleImpl(
     private val initModule: InitModule,
-    override val openTelemetryClock: OtelJavaClock = EmbOtelJavaClock(
+    override val openTelemetryClock: EmbOtelJavaClock = EmbOtelJavaClock(
         embraceClock = initModule.clock
     ),
 ) : OpenTelemetryModule {
@@ -61,7 +60,7 @@ internal class OpenTelemetryModuleImpl(
         EmbTrace.trace("otel-sdk-wrapper-init") {
             try {
                 OtelSdkWrapper(
-                    openTelemetryClock = openTelemetryClock,
+                    otelClock = openTelemetryClock,
                     configuration = otelSdkConfig
                 )
             } catch (exc: NoClassDefFoundError) {

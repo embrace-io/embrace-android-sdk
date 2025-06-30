@@ -8,7 +8,7 @@ import io.embrace.opentelemetry.kotlin.aliases.OtelJavaReadWriteLogRecord
 /**
  * [LogRecordProcessor] that exports log records it to the given [LogRecordExporter]
  */
-internal class EmbraceLogRecordProcessor(
+internal class EmbraceOtelJavaLogRecordProcessor(
     private val logRecordExporter: OtelJavaLogRecordExporter,
 ) : OtelJavaLogRecordProcessor {
 

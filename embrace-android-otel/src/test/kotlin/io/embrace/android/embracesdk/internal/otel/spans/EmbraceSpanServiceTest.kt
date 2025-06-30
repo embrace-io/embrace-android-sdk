@@ -48,7 +48,7 @@ internal class EmbraceSpanServiceTest {
             processIdentifierProvider = { "fake-pid" }
         )
         val otelSdkWrapper = OtelSdkWrapper(
-            openTelemetryClock = fakeClock,
+            otelClock = fakeClock,
             configuration = otelSdkConfig,
         )
         val dataValidator = DataValidator()

@@ -34,4 +34,6 @@ class DefaultSpanProcessor(
 
     override fun forceFlush(): OperationResultCode = OperationResultCode.Success
     override fun shutdown(): OperationResultCode = OperationResultCode.Success
+    override fun isEndRequired(): Boolean = true
+    override fun isStartRequired(): Boolean = true
 }

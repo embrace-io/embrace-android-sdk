@@ -1,11 +1,13 @@
 package io.embrace.android.embracesdk.internal.otel.wrapper
 
 import android.os.Build
+import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaTraceState
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaTraceStateBuilder
 import io.embrace.opentelemetry.kotlin.tracing.model.TraceState
 import java.util.function.BiConsumer
 
+@OptIn(ExperimentalApi::class)
 class KotlinTraceStateWrapper(
     private val impl: TraceState,
 ) : OtelJavaTraceState {

@@ -3,6 +3,9 @@ name: Clear CI cache
 on:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   clear-cache:
     name: Clear CI cache

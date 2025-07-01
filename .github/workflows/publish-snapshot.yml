@@ -1,0 +1,51 @@
+name: Publish snapshot
+
+env:
+  ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.SONATYPE_TOKEN_USER }}
+  ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.SONATYPE_TOKEN_USER_PASSWORD }}
+  ORG_GRADLE_PROJECT_signingInMemoryKeyId: ${{ secrets.MAVEN_ANDROID_SIGNING_KEY }}
+  ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.MAVEN_ANDROID_GPG_KEY }}
+  ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.MAVEN_ANDROID_SIGNING_PASSWORD }}
+
+on:
+  schedule:
+    - cron: '0 5 * * *'  # Runs every day at 5:00 UTC
+  workflow_dispatch:
+    inputs:
+      snapshot_name:
+        description: 'Name of the snapshot to be published. -SNAPSHOT will be appended automatically, so just add a name. e.g. 7.7.0'
+        required: false
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    timeout-minutes: 60
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set snapshot_name in gradle.properties if set
+        env:
+          SNAPSHOT_NAME: ${{ inputs.snapshot_name }}
+        run: |
+          if [ -n "$SNAPSHOT_NAME" ]; then
+            sed -i -r "s#^version=.*#version=${SNAPSHOT_NAME}-SNAPSHOT#" gradle.properties
+            git add gradle.properties
+          fi
+
+      - name: Fail if version is not -SNAPSHOT
+        run: |
+          grep -q -- '-SNAPSHOT$' gradle.properties || (echo "ERROR: version must end with -SNAPSHOT" && exit 1)
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'adopt'
+          java-version: 17
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@ac638b010cf58a27ee6c972d7336334ccaf61c96 # v4.4.1
+
+      - name: Publish to Maven Central
+        run: |
+          ./gradlew publishToMavenCentral --no-configuration-cache --stacktrace

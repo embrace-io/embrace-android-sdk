@@ -1,4 +1,3 @@
-import java.time.Duration
 import org.jetbrains.dokka.gradle.DokkaTaskPartial
 
 plugins {
@@ -6,29 +5,12 @@ plugins {
     kotlin("jvm") apply false
     alias(libs.plugins.google.ksp) apply false
     id("com.android.library") apply false
-    alias(libs.plugins.nexus.publish)
     alias(libs.plugins.dokka)
     alias(libs.plugins.kover)
 }
 
 group = "io.embrace"
 version = project.version
-
-nexusPublishing {
-    repositories {
-        sonatype {
-            username = System.getenv("SONATYPE_USERNAME")
-            password = System.getenv("SONATYPE_PASSWORD")
-            nexusUrl.set(uri("https://ossrh-staging-api.central.sonatype.com/service/local/"))
-        }
-    }
-    transitionCheckOptions {
-        maxRetries.set(60)
-        delayBetween.set(Duration.ofSeconds(20))
-    }
-    connectTimeout.set(Duration.ofMinutes(15))
-    clientTimeout.set(Duration.ofMinutes(15))
-}
 
 subprojects {
     if (project.name == "embrace-android-sdk" || project.name == "embrace-android-api") {

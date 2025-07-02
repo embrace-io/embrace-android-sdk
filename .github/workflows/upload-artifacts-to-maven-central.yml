@@ -1,13 +1,11 @@
-name: Upload artifacts to Sonatype
+name: Upload artifacts to Maven Central
 
 env:
-  SONATYPE_USERNAME: ${{ secrets.SONATYPE_TOKEN_USER }}
-  SONATYPE_PASSWORD: ${{ secrets.SONATYPE_TOKEN_USER_PASSWORD }}
-  MAVEN_QA_USER: github
-  MAVEN_QA_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
-  mavenSigningKeyId: ${{ secrets.MAVEN_ANDROID_SIGNING_KEY }}
-  mavenSigningKeyRingFileEncoded: ${{ secrets.MAVEN_ANDROID_GPG_KEY }}
-  mavenSigningKeyPassword: ${{ secrets.MAVEN_ANDROID_SIGNING_PASSWORD }}
+  ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.SONATYPE_TOKEN_USER }}
+  ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.SONATYPE_TOKEN_USER_PASSWORD }}
+  ORG_GRADLE_PROJECT_signingInMemoryKeyId: ${{ secrets.MAVEN_ANDROID_SIGNING_KEY }}
+  ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.MAVEN_ANDROID_GPG_KEY }}
+  ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.MAVEN_ANDROID_SIGNING_PASSWORD }}
 
 on:
   workflow_call:
@@ -29,12 +27,6 @@ jobs:
     timeout-minutes: 60
     runs-on: ubuntu-latest
     steps:
-      - name: Decode Keystore
-        run: |
-          mkdir "$RUNNER_TEMP"/keystore
-          echo $mavenSigningKeyRingFileEncoded | base64 -di > "$RUNNER_TEMP"/keystore/2DE631C1.gpg
-          echo "mavenSigningKeyRingFile=$RUNNER_TEMP/keystore/2DE631C1.gpg" >> $GITHUB_ENV
-
       - name: Configure git
         run: |
           git config --global user.name 'embrace-ci[bot]'
@@ -55,9 +47,9 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@ac638b010cf58a27ee6c972d7336334ccaf61c96 # v4.4.1
 
-      - name: Publish and close Sonatype repository
+      - name: Publish to Maven Central
         run: |
-          ./gradlew publishAllPublicationsToSonatypeRepository -x embrace-gradle-plugin-integration-tests:publishAllPublicationsToSonatypeRepository closeSonatypeStagingRepository -Dorg.gradle.parallel=false --no-build-cache --no-configuration-cache --stacktrace
+          ./gradlew publishToMavenCentral --no-configuration-cache --stacktrace
 
       - name: Publish git tag
         env:

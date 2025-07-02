@@ -17,7 +17,7 @@ on:
         required: true
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   release-to-maven-central:
@@ -39,6 +39,7 @@ jobs:
         with:
           ref: release/${{ inputs.rc_version }}
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -67,5 +68,7 @@ jobs:
     name: Publish API Docs to GitHub Pages
     uses: ./.github/workflows/publish-api-docs.yml
     secrets: inherit
+    permissions:
+      contents: write
     with:
       rc_version: ${{ inputs.rc_version }}

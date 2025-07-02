@@ -24,6 +24,10 @@ jobs:
     timeout-minutes: 60
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          
       - name: Set snapshot_name in gradle.properties if set
         env:
           SNAPSHOT_NAME: ${{ inputs.snapshot_name }}

@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.arch.assertIsTypePerformance
 import io.embrace.android.embracesdk.assertions.assertEmbraceSpanData
 import io.embrace.android.embracesdk.assertions.findCustomLinks
 import io.embrace.android.embracesdk.assertions.findSpanByName
+import io.embrace.android.embracesdk.assertions.getSessionId
 import io.embrace.android.embracesdk.assertions.hasLinkToEmbraceSpan
 import io.embrace.android.embracesdk.assertions.isLinkedToSpanContext
 import io.embrace.android.embracesdk.assertions.validateLinkToSpan
@@ -20,6 +21,7 @@ import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.embrace.android.embracesdk.internal.otel.schema.LinkType
+import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
 import io.embrace.android.embracesdk.internal.otel.sdk.toEmbraceSpanData
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanData
@@ -37,6 +39,7 @@ import io.embrace.opentelemetry.kotlin.aliases.OtelJavaContext
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanContext
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaTraceFlags
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaTraceState
+import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
@@ -216,7 +219,8 @@ internal class TracingApiTest {
                             timestampNanos = (testStartTimeMs + 250).millisToNanos(),
                             attributes = emptyList()
                         ),
-                    )
+                    ),
+                    expectedSessionId = session.getSessionId()
                 )
                 val expectedParentId = traceRootSpan.spanId
                 assertEmbraceSpanData(
@@ -224,7 +228,8 @@ internal class TracingApiTest {
                     expectedStartTimeMs = testStartTimeMs,
                     expectedEndTimeMs = testStartTimeMs + 100,
                     expectedParentId = checkNotNull(expectedParentId),
-                    expectedTraceId = traceRootSpan.traceId
+                    expectedTraceId = traceRootSpan.traceId,
+                    expectedSessionId = session.getSessionId()
                 )
 
                 assertEmbraceSpanData(
@@ -241,7 +246,8 @@ internal class TracingApiTest {
                             timestampNanos = (testStartTimeMs + 300).millisToNanos(),
                             attributes = listOf(Attribute("retry", "1"))
                         )
-                    )
+                    ),
+                    expectedSessionId = session.getSessionId()
                 )
 
                 assertEmbraceSpanData(
@@ -249,7 +255,8 @@ internal class TracingApiTest {
                     expectedStartTimeMs = testStartTimeMs + 300,
                     expectedEndTimeMs = testStartTimeMs + 301,
                     expectedParentId = expectedParentId,
-                    expectedTraceId = traceRootSpan.traceId
+                    expectedTraceId = traceRootSpan.traceId,
+                    expectedSessionId = session.getSessionId()
                 )
 
                 assertEmbraceSpanData(
@@ -257,7 +264,8 @@ internal class TracingApiTest {
                     expectedStartTimeMs = testStartTimeMs + 310,
                     expectedEndTimeMs = testStartTimeMs + 600,
                     expectedParentId = expectedParentId,
-                    expectedTraceId = traceRootSpan.traceId
+                    expectedTraceId = traceRootSpan.traceId,
+                    expectedSessionId = session.getSessionId()
                 )
 
                 assertEmbraceSpanData(
@@ -265,6 +273,7 @@ internal class TracingApiTest {
                     expectedStartTimeMs = sessionStartTimeMs,
                     expectedEndTimeMs = sessionEndTimeMs,
                     expectedParentId = OtelIds.invalidSpanId,
+                    expectedSessionId = session.getSessionId(),
                     private = false
                 )
 
@@ -286,6 +295,12 @@ internal class TracingApiTest {
                         )
                     )
                 )
+            },
+            otelExportAssertion = {
+                val sessionSpan = awaitSpansWithType(2, EmbType.Ux.Session).last().toEmbraceSpanData().toEmbracePayload()
+                val sessionId = checkNotNull(sessionSpan.attributes?.findAttributeValue(SessionIncubatingAttributes.SESSION_ID.key))
+                val span = awaitSpans(1) { it.name == "test-trace-root" }.single().toEmbraceSpanData().toEmbracePayload()
+                assertEquals(sessionId, span.attributes?.findAttributeValue(SessionIncubatingAttributes.SESSION_ID.key))
             }
         )
     }
@@ -387,6 +402,46 @@ internal class TracingApiTest {
                 val links = checkNotNull(spanWithLinks.findCustomLinks())
                 links[0].validateLinkToSpan(linkedSpan = linkedToSpan, expectedAttributes = mapOf("test" to "value"))
                 assertTrue(links[1].isLinkedToSpanContext(remoteSpanContext))
+            }
+        )
+    }
+
+    @Test
+    fun `correct session id populated in spans`() {
+        var sessionId1 = ""
+        var sessionId2 = ""
+        testRule.runTest(
+            testCaseAction = {
+                val span1 = checkNotNull(embrace.createSpan("span1"))
+                val span2 = checkNotNull(embrace.createSpan("span2"))
+                recordSession {
+                    sessionId1 = checkNotNull(embrace.currentSessionId)
+                    span1.start()
+                    span2.start()
+                    span1.stop()
+                }
+
+                recordSession {
+                    sessionId2 = checkNotNull(embrace.currentSessionId)
+                    span2.stop()
+                }
+            },
+            assertAction = {
+                assertNotEquals(sessionId1, sessionId2)
+
+                val sessions = getSessionEnvelopes(2)
+                val span1 = sessions.first().findSpanByName("span1")
+                val span2 = sessions.last().findSpanByName("span2")
+
+                assertEquals(sessionId1, span1.attributes?.findAttributeValue(SessionIncubatingAttributes.SESSION_ID.key))
+                assertEquals(sessionId1, span2.attributes?.findAttributeValue(SessionIncubatingAttributes.SESSION_ID.key))
+
+            },
+            otelExportAssertion = {
+                val span1 = awaitSpans(1) { it.name == "span1" }.single().toEmbraceSpanData().toEmbracePayload()
+                val span2 = awaitSpans(1) { it.name == "span2" }.single().toEmbraceSpanData().toEmbracePayload()
+                assertEquals(sessionId1, span1.attributes?.findAttributeValue(SessionIncubatingAttributes.SESSION_ID.key))
+                assertEquals(sessionId1, span2.attributes?.findAttributeValue(SessionIncubatingAttributes.SESSION_ID.key))
             }
         )
     }

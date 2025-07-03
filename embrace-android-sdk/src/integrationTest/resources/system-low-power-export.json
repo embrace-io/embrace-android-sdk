@@ -6,7 +6,7 @@
     "startEpochNanos": "169220160030000000",
     "endEpochNanos": "169220163030000000",
     "hasEnded": "true",
-    "totalAttributeCount": "3",
+    "totalAttributeCount": "4",
     "attributes": {
       "emb.type": "sys.low_power"
     },

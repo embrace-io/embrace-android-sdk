@@ -8,13 +8,12 @@ import io.embrace.opentelemetry.kotlin.aliases.OtelJavaReadWriteSpan
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaReadableSpan
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanExporter
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanProcessor
+import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes
 import java.util.concurrent.atomic.AtomicLong
 
-/**
- * [SpanProcessor] that adds custom attributes to a [Span] when it starts, and exports it to the given [SpanExporter] when it finishes
- */
 class EmbraceOtelJavaSpanProcessor(
     private val spanExporter: OtelJavaSpanExporter,
+    private val sessionIdProvider: () -> String?,
     private val processIdentifier: String,
 ) : OtelJavaSpanProcessor {
 
@@ -23,6 +22,9 @@ class EmbraceOtelJavaSpanProcessor(
     override fun onStart(parentContext: OtelJavaContext, span: OtelJavaReadWriteSpan) {
         span.setEmbraceAttribute(embSequenceId, counter.getAndIncrement().toString())
         span.setEmbraceAttribute(embProcessIdentifier, processIdentifier)
+        sessionIdProvider()?.let { sessionId ->
+            span.setAttribute(SessionIncubatingAttributes.SESSION_ID, sessionId)
+        }
     }
 
     override fun onEnd(span: OtelJavaReadableSpan) {

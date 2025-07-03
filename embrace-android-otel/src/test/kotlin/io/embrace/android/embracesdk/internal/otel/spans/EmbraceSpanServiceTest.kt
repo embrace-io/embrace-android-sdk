@@ -45,6 +45,7 @@ internal class EmbraceSpanServiceTest {
             sdkName = "test-sdk",
             sdkVersion = "1.0",
             systemInfo = SystemInfo(),
+            sessionIdProvider = { "fake-session-id" },
             processIdentifierProvider = { "fake-pid" }
         )
         val otelSdkWrapper = OtelSdkWrapper(

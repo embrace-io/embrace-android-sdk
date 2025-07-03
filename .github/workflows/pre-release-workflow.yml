@@ -16,7 +16,6 @@ jobs:
     permissions:
       contents: write
     uses: ./.github/workflows/create-release-branch.yml
-    secrets: inherit
     with:
       rc_version: ${{ inputs.rc_version }}
 
@@ -26,7 +25,6 @@ jobs:
       contents: write
       pull-requests: write
     uses: ./.github/workflows/bump-snapshot-version.yml
-    secrets: inherit
     with:
       next_version: ${{ inputs.next_version }}
 
@@ -36,6 +34,5 @@ jobs:
       contents: write
     needs: create-release-branch
     uses: ./.github/workflows/upload-artifacts-to-maven-central.yml
-    secrets: inherit
     with:
       rc_version: ${{ inputs.rc_version }}

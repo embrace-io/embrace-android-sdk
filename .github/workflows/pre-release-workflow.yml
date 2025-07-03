@@ -31,11 +31,11 @@ jobs:
       next_version: ${{ inputs.next_version }}
 
   upload-artifacts-to-sonatype:
-    name: Upload RC artifacts to Sonatype
+    name: Upload RC artifacts to Maven Central
     permissions:
       contents: write
     needs: create-release-branch
-    uses: ./.github/workflows/upload-artifacts-to-sonatype.yml
+    uses: ./.github/workflows/upload-artifacts-to-maven-central.yml
     secrets: inherit
     with:
       rc_version: ${{ inputs.rc_version }}

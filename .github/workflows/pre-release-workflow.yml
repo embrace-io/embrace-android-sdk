@@ -16,7 +16,6 @@ jobs:
     permissions:
       contents: write
     uses: ./.github/workflows/create-release-branch.yml
-    secrets: inherit
     with:
       rc_version: ${{ inputs.rc_version }}
 
@@ -26,16 +25,14 @@ jobs:
       contents: write
       pull-requests: write
     uses: ./.github/workflows/bump-snapshot-version.yml
-    secrets: inherit
     with:
       next_version: ${{ inputs.next_version }}
 
   upload-artifacts-to-sonatype:
-    name: Upload RC artifacts to Sonatype
+    name: Upload RC artifacts to Maven Central
     permissions:
       contents: write
     needs: create-release-branch
-    uses: ./.github/workflows/upload-artifacts-to-sonatype.yml
-    secrets: inherit
+    uses: ./.github/workflows/upload-artifacts-to-maven-central.yml
     with:
       rc_version: ${{ inputs.rc_version }}

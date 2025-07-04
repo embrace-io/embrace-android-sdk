@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.arch.assertError
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeClock.Companion.DEFAULT_FAKE_CURRENT_TIME
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
+import io.embrace.android.embracesdk.fakes.FakeProcessInfo
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.capture.activity.hasPrePostEvents
 import io.embrace.android.embracesdk.internal.capture.startup.AppStartupTraceEmitter.Companion.ACTIVITY_FIRST_DRAW_SPAN
@@ -608,12 +609,13 @@ internal class AppStartupTraceEmitterTest {
             versionChecker = BuildVersionChecker,
             logger = logger,
             manualEnd = manualEnd,
-            deviceStartTimestampMs = DEFAULT_FAKE_CURRENT_TIME - 10000000L,
-            processCreatedMs = if (BuildVersionChecker.isAtLeast(VERSION_CODES.N)) {
-                DEFAULT_FAKE_CURRENT_TIME
-            } else {
-                null
-            }
+            processInfo = FakeProcessInfo(
+                if (BuildVersionChecker.isAtLeast(VERSION_CODES.N)) {
+                    DEFAULT_FAKE_CURRENT_TIME
+                } else {
+                    null
+                }
+            )
         )
 
     private fun AppStartupTraceEmitter.simulateAppStartup(

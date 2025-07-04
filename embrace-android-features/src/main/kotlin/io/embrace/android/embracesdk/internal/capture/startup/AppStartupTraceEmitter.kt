@@ -1,13 +1,13 @@
 package io.embrace.android.embracesdk.internal.capture.startup
 
 import android.os.Build.VERSION_CODES
-import android.os.Process
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.otel.attrs.embStartupActivityName
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
+import io.embrace.android.embracesdk.internal.process.ProcessInfo
 import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateListener
 import io.embrace.android.embracesdk.internal.ui.hasRenderEvent
 import io.embrace.android.embracesdk.internal.ui.supportFrameCommitCallback
@@ -49,12 +49,7 @@ internal class AppStartupTraceEmitter(
     private val versionChecker: VersionChecker,
     private val logger: EmbLogger,
     manualEnd: Boolean,
-    deviceStartTimestampMs: Long,
-    private val processCreatedMs: Long? = if (versionChecker.isAtLeast(VERSION_CODES.N)) {
-        deviceStartTimestampMs + Process.getStartElapsedRealtime()
-    } else {
-        null
-    },
+    processInfo: ProcessInfo,
 ) : AppStartupDataCollector, ProcessStateListener {
     private val additionalTrackedIntervals = ConcurrentLinkedQueue<TrackedInterval>()
     private val customAttributes: MutableMap<String, String> = ConcurrentHashMap()
@@ -69,6 +64,8 @@ internal class AppStartupTraceEmitter(
     } else {
         TraceEnd.RESUMED
     }
+
+    private val processCreatedMs: Long? = processInfo.startRequestedTimeMs()
 
     @Volatile
     private var applicationInitStartMs: Long? = null

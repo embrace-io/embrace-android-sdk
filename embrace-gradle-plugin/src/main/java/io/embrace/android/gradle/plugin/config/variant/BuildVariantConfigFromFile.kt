@@ -41,22 +41,26 @@ fun buildVariantConfig(
 private fun buildVariantConfiguration(
     configFile: File,
 ): EmbraceVariantConfig? {
-    configFile.inputStream().source().buffer().use { buffer ->
-        return try {
-            val moshi = Moshi.Builder().build()
-            val adapter = moshi.adapter(EmbraceVariantConfig::class.java)
-            val configuration = adapter.fromJson(buffer) ?: return null
-
-            VariantConfigurationValidator.validate(
-                configuration = configuration,
-                sourceType = VariantConfigurationValidator.VariantConfigurationSourceType.CONFIG_FILE,
-                environment = System::getenv
-            )
-        } catch (ex: Throwable) {
-            throw IllegalArgumentException(
-                "Problem parsing field in Embrace config file " +
-                    "${configFile.absoluteFile}.\nError=${ex.localizedMessage}"
-            )
-        }
+    return try {
+        val configuration = readConfigurationFromFile(configFile) ?: return null
+        VariantConfigurationValidator.validate(
+            configuration = configuration,
+            sourceType = VariantConfigurationValidator.VariantConfigurationSourceType.CONFIG_FILE,
+            environment = System::getenv
+        )
+        configuration
+    } catch (ex: Throwable) {
+        throw IllegalArgumentException(
+            "Problem parsing field in Embrace config file ${configFile.absoluteFile}.\nError=${ex.localizedMessage}"
+        )
     }
 }
+
+private fun readConfigurationFromFile(
+    configFile: File,
+): EmbraceVariantConfig? =
+    configFile.inputStream().source().buffer().use { buffer ->
+        val moshi = Moshi.Builder().build()
+        val adapter = moshi.adapter(EmbraceVariantConfig::class.java)
+        adapter.fromJson(buffer)
+    }

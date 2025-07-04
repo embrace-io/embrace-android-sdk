@@ -45,14 +45,7 @@ private fun buildVariantConfiguration(
         return try {
             val moshi = Moshi.Builder().build()
             val adapter = moshi.adapter(EmbraceVariantConfig::class.java)
-            val obj = adapter.fromJson(buffer)
-            val configuration = obj?.copy(
-                configStr = adapter.toJson(obj)
-            )
-
-            if (configuration == null) {
-                return null
-            }
+            val configuration = adapter.fromJson(buffer) ?: return null
 
             VariantConfigurationValidator.validate(
                 configuration = configuration,

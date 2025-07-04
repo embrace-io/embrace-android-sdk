@@ -85,14 +85,12 @@ internal class OpenTelemetrySdkTest {
 
     @Test
     fun `instrumentation scope set properly on external tracer`() {
-        sdk.sdkTracerProvider
-            .tracerBuilder("testScope")
-            .setInstrumentationVersion("v1")
-            .setSchemaUrl("url")
-            .build()
-            .spanBuilder("test")
-            .startSpan()
-            .end()
+        val tracer = sdk.kotlinApi.tracerProvider.getTracer(
+            name = "testScope",
+            version = "v1",
+            schemaUrl = "url"
+        )
+        tracer.createSpan("test").end()
         with(spanExporter.exportedSpans.single().instrumentationScopeInfo) {
             assertEquals("testScope", name)
             assertEquals("v1", version)

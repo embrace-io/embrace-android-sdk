@@ -41,7 +41,7 @@ class OtelSdkWrapper(
         System.setProperty("io.opentelemetry.context.contextStorageProvider", "default")
     }
 
-    val sdkTracerProvider: OtelJavaSdkTracerProvider by lazy {
+    private val otelJavaSdkTracerProvider: OtelJavaSdkTracerProvider by lazy {
         EmbTrace.trace("otel-tracer-provider-init") {
             OtelJavaSdkTracerProvider
                 .builder()
@@ -78,7 +78,7 @@ class OtelSdkWrapper(
         EmbTrace.trace("otel-sdk-init") {
             OtelJavaOpenTelemetrySdk
                 .builder()
-                .setTracerProvider(sdkTracerProvider)
+                .setTracerProvider(otelJavaSdkTracerProvider)
                 .setLoggerProvider(
                     OtelJavaSdkLoggerProvider
                         .builder()

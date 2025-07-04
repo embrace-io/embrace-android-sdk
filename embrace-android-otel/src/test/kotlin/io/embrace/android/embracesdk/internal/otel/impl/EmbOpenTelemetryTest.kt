@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.otel.impl
 
-import io.embrace.android.embracesdk.fakes.FakeTracerProvider
+import io.embrace.android.embracesdk.fakes.FakeOtelJavaTracerProvider
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaContextPropagators
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaLoggerProvider
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaOpenTelemetry
@@ -12,12 +12,12 @@ import org.junit.Before
 import org.junit.Test
 
 internal class EmbOpenTelemetryTest {
-    private lateinit var tracerProvider: FakeTracerProvider
+    private lateinit var tracerProvider: FakeOtelJavaTracerProvider
     private lateinit var openTelemetry: EmbOtelJavaOpenTelemetry
 
     @Before
     fun setup() {
-        tracerProvider = FakeTracerProvider()
+        tracerProvider = FakeOtelJavaTracerProvider()
         openTelemetry = EmbOtelJavaOpenTelemetry { tracerProvider }
     }
 

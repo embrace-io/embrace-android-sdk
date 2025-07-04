@@ -3,8 +3,8 @@ package io.embrace.android.embracesdk.internal.otel.spans
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryClock
+import io.embrace.android.embracesdk.fakes.FakeOtelJavaTracer
 import io.embrace.android.embracesdk.fakes.FakeSpanBuilder
-import io.embrace.android.embracesdk.fakes.FakeTracer
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.embrace.android.embracesdk.internal.otel.schema.PrivateSpan
@@ -27,11 +27,11 @@ internal class OtelSpanCreatorTest {
 
     private lateinit var clock: FakeClock
     private lateinit var otelClock: Clock
-    private lateinit var tracer: FakeTracer
+    private lateinit var tracer: FakeOtelJavaTracer
 
     @Before
     fun setup() {
-        tracer = FakeTracer()
+        tracer = FakeOtelJavaTracer()
         clock = FakeClock()
         otelClock = ClockAdapter(FakeOpenTelemetryClock(clock))
     }

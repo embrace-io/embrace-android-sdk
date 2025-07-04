@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.otel.impl
 
-import io.embrace.android.embracesdk.fakes.FakeTracer
+import io.embrace.android.embracesdk.fakes.FakeOtelJavaTracer
 import io.embrace.android.embracesdk.internal.otel.sdk.TracerKey
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -15,9 +15,9 @@ internal class EmbTracerBuilderTest {
             tracerSupplier = ::createTracer
         )
 
-        val tracer = embTracerBuilder.setSchemaUrl("url").setInstrumentationVersion("v1").build() as FakeTracer
+        val tracer = embTracerBuilder.setSchemaUrl("url").setInstrumentationVersion("v1").build() as FakeOtelJavaTracer
         assertEquals(expectedKey, tracer.tracerKey)
     }
 
-    private fun createTracer(key: TracerKey): FakeTracer = FakeTracer(tracerKey = key)
+    private fun createTracer(key: TracerKey): FakeOtelJavaTracer = FakeOtelJavaTracer(tracerKey = key)
 }

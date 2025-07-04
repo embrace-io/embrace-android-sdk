@@ -13,6 +13,7 @@ import io.embrace.android.embracesdk.internal.capture.startup.StartupTracker
 import io.embrace.android.embracesdk.internal.capture.webview.EmbraceWebViewService
 import io.embrace.android.embracesdk.internal.capture.webview.WebViewService
 import io.embrace.android.embracesdk.internal.config.ConfigService
+import io.embrace.android.embracesdk.internal.process.ProcessInfoImpl
 import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityLifecycleListener
 import io.embrace.android.embracesdk.internal.ui.createDrawEventEmitter
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
@@ -59,7 +60,10 @@ internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
             versionChecker = versionChecker,
             logger = initModule.logger,
             manualEnd = configService.autoDataCaptureBehavior.isEndStartupWithAppReadyEnabled(),
-            deviceStartTimestampMs = openTelemetryModule.deviceStartTimeMs()
+            processInfo = ProcessInfoImpl(
+                deviceStartTimeMs = openTelemetryModule.deviceStartTimeMs(),
+                versionChecker = versionChecker,
+            )
         )
     }
 

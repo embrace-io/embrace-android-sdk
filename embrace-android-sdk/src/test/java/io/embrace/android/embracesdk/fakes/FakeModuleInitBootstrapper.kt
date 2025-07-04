@@ -35,7 +35,8 @@ import io.embrace.android.embracesdk.internal.injection.WorkerThreadModuleSuppli
 @Suppress("LongParameterList")
 internal fun fakeModuleInitBootstrapper(
     fakeEmbLogger: FakeEmbLogger = FakeEmbLogger(),
-    fakeInitModule: FakeInitModule = FakeInitModule(logger = fakeEmbLogger),
+    fakeClock: FakeClock = FakeClock(),
+    fakeInitModule: FakeInitModule = FakeInitModule(clock = fakeClock, logger = fakeEmbLogger),
     fakeOpenTelemetryModule: FakeOpenTelemetryModule = FakeOpenTelemetryModule(),
     coreModuleSupplier: CoreModuleSupplier = { _, _ -> FakeCoreModule() },
     systemServiceModuleSupplier: SystemServiceModuleSupplier = { _, _ -> FakeSystemServiceModule() },
@@ -57,6 +58,7 @@ internal fun fakeModuleInitBootstrapper(
         { _, _, _, _, _, _, _, _, _, _, _ -> FakePayloadSourceModule() },
 ) = ModuleInitBootstrapper(
     logger = fakeEmbLogger,
+    clock = fakeClock,
     initModule = fakeInitModule,
     openTelemetryModule = fakeOpenTelemetryModule,
     configModuleSupplier = configModuleSupplier,

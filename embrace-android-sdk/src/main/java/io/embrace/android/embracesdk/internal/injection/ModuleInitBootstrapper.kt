@@ -2,6 +2,8 @@ package io.embrace.android.embracesdk.internal.injection
 
 import android.content.Context
 import io.embrace.android.embracesdk.internal.capture.envelope.session.OtelPayloadMapperImpl
+import io.embrace.android.embracesdk.internal.clock.Clock
+import io.embrace.android.embracesdk.internal.clock.NormalizedIntervalClock
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
@@ -21,7 +23,8 @@ import kotlin.reflect.KClass
  */
 internal class ModuleInitBootstrapper(
     val logger: EmbLogger = EmbTrace.trace("logger-init", ::EmbLoggerImpl),
-    val initModule: InitModule = EmbTrace.trace("init-module") { createInitModule(logger = logger) },
+    val clock: Clock = NormalizedIntervalClock(),
+    val initModule: InitModule = EmbTrace.trace("init-module") { createInitModule(clock = clock, logger = logger) },
     val openTelemetryModule: OpenTelemetryModule = EmbTrace.trace("otel-module") {
         createOpenTelemetryModule(initModule)
     },

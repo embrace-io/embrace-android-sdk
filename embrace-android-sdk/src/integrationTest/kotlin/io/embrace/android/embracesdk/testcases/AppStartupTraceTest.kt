@@ -8,13 +8,13 @@ import io.embrace.android.embracesdk.fakes.FakeActivity
 import io.embrace.android.embracesdk.fakes.FakeSplashScreenActivity
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
+import io.embrace.android.embracesdk.internal.clock.nanosToMillis
+import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.embrace.android.embracesdk.internal.otel.schema.ErrorCodeAttribute
-import io.embrace.android.embracesdk.internal.clock.nanosToMillis
-import io.embrace.android.embracesdk.internal.payload.Span
-import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.otel.sdk.hasEmbraceAttribute
+import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
@@ -243,6 +243,71 @@ internal class AppStartupTraceTest {
             }
         )
     }
+
+    @Test
+    fun `applicationInitStart changes start time in L if applicationInitEnd also called`() {
+        var applicationStartTimeMs: Long? = null
+        testRule.runTest(
+            instrumentedConfig = FakeInstrumentedConfig(
+                enabledFeatures = FakeEnabledFeatureConfig(
+                    bgActivityCapture = true
+                )
+            ),
+            preSdkStartAction = {
+                applicationStartTimeMs = clock.now()
+                embrace.applicationInitStart()
+                clock.tick(13)
+            },
+            testCaseAction = {
+                clock.tick(44)
+                embrace.applicationInitEnd()
+                clock.tick(33)
+                simulateOpeningActivities(
+                    addStartupActivity = false,
+                    startInBackground = true,
+                    endInBackground = false,
+                )
+            },
+            otelExportAssertion = {
+                with(awaitSpansWithType(6, EmbType.Performance.Default).associateBy { it.name }) {
+                    assertEquals(applicationStartTimeMs, coldAppStartupRootSpan().startEpochNanos.nanosToMillis())
+                    assertEquals(applicationStartTimeMs, processInitSpan().startEpochNanos.nanosToMillis())
+                }
+            }
+        )
+    }
+
+
+    @Test
+    fun `start time in L matches SDK startup time if applicationInitEnd is not called`() {
+        var sdkStartTime: Long? = null
+        testRule.runTest(
+            instrumentedConfig = FakeInstrumentedConfig(
+                enabledFeatures = FakeEnabledFeatureConfig(
+                    bgActivityCapture = true
+                )
+            ),
+            preSdkStartAction = {
+                embrace.applicationInitStart()
+                clock.tick(13)
+            },
+            testCaseAction = {
+                sdkStartTime = clock.now()
+                clock.tick(44)
+                simulateOpeningActivities(
+                    addStartupActivity = false,
+                    startInBackground = true,
+                    endInBackground = false,
+                )
+            },
+            otelExportAssertion = {
+                with(awaitSpansWithType(5, EmbType.Performance.Default).associateBy { it.name }) {
+                    assertEquals(sdkStartTime, coldAppStartupRootSpan().startEpochNanos.nanosToMillis())
+                }
+            }
+        )
+    }
+
 
     @Test
     fun `applicationInitEnd call adds extra information`() {

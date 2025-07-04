@@ -58,7 +58,8 @@ internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
             spanService = openTelemetryModule.spanService,
             versionChecker = versionChecker,
             logger = initModule.logger,
-            manualEnd = configService.autoDataCaptureBehavior.isEndStartupWithAppReadyEnabled()
+            manualEnd = configService.autoDataCaptureBehavior.isEndStartupWithAppReadyEnabled(),
+            deviceStartTimestampMs = openTelemetryModule.deviceStartTimeMs()
         )
     }
 

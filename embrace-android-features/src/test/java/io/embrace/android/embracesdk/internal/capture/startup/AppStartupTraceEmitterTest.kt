@@ -199,7 +199,7 @@ internal class AppStartupTraceEmitterTest {
     @Config(sdk = [VERSION_CODES.TIRAMISU])
     @Test
     fun `abandon cold start after before manual end`() {
-        val emitter = createTraceEmitter(true).apply {
+        val emitter = createTraceEmitter(manualEnd = true).apply {
             initApp(
                 hasAppInitEvents = true,
                 isColdStart = true
@@ -248,7 +248,7 @@ internal class AppStartupTraceEmitterTest {
     @Config(sdk = [VERSION_CODES.TIRAMISU])
     @Test
     fun `abandon warm start after before manual end`() {
-        val emitter = createTraceEmitter(true).apply {
+        val emitter = createTraceEmitter(manualEnd = true).apply {
             initApp(
                 hasAppInitEvents = true,
                 isColdStart = false
@@ -608,7 +608,12 @@ internal class AppStartupTraceEmitterTest {
             versionChecker = BuildVersionChecker,
             logger = logger,
             manualEnd = manualEnd,
-            processCreatedMs = processInitTime
+            deviceStartTimestampMs = DEFAULT_FAKE_CURRENT_TIME - 10000000L,
+            processCreatedMs = if (BuildVersionChecker.isAtLeast(VERSION_CODES.N)) {
+                DEFAULT_FAKE_CURRENT_TIME
+            } else {
+                null
+            }
         )
 
     private fun AppStartupTraceEmitter.simulateAppStartup(

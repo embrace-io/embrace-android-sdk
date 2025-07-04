@@ -49,13 +49,13 @@ internal class AppStartupTraceEmitter(
     private val versionChecker: VersionChecker,
     private val logger: EmbLogger,
     manualEnd: Boolean,
+    deviceStartTimestampMs: Long,
     private val processCreatedMs: Long? = if (versionChecker.isAtLeast(VERSION_CODES.N)) {
-        Process.getStartElapsedRealtime()
+        deviceStartTimestampMs + Process.getStartElapsedRealtime()
     } else {
         null
-    }
+    },
 ) : AppStartupDataCollector, ProcessStateListener {
-
     private val additionalTrackedIntervals = ConcurrentLinkedQueue<TrackedInterval>()
     private val customAttributes: MutableMap<String, String> = ConcurrentHashMap()
     private val trackRender = hasRenderEvent(versionChecker)
@@ -341,14 +341,15 @@ internal class AppStartupTraceEmitter(
                 endTimeMs = traceEndTimeMs
             )
 
-            val startMs = applicationInitStartMs
-            if (startMs != null && applicationInitEndMs != null) {
-                spanService.recordCompletedSpan(
-                    name = PROCESS_INIT_SPAN,
-                    startTimeMs = startMs,
-                    endTimeMs = applicationInitEndMs,
-                    parent = this,
-                )
+            getStartTimeMs()?.let { traceStartTimeMs ->
+                if (applicationInitEndMs != null) {
+                    spanService.recordCompletedSpan(
+                        name = PROCESS_INIT_SPAN,
+                        startTimeMs = traceStartTimeMs,
+                        endTimeMs = applicationInitEndMs,
+                        parent = this,
+                    )
+                }
             }
 
             if (sdkInitStartMs != null && sdkInitEndMs != null) {

@@ -20,6 +20,8 @@ import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSdkLoggerProvider
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSdkTracerProvider
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanLimits
 import io.embrace.opentelemetry.kotlin.compatWithOtelJava
+import io.embrace.opentelemetry.kotlin.j2k.logging.export.OtelJavaLogRecordExporterAdapter
+import io.embrace.opentelemetry.kotlin.j2k.tracing.export.OtelJavaSpanExporterAdapter
 import io.embrace.opentelemetry.kotlin.kotlinApi
 import io.embrace.opentelemetry.kotlin.tracing.Tracer
 
@@ -97,14 +99,14 @@ class OtelSdkWrapper(
      * Creates an instance of opentelemetry-kotlin using the Kotlin API's DSL, rather than the opentelemetry-java
      * API.
      */
-    @Suppress("unused", "UNREACHABLE_CODE")
+    @Suppress("unused")
     private val kotlinApiViaDsl: OpenTelemetry by lazy {
         OpenTelemetryInstance.kotlinApi(
             loggerProvider = {
                 resource(configuration.resourceAction)
                 addLogRecordProcessor(
                     DefaultLogRecordProcessor(
-                        TODO()
+                        OtelJavaLogRecordExporterAdapter(configuration.otelJavaLogRecordExporter)
                     )
                 )
             },
@@ -117,7 +119,7 @@ class OtelSdkWrapper(
                 }
                 addSpanProcessor(
                     DefaultSpanProcessor(
-                        TODO(),
+                        OtelJavaSpanExporterAdapter(configuration.otelJavaSpanExporter),
                         configuration.processIdentifier
                     )
                 )

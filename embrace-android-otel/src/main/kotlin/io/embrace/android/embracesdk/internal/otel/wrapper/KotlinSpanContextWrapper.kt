@@ -1,10 +1,12 @@
 package io.embrace.android.embracesdk.internal.otel.wrapper
 
+import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanContext
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaTraceFlags
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaTraceState
 import io.embrace.opentelemetry.kotlin.tracing.model.SpanContext
 
+@OptIn(ExperimentalApi::class)
 class KotlinSpanContextWrapper(
     private val impl: SpanContext,
 ) : OtelJavaSpanContext {

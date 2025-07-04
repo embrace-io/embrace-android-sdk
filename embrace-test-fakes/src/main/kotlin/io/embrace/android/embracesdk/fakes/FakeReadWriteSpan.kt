@@ -22,4 +22,5 @@ class FakeReadWriteSpan(
         get() = throw UnsupportedOperationException()
 
     override fun hasEnded(): Boolean = true
+    override val endTimestamp: Long? = null
 }

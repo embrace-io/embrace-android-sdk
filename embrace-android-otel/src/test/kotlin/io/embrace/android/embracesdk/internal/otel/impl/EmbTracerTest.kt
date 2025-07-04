@@ -5,11 +5,13 @@ import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryClock
 import io.embrace.android.embracesdk.fakes.FakeSpanService
 import io.embrace.android.embracesdk.fakes.FakeTracer
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
+import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
 
+@OptIn(ExperimentalApi::class)
 internal class EmbTracerTest {
     private val clock = FakeClock()
     private val openTelemetryClock = FakeOpenTelemetryClock(clock)

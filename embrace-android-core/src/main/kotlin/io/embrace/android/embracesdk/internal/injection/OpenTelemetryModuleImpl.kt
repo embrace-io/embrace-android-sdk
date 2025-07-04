@@ -157,7 +157,7 @@ internal class OpenTelemetryModuleImpl(
 
     override val externalTracerProvider: OtelJavaTracerProvider by lazy {
         EmbOtelJavaTracerProvider(
-            sdkTracerProvider = otelSdkWrapper.sdkTracerProvider,
+            sdkTracerProvider = otelSdkWrapper.kotlinApi.tracerProvider,
             spanService = spanService,
             clock = openTelemetryClock,
         )

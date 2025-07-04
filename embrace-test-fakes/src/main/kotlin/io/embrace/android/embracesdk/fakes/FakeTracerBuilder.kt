@@ -22,7 +22,7 @@ class FakeTracerBuilder(
     }
 
     override fun build(): OtelJavaTracer =
-        FakeTracer(
+        FakeOtelJavaTracer(
             TracerKey(
                 instrumentationScopeName = instrumentationScopeName,
                 instrumentationScopeVersion = scopeVersion,

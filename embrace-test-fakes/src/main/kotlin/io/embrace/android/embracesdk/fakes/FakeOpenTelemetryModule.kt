@@ -47,9 +47,9 @@ class FakeOpenTelemetryModule(
     override val logger: Logger
         get() = FakeOtelLogger()
     override val externalOpenTelemetry: OtelJavaOpenTelemetry
-        get() = EmbOtelJavaOpenTelemetry(traceProviderSupplier = { FakeTracerProvider() })
+        get() = EmbOtelJavaOpenTelemetry(traceProviderSupplier = { FakeOtelJavaTracerProvider() })
     override val externalTracerProvider: OtelJavaTracerProvider
-        get() = FakeTracerProvider()
+        get() = FakeOtelJavaTracerProvider()
     override val openTelemetryClock: OtelJavaClock
         get() = FakeOpenTelemetryClock(FakeClock())
 }

@@ -378,7 +378,7 @@ public class Embrace private constructor(
     }
 
     /**
-     * Adds a [SpanExporter] to the tracer.
+     * Adds a [OtelJavaSpanExporter] to the tracer.
      *
      * @param spanExporter the span exporter to add
      */
@@ -395,7 +395,7 @@ public class Embrace private constructor(
     }
 
     /**
-     * Adds a [LogRecordExporter] to the open telemetry logger.
+     * Adds a [OtelJavaLogRecordExporter] to the open telemetry logger.
      *
      * @param logRecordExporter the LogRecord exporter to add
      */
@@ -431,6 +431,10 @@ public class Embrace private constructor(
 
     override fun trackWebViewPerformance(tag: String, message: String) {
         impl.trackWebViewPerformance(tag, message)
+    }
+
+    override fun applicationInitStart() {
+        impl.applicationInitStart()
     }
 
     override fun applicationInitEnd() {

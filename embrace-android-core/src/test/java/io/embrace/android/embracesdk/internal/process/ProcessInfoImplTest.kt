@@ -22,7 +22,7 @@ internal class ProcessInfoImplTest {
         processInfo = ProcessInfoImpl(fakeDeviceStartTime, BuildVersionChecker)
     }
 
-    @Config(sdk = [VERSION_CODES.UPSIDE_DOWN_CAKE])
+    @Config(sdk = [VERSION_CODES.TIRAMISU])
     @Test
     fun `verify start time in T`() {
         val startRequestElapsedTime = Process.getStartRequestedElapsedRealtime()

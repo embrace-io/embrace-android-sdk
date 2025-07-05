@@ -39,15 +39,18 @@ fun buildVariantConfig(
     return null
 }
 
-private fun buildVariantConfiguration(
-    configFile: File,
-): EmbraceVariantConfig? {
+private fun buildVariantConfiguration(configFile: File): EmbraceVariantConfig? {
     return try {
         var configuration = readConfigurationFromFile(configFile) ?: return null
 
         val apiTokenFromEnv = getApiTokenFromEnv(configuration)
         if (apiTokenFromEnv != null) {
             configuration = configuration.copy(apiToken = apiTokenFromEnv)
+        }
+
+        val appIdFromEnv = getAppIdFromEnv(configuration)
+        if (appIdFromEnv != null) {
+            configuration = configuration.copy(appId = appIdFromEnv)
         }
 
         VariantConfigurationValidator.validate(configuration)
@@ -76,9 +79,23 @@ private fun getApiTokenFromEnv(config: EmbraceVariantConfig): String? {
     return null
 }
 
-private fun readConfigurationFromFile(
-    configFile: File,
-): EmbraceVariantConfig? =
+private fun getAppIdFromEnv(config: EmbraceVariantConfig): String? {
+    val appIdFromEnv = System.getenv("EMBRACE_APP_ID")
+
+    if (config.appId.isNullOrEmpty() && !appIdFromEnv.isNullOrEmpty()) {
+        return appIdFromEnv
+    }
+
+    if (!config.appId.isNullOrEmpty() && !appIdFromEnv.isNullOrEmpty()) {
+        Logging.getLogger("BuildVariantConfigFromFile").warn(
+            "App IDs were found in both the environment variable and the configuration file. The latter will be used."
+        )
+    }
+
+    return null
+}
+
+private fun readConfigurationFromFile(configFile: File): EmbraceVariantConfig? =
     configFile.inputStream().source().buffer().use { buffer ->
         val moshi = Moshi.Builder().build()
         val adapter = moshi.adapter(EmbraceVariantConfig::class.java)

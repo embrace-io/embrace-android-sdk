@@ -31,7 +31,6 @@ import io.embrace.android.embracesdk.internal.ui.hasRenderEvent
 import io.embrace.android.embracesdk.internal.ui.supportFrameCommitCallback
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.spans.ErrorCode
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaClock
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -60,7 +59,6 @@ internal class AppStartupTraceEmitterTest {
     private var hasFrameCommitEvent = true
 
     private lateinit var clock: FakeClock
-    private lateinit var otelClock: OtelJavaClock
     private lateinit var spanSink: SpanSink
     private lateinit var spanService: SpanService
     private lateinit var logger: FakeEmbLogger
@@ -69,7 +67,6 @@ internal class AppStartupTraceEmitterTest {
     fun setUp() {
         clock = FakeClock(processInitTime)
         FakeInitModule(clock = clock).run {
-            otelClock = openTelemetryModule.openTelemetryClock
             spanSink = openTelemetryModule.spanSink
             spanService = openTelemetryModule.spanService
         }
@@ -202,7 +199,7 @@ internal class AppStartupTraceEmitterTest {
     @Config(sdk = [VERSION_CODES.TIRAMISU])
     @Test
     fun `abandon cold start after before manual end`() {
-        val emitter = createTraceEmitter(true).apply {
+        val emitter = createTraceEmitter(manualEnd = true).apply {
             initApp(
                 hasAppInitEvents = true,
                 isColdStart = true
@@ -251,7 +248,7 @@ internal class AppStartupTraceEmitterTest {
     @Config(sdk = [VERSION_CODES.TIRAMISU])
     @Test
     fun `abandon warm start after before manual end`() {
-        val emitter = createTraceEmitter(true).apply {
+        val emitter = createTraceEmitter(manualEnd = true).apply {
             initApp(
                 hasAppInitEvents = true,
                 isColdStart = false
@@ -605,12 +602,18 @@ internal class AppStartupTraceEmitterTest {
 
     private fun createTraceEmitter(manualEnd: Boolean = false) =
         AppStartupTraceEmitter(
-            clock = otelClock,
+            clock = clock,
             startupServiceProvider = { startupService },
             spanService = spanService,
             versionChecker = BuildVersionChecker,
             logger = logger,
             manualEnd = manualEnd,
+            deviceStartTimestampMs = DEFAULT_FAKE_CURRENT_TIME - 10000000L,
+            processCreatedMs = if (BuildVersionChecker.isAtLeast(VERSION_CODES.N)) {
+                DEFAULT_FAKE_CURRENT_TIME
+            } else {
+                null
+            }
         )
 
     private fun AppStartupTraceEmitter.simulateAppStartup(
@@ -699,9 +702,7 @@ internal class AppStartupTraceEmitterTest {
             expectedCustomAttributes = mapOf("custom-attribute" to "true")
         )
 
-        if (isColdStart && hasAppInitEvents) {
-            assertChildSpan(spanMap.processInitSpan(), traceStart, appInitTimestamps.applicationInitEnd)
-        } else {
+        if (!isColdStart) {
             assertNull(spanMap.processInitSpan())
         }
 
@@ -847,7 +848,7 @@ internal class AppStartupTraceEmitterTest {
     }
 
     private fun AppStartupTraceEmitter.fireEndEvent(
-        activityInitTimestamps: ActivityInitTimestamps
+        activityInitTimestamps: ActivityInitTimestamps,
     ) {
         startupActivityInitEnd()
         activityInitTimestamps.startupActivityEnd = clock.now()

@@ -28,11 +28,11 @@ import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import io.embrace.android.embracesdk.testframework.export.FilteredLogExporter
 import io.embrace.android.embracesdk.testframework.export.FilteredSpanExporter
 import io.embrace.android.embracesdk.testframework.server.FakeApiServer
-import java.io.File
 import okhttp3.Protocol
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.Assert.assertEquals
 import org.junit.rules.ExternalResource
+import java.io.File
 
 /**
  * A [org.junit.Rule] that is responsible for setting up and tearing down the Embrace SDK for use in
@@ -146,7 +146,7 @@ internal class SdkIntegrationTestRule(
 
         setupAction(setup)
         with(setup) {
-            embraceImpl = EmbraceImpl(bootstrapper)
+            embraceImpl = EmbraceImpl(clock = setup.fakeClock, bootstrapper = bootstrapper)
             EmbraceHooks.setImpl(embraceImpl)
             preSdkStartAction(preSdkStart)
             embraceImpl.addSpanExporter(spanExporter)

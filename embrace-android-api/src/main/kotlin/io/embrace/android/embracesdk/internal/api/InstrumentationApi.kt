@@ -10,14 +10,6 @@ import io.embrace.android.embracesdk.spans.ErrorCode
  */
 @InternalApi
 public interface InstrumentationApi {
-
-    /**
-     * Notify the Embrace SDK that the application has been fully created. This is typically called at the end of the
-     * Application.onCreate() function. Calling this will allow the SDK to more accurately gather the details of the
-     * trace recorded for app startup.
-     */
-    public fun applicationInitEnd()
-
     /**
      * Notify the Embrace SDK that app startup has completed and the UI is ready to be used.
      */

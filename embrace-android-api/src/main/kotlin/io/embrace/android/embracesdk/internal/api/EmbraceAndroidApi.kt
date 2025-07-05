@@ -89,4 +89,18 @@ public interface EmbraceAndroidApi {
      * due to technical reasons, but any captured data will not be exported.
      */
     public fun disable()
+
+    /**
+     * Notify the Embrace SDK that the application is starting to initialize. This is typically called at the beginning of the
+     * Application.onCreate() function, before the Embrace SDK is started. Calling this will allow the SDK to more accurately gauge
+     * when the application began to start.
+     */
+    public fun applicationInitStart()
+
+    /**
+     * Notify the Embrace SDK that the application has been fully created. This is typically called at the end of the
+     * Application.onCreate() function. Calling this will allow the SDK to more accurately gather the details of the
+     * trace recorded for app startup.
+     */
+    public fun applicationInitEnd()
 }

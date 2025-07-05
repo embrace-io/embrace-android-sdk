@@ -14,18 +14,12 @@ internal class InstrumentationApiDelegate(
     private val sdkCallChecker: SdkCallChecker,
 ) : InstrumentationApi {
 
-    private val clock: Clock = bootstrapper.initModule.clock
+    private val clock: Clock = bootstrapper.clock
     private val uiLoadTraceEmitter by embraceImplInject(sdkCallChecker) {
         bootstrapper.dataCaptureServiceModule.uiLoadDataListener
     }
     private val appStartupDataCollector by embraceImplInject(sdkCallChecker) {
         bootstrapper.dataCaptureServiceModule.appStartupDataCollector
-    }
-
-    override fun applicationInitEnd() {
-        if (sdkCallChecker.check("application_init_end")) {
-            appStartupDataCollector?.applicationInitEnd()
-        }
     }
 
     override fun appReady() {

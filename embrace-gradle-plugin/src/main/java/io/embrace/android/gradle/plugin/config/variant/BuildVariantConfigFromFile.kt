@@ -6,6 +6,7 @@ import io.embrace.android.gradle.plugin.model.AndroidCompactedVariantData
 import okio.buffer
 import okio.source
 import org.gradle.api.file.Directory
+import org.gradle.api.logging.Logging
 import java.io.File
 
 /**
@@ -42,18 +43,37 @@ private fun buildVariantConfiguration(
     configFile: File,
 ): EmbraceVariantConfig? {
     return try {
-        val configuration = readConfigurationFromFile(configFile) ?: return null
-        VariantConfigurationValidator.validate(
-            configuration = configuration,
-            sourceType = VariantConfigurationValidator.VariantConfigurationSourceType.CONFIG_FILE,
-            environment = System::getenv
-        )
+        var configuration = readConfigurationFromFile(configFile) ?: return null
+
+        val apiTokenFromEnv = getApiTokenFromEnv(configuration)
+        if (apiTokenFromEnv != null) {
+            configuration = configuration.copy(apiToken = apiTokenFromEnv)
+        }
+
+        VariantConfigurationValidator.validate(configuration)
+
         configuration
     } catch (ex: Throwable) {
         throw IllegalArgumentException(
             "Problem parsing field in Embrace config file ${configFile.absoluteFile}.\nError=${ex.localizedMessage}"
         )
     }
+}
+
+private fun getApiTokenFromEnv(config: EmbraceVariantConfig): String? {
+    val apiTokenFromEnv = System.getenv("EMBRACE_API_TOKEN")
+
+    if (config.apiToken.isNullOrEmpty() && !apiTokenFromEnv.isNullOrEmpty()) {
+        return apiTokenFromEnv
+    }
+
+    if (!config.apiToken.isNullOrEmpty() && !apiTokenFromEnv.isNullOrEmpty()) {
+        Logging.getLogger("BuildVariantConfigFromFile").warn(
+            "API tokens were found in both the environment variable and the configuration file. The latter will be used."
+        )
+    }
+
+    return null
 }
 
 private fun readConfigurationFromFile(

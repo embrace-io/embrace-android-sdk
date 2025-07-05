@@ -72,7 +72,7 @@ private fun getApiTokenFromEnv(config: EmbraceVariantConfig): String? {
 
     if (!config.apiToken.isNullOrEmpty() && !apiTokenFromEnv.isNullOrEmpty()) {
         Logging.getLogger("BuildVariantConfigFromFile").warn(
-            "API tokens were found in both the environment variable and the configuration file. The latter will be used."
+            "API tokens were found in both an environment variable and the configuration file. The latter will be used."
         )
     }
 
@@ -88,7 +88,7 @@ private fun getAppIdFromEnv(config: EmbraceVariantConfig): String? {
 
     if (!config.appId.isNullOrEmpty() && !appIdFromEnv.isNullOrEmpty()) {
         Logging.getLogger("BuildVariantConfigFromFile").warn(
-            "App IDs were found in both the environment variable and the configuration file. The latter will be used."
+            "App IDs were found in both an environment variable and the configuration file. The latter will be used."
         )
     }
 

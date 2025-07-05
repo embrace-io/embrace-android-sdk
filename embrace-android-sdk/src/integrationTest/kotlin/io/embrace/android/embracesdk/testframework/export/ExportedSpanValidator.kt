@@ -46,7 +46,7 @@ internal class ExportedSpanValidator {
     }
 
     private fun OtelJavaSpanData.representAttributes(): Map<String, String> {
-        val ignoreList = listOf("emb.process_identifier", "emb.private.sequence_id")
+        val ignoreList = listOf("emb.process_identifier", "emb.private.sequence_id", "session.id")
         val attrs: Map<String, String> = attributes.asMap().map {
             it.key.key to it.value.toString()
         }.toMap()

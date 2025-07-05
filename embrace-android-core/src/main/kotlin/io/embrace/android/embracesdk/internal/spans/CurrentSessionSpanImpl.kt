@@ -103,8 +103,15 @@ internal class CurrentSessionSpanImpl(
                 currentSessionSpan?.addSystemLink(spanToStopContext, LinkType.EndedIn)
             }
 
-            currentSessionSpan?.spanContext?.let { sessionSpanContext ->
-                spanToStop?.addSystemLink(sessionSpanContext, LinkType.EndSession)
+            val sessionId = currentSessionSpan?.getSystemAttribute(SessionIncubatingAttributes.SESSION_ID.key)
+            if (sessionId != null) {
+                currentSessionSpan.spanContext?.let { sessionSpanContext ->
+                    spanToStop?.addSystemLink(
+                        linkedSpanContext = sessionSpanContext,
+                        type = LinkType.EndSession,
+                        attributes = mapOf(SessionIncubatingAttributes.SESSION_ID.key to sessionId)
+                    )
+                }
             }
         }
     }

@@ -6,7 +6,7 @@
     "startEpochNanos": "169220160010000000",
     "endEpochNanos": "169220200131000000",
     "hasEnded": "true",
-    "totalAttributeCount": "4",
+    "totalAttributeCount": "5",
     "attributes": {
       "emb.type": "ux.view",
       "view.name": "android.app.Activity"

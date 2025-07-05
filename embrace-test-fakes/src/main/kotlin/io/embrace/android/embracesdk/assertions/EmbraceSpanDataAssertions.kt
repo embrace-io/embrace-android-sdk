@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
+import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 
@@ -26,6 +27,7 @@ fun assertEmbraceSpanData(
     expectedErrorCode: ErrorCode? = null,
     expectedCustomAttributes: Map<String, String> = emptyMap(),
     expectedEvents: List<SpanEvent> = emptyList(),
+    expectedSessionId: String? = null,
     private: Boolean = false,
 ) {
     checkNotNull(span)
@@ -50,6 +52,11 @@ fun assertEmbraceSpanData(
             assertEquals(entry.value, attributes?.findAttributeValue(entry.key))
         }
         assertEquals(expectedEvents, events)
+
+        if (expectedSessionId != null) {
+            assertEquals(expectedSessionId, attributes?.findAttributeValue(SessionIncubatingAttributes.SESSION_ID.key))
+        }
+
         if (private) {
             assertIsPrivateSpan()
         } else {

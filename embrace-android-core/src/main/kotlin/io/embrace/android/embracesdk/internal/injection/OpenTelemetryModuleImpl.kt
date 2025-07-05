@@ -52,6 +52,7 @@ internal class OpenTelemetryModuleImpl(
             sdkName = BuildConfig.LIBRARY_PACKAGE_NAME,
             sdkVersion = BuildConfig.VERSION_NAME,
             systemInfo = initModule.systemInfo,
+            sessionIdProvider = { currentSessionSpan.getSessionId() },
             processIdentifierProvider = initModule.processIdentifierProvider
         )
     }

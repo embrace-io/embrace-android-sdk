@@ -533,7 +533,7 @@ internal class SpanServiceImplTest {
 
         val completedSpans = spanSink.completedSpans()
         assertEquals(1, completedSpans.size)
-        assertEquals(48, completedSpans[0].attributes.filterNot { it.key.startsWith("emb.") }.size)
+        assertEquals(49, completedSpans[0].attributes.filterNot { it.key.startsWith("emb.") }.size)
     }
 
     @Test
@@ -610,6 +610,7 @@ internal class SpanServiceImplTest {
             sdkName = "test-sdk",
             sdkVersion = "1.0",
             systemInfo = SystemInfo(),
+            sessionIdProvider = { "fake-session-id" },
             processIdentifierProvider = { "fake-pid" }
         )
         val otelSdkWrapper = OtelSdkWrapper(

@@ -30,6 +30,7 @@ class OtelSdkConfig(
     val sdkName: String,
     val sdkVersion: String,
     systemInfo: SystemInfo,
+    private val sessionIdProvider: () -> String? = { null },
     private val processIdentifierProvider: () -> String = IdGenerator.Companion::generateLaunchInstanceId,
 ) {
     val otelJavaResourceBuilder: OtelJavaResourceBuilder = OtelJavaResource.getDefault().toBuilder()
@@ -94,6 +95,7 @@ class OtelSdkConfig(
     val otelJavaSpanProcessor: OtelJavaSpanProcessor by lazy {
         EmbraceOtelJavaSpanProcessor(
             otelJavaSpanExporter,
+            sessionIdProvider,
             processIdentifier
         )
     }

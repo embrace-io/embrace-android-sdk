@@ -1,10 +1,10 @@
 package io.embrace.android.embracesdk.internal.otel.config
 
 import io.embrace.android.embracesdk.internal.SystemInfo
-import io.embrace.android.embracesdk.internal.otel.logs.EmbraceOtelJavaLogRecordExporter
+import io.embrace.android.embracesdk.internal.otel.logs.DefaultLogRecordExporter
 import io.embrace.android.embracesdk.internal.otel.logs.LogSink
 import io.embrace.android.embracesdk.internal.otel.sdk.IdGenerator
-import io.embrace.android.embracesdk.internal.otel.spans.EmbraceOtelJavaSpanExporter
+import io.embrace.android.embracesdk.internal.otel.spans.DefaultSpanExporter
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanProcessor
 import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
@@ -12,6 +12,10 @@ import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaLogRecordExporter
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanExporter
 import io.embrace.opentelemetry.kotlin.attributes.AttributeContainer
+import io.embrace.opentelemetry.kotlin.j2k.logging.export.OtelJavaLogRecordExporterAdapter
+import io.embrace.opentelemetry.kotlin.j2k.tracing.export.OtelJavaSpanExporterAdapter
+import io.embrace.opentelemetry.kotlin.logging.export.LogRecordExporter
+import io.embrace.opentelemetry.kotlin.tracing.export.SpanExporter
 import io.embrace.opentelemetry.kotlin.tracing.export.SpanProcessor
 import io.opentelemetry.semconv.ServiceAttributes
 import io.opentelemetry.semconv.incubating.AndroidIncubatingAttributes
@@ -71,14 +75,15 @@ class OtelSdkConfig(
         exportEnabled = false
     }
 
-    val otelJavaSpanExporter: OtelJavaSpanExporter by lazy {
-        EmbraceOtelJavaSpanExporter(
+    val spanExporter: SpanExporter by lazy {
+        val externalExporter = if (externalSpanExporters.isNotEmpty()) {
+            OtelJavaSpanExporter.composite(externalSpanExporters)
+        } else {
+            null
+        }
+        DefaultSpanExporter(
             spanSink = spanSink,
-            externalSpanExporter = if (externalSpanExporters.isNotEmpty()) {
-                OtelJavaSpanExporter.composite(externalSpanExporters)
-            } else {
-                null
-            },
+            externalSpanExporter = externalExporter?.let(::OtelJavaSpanExporterAdapter),
             exportCheck = exportCheck,
         )
     }
@@ -89,14 +94,15 @@ class OtelSdkConfig(
         )
     }
 
-    val otelJavaLogRecordExporter: OtelJavaLogRecordExporter by lazy {
-        EmbraceOtelJavaLogRecordExporter(
+    val logRecordExporter: LogRecordExporter by lazy {
+        val externalExporter = if (externalLogExporters.isNotEmpty()) {
+            OtelJavaLogRecordExporter.composite(externalLogExporters)
+        } else {
+            null
+        }
+        DefaultLogRecordExporter(
             logSink = logSink,
-            externalLogRecordExporter = if (externalLogExporters.isNotEmpty()) {
-                OtelJavaLogRecordExporter.composite(externalLogExporters)
-            } else {
-                null
-            },
+            externalLogRecordExporter = externalExporter?.let(::OtelJavaLogRecordExporterAdapter),
             exportCheck = exportCheck,
         )
     }

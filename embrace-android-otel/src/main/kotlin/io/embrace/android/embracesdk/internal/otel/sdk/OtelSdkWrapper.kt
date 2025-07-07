@@ -13,8 +13,6 @@ import io.embrace.opentelemetry.kotlin.Clock
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.OpenTelemetry
 import io.embrace.opentelemetry.kotlin.OpenTelemetryInstance
-import io.embrace.opentelemetry.kotlin.j2k.logging.export.OtelJavaLogRecordExporterAdapter
-import io.embrace.opentelemetry.kotlin.j2k.tracing.export.OtelJavaSpanExporterAdapter
 import io.embrace.opentelemetry.kotlin.kotlinApi
 import io.embrace.opentelemetry.kotlin.tracing.Tracer
 
@@ -48,9 +46,7 @@ class OtelSdkWrapper(
             loggerProvider = {
                 resource(configuration.resourceAction)
                 addLogRecordProcessor(
-                    DefaultLogRecordProcessor(
-                        OtelJavaLogRecordExporterAdapter(configuration.otelJavaLogRecordExporter)
-                    )
+                    DefaultLogRecordProcessor(configuration.logRecordExporter)
                 )
             },
             tracerProvider = {
@@ -62,7 +58,7 @@ class OtelSdkWrapper(
                 }
                 addSpanProcessor(
                     DefaultSpanProcessor(
-                        OtelJavaSpanExporterAdapter(configuration.otelJavaSpanExporter),
+                        configuration.spanExporter,
                         configuration.processIdentifier
                     )
                 )

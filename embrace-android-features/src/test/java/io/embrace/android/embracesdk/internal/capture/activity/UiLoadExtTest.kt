@@ -11,7 +11,6 @@ import io.embrace.android.embracesdk.fakes.FakeNotTracedActivity
 import io.embrace.android.embracesdk.fakes.FakeTracedActivity
 import io.embrace.android.embracesdk.fakes.FakeUiLoadEventListener
 import io.embrace.android.embracesdk.fakes.FakeUiLoadEventListener.EventData
-import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.ClockTickingActivityLifecycleCallbacks
 import io.embrace.android.embracesdk.internal.ClockTickingActivityLifecycleCallbacks.Companion.POST_DURATION
 import io.embrace.android.embracesdk.internal.ClockTickingActivityLifecycleCallbacks.Companion.PRE_DURATION
@@ -159,7 +158,7 @@ internal class UiLoadExtTest {
             uiLoadEventListener = uiLoadEventListener,
             firstDrawDetector = drawEventEmitter,
             autoTraceEnabled = autoTraceEnabled,
-            clock = FakeInitModule(clock = clock).openTelemetryModule.openTelemetryClock,
+            clock = clock,
             versionChecker = BuildVersionChecker
         ).apply {
             RuntimeEnvironment.getApplication().registerActivityLifecycleCallbacks(this)

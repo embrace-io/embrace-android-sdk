@@ -7,11 +7,10 @@ import androidx.annotation.RequiresApi
 import io.embrace.android.embracesdk.annotation.CustomLoadTracedActivity
 import io.embrace.android.embracesdk.annotation.LoadTracedActivity
 import io.embrace.android.embracesdk.annotation.NotTracedActivity
-import io.embrace.android.embracesdk.internal.clock.nanosToMillis
+import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityLifecycleListener
 import io.embrace.android.embracesdk.internal.ui.DrawEventEmitter
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaClock
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -24,7 +23,7 @@ fun createActivityLoadEventEmitter(
     uiLoadEventListener: UiLoadEventListener,
     firstDrawDetector: DrawEventEmitter?,
     autoTraceEnabled: Boolean,
-    clock: OtelJavaClock,
+    clock: Clock,
     versionChecker: VersionChecker,
 ): ActivityLifecycleListener {
     val lifecycleEventEmitter = LifecycleEventEmitter(
@@ -120,7 +119,7 @@ private class LifecycleEventEmitter(
     private val uiLoadEventListener: UiLoadEventListener,
     private val drawEventEmitter: DrawEventEmitter?,
     private val autoTraceEnabled: Boolean,
-    private val clock: OtelJavaClock,
+    private val clock: Clock,
 ) {
 
     private val instanceStartTime: MutableMap<Int, Long> = ConcurrentHashMap()
@@ -224,5 +223,5 @@ private class LifecycleEventEmitter(
 
     private fun Activity.isManualEnd(): Boolean = javaClass.isAnnotationPresent(CustomLoadTracedActivity::class.java)
 
-    private fun nowMs(): Long = clock.now().nanosToMillis()
+    private fun nowMs(): Long = clock.now()
 }

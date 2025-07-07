@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.internal.capture.startup
 
 import android.os.Build.VERSION_CODES
 import android.os.Process
-import io.embrace.android.embracesdk.internal.clock.nanosToMillis
+import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.otel.attrs.embStartupActivityName
@@ -17,7 +17,6 @@ import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaClock
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicBoolean
@@ -44,15 +43,19 @@ import java.util.concurrent.atomic.AtomicReference
  *
  */
 internal class AppStartupTraceEmitter(
-    private val clock: OtelJavaClock,
+    private val clock: Clock,
     private val startupServiceProvider: Provider<StartupService?>,
     private val spanService: SpanService,
     private val versionChecker: VersionChecker,
     private val logger: EmbLogger,
     manualEnd: Boolean,
+    deviceStartTimestampMs: Long,
+    private val processCreatedMs: Long? = if (versionChecker.isAtLeast(VERSION_CODES.N)) {
+        deviceStartTimestampMs + Process.getStartElapsedRealtime()
+    } else {
+        null
+    },
 ) : AppStartupDataCollector, ProcessStateListener {
-    private val processCreateRequestedMs: Long?
-    private val processCreatedMs: Long?
     private val additionalTrackedIntervals = ConcurrentLinkedQueue<TrackedInterval>()
     private val customAttributes: MutableMap<String, String> = ConcurrentHashMap()
     private val trackRender = hasRenderEvent(versionChecker)
@@ -65,20 +68,6 @@ internal class AppStartupTraceEmitter(
         TraceEnd.RENDERED
     } else {
         TraceEnd.RESUMED
-    }
-
-    init {
-        val timestampAtDeviceStart = nowMs() - clock.nanoTime().nanosToMillis()
-        processCreateRequestedMs = if (versionChecker.isAtLeast(VERSION_CODES.TIRAMISU)) {
-            timestampAtDeviceStart + Process.getStartRequestedElapsedRealtime()
-        } else {
-            null
-        }
-        processCreatedMs = if (versionChecker.isAtLeast(VERSION_CODES.N)) {
-            timestampAtDeviceStart + Process.getStartElapsedRealtime()
-        } else {
-            null
-        }
     }
 
     @Volatile
@@ -423,7 +412,7 @@ internal class AppStartupTraceEmitter(
     private fun applicationActivityCreationGap(sdkInitEndMs: Long): Long? =
         duration(applicationInitEndMs ?: sdkInitEndMs, firstActivityInitStartMs)
 
-    private fun nowMs(): Long = clock.now().nanosToMillis()
+    private fun nowMs(): Long = clock.now()
 
     private fun EmbraceSdkSpan.addTraceMetadata() {
         addCustomAttributes()

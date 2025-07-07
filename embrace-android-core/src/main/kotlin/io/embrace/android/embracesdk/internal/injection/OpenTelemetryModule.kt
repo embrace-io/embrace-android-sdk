@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.injection
 
+import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehavior
 import io.embrace.android.embracesdk.internal.otel.config.OtelSdkConfig
 import io.embrace.android.embracesdk.internal.otel.logs.LogSink
@@ -96,4 +97,6 @@ interface OpenTelemetryModule {
         sensitiveKeysBehavior: SensitiveKeysBehavior,
         bypassValidation: Boolean,
     )
+
+    fun deviceStartTimeMs(): Long = openTelemetryClock.run { now() - nanoTime() }.nanosToMillis()
 }

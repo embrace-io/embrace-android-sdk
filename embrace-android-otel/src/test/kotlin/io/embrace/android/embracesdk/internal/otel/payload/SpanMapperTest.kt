@@ -5,11 +5,19 @@ import io.embrace.android.embracesdk.arch.assertIsTypePerformance
 import io.embrace.android.embracesdk.arch.assertNotPrivateSpan
 import io.embrace.android.embracesdk.arch.assertSuccessful
 import io.embrace.android.embracesdk.fakes.FakeSpanData
+import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
+import io.embrace.android.embracesdk.internal.otel.schema.AppTerminationCause
+import io.embrace.android.embracesdk.internal.otel.schema.EmbType
+import io.embrace.android.embracesdk.internal.otel.schema.ErrorCodeAttribute
+import io.embrace.android.embracesdk.internal.otel.sdk.setEmbraceAttribute
 import io.embrace.android.embracesdk.internal.otel.sdk.toEmbraceSpanData
+import io.embrace.android.embracesdk.internal.otel.spans.hasEmbraceAttribute
 import io.embrace.android.embracesdk.internal.otel.toOtelJava
+import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.spans.ErrorCode
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanId
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -63,5 +71,21 @@ internal class SpanMapperTest {
         checkNotNull(snapshot.attributes).forEach {
             assertEquals(attributesOfFailedSpan[it.key], it.data)
         }
+    }
+
+    private fun Span.toFailedSpan(endTimeMs: Long): Span {
+        val newAttributes = mutableMapOf<String, String>().apply {
+            setEmbraceAttribute(ErrorCodeAttribute.Failure)
+            if (hasEmbraceAttribute(EmbType.Ux.Session)) {
+                setEmbraceAttribute(AppTerminationCause.Crash)
+            }
+        }
+
+        return copy(
+            endTimeNanos = endTimeMs.millisToNanos(),
+            parentSpanId = parentSpanId ?: OtelJavaSpanId.getInvalid(),
+            status = Span.Status.ERROR,
+            attributes = newAttributes.map { Attribute(it.key, it.value) }.plus(attributes ?: emptyList())
+        )
     }
 }

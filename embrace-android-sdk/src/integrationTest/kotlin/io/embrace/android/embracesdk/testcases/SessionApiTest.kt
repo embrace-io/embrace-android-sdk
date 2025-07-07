@@ -6,7 +6,6 @@ import io.embrace.android.embracesdk.assertions.toMap
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
-import io.embrace.android.embracesdk.internal.otel.attrs.asOtelAttributeKey
 import io.embrace.android.embracesdk.internal.otel.attrs.embFreeDiskBytes
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
@@ -108,7 +107,7 @@ internal class SessionApiTest {
 
         // Attributes that are unstable that we should not try to verify
         val ignoredAttributes = setOf(
-            embFreeDiskBytes.asOtelAttributeKey().key
+            embFreeDiskBytes.name
         ).plus(validateExistenceOnly)
     }
 }

@@ -3,6 +3,8 @@ package io.embrace.android.gradle.plugin.config.variant
 import com.squareup.moshi.Moshi
 import io.embrace.android.gradle.plugin.instrumentation.config.model.EmbraceVariantConfig
 import io.embrace.android.gradle.plugin.model.AndroidCompactedVariantData
+import io.embrace.android.gradle.plugin.system.JavaSystemWrapper
+import io.embrace.android.gradle.plugin.system.SystemWrapper
 import okio.buffer
 import okio.source
 import org.gradle.api.file.Directory
@@ -24,6 +26,7 @@ fun buildVariantConfig(
         variantBuildTypeConfigurationFileFinder(variantInfo, projectDirectory),
         defaultConfigurationFileFinder(projectDirectory)
     ),
+    systemWrapper: SystemWrapper = JavaSystemWrapper(),
 ): EmbraceVariantConfig? {
     if (configFileFinders.isEmpty()) {
         error("No config file finders found. Local configuration will not be applied.")
@@ -32,23 +35,23 @@ fun buildVariantConfig(
     configFileFinders.forEach { fileFinder ->
         val file = fileFinder.fetchFile()
         if (file != null) {
-            return buildVariantConfiguration(file)
+            return buildVariantConfiguration(file, systemWrapper)
         }
     }
 
     return null
 }
 
-private fun buildVariantConfiguration(configFile: File): EmbraceVariantConfig? {
+private fun buildVariantConfiguration(configFile: File, systemWrapper: SystemWrapper): EmbraceVariantConfig? {
     return try {
         var configuration = readConfigurationFromFile(configFile) ?: return null
 
-        val apiTokenFromEnv = getApiTokenFromEnv(configuration)
+        val apiTokenFromEnv = getApiTokenFromEnv(configuration, systemWrapper)
         if (apiTokenFromEnv != null) {
             configuration = configuration.copy(apiToken = apiTokenFromEnv)
         }
 
-        val appIdFromEnv = getAppIdFromEnv(configuration)
+        val appIdFromEnv = getAppIdFromEnv(configuration, systemWrapper)
         if (appIdFromEnv != null) {
             configuration = configuration.copy(appId = appIdFromEnv)
         }
@@ -63,8 +66,8 @@ private fun buildVariantConfiguration(configFile: File): EmbraceVariantConfig? {
     }
 }
 
-private fun getApiTokenFromEnv(config: EmbraceVariantConfig): String? {
-    val apiTokenFromEnv = System.getenv("EMBRACE_API_TOKEN")
+private fun getApiTokenFromEnv(config: EmbraceVariantConfig, systemWrapper: SystemWrapper): String? {
+    val apiTokenFromEnv = systemWrapper.getEnvironmentVariable("EMBRACE_API_TOKEN")
 
     if (config.apiToken.isNullOrEmpty() && !apiTokenFromEnv.isNullOrEmpty()) {
         return apiTokenFromEnv
@@ -79,8 +82,8 @@ private fun getApiTokenFromEnv(config: EmbraceVariantConfig): String? {
     return null
 }
 
-private fun getAppIdFromEnv(config: EmbraceVariantConfig): String? {
-    val appIdFromEnv = System.getenv("EMBRACE_APP_ID")
+private fun getAppIdFromEnv(config: EmbraceVariantConfig, systemWrapper: SystemWrapper): String? {
+    val appIdFromEnv = systemWrapper.getEnvironmentVariable("EMBRACE_APP_ID")
 
     if (config.appId.isNullOrEmpty() && !appIdFromEnv.isNullOrEmpty()) {
         return appIdFromEnv

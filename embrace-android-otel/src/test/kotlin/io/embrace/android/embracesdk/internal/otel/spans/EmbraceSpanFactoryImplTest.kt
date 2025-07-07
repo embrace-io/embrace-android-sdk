@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.internal.otel.spans
 
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
-import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryClock
+import io.embrace.android.embracesdk.fakes.FakeOtelJavaClock
 import io.embrace.android.embracesdk.fakes.FakeOtelJavaTracer
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.embrace.android.embracesdk.internal.otel.schema.PrivateSpan
@@ -29,7 +29,7 @@ internal class EmbraceSpanFactoryImplTest {
 
     @Before
     fun setup() {
-        val openTelemetryClock = FakeOpenTelemetryClock(clock)
+        val openTelemetryClock = FakeOtelJavaClock(clock)
         spanRepository = SpanRepository().apply {
             setSpanUpdateNotifier {
                 updateNotified = true

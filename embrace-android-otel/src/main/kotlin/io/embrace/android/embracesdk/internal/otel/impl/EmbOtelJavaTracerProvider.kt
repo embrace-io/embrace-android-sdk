@@ -2,8 +2,8 @@ package io.embrace.android.embracesdk.internal.otel.impl
 
 import io.embrace.android.embracesdk.internal.otel.sdk.TracerKey
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
+import io.embrace.opentelemetry.kotlin.Clock
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaClock
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaTracer
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaTracerBuilder
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaTracerProvider
@@ -15,7 +15,7 @@ import java.util.concurrent.ConcurrentHashMap
 class EmbOtelJavaTracerProvider(
     private val sdkTracerProvider: TracerProvider,
     private val spanService: SpanService,
-    private val clock: OtelJavaClock,
+    private val clock: Clock,
 ) : OtelJavaTracerProvider {
 
     private val tracers = ConcurrentHashMap<TracerKey, OtelJavaTracer>()

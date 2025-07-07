@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.internal.otel.sdk
 
 import io.embrace.android.embracesdk.assertions.assertExpectedAttributes
 import io.embrace.android.embracesdk.fakes.FakeClock
-import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryClock
+import io.embrace.android.embracesdk.fakes.FakeOtelJavaClock
 import io.embrace.android.embracesdk.fakes.FakeOtelJavaLogRecordExporter
 import io.embrace.android.embracesdk.fakes.FakeOtelJavaSpanExporter
 import io.embrace.android.embracesdk.internal.SystemInfo
@@ -46,7 +46,7 @@ internal class OpenTelemetrySdkTest {
         configuration.addLogExporter(logExporter)
 
         sdk = OtelSdkWrapper(
-            otelClock = FakeOpenTelemetryClock(FakeClock()),
+            otelClock = FakeOtelJavaClock(FakeClock()),
             configuration = configuration
         )
     }

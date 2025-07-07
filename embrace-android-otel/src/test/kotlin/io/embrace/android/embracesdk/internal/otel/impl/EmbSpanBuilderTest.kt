@@ -2,8 +2,8 @@ package io.embrace.android.embracesdk.internal.otel.impl
 
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
-import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryClock
 import io.embrace.android.embracesdk.fakes.FakeOtelJavaTracer
+import io.embrace.android.embracesdk.fakes.FakeOtelKotlinClock
 import io.embrace.android.embracesdk.fakes.FakeSpanService
 import io.embrace.android.embracesdk.fixtures.fakeContextKey
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
@@ -17,7 +17,6 @@ import io.embrace.opentelemetry.kotlin.aliases.OtelJavaAttributes
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaContext
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpan
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanKind
-import io.embrace.opentelemetry.kotlin.k2j.ClockAdapter
 import io.embrace.opentelemetry.kotlin.k2j.tracing.TracerAdapter
 import io.embrace.opentelemetry.kotlin.tracing.Tracer
 import io.embrace.opentelemetry.kotlin.tracing.model.SpanKind
@@ -32,7 +31,7 @@ import java.util.concurrent.TimeUnit
 @OptIn(ExperimentalApi::class)
 internal class EmbSpanBuilderTest {
     private val clock = FakeClock()
-    private val openTelemetryClock = FakeOpenTelemetryClock(clock)
+    private val openTelemetryClock = FakeOtelKotlinClock(clock)
     private lateinit var tracer: Tracer
     private lateinit var spanService: FakeSpanService
     private lateinit var creator: OtelSpanCreator
@@ -41,7 +40,7 @@ internal class EmbSpanBuilderTest {
     @Before
     fun setup() {
         spanService = FakeSpanService()
-        tracer = TracerAdapter(FakeOtelJavaTracer(), ClockAdapter(openTelemetryClock))
+        tracer = TracerAdapter(FakeOtelJavaTracer(), openTelemetryClock)
         creator = OtelSpanCreator(
             tracer = tracer,
             spanStartArgs = OtelSpanStartArgs(

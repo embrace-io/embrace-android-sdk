@@ -4,7 +4,7 @@ import io.embrace.android.embracesdk.assertions.validateLinkToSpan
 import io.embrace.android.embracesdk.assertions.validateSystemLink
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
-import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryClock
+import io.embrace.android.embracesdk.fakes.FakeOtelJavaClock
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.fixtures.MAX_LENGTH_ATTRIBUTE_KEY
 import io.embrace.android.embracesdk.fixtures.MAX_LENGTH_ATTRIBUTE_KEY_FOR_INTERNAL_SPAN
@@ -64,7 +64,7 @@ internal class EmbraceSpanImplTest {
     @Before
     fun setup() {
         fakeClock = FakeClock()
-        val otelClock = FakeOpenTelemetryClock(fakeClock)
+        val otelClock = FakeOtelJavaClock(fakeClock)
         spanRepository = SpanRepository().apply { setSpanUpdateNotifier { updateNotified = true } }
         serializer = TestPlatformSerializer()
         embraceSpanFactory = EmbraceSpanFactoryImpl(
@@ -547,7 +547,7 @@ internal class EmbraceSpanImplTest {
         type = EmbType.System.LowPower,
         internal = true,
         private = true,
-        clock = ClockAdapter(FakeOpenTelemetryClock(fakeClock))
+        clock = ClockAdapter(FakeOtelJavaClock(fakeClock))
     )
 
     private fun EmbraceSdkSpan.assertSnapshot(

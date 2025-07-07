@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.otel.impl
 
 import io.embrace.android.embracesdk.fakes.FakeClock
-import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryClock
+import io.embrace.android.embracesdk.fakes.FakeOtelKotlinClock
 import io.embrace.android.embracesdk.fakes.FakeSpanService
 import io.embrace.android.embracesdk.fakes.FakeTracer
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
@@ -14,7 +14,7 @@ import org.junit.Test
 @OptIn(ExperimentalApi::class)
 internal class EmbTracerTest {
     private val clock = FakeClock()
-    private val openTelemetryClock = FakeOpenTelemetryClock(clock)
+    private val openTelemetryClock = FakeOtelKotlinClock(clock)
 
     private lateinit var spanService: FakeSpanService
     private lateinit var sdkTracer: FakeTracer

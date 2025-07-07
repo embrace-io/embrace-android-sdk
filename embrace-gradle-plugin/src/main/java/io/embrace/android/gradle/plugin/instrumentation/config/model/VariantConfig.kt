@@ -62,8 +62,6 @@ data class EmbraceVariantConfig(
     @Json(name = "unity")
     val unityConfig: UnityConfig?,
 
-    val configStr: String? = null,
-
 ) : Serializable {
 
     private companion object {

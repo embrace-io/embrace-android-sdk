@@ -6,7 +6,7 @@ import io.embrace.android.gradle.plugin.gradle.GradleVersion
 import io.embrace.android.gradle.plugin.gradle.GradleVersion.Companion.isAtLeast
 import io.embrace.android.gradle.plugin.gradle.getProperty
 import io.embrace.android.gradle.plugin.instrumentation.config.model.VariantConfig
-import io.embrace.android.gradle.plugin.system.SystemWrapper
+import io.embrace.android.gradle.plugin.system.JavaSystemWrapper
 import io.embrace.embrace_gradle_plugin.BuildConfig
 import org.gradle.api.Project
 import org.gradle.api.internal.StartParameterInternal
@@ -20,7 +20,7 @@ import java.util.UUID
  */
 class BuildTelemetryCollector {
 
-    private val systemWrapper = SystemWrapper()
+    private val systemWrapper = JavaSystemWrapper()
 
     fun collect(
         project: Project,

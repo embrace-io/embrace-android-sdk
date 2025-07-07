@@ -34,11 +34,11 @@ import io.embrace.android.embracesdk.internal.injection.createEssentialServiceMo
 import io.embrace.android.embracesdk.internal.injection.createNativeCoreModule
 import io.embrace.android.embracesdk.internal.injection.createWorkerThreadModule
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
 import io.embrace.android.embracesdk.internal.prefs.PreferencesService
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
-import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
@@ -51,6 +51,7 @@ internal class EmbraceSetupInterface @JvmOverloads constructor(
     anrMonitoringThread: Thread? = null,
     fakeStorageLayer: Boolean = false,
     val ignoredInternalErrors: List<InternalErrorType> = emptyList(),
+    val fakeClock: FakeClock = FakeClock(currentTime = SdkIntegrationTestRule.DEFAULT_SDK_START_TIME_MS),
 ) {
     private val processIdentifier: String = Uuid.getEmbUuid()
 
@@ -70,7 +71,7 @@ internal class EmbraceSetupInterface @JvmOverloads constructor(
     }
 
     private val fakeInitModule: FakeInitModule = FakeInitModule(
-        clock = FakeClock(currentTime = SdkIntegrationTestRule.DEFAULT_SDK_START_TIME_MS),
+        clock = fakeClock,
         logger = FakeEmbLogger(ignoredErrors = ignoredInternalErrors),
         processIdentifier = processIdentifier
     )
@@ -112,6 +113,7 @@ internal class EmbraceSetupInterface @JvmOverloads constructor(
         instrumentedConfig: FakeInstrumentedConfig,
         deliveryTracer: DeliveryTracer,
     ): ModuleInitBootstrapper = ModuleInitBootstrapper(
+        clock = fakeClock,
         initModule = fakeInitModule.apply {
             this.instrumentedConfig = instrumentedConfig
         },
@@ -192,7 +194,7 @@ internal class EmbraceSetupInterface @JvmOverloads constructor(
         fakeJniDelegate.addCrashRaw(key, json)
     }
 
-    fun getClock(): FakeClock = checkNotNull(fakeInitModule.getFakeClock())
+    fun getClock(): FakeClock = fakeClock
 
     fun getSpanSink(): SpanSink = fakeInitModule.openTelemetryModule.spanSink
 

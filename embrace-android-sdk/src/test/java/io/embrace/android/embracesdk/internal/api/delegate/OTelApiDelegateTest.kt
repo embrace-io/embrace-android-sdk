@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.api.delegate
 
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.fakes.FakeAttributeContainer
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeOtelJavaLogRecordExporter
 import io.embrace.android.embracesdk.fakes.FakeOtelJavaSpanExporter
@@ -10,16 +11,19 @@ import io.embrace.android.embracesdk.fakes.fakeModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.otel.config.OtelSdkConfig
 import io.embrace.android.embracesdk.internal.payload.AppFramework
+import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaOpenTelemetry
 import io.opentelemetry.semconv.ServiceAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 
+@OptIn(ExperimentalApi::class)
 @RunWith(AndroidJUnit4::class)
 internal class OTelApiDelegateTest {
 
@@ -86,24 +90,22 @@ internal class OTelApiDelegateTest {
     fun `set resource attribute before sdk starts`() {
         sdkCallChecker.started.set(false)
         delegate.setResourceAttribute("test", "foo")
-        assertEquals(
-            "foo",
-            cfg.otelJavaResourceBuilder.build().attributes.asMap().filter {
-                it.key.key == "test"
-            }.values.single()
-        )
+        val attrs = FakeAttributeContainer().apply(cfg.resourceAction).attributes()
+        assertEquals("foo", attrs["test"])
     }
 
     @Test
     fun `override resource attribute before sdk starts`() {
         sdkCallChecker.started.set(false)
         delegate.setResourceAttribute(ServiceAttributes.SERVICE_NAME, "foo")
-        assertEquals("foo", cfg.otelJavaResourceBuilder.build().attributes[ServiceAttributes.SERVICE_NAME])
+        val attrs = FakeAttributeContainer().apply(cfg.resourceAction).attributes()
+        assertEquals("foo", attrs[ServiceAttributes.SERVICE_NAME.key])
     }
 
     @Test
     fun `set resource attribute after sdk starts`() {
         delegate.setResourceAttribute("test", "foo")
-        assertTrue(cfg.otelJavaResourceBuilder.build().attributes.asMap().filter { it.key.key == "test" }.isEmpty())
+        val attrs = FakeAttributeContainer().apply(cfg.resourceAction).attributes()
+        assertNull(attrs["test"])
     }
 }

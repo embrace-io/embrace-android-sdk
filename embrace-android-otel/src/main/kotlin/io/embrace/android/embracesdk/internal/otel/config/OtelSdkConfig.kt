@@ -2,26 +2,23 @@ package io.embrace.android.embracesdk.internal.otel.config
 
 import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.otel.logs.EmbraceOtelJavaLogRecordExporter
-import io.embrace.android.embracesdk.internal.otel.logs.EmbraceOtelJavaLogRecordProcessor
 import io.embrace.android.embracesdk.internal.otel.logs.LogSink
 import io.embrace.android.embracesdk.internal.otel.sdk.IdGenerator
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceOtelJavaSpanExporter
-import io.embrace.android.embracesdk.internal.otel.spans.EmbraceOtelJavaSpanProcessor
+import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanProcessor
 import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaLogRecordExporter
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaLogRecordProcessor
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaResource
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaResourceBuilder
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanExporter
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanProcessor
 import io.embrace.opentelemetry.kotlin.attributes.AttributeContainer
+import io.embrace.opentelemetry.kotlin.tracing.export.SpanProcessor
 import io.opentelemetry.semconv.ServiceAttributes
 import io.opentelemetry.semconv.incubating.AndroidIncubatingAttributes
 import io.opentelemetry.semconv.incubating.DeviceIncubatingAttributes
 import io.opentelemetry.semconv.incubating.OsIncubatingAttributes
 import io.opentelemetry.semconv.incubating.TelemetryIncubatingAttributes
+import java.util.concurrent.ConcurrentHashMap
 
 @OptIn(ExperimentalApi::class)
 class OtelSdkConfig(
@@ -33,19 +30,8 @@ class OtelSdkConfig(
     private val sessionIdProvider: () -> String? = { null },
     private val processIdentifierProvider: () -> String = IdGenerator.Companion::generateLaunchInstanceId,
 ) {
-    val otelJavaResourceBuilder: OtelJavaResourceBuilder = OtelJavaResource.getDefault().toBuilder()
-        .put(ServiceAttributes.SERVICE_NAME, sdkName)
-        .put(ServiceAttributes.SERVICE_VERSION, sdkVersion)
-        .put(OsIncubatingAttributes.OS_NAME, systemInfo.osName)
-        .put(OsIncubatingAttributes.OS_VERSION, systemInfo.osVersion)
-        .put(OsIncubatingAttributes.OS_TYPE, systemInfo.osType)
-        .put(OsIncubatingAttributes.OS_BUILD_ID, systemInfo.osBuild)
-        .put(AndroidIncubatingAttributes.ANDROID_OS_API_LEVEL, systemInfo.androidOsApiLevel)
-        .put(DeviceIncubatingAttributes.DEVICE_MANUFACTURER, systemInfo.deviceManufacturer)
-        .put(DeviceIncubatingAttributes.DEVICE_MODEL_IDENTIFIER, systemInfo.deviceModel)
-        .put(DeviceIncubatingAttributes.DEVICE_MODEL_NAME, systemInfo.deviceModel)
-        .put(TelemetryIncubatingAttributes.TELEMETRY_DISTRO_NAME, sdkName)
-        .put(TelemetryIncubatingAttributes.TELEMETRY_DISTRO_VERSION, sdkVersion)
+
+    private val customAttributes: MutableMap<String, String> = ConcurrentHashMap()
 
     val resourceAction: AttributeContainer.() -> Unit = {
         setStringAttribute(ServiceAttributes.SERVICE_NAME.key, sdkName)
@@ -60,6 +46,10 @@ class OtelSdkConfig(
         setStringAttribute(DeviceIncubatingAttributes.DEVICE_MODEL_NAME.key, systemInfo.deviceModel)
         setStringAttribute(TelemetryIncubatingAttributes.TELEMETRY_DISTRO_NAME.key, sdkName)
         setStringAttribute(TelemetryIncubatingAttributes.TELEMETRY_DISTRO_VERSION.key, sdkVersion)
+
+        customAttributes.forEach {
+            setStringAttribute(it.key, it.value)
+        }
     }
 
     /**
@@ -92,9 +82,8 @@ class OtelSdkConfig(
             exportCheck = exportCheck,
         )
     }
-    val otelJavaSpanProcessor: OtelJavaSpanProcessor by lazy {
-        EmbraceOtelJavaSpanProcessor(
-            otelJavaSpanExporter,
+    val spanProcessor: SpanProcessor by lazy {
+        EmbraceSpanProcessor(
             sessionIdProvider,
             processIdentifier
         )
@@ -112,12 +101,6 @@ class OtelSdkConfig(
         )
     }
 
-    val otelJavaLogProcessor: OtelJavaLogRecordProcessor by lazy {
-        EmbraceOtelJavaLogRecordProcessor(
-            otelJavaLogRecordExporter
-        )
-    }
-
     fun addSpanExporter(spanExporter: OtelJavaSpanExporter) {
         externalSpanExporters.add(spanExporter)
     }
@@ -127,4 +110,8 @@ class OtelSdkConfig(
     }
 
     fun hasConfiguredOtelExporters(): Boolean = externalLogExporters.isNotEmpty() || externalSpanExporters.isNotEmpty()
+
+    fun setResourceAttribute(key: String, value: String) {
+        customAttributes[key] = value
+    }
 }

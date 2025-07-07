@@ -6,20 +6,13 @@ import io.embrace.android.embracesdk.internal.otel.config.OtelSdkConfig
 import io.embrace.android.embracesdk.internal.otel.config.getMaxTotalAttributeCount
 import io.embrace.android.embracesdk.internal.otel.config.getMaxTotalEventCount
 import io.embrace.android.embracesdk.internal.otel.config.getMaxTotalLinkCount
-import io.embrace.android.embracesdk.internal.otel.impl.EmbOtelJavaClock
 import io.embrace.android.embracesdk.internal.otel.logs.DefaultLogRecordProcessor
 import io.embrace.android.embracesdk.internal.otel.spans.DefaultSpanProcessor
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
+import io.embrace.opentelemetry.kotlin.Clock
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.OpenTelemetry
 import io.embrace.opentelemetry.kotlin.OpenTelemetryInstance
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaClock
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaOpenTelemetrySdk
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaResource
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSdkLoggerProvider
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSdkTracerProvider
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanLimits
-import io.embrace.opentelemetry.kotlin.compatWithOtelJava
 import io.embrace.opentelemetry.kotlin.j2k.logging.export.OtelJavaLogRecordExporterAdapter
 import io.embrace.opentelemetry.kotlin.j2k.tracing.export.OtelJavaSpanExporterAdapter
 import io.embrace.opentelemetry.kotlin.kotlinApi
@@ -32,33 +25,13 @@ import io.embrace.opentelemetry.kotlin.tracing.Tracer
  */
 @OptIn(ExperimentalApi::class)
 class OtelSdkWrapper(
-    otelClock: OtelJavaClock,
+    otelClock: Clock,
     configuration: OtelSdkConfig,
     limits: OtelLimitsConfig = InstrumentedConfigImpl.otelLimits,
 ) {
     init {
         // Enforce the use of default ThreadLocal ContextStorage of the OTel Java to bypass SPI looking that violates Android strict mode
         System.setProperty("io.opentelemetry.context.contextStorageProvider", "default")
-    }
-
-    private val otelJavaSdkTracerProvider: OtelJavaSdkTracerProvider by lazy {
-        EmbTrace.trace("otel-tracer-provider-init") {
-            OtelJavaSdkTracerProvider
-                .builder()
-                .addResource(resource)
-                .addSpanProcessor(configuration.otelJavaSpanProcessor)
-                .setSpanLimits(
-                    OtelJavaSpanLimits
-                        .getDefault()
-                        .toBuilder()
-                        .setMaxNumberOfEvents(limits.getMaxTotalEventCount())
-                        .setMaxNumberOfAttributes(limits.getMaxTotalAttributeCount())
-                        .setMaxNumberOfLinks(limits.getMaxTotalLinkCount())
-                        .build()
-                )
-                .setClock(otelClock)
-                .build()
-        }
     }
 
     val sdkTracer: Tracer by lazy {
@@ -70,37 +43,7 @@ class OtelSdkWrapper(
         }
     }
 
-    private val resource: OtelJavaResource by lazy {
-        configuration.otelJavaResourceBuilder.build()
-    }
-
-    private val sdk: OtelJavaOpenTelemetrySdk by lazy {
-        EmbTrace.trace("otel-sdk-init") {
-            OtelJavaOpenTelemetrySdk
-                .builder()
-                .setTracerProvider(otelJavaSdkTracerProvider)
-                .setLoggerProvider(
-                    OtelJavaSdkLoggerProvider
-                        .builder()
-                        .addResource(resource)
-                        .addLogRecordProcessor(configuration.otelJavaLogProcessor)
-                        .setClock(otelClock)
-                        .build()
-                )
-                .build()
-        }
-    }
-
     val kotlinApi: OpenTelemetry by lazy {
-        OpenTelemetryInstance.compatWithOtelJava(sdk)
-    }
-
-    /**
-     * Creates an instance of opentelemetry-kotlin using the Kotlin API's DSL, rather than the opentelemetry-java
-     * API.
-     */
-    @Suppress("unused")
-    private val kotlinApiViaDsl: OpenTelemetry by lazy {
         OpenTelemetryInstance.kotlinApi(
             loggerProvider = {
                 resource(configuration.resourceAction)
@@ -123,8 +66,9 @@ class OtelSdkWrapper(
                         configuration.processIdentifier
                     )
                 )
+                addSpanProcessor(configuration.spanProcessor)
             },
-            clock = otelClock as EmbOtelJavaClock
+            clock = otelClock
         )
     }
 }

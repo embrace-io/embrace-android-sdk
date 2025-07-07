@@ -26,9 +26,9 @@ import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
+import io.embrace.opentelemetry.kotlin.Clock
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaAttributes
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaClock
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaContext
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanContext
 import io.embrace.opentelemetry.kotlin.k2j.tracing.SpanContextAdapter
@@ -46,7 +46,7 @@ import java.util.concurrent.atomic.AtomicReference
 @OptIn(ExperimentalApi::class)
 class EmbraceSpanFactoryImpl(
     private val tracer: Tracer,
-    private val openTelemetryClock: OtelJavaClock,
+    private val openTelemetryClock: Clock,
     private val spanRepository: SpanRepository,
     private val dataValidator: DataValidator = DataValidator(),
     private val stopCallback: ((spanId: String) -> Unit)? = null,
@@ -90,7 +90,7 @@ class EmbraceSpanFactoryImpl(
 @OptIn(ExperimentalApi::class)
 private class EmbraceSpanImpl(
     private val otelSpanCreator: OtelSpanCreator,
-    private val openTelemetryClock: OtelJavaClock,
+    private val openTelemetryClock: Clock,
     private val spanRepository: SpanRepository,
     private val dataValidator: DataValidator,
     private val stopCallback: ((spanId: String) -> Unit)? = null,

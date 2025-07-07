@@ -1,8 +1,10 @@
 package io.embrace.android.embracesdk.internal.otel.config
 
+import io.embrace.android.embracesdk.fakes.FakeAttributeContainer
 import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.otel.logs.LogSinkImpl
 import io.embrace.android.embracesdk.internal.otel.spans.SpanSinkImpl
+import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.opentelemetry.semconv.ServiceAttributes
 import io.opentelemetry.semconv.incubating.AndroidIncubatingAttributes
 import io.opentelemetry.semconv.incubating.DeviceIncubatingAttributes
@@ -11,6 +13,7 @@ import io.opentelemetry.semconv.incubating.TelemetryIncubatingAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
+@OptIn(ExperimentalApi::class)
 internal class OtelSdkConfigTest {
 
     @Test
@@ -33,40 +36,21 @@ internal class OtelSdkConfigTest {
             systemInfo = systemInfo
         )
 
-        val resource = configuration.otelJavaResourceBuilder.build()
-
-        assertEquals(configuration.sdkName, resource.getAttribute(ServiceAttributes.SERVICE_NAME))
-        assertEquals(
-            configuration.sdkVersion,
-            resource.getAttribute(ServiceAttributes.SERVICE_VERSION)
-        )
-        assertEquals(
-            configuration.sdkName,
-            resource.getAttribute(TelemetryIncubatingAttributes.TELEMETRY_DISTRO_NAME)
-        )
-        assertEquals(
-            configuration.sdkVersion,
-            resource.getAttribute(TelemetryIncubatingAttributes.TELEMETRY_DISTRO_VERSION)
-        )
-        assertEquals(systemInfo.osName, resource.getAttribute(OsIncubatingAttributes.OS_NAME))
-        assertEquals(systemInfo.osVersion, resource.getAttribute(OsIncubatingAttributes.OS_VERSION))
-        assertEquals(systemInfo.osType, resource.getAttribute(OsIncubatingAttributes.OS_TYPE))
-        assertEquals(systemInfo.osBuild, resource.getAttribute(OsIncubatingAttributes.OS_BUILD_ID))
-        assertEquals(
-            systemInfo.androidOsApiLevel,
-            resource.getAttribute(AndroidIncubatingAttributes.ANDROID_OS_API_LEVEL)
-        )
-        assertEquals(
-            systemInfo.deviceManufacturer,
-            resource.getAttribute(DeviceIncubatingAttributes.DEVICE_MANUFACTURER)
-        )
-        assertEquals(
-            systemInfo.deviceModel,
-            resource.getAttribute(DeviceIncubatingAttributes.DEVICE_MODEL_IDENTIFIER)
-        )
-        assertEquals(
-            systemInfo.deviceModel,
-            resource.getAttribute(DeviceIncubatingAttributes.DEVICE_MODEL_NAME)
-        )
+        val attrs = FakeAttributeContainer().apply(configuration.resourceAction).attributes()
+        val expected = mapOf(
+            ServiceAttributes.SERVICE_NAME to configuration.sdkName,
+            ServiceAttributes.SERVICE_VERSION to configuration.sdkVersion,
+            TelemetryIncubatingAttributes.TELEMETRY_DISTRO_NAME to configuration.sdkName,
+            TelemetryIncubatingAttributes.TELEMETRY_DISTRO_VERSION to configuration.sdkVersion,
+            OsIncubatingAttributes.OS_NAME to systemInfo.osName,
+            OsIncubatingAttributes.OS_VERSION to systemInfo.osVersion,
+            OsIncubatingAttributes.OS_TYPE to systemInfo.osType,
+            OsIncubatingAttributes.OS_BUILD_ID to systemInfo.osBuild,
+            AndroidIncubatingAttributes.ANDROID_OS_API_LEVEL to systemInfo.androidOsApiLevel,
+            DeviceIncubatingAttributes.DEVICE_MANUFACTURER to systemInfo.deviceManufacturer,
+            DeviceIncubatingAttributes.DEVICE_MODEL_IDENTIFIER to systemInfo.deviceModel,
+            DeviceIncubatingAttributes.DEVICE_MODEL_NAME to systemInfo.deviceModel
+        ).mapKeys { it.key.key }
+        assertEquals(expected, attrs)
     }
 }

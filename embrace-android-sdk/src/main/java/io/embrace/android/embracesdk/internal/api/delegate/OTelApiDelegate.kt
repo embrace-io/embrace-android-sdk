@@ -37,6 +37,6 @@ internal class OTelApiDelegate(
         if (sdkCallChecker.started.get()) {
             return
         }
-        bootstrapper.openTelemetryModule.otelSdkConfig.otelJavaResourceBuilder.put(key, value)
+        bootstrapper.openTelemetryModule.otelSdkConfig.setResourceAttribute(key, value)
     }
 }

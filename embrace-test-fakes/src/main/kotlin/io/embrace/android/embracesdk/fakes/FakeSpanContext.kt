@@ -10,9 +10,7 @@ class FakeSpanContext : SpanContext {
     override val isRemote: Boolean = false
     override val isValid: Boolean = false
     override val spanId: String = ""
-    override val traceFlags: TraceFlags
-        get() = throw UnsupportedOperationException()
+    override val traceFlags: TraceFlags = FakeTraceFlags()
     override val traceId: String = ""
-    override val traceState: TraceState
-        get() = throw UnsupportedOperationException()
+    override val traceState: TraceState = FakeTraceState()
 }

@@ -24,6 +24,7 @@ import io.embrace.android.embracesdk.internal.spans.EmbraceTracer
 import io.embrace.android.embracesdk.internal.spans.InternalTracer
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
+import io.embrace.opentelemetry.kotlin.OpenTelemetry
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaOpenTelemetry
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaTracerProvider
 import io.embrace.opentelemetry.kotlin.logging.Logger
@@ -36,6 +37,11 @@ internal class OpenTelemetryModuleImpl(
         embraceClock = initModule.clock
     ),
 ) : OpenTelemetryModule {
+
+    init {
+        // Enforce the use of default ThreadLocal ContextStorage of the OTel Java to bypass SPI looking that violates Android strict mode
+        System.setProperty("io.opentelemetry.context.contextStorageProvider", "default")
+    }
 
     override val spanRepository: SpanRepository by lazy {
         SpanRepository()
@@ -150,13 +156,17 @@ internal class OpenTelemetryModuleImpl(
         LogSinkImpl()
     }
 
-    override val externalOpenTelemetry: OtelJavaOpenTelemetry by lazy {
+    override val openTelemetryJava: OtelJavaOpenTelemetry by lazy {
         EmbOtelJavaOpenTelemetry(
             traceProviderSupplier = { externalTracerProvider }
         )
     }
 
-    override val externalTracerProvider: OtelJavaTracerProvider by lazy {
+    override val openTelemetryKotlin: OpenTelemetry by lazy {
+        otelSdkWrapper.kotlinApi
+    }
+
+    private val externalTracerProvider: OtelJavaTracerProvider by lazy {
         EmbOtelJavaTracerProvider(
             sdkTracerProvider = otelSdkWrapper.kotlinApi.tracerProvider,
             spanService = spanService,

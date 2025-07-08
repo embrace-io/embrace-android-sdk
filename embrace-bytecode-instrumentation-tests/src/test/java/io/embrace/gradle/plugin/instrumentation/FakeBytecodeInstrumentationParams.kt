@@ -14,6 +14,8 @@ class FakeBytecodeInstrumentationParams(
     override val shouldInstrumentOkHttp: Property<Boolean> = fakeProperty(true),
     override val shouldInstrumentOnLongClick: Property<Boolean> = fakeProperty(true),
     override val shouldInstrumentOnClick: Property<Boolean> = fakeProperty(true),
+    override val shouldInstrumentApplicationInitTimeStart: Property<Boolean> = fakeProperty(true),
+    override val shouldInstrumentApplicationInitTimeEnd: Property<Boolean> = fakeProperty(true),
 ) : BytecodeInstrumentationParams {
     override val config: Property<VariantConfig>
         get() = TODO("Not yet implemented")

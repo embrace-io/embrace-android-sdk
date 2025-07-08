@@ -41,6 +41,8 @@ class AsmTaskRegistration : EmbraceTaskRegistration {
                 params.shouldInstrumentOkHttp.set(behavior.instrumentation.okHttpEnabled)
                 params.shouldInstrumentOnLongClick.set(behavior.instrumentation.onLongClickEnabled)
                 params.shouldInstrumentOnClick.set(behavior.instrumentation.onClickEnabled)
+                params.shouldInstrumentApplicationInitTimeStart.set(behavior.instrumentation.applicationInitTimeStartEnabled)
+                params.shouldInstrumentApplicationInitTimeEnd.set(behavior.instrumentation.applicationInitTimeEndEnabled)
 
                 val encodeFileToBase64Task = project.lazyTaskLookup<EncodeFileToBase64Task>(
                     "${EncodeFileToBase64Task.NAME}${data.name.capitalizedString()}"

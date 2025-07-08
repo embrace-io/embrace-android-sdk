@@ -70,6 +70,14 @@ private val autoSdkInitializationFactory: ClassVisitorFactory = { visitor, param
     createFactory(params, visitor, "auto_sdk_initialization", "android.app.Application")
 }
 
+private val applicationInitTimeStartFactory: ClassVisitorFactory = { visitor, params ->
+    createFactory(params, visitor, "application_init_time_start", "android.app.Application")
+}
+
+private val applicationInitTimeEndFactory: ClassVisitorFactory = { visitor, params ->
+    createFactory(params, visitor, "application_init_time_end", "android.app.Application")
+}
+
 /**
  * Verifies that a [ClassVisitor] produces the correct bytecode output for a given class.
  *
@@ -132,6 +140,16 @@ class InstrumentedBytecodeTest(
             BytecodeTestParams(clz = CustomWebViewClient::class, factory = webviewFactory),
             BytecodeTestParams(clz = ExtendedCustomWebViewClient::class, factory = webviewFactory),
             BytecodeTestParams(clz = TestApplication::class, factory = autoSdkInitializationFactory),
+            BytecodeTestParams(
+                clz = TestApplication::class,
+                factory = applicationInitTimeStartFactory,
+                expectedOutput = "TestApplication_application_init_time_start_expected.txt"
+            ),
+            BytecodeTestParams(
+                clz = TestApplication::class,
+                factory = applicationInitTimeEndFactory,
+                expectedOutput = "TestApplication_application_init_time_end_expected.txt"
+            ),
             BytecodeTestParams(clz = NoOverrideWebViewClient::class, factory = webviewFactory),
         )
     }

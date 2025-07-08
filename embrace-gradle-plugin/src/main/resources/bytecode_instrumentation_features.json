@@ -121,6 +121,51 @@
       "visitStrategy": {
         "type": "exhaustive"
       }
+    },
+    {
+      "name": "application_init_time_start",
+      "target": {
+        "name": "onCreate",
+        "descriptor": "()V"
+      },
+      "insert": {
+        "owner": "io/embrace/android/embracesdk/internal/instrumentation/bytecode/ApplicationInitTimeBytecodeEntrypoint",
+        "name": "applicationInitStart",
+        "descriptor": "()V",
+        "operandStackIndices": []
+      },
+      "addOverride": {
+        "owner": "android/app/Application",
+        "name": "onCreate",
+        "descriptor": "()V"
+      },
+      "visitStrategy": {
+        "type": "match_super_class_name",
+        "value": "android.app.Application"
+      }
+    },
+    {
+      "name": "application_init_time_end",
+      "target": {
+        "name": "onCreate",
+        "descriptor": "()V"
+      },
+      "insert": {
+        "owner": "io/embrace/android/embracesdk/internal/instrumentation/bytecode/ApplicationInitTimeBytecodeEntrypoint",
+        "name": "applicationInitEnd",
+        "descriptor": "()V",
+        "operandStackIndices": [],
+        "insertAtEnd": true
+      },
+      "addOverride": {
+        "owner": "android/app/Application",
+        "name": "onCreate",
+        "descriptor": "()V"
+      },
+      "visitStrategy": {
+        "type": "match_super_class_name",
+        "value": "android.app.Application"
+      }
     }
   ]
 }

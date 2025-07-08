@@ -186,14 +186,12 @@ class NdkUploadTasksRegistrationTest {
         ndkEnabled: Boolean? = true,
         sdkConfig: SdkLocalConfig? = null,
         unityConfig: UnityConfig? = null,
-        configStr: String? = null,
     ) = EmbraceVariantConfig(
         appId = appId,
         apiToken = apiToken,
         ndkEnabled = ndkEnabled,
         sdkConfig = sdkConfig,
-        unityConfig = unityConfig,
-        configStr = configStr
+        unityConfig = unityConfig
     )
 
     private fun assertTaskNotRegistered(taskName: String, variantName: String) {

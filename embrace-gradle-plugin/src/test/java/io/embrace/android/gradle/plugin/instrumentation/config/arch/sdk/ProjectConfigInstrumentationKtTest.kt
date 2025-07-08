@@ -19,8 +19,6 @@ class ProjectConfigInstrumentationKtTest {
             null,
             null,
             null,
-            null
-
         )
     )
 

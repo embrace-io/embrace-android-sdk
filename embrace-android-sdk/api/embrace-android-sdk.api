@@ -14,6 +14,7 @@ public final class io/embrace/android/embracesdk/Embrace : io/embrace/android/em
 	public fun addUserPersona (Ljava/lang/String;)V
 	public fun appReady ()V
 	public fun applicationInitEnd ()V
+	public fun applicationInitStart ()V
 	public fun clearAllUserPersonas ()V
 	public fun clearUserEmail ()V
 	public fun clearUserIdentifier ()V

@@ -33,6 +33,8 @@ import io.embrace.android.embracesdk.internal.api.delegate.SdkStateApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.SessionApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.UserApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.ViewTrackingApiDelegate
+import io.embrace.android.embracesdk.internal.clock.Clock
+import io.embrace.android.embracesdk.internal.clock.NormalizedIntervalClock
 import io.embrace.android.embracesdk.internal.delivery.storage.StorageLocation
 import io.embrace.android.embracesdk.internal.fromFramework
 import io.embrace.android.embracesdk.internal.injection.InternalInterfaceModule
@@ -57,11 +59,11 @@ import java.util.concurrent.atomic.AtomicBoolean
  * here instead.
  */
 @SuppressLint("EmbracePublicApiPackageRule")
-internal class EmbraceImpl @JvmOverloads constructor(
+internal class EmbraceImpl(
+    private val clock: Clock = NormalizedIntervalClock(),
     private val bootstrapper: ModuleInitBootstrapper = EmbTrace.trace(
-        "bootstrapper-init",
-        ::ModuleInitBootstrapper
-    ),
+        "bootstrapper-init"
+    ) { ModuleInitBootstrapper(clock = clock) },
     private val sdkCallChecker: SdkCallChecker =
         SdkCallChecker(bootstrapper.initModule.logger, bootstrapper.initModule.telemetryService),
     private val userApiDelegate: UserApiDelegate = UserApiDelegate(bootstrapper, sdkCallChecker),
@@ -98,7 +100,6 @@ internal class EmbraceImpl @JvmOverloads constructor(
         EmbraceInternalApi.isStarted = sdkCallChecker.started::get
     }
 
-    private val sdkClock by lazy { bootstrapper.initModule.clock }
     private val logger by lazy { bootstrapper.initModule.logger }
     private val sdkShuttingDown = AtomicBoolean(false)
 
@@ -108,6 +109,9 @@ internal class EmbraceImpl @JvmOverloads constructor(
     @Volatile
     var application: Application? = null
         private set
+
+    @Volatile
+    private var applicationInitStartMs: Long? = null
 
     private var internalInterfaceModule: InternalInterfaceModule? = null
 
@@ -143,7 +147,7 @@ internal class EmbraceImpl @JvmOverloads constructor(
             return
         }
 
-        val startTimeMs = sdkClock.now()
+        val startTimeMs = clock.now()
 
         val appFramework = fromFramework(framework)
         if (!bootstrapper.init(context, appFramework, startTimeMs)) {
@@ -192,7 +196,7 @@ internal class EmbraceImpl @JvmOverloads constructor(
         val startMsg = "Embrace SDK version ${BuildConfig.VERSION_NAME} started" + appId?.run { " for appId =  $this" }
         logger.logInfo(startMsg)
 
-        val endTimeMs = sdkClock.now()
+        val endTimeMs = clock.now()
         sdkCallChecker.started.set(true)
         end()
         val inForeground = !bootstrapper.essentialServiceModule.processStateService.isInBackground
@@ -337,4 +341,21 @@ internal class EmbraceImpl @JvmOverloads constructor(
         get() {
             return checkNotNull(internalInterfaceModule?.flutterInternalInterface)
         }
+
+    override fun applicationInitStart() {
+        if (applicationInitStartMs == null) {
+            applicationInitStartMs = clock.now()
+        }
+    }
+
+    override fun applicationInitEnd() {
+        if (sdkCallChecker.check("application_init_end")) {
+            bootstrapper.dataCaptureServiceModule.appStartupDataCollector.run {
+                if (applicationInitStartMs != null) {
+                    applicationInitStart(applicationInitStartMs)
+                }
+                applicationInitEnd()
+            }
+        }
+    }
 }

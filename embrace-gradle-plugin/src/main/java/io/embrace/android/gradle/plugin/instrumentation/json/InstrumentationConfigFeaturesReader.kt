@@ -38,6 +38,7 @@ private fun InstrumentationConfigFeature.convertInstrumentationConfigFeature(): 
             name = insert.name,
             descriptor = insert.descriptor,
             operandStackIndices = insert.operandStackIndices,
+            insertAtEnd = insert.insertAtEnd
         ),
         visitStrategy = convertVisitStrategy(),
         addOverrideParams = addOverride?.let {

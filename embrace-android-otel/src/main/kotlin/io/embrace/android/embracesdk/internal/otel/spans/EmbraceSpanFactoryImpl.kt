@@ -35,6 +35,7 @@ import io.embrace.opentelemetry.kotlin.k2j.tracing.SpanContextAdapter
 import io.embrace.opentelemetry.kotlin.tracing.StatusCode
 import io.embrace.opentelemetry.kotlin.tracing.Tracer
 import io.embrace.opentelemetry.kotlin.tracing.model.Span
+import io.embrace.opentelemetry.kotlin.tracing.model.SpanContext
 import io.opentelemetry.context.ImplicitContextKeyed
 import io.opentelemetry.semconv.ExceptionAttributes
 import java.util.Queue
@@ -316,14 +317,14 @@ private class EmbraceSpanImpl(
         return false
     }
 
-    override fun addSystemLink(linkedSpanContext: OtelJavaSpanContext, type: LinkType, attributes: Map<String, String>): Boolean =
+    override fun addSystemLink(linkedSpanContext: SpanContext, type: LinkType, attributes: Map<String, String>): Boolean =
         addObject(systemLinks, systemLinkCount, dataValidator.otelLimitsConfig.getMaxSystemLinkCount()) {
             EmbraceLinkData(linkedSpanContext, mutableMapOf(type.asPair()).apply { putAll(attributes) })
         }
 
     override fun addLink(linkedSpanContext: OtelJavaSpanContext, attributes: Map<String, String>?): Boolean =
         addObject(customLinks, customLinkCount, dataValidator.otelLimitsConfig.getMaxCustomLinkCount()) {
-            EmbraceLinkData(linkedSpanContext, attributes ?: emptyMap())
+            EmbraceLinkData(SpanContextAdapter(linkedSpanContext), attributes ?: emptyMap())
         }
 
     override fun asNewContext(): OtelJavaContext? = startedSpan.get()?.run {
@@ -453,7 +454,7 @@ private class EmbraceSpanImpl(
             } else {
                 OtelJavaAttributes.empty()
             }
-            spanToStop.addLink(SpanContextAdapter(it.spanContext)) {
+            spanToStop.addLink(it.spanContext) {
                 linkAttributes.toStringMap().forEach { entry ->
                     setStringAttribute(entry.key, entry.value)
                 }

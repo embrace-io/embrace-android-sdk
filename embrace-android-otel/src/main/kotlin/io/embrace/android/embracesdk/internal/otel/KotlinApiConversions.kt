@@ -1,9 +1,13 @@
 package io.embrace.android.embracesdk.internal.otel
 
 import io.embrace.android.embracesdk.internal.payload.Span.Status
+import io.embrace.opentelemetry.kotlin.ExperimentalApi
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanContext
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanKind
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaStatusCode
+import io.embrace.opentelemetry.kotlin.k2j.tracing.SpanContextAdapter
 import io.embrace.opentelemetry.kotlin.tracing.StatusCode
+import io.embrace.opentelemetry.kotlin.tracing.model.SpanContext
 import io.embrace.opentelemetry.kotlin.tracing.model.SpanKind
 
 internal fun StatusCode.toOtelJava(): OtelJavaStatusCode = when (this) {
@@ -31,3 +35,6 @@ fun StatusCode.toEmbracePayload(): Status = when (this) {
     StatusCode.Ok -> Status.OK
     StatusCode.Unset -> Status.UNSET
 }
+
+@OptIn(ExperimentalApi::class)
+fun OtelJavaSpanContext.toOtelKotlin(): SpanContext = SpanContextAdapter(this)

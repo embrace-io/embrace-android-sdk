@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.injection
 
+import android.os.SystemClock
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehavior
 import io.embrace.android.embracesdk.internal.otel.config.OtelSdkConfig
@@ -10,8 +11,8 @@ import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
 import io.embrace.android.embracesdk.internal.spans.EmbraceTracer
 import io.embrace.android.embracesdk.internal.spans.InternalTracer
+import io.embrace.opentelemetry.kotlin.Clock
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaClock
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaOpenTelemetry
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaTracerProvider
 import io.embrace.opentelemetry.kotlin.logging.Logger
@@ -88,7 +89,7 @@ interface OpenTelemetryModule {
     /**
      * OpenTelemetry SDK compatible clock based on the internal Embrace clock instance
      */
-    val openTelemetryClock: OtelJavaClock
+    val openTelemetryClock: Clock
 
     /**
      * Setup configuration configuration-dependent behavior
@@ -98,5 +99,5 @@ interface OpenTelemetryModule {
         bypassValidation: Boolean,
     )
 
-    fun deviceStartTimeMs(): Long = openTelemetryClock.run { now() - nanoTime() }.nanosToMillis()
+    fun deviceStartTimeMs(): Long = openTelemetryClock.run { now() - SystemClock.elapsedRealtimeNanos() }.nanosToMillis()
 }

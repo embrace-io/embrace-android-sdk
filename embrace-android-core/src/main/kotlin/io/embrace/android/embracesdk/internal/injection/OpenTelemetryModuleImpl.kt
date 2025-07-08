@@ -5,8 +5,6 @@ import io.embrace.android.embracesdk.internal.config.behavior.REDACTED_LABEL
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehavior
 import io.embrace.android.embracesdk.internal.otel.config.OtelSdkConfig
 import io.embrace.android.embracesdk.internal.otel.impl.EmbClock
-import io.embrace.android.embracesdk.internal.otel.impl.EmbOtelJavaOpenTelemetry
-import io.embrace.android.embracesdk.internal.otel.impl.EmbOtelJavaTracerProvider
 import io.embrace.android.embracesdk.internal.otel.logs.LogSink
 import io.embrace.android.embracesdk.internal.otel.logs.LogSinkImpl
 import io.embrace.android.embracesdk.internal.otel.sdk.DataValidator
@@ -24,11 +22,6 @@ import io.embrace.android.embracesdk.internal.spans.EmbraceTracer
 import io.embrace.android.embracesdk.internal.spans.InternalTracer
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
-import io.embrace.opentelemetry.kotlin.OpenTelemetry
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaOpenTelemetry
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaTracerProvider
-import io.embrace.opentelemetry.kotlin.logging.Logger
-import io.embrace.opentelemetry.kotlin.tracing.Tracer
 
 @OptIn(ExperimentalApi::class)
 internal class OpenTelemetryModuleImpl(
@@ -63,12 +56,13 @@ internal class OpenTelemetryModuleImpl(
         )
     }
 
-    private val otelSdkWrapper: OtelSdkWrapper by lazy {
+    override val otelSdkWrapper: OtelSdkWrapper by lazy {
         EmbTrace.trace("otel-sdk-wrapper-init") {
             try {
                 OtelSdkWrapper(
                     otelClock = openTelemetryClock,
-                    configuration = otelSdkConfig
+                    configuration = otelSdkConfig,
+                    spanService = spanService
                 )
             } catch (exc: NoClassDefFoundError) {
                 throw LinkageError(
@@ -79,10 +73,6 @@ internal class OpenTelemetryModuleImpl(
                 )
             }
         }
-    }
-
-    override val sdkTracer: Tracer by lazy {
-        otelSdkWrapper.sdkTracer
     }
 
     private var sensitiveKeysBehavior: SensitiveKeysBehavior? = null
@@ -100,7 +90,7 @@ internal class OpenTelemetryModuleImpl(
 
     private val embraceSpanFactory: EmbraceSpanFactory by singleton {
         EmbraceSpanFactoryImpl(
-            tracer = sdkTracer,
+            tracer = otelSdkWrapper.sdkTracer,
             openTelemetryClock = openTelemetryClock,
             spanRepository = spanRepository,
             dataValidator = dataValidator,
@@ -144,34 +134,8 @@ internal class OpenTelemetryModuleImpl(
         )
     }
 
-    override val logger: Logger by lazy {
-        EmbTrace.trace("otel-logger-init") {
-            otelSdkWrapper.kotlinApi.loggerProvider.getLogger(
-                name = otelSdkConfig.sdkName
-            )
-        }
-    }
-
     override val logSink: LogSink by lazy {
         LogSinkImpl()
-    }
-
-    override val openTelemetryJava: OtelJavaOpenTelemetry by lazy {
-        EmbOtelJavaOpenTelemetry(
-            traceProviderSupplier = { externalTracerProvider }
-        )
-    }
-
-    override val openTelemetryKotlin: OpenTelemetry by lazy {
-        otelSdkWrapper.kotlinApi
-    }
-
-    private val externalTracerProvider: OtelJavaTracerProvider by lazy {
-        EmbOtelJavaTracerProvider(
-            sdkTracerProvider = otelSdkWrapper.kotlinApi.tracerProvider,
-            spanService = spanService,
-            clock = openTelemetryClock,
-        )
     }
 
     fun redactionFunction(key: String, value: String): String {

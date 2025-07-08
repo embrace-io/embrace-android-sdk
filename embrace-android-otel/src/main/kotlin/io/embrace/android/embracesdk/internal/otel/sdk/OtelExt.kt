@@ -10,10 +10,8 @@ import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanData.Compani
 import io.embrace.android.embracesdk.internal.otel.toOtelKotlin
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Link
-import io.embrace.android.embracesdk.internal.utils.isBlankish
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaAttributeKey
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaAttributes
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaAttributesBuilder
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaLinkData
@@ -57,17 +55,6 @@ fun OtelJavaLinkData.toEmbracePayload() = Link(
 
 fun OtelJavaLogRecordBuilder.setEmbraceAttribute(embraceAttribute: EmbraceAttribute): OtelJavaLogRecordBuilder {
     setAttribute(embraceAttribute.key.asOtelAttributeKey(), embraceAttribute.value)
-    return this
-}
-
-fun OtelJavaLogRecordBuilder.setAttribute(
-    attributeKey: OtelJavaAttributeKey<String>,
-    value: String,
-    keepBlankishValues: Boolean = true,
-): OtelJavaLogRecordBuilder {
-    if (keepBlankishValues || !value.isBlankish()) {
-        setAttribute(attributeKey, value)
-    }
     return this
 }
 

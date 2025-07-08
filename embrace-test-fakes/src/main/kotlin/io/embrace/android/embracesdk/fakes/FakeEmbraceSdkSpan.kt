@@ -24,14 +24,18 @@ import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
+import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaContext
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpan
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanContext
+import io.embrace.opentelemetry.kotlin.k2j.tracing.SpanContextAdapter
 import io.embrace.opentelemetry.kotlin.tracing.StatusCode
+import io.embrace.opentelemetry.kotlin.tracing.model.SpanContext
 import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.TimeUnit
 
+@OptIn(ExperimentalApi::class)
 class FakeEmbraceSdkSpan(
     var name: String = "fake-span",
     var parentContext: OtelJavaContext = OtelJavaContext.root(),
@@ -140,12 +144,14 @@ class FakeEmbraceSdkSpan(
     }
 
     override fun addLink(linkedSpanContext: OtelJavaSpanContext, attributes: Map<String, String>?): Boolean {
-        links.add(EmbraceLinkData(linkedSpanContext, attributes ?: emptyMap()))
+        links.add(EmbraceLinkData(SpanContextAdapter(linkedSpanContext), attributes ?: emptyMap()))
         return true
     }
 
-    override fun addSystemLink(linkedSpanContext: OtelJavaSpanContext, type: LinkType, attributes: Map<String, String>): Boolean =
-        addLink(linkedSpanContext, mutableMapOf(type.asPair()).apply { putAll(attributes) })
+    override fun addSystemLink(linkedSpanContext: SpanContext, type: LinkType, attributes: Map<String, String>): Boolean {
+        links.add(EmbraceLinkData(linkedSpanContext, mutableMapOf(type.asPair()).apply { putAll(attributes) }))
+        return true
+    }
 
     override fun asNewContext(): OtelJavaContext? = sdkSpan?.let { parentContext.with(this).with(it) }
 

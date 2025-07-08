@@ -14,6 +14,7 @@ import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanFactory
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
+import io.embrace.android.embracesdk.internal.otel.toOtelKotlin
 import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.utils.Uuid
@@ -21,7 +22,6 @@ import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.opentelemetry.kotlin.Clock
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
-import io.embrace.opentelemetry.kotlin.k2j.tracing.SpanContextAdapter
 import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
@@ -103,14 +103,14 @@ internal class CurrentSessionSpanImpl(
 
         if (currentSessionSpan != spanToStop) {
             spanToStop?.spanContext?.let { spanToStopContext ->
-                currentSessionSpan?.addSystemLink(SpanContextAdapter(spanToStopContext), LinkType.EndedIn)
+                currentSessionSpan?.addSystemLink(spanToStopContext.toOtelKotlin(), LinkType.EndedIn)
             }
 
             val sessionId = currentSessionSpan?.getSystemAttribute(SessionIncubatingAttributes.SESSION_ID.key)
             if (sessionId != null) {
                 currentSessionSpan.spanContext?.let { sessionSpanContext ->
                     spanToStop?.addSystemLink(
-                        linkedSpanContext = SpanContextAdapter(sessionSpanContext),
+                        linkedSpanContext = sessionSpanContext.toOtelKotlin(),
                         type = LinkType.EndSession,
                         attributes = mapOf(SessionIncubatingAttributes.SESSION_ID.key to sessionId)
                     )
@@ -216,7 +216,7 @@ internal class CurrentSessionSpanImpl(
             previousSessionSpan?.spanContext?.let {
                 val prevSessionId = previousSessionSpan.getSystemAttribute(SessionIncubatingAttributes.SESSION_ID.key) ?: ""
                 addSystemLink(
-                    linkedSpanContext = SpanContextAdapter(it),
+                    linkedSpanContext = it.toOtelKotlin(),
                     type = LinkType.PreviousSession,
                     attributes = mapOf(SessionIncubatingAttributes.SESSION_ID.key to prevSessionId)
                 )

@@ -27,7 +27,7 @@ internal class OTelExportTest {
         val fakeSpanExporter = FakeOtelJavaSpanExporter()
         testRule.runTest(
             preSdkStartAction = {
-                embrace.setResourceAttribute(ServiceAttributes.SERVICE_NAME, "my.app")
+                embrace.setResourceAttribute(ServiceAttributes.SERVICE_NAME.key, "my.app")
                 embrace.setResourceAttribute("test", "foo")
                 embrace.addSpanExporter(fakeSpanExporter)
             },

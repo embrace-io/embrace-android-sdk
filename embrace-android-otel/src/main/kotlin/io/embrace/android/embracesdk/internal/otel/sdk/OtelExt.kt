@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.otel.sdk
 
+import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.otel.attrs.EmbraceAttribute
 import io.embrace.android.embracesdk.internal.otel.attrs.EmbraceAttributeKey
 import io.embrace.android.embracesdk.internal.otel.attrs.asOtelAttributeKey
@@ -7,9 +8,10 @@ import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanData.Companion.fromEventData
 import io.embrace.android.embracesdk.internal.otel.toOtelKotlin
+import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Link
-import io.embrace.android.embracesdk.internal.payload.Span.Status
 import io.embrace.android.embracesdk.internal.utils.isBlankish
+import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaAttributeKey
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaAttributes
@@ -18,7 +20,9 @@ import io.embrace.opentelemetry.kotlin.aliases.OtelJavaLinkData
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaLogRecordBuilder
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpan
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanData
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaStatusCode
+import io.embrace.opentelemetry.kotlin.tracing.model.ReadableLink
+import io.embrace.opentelemetry.kotlin.tracing.model.ReadableSpan
+import io.embrace.opentelemetry.kotlin.tracing.model.ReadableSpanEvent
 import io.embrace.opentelemetry.kotlin.tracing.model.Span
 
 /**
@@ -27,7 +31,7 @@ import io.embrace.opentelemetry.kotlin.tracing.model.Span
 fun OtelJavaAttributesBuilder.fromMap(
     attributes: Map<String, String>,
     internal: Boolean,
-    limitsValidator: DataValidator
+    limitsValidator: DataValidator,
 ): OtelJavaAttributesBuilder {
     attributes.filter {
         limitsValidator.isAttributeValid(it.key, it.value, internal) || it.key.isValidLongValueAttribute()
@@ -92,13 +96,36 @@ fun OtelJavaSpanData.toEmbraceSpanData(): EmbraceSpanData = EmbraceSpanData(
     links = links.map { it.toEmbracePayload() }
 )
 
+@OptIn(ExperimentalApi::class)
+fun ReadableSpan.toEmbracePayload(): EmbraceSpanData = EmbraceSpanData(
+    traceId = spanContext.traceId,
+    spanId = spanContext.spanId,
+    parentSpanId = parent?.spanId,
+    name = name,
+    startTimeNanos = startTimestamp,
+    endTimeNanos = endTimestamp ?: 0,
+    status = status,
+    events = events.mapNotNull(ReadableSpanEvent::toEmbracePayload),
+    attributes = attributes.mapValues { it.value.toString() },
+    links = links.map(ReadableLink::toEmbracePayload),
+)
+
+@OptIn(ExperimentalApi::class)
+fun ReadableLink.toEmbracePayload(): Link = Link(
+    spanId = spanContext.spanId,
+    traceId = spanContext.traceId,
+    attributes = attributes.map { Attribute(it.key, it.value.toString()) },
+    isRemote = spanContext.isRemote
+)
+
+@OptIn(ExperimentalApi::class)
+fun ReadableSpanEvent.toEmbracePayload(): EmbraceSpanEvent? {
+    return EmbraceSpanEvent.create(
+        name = name,
+        timestampMs = timestamp.nanosToMillis(),
+        attributes = attributes.mapValues { it.value.toString() },
+    )
+}
+
 fun OtelJavaAttributes.hasEmbraceAttribute(embraceAttribute: EmbraceAttribute): Boolean =
     asMap()[embraceAttribute.key.asOtelAttributeKey()] == embraceAttribute.value
-
-fun OtelJavaStatusCode.toStatus(): Status {
-    return when (this) {
-        OtelJavaStatusCode.UNSET -> Status.UNSET
-        OtelJavaStatusCode.OK -> Status.OK
-        OtelJavaStatusCode.ERROR -> Status.ERROR
-    }
-}

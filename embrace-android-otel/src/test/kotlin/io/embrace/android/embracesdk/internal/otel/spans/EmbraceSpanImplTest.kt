@@ -4,7 +4,7 @@ import io.embrace.android.embracesdk.assertions.validateLinkToSpan
 import io.embrace.android.embracesdk.assertions.validateSystemLink
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
-import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryClock
+import io.embrace.android.embracesdk.fakes.FakeOtelKotlinClock
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.fixtures.MAX_LENGTH_ATTRIBUTE_KEY
 import io.embrace.android.embracesdk.fixtures.MAX_LENGTH_ATTRIBUTE_KEY_FOR_INTERNAL_SPAN
@@ -35,10 +35,8 @@ import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.utils.truncatedStacktraceText
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaOpenTelemetrySdk
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSdkTracerProvider
-import io.embrace.opentelemetry.kotlin.k2j.ClockAdapter
-import io.embrace.opentelemetry.kotlin.k2j.tracing.TracerAdapter
+import io.embrace.opentelemetry.kotlin.OpenTelemetryInstance
+import io.embrace.opentelemetry.kotlin.kotlinApi
 import io.opentelemetry.semconv.ExceptionAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -57,18 +55,18 @@ internal class EmbraceSpanImplTest {
     private lateinit var embraceSpanFactory: EmbraceSpanFactory
     private var updateNotified: Boolean = false
     private var stoppedSpanId: String? = null
-    private val tracer = OtelJavaOpenTelemetrySdk.builder()
-        .setTracerProvider(OtelJavaSdkTracerProvider.builder().build()).build()
-        .getTracer(EmbraceSpanImplTest::class.java.name)
+    private val tracer = OpenTelemetryInstance.kotlinApi().tracerProvider.getTracer(
+        "test-tracer"
+    )
 
     @Before
     fun setup() {
         fakeClock = FakeClock()
-        val otelClock = FakeOpenTelemetryClock(fakeClock)
+        val otelClock = FakeOtelKotlinClock(fakeClock)
         spanRepository = SpanRepository().apply { setSpanUpdateNotifier { updateNotified = true } }
         serializer = TestPlatformSerializer()
         embraceSpanFactory = EmbraceSpanFactoryImpl(
-            tracer = TracerAdapter(tracer, ClockAdapter(otelClock)),
+            tracer = tracer,
             openTelemetryClock = otelClock,
             spanRepository = spanRepository,
             stopCallback = ::stopCallback,
@@ -80,7 +78,6 @@ internal class EmbraceSpanImplTest {
                 type = EmbType.Performance.Default,
                 internal = false,
                 private = false,
-                clock = ClockAdapter(otelClock),
             )
         )
         fakeClock.tick(100)
@@ -547,7 +544,6 @@ internal class EmbraceSpanImplTest {
         type = EmbType.System.LowPower,
         internal = true,
         private = true,
-        clock = ClockAdapter(FakeOpenTelemetryClock(fakeClock))
     )
 
     private fun EmbraceSdkSpan.assertSnapshot(

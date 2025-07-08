@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.otel.spans
 import io.embrace.android.embracesdk.internal.otel.sdk.StoreDataResult
 
 /**
- * A service that stores all the spans that are completed and exported via [EmbraceOtelJavaSpanExporter],
+ * A service that stores all the spans that are completed and exported via an exporter,
  * and provides access to them so they
  * can be sent off-device at the appropriate cadence.
  */

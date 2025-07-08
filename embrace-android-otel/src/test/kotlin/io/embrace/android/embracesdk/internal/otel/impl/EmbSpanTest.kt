@@ -2,14 +2,14 @@ package io.embrace.android.embracesdk.internal.otel.impl
 
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
-import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryClock
+import io.embrace.android.embracesdk.fakes.FakeOtelKotlinClock
 import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
 import io.embrace.android.embracesdk.internal.otel.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.otel.sdk.hasEmbraceAttribute
 import io.embrace.android.embracesdk.internal.payload.Span
+import io.embrace.opentelemetry.kotlin.Clock
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaAttributeKey
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaAttributes
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaClock
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaStatusCode
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -22,14 +22,14 @@ import java.util.concurrent.TimeUnit
 
 internal class EmbSpanTest {
     private lateinit var fakeClock: FakeClock
-    private lateinit var openTelemetryClock: OtelJavaClock
+    private lateinit var openTelemetryClock: Clock
     private lateinit var fakeEmbraceSpan: FakeEmbraceSdkSpan
     private lateinit var embSpan: EmbOtelJavaSpan
 
     @Before
     fun setup() {
         fakeClock = FakeClock()
-        openTelemetryClock = FakeOpenTelemetryClock(fakeClock)
+        openTelemetryClock = FakeOtelKotlinClock(fakeClock)
         fakeEmbraceSpan = FakeEmbraceSdkSpan.started(clock = fakeClock)
         embSpan = EmbOtelJavaSpan(
             embraceSpan = fakeEmbraceSpan,

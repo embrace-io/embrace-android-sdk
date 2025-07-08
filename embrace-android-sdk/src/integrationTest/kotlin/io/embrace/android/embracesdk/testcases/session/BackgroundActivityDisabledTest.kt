@@ -15,7 +15,6 @@ import io.embrace.android.embracesdk.internal.otel.attrs.embSessionNumber
 import io.embrace.android.embracesdk.internal.otel.attrs.embSessionStartType
 import io.embrace.android.embracesdk.internal.otel.attrs.embState
 import io.embrace.android.embracesdk.internal.otel.attrs.embTerminated
-import io.embrace.android.embracesdk.internal.otel.attrs.asOtelAttributeKey
 import io.embrace.android.embracesdk.internal.payload.ApplicationState
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
@@ -85,7 +84,7 @@ internal class BackgroundActivityDisabledTest {
                     assertEquals("error", body)
                     attributes?.assertMatches(
                         mapOf(
-                            embState.asOtelAttributeKey().key to "background"
+                            embState.name to "background"
                         )
                     )
                     assertNull(attributes?.findAttributeValue(SessionIncubatingAttributes.SESSION_ID.key))
@@ -94,7 +93,7 @@ internal class BackgroundActivityDisabledTest {
                     assertEquals("info", body)
                     attributes?.assertMatches(
                         mapOf(
-                            embState.asOtelAttributeKey().key to "background"
+                            embState.name to "background"
                         )
                     )
                     assertNull(attributes?.findAttributeValue(SessionIncubatingAttributes.SESSION_ID.key))
@@ -103,7 +102,7 @@ internal class BackgroundActivityDisabledTest {
                     assertEquals("warning", body)
                     attributes?.assertMatches(
                         mapOf(
-                            embState.asOtelAttributeKey().key to "foreground",
+                            embState.name to "foreground",
                             SessionIncubatingAttributes.SESSION_ID.key to sessions[1].getSessionId()
                         )
                     )
@@ -114,7 +113,7 @@ internal class BackgroundActivityDisabledTest {
                     assertEquals("sent-after-session", body)
                     attributes?.assertMatches(
                         mapOf(
-                            embState.asOtelAttributeKey().key to "foreground",
+                            embState.name to "foreground",
                             SessionIncubatingAttributes.SESSION_ID.key to secondSession.getSessionId()
                         )
                     )
@@ -198,8 +197,8 @@ internal class BackgroundActivityDisabledTest {
                 )
 
                 assertEquals(
-                    sessionSpan1.attributes?.findAttributeValue(embProcessIdentifier.asOtelAttributeKey().key),
-                    sessionSpan2.attributes?.findAttributeValue(embProcessIdentifier.asOtelAttributeKey().key)
+                    sessionSpan1.attributes?.findAttributeValue(embProcessIdentifier.name),
+                    sessionSpan2.attributes?.findAttributeValue(embProcessIdentifier.name)
                 )
             }
         )
@@ -216,18 +215,18 @@ internal class BackgroundActivityDisabledTest {
         assertEquals(endMs, endTimeNanos?.nanosToMillis())
         attributes?.assertMatches(
             mapOf(
-                embSessionNumber.asOtelAttributeKey().key to sessionNumber,
-                embSequenceId.asOtelAttributeKey().key to sequenceId,
-                embColdStart.asOtelAttributeKey().key to coldStart,
-                embState.asOtelAttributeKey().key to "foreground",
-                embCleanExit.asOtelAttributeKey().key to "true",
-                embTerminated.asOtelAttributeKey().key to "false",
-                embSessionStartType.asOtelAttributeKey().key to "state",
-                embSessionEndType.asOtelAttributeKey().key to "state",
+                embSessionNumber.name to sessionNumber,
+                embSequenceId.name to sequenceId,
+                embColdStart.name to coldStart,
+                embState.name to "foreground",
+                embCleanExit.name to "true",
+                embTerminated.name to "false",
+                embSessionStartType.name to "state",
+                embSessionEndType.name to "state",
             )
         )
         with(checkNotNull(attributes)) {
-            assertFalse(findAttributeValue(embProcessIdentifier.asOtelAttributeKey().key).isNullOrBlank())
+            assertFalse(findAttributeValue(embProcessIdentifier.name).isNullOrBlank())
             assertFalse(findAttributeValue(SessionIncubatingAttributes.SESSION_ID.key).isNullOrBlank())
         }
     }

@@ -1,15 +1,9 @@
 package io.embrace.android.embracesdk.internal.otel.payload
 
-import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
-import io.embrace.android.embracesdk.internal.otel.schema.AppTerminationCause
-import io.embrace.android.embracesdk.internal.otel.schema.EmbType
-import io.embrace.android.embracesdk.internal.otel.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
-import io.embrace.android.embracesdk.internal.otel.sdk.setEmbraceAttribute
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceLinkData
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanData
-import io.embrace.android.embracesdk.internal.otel.spans.hasEmbraceAttribute
 import io.embrace.android.embracesdk.internal.otel.toEmbracePayload
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Link
@@ -74,21 +68,5 @@ fun Span.toEmbracePayload(): EmbraceSpanData {
         events = events?.mapNotNull { it.toEmbracePayload() } ?: emptyList(),
         attributes = attributes?.toEmbracePayload() ?: emptyMap(),
         links = links ?: emptyList()
-    )
-}
-
-fun Span.toFailedSpan(endTimeMs: Long): Span {
-    val newAttributes = mutableMapOf<String, String>().apply {
-        setEmbraceAttribute(ErrorCodeAttribute.Failure)
-        if (hasEmbraceAttribute(EmbType.Ux.Session)) {
-            setEmbraceAttribute(AppTerminationCause.Crash)
-        }
-    }
-
-    return copy(
-        endTimeNanos = endTimeMs.millisToNanos(),
-        parentSpanId = parentSpanId ?: OtelJavaSpanId.getInvalid(),
-        status = Span.Status.ERROR,
-        attributes = newAttributes.map { Attribute(it.key, it.value) }.plus(attributes ?: emptyList())
     )
 }

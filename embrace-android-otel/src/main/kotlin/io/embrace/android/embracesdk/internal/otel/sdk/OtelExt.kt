@@ -8,7 +8,6 @@ import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanData.Companion.fromEventData
 import io.embrace.android.embracesdk.internal.otel.toOtelKotlin
 import io.embrace.android.embracesdk.internal.payload.Link
-import io.embrace.android.embracesdk.internal.payload.Span.Status
 import io.embrace.android.embracesdk.internal.utils.isBlankish
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaAttributeKey
@@ -18,7 +17,6 @@ import io.embrace.opentelemetry.kotlin.aliases.OtelJavaLinkData
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaLogRecordBuilder
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpan
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanData
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaStatusCode
 import io.embrace.opentelemetry.kotlin.tracing.model.Span
 
 /**
@@ -94,11 +92,3 @@ fun OtelJavaSpanData.toEmbraceSpanData(): EmbraceSpanData = EmbraceSpanData(
 
 fun OtelJavaAttributes.hasEmbraceAttribute(embraceAttribute: EmbraceAttribute): Boolean =
     asMap()[embraceAttribute.key.asOtelAttributeKey()] == embraceAttribute.value
-
-fun OtelJavaStatusCode.toStatus(): Status {
-    return when (this) {
-        OtelJavaStatusCode.UNSET -> Status.UNSET
-        OtelJavaStatusCode.OK -> Status.OK
-        OtelJavaStatusCode.ERROR -> Status.ERROR
-    }
-}

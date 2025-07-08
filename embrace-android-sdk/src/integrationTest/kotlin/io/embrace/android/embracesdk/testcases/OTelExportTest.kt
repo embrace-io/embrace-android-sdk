@@ -86,7 +86,9 @@ internal class OTelExportTest {
                 }
             },
             otelExportAssertion = {
-                val log = awaitLogs(1) { it.attributes.get(EmbType.System.Log.key.asOtelAttributeKey()) == EmbType.System.Log.value }
+                val log = awaitLogs(1) {
+                    it.attributes.get(EmbType.System.Log.key.asOtelAttributeKey()) == EmbType.System.Log.value
+                }
                 with(log.single()) {
                     assertEquals("test message", body.asString())
                     assertEquals(logTimestampNanos, timestampEpochNanos)

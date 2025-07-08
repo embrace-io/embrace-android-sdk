@@ -18,7 +18,6 @@ import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.otel.attrs.embAeiNumber
 import io.embrace.android.embracesdk.internal.otel.attrs.embCrashNumber
-import io.embrace.android.embracesdk.internal.otel.attrs.asOtelAttributeKey
 import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
@@ -332,8 +331,8 @@ internal class AeiFeatureTest {
                     "description" to description,
                     "reason" to reason,
                     "emb.type" to "sys.exit",
-                    embCrashNumber.asOtelAttributeKey().key to crashNumber,
-                    embAeiNumber.asOtelAttributeKey().key to aeiNumber,
+                    embCrashNumber.name to crashNumber,
+                    embAeiNumber.name to aeiNumber,
                 )
             )
             assertEquals(trace, body)

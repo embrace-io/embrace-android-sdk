@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.internal.payload.Link
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
+import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanId
 import io.embrace.opentelemetry.kotlin.tracing.StatusCode
 
@@ -44,6 +45,7 @@ fun Map<String, String>.toEmbracePayload(): List<Attribute> =
 fun List<Attribute>.toEmbracePayload(): Map<String, String> =
     associate { Pair(it.key ?: "", it.data ?: "") }.filterKeys { it.isNotBlank() }
 
+@OptIn(ExperimentalApi::class)
 fun EmbraceLinkData.toEmbracePayload() = Link(
     spanId = spanContext.spanId,
     traceId = spanContext.traceId,

@@ -97,7 +97,7 @@ internal class OTelApiDelegateTest {
     @Test
     fun `override resource attribute before sdk starts`() {
         sdkCallChecker.started.set(false)
-        delegate.setResourceAttribute(ServiceAttributes.SERVICE_NAME, "foo")
+        delegate.setResourceAttribute(ServiceAttributes.SERVICE_NAME.key, "foo")
         val attrs = FakeAttributeContainer().apply(cfg.resourceAction).attributes()
         assertEquals("foo", attrs[ServiceAttributes.SERVICE_NAME.key])
     }

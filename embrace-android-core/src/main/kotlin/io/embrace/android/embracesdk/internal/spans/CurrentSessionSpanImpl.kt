@@ -20,6 +20,8 @@ import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.opentelemetry.kotlin.Clock
+import io.embrace.opentelemetry.kotlin.ExperimentalApi
+import io.embrace.opentelemetry.kotlin.k2j.tracing.SpanContextAdapter
 import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
@@ -94,20 +96,21 @@ internal class CurrentSessionSpanImpl(
         return sessionSpan.get()?.getSystemAttribute(SessionIncubatingAttributes.SESSION_ID.key) ?: ""
     }
 
+    @OptIn(ExperimentalApi::class)
     override fun spanStopCallback(spanId: String) {
         val currentSessionSpan = sessionSpan.get()
         val spanToStop = spanRepository.getSpan(spanId)
 
         if (currentSessionSpan != spanToStop) {
             spanToStop?.spanContext?.let { spanToStopContext ->
-                currentSessionSpan?.addSystemLink(spanToStopContext, LinkType.EndedIn)
+                currentSessionSpan?.addSystemLink(SpanContextAdapter(spanToStopContext), LinkType.EndedIn)
             }
 
             val sessionId = currentSessionSpan?.getSystemAttribute(SessionIncubatingAttributes.SESSION_ID.key)
             if (sessionId != null) {
                 currentSessionSpan.spanContext?.let { sessionSpanContext ->
                     spanToStop?.addSystemLink(
-                        linkedSpanContext = sessionSpanContext,
+                        linkedSpanContext = SpanContextAdapter(sessionSpanContext),
                         type = LinkType.EndSession,
                         attributes = mapOf(SessionIncubatingAttributes.SESSION_ID.key to sessionId)
                     )
@@ -196,6 +199,7 @@ internal class CurrentSessionSpanImpl(
     /**
      * This method should always be used when starting a new session span
      */
+    @OptIn(ExperimentalApi::class)
     private fun startSessionSpan(startTimeMs: Long): EmbraceSdkSpan {
         traceCount.set(0)
         internalTraceCount.set(0)
@@ -212,7 +216,7 @@ internal class CurrentSessionSpanImpl(
             previousSessionSpan?.spanContext?.let {
                 val prevSessionId = previousSessionSpan.getSystemAttribute(SessionIncubatingAttributes.SESSION_ID.key) ?: ""
                 addSystemLink(
-                    linkedSpanContext = it,
+                    linkedSpanContext = SpanContextAdapter(it),
                     type = LinkType.PreviousSession,
                     attributes = mapOf(SessionIncubatingAttributes.SESSION_ID.key to prevSessionId)
                 )

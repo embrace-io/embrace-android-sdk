@@ -29,17 +29,21 @@ public interface OTelApi {
     public fun getOpenTelemetry(): OtelJavaOpenTelemetry
 
     /**
-     * Set an attribute on the [Resource] used by the OTel SDK instance with the given [AttributeKey] key and String value.
+     * Set an attribute on the resource used by the OTel SDK instance with the given key and String value.
      * The value set will override any value set previously or by the Embrace SDK.
      * This must be called before the SDK is started in order for it to take effect.
      */
+    @Deprecated(
+        "Use setResourceAttribute(key: String, value: String) instead.",
+        ReplaceWith("setResourceAttribute(key.key, value)")
+    )
     public fun setResourceAttribute(
         key: OtelJavaAttributeKey<String>,
-        value: String
+        value: String,
     ): Unit = setResourceAttribute(key.key, value)
 
     /**
-     * Set an attribute on the [Resource] used by the OTel SDK instance with the given String key and value.
+     * Set an attribute on the resource used by the OTel SDK instance with the given String key and value.
      * The value set will override any value set previously or by the Embrace SDK.
      * This must be called before the SDK is started in order for it to take effect.
      */

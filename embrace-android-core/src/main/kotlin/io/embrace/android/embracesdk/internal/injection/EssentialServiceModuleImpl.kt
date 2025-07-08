@@ -82,7 +82,7 @@ class EssentialServiceModuleImpl(
 
     override val logWriter: LogWriter by singleton {
         LogWriterImpl(
-            logger = openTelemetryModule.logger,
+            logger = openTelemetryModule.otelSdkWrapper.logger,
             sessionIdTracker = sessionIdTracker,
             processStateService = processStateService,
             clock = initModule.clock,

@@ -4,7 +4,7 @@ import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 
 class FakeOtelKotlinClock(
-    private val embraceClock: Clock,
+    private val embraceClock: Clock = FakeClock(),
 ) : io.embrace.opentelemetry.kotlin.Clock {
 
     override fun now(): Long = embraceClock.now().millisToNanos()

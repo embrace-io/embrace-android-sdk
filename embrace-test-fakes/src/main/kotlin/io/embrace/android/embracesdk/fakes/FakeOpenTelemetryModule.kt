@@ -6,9 +6,9 @@ import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehavior
 import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModule
 import io.embrace.android.embracesdk.internal.otel.config.OtelSdkConfig
-import io.embrace.android.embracesdk.internal.otel.impl.EmbOtelJavaOpenTelemetry
 import io.embrace.android.embracesdk.internal.otel.logs.LogSink
 import io.embrace.android.embracesdk.internal.otel.logs.LogSinkImpl
+import io.embrace.android.embracesdk.internal.otel.sdk.OtelSdkWrapper
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
@@ -18,10 +18,6 @@ import io.embrace.android.embracesdk.internal.spans.EmbraceTracer
 import io.embrace.android.embracesdk.internal.spans.InternalTracer
 import io.embrace.opentelemetry.kotlin.Clock
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
-import io.embrace.opentelemetry.kotlin.OpenTelemetry
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaOpenTelemetry
-import io.embrace.opentelemetry.kotlin.logging.Logger
-import io.embrace.opentelemetry.kotlin.tracing.Tracer
 
 class FakeOpenTelemetryModule(
     override val currentSessionSpan: CurrentSessionSpan = FakeCurrentSessionSpan(),
@@ -29,27 +25,35 @@ class FakeOpenTelemetryModule(
     override val logSink: LogSink = LogSinkImpl(),
     override val spanRepository: SpanRepository = SpanRepository(),
 ) : OpenTelemetryModule {
+    private val sdkName = "sdk"
+    private val sdkVersion = "1.0"
+    private val systemInfo = SystemInfo()
+
     override val otelSdkConfig: OtelSdkConfig =
-        OtelSdkConfig(spanSink, logSink, "sdk", "1.0", SystemInfo())
+        OtelSdkConfig(spanSink, logSink, sdkName, sdkVersion, systemInfo)
 
     override fun applyConfiguration(sensitiveKeysBehavior: SensitiveKeysBehavior, bypassValidation: Boolean) {
         // no-op
     }
 
-    override val sdkTracer: Tracer
-        get() = FakeKotlinTracer()
+    override val otelSdkWrapper: OtelSdkWrapper
+        get() = OtelSdkWrapper(
+            FakeOtelKotlinClock(),
+            OtelSdkConfig(
+                spanSink,
+                logSink,
+                sdkName,
+                sdkVersion,
+                systemInfo
+            ),
+            FakeSpanService(),
+        )
     override val spanService: SpanService
         get() = FakeSpanService()
     override val embraceTracer: EmbraceTracer
         get() = TODO()
     override val internalTracer: InternalTracer
         get() = TODO()
-    override val logger: Logger
-        get() = FakeOtelLogger()
-    override val openTelemetryJava: OtelJavaOpenTelemetry
-        get() = EmbOtelJavaOpenTelemetry(traceProviderSupplier = { FakeOtelJavaTracerProvider() })
-    override val openTelemetryKotlin: OpenTelemetry
-        get() = throw UnsupportedOperationException()
     override val openTelemetryClock: Clock
         get() = FakeOtelKotlinClock(FakeClock())
 }

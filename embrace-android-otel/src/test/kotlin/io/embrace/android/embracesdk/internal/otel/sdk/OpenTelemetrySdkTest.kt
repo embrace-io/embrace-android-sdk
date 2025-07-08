@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeOtelJavaLogRecordExporter
 import io.embrace.android.embracesdk.fakes.FakeOtelJavaSpanExporter
 import io.embrace.android.embracesdk.fakes.FakeOtelKotlinClock
+import io.embrace.android.embracesdk.fakes.FakeSpanService
 import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.otel.config.OtelSdkConfig
 import io.embrace.android.embracesdk.internal.otel.logs.LogSink
@@ -47,7 +48,8 @@ internal class OpenTelemetrySdkTest {
 
         sdk = OtelSdkWrapper(
             otelClock = FakeOtelKotlinClock(FakeClock()),
-            configuration = configuration
+            configuration = configuration,
+            spanService = FakeSpanService()
         )
     }
 

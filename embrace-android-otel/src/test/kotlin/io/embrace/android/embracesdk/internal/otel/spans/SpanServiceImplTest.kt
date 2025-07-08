@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.arch.assertIsType
 import io.embrace.android.embracesdk.arch.assertIsTypePerformance
 import io.embrace.android.embracesdk.arch.assertNotPrivateSpan
 import io.embrace.android.embracesdk.fakes.FakeClock
-import io.embrace.android.embracesdk.fakes.FakeOtelJavaClock
+import io.embrace.android.embracesdk.fakes.FakeOtelKotlinClock
 import io.embrace.android.embracesdk.fixtures.MAX_LENGTH_INTERNAL_SPAN_NAME
 import io.embrace.android.embracesdk.fixtures.MAX_LENGTH_SPAN_NAME
 import io.embrace.android.embracesdk.fixtures.TOO_LONG_ATTRIBUTE_KEY
@@ -533,7 +533,8 @@ internal class SpanServiceImplTest {
 
         val completedSpans = spanSink.completedSpans()
         assertEquals(1, completedSpans.size)
-        assertEquals(49, completedSpans[0].attributes.filterNot { it.key.startsWith("emb.") }.size)
+        val attrs = completedSpans[0].attributes.filterNot { it.key.startsWith("emb.") }
+        assertEquals(49, attrs.size)
     }
 
     @Test
@@ -603,7 +604,7 @@ internal class SpanServiceImplTest {
     }
 
     private fun createSpanService(dataValidator: DataValidator = DataValidator()): SpanServiceImpl {
-        val fakeClock = FakeOtelJavaClock(clock)
+        val fakeClock = FakeOtelKotlinClock(clock)
         val otelSdkConfig = OtelSdkConfig(
             spanSink = spanSink,
             logSink = LogSinkImpl(),

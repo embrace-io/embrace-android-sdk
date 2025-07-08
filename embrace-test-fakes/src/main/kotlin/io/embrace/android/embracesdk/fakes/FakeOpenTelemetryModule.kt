@@ -18,8 +18,8 @@ import io.embrace.android.embracesdk.internal.spans.EmbraceTracer
 import io.embrace.android.embracesdk.internal.spans.InternalTracer
 import io.embrace.opentelemetry.kotlin.Clock
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
+import io.embrace.opentelemetry.kotlin.OpenTelemetry
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaOpenTelemetry
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaTracerProvider
 import io.embrace.opentelemetry.kotlin.logging.Logger
 import io.embrace.opentelemetry.kotlin.tracing.Tracer
 
@@ -46,10 +46,10 @@ class FakeOpenTelemetryModule(
         get() = TODO()
     override val logger: Logger
         get() = FakeOtelLogger()
-    override val externalOpenTelemetry: OtelJavaOpenTelemetry
+    override val openTelemetryJava: OtelJavaOpenTelemetry
         get() = EmbOtelJavaOpenTelemetry(traceProviderSupplier = { FakeOtelJavaTracerProvider() })
-    override val externalTracerProvider: OtelJavaTracerProvider
-        get() = FakeOtelJavaTracerProvider()
+    override val openTelemetryKotlin: OpenTelemetry
+        get() = throw UnsupportedOperationException()
     override val openTelemetryClock: Clock
         get() = FakeOtelKotlinClock(FakeClock())
 }

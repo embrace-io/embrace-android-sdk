@@ -27,7 +27,7 @@ internal class OTelApiDelegate(
 
     override fun getOpenTelemetry(): OtelJavaOpenTelemetry {
         return if (sdkCallChecker.started.get()) {
-            bootstrapper.openTelemetryModule.externalOpenTelemetry
+            bootstrapper.openTelemetryModule.openTelemetryJava
         } else {
             OtelJavaOpenTelemetry.noop()
         }

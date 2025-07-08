@@ -16,8 +16,8 @@ import io.embrace.android.embracesdk.internal.otel.spans.SpanSinkImpl
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
 import io.embrace.android.embracesdk.internal.spans.EmbraceTracer
 import io.embrace.android.embracesdk.internal.spans.InternalTracer
+import io.embrace.opentelemetry.kotlin.Clock
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaClock
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaOpenTelemetry
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaTracerProvider
 import io.embrace.opentelemetry.kotlin.logging.Logger
@@ -50,6 +50,6 @@ class FakeOpenTelemetryModule(
         get() = EmbOtelJavaOpenTelemetry(traceProviderSupplier = { FakeOtelJavaTracerProvider() })
     override val externalTracerProvider: OtelJavaTracerProvider
         get() = FakeOtelJavaTracerProvider()
-    override val openTelemetryClock: OtelJavaClock
-        get() = FakeOtelJavaClock(FakeClock())
+    override val openTelemetryClock: Clock
+        get() = FakeOtelKotlinClock(FakeClock())
 }

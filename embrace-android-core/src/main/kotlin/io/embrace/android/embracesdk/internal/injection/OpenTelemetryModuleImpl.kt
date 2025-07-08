@@ -4,7 +4,7 @@ import io.embrace.android.embracesdk.core.BuildConfig
 import io.embrace.android.embracesdk.internal.config.behavior.REDACTED_LABEL
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehavior
 import io.embrace.android.embracesdk.internal.otel.config.OtelSdkConfig
-import io.embrace.android.embracesdk.internal.otel.impl.EmbOtelJavaClock
+import io.embrace.android.embracesdk.internal.otel.impl.EmbClock
 import io.embrace.android.embracesdk.internal.otel.impl.EmbOtelJavaOpenTelemetry
 import io.embrace.android.embracesdk.internal.otel.impl.EmbOtelJavaTracerProvider
 import io.embrace.android.embracesdk.internal.otel.logs.LogSink
@@ -32,7 +32,7 @@ import io.embrace.opentelemetry.kotlin.tracing.Tracer
 @OptIn(ExperimentalApi::class)
 internal class OpenTelemetryModuleImpl(
     private val initModule: InitModule,
-    override val openTelemetryClock: EmbOtelJavaClock = EmbOtelJavaClock(
+    override val openTelemetryClock: EmbClock = EmbClock(
         embraceClock = initModule.clock
     ),
 ) : OpenTelemetryModule {

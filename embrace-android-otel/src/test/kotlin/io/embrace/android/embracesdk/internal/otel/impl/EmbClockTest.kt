@@ -15,12 +15,12 @@ import java.util.concurrent.TimeUnit
 internal class EmbClockTest {
 
     private lateinit var embraceClock: Clock
-    private lateinit var openTelemetryClock: EmbOtelJavaClock
+    private lateinit var openTelemetryClock: EmbClock
 
     @Before
     fun setup() {
         embraceClock = NormalizedIntervalClock()
-        openTelemetryClock = EmbOtelJavaClock(embraceClock = embraceClock)
+        openTelemetryClock = EmbClock(embraceClock = embraceClock)
     }
 
     @Config(sdk = [TIRAMISU])

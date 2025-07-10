@@ -43,6 +43,7 @@ dependencies {
     androidTestImplementation(libs.androidx.benchmark.junit4)
     androidTestImplementation(libs.opentelemetry.kotlin)
     androidTestImplementation(project(":embrace-android-sdk"))
+    androidTestImplementation(project(":embrace-android-core"))
     androidTestImplementation(project(":embrace-android-otel"))
     androidTestImplementation(project(":embrace-android-infra"))
     androidTestImplementation(project(":embrace-android-payload"))

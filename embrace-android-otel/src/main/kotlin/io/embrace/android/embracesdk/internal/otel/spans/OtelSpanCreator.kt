@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.internal.otel.spans
 
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
-import io.embrace.android.embracesdk.internal.otel.toOtelKotlin
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
+import io.embrace.opentelemetry.kotlin.j2k.tracing.convertToOtelKotlin
 import io.embrace.opentelemetry.kotlin.k2j.tracing.SpanContextAdapter
 import io.embrace.opentelemetry.kotlin.tracing.Tracer
 import io.embrace.opentelemetry.kotlin.tracing.model.Span
@@ -18,7 +18,7 @@ class OtelSpanCreator(
         return tracer.createSpan(
             name = spanStartArgs.spanName,
             parent = parentSpanContext?.let(::SpanContextAdapter),
-            spanKind = spanStartArgs.spanKind?.toOtelKotlin() ?: SpanKind.INTERNAL,
+            spanKind = spanStartArgs.spanKind?.convertToOtelKotlin() ?: SpanKind.INTERNAL,
             startTimestamp = startTimeMs.millisToNanos()
         )
     }

@@ -6,7 +6,6 @@ import io.embrace.android.embracesdk.internal.otel.attrs.EmbraceAttributeKey
 import io.embrace.android.embracesdk.internal.otel.attrs.asOtelAttributeKey
 import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanData
-import io.embrace.android.embracesdk.internal.otel.toOtelKotlin
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Link
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
@@ -18,6 +17,7 @@ import io.embrace.opentelemetry.kotlin.aliases.OtelJavaLinkData
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaLogRecordBuilder
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpan
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanData
+import io.embrace.opentelemetry.kotlin.k2j.tracing.convertToOtelKotlin
 import io.embrace.opentelemetry.kotlin.tracing.model.ReadableLink
 import io.embrace.opentelemetry.kotlin.tracing.model.ReadableSpan
 import io.embrace.opentelemetry.kotlin.tracing.model.ReadableSpanEvent
@@ -77,7 +77,7 @@ fun OtelJavaSpanData.toEmbraceSpanData(): EmbraceSpanData = EmbraceSpanData(
     name = name,
     startTimeNanos = startEpochNanos,
     endTimeNanos = endEpochNanos,
-    status = status.statusCode.toOtelKotlin(),
+    status = status.statusCode.convertToOtelKotlin(),
     events = events?.mapNotNull { it.toEmbracePayload() } ?: emptyList(),
     attributes = attributes.toStringMap(),
     links = links.map { it.toEmbracePayload() }

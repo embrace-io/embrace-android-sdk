@@ -28,6 +28,11 @@ interface InstrumentationBehavior {
     val autoSdkInitializationEnabled: Boolean
 
     /**
+     * Whether application initialization timing start should be auto-instrumented
+     */
+    val applicationInitTimingEnabled: Boolean
+
+    /**
      * Whether FCM push notifications should be auto-instrumented
      */
     val fcmPushNotificationsEnabled: Boolean

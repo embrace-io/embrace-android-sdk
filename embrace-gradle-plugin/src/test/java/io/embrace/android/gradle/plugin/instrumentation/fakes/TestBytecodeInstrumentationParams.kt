@@ -21,6 +21,7 @@ class TestBytecodeInstrumentationParams(
     instrumentOkHttp: Boolean = SwazzlerExtension.DEFAULT_INSTRUMENT_OKHTTP,
     instrumentOnLongClick: Boolean = SwazzlerExtension.DEFAULT_INSTRUMENT_ON_LONG_CLICK,
     instrumentOnClick: Boolean = SwazzlerExtension.DEFAULT_INSTRUMENT_ON_CLICK,
+    applicationInitTimingEnabled: Boolean = true,
 ) : BytecodeInstrumentationParams {
 
     override val config: Property<VariantConfig> =
@@ -47,4 +48,6 @@ class TestBytecodeInstrumentationParams(
         DefaultProperty(PropertyHost.NO_OP, Boolean::class.javaObjectType).convention(instrumentOnLongClick)
     override val shouldInstrumentOnClick: Property<Boolean> =
         DefaultProperty(PropertyHost.NO_OP, Boolean::class.javaObjectType).convention(instrumentOnClick)
+    override val applicationInitTimingEnabled: Property<Boolean> =
+        DefaultProperty(PropertyHost.NO_OP, Boolean::class.javaObjectType).convention(applicationInitTimingEnabled)
 }

@@ -46,6 +46,8 @@ class VisitorFactoryImpl(
             "auto_sdk_initialization" -> params.shouldInstrumentAutoSdkInitialization.get()
             "on_click" -> params.shouldInstrumentOnClick.get()
             "on_long_click" -> params.shouldInstrumentOnLongClick.get()
+            "application_init_time_start" -> params.applicationInitTimingEnabled.get()
+            "application_init_time_end" -> params.applicationInitTimingEnabled.get()
             else -> error("Unknown feature: $name. Please add a property that enables/disables it on EmbraceBytecodeInstrumentation.")
         }
         return enabledViaDsl && visitStrategy.shouldVisit(ctx)

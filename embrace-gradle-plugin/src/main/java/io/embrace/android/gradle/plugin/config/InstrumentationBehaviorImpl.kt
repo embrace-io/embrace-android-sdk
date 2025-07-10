@@ -38,6 +38,10 @@ class InstrumentationBehaviorImpl(
         enabled && (instrumentation.autoSdkInitializationEnabled.orNull ?: false)
     }
 
+    override val applicationInitTimingEnabled: Boolean by lazy {
+        enabled && (instrumentation.applicationInitTimingEnabled.orNull ?: true)
+    }
+
     override val fcmPushNotificationsEnabled: Boolean by lazy {
         enabled && (instrumentation.firebasePushNotificationsEnabled.orNull ?: extension.instrumentFirebaseMessaging.orNull ?: false)
     }

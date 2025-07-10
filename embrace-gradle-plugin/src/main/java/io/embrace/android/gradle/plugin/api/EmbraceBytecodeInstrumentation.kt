@@ -42,6 +42,11 @@ abstract class EmbraceBytecodeInstrumentation @Inject internal constructor(objec
     val autoSdkInitializationEnabled: Property<Boolean> = objectFactory.property(Boolean::class.java)
 
     /**
+     * Whether Embrace should automatically instrument application initialization timing. Defaults to true.
+     */
+    val applicationInitTimingEnabled: Property<Boolean> = objectFactory.property(Boolean::class.java).convention(true)
+
+    /**
      * Whether Embrace should automatically instrument push notifications from Firebase. Defaults to false.
      */
     val firebasePushNotificationsEnabled: Property<Boolean> =

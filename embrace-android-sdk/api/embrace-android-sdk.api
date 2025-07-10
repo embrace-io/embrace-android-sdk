@@ -83,6 +83,12 @@ public final class io/embrace/android/embracesdk/Embrace$Companion {
 	public final fun getInstance ()Lio/embrace/android/embracesdk/Embrace;
 }
 
+public final class io/embrace/android/embracesdk/internal/instrumentation/bytecode/ApplicationInitTimeBytecodeEntrypoint {
+	public static final field INSTANCE Lio/embrace/android/embracesdk/internal/instrumentation/bytecode/ApplicationInitTimeBytecodeEntrypoint;
+	public static final fun applicationInitEnd ()V
+	public static final fun applicationInitStart ()V
+}
+
 public final class io/embrace/android/embracesdk/internal/instrumentation/bytecode/AutoSdkInitializationBytecodeEntrypoint {
 	public static final field INSTANCE Lio/embrace/android/embracesdk/internal/instrumentation/bytecode/AutoSdkInitializationBytecodeEntrypoint;
 	public static final fun onCreate (Landroid/app/Application;)V

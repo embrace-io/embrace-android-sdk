@@ -4,23 +4,56 @@
     <issue
         id="StopShip"
         message="`TODO` call found; points to code which must be fixed prior to release"
-        errorLine1="                        TODO()"
-        errorLine2="                        ~~~~~~">
+        errorLine1="        TODO(&quot;Not yet implemented&quot;)"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/kotlin/io/embrace/android/embracesdk/internal/otel/sdk/OtelSdkWrapper.kt"
-            line="107"
-            column="25"/>
+            file="src/main/kotlin/io/embrace/android/embracesdk/internal/otel/impl/EmbSpan.kt"
+            line="73"
+            column="9"/>
     </issue>
 
     <issue
         id="StopShip"
         message="`TODO` call found; points to code which must be fixed prior to release"
-        errorLine1="                        TODO(),"
-        errorLine2="                        ~~~~~~">
+        errorLine1="        get() = TODO(&quot;Not yet implemented&quot;)"
+        errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/kotlin/io/embrace/android/embracesdk/internal/otel/sdk/OtelSdkWrapper.kt"
-            line="120"
-            column="25"/>
+            file="src/main/kotlin/io/embrace/android/embracesdk/internal/otel/impl/EmbSpan.kt"
+            line="91"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="StopShip"
+        message="`TODO` call found; points to code which must be fixed prior to release"
+        errorLine1="        get() = TODO(&quot;Not yet implemented&quot;)"
+        errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/embrace/android/embracesdk/internal/otel/impl/EmbSpan.kt"
+            line="97"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="StopShip"
+        message="`TODO` call found; points to code which must be fixed prior to release"
+        errorLine1="        TODO(&quot;Not yet implemented&quot;)"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/embrace/android/embracesdk/internal/otel/impl/EmbSpan.kt"
+            line="103"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="StopShip"
+        message="`TODO` call found; points to code which must be fixed prior to release"
+        errorLine1="        TODO(&quot;Not yet implemented&quot;)"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/embrace/android/embracesdk/internal/otel/impl/EmbSpan.kt"
+            line="107"
+            column="9"/>
     </issue>
 
 </issues>

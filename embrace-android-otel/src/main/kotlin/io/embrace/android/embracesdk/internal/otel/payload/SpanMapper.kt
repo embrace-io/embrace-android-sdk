@@ -11,7 +11,6 @@ import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanId
 import io.embrace.opentelemetry.kotlin.tracing.StatusCode
 
 fun EmbraceSpanData.toEmbracePayload(): Span = Span(
@@ -57,7 +56,7 @@ fun Span.toEmbracePayload(): EmbraceSpanData {
     return EmbraceSpanData(
         traceId = traceId ?: "",
         spanId = spanId ?: "",
-        parentSpanId = parentSpanId ?: OtelJavaSpanId.getInvalid(),
+        parentSpanId = parentSpanId ?: OtelIds.invalidSpanId,
         name = name ?: "",
         startTimeNanos = startTimeNanos ?: 0,
         endTimeNanos = endTimeNanos ?: 0L,

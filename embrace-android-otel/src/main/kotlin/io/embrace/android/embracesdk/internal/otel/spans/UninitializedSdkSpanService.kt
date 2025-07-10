@@ -12,7 +12,7 @@ import java.util.concurrent.atomic.AtomicReference
 /**
  * An implementation of [SpanService] used when the SDK has not been started.
  */
-internal class UninitializedSdkSpanService : SpanService {
+class UninitializedSdkSpanService : SpanService {
     private val bufferedCalls = ConcurrentLinkedQueue<BufferedRecordCompletedSpan>()
     private val bufferedCallsCount = AtomicInteger(0)
     private val realSpanService: AtomicReference<SpanService?> = AtomicReference(null)

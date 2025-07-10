@@ -37,6 +37,7 @@ agp-api = "7.4.2"
 apktoolLib = "2.11.1"
 bundletool = "1.18.1"
 vanniktechMavenPublish = "0.33.0"
+androidxBenchmark = "1.2.4"
 
 [libraries]
 binary-compatibility-validator = { module = "org.jetbrains.kotlinx:binary-compatibility-validator", version.ref = "binaryCompatibilityValidator" }
@@ -83,10 +84,12 @@ zstd-jni = { module = "com.github.luben:zstd-jni", version.ref = "zstdJni" }
 agp-api = { module = "com.android.tools.build:gradle-api", version.ref = "agp-api" }
 apktool-lib = { module = "org.apktool:apktool-lib", version.ref = "apktoolLib" }
 bundletool = { module = "com.android.tools.build:bundletool", version.ref = "bundletool" }
+opentelemetry-kotlin = { module = "io.embrace.opentelemetry.kotlin:opentelemetry-kotlin", version.ref = "otelKotlin" }
 opentelemetry-kotlin-api = { module = "io.embrace.opentelemetry.kotlin:opentelemetry-kotlin-api", version.ref = "otelKotlin" }
 opentelemetry-kotlin-api-ext = { module = "io.embrace.opentelemetry.kotlin:opentelemetry-kotlin-api-ext", version.ref = "otelKotlin" }
 opentelemetry-kotlin-compat = { module = "io.embrace.opentelemetry.kotlin:opentelemetry-kotlin-compat", version.ref = "otelKotlin" }
 opentelemetry-java-aliases = { module = "io.embrace.opentelemetry.kotlin:opentelemetry-java-typealiases", version.ref = "otelKotlin" }
+androidx-benchmark-junit4 = { group = "androidx.benchmark", name = "benchmark-junit4", version.ref = "androidxBenchmark" }
 
 [plugins]
 google-ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
@@ -96,3 +99,4 @@ detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
 buildconfig = { id = "com.github.gmazzo.buildconfig", version.ref = "buildconfig" }
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlinGradlePlugin" }
 kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "koverGradlePlugin" }
+benchmark = { id = "androidx.benchmark", version.ref = "androidxBenchmark" }

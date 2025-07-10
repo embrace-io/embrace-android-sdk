@@ -31,4 +31,10 @@ data class BytecodeMethodInsertionParams(
      * foo(String, Int, Boolean)
      */
     val operandStackIndices: List<Int>,
+
+    /**
+     * Specifies if the method call should be inserted at the end of the target method.
+     * Defaults to false, which inserts the call at the method entry point.
+     */
+    val insertAtEnd: Boolean,
 )

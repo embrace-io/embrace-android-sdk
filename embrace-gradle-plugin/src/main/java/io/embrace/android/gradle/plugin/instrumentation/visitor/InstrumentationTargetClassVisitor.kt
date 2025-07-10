@@ -22,11 +22,19 @@ class InstrumentationTargetClassVisitor(
         val nextMethodVisitor = super.visitMethod(access, name, desc, signature, exceptions)
 
         return if (feature.targetParams.name == name && feature.targetParams.descriptor == desc && !isStatic(access)) {
-            InstrumentationTargetMethodVisitor(
-                api = api,
-                methodVisitor = nextMethodVisitor,
-                params = feature.insertionParams
-            )
+            if (feature.insertionParams.insertAtEnd) {
+                InstrumentationTargetMethodEndVisitor(
+                    api = api,
+                    methodVisitor = nextMethodVisitor,
+                    params = feature.insertionParams
+                )
+            } else {
+                InstrumentationTargetMethodVisitor(
+                    api = api,
+                    methodVisitor = nextMethodVisitor,
+                    params = feature.insertionParams
+                )
+            }
         } else {
             nextMethodVisitor
         }

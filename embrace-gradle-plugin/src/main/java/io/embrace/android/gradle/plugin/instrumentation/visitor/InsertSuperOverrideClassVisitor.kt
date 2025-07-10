@@ -27,11 +27,19 @@ class InsertSuperOverrideClassVisitor(
 
         return if (feature.targetParams.name == name && feature.targetParams.descriptor == desc && !isStatic(access)) {
             hasOverride = true
-            InstrumentationTargetMethodVisitor(
-                api = api,
-                methodVisitor = nextMethodVisitor,
-                params = feature.insertionParams
-            )
+            if (feature.insertionParams.insertAtEnd) {
+                InstrumentationTargetMethodEndVisitor(
+                    api = api,
+                    methodVisitor = nextMethodVisitor,
+                    params = feature.insertionParams
+                )
+            } else {
+                InstrumentationTargetMethodVisitor(
+                    api = api,
+                    methodVisitor = nextMethodVisitor,
+                    params = feature.insertionParams
+                )
+            }
         } else {
             return nextMethodVisitor
         }

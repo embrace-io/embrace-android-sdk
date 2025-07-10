@@ -31,7 +31,7 @@ internal class CrashDataSourceImpl(
     private val sessionPropertiesService: SessionPropertiesService,
     private val preferencesService: PreferencesService,
     private val logWriter: LogWriter,
-    private val configService: ConfigService,
+    configService: ConfigService,
     private val serializer: PlatformSerializer,
     private val logger: EmbLogger,
 ) : CrashDataSource,
@@ -65,7 +65,6 @@ internal class CrashDataSourceImpl(
             val crashId = Uuid.getEmbUuid()
             val crashNumber = preferencesService.incrementAndGetCrashNumber()
             val crashAttributes = TelemetryAttributes(
-                configService = configService,
                 sessionPropertiesProvider = sessionPropertiesService::getProperties,
             )
 

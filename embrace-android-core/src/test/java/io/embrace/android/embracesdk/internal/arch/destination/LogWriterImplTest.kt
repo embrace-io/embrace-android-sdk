@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.internal.arch.destination
 import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeClock.Companion.DEFAULT_FAKE_CURRENT_TIME
-import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryLogger
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
@@ -53,7 +52,6 @@ internal class LogWriterImplTest {
         logWriterImpl.addLog(
             schemaType = SchemaType.Log(
                 TelemetryAttributes(
-                    configService = FakeConfigService(),
                     customAttributes = mapOf(PrivateSpan.asPair())
                 )
             ),
@@ -75,11 +73,7 @@ internal class LogWriterImplTest {
     @Test
     fun `check that private value is set`() {
         logWriterImpl.addLog(
-            schemaType = SchemaType.Log(
-                TelemetryAttributes(
-                    configService = FakeConfigService()
-                )
-            ),
+            schemaType = SchemaType.Log(TelemetryAttributes()),
             severity = Severity.ERROR,
             message = "test",
             isPrivate = true
@@ -88,11 +82,7 @@ internal class LogWriterImplTest {
             assertTrue(attributes()[PrivateSpan.key.name] != null)
         }
         logWriterImpl.addLog(
-            schemaType = SchemaType.Log(
-                TelemetryAttributes(
-                    configService = FakeConfigService()
-                )
-            ),
+            schemaType = SchemaType.Log(TelemetryAttributes()),
             severity = Severity.ERROR,
             message = "test",
             isPrivate = false
@@ -107,11 +97,7 @@ internal class LogWriterImplTest {
         sessionIdTracker.setActiveSession("foreground-session", true)
         processStateService.isInBackground = true
         logWriterImpl.addLog(
-            schemaType = SchemaType.Log(
-                TelemetryAttributes(
-                    configService = FakeConfigService()
-                )
-            ),
+            schemaType = SchemaType.Log(TelemetryAttributes()),
             severity = Severity.ERROR,
             message = "test"
         )
@@ -130,11 +116,7 @@ internal class LogWriterImplTest {
         sessionIdTracker.sessionData = null
         processStateService.isInBackground = true
         logWriterImpl.addLog(
-            schemaType = SchemaType.Log(
-                TelemetryAttributes(
-                    configService = FakeConfigService()
-                )
-            ),
+            schemaType = SchemaType.Log(TelemetryAttributes()),
             severity = Severity.ERROR,
             message = "test"
         )
@@ -149,11 +131,7 @@ internal class LogWriterImplTest {
     fun `timestamp can be overridden`() {
         val fakeTimeMs = DEFAULT_FAKE_CURRENT_TIME
         logWriterImpl.addLog(
-            schemaType = SchemaType.Log(
-                TelemetryAttributes(
-                    configService = FakeConfigService()
-                )
-            ),
+            schemaType = SchemaType.Log(TelemetryAttributes()),
             severity = Severity.ERROR,
             message = "test",
             timestampMs = fakeTimeMs
@@ -169,11 +147,7 @@ internal class LogWriterImplTest {
     fun `only set current session info on log if instructed to`() {
         sessionIdTracker.setActiveSession("foreground-session", true)
         logWriterImpl.addLog(
-            schemaType = SchemaType.Log(
-                TelemetryAttributes(
-                    configService = FakeConfigService()
-                )
-            ),
+            schemaType = SchemaType.Log(TelemetryAttributes()),
             severity = Severity.ERROR,
             message = "test",
             addCurrentSessionInfo = false,
@@ -189,11 +163,7 @@ internal class LogWriterImplTest {
     fun `no activity session will result in log written without sessionId`() {
         sessionIdTracker.sessionData = SessionData("", false)
         logWriterImpl.addLog(
-            schemaType = SchemaType.Log(
-                TelemetryAttributes(
-                    configService = FakeConfigService()
-                )
-            ),
+            schemaType = SchemaType.Log(TelemetryAttributes()),
             severity = Severity.ERROR,
             message = "test"
         )

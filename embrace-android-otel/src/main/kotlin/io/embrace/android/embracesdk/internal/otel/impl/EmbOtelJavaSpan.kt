@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.internal.otel.impl
 
 import io.embrace.android.embracesdk.internal.otel.sdk.toStringMap
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
-import io.embrace.android.embracesdk.internal.otel.toOtelKotlin
 import io.embrace.opentelemetry.kotlin.Clock
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaAttributeKey
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaAttributes
@@ -11,6 +10,7 @@ import io.embrace.opentelemetry.kotlin.aliases.OtelJavaScope
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpan
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanContext
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaStatusCode
+import io.embrace.opentelemetry.kotlin.k2j.tracing.convertToOtelKotlin
 import java.util.concurrent.TimeUnit
 
 class EmbOtelJavaSpan(
@@ -46,7 +46,7 @@ class EmbOtelJavaSpan(
 
     override fun setStatus(statusCode: OtelJavaStatusCode, description: String): OtelJavaSpan {
         if (isRecording) {
-            embraceSpan.setStatus(statusCode.toOtelKotlin(), description)
+            embraceSpan.setStatus(statusCode.convertToOtelKotlin(), description)
         }
         return this
     }

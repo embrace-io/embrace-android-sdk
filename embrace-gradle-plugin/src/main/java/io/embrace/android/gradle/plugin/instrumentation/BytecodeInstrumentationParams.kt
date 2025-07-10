@@ -73,8 +73,5 @@ interface BytecodeInstrumentationParams : InstrumentationParameters {
     val shouldInstrumentOnClick: Property<Boolean>
 
     @get:Input
-    val shouldInstrumentApplicationInitTimeStart: Property<Boolean>
-
-    @get:Input
-    val shouldInstrumentApplicationInitTimeEnd: Property<Boolean>
+    val applicationInitTimingEnabled: Property<Boolean>
 }

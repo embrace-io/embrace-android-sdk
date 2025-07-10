@@ -64,8 +64,7 @@ class EmbraceClassVisitorFactoryTest {
             instrumentOnClick = false,
             instrumentOnLongClick = false,
             instrumentAutoSdkInitialization = false,
-            instrumentApplicationInitTimeStart = false,
-            instrumentApplicationInitTimeEnd = false
+            applicationInitTimingEnabled = false,
         )
         val observed = fetchClassVisitor(config, ctx, visitor)
         assertSame(visitor, observed)
@@ -113,8 +112,7 @@ class EmbraceClassVisitorFactoryTest {
         instrumentWebview: Boolean = true,
         instrumentAutoSdkInitialization: Boolean = true,
         instrumentFirebaseMessaging: Boolean = true,
-        instrumentApplicationInitTimeStart: Boolean = false,
-        instrumentApplicationInitTimeEnd: Boolean = false,
+        applicationInitTimingEnabled: Boolean = false,
     ): TestBytecodeInstrumentationParams {
         return TestBytecodeInstrumentationParams(
             instrumentFirebaseMessaging = instrumentFirebaseMessaging,
@@ -123,8 +121,7 @@ class EmbraceClassVisitorFactoryTest {
             instrumentOkHttp = instrumentOkHttp,
             instrumentOnLongClick = instrumentOnLongClick,
             instrumentOnClick = instrumentOnClick,
-            instrumentApplicationInitTimeStart = instrumentApplicationInitTimeStart,
-            instrumentApplicationInitTimeEnd = instrumentApplicationInitTimeEnd
+            applicationInitTimingEnabled = applicationInitTimingEnabled,
         )
     }
 

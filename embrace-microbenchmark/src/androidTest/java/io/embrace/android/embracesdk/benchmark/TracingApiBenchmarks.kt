@@ -43,34 +43,32 @@ class TracingApiBenchmarks {
         val dataValidator = DataValidator()
         val spanRepository = SpanRepository()
         spanSink = SpanSinkImpl()
-        spansService = run {
-            val otelSdkWrapper = OtelSdkWrapper(
-                otelClock = clock,
-                configuration = OtelSdkConfig(
-                    spanSink = spanSink,
-                    logSink = LogSinkImpl(),
-                    sdkName = "benchmark-test-sdk",
-                    sdkVersion = "1.0",
-                    systemInfo = SystemInfo(),
-                    sessionIdProvider = { "fake-session-id" },
-                    processIdentifierProvider = { "fake-pid" }
+        val otelSdkWrapper = OtelSdkWrapper(
+            otelClock = clock,
+            configuration = OtelSdkConfig(
+                spanSink = spanSink,
+                logSink = LogSinkImpl(),
+                sdkName = "benchmark-test-sdk",
+                sdkVersion = "1.0",
+                systemInfo = SystemInfo(),
+                sessionIdProvider = { "fake-session-id" },
+                processIdentifierProvider = { "fake-pid" }
+            ),
+            spanService = UninitializedSdkSpanService()
+        )
+        spansService = SpanServiceImpl(
+            spanRepository = spanRepository,
+            canStartNewSpan = { _, _ -> true },
+            initCallback = { },
+            embraceSpanFactory =
+                EmbraceSpanFactoryImpl(
+                    tracer = otelSdkWrapper.sdkTracer,
+                    openTelemetryClock = clock,
+                    spanRepository = spanRepository,
+                    dataValidator = dataValidator
                 ),
-                spanService = UninitializedSdkSpanService()
-            )
-            SpanServiceImpl(
-                spanRepository = spanRepository,
-                canStartNewSpan = { _, _ -> true },
-                initCallback = { },
-                embraceSpanFactory =
-                    EmbraceSpanFactoryImpl(
-                        tracer = otelSdkWrapper.sdkTracer,
-                        openTelemetryClock = clock,
-                        spanRepository = spanRepository,
-                        dataValidator = dataValidator
-                    ),
-                dataValidator = dataValidator
-            )
-        }
+            dataValidator = dataValidator
+        )
     }
 
     @Test

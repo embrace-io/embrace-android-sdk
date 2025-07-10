@@ -7,7 +7,7 @@ import org.objectweb.asm.Opcodes
  * Visits a method that should be rewritten to include an API call to instrumentation
  * and inserts a call to a static method before all return statements (at the end).
  */
-internal class InstrumentationTargetMethodEndVisitor(
+class InstrumentationTargetMethodEndVisitor(
     api: Int,
     methodVisitor: MethodVisitor?,
     private val params: BytecodeMethodInsertionParams,

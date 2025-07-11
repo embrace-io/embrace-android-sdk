@@ -184,7 +184,7 @@
         errorLine2="                ~~~~~~">
         <location
             file="src/main/kotlin/io/embrace/android/embracesdk/fakes/FakeOpenTelemetryModule.kt"
-            line="44"
+            line="54"
             column="17"/>
     </issue>
 
@@ -195,7 +195,7 @@
         errorLine2="                ~~~~~~">
         <location
             file="src/main/kotlin/io/embrace/android/embracesdk/fakes/FakeOpenTelemetryModule.kt"
-            line="46"
+            line="56"
             column="17"/>
     </issue>
 

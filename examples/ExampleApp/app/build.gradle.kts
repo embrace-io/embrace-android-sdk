@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -18,7 +20,6 @@ android {
     defaultConfig {
         applicationId = "io.embrace.android.exampleapp"
         minSdk = 24
-        targetSdk = 36
         versionCode = 1
         versionName = "1.0"
 
@@ -34,14 +35,24 @@ android {
                 "proguard-rules.pro"
             )
         }
+        create("benchmark") {
+            initWith(buildTypes.getByName("release"))
+            signingConfig = signingConfigs.getByName("debug")
+            matchingFallbacks += listOf("release")
+            isDebuggable = false
+        }
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
-    kotlinOptions {
-        jvmTarget = "11"
+
+    kotlin {
+        compilerOptions {
+            jvmTarget.set(JvmTarget.JVM_11)
+        }
     }
+
     buildFeatures {
         compose = true
     }

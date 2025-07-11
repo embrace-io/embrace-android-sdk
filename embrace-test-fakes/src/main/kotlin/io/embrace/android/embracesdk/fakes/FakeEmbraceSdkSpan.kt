@@ -20,7 +20,9 @@ import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.otel.spans.getEmbraceSpan
 import io.embrace.android.embracesdk.internal.otel.toEmbracePayload
 import io.embrace.android.embracesdk.internal.otel.toOtelKotlin
+import io.embrace.android.embracesdk.internal.payload.Link
 import io.embrace.android.embracesdk.internal.payload.Span
+import io.embrace.android.embracesdk.internal.payload.SpanEvent
 import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
@@ -31,6 +33,7 @@ import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpan
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanContext
 import io.embrace.opentelemetry.kotlin.tracing.StatusCode
 import io.embrace.opentelemetry.kotlin.tracing.model.SpanContext
+import io.embrace.opentelemetry.kotlin.tracing.model.SpanKind
 import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.TimeUnit
@@ -49,7 +52,7 @@ class FakeEmbraceSdkSpan(
     private var sdkSpan: OtelJavaSpan? = null
     var spanStartTimeMs: Long? = null
     var spanEndTimeMs: Long? = null
-    var status: Span.Status = Span.Status.UNSET
+    override var status: Span.Status = Span.Status.UNSET
     var statusDescription: String = ""
     var errorCode: ErrorCode? = null
     val attributes: MutableMap<String, String> = mutableMapOf(type.asPair())
@@ -189,6 +192,20 @@ class FakeEmbraceSdkSpan(
 
     override fun removeSystemAttribute(key: String) {
         attributes.remove(key)
+    }
+
+    override fun attributes(): Map<String, Any> = attributes.toMap()
+
+    override fun name(): String = name
+
+    override val spanKind: SpanKind = SpanKind.INTERNAL
+
+    override fun events(): List<SpanEvent> {
+        throw UnsupportedOperationException()
+    }
+
+    override fun links(): List<Link> {
+        throw UnsupportedOperationException()
     }
 
     private fun started(): Boolean = sdkSpan != null

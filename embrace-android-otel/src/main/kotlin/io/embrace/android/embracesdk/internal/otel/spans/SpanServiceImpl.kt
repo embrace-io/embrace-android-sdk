@@ -13,7 +13,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 /**
  * Implementation of the core logic for [SpanService]
  */
-internal class SpanServiceImpl(
+class SpanServiceImpl(
     private val spanRepository: SpanRepository,
     private val embraceSpanFactory: EmbraceSpanFactory,
     private val dataValidator: DataValidator,

@@ -70,7 +70,7 @@ jobs:
       # Sets the Baseline Profile on its proper place so it gets correctly bundled into Play Store
       - name: Move & Rename Baseline Profiles
         run: cat android-sdk-benchmark/macrobenchmark/build/outputs/managed_device_android_test_additional_output/baselineprofile/pixel6Api34/BaselineProfileGenerator_startup-baseline-prof.txt
-          | grep '^[^[]*io/embrace/android/embracesdk' > embrace-android-sdk/src/main/baseline-prof.txt
+          | grep -E '^[^[]*io/embrace/android/embracesdk|^[^[]*io/opentelemetry|^[^[]*io/embrace/opentelemetry/kotlin' > embrace-android-sdk/src/main/baseline-prof.txt
 
       - name: Create baseline profile PR
         env:

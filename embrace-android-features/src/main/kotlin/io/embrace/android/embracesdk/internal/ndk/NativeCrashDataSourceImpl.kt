@@ -6,7 +6,6 @@ import io.embrace.android.embracesdk.internal.arch.destination.LogWriter
 import io.embrace.android.embracesdk.internal.arch.limits.NoopLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.arch.schema.TelemetryAttributes
-import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.otel.attrs.embCrashNumber
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
@@ -19,7 +18,6 @@ internal class NativeCrashDataSourceImpl(
     private val nativeCrashProcessor: NativeCrashProcessor,
     private val preferencesService: PreferencesService,
     private val logWriter: LogWriter,
-    private val configService: ConfigService,
     private val serializer: PlatformSerializer,
     logger: EmbLogger,
 ) : NativeCrashDataSource, LogDataSourceImpl(
@@ -42,7 +40,6 @@ internal class NativeCrashDataSourceImpl(
     ) {
         val nativeCrashNumber = preferencesService.incrementAndGetNativeCrashNumber()
         val crashAttributes = TelemetryAttributes(
-            configService = configService,
             sessionPropertiesProvider = { sessionProperties }
         )
         crashAttributes.setAttribute(

@@ -19,7 +19,6 @@ internal class NativeFeatureModuleImpl(
                 nativeCrashProcessor = nativeCoreModule.processor,
                 preferencesService = androidServicesModule.preferencesService,
                 logWriter = essentialServiceModule.logWriter,
-                configService = configModule.configService,
                 serializer = initModule.jsonSerializer,
                 logger = initModule.logger,
             )

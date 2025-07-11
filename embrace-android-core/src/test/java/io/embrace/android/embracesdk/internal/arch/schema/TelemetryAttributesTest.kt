@@ -1,12 +1,7 @@
 package io.embrace.android.embracesdk.internal.arch.schema
 
-import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeSessionPropertiesService
-import io.embrace.android.embracesdk.fakes.createSessionBehavior
 import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
-import io.embrace.android.embracesdk.internal.config.ConfigService
-import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
-import io.embrace.android.embracesdk.internal.config.remote.SessionRemoteConfig
 import io.embrace.android.embracesdk.internal.otel.attrs.embProcessIdentifier
 import io.embrace.android.embracesdk.internal.session.getSessionProperty
 import io.embrace.android.embracesdk.internal.utils.Uuid
@@ -22,21 +17,17 @@ internal class TelemetryAttributesTest {
     private lateinit var sessionPropertiesService: SessionPropertiesService
     private lateinit var telemetryAttributes: TelemetryAttributes
     private lateinit var sessionId: String
-    private lateinit var configService: ConfigService
 
     @Before
     fun setup() {
         customAttributes = mapOf("custom" to "attributeValue")
         sessionPropertiesService = FakeSessionPropertiesService()
         sessionId = Uuid.getEmbUuid()
-        configService = FakeConfigService()
     }
 
     @Test
     fun `only schema properties`() {
-        telemetryAttributes = TelemetryAttributes(
-            configService = configService,
-        )
+        telemetryAttributes = TelemetryAttributes()
         telemetryAttributes.setAttribute(SessionIncubatingAttributes.SESSION_ID.key, sessionId)
         telemetryAttributes.setAttribute(ExceptionAttributes.EXCEPTION_TYPE.key, "exceptionValue")
         val attributes = telemetryAttributes.snapshot()
@@ -50,7 +41,6 @@ internal class TelemetryAttributesTest {
     @Test
     fun `all attributes types`() {
         telemetryAttributes = TelemetryAttributes(
-            configService = configService,
             sessionPropertiesProvider = sessionPropertiesService::getProperties,
             customAttributes = customAttributes
         )
@@ -72,7 +62,6 @@ internal class TelemetryAttributesTest {
     fun `overwritten values returned`() {
         val newSessionId = Uuid.getEmbUuid()
         telemetryAttributes = TelemetryAttributes(
-            configService = configService,
             sessionPropertiesProvider = sessionPropertiesService::getProperties,
         )
         val sessionIdKey = SessionIncubatingAttributes.SESSION_ID.key
@@ -94,7 +83,6 @@ internal class TelemetryAttributesTest {
     fun `schema attribute values take priority if the same key is used`() {
         val newSessionId = Uuid.getEmbUuid()
         telemetryAttributes = TelemetryAttributes(
-            configService = configService,
             customAttributes = mapOf(SessionIncubatingAttributes.SESSION_ID.key to sessionId)
         )
         telemetryAttributes.setAttribute(SessionIncubatingAttributes.SESSION_ID.key, newSessionId)
@@ -104,48 +92,11 @@ internal class TelemetryAttributesTest {
     }
 
     @Test
-    fun `log properties and session properties are not included in the attributes`() {
-        val configService = FakeConfigService(
-            sessionBehavior = createSessionBehavior(
-                remoteCfg = RemoteConfig(
-                    sessionConfig = SessionRemoteConfig(
-                        fullSessionEvents = setOf(),
-                        sessionComponents = setOf()
-                    )
-                )
-            )
-        )
-        sessionPropertiesService.addProperty("perm", "permVal", true)
-        sessionPropertiesService.addProperty("temp", "tempVal", false)
-
-        telemetryAttributes = TelemetryAttributes(
-            configService = configService,
-            sessionPropertiesProvider = sessionPropertiesService::getProperties,
-            customAttributes = customAttributes
-        )
-        telemetryAttributes.setAttribute(SessionIncubatingAttributes.SESSION_ID.key, sessionId)
-
-        val attributes = telemetryAttributes.snapshot()
-        assertEquals(1, attributes.size)
-    }
-
-    @Test
     fun `log properties and session properties are included in the attributes`() {
-        val configService = FakeConfigService(
-            sessionBehavior = createSessionBehavior(
-                remoteCfg = RemoteConfig(
-                    sessionConfig = SessionRemoteConfig(
-                        fullSessionEvents = setOf(),
-                        sessionComponents = setOf("s_props", "log_pr")
-                    )
-                )
-            )
-        )
         sessionPropertiesService.addProperty("perm", "permVal", true)
         sessionPropertiesService.addProperty("temp", "tempVal", false)
 
         telemetryAttributes = TelemetryAttributes(
-            configService = configService,
             sessionPropertiesProvider = sessionPropertiesService::getProperties,
             customAttributes = customAttributes
         )
@@ -157,9 +108,7 @@ internal class TelemetryAttributesTest {
 
     @Test
     fun `blankish values skipped when directed to do so`() {
-        telemetryAttributes = TelemetryAttributes(
-            configService = configService,
-        )
+        telemetryAttributes = TelemetryAttributes()
         val blankishValues = listOf("", " ", "null", "NULL")
 
         // Give me Union types, plz

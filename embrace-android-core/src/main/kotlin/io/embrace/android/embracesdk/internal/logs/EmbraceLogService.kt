@@ -87,9 +87,16 @@ class EmbraceLogService(
         logAttrs: Map<String, String>,
     ): TelemetryAttributes {
         val attributes = TelemetryAttributes(
-            configService = configService,
-            sessionPropertiesProvider = sessionPropertiesService::getProperties,
-            customAttributes = customProperties?.mapValues { it.value.toString() } ?: emptyMap()
+            sessionPropertiesProvider = if (!configService.sessionBehavior.shouldGateSessionProperties()) {
+                sessionPropertiesService::getProperties
+            } else {
+                { null }
+            },
+            customAttributes = if (!configService.sessionBehavior.shouldGateLogProperties()) {
+                customProperties?.mapValues { it.value.toString() } ?: emptyMap()
+            } else {
+                null
+            },
         )
         attributes.setAttribute(LogIncubatingAttributes.LOG_RECORD_UID.key, Uuid.getEmbUuid())
         logAttrs.forEach {

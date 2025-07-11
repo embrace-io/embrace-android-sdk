@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.ndk
 
 import io.embrace.android.embracesdk.fakes.FakeClock
-import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakeNativeCrashProcessor
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryLogger
@@ -39,7 +38,6 @@ internal class NativeCrashDataSourceImplTest {
 
     private lateinit var crashProcessor: FakeNativeCrashProcessor
     private lateinit var preferencesService: FakePreferenceService
-    private lateinit var configService: FakeConfigService
     private lateinit var serializer: EmbraceSerializer
     private lateinit var logWriter: LogWriter
     private lateinit var logger: EmbLogger
@@ -66,13 +64,11 @@ internal class NativeCrashDataSourceImplTest {
             logger = otelLogger,
             clock = clock
         )
-        configService = FakeConfigService()
         serializer = EmbraceSerializer()
         nativeCrashDataSource = NativeCrashDataSourceImpl(
             nativeCrashProcessor = crashProcessor,
             preferencesService = preferencesService,
             logWriter = logWriter,
-            configService = configService,
             serializer = serializer,
             logger = logger
         )

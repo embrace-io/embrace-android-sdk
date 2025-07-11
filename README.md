@@ -20,7 +20,7 @@ Android apps, enabling full-stack observability of your system by connecting mob
 Telemetry recorded through this SDK can be consumed on the Embrace platform for Embrace customers, but it can also be used by those who are
 not Embrace customers to export collected data directly to any OTel Collector, either one that they host or is hosted by other vendors. 
 In effect, this SDK is an alternative to [opentelemetry-android](https://github.com/open-telemetry/opentelemetry-android) or using the [OpenTelemetry Java SDK](https://github.com/open-telemetry/opentelemetry-java) directly for Android apps that want to leverage the 
-OpenTelemetry ecosystem for observability, but also want all the advanced telemetry capture that Embrace is known for like ANR thread sampling, native crash
+OpenTelemetry ecosystem for observability, but also want all the advanced telemetry capture that Embrace is known for, like ANR thread sampling, native crash
 capture, and so forth.
 
 Currently, only Spans and Logs are supported, but other signals will be added in the future.
@@ -32,11 +32,11 @@ Currently, only Spans and Logs are supported, but other signals will be added in
      - Updating dependencies to include optional modules that are needed for certain features.
      - Setting up configuration files to be read at runtime.
      - Doing bytecode instrumentation to enable the capture of certain telemetry.
-2. For multi-module projects, in the Gradle files of modules you want to invoke Embrace SDK API methods, add a dependency to the main Embrace SDK module: `'io.embrace:embrace-android-sdk:<version>`.
-3. In the `main` directory of your app's root source folder (i.e. `app/src/main/`), add in a file called `embrace-config.json` that contains `{}` as its only line.
+2. For multi-module projects, in the Gradle files of modules where you want to invoke Embrace SDK API methods, add a dependency to the main Embrace SDK module: `'io.embrace:embrace-android-sdk:<version>`.
+3. In the `main` directory of your app's root source folder (i.e. `app/src/main/`), add a file called `embrace-config.json` that contains `{}` as its only line.
    - To further configure the SDK, additional attributes can be added to this configuration file. 
    - See our [configuration documentation page](https://embrace.io/docs/android/features/configuration-file/) for further details.
-4. In your app's Gradle properties file, add in the entry `embrace.disableMappingFileUpload=true`
+4. In your app's Gradle properties file, add the entry `embrace.disableMappingFileUpload=true`
    - This allows the SDK to function without sending data to Embrace.
 5. In Android Studio, do a Gradle Sync. Barring any errors, you should be able to configure and start the SDK to begin recording and exporting data.
 
@@ -56,14 +56,14 @@ Embrace.getInstance().addLogRecordExporter(SystemOutLogRecordExporter.create())
 
 ```
 
-It is recommended that you start the Embrace SDK in the your `Application` object's `onCreate()` function (or even earlier) to minimize
+It is recommended that you start the Embrace SDK in your `Application` object's `onCreate()` function (or even earlier) to minimize
 the amount of time when telemetry isn't being recorded. This allows performance problems such as crashes and ANRs to be captured as soon
 as possible.
 
 ```kotlin
 internal class MyApplication : Application() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
+    override fun onCreate() {
+        super.onCreate()
 
         // Do your exporter setup before starting the SDK
 
@@ -83,7 +83,7 @@ For details about the features the Embrace Android SDK supports, refer to our [f
 
 ## Support 
 
-We appreciate any feedback you have on the SDK and the APIs that is provides. To contribute to this project please see our [Contribution Guidelines](https://github.com/embrace-io/embrace-android-sdk/blob/master/CONTRIBUTING.md) there you'll be able to submit a feature request, create a bug report, or submit a pull request.
+We appreciate any feedback you have on the SDK and the APIs that it provides. To contribute to this project, please see our [Contribution Guidelines](https://github.com/embrace-io/embrace-android-sdk/blob/master/CONTRIBUTING.md). There, you'll be able to submit a feature request, create a bug report, or submit a pull request.
 
 For urgent matters (such as outages) or issues concerning the Embrace service or UI reach out in our [Community Slack](https://join.slack.com/t/embraceio-community/shared_invite/zt-ywr4jhzp-DLROX0ndN9a0soHMf6Ksow) for direct, faster assistance.
 

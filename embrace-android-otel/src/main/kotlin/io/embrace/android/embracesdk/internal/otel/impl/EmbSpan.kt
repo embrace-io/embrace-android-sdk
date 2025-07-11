@@ -1,11 +1,17 @@
 package io.embrace.android.embracesdk.internal.otel.impl
 
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
+import io.embrace.android.embracesdk.internal.otel.toOtelKotlin
+import io.embrace.android.embracesdk.internal.payload.Attribute
+import io.embrace.android.embracesdk.internal.payload.Span.Status
 import io.embrace.opentelemetry.kotlin.Clock
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanContext
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaTraceFlags
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaTraceState
 import io.embrace.opentelemetry.kotlin.attributes.AttributeContainer
 import io.embrace.opentelemetry.kotlin.k2j.tracing.SpanContextAdapter
+import io.embrace.opentelemetry.kotlin.k2j.tracing.convertToOtelJava
 import io.embrace.opentelemetry.kotlin.tracing.StatusCode
 import io.embrace.opentelemetry.kotlin.tracing.model.Link
 import io.embrace.opentelemetry.kotlin.tracing.model.Span
@@ -70,16 +76,16 @@ class EmbSpan(
     }
 
     override fun addLink(spanContext: SpanContext, action: AttributeContainer.() -> Unit) {
-        TODO("Not yet implemented")
+        val attrs = EmbAttributeContainer().apply(action).attributes()
+        impl.addLink(spanContext.convertToOtelJava(), attrs)
     }
 
     override fun attributes(): Map<String, Any> {
-        val attrs = impl.snapshot()?.attributes?.filter { it.key == null || it.data == null }
-        return attrs?.associate { Pair(checkNotNull(it.key), checkNotNull(it.data)) } ?: emptyMap()
+        return impl.attributes()
     }
 
     override var name: String
-        get() = impl.snapshot()?.name ?: ""
+        get() = impl.name()
         set(value) {
             impl.updateName(value)
         }
@@ -88,22 +94,50 @@ class EmbSpan(
         get() = impl.parent?.spanContext?.let(::SpanContextAdapter)
 
     override val spanKind: SpanKind
-        get() = TODO("Not yet implemented")
+        get() = impl.spanKind
 
     override val startTimestamp: Long
         get() = impl.getStartTimeMs() ?: 0
 
     override var status: StatusCode
-        get() = TODO("Not yet implemented")
+        get() = impl.status.toOtelKotlin()
         set(value) {
             impl.setStatus(value)
         }
 
-    override fun events(): List<SpanEvent> {
-        TODO("Not yet implemented")
+    override fun events(): List<SpanEvent> = impl.events().map {
+        EmbSpanEvent(
+            it.name ?: "",
+            it.timestampNanos ?: 0,
+            it.attributes.toAttributeContainer()
+        )
     }
 
-    override fun links(): List<Link> {
-        TODO("Not yet implemented")
+    override fun links(): List<Link> = impl.links().map {
+        EmbLink(it.retrieveSpanContext(), it.attributes.toAttributeContainer())
+    }
+
+    private fun List<Attribute>?.toAttributeContainer(): AttributeContainer {
+        val raw = this ?: emptyList()
+        val attrs = raw.filter { entry -> entry.key == null || entry.data == null }
+        val map = attrs.associate { entry ->
+            Pair(checkNotNull(entry.key), checkNotNull(entry.data))
+        }
+        return EmbAttributeContainer(map.toMutableMap())
+    }
+
+    private fun io.embrace.android.embracesdk.internal.payload.Link.retrieveSpanContext(): SpanContext {
+        return OtelJavaSpanContext.create(
+            checkNotNull(traceId),
+            checkNotNull(spanId),
+            OtelJavaTraceFlags.getDefault(),
+            OtelJavaTraceState.getDefault()
+        ).toOtelKotlin()
+    }
+
+    private fun Status.toOtelKotlin() = when (this) {
+        Status.UNSET -> StatusCode.Unset
+        Status.ERROR -> StatusCode.Error(null)
+        Status.OK -> StatusCode.Ok
     }
 }

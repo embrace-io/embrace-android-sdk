@@ -17,10 +17,11 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.ExampleApp"
         tools:targetApi="31">
+        <profileable android:shell="true"/>
+
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:label="@string/app_name"
             android:theme="@style/Theme.ExampleApp">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -40,9 +41,16 @@
         <activity
             android:name=".ui.examples.bytecode.BytecodeFcmPushNotificationActivity"
             android:theme="@style/Theme.ExampleApp" />
+        <activity
+            android:name=".TracingApiActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="io.embrace.android.exampleapp.TRACING_API_ACTIVITY" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
 
-        <service android:name=".ui.examples.bytecode.ExamplePushNotificationService"
-            />
+        <service android:name=".ui.examples.bytecode.ExamplePushNotificationService" />
     </application>
 
 </manifest>

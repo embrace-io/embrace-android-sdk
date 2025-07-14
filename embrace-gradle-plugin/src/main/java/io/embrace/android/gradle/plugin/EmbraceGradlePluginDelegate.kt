@@ -89,8 +89,8 @@ class EmbraceGradlePluginDelegate {
 
         if (enableDesugaring) {
             error(
-                "Desugaring must be enabled when minSdk is < 24, " +
-                    "otherwise devices on Android API version < 24 will fail at runtime.\n" +
+                "Desugaring must be enabled when minSdk is < 26, " +
+                    "otherwise devices on Android API version < 26 will fail at runtime.\n" +
                     "You can enable desugaring by adding the following:\n" +
                     "compileOptions\n" +
                     "{\n" +

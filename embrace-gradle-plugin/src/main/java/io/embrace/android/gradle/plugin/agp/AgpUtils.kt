@@ -5,7 +5,7 @@ import org.gradle.api.tasks.TaskProvider
 
 object AgpUtils {
 
-    private const val MINIMUM_DESUGARING_LEVEL = 23
+    private const val MINIMUM_DESUGARING_LEVEL = 25
     fun isDesugaringRequired(sdkLevel: Int) = sdkLevel <= MINIMUM_DESUGARING_LEVEL
 
     /**

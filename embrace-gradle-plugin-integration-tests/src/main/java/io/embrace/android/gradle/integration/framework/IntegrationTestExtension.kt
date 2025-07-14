@@ -91,7 +91,7 @@ abstract class IntegrationTestExtension(objectFactory: ObjectFactory) {
             defaultConfig {
                 applicationId = "com.example.app"
                 targetSdk = 36
-                minSdk = 24
+                minSdk = 26
                 versionCode = 1
                 versionName = "1.0"
             }

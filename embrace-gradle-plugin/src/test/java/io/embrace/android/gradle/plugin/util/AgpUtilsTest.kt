@@ -12,13 +12,13 @@ import org.junit.Test
 class AgpUtilsTest {
 
     @Test
-    fun `desugaring should not be required for min sdk level greater than 23`() {
-        assertFalse(AgpUtils.isDesugaringRequired(24))
+    fun `desugaring should not be required for min sdk level greater than 25`() {
+        assertFalse(AgpUtils.isDesugaringRequired(26))
     }
 
     @Test
-    fun `desugaring should be required for min sdk level less than 24`() {
-        assertTrue(AgpUtils.isDesugaringRequired(23))
+    fun `desugaring should be required for min sdk level less than 26`() {
+        assertTrue(AgpUtils.isDesugaringRequired(25))
     }
 
     @Test

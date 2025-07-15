@@ -109,14 +109,14 @@ class EmbraceGradlePluginDelegate {
     private fun verifySemConvWorkaround(project: Project, agpWrapper: AgpWrapper) {
         val minSdk = agpWrapper.minSdk ?: return
 
-        if (minSdk < 24) {
+        if (minSdk < 26) {
             if (agpWrapper.version <= AgpVersion.AGP_8_3_0 ||
                 project.getProperty("android.useFullClasspathForDexingTransform").orNull != "true"
             ) {
                 error(
-                    "To use the Embrace SDK when your minSdk is lower than 24 " +
+                    "To use the Embrace SDK when your minSdk is lower than 26 " +
                         "you must use AGP 8.3.0+ and add android.useFullClasspathForDexingTransform=true to " +
-                        "gradle.properties.\nAlternatively you can set your minSdk to 24 or higher.\n" +
+                        "gradle.properties.\nAlternatively you can set your minSdk to 26 or higher.\n" +
                         "This avoids a desugaring bug in old AGP versions that will lead to runtime crashes on old devices.\n" +
                         "For the full context for this workaround, please see the following issue:" +
                         " https://issuetracker.google.com/issues/230454566#comment18"

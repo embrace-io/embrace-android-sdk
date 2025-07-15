@@ -3,7 +3,9 @@ package io.embrace.android.embracesdk.internal.otel.spans
 import io.embrace.android.embracesdk.internal.otel.attrs.EmbraceAttribute
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.embrace.android.embracesdk.internal.otel.schema.LinkType
+import io.embrace.android.embracesdk.internal.payload.Link
 import io.embrace.android.embracesdk.internal.payload.Span
+import io.embrace.android.embracesdk.internal.payload.SpanEvent
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaContext
@@ -11,10 +13,12 @@ import io.embrace.opentelemetry.kotlin.aliases.OtelJavaContextKey
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaImplicitContextKeyed
 import io.embrace.opentelemetry.kotlin.tracing.StatusCode
 import io.embrace.opentelemetry.kotlin.tracing.model.SpanContext
+import io.embrace.opentelemetry.kotlin.tracing.model.SpanKind
 
 /**
  * An [EmbraceSpan] that has additional functionality to be used internally by the SDK
  */
+@OptIn(ExperimentalApi::class)
 interface EmbraceSdkSpan : EmbraceSpan, OtelJavaImplicitContextKeyed {
 
     /**
@@ -85,6 +89,36 @@ interface EmbraceSdkSpan : EmbraceSpan, OtelJavaImplicitContextKeyed {
     ): Boolean
 
     override fun storeInContext(context: OtelJavaContext): OtelJavaContext = context.with(embraceSpanContextKey, this)
+
+    /**
+     * Returns a read-only view of the attributes
+     */
+    fun attributes(): Map<String, Any>
+
+    /**
+     * Retrieves the span name
+     */
+    fun name(): String
+
+    /**
+     * Retrieves the span kind
+     */
+    val spanKind: SpanKind
+
+    /**
+     * Retrieves the span status
+     */
+    val status: Span.Status
+
+    /**
+     * Retrieves the span events
+     */
+    fun events(): List<SpanEvent>
+
+    /**
+     * Retrieves the span links
+     */
+    fun links(): List<Link>
 }
 
 fun OtelJavaContext.getEmbraceSpan(): EmbraceSdkSpan? = get(embraceSpanContextKey)

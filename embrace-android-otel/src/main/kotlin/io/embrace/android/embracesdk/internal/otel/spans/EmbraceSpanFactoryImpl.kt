@@ -19,6 +19,8 @@ import io.embrace.android.embracesdk.internal.otel.sdk.setEmbraceAttribute
 import io.embrace.android.embracesdk.internal.otel.sdk.toStringMap
 import io.embrace.android.embracesdk.internal.otel.toEmbracePayload
 import io.embrace.android.embracesdk.internal.payload.Attribute
+import io.embrace.android.embracesdk.internal.payload.Link
+import io.embrace.android.embracesdk.internal.payload.SpanEvent
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.truncatedStacktraceText
 import io.embrace.android.embracesdk.spans.AutoTerminationMode
@@ -36,6 +38,7 @@ import io.embrace.opentelemetry.kotlin.tracing.StatusCode
 import io.embrace.opentelemetry.kotlin.tracing.Tracer
 import io.embrace.opentelemetry.kotlin.tracing.model.Span
 import io.embrace.opentelemetry.kotlin.tracing.model.SpanContext
+import io.embrace.opentelemetry.kotlin.tracing.model.SpanKind
 import io.opentelemetry.context.ImplicitContextKeyed
 import io.opentelemetry.semconv.ExceptionAttributes
 import java.util.Queue
@@ -108,7 +111,7 @@ private class EmbraceSpanImpl(
     private var spanEndTimeMs: Long? = null
 
     @Volatile
-    private var status = io.embrace.android.embracesdk.internal.payload.Span.Status.UNSET
+    override var status = io.embrace.android.embracesdk.internal.payload.Span.Status.UNSET
     private var updatedName: String? = null
 
     private val systemEvents = ConcurrentLinkedQueue<EmbraceSpanEvent>()
@@ -338,21 +341,18 @@ private class EmbraceSpanImpl(
     }
 
     override fun snapshot(): io.embrace.android.embracesdk.internal.payload.Span? {
-        val redactedCustomEvents = customEvents.map { it.copy(attributes = it.attributes.redactIfSensitive()) }
-        val redactedCustomLinks = customLinks.map { it.copy(attributes = it.attributes.redactIfSensitive()) }
         return if (canSnapshot()) {
             io.embrace.android.embracesdk.internal.payload.Span(
                 traceId = traceId,
                 spanId = spanId,
                 parentSpanId = parent?.spanId ?: OtelIds.invalidSpanId,
-                name = getSpanName(),
+                name = name(),
                 startTimeNanos = spanStartTimeMs?.millisToNanos(),
                 endTimeNanos = spanEndTimeMs?.millisToNanos(),
                 status = status,
-                events = systemEvents.map(EmbraceSpanEvent::toEmbracePayload) +
-                    redactedCustomEvents.map(EmbraceSpanEvent::toEmbracePayload),
+                events = events(),
                 attributes = getAttributesPayload(),
-                links = (systemLinks + redactedCustomLinks).map(EmbraceLinkData::toEmbracePayload)
+                links = links()
             )
         } else {
             null
@@ -376,6 +376,30 @@ private class EmbraceSpanImpl(
     override fun removeSystemAttribute(key: String) {
         systemAttributes.remove(key)
         spanRepository.notifySpanUpdate()
+    }
+
+    override fun attributes(): Map<String, Any> {
+        val raw = getAttributesPayload()
+        val attrs = raw.filter { it.key == null || it.data == null }
+        return attrs.associate { Pair(checkNotNull(it.key), checkNotNull(it.data)) }
+    }
+
+    override fun name(): String = synchronized(startedSpan) {
+        updatedName ?: otelSpanCreator.spanStartArgs.spanName
+    }
+
+    override val spanKind: SpanKind
+        get() = startedSpan.get()?.spanKind ?: SpanKind.INTERNAL
+
+    override fun events(): List<SpanEvent> {
+        val redactedCustomEvents = customEvents.map { it.copy(attributes = it.attributes.redactIfSensitive()) }
+        return systemEvents.map(EmbraceSpanEvent::toEmbracePayload) +
+            redactedCustomEvents.map(EmbraceSpanEvent::toEmbracePayload)
+    }
+
+    override fun links(): List<Link> {
+        val redactedCustomLinks = customLinks.map { it.copy(attributes = it.attributes.redactIfSensitive()) }
+        return (systemLinks + redactedCustomLinks).map(EmbraceLinkData::toEmbracePayload)
     }
 
     private fun getAttributesPayload(): List<Attribute> =
@@ -406,8 +430,6 @@ private class EmbraceSpanImpl(
     }
 
     private fun spanStarted() = startedSpan.get() != null
-
-    private fun getSpanName() = synchronized(startedSpan) { updatedName ?: otelSpanCreator.spanStartArgs.spanName }
 
     private fun Map<String, String>.redactIfSensitive(): Map<String, String> {
         return mapValues {

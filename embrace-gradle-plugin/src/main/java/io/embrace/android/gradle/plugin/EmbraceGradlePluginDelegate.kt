@@ -110,7 +110,7 @@ class EmbraceGradlePluginDelegate {
         val minSdk = agpWrapper.minSdk ?: return
 
         if (minSdk < 26) {
-            if (agpWrapper.version <= AgpVersion.AGP_8_3_0 ||
+            if (agpWrapper.version < AgpVersion.AGP_8_3_0 ||
                 project.getProperty("android.useFullClasspathForDexingTransform").orNull != "true"
             ) {
                 error(

@@ -46,7 +46,6 @@ class FakeOpenTelemetryModule(
                 sdkVersion,
                 systemInfo
             ),
-            FakeSpanService(),
         )
     override val spanService: SpanService
         get() = FakeSpanService()

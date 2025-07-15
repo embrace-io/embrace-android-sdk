@@ -18,7 +18,6 @@ import io.embrace.android.embracesdk.internal.otel.logs.LogSink
 import io.embrace.android.embracesdk.internal.otel.logs.LogSinkImpl
 import io.embrace.android.embracesdk.internal.otel.sdk.OtelSdkWrapper
 import io.embrace.android.embracesdk.internal.otel.spans.SpanSinkImpl
-import io.embrace.android.embracesdk.internal.otel.spans.UninitializedSdkSpanService
 import io.embrace.android.embracesdk.internal.session.id.SessionData
 import io.embrace.android.embracesdk.internal.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateListener
@@ -56,8 +55,7 @@ class LoggingApiBenchmarks {
                 systemInfo = SystemInfo(),
                 sessionIdProvider = { "fake-session-id" },
                 processIdentifierProvider = { "fake-pid" }
-            ),
-            spanService = UninitializedSdkSpanService()
+            )
         )
         logWriter = LogWriterImpl(
             logger = otelSdkWrapper.logger,

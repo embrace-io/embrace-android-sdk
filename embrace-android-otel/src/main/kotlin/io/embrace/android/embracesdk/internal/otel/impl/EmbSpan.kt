@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.otel.impl
 
+import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.otel.toOtelKotlin
 import io.embrace.android.embracesdk.internal.payload.Attribute
@@ -57,7 +58,7 @@ class EmbSpan(
         setStringAttribute(key, value.toString())
     }
 
-    override fun end(): Unit = end(timestamp = clock.now())
+    override fun end(): Unit = end(timestamp = clock.now().nanosToMillis())
 
     override fun end(timestamp: Long) {
         if (isRecording()) {
@@ -102,7 +103,9 @@ class EmbSpan(
     override var status: StatusCode
         get() = impl.status.toOtelKotlin()
         set(value) {
-            impl.setStatus(value)
+            if (isRecording()) {
+                impl.setStatus(value)
+            }
         }
 
     override fun events(): List<SpanEvent> = impl.events().map {

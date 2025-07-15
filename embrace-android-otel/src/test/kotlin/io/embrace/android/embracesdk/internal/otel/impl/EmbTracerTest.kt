@@ -18,14 +18,14 @@ internal class EmbTracerTest {
 
     private lateinit var spanService: FakeSpanService
     private lateinit var sdkTracer: FakeTracer
-    private lateinit var tracer: EmbOtelJavaTracer
+    private lateinit var tracer: EmbTracer
 
     @Before
     fun setup() {
         spanService = FakeSpanService()
         sdkTracer = FakeTracer()
-        tracer = EmbOtelJavaTracer(
-            sdkTracer = sdkTracer,
+        tracer = EmbTracer(
+            impl = sdkTracer,
             spanService = spanService,
             clock = openTelemetryClock,
         )
@@ -33,7 +33,7 @@ internal class EmbTracerTest {
 
     @Test
     fun `check span generated with default parameters`() {
-        tracer.spanBuilder("foo").startSpan().end()
+        tracer.createSpan("foo").end()
         val fakeCreatedSpan = spanService.createdSpans.single()
         with(fakeCreatedSpan) {
             assertNull(parent)

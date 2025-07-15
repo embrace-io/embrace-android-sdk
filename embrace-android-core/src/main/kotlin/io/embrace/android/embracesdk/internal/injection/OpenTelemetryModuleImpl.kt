@@ -61,8 +61,7 @@ internal class OpenTelemetryModuleImpl(
             try {
                 OtelSdkWrapper(
                     otelClock = openTelemetryClock,
-                    configuration = otelSdkConfig,
-                    spanService = spanService
+                    configuration = otelSdkConfig
                 )
             } catch (exc: NoClassDefFoundError) {
                 throw LinkageError(

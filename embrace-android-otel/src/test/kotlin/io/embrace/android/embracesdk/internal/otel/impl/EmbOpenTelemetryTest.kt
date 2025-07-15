@@ -1,32 +1,31 @@
 package io.embrace.android.embracesdk.internal.otel.impl
 
-import io.embrace.android.embracesdk.fakes.FakeOtelJavaTracerProvider
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaContextPropagators
+import io.embrace.android.embracesdk.fakes.FakeTracerProvider
+import io.embrace.opentelemetry.kotlin.ExperimentalApi
+import io.embrace.opentelemetry.kotlin.OpenTelemetryInstance
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaLoggerProvider
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaOpenTelemetry
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaTracerProvider
-import io.opentelemetry.api.metrics.MeterProvider
+import io.embrace.opentelemetry.kotlin.noop
 import org.junit.Assert.assertNotEquals
-import org.junit.Assert.assertSame
 import org.junit.Before
 import org.junit.Test
 
+@OptIn(ExperimentalApi::class)
 internal class EmbOpenTelemetryTest {
-    private lateinit var tracerProvider: FakeOtelJavaTracerProvider
-    private lateinit var openTelemetry: EmbOtelJavaOpenTelemetry
+    private lateinit var tracerProvider: FakeTracerProvider
+    private lateinit var openTelemetry: EmbOpenTelemetry
 
     @Before
     fun setup() {
-        tracerProvider = FakeOtelJavaTracerProvider()
-        openTelemetry = EmbOtelJavaOpenTelemetry { tracerProvider }
+        tracerProvider = FakeTracerProvider()
+        openTelemetry = EmbOpenTelemetry(OpenTelemetryInstance.noop()) { tracerProvider }
     }
 
     @Test
     fun `tracer provider is a real implementation`() {
         assertNotEquals(OtelJavaOpenTelemetry.noop(), openTelemetry)
         assertNotEquals(OtelJavaTracerProvider.noop(), openTelemetry.tracerProvider)
-        assertSame(MeterProvider.noop(), openTelemetry.meterProvider)
-        assertSame(OtelJavaLoggerProvider.noop(), openTelemetry.logsBridge)
-        assertSame(OtelJavaContextPropagators.noop(), openTelemetry.propagators)
+        assertNotEquals(OtelJavaLoggerProvider.noop(), openTelemetry.loggerProvider)
     }
 }

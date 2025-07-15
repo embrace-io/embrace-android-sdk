@@ -15,7 +15,6 @@ import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.otel.spans.SpanServiceImpl
 import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
 import io.embrace.android.embracesdk.internal.otel.spans.SpanSinkImpl
-import io.embrace.android.embracesdk.internal.otel.spans.UninitializedSdkSpanService
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -53,8 +52,7 @@ class TracingApiBenchmarks {
                 systemInfo = SystemInfo(),
                 sessionIdProvider = { "fake-session-id" },
                 processIdentifierProvider = { "fake-pid" }
-            ),
-            spanService = UninitializedSdkSpanService()
+            )
         )
         spansService = SpanServiceImpl(
             spanRepository = spanRepository,

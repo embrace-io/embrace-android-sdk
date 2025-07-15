@@ -5,7 +5,6 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeOtelJavaLogRecordExporter
 import io.embrace.android.embracesdk.fakes.FakeOtelJavaSpanExporter
 import io.embrace.android.embracesdk.fakes.FakeOtelKotlinClock
-import io.embrace.android.embracesdk.fakes.FakeSpanService
 import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.otel.config.OtelSdkConfig
 import io.embrace.android.embracesdk.internal.otel.logs.LogSink
@@ -48,14 +47,14 @@ internal class OpenTelemetrySdkTest {
 
         sdk = OtelSdkWrapper(
             otelClock = FakeOtelKotlinClock(FakeClock()),
-            configuration = configuration,
-            spanService = FakeSpanService()
+            configuration = configuration
         )
     }
 
     @Test
     fun `check resource added by sdk tracer`() {
-        sdk.sdkTracer.createSpan("test").end()
+        val span = sdk.sdkTracer.createSpan("test")
+        span.end() // FIXME: end does not propagate to spanService?
         spanExporter.exportedSpans.single().resource.assertExpectedAttributes(
             expectedServiceName = configuration.sdkName,
             expectedServiceVersion = configuration.sdkVersion,

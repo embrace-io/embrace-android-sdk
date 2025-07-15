@@ -4,7 +4,6 @@ import io.embrace.android.embracesdk.arch.assertIsTypePerformance
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeEmbraceSpanFactory
 import io.embrace.android.embracesdk.fakes.FakeOtelKotlinClock
-import io.embrace.android.embracesdk.fakes.FakeSpanService
 import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.otel.config.OtelSdkConfig
@@ -51,8 +50,7 @@ internal class EmbraceSpanServiceTest {
         )
         val otelSdkWrapper = OtelSdkWrapper(
             otelClock = fakeClock,
-            configuration = otelSdkConfig,
-            spanService = FakeSpanService()
+            configuration = otelSdkConfig
         )
         val dataValidator = DataValidator()
 

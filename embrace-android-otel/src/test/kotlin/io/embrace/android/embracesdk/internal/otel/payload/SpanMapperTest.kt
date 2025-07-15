@@ -22,6 +22,7 @@ import io.embrace.opentelemetry.kotlin.k2j.tracing.convertToOtelJava
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
+@OptIn(ExperimentalApi::class)
 internal class SpanMapperTest {
 
     @OptIn(ExperimentalApi::class)

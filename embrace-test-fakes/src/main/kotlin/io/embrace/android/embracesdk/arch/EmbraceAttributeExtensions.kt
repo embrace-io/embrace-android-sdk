@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalApi::class)
+
 package io.embrace.android.embracesdk.arch
 
 import io.embrace.android.embracesdk.fakes.LogEventData

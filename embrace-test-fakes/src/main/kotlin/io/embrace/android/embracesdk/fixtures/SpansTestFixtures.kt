@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalApi::class)
+
 package io.embrace.android.embracesdk.fixtures
 
 import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl

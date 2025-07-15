@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalApi::class)
+
 package io.embrace.android.embracesdk.internal
 
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis

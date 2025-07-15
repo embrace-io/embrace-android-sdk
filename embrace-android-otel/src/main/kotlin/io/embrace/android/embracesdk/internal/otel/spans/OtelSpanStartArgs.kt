@@ -6,14 +6,16 @@ import io.embrace.android.embracesdk.internal.otel.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.otel.sdk.toEmbraceObjectName
 import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
+import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaContext
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpan
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanContext
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanKind
+import io.embrace.opentelemetry.kotlin.tracing.model.SpanKind
 
 /**
  * Wrapper for the SpanBuilder that stores the input data so that they can be accessed
  */
+@OptIn(ExperimentalApi::class)
 class OtelSpanStartArgs(
     name: String,
     type: EmbType,
@@ -31,7 +33,7 @@ class OtelSpanStartArgs(
     }
 
     var startTimeMs: Long? = null
-    var spanKind: OtelJavaSpanKind? = null
+    var spanKind: SpanKind = SpanKind.INTERNAL
 
     val embraceAttributes = mutableListOf<EmbraceAttribute>(type)
     val customAttributes = mutableMapOf<String, String>()

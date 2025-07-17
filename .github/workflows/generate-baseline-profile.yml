@@ -38,11 +38,12 @@ jobs:
         uses: gradle/actions/setup-gradle@ac638b010cf58a27ee6c972d7336334ccaf61c96 # v4.4.1
 
       - name: Read version
+        id: sdk_version
         run: |
           # Read the version from gradle.properties
           version=$(grep '^version' gradle.properties | cut -d'=' -f2 | tr -d '[:space:]')
-          # Set the version as an environment variable
-          echo "ANDROID_SDK_VERSION=${version}" >> "$GITHUB_ENV"
+          # Set the version as a step output
+          echo "sdk_version=${version}" >> "$GITHUB_OUTPUT"
 
       - name: Publish to Maven local
         run: ./gradlew pTML
@@ -55,6 +56,12 @@ jobs:
           path: ./android-sdk-benchmark
           token: ${{ secrets.GH_ANDROID_SDK_TOKEN }} # NOTE: read android-sdk-benchmark
           persist-credentials: false
+
+      - name: Update Android SDK Benchmark version
+        working-directory: android-sdk-benchmark
+        run: |
+          # Update the embrace_version in gradle.properties
+          sed -i 's/embrace_version=.*/embrace_version=${{ steps.sdk_version.outputs.sdk_version }}/' gradle.properties
 
       - name: Clean Managed Devices
         working-directory: android-sdk-benchmark

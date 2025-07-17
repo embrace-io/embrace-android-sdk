@@ -71,11 +71,6 @@ interface EmbraceSdkSpan : EmbraceSpan, OtelJavaImplicitContextKeyed {
      */
     fun removeSystemEvents(type: EmbType): Boolean
 
-    /**
-     * Set the [StatusCode] and status description of the wrapped Span
-     */
-    fun setStatus(statusCode: StatusCode, description: String = "")
-
     fun getStartTimeMs(): Long?
 
     /**
@@ -106,9 +101,9 @@ interface EmbraceSdkSpan : EmbraceSpan, OtelJavaImplicitContextKeyed {
     val spanKind: SpanKind
 
     /**
-     * Retrieves the span status
+     * The span status
      */
-    val status: Span.Status
+    var status: StatusCode
 
     /**
      * Retrieves the span events

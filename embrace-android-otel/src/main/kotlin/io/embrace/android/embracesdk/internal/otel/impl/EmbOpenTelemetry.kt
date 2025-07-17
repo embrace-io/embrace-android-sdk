@@ -11,9 +11,8 @@ import io.embrace.opentelemetry.kotlin.tracing.TracerProvider
 @OptIn(ExperimentalApi::class)
 class EmbOpenTelemetry(
     private val impl: OpenTelemetry,
-    override val clock: Clock,
     traceProviderSupplier: () -> TracerProvider,
 ) : OpenTelemetry by impl {
-
+    override val clock: Clock = impl.clock
     override val tracerProvider: TracerProvider = traceProviderSupplier()
 }

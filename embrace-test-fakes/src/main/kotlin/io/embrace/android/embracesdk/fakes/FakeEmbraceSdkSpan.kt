@@ -52,8 +52,7 @@ class FakeEmbraceSdkSpan(
     private var sdkSpan: OtelJavaSpan? = null
     var spanStartTimeMs: Long? = null
     var spanEndTimeMs: Long? = null
-    override var status: Span.Status = Span.Status.UNSET
-    var statusDescription: String = ""
+    override var status: StatusCode = StatusCode.Unset
     var errorCode: ErrorCode? = null
     val attributes: MutableMap<String, String> = mutableMapOf(type.asPair())
     val events: ConcurrentLinkedQueue<EmbraceSpanEvent> = ConcurrentLinkedQueue()
@@ -92,10 +91,10 @@ class FakeEmbraceSdkSpan(
         if (isRecording) {
             this.errorCode = errorCode
             if (errorCode != null) {
-                setStatus(StatusCode.Error(null))
+                status = StatusCode.Error(null)
             }
 
-            if (status == Span.Status.ERROR) {
+            if (status is StatusCode.Error) {
                 val error = errorCode?.fromErrorCode() ?: ErrorCodeAttribute.Failure
                 setSystemAttribute(error.key.name, error.value)
             }
@@ -127,11 +126,6 @@ class FakeEmbraceSdkSpan(
     override fun removeSystemEvents(type: EmbType): Boolean {
         events.removeAll { it.hasEmbraceAttribute(type) }
         return true
-    }
-
-    override fun setStatus(statusCode: StatusCode, description: String) {
-        status = statusCode.toEmbracePayload()
-        statusDescription = description
     }
 
     override fun getStartTimeMs(): Long? = spanStartTimeMs
@@ -169,7 +163,7 @@ class FakeEmbraceSdkSpan(
                 name = name,
                 startTimeNanos = spanStartTimeMs?.millisToNanos(),
                 endTimeNanos = spanEndTimeMs?.millisToNanos(),
-                status = status,
+                status = status.toEmbracePayload(),
                 events = events.map(EmbraceSpanEvent::toEmbracePayload),
                 attributes = attributes.toEmbracePayload(),
                 links = links.toList().map { it.toEmbracePayload() }

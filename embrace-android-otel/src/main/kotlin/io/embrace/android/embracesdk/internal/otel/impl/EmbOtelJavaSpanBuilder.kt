@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.otel.impl
 import io.embrace.android.embracesdk.internal.otel.spans.OtelSpanCreator
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.opentelemetry.kotlin.Clock
+import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaAttributeKey
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaAttributes
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaContext
@@ -12,6 +13,7 @@ import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanContext
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanKind
 import java.util.concurrent.TimeUnit
 
+@OptIn(ExperimentalApi::class)
 class EmbOtelJavaSpanBuilder(
     private val otelSpanCreator: OtelSpanCreator,
     private val spanService: SpanService,

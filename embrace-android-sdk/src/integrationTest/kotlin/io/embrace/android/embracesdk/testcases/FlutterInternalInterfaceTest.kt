@@ -11,6 +11,7 @@ import io.embrace.android.embracesdk.internal.EmbraceInternalApi
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
+import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.logging.model.SeverityNumber
 import io.opentelemetry.semconv.ExceptionAttributes
 import org.junit.Assert.assertEquals
@@ -23,6 +24,7 @@ import org.junit.runner.RunWith
 /**
  * Validation of the internal API
  */
+@OptIn(ExperimentalApi::class)
 @RunWith(AndroidJUnit4::class)
 internal class FlutterInternalInterfaceTest {
 

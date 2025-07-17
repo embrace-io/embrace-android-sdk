@@ -7,6 +7,7 @@ import io.embrace.opentelemetry.kotlin.k2j.tracing.SpanContextAdapter
 import io.embrace.opentelemetry.kotlin.tracing.StatusCode
 import io.embrace.opentelemetry.kotlin.tracing.model.SpanContext
 
+@OptIn(ExperimentalApi::class)
 fun StatusCode.toEmbracePayload(): Status = when (this) {
     is StatusCode.Error -> Status.ERROR
     StatusCode.Ok -> Status.OK

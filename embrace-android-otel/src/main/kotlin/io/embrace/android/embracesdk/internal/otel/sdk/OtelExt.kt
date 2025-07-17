@@ -70,6 +70,7 @@ fun OtelJavaSpan.setEmbraceAttribute(embraceAttribute: EmbraceAttribute): OtelJa
 fun Span.setEmbraceAttribute(embraceAttribute: EmbraceAttribute) =
     setStringAttribute(embraceAttribute.key.name, embraceAttribute.value)
 
+@OptIn(ExperimentalApi::class)
 fun OtelJavaSpanData.toEmbraceSpanData(): EmbraceSpanData = EmbraceSpanData(
     traceId = spanContext.traceId,
     spanId = spanContext.spanId,

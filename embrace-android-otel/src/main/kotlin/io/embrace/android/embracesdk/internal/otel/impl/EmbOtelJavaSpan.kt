@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.otel.impl
 import io.embrace.android.embracesdk.internal.otel.sdk.toStringMap
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.opentelemetry.kotlin.Clock
+import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaAttributeKey
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaAttributes
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaContext
@@ -13,6 +14,7 @@ import io.embrace.opentelemetry.kotlin.aliases.OtelJavaStatusCode
 import io.embrace.opentelemetry.kotlin.k2j.tracing.convertToOtelKotlin
 import java.util.concurrent.TimeUnit
 
+@OptIn(ExperimentalApi::class)
 class EmbOtelJavaSpan(
     private val embraceSpan: EmbraceSdkSpan,
     private val clock: Clock,

@@ -13,12 +13,14 @@ import io.embrace.android.embracesdk.internal.otel.spans.SpanSinkImpl
 import io.embrace.android.embracesdk.internal.otel.spans.hasEmbraceAttribute
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSnapshotType
+import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
 
+@OptIn(ExperimentalApi::class)
 internal class SessionPayloadSourceImplTest {
 
     private lateinit var impl: SessionPayloadSourceImpl

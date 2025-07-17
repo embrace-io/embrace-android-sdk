@@ -13,6 +13,7 @@ import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.utils.getSafeStackTrace
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
+import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSeverity
 import io.embrace.opentelemetry.kotlin.logging.model.SeverityNumber
 import java.util.LinkedList
@@ -22,6 +23,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
+@OptIn(ExperimentalApi::class)
 @RunWith(AndroidJUnit4::class)
 internal class LogFeatureTest {
 

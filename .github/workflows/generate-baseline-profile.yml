@@ -59,9 +59,11 @@ jobs:
 
       - name: Update Android SDK Benchmark version
         working-directory: android-sdk-benchmark
+        env:
+          SDK_VERSION: ${{ steps.sdk_version.outputs.sdk_version }}
         run: |
           # Update the embrace_version in gradle.properties
-          sed -i 's/embrace_version=.*/embrace_version=${{ steps.sdk_version.outputs.sdk_version }}/' gradle.properties
+          sed -i "s/embrace_version=.*/embrace_version=${SDK_VERSION}/" gradle.properties
 
       - name: Clean Managed Devices
         working-directory: android-sdk-benchmark

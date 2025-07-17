@@ -13,6 +13,7 @@ import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.tracing.StatusCode
 
+@OptIn(ExperimentalApi::class)
 fun EmbraceSpanData.toEmbracePayload(): Span = Span(
     traceId = traceId,
     spanId = spanId,
@@ -52,6 +53,7 @@ fun EmbraceLinkData.toEmbracePayload() = Link(
     isRemote = spanContext.isRemote
 )
 
+@OptIn(ExperimentalApi::class)
 fun Span.toEmbracePayload(): EmbraceSpanData {
     return EmbraceSpanData(
         traceId = traceId ?: "",

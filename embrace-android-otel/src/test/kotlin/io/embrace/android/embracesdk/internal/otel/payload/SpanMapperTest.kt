@@ -17,12 +17,14 @@ import io.embrace.android.embracesdk.internal.otel.spans.hasEmbraceAttribute
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.spans.ErrorCode
+import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.k2j.tracing.convertToOtelJava
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
 internal class SpanMapperTest {
 
+    @OptIn(ExperimentalApi::class)
     @Test
     fun toSpan() {
         val input = FakeSpanData.perfSpanCompleted.toEmbraceSpanData()

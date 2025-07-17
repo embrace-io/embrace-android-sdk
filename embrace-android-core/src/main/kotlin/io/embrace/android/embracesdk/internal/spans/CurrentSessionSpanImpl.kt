@@ -27,6 +27,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 
+@OptIn(ExperimentalApi::class)
 internal class CurrentSessionSpanImpl(
     private val openTelemetryClock: Clock,
     private val telemetryService: TelemetryService,

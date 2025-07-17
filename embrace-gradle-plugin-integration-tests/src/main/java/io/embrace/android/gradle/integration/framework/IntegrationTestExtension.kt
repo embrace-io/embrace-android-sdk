@@ -84,6 +84,8 @@ abstract class IntegrationTestExtension(objectFactory: ObjectFactory) {
 
         val android = checkNotNull(project.extensions.findByType(ApplicationExtension::class.java))
 
+        val customMinSdk = project.findProperty("minSdk")?.toString()?.toIntOrNull()
+
         android.apply {
             namespace = "com.example"
             compileSdk = 36
@@ -91,7 +93,7 @@ abstract class IntegrationTestExtension(objectFactory: ObjectFactory) {
             defaultConfig {
                 applicationId = "com.example.app"
                 targetSdk = 36
-                minSdk = 26
+                minSdk = customMinSdk ?: 26
                 versionCode = 1
                 versionName = "1.0"
             }
@@ -109,5 +111,28 @@ abstract class IntegrationTestExtension(objectFactory: ObjectFactory) {
 
     fun configure3rdPartyLibrary(project: Project) = with(project) {
         dependencies.add("implementation", project(":customLibrary"))
+    }
+
+    fun configureDesugaring(project: Project) = with(project) {
+        val android = checkNotNull(project.extensions.findByType(ApplicationExtension::class.java))
+
+        val embrace = checkNotNull(project.extensions.findByType(EmbraceExtension::class.java))
+        embrace.autoAddEmbraceDependencies.set(true)
+
+        repositories.apply {
+            google()
+            mavenCentral()
+            mavenLocal()
+        }
+
+        android.compileOptions {
+            // Enable core library desugaring
+            isCoreLibraryDesugaringEnabled = true
+        }
+
+        dependencies.add(
+            "coreLibraryDesugaring",
+            "com.android.tools:desugar_jdk_libs:2.1.5"
+        )
     }
 }

@@ -7,13 +7,12 @@ import org.gradle.kotlin.dsl.getByType
 
 fun Project.configureProductionModule(
     android: LibraryExtension,
-    module: EmbraceBuildLogicExtension
+    module: EmbraceBuildLogicExtension,
 ) {
     with(project.pluginManager) {
         apply("checkstyle")
         apply("org.jetbrains.kotlinx.kover")
-        apply("maven-publish")
-        apply("signing")
+        apply("com.vanniktech.maven.publish")
         apply("binary-compatibility-validator")
     }
 
@@ -34,16 +33,6 @@ fun Project.configureProductionModule(
         buildTypes {
             named("release") {
                 isMinifyEnabled = false
-            }
-        }
-
-        publishing {
-
-            // create component with single publication variant
-            // https://developer.android.com/studio/publish-library/configure-pub-variants#single-pub-var
-            singleVariant("release") {
-                withSourcesJar()
-                withJavadocJar()
             }
         }
 

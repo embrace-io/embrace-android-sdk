@@ -1,0 +1,66 @@
+name: Upload artifacts to Maven Central
+
+env:
+  ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.SONATYPE_TOKEN_USER }}
+  ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.SONATYPE_TOKEN_USER_PASSWORD }}
+  ORG_GRADLE_PROJECT_signingInMemoryKeyId: ${{ secrets.MAVEN_ANDROID_SIGNING_KEY }}
+  ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.MAVEN_ANDROID_GPG_KEY }}
+  ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.MAVEN_ANDROID_SIGNING_PASSWORD }}
+
+on:
+  workflow_call:
+    inputs:
+      rc_version:
+        required: true
+        type: string
+  workflow_dispatch:
+    inputs:
+      rc_version:
+        description: 'Version to create new RC for. Specify <major.minor.patch>, e.g. 7.1.2'
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    timeout-minutes: 60
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure git
+        run: |
+          git config --global user.name 'embrace-ci[bot]'
+          git config --global user.email 'embrace-ci@users.noreply.github.com'
+
+      - name: Extract base version (major.minor.0)
+        id: base_version
+        env:
+          RC_VERSION: ${{ inputs.rc_version }}
+        run: |
+          base_version=$(echo "$RC_VERSION" | cut -d. -f1,2).0
+          echo "base_version=$base_version" >> $GITHUB_OUTPUT
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: release/${{ steps.base_version.outputs.base_version }}
+          persist-credentials: true
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'adopt'
+          java-version: 17
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Publish to Maven Central
+        run: |
+          ./gradlew publishToMavenCentral --no-configuration-cache --stacktrace
+
+      - name: Publish git tag
+        run: |
+          git push origin :refs/tags/${{ inputs.rc_version }}
+          git tag -f ${{ inputs.rc_version }}
+          git push origin --tags

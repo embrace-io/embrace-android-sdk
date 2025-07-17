@@ -1,4 +1,4 @@
-name: Publish API Docs to GitHub Pages
+name: Publish API docs and record SDK version
 
 on:
   workflow_call:
@@ -20,15 +20,33 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
+      - name: Validate access to version data service
+        uses: embrace-io/public-actions/upload-sdk-version@88167cd1a3fce3418e26c8c842026e6dfab99e41
+        with:
+          platform: 'android'
+          version: ${{ inputs.rc_version }}
+          dryRun: true
+          uploadUrl: ${{ vars.SDK_VERSION_URL }}
+        env:
+          SDK_VERSION_TOKEN: ${{ secrets.SDK_VERSION_TOKEN }}
+
       - name: Configure git
         run: |
           git config --global user.name 'embrace-ci[bot]'
           git config --global user.email 'embrace-ci@users.noreply.github.com'
 
+      - name: Extract base version (major.minor.0)
+        id: base_version
+        env:
+          RC_VERSION: ${{ inputs.rc_version }}
+        run: |
+          base_version=$(echo "$RC_VERSION" | cut -d. -f1,2).0
+          echo "base_version=$base_version" >> $GITHUB_OUTPUT
+
       - name: Checkout SDK
         uses: actions/checkout@v4
         with:
-          ref: release/${{ inputs.rc_version }}
+          ref: release/${{ steps.base_version.outputs.base_version }}
           fetch-depth: 0
 
       - name: Setup Java
@@ -57,3 +75,13 @@ jobs:
           git config --global user.email "embrace-ci@users.noreply.github.com"
           git commit --allow-empty --message 'CI/CD: Automatically generated documentation for ${{ inputs.rc_version }}' docs/
           git push --force origin gh-pages
+
+      - name: Record SDK Version History
+        uses: embrace-io/public-actions/upload-sdk-version@88167cd1a3fce3418e26c8c842026e6dfab99e41
+        with:
+          platform: 'android'
+          version: ${{ inputs.rc_version }}
+          dryRun: false
+          uploadUrl: ${{ vars.SDK_VERSION_URL }}
+        env:
+          SDK_VERSION_TOKEN: ${{ secrets.SDK_VERSION_TOKEN }}

@@ -35,10 +35,18 @@ jobs:
           git config --global user.name 'embrace-ci[bot]'
           git config --global user.email 'embrace-ci@users.noreply.github.com'
 
+      - name: Extract base version (major.minor.0)
+        id: base_version
+        env:
+          RC_VERSION: ${{ inputs.rc_version }}
+        run: |
+          base_version=$(echo "$RC_VERSION" | cut -d. -f1,2).0
+          echo "base_version=$base_version" >> $GITHUB_OUTPUT
+
       - name: Checkout SDK
         uses: actions/checkout@v4
         with:
-          ref: release/${{ inputs.rc_version }}
+          ref: release/${{ steps.base_version.outputs.base_version }}
           fetch-depth: 0
           persist-credentials: true
 

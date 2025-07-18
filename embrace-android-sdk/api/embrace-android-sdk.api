@@ -32,6 +32,7 @@ public final class io/embrace/android/embracesdk/Embrace : io/embrace/android/em
 	public static final fun getInstance ()Lio/embrace/android/embracesdk/Embrace;
 	public fun getLastRunEndState ()Lio/embrace/android/embracesdk/LastRunEndState;
 	public fun getOpenTelemetry ()Lio/opentelemetry/api/OpenTelemetry;
+	public fun getOpenTelemetryKotlin ()Lio/embrace/opentelemetry/kotlin/OpenTelemetry;
 	public fun getSdkCurrentTimeMs ()J
 	public fun getSpan (Ljava/lang/String;)Lio/embrace/android/embracesdk/spans/EmbraceSpan;
 	public fun isStarted ()Z

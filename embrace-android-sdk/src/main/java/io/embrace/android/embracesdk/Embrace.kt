@@ -13,6 +13,8 @@ import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
+import io.embrace.opentelemetry.kotlin.ExperimentalApi
+import io.embrace.opentelemetry.kotlin.OpenTelemetry
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaLogRecordExporter
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaOpenTelemetry
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanExporter
@@ -388,6 +390,15 @@ public class Embrace private constructor(
 
     override fun getOpenTelemetry(): OtelJavaOpenTelemetry {
         return impl.getOpenTelemetry()
+    }
+
+    /**
+     * Returns an [OpenTelemetry] instance that uses the API from opentelemetry-kotlin. This API
+     * is currently experimental and is subject to breaking change without warning.
+     */
+    @ExperimentalApi
+    override fun getOpenTelemetryKotlin(): OpenTelemetry {
+        return impl.getOpenTelemetryKotlin()
     }
 
     override fun setResourceAttribute(key: String, value: String) {

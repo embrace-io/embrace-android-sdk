@@ -10,8 +10,6 @@ import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaContext
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpan
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanContext
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanKind
-import io.embrace.opentelemetry.kotlin.j2k.tracing.convertToOtelKotlin
 import io.embrace.opentelemetry.kotlin.k2j.tracing.SpanContextAdapter
 import io.embrace.opentelemetry.kotlin.tracing.Tracer
 import io.embrace.opentelemetry.kotlin.tracing.model.Span
@@ -39,7 +37,7 @@ class OtelSpanStartArgs(
     }
 
     var startTimeMs: Long? = null
-    var spanKind: OtelJavaSpanKind? = null
+    var spanKind: SpanKind = SpanKind.INTERNAL
 
     val embraceAttributes = mutableListOf<EmbraceAttribute>(type)
     val customAttributes = mutableMapOf<String, String>()
@@ -65,7 +63,7 @@ class OtelSpanStartArgs(
         return tracer.createSpan(
             name = spanName,
             parent = parentSpanContext?.let(::SpanContextAdapter),
-            spanKind = spanKind?.convertToOtelKotlin() ?: SpanKind.INTERNAL,
+            spanKind = spanKind,
             startTimestamp = startTimeMs.millisToNanos()
         )
     }

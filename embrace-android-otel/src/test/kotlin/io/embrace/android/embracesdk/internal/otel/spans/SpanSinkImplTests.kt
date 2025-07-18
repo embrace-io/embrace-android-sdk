@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.otel.spans
 import io.embrace.android.embracesdk.concurrency.SingleThreadTestScheduledExecutor
 import io.embrace.android.embracesdk.fakes.FakeSpanData
 import io.embrace.android.embracesdk.internal.otel.sdk.StoreDataResult
-import io.embrace.android.embracesdk.internal.otel.sdk.toEmbraceSpanData
+import io.embrace.android.embracesdk.internal.toEmbraceSpanData
 import io.mockk.every
 import io.mockk.spyk
 import io.mockk.unmockkObject

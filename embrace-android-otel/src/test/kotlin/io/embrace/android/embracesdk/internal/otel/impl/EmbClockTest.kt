@@ -4,6 +4,7 @@ import android.os.Build.VERSION_CODES.TIRAMISU
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.clock.NormalizedIntervalClock
+import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -11,6 +12,7 @@ import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
 import java.util.concurrent.TimeUnit
 
+@OptIn(ExperimentalApi::class)
 @RunWith(AndroidJUnit4::class)
 internal class EmbClockTest {
 

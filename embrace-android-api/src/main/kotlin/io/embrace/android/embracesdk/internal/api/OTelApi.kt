@@ -1,6 +1,8 @@
 package io.embrace.android.embracesdk.internal.api
 
 import io.embrace.android.embracesdk.annotation.InternalApi
+import io.embrace.opentelemetry.kotlin.ExperimentalApi
+import io.embrace.opentelemetry.kotlin.OpenTelemetry
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaAttributeKey
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaLogRecordExporter
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaOpenTelemetry
@@ -27,6 +29,13 @@ public interface OTelApi {
      * model.
      */
     public fun getOpenTelemetry(): OtelJavaOpenTelemetry
+
+    /**
+     * Returns an [OpenTelemetry] instance that uses the API from opentelemetry-kotlin. This API
+     * is currently experimental and is subject to breaking change without warning.
+     */
+    @ExperimentalApi
+    public fun getOpenTelemetryKotlin(): OpenTelemetry
 
     /**
      * Set an attribute on the resource used by the OTel SDK instance with the given key and String value.

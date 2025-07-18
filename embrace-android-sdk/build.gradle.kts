@@ -95,6 +95,7 @@ dependencies {
 
     implementation(libs.opentelemetry.kotlin.api)
     implementation(libs.opentelemetry.kotlin.api.ext)
+    implementation(libs.opentelemetry.kotlin.noop)
 
     testImplementation(project(":embrace-test-fakes"))
     testImplementation(libs.protobuf.java)

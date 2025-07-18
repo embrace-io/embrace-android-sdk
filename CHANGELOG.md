@@ -1,5 +1,29 @@
 # Embrace Android SDK Changelog
 
+## 7.7.0
+*July 18, 2025*
+
+- Improve cold startup trace by automatically instrumenting `Application.onCreate()` invocation
+- Add `session.id` attribute to all Spans that denotes the session in which a Span started in
+- Use Kotlin OTel API and Java adaptors internally (no visible API or behavior change to SDK users)
+- Require desugaring at build time when minSdk < 26 due to OTel SDK issue
+
+## 7.6.1
+*July 17, 2025*
+
+> This version is identical to 7.6.0 except that the desugaring requirement if Android 7.x is supported will be verified at build time.
+> This patch is unnecessary if you are already running 7.6.0. But if you support Android 7.x, ensure that you have desugaring enabled or else the Embrace SDK will not start for apps running on those Android versions.
+
+- Require desugaring at build time when minSdk < 26 due to OTel SDK issue
+
+## 7.6.0
+*June 25, 2025*
+
+> This version requires desugaring if your app support Android 7.x. Previously, the requirement had been for support of Android 6.x or lower. For more information, please see [Google's documentation here](https://developer.android.com/studio/write/java8-support#library-desugaring)
+
+- Fix a Dexguard issue when bundle and assemble are executed in the same Gradle command
+- Stop tracking ANRs for sessions that start and stay in the background
+
 ## 7.5.0
 *June 9, 2025*
 

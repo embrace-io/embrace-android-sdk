@@ -18,12 +18,13 @@ import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSeverity
 import io.embrace.opentelemetry.kotlin.logging.model.SeverityNumber
-import java.util.LinkedList
-import java.util.Queue
+import junit.framework.Assert.assertEquals
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.util.LinkedList
+import java.util.Queue
 
 @OptIn(ExperimentalApi::class)
 @RunWith(AndroidJUnit4::class)

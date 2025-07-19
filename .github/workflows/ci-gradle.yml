@@ -7,20 +7,37 @@ on:
   release:
     types: [ released ]
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
-
 permissions:
   contents: read
 
+env:
+  DEPOT_RUNNER: depot-ubuntu-24.04-8
+
 jobs:
-  gradle-test:
+  environment:
     runs-on: ubuntu-latest
+    outputs:
+      where: ${{ steps.choose.outputs.where }}
+    steps:
+      - id: choose
+        run: |
+          if [ ${GITHUB_ACTOR} != 'dependabot[bot]' ]; then
+              echo "where=${DEPOT_RUNNER}" >> $GITHUB_OUTPUT
+          else
+              echo "where=ubuntu-latest" >> $GITHUB_OUTPUT
+          fi
+
+  gradle-test:
+    needs: environment
+    runs-on: ${{ needs.environment.outputs.where }}
     timeout-minutes: 60
+    strategy:
+      matrix:
+        gradle-task: ['test', 'assembleRelease']
     steps:
       - name: Free Disk Space (Ubuntu)
         uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be # v1.3.1
+        if: ${{ needs.environment.outputs.where == 'ubuntu-latest' }}
         with:
           tool-cache: false
           # keep android packages
@@ -52,20 +69,27 @@ jobs:
         run: /bin/sh .github/fetch-robolectric-dependencies.sh
 
       # Build the entire project, run the tests, and run all static analysis
-      - name: Gradle Build
+      - name: Gradle (embrace-gradle-plugin-integration-tests:test)
+        if: ${{ matrix.gradle-task == 'test' }}
+        run: ./gradlew embrace-gradle-plugin-integration-tests:test --stacktrace
+
+      - name: Gradle (assembleRelease check -x embrace-gradle-plugin-integration-tests:test)
+        if: ${{ matrix.gradle-task == 'assembleRelease' }}
         run: ./gradlew assembleRelease check -x embrace-gradle-plugin-integration-tests:test --stacktrace
 
       - name: Archive Test Results
         if: ${{ always() }}
         uses: actions/upload-artifact@v4
         with:
-          name: test-results
+          name: test-results-${{ matrix.gradle-task }}
           path: '**/build/reports/tests/**'
 
       - name: Run Kover Code Coverage
+        if: ${{ matrix.gradle-task == 'assembleRelease' }}
         run: ./gradlew koverXmlReportRelease
 
       - uses: codecov/codecov-action@18283e04ce6e62d37312384ff67231eb8fd56d24 # v5.4.3
+        if: ${{ matrix.gradle-task == 'assembleRelease' }}
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: false

@@ -27,7 +27,7 @@ internal class SessionBehaviorImplImplTest {
             assertNull(getSessionComponents())
             assertFalse(isGatingFeatureEnabled())
             assertFalse(isSessionControlEnabled())
-            assertEquals(10, getMaxSessionProperties())
+            assertEquals(100, getMaxSessionProperties())
         }
     }
 
@@ -56,6 +56,13 @@ internal class SessionBehaviorImplImplTest {
             remoteCfg = buildGatingConfig(setOf("crashes", "errors"))
         )
         assertEquals(setOf("crashes", "errors"), behavior.getFullSessionEvents())
+    }
+
+    @Test
+    fun `remote session properties limit is capped to 200`() {
+        with(createSessionBehavior(remoteCfg = RemoteConfig(maxSessionProperties = 1000))) {
+            assertEquals(200, getMaxSessionProperties())
+        }
     }
 
     private fun buildGatingConfig(events: Set<String>) = RemoteConfig(

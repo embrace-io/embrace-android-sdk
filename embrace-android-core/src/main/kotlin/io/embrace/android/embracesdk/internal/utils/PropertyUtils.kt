@@ -1,33 +1,14 @@
 package io.embrace.android.embracesdk.internal.utils
 
-import android.os.Parcelable
-import java.io.Serializable
-
-/**
- * Utility to for sanitizing user-supplied properties.
- */
 object PropertyUtils {
 
-    const val MAX_PROPERTY_SIZE: Int = 50
+    private const val END_CHARS = "..."
 
-    fun sanitizeProperties(properties: Map<String, Any>?, bypassPropertyLimit: Boolean = false): Map<String, Any> {
-        return if (properties == null) {
-            emptyMap()
-        } else {
-            runCatching {
-                if (bypassPropertyLimit) {
-                    properties.entries
-                } else {
-                    properties.entries.take(MAX_PROPERTY_SIZE)
-                }.associate { Pair(it.key, checkIfSerializable(it.value)) }
-            }.getOrDefault(emptyMap())
+    fun truncate(value: String, maxLength: Int): String {
+        if (value.length <= maxLength) {
+            return value
         }
-    }
 
-    private fun checkIfSerializable(value: Any): Any {
-        if (!(value is Parcelable || value is Serializable)) {
-            return "not serializable"
-        }
-        return value
+        return "${value.take(maxLength - 3)}$END_CHARS"
     }
 }

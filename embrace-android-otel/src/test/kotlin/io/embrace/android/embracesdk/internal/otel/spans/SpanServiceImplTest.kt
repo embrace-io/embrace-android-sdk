@@ -535,7 +535,7 @@ internal class SpanServiceImplTest {
         val completedSpans = spanSink.completedSpans()
         assertEquals(1, completedSpans.size)
         val attrs = completedSpans[0].attributes.filterNot { it.key.startsWith("emb.") }
-        assertEquals(49, attrs.size)
+        assertEquals(99, attrs.size)
     }
 
     @Test

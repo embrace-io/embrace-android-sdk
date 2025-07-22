@@ -427,14 +427,14 @@ internal class LogFeatureTest {
     @Test
     fun `default maximum number of session and log properties are recorded in log`() {
         val props = buildMap {
-            repeat(50) {
+            repeat(150) {
                 set("prop$it", "val")
             }
         }
         testRule.runTest(
             testCaseAction = {
                 recordSession {
-                    repeat(20) {
+                    repeat(150) {
                         embrace.addSessionProperty("session-prop$it", "val", true)
                     }
                     embrace.logMessage("test", Severity.INFO, props)
@@ -442,7 +442,7 @@ internal class LogFeatureTest {
             },
             assertAction = {
                 val log = getSingleLogEnvelope().getLogOfType(EmbType.System.Log)
-                assertEquals(50, log.attributes?.count { it.key?.startsWith("prop") == true })
+                assertEquals(100, log.attributes?.count { it.key?.startsWith("prop") == true })
             },
             otelExportAssertion = {
                 val logData = awaitLogs(1) { it.severity == io.opentelemetry.api.logs.Severity.INFO }.single()
@@ -450,7 +450,7 @@ internal class LogFeatureTest {
                     it.key.key.startsWith("prop") || it.key.key.isSessionPropertyAttributeName()
                 }.size
 
-                assertEquals(60, totalPropsCount)
+                assertEquals(200, totalPropsCount)
             }
         )
     }

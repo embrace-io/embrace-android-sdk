@@ -259,4 +259,66 @@ internal class EmbraceLogServiceTest {
         val attachment = payloadStore.storedAttachments.single()
         assertEquals(bytes, attachment.data.second)
     }
+
+    @Test
+    fun `log properties truncated properly`() {
+        logService.log(
+            message = "message",
+            severity = Severity.INFO,
+            logExceptionType = LogExceptionType.NONE,
+            properties = tooBigProperties
+        )
+
+        // then the message is not ellipsized
+        val logProps = fakeLogWriter.logEvents.single().schemaType.attributes().filter { it.key.startsWith("test") }
+        assertEquals(truncatedProps, logProps)
+    }
+
+    @Test
+    fun `unserializable log values turned into error string`() {
+        logService.log(
+            message = "message",
+            severity = Severity.INFO,
+            logExceptionType = LogExceptionType.NONE,
+            properties = mapOf("badvalue" to UnSerializableClass())
+        )
+        assertEquals("not serializable", fakeLogWriter.logEvents.single().schemaType.attributes()["badvalue"])
+    }
+
+    @Test
+    fun `log properties unchanged if embrace not in use`() {
+        fakeConfigService = FakeConfigService(onlyUsingOtelExporters = true)
+        logService = createEmbraceLogService()
+        logService.log(
+            message = "message",
+            severity = Severity.INFO,
+            logExceptionType = LogExceptionType.NONE,
+            properties = tooBigProperties
+        )
+
+        // then the message is not ellipsized
+        val logProps = fakeLogWriter.logEvents.single().schemaType.attributes().filter { it.key.startsWith("test") }
+        assertEquals(tooBigProperties, logProps)
+    }
+
+    private class UnSerializableClass
+
+    companion object {
+        private val twoHundredXs = "x".repeat(200)
+        private val twoThousandXs = twoHundredXs.repeat(10)
+
+        val tooBigProperties = mutableMapOf<String, String>().apply {
+            repeat(150) {
+                this["test$it$twoHundredXs"] = twoThousandXs
+            }
+        }
+
+        val truncatedProps = mutableMapOf<String, String>().apply {
+            val expectedValue = twoThousandXs.take(1021) + "..."
+            repeat(100) {
+                val key = "test$it$twoHundredXs".take(125) + "..."
+                this[key] = expectedValue
+            }
+        }
+    }
 }

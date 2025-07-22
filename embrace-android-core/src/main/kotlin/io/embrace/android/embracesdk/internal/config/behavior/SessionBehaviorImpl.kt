@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.internal.config.instrumented.schema.Session
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.gating.SessionGatingKeys
 import java.util.Locale
+import kotlin.math.min
 
 /**
  * Provides the behavior that functionality relating to sessions should follow.
@@ -15,7 +16,8 @@ class SessionBehaviorImpl(
 ) : SessionBehavior {
 
     companion object {
-        const val SESSION_PROPERTY_LIMIT: Int = 10
+        const val SESSION_PROPERTY_LIMIT: Int = 100
+        const val SESSION_PROPERTY_MAX_LIMIT: Int = 200
     }
 
     override val local: SessionConfig = local.session
@@ -32,7 +34,7 @@ class SessionBehaviorImpl(
 
     override fun isSessionControlEnabled(): Boolean = remote?.sessionConfig?.isEnabled ?: false
 
-    override fun getMaxSessionProperties(): Int = remote?.maxSessionProperties ?: SESSION_PROPERTY_LIMIT
+    override fun getMaxSessionProperties(): Int = min(remote?.maxSessionProperties ?: SESSION_PROPERTY_LIMIT, SESSION_PROPERTY_MAX_LIMIT)
 
     override fun shouldGateInfoLog(): Boolean = shouldGateFeature(SessionGatingKeys.LOGS_INFO)
 

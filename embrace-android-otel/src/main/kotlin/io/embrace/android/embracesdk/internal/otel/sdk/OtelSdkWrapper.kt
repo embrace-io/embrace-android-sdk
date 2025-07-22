@@ -64,6 +64,9 @@ class OtelSdkWrapper(
                 addLogRecordProcessor(
                     DefaultLogRecordProcessor(configuration.logRecordExporter)
                 )
+                logLimits {
+                    attributeCountLimit = limits.getMaxTotalAttributeCount()
+                }
             },
             tracerProvider = {
                 resource(configuration.resourceAction)

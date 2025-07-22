@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.internal.arch.destination.SessionSpanWriter
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.config.behavior.REDACTED_LABEL
 import io.embrace.android.embracesdk.internal.prefs.PreferencesService
+import io.embrace.android.embracesdk.internal.utils.PropertyUtils
 
 internal class SessionPropertiesServiceImpl(
     preferencesService: PreferencesService,
@@ -18,7 +19,7 @@ internal class SessionPropertiesServiceImpl(
         if (!isValidKey(originalKey)) {
             return false
         }
-        val sanitizedKey = enforceLength(originalKey, SESSION_PROPERTY_KEY_LIMIT)
+        val sanitizedKey = PropertyUtils.truncate(originalKey, SESSION_PROPERTY_KEY_LIMIT)
 
         if (!isValidValue(originalValue)) {
             return false
@@ -27,7 +28,7 @@ internal class SessionPropertiesServiceImpl(
         val sanitizedValue = if (configService.sensitiveKeysBehavior.isSensitiveKey(sanitizedKey)) {
             REDACTED_LABEL
         } else {
-            enforceLength(originalValue, SESSION_PROPERTY_VALUE_LIMIT)
+            PropertyUtils.truncate(originalValue, SESSION_PROPERTY_VALUE_LIMIT)
         }
 
         val added = props.add(sanitizedKey, sanitizedValue, permanent)
@@ -41,7 +42,7 @@ internal class SessionPropertiesServiceImpl(
         if (!isValidKey(originalKey)) {
             return false
         }
-        val sanitizedKey = enforceLength(originalKey, SESSION_PROPERTY_KEY_LIMIT)
+        val sanitizedKey = PropertyUtils.truncate(originalKey, SESSION_PROPERTY_KEY_LIMIT)
 
         val removed = props.remove(sanitizedKey)
         if (removed) {
@@ -67,14 +68,6 @@ internal class SessionPropertiesServiceImpl(
     private fun isValidKey(key: String?): Boolean = !key.isNullOrEmpty()
 
     private fun isValidValue(key: String?): Boolean = key != null
-
-    private fun enforceLength(value: String, maxLength: Int): String {
-        if (value.length <= maxLength) {
-            return value
-        }
-        val endChars = "..."
-        return value.substring(0, maxLength - endChars.length) + endChars
-    }
 
     private companion object {
         /**

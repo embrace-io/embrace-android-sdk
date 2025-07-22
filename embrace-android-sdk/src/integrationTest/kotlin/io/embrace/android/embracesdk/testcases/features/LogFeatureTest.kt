@@ -8,6 +8,8 @@ import io.embrace.android.embracesdk.assertions.getLogOfType
 import io.embrace.android.embracesdk.assertions.getOtelSeverity
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
+import io.embrace.android.embracesdk.internal.capture.session.isSessionPropertyAttributeName
+import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.LogPayload
@@ -16,12 +18,13 @@ import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSeverity
 import io.embrace.opentelemetry.kotlin.logging.model.SeverityNumber
-import java.util.LinkedList
-import java.util.Queue
+import junit.framework.Assert.assertEquals
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.util.LinkedList
+import java.util.Queue
 
 @OptIn(ExperimentalApi::class)
 @RunWith(AndroidJUnit4::class)
@@ -417,6 +420,58 @@ internal class LogFeatureTest {
                         expectedEmbType = "sys.exception",
                     )
                 }
+            }
+        )
+    }
+
+    @Test
+    fun `default maximum number of session and log properties are recorded in log`() {
+        val props = buildMap {
+            repeat(150) {
+                set("prop$it", "val")
+            }
+        }
+        testRule.runTest(
+            testCaseAction = {
+                recordSession {
+                    repeat(150) {
+                        embrace.addSessionProperty("session-prop$it", "val", true)
+                    }
+                    embrace.logMessage("test", Severity.INFO, props)
+                }
+            },
+            assertAction = {
+                val log = getSingleLogEnvelope().getLogOfType(EmbType.System.Log)
+                assertEquals(100, log.attributes?.count { it.key?.startsWith("prop") == true })
+            },
+            otelExportAssertion = {
+                val logData = awaitLogs(1) { it.severity == io.opentelemetry.api.logs.Severity.INFO }.single()
+                val totalPropsCount = logData.attributes.asMap().filter {
+                    it.key.key.startsWith("prop") || it.key.key.isSessionPropertyAttributeName()
+                }.size
+
+                assertEquals(200, totalPropsCount)
+            }
+        )
+    }
+
+    @Test
+    fun `exported logs can contain maximum number of session properties`() {
+        val maxCustomSessionProps = 200
+        testRule.runTest(
+            persistedRemoteConfig = RemoteConfig(maxSessionProperties = maxCustomSessionProps),
+            testCaseAction = {
+                recordSession {
+                    repeat(maxCustomSessionProps + 1) {
+                        embrace.addSessionProperty("session-prop$it", "val", true)
+                    }
+                    embrace.logMessage("test", Severity.INFO)
+                }
+            },
+            otelExportAssertion = {
+                val logData = awaitLogs(1) { it.severity == io.opentelemetry.api.logs.Severity.INFO }.single()
+                val totalPropsCount = logData.attributes.asMap().filter { it.key.key.isSessionPropertyAttributeName() }.size
+                assertEquals(maxCustomSessionProps, totalPropsCount)
             }
         )
     }

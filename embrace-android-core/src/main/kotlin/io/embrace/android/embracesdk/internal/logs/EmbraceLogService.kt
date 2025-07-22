@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.logs
 
+import android.os.Parcelable
 import io.embrace.android.embracesdk.LogExceptionType
 import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.internal.arch.destination.LogWriter
@@ -16,9 +17,10 @@ import io.embrace.android.embracesdk.internal.otel.attrs.embExceptionHandling
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.session.orchestrator.PayloadStore
-import io.embrace.android.embracesdk.internal.utils.PropertyUtils.sanitizeProperties
+import io.embrace.android.embracesdk.internal.utils.PropertyUtils.truncate
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.opentelemetry.semconv.incubating.LogIncubatingAttributes
+import java.io.Serializable
 
 /**
  * Creates log records to be sent using the Open Telemetry Logs data model.
@@ -161,11 +163,48 @@ class EmbraceLogService(
         }
     }
 
+    private fun sanitizeProperties(
+        properties: Map<String, Any>?,
+        bypassPropertyLimit: Boolean = false,
+    ): Map<String, Any> {
+        return if (properties == null) {
+            emptyMap()
+        } else {
+            runCatching {
+                if (bypassPropertyLimit) {
+                    properties.entries.associate {
+                        Pair(it.key, checkIfSerializable(it.value))
+                    }
+                } else {
+                    properties.entries.take(MAX_PROPERTY_COUNT).associate {
+                        Pair(
+                            first = truncate(it.key, MAX_PROPERTY_KEY_LENGTH),
+                            second = truncate(checkIfSerializable(it.value).toString(), MAX_PROPERTY_VALUE_LENGTH)
+                        )
+                    }
+                }
+            }.getOrDefault(emptyMap())
+        }
+    }
+
+    private fun checkIfSerializable(value: Any): Any {
+        if (!(value is Parcelable || value is Serializable)) {
+            return "not serializable"
+        }
+        return value
+    }
+
     private companion object {
 
         /**
          * The default limit of Unity log messages that can be sent.
          */
         private const val LOG_MESSAGE_UNITY_MAXIMUM_ALLOWED_LENGTH = 16384
+
+        private const val MAX_PROPERTY_COUNT: Int = 100
+
+        private const val MAX_PROPERTY_KEY_LENGTH = 128
+
+        private const val MAX_PROPERTY_VALUE_LENGTH = 1024
     }
 }

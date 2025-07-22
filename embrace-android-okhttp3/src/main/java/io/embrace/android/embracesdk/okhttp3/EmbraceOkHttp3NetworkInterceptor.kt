@@ -48,10 +48,15 @@ class EmbraceOkHttp3NetworkInterceptor @JvmOverloads constructor(
             return chain.proceed(originalRequest)
         }
 
+        val httpMethod = HttpMethod.fromString(originalRequest.method)
+        val url = EmbraceHttpPathOverride.getURLString(EmbraceOkHttp3PathOverrideRequest(originalRequest))
+        val startTimeMs = systemClock.now()
+        val span = embraceInternalApi.internalInterface.startNetworkRequestSpan(httpMethod, url, startTimeMs)
+
         val networkSpanForwardingEnabled = embraceInternalApi.internalInterface.isNetworkSpanForwardingEnabled()
         var traceparent: String? = null
         if (networkSpanForwardingEnabled && originalRequest.header(TRACEPARENT_HEADER_NAME) == null) {
-            traceparent = embrace.generateW3cTraceparent()
+            traceparent = embraceInternalApi.internalInterface.generateW3cTraceparent(span?.traceId, span?.spanId)
         }
         val request =
             if (traceparent == null) {
@@ -82,7 +87,7 @@ class EmbraceOkHttp3NetworkInterceptor @JvmOverloads constructor(
         var response: Response = networkResponse
         var networkCaptureData: NetworkCaptureData? = null
         val shouldCaptureNetworkData =
-            embraceInternalApi.internalInterface.shouldCaptureNetworkBody(request.url.toString(), request.method)
+            embraceInternalApi.internalInterface.shouldCaptureNetworkBody(url, request.method)
 
         // If we need to capture the network response body,
         if (shouldCaptureNetworkData) {
@@ -110,20 +115,23 @@ class EmbraceOkHttp3NetworkInterceptor @JvmOverloads constructor(
             networkCaptureData = getNetworkCaptureData(request, response)
         }
 
-        embrace.recordNetworkRequest(
-            EmbraceNetworkRequest.fromCompletedRequest(
-                EmbraceHttpPathOverride.getURLString(EmbraceOkHttp3PathOverrideRequest(request)),
-                HttpMethod.fromString(request.method),
-                response.sentRequestAtMillis + offset,
-                response.receivedResponseAtMillis + offset,
-                request.body?.contentLength() ?: 0,
-                contentLength,
-                response.code,
-                request.header(CUSTOM_TRACE_ID_HEADER_NAME),
-                if (networkSpanForwardingEnabled) request.header(TRACEPARENT_HEADER_NAME) else null,
-                networkCaptureData
+        if (span != null) {
+            embraceInternalApi.internalInterface.endNetworkRequestSpan(
+                EmbraceNetworkRequest.fromCompletedRequest(
+                    EmbraceHttpPathOverride.getURLString(EmbraceOkHttp3PathOverrideRequest(request)),
+                    httpMethod,
+                    startTimeMs,
+                    response.receivedResponseAtMillis + offset,
+                    request.body?.contentLength() ?: 0,
+                    contentLength,
+                    response.code,
+                    request.header(CUSTOM_TRACE_ID_HEADER_NAME),
+                    if (networkSpanForwardingEnabled) request.header(TRACEPARENT_HEADER_NAME) else null,
+                    networkCaptureData
+                ),
+                span
             )
-        )
+        }
         return response
     }
 

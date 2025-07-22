@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.internal.EmbraceInternalApi.Companion.CUSTO
 import io.embrace.android.embracesdk.internal.network.http.EmbraceHttpPathOverride
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.http.HttpMethod
+import io.embrace.android.embracesdk.spans.EmbraceSpan
 import okhttp3.Interceptor
 import okhttp3.Request
 import okhttp3.Response
@@ -31,61 +32,65 @@ class EmbraceOkHttp3ApplicationInterceptor(
     override fun intercept(chain: Interceptor.Chain): Response {
         val startTime = embrace.getSdkCurrentTimeMs()
         val request: Request = chain.request()
+        val httpMethod = HttpMethod.fromString(request.method)
+        val url = EmbraceHttpPathOverride.getURLString(EmbraceOkHttp3PathOverrideRequest(request))
+        val span = embraceInternalApi.internalInterface.startNetworkRequestSpan(httpMethod, url, startTime)
+
         return try {
             // we are not interested in response, just proceed
             chain.proceed(request)
-        } catch (e: EmbraceCustomPathException) {
-            if (embrace.isStarted) {
-                val urlString =
-                    EmbraceHttpPathOverride.getURLString(EmbraceOkHttp3PathOverrideRequest(request), e.customPath)
-                embrace.recordNetworkRequest(
-                    EmbraceNetworkRequest.fromIncompleteRequest(
-                        urlString,
-                        HttpMethod.fromString(request.method),
-                        startTime,
-                        embrace.getSdkCurrentTimeMs(),
-                        causeName(e, UNKNOWN_EXCEPTION),
-                        causeMessage(e, UNKNOWN_MESSAGE),
-                        request.header(CUSTOM_TRACE_ID_HEADER_NAME),
-                        if (embraceInternalApi.internalInterface.isNetworkSpanForwardingEnabled()) {
-                            request.header(
-                                TRACEPARENT_HEADER_NAME
-                            )
-                        } else {
-                            null
-                        },
-                        null
+        } catch (exc: EmbraceCustomPathException) {
+            recordNetworkError(
+                request = request,
+                httpMethod = httpMethod,
+                startTime = startTime,
+                errorType = causeName(exc, UNKNOWN_EXCEPTION),
+                errorMessage = causeMessage(exc, UNKNOWN_MESSAGE),
+                url = EmbraceHttpPathOverride.getURLString(EmbraceOkHttp3PathOverrideRequest(request), exc.customPath),
+                span = span,
+            )
+            throw exc
+        } catch (exc: Exception) {
+            recordNetworkError(
+                request = request,
+                httpMethod = httpMethod,
+                startTime = startTime,
+                errorType = exc.javaClass.canonicalName ?: UNKNOWN_EXCEPTION,
+                errorMessage = exc.message ?: UNKNOWN_MESSAGE,
+                url = EmbraceHttpPathOverride.getURLString(EmbraceOkHttp3PathOverrideRequest(request)),
+                span = span,
+            )
+            throw exc
+        }
+    }
+
+    private fun recordNetworkError(
+        request: Request,
+        startTime: Long,
+        httpMethod: HttpMethod,
+        errorType: String,
+        errorMessage: String,
+        url: String,
+        span: EmbraceSpan?,
+    ) {
+        if (embrace.isStarted && span != null) {
+            val networkRequest = EmbraceNetworkRequest.fromIncompleteRequest(
+                url,
+                httpMethod,
+                startTime,
+                embrace.getSdkCurrentTimeMs(),
+                errorType,
+                errorMessage,
+                request.header(CUSTOM_TRACE_ID_HEADER_NAME),
+                if (embraceInternalApi.internalInterface.isNetworkSpanForwardingEnabled()) {
+                    request.header(
+                        TRACEPARENT_HEADER_NAME
                     )
-                )
-            }
-            throw e
-        } catch (e: Exception) {
-            // we are interested in errors.
-            if (embrace.isStarted) {
-                val urlString = EmbraceHttpPathOverride.getURLString(EmbraceOkHttp3PathOverrideRequest(request))
-                val errorType = e.javaClass.canonicalName
-                val errorMessage = e.message
-                embrace.recordNetworkRequest(
-                    EmbraceNetworkRequest.fromIncompleteRequest(
-                        urlString,
-                        HttpMethod.fromString(request.method),
-                        startTime,
-                        embrace.getSdkCurrentTimeMs(),
-                        errorType ?: UNKNOWN_EXCEPTION,
-                        errorMessage ?: UNKNOWN_MESSAGE,
-                        request.header(CUSTOM_TRACE_ID_HEADER_NAME),
-                        if (embraceInternalApi.internalInterface.isNetworkSpanForwardingEnabled()) {
-                            request.header(
-                                TRACEPARENT_HEADER_NAME
-                            )
-                        } else {
-                            null
-                        },
-                        null
-                    )
-                )
-            }
-            throw e
+                } else {
+                    null
+                },
+            )
+            embraceInternalApi.internalInterface.endNetworkRequestSpan(networkRequest, span)
         }
     }
 

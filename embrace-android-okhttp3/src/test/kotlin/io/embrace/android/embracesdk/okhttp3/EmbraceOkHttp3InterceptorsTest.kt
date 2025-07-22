@@ -40,7 +40,6 @@ import org.junit.Test
 import java.io.ByteArrayOutputStream
 import java.net.SocketException
 import java.util.Locale
-import java.util.concurrent.atomic.AtomicLong
 import java.util.zip.GZIPOutputStream
 
 internal class EmbraceOkHttp3InterceptorsTest {
@@ -96,6 +95,7 @@ internal class EmbraceOkHttp3InterceptorsTest {
         every { mockInternalInterface.shouldCaptureNetworkBody(any(), "POST") } answers { true }
         every { mockInternalInterface.shouldCaptureNetworkBody(any(), "GET") } answers { false }
         every { mockInternalInterface.isNetworkSpanForwardingEnabled() } answers { isNetworkSpanForwardingEnabled }
+        every { mockInternalInterface.generateW3cTraceparent(any(), any()) } answers { GENERATED_TRACEPARENT }
         every { mockEmbrace.getSdkCurrentTimeMs() } answers { FAKE_SDK_TIME }
         applicationInterceptor = EmbraceOkHttp3ApplicationInterceptor(mockEmbrace, mockEmbraceInternalApi)
         preNetworkInterceptorTestInterceptor = TestInspectionInterceptor(
@@ -125,7 +125,7 @@ internal class EmbraceOkHttp3InterceptorsTest {
             .header(requestHeaderName, requestHeaderValue)
         capturedEmbraceNetworkRequest = slot()
         every { mockEmbrace.isStarted } answers { isSDKStarted }
-        every { mockEmbrace.recordNetworkRequest(capture(capturedEmbraceNetworkRequest)) } answers { }
+        every { mockInternalInterface.endNetworkRequestSpan(capture(capturedEmbraceNetworkRequest), any()) } answers { }
         every { mockEmbrace.generateW3cTraceparent() } answers { GENERATED_TRACEPARENT }
         every { mockEmbraceInternalApi.internalInterface } answers { mockInternalInterface }
         isSDKStarted = true
@@ -466,46 +466,6 @@ internal class EmbraceOkHttp3InterceptorsTest {
         )
     }
 
-    @Test
-    fun `check consistent offsets produce expected start and end times`() {
-        val clockDrifts = listOf(-500L, -1L, 0L, 1L, 500L)
-        clockDrifts.forEach { clockDrift ->
-            runAndValidateTimestamps(
-                clockDrift = clockDrift,
-                extraDrift = 0L
-            )
-        }
-    }
-
-    @Test
-    fun `check tick overs round to the lowest absolute value for the offset`() {
-        val clockDrifts = listOf(-500L, -2L, -1L, 0L, 1L, 2L, 500L)
-        val extraDrifts = listOf(-1L, 1L)
-        clockDrifts.forEach { clockDrift ->
-            extraDrifts.forEach { extraDrift ->
-                runAndValidateTimestamps(
-                    clockDrift = clockDrift,
-                    extraDrift = extraDrift,
-                )
-            }
-        }
-    }
-
-    @Test
-    fun `check big differences in offset samples will result in no offset being used`() {
-        val clockDrifts = listOf(-500L, -1L, 0L, 1L, 500L)
-        val extraDrifts = listOf(-200L, -2L, 2L, 200L)
-        clockDrifts.forEach { clockDrift ->
-            extraDrifts.forEach { extraDrift ->
-                runAndValidateTimestamps(
-                    clockDrift = clockDrift,
-                    extraDrift = extraDrift,
-                    expectedOffset = 0L
-                )
-            }
-        }
-    }
-
     private fun createBaseMockResponse(httpStatus: Int = 200) =
         MockResponse()
             .setResponseCode(httpStatus)
@@ -529,17 +489,15 @@ internal class EmbraceOkHttp3InterceptorsTest {
         expectedPath: String = defaultPath,
         expectedHttpStatus: Int = 200,
     ) {
-        val realSystemClockStartTime = System.currentTimeMillis()
         runPostRequest()
         val realSystemClockEndTime = System.currentTimeMillis()
         validateWholeRequest(
             path = expectedPath,
-            httpStatus = expectedHttpStatus,
-            responseBodySize = expectedResponseBodySize,
             httpMethod = "POST",
+            httpStatus = expectedHttpStatus,
             requestSize = requestBodySize,
+            responseBodySize = expectedResponseBodySize,
             responseBody = responseBody,
-            realSystemClockStartTime = realSystemClockStartTime,
             realSystemClockEndTime = realSystemClockEndTime
         )
     }
@@ -547,50 +505,17 @@ internal class EmbraceOkHttp3InterceptorsTest {
     private fun runAndValidateGetRequest(
         expectedResponseBodySize: Int,
     ) {
-        val realSystemClockStartTime = System.currentTimeMillis()
         runGetRequest()
         val realSystemClockEndTime = System.currentTimeMillis()
         validateWholeRequest(
             path = defaultPath,
-            httpStatus = 200,
             httpMethod = "GET",
+            httpStatus = 200,
             requestSize = 0,
             responseBodySize = expectedResponseBodySize,
             responseBody = null,
-            realSystemClockStartTime = realSystemClockStartTime,
             realSystemClockEndTime = realSystemClockEndTime
         )
-    }
-
-    private fun runAndValidateTimestamps(
-        clockDrift: Long,
-        extraDrift: Long = 0L,
-        expectedOffset: Long = ((clockDrift * 2) + extraDrift) / 2L,
-    ) {
-        val realDrift = AtomicLong(clockDrift)
-        every { mockSystemClock.now() } answers { FAKE_SDK_TIME + realDrift.getAndAdd(extraDrift) }
-        server.enqueue(createBaseMockResponse().setBody(responseBody))
-        val response = runGetRequest()
-        val realSystemClockStartTime = response.sentRequestAtMillis
-        val realSystemClockEndTime = response.receivedResponseAtMillis
-        with(capturedEmbraceNetworkRequest) {
-            assertEquals(
-                "Unexpected start time when clock drifts are $clockDrift and ${clockDrift + extraDrift}:\n" +
-                    "Unadjusted time: $realSystemClockStartTime with expected offset $expectedOffset\n" +
-                    "Expected time: ${realSystemClockStartTime - expectedOffset}\n" +
-                    "Captured time: ${captured.startTime}",
-                realSystemClockStartTime - expectedOffset,
-                captured.startTime
-            )
-            assertEquals(
-                "Unexpected end time when clock drifts are $clockDrift and ${clockDrift + extraDrift}\n" +
-                    "Unadjusted time: $realSystemClockEndTime with expected offset $expectedOffset\n" +
-                    "Expected time: ${realSystemClockEndTime - expectedOffset}\n" +
-                    "Captured time: ${captured.endTime}",
-                realSystemClockEndTime - expectedOffset,
-                captured.endTime
-            )
-        }
     }
 
     private fun runPostRequest(): Response = checkNotNull(okHttpClient.newCall(postRequestBuilder.build()).execute())
@@ -609,14 +534,11 @@ internal class EmbraceOkHttp3InterceptorsTest {
         traceId: String? = null,
         w3cTraceparent: String? = null,
         responseBody: String?,
-        realSystemClockStartTime: Long,
         realSystemClockEndTime: Long,
     ) {
         with(capturedEmbraceNetworkRequest) {
             assertTrue(captured.url.endsWith("$path?$defaultQueryString"))
             assertEquals(httpMethod, captured.httpMethod)
-            assertTrue(realSystemClockStartTime - CLOCK_DRIFT <= captured.startTime)
-            assertTrue(realSystemClockStartTime > captured.startTime)
             assertTrue(realSystemClockEndTime - CLOCK_DRIFT >= captured.endTime)
             assertTrue(realSystemClockEndTime > captured.endTime)
             assertEquals(httpStatus, captured.responseCode)

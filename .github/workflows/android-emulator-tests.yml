@@ -1,4 +1,4 @@
-name: Android Emulator
+name: Android
 
 on:
   workflow_dispatch:
@@ -17,7 +17,7 @@ permissions:
   contents: read
 
 jobs:
-  android-emulator:
+  emulator:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     strategy:
@@ -57,7 +57,7 @@ jobs:
           key: avd-${{ matrix.api-level }}
 
       - name: create AVD and generate snapshot for caching
-        if: steps.avd-cache.outputs.cache-hit != 'true'
+        if: ${{ steps.avd-cache.outputs.cache-hit != 'true' }}
         uses: reactivecircus/android-emulator-runner@1dcd0090116d15e7c562f8db72807de5e036a4ed # v2.34.0
         with:
           api-level: ${{ matrix.api-level }}
@@ -77,7 +77,7 @@ jobs:
           script: ./gradlew connectedCheck --stacktrace || (adb logcat '[Embrace]:d' '*:S' -t 100000 > emulator_logcat.log && adb pull /storage/emulated/0/Android/data/io.embrace.android.embracesdk.test/cache/test_failure/ && exit 127)
 
       - name: Archive Test Results
-        if: always()
+        if: ${{ always() && matrix.working-directory == '.' }}
         uses: actions/upload-artifact@v4
         with:
           name: android-emulator-${{ matrix.working-directory }}-test-results

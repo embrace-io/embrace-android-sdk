@@ -10,15 +10,30 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
-env:
-  ANDROID_EMULATOR_WAIT_TIME_BEFORE_KILL: 60
-
 permissions:
   contents: read
 
+env:
+  ANDROID_EMULATOR_WAIT_TIME_BEFORE_KILL: 60
+  DEPOT_RUNNER: depot-ubuntu-24.04-8
+
 jobs:
-  emulator:
+  environment:
     runs-on: ubuntu-latest
+    outputs:
+      where: ${{ steps.choose.outputs.where }}
+    steps:
+      - id: choose
+        run: |
+          if [ ${GITHUB_ACTOR} != 'dependabot[bot]' ]; then
+              echo "where=${DEPOT_RUNNER}" >> $GITHUB_OUTPUT
+          else
+              echo "where=ubuntu-latest" >> $GITHUB_OUTPUT
+          fi
+
+  emulator:
+    needs: environment
+    runs-on: ${{ needs.environment.outputs.where }}
     timeout-minutes: 45
     strategy:
       matrix:
@@ -32,6 +47,7 @@ jobs:
           persist-credentials: false
 
       - name: Enable KVM group perms
+        if: ${{ needs.environment.outputs.where == 'ubuntu-latest' }}
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules

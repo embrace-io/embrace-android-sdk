@@ -13,16 +13,20 @@ import io.embrace.android.embracesdk.internal.injection.InitModule
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData
 import io.embrace.android.embracesdk.internal.network.logging.NetworkCaptureService
+import io.embrace.android.embracesdk.internal.network.logging.NetworkLoggingService
 import io.embrace.android.embracesdk.internal.payload.TapBreadcrumb
 import io.embrace.android.embracesdk.internal.spans.InternalTracer
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.http.HttpMethod
+import io.embrace.android.embracesdk.spans.EmbraceSpan
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaIdGenerator
 
 @SuppressLint("EmbracePublicApiPackageRule")
 internal class EmbraceInternalInterfaceImpl(
     private val embraceImpl: EmbraceImpl,
     private val initModule: InitModule,
     private val networkCaptureService: NetworkCaptureService,
+    private val networkLoggingService: NetworkLoggingService,
     private val configService: ConfigService,
     internalTracer: InternalTracer,
 ) : EmbraceInternalInterface, InternalTracingApi by internalTracer {
@@ -183,6 +187,21 @@ internal class EmbraceInternalInterfaceImpl(
 
     override fun logTap(point: Pair<Float?, Float?>, elementName: String, type: TapBreadcrumb.TapBreadcrumbType) {
         embraceImpl.logTap(point, elementName, type)
+    }
+
+    override fun startNetworkRequestSpan(httpMethod: HttpMethod, url: String, startTimeMs: Long): EmbraceSpan? {
+        return networkLoggingService.startNetworkRequestSpan(httpMethod, url, startTimeMs)
+    }
+
+    override fun endNetworkRequestSpan(networkRequest: EmbraceNetworkRequest, span: EmbraceSpan) {
+        return networkLoggingService.endNetworkRequestSpan(networkRequest, span)
+    }
+
+    override fun generateW3cTraceparent(traceId: String?, spanId: String?): String {
+        val generator = OtelJavaIdGenerator.random()
+        val tid = traceId ?: generator.generateTraceId()
+        val sid = spanId ?: generator.generateSpanId()
+        return "00-$tid-$sid-01"
     }
 
     override fun stopSdk() {

@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.internal.api.delegate.NoopEmbraceInternalIn
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.http.HttpMethod
 import io.mockk.mockk
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Before
 import org.junit.Test
@@ -78,5 +79,10 @@ internal class NoopEmbraceInternalInterfaceTest {
     @Test
     fun `check isNdkEnabled before SDK starts`() {
         assertFalse(impl.isNdkEnabled())
+    }
+
+    @Test
+    fun `check invalid w3ctraceparent`() {
+        assertEquals("00-00000000000000000000000000000000-0000000000000000-00", impl.generateW3cTraceparent("", ""))
     }
 }

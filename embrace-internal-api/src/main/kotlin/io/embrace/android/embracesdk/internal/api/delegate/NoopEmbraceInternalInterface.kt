@@ -9,6 +9,8 @@ import io.embrace.android.embracesdk.internal.InternalTracingApi
 import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData
 import io.embrace.android.embracesdk.internal.payload.TapBreadcrumb
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
+import io.embrace.android.embracesdk.network.http.HttpMethod
+import io.embrace.android.embracesdk.spans.EmbraceSpan
 
 @SuppressLint("EmbracePublicApiPackageRule")
 internal class NoopEmbraceInternalInterface(
@@ -85,4 +87,15 @@ internal class NoopEmbraceInternalInterface(
     override fun stopSdk() {}
 
     override fun logTap(point: Pair<Float?, Float?>, elementName: String, type: TapBreadcrumb.TapBreadcrumbType) {}
+
+    override fun startNetworkRequestSpan(httpMethod: HttpMethod, url: String, startTimeMs: Long): EmbraceSpan? {
+        return null
+    }
+
+    override fun endNetworkRequestSpan(networkRequest: EmbraceNetworkRequest, span: EmbraceSpan) {
+    }
+
+    override fun generateW3cTraceparent(traceId: String?, spanId: String?): String {
+        return "00-00000000000000000000000000000000-0000000000000000-00"
+    }
 }

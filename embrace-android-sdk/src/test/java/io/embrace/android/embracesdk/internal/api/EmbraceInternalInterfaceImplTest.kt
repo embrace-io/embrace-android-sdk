@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeNetworkCaptureService
+import io.embrace.android.embracesdk.fakes.FakeNetworkLoggingService
 import io.embrace.android.embracesdk.fakes.behavior.FakeAnrBehavior
 import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.fakes.behavior.FakeNetworkSpanForwardingBehavior
@@ -36,6 +37,7 @@ internal class EmbraceInternalInterfaceImplTest {
     private lateinit var initModule: FakeInitModule
     private lateinit var fakeConfigService: FakeConfigService
     private lateinit var fakeNetworkCaptureService: FakeNetworkCaptureService
+    private lateinit var fakeNetworkLoggingService: FakeNetworkLoggingService
 
     @Before
     fun setUp() {
@@ -44,10 +46,12 @@ internal class EmbraceInternalInterfaceImplTest {
         initModule = FakeInitModule(clock = fakeClock, logger = FakeEmbLogger(false))
         fakeConfigService = FakeConfigService()
         fakeNetworkCaptureService = FakeNetworkCaptureService()
+        fakeNetworkLoggingService = FakeNetworkLoggingService()
         internalImpl = EmbraceInternalInterfaceImpl(
             embraceImpl,
             initModule,
             fakeNetworkCaptureService,
+            fakeNetworkLoggingService,
             fakeConfigService,
             initModule.openTelemetryModule.internalTracer
         )
@@ -207,6 +211,15 @@ internal class EmbraceInternalInterfaceImplTest {
     fun `check stopping SDK`() {
         internalImpl.stopSdk()
         assertFalse(embraceImpl.isStarted)
+    }
+
+    @Test
+    fun `check generate w3ctraceparent`() {
+        val traceId = "0af7651916cd43dd8448eb211c80319c"
+        val spanId = "b7ad6b7169203331"
+        val traceparent = internalImpl.generateW3cTraceparent(traceId, spanId)
+        val expected = "00-$traceId-$spanId-01"
+        assertEquals(expected, traceparent)
     }
 
     companion object {

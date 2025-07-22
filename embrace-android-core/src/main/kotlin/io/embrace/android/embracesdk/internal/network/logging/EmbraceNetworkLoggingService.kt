@@ -10,6 +10,8 @@ import io.embrace.android.embracesdk.internal.utils.NetworkUtils.getValidTraceId
 import io.embrace.android.embracesdk.internal.utils.NetworkUtils.stripUrl
 import io.embrace.android.embracesdk.internal.utils.toNonNullMap
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
+import io.embrace.android.embracesdk.network.http.HttpMethod
+import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.semconv.ErrorAttributes
 import io.opentelemetry.semconv.ExceptionAttributes
@@ -31,9 +33,67 @@ internal class EmbraceNetworkLoggingService(
 ) : NetworkLoggingService {
 
     override fun logNetworkRequest(networkRequest: EmbraceNetworkRequest) {
-        logNetworkCaptureData(networkRequest)
-        recordNetworkRequest(networkRequest)
+        val span = startNetworkRequestSpan(
+            HttpMethod.fromString(networkRequest.httpMethod),
+            networkRequest.url,
+            networkRequest.startTime
+        )
+        if (span != null) {
+            endNetworkRequestSpan(networkRequest, span)
+        }
     }
+
+    override fun startNetworkRequestSpan(
+        httpMethod: HttpMethod,
+        url: String,
+        startTimeMs: Long,
+    ): EmbraceSpan? {
+        // TODO: Shouldn't we ignore domains that can't be parsed for networkCapturedData too?
+        // Shouldn't we also track limits for networkCapturedData?
+
+        // Get the domain, if it can be successfully parsed. If not, don't log this call.
+        val strippedUrl = stripUrl(url)
+        val domain = getDomain(strippedUrl) ?: return null
+
+        if (embraceDomainCountLimiter.canLogNetworkRequest(domain)) {
+            return spanService.startSpan(
+                name = "$httpMethod ${getUrlPath(strippedUrl)}",
+                startTimeMs = startTimeMs,
+                type = EmbType.Performance.Network,
+            )
+        }
+        return null
+    }
+
+    override fun endNetworkRequestSpan(
+        networkRequest: EmbraceNetworkRequest,
+        span: EmbraceSpan,
+    ) {
+        logNetworkCaptureData(networkRequest)
+        val networkRequestSchemaType = SchemaType.NetworkRequest(generateSchemaAttributes(networkRequest))
+        val statusCode = networkRequest.responseCode
+        val errorCode = if (statusCode == null || statusCode <= 0 || statusCode >= 400) {
+            ErrorCode.FAILURE
+        } else {
+            null
+        }
+        networkRequestSchemaType.attributes().forEach {
+            span.addAttribute(it.key, it.value)
+        }
+        span.stop(errorCode, networkRequest.endTime)
+    }
+
+    private fun generateSchemaAttributes(networkRequest: EmbraceNetworkRequest): Map<String, String> = mapOf(
+        "url.full" to stripUrl(networkRequest.url),
+        HttpAttributes.HTTP_REQUEST_METHOD.key to networkRequest.httpMethod,
+        HttpAttributes.HTTP_RESPONSE_STATUS_CODE.key to networkRequest.responseCode,
+        HttpIncubatingAttributes.HTTP_REQUEST_BODY_SIZE.key to networkRequest.bytesSent,
+        HttpIncubatingAttributes.HTTP_RESPONSE_BODY_SIZE.key to networkRequest.bytesReceived,
+        ErrorAttributes.ERROR_TYPE.key to networkRequest.errorType,
+        ExceptionAttributes.EXCEPTION_MESSAGE.key to networkRequest.errorMessage,
+        "emb.w3c_traceparent" to networkRequest.w3cTraceparent,
+        "emb.trace_id" to getValidTraceId(networkRequest.traceId),
+    ).toNonNullMap().mapValues { it.value.toString() }
 
     private fun logNetworkCaptureData(networkRequest: EmbraceNetworkRequest) {
         if (networkRequest.networkCaptureData != null) {
@@ -48,51 +108,4 @@ internal class EmbraceNetworkLoggingService(
             )
         }
     }
-
-    /**
-     * Records network calls as spans if their domain can be parsed and is within the limits.
-     *
-     * @param networkRequest the network request to record
-     */
-    private fun recordNetworkRequest(networkRequest: EmbraceNetworkRequest) {
-        // TODO: Shouldn't we ignore domains that can't be parsed for networkCapturedData too?
-        // Shouldn't we also track limits for networkCapturedData?
-
-        // Get the domain, if it can be successfully parsed. If not, don't log this call.
-        val domain = getDomain(
-            stripUrl(networkRequest.url)
-        ) ?: return
-
-        if (embraceDomainCountLimiter.canLogNetworkRequest(domain)) {
-            val strippedUrl = stripUrl(networkRequest.url)
-
-            val networkRequestSchemaType = SchemaType.NetworkRequest(generateSchemaAttributes(networkRequest))
-            val statusCode = networkRequest.responseCode
-            val errorCode = if (statusCode == null || statusCode <= 0 || statusCode >= 400) {
-                ErrorCode.FAILURE
-            } else {
-                null
-            }
-            spanService.recordCompletedSpan(
-                name = "${networkRequest.httpMethod} ${getUrlPath(strippedUrl)}",
-                startTimeMs = networkRequest.startTime,
-                endTimeMs = networkRequest.endTime,
-                type = EmbType.Performance.Network,
-                attributes = networkRequestSchemaType.attributes(),
-                errorCode = errorCode,
-            )
-        }
-    }
-
-    private fun generateSchemaAttributes(networkRequest: EmbraceNetworkRequest): Map<String, String> = mapOf(
-        "url.full" to stripUrl(networkRequest.url),
-        HttpAttributes.HTTP_REQUEST_METHOD.key to networkRequest.httpMethod,
-        HttpAttributes.HTTP_RESPONSE_STATUS_CODE.key to networkRequest.responseCode,
-        HttpIncubatingAttributes.HTTP_REQUEST_BODY_SIZE.key to networkRequest.bytesSent,
-        HttpIncubatingAttributes.HTTP_RESPONSE_BODY_SIZE.key to networkRequest.bytesReceived,
-        ErrorAttributes.ERROR_TYPE.key to networkRequest.errorType,
-        ExceptionAttributes.EXCEPTION_MESSAGE.key to networkRequest.errorMessage,
-        "emb.w3c_traceparent" to networkRequest.w3cTraceparent,
-        "emb.trace_id" to getValidTraceId(networkRequest.traceId),
-    ).toNonNullMap().mapValues { it.value.toString() }
 }

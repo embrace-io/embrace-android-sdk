@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.network.logging
 
 import io.embrace.android.embracesdk.fakes.FakeDomainCountLimiter
+import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
 import io.embrace.android.embracesdk.fakes.FakeNetworkCaptureService
 import io.embrace.android.embracesdk.fakes.FakeSpanService
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
@@ -159,6 +160,37 @@ internal class EmbraceNetworkLoggingServiceTest {
         with(checkNotNull(getNetworkSpans().single())) {
             assertEquals(stripUrl(url), attributes?.single { it.key == "url.full" }?.data)
         }
+    }
+
+    @Test
+    fun `network request start`() {
+        val span = networkLoggingService.startNetworkRequestSpan(HttpMethod.GET, "www.example.com", 5)
+        val fakeSpan = checkNotNull(span) as FakeEmbraceSdkSpan
+        assertEquals(EmbType.Performance.Network, fakeSpan.type)
+        assertEquals(5L, fakeSpan.spanStartTimeMs)
+    }
+
+    @Test
+    fun `network request end`() {
+        val url = "www.example.com"
+        val endTime: Long = 200
+
+        val span = networkLoggingService.startNetworkRequestSpan(HttpMethod.GET, url, 5)
+        checkNotNull(span)
+        val request = EmbraceNetworkRequest.fromCompletedRequest(
+            url,
+            HttpMethod.GET,
+            100,
+            endTime,
+            100L,
+            1000L,
+            endTime.toInt()
+        )
+        networkLoggingService.endNetworkRequestSpan(request, span)
+        val fakeSpan = span as FakeEmbraceSdkSpan
+        assertEquals(endTime, fakeSpan.spanEndTimeMs)
+        val attrs = fakeSpan.attributes
+        assertEquals(url, attrs["url.full"])
     }
 
     private fun logNetworkRequest(

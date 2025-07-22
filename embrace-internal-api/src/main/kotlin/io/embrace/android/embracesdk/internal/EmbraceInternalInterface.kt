@@ -6,6 +6,8 @@ import io.embrace.android.embracesdk.LogType
 import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData
 import io.embrace.android.embracesdk.internal.payload.TapBreadcrumb
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
+import io.embrace.android.embracesdk.network.http.HttpMethod
+import io.embrace.android.embracesdk.spans.EmbraceSpan
 
 /**
  * Provides an internal interface to Embrace that is intended for use by hosted SDKs as their sole source of communication
@@ -151,4 +153,27 @@ interface EmbraceInternalInterface : InternalTracingApi {
      * Stop the Embrace SDK and disable its functionality
      */
     fun stopSdk()
+
+    /**
+     * Attempts to start a span that models a network request, returning a span object if this is allowed.
+     */
+    fun startNetworkRequestSpan(
+        httpMethod: HttpMethod,
+        url: String,
+        startTimeMs: Long,
+    ): EmbraceSpan?
+
+    /**
+     * Ends a span that is modelling a network request.
+     */
+    fun endNetworkRequestSpan(
+        networkRequest: EmbraceNetworkRequest,
+        span: EmbraceSpan,
+    )
+
+    /**
+     * Generates a W3C traceparent using the given trace ID and span ID. If none are supplied, a random
+     * trace ID and span ID will be generated.
+     */
+    fun generateW3cTraceparent(traceId: String?, spanId: String?): String
 }

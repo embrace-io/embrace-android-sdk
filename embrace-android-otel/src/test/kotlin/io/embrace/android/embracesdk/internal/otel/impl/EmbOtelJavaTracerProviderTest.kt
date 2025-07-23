@@ -12,7 +12,7 @@ import org.junit.Before
 import org.junit.Test
 
 @OptIn(ExperimentalApi::class)
-internal class EmbTracerProviderTest {
+internal class EmbOtelJavaTracerProviderTest {
     private val clock = FakeClock()
     private val openTelemetryClock = FakeOtelKotlinClock(clock)
 

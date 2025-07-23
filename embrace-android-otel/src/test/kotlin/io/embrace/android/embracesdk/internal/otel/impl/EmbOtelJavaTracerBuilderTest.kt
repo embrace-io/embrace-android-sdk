@@ -5,7 +5,7 @@ import io.embrace.android.embracesdk.internal.otel.sdk.TracerKey
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
-internal class EmbTracerBuilderTest {
+internal class EmbOtelJavaTracerBuilderTest {
 
     @Test
     fun `check tracer attributes from builder`() {

@@ -101,8 +101,8 @@ internal class EmbraceTracerTest {
     }
 
     @Test
-    fun `cannot start a span if it was not created`() {
-        assertNull(embraceTracer.startSpan(name = TOO_LONG_SPAN_NAME))
+    fun `long span names truncated`() {
+        assertNotNull(embraceTracer.startSpan(name = TOO_LONG_SPAN_NAME))
     }
 
     @Test

@@ -24,16 +24,14 @@ import io.embrace.opentelemetry.kotlin.tracing.model.ReadableSpanEvent
 import io.embrace.opentelemetry.kotlin.tracing.model.Span
 
 /**
- * Populate an [AttributesBuilder] with String key-value pairs from a [Map]
+ * Populate an AttributesBuilder with String key-value pairs from a [Map]
  */
 fun OtelJavaAttributesBuilder.fromMap(
     attributes: Map<String, String>,
     internal: Boolean,
-    limitsValidator: DataValidator,
+    dataValidator: DataValidator,
 ): OtelJavaAttributesBuilder {
-    attributes.filter {
-        limitsValidator.isAttributeValid(it.key, it.value, internal) || it.key.isValidLongValueAttribute()
-    }.forEach {
+    dataValidator.truncateAttributes(attributes, internal).forEach {
         put(it.key, it.value)
     }
     return this

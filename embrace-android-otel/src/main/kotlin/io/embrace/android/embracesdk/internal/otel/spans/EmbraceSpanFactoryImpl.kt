@@ -291,12 +291,15 @@ private class EmbraceSpanImpl(
     override fun getStartTimeMs(): Long? = spanStartTimeMs
 
     override fun addAttribute(key: String, value: String): Boolean {
-        if (customAttributes.size < dataValidator.otelLimitsConfig.getMaxCustomAttributeCount() &&
-            dataValidator.isAttributeValid(key, value, otelSpanCreator.spanStartArgs.internal)
-        ) {
+        if (customAttributes.size < dataValidator.otelLimitsConfig.getMaxCustomAttributeCount() && key.isNotBlank()) {
             synchronized(customAttributes) {
                 if (customAttributes.size < dataValidator.otelLimitsConfig.getMaxCustomAttributeCount() && isRecording) {
-                    customAttributes[key] = value
+                    val attribute = dataValidator.truncateAttribute(
+                        key = key,
+                        value = value,
+                        internal = otelSpanCreator.spanStartArgs.internal
+                    )
+                    customAttributes[attribute.first] = attribute.second
                     spanRepository.notifySpanUpdate()
                     return true
                 }
@@ -307,11 +310,12 @@ private class EmbraceSpanImpl(
     }
 
     override fun updateName(newName: String): Boolean {
-        if (dataValidator.isNameValid(newName, otelSpanCreator.spanStartArgs.internal)) {
+        if (newName.isNotBlank()) {
             synchronized(startedSpan) {
                 if (!spanStarted() || isRecording) {
-                    updatedName = newName
-                    startedSpan.get()?.name = newName
+                    val validatedName = dataValidator.truncateSpanName(newName, otelSpanCreator.spanStartArgs.internal)
+                    updatedName = validatedName
+                    startedSpan.get()?.name = validatedName
                     spanRepository.notifySpanUpdate()
                     return true
                 }

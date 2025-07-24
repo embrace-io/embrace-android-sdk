@@ -17,6 +17,11 @@ import io.embrace.android.embracesdk.fixtures.TOO_LONG_ATTRIBUTE_VALUE
 import io.embrace.android.embracesdk.fixtures.TOO_LONG_ATTRIBUTE_VALUE_FOR_INTERNAL_SPAN
 import io.embrace.android.embracesdk.fixtures.TOO_LONG_EVENT_NAME
 import io.embrace.android.embracesdk.fixtures.TOO_LONG_SPAN_NAME
+import io.embrace.android.embracesdk.fixtures.TRUNCATED_TOO_LONG_ATTRIBUTE_KEY
+import io.embrace.android.embracesdk.fixtures.TRUNCATED_TOO_LONG_ATTRIBUTE_KEY_FOR_INTERNAL_SPAN
+import io.embrace.android.embracesdk.fixtures.TRUNCATED_TOO_LONG_ATTRIBUTE_VALUE
+import io.embrace.android.embracesdk.fixtures.TRUNCATED_TOO_LONG_ATTRIBUTE_VALUE_FOR_INTERNAL_SPAN
+import io.embrace.android.embracesdk.fixtures.TRUNCATED_TOO_LONG_SPAN_NAME
 import io.embrace.android.embracesdk.fixtures.fakeContextKey
 import io.embrace.android.embracesdk.fixtures.maxSizeEventAttributes
 import io.embrace.android.embracesdk.fixtures.tooBigEventAttributes
@@ -231,8 +236,9 @@ internal class EmbraceSpanImplTest {
     @Test
     fun `span name update`() {
         with(embraceSpan) {
+            assertTrue(embraceSpan.updateName(TOO_LONG_SPAN_NAME))
+            assertEquals(TRUNCATED_TOO_LONG_SPAN_NAME, embraceSpan.name())
             assertTrue(embraceSpan.updateName("new-name"))
-            assertFalse(embraceSpan.updateName(TOO_LONG_SPAN_NAME))
             assertFalse(embraceSpan.updateName(""))
             assertFalse(embraceSpan.updateName(" "))
             assertTrue(start())
@@ -371,16 +377,22 @@ internal class EmbraceSpanImplTest {
     fun `check custom attribute limits`() {
         with(embraceSpan) {
             assertTrue(start())
-            assertFalse(addAttribute(key = TOO_LONG_ATTRIBUTE_KEY, value = "value"))
-            assertFalse(addAttribute(key = "key", value = TOO_LONG_ATTRIBUTE_VALUE))
+            assertTrue(addAttribute(key = TOO_LONG_ATTRIBUTE_KEY, value = "long-key-value"))
+            assertTrue(addAttribute(key = "long-value-key", value = TOO_LONG_ATTRIBUTE_VALUE))
             assertTrue(addAttribute(key = MAX_LENGTH_ATTRIBUTE_KEY, value = "value"))
             assertTrue(addAttribute(key = "key", value = MAX_LENGTH_ATTRIBUTE_VALUE))
             assertTrue(addAttribute(key = "Key", value = MAX_LENGTH_ATTRIBUTE_VALUE))
-            repeat(dataValidator.otelLimitsConfig.getMaxCustomAttributeCount() - 3) {
+            repeat(dataValidator.otelLimitsConfig.getMaxCustomAttributeCount() - 5) {
                 assertTrue(addAttribute(key = "key$it", value = "value"))
             }
             assertFalse(addAttribute(key = "failedKey", value = "value"))
             assertEquals(dataValidator.otelLimitsConfig.getMaxCustomAttributeCount() + 1, attributes().size)
+            val combinedAttributes = attributes()
+            with(combinedAttributes) {
+                assertEquals(TRUNCATED_TOO_LONG_ATTRIBUTE_VALUE, combinedAttributes["long-value-key"])
+                assertEquals("long-key-value", combinedAttributes[TRUNCATED_TOO_LONG_ATTRIBUTE_KEY])
+            }
+
             assertTrue(updateNotified)
         }
     }
@@ -390,11 +402,16 @@ internal class EmbraceSpanImplTest {
         embraceSpan = createInternalEmbraceSdkSpan()
         with(embraceSpan) {
             assertTrue(start())
-            assertFalse(addAttribute(key = TOO_LONG_ATTRIBUTE_KEY_FOR_INTERNAL_SPAN, value = "value"))
-            assertFalse(addAttribute(key = "key", value = TOO_LONG_ATTRIBUTE_VALUE_FOR_INTERNAL_SPAN))
+            assertTrue(addAttribute(key = TOO_LONG_ATTRIBUTE_KEY_FOR_INTERNAL_SPAN, value = "long-key-value"))
+            assertTrue(addAttribute(key = "long-value-key", value = TOO_LONG_ATTRIBUTE_VALUE_FOR_INTERNAL_SPAN))
             assertTrue(addAttribute(key = MAX_LENGTH_ATTRIBUTE_KEY_FOR_INTERNAL_SPAN, value = "value"))
             assertTrue(addAttribute(key = "key", value = MAX_LENGTH_ATTRIBUTE_VALUE_FOR_INTERNAL_SPAN))
             assertTrue(addAttribute(key = "Key", value = MAX_LENGTH_ATTRIBUTE_VALUE_FOR_INTERNAL_SPAN))
+            val combinedAttributes = attributes()
+            with(combinedAttributes) {
+                assertEquals("long-key-value", combinedAttributes[TRUNCATED_TOO_LONG_ATTRIBUTE_KEY_FOR_INTERNAL_SPAN])
+                assertEquals(TRUNCATED_TOO_LONG_ATTRIBUTE_VALUE_FOR_INTERNAL_SPAN, combinedAttributes["long-value-key"])
+            }
         }
     }
 

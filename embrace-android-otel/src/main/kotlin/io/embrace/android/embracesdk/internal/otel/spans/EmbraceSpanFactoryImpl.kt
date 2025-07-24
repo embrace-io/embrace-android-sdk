@@ -53,7 +53,7 @@ class EmbraceSpanFactoryImpl(
     private val tracer: Tracer,
     private val openTelemetryClock: Clock,
     private val spanRepository: SpanRepository,
-    private val dataValidator: DataValidator = DataValidator(),
+    private val dataValidator: DataValidator,
     private val stopCallback: ((spanId: String) -> Unit)? = null,
     private var redactionFunction: ((key: String, value: String) -> String)? = null,
 ) : EmbraceSpanFactory {
@@ -390,7 +390,7 @@ private class EmbraceSpanImpl(
 
     override fun attributes(): Map<String, Any> {
         val raw = getAttributesPayload()
-        val attrs = raw.filter { it.key == null || it.data == null }
+        val attrs = raw.filter { it.key != null && it.data != null }
         return attrs.associate { Pair(checkNotNull(it.key), checkNotNull(it.data)) }
     }
 

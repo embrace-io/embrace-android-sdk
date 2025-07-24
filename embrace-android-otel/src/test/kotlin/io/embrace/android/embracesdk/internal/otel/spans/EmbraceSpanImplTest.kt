@@ -22,10 +22,10 @@ import io.embrace.android.embracesdk.fixtures.maxSizeEventAttributes
 import io.embrace.android.embracesdk.fixtures.tooBigEventAttributes
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
-import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.embrace.android.embracesdk.internal.otel.schema.LinkType
 import io.embrace.android.embracesdk.internal.otel.schema.PrivateSpan
+import io.embrace.android.embracesdk.internal.otel.sdk.DataValidator
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
 import io.embrace.android.embracesdk.internal.otel.sdk.otelSpanCreator
@@ -38,6 +38,7 @@ import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.OpenTelemetryInstance
 import io.embrace.opentelemetry.kotlin.k2j.tracing.SpanContextAdapter
 import io.embrace.opentelemetry.kotlin.kotlinApi
+import io.embrace.opentelemetry.kotlin.tracing.model.SpanKind
 import io.opentelemetry.semconv.ExceptionAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -53,6 +54,7 @@ internal class EmbraceSpanImplTest {
     private lateinit var embraceSpan: EmbraceSdkSpan
     private lateinit var spanRepository: SpanRepository
     private lateinit var serializer: PlatformSerializer
+    private lateinit var dataValidator: DataValidator
     private lateinit var embraceSpanFactory: EmbraceSpanFactory
     private var updateNotified: Boolean = false
     private var stoppedSpanId: String? = null
@@ -66,10 +68,12 @@ internal class EmbraceSpanImplTest {
         val otelClock = FakeOtelKotlinClock(fakeClock)
         spanRepository = SpanRepository().apply { setSpanUpdateNotifier { updateNotified = true } }
         serializer = TestPlatformSerializer()
+        dataValidator = DataValidator()
         embraceSpanFactory = EmbraceSpanFactoryImpl(
             tracer = tracer,
             openTelemetryClock = otelClock,
             spanRepository = spanRepository,
+            dataValidator = dataValidator,
             stopCallback = ::stopCallback,
             redactionFunction = ::redactionFunction
         )
@@ -94,6 +98,7 @@ internal class EmbraceSpanImplTest {
             assertFalse(addAttribute("first", "value"))
             assertEquals(0, spanRepository.getActiveSpans().size)
             assertEquals(0, spanRepository.getCompletedSpans().size)
+            assertEquals(SpanKind.INTERNAL, spanKind)
             assertNull(embraceSpan.snapshot())
         }
         assertFalse(updateNotified)
@@ -109,6 +114,10 @@ internal class EmbraceSpanImplTest {
             assertNotNull(traceId)
             assertNotNull(spanId)
             assertTrue(isRecording)
+            assertEquals(EXPECTED_SPAN_NAME, name())
+            assertEquals(SpanKind.INTERNAL, spanKind)
+            assertEquals(expectedStartTimeMs, getStartTimeMs())
+            assertEquals("emb.type", attributes().entries.single().key)
             assertSnapshot(expectedStartTimeMs = expectedStartTimeMs, expectedEndTimeMs = null)
             assertTrue(addEvent("eventName"))
             assertTrue(addAttribute("first", "value"))
@@ -227,11 +236,14 @@ internal class EmbraceSpanImplTest {
             assertFalse(embraceSpan.updateName(""))
             assertFalse(embraceSpan.updateName(" "))
             assertTrue(start())
+            assertEquals("new-name", embraceSpan.name())
             assertEquals("new-name", embraceSpan.snapshot()?.name)
             assertTrue(embraceSpan.updateName("new-new-name"))
+            assertEquals("new-new-name", embraceSpan.name())
             assertEquals("new-new-name", embraceSpan.snapshot()?.name)
             assertTrue(stop())
             assertFalse(embraceSpan.updateName("failed-to-update"))
+            assertEquals("new-new-name", embraceSpan.name())
             assertEquals("new-new-name", embraceSpan.snapshot()?.name)
             assertTrue(updateNotified)
         }
@@ -260,7 +272,7 @@ internal class EmbraceSpanImplTest {
             val sanitizedEvents = checkNotNull(events)
             assertEquals(2, sanitizedEvents.size)
             with(sanitizedEvents.first()) {
-                assertEquals(InstrumentedConfigImpl.otelLimits.getExceptionEventName(), name)
+                assertEquals(dataValidator.otelLimitsConfig.getExceptionEventName(), name)
                 val attrs = checkNotNull(attributes)
                 assertEquals(timestampNanos, timestampNanos)
                 assertEquals(
@@ -274,7 +286,7 @@ internal class EmbraceSpanImplTest {
                 )
             }
             with(sanitizedEvents.last()) {
-                assertEquals(InstrumentedConfigImpl.otelLimits.getExceptionEventName(), name)
+                assertEquals(dataValidator.otelLimitsConfig.getExceptionEventName(), name)
                 val attrs = checkNotNull(attributes)
                 assertEquals(timestampNanos, timestampNanos)
                 assertEquals(
@@ -313,7 +325,7 @@ internal class EmbraceSpanImplTest {
             assertTrue(addEvent(name = MAX_LENGTH_EVENT_NAME, timestampMs = null, attributes = null))
             assertTrue(addEvent(name = "yo", timestampMs = null, attributes = maxSizeEventAttributes))
             assertTrue(recordException(exception = RuntimeException()))
-            repeat(InstrumentedConfigImpl.otelLimits.getMaxCustomEventCount() - 5) {
+            repeat(dataValidator.otelLimitsConfig.getMaxCustomEventCount() - 5) {
                 assertTrue(addEvent(name = "event $it"))
             }
             val eventAttributesAMap = mutableMapOf(
@@ -340,14 +352,17 @@ internal class EmbraceSpanImplTest {
     fun `check adding and removing system attributes not affected by custom attributes`() {
         with(embraceSpan) {
             assertTrue(start())
-            repeat(InstrumentedConfigImpl.otelLimits.getMaxCustomAttributeCount()) {
+            val maxCustomAttrCount = dataValidator.otelLimitsConfig.getMaxCustomAttributeCount()
+            repeat(maxCustomAttrCount) {
                 assertTrue(addAttribute(key = "key$it", value = "value"))
             }
             assertFalse(addAttribute(key = "failed", value = "value"))
             addSystemAttribute("system-attribute", "value")
             assertEquals("value", embraceSpan.snapshot()?.attributes?.findAttributeValue("system-attribute"))
+            assertEquals(maxCustomAttrCount + 2, attributes().size)
             removeSystemAttribute("system-attribute")
             assertNull("value", embraceSpan.snapshot()?.attributes?.findAttributeValue("system-attribute"))
+            assertEquals(maxCustomAttrCount + 1, attributes().size)
             assertTrue(updateNotified)
         }
     }
@@ -361,10 +376,11 @@ internal class EmbraceSpanImplTest {
             assertTrue(addAttribute(key = MAX_LENGTH_ATTRIBUTE_KEY, value = "value"))
             assertTrue(addAttribute(key = "key", value = MAX_LENGTH_ATTRIBUTE_VALUE))
             assertTrue(addAttribute(key = "Key", value = MAX_LENGTH_ATTRIBUTE_VALUE))
-            repeat(InstrumentedConfigImpl.otelLimits.getMaxCustomAttributeCount() - 3) {
+            repeat(dataValidator.otelLimitsConfig.getMaxCustomAttributeCount() - 3) {
                 assertTrue(addAttribute(key = "key$it", value = "value"))
             }
             assertFalse(addAttribute(key = "failedKey", value = "value"))
+            assertEquals(dataValidator.otelLimitsConfig.getMaxCustomAttributeCount() + 1, attributes().size)
             assertTrue(updateNotified)
         }
     }
@@ -385,7 +401,7 @@ internal class EmbraceSpanImplTest {
     @Test
     fun `check system link limits`() {
         assertTrue(embraceSpan.start())
-        repeat(InstrumentedConfigImpl.otelLimits.getMaxSystemLinkCount()) {
+        repeat(dataValidator.otelLimitsConfig.getMaxSystemLinkCount()) {
             val spanContext = checkNotNull(FakeEmbraceSdkSpan.stopped().spanContext)
             assertTrue(embraceSpan.addSystemLink(SpanContextAdapter(spanContext), LinkType.PreviousSession))
         }
@@ -398,7 +414,7 @@ internal class EmbraceSpanImplTest {
     @Test
     fun `check custom link limits`() {
         assertTrue(embraceSpan.start())
-        repeat(InstrumentedConfigImpl.otelLimits.getMaxCustomLinkCount()) {
+        repeat(dataValidator.otelLimitsConfig.getMaxCustomLinkCount()) {
             assertTrue(embraceSpan.addLink(FakeEmbraceSdkSpan.stopped()))
         }
 

@@ -11,7 +11,7 @@ import org.junit.Assert.assertSame
 import org.junit.Before
 import org.junit.Test
 
-internal class EmbOpenTelemetryTest {
+internal class EmbOtelJavaOpenTelemetryTest {
     private lateinit var tracerProvider: FakeOtelJavaTracerProvider
     private lateinit var openTelemetry: EmbOtelJavaOpenTelemetry
 

@@ -29,7 +29,7 @@ import java.time.Instant
 import java.util.concurrent.TimeUnit
 
 @OptIn(ExperimentalApi::class)
-internal class EmbSpanBuilderTest {
+internal class EmbOtelJavaSpanBuilderTest {
     private val clock = FakeClock()
     private val openTelemetryClock = FakeOtelKotlinClock(clock)
     private lateinit var tracer: Tracer

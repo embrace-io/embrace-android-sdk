@@ -22,7 +22,7 @@ import org.junit.Test
 import java.util.concurrent.TimeUnit
 
 @OptIn(ExperimentalApi::class)
-internal class EmbSpanTest {
+internal class EmbOtelJavaSpanTest {
     private lateinit var fakeClock: FakeClock
     private lateinit var openTelemetryClock: Clock
     private lateinit var fakeEmbraceSpan: FakeEmbraceSdkSpan

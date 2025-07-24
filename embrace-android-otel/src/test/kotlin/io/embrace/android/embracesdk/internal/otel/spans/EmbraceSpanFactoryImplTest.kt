@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.fakes.FakeOtelJavaTracer
 import io.embrace.android.embracesdk.fakes.FakeOtelKotlinClock
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.embrace.android.embracesdk.internal.otel.schema.PrivateSpan
+import io.embrace.android.embracesdk.internal.otel.sdk.DataValidator
 import io.embrace.android.embracesdk.internal.otel.sdk.otelSpanCreator
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.k2j.tracing.TracerAdapter
@@ -39,6 +40,7 @@ internal class EmbraceSpanFactoryImplTest {
             tracer = tracer,
             openTelemetryClock = openTelemetryClock,
             spanRepository = spanRepository,
+            dataValidator = DataValidator()
         )
     }
 

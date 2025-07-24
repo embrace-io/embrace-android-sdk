@@ -12,7 +12,7 @@ class DataValidator(
     val otelLimitsConfig: OtelLimitsConfig = OtelLimitsConfigImpl,
     private val bypassValidation: (() -> Boolean) = { false },
 ) {
-    fun truncateSpanName(name: String, internal: Boolean): String {
+    fun truncateName(name: String, internal: Boolean): String {
         val maxLength = if (internal) {
             otelLimitsConfig.getMaxInternalNameLength()
         } else {
@@ -31,8 +31,8 @@ class DataValidator(
         }
     }
 
-    fun truncateAttributes(attributes: Map<String, String>, internal: Boolean): Map<String, String> {
-        val maxAttributeCount = if (internal) {
+    fun truncateAttributes(attributes: Map<String, String>, internal: Boolean, countOverride: Int? = null): Map<String, String> {
+        val maxAttributeCount = countOverride ?: if (internal) {
             otelLimitsConfig.getMaxSystemAttributeCount()
         } else {
             otelLimitsConfig.getMaxCustomAttributeCount()
@@ -78,6 +78,23 @@ class DataValidator(
         }
 
         return Pair(PropertyUtils.truncate(key, maxKeyLength), truncatedValue)
+    }
+
+    fun createTruncatedEvent(
+        name: String,
+        timestampMs: Long,
+        internal: Boolean,
+        attributes: Map<String, String>,
+    ): EmbraceSpanEvent? {
+        return EmbraceSpanEvent.create(
+            name = truncateName(name, internal),
+            timestampMs = timestampMs,
+            attributes = truncateAttributes(
+                attributes = attributes,
+                internal = internal,
+                countOverride = otelLimitsConfig.getMaxEventAttributeCount()
+            )
+        )
     }
 
     private fun Map<String, String>.truncate(

@@ -26,25 +26,15 @@ public data class EmbraceSpanEvent internal constructor(
      * @suppress
      */
     public companion object {
-        internal const val MAX_EVENT_NAME_LENGTH = 100
-        internal const val MAX_EVENT_ATTRIBUTE_COUNT = 10
-
         /**
          * @suppress
          */
         public fun create(name: String, timestampMs: Long, attributes: Map<String, String>?): EmbraceSpanEvent? {
-            if (inputsValid(name, attributes)) {
-                return EmbraceSpanEvent(
-                    name = name,
-                    timestampNanos = TimeUnit.MILLISECONDS.toNanos(timestampMs),
-                    attributes = attributes ?: emptyMap()
-                )
-            }
-
-            return null
+            return EmbraceSpanEvent(
+                name = name,
+                timestampNanos = TimeUnit.MILLISECONDS.toNanos(timestampMs),
+                attributes = attributes ?: emptyMap()
+            )
         }
-
-        internal fun inputsValid(name: String, attributes: Map<String, String>?) =
-            name.length <= MAX_EVENT_NAME_LENGTH && (attributes == null || attributes.size <= MAX_EVENT_ATTRIBUTE_COUNT)
     }
 }

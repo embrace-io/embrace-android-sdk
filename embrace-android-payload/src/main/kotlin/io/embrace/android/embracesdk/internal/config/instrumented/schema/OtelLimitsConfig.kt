@@ -13,6 +13,7 @@ interface OtelLimitsConfig {
     fun getMaxSystemEventCount(): Int = 11000
     fun getMaxCustomAttributeCount(): Int = 100
     fun getMaxSystemAttributeCount(): Int = 300
+    fun getMaxEventAttributeCount(): Int = 10
     fun getMaxCustomLinkCount(): Int = 10
     fun getMaxSystemLinkCount(): Int = 100
     fun getMaxInternalAttributeKeyLength(): Int = 1000

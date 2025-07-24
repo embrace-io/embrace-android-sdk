@@ -21,6 +21,7 @@ import io.embrace.android.embracesdk.fixtures.TRUNCATED_TOO_LONG_ATTRIBUTE_KEY
 import io.embrace.android.embracesdk.fixtures.TRUNCATED_TOO_LONG_ATTRIBUTE_KEY_FOR_INTERNAL_SPAN
 import io.embrace.android.embracesdk.fixtures.TRUNCATED_TOO_LONG_ATTRIBUTE_VALUE
 import io.embrace.android.embracesdk.fixtures.TRUNCATED_TOO_LONG_ATTRIBUTE_VALUE_FOR_INTERNAL_SPAN
+import io.embrace.android.embracesdk.fixtures.TRUNCATED_TOO_LONG_EVENT_NAME
 import io.embrace.android.embracesdk.fixtures.TRUNCATED_TOO_LONG_SPAN_NAME
 import io.embrace.android.embracesdk.fixtures.fakeContextKey
 import io.embrace.android.embracesdk.fixtures.maxSizeEventAttributes
@@ -191,6 +192,7 @@ internal class EmbraceSpanImplTest {
     fun `check adding events`() {
         with(embraceSpan) {
             assertTrue(start())
+            assertTrue(addEvent(name = ""))
             assertTrue(addEvent(name = "current event"))
             assertTrue(
                 addEvent(
@@ -268,16 +270,17 @@ internal class EmbraceSpanImplTest {
             assertTrue(start())
             assertTrue(recordException(exception = firstException))
             assertTrue(recordException(exception = secondException, attributes = mapOf("myKey" to "myValue")))
-            assertFalse(recordException(exception = RuntimeException(), attributes = tooBigEventAttributes))
+            assertTrue(recordException(exception = RuntimeException(), attributes = tooBigEventAttributes))
             assertTrue(stop())
             assertFalse(recordException(exception = IllegalStateException()))
+            assertEquals(3, events().size)
             assertTrue(updateNotified)
         }
 
         with(checkNotNull(embraceSpan.snapshot())) {
             val sanitizedEvents = checkNotNull(events)
-            assertEquals(2, sanitizedEvents.size)
-            with(sanitizedEvents.first()) {
+            assertEquals(3, sanitizedEvents.size)
+            with(sanitizedEvents[0]) {
                 assertEquals(dataValidator.otelLimitsConfig.getExceptionEventName(), name)
                 val attrs = checkNotNull(attributes)
                 assertEquals(timestampNanos, timestampNanos)
@@ -291,7 +294,7 @@ internal class EmbraceSpanImplTest {
                     attrs.single { it.key == ExceptionAttributes.EXCEPTION_STACKTRACE.key }.data
                 )
             }
-            with(sanitizedEvents.last()) {
+            with(sanitizedEvents[1]) {
                 assertEquals(dataValidator.otelLimitsConfig.getExceptionEventName(), name)
                 val attrs = checkNotNull(attributes)
                 assertEquals(timestampNanos, timestampNanos)
@@ -324,14 +327,15 @@ internal class EmbraceSpanImplTest {
     fun `check event limits`() {
         with(embraceSpan) {
             assertTrue(start())
-            assertFalse(addEvent(name = TOO_LONG_EVENT_NAME))
-            assertFalse(addEvent(name = TOO_LONG_EVENT_NAME, timestampMs = null, attributes = null))
-            assertFalse(addEvent(name = "yo", timestampMs = null, attributes = tooBigEventAttributes))
+            assertTrue(addEvent(name = TOO_LONG_EVENT_NAME))
+            assertEquals(TRUNCATED_TOO_LONG_EVENT_NAME, events().last().name)
+            assertTrue(addEvent(name = "yo", timestampMs = null, attributes = tooBigEventAttributes))
+            assertEquals(10, events().last().attributes?.size)
             assertTrue(addEvent(name = MAX_LENGTH_EVENT_NAME))
             assertTrue(addEvent(name = MAX_LENGTH_EVENT_NAME, timestampMs = null, attributes = null))
             assertTrue(addEvent(name = "yo", timestampMs = null, attributes = maxSizeEventAttributes))
             assertTrue(recordException(exception = RuntimeException()))
-            repeat(dataValidator.otelLimitsConfig.getMaxCustomEventCount() - 5) {
+            repeat(dataValidator.otelLimitsConfig.getMaxCustomEventCount() - 7) {
                 assertTrue(addEvent(name = "event $it"))
             }
             val eventAttributesAMap = mutableMapOf(

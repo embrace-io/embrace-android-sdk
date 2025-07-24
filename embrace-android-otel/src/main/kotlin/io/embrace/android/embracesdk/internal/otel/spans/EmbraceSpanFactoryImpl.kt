@@ -224,10 +224,11 @@ private class EmbraceSpanImpl(
 
     override fun addEvent(name: String, timestampMs: Long?, attributes: Map<String, String>?): Boolean =
         addObject(customEvents, customEventCount, dataValidator.otelLimitsConfig.getMaxCustomEventCount()) {
-            EmbraceSpanEvent.create(
+            dataValidator.createTruncatedEvent(
                 name = name,
                 timestampMs = timestampMs?.normalizeTimestampAsMillis() ?: openTelemetryClock.now().nanosToMillis(),
-                attributes = attributes
+                internal = otelSpanCreator.spanStartArgs.internal,
+                attributes = attributes ?: emptyMap(),
             )
         }
 
@@ -248,19 +249,21 @@ private class EmbraceSpanImpl(
 
             eventAttributes[ExceptionAttributes.EXCEPTION_STACKTRACE.key] = exception.truncatedStacktraceText()
 
-            EmbraceSpanEvent.create(
+            dataValidator.createTruncatedEvent(
                 name = dataValidator.otelLimitsConfig.getExceptionEventName(),
                 timestampMs = openTelemetryClock.now().nanosToMillis(),
-                attributes = eventAttributes
+                internal = otelSpanCreator.spanStartArgs.internal,
+                attributes = eventAttributes,
             )
         }
 
     override fun addSystemEvent(name: String, timestampMs: Long?, attributes: Map<String, String>?): Boolean =
         addObject(systemEvents, systemEventCount, dataValidator.otelLimitsConfig.getMaxSystemEventCount()) {
-            EmbraceSpanEvent.create(
+            dataValidator.createTruncatedEvent(
                 name = name,
                 timestampMs = timestampMs?.normalizeTimestampAsMillis() ?: openTelemetryClock.now().nanosToMillis(),
-                attributes = attributes
+                internal = otelSpanCreator.spanStartArgs.internal,
+                attributes = attributes ?: emptyMap(),
             )
         }
 
@@ -313,7 +316,7 @@ private class EmbraceSpanImpl(
         if (newName.isNotBlank()) {
             synchronized(startedSpan) {
                 if (!spanStarted() || isRecording) {
-                    val validatedName = dataValidator.truncateSpanName(newName, otelSpanCreator.spanStartArgs.internal)
+                    val validatedName = dataValidator.truncateName(newName, otelSpanCreator.spanStartArgs.internal)
                     updatedName = validatedName
                     startedSpan.get()?.name = validatedName
                     spanRepository.notifySpanUpdate()

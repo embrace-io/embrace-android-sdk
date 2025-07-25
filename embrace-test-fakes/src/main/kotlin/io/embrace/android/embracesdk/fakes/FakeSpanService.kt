@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.fakes
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.embrace.android.embracesdk.internal.otel.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
-import io.embrace.android.embracesdk.internal.otel.spans.OtelSpanCreator
+import io.embrace.android.embracesdk.internal.otel.spans.OtelSpanStartArgs
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
@@ -39,9 +39,8 @@ class FakeSpanService : SpanService {
     }
 
     override fun createSpan(
-        otelSpanCreator: OtelSpanCreator
+        otelSpanStartArgs: OtelSpanStartArgs
     ): EmbraceSdkSpan {
-        val otelSpanStartArgs = otelSpanCreator.spanStartArgs
         return FakeEmbraceSdkSpan(
             name = otelSpanStartArgs.spanName,
             parentContext = otelSpanStartArgs.parentContext,

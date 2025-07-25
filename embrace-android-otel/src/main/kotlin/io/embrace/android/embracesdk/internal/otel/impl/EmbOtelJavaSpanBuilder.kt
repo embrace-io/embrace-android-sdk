@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.otel.impl
 
-import io.embrace.android.embracesdk.internal.otel.spans.OtelSpanCreator
+import io.embrace.android.embracesdk.internal.otel.spans.OtelSpanStartArgs
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.opentelemetry.kotlin.Clock
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
@@ -15,12 +15,10 @@ import java.util.concurrent.TimeUnit
 
 @OptIn(ExperimentalApi::class)
 class EmbOtelJavaSpanBuilder(
-    private val otelSpanCreator: OtelSpanCreator,
+    private val otelSpanStartArgs: OtelSpanStartArgs,
     private val spanService: SpanService,
     private val clock: Clock,
 ) : OtelJavaSpanBuilder {
-
-    private val otelSpanStartArgs = otelSpanCreator.spanStartArgs
 
     override fun setParent(context: OtelJavaContext): OtelJavaSpanBuilder {
         otelSpanStartArgs.parentContext = context
@@ -61,7 +59,7 @@ class EmbOtelJavaSpanBuilder(
     }
 
     override fun startSpan(): OtelJavaSpan {
-        spanService.createSpan(otelSpanCreator)?.let { embraceSpan ->
+        spanService.createSpan(otelSpanStartArgs)?.let { embraceSpan ->
             if (embraceSpan.start()) {
                 return EmbOtelJavaSpan(
                     embraceSpan = embraceSpan,

@@ -28,7 +28,7 @@ import io.embrace.android.embracesdk.internal.otel.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.otel.sdk.DataValidator
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
-import io.embrace.android.embracesdk.internal.otel.sdk.otelSpanCreator
+import io.embrace.android.embracesdk.internal.otel.sdk.otelSpanArgs
 import io.embrace.android.embracesdk.internal.otel.sdk.toEmbraceObjectName
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
@@ -78,7 +78,7 @@ internal class EmbraceSpanImplTest {
             redactionFunction = ::redactionFunction
         )
         embraceSpan = embraceSpanFactory.create(
-            otelSpanCreator = tracer.otelSpanCreator(
+            otelSpanStartArgs = tracer.otelSpanArgs(
                 name = EXPECTED_SPAN_NAME,
                 type = EmbType.Performance.Default,
                 internal = false,
@@ -480,7 +480,7 @@ internal class EmbraceSpanImplTest {
     @Test
     fun `start time from span start method overrides all`() {
         val wrapper = createWrapperForInternalSpan()
-        wrapper.spanStartArgs.startTimeMs = fakeClock.tick()
+        wrapper.startTimeMs = fakeClock.tick()
         embraceSpan = embraceSpanFactory.create(wrapper)
 
         val timePassedIn = fakeClock.tick()
@@ -499,7 +499,7 @@ internal class EmbraceSpanImplTest {
     fun `start time from span builder used if no start time passed into start method`() {
         val wrapper = createWrapperForInternalSpan()
         val timeOnWrapper = fakeClock.tick()
-        wrapper.spanStartArgs.startTimeMs = timeOnWrapper
+        wrapper.startTimeMs = timeOnWrapper
         embraceSpan = embraceSpanFactory.create(wrapper)
         fakeClock.tick()
         assertTrue(embraceSpan.start())
@@ -509,8 +509,8 @@ internal class EmbraceSpanImplTest {
     @Test
     fun `validate context objects are propagated from the parent to the child span`() {
         val wrapper = createWrapperForInternalSpan()
-        val newParentContext = wrapper.spanStartArgs.parentContext.with(fakeContextKey, "fake-value")
-        wrapper.spanStartArgs.parentContext = newParentContext
+        val newParentContext = wrapper.parentContext.with(fakeContextKey, "fake-value")
+        wrapper.parentContext = newParentContext
         embraceSpan = embraceSpanFactory.create(wrapper)
 
         assertNull(embraceSpan.asNewContext())
@@ -523,8 +523,8 @@ internal class EmbraceSpanImplTest {
     fun `custom attributes are redacted if their key is sensitive when getting a span snapshot`() {
         // given a span with a sensitive key
         val spanBuilder = createWrapperForInternalSpan()
-        spanBuilder.spanStartArgs.customAttributes["password"] = "123456"
-        spanBuilder.spanStartArgs.customAttributes["status"] = "ok"
+        spanBuilder.customAttributes["password"] = "123456"
+        spanBuilder.customAttributes["status"] = "ok"
         embraceSpan = embraceSpanFactory.create(spanBuilder)
         embraceSpan.start()
 
@@ -558,7 +558,7 @@ internal class EmbraceSpanImplTest {
 
     private fun createInternalEmbraceSdkSpan() = embraceSpanFactory.create(createWrapperForInternalSpan())
 
-    private fun createWrapperForInternalSpan() = tracer.otelSpanCreator(
+    private fun createWrapperForInternalSpan() = tracer.otelSpanArgs(
         name = EXPECTED_SPAN_NAME,
         type = EmbType.System.LowPower,
         internal = true,

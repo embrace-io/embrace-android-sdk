@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.fakes.FakeSpanService
 import io.embrace.android.embracesdk.fixtures.fakeContextKey
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.embrace.android.embracesdk.internal.otel.spans.OtelSpanStartArgs
+import io.embrace.android.embracesdk.internal.otel.spans.createContext
 import io.embrace.android.embracesdk.internal.otel.spans.getEmbraceSpan
 import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
@@ -63,7 +64,7 @@ internal class EmbOtelJavaSpanBuilderTest {
             type = EmbType.Performance.Default,
             internal = true,
             private = true,
-            parentSpan = spanParent,
+            parentCtx = spanParent.createContext(),
             autoTerminationMode = AutoTerminationMode.ON_BACKGROUND,
         )
         embSpanBuilder = EmbOtelJavaSpanBuilder(
@@ -95,7 +96,7 @@ internal class EmbOtelJavaSpanBuilderTest {
             type = EmbType.Performance.Default,
             internal = false,
             private = false,
-            parentSpan = oldParent,
+            parentCtx = oldParent.createContext(),
         )
         embSpanBuilder = EmbOtelJavaSpanBuilder(
             otelSpanStartArgs = newOtelSpanStartArgs,

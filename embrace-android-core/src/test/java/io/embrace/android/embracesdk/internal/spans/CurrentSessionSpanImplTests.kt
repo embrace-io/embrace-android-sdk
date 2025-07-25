@@ -158,7 +158,6 @@ internal class CurrentSessionSpanImplTests {
                         internal = false,
                         private = false,
                         tracer = tracer,
-                        parentSpan = null,
                     )
                 )
             )
@@ -171,7 +170,6 @@ internal class CurrentSessionSpanImplTests {
                     internal = false,
                     private = false,
                     tracer = tracer,
-                    parentSpan = null,
                 )
             )
         )
@@ -183,7 +181,6 @@ internal class CurrentSessionSpanImplTests {
                     internal = true,
                     private = false,
                     tracer = tracer,
-                    parentSpan = null,
                 )
             )
         )

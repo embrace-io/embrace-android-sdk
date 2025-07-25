@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.otel.impl
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.embrace.android.embracesdk.internal.otel.spans.OtelSpanStartArgs
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
+import io.embrace.android.embracesdk.internal.otel.spans.createContext
 import io.embrace.android.embracesdk.internal.otel.spans.getEmbraceSpan
 import io.embrace.opentelemetry.kotlin.Clock
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
@@ -26,7 +27,7 @@ class EmbOtelJavaTracer(
                 internal = false,
                 private = false,
                 tracer = sdkTracer,
-                parentSpan = OtelJavaContext.current().getEmbraceSpan(),
+                parentCtx = OtelJavaContext.current().getEmbraceSpan()?.createContext(),
             ),
             spanService = spanService,
             clock = clock,

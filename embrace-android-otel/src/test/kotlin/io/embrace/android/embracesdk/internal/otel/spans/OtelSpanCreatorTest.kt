@@ -89,7 +89,7 @@ internal class OtelSpanCreatorTest {
             type = EmbType.Performance.Default,
             internal = false,
             private = false,
-            parentSpan = parent,
+            parentCtx = parent.createContext(),
             tracer = TracerAdapter(tracer, otelClock),
         )
 
@@ -109,7 +109,7 @@ internal class OtelSpanCreatorTest {
             type = EmbType.Ux.View,
             internal = false,
             private = false,
-            parentSpan = parent,
+            parentCtx = parent.createContext(),
             tracer = TracerAdapter(tracer, otelClock),
         )
         uxArgs.parentContext = OtelJavaContext.root()

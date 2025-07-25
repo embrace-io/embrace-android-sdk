@@ -224,7 +224,7 @@ private class EmbraceSpanImpl(
 
     override fun addEvent(name: String, timestampMs: Long?, attributes: Map<String, String>?): Boolean =
         addObject(customEvents, customEventCount, dataValidator.otelLimitsConfig.getMaxCustomEventCount()) {
-            dataValidator.createTruncatedEvent(
+            dataValidator.createTruncatedSpanEvent(
                 name = name,
                 timestampMs = timestampMs?.normalizeTimestampAsMillis() ?: openTelemetryClock.now().nanosToMillis(),
                 internal = otelSpanCreator.spanStartArgs.internal,
@@ -249,7 +249,7 @@ private class EmbraceSpanImpl(
 
             eventAttributes[ExceptionAttributes.EXCEPTION_STACKTRACE.key] = exception.truncatedStacktraceText()
 
-            dataValidator.createTruncatedEvent(
+            dataValidator.createTruncatedSpanEvent(
                 name = dataValidator.otelLimitsConfig.getExceptionEventName(),
                 timestampMs = openTelemetryClock.now().nanosToMillis(),
                 internal = otelSpanCreator.spanStartArgs.internal,
@@ -259,7 +259,7 @@ private class EmbraceSpanImpl(
 
     override fun addSystemEvent(name: String, timestampMs: Long?, attributes: Map<String, String>?): Boolean =
         addObject(systemEvents, systemEventCount, dataValidator.otelLimitsConfig.getMaxSystemEventCount()) {
-            dataValidator.createTruncatedEvent(
+            dataValidator.createTruncatedSpanEvent(
                 name = name,
                 timestampMs = timestampMs?.normalizeTimestampAsMillis() ?: openTelemetryClock.now().nanosToMillis(),
                 internal = otelSpanCreator.spanStartArgs.internal,

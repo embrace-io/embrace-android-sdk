@@ -80,7 +80,7 @@ class DataValidator(
         return Pair(PropertyUtils.truncate(key, maxKeyLength), truncatedValue)
     }
 
-    fun createTruncatedEvent(
+    fun createTruncatedSpanEvent(
         name: String,
         timestampMs: Long,
         internal: Boolean,

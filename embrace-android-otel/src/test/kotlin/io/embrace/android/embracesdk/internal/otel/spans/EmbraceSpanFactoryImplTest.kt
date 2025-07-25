@@ -7,7 +7,6 @@ import io.embrace.android.embracesdk.fakes.FakeOtelKotlinClock
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.embrace.android.embracesdk.internal.otel.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.otel.sdk.DataValidator
-import io.embrace.android.embracesdk.internal.otel.sdk.otelSpanArgs
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.k2j.tracing.TracerAdapter
 import io.embrace.opentelemetry.kotlin.tracing.Tracer
@@ -100,12 +99,13 @@ internal class EmbraceSpanFactoryImplTest {
     @Test
     fun `span creation with embrace span builder`() {
         val spanParent = FakeEmbraceSdkSpan.started()
-        val spanBuilder = tracer.otelSpanArgs(
+        val spanBuilder = OtelSpanStartArgs(
             name = "from-span-builder",
             type = EmbType.System.LowPower,
             internal = false,
             private = false,
-            parent = spanParent,
+            tracer = tracer,
+            parentSpan = spanParent,
         )
 
         with(embraceSpanFactory.create(otelSpanStartArgs = spanBuilder)) {

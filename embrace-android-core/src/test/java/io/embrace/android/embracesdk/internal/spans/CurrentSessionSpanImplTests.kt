@@ -22,7 +22,7 @@ import io.embrace.android.embracesdk.internal.otel.schema.AppTerminationCause
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.embrace.android.embracesdk.internal.otel.schema.LinkType
 import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
-import io.embrace.android.embracesdk.internal.otel.sdk.otelSpanArgs
+import io.embrace.android.embracesdk.internal.otel.spans.OtelSpanStartArgs
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
@@ -151,35 +151,38 @@ internal class CurrentSessionSpanImplTests {
         repeat(MAX_NON_INTERNAL_SPANS_PER_SESSION) {
             assertNotNull(
                 spanService.createSpan(
-                    otelSpanStartArgs = tracer.otelSpanArgs(
+                    otelSpanStartArgs = OtelSpanStartArgs(
                         name = "external-span",
                         type = EmbType.Performance.Default,
-                        parent = null,
                         internal = false,
                         private = false,
+                        tracer = tracer,
+                        parentSpan = null,
                     )
                 )
             )
         }
         assertNull(
             spanService.createSpan(
-                otelSpanStartArgs = tracer.otelSpanArgs(
+                otelSpanStartArgs = OtelSpanStartArgs(
                     name = "external-span",
                     type = EmbType.Performance.Default,
-                    parent = null,
                     internal = false,
                     private = false,
+                    tracer = tracer,
+                    parentSpan = null,
                 )
             )
         )
         assertNotNull(
             spanService.createSpan(
-                otelSpanStartArgs = tracer.otelSpanArgs(
+                otelSpanStartArgs = OtelSpanStartArgs(
                     name = "internal-span",
                     type = EmbType.Performance.Default,
-                    parent = null,
                     internal = true,
                     private = false,
+                    tracer = tracer,
+                    parentSpan = null,
                 )
             )
         )

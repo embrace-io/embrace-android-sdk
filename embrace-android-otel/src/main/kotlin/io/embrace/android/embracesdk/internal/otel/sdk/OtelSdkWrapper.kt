@@ -6,8 +6,8 @@ import io.embrace.android.embracesdk.internal.otel.config.OtelSdkConfig
 import io.embrace.android.embracesdk.internal.otel.config.getMaxTotalAttributeCount
 import io.embrace.android.embracesdk.internal.otel.config.getMaxTotalEventCount
 import io.embrace.android.embracesdk.internal.otel.config.getMaxTotalLinkCount
-import io.embrace.android.embracesdk.internal.otel.impl.EmbOtelJavaOpenTelemetry
-import io.embrace.android.embracesdk.internal.otel.impl.EmbOtelJavaTracerProvider
+import io.embrace.android.embracesdk.internal.otel.impl.EmbOpenTelemetry
+import io.embrace.android.embracesdk.internal.otel.impl.EmbTracerProvider
 import io.embrace.android.embracesdk.internal.otel.logs.DefaultLogRecordProcessor
 import io.embrace.android.embracesdk.internal.otel.spans.DefaultSpanProcessor
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
@@ -17,7 +17,7 @@ import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.OpenTelemetry
 import io.embrace.opentelemetry.kotlin.OpenTelemetryInstance
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaOpenTelemetry
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaTracerProvider
+import io.embrace.opentelemetry.kotlin.compatWithOtelKotlin
 import io.embrace.opentelemetry.kotlin.kotlinApi
 import io.embrace.opentelemetry.kotlin.logging.Logger
 import io.embrace.opentelemetry.kotlin.tracing.Tracer
@@ -88,16 +88,10 @@ class OtelSdkWrapper(
     }
 
     val openTelemetryJava: OtelJavaOpenTelemetry by lazy {
-        EmbOtelJavaOpenTelemetry(
-            traceProviderSupplier = { externalTracerProvider }
-        )
-    }
-
-    private val externalTracerProvider: OtelJavaTracerProvider by lazy {
-        EmbOtelJavaTracerProvider(
-            sdkTracerProvider = kotlinApi.tracerProvider,
-            spanService = spanService,
-            clock = otelClock,
+        OpenTelemetryInstance.compatWithOtelKotlin(
+            EmbOpenTelemetry(kotlinApi) {
+                EmbTracerProvider(kotlinApi.tracerProvider, spanService, otelClock)
+            }
         )
     }
 }

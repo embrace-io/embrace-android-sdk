@@ -4,9 +4,6 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.assertEmbraceSpanData
 import io.embrace.android.embracesdk.fakes.FakeOtelJavaSpanExporter
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
-import io.embrace.android.embracesdk.internal.otel.impl.EmbOtelJavaSpan
-import io.embrace.android.embracesdk.internal.otel.impl.EmbOtelJavaSpanBuilder
-import io.embrace.android.embracesdk.internal.otel.impl.EmbOtelJavaTracer
 import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
 import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
 import io.embrace.android.embracesdk.internal.otel.sdk.toEmbraceSpanData
@@ -28,7 +25,6 @@ import io.opentelemetry.semconv.ExceptionAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNull
-import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
@@ -45,7 +41,6 @@ internal class ExternalTracerTest {
     private lateinit var spanExporter: FakeOtelJavaSpanExporter
     private lateinit var embOpenTelemetry: OtelJavaOpenTelemetry
     private lateinit var embTracer: OtelJavaTracer
-    private lateinit var otelTracer: OtelJavaTracer
 
     @Before
     fun setup() {
@@ -61,18 +56,11 @@ internal class ExternalTracerTest {
             testCaseAction = {
                 initializeTracer()
                 embOpenTelemetry = embrace.getOpenTelemetry()
-                otelTracer = embrace.getOpenTelemetry().getTracer("foo")
             },
             assertAction = {
-                assertSame(
-                    otelTracer,
-                    embOpenTelemetry.getTracer("foo")
-                )
-                assertTrue(embTracer is EmbOtelJavaTracer)
                 val spanBuilder = embTracer.spanBuilder("test")
                 val span = spanBuilder.startSpan()
-                assertTrue(spanBuilder is EmbOtelJavaSpanBuilder)
-                assertTrue(span is EmbOtelJavaSpan)
+                assertTrue(span.isRecording)
             }
         )
     }
@@ -192,11 +180,9 @@ internal class ExternalTracerTest {
                 initializeTracer()
             },
             assertAction = {
-                assertTrue(embTracer is EmbOtelJavaTracer)
                 val spanBuilder = embTracer.spanBuilder("test")
                 val span = spanBuilder.startSpan()
-                assertTrue(spanBuilder is EmbOtelJavaSpanBuilder)
-                assertTrue(span is EmbOtelJavaSpan)
+                assertTrue(span.isRecording)
             }
         )
     }

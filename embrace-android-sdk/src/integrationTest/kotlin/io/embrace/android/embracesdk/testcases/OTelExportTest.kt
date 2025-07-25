@@ -5,7 +5,7 @@ import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.fakes.FakeOtelJavaSpanExporter
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
-import io.embrace.android.embracesdk.internal.otel.sdk.hasEmbraceAttribute
+import io.embrace.android.embracesdk.internal.toStringMap
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.opentelemetry.semconv.ServiceAttributes
 import org.junit.Assert.assertEquals
@@ -87,7 +87,7 @@ internal class OTelExportTest {
             },
             otelExportAssertion = {
                 val log = awaitLogs(1) {
-                    it.attributes.hasEmbraceAttribute(EmbType.System.Log)
+                    it.attributes.toStringMap().containsKey(EmbType.System.Log.key.name)
                 }
                 with(log.single()) {
                     assertEquals("test message", body.asString())

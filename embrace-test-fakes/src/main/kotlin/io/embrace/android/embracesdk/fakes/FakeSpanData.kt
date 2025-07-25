@@ -6,7 +6,8 @@ import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.otel.attrs.asPair
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.embrace.android.embracesdk.internal.otel.sdk.DataValidator
-import io.embrace.android.embracesdk.internal.otel.sdk.fromMap
+import io.embrace.android.embracesdk.internal.otel.sdk.sanitizeAttributesMap
+import io.embrace.android.embracesdk.internal.toOtelJava
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaAttributes
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaEventData
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaInstrumentationLibraryInfo
@@ -29,15 +30,10 @@ class FakeSpanData(
     private var spanContext: OtelJavaSpanContext = newTraceRootContext(),
     private var parentSpanContext: OtelJavaSpanContext = OtelJavaSpanContext.getInvalid(),
     private var startEpochNanos: Long = DEFAULT_START_TIME_MS.millisToNanos(),
-    private var attributes: OtelJavaAttributes =
-        OtelJavaAttributes.builder().fromMap(
-            attributes = mapOf(
-                type.asPair(),
-                Pair("my-key", "my-value")
-            ),
-            internal = true,
-            limitsValidator = DataValidator()
-        ).build(),
+    private var attributes: OtelJavaAttributes = mapOf(
+        type.asPair(),
+        Pair("my-key", "my-value")
+    ).sanitizeAttributesMap(true, DataValidator()).toOtelJava(),
     private var events: MutableList<OtelJavaEventData> = mutableListOf(
         OtelJavaEventData.create(
             startEpochNanos + 1000000L,

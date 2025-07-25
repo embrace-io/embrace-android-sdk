@@ -12,6 +12,7 @@ import io.embrace.android.embracesdk.internal.otel.sdk.toEmbraceObjectName
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanFactory
+import io.embrace.android.embracesdk.internal.otel.spans.OtelSpanStartArgs
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
 import io.embrace.android.embracesdk.internal.otel.toOtelKotlin
@@ -22,6 +23,7 @@ import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.opentelemetry.kotlin.Clock
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
+import io.embrace.opentelemetry.kotlin.tracing.Tracer
 import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
@@ -33,6 +35,7 @@ internal class CurrentSessionSpanImpl(
     private val telemetryService: TelemetryService,
     private val spanRepository: SpanRepository,
     private val spanSink: SpanSink,
+    private val tracerSupplier: Provider<Tracer>,
     private val embraceSpanFactorySupplier: Provider<EmbraceSpanFactory>,
 ) : CurrentSessionSpan, SessionSpanWriter {
 
@@ -206,10 +209,13 @@ internal class CurrentSessionSpanImpl(
         internalTraceCount.set(0)
 
         return embraceSpanFactorySupplier().create(
-            name = "session",
-            type = EmbType.Ux.Session,
-            internal = true,
-            private = false,
+            OtelSpanStartArgs(
+                name = "session",
+                type = EmbType.Ux.Session,
+                internal = true,
+                private = false,
+                tracer = tracerSupplier()
+            )
         ).apply {
             start(startTimeMs = startTimeMs)
             setSystemAttribute(SessionIncubatingAttributes.SESSION_ID.key, Uuid.getEmbUuid())

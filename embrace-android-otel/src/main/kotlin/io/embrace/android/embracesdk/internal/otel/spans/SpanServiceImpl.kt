@@ -8,12 +8,16 @@ import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
+import io.embrace.opentelemetry.kotlin.ExperimentalApi
+import io.embrace.opentelemetry.kotlin.tracing.Tracer
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * Implementation of the core logic for [SpanService]
  */
+@OptIn(ExperimentalApi::class)
 class SpanServiceImpl(
+    private val tracer: Tracer,
     private val spanRepository: SpanRepository,
     private val embraceSpanFactory: EmbraceSpanFactory,
     private val dataValidator: DataValidator,
@@ -42,12 +46,15 @@ class SpanServiceImpl(
         EmbTrace.trace("span-create") {
             return if (dataValidator.isNameValid(name, internal) && canStartNewSpan(parent, internal)) {
                 embraceSpanFactory.create(
-                    name = name,
-                    type = type,
-                    internal = internal,
-                    private = private,
-                    parent = parent,
-                    autoTerminationMode = autoTerminationMode,
+                    OtelSpanStartArgs(
+                        name = name,
+                        type = type,
+                        internal = internal,
+                        private = private,
+                        parentSpan = parent,
+                        autoTerminationMode = autoTerminationMode,
+                        tracer = tracer,
+                    )
                 )
             } else {
                 null
@@ -134,11 +141,14 @@ class SpanServiceImpl(
 
             if (inputsValid(name, internal, events, attributes) && canStartNewSpan(parent, internal)) {
                 val newSpan = embraceSpanFactory.create(
-                    name = name,
-                    type = type,
-                    internal = internal,
-                    private = private,
-                    parent = parent,
+                    OtelSpanStartArgs(
+                        name = name,
+                        type = type,
+                        internal = internal,
+                        private = private,
+                        parentSpan = parent,
+                        tracer = tracer,
+                    )
                 )
                 if (newSpan.start(startTimeMs)) {
                     attributes.forEach {

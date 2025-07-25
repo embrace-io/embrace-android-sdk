@@ -69,7 +69,6 @@ internal class EmbraceSpanImplTest {
         serializer = TestPlatformSerializer()
         dataValidator = DataValidator()
         embraceSpanFactory = EmbraceSpanFactoryImpl(
-            tracer = tracer,
             openTelemetryClock = otelClock,
             spanRepository = spanRepository,
             dataValidator = dataValidator,

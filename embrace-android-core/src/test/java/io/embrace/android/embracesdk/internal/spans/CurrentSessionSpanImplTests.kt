@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.assertions.validateSystemLink
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
 import io.embrace.android.embracesdk.fakes.FakeEmbraceSpanFactory
+import io.embrace.android.embracesdk.fakes.FakeTracer
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.arch.destination.SpanAttributeData
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
@@ -476,7 +477,8 @@ internal class CurrentSessionSpanImplTests {
             telemetryService = telemetryService,
             spanRepository = spanRepository,
             spanSink = spanSink,
-            embraceSpanFactorySupplier = { FakeEmbraceSpanFactory() }
+            embraceSpanFactorySupplier = { FakeEmbraceSpanFactory() },
+            tracerSupplier = { FakeTracer() }
         )
         assertFalse(sessionSpan.readySession())
     }

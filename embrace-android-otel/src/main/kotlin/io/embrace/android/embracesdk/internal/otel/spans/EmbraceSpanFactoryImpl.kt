@@ -14,7 +14,7 @@ import io.embrace.android.embracesdk.internal.otel.sdk.DataValidator
 import io.embrace.android.embracesdk.internal.otel.sdk.fromMap
 import io.embrace.android.embracesdk.internal.otel.sdk.hasEmbraceAttribute
 import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
-import io.embrace.android.embracesdk.internal.otel.sdk.otelSpanCreator
+import io.embrace.android.embracesdk.internal.otel.sdk.otelSpanArgs
 import io.embrace.android.embracesdk.internal.otel.sdk.setEmbraceAttribute
 import io.embrace.android.embracesdk.internal.otel.sdk.toStringMap
 import io.embrace.android.embracesdk.internal.otel.toEmbracePayload
@@ -66,7 +66,7 @@ class EmbraceSpanFactoryImpl(
         parent: EmbraceSpan?,
         autoTerminationMode: AutoTerminationMode,
     ): EmbraceSdkSpan = create(
-        otelSpanCreator = tracer.otelSpanCreator(
+        otelSpanStartArgs = tracer.otelSpanArgs(
             name = name,
             type = type,
             internal = internal,
@@ -77,11 +77,11 @@ class EmbraceSpanFactoryImpl(
     )
 
     override fun create(
-        otelSpanCreator: OtelSpanCreator,
+        otelSpanStartArgs: OtelSpanStartArgs,
         autoTerminationMode: AutoTerminationMode,
     ): EmbraceSdkSpan {
         return EmbraceSpanImpl(
-            otelSpanCreator = otelSpanCreator,
+            otelSpanStartArgs = otelSpanStartArgs,
             openTelemetryClock = openTelemetryClock,
             spanRepository = spanRepository,
             dataValidator = dataValidator,
@@ -94,7 +94,7 @@ class EmbraceSpanFactoryImpl(
 
 @OptIn(ExperimentalApi::class)
 private class EmbraceSpanImpl(
-    private val otelSpanCreator: OtelSpanCreator,
+    private val otelSpanStartArgs: OtelSpanStartArgs,
     private val openTelemetryClock: Clock,
     private val spanRepository: SpanRepository,
     private val dataValidator: DataValidator,
@@ -118,10 +118,10 @@ private class EmbraceSpanImpl(
     private val systemEvents = ConcurrentLinkedQueue<EmbraceSpanEvent>()
     private val customEvents = ConcurrentLinkedQueue<EmbraceSpanEvent>()
     private val systemAttributes = ConcurrentHashMap<String, String>().apply {
-        putAll(otelSpanCreator.spanStartArgs.embraceAttributes.associate { it.key.name to it.value })
+        putAll(otelSpanStartArgs.embraceAttributes.associate { it.key.name to it.value })
     }
     private val customAttributes = ConcurrentHashMap<String, String>().apply {
-        putAll(otelSpanCreator.spanStartArgs.customAttributes)
+        putAll(otelSpanStartArgs.customAttributes)
     }
     private val systemLinks = ConcurrentLinkedQueue<EmbraceLinkData>()
     private val customLinks = ConcurrentLinkedQueue<EmbraceLinkData>()
@@ -133,7 +133,7 @@ private class EmbraceSpanImpl(
     private val systemLinkCount = AtomicInteger(0)
     private val customLinkCount = AtomicInteger(0)
 
-    override val parent: EmbraceSpan? = otelSpanCreator.spanStartArgs.parentContext.getEmbraceSpan()
+    override val parent: EmbraceSpan? = otelSpanStartArgs.parentContext.getEmbraceSpan()
 
     override val spanContext: OtelJavaSpanContext?
         get() = startedSpan.get()?.spanContext?.convertToOtelJava()
@@ -154,12 +154,12 @@ private class EmbraceSpanImpl(
             }
 
             val attemptedStartTimeMs =
-                (startTimeMs?.normalizeTimestampAsMillis() ?: otelSpanCreator.spanStartArgs.startTimeMs)?.takeIf { it > 0 }
+                (startTimeMs?.normalizeTimestampAsMillis() ?: otelSpanStartArgs.startTimeMs)?.takeIf { it > 0 }
                     ?: openTelemetryClock.now().nanosToMillis()
 
             synchronized(startedSpan) {
                 val newSpan = EmbTrace.trace("otel-span-start") {
-                    otelSpanCreator.startSpan(attemptedStartTimeMs)
+                    otelSpanStartArgs.startSpan(attemptedStartTimeMs)
                 }
                 if (newSpan.isRecording()) {
                     startedSpan.set(newSpan)
@@ -292,7 +292,7 @@ private class EmbraceSpanImpl(
 
     override fun addAttribute(key: String, value: String): Boolean {
         if (customAttributes.size < dataValidator.otelLimitsConfig.getMaxCustomAttributeCount() &&
-            dataValidator.isAttributeValid(key, value, otelSpanCreator.spanStartArgs.internal)
+            dataValidator.isAttributeValid(key, value, otelSpanStartArgs.internal)
         ) {
             synchronized(customAttributes) {
                 if (customAttributes.size < dataValidator.otelLimitsConfig.getMaxCustomAttributeCount() && isRecording) {
@@ -307,7 +307,7 @@ private class EmbraceSpanImpl(
     }
 
     override fun updateName(newName: String): Boolean {
-        if (dataValidator.isNameValid(newName, otelSpanCreator.spanStartArgs.internal)) {
+        if (dataValidator.isNameValid(newName, otelSpanStartArgs.internal)) {
             synchronized(startedSpan) {
                 if (!spanStarted() || isRecording) {
                     updatedName = newName
@@ -341,7 +341,7 @@ private class EmbraceSpanImpl(
     }
 
     override fun asNewContext(): OtelJavaContext? = startedSpan.get()?.run {
-        val parentContext: OtelJavaContext = otelSpanCreator.spanStartArgs.parentContext
+        val parentContext: OtelJavaContext = otelSpanStartArgs.parentContext
 
         // assumes that the underlying instance of Span implements ImplicitContextKeyed. This
         // should always be true when opentelemetry-kotlin is used to create spans, but
@@ -395,7 +395,7 @@ private class EmbraceSpanImpl(
     }
 
     override fun name(): String = synchronized(startedSpan) {
-        updatedName ?: otelSpanCreator.spanStartArgs.spanName
+        updatedName ?: otelSpanStartArgs.spanName
     }
 
     override val spanKind: SpanKind
@@ -461,7 +461,7 @@ private class EmbraceSpanImpl(
 
         (systemEvents + redactedCustomEvents).forEach { event ->
             val eventAttributes = if (event.attributes.isNotEmpty()) {
-                OtelJavaAttributes.builder().fromMap(event.attributes, otelSpanCreator.spanStartArgs.internal, dataValidator).build()
+                OtelJavaAttributes.builder().fromMap(event.attributes, otelSpanStartArgs.internal, dataValidator).build()
             } else {
                 OtelJavaAttributes.empty()
             }

@@ -65,7 +65,7 @@ class EmbraceSpanService(
             autoTerminationMode = autoTerminationMode
         )
 
-    override fun createSpan(otelSpanCreator: OtelSpanCreator): EmbraceSdkSpan? = currentDelegate.createSpan(otelSpanCreator)
+    override fun createSpan(otelSpanStartArgs: OtelSpanStartArgs): EmbraceSdkSpan? = currentDelegate.createSpan(otelSpanStartArgs)
 
     override fun <T> recordSpan(
         name: String,

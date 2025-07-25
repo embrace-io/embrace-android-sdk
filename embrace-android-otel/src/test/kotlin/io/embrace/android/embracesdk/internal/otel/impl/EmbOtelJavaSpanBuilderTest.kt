@@ -7,7 +7,6 @@ import io.embrace.android.embracesdk.fakes.FakeOtelKotlinClock
 import io.embrace.android.embracesdk.fakes.FakeSpanService
 import io.embrace.android.embracesdk.fixtures.fakeContextKey
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
-import io.embrace.android.embracesdk.internal.otel.spans.OtelSpanCreator
 import io.embrace.android.embracesdk.internal.otel.spans.OtelSpanStartArgs
 import io.embrace.android.embracesdk.internal.otel.spans.getEmbraceSpan
 import io.embrace.android.embracesdk.spans.AutoTerminationMode
@@ -34,24 +33,22 @@ internal class EmbOtelJavaSpanBuilderTest {
     private val openTelemetryClock = FakeOtelKotlinClock(clock)
     private lateinit var tracer: Tracer
     private lateinit var spanService: FakeSpanService
-    private lateinit var creator: OtelSpanCreator
+    private lateinit var args: OtelSpanStartArgs
     private lateinit var embSpanBuilder: EmbOtelJavaSpanBuilder
 
     @Before
     fun setup() {
         spanService = FakeSpanService()
         tracer = TracerAdapter(FakeOtelJavaTracer(), openTelemetryClock)
-        creator = OtelSpanCreator(
+        args = OtelSpanStartArgs(
             tracer = tracer,
-            spanStartArgs = OtelSpanStartArgs(
-                name = "test",
-                type = EmbType.Performance.Default,
-                internal = false,
-                private = false,
-            ),
+            name = "test",
+            type = EmbType.Performance.Default,
+            internal = false,
+            private = false,
         )
         embSpanBuilder = EmbOtelJavaSpanBuilder(
-            otelSpanCreator = creator,
+            otelSpanStartArgs = args,
             spanService = spanService,
             clock = openTelemetryClock
         )
@@ -60,19 +57,17 @@ internal class EmbOtelJavaSpanBuilderTest {
     @Test
     fun `parameters set on embrace span builder respected`() {
         val spanParent = FakeEmbraceSdkSpan.started()
-        val newOtelSpanStartArgs = OtelSpanCreator(
+        val newOtelSpanStartArgs = OtelSpanStartArgs(
             tracer = tracer,
-            spanStartArgs = OtelSpanStartArgs(
-                name = "custom",
-                type = EmbType.Performance.Default,
-                internal = true,
-                private = true,
-                parentSpan = spanParent,
-                autoTerminationMode = AutoTerminationMode.ON_BACKGROUND,
-            )
+            name = "custom",
+            type = EmbType.Performance.Default,
+            internal = true,
+            private = true,
+            parentSpan = spanParent,
+            autoTerminationMode = AutoTerminationMode.ON_BACKGROUND,
         )
         embSpanBuilder = EmbOtelJavaSpanBuilder(
-            otelSpanCreator = newOtelSpanStartArgs,
+            otelSpanStartArgs = newOtelSpanStartArgs,
             spanService = spanService,
             clock = openTelemetryClock
         )
@@ -94,18 +89,16 @@ internal class EmbOtelJavaSpanBuilderTest {
                 "value"
             )
         )
-        val newOtelSpanStartArgs = OtelSpanCreator(
+        val newOtelSpanStartArgs = OtelSpanStartArgs(
             tracer = tracer,
-            spanStartArgs = OtelSpanStartArgs(
-                name = "custom",
-                type = EmbType.Performance.Default,
-                internal = false,
-                private = false,
-                parentSpan = oldParent,
-            )
+            name = "custom",
+            type = EmbType.Performance.Default,
+            internal = false,
+            private = false,
+            parentSpan = oldParent,
         )
         embSpanBuilder = EmbOtelJavaSpanBuilder(
-            otelSpanCreator = newOtelSpanStartArgs,
+            otelSpanStartArgs = newOtelSpanStartArgs,
             spanService = spanService,
             clock = openTelemetryClock
         )
@@ -127,17 +120,15 @@ internal class EmbOtelJavaSpanBuilderTest {
         )
         val newParentContext = checkNotNull(newParentSpan.asNewContext())
 
-        val newOtelSpanStartArgs = OtelSpanCreator(
+        val newOtelSpanStartArgs = OtelSpanStartArgs(
             tracer = tracer,
-            spanStartArgs = OtelSpanStartArgs(
-                name = "custom",
-                type = EmbType.Performance.Default,
-                internal = false,
-                private = false,
-            )
+            name = "custom",
+            type = EmbType.Performance.Default,
+            internal = false,
+            private = false,
         )
         embSpanBuilder = EmbOtelJavaSpanBuilder(
-            otelSpanCreator = newOtelSpanStartArgs,
+            otelSpanStartArgs = newOtelSpanStartArgs,
             spanService = spanService,
             clock = openTelemetryClock
         )
@@ -156,10 +147,10 @@ internal class EmbOtelJavaSpanBuilderTest {
     fun `check start times set`() {
         val startTimeInstant = Instant.ofEpochMilli(clock.tick())
         embSpanBuilder.setStartTimestamp(startTimeInstant)
-        assertEquals(startTimeInstant.toEpochMilli(), creator.spanStartArgs.startTimeMs)
+        assertEquals(startTimeInstant.toEpochMilli(), args.startTimeMs)
         val startTimeMs = clock.tick()
         embSpanBuilder.setStartTimestamp(startTimeMs, TimeUnit.MILLISECONDS)
-        assertEquals(startTimeMs, creator.spanStartArgs.startTimeMs)
+        assertEquals(startTimeMs, args.startTimeMs)
     }
 
     @Test
@@ -177,13 +168,13 @@ internal class EmbOtelJavaSpanBuilderTest {
             setAttribute(OtelJavaAttributeKey.stringArrayKey("stringArray"), listOf("value", "vee"))
         }
 
-        assertEquals(10, creator.spanStartArgs.customAttributes.count())
+        assertEquals(10, args.customAttributes.count())
     }
 
     @Test
     fun `set span kind`() {
         embSpanBuilder.setSpanKind(OtelJavaSpanKind.CLIENT)
-        val fakeSpan = creator.startSpan(clock.now())
+        val fakeSpan = args.startSpan(clock.now())
         assertEquals(SpanKind.CLIENT, fakeSpan.spanKind)
     }
 

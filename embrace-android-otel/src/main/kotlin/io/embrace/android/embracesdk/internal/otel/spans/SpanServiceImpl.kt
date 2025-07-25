@@ -55,9 +55,8 @@ class SpanServiceImpl(
         }
     }
 
-    override fun createSpan(otelSpanCreator: OtelSpanCreator): EmbraceSdkSpan? {
+    override fun createSpan(otelSpanStartArgs: OtelSpanStartArgs): EmbraceSdkSpan? {
         EmbTrace.trace("span-create") {
-            val otelSpanStartArgs = otelSpanCreator.spanStartArgs
             return if (
                 dataValidator.isNameValid(otelSpanStartArgs.spanName, otelSpanStartArgs.internal) &&
                 canStartNewSpan(
@@ -65,7 +64,7 @@ class SpanServiceImpl(
                     otelSpanStartArgs.internal
                 )
             ) {
-                embraceSpanFactory.create(otelSpanCreator)
+                embraceSpanFactory.create(otelSpanStartArgs)
             } else {
                 null
             }

@@ -62,12 +62,12 @@ class TracingApiBenchmarks {
             initCallback = { },
             embraceSpanFactory =
                 EmbraceSpanFactoryImpl(
-                    tracer = otelSdkWrapper.sdkTracer,
                     openTelemetryClock = clock,
                     spanRepository = spanRepository,
                     dataValidator = dataValidator
                 ),
-            dataValidator = dataValidator
+            dataValidator = dataValidator,
+            tracer = otelSdkWrapper.sdkTracer
         )
     }
 

@@ -34,7 +34,6 @@ import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanContext
 import io.embrace.opentelemetry.kotlin.k2j.tracing.SpanContextAdapter
 import io.embrace.opentelemetry.kotlin.k2j.tracing.convertToOtelJava
 import io.embrace.opentelemetry.kotlin.tracing.StatusCode
-import io.embrace.opentelemetry.kotlin.tracing.Tracer
 import io.embrace.opentelemetry.kotlin.tracing.model.Span
 import io.embrace.opentelemetry.kotlin.tracing.model.SpanContext
 import io.embrace.opentelemetry.kotlin.tracing.model.SpanKind
@@ -49,7 +48,6 @@ import java.util.concurrent.atomic.AtomicReference
 
 @OptIn(ExperimentalApi::class)
 class EmbraceSpanFactoryImpl(
-    private val tracer: Tracer,
     private val openTelemetryClock: Clock,
     private val spanRepository: SpanRepository,
     private val dataValidator: DataValidator,
@@ -57,39 +55,14 @@ class EmbraceSpanFactoryImpl(
     private var redactionFunction: ((key: String, value: String) -> String)? = null,
 ) : EmbraceSpanFactory {
 
-    override fun create(
-        name: String,
-        type: EmbType,
-        internal: Boolean,
-        private: Boolean,
-        parent: EmbraceSpan?,
-        autoTerminationMode: AutoTerminationMode,
-    ): EmbraceSdkSpan = create(
-        otelSpanStartArgs = OtelSpanStartArgs(
-            name = name,
-            type = type,
-            internal = internal,
-            private = private,
-            tracer = tracer,
-            parentSpan = parent,
-        ),
-        autoTerminationMode = autoTerminationMode
+    override fun create(otelSpanStartArgs: OtelSpanStartArgs): EmbraceSdkSpan = EmbraceSpanImpl(
+        otelSpanStartArgs = otelSpanStartArgs,
+        openTelemetryClock = openTelemetryClock,
+        spanRepository = spanRepository,
+        dataValidator = dataValidator,
+        stopCallback = stopCallback,
+        redactionFunction = redactionFunction,
     )
-
-    override fun create(
-        otelSpanStartArgs: OtelSpanStartArgs,
-        autoTerminationMode: AutoTerminationMode,
-    ): EmbraceSdkSpan {
-        return EmbraceSpanImpl(
-            otelSpanStartArgs = otelSpanStartArgs,
-            openTelemetryClock = openTelemetryClock,
-            spanRepository = spanRepository,
-            dataValidator = dataValidator,
-            stopCallback = stopCallback,
-            redactionFunction = redactionFunction,
-            autoTerminationMode = autoTerminationMode
-        )
-    }
 }
 
 @OptIn(ExperimentalApi::class)
@@ -98,9 +71,8 @@ private class EmbraceSpanImpl(
     private val openTelemetryClock: Clock,
     private val spanRepository: SpanRepository,
     private val dataValidator: DataValidator,
-    private val stopCallback: ((spanId: String) -> Unit)? = null,
-    private val redactionFunction: ((key: String, value: String) -> String)? = null,
-    override val autoTerminationMode: AutoTerminationMode = AutoTerminationMode.NONE,
+    private val stopCallback: ((spanId: String) -> Unit)?,
+    private val redactionFunction: ((key: String, value: String) -> String)?,
 ) : EmbraceSdkSpan {
 
     private val startedSpan: AtomicReference<Span?> = AtomicReference(null)
@@ -113,6 +85,9 @@ private class EmbraceSpanImpl(
 
     @Volatile
     override var status = io.embrace.android.embracesdk.internal.payload.Span.Status.UNSET
+
+    override val autoTerminationMode: AutoTerminationMode = otelSpanStartArgs.autoTerminationMode
+
     private var updatedName: String? = null
 
     private val systemEvents = ConcurrentLinkedQueue<EmbraceSpanEvent>()

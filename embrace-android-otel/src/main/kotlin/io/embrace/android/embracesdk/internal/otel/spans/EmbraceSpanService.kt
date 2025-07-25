@@ -7,18 +7,22 @@ import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
+import io.embrace.opentelemetry.kotlin.ExperimentalApi
+import io.embrace.opentelemetry.kotlin.tracing.Tracer
 
 /**
  * A [SpanService] that can be instantiated quickly. At that time, it will defer calls an implementation that handles the case when
  * the SDK has not been started ([UninitializedSdkSpanService]. When [initializeService] is called during SDK startup, it will
  * instantiate and initialize [SpanServiceImpl] to provide the span recording functionality.
  */
+@OptIn(ExperimentalApi::class)
 class EmbraceSpanService(
     private val spanRepository: SpanRepository,
     private val dataValidator: DataValidator,
     private val canStartNewSpan: (parentSpan: EmbraceSpan?, internal: Boolean) -> Boolean,
     private val initCallback: (initTimeMs: Long) -> Unit,
     private val embraceSpanFactorySupplier: Provider<EmbraceSpanFactory>,
+    private val tracerSupplier: Provider<Tracer>,
 ) : SpanService {
     private val uninitializedSdkSpansService: UninitializedSdkSpanService = UninitializedSdkSpanService()
 
@@ -34,7 +38,8 @@ class EmbraceSpanService(
                         dataValidator = dataValidator,
                         embraceSpanFactory = embraceSpanFactorySupplier(),
                         canStartNewSpan = canStartNewSpan,
-                        initCallback = initCallback
+                        initCallback = initCallback,
+                        tracer = tracerSupplier()
                     )
                     realSpansService.initializeService(sdkInitStartTimeMs)
                     if (realSpansService.initialized()) {

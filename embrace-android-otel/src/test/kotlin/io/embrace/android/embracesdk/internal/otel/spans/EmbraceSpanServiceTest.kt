@@ -15,6 +15,7 @@ import io.embrace.android.embracesdk.internal.otel.sdk.OtelSdkWrapper
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
+import io.embrace.opentelemetry.kotlin.tracing.Tracer
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -27,19 +28,17 @@ import org.junit.Test
 internal class EmbraceSpanServiceTest {
     private lateinit var spanSink: SpanSink
     private lateinit var spanService: SpanService
-    private val clock = FakeClock(10000L)
+    private lateinit var clock: FakeOtelKotlinClock
+    private lateinit var tracer: Tracer
     private var spanCreationAllowed: Boolean = true
     private var initTimeMs: Long = 0L
 
     @Before
     fun setup() {
-        spanService = createEmbraceSpanService()
-        spanService.initializeService(clock.now())
-    }
-
-    private fun createEmbraceSpanService(): EmbraceSpanService {
-        spanSink = SpanSinkImpl()
+        clock = FakeOtelKotlinClock(FakeClock(10000L))
         val fakeClock = FakeOtelKotlinClock(FakeClock())
+        spanSink = SpanSinkImpl()
+
         val otelSdkConfig = OtelSdkConfig(
             spanSink = spanSink,
             logSink = LogSinkImpl(),
@@ -54,6 +53,12 @@ internal class EmbraceSpanServiceTest {
             configuration = otelSdkConfig,
             spanService = FakeSpanService()
         )
+        tracer = otelSdkWrapper.sdkTracer
+        spanService = createEmbraceSpanService()
+        spanService.initializeService(clock.now().nanosToMillis())
+    }
+
+    private fun createEmbraceSpanService(): EmbraceSpanService {
         val dataValidator = DataValidator()
 
         return EmbraceSpanService(
@@ -62,13 +67,13 @@ internal class EmbraceSpanServiceTest {
             initCallback = ::initCallback,
             embraceSpanFactorySupplier = {
                 EmbraceSpanFactoryImpl(
-                    tracer = otelSdkWrapper.sdkTracer,
-                    openTelemetryClock = fakeClock,
+                    openTelemetryClock = clock,
                     spanRepository = SpanRepository(),
                     dataValidator = dataValidator
                 )
             },
-            dataValidator = dataValidator
+            dataValidator = dataValidator,
+            tracerSupplier = { tracer },
         )
     }
 
@@ -79,7 +84,8 @@ internal class EmbraceSpanServiceTest {
             dataValidator = DataValidator(),
             canStartNewSpan = ::canStartNewSpan,
             initCallback = ::initCallback,
-            embraceSpanFactorySupplier = { FakeEmbraceSpanFactory() }
+            embraceSpanFactorySupplier = { FakeEmbraceSpanFactory() },
+            tracerSupplier = { tracer },
         )
         assertFalse(uninitializedService.initialized())
         assertNull(uninitializedService.createSpan("test-span"))
@@ -106,7 +112,7 @@ internal class EmbraceSpanServiceTest {
     fun `record internal completed span recording with all the fixings`() {
         spanSink.flushSpans()
         val expectedName = "test-span"
-        val expectedStartTimeMs = clock.now()
+        val expectedStartTimeMs = clock.now().nanosToMillis()
         val expectedEndTimeMs = expectedStartTimeMs + 100L
         val expectedType = EmbType.Performance.Default
         val expectedAttributes = mapOf(
@@ -150,7 +156,7 @@ internal class EmbraceSpanServiceTest {
         assertFalse(service.initialized())
         assertTrue(service.recordCompletedSpan("test-span", 10, 20))
         assertTrue(service.recordCompletedSpan("test-span", 15, 25))
-        service.initializeService(clock.now())
+        service.initializeService(clock.now().nanosToMillis())
         assertEquals(2, spanSink.completedSpans().size)
     }
 

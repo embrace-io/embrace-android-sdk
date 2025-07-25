@@ -78,7 +78,7 @@ private class EmbraceSpanImpl(
     private val startedSpan: AtomicReference<Span?> = AtomicReference(null)
 
     @Volatile
-    private var spanStartTimeMs: Long? = null
+    private var spanStartTimeMs: Long? = otelSpanStartArgs.startTimeMs
 
     @Volatile
     private var spanEndTimeMs: Long? = null
@@ -88,7 +88,7 @@ private class EmbraceSpanImpl(
 
     override val autoTerminationMode: AutoTerminationMode = otelSpanStartArgs.autoTerminationMode
 
-    private var updatedName: String? = null
+    private var updatedName: String = otelSpanStartArgs.spanName
 
     private val systemEvents = ConcurrentLinkedQueue<EmbraceSpanEvent>()
     private val customEvents = ConcurrentLinkedQueue<EmbraceSpanEvent>()
@@ -108,7 +108,10 @@ private class EmbraceSpanImpl(
     private val systemLinkCount = AtomicInteger(0)
     private val customLinkCount = AtomicInteger(0)
 
-    override val parent: EmbraceSpan? = otelSpanStartArgs.parentContext.getEmbraceSpan()
+    private val internal: Boolean = otelSpanStartArgs.internal
+    private val parentContext: OtelJavaContext = otelSpanStartArgs.parentContext
+
+    override val parent: EmbraceSpan? = parentContext.getEmbraceSpan()
 
     override val spanContext: OtelJavaSpanContext?
         get() = startedSpan.get()?.spanContext?.convertToOtelJava()
@@ -129,7 +132,7 @@ private class EmbraceSpanImpl(
             }
 
             val attemptedStartTimeMs =
-                (startTimeMs?.normalizeTimestampAsMillis() ?: otelSpanStartArgs.startTimeMs)?.takeIf { it > 0 }
+                (startTimeMs?.normalizeTimestampAsMillis() ?: spanStartTimeMs)?.takeIf { it > 0 }
                     ?: openTelemetryClock.now().nanosToMillis()
 
             synchronized(startedSpan) {
@@ -143,7 +146,7 @@ private class EmbraceSpanImpl(
                 }
 
                 spanRepository.trackStartedSpan(this)
-                updatedName?.let { newName ->
+                updatedName.let { newName ->
                     newSpan.name = newName
                 }
                 spanStartTimeMs = attemptedStartTimeMs
@@ -267,7 +270,7 @@ private class EmbraceSpanImpl(
 
     override fun addAttribute(key: String, value: String): Boolean {
         if (customAttributes.size < dataValidator.otelLimitsConfig.getMaxCustomAttributeCount() &&
-            dataValidator.isAttributeValid(key, value, otelSpanStartArgs.internal)
+            dataValidator.isAttributeValid(key, value, internal)
         ) {
             synchronized(customAttributes) {
                 if (customAttributes.size < dataValidator.otelLimitsConfig.getMaxCustomAttributeCount() && isRecording) {
@@ -282,7 +285,7 @@ private class EmbraceSpanImpl(
     }
 
     override fun updateName(newName: String): Boolean {
-        if (dataValidator.isNameValid(newName, otelSpanStartArgs.internal)) {
+        if (dataValidator.isNameValid(newName, internal)) {
             synchronized(startedSpan) {
                 if (!spanStarted() || isRecording) {
                     updatedName = newName
@@ -316,8 +319,6 @@ private class EmbraceSpanImpl(
     }
 
     override fun asNewContext(): OtelJavaContext? = startedSpan.get()?.run {
-        val parentContext: OtelJavaContext = otelSpanStartArgs.parentContext
-
         // assumes that the underlying instance of Span implements ImplicitContextKeyed. This
         // should always be true when opentelemetry-kotlin is used to create spans, but
         // we avoid exposing this fact in the public interface.
@@ -370,7 +371,7 @@ private class EmbraceSpanImpl(
     }
 
     override fun name(): String = synchronized(startedSpan) {
-        updatedName ?: otelSpanStartArgs.spanName
+        updatedName
     }
 
     override val spanKind: SpanKind
@@ -436,7 +437,7 @@ private class EmbraceSpanImpl(
 
         (systemEvents + redactedCustomEvents).forEach { event ->
             val eventAttributes = if (event.attributes.isNotEmpty()) {
-                OtelJavaAttributes.builder().fromMap(event.attributes, otelSpanStartArgs.internal, dataValidator).build()
+                OtelJavaAttributes.builder().fromMap(event.attributes, internal, dataValidator).build()
             } else {
                 OtelJavaAttributes.empty()
             }

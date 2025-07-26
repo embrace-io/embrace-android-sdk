@@ -23,12 +23,7 @@ class OtelSpanStartArgs(
     parentSpan: EmbraceSpan? = null,
 ) {
     var parentContext: OtelJavaContext = OtelJavaContext.root()
-
-    var spanName: String = name.appendEmbracePrefix(internal)
-        set(value) {
-            field = value.appendEmbracePrefix(internal)
-        }
-
+    val initialSpanName: String = name.prependEmbracePrefix(internal)
     var startTimeMs: Long? = null
     var spanKind: OtelJavaSpanKind? = null
 
@@ -59,7 +54,7 @@ class OtelSpanStartArgs(
         }
     }
 
-    private fun String.appendEmbracePrefix(internal: Boolean): String {
+    private fun String.prependEmbracePrefix(internal: Boolean): String {
         return if (internal) {
             toEmbraceObjectName()
         } else {

@@ -12,7 +12,7 @@ class DataValidator(
     val otelLimitsConfig: OtelLimitsConfig = OtelLimitsConfigImpl,
     private val bypassValidation: (() -> Boolean) = { false },
 ) {
-    fun truncateSpanName(name: String, internal: Boolean): String {
+    fun truncateName(name: String, internal: Boolean): String {
         val maxLength = if (internal) {
             otelLimitsConfig.getMaxInternalNameLength()
         } else {
@@ -31,8 +31,8 @@ class DataValidator(
         }
     }
 
-    fun truncateAttributes(attributes: Map<String, String>, internal: Boolean): Map<String, String> {
-        val maxAttributeCount = if (internal) {
+    fun truncateAttributes(attributes: Map<String, String>, internal: Boolean, countOverride: Int? = null): Map<String, String> {
+        val maxAttributeCount = countOverride ?: if (internal) {
             otelLimitsConfig.getMaxSystemAttributeCount()
         } else {
             otelLimitsConfig.getMaxCustomAttributeCount()
@@ -80,19 +80,43 @@ class DataValidator(
         return Pair(PropertyUtils.truncate(key, maxKeyLength), truncatedValue)
     }
 
+    fun createTruncatedSpanEvent(
+        name: String,
+        timestampMs: Long,
+        internal: Boolean,
+        attributes: Map<String, String>,
+    ): EmbraceSpanEvent? {
+        return EmbraceSpanEvent.create(
+            name = truncateName(name, internal),
+            timestampMs = timestampMs,
+            attributes = truncateAttributes(
+                attributes = attributes,
+                internal = internal,
+                countOverride = otelLimitsConfig.getMaxEventAttributeCount()
+            )
+        )
+    }
+
     private fun Map<String, String>.truncate(
         maxCount: Int,
         maxKeyLength: Int,
         maxValueLength: Int,
     ): Map<String, String> =
-        mutableMapOf<String, String>().apply {
-            this@truncate.entries.take(maxCount).forEach {
-                val truncatedValue = if (it.key.isValidLongValueAttribute()) {
-                    it.value
-                } else {
-                    PropertyUtils.truncate(it.value, maxValueLength)
-                }
-                this[PropertyUtils.truncate(it.key, maxKeyLength)] = truncatedValue
-            }
+        entries.take(maxCount).associate {
+            PropertyUtils.truncate(
+                value = it.key,
+                maxLength = maxKeyLength
+            ) to truncateAttributeValue(
+                key = it.key,
+                value = it.value,
+                maxLength = maxValueLength
+            )
+        }
+
+    private fun truncateAttributeValue(key: String, value: String, maxLength: Int): String =
+        if (key.isValidLongValueAttribute()) {
+            value
+        } else {
+            PropertyUtils.truncate(value, maxLength)
         }
 }

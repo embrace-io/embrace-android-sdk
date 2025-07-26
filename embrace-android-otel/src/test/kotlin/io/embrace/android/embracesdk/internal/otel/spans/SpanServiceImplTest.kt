@@ -437,11 +437,14 @@ internal class SpanServiceImplTest {
                 events = maxSizeSystemEvents
             )
         )
-        assertEquals(6, spanSink.completedSpans().size)
+        val completedSpans = spanSink.completedSpans()
+        assertEquals(6, completedSpans.size)
+        assertEquals(2, completedSpans.filter { it.name.endsWith("...") }.size)
     }
 
     @Test
     fun `check events limit`() {
+        val maxEventAttrCount = dataValidator.otelLimitsConfig.getMaxEventAttributeCount()
         assertTrue(
             spansService.recordCompletedSpan(
                 name = "too many events",
@@ -461,7 +464,7 @@ internal class SpanServiceImplTest {
             )
         )
 
-        spanSink.flushSpans()
+        assertEquals(maxEventAttrCount, spanSink.flushSpans().single { it.name == "too many events" }.events.size)
 
         val attributesMap = mutableMapOf(
             Pair(TOO_LONG_ATTRIBUTE_KEY, "value"),
@@ -488,7 +491,7 @@ internal class SpanServiceImplTest {
         val completedSpans = spanSink.completedSpans()
         assertEquals(1, completedSpans.size)
         assertEquals(10, completedSpans[0].events.size)
-        assertEquals(10, completedSpans[0].events[0].attributes.size)
+        assertEquals(maxEventAttrCount, completedSpans[0].events[0].attributes.size)
     }
 
     @Test

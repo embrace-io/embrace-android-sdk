@@ -113,7 +113,10 @@ private class EmbraceSpanImpl(
 
     @Volatile
     override var status = io.embrace.android.embracesdk.internal.payload.Span.Status.UNSET
-    private var updatedName: String? = null
+    private var spanName: String = validateName(otelSpanCreator.spanStartArgs.initialSpanName)
+        set(name) {
+            field = validateName(name)
+        }
 
     private val systemEvents = ConcurrentLinkedQueue<EmbraceSpanEvent>()
     private val customEvents = ConcurrentLinkedQueue<EmbraceSpanEvent>()
@@ -168,9 +171,8 @@ private class EmbraceSpanImpl(
                 }
 
                 spanRepository.trackStartedSpan(this)
-                updatedName?.let { newName ->
-                    newSpan.name = newName
-                }
+                newSpan.name = spanName
+
                 spanStartTimeMs = attemptedStartTimeMs
                 spanRepository.notifySpanUpdate()
             }
@@ -224,10 +226,11 @@ private class EmbraceSpanImpl(
 
     override fun addEvent(name: String, timestampMs: Long?, attributes: Map<String, String>?): Boolean =
         addObject(customEvents, customEventCount, dataValidator.otelLimitsConfig.getMaxCustomEventCount()) {
-            EmbraceSpanEvent.create(
+            dataValidator.createTruncatedSpanEvent(
                 name = name,
                 timestampMs = timestampMs?.normalizeTimestampAsMillis() ?: openTelemetryClock.now().nanosToMillis(),
-                attributes = attributes
+                internal = otelSpanCreator.spanStartArgs.internal,
+                attributes = attributes ?: emptyMap(),
             )
         }
 
@@ -248,19 +251,21 @@ private class EmbraceSpanImpl(
 
             eventAttributes[ExceptionAttributes.EXCEPTION_STACKTRACE.key] = exception.truncatedStacktraceText()
 
-            EmbraceSpanEvent.create(
+            dataValidator.createTruncatedSpanEvent(
                 name = dataValidator.otelLimitsConfig.getExceptionEventName(),
                 timestampMs = openTelemetryClock.now().nanosToMillis(),
-                attributes = eventAttributes
+                internal = otelSpanCreator.spanStartArgs.internal,
+                attributes = eventAttributes,
             )
         }
 
     override fun addSystemEvent(name: String, timestampMs: Long?, attributes: Map<String, String>?): Boolean =
         addObject(systemEvents, systemEventCount, dataValidator.otelLimitsConfig.getMaxSystemEventCount()) {
-            EmbraceSpanEvent.create(
+            dataValidator.createTruncatedSpanEvent(
                 name = name,
                 timestampMs = timestampMs?.normalizeTimestampAsMillis() ?: openTelemetryClock.now().nanosToMillis(),
-                attributes = attributes
+                internal = otelSpanCreator.spanStartArgs.internal,
+                attributes = attributes ?: emptyMap(),
             )
         }
 
@@ -313,9 +318,8 @@ private class EmbraceSpanImpl(
         if (newName.isNotBlank()) {
             synchronized(startedSpan) {
                 if (!spanStarted() || isRecording) {
-                    val validatedName = dataValidator.truncateSpanName(newName, otelSpanCreator.spanStartArgs.internal)
-                    updatedName = validatedName
-                    startedSpan.get()?.name = validatedName
+                    spanName = newName
+                    startedSpan.get()?.name = spanName
                     spanRepository.notifySpanUpdate()
                     return true
                 }
@@ -399,7 +403,7 @@ private class EmbraceSpanImpl(
     }
 
     override fun name(): String = synchronized(startedSpan) {
-        updatedName ?: otelSpanCreator.spanStartArgs.spanName
+        spanName
     }
 
     override val spanKind: SpanKind
@@ -497,4 +501,10 @@ private class EmbraceSpanImpl(
             }
         }
     }
+
+    private fun validateName(name: String) =
+        dataValidator.truncateName(
+            name = name,
+            internal = otelSpanCreator.spanStartArgs.internal
+        )
 }

@@ -16,7 +16,7 @@ class OtelSpanCreator(
     internal fun startSpan(startTimeMs: Long): Span {
         val parentSpanContext = spanStartArgs.getParentSpanContext()
         return tracer.createSpan(
-            name = spanStartArgs.spanName,
+            name = spanStartArgs.initialSpanName,
             parent = parentSpanContext?.let(::SpanContextAdapter),
             spanKind = spanStartArgs.spanKind?.convertToOtelKotlin() ?: SpanKind.INTERNAL,
             startTimestamp = startTimeMs.millisToNanos()

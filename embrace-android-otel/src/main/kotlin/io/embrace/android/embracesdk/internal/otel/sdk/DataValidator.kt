@@ -102,14 +102,21 @@ class DataValidator(
         maxKeyLength: Int,
         maxValueLength: Int,
     ): Map<String, String> =
-        mutableMapOf<String, String>().apply {
-            this@truncate.entries.take(maxCount).forEach {
-                val truncatedValue = if (it.key.isValidLongValueAttribute()) {
-                    it.value
-                } else {
-                    PropertyUtils.truncate(it.value, maxValueLength)
-                }
-                this[PropertyUtils.truncate(it.key, maxKeyLength)] = truncatedValue
-            }
+        entries.take(maxCount).associate {
+            PropertyUtils.truncate(
+                value = it.key,
+                maxLength = maxKeyLength
+            ) to truncateAttributeValue(
+                key = it.key,
+                value = it.value,
+                maxLength = maxValueLength
+            )
+        }
+
+    private fun truncateAttributeValue(key: String, value: String, maxLength: Int): String =
+        if (key.isValidLongValueAttribute()) {
+            value
+        } else {
+            PropertyUtils.truncate(value, maxLength)
         }
 }

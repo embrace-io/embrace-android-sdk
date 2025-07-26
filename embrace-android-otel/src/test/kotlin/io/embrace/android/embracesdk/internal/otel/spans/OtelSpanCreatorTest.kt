@@ -5,6 +5,8 @@ import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
 import io.embrace.android.embracesdk.fakes.FakeOtelJavaTracer
 import io.embrace.android.embracesdk.fakes.FakeOtelKotlinClock
 import io.embrace.android.embracesdk.fakes.FakeSpanBuilder
+import io.embrace.android.embracesdk.fixtures.TOO_LONG_INTERNAL_SPAN_NAME
+import io.embrace.android.embracesdk.fixtures.TOO_LONG_SPAN_NAME
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.embrace.android.embracesdk.internal.otel.schema.PrivateSpan
@@ -54,7 +56,7 @@ internal class OtelSpanCreatorTest {
             assertTrue(contains(PrivateSpan))
             assertTrue(contains(EmbType.Performance.Default))
         }
-        assertEquals("emb-test", args.spanName)
+        assertEquals("emb-test", args.initialSpanName)
         assertNull(creator.spanStartArgs.getParentSpanContext())
 
         creator.startSpan(startTime).assertSpan(
@@ -166,6 +168,42 @@ internal class OtelSpanCreatorTest {
         )
         args.customAttributes["test-key"] = "test-value"
         assertEquals("test-value", args.customAttributes["test-key"])
+    }
+
+    @Test
+    fun `initial name not truncated`() {
+        val tracer = TracerAdapter(tracer, otelClock)
+        val startTime = clock.now()
+
+        val creator = OtelSpanCreator(
+            tracer = tracer,
+            spanStartArgs = OtelSpanStartArgs(
+                name = TOO_LONG_SPAN_NAME,
+                type = EmbType.Performance.Default,
+                internal = false,
+                private = false,
+            )
+        )
+
+        creator.startSpan(startTime).assertSpan(
+            expectedName = TOO_LONG_SPAN_NAME,
+            expectedStartTimeMs = startTime
+        )
+
+        val internalSpanCreator = OtelSpanCreator(
+            tracer = tracer,
+            spanStartArgs = OtelSpanStartArgs(
+                name = TOO_LONG_INTERNAL_SPAN_NAME,
+                type = EmbType.Performance.Default,
+                internal = true,
+                private = false,
+            )
+        )
+
+        internalSpanCreator.startSpan(startTime).assertSpan(
+            expectedName = "emb-$TOO_LONG_INTERNAL_SPAN_NAME",
+            expectedStartTimeMs = startTime
+        )
     }
 
     private fun Span.assertSpan(

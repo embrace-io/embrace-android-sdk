@@ -81,8 +81,10 @@ private val limits = InstrumentedConfigImpl.otelLimits
 val MAX_LENGTH_SPAN_NAME: String = "s".repeat(limits.getMaxNameLength())
 val TOO_LONG_SPAN_NAME: String = "s".repeat(limits.getMaxNameLength() + 1)
 val TRUNCATED_TOO_LONG_SPAN_NAME: String = PropertyUtils.truncate(TOO_LONG_SPAN_NAME, limits.getMaxNameLength())
-val MAX_LENGTH_INTERNAL_SPAN_NAME: String = "s".repeat(limits.getMaxInternalNameLength())
-val TOO_LONG_INTERNAL_SPAN_NAME: String = "s".repeat(limits.getMaxInternalNameLength() + 1)
+
+// Max length for internal spans name need to take into account the "emb-" prefix that will be added before truncation is applied
+val MAX_LENGTH_INTERNAL_SPAN_NAME: String = "s".repeat(limits.getMaxInternalNameLength() - 4)
+val TOO_LONG_INTERNAL_SPAN_NAME: String = "s".repeat(limits.getMaxInternalNameLength() - 3)
 val MAX_LENGTH_EVENT_NAME: String = "s".repeat(limits.getMaxNameLength())
 val TOO_LONG_EVENT_NAME: String = "s".repeat(limits.getMaxNameLength() + 1)
 val TRUNCATED_TOO_LONG_EVENT_NAME: String = PropertyUtils.truncate(TOO_LONG_EVENT_NAME, limits.getMaxNameLength())

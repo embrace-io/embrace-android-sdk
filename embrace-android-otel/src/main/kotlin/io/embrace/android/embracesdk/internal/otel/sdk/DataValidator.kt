@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.otel.sdk
 
 import io.embrace.android.embracesdk.internal.config.instrumented.OtelLimitsConfigImpl
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.OtelLimitsConfig
+import io.embrace.android.embracesdk.internal.utils.PropertyUtils
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 
 /**
@@ -11,45 +12,87 @@ class DataValidator(
     val otelLimitsConfig: OtelLimitsConfig = OtelLimitsConfigImpl,
     private val bypassValidation: (() -> Boolean) = { false },
 ) {
-    fun isNameValid(str: String, internal: Boolean): Boolean {
-        return if (internal) {
-            str.isNotBlank() && str.length <= otelLimitsConfig.getMaxInternalNameLength()
-        } else if (!bypassValidation()) {
-            str.isNotBlank() && str.length <= otelLimitsConfig.getMaxNameLength()
+    fun truncateSpanName(name: String, internal: Boolean): String {
+        val maxLength = if (internal) {
+            otelLimitsConfig.getMaxInternalNameLength()
         } else {
-            true
+            otelLimitsConfig.getMaxNameLength()
+        }
+        return PropertyUtils.truncate(name, maxLength)
+    }
+
+    fun truncateEvents(events: List<EmbraceSpanEvent>, internal: Boolean): List<EmbraceSpanEvent> {
+        return if (internal) {
+            events.take(otelLimitsConfig.getMaxSystemEventCount())
+        } else if (!bypassValidation()) {
+            events.take(otelLimitsConfig.getMaxCustomEventCount())
+        } else {
+            events
         }
     }
 
-    fun isEventCountValid(events: List<EmbraceSpanEvent>, internal: Boolean): Boolean {
-        return if (internal) {
-            events.size <= otelLimitsConfig.getMaxSystemEventCount()
-        } else if (!bypassValidation()) {
-            events.size <= otelLimitsConfig.getMaxCustomEventCount()
+    fun truncateAttributes(attributes: Map<String, String>, internal: Boolean): Map<String, String> {
+        val maxAttributeCount = if (internal) {
+            otelLimitsConfig.getMaxSystemAttributeCount()
         } else {
-            true
+            otelLimitsConfig.getMaxCustomAttributeCount()
+        }
+        val maxKeyLength = if (internal) {
+            otelLimitsConfig.getMaxInternalAttributeKeyLength()
+        } else {
+            otelLimitsConfig.getMaxCustomAttributeKeyLength()
+        }
+        val maxValueLength = if (internal) {
+            otelLimitsConfig.getMaxInternalAttributeValueLength()
+        } else {
+            otelLimitsConfig.getMaxCustomAttributeValueLength()
+        }
+
+        return if (internal || !bypassValidation()) {
+            attributes.truncate(
+                maxCount = maxAttributeCount,
+                maxKeyLength = maxKeyLength,
+                maxValueLength = maxValueLength
+            )
+        } else {
+            attributes
         }
     }
 
-    fun isAttributeCountValid(attributes: Map<String, String>, internal: Boolean): Boolean {
-        return if (internal) {
-            attributes.size <= otelLimitsConfig.getMaxSystemAttributeCount()
-        } else if (!bypassValidation()) {
-            attributes.size <= otelLimitsConfig.getMaxCustomAttributeCount()
+    fun truncateAttribute(key: String, value: String, internal: Boolean): Pair<String, String> {
+        val maxKeyLength = if (internal) {
+            otelLimitsConfig.getMaxInternalAttributeKeyLength()
         } else {
-            true
+            otelLimitsConfig.getMaxCustomAttributeKeyLength()
         }
+        val maxValueLength = if (internal) {
+            otelLimitsConfig.getMaxInternalAttributeValueLength()
+        } else {
+            otelLimitsConfig.getMaxCustomAttributeValueLength()
+        }
+
+        val truncatedValue = if (key.isValidLongValueAttribute()) {
+            value
+        } else {
+            PropertyUtils.truncate(value, maxValueLength)
+        }
+
+        return Pair(PropertyUtils.truncate(key, maxKeyLength), truncatedValue)
     }
 
-    fun isAttributeValid(key: String, value: String, internal: Boolean): Boolean {
-        with(otelLimitsConfig) {
-            return if (internal) {
-                key.length <= getMaxInternalAttributeKeyLength() && value.length <= getMaxInternalAttributeValueLength()
-            } else if (!bypassValidation()) {
-                key.length <= getMaxCustomAttributeKeyLength() && value.length <= getMaxCustomAttributeValueLength()
-            } else {
-                true
+    private fun Map<String, String>.truncate(
+        maxCount: Int,
+        maxKeyLength: Int,
+        maxValueLength: Int,
+    ): Map<String, String> =
+        mutableMapOf<String, String>().apply {
+            this@truncate.entries.take(maxCount).forEach {
+                val truncatedValue = if (it.key.isValidLongValueAttribute()) {
+                    it.value
+                } else {
+                    PropertyUtils.truncate(it.value, maxValueLength)
+                }
+                this[PropertyUtils.truncate(it.key, maxKeyLength)] = truncatedValue
             }
         }
-    }
 }

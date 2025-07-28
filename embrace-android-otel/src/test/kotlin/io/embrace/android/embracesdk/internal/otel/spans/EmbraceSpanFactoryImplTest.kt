@@ -36,7 +36,6 @@ internal class EmbraceSpanFactoryImplTest {
         }
         tracer = TracerAdapter(FakeOtelJavaTracer(), openTelemetryClock)
         embraceSpanFactory = EmbraceSpanFactoryImpl(
-            tracer = tracer,
             openTelemetryClock = openTelemetryClock,
             spanRepository = spanRepository,
             dataValidator = DataValidator()
@@ -46,10 +45,13 @@ internal class EmbraceSpanFactoryImplTest {
     @Test
     fun `check public span creation`() {
         val span = embraceSpanFactory.create(
-            name = "test",
-            type = EmbType.Performance.Default,
-            internal = false,
-            private = false,
+            OtelSpanStartArgs(
+                name = "test",
+                type = EmbType.Performance.Default,
+                internal = false,
+                private = false,
+                tracer = tracer,
+            )
         )
         assertTrue(span.start(clock.now()))
         with(span) {
@@ -65,10 +67,13 @@ internal class EmbraceSpanFactoryImplTest {
     @Test
     fun `check internal span creation`() {
         val span = embraceSpanFactory.create(
-            name = "test",
-            type = EmbType.Performance.Default,
-            internal = true,
-            private = true,
+            OtelSpanStartArgs(
+                name = "test",
+                type = EmbType.Performance.Default,
+                internal = true,
+                private = true,
+                tracer = tracer,
+            )
         )
         assertTrue(span.start(clock.now()))
         with(span) {
@@ -82,10 +87,13 @@ internal class EmbraceSpanFactoryImplTest {
     @Test
     fun `check internal span can be public`() {
         val span = embraceSpanFactory.create(
-            name = "test",
-            type = EmbType.Performance.Default,
-            internal = true,
-            private = false,
+            OtelSpanStartArgs(
+                name = "test",
+                type = EmbType.Performance.Default,
+                internal = true,
+                private = false,
+                tracer = tracer,
+            )
         )
         assertTrue(span.start(clock.now()))
         with(span) {

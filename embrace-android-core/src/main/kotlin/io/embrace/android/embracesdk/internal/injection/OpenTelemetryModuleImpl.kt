@@ -90,7 +90,6 @@ internal class OpenTelemetryModuleImpl(
 
     private val embraceSpanFactory: EmbraceSpanFactory by singleton {
         EmbraceSpanFactoryImpl(
-            tracer = otelSdkWrapper.sdkTracer,
             openTelemetryClock = openTelemetryClock,
             spanRepository = spanRepository,
             dataValidator = dataValidator,
@@ -105,7 +104,8 @@ internal class OpenTelemetryModuleImpl(
             telemetryService = initModule.telemetryService,
             spanRepository = spanRepository,
             spanSink = spanSink,
-            embraceSpanFactorySupplier = { embraceSpanFactory }
+            tracerSupplier = { otelSdkWrapper.sdkTracer },
+            embraceSpanFactorySupplier = { embraceSpanFactory },
         ).also {
             internalSpanStopCallback = it::spanStopCallback
         }
@@ -116,8 +116,10 @@ internal class OpenTelemetryModuleImpl(
             spanRepository = spanRepository,
             canStartNewSpan = currentSessionSpan::canStartNewSpan,
             initCallback = currentSessionSpan::initializeService,
-            dataValidator = dataValidator
-        ) { embraceSpanFactory }
+            dataValidator = dataValidator,
+            tracerSupplier = { otelSdkWrapper.sdkTracer },
+            embraceSpanFactorySupplier = { embraceSpanFactory },
+        )
     }
 
     override val embraceTracer: EmbraceTracer by singleton {

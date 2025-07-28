@@ -28,7 +28,6 @@ import io.embrace.android.embracesdk.internal.otel.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.otel.sdk.DataValidator
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
-import io.embrace.android.embracesdk.internal.otel.sdk.otelSpanArgs
 import io.embrace.android.embracesdk.internal.otel.sdk.toEmbraceObjectName
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
@@ -78,11 +77,12 @@ internal class EmbraceSpanImplTest {
             redactionFunction = ::redactionFunction
         )
         embraceSpan = embraceSpanFactory.create(
-            otelSpanStartArgs = tracer.otelSpanArgs(
+            otelSpanStartArgs = OtelSpanStartArgs(
                 name = EXPECTED_SPAN_NAME,
                 type = EmbType.Performance.Default,
                 internal = false,
                 private = false,
+                tracer = tracer,
             )
         )
         fakeClock.tick(100)
@@ -558,11 +558,12 @@ internal class EmbraceSpanImplTest {
 
     private fun createInternalEmbraceSdkSpan() = embraceSpanFactory.create(createWrapperForInternalSpan())
 
-    private fun createWrapperForInternalSpan() = tracer.otelSpanArgs(
+    private fun createWrapperForInternalSpan() = OtelSpanStartArgs(
         name = EXPECTED_SPAN_NAME,
         type = EmbType.System.LowPower,
         internal = true,
         private = true,
+        tracer = tracer,
     )
 
     private fun EmbraceSdkSpan.assertSnapshot(

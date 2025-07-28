@@ -14,7 +14,6 @@ import io.embrace.android.embracesdk.internal.otel.sdk.DataValidator
 import io.embrace.android.embracesdk.internal.otel.sdk.fromMap
 import io.embrace.android.embracesdk.internal.otel.sdk.hasEmbraceAttribute
 import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
-import io.embrace.android.embracesdk.internal.otel.sdk.otelSpanArgs
 import io.embrace.android.embracesdk.internal.otel.sdk.setEmbraceAttribute
 import io.embrace.android.embracesdk.internal.otel.sdk.toStringMap
 import io.embrace.android.embracesdk.internal.otel.toEmbracePayload
@@ -66,12 +65,13 @@ class EmbraceSpanFactoryImpl(
         parent: EmbraceSpan?,
         autoTerminationMode: AutoTerminationMode,
     ): EmbraceSdkSpan = create(
-        otelSpanStartArgs = tracer.otelSpanArgs(
+        otelSpanStartArgs = OtelSpanStartArgs(
             name = name,
             type = type,
             internal = internal,
             private = private,
-            parent = parent,
+            tracer = tracer,
+            parentSpan = parent,
         ),
         autoTerminationMode = autoTerminationMode
     )

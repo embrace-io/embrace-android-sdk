@@ -44,10 +44,10 @@ class SpanServiceImpl(
         autoTerminationMode: AutoTerminationMode,
     ): EmbraceSdkSpan? {
         EmbTrace.trace("span-create") {
-            return if (dataValidator.isNameValid(name, internal) && canStartNewSpan(parent, internal)) {
+            return if (name.isNotBlank() && canStartNewSpan(parent, internal)) {
                 embraceSpanFactory.create(
                     OtelSpanStartArgs(
-                        name = name,
+                        name = dataValidator.truncateName(name, internal),
                         type = type,
                         internal = internal,
                         private = private,
@@ -65,7 +65,7 @@ class SpanServiceImpl(
     override fun createSpan(otelSpanStartArgs: OtelSpanStartArgs): EmbraceSdkSpan? {
         EmbTrace.trace("span-create") {
             return if (
-                dataValidator.isNameValid(otelSpanStartArgs.spanName, otelSpanStartArgs.internal) &&
+                otelSpanStartArgs.initialSpanName.isNotBlank() &&
                 canStartNewSpan(
                     otelSpanStartArgs.parentContext.getEmbraceSpan(),
                     otelSpanStartArgs.internal
@@ -139,10 +139,14 @@ class SpanServiceImpl(
                 return false
             }
 
-            if (inputsValid(name, internal, events, attributes) && canStartNewSpan(parent, internal)) {
+            val validName = dataValidator.truncateName(name, internal)
+            val validEvents = dataValidator.truncateEvents(events, internal)
+            val validAttributes = dataValidator.truncateAttributes(attributes, internal)
+
+            if (canStartNewSpan(parent, internal)) {
                 val newSpan = embraceSpanFactory.create(
                     OtelSpanStartArgs(
-                        name = name,
+                        name = validName,
                         type = type,
                         internal = internal,
                         private = private,
@@ -151,10 +155,10 @@ class SpanServiceImpl(
                     )
                 )
                 if (newSpan.start(startTimeMs)) {
-                    attributes.forEach {
+                    validAttributes.forEach {
                         newSpan.addAttribute(it.key, it.value)
                     }
-                    events.forEach {
+                    validEvents.forEach {
                         newSpan.addEvent(it.name, it.timestampNanos.nanosToMillis(), it.attributes)
                     }
                     return newSpan.stop(errorCode, endTimeMs)
@@ -166,13 +170,4 @@ class SpanServiceImpl(
     }
 
     override fun getSpan(spanId: String): EmbraceSpan? = spanRepository.getSpan(spanId = spanId)
-
-    private fun inputsValid(
-        name: String,
-        internal: Boolean,
-        events: List<EmbraceSpanEvent>,
-        attributes: Map<String, String>,
-    ): Boolean = dataValidator.isNameValid(name, internal) &&
-        dataValidator.isEventCountValid(events, internal) &&
-        dataValidator.isAttributeCountValid(attributes, internal)
 }

@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.payload.Span
+import io.embrace.android.embracesdk.internal.utils.PropertyUtils
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaContextKey
@@ -75,32 +76,39 @@ private fun createEventsListOfSize(size: Int): List<EmbraceSpanEvent> {
     return events
 }
 
-private const val MAX_EVENT_NAME_LENGTH = 100
-private const val MAX_EVENT_ATTRIBUTE_COUNT = 10
-
 private val limits = InstrumentedConfigImpl.otelLimits
 
 val MAX_LENGTH_SPAN_NAME: String = "s".repeat(limits.getMaxNameLength())
 val TOO_LONG_SPAN_NAME: String = "s".repeat(limits.getMaxNameLength() + 1)
-val MAX_LENGTH_INTERNAL_SPAN_NAME: String = "s".repeat(limits.getMaxInternalNameLength())
-val TOO_LONG_INTERNAL_SPAN_NAME: String = "s".repeat(limits.getMaxInternalNameLength() + 1)
-val MAX_LENGTH_EVENT_NAME: String = "s".repeat(MAX_EVENT_NAME_LENGTH)
-val TOO_LONG_EVENT_NAME: String = "s".repeat(MAX_EVENT_NAME_LENGTH + 1)
+val TRUNCATED_TOO_LONG_SPAN_NAME: String = PropertyUtils.truncate(TOO_LONG_SPAN_NAME, limits.getMaxNameLength())
+
+// Max length for internal spans name need to take into account the "emb-" prefix that will be added before truncation is applied
+val MAX_LENGTH_INTERNAL_SPAN_NAME: String = "s".repeat(limits.getMaxInternalNameLength() - 4)
+val TOO_LONG_INTERNAL_SPAN_NAME: String = "s".repeat(limits.getMaxInternalNameLength() - 3)
+val MAX_LENGTH_EVENT_NAME: String = "s".repeat(limits.getMaxNameLength())
+val TOO_LONG_EVENT_NAME: String = "s".repeat(limits.getMaxNameLength() + 1)
+val TRUNCATED_TOO_LONG_EVENT_NAME: String = PropertyUtils.truncate(TOO_LONG_EVENT_NAME, limits.getMaxNameLength())
 val MAX_LENGTH_ATTRIBUTE_KEY: String = "s".repeat(limits.getMaxCustomAttributeKeyLength())
 val TOO_LONG_ATTRIBUTE_KEY: String = "s".repeat(limits.getMaxCustomAttributeKeyLength() + 1)
+val TRUNCATED_TOO_LONG_ATTRIBUTE_KEY: String = PropertyUtils.truncate(TOO_LONG_ATTRIBUTE_KEY, limits.getMaxCustomAttributeKeyLength())
 val MAX_LENGTH_ATTRIBUTE_VALUE: String = "s".repeat(limits.getMaxCustomAttributeValueLength())
 val TOO_LONG_ATTRIBUTE_VALUE: String = "s".repeat(limits.getMaxCustomAttributeValueLength() + 1)
+val TRUNCATED_TOO_LONG_ATTRIBUTE_VALUE: String = PropertyUtils.truncate(TOO_LONG_ATTRIBUTE_VALUE, limits.getMaxCustomAttributeValueLength())
 val MAX_LENGTH_ATTRIBUTE_KEY_FOR_INTERNAL_SPAN: String = "s".repeat(limits.getMaxInternalAttributeKeyLength())
 val TOO_LONG_ATTRIBUTE_KEY_FOR_INTERNAL_SPAN: String = "s".repeat(limits.getMaxInternalAttributeKeyLength() + 1)
+val TRUNCATED_TOO_LONG_ATTRIBUTE_KEY_FOR_INTERNAL_SPAN: String =
+    PropertyUtils.truncate(TOO_LONG_ATTRIBUTE_KEY_FOR_INTERNAL_SPAN, limits.getMaxInternalAttributeKeyLength())
 val MAX_LENGTH_ATTRIBUTE_VALUE_FOR_INTERNAL_SPAN: String =
     "s".repeat(limits.getMaxInternalAttributeValueLength())
 val TOO_LONG_ATTRIBUTE_VALUE_FOR_INTERNAL_SPAN: String =
     "s".repeat(limits.getMaxInternalAttributeValueLength() + 1)
+val TRUNCATED_TOO_LONG_ATTRIBUTE_VALUE_FOR_INTERNAL_SPAN: String =
+    PropertyUtils.truncate(TOO_LONG_ATTRIBUTE_VALUE_FOR_INTERNAL_SPAN, limits.getMaxInternalAttributeValueLength())
 
 val maxSizeCustomAttributes: Map<String, String> = createMapOfSize(limits.getMaxCustomAttributeCount())
 val tooBigCustomAttributes: Map<String, String> = createMapOfSize(limits.getMaxCustomAttributeCount() + 1)
-val maxSizeEventAttributes: Map<String, String> = createMapOfSize(MAX_EVENT_ATTRIBUTE_COUNT)
-val tooBigEventAttributes: Map<String, String> = createMapOfSize(MAX_EVENT_ATTRIBUTE_COUNT + 1)
+val maxSizeEventAttributes: Map<String, String> = createMapOfSize(limits.getMaxEventAttributeCount())
+val tooBigEventAttributes: Map<String, String> = createMapOfSize(limits.getMaxEventAttributeCount() + 1)
 val maxSizeSystemAttributes: Map<String, String> = createMapOfSize(limits.getMaxSystemAttributeCount())
 val tooBigSystemAttributes: Map<String, String> = createMapOfSize(limits.getMaxSystemAttributeCount() + 1)
 val maxSizeCustomEvents: List<EmbraceSpanEvent> = createEventsListOfSize(limits.getMaxCustomEventCount())

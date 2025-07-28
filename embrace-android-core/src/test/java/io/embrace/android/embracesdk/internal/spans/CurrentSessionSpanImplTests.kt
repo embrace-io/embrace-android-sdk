@@ -15,7 +15,7 @@ import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.arch.destination.SpanAttributeData
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
-import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
+import io.embrace.android.embracesdk.internal.config.instrumented.schema.OtelLimitsConfig
 import io.embrace.android.embracesdk.internal.otel.attrs.asPair
 import io.embrace.android.embracesdk.internal.otel.config.getMaxTotalAttributeCount
 import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
@@ -50,6 +50,7 @@ internal class CurrentSessionSpanImplTests {
 
     private lateinit var spanRepository: SpanRepository
     private lateinit var spanSink: SpanSink
+    private lateinit var otelLimitsConfig: OtelLimitsConfig
     private lateinit var telemetryService: TelemetryService
     private lateinit var openTelemetryClock: Clock
     private lateinit var currentSessionSpan: CurrentSessionSpanImpl
@@ -68,6 +69,7 @@ internal class CurrentSessionSpanImplTests {
         tracer = initModule.openTelemetryModule.otelSdkWrapper.sdkTracer
         spanService = initModule.openTelemetryModule.spanService
         spanService.initializeService(clock.now())
+        otelLimitsConfig = initModule.instrumentedConfig.otelLimits
     }
 
     @Test
@@ -533,7 +535,7 @@ internal class CurrentSessionSpanImplTests {
 
     @Test
     fun `validate maximum events on session span`() {
-        val limit = InstrumentedConfigImpl.otelLimits.getMaxSystemEventCount()
+        val limit = otelLimitsConfig.getMaxSystemEventCount()
         repeat(limit + 1) {
             currentSessionSpan.addSessionEvent(SchemaType.Breadcrumb("test-event"), 1000L + it)
         }
@@ -560,7 +562,7 @@ internal class CurrentSessionSpanImplTests {
 
     @Test
     fun `validate maximum attributes on session span`() {
-        val limit = InstrumentedConfigImpl.otelLimits.getMaxTotalAttributeCount()
+        val limit = otelLimitsConfig.getMaxTotalAttributeCount()
         repeat(limit + 1) {
             currentSessionSpan.addSessionAttribute(SpanAttributeData("attribute-$it", "value"))
         }

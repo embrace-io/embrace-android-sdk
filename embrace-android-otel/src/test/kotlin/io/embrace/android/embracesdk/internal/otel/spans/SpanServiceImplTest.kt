@@ -25,7 +25,6 @@ import io.embrace.android.embracesdk.fixtures.tooBigSystemAttributes
 import io.embrace.android.embracesdk.fixtures.tooBigSystemEvents
 import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
-import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
 import io.embrace.android.embracesdk.internal.otel.config.OtelSdkConfig
 import io.embrace.android.embracesdk.internal.otel.logs.LogSinkImpl
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
@@ -50,6 +49,7 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 internal class SpanServiceImplTest {
     private lateinit var spanSink: SpanSink
+    private lateinit var dataValidator: DataValidator
     private lateinit var spansService: SpanServiceImpl
     private val clock = FakeClock()
     private var spanCreationAllowed: Boolean = true
@@ -58,7 +58,8 @@ internal class SpanServiceImplTest {
     @Before
     fun setup() {
         spanSink = SpanSinkImpl()
-        spansService = createSpanService()
+        dataValidator = DataValidator()
+        spansService = createSpanService(dataValidator)
     }
 
     @Test
@@ -362,8 +363,8 @@ internal class SpanServiceImplTest {
 
     @Test
     fun `check name length limit for non-internal spans`() {
-        assertNull(spansService.createSpan(name = TOO_LONG_SPAN_NAME, internal = false))
-        assertFalse(
+        assertNotNull(spansService.createSpan(name = TOO_LONG_SPAN_NAME, internal = false))
+        assertTrue(
             spansService.recordCompletedSpan(
                 name = TOO_LONG_SPAN_NAME,
                 startTimeMs = 100L,
@@ -372,7 +373,7 @@ internal class SpanServiceImplTest {
             )
         )
         assertNotNull(spansService.recordSpan(name = TOO_LONG_SPAN_NAME, internal = false) { 1 })
-        assertEquals(0, spanSink.completedSpans().size)
+        assertEquals(2, spanSink.completedSpans().size)
         assertNotNull(spansService.createSpan(name = MAX_LENGTH_SPAN_NAME, internal = false))
         assertNotNull(spansService.recordSpan(name = MAX_LENGTH_SPAN_NAME, internal = false) { 2 })
         assertTrue(
@@ -383,13 +384,13 @@ internal class SpanServiceImplTest {
                 internal = false,
             )
         )
-        assertEquals(2, spanSink.completedSpans().size)
+        assertEquals(4, spanSink.completedSpans().size)
     }
 
     @Test
     fun `check limits for internal spans`() {
-        assertNull(spansService.createSpan(name = TOO_LONG_INTERNAL_SPAN_NAME, internal = true))
-        assertFalse(
+        assertNotNull(spansService.createSpan(name = TOO_LONG_INTERNAL_SPAN_NAME, internal = true))
+        assertTrue(
             spansService.recordCompletedSpan(
                 name = TOO_LONG_INTERNAL_SPAN_NAME,
                 startTimeMs = 100L,
@@ -397,7 +398,7 @@ internal class SpanServiceImplTest {
                 internal = true,
             )
         )
-        assertFalse(
+        assertTrue(
             spansService.recordCompletedSpan(
                 name = MAX_LENGTH_INTERNAL_SPAN_NAME,
                 startTimeMs = 100L,
@@ -406,7 +407,7 @@ internal class SpanServiceImplTest {
                 attributes = tooBigSystemAttributes
             )
         )
-        assertFalse(
+        assertTrue(
             spansService.recordCompletedSpan(
                 name = MAX_LENGTH_INTERNAL_SPAN_NAME,
                 startTimeMs = 100L,
@@ -420,7 +421,6 @@ internal class SpanServiceImplTest {
                 1
             }
         )
-        assertEquals(0, spanSink.completedSpans().size)
         assertNotNull(spansService.createSpan(name = MAX_LENGTH_INTERNAL_SPAN_NAME, internal = true))
         assertNotNull(
             spansService.recordSpan(name = MAX_LENGTH_INTERNAL_SPAN_NAME, internal = true) {
@@ -437,12 +437,15 @@ internal class SpanServiceImplTest {
                 events = maxSizeSystemEvents
             )
         )
-        assertEquals(2, spanSink.completedSpans().size)
+        val completedSpans = spanSink.completedSpans()
+        assertEquals(6, completedSpans.size)
+        assertEquals(2, completedSpans.filter { it.name.endsWith("...") }.size)
     }
 
     @Test
     fun `check events limit`() {
-        assertFalse(
+        val maxEventAttrCount = dataValidator.otelLimitsConfig.getMaxEventAttributeCount()
+        assertTrue(
             spansService.recordCompletedSpan(
                 name = "too many events",
                 startTimeMs = 100L,
@@ -461,7 +464,7 @@ internal class SpanServiceImplTest {
             )
         )
 
-        spanSink.flushSpans()
+        assertEquals(maxEventAttrCount, spanSink.flushSpans().single { it.name == "too many events" }.events.size)
 
         val attributesMap = mutableMapOf(
             Pair(TOO_LONG_ATTRIBUTE_KEY, "value"),
@@ -472,7 +475,7 @@ internal class SpanServiceImplTest {
         }
 
         val events = mutableListOf(checkNotNull(EmbraceSpanEvent.create("event", 100L, attributesMap)))
-        repeat(InstrumentedConfigImpl.otelLimits.getMaxCustomEventCount() - 1) {
+        repeat(dataValidator.otelLimitsConfig.getMaxCustomEventCount() - 1) {
             events.add(checkNotNull(EmbraceSpanEvent.create("event", 100L, null)))
         }
         assertTrue(
@@ -488,12 +491,12 @@ internal class SpanServiceImplTest {
         val completedSpans = spanSink.completedSpans()
         assertEquals(1, completedSpans.size)
         assertEquals(10, completedSpans[0].events.size)
-        assertEquals(8, completedSpans[0].events[0].attributes.size)
+        assertEquals(maxEventAttrCount, completedSpans[0].events[0].attributes.size)
     }
 
     @Test
     fun `check attributes limit`() {
-        assertFalse(
+        assertTrue(
             spansService.recordCompletedSpan(
                 name = "too many attributes",
                 startTimeMs = 100L,
@@ -514,12 +517,13 @@ internal class SpanServiceImplTest {
 
         spanSink.flushSpans()
 
+        val maxCustomAttrCount = dataValidator.otelLimitsConfig.getMaxCustomAttributeCount()
         val attributesMap = mutableMapOf(
             Pair(TOO_LONG_ATTRIBUTE_KEY, "value"),
-            Pair("key", TOO_LONG_ATTRIBUTE_VALUE),
+            Pair("ssskey", TOO_LONG_ATTRIBUTE_VALUE),
         )
-        repeat(InstrumentedConfigImpl.otelLimits.getMaxCustomAttributeCount() - 2) {
-            attributesMap["key$it"] = "value"
+        repeat(maxCustomAttrCount) {
+            attributesMap["test-key$it"] = "value"
         }
 
         assertTrue(
@@ -532,10 +536,11 @@ internal class SpanServiceImplTest {
             )
         )
 
-        val completedSpans = spanSink.completedSpans()
-        assertEquals(1, completedSpans.size)
-        val attrs = completedSpans[0].attributes.filterNot { it.key.startsWith("emb.") }
-        assertEquals(99, attrs.size)
+        val truncatedAttributesSpan = spanSink.completedSpans().single { it.name == MAX_LENGTH_SPAN_NAME }
+        val attrs = truncatedAttributesSpan.attributes
+        val truncatedAttrCount = attrs.filter { it.key.startsWith("sss") }.size
+        assertEquals(2, truncatedAttrCount)
+        assertEquals(98, attrs.filter { it.key.startsWith("test-key") }.size)
     }
 
     @Test
@@ -575,8 +580,8 @@ internal class SpanServiceImplTest {
     fun `validation for internal spans still enforced even when non-internal limits bypassed`() {
         spansService = createSpanService(DataValidator(bypassValidation = { true }))
 
-        assertNull(spansService.createSpan(name = TOO_LONG_INTERNAL_SPAN_NAME, internal = true))
-        assertFalse(
+        assertNotNull(spansService.createSpan(name = TOO_LONG_INTERNAL_SPAN_NAME, internal = true))
+        assertTrue(
             spansService.recordCompletedSpan(
                 name = TOO_LONG_INTERNAL_SPAN_NAME,
                 startTimeMs = 100L,
@@ -584,7 +589,7 @@ internal class SpanServiceImplTest {
                 internal = true,
             )
         )
-        assertFalse(
+        assertTrue(
             spansService.recordCompletedSpan(
                 name = "too many events",
                 startTimeMs = 100L,
@@ -593,7 +598,7 @@ internal class SpanServiceImplTest {
                 events = tooBigSystemEvents,
             )
         )
-        assertFalse(
+        assertTrue(
             spansService.recordCompletedSpan(
                 name = "too many attributes",
                 startTimeMs = 100L,
@@ -602,9 +607,11 @@ internal class SpanServiceImplTest {
                 attributes = tooBigSystemAttributes,
             )
         )
+
+        assertEquals(3, spanSink.completedSpans().size)
     }
 
-    private fun createSpanService(dataValidator: DataValidator = DataValidator()): SpanServiceImpl {
+    private fun createSpanService(dataValidator: DataValidator): SpanServiceImpl {
         val fakeClock = FakeOtelKotlinClock(clock)
         val otelSdkConfig = OtelSdkConfig(
             spanSink = spanSink,

@@ -36,7 +36,7 @@ class FakeSpanData(
                 Pair("my-key", "my-value")
             ),
             internal = true,
-            limitsValidator = DataValidator()
+            dataValidator = DataValidator()
         ).build(),
     private var events: MutableList<OtelJavaEventData> = mutableListOf(
         OtelJavaEventData.create(

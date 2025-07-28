@@ -96,7 +96,7 @@ class FakeAppStartupDataCollector(
         val attributesBuilder = OtelJavaAttributes.builder().fromMap(
             attributes = attributes,
             internal = false,
-            limitsValidator = dataValidator
+            dataValidator = dataValidator
         )
         val status = if (errorCode != null) {
             val errorCodeAttr = errorCode.fromErrorCode()
@@ -118,7 +118,7 @@ class FakeAppStartupDataCollector(
                         OtelJavaAttributes.builder().fromMap(
                             attributes = it.attributes,
                             internal = false,
-                            limitsValidator = dataValidator
+                            dataValidator = dataValidator
                         ).build()
                     )
                 }.toMutableList(),

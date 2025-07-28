@@ -42,7 +42,7 @@ class FakeSpanService : SpanService {
         otelSpanStartArgs: OtelSpanStartArgs
     ): EmbraceSdkSpan {
         return FakeEmbraceSdkSpan(
-            name = otelSpanStartArgs.spanName,
+            name = otelSpanStartArgs.initialSpanName,
             parentContext = otelSpanStartArgs.parentContext,
             type = otelSpanStartArgs.embraceAttributes.filterIsInstance<EmbType>().single(),
             internal = otelSpanStartArgs.internal,

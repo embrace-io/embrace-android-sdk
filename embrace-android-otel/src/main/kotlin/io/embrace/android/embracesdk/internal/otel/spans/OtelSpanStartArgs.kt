@@ -32,13 +32,7 @@ class OtelSpanStartArgs(
     parentSpan: EmbraceSpan? = null,
 ) {
     var parentContext: OtelJavaContext = OtelJavaContext.root()
-
-    val spanName: String = if (internal) {
-        name.toEmbraceObjectName()
-    } else {
-        name
-    }
-
+    val initialSpanName: String = name.prependEmbracePrefix(internal)
     var startTimeMs: Long? = null
     var spanKind: OtelJavaSpanKind? = null
 
@@ -69,13 +63,21 @@ class OtelSpanStartArgs(
         }
     }
 
+    private fun String.prependEmbracePrefix(internal: Boolean): String {
+        return if (internal) {
+            toEmbraceObjectName()
+        } else {
+            this
+        }
+    }
+
     internal fun startSpan(startTimeMs: Long): Span {
         val parentSpanContext = getParentSpanContext()
         return tracer.createSpan(
-            name = spanName,
+            name = initialSpanName,
             parent = parentSpanContext?.let(::SpanContextAdapter),
             spanKind = spanKind?.convertToOtelKotlin() ?: SpanKind.INTERNAL,
-            startTimestamp = startTimeMs.millisToNanos()
+            startTimestamp = startTimeMs.millisToNanos(),
         )
     }
 }

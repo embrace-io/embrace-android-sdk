@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.otel.spans
 
 import io.embrace.android.embracesdk.fakes.FakeClock
-import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
 import io.embrace.android.embracesdk.fakes.FakeOtelJavaTracer
 import io.embrace.android.embracesdk.fakes.FakeOtelKotlinClock
 import io.embrace.android.embracesdk.fakes.FakeSpanBuilder
@@ -39,15 +38,15 @@ internal class OtelSpanStartArgsTest {
 
     @Test
     fun `check private and internal span creation`() {
+        val originalStartTime = clock.now()
         val args = OtelSpanStartArgs(
             name = "test",
             type = EmbType.Performance.Default,
             internal = true,
             private = true,
             tracer = TracerAdapter(tracer, otelClock),
+            startTimeMs = clock.now()
         )
-        val originalStartTime = clock.now()
-        args.startTimeMs = originalStartTime
         val startTime = clock.tick()
         with(args.embraceAttributes.toSet()) {
             assertTrue(contains(PrivateSpan))
@@ -65,60 +64,20 @@ internal class OtelSpanStartArgsTest {
 
     @Test
     fun `add parent after initial creation`() {
+        val parent = FakeSpanBuilder(spanName = "parent").startSpan()
         val args = OtelSpanStartArgs(
             name = "test",
             type = EmbType.Performance.Default,
             internal = false,
             private = false,
             tracer = TracerAdapter(tracer, otelClock),
+            parentCtx = OtelJavaContext.root().with(parent)
         )
-        val parent = FakeSpanBuilder(spanName = "parent").startSpan()
-        args.parentContext = OtelJavaContext.root().with(parent)
         assertEquals(parent.spanContext, args.getParentSpanContext())
         val startTime = clock.now()
         args.startSpan(startTime).assertSpan(
             expectedName = "test",
             expectedStartTimeMs = startTime,
-        )
-    }
-
-    @Test
-    fun `change and remove parent after initial creation`() {
-        val parent = FakeEmbraceSdkSpan.started()
-        val startTime = clock.now()
-        val args = OtelSpanStartArgs(
-            name = "test",
-            type = EmbType.Performance.Default,
-            internal = false,
-            private = false,
-            parentSpan = parent,
-            tracer = TracerAdapter(tracer, otelClock),
-        )
-
-        assertEquals(parent.spanContext, args.getParentSpanContext())
-
-        val newParent = FakeSpanBuilder("new-parent").startSpan()
-        args.parentContext = OtelJavaContext.root().with(newParent)
-        assertEquals(newParent.spanContext, args.getParentSpanContext())
-
-        args.startSpan(startTime).assertSpan(
-            expectedName = "test",
-            expectedStartTimeMs = startTime
-        )
-
-        val uxArgs = OtelSpanStartArgs(
-            name = "ux-test",
-            type = EmbType.Ux.View,
-            internal = false,
-            private = false,
-            parentSpan = parent,
-            tracer = TracerAdapter(tracer, otelClock),
-        )
-        uxArgs.parentContext = OtelJavaContext.root()
-        assertNull(uxArgs.getParentSpanContext())
-        uxArgs.startSpan(startTime).assertSpan(
-            expectedName = "ux-test",
-            expectedStartTimeMs = startTime
         )
     }
 
@@ -130,9 +89,9 @@ internal class OtelSpanStartArgsTest {
             internal = false,
             private = false,
             tracer = TracerAdapter(tracer, otelClock),
+            spanKind = OtelJavaSpanKind.CLIENT
         )
         val startTime = clock.now()
-        args.spanKind = OtelJavaSpanKind.CLIENT
         args.startSpan(startTime).assertSpan(
             expectedName = "test",
             expectedStartTimeMs = startTime,

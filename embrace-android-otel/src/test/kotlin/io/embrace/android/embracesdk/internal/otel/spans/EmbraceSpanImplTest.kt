@@ -41,9 +41,11 @@ import io.embrace.android.embracesdk.internal.utils.truncatedStacktraceText
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.OpenTelemetryInstance
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaContext
 import io.embrace.opentelemetry.kotlin.k2j.tracing.SpanContextAdapter
 import io.embrace.opentelemetry.kotlin.kotlinApi
 import io.embrace.opentelemetry.kotlin.tracing.model.SpanKind
+import io.opentelemetry.context.Context
 import io.opentelemetry.semconv.ExceptionAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -499,8 +501,7 @@ internal class EmbraceSpanImplTest {
 
     @Test
     fun `start time from span start method overrides all`() {
-        val wrapper = createWrapperForInternalSpan()
-        wrapper.startTimeMs = fakeClock.tick()
+        val wrapper = createWrapperForInternalSpan(startTimeMs = fakeClock.tick())
         embraceSpan = embraceSpanFactory.create(wrapper)
 
         val timePassedIn = fakeClock.tick()
@@ -517,9 +518,8 @@ internal class EmbraceSpanImplTest {
 
     @Test
     fun `start time from span builder used if no start time passed into start method`() {
-        val wrapper = createWrapperForInternalSpan()
         val timeOnWrapper = fakeClock.tick()
-        wrapper.startTimeMs = timeOnWrapper
+        val wrapper = createWrapperForInternalSpan(startTimeMs = timeOnWrapper)
         embraceSpan = embraceSpanFactory.create(wrapper)
         fakeClock.tick()
         assertTrue(embraceSpan.start())
@@ -528,9 +528,8 @@ internal class EmbraceSpanImplTest {
 
     @Test
     fun `validate context objects are propagated from the parent to the child span`() {
-        val wrapper = createWrapperForInternalSpan()
-        val newParentContext = wrapper.parentContext.with(fakeContextKey, "fake-value")
-        wrapper.parentContext = newParentContext
+        val newParentContext = OtelJavaContext.current().with(fakeContextKey, "fake-value")
+        val wrapper = createWrapperForInternalSpan(parentContext = newParentContext)
         embraceSpan = embraceSpanFactory.create(wrapper)
 
         assertNull(embraceSpan.asNewContext())
@@ -578,12 +577,14 @@ internal class EmbraceSpanImplTest {
 
     private fun createInternalEmbraceSdkSpan() = embraceSpanFactory.create(createWrapperForInternalSpan())
 
-    private fun createWrapperForInternalSpan() = OtelSpanStartArgs(
+    private fun createWrapperForInternalSpan(startTimeMs: Long? = null, parentContext: Context? = null) = OtelSpanStartArgs(
         name = EXPECTED_SPAN_NAME,
         type = EmbType.System.LowPower,
         internal = true,
         private = true,
         tracer = tracer,
+        startTimeMs = startTimeMs,
+        parentCtx = parentContext
     )
 
     private fun EmbraceSdkSpan.assertSnapshot(

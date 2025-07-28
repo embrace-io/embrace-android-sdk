@@ -1,9 +1,9 @@
 package io.embrace.android.embracesdk.internal.otel.impl
 
+import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.otel.toOtelKotlin
 import io.embrace.android.embracesdk.internal.payload.Attribute
-import io.embrace.android.embracesdk.internal.payload.Span.Status
 import io.embrace.opentelemetry.kotlin.Clock
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanContext
@@ -64,7 +64,7 @@ class EmbSpan(
 
     override fun end(timestamp: Long) {
         if (isRecording()) {
-            impl.stop(endTimeMs = timestamp)
+            impl.stop(endTimeMs = timestamp.nanosToMillis())
         }
     }
 
@@ -103,9 +103,11 @@ class EmbSpan(
         get() = impl.getStartTimeMs() ?: 0
 
     override var status: StatusCode
-        get() = impl.status.toOtelKotlin()
+        get() = impl.status
         set(value) {
-            impl.setStatus(value)
+            if (isRecording()) {
+                impl.status = value
+            }
         }
 
     override fun events(): List<SpanEvent> = impl.events().map {
@@ -144,11 +146,5 @@ class EmbSpan(
             OtelJavaTraceFlags.getDefault(),
             OtelJavaTraceState.getDefault()
         ).toOtelKotlin()
-    }
-
-    private fun Status.toOtelKotlin() = when (this) {
-        Status.UNSET -> StatusCode.Unset
-        Status.ERROR -> StatusCode.Error(null)
-        Status.OK -> StatusCode.Ok
     }
 }

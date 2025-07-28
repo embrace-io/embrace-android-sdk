@@ -51,7 +51,7 @@ class SpanServiceImpl(
                         type = type,
                         internal = internal,
                         private = private,
-                        parentSpan = parent,
+                        parentCtx = (parent as? EmbraceSdkSpan)?.createContext(),
                         autoTerminationMode = autoTerminationMode,
                         tracer = tracer,
                     )
@@ -150,7 +150,7 @@ class SpanServiceImpl(
                         type = type,
                         internal = internal,
                         private = private,
-                        parentSpan = parent,
+                        parentCtx = (parent as? EmbraceSdkSpan)?.createContext(),
                         tracer = tracer,
                     )
                 )

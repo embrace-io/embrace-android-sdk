@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.fakes
 
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.attributes.AttributeContainer
+import io.embrace.opentelemetry.kotlin.context.Context
 import io.embrace.opentelemetry.kotlin.tracing.StatusCode
 import io.embrace.opentelemetry.kotlin.tracing.model.Link
 import io.embrace.opentelemetry.kotlin.tracing.model.Span
@@ -12,7 +13,7 @@ import io.embrace.opentelemetry.kotlin.tracing.model.SpanKind
 @ExperimentalApi
 class FakeKotlinSpan(
     override var name: String,
-    override var parent: SpanContext,
+    val parentContext: Context?,
     override val spanKind: SpanKind,
     override val startTimestamp: Long,
 ) : Span {
@@ -22,6 +23,7 @@ class FakeKotlinSpan(
     override fun attributes(): Map<String, Any> = emptyMap()
 
     override val spanContext: SpanContext = throw UnsupportedOperationException()
+    override val parent: SpanContext = throw UnsupportedOperationException()
 
     override var status: StatusCode = StatusCode.Unset
 

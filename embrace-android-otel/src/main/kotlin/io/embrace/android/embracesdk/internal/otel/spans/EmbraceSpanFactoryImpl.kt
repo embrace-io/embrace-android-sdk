@@ -84,14 +84,21 @@ private class EmbraceSpanImpl(
     @Volatile
     private var spanEndTimeMs: Long? = null
 
-    @Volatile
-    override var status = io.embrace.android.embracesdk.internal.payload.Span.Status.UNSET
-
     override val autoTerminationMode: AutoTerminationMode = otelSpanStartArgs.autoTerminationMode
 
     private var spanName: String = validateName(otelSpanStartArgs.initialSpanName)
         set(name) {
             field = validateName(name)
+        }
+    override var status: StatusCode
+        get() = startedSpan.get()?.status ?: StatusCode.Unset
+        set(value) {
+            startedSpan.get()?.let { sdkSpan ->
+                synchronized(startedSpan) {
+                    sdkSpan.status = value
+                    spanRepository.notifySpanUpdate()
+                }
+            }
         }
 
     private val systemEvents = ConcurrentLinkedQueue<EmbraceSpanEvent>()
@@ -179,9 +186,9 @@ private class EmbraceSpanImpl(
                     populateLinks(spanToStop)
 
                     if (errorCode != null) {
-                        setStatus(StatusCode.Error(null))
+                        status = StatusCode.Error(null)
                         spanToStop.setEmbraceAttribute(errorCode.fromErrorCode())
-                    } else if (status == io.embrace.android.embracesdk.internal.payload.Span.Status.ERROR) {
+                    } else if (status is StatusCode.Error) {
                         spanToStop.setEmbraceAttribute(ErrorCodeAttribute.Failure)
                     }
 
@@ -261,16 +268,6 @@ private class EmbraceSpanImpl(
         return false
     }
 
-    override fun setStatus(statusCode: StatusCode, description: String) {
-        startedSpan.get()?.let { sdkSpan ->
-            synchronized(startedSpan) {
-                status = statusCode.toEmbracePayload()
-                sdkSpan.status = statusCode
-                spanRepository.notifySpanUpdate()
-            }
-        }
-    }
-
     override fun getStartTimeMs(): Long? = spanStartTimeMs
 
     override fun addAttribute(key: String, value: String): Boolean {
@@ -334,6 +331,16 @@ private class EmbraceSpanImpl(
         return span.storeInContext(parentContext)
     }
 
+    override fun storeInContext(context: OtelJavaContext): OtelJavaContext {
+        val impl = startedSpan.get() as? ImplicitContextKeyed
+        val base = super.storeInContext(context)
+        return if (impl != null) {
+            impl.storeInContext(base)
+        } else {
+            base
+        }
+    }
+
     override fun snapshot(): io.embrace.android.embracesdk.internal.payload.Span? {
         return if (canSnapshot()) {
             io.embrace.android.embracesdk.internal.payload.Span(
@@ -343,7 +350,7 @@ private class EmbraceSpanImpl(
                 name = name(),
                 startTimeNanos = spanStartTimeMs?.millisToNanos(),
                 endTimeNanos = spanEndTimeMs?.millisToNanos(),
-                status = status,
+                status = status.toEmbracePayload(),
                 events = events(),
                 attributes = getAttributesPayload(),
                 links = links()

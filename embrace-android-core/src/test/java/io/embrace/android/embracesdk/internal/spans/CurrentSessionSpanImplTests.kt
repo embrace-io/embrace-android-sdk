@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.assertions.validateSystemLink
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
 import io.embrace.android.embracesdk.fakes.FakeEmbraceSpanFactory
+import io.embrace.android.embracesdk.fakes.FakeTracer
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.arch.destination.SpanAttributeData
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
@@ -22,7 +23,7 @@ import io.embrace.android.embracesdk.internal.otel.schema.AppTerminationCause
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.embrace.android.embracesdk.internal.otel.schema.LinkType
 import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
-import io.embrace.android.embracesdk.internal.otel.sdk.otelSpanCreator
+import io.embrace.android.embracesdk.internal.otel.spans.OtelSpanStartArgs
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
@@ -153,35 +154,38 @@ internal class CurrentSessionSpanImplTests {
         repeat(MAX_NON_INTERNAL_SPANS_PER_SESSION) {
             assertNotNull(
                 spanService.createSpan(
-                    otelSpanCreator = tracer.otelSpanCreator(
+                    otelSpanStartArgs = OtelSpanStartArgs(
                         name = "external-span",
                         type = EmbType.Performance.Default,
-                        parent = null,
                         internal = false,
                         private = false,
+                        tracer = tracer,
+                        parentSpan = null,
                     )
                 )
             )
         }
         assertNull(
             spanService.createSpan(
-                otelSpanCreator = tracer.otelSpanCreator(
+                otelSpanStartArgs = OtelSpanStartArgs(
                     name = "external-span",
                     type = EmbType.Performance.Default,
-                    parent = null,
                     internal = false,
                     private = false,
+                    tracer = tracer,
+                    parentSpan = null,
                 )
             )
         )
         assertNotNull(
             spanService.createSpan(
-                otelSpanCreator = tracer.otelSpanCreator(
+                otelSpanStartArgs = OtelSpanStartArgs(
                     name = "internal-span",
                     type = EmbType.Performance.Default,
-                    parent = null,
                     internal = true,
                     private = false,
+                    tracer = tracer,
+                    parentSpan = null,
                 )
             )
         )
@@ -475,7 +479,8 @@ internal class CurrentSessionSpanImplTests {
             telemetryService = telemetryService,
             spanRepository = spanRepository,
             spanSink = spanSink,
-            embraceSpanFactorySupplier = { FakeEmbraceSpanFactory() }
+            embraceSpanFactorySupplier = { FakeEmbraceSpanFactory() },
+            tracerSupplier = { FakeTracer() }
         )
         assertFalse(sessionSpan.readySession())
     }

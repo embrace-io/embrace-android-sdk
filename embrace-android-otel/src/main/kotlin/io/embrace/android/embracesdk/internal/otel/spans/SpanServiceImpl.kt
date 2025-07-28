@@ -8,12 +8,16 @@ import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
+import io.embrace.opentelemetry.kotlin.ExperimentalApi
+import io.embrace.opentelemetry.kotlin.tracing.Tracer
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * Implementation of the core logic for [SpanService]
  */
+@OptIn(ExperimentalApi::class)
 class SpanServiceImpl(
+    private val tracer: Tracer,
     private val spanRepository: SpanRepository,
     private val embraceSpanFactory: EmbraceSpanFactory,
     private val dataValidator: DataValidator,
@@ -42,12 +46,15 @@ class SpanServiceImpl(
         EmbTrace.trace("span-create") {
             return if (name.isNotBlank() && canStartNewSpan(parent, internal)) {
                 embraceSpanFactory.create(
-                    name = dataValidator.truncateName(name, internal),
-                    type = type,
-                    internal = internal,
-                    private = private,
-                    parent = parent,
-                    autoTerminationMode = autoTerminationMode,
+                    OtelSpanStartArgs(
+                        name = dataValidator.truncateName(name, internal),
+                        type = type,
+                        internal = internal,
+                        private = private,
+                        parentSpan = parent,
+                        autoTerminationMode = autoTerminationMode,
+                        tracer = tracer,
+                    )
                 )
             } else {
                 null
@@ -55,9 +62,8 @@ class SpanServiceImpl(
         }
     }
 
-    override fun createSpan(otelSpanCreator: OtelSpanCreator): EmbraceSdkSpan? {
+    override fun createSpan(otelSpanStartArgs: OtelSpanStartArgs): EmbraceSdkSpan? {
         EmbTrace.trace("span-create") {
-            val otelSpanStartArgs = otelSpanCreator.spanStartArgs
             return if (
                 otelSpanStartArgs.initialSpanName.isNotBlank() &&
                 canStartNewSpan(
@@ -65,7 +71,7 @@ class SpanServiceImpl(
                     otelSpanStartArgs.internal
                 )
             ) {
-                embraceSpanFactory.create(otelSpanCreator)
+                embraceSpanFactory.create(otelSpanStartArgs)
             } else {
                 null
             }
@@ -139,11 +145,14 @@ class SpanServiceImpl(
 
             if (canStartNewSpan(parent, internal)) {
                 val newSpan = embraceSpanFactory.create(
-                    name = validName,
-                    type = type,
-                    internal = internal,
-                    private = private,
-                    parent = parent,
+                    OtelSpanStartArgs(
+                        name = validName,
+                        type = type,
+                        internal = internal,
+                        private = private,
+                        parentSpan = parent,
+                        tracer = tracer,
+                    )
                 )
                 if (newSpan.start(startTimeMs)) {
                     validAttributes.forEach {

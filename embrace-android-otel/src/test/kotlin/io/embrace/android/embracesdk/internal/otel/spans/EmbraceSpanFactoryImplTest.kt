@@ -7,7 +7,6 @@ import io.embrace.android.embracesdk.fakes.FakeOtelKotlinClock
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.embrace.android.embracesdk.internal.otel.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.otel.sdk.DataValidator
-import io.embrace.android.embracesdk.internal.otel.sdk.otelSpanCreator
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.k2j.tracing.TracerAdapter
 import io.embrace.opentelemetry.kotlin.tracing.Tracer
@@ -37,7 +36,6 @@ internal class EmbraceSpanFactoryImplTest {
         }
         tracer = TracerAdapter(FakeOtelJavaTracer(), openTelemetryClock)
         embraceSpanFactory = EmbraceSpanFactoryImpl(
-            tracer = tracer,
             openTelemetryClock = openTelemetryClock,
             spanRepository = spanRepository,
             dataValidator = DataValidator()
@@ -47,10 +45,13 @@ internal class EmbraceSpanFactoryImplTest {
     @Test
     fun `check public span creation`() {
         val span = embraceSpanFactory.create(
-            name = "test",
-            type = EmbType.Performance.Default,
-            internal = false,
-            private = false,
+            OtelSpanStartArgs(
+                name = "test",
+                type = EmbType.Performance.Default,
+                internal = false,
+                private = false,
+                tracer = tracer,
+            )
         )
         assertTrue(span.start(clock.now()))
         with(span) {
@@ -66,10 +67,13 @@ internal class EmbraceSpanFactoryImplTest {
     @Test
     fun `check internal span creation`() {
         val span = embraceSpanFactory.create(
-            name = "test",
-            type = EmbType.Performance.Default,
-            internal = true,
-            private = true,
+            OtelSpanStartArgs(
+                name = "test",
+                type = EmbType.Performance.Default,
+                internal = true,
+                private = true,
+                tracer = tracer,
+            )
         )
         assertTrue(span.start(clock.now()))
         with(span) {
@@ -83,10 +87,13 @@ internal class EmbraceSpanFactoryImplTest {
     @Test
     fun `check internal span can be public`() {
         val span = embraceSpanFactory.create(
-            name = "test",
-            type = EmbType.Performance.Default,
-            internal = true,
-            private = false,
+            OtelSpanStartArgs(
+                name = "test",
+                type = EmbType.Performance.Default,
+                internal = true,
+                private = false,
+                tracer = tracer,
+            )
         )
         assertTrue(span.start(clock.now()))
         with(span) {
@@ -100,15 +107,16 @@ internal class EmbraceSpanFactoryImplTest {
     @Test
     fun `span creation with embrace span builder`() {
         val spanParent = FakeEmbraceSdkSpan.started()
-        val spanBuilder = tracer.otelSpanCreator(
+        val spanBuilder = OtelSpanStartArgs(
             name = "from-span-builder",
             type = EmbType.System.LowPower,
             internal = false,
             private = false,
-            parent = spanParent,
+            tracer = tracer,
+            parentSpan = spanParent,
         )
 
-        with(embraceSpanFactory.create(otelSpanCreator = spanBuilder)) {
+        with(embraceSpanFactory.create(otelSpanStartArgs = spanBuilder)) {
             assertTrue(start(clock.now()))
             assertTrue(hasEmbraceAttribute(EmbType.System.LowPower))
             assertEquals(spanParent, parent)

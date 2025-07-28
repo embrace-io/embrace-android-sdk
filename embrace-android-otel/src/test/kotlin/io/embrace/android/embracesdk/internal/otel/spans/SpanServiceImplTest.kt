@@ -631,14 +631,14 @@ internal class SpanServiceImplTest {
         return SpanServiceImpl(
             spanRepository = SpanRepository(),
             embraceSpanFactory = EmbraceSpanFactoryImpl(
-                tracer = otelSdkWrapper.sdkTracer,
                 openTelemetryClock = fakeClock,
                 spanRepository = SpanRepository(),
                 dataValidator = dataValidator
             ),
             dataValidator = dataValidator,
             canStartNewSpan = ::canStartNewSpan,
-            initCallback = ::initCallback
+            initCallback = ::initCallback,
+            tracer = otelSdkWrapper.sdkTracer
         ).apply {
             initializeService(fakeClock.now().nanosToMillis())
         }

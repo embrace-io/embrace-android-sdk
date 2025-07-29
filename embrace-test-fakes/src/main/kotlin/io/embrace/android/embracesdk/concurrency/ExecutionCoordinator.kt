@@ -1,9 +1,5 @@
 package io.embrace.android.embracesdk.concurrency
 
-import io.embrace.android.embracesdk.internal.utils.Provider
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
-import org.junit.Assert.assertTrue
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.LinkedBlockingDeque
@@ -14,99 +10,7 @@ import java.util.concurrent.atomic.AtomicInteger
  * A class that coordinates the parallel execution of two threads to ensure a deterministic execution order
  * This enables the writing of non-flaky, non-sleep()-based tests to check for race conditions
  */
-class ExecutionCoordinator(
-    private val executionModifiers: ExecutionModifiers,
-    private val errorLogsProvider: Provider<List<Throwable>>?,
-) {
-    private val thread1 = SingleThreadTestScheduledExecutor()
-    private val thread2 = SingleThreadTestScheduledExecutor()
-    private val unblockingThread = SingleThreadTestScheduledExecutor()
-
-    /**
-     * Execute both operations in separate threads in a coordinated manner
-     */
-    fun executeOperations(
-        first: () -> Unit,
-        second: () -> Unit,
-        firstBlocksSecond: Boolean,
-        firstOperationFails: Boolean = false,
-    ) {
-        val completionSteps = if (firstBlocksSecond) 3 else 2
-        var blockId: Int? = null
-        var firstOperationUnblocked: Boolean? = null
-        val completionLatch = CountDownLatch(completionSteps)
-        val queueSecondOperationLatch = CountDownLatch(1)
-        val unblockFirstOperationLatch = CountDownLatch(1)
-
-        thread1.submit {
-            if (firstOperationFails) {
-                executionModifiers.errorOnNextOperation()
-            } else {
-                blockId = executionModifiers.blockNextOperation()
-            }
-            queueSecondOperationLatch.countDown()
-            first()
-            completionLatch.countDown()
-        }
-
-        queueSecondOperationLatch.await(1, TimeUnit.SECONDS)
-
-        thread2.submit {
-            unblockingThread.submit {
-                unblockFirstOperationLatch.await(1, TimeUnit.SECONDS)
-                firstOperationUnblocked = executionModifiers.unblockOperation(checkNotNull(blockId))
-                completionLatch.countDown()
-            }
-
-            if (firstBlocksSecond) {
-                unblockFirstOperationLatch.countDown()
-            }
-
-            second()
-
-            if (!firstBlocksSecond) {
-                unblockFirstOperationLatch.countDown()
-            }
-            completionLatch.countDown()
-        }
-
-        completionLatch.await(5, TimeUnit.SECONDS)
-
-        assertNull("First task threw exception", thread1.lastThrowable())
-        assertNull("Second task threw exception", thread2.lastThrowable())
-
-        if (!firstOperationFails) {
-            assertTrue(checkNotNull(firstOperationUnblocked))
-        } else if (errorLogsProvider != null) {
-            val errorLogs = errorLogsProvider.invoke()
-            assertEquals("The following errors were logged: $errorLogs", 1, errorLogs.size)
-        }
-
-        assertLatchFullyCountedDown(completionLatch)
-        assertLatchFullyCountedDown(queueSecondOperationLatch)
-        assertLatchFullyCountedDown(unblockFirstOperationLatch)
-    }
-
-    /**
-     * Kill the first thread. Most useful when the thread is blocked so unexpected mid-execution errors can be simulated.
-     */
-    fun shutdownFirstThread(): List<Runnable> = thread1.shutdownNow()
-
-    /**
-     * Return an error message used for debugging and assertions based on error logs recorded during the execution.
-     */
-    fun getErrorMessage(): String {
-        return if (errorLogsProvider != null) {
-            "The following errors were logged: ${errorLogsProvider.invoke()}"
-        } else {
-            "Error"
-        }
-    }
-
-    private fun assertLatchFullyCountedDown(latch: CountDownLatch?) {
-        checkNotNull(latch)
-        assertEquals(0, latch.count)
-    }
+class ExecutionCoordinator {
 
     /**
      * Provides a standard implementation for [ExecutionModifiers] that [ExecutionCoordinator] expects and validates against.

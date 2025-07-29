@@ -11,11 +11,9 @@ import io.embrace.android.embracesdk.internal.otel.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.otel.schema.ErrorCodeAttribute.Failure.fromErrorCode
 import io.embrace.android.embracesdk.internal.otel.schema.LinkType
 import io.embrace.android.embracesdk.internal.otel.sdk.DataValidator
-import io.embrace.android.embracesdk.internal.otel.sdk.fromMap
 import io.embrace.android.embracesdk.internal.otel.sdk.hasEmbraceAttribute
 import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
 import io.embrace.android.embracesdk.internal.otel.sdk.setEmbraceAttribute
-import io.embrace.android.embracesdk.internal.otel.sdk.toStringMap
 import io.embrace.android.embracesdk.internal.otel.toEmbracePayload
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Link
@@ -28,9 +26,9 @@ import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.opentelemetry.kotlin.Clock
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaAttributes
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaContext
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanContext
+import io.embrace.opentelemetry.kotlin.attributes.setAttributes
 import io.embrace.opentelemetry.kotlin.k2j.tracing.SpanContextAdapter
 import io.embrace.opentelemetry.kotlin.k2j.tracing.convertToOtelJava
 import io.embrace.opentelemetry.kotlin.tracing.StatusCode
@@ -451,19 +449,13 @@ private class EmbraceSpanImpl(
         val redactedCustomEvents = customEvents.map { it.copy(attributes = it.attributes.redactIfSensitive()) }
 
         (systemEvents + redactedCustomEvents).forEach { event ->
-            val eventAttributes = if (event.attributes.isNotEmpty()) {
-                OtelJavaAttributes.builder().fromMap(event.attributes, internal, dataValidator).build()
-            } else {
-                OtelJavaAttributes.empty()
-            }
+            val eventAttributes = dataValidator.truncateAttributes(event.attributes, internal)
 
             spanToStop.addEvent(
                 name = event.name,
                 timestamp = event.timestampNanos,
             ) {
-                eventAttributes.toStringMap().forEach {
-                    setStringAttribute(it.key, it.value)
-                }
+                setAttributes(eventAttributes)
             }
         }
     }
@@ -472,15 +464,9 @@ private class EmbraceSpanImpl(
         val redactedCustomLinks = customLinks.map { it.copy(attributes = it.attributes.redactIfSensitive()) }
 
         (systemLinks + redactedCustomLinks).forEach {
-            val linkAttributes = if (it.attributes.isNotEmpty()) {
-                OtelJavaAttributes.builder().fromMap(attributes = it.attributes, false, dataValidator).build()
-            } else {
-                OtelJavaAttributes.empty()
-            }
+            val linkAttributes = dataValidator.truncateAttributes(it.attributes, false)
             spanToStop.addLink(it.spanContext) {
-                linkAttributes.toStringMap().forEach { entry ->
-                    setStringAttribute(entry.key, entry.value)
-                }
+                setAttributes(linkAttributes)
             }
         }
     }

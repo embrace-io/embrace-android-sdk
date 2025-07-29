@@ -13,8 +13,3 @@ val testSessionEnvelope: Envelope<SessionPayload> = fakeSessionEnvelope(
 val testSessionEnvelopeOneMinuteLater: Envelope<SessionPayload> = fakeSessionEnvelope(
     startMs = testSessionEnvelope.getStartTime() + 60000L
 )
-
-val testSessionEnvelope2: Envelope<SessionPayload> = fakeSessionEnvelope(
-    sessionId = "03FC033631F346C48AF6E3D5B56F6AA3",
-    startMs = testSessionEnvelopeOneMinuteLater.getStartTime() + 300000L
-)

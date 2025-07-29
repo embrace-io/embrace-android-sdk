@@ -1,6 +1,7 @@
+@file:OptIn(ExperimentalApi::class)
+
 package io.embrace.android.embracesdk.fixtures
 
-import io.embrace.android.embracesdk.fakes.FakeClock.Companion.DEFAULT_FAKE_CURRENT_TIME
 import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
 import io.embrace.android.embracesdk.internal.otel.attrs.asPair
 import io.embrace.android.embracesdk.internal.otel.attrs.embSequenceId
@@ -46,19 +47,7 @@ val testSpan: Span = EmbraceSpanData(
     )
 ).toEmbracePayload()
 
-val testSpanSnapshot: Span = Span(
-    traceId = "snapshot-trace-id",
-    spanId = "snapshot-span-id",
-    parentSpanId = null,
-    name = "snapshot",
-    startTimeNanos = DEFAULT_FAKE_CURRENT_TIME,
-    endTimeNanos = null,
-    status = Span.Status.UNSET,
-    events = emptyList(),
-    attributes = emptyList()
-)
-
-val fakeContextKey: OtelJavaContextKey<String> = OtelJavaContextKey.named<String>("fake-context-key")
+val fakeContextKey: OtelJavaContextKey<String> = OtelJavaContextKey.named("fake-context-key")
 
 private fun createMapOfSize(size: Int): Map<String, String> {
     val mutableMap = mutableMapOf<String, String>()

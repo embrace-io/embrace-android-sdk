@@ -1,9 +1,8 @@
 package io.embrace.android.embracesdk.internal.otel.impl
 
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanContext
 import io.embrace.opentelemetry.kotlin.attributes.AttributeContainer
-import io.embrace.opentelemetry.kotlin.k2j.tracing.SpanContextAdapter
+import io.embrace.opentelemetry.kotlin.k2j.tracing.model.invalid
 import io.embrace.opentelemetry.kotlin.tracing.StatusCode
 import io.embrace.opentelemetry.kotlin.tracing.model.Link
 import io.embrace.opentelemetry.kotlin.tracing.model.Span
@@ -20,8 +19,8 @@ internal class EmbInvalidSpan : Span {
     override fun attributes(): Map<String, Any> = emptyMap()
 
     override var name: String = ""
-    override val parent: SpanContext = SpanContextAdapter(OtelJavaSpanContext.getInvalid())
-    override val spanContext: SpanContext = SpanContextAdapter(OtelJavaSpanContext.getInvalid())
+    override val parent: SpanContext = SpanContext.invalid()
+    override val spanContext: SpanContext = SpanContext.invalid()
     override val spanKind: SpanKind = SpanKind.INTERNAL
     override val startTimestamp: Long = 0
     override var status: StatusCode = StatusCode.Unset

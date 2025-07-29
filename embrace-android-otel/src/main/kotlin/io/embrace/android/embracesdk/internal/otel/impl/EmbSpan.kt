@@ -73,13 +73,13 @@ class EmbSpan(
 
     override fun isRecording(): Boolean = impl.isRecording
 
-    override fun addEvent(name: String, timestamp: Long?, action: AttributeContainer.() -> Unit) {
-        val attrs = EmbAttributeContainer().apply(action).attributes()
+    override fun addEvent(name: String, timestamp: Long?, attributes: AttributeContainer.() -> Unit) {
+        val attrs = EmbAttributeContainer().apply(attributes).attributes()
         impl.addEvent(name, timestamp, attrs)
     }
 
-    override fun addLink(spanContext: SpanContext, action: AttributeContainer.() -> Unit) {
-        val attrs = EmbAttributeContainer().apply(action).attributes()
+    override fun addLink(spanContext: SpanContext, attributes: AttributeContainer.() -> Unit) {
+        val attrs = EmbAttributeContainer().apply(attributes).attributes()
         impl.addLink(spanContext.convertToOtelJava(), attrs)
     }
 
@@ -93,8 +93,8 @@ class EmbSpan(
             impl.updateName(value)
         }
 
-    override val parent: SpanContext?
-        get() = impl.parent?.spanContext?.let(::SpanContextAdapter)
+    override val parent: SpanContext
+        get() = (impl.parent?.spanContext ?: OtelJavaSpanContext.getInvalid()).let(::SpanContextAdapter)
 
     override val spanKind: SpanKind
         get() = impl.spanKind

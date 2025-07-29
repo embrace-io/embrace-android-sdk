@@ -94,7 +94,7 @@ private fun OtelJavaEventData.toEmbracePayload(): EmbraceSpanEvent? {
 fun ReadableSpan.toEmbracePayload(): EmbraceSpanData = EmbraceSpanData(
     traceId = spanContext.traceId,
     spanId = spanContext.spanId,
-    parentSpanId = parent?.spanId,
+    parentSpanId = parent.spanId,
     name = name,
     startTimeNanos = startTimestamp,
     endTimeNanos = endTimestamp ?: 0,

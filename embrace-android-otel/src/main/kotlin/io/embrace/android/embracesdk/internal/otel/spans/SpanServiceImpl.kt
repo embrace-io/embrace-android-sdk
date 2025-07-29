@@ -22,7 +22,7 @@ class SpanServiceImpl(
     private val embraceSpanFactory: EmbraceSpanFactory,
     private val dataValidator: DataValidator,
     private val canStartNewSpan: (parentSpan: EmbraceSpan?, internal: Boolean) -> Boolean,
-    private val initCallback: (initTimeMs: Long) -> Unit
+    private val initCallback: (initTimeMs: Long) -> Unit,
 ) : SpanService {
     private val initialized = AtomicBoolean(false)
 

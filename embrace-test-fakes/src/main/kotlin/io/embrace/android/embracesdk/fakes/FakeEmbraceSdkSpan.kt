@@ -28,9 +28,12 @@ import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaContext
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpan
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanContext
+import io.embrace.opentelemetry.kotlin.context.Context
+import io.embrace.opentelemetry.kotlin.j2k.bridge.context.toOtelKotlin
+import io.embrace.opentelemetry.kotlin.k2j.context.root
+import io.embrace.opentelemetry.kotlin.k2j.context.toOtelJava
 import io.embrace.opentelemetry.kotlin.tracing.StatusCode
 import io.embrace.opentelemetry.kotlin.tracing.model.SpanContext
 import io.embrace.opentelemetry.kotlin.tracing.model.SpanKind
@@ -41,7 +44,7 @@ import java.util.concurrent.TimeUnit
 @OptIn(ExperimentalApi::class)
 class FakeEmbraceSdkSpan(
     var name: String = "fake-span",
-    var parentContext: OtelJavaContext = OtelJavaContext.root(),
+    var parentContext: Context = Context.root(),
     val type: EmbType = EmbType.Performance.Default,
     val internal: Boolean = false,
     val private: Boolean = internal,
@@ -80,7 +83,7 @@ class FakeEmbraceSdkSpan(
             val timestampMs = startTimeMs ?: fakeClock.now()
             sdkSpan = FakeSpanBuilder(name)
                 .setStartTimestamp(timestampMs, TimeUnit.MILLISECONDS)
-                .setParent(parentContext)
+                .setParent(parentContext.toOtelJava())
                 .startSpan()
             spanStartTimeMs = timestampMs
         }
@@ -150,7 +153,7 @@ class FakeEmbraceSdkSpan(
         return true
     }
 
-    override fun asNewContext(): OtelJavaContext? = sdkSpan?.let { parentContext.with(this).with(it) }
+    override fun asNewContext(): Context? = sdkSpan?.let { parentContext.toOtelJava().with(this).with(it).toOtelKotlin() }
 
     override fun snapshot(): Span? {
         return if (spanId == null) {
@@ -209,7 +212,7 @@ class FakeEmbraceSdkSpan(
 
         fun started(
             parent: EmbraceSdkSpan? = null,
-            parentContext: OtelJavaContext = parent?.run { parent.asNewContext() } ?: OtelJavaContext.root(),
+            parentContext: Context = parent?.run { parent.asNewContext() } ?: Context.root(),
             clock: FakeClock = FakeClock(),
         ): FakeEmbraceSdkSpan =
             FakeEmbraceSdkSpan(

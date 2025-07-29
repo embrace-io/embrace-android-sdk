@@ -29,6 +29,9 @@ import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaContext
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanContext
 import io.embrace.opentelemetry.kotlin.attributes.setAttributes
+import io.embrace.opentelemetry.kotlin.context.Context
+import io.embrace.opentelemetry.kotlin.j2k.bridge.context.toOtelKotlin
+import io.embrace.opentelemetry.kotlin.k2j.context.toOtelJava
 import io.embrace.opentelemetry.kotlin.k2j.tracing.SpanContextAdapter
 import io.embrace.opentelemetry.kotlin.k2j.tracing.convertToOtelJava
 import io.embrace.opentelemetry.kotlin.tracing.StatusCode
@@ -117,7 +120,7 @@ private class EmbraceSpanImpl(
     private val systemLinkCount = AtomicInteger(0)
     private val customLinkCount = AtomicInteger(0)
 
-    private val parentContext: OtelJavaContext = otelSpanStartArgs.parentContext
+    private val parentContext = otelSpanStartArgs.parentContext
 
     override val parent: EmbraceSpan? = parentContext.getEmbraceSpan()
 
@@ -321,12 +324,12 @@ private class EmbraceSpanImpl(
         }
     }
 
-    override fun asNewContext(): OtelJavaContext? = startedSpan.get()?.run {
+    override fun asNewContext(): Context? = startedSpan.get()?.run {
         // assumes that the underlying instance of Span implements ImplicitContextKeyed. This
         // should always be true when opentelemetry-kotlin is used to create spans, but
         // we avoid exposing this fact in the public interface.
         val span = this as ImplicitContextKeyed
-        return span.storeInContext(parentContext)
+        return span.storeInContext(parentContext.toOtelJava()).toOtelKotlin()
     }
 
     override fun storeInContext(context: OtelJavaContext): OtelJavaContext {

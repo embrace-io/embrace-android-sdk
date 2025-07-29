@@ -7,9 +7,8 @@ import io.embrace.android.embracesdk.internal.otel.spans.createContext
 import io.embrace.android.embracesdk.internal.otel.spans.getEmbraceSpan
 import io.embrace.opentelemetry.kotlin.Clock
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaContext
 import io.embrace.opentelemetry.kotlin.context.Context
-import io.embrace.opentelemetry.kotlin.k2j.context.toOtelJava
+import io.embrace.opentelemetry.kotlin.k2j.context.current
 import io.embrace.opentelemetry.kotlin.tracing.Tracer
 import io.embrace.opentelemetry.kotlin.tracing.model.Span
 import io.embrace.opentelemetry.kotlin.tracing.model.SpanKind
@@ -32,7 +31,7 @@ class EmbTracer(
         startTimestamp: Long?,
         action: SpanRelationships.() -> Unit,
     ): Span {
-        val parentCtx: OtelJavaContext? = parentContext?.toOtelJava() ?: OtelJavaContext.current().getEmbraceSpan()?.createContext()
+        val parentCtx = parentContext ?: Context.current().getEmbraceSpan()?.createContext()
         val spanCreator = OtelSpanStartArgs(
             name = name,
             type = EmbType.Performance.Default,

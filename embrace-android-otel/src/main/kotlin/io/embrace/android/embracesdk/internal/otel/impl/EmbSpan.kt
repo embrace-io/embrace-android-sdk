@@ -5,13 +5,13 @@ import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.opentelemetry.kotlin.Clock
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanContext
 import io.embrace.opentelemetry.kotlin.attributes.AttributeContainer
 import io.embrace.opentelemetry.kotlin.k2j.tracing.SpanContextAdapter
 import io.embrace.opentelemetry.kotlin.k2j.tracing.convertToOtelJava
 import io.embrace.opentelemetry.kotlin.k2j.tracing.model.create
 import io.embrace.opentelemetry.kotlin.k2j.tracing.model.default
 import io.embrace.opentelemetry.kotlin.k2j.tracing.model.invalid
+import io.embrace.opentelemetry.kotlin.k2j.tracing.toOtelKotlin
 import io.embrace.opentelemetry.kotlin.tracing.StatusCode
 import io.embrace.opentelemetry.kotlin.tracing.model.Link
 import io.embrace.opentelemetry.kotlin.tracing.model.Span
@@ -96,7 +96,7 @@ class EmbSpan(
         }
 
     override val parent: SpanContext
-        get() = (impl.parent?.spanContext ?: OtelJavaSpanContext.getInvalid()).let(::SpanContextAdapter)
+        get() = impl.parent?.spanContext?.toOtelKotlin() ?: SpanContext.invalid()
 
     override val spanKind: SpanKind
         get() = impl.spanKind

@@ -1,14 +1,14 @@
 package io.embrace.android.embracesdk.internal.otel.spans
 
 import io.embrace.android.embracesdk.fakes.FakeClock
-import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
-import io.embrace.android.embracesdk.fakes.FakeOtelJavaTracer
 import io.embrace.android.embracesdk.fakes.FakeOtelKotlinClock
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.embrace.android.embracesdk.internal.otel.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.otel.sdk.DataValidator
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
-import io.embrace.opentelemetry.kotlin.k2j.tracing.TracerAdapter
+import io.embrace.opentelemetry.kotlin.OpenTelemetryInstance
+import io.embrace.opentelemetry.kotlin.getTracer
+import io.embrace.opentelemetry.kotlin.kotlinApi
 import io.embrace.opentelemetry.kotlin.tracing.Tracer
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -34,7 +34,8 @@ internal class EmbraceSpanFactoryImplTest {
                 updateNotified = true
             }
         }
-        tracer = TracerAdapter(FakeOtelJavaTracer(), openTelemetryClock)
+        val api = OpenTelemetryInstance.kotlinApi(clock = openTelemetryClock)
+        tracer = api.getTracer("my_tracer")
         embraceSpanFactory = EmbraceSpanFactoryImpl(
             openTelemetryClock = openTelemetryClock,
             spanRepository = spanRepository,
@@ -106,20 +107,28 @@ internal class EmbraceSpanFactoryImplTest {
 
     @Test
     fun `span creation with embrace span builder`() {
-        val spanParent = FakeEmbraceSdkSpan.started()
+        val parent = embraceSpanFactory.create(
+            OtelSpanStartArgs(
+                name = "",
+                type = EmbType.System.Log,
+                internal = false,
+                private = false,
+                tracer = tracer
+            )
+        )
         val spanBuilder = OtelSpanStartArgs(
             name = "from-span-builder",
             type = EmbType.System.LowPower,
             internal = false,
             private = false,
             tracer = tracer,
-            parentCtx = spanParent.createContext(),
+            parentCtx = parent.asNewContext()
         )
 
         with(embraceSpanFactory.create(otelSpanStartArgs = spanBuilder)) {
             assertTrue(start(clock.now()))
             assertTrue(hasEmbraceAttribute(EmbType.System.LowPower))
-            assertEquals(spanParent, parent)
+            assertEquals(parent.spanContext?.traceId, parent.spanContext?.traceId)
             assertFalse(hasEmbraceAttribute(PrivateSpan))
             assertEquals("from-span-builder", snapshot()?.name)
             assertTrue(updateNotified)

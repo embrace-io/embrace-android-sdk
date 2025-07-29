@@ -14,6 +14,7 @@ import io.embrace.opentelemetry.kotlin.aliases.OtelJavaImplicitContextKeyed
 import io.embrace.opentelemetry.kotlin.tracing.StatusCode
 import io.embrace.opentelemetry.kotlin.tracing.model.SpanContext
 import io.embrace.opentelemetry.kotlin.tracing.model.SpanKind
+import io.opentelemetry.context.Context
 
 /**
  * An [EmbraceSpan] that has additional functionality to be used internally by the SDK
@@ -71,11 +72,6 @@ interface EmbraceSdkSpan : EmbraceSpan, OtelJavaImplicitContextKeyed {
      */
     fun removeSystemEvents(type: EmbType): Boolean
 
-    /**
-     * Set the [StatusCode] and status description of the wrapped Span
-     */
-    fun setStatus(statusCode: StatusCode, description: String = "")
-
     fun getStartTimeMs(): Long?
 
     /**
@@ -106,9 +102,9 @@ interface EmbraceSdkSpan : EmbraceSpan, OtelJavaImplicitContextKeyed {
     val spanKind: SpanKind
 
     /**
-     * Retrieves the span status
+     * The span status
      */
-    val status: Span.Status
+    var status: StatusCode
 
     /**
      * Retrieves the span events
@@ -123,4 +119,8 @@ interface EmbraceSdkSpan : EmbraceSpan, OtelJavaImplicitContextKeyed {
 
 fun OtelJavaContext.getEmbraceSpan(): EmbraceSdkSpan? = get(embraceSpanContextKey)
 
+fun EmbraceSdkSpan.createContext(): OtelJavaContext {
+    val newParentContext = asNewContext() ?: OtelJavaContext.root()
+    return newParentContext.with(this)
+}
 private val embraceSpanContextKey = OtelJavaContextKey.named<EmbraceSdkSpan>("embrace-span-key")

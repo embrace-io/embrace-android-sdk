@@ -1,23 +1,25 @@
 package io.embrace.android.embracesdk.internal.otel.impl
 
+import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
-import io.embrace.android.embracesdk.internal.otel.toOtelKotlin
 import io.embrace.android.embracesdk.internal.payload.Attribute
-import io.embrace.android.embracesdk.internal.payload.Span.Status
 import io.embrace.opentelemetry.kotlin.Clock
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanContext
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaTraceFlags
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaTraceState
 import io.embrace.opentelemetry.kotlin.attributes.AttributeContainer
 import io.embrace.opentelemetry.kotlin.k2j.tracing.SpanContextAdapter
 import io.embrace.opentelemetry.kotlin.k2j.tracing.convertToOtelJava
+import io.embrace.opentelemetry.kotlin.k2j.tracing.model.create
+import io.embrace.opentelemetry.kotlin.k2j.tracing.model.default
+import io.embrace.opentelemetry.kotlin.k2j.tracing.model.invalid
 import io.embrace.opentelemetry.kotlin.tracing.StatusCode
 import io.embrace.opentelemetry.kotlin.tracing.model.Link
 import io.embrace.opentelemetry.kotlin.tracing.model.Span
 import io.embrace.opentelemetry.kotlin.tracing.model.SpanContext
 import io.embrace.opentelemetry.kotlin.tracing.model.SpanEvent
 import io.embrace.opentelemetry.kotlin.tracing.model.SpanKind
+import io.embrace.opentelemetry.kotlin.tracing.model.TraceFlags
+import io.embrace.opentelemetry.kotlin.tracing.model.TraceState
 import io.opentelemetry.context.Context
 import io.opentelemetry.context.ImplicitContextKeyed
 import io.opentelemetry.context.Scope
@@ -64,12 +66,12 @@ class EmbSpan(
 
     override fun end(timestamp: Long) {
         if (isRecording()) {
-            impl.stop(endTimeMs = timestamp)
+            impl.stop(endTimeMs = timestamp.nanosToMillis())
         }
     }
 
     override val spanContext: SpanContext
-        get() = SpanContextAdapter(impl.spanContext ?: OtelJavaSpanContext.getInvalid())
+        get() = impl.spanContext?.let(::SpanContextAdapter) ?: SpanContext.invalid()
 
     override fun isRecording(): Boolean = impl.isRecording
 
@@ -103,9 +105,11 @@ class EmbSpan(
         get() = impl.getStartTimeMs() ?: 0
 
     override var status: StatusCode
-        get() = impl.status.toOtelKotlin()
+        get() = impl.status
         set(value) {
-            impl.setStatus(value)
+            if (isRecording()) {
+                impl.status = value
+            }
         }
 
     override fun events(): List<SpanEvent> = impl.events().map {
@@ -138,17 +142,11 @@ class EmbSpan(
     }
 
     private fun io.embrace.android.embracesdk.internal.payload.Link.retrieveSpanContext(): SpanContext {
-        return OtelJavaSpanContext.create(
-            checkNotNull(traceId),
-            checkNotNull(spanId),
-            OtelJavaTraceFlags.getDefault(),
-            OtelJavaTraceState.getDefault()
-        ).toOtelKotlin()
-    }
-
-    private fun Status.toOtelKotlin() = when (this) {
-        Status.UNSET -> StatusCode.Unset
-        Status.ERROR -> StatusCode.Error(null)
-        Status.OK -> StatusCode.Ok
+        return SpanContext.create(
+            traceId = checkNotNull(traceId),
+            spanId = checkNotNull(spanId),
+            traceFlags = TraceFlags.default(),
+            traceState = TraceState.default(),
+        )
     }
 }

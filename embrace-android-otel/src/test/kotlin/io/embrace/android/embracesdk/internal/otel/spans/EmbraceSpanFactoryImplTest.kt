@@ -113,7 +113,7 @@ internal class EmbraceSpanFactoryImplTest {
             internal = false,
             private = false,
             tracer = tracer,
-            parentSpan = spanParent,
+            parentCtx = spanParent.createContext(),
         )
 
         with(embraceSpanFactory.create(otelSpanStartArgs = spanBuilder)) {

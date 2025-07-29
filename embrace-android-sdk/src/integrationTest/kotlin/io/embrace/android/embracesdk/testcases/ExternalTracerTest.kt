@@ -6,9 +6,9 @@ import io.embrace.android.embracesdk.fakes.FakeOtelJavaSpanExporter
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
 import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
-import io.embrace.android.embracesdk.internal.otel.sdk.toEmbraceSpanData
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
+import io.embrace.android.embracesdk.internal.toEmbraceSpanData
 import io.embrace.android.embracesdk.internal.utils.truncatedStacktraceText
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
@@ -22,9 +22,11 @@ import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanContext
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanData
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaStatusCode
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaTracer
+import io.opentelemetry.context.Context
 import io.opentelemetry.semconv.ExceptionAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
+import org.junit.Assert.assertNotSame
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -90,7 +92,7 @@ internal class ExternalTracerTest {
                         childSpan.setStatus(OtelJavaStatusCode.ERROR)
                         val exception = RuntimeException("bah")
                         childSpan.recordException(exception, OtelJavaAttributes.builder().put("bad", "yes").build())
-                        stacktrace = exception.truncatedStacktraceText()
+                        stacktrace = exception.stackTraceToString()
                         childEndTimeMs = clock.tick()
                         childSpan.end()
 
@@ -182,11 +184,9 @@ internal class ExternalTracerTest {
                 recordSession {
                     val spanBuilder = embTracer.spanBuilder("external-span")
                     val span = spanBuilder.startSpan()
-                    span.makeCurrent().use {
-                    }
+                    val ctx = span.storeInContext(Context.current())
+                    embTracer.spanBuilder("set-parent-explicitly").setParent(ctx).startSpan().end()
                     span.end()
-                    embTracer.spanBuilder("set-parent-explicitly").setParent(OtelJavaContext.root().with(span)).startSpan()
-                        .end()
                 }
             },
             assertAction = {
@@ -216,7 +216,7 @@ internal class ExternalTracerTest {
                     startTimeMs = clock.now()
                     val span = embTracer.spanBuilder("exc-span").startSpan()
                     val exception = RuntimeException("bah")
-                    stacktrace = exception.truncatedStacktraceText()
+                    stacktrace = exception.stackTraceToString()
                     span.recordException(exception, OtelJavaAttributes.builder().put("bad", "yes").build())
                     span.end()
                     endTimeMs = clock.now()

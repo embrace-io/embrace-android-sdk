@@ -12,7 +12,6 @@ import io.embrace.android.embracesdk.internal.otel.schema.PrivateSpan
 import io.embrace.opentelemetry.kotlin.Clock
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaContext
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanKind
 import io.embrace.opentelemetry.kotlin.k2j.tracing.TracerAdapter
 import io.embrace.opentelemetry.kotlin.tracing.model.Span
 import io.embrace.opentelemetry.kotlin.tracing.model.SpanKind
@@ -89,7 +88,7 @@ internal class OtelSpanStartArgsTest {
             internal = false,
             private = false,
             tracer = TracerAdapter(tracer, otelClock),
-            spanKind = OtelJavaSpanKind.CLIENT
+            spanKind = SpanKind.CLIENT
         )
         val startTime = clock.now()
         args.startSpan(startTime).assertSpan(

@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalApi::class)
+
 package io.embrace.android.embracesdk.internal.otel.spans
 
 import io.embrace.android.embracesdk.internal.otel.attrs.EmbraceAttribute
@@ -9,12 +11,13 @@ import io.embrace.android.embracesdk.internal.payload.SpanEvent
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaContext
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaContextKey
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaImplicitContextKeyed
+import io.embrace.opentelemetry.kotlin.context.Context
+import io.embrace.opentelemetry.kotlin.k2j.context.root
+import io.embrace.opentelemetry.kotlin.k2j.tracing.toOtelJava
 import io.embrace.opentelemetry.kotlin.tracing.StatusCode
 import io.embrace.opentelemetry.kotlin.tracing.model.SpanContext
 import io.embrace.opentelemetry.kotlin.tracing.model.SpanKind
-import io.opentelemetry.context.Context
 
 /**
  * An [EmbraceSpan] that has additional functionality to be used internally by the SDK
@@ -23,10 +26,10 @@ import io.opentelemetry.context.Context
 interface EmbraceSdkSpan : EmbraceSpan, OtelJavaImplicitContextKeyed {
 
     /**
-     * Create a new [Context] object based in this span and its parent's context. This can be used for the parent [Context] for a new span
+     * Create a new context object based in this span and its parent's context. This can be used for the parent context for a new span
      * with this span as its parent.
      */
-    fun asNewContext(): OtelJavaContext?
+    fun asNewContext(): Context?
 
     /**
      * Create a snapshot of the current state of the object
@@ -84,7 +87,7 @@ interface EmbraceSdkSpan : EmbraceSpan, OtelJavaImplicitContextKeyed {
         attributes: Map<String, String> = emptyMap(),
     ): Boolean
 
-    override fun storeInContext(context: OtelJavaContext): OtelJavaContext = context.with(embraceSpanContextKey, this)
+    override fun storeInContext(context: OtelJavaContext): OtelJavaContext = context.with(embraceSpanContextKey.toOtelJava(), this)
 
     /**
      * Returns a read-only view of the attributes
@@ -117,10 +120,11 @@ interface EmbraceSdkSpan : EmbraceSpan, OtelJavaImplicitContextKeyed {
     fun links(): List<Link>
 }
 
-fun OtelJavaContext.getEmbraceSpan(): EmbraceSdkSpan? = get(embraceSpanContextKey)
+fun Context.getEmbraceSpan(): EmbraceSdkSpan? = get(embraceSpanContextKey)
 
-fun EmbraceSdkSpan.createContext(): OtelJavaContext {
-    val newParentContext = asNewContext() ?: OtelJavaContext.root()
-    return newParentContext.with(this)
+fun EmbraceSdkSpan.createContext(): Context {
+    val newParentContext = asNewContext() ?: Context.root()
+    return newParentContext.set(embraceSpanContextKey, this)
 }
-private val embraceSpanContextKey = OtelJavaContextKey.named<EmbraceSdkSpan>("embrace-span-key")
+
+private val embraceSpanContextKey = Context.root().createKey<EmbraceSdkSpan>("embrace-span-key")

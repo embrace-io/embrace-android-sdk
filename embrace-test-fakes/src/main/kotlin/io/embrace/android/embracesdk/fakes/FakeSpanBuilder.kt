@@ -1,31 +1,36 @@
 package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.internal.otel.sdk.TracerKey
+import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaAttributeKey
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaAttributes
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaContext
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanBuilder
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanContext
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanKind
+import io.embrace.opentelemetry.kotlin.context.Context
+import io.embrace.opentelemetry.kotlin.j2k.bridge.context.toOtelKotlin
+import io.embrace.opentelemetry.kotlin.k2j.context.root
 import java.util.concurrent.TimeUnit
 
+@OptIn(ExperimentalApi::class)
 class FakeSpanBuilder(
     var spanName: String,
     val tracerKey: TracerKey = TracerKey("fake-scope"),
 ) : OtelJavaSpanBuilder {
 
     var spanKind: OtelJavaSpanKind? = null
-    var parentContext: OtelJavaContext = OtelJavaContext.root()
+    var parentContext: Context = Context.root()
     var startTimestampMs: Long? = null
     var attributes: MutableMap<Any, Any> = mutableMapOf()
 
     override fun setParent(context: OtelJavaContext): OtelJavaSpanBuilder {
-        parentContext = context
+        parentContext = context.toOtelKotlin()
         return this
     }
 
     override fun setNoParent(): OtelJavaSpanBuilder {
-        parentContext = OtelJavaContext.root()
+        parentContext = Context.root()
         return this
     }
 

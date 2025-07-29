@@ -13,12 +13,12 @@ import io.embrace.android.embracesdk.internal.otel.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
 import io.embrace.android.embracesdk.internal.otel.sdk.setEmbraceAttribute
 import io.embrace.android.embracesdk.internal.otel.spans.hasEmbraceAttribute
+import io.embrace.android.embracesdk.internal.otel.toEmbracePayload
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.toEmbraceSpanData
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
-import io.embrace.opentelemetry.kotlin.k2j.tracing.convertToOtelJava
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -37,7 +37,7 @@ internal class SpanMapperTest {
         assertEquals(input.name, output.name)
         assertEquals(input.startTimeNanos, output.startTimeNanos)
         assertEquals(input.endTimeNanos, output.endTimeNanos)
-        assertEquals(input.status.convertToOtelJava().name, checkNotNull(output.status).name)
+        assertEquals(input.status.toEmbracePayload().name, checkNotNull(output.status).name)
 
         // validate event copied
         val inputEvent = input.events.single()

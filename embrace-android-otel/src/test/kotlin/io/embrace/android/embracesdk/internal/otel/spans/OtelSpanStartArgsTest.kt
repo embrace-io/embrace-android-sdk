@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.otel.spans
 
 import io.embrace.android.embracesdk.fakes.FakeClock
-import io.embrace.android.embracesdk.fakes.FakeOtelJavaTracer
 import io.embrace.android.embracesdk.fakes.FakeOtelKotlinClock
 import io.embrace.android.embracesdk.fakes.FakeSpanBuilder
 import io.embrace.android.embracesdk.fixtures.TOO_LONG_INTERNAL_SPAN_NAME
@@ -11,12 +10,17 @@ import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.embrace.android.embracesdk.internal.otel.schema.PrivateSpan
 import io.embrace.opentelemetry.kotlin.Clock
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
+import io.embrace.opentelemetry.kotlin.OpenTelemetryInstance
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaContext
-import io.embrace.opentelemetry.kotlin.k2j.tracing.TracerAdapter
+import io.embrace.opentelemetry.kotlin.getTracer
+import io.embrace.opentelemetry.kotlin.j2k.bridge.context.toOtelKotlin
+import io.embrace.opentelemetry.kotlin.k2j.tracing.fromContext
+import io.embrace.opentelemetry.kotlin.kotlinApi
+import io.embrace.opentelemetry.kotlin.tracing.Tracer
 import io.embrace.opentelemetry.kotlin.tracing.model.Span
 import io.embrace.opentelemetry.kotlin.tracing.model.SpanKind
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -26,25 +30,27 @@ internal class OtelSpanStartArgsTest {
 
     private lateinit var clock: FakeClock
     private lateinit var otelClock: Clock
-    private lateinit var tracer: FakeOtelJavaTracer
+    private lateinit var tracer: Tracer
 
     @Before
     fun setup() {
-        tracer = FakeOtelJavaTracer()
         clock = FakeClock()
         otelClock = FakeOtelKotlinClock(clock)
+
+        val api = OpenTelemetryInstance.kotlinApi(clock = otelClock)
+        tracer = api.getTracer("my_tracer")
     }
 
     @Test
     fun `check private and internal span creation`() {
-        val originalStartTime = clock.now()
+        val originalStartTime = otelClock.now()
         val args = OtelSpanStartArgs(
             name = "test",
             type = EmbType.Performance.Default,
             internal = true,
             private = true,
-            tracer = TracerAdapter(tracer, otelClock),
-            startTimeMs = clock.now()
+            tracer = tracer,
+            startTimeMs = originalStartTime
         )
         val startTime = clock.tick()
         with(args.embraceAttributes.toSet()) {
@@ -52,7 +58,8 @@ internal class OtelSpanStartArgsTest {
             assertTrue(contains(EmbType.Performance.Default))
         }
         assertEquals("emb-test", args.initialSpanName)
-        assertNull(args.getParentSpanContext())
+        val spanContext = Span.fromContext(args.parentContext).spanContext
+        assertFalse(spanContext.isValid)
 
         args.startSpan(startTime).assertSpan(
             expectedName = "emb-test",
@@ -69,11 +76,13 @@ internal class OtelSpanStartArgsTest {
             type = EmbType.Performance.Default,
             internal = false,
             private = false,
-            tracer = TracerAdapter(tracer, otelClock),
-            parentCtx = OtelJavaContext.root().with(parent)
+            tracer = tracer,
+            parentCtx = OtelJavaContext.root().with(parent).toOtelKotlin()
         )
-        assertEquals(parent.spanContext, args.getParentSpanContext())
-        val startTime = clock.now()
+        val spanContext = Span.fromContext(args.parentContext).spanContext
+        assertEquals(parent.spanContext.traceId, spanContext.traceId)
+
+        val startTime = otelClock.now()
         args.startSpan(startTime).assertSpan(
             expectedName = "test",
             expectedStartTimeMs = startTime,
@@ -87,10 +96,10 @@ internal class OtelSpanStartArgsTest {
             type = EmbType.Performance.Default,
             internal = false,
             private = false,
-            tracer = TracerAdapter(tracer, otelClock),
+            tracer = tracer,
             spanKind = SpanKind.CLIENT
         )
-        val startTime = clock.now()
+        val startTime = otelClock.now()
         args.startSpan(startTime).assertSpan(
             expectedName = "test",
             expectedStartTimeMs = startTime,
@@ -105,7 +114,7 @@ internal class OtelSpanStartArgsTest {
             type = EmbType.Performance.Default,
             internal = false,
             private = false,
-            tracer = TracerAdapter(tracer, otelClock),
+            tracer = tracer,
         )
         args.customAttributes["test-key"] = "test-value"
         assertEquals("test-value", args.customAttributes["test-key"])
@@ -113,8 +122,7 @@ internal class OtelSpanStartArgsTest {
 
     @Test
     fun `initial name not truncated`() {
-        val tracer = TracerAdapter(tracer, otelClock)
-        val startTime = clock.now()
+        val startTime = otelClock.now()
 
         val creator = OtelSpanStartArgs(
             tracer = tracer,

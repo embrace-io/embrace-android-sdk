@@ -9,8 +9,13 @@ import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaContext
+import io.embrace.opentelemetry.kotlin.ExperimentalApi
+import io.embrace.opentelemetry.kotlin.context.Context
+import io.embrace.opentelemetry.kotlin.j2k.bridge.context.toOtelKotlin
+import io.embrace.opentelemetry.kotlin.k2j.context.root
+import io.embrace.opentelemetry.kotlin.k2j.context.toOtelJava
 
+@OptIn(ExperimentalApi::class)
 class FakeSpanService : SpanService {
 
     val createdSpans: MutableList<FakeEmbraceSdkSpan> = mutableListOf()
@@ -29,7 +34,9 @@ class FakeSpanService : SpanService {
         autoTerminationMode: AutoTerminationMode,
     ): EmbraceSdkSpan = FakeEmbraceSdkSpan(
         name = name,
-        parentContext = parent?.run { OtelJavaContext.root().with(parent as EmbraceSdkSpan) } ?: OtelJavaContext.root(),
+        parentContext = parent?.run {
+            Context.root().toOtelJava().with(parent as EmbraceSdkSpan)
+        }?.toOtelKotlin() ?: Context.root(),
         type = type,
         internal = internal,
         private = private,
@@ -82,7 +89,9 @@ class FakeSpanService : SpanService {
         createdSpans.add(
             FakeEmbraceSdkSpan(
                 name = name,
-                parentContext = parent?.run { OtelJavaContext.root().with(parent as EmbraceSdkSpan) } ?: OtelJavaContext.root(),
+                parentContext = parent?.run {
+                    Context.root().toOtelJava().with(parent as EmbraceSdkSpan).toOtelKotlin()
+                } ?: Context.root(),
                 type = type,
                 internal = internal,
                 private = private

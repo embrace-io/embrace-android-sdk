@@ -7,10 +7,8 @@ import io.embrace.android.embracesdk.internal.otel.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.otel.sdk.toEmbraceObjectName
 import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaContext
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpan
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanContext
-import io.embrace.opentelemetry.kotlin.j2k.bridge.context.toOtelKotlin
+import io.embrace.opentelemetry.kotlin.context.Context
+import io.embrace.opentelemetry.kotlin.k2j.context.root
 import io.embrace.opentelemetry.kotlin.tracing.Tracer
 import io.embrace.opentelemetry.kotlin.tracing.model.Span
 import io.embrace.opentelemetry.kotlin.tracing.model.SpanKind
@@ -26,11 +24,11 @@ class OtelSpanStartArgs(
     private: Boolean,
     private val tracer: Tracer,
     val autoTerminationMode: AutoTerminationMode = AutoTerminationMode.NONE,
-    parentCtx: OtelJavaContext? = null,
+    parentCtx: Context? = null,
     val startTimeMs: Long? = null,
-    val spanKind: SpanKind? = null
+    val spanKind: SpanKind? = null,
 ) {
-    val parentContext: OtelJavaContext = parentCtx ?: OtelJavaContext.root()
+    val parentContext: Context = parentCtx ?: Context.root()
     val initialSpanName: String = name.prependEmbracePrefix(internal)
 
     val embraceAttributes = mutableListOf<EmbraceAttribute>(type)
@@ -39,16 +37,6 @@ class OtelSpanStartArgs(
     init {
         if (private) {
             embraceAttributes.add(PrivateSpan)
-        }
-    }
-
-    fun getParentSpanContext(): OtelJavaSpanContext? {
-        val parentSpanContext = OtelJavaSpan.fromContext(parentContext).spanContext
-
-        return if (parentSpanContext.isValid) {
-            parentSpanContext
-        } else {
-            null
         }
     }
 
@@ -63,7 +51,7 @@ class OtelSpanStartArgs(
     internal fun startSpan(startTimeMs: Long): Span {
         return tracer.createSpan(
             name = initialSpanName,
-            parentContext = parentContext.toOtelKotlin(),
+            parentContext = parentContext,
             spanKind = spanKind ?: SpanKind.INTERNAL,
             startTimestamp = startTimeMs.millisToNanos(),
         )

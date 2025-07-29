@@ -21,7 +21,7 @@ import org.junit.Before
 import org.junit.Test
 
 @OptIn(ExperimentalApi::class)
-internal class EmbOtelJavaSpanTest {
+internal class EmbSpanTest {
     private lateinit var fakeClock: FakeClock
     private lateinit var openTelemetryClock: Clock
     private lateinit var fakeEmbraceSpan: FakeEmbraceSdkSpan

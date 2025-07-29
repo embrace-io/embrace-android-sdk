@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
 import io.embrace.android.embracesdk.internal.otel.spans.getEmbraceSpan
+import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaAttributeKey
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaAttributes
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpan
@@ -11,6 +12,7 @@ import io.embrace.opentelemetry.kotlin.aliases.OtelJavaTraceFlags
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaTraceState
 import java.util.concurrent.TimeUnit
 
+@OptIn(ExperimentalApi::class)
 class FakeOtelJavaSpan(
     val fakeSpanBuilder: FakeSpanBuilder,
 ) : OtelJavaSpan {

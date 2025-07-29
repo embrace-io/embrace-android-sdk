@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
 import io.embrace.android.embracesdk.internal.payload.LifeEventType
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.session.SessionZygote
+import io.embrace.opentelemetry.kotlin.ExperimentalApi
 
 fun fakeSessionZygote(): SessionZygote = SessionZygote(
     sessionId = "fakeSessionId",
@@ -18,6 +19,7 @@ fun fakeSessionZygote(): SessionZygote = SessionZygote(
     startType = LifeEventType.STATE
 )
 
+@OptIn(ExperimentalApi::class)
 fun fakeSessionEnvelope(
     sessionId: String = "fakeSessionId",
     startMs: Long = 160000000000L,
@@ -46,6 +48,7 @@ fun fakeSessionEnvelope(
     )
 }
 
+@OptIn(ExperimentalApi::class)
 fun fakeIncompleteSessionEnvelope(
     sessionId: String = "fakeIncompleteSessionId",
     processIdentifier: String = "fakeIncompleteSessionProcessId",

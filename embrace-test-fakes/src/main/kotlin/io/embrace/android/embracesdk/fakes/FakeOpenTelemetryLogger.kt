@@ -13,8 +13,8 @@ class FakeOpenTelemetryLogger : Logger {
 
     override fun log(
         body: String?,
-        timestampNs: Long?,
-        observedTimestampNs: Long?,
+        timestamp: Long?,
+        observedTimestamp: Long?,
         context: Context?,
         severityNumber: SeverityNumber?,
         severityText: String?,
@@ -25,12 +25,12 @@ class FakeOpenTelemetryLogger : Logger {
         logs.add(
             FakeLogRecord(
                 body = body,
-                timestamp = timestampNs,
-                observedTimestamp = observedTimestampNs,
+                timestamp = timestamp,
+                observedTimestamp = observedTimestamp,
                 context = context,
                 severityNumber = severityNumber,
                 severityText = severityText,
-                attrs = container.attributes()
+                attributes = container.attributes()
             )
         )
     }

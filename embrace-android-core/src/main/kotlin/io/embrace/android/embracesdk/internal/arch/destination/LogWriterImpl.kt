@@ -27,7 +27,7 @@ class LogWriterImpl(
 
     override fun addLog(
         schemaType: SchemaType,
-        severity: io.embrace.android.embracesdk.Severity,
+        severity: Severity,
         message: String,
         isPrivate: Boolean,
         addCurrentSessionInfo: Boolean,
@@ -43,7 +43,7 @@ class LogWriterImpl(
             body = message,
             severityNumber = severityNumber,
             severityText = getSeverityText(severityNumber),
-            timestampNs = TimeUnit.MILLISECONDS.toNanos(logTimeMs)
+            timestamp = TimeUnit.MILLISECONDS.toNanos(logTimeMs)
         ) {
             setStringAttribute(LogIncubatingAttributes.LOG_RECORD_UID.key, Uuid.getEmbUuid())
 

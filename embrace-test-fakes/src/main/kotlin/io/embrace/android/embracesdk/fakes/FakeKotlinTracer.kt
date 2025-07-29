@@ -18,7 +18,7 @@ class FakeKotlinTracer : Tracer {
         action: SpanRelationships.() -> Unit,
     ): Span = FakeKotlinSpan(
         name,
-        parent,
+        parent ?: FakeSpanContext(),
         spanKind,
         startTimestamp ?: -1,
     )

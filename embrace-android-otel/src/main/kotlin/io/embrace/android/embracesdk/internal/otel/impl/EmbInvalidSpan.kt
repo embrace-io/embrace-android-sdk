@@ -20,16 +20,16 @@ internal class EmbInvalidSpan : Span {
     override fun attributes(): Map<String, Any> = emptyMap()
 
     override var name: String = ""
-    override val parent: SpanContext? = null
+    override val parent: SpanContext = SpanContextAdapter(OtelJavaSpanContext.getInvalid())
     override val spanContext: SpanContext = SpanContextAdapter(OtelJavaSpanContext.getInvalid())
     override val spanKind: SpanKind = SpanKind.INTERNAL
     override val startTimestamp: Long = 0
     override var status: StatusCode = StatusCode.Unset
 
-    override fun addEvent(name: String, timestamp: Long?, action: AttributeContainer.() -> Unit) {
+    override fun addEvent(name: String, timestamp: Long?, attributes: AttributeContainer.() -> Unit) {
     }
 
-    override fun addLink(spanContext: SpanContext, action: AttributeContainer.() -> Unit) {
+    override fun addLink(spanContext: SpanContext, attributes: AttributeContainer.() -> Unit) {
     }
 
     override fun end() {

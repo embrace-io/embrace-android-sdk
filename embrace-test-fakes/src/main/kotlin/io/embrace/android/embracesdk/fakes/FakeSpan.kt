@@ -17,16 +17,16 @@ class FakeSpan : Span {
     override fun attributes(): Map<String, Any> = attrs
 
     override var name: String = ""
-    override val parent: SpanContext? = null
+    override val parent: SpanContext = FakeSpanContext()
     override val spanContext: SpanContext = FakeSpanContext()
     override val spanKind: SpanKind = SpanKind.INTERNAL
     override val startTimestamp: Long = -1
     override var status: StatusCode = StatusCode.Unset
 
-    override fun addEvent(name: String, timestamp: Long?, action: AttributeContainer.() -> Unit) {
+    override fun addEvent(name: String, timestamp: Long?, attributes: AttributeContainer.() -> Unit) {
     }
 
-    override fun addLink(spanContext: SpanContext, action: AttributeContainer.() -> Unit) {
+    override fun addLink(spanContext: SpanContext, attributes: AttributeContainer.() -> Unit) {
     }
 
     override fun end() {

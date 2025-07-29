@@ -12,7 +12,7 @@ import io.embrace.opentelemetry.kotlin.tracing.model.SpanKind
 @ExperimentalApi
 class FakeKotlinSpan(
     override var name: String,
-    override var parent: SpanContext?,
+    override var parent: SpanContext,
     override val spanKind: SpanKind,
     override val startTimestamp: Long,
 ) : Span {
@@ -25,10 +25,10 @@ class FakeKotlinSpan(
 
     override var status: StatusCode = StatusCode.Unset
 
-    override fun addEvent(name: String, timestamp: Long?, action: AttributeContainer.() -> Unit) {
+    override fun addEvent(name: String, timestamp: Long?, attributes: AttributeContainer.() -> Unit) {
     }
 
-    override fun addLink(spanContext: SpanContext, action: AttributeContainer.() -> Unit) {
+    override fun addLink(spanContext: SpanContext, attributes: AttributeContainer.() -> Unit) {
     }
 
     override fun end() {

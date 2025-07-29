@@ -55,8 +55,5 @@ fun Span.findLinkOfType(type: LinkType): Link = checkNotNull(findLinksOfType(typ
 
 fun Span.findCustomLinks() = links?.filter { it.attributes?.any { attr -> attr.key == "emb.link_type" } == false }
 
-fun Span.hasCustomLink(linkedSpan: Span, isLinkedToSpanRemote: Boolean) =
-    findCustomLinks()?.any { it.isLinkedToSpan(linkedSpan, isLinkedToSpanRemote) }
-
 fun Span.hasLinkToEmbraceSpan(linkedSpan: Span, type: LinkType): Boolean =
     findLinksOfType(type)?.any { it.isLinkedToSpan(linkedSpan, false) } == true

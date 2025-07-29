@@ -1,5 +1,3 @@
-@file:OptIn(ExperimentalApi::class)
-
 package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.internal.SystemInfo
@@ -19,6 +17,7 @@ import io.embrace.android.embracesdk.internal.spans.InternalTracer
 import io.embrace.opentelemetry.kotlin.Clock
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 
+@OptIn(ExperimentalApi::class)
 class FakeOpenTelemetryModule(
     override val currentSessionSpan: CurrentSessionSpan = FakeCurrentSessionSpan(),
     override val spanSink: SpanSink = SpanSinkImpl(),

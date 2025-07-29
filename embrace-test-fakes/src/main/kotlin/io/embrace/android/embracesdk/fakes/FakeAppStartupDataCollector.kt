@@ -4,10 +4,9 @@ import io.embrace.android.embracesdk.internal.capture.startup.AppStartupDataColl
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.otel.schema.ErrorCodeAttribute.UserAbandon.fromErrorCode
 import io.embrace.android.embracesdk.internal.otel.sdk.DataValidator
-import io.embrace.android.embracesdk.internal.otel.sdk.fromMap
+import io.embrace.android.embracesdk.internal.toOtelJava
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaAttributes
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaEventData
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanData
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaStatusData
@@ -93,14 +92,15 @@ class FakeAppStartupDataCollector(
         events: List<EmbraceSpanEvent>,
         errorCode: ErrorCode?,
     ) {
-        val attributesBuilder = OtelJavaAttributes.builder().fromMap(
-            attributes = attributes,
-            internal = false,
-            dataValidator = dataValidator
-        )
-        val status = if (errorCode != null) {
+        val map = if (errorCode != null) {
             val errorCodeAttr = errorCode.fromErrorCode()
-            attributesBuilder.put(errorCodeAttr.key.name, errorCodeAttr.value)
+            mutableMapOf(errorCodeAttr.key.name to errorCodeAttr.value)
+        } else {
+            mutableMapOf()
+        }
+
+        val attrs = dataValidator.truncateAttributes(map, false)
+        val status = if (errorCode != null) {
             OtelJavaStatusData.error()
         } else {
             OtelJavaStatusData.unset()
@@ -110,16 +110,12 @@ class FakeAppStartupDataCollector(
                 name = name,
                 startEpochNanos = startTimeMs.millisToNanos(),
                 endTimeNanos = endTimeMs.millisToNanos(),
-                attributes = attributesBuilder.build(),
+                attributes = attrs.toOtelJava(),
                 events = events.map {
                     OtelJavaEventData.create(
                         it.timestampNanos,
                         it.name,
-                        OtelJavaAttributes.builder().fromMap(
-                            attributes = it.attributes,
-                            internal = false,
-                            dataValidator = dataValidator
-                        ).build()
+                        dataValidator.truncateAttributes(it.attributes, false).toOtelJava()
                     )
                 }.toMutableList(),
                 spanStatus = status

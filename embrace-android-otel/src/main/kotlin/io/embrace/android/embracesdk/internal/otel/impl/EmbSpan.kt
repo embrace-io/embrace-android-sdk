@@ -7,8 +7,7 @@ import io.embrace.opentelemetry.kotlin.Clock
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.attributes.AttributeContainer
 import io.embrace.opentelemetry.kotlin.creator.ObjectCreator
-import io.embrace.opentelemetry.kotlin.k2j.tracing.SpanContextAdapter
-import io.embrace.opentelemetry.kotlin.k2j.tracing.convertToOtelJava
+import io.embrace.opentelemetry.kotlin.k2j.tracing.toOtelJava
 import io.embrace.opentelemetry.kotlin.k2j.tracing.toOtelKotlin
 import io.embrace.opentelemetry.kotlin.tracing.StatusCode
 import io.embrace.opentelemetry.kotlin.tracing.model.Link
@@ -68,7 +67,7 @@ class EmbSpan(
     }
 
     override val spanContext: SpanContext
-        get() = impl.spanContext?.let(::SpanContextAdapter) ?: objectCreator.spanContext.invalid
+        get() = impl.spanContext?.toOtelKotlin() ?: objectCreator.spanContext.invalid
 
     override fun isRecording(): Boolean = impl.isRecording
 
@@ -79,7 +78,7 @@ class EmbSpan(
 
     override fun addLink(spanContext: SpanContext, attributes: AttributeContainer.() -> Unit) {
         val attrs = EmbAttributeContainer().apply(attributes).attributes()
-        impl.addLink(spanContext.convertToOtelJava(), attrs)
+        impl.addLink(spanContext.toOtelJava(), attrs)
     }
 
     override fun attributes(): Map<String, Any> {

@@ -32,9 +32,8 @@ import io.embrace.opentelemetry.kotlin.attributes.setAttributes
 import io.embrace.opentelemetry.kotlin.context.Context
 import io.embrace.opentelemetry.kotlin.j2k.bridge.context.toOtelKotlin
 import io.embrace.opentelemetry.kotlin.k2j.context.toOtelJava
-import io.embrace.opentelemetry.kotlin.k2j.tracing.SpanContextAdapter
-import io.embrace.opentelemetry.kotlin.k2j.tracing.convertToOtelJava
 import io.embrace.opentelemetry.kotlin.k2j.tracing.toOtelJava
+import io.embrace.opentelemetry.kotlin.k2j.tracing.toOtelKotlin
 import io.embrace.opentelemetry.kotlin.tracing.StatusCode
 import io.embrace.opentelemetry.kotlin.tracing.model.Span
 import io.embrace.opentelemetry.kotlin.tracing.model.SpanContext
@@ -126,7 +125,7 @@ private class EmbraceSpanImpl(
     override val parent: EmbraceSpan? = parentContext.getEmbraceSpan(otelSpanStartArgs.objectCreator)
 
     override val spanContext: OtelJavaSpanContext?
-        get() = startedSpan.get()?.spanContext?.convertToOtelJava()
+        get() = startedSpan.get()?.spanContext?.toOtelJava()
 
     override val traceId: String?
         get() = spanContext?.traceId
@@ -313,7 +312,7 @@ private class EmbraceSpanImpl(
 
     override fun addLink(linkedSpanContext: OtelJavaSpanContext, attributes: Map<String, String>?): Boolean =
         addObject(customLinks, customLinkCount, dataValidator.otelLimitsConfig.getMaxCustomLinkCount()) {
-            EmbraceLinkData(SpanContextAdapter(linkedSpanContext), attributes ?: emptyMap())
+            EmbraceLinkData(linkedSpanContext.toOtelKotlin(), attributes ?: emptyMap())
         }
 
     override fun makeCurrent(): Scope {

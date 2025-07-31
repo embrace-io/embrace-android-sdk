@@ -6,7 +6,7 @@ import io.embrace.android.embracesdk.fakes.FakeReadWriteLogRecord
 import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
 import io.embrace.android.embracesdk.internal.otel.schema.PrivateSpan
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
-import io.embrace.opentelemetry.kotlin.j2k.logging.export.OtelJavaLogRecordExporterAdapter
+import io.embrace.opentelemetry.kotlin.j2k.logging.export.toOtelKotlin
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Test
@@ -30,7 +30,7 @@ internal class DefaultLogRecordExporterTest {
     fun `private logs should be filtered out from external exporters`() {
         val logSink: LogSink = LogSinkImpl()
         val externalExporter = FakeOtelJavaLogRecordExporter()
-        val exporter = DefaultLogRecordExporter(logSink, OtelJavaLogRecordExporterAdapter(externalExporter)) { true }
+        val exporter = DefaultLogRecordExporter(logSink, externalExporter.toOtelKotlin()) { true }
         val logKey = "test_log"
         val data = FakeReadWriteLogRecord(body = logKey)
 

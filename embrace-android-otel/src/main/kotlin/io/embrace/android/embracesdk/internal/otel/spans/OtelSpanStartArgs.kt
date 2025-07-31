@@ -8,7 +8,7 @@ import io.embrace.android.embracesdk.internal.otel.sdk.toEmbraceObjectName
 import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.context.Context
-import io.embrace.opentelemetry.kotlin.k2j.context.root
+import io.embrace.opentelemetry.kotlin.creator.ObjectCreator
 import io.embrace.opentelemetry.kotlin.tracing.Tracer
 import io.embrace.opentelemetry.kotlin.tracing.model.Span
 import io.embrace.opentelemetry.kotlin.tracing.model.SpanKind
@@ -27,8 +27,9 @@ class OtelSpanStartArgs(
     parentCtx: Context? = null,
     val startTimeMs: Long? = null,
     val spanKind: SpanKind? = null,
+    val objectCreator: ObjectCreator,
 ) {
-    val parentContext: Context = parentCtx ?: Context.root()
+    val parentContext: Context = parentCtx ?: objectCreator.context.root()
     val initialSpanName: String = name.prependEmbracePrefix(internal)
 
     val embraceAttributes = mutableListOf<EmbraceAttribute>(type)

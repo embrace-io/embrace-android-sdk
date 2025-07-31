@@ -34,6 +34,7 @@ import io.embrace.opentelemetry.kotlin.j2k.bridge.context.toOtelKotlin
 import io.embrace.opentelemetry.kotlin.k2j.context.toOtelJava
 import io.embrace.opentelemetry.kotlin.k2j.tracing.SpanContextAdapter
 import io.embrace.opentelemetry.kotlin.k2j.tracing.convertToOtelJava
+import io.embrace.opentelemetry.kotlin.k2j.tracing.toOtelJava
 import io.embrace.opentelemetry.kotlin.tracing.StatusCode
 import io.embrace.opentelemetry.kotlin.tracing.model.Span
 import io.embrace.opentelemetry.kotlin.tracing.model.SpanContext
@@ -122,7 +123,7 @@ private class EmbraceSpanImpl(
 
     private val parentContext = otelSpanStartArgs.parentContext
 
-    override val parent: EmbraceSpan? = parentContext.getEmbraceSpan()
+    override val parent: EmbraceSpan? = parentContext.getEmbraceSpan(otelSpanStartArgs.objectCreator)
 
     override val spanContext: OtelJavaSpanContext?
         get() = startedSpan.get()?.spanContext?.convertToOtelJava()
@@ -334,7 +335,9 @@ private class EmbraceSpanImpl(
 
     override fun storeInContext(context: OtelJavaContext): OtelJavaContext {
         val impl = startedSpan.get() as? ImplicitContextKeyed
-        val base = super.storeInContext(context)
+        val spanKey = getOrCreateSpanKey(otelSpanStartArgs.objectCreator)
+        val base = context.with(spanKey.toOtelJava(), this)
+
         return if (impl != null) {
             impl.storeInContext(base)
         } else {

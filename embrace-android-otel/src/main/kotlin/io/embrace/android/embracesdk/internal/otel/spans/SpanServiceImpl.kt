@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
+import io.embrace.opentelemetry.kotlin.creator.ObjectCreator
 import io.embrace.opentelemetry.kotlin.tracing.Tracer
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -23,6 +24,7 @@ class SpanServiceImpl(
     private val dataValidator: DataValidator,
     private val canStartNewSpan: (parentSpan: EmbraceSpan?, internal: Boolean) -> Boolean,
     private val initCallback: (initTimeMs: Long) -> Unit,
+    private val objectCreator: ObjectCreator,
 ) : SpanService {
     private val initialized = AtomicBoolean(false)
 
@@ -51,9 +53,10 @@ class SpanServiceImpl(
                         type = type,
                         internal = internal,
                         private = private,
-                        parentCtx = (parent as? EmbraceSdkSpan)?.createContext(),
-                        autoTerminationMode = autoTerminationMode,
                         tracer = tracer,
+                        autoTerminationMode = autoTerminationMode,
+                        parentCtx = (parent as? EmbraceSdkSpan)?.createContext(objectCreator),
+                        objectCreator = objectCreator,
                     )
                 )
             } else {
@@ -67,7 +70,7 @@ class SpanServiceImpl(
             return if (
                 otelSpanStartArgs.initialSpanName.isNotBlank() &&
                 canStartNewSpan(
-                    otelSpanStartArgs.parentContext.getEmbraceSpan(),
+                    otelSpanStartArgs.parentContext.getEmbraceSpan(objectCreator),
                     otelSpanStartArgs.internal
                 )
             ) {
@@ -150,8 +153,9 @@ class SpanServiceImpl(
                         type = type,
                         internal = internal,
                         private = private,
-                        parentCtx = (parent as? EmbraceSdkSpan)?.createContext(),
                         tracer = tracer,
+                        parentCtx = (parent as? EmbraceSdkSpan)?.createContext(objectCreator),
+                        objectCreator = objectCreator,
                     )
                 )
                 if (newSpan.start(startTimeMs)) {

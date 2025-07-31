@@ -57,9 +57,8 @@ class TracingApiBenchmarks {
             spanService = UninitializedSdkSpanService()
         )
         spansService = SpanServiceImpl(
+            tracer = otelSdkWrapper.sdkTracer,
             spanRepository = spanRepository,
-            canStartNewSpan = { _, _ -> true },
-            initCallback = { },
             embraceSpanFactory =
                 EmbraceSpanFactoryImpl(
                     openTelemetryClock = clock,
@@ -67,7 +66,9 @@ class TracingApiBenchmarks {
                     dataValidator = dataValidator
                 ),
             dataValidator = dataValidator,
-            tracer = otelSdkWrapper.sdkTracer
+            canStartNewSpan = { _, _ -> true },
+            initCallback = { },
+            objectCreator = objectCreatorSupplier()
         )
     }
 

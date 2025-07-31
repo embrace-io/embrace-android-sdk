@@ -23,6 +23,7 @@ import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.opentelemetry.kotlin.Clock
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
+import io.embrace.opentelemetry.kotlin.creator.ObjectCreator
 import io.embrace.opentelemetry.kotlin.tracing.Tracer
 import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes
 import java.util.concurrent.atomic.AtomicBoolean
@@ -36,6 +37,7 @@ internal class CurrentSessionSpanImpl(
     private val spanRepository: SpanRepository,
     private val spanSink: SpanSink,
     private val tracerSupplier: Provider<Tracer>,
+    private val objectCreatorSupplier: Provider<ObjectCreator>,
     private val embraceSpanFactorySupplier: Provider<EmbraceSpanFactory>,
 ) : CurrentSessionSpan, SessionSpanWriter {
 
@@ -214,7 +216,8 @@ internal class CurrentSessionSpanImpl(
                 type = EmbType.Ux.Session,
                 internal = true,
                 private = false,
-                tracer = tracerSupplier()
+                tracer = tracerSupplier(),
+                objectCreator = objectCreatorSupplier()
             )
         ).apply {
             start(startTimeMs = startTimeMs)

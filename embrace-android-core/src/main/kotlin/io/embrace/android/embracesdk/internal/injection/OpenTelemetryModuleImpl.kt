@@ -105,6 +105,7 @@ internal class OpenTelemetryModuleImpl(
             spanRepository = spanRepository,
             spanSink = spanSink,
             tracerSupplier = { otelSdkWrapper.sdkTracer },
+            objectCreatorSupplier = { otelSdkWrapper.kotlinApi.objectCreator },
             embraceSpanFactorySupplier = { embraceSpanFactory },
         ).also {
             internalSpanStopCallback = it::spanStopCallback
@@ -118,6 +119,7 @@ internal class OpenTelemetryModuleImpl(
             initCallback = currentSessionSpan::initializeService,
             dataValidator = dataValidator,
             tracerSupplier = { otelSdkWrapper.sdkTracer },
+            objectCreatorSupplier = { otelSdkWrapper.kotlinApi.objectCreator },
             embraceSpanFactorySupplier = { embraceSpanFactory },
         )
     }

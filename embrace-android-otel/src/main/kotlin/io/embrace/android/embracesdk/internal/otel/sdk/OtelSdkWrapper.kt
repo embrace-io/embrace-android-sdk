@@ -90,7 +90,7 @@ class OtelSdkWrapper(
     val openTelemetryJava: OtelJavaOpenTelemetry by lazy {
         OpenTelemetryInstance.compatWithOtelKotlin(
             EmbOpenTelemetry(kotlinApi) {
-                EmbTracerProvider(kotlinApi.tracerProvider, spanService, otelClock)
+                EmbTracerProvider(kotlinApi, spanService, otelClock)
             }
         )
     }

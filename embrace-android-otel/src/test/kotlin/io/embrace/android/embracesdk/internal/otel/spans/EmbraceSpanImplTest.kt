@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
 import io.embrace.android.embracesdk.fakes.FakeOtelKotlinClock
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
+import io.embrace.android.embracesdk.fakes.fakeObjectCreator
 import io.embrace.android.embracesdk.fixtures.MAX_LENGTH_ATTRIBUTE_KEY
 import io.embrace.android.embracesdk.fixtures.MAX_LENGTH_ATTRIBUTE_KEY_FOR_INTERNAL_SPAN
 import io.embrace.android.embracesdk.fixtures.MAX_LENGTH_ATTRIBUTE_VALUE
@@ -42,7 +43,6 @@ import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.OpenTelemetryInstance
 import io.embrace.opentelemetry.kotlin.context.Context
-import io.embrace.opentelemetry.kotlin.k2j.context.current
 import io.embrace.opentelemetry.kotlin.k2j.tracing.SpanContextAdapter
 import io.embrace.opentelemetry.kotlin.kotlinApi
 import io.embrace.opentelemetry.kotlin.tracing.model.SpanKind
@@ -90,6 +90,7 @@ internal class EmbraceSpanImplTest {
                 internal = false,
                 private = false,
                 tracer = tracer,
+                objectCreator = fakeObjectCreator,
             )
         )
         fakeClock.tick(100)
@@ -528,7 +529,7 @@ internal class EmbraceSpanImplTest {
 
     @Test
     fun `validate context objects are propagated from the parent to the child span`() {
-        val newParentContext = io.embrace.opentelemetry.kotlin.context.Context.current().set(fakeContextKey, "fake-value")
+        val newParentContext = fakeObjectCreator.context.current().set(fakeContextKey, "fake-value")
         val wrapper = createWrapperForInternalSpan(parentContext = newParentContext)
         embraceSpan = embraceSpanFactory.create(wrapper)
 
@@ -583,8 +584,9 @@ internal class EmbraceSpanImplTest {
         internal = true,
         private = true,
         tracer = tracer,
+        parentCtx = parentContext,
         startTimeMs = startTimeMs,
-        parentCtx = parentContext
+        objectCreator = fakeObjectCreator,
     )
 
     private fun EmbraceSdkSpan.assertSnapshot(

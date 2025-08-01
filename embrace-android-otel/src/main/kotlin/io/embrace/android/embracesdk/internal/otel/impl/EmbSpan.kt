@@ -7,9 +7,9 @@ import io.embrace.opentelemetry.kotlin.Clock
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.attributes.AttributeContainer
 import io.embrace.opentelemetry.kotlin.creator.ObjectCreator
-import io.embrace.opentelemetry.kotlin.k2j.tracing.toOtelJavaSpanContext
-import io.embrace.opentelemetry.kotlin.k2j.tracing.toOtelKotlinSpanContext
 import io.embrace.opentelemetry.kotlin.tracing.data.StatusData
+import io.embrace.opentelemetry.kotlin.tracing.ext.toOtelJavaSpanContext
+import io.embrace.opentelemetry.kotlin.tracing.ext.toOtelKotlinSpanContext
 import io.embrace.opentelemetry.kotlin.tracing.model.Link
 import io.embrace.opentelemetry.kotlin.tracing.model.Span
 import io.embrace.opentelemetry.kotlin.tracing.model.SpanContext

@@ -10,8 +10,8 @@ import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
-import io.embrace.opentelemetry.kotlin.j2k.bridge.context.toOtelKotlinContext
-import io.embrace.opentelemetry.kotlin.k2j.context.toOtelJavaContext
+import io.embrace.opentelemetry.kotlin.context.toOtelJavaContext
+import io.embrace.opentelemetry.kotlin.context.toOtelKotlinContext
 
 @OptIn(ExperimentalApi::class)
 class FakeSpanService : SpanService {

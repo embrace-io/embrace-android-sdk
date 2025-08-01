@@ -13,9 +13,9 @@ import io.embrace.opentelemetry.kotlin.Clock
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.OpenTelemetryInstance
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaContext
+import io.embrace.opentelemetry.kotlin.context.toOtelKotlinContext
 import io.embrace.opentelemetry.kotlin.createOpenTelemetryKotlin
 import io.embrace.opentelemetry.kotlin.getTracer
-import io.embrace.opentelemetry.kotlin.j2k.bridge.context.toOtelKotlinContext
 import io.embrace.opentelemetry.kotlin.tracing.Tracer
 import io.embrace.opentelemetry.kotlin.tracing.model.Span
 import io.embrace.opentelemetry.kotlin.tracing.model.SpanKind

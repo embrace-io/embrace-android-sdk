@@ -6,8 +6,8 @@ import io.embrace.android.embracesdk.internal.otel.sdk.toEmbracePayload
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.export.OperationResultCode
+import io.embrace.opentelemetry.kotlin.tracing.data.SpanData
 import io.embrace.opentelemetry.kotlin.tracing.export.SpanExporter
-import io.embrace.opentelemetry.kotlin.tracing.model.ReadableSpan
 
 /**
  * Exports the given completed span to the given [SpanSink] as well as any configured external exporter
@@ -20,11 +20,11 @@ internal class DefaultSpanExporter(
 ) : SpanExporter {
 
     @Synchronized
-    override fun export(telemetry: List<ReadableSpan>): OperationResultCode {
+    override fun export(telemetry: List<SpanData>): OperationResultCode {
         if (!exportCheck()) {
             return OperationResultCode.Success
         }
-        val result = spanSink.storeCompletedSpans(telemetry.map(ReadableSpan::toEmbracePayload))
+        val result = spanSink.storeCompletedSpans(telemetry.map(SpanData::toEmbracePayload))
         if (externalSpanExporter != null && result == StoreDataResult.SUCCESS) {
             return EmbTrace.trace("otel-external-export") {
                 externalSpanExporter.export(

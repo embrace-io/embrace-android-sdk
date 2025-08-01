@@ -2,15 +2,15 @@ package io.embrace.android.embracesdk.fakes
 
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.export.OperationResultCode
+import io.embrace.opentelemetry.kotlin.tracing.data.SpanData
 import io.embrace.opentelemetry.kotlin.tracing.export.SpanExporter
-import io.embrace.opentelemetry.kotlin.tracing.model.ReadableSpan
 
 @OptIn(ExperimentalApi::class)
 class FakeSpanExporter : SpanExporter {
 
-    val exportedSpans: MutableList<ReadableSpan> = mutableListOf()
+    val exportedSpans: MutableList<SpanData> = mutableListOf()
 
-    override fun export(telemetry: List<ReadableSpan>): OperationResultCode {
+    override fun export(telemetry: List<SpanData>): OperationResultCode {
         exportedSpans += telemetry
         return OperationResultCode.Success
     }

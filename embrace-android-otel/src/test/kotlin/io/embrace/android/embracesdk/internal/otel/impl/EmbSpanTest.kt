@@ -11,7 +11,7 @@ import io.embrace.android.embracesdk.internal.otel.sdk.hasEmbraceAttribute
 import io.embrace.android.embracesdk.internal.otel.toOtelKotlin
 import io.embrace.opentelemetry.kotlin.Clock
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
-import io.embrace.opentelemetry.kotlin.tracing.StatusCode
+import io.embrace.opentelemetry.kotlin.tracing.data.StatusData
 import io.embrace.opentelemetry.kotlin.tracing.recordException
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -70,11 +70,11 @@ internal class EmbSpanTest {
     @Test
     fun `set error status before end`() {
         with(embSpan) {
-            status = StatusCode.Error("error")
+            status = StatusData.Error("error")
             end()
         }
         with(fakeEmbraceSpan) {
-            assertTrue(status is StatusCode.Error)
+            assertTrue(status is StatusData.Error)
             assertTrue(attributes.hasEmbraceAttribute(ErrorCodeAttribute.Failure))
         }
     }
@@ -83,12 +83,12 @@ internal class EmbSpanTest {
     fun `status can only be set on a span that is recording`() {
         with(embSpan) {
             end()
-            status = StatusCode.Error("error")
+            status = StatusData.Error("error")
             end()
         }
 
         with(fakeEmbraceSpan) {
-            assertEquals(status, StatusCode.Unset)
+            assertEquals(status, StatusData.Unset)
             assertFalse(attributes.hasEmbraceAttribute(ErrorCodeAttribute.Failure))
         }
     }

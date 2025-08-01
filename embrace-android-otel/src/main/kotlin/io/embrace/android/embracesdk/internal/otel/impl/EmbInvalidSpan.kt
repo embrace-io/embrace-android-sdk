@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.otel.impl
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.attributes.AttributeContainer
 import io.embrace.opentelemetry.kotlin.creator.ObjectCreator
-import io.embrace.opentelemetry.kotlin.tracing.StatusCode
+import io.embrace.opentelemetry.kotlin.tracing.data.StatusData
 import io.embrace.opentelemetry.kotlin.tracing.model.Link
 import io.embrace.opentelemetry.kotlin.tracing.model.Span
 import io.embrace.opentelemetry.kotlin.tracing.model.SpanContext
@@ -23,7 +23,7 @@ internal class EmbInvalidSpan(objectCreator: ObjectCreator) : Span {
     override val spanContext: SpanContext = objectCreator.spanContext.invalid
     override val spanKind: SpanKind = SpanKind.INTERNAL
     override val startTimestamp: Long = 0
-    override var status: StatusCode = StatusCode.Unset
+    override var status: StatusData = StatusData.Unset
 
     override fun addEvent(name: String, timestamp: Long?, attributes: AttributeContainer.() -> Unit) {
     }

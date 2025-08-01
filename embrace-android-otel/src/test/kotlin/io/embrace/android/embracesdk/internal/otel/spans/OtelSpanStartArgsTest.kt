@@ -13,9 +13,9 @@ import io.embrace.opentelemetry.kotlin.Clock
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.OpenTelemetryInstance
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaContext
+import io.embrace.opentelemetry.kotlin.createOpenTelemetryKotlin
 import io.embrace.opentelemetry.kotlin.getTracer
-import io.embrace.opentelemetry.kotlin.j2k.bridge.context.toOtelKotlin
-import io.embrace.opentelemetry.kotlin.kotlinApi
+import io.embrace.opentelemetry.kotlin.j2k.bridge.context.toOtelKotlinContext
 import io.embrace.opentelemetry.kotlin.tracing.Tracer
 import io.embrace.opentelemetry.kotlin.tracing.model.Span
 import io.embrace.opentelemetry.kotlin.tracing.model.SpanKind
@@ -37,7 +37,7 @@ internal class OtelSpanStartArgsTest {
         clock = FakeClock()
         otelClock = FakeOtelKotlinClock(clock)
 
-        val api = OpenTelemetryInstance.kotlinApi(clock = otelClock)
+        val api = OpenTelemetryInstance.createOpenTelemetryKotlin(clock = otelClock)
         tracer = api.getTracer("my_tracer")
     }
 
@@ -78,7 +78,7 @@ internal class OtelSpanStartArgsTest {
             internal = false,
             private = false,
             tracer = tracer,
-            parentCtx = OtelJavaContext.root().with(parent).toOtelKotlin(),
+            parentCtx = OtelJavaContext.root().with(parent).toOtelKotlinContext(),
             objectCreator = fakeObjectCreator
         )
         val spanContext = fakeObjectCreator.span.fromContext(args.parentContext).spanContext

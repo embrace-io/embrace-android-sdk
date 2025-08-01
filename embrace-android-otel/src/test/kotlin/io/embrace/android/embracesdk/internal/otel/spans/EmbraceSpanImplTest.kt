@@ -45,7 +45,7 @@ import io.embrace.opentelemetry.kotlin.OpenTelemetryInstance
 import io.embrace.opentelemetry.kotlin.context.Context
 import io.embrace.opentelemetry.kotlin.createOpenTelemetryKotlin
 import io.embrace.opentelemetry.kotlin.creator.current
-import io.embrace.opentelemetry.kotlin.tracing.conversion.toOtelKotlinSpanContext
+import io.embrace.opentelemetry.kotlin.tracing.ext.toOtelKotlinSpanContext
 import io.embrace.opentelemetry.kotlin.tracing.model.SpanKind
 import io.opentelemetry.semconv.ExceptionAttributes
 import org.junit.Assert.assertEquals

@@ -15,6 +15,7 @@ import io.embrace.android.embracesdk.internal.utils.PropertyUtils
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.context.ContextKey
+import io.embrace.opentelemetry.kotlin.creator.current
 import io.embrace.opentelemetry.kotlin.tracing.StatusCode
 
 @OptIn(ExperimentalApi::class)

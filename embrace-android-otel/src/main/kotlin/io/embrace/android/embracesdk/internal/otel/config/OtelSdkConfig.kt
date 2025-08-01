@@ -12,11 +12,11 @@ import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaLogRecordExporter
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanExporter
 import io.embrace.opentelemetry.kotlin.attributes.AttributeContainer
-import io.embrace.opentelemetry.kotlin.j2k.logging.export.toOtelKotlin
-import io.embrace.opentelemetry.kotlin.j2k.tracing.export.toOtelKotlin
 import io.embrace.opentelemetry.kotlin.logging.export.LogRecordExporter
+import io.embrace.opentelemetry.kotlin.logging.export.toOtelKotlinLogRecordExporter
 import io.embrace.opentelemetry.kotlin.tracing.export.SpanExporter
 import io.embrace.opentelemetry.kotlin.tracing.export.SpanProcessor
+import io.embrace.opentelemetry.kotlin.tracing.export.toOtelKotlinSpanExporter
 import io.opentelemetry.semconv.ServiceAttributes
 import io.opentelemetry.semconv.incubating.AndroidIncubatingAttributes
 import io.opentelemetry.semconv.incubating.DeviceIncubatingAttributes
@@ -83,7 +83,7 @@ class OtelSdkConfig(
         }
         DefaultSpanExporter(
             spanSink = spanSink,
-            externalSpanExporter = externalExporter?.toOtelKotlin(),
+            externalSpanExporter = externalExporter?.toOtelKotlinSpanExporter(),
             exportCheck = exportCheck,
         )
     }
@@ -102,7 +102,7 @@ class OtelSdkConfig(
         }
         DefaultLogRecordExporter(
             logSink = logSink,
-            externalLogRecordExporter = externalExporter?.toOtelKotlin(),
+            externalLogRecordExporter = externalExporter?.toOtelKotlinLogRecordExporter(),
             exportCheck = exportCheck,
         )
     }

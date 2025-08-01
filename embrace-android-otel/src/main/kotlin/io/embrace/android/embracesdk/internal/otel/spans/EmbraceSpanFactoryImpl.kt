@@ -30,11 +30,12 @@ import io.embrace.opentelemetry.kotlin.aliases.OtelJavaContext
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanContext
 import io.embrace.opentelemetry.kotlin.attributes.setAttributes
 import io.embrace.opentelemetry.kotlin.context.Context
-import io.embrace.opentelemetry.kotlin.j2k.bridge.context.toOtelKotlin
-import io.embrace.opentelemetry.kotlin.k2j.context.toOtelJava
-import io.embrace.opentelemetry.kotlin.k2j.tracing.toOtelJava
-import io.embrace.opentelemetry.kotlin.k2j.tracing.toOtelKotlin
-import io.embrace.opentelemetry.kotlin.tracing.StatusCode
+import io.embrace.opentelemetry.kotlin.context.toOtelJavaContext
+import io.embrace.opentelemetry.kotlin.context.toOtelKotlinContext
+import io.embrace.opentelemetry.kotlin.tracing.data.StatusData
+import io.embrace.opentelemetry.kotlin.tracing.ext.toOtelJavaContextKey
+import io.embrace.opentelemetry.kotlin.tracing.ext.toOtelJavaSpanContext
+import io.embrace.opentelemetry.kotlin.tracing.ext.toOtelKotlinSpanContext
 import io.embrace.opentelemetry.kotlin.tracing.model.Span
 import io.embrace.opentelemetry.kotlin.tracing.model.SpanContext
 import io.embrace.opentelemetry.kotlin.tracing.model.SpanKind
@@ -91,8 +92,8 @@ private class EmbraceSpanImpl(
         set(name) {
             field = validateName(name)
         }
-    override var status: StatusCode
-        get() = startedSpan.get()?.status ?: StatusCode.Unset
+    override var status: StatusData
+        get() = startedSpan.get()?.status ?: StatusData.Unset
         set(value) {
             startedSpan.get()?.let { sdkSpan ->
                 synchronized(startedSpan) {
@@ -125,7 +126,7 @@ private class EmbraceSpanImpl(
     override val parent: EmbraceSpan? = parentContext.getEmbraceSpan(otelSpanStartArgs.objectCreator)
 
     override val spanContext: OtelJavaSpanContext?
-        get() = startedSpan.get()?.spanContext?.toOtelJava()
+        get() = startedSpan.get()?.spanContext?.toOtelJavaSpanContext()
 
     override val traceId: String?
         get() = spanContext?.traceId
@@ -187,9 +188,9 @@ private class EmbraceSpanImpl(
                     populateLinks(spanToStop)
 
                     if (errorCode != null) {
-                        status = StatusCode.Error(null)
+                        status = StatusData.Error(null)
                         spanToStop.setEmbraceAttribute(errorCode.fromErrorCode())
-                    } else if (status is StatusCode.Error) {
+                    } else if (status is StatusData.Error) {
                         spanToStop.setEmbraceAttribute(ErrorCodeAttribute.Failure)
                     }
 
@@ -312,7 +313,7 @@ private class EmbraceSpanImpl(
 
     override fun addLink(linkedSpanContext: OtelJavaSpanContext, attributes: Map<String, String>?): Boolean =
         addObject(customLinks, customLinkCount, dataValidator.otelLimitsConfig.getMaxCustomLinkCount()) {
-            EmbraceLinkData(linkedSpanContext.toOtelKotlin(), attributes ?: emptyMap())
+            EmbraceLinkData(linkedSpanContext.toOtelKotlinSpanContext(), attributes ?: emptyMap())
         }
 
     override fun makeCurrent(): Scope {
@@ -329,13 +330,13 @@ private class EmbraceSpanImpl(
         // should always be true when opentelemetry-kotlin is used to create spans, but
         // we avoid exposing this fact in the public interface.
         val span = this as ImplicitContextKeyed
-        return span.storeInContext(parentContext.toOtelJava()).toOtelKotlin()
+        return span.storeInContext(parentContext.toOtelJavaContext()).toOtelKotlinContext()
     }
 
     override fun storeInContext(context: OtelJavaContext): OtelJavaContext {
         val impl = startedSpan.get() as? ImplicitContextKeyed
         val spanKey = getOrCreateSpanKey(otelSpanStartArgs.objectCreator)
-        val base = context.with(spanKey.toOtelJava(), this)
+        val base = context.with(spanKey.toOtelJavaContextKey(), this)
 
         return if (impl != null) {
             impl.storeInContext(base)

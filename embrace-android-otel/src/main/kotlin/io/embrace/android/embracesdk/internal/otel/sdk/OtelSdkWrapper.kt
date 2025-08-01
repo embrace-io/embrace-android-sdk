@@ -17,8 +17,8 @@ import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.OpenTelemetry
 import io.embrace.opentelemetry.kotlin.OpenTelemetryInstance
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaOpenTelemetry
-import io.embrace.opentelemetry.kotlin.compatWithOtelKotlin
-import io.embrace.opentelemetry.kotlin.kotlinApi
+import io.embrace.opentelemetry.kotlin.createOpenTelemetryKotlin
+import io.embrace.opentelemetry.kotlin.decorateKotlinApi
 import io.embrace.opentelemetry.kotlin.logging.Logger
 import io.embrace.opentelemetry.kotlin.tracing.Tracer
 
@@ -58,7 +58,7 @@ class OtelSdkWrapper(
     }
 
     val kotlinApi: OpenTelemetry by lazy {
-        OpenTelemetryInstance.kotlinApi(
+        OpenTelemetryInstance.createOpenTelemetryKotlin(
             loggerProvider = {
                 resource(configuration.resourceAction)
                 addLogRecordProcessor(
@@ -88,7 +88,7 @@ class OtelSdkWrapper(
     }
 
     val openTelemetryJava: OtelJavaOpenTelemetry by lazy {
-        OpenTelemetryInstance.compatWithOtelKotlin(
+        OpenTelemetryInstance.decorateKotlinApi(
             EmbOpenTelemetry(kotlinApi) {
                 EmbTracerProvider(kotlinApi, spanService, otelClock)
             }

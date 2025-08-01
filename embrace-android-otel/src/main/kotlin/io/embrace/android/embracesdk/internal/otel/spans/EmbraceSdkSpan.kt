@@ -14,7 +14,7 @@ import io.embrace.opentelemetry.kotlin.aliases.OtelJavaImplicitContextKeyed
 import io.embrace.opentelemetry.kotlin.context.Context
 import io.embrace.opentelemetry.kotlin.context.ContextKey
 import io.embrace.opentelemetry.kotlin.creator.ObjectCreator
-import io.embrace.opentelemetry.kotlin.tracing.StatusCode
+import io.embrace.opentelemetry.kotlin.tracing.data.StatusData
 import io.embrace.opentelemetry.kotlin.tracing.model.SpanContext
 import io.embrace.opentelemetry.kotlin.tracing.model.SpanKind
 
@@ -104,7 +104,7 @@ interface EmbraceSdkSpan : EmbraceSpan, OtelJavaImplicitContextKeyed {
     /**
      * The span status
      */
-    var status: StatusCode
+    var status: StatusData
 
     /**
      * Retrieves the span events

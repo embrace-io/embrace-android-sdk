@@ -9,7 +9,7 @@ import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanBuilder
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanContext
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanKind
 import io.embrace.opentelemetry.kotlin.context.Context
-import io.embrace.opentelemetry.kotlin.j2k.bridge.context.toOtelKotlin
+import io.embrace.opentelemetry.kotlin.context.toOtelKotlinContext
 import java.util.concurrent.TimeUnit
 
 @OptIn(ExperimentalApi::class)
@@ -24,7 +24,7 @@ class FakeSpanBuilder(
     var attributes: MutableMap<Any, Any> = mutableMapOf()
 
     override fun setParent(context: OtelJavaContext): OtelJavaSpanBuilder {
-        parentContext = context.toOtelKotlin()
+        parentContext = context.toOtelKotlinContext()
         return this
     }
 

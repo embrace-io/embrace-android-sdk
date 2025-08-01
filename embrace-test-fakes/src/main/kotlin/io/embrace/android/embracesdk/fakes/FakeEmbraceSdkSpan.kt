@@ -33,10 +33,10 @@ import io.embrace.opentelemetry.kotlin.aliases.OtelJavaContext
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpan
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanContext
 import io.embrace.opentelemetry.kotlin.context.Context
-import io.embrace.opentelemetry.kotlin.j2k.bridge.context.toOtelKotlin
-import io.embrace.opentelemetry.kotlin.k2j.context.toOtelJava
-import io.embrace.opentelemetry.kotlin.k2j.tracing.toOtelJava
-import io.embrace.opentelemetry.kotlin.tracing.StatusCode
+import io.embrace.opentelemetry.kotlin.context.toOtelJavaContext
+import io.embrace.opentelemetry.kotlin.context.toOtelKotlinContext
+import io.embrace.opentelemetry.kotlin.tracing.data.StatusData
+import io.embrace.opentelemetry.kotlin.tracing.ext.toOtelJavaContextKey
 import io.embrace.opentelemetry.kotlin.tracing.model.SpanContext
 import io.embrace.opentelemetry.kotlin.tracing.model.SpanKind
 import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes
@@ -57,7 +57,7 @@ class FakeEmbraceSdkSpan(
     private var sdkSpan: OtelJavaSpan? = null
     var spanStartTimeMs: Long? = null
     var spanEndTimeMs: Long? = null
-    override var status: StatusCode = StatusCode.Unset
+    override var status: StatusData = StatusData.Unset
     var errorCode: ErrorCode? = null
     val attributes: MutableMap<String, String> = mutableMapOf(type.asPair())
     val events: ConcurrentLinkedQueue<EmbraceSpanEvent> = ConcurrentLinkedQueue()
@@ -85,7 +85,7 @@ class FakeEmbraceSdkSpan(
             val timestampMs = startTimeMs ?: fakeClock.now()
             sdkSpan = FakeSpanBuilder(name)
                 .setStartTimestamp(timestampMs, TimeUnit.MILLISECONDS)
-                .setParent(parentContext.toOtelJava())
+                .setParent(parentContext.toOtelJavaContext())
                 .startSpan()
             spanStartTimeMs = timestampMs
         }
@@ -96,10 +96,10 @@ class FakeEmbraceSdkSpan(
         if (isRecording) {
             this.errorCode = errorCode
             if (errorCode != null) {
-                status = StatusCode.Error(null)
+                status = StatusData.Error(null)
             }
 
-            if (status is StatusCode.Error) {
+            if (status is StatusData.Error) {
                 val error = errorCode?.fromErrorCode() ?: ErrorCodeAttribute.Failure
                 setSystemAttribute(error.key.name, error.value)
             }
@@ -155,7 +155,9 @@ class FakeEmbraceSdkSpan(
         return true
     }
 
-    override fun asNewContext(): Context? = sdkSpan?.let { parentContext.toOtelJava().with(this).with(it).toOtelKotlin() }
+    override fun asNewContext(): Context? = sdkSpan?.let {
+        parentContext.toOtelJavaContext().with(this).with(it).toOtelKotlinContext()
+    }
 
     override fun snapshot(): Span? {
         return if (spanId == null) {
@@ -209,7 +211,7 @@ class FakeEmbraceSdkSpan(
 
     override fun storeInContext(context: OtelJavaContext): OtelJavaContext {
         val spanKey = getOrCreateSpanKey(fakeObjectCreator)
-        return context.with(spanKey.toOtelJava(), this)
+        return context.with(spanKey.toOtelJavaContextKey(), this)
     }
 
     private fun started(): Boolean = sdkSpan != null

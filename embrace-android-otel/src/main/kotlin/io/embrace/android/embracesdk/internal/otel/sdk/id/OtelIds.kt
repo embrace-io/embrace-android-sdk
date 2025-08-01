@@ -1,10 +1,11 @@
 package io.embrace.android.embracesdk.internal.otel.sdk.id
 
-import io.embrace.opentelemetry.kotlin.k2j.id.TracingIdGeneratorImpl
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaIdGenerator
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanId
 
 object OtelIds {
 
-    private val generator = TracingIdGeneratorImpl()
+    private val generator = OtelJavaIdGenerator.random()
 
     /**
      * Generates a new valid SpanId.
@@ -19,5 +20,5 @@ object OtelIds {
     /**
      * An invalid SpanId.
      */
-    val invalidSpanId: String = generator.invalidSpanId
+    val invalidSpanId: String = OtelJavaSpanId.getInvalid()
 }

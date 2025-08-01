@@ -30,11 +30,11 @@ import io.embrace.opentelemetry.kotlin.aliases.OtelJavaContext
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanContext
 import io.embrace.opentelemetry.kotlin.attributes.setAttributes
 import io.embrace.opentelemetry.kotlin.context.Context
-import io.embrace.opentelemetry.kotlin.j2k.bridge.context.toOtelKotlinContext
-import io.embrace.opentelemetry.kotlin.k2j.context.toOtelJavaContext
-import io.embrace.opentelemetry.kotlin.k2j.tracing.toOtelJavaContextKey
-import io.embrace.opentelemetry.kotlin.k2j.tracing.toOtelJavaSpanContext
-import io.embrace.opentelemetry.kotlin.k2j.tracing.toOtelKotlinSpanContext
+import io.embrace.opentelemetry.kotlin.context.toOtelJavaContext
+import io.embrace.opentelemetry.kotlin.context.toOtelKotlinContext
+import io.embrace.opentelemetry.kotlin.tracing.conversion.toOtelJavaContextKey
+import io.embrace.opentelemetry.kotlin.tracing.conversion.toOtelJavaSpanContext
+import io.embrace.opentelemetry.kotlin.tracing.conversion.toOtelKotlinSpanContext
 import io.embrace.opentelemetry.kotlin.tracing.data.StatusData
 import io.embrace.opentelemetry.kotlin.tracing.model.Span
 import io.embrace.opentelemetry.kotlin.tracing.model.SpanContext

@@ -3,8 +3,8 @@ package io.embrace.android.embracesdk.internal.otel
 import io.embrace.android.embracesdk.internal.payload.Span.Status
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanContext
-import io.embrace.opentelemetry.kotlin.k2j.tracing.toOtelKotlinSpanContext
 import io.embrace.opentelemetry.kotlin.tracing.StatusCode
+import io.embrace.opentelemetry.kotlin.tracing.conversion.toOtelKotlinSpanContext
 import io.embrace.opentelemetry.kotlin.tracing.data.StatusData
 import io.embrace.opentelemetry.kotlin.tracing.model.SpanContext
 

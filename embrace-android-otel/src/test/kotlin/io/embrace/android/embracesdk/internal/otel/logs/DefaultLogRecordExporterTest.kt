@@ -6,7 +6,7 @@ import io.embrace.android.embracesdk.fakes.FakeReadWriteLogRecord
 import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
 import io.embrace.android.embracesdk.internal.otel.schema.PrivateSpan
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
-import io.embrace.opentelemetry.kotlin.j2k.logging.export.toOtelKotlinLogRecordExporter
+import io.embrace.opentelemetry.kotlin.logging.export.toOtelKotlinLogRecordExporter
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Test

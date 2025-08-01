@@ -2,13 +2,14 @@ package io.embrace.android.embracesdk.internal.otel.spans
 
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeOtelKotlinClock
+import io.embrace.android.embracesdk.fakes.fakeObjectCreator
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.embrace.android.embracesdk.internal.otel.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.otel.sdk.DataValidator
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.OpenTelemetryInstance
+import io.embrace.opentelemetry.kotlin.createOpenTelemetryKotlin
 import io.embrace.opentelemetry.kotlin.getTracer
-import io.embrace.opentelemetry.kotlin.kotlinApi
 import io.embrace.opentelemetry.kotlin.tracing.Tracer
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -34,7 +35,7 @@ internal class EmbraceSpanFactoryImplTest {
                 updateNotified = true
             }
         }
-        val api = OpenTelemetryInstance.kotlinApi(clock = openTelemetryClock)
+        val api = OpenTelemetryInstance.createOpenTelemetryKotlin(clock = openTelemetryClock)
         tracer = api.getTracer("my_tracer")
         embraceSpanFactory = EmbraceSpanFactoryImpl(
             openTelemetryClock = openTelemetryClock,
@@ -52,6 +53,7 @@ internal class EmbraceSpanFactoryImplTest {
                 internal = false,
                 private = false,
                 tracer = tracer,
+                objectCreator = fakeObjectCreator,
             )
         )
         assertTrue(span.start(clock.now()))
@@ -74,6 +76,7 @@ internal class EmbraceSpanFactoryImplTest {
                 internal = true,
                 private = true,
                 tracer = tracer,
+                objectCreator = fakeObjectCreator,
             )
         )
         assertTrue(span.start(clock.now()))
@@ -94,6 +97,7 @@ internal class EmbraceSpanFactoryImplTest {
                 internal = true,
                 private = false,
                 tracer = tracer,
+                objectCreator = fakeObjectCreator,
             )
         )
         assertTrue(span.start(clock.now()))
@@ -113,7 +117,8 @@ internal class EmbraceSpanFactoryImplTest {
                 type = EmbType.System.Log,
                 internal = false,
                 private = false,
-                tracer = tracer
+                tracer = tracer,
+                objectCreator = fakeObjectCreator,
             )
         )
         val spanBuilder = OtelSpanStartArgs(
@@ -122,7 +127,8 @@ internal class EmbraceSpanFactoryImplTest {
             internal = false,
             private = false,
             tracer = tracer,
-            parentCtx = parent.asNewContext()
+            parentCtx = parent.asNewContext(),
+            objectCreator = fakeObjectCreator,
         )
 
         with(embraceSpanFactory.create(otelSpanStartArgs = spanBuilder)) {

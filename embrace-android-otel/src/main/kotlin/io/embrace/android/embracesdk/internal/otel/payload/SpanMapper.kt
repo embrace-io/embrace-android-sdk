@@ -67,7 +67,7 @@ fun Span.toEmbracePayload(): EmbraceSpanData {
         status = when (status) {
             Span.Status.UNSET -> StatusCode.Unset
             Span.Status.OK -> StatusCode.Ok
-            Span.Status.ERROR -> StatusCode.Error(null)
+            Span.Status.ERROR -> StatusCode.Error
             else -> StatusCode.Unset
         },
         events = events?.mapNotNull { it.toEmbracePayload() } ?: emptyList(),

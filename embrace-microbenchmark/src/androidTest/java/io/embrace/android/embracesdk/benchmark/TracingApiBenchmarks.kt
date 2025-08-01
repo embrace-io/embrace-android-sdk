@@ -17,6 +17,7 @@ import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
 import io.embrace.android.embracesdk.internal.otel.spans.SpanSinkImpl
 import io.embrace.android.embracesdk.internal.otel.spans.UninitializedSdkSpanService
 import io.embrace.android.embracesdk.spans.EmbraceSpan
+import io.embrace.opentelemetry.kotlin.creator.createCompatObjectCreator
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Rule
@@ -57,9 +58,8 @@ class TracingApiBenchmarks {
             spanService = UninitializedSdkSpanService()
         )
         spansService = SpanServiceImpl(
+            tracer = otelSdkWrapper.sdkTracer,
             spanRepository = spanRepository,
-            canStartNewSpan = { _, _ -> true },
-            initCallback = { },
             embraceSpanFactory =
                 EmbraceSpanFactoryImpl(
                     openTelemetryClock = clock,
@@ -67,7 +67,9 @@ class TracingApiBenchmarks {
                     dataValidator = dataValidator
                 ),
             dataValidator = dataValidator,
-            tracer = otelSdkWrapper.sdkTracer
+            canStartNewSpan = { _, _ -> true },
+            initCallback = { },
+            objectCreator = createCompatObjectCreator()
         )
     }
 

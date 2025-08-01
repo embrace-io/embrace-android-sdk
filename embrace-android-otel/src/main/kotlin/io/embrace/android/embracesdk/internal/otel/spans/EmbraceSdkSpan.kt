@@ -10,12 +10,11 @@ import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaContext
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaImplicitContextKeyed
 import io.embrace.opentelemetry.kotlin.context.Context
-import io.embrace.opentelemetry.kotlin.k2j.context.root
-import io.embrace.opentelemetry.kotlin.k2j.tracing.toOtelJava
-import io.embrace.opentelemetry.kotlin.tracing.StatusCode
+import io.embrace.opentelemetry.kotlin.context.ContextKey
+import io.embrace.opentelemetry.kotlin.creator.ObjectCreator
+import io.embrace.opentelemetry.kotlin.tracing.data.StatusData
 import io.embrace.opentelemetry.kotlin.tracing.model.SpanContext
 import io.embrace.opentelemetry.kotlin.tracing.model.SpanKind
 
@@ -87,8 +86,6 @@ interface EmbraceSdkSpan : EmbraceSpan, OtelJavaImplicitContextKeyed {
         attributes: Map<String, String> = emptyMap(),
     ): Boolean
 
-    override fun storeInContext(context: OtelJavaContext): OtelJavaContext = context.with(embraceSpanContextKey.toOtelJava(), this)
-
     /**
      * Returns a read-only view of the attributes
      */
@@ -107,7 +104,7 @@ interface EmbraceSdkSpan : EmbraceSpan, OtelJavaImplicitContextKeyed {
     /**
      * The span status
      */
-    var status: StatusCode
+    var status: StatusData
 
     /**
      * Retrieves the span events
@@ -120,11 +117,23 @@ interface EmbraceSdkSpan : EmbraceSpan, OtelJavaImplicitContextKeyed {
     fun links(): List<Link>
 }
 
-fun Context.getEmbraceSpan(): EmbraceSdkSpan? = get(embraceSpanContextKey)
+private val lock = Any()
+private var embraceSpanContextKey: ContextKey<EmbraceSdkSpan>? = null
 
-fun EmbraceSdkSpan.createContext(): Context {
-    val newParentContext = asNewContext() ?: Context.root()
-    return newParentContext.set(embraceSpanContextKey, this)
+fun Context.getEmbraceSpan(objectCreator: ObjectCreator): EmbraceSdkSpan? = get(getOrCreateSpanKey(objectCreator))
+
+fun EmbraceSdkSpan.createContext(objectCreator: ObjectCreator): Context {
+    val newParentContext = asNewContext() ?: objectCreator.context.root()
+    return newParentContext.set(getOrCreateSpanKey(objectCreator), this)
 }
 
-private val embraceSpanContextKey = Context.root().createKey<EmbraceSdkSpan>("embrace-span-key")
+fun getOrCreateSpanKey(objectCreator: ObjectCreator): ContextKey<EmbraceSdkSpan> {
+    if (embraceSpanContextKey == null) {
+        synchronized(lock) {
+            if (embraceSpanContextKey == null) {
+                embraceSpanContextKey = objectCreator.context.root().createKey("embrace-span-key")
+            }
+        }
+    }
+    return embraceSpanContextKey ?: error("Failed to create context key")
+}

@@ -11,6 +11,7 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
 import io.embrace.android.embracesdk.fakes.FakeEmbraceSpanFactory
 import io.embrace.android.embracesdk.fakes.FakeTracer
+import io.embrace.android.embracesdk.fakes.fakeObjectCreator
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.arch.destination.SpanAttributeData
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
@@ -160,6 +161,7 @@ internal class CurrentSessionSpanImplTests {
                         internal = false,
                         private = false,
                         tracer = tracer,
+                        objectCreator = fakeObjectCreator,
                     )
                 )
             )
@@ -172,6 +174,7 @@ internal class CurrentSessionSpanImplTests {
                     internal = false,
                     private = false,
                     tracer = tracer,
+                    objectCreator = fakeObjectCreator,
                 )
             )
         )
@@ -183,6 +186,7 @@ internal class CurrentSessionSpanImplTests {
                     internal = true,
                     private = false,
                     tracer = tracer,
+                    objectCreator = fakeObjectCreator,
                 )
             )
         )
@@ -477,7 +481,8 @@ internal class CurrentSessionSpanImplTests {
             spanRepository = spanRepository,
             spanSink = spanSink,
             embraceSpanFactorySupplier = { FakeEmbraceSpanFactory() },
-            tracerSupplier = { FakeTracer() }
+            tracerSupplier = { FakeTracer() },
+            objectCreatorSupplier = ::fakeObjectCreator
         )
         assertFalse(sessionSpan.readySession())
     }

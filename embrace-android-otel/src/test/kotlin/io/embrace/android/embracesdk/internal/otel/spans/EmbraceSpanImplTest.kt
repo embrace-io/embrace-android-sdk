@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
 import io.embrace.android.embracesdk.fakes.FakeOtelKotlinClock
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
+import io.embrace.android.embracesdk.fakes.fakeObjectCreator
 import io.embrace.android.embracesdk.fixtures.MAX_LENGTH_ATTRIBUTE_KEY
 import io.embrace.android.embracesdk.fixtures.MAX_LENGTH_ATTRIBUTE_KEY_FOR_INTERNAL_SPAN
 import io.embrace.android.embracesdk.fixtures.MAX_LENGTH_ATTRIBUTE_VALUE
@@ -42,9 +43,9 @@ import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.OpenTelemetryInstance
 import io.embrace.opentelemetry.kotlin.context.Context
-import io.embrace.opentelemetry.kotlin.k2j.context.current
-import io.embrace.opentelemetry.kotlin.k2j.tracing.SpanContextAdapter
-import io.embrace.opentelemetry.kotlin.kotlinApi
+import io.embrace.opentelemetry.kotlin.createOpenTelemetryKotlin
+import io.embrace.opentelemetry.kotlin.creator.current
+import io.embrace.opentelemetry.kotlin.tracing.ext.toOtelKotlinSpanContext
 import io.embrace.opentelemetry.kotlin.tracing.model.SpanKind
 import io.opentelemetry.semconv.ExceptionAttributes
 import org.junit.Assert.assertEquals
@@ -65,7 +66,7 @@ internal class EmbraceSpanImplTest {
     private lateinit var embraceSpanFactory: EmbraceSpanFactory
     private var updateNotified: Boolean = false
     private var stoppedSpanId: String? = null
-    private val tracer = OpenTelemetryInstance.kotlinApi().tracerProvider.getTracer(
+    private val tracer = OpenTelemetryInstance.createOpenTelemetryKotlin().tracerProvider.getTracer(
         "test-tracer"
     )
 
@@ -90,6 +91,7 @@ internal class EmbraceSpanImplTest {
                 internal = false,
                 private = false,
                 tracer = tracer,
+                objectCreator = fakeObjectCreator,
             )
         )
         fakeClock.tick(100)
@@ -231,7 +233,7 @@ internal class EmbraceSpanImplTest {
             assertTrue(start())
             val linkedSpan = FakeEmbraceSdkSpan.stopped()
             val spanContext = checkNotNull(linkedSpan.spanContext)
-            assertTrue(embraceSpan.addSystemLink(SpanContextAdapter(spanContext), LinkType.PreviousSession))
+            assertTrue(embraceSpan.addSystemLink(spanContext.toOtelKotlinSpanContext(), LinkType.PreviousSession))
             assertTrue(updateNotified)
         }
     }
@@ -425,11 +427,14 @@ internal class EmbraceSpanImplTest {
         assertTrue(embraceSpan.start())
         repeat(dataValidator.otelLimitsConfig.getMaxSystemLinkCount()) {
             val spanContext = checkNotNull(FakeEmbraceSdkSpan.stopped().spanContext)
-            assertTrue(embraceSpan.addSystemLink(SpanContextAdapter(spanContext), LinkType.PreviousSession))
+            assertTrue(embraceSpan.addSystemLink(spanContext.toOtelKotlinSpanContext(), LinkType.PreviousSession))
         }
 
         assertFalse(
-            embraceSpan.addSystemLink(SpanContextAdapter(checkNotNull(FakeEmbraceSdkSpan.stopped().spanContext)), LinkType.PreviousSession)
+            embraceSpan.addSystemLink(
+                checkNotNull(FakeEmbraceSdkSpan.stopped().spanContext).toOtelKotlinSpanContext(),
+                LinkType.PreviousSession
+            )
         )
     }
 
@@ -465,7 +470,7 @@ internal class EmbraceSpanImplTest {
             val linkAttrs = mapOf("link-attr" to "value")
             val spanContext = checkNotNull(linkedSpan.spanContext)
             assertTrue(embraceSpan.addLink(spanContext, linkAttrs))
-            assertTrue(embraceSpan.addSystemLink(SpanContextAdapter(spanContext), LinkType.PreviousSession))
+            assertTrue(embraceSpan.addSystemLink(spanContext.toOtelKotlinSpanContext(), LinkType.PreviousSession))
 
             val snapshot = checkNotNull(embraceSpan.snapshot())
 
@@ -528,7 +533,7 @@ internal class EmbraceSpanImplTest {
 
     @Test
     fun `validate context objects are propagated from the parent to the child span`() {
-        val newParentContext = io.embrace.opentelemetry.kotlin.context.Context.current().set(fakeContextKey, "fake-value")
+        val newParentContext = fakeObjectCreator.context.current().set(fakeContextKey, "fake-value")
         val wrapper = createWrapperForInternalSpan(parentContext = newParentContext)
         embraceSpan = embraceSpanFactory.create(wrapper)
 
@@ -583,8 +588,9 @@ internal class EmbraceSpanImplTest {
         internal = true,
         private = true,
         tracer = tracer,
+        parentCtx = parentContext,
         startTimeMs = startTimeMs,
-        parentCtx = parentContext
+        objectCreator = fakeObjectCreator,
     )
 
     private fun EmbraceSdkSpan.assertSnapshot(

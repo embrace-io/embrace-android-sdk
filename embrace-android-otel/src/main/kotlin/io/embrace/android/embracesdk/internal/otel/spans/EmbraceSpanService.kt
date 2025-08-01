@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
+import io.embrace.opentelemetry.kotlin.creator.ObjectCreator
 import io.embrace.opentelemetry.kotlin.tracing.Tracer
 
 /**
@@ -23,6 +24,7 @@ class EmbraceSpanService(
     private val initCallback: (initTimeMs: Long) -> Unit,
     private val embraceSpanFactorySupplier: Provider<EmbraceSpanFactory>,
     private val tracerSupplier: Provider<Tracer>,
+    private val objectCreatorSupplier: Provider<ObjectCreator>,
 ) : SpanService {
     private val uninitializedSdkSpansService: UninitializedSdkSpanService = UninitializedSdkSpanService()
 
@@ -39,7 +41,8 @@ class EmbraceSpanService(
                         embraceSpanFactory = embraceSpanFactorySupplier(),
                         canStartNewSpan = canStartNewSpan,
                         initCallback = initCallback,
-                        tracer = tracerSupplier()
+                        tracer = tracerSupplier(),
+                        objectCreator = objectCreatorSupplier()
                     )
                     realSpansService.initializeService(sdkInitStartTimeMs)
                     if (realSpansService.initialized()) {

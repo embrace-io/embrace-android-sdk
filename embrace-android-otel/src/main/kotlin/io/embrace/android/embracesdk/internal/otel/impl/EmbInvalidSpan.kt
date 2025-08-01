@@ -2,8 +2,8 @@ package io.embrace.android.embracesdk.internal.otel.impl
 
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.attributes.AttributeContainer
-import io.embrace.opentelemetry.kotlin.k2j.tracing.model.invalid
-import io.embrace.opentelemetry.kotlin.tracing.StatusCode
+import io.embrace.opentelemetry.kotlin.creator.ObjectCreator
+import io.embrace.opentelemetry.kotlin.tracing.data.StatusData
 import io.embrace.opentelemetry.kotlin.tracing.model.Link
 import io.embrace.opentelemetry.kotlin.tracing.model.Span
 import io.embrace.opentelemetry.kotlin.tracing.model.SpanContext
@@ -14,16 +14,16 @@ import io.embrace.opentelemetry.kotlin.tracing.model.SpanKind
  * Embrace-specific decorator that adds extra logic to OTel Tracing.
  */
 @OptIn(ExperimentalApi::class)
-internal class EmbInvalidSpan : Span {
+internal class EmbInvalidSpan(objectCreator: ObjectCreator) : Span {
 
     override fun attributes(): Map<String, Any> = emptyMap()
 
     override var name: String = ""
-    override val parent: SpanContext = SpanContext.invalid()
-    override val spanContext: SpanContext = SpanContext.invalid()
+    override val parent: SpanContext = objectCreator.spanContext.invalid
+    override val spanContext: SpanContext = objectCreator.spanContext.invalid
     override val spanKind: SpanKind = SpanKind.INTERNAL
     override val startTimestamp: Long = 0
-    override var status: StatusCode = StatusCode.Unset
+    override var status: StatusData = StatusData.Unset
 
     override fun addEvent(name: String, timestamp: Long?, attributes: AttributeContainer.() -> Unit) {
     }

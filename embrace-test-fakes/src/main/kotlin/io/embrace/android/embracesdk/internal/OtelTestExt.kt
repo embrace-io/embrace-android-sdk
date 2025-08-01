@@ -40,7 +40,7 @@ fun OtelJavaSpanData.toEmbraceSpanData(): EmbraceSpanData = EmbraceSpanData(
     status = when (status.statusCode) {
         StatusCode.UNSET -> io.embrace.opentelemetry.kotlin.tracing.StatusCode.Unset
         StatusCode.OK -> io.embrace.opentelemetry.kotlin.tracing.StatusCode.Ok
-        StatusCode.ERROR -> io.embrace.opentelemetry.kotlin.tracing.StatusCode.Error(null)
+        StatusCode.ERROR -> io.embrace.opentelemetry.kotlin.tracing.StatusCode.Error
         else -> io.embrace.opentelemetry.kotlin.tracing.StatusCode.Unset
     },
     events = events?.mapNotNull { it.toEmbracePayload() } ?: emptyList(),

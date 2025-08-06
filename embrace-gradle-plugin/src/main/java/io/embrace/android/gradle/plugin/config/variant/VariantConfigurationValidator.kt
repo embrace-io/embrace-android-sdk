@@ -26,7 +26,7 @@ internal object VariantConfigurationValidator {
     private fun validateAppId(configuration: EmbraceVariantConfig) {
         if (!configuration.appId.isNullOrEmpty()) {
             require(configuration.appId.length == APP_ID_LENGTH) {
-                "app_id must contain exactly $APP_ID_LENGTH characters."
+                "app_id must contain exactly $APP_ID_LENGTH characters. Current value ${configuration.appId}"
             }
         }
     }
@@ -38,7 +38,7 @@ internal object VariantConfigurationValidator {
     private fun validateApiToken(configuration: EmbraceVariantConfig) {
         if (!configuration.apiToken.isNullOrEmpty()) {
             require(configuration.apiToken.length == API_TOKEN_LENGTH) {
-                "api_token must contain exactly $API_TOKEN_LENGTH characters."
+                "api_token must contain exactly $API_TOKEN_LENGTH characters. Current value ${configuration.apiToken}"
             }
         }
     }

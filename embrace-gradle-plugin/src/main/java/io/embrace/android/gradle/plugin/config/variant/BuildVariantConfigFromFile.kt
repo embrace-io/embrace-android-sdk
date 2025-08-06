@@ -61,7 +61,7 @@ private fun buildVariantConfiguration(configFile: File, systemWrapper: SystemWra
         configuration
     } catch (ex: Throwable) {
         throw IllegalArgumentException(
-            "Problem parsing field in Embrace config file ${configFile.absoluteFile}.\nError=${ex.localizedMessage}"
+            "Problem parsing field in Embrace config file ${configFile.absoluteFile} or environment variable.\nError=${ex.localizedMessage}"
         )
     }
 }

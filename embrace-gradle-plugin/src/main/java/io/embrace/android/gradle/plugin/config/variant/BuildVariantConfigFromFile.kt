@@ -1,6 +1,7 @@
 package io.embrace.android.gradle.plugin.config.variant
 
 import com.squareup.moshi.Moshi
+import io.embrace.android.gradle.plugin.EmbraceLogger
 import io.embrace.android.gradle.plugin.instrumentation.config.model.EmbraceVariantConfig
 import io.embrace.android.gradle.plugin.model.AndroidCompactedVariantData
 import io.embrace.android.gradle.plugin.system.JavaSystemWrapper
@@ -8,8 +9,9 @@ import io.embrace.android.gradle.plugin.system.SystemWrapper
 import okio.buffer
 import okio.source
 import org.gradle.api.file.Directory
-import org.gradle.api.logging.Logging
 import java.io.File
+
+private val logger = EmbraceLogger("BuildVariantConfigFromFile")
 
 /**
  * It builds an EmbraceVariantConfiguration with information fetched from a json file.
@@ -74,7 +76,7 @@ private fun getApiTokenFromEnv(config: EmbraceVariantConfig, systemWrapper: Syst
     }
 
     if (!config.apiToken.isNullOrEmpty() && !apiTokenFromEnv.isNullOrEmpty()) {
-        Logging.getLogger("BuildVariantConfigFromFile").warn(
+        logger.warn(
             "API tokens were found in both an environment variable and the configuration file. The latter will be used."
         )
     }
@@ -90,7 +92,7 @@ private fun getAppIdFromEnv(config: EmbraceVariantConfig, systemWrapper: SystemW
     }
 
     if (!config.appId.isNullOrEmpty() && !appIdFromEnv.isNullOrEmpty()) {
-        Logging.getLogger("BuildVariantConfigFromFile").warn(
+        logger.warn(
             "App IDs were found in both an environment variable and the configuration file. The latter will be used."
         )
     }

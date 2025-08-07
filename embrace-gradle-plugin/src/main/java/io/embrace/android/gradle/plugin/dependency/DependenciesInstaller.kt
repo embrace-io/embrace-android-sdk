@@ -1,5 +1,6 @@
 package io.embrace.android.gradle.plugin.dependency
 
+import io.embrace.android.gradle.plugin.EmbraceLogger
 import io.embrace.android.gradle.plugin.config.PluginBehavior
 import io.embrace.embrace_gradle_plugin.BuildConfig
 import org.gradle.api.InvalidUserDataException
@@ -7,6 +8,8 @@ import org.gradle.api.Project
 import org.gradle.api.attributes.Attribute
 
 const val INSTALL_EMBRACE_DEPENDENCIES_ATTRIBUTE = "io.embrace.install-dependencies"
+
+private val embraceLogger = EmbraceLogger("DependenciesInstaller")
 
 /**
  * It installs embrace dependencies (if needed) into customer's project for given variant only.
@@ -74,7 +77,7 @@ fun Project.installDependenciesForVariant(
                     )
                 }
             } catch (e: InvalidUserDataException) {
-                logger.error(
+                embraceLogger.error(
                     "This happens because someone that gets executed before the embrace gradle plugin is resolving " +
                         "dependencies (either explicit or implicitly) at configuration time. We recommend to find who's " +
                         "doing that, and fix it. Gradle does not recommend resolving dependencies during configuration " +
@@ -92,8 +95,8 @@ fun Project.installDependenciesForVariant(
 private fun fetchConfiguration(configurationName: String, project: Project) = with(project) {
     try {
         return configurations.register(configurationName)
-    } catch (e: InvalidUserDataException) {
-        logger.debug("Configuration $configurationName already exists.")
+    } catch (_: InvalidUserDataException) {
+        embraceLogger.debug("Configuration $configurationName already exists.")
         configurations.named(configurationName)
     }
 }

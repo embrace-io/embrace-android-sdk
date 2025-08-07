@@ -7,19 +7,11 @@ import org.gradle.api.logging.Logging
 /**
  * Embrace-specific logger that automatically adds plugin and class prefixes.
  */
-class EmbraceLogger {
-    private val gradleLogger: org.gradle.api.logging.Logger
-    private val logPrefix: String
+class EmbraceLogger(componentName: String) {
+    private val gradleLogger: org.gradle.api.logging.Logger = Logging.getLogger(componentName)
+    private val logPrefix: String = "[EmbraceGradlePlugin] [$componentName]"
 
-    constructor(clazz: Class<*>) {
-        gradleLogger = Logging.getLogger(clazz)
-        logPrefix = "[EmbraceGradlePlugin] [${clazz.simpleName}]"
-    }
-
-    constructor(componentName: String) {
-        gradleLogger = Logging.getLogger(componentName)
-        logPrefix = "[EmbraceGradlePlugin] [$componentName]"
-    }
+    constructor(clazz: Class<*>) : this(clazz.simpleName)
 
     /**
      * Log a message with INFO severity.

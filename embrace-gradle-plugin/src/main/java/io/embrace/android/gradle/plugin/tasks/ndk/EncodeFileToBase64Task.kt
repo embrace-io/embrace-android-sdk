@@ -1,6 +1,6 @@
 package io.embrace.android.gradle.plugin.tasks.ndk
 
-import io.embrace.android.gradle.plugin.Logger
+import io.embrace.android.gradle.plugin.EmbraceLogger
 import io.embrace.android.gradle.plugin.tasks.EmbraceTaskImpl
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.model.ObjectFactory
@@ -26,7 +26,7 @@ abstract class EncodeFileToBase64Task @Inject constructor(
     objectFactory: ObjectFactory,
 ) : EmbraceTaskImpl(objectFactory) {
 
-    private val logger = Logger(EncodeFileToBase64Task::class.java)
+    private val logger = EmbraceLogger(EncodeFileToBase64Task::class.java)
 
     @SkipWhenEmpty
     @get:InputFile

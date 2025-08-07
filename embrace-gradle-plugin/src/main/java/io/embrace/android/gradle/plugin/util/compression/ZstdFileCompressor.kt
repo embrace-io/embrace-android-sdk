@@ -1,14 +1,14 @@
 package io.embrace.android.gradle.plugin.util.compression
 
 import com.github.luben.zstd.ZstdOutputStream
-import io.embrace.android.gradle.plugin.Logger
+import io.embrace.android.gradle.plugin.EmbraceLogger
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.IOException
 
 class ZstdFileCompressor : FileCompressor {
-    private val logger = Logger(ZstdFileCompressor::class.java)
+    private val logger = EmbraceLogger(ZstdFileCompressor::class.java)
 
     override fun compress(inputFile: File, outputFile: File): File? {
         return try {

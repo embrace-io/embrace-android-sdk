@@ -2,6 +2,7 @@ package io.embrace.android.gradle.plugin.instrumentation
 
 import com.android.build.api.instrumentation.FramesComputationMode
 import com.android.build.api.instrumentation.InstrumentationScope
+import io.embrace.android.gradle.plugin.EmbraceLogger
 import io.embrace.android.gradle.plugin.gradle.lazyTaskLookup
 import io.embrace.android.gradle.plugin.gradle.safeFlatMap
 import io.embrace.android.gradle.plugin.tasks.ndk.EncodeFileToBase64Task
@@ -11,6 +12,9 @@ import io.embrace.android.gradle.plugin.tasks.registration.RegistrationParams
 import io.embrace.android.gradle.plugin.util.capitalizedString
 
 class AsmTaskRegistration : EmbraceTaskRegistration {
+
+    private val logger = EmbraceLogger(AsmTaskRegistration::class.java)
+
     override fun register(params: RegistrationParams) {
         params.execute()
     }
@@ -64,7 +68,7 @@ class AsmTaskRegistration : EmbraceTaskRegistration {
                 )
             }
         } catch (exception: Exception) {
-            project.logger.error("An error has occurred while performing ASM bytecode transformation.", exception)
+            logger.error("An error has occurred while performing ASM bytecode transformation.", exception)
             if (behavior.failBuildOnUploadErrors.get()) {
                 throw exception
             }

@@ -18,6 +18,7 @@ private const val ANDROID_APPLICATION_PLUGIN = "com.android.application"
  */
 class EmbraceGradlePlugin : Plugin<Project> {
 
+    private val logger = EmbraceLogger(EmbraceGradlePlugin::class.java)
     private val impl by lazy {
         EmbraceGradlePluginDelegate()
     }
@@ -52,6 +53,8 @@ class EmbraceGradlePlugin : Plugin<Project> {
                 embrace,
             )
         }
+
+        logger.info("Embrace Gradle Plugin applied to project: ${project.name}")
     }
 
     private fun validateMinGradleVersion() {

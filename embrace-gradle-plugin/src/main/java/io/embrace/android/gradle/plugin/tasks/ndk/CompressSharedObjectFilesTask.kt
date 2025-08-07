@@ -1,6 +1,6 @@
 package io.embrace.android.gradle.plugin.tasks.ndk
 
-import io.embrace.android.gradle.plugin.Logger
+import io.embrace.android.gradle.plugin.EmbraceLogger
 import io.embrace.android.gradle.plugin.tasks.EmbraceTaskImpl
 import io.embrace.android.gradle.plugin.util.compression.ZstdFileCompressor
 import org.gradle.api.file.DirectoryProperty
@@ -24,7 +24,7 @@ abstract class CompressSharedObjectFilesTask @Inject constructor(
 ) : EmbraceTaskImpl(objectFactory) {
 
     private val compressor = ZstdFileCompressor()
-    private val logger = Logger(CompressSharedObjectFilesTask::class.java)
+    private val logger = EmbraceLogger(CompressSharedObjectFilesTask::class.java)
 
     @get:InputDirectory
     @get:SkipWhenEmpty

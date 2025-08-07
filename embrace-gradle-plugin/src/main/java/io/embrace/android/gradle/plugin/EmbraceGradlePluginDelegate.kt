@@ -22,7 +22,7 @@ import org.gradle.api.provider.ListProperty
  */
 class EmbraceGradlePluginDelegate {
 
-    private val logger: Logger<EmbraceGradlePluginDelegate> = Logger(EmbraceGradlePluginDelegate::class.java)
+    private val logger = EmbraceLogger(EmbraceGradlePluginDelegate::class.java)
 
     fun onAndroidPluginApplied(
         project: Project,

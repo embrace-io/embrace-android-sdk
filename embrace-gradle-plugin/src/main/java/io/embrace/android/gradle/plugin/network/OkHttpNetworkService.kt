@@ -1,6 +1,6 @@
 package io.embrace.android.gradle.plugin.network
 
-import io.embrace.android.gradle.plugin.Logger
+import io.embrace.android.gradle.plugin.EmbraceLogger
 import io.embrace.android.gradle.plugin.buildreporter.BuildTelemetryRequest
 import io.embrace.android.gradle.plugin.tasks.common.RequestParams
 import io.embrace.android.gradle.plugin.tasks.ndk.NdkUploadHandshakeRequest
@@ -40,7 +40,7 @@ class OkHttpNetworkService(
         .writeTimeout(NETWORK_WRITE_TIMEOUT_SECONDS, TimeUnit.SECONDS)
         .build()
 
-    private val logger = Logger(OkHttpNetworkService::class.java)
+    private val logger = EmbraceLogger(OkHttpNetworkService::class.java)
 
     private val mediaTypeJson = "application/json".toMediaType()
     private val mediaTypeText = "text/plain".toMediaType()

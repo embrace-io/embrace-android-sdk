@@ -1,6 +1,6 @@
 package io.embrace.android.gradle.plugin.tasks.ndk
 
-import io.embrace.android.gradle.plugin.Logger
+import io.embrace.android.gradle.plugin.EmbraceLogger
 import io.embrace.android.gradle.plugin.network.OkHttpNetworkService
 import io.embrace.android.gradle.plugin.tasks.EmbraceUploadTask
 import io.embrace.android.gradle.plugin.tasks.EmbraceUploadTaskImpl
@@ -35,7 +35,7 @@ abstract class UploadSharedObjectFilesTask @Inject constructor(
 ) : EmbraceUploadTask, EmbraceUploadTaskImpl(objectFactory) {
 
     private val serializer = MoshiSerializer()
-    private val logger = Logger(UploadSharedObjectFilesTask::class.java)
+    private val logger = EmbraceLogger(UploadSharedObjectFilesTask::class.java)
 
     @get:Input
     val failBuildOnUploadErrors: Property<Boolean> = objectFactory.property(Boolean::class.java)

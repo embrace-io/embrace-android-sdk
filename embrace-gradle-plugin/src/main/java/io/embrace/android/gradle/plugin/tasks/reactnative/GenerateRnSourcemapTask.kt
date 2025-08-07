@@ -1,7 +1,7 @@
 package io.embrace.android.gradle.plugin.tasks.reactnative
 
 import com.squareup.moshi.JsonWriter
-import io.embrace.android.gradle.plugin.Logger
+import io.embrace.android.gradle.plugin.EmbraceLogger
 import io.embrace.android.gradle.plugin.hash.calculateMD5ForFile
 import io.embrace.android.gradle.plugin.network.OkHttpNetworkService
 import io.embrace.android.gradle.plugin.tasks.EmbraceUploadTask
@@ -29,7 +29,7 @@ abstract class GenerateRnSourcemapTask @Inject constructor(
     objectFactory: ObjectFactory,
 ) : EmbraceUploadTask, EmbraceUploadTaskImpl(objectFactory) {
 
-    private val logger = Logger(GenerateRnSourcemapTask::class.java)
+    private val logger = EmbraceLogger(GenerateRnSourcemapTask::class.java)
 
     @Optional
     @get:InputFile

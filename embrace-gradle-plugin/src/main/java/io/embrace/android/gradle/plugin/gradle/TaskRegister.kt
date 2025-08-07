@@ -1,5 +1,6 @@
 package io.embrace.android.gradle.plugin.gradle
 
+import io.embrace.android.gradle.plugin.EmbraceLogger
 import io.embrace.android.gradle.plugin.model.AndroidCompactedVariantData
 import io.embrace.android.gradle.plugin.tasks.EmbraceTask
 import io.embrace.android.gradle.plugin.util.capitalizedString
@@ -14,17 +15,18 @@ fun <T : EmbraceTask> Project.registerTask(
     name: String,
     clz: Class<T>,
     variantData: AndroidCompactedVariantData,
-    configurationAction: Action<T>
+    configurationAction: Action<T>,
 ): TaskProvider<T> {
+    val logger = EmbraceLogger(clz)
     val taskName = "$name${variantData.name.capitalizedString()}"
-    logger.info("Registering task=$taskName")
+    logger.info("Registering task $taskName.")
     val taskProvider: TaskProvider<T> = tasks.register(taskName, clz) { task: T ->
         // at this point, it means that the task has been realized, which is ok, it means that the task is being
         // configured (not necessarily ran)
-        logger.info("Task=$taskName has been realized.")
+        logger.info("Task $taskName has been realized.")
         task.variantData.set(variantData)
         configurationAction.execute(task)
-        logger.debug("Task=$taskName configured.")
+        logger.debug("Task $taskName configured.")
     }
     return taskProvider
 }

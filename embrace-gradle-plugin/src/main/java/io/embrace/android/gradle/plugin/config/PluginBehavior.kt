@@ -35,11 +35,6 @@ interface PluginBehavior {
     val baseUrl: String
 
     /**
-     * Whether the project uses React Native or not
-     */
-    val isReactNativeProject: Boolean
-
-    /**
      * The behavior for instrumenting bytecode
      */
     val instrumentation: InstrumentationBehavior

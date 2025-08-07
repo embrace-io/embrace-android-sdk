@@ -6,7 +6,6 @@ import io.embrace.android.gradle.plugin.api.EmbraceExtension
 import io.embrace.android.gradle.swazzler.plugin.extension.SwazzlerExtension
 import org.gradle.api.Project
 import org.gradle.api.provider.Provider
-import java.io.File
 
 class PluginBehaviorImpl(
     private val project: Project,
@@ -49,17 +48,6 @@ class PluginBehaviorImpl(
             prop
         } else {
             "https://$prop"
-        }
-    }
-
-    override val isReactNativeProject: Boolean by lazy {
-        val rootFile = project.rootDir.parentFile
-        if (rootFile != null) {
-            val nodeModules = File("${rootFile.path}/node_modules")
-            val nodeModulesEmbrace = File("${nodeModules.path}/react-native")
-            nodeModulesEmbrace.exists()
-        } else {
-            false
         }
     }
 

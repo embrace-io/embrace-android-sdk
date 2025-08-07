@@ -24,7 +24,7 @@ class TaskRegistrar(
     private val project: Project,
     private val behavior: PluginBehavior,
     private val embraceVariantConfigurationBuilder: EmbraceVariantConfigurationBuilder,
-    private val variantConfigurationsListProperty: ListProperty<VariantConfig>
+    private val variantConfigurationsListProperty: ListProperty<VariantConfig>,
 ) {
 
     private val logger = EmbraceLogger(TaskRegistrar::class.java)
@@ -40,22 +40,27 @@ class TaskRegistrar(
             }
     }
 
+    /**
+     * Registers React Native specific tasks for all variants.
+     * This method is called when the React Native plugin is detected.
+     */
+    fun registerReactNativeTasks() {
+        project.extensions.getByType(AndroidComponentsExtension::class.java)
+            .onVariants { variant: Variant ->
+                onReactNativeVariant(AndroidCompactedVariantData.from(variant), variant)
+            }
+    }
+
     private fun onVariant(variant: AndroidCompactedVariantData, ref: Variant) {
         project.installDependenciesForVariant(variant.name, behavior)
 
         setupVariantConfigurationListProperty(variant, variantConfigurationsListProperty)
 
-        val params = RegistrationParams(
-            project,
-            ref,
-            variant,
-            variantConfigurationsListProperty,
-            behavior,
-        )
+        val params = createRegistrationParams(variant, ref)
 
         AsmTaskRegistration().register(params)
 
-        if (behavior.isPluginDisabledForVariant(variant.name) || !shouldRegisterUploadTasks(variant, variantConfigurationsListProperty)) {
+        if (shouldSkipUploadTasks(variant)) {
             logger.info("Skipping upload tasks for variant: ${variant.name}")
             return
         } else {
@@ -63,11 +68,34 @@ class TaskRegistrar(
         }
     }
 
+    private fun onReactNativeVariant(variant: AndroidCompactedVariantData, ref: Variant) {
+        if (shouldSkipUploadTasks(variant)) {
+            logger.info("Skipping RN upload task for variant: ${variant.name}")
+            return
+        }
+
+        GenerateRnSourcemapTaskRegistration().register(
+            createRegistrationParams(variant, ref)
+        )
+    }
+
+    private fun shouldSkipUploadTasks(variant: AndroidCompactedVariantData): Boolean {
+        return behavior.isPluginDisabledForVariant(variant.name) ||
+            !shouldRegisterUploadTasks(variant, variantConfigurationsListProperty)
+    }
+
+    private fun createRegistrationParams(variant: AndroidCompactedVariantData, ref: Variant): RegistrationParams {
+        return RegistrationParams(
+            project,
+            ref,
+            variant,
+            variantConfigurationsListProperty,
+            behavior,
+        )
+    }
+
     private fun registerUploadTasks(params: RegistrationParams, variant: AndroidCompactedVariantData) {
         JvmMappingUploadTaskRegistration().register(params)
-        if (behavior.isReactNativeProject) {
-            GenerateRnSourcemapTaskRegistration().register(params)
-        }
         val variantConfig = variantConfigurationsListProperty.get().first { it.variantName == variant.name }
         NdkUploadTasksRegistration(behavior, variantConfig).register(params)
         if (behavior.isIl2CppMappingFilesUploadEnabled) {

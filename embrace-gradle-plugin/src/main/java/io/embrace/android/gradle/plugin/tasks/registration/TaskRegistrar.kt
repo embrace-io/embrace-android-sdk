@@ -2,6 +2,7 @@ package io.embrace.android.gradle.plugin.tasks.registration
 
 import com.android.build.api.variant.AndroidComponentsExtension
 import com.android.build.api.variant.Variant
+import io.embrace.android.gradle.plugin.EmbraceLogger
 import io.embrace.android.gradle.plugin.config.PluginBehavior
 import io.embrace.android.gradle.plugin.config.variant.EmbraceVariantConfigurationBuilder
 import io.embrace.android.gradle.plugin.dependency.installDependenciesForVariant
@@ -25,6 +26,8 @@ class TaskRegistrar(
     private val embraceVariantConfigurationBuilder: EmbraceVariantConfigurationBuilder,
     private val variantConfigurationsListProperty: ListProperty<VariantConfig>
 ) {
+
+    private val logger = EmbraceLogger(TaskRegistrar::class.java)
 
     /**
      * It is in charge of looping through each variant and configure each task.
@@ -53,6 +56,7 @@ class TaskRegistrar(
         AsmTaskRegistration().register(params)
 
         if (behavior.isPluginDisabledForVariant(variant.name) || !shouldRegisterUploadTasks(variant, variantConfigurationsListProperty)) {
+            logger.info("Skipping upload tasks for variant: ${variant.name}")
             return
         } else {
             registerUploadTasks(params, variant)

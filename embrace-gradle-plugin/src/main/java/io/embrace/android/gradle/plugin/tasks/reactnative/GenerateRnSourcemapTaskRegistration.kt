@@ -1,5 +1,6 @@
 package io.embrace.android.gradle.plugin.tasks.reactnative
 
+import io.embrace.android.gradle.plugin.EmbraceLogger
 import io.embrace.android.gradle.plugin.gradle.lazyTaskLookup
 import io.embrace.android.gradle.plugin.gradle.nullSafeMap
 import io.embrace.android.gradle.plugin.gradle.registerTask
@@ -25,6 +26,8 @@ private const val SOURCE_MAP_NAME = "android-embrace.bundle.map"
 
 class GenerateRnSourcemapTaskRegistration : EmbraceTaskRegistration {
 
+    private val logger = EmbraceLogger(GenerateRnSourcemapTaskRegistration::class.java)
+
     override fun register(params: RegistrationParams) {
         params.execute()
     }
@@ -36,6 +39,7 @@ class GenerateRnSourcemapTaskRegistration : EmbraceTaskRegistration {
     private fun RegistrationParams.execute() {
         // Prevent upload the bundle in debug variant
         if (data.isBuildTypeDebuggable) {
+            logger.info("Skipping sourcemap upload for variant: ${data.name}. Build type is debuggable.")
             return
         }
 

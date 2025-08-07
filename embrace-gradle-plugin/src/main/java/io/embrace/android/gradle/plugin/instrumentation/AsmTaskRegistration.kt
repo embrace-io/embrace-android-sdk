@@ -21,6 +21,7 @@ class AsmTaskRegistration : EmbraceTaskRegistration {
 
     private fun RegistrationParams.execute() {
         try {
+            logger.info("Setting up ASM transformation.")
             variant.instrumentation.setAsmFramesComputationMode(FramesComputationMode.COMPUTE_FRAMES_FOR_INSTRUMENTED_METHODS)
             variant.instrumentation.transformClassesWith(
                 EmbraceClassVisitorFactory::class.java,

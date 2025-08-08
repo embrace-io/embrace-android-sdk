@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.otel.config
 
-import io.embrace.android.embracesdk.fakes.FakeAttributeContainer
+import io.embrace.android.embracesdk.fakes.FakeMutableAttributeContainer
 import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.otel.logs.LogSinkImpl
 import io.embrace.android.embracesdk.internal.otel.spans.SpanSinkImpl
@@ -36,7 +36,7 @@ internal class OtelSdkConfigTest {
             systemInfo = systemInfo
         )
 
-        val attrs = FakeAttributeContainer().apply(configuration.resourceAction).attributes()
+        val attrs = FakeMutableAttributeContainer().apply(configuration.resourceAction).attributes
         val expected = mapOf(
             ServiceAttributes.SERVICE_NAME to configuration.sdkName,
             ServiceAttributes.SERVICE_VERSION to configuration.sdkVersion,

@@ -1,44 +1,46 @@
-package io.embrace.android.embracesdk.fakes
+package io.embrace.android.embracesdk.internal.otel.impl
 
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
-import io.embrace.opentelemetry.kotlin.attributes.AttributeContainer
+import io.embrace.opentelemetry.kotlin.attributes.MutableAttributeContainer
+import java.util.concurrent.ConcurrentHashMap
 
 @OptIn(ExperimentalApi::class)
-class FakeAttributeContainer(
-    private val impl: MutableMap<String, Any> = mutableMapOf(),
-) : AttributeContainer {
+internal class EmbMutableAttributeContainer(
+    private val map: MutableMap<String, String> = ConcurrentHashMap(),
+) : MutableAttributeContainer {
 
-    override fun attributes(): Map<String, Any> = impl.toMap()
+    override val attributes: Map<String, String>
+        get() = map.toMap()
 
     override fun setBooleanAttribute(key: String, value: Boolean) {
-        impl[key] = value
+        map[key] = value.toString()
     }
 
     override fun setBooleanListAttribute(key: String, value: List<Boolean>) {
-        impl[key] = value
+        map[key] = value.toString()
     }
 
     override fun setDoubleAttribute(key: String, value: Double) {
-        impl[key] = value
+        map[key] = value.toString()
     }
 
     override fun setDoubleListAttribute(key: String, value: List<Double>) {
-        impl[key] = value
+        map[key] = value.toString()
     }
 
     override fun setLongAttribute(key: String, value: Long) {
-        impl[key] = value
+        map[key] = value.toString()
     }
 
     override fun setLongListAttribute(key: String, value: List<Long>) {
-        impl[key] = value
+        map[key] = value.toString()
     }
 
     override fun setStringAttribute(key: String, value: String) {
-        impl[key] = value
+        map[key] = value
     }
 
     override fun setStringListAttribute(key: String, value: List<String>) {
-        impl[key] = value
+        map[key] = value.toString()
     }
 }

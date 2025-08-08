@@ -218,7 +218,7 @@ internal class InternalTracerTest {
         with(verifyPublicSpan(expectedName, ErrorCode.FAILURE)) {
             assertEquals(expectedStartTimeMs, startTimeNanos.nanosToMillis())
             assertEquals(expectedEndTimeMs, endTimeNanos.nanosToMillis())
-            assertTrue(status == StatusCode.Error)
+            assertTrue(status == StatusCode.ERROR)
         }
     }
 

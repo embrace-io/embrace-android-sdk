@@ -187,7 +187,7 @@ internal class EmbraceTracerTest {
         with(verifyPublicSpan(expectedName, true, ErrorCode.FAILURE)) {
             assertEquals(expectedStartTimeMs, startTimeNanos.nanosToMillis())
             assertEquals(expectedEndTimeMs, endTimeNanos.nanosToMillis())
-            assertTrue(status == StatusCode.Error)
+            assertTrue(status == StatusCode.ERROR)
         }
     }
 
@@ -235,7 +235,7 @@ internal class EmbraceTracerTest {
         with(verifyPublicSpan(expectedName, false, ErrorCode.USER_ABANDON)) {
             assertEquals(expectedStartTimeMs, startTimeNanos.nanosToMillis())
             assertEquals(expectedEndTimeMs, endTimeNanos.nanosToMillis())
-            assertTrue(status == StatusCode.Error)
+            assertTrue(status == StatusCode.ERROR)
         }
     }
 

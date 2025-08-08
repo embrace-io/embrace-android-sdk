@@ -12,7 +12,6 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import java.io.File
 
 class PluginBehaviorImplTest {
 
@@ -141,20 +140,6 @@ class PluginBehaviorImplTest {
     }
 
     @Test
-    fun `react native project false`() {
-        val rnDir = findRnNodeModulesDir()
-        rnDir.deleteRecursively()
-        assertFalse(behavior.isReactNativeProject)
-    }
-
-    @Test
-    fun `react native project true`() {
-        val rnDir = findRnNodeModulesDir()
-        rnDir.mkdirs()
-        assertTrue(behavior.isReactNativeProject)
-    }
-
-    @Test
     fun `autoAddEmbraceDependencies default`() {
         assertTrue(behavior.autoAddEmbraceDependencies)
     }
@@ -269,10 +254,5 @@ class PluginBehaviorImplTest {
 
     private fun addGradleProperty(key: String, value: String) {
         project.extensions.extraProperties[key] = value
-    }
-
-    private fun findRnNodeModulesDir(): File {
-        val rootFile = project.rootDir.parentFile ?: error("Parent directory of project root is null")
-        return File("${File("${rootFile.path}/node_modules").path}/react-native")
     }
 }

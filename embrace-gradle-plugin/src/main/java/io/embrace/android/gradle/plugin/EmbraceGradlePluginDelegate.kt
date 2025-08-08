@@ -57,6 +57,11 @@ class EmbraceGradlePluginDelegate {
 
         taskRegistrar.registerTasks()
 
+        // Register React Native specific tasks when React Native plugin is also applied
+        project.pluginManager.withPlugin("com.facebook.react") {
+            taskRegistrar.registerReactNativeTasks()
+        }
+
         project.afterEvaluate { evaluatedProject ->
             onProjectEvaluated(evaluatedProject, agpWrapper)
         }

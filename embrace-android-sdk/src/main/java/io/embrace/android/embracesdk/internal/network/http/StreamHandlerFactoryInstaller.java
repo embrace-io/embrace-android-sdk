@@ -1,5 +1,8 @@
 package io.embrace.android.embracesdk.internal.network.http;
 
+import static io.embrace.android.embracesdk.internal.network.http.EmbraceUrlStreamHandler.METHOD_NAME_OPEN_CONNECTION;
+import static io.embrace.android.embracesdk.internal.network.http.HttpUrlConnectionUtilsKt.findDeclaredMethod;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
@@ -149,7 +152,8 @@ class StreamHandlerFactoryInstaller {
                 @Override
                 protected URLConnection openConnection(URL url, Proxy proxy) {
                     try {
-                        Method method = parentHandler.getClass().getDeclaredMethod("openConnection", URL.class, Proxy.class);
+                        Method method =
+                            findDeclaredMethod(parentHandler, parentHandler.getClass(), METHOD_NAME_OPEN_CONNECTION, URL.class, Proxy.class);
                         method.setAccessible(true);
                         URLConnection parentConnection = (URLConnection) method.invoke(parentHandler, url, proxy);
                         return wrapConnection(parentConnection);
@@ -162,7 +166,8 @@ class StreamHandlerFactoryInstaller {
                 @Override
                 protected URLConnection openConnection(URL url) {
                     try {
-                        Method method = parentHandler.getClass().getDeclaredMethod("openConnection", URL.class);
+                        Method method =
+                            findDeclaredMethod(parentHandler, parentHandler.getClass(), METHOD_NAME_OPEN_CONNECTION, URL.class,  Proxy.class);
                         method.setAccessible(true);
                         URLConnection parentConnection = (URLConnection) method.invoke(parentHandler, url);
                         return wrapConnection(parentConnection);

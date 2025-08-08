@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.fakes
 
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
-import io.embrace.opentelemetry.kotlin.attributes.AttributeContainer
+import io.embrace.opentelemetry.kotlin.attributes.MutableAttributeContainer
 import io.embrace.opentelemetry.kotlin.tracing.data.StatusData
 import io.embrace.opentelemetry.kotlin.tracing.model.Link
 import io.embrace.opentelemetry.kotlin.tracing.model.Span
@@ -14,7 +14,7 @@ class FakeSpan : Span {
 
     var attrs: MutableMap<String, String> = mutableMapOf()
 
-    override fun attributes(): Map<String, Any> = attrs
+    override val attributes: Map<String, Any> = attrs
 
     override var name: String = ""
     override val parent: SpanContext = FakeSpanContext()
@@ -23,10 +23,10 @@ class FakeSpan : Span {
     override val startTimestamp: Long = -1
     override var status: StatusData = StatusData.Unset
 
-    override fun addEvent(name: String, timestamp: Long?, attributes: AttributeContainer.() -> Unit) {
+    override fun addEvent(name: String, timestamp: Long?, attributes: MutableAttributeContainer.() -> Unit) {
     }
 
-    override fun addLink(spanContext: SpanContext, attributes: AttributeContainer.() -> Unit) {
+    override fun addLink(spanContext: SpanContext, attributes: MutableAttributeContainer.() -> Unit) {
     }
 
     override fun end() {
@@ -35,11 +35,11 @@ class FakeSpan : Span {
     override fun end(timestamp: Long) {
     }
 
-    override fun events(): List<SpanEvent> = emptyList()
+    override val events: List<SpanEvent> = emptyList()
 
     override fun isRecording(): Boolean = false
 
-    override fun links(): List<Link> = emptyList()
+    override val links: List<Link> = emptyList()
 
     override fun setBooleanAttribute(key: String, value: Boolean) {
     }

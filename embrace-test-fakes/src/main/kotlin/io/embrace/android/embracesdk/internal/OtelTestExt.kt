@@ -38,10 +38,10 @@ fun OtelJavaSpanData.toEmbraceSpanData(): EmbraceSpanData = EmbraceSpanData(
     startTimeNanos = startEpochNanos,
     endTimeNanos = endEpochNanos,
     status = when (status.statusCode) {
-        StatusCode.UNSET -> io.embrace.opentelemetry.kotlin.tracing.StatusCode.Unset
-        StatusCode.OK -> io.embrace.opentelemetry.kotlin.tracing.StatusCode.Ok
-        StatusCode.ERROR -> io.embrace.opentelemetry.kotlin.tracing.StatusCode.Error
-        else -> io.embrace.opentelemetry.kotlin.tracing.StatusCode.Unset
+        StatusCode.UNSET -> io.embrace.opentelemetry.kotlin.tracing.StatusCode.UNSET
+        StatusCode.OK -> io.embrace.opentelemetry.kotlin.tracing.StatusCode.OK
+        StatusCode.ERROR -> io.embrace.opentelemetry.kotlin.tracing.StatusCode.ERROR
+        else -> io.embrace.opentelemetry.kotlin.tracing.StatusCode.UNSET
     },
     events = events?.mapNotNull { it.toEmbracePayload() } ?: emptyList(),
     attributes = attributes.toStringMap(),

@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.fakes
 
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
-import io.embrace.opentelemetry.kotlin.attributes.AttributeContainer
+import io.embrace.opentelemetry.kotlin.attributes.MutableAttributeContainer
 import io.embrace.opentelemetry.kotlin.context.Context
 import io.embrace.opentelemetry.kotlin.logging.Logger
 import io.embrace.opentelemetry.kotlin.logging.model.SeverityNumber
@@ -18,9 +18,9 @@ class FakeOpenTelemetryLogger : Logger {
         context: Context?,
         severityNumber: SeverityNumber?,
         severityText: String?,
-        attributes: AttributeContainer.() -> Unit,
+        attributes: MutableAttributeContainer.() -> Unit,
     ) {
-        val container = FakeAttributeContainer()
+        val container = FakeMutableAttributeContainer()
         attributes(container)
         logs.add(
             FakeLogRecord(
@@ -30,7 +30,7 @@ class FakeOpenTelemetryLogger : Logger {
                 context = context,
                 severityNumber = severityNumber,
                 severityText = severityText,
-                attributes = container.attributes()
+                attributes = container.attributes
             )
         )
     }

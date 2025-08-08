@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.otel.logs
 
-import io.embrace.android.embracesdk.fakes.FakeAttributeContainer
+import io.embrace.android.embracesdk.fakes.FakeMutableAttributeContainer
 import io.embrace.android.embracesdk.fakes.FakeOtelJavaLogRecordExporter
 import io.embrace.android.embracesdk.fakes.FakeReadWriteLogRecord
 import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
@@ -35,7 +35,7 @@ internal class DefaultLogRecordExporterTest {
         val data = FakeReadWriteLogRecord(body = logKey)
 
         val privateData = FakeReadWriteLogRecord(
-            attributeContainer = FakeAttributeContainer().apply {
+            attributeContainer = FakeMutableAttributeContainer().apply {
                 setStringAttribute(PrivateSpan.key.name, PrivateSpan.value)
             }
         )

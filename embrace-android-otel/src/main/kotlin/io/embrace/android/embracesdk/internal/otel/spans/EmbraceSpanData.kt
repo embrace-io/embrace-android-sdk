@@ -22,7 +22,7 @@ data class EmbraceSpanData(
 
     val endTimeNanos: Long,
 
-    val status: StatusCode = StatusCode.Unset,
+    val status: StatusCode = StatusCode.UNSET,
 
     val events: List<EmbraceSpanEvent> = emptyList(),
 

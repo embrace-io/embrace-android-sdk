@@ -60,7 +60,7 @@ class OtelSdkWrapper(
     val kotlinApi: OpenTelemetry by lazy {
         OpenTelemetryInstance.createOpenTelemetryKotlin(
             loggerProvider = {
-                resource(configuration.resourceAction)
+                resource(attributes = configuration.resourceAction)
                 addLogRecordProcessor(
                     DefaultLogRecordProcessor(configuration.logRecordExporter)
                 )
@@ -69,7 +69,7 @@ class OtelSdkWrapper(
                 }
             },
             tracerProvider = {
-                resource(configuration.resourceAction)
+                resource(attributes = configuration.resourceAction)
                 spanLimits {
                     eventCountLimit = limits.getMaxTotalEventCount()
                     attributeCountLimit = limits.getMaxTotalAttributeCount()

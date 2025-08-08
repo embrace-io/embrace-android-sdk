@@ -65,10 +65,10 @@ fun Span.toEmbracePayload(): EmbraceSpanData {
         startTimeNanos = startTimeNanos ?: 0,
         endTimeNanos = endTimeNanos ?: 0L,
         status = when (status) {
-            Span.Status.UNSET -> StatusCode.Unset
-            Span.Status.OK -> StatusCode.Ok
-            Span.Status.ERROR -> StatusCode.Error
-            else -> StatusCode.Unset
+            Span.Status.UNSET -> StatusCode.UNSET
+            Span.Status.OK -> StatusCode.OK
+            Span.Status.ERROR -> StatusCode.ERROR
+            else -> StatusCode.UNSET
         },
         events = events?.mapNotNull { it.toEmbracePayload() } ?: emptyList(),
         attributes = attributes?.toEmbracePayload() ?: emptyMap(),

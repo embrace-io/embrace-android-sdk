@@ -10,9 +10,9 @@ import io.embrace.opentelemetry.kotlin.tracing.model.SpanContext
 
 @OptIn(ExperimentalApi::class)
 fun StatusCode.toEmbracePayload(): Status = when (this) {
-    StatusCode.Error -> Status.ERROR
-    StatusCode.Ok -> Status.OK
-    StatusCode.Unset -> Status.UNSET
+    StatusCode.ERROR -> Status.ERROR
+    StatusCode.OK -> Status.OK
+    StatusCode.UNSET -> Status.UNSET
 }
 
 @OptIn(ExperimentalApi::class)

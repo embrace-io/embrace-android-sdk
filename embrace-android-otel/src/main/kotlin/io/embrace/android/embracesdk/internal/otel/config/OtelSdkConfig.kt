@@ -11,7 +11,7 @@ import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaLogRecordExporter
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanExporter
-import io.embrace.opentelemetry.kotlin.attributes.AttributeContainer
+import io.embrace.opentelemetry.kotlin.attributes.MutableAttributeContainer
 import io.embrace.opentelemetry.kotlin.logging.export.LogRecordExporter
 import io.embrace.opentelemetry.kotlin.logging.export.toOtelKotlinLogRecordExporter
 import io.embrace.opentelemetry.kotlin.tracing.export.SpanExporter
@@ -30,31 +30,32 @@ class OtelSdkConfig(
     logSink: LogSink,
     val sdkName: String,
     val sdkVersion: String,
-    systemInfo: SystemInfo,
+    private val systemInfo: SystemInfo,
     private val sessionIdProvider: () -> String? = { null },
     private val processIdentifierProvider: () -> String = IdGenerator.Companion::generateLaunchInstanceId,
 ) {
 
     private val customAttributes: MutableMap<String, String> = ConcurrentHashMap()
 
-    val resourceAction: AttributeContainer.() -> Unit = {
-        setStringAttribute(ServiceAttributes.SERVICE_NAME.key, sdkName)
-        setStringAttribute(ServiceAttributes.SERVICE_VERSION.key, sdkVersion)
-        setStringAttribute(OsIncubatingAttributes.OS_NAME.key, systemInfo.osName)
-        setStringAttribute(OsIncubatingAttributes.OS_VERSION.key, systemInfo.osVersion)
-        setStringAttribute(OsIncubatingAttributes.OS_TYPE.key, systemInfo.osType)
-        setStringAttribute(OsIncubatingAttributes.OS_BUILD_ID.key, systemInfo.osBuild)
-        setStringAttribute(AndroidIncubatingAttributes.ANDROID_OS_API_LEVEL.key, systemInfo.androidOsApiLevel)
-        setStringAttribute(DeviceIncubatingAttributes.DEVICE_MANUFACTURER.key, systemInfo.deviceManufacturer)
-        setStringAttribute(DeviceIncubatingAttributes.DEVICE_MODEL_IDENTIFIER.key, systemInfo.deviceModel)
-        setStringAttribute(DeviceIncubatingAttributes.DEVICE_MODEL_NAME.key, systemInfo.deviceModel)
-        setStringAttribute(TelemetryIncubatingAttributes.TELEMETRY_DISTRO_NAME.key, sdkName)
-        setStringAttribute(TelemetryIncubatingAttributes.TELEMETRY_DISTRO_VERSION.key, sdkVersion)
+    val resourceAction: MutableAttributeContainer.() -> Unit
+        get() = {
+            setStringAttribute(ServiceAttributes.SERVICE_NAME.key, sdkName)
+            setStringAttribute(ServiceAttributes.SERVICE_VERSION.key, sdkVersion)
+            setStringAttribute(OsIncubatingAttributes.OS_NAME.key, systemInfo.osName)
+            setStringAttribute(OsIncubatingAttributes.OS_VERSION.key, systemInfo.osVersion)
+            setStringAttribute(OsIncubatingAttributes.OS_TYPE.key, systemInfo.osType)
+            setStringAttribute(OsIncubatingAttributes.OS_BUILD_ID.key, systemInfo.osBuild)
+            setStringAttribute(AndroidIncubatingAttributes.ANDROID_OS_API_LEVEL.key, systemInfo.androidOsApiLevel)
+            setStringAttribute(DeviceIncubatingAttributes.DEVICE_MANUFACTURER.key, systemInfo.deviceManufacturer)
+            setStringAttribute(DeviceIncubatingAttributes.DEVICE_MODEL_IDENTIFIER.key, systemInfo.deviceModel)
+            setStringAttribute(DeviceIncubatingAttributes.DEVICE_MODEL_NAME.key, systemInfo.deviceModel)
+            setStringAttribute(TelemetryIncubatingAttributes.TELEMETRY_DISTRO_NAME.key, sdkName)
+            setStringAttribute(TelemetryIncubatingAttributes.TELEMETRY_DISTRO_VERSION.key, sdkVersion)
 
-        customAttributes.forEach {
-            setStringAttribute(it.key, it.value)
+            customAttributes.forEach {
+                setStringAttribute(it.key, it.value)
+            }
         }
-    }
 
     /**
      * Unique ID generated for an instance of the app process and not related to the actual process ID assigned by the OS.

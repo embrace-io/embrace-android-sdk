@@ -23,6 +23,7 @@ dependencies {
     ksp(libs.moshi.kotlin.codegen)
 
     implementation(libs.junit)
+    implementation(platform(libs.okhttp.bom))
     implementation(libs.mockwebserver)
     testImplementation(project(":embrace-test-common"))
     implementation(libs.zstd.jni)

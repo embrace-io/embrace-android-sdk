@@ -11,6 +11,7 @@ android {
 }
 
 dependencies {
+    compileOnly(platform(libs.okhttp.bom))
     compileOnly(libs.okhttp)
     compileOnly(project(":embrace-android-core"))
     compileOnly(project(":embrace-android-infra"))

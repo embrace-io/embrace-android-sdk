@@ -18,6 +18,7 @@ dependencies {
     compileOnly(libs.agp.api)
     compileOnly(gradleApi())
 
+    implementation(platform(libs.okhttp.bom))
     implementation(libs.okhttp)
     implementation(libs.moshi)
     ksp(libs.moshi.kotlin.codegen)

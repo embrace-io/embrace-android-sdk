@@ -10,6 +10,7 @@ embrace {
 }
 
 dependencies {
+    implementation(platform(libs.okhttp.bom))
     implementation(libs.mockwebserver)
     implementation(libs.moshi)
     ksp(libs.moshi.kotlin.codegen)

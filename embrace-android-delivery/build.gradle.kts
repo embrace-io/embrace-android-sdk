@@ -11,6 +11,7 @@ android {
 }
 
 dependencies {
+    implementation(platform(libs.okhttp.bom))
     implementation(libs.okhttp)
     implementation(project(":embrace-android-payload"))
     implementation(project(":embrace-android-infra"))

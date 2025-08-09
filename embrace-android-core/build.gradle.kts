@@ -40,6 +40,7 @@ dependencies {
     compileOnly(libs.opentelemetry.semconv.incubating)
     implementation(libs.lifecycle.runtime)
     implementation(libs.lifecycle.process)
+    implementation(platform(libs.okhttp.bom))
     implementation(libs.okhttp)
 
     implementation(libs.opentelemetry.kotlin.api)

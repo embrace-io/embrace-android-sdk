@@ -1,5 +1,7 @@
 package io.embrace.android.embracesdk.internal.network.http;
 
+import static io.embrace.android.embracesdk.internal.network.http.HttpUrlConnectionUtilsKt.findDeclaredMethod;
+
 import java.lang.reflect.Method;
 import java.net.HttpURLConnection;
 import java.net.Proxy;
@@ -31,7 +33,7 @@ final class EmbraceHttpUrlStreamHandler extends EmbraceUrlStreamHandler {
 
     @Override
     protected Method getMethodOpenConnection(Class<URL> url) throws NoSuchMethodException {
-        Method method = this.handler.getClass().getDeclaredMethod(METHOD_NAME_OPEN_CONNECTION, url);
+        Method method = findDeclaredMethod(handler, handler.getClass(), METHOD_NAME_OPEN_CONNECTION, url);
 
         method.setAccessible(true);
         return method;
@@ -39,7 +41,7 @@ final class EmbraceHttpUrlStreamHandler extends EmbraceUrlStreamHandler {
 
     @Override
     protected Method getMethodOpenConnection(Class<URL> url, Class<Proxy> proxy) throws NoSuchMethodException {
-        Method method = this.handler.getClass().getDeclaredMethod(METHOD_NAME_OPEN_CONNECTION, url, proxy);
+        Method method = findDeclaredMethod(handler, handler.getClass(), METHOD_NAME_OPEN_CONNECTION, url, proxy);
 
         method.setAccessible(true);
         return method;

@@ -10,6 +10,7 @@ import org.junit.Test
 
 internal class SdkCallCheckerTest {
 
+    private val action = "foo"
     private lateinit var logger: FakeEmbLogger
     private lateinit var telemetryService: FakeTelemetryService
     private lateinit var checker: SdkCallChecker
@@ -23,7 +24,6 @@ internal class SdkCallCheckerTest {
 
     @Test
     fun `test not started`() {
-        val action = "foo"
         logger.throwOnInternalError = false
         assertFalse(checker.started.get())
         assertFalse(checker.check(action))
@@ -32,8 +32,16 @@ internal class SdkCallCheckerTest {
     }
 
     @Test
+    fun `error message can be suppressed`() {
+        logger.throwOnInternalError = false
+        assertFalse(checker.started.get())
+        assertFalse(checker.check(action, false))
+        assertTrue(logger.sdkNotInitializedMessages.isEmpty())
+        assertEquals(action, telemetryService.apiCalls.single())
+    }
+
+    @Test
     fun `test started`() {
-        val action = "foo"
         checker.started.set(true)
         assertTrue(checker.check(action))
         assertTrue(logger.sdkNotInitializedMessages.isEmpty())

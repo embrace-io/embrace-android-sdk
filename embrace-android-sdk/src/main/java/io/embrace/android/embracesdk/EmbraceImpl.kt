@@ -349,7 +349,7 @@ internal class EmbraceImpl(
     }
 
     override fun applicationInitEnd() {
-        if (sdkCallChecker.check("application_init_end")) {
+        if (sdkCallChecker.check("application_init_end", false)) {
             bootstrapper.dataCaptureServiceModule.appStartupDataCollector.run {
                 if (applicationInitStartMs != null) {
                     applicationInitStart(applicationInitStartMs)

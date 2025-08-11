@@ -36,3 +36,4 @@ jobs:
     uses: ./.github/workflows/upload-artifacts-to-maven-central.yml
     with:
       rc_version: ${{ inputs.rc_version }}
+    secrets: inherit

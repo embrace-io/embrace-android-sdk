@@ -20,9 +20,9 @@ internal class SdkCallChecker(
      * Every public API usage should go through this method, except the ones that are called too often and may cause a performance hit.
      * For instance, get_current_session_id go directly through checkSdkStarted.
      */
-    fun check(action: String): Boolean {
+    fun check(action: String, outputErrorMessage: Boolean = true): Boolean {
         val isStarted = started.get()
-        if (!isStarted) {
+        if (!isStarted && outputErrorMessage) {
             logger.logSdkNotInitialized(action)
         }
         telemetryService?.onPublicApiCalled(action)

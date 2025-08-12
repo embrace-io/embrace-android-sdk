@@ -1,5 +1,3 @@
-import io.embrace.internal.EmbraceBuildLogicExtension
-
 plugins {
     id("com.android.library")
     id("kotlin-android")
@@ -101,6 +99,7 @@ dependencies {
     testImplementation(libs.protobuf.java)
     testImplementation(libs.protobuf.java.util)
     testImplementation(libs.kotlin.reflect)
+    testImplementation(platform(libs.okhttp.bom))
     testImplementation(libs.mockwebserver)
 
     androidTestImplementation(project(":embrace-test-fakes"))

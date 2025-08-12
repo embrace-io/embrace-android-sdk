@@ -30,6 +30,7 @@ dependencies {
     implementation(libs.opentelemetry.java.aliases)
 
     implementation(libs.junit)
+    implementation(platform(libs.okhttp.bom))
     implementation(libs.okhttp)
     implementation(libs.robolectric)
     implementation(libs.lifecycle.runtime)

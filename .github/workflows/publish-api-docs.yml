@@ -44,7 +44,7 @@ jobs:
           echo "base_version=$base_version" >> $GITHUB_OUTPUT
 
       - name: Checkout SDK
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           ref: release/${{ steps.base_version.outputs.base_version }}
           fetch-depth: 0

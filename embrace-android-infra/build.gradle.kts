@@ -11,6 +11,5 @@ android {
 }
 
 dependencies {
-    implementation(libs.lifecycle.runtime)
-    implementation(libs.lifecycle.process)
+    implementation(libs.androidx.annotation)
 }

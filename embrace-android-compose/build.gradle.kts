@@ -11,10 +11,8 @@ android {
 }
 
 dependencies {
-    implementation(libs.lifecycle.runtime)
     implementation(libs.lifecycle.process)
     compileOnly(libs.compose)
     compileOnly(project(":embrace-internal-api"))
     compileOnly(project(":embrace-android-sdk"))
-    testImplementation(project(":embrace-android-sdk"))
 }

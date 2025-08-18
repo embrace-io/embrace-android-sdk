@@ -8,12 +8,29 @@ import io.embrace.opentelemetry.kotlin.OpenTelemetryInstance
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaLogRecordExporter
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaOpenTelemetry
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanExporter
+import io.embrace.opentelemetry.kotlin.logging.export.LogRecordExporter
 import io.embrace.opentelemetry.kotlin.noop
+import io.embrace.opentelemetry.kotlin.tracing.export.SpanExporter
 
+@OptIn(ExperimentalApi::class)
 internal class OTelApiDelegate(
     private val bootstrapper: ModuleInitBootstrapper,
     private val sdkCallChecker: SdkCallChecker,
 ) : OTelApi {
+
+    override fun addSpanExporter(spanExporter: SpanExporter) {
+        if (sdkCallChecker.started.get()) {
+            return
+        }
+        bootstrapper.openTelemetryModule.otelSdkConfig.addSpanExporter(spanExporter)
+    }
+
+    override fun addLogRecordExporter(logRecordExporter: LogRecordExporter) {
+        if (sdkCallChecker.started.get()) {
+            return
+        }
+        bootstrapper.openTelemetryModule.otelSdkConfig.addLogExporter(logRecordExporter)
+    }
 
     override fun addSpanExporter(spanExporter: OtelJavaSpanExporter) {
         if (sdkCallChecker.started.get()) {

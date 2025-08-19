@@ -66,8 +66,8 @@ class OtelSdkConfig(
         EmbTrace.trace("process-identifier-init", processIdentifierProvider)
     }
 
-    private val externalSpanExporters = mutableListOf<OtelJavaSpanExporter>()
-    private val externalLogExporters = mutableListOf<OtelJavaLogRecordExporter>()
+    private val externalSpanExporters = mutableListOf<SpanExporter>()
+    private val externalLogExporters = mutableListOf<LogRecordExporter>()
 
     private var exportEnabled: Boolean = true
     private val exportCheck: () -> Boolean = { exportEnabled }
@@ -77,14 +77,9 @@ class OtelSdkConfig(
     }
 
     val spanExporter: SpanExporter by lazy {
-        val externalExporter = if (externalSpanExporters.isNotEmpty()) {
-            OtelJavaSpanExporter.composite(externalSpanExporters)
-        } else {
-            null
-        }
         DefaultSpanExporter(
             spanSink = spanSink,
-            externalSpanExporter = externalExporter?.toOtelKotlinSpanExporter(),
+            externalExporters = externalSpanExporters.toList(),
             exportCheck = exportCheck,
         )
     }
@@ -96,23 +91,26 @@ class OtelSdkConfig(
     }
 
     val logRecordExporter: LogRecordExporter by lazy {
-        val externalExporter = if (externalLogExporters.isNotEmpty()) {
-            OtelJavaLogRecordExporter.composite(externalLogExporters)
-        } else {
-            null
-        }
         DefaultLogRecordExporter(
             logSink = logSink,
-            externalLogRecordExporter = externalExporter?.toOtelKotlinLogRecordExporter(),
+            externalExporters = externalLogExporters.toList(),
             exportCheck = exportCheck,
         )
     }
 
     fun addSpanExporter(spanExporter: OtelJavaSpanExporter) {
-        externalSpanExporters.add(spanExporter)
+        externalSpanExporters.add(spanExporter.toOtelKotlinSpanExporter())
     }
 
     fun addLogExporter(logExporter: OtelJavaLogRecordExporter) {
+        externalLogExporters.add(logExporter.toOtelKotlinLogRecordExporter())
+    }
+
+    fun addSpanExporter(spanExporter: SpanExporter) {
+        externalSpanExporters.add(spanExporter)
+    }
+
+    fun addLogExporter(logExporter: LogRecordExporter) {
         externalLogExporters.add(logExporter)
     }
 

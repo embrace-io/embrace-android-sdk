@@ -7,12 +7,26 @@ import io.embrace.opentelemetry.kotlin.aliases.OtelJavaAttributeKey
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaLogRecordExporter
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaOpenTelemetry
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanExporter
+import io.embrace.opentelemetry.kotlin.logging.export.LogRecordExporter
+import io.embrace.opentelemetry.kotlin.tracing.export.SpanExporter
 
 /**
  * Methods that enable integration with the the large OTel ecosystem through standard OTel APIs and concepts.
  */
 @InternalApi
 public interface OTelApi {
+
+    /**
+     * Add a [LogRecordExporter] that OTel Logs will be exported to after logging
+     */
+    @OptIn(ExperimentalApi::class)
+    public fun addLogRecordExporter(logRecordExporter: LogRecordExporter)
+
+    /**
+     * Adds a [SpanExporter] that OTel Spans will be exported to after completion
+     */
+    @OptIn(ExperimentalApi::class)
+    public fun addSpanExporter(spanExporter: SpanExporter)
 
     /**
      * Add a [LogRecordExporter] that OTel Logs will be exported to after logging

@@ -104,7 +104,9 @@ public abstract interface class io/embrace/android/embracesdk/internal/api/Netwo
 }
 
 public abstract interface class io/embrace/android/embracesdk/internal/api/OTelApi {
+	public abstract fun addLogRecordExporter (Lio/embrace/opentelemetry/kotlin/logging/export/LogRecordExporter;)V
 	public abstract fun addLogRecordExporter (Lio/opentelemetry/sdk/logs/export/LogRecordExporter;)V
+	public abstract fun addSpanExporter (Lio/embrace/opentelemetry/kotlin/tracing/export/SpanExporter;)V
 	public abstract fun addSpanExporter (Lio/opentelemetry/sdk/trace/export/SpanExporter;)V
 	public abstract fun getOpenTelemetry ()Lio/opentelemetry/api/OpenTelemetry;
 	public abstract fun getOpenTelemetryKotlin ()Lio/embrace/opentelemetry/kotlin/OpenTelemetry;

@@ -15,7 +15,7 @@ import io.embrace.opentelemetry.kotlin.tracing.export.SpanExporter
 @ExperimentalApi
 internal class DefaultSpanExporter(
     private val spanSink: SpanSink,
-    private val externalSpanExporter: SpanExporter?,
+    private val externalExporters: List<SpanExporter>,
     private val exportCheck: () -> Boolean,
 ) : SpanExporter {
 
@@ -24,16 +24,23 @@ internal class DefaultSpanExporter(
         if (!exportCheck()) {
             return OperationResultCode.Success
         }
-        val result = spanSink.storeCompletedSpans(telemetry.map(SpanData::toEmbracePayload))
-        if (externalSpanExporter != null && result == StoreDataResult.SUCCESS) {
-            return EmbTrace.trace("otel-external-export") {
-                externalSpanExporter.export(
-                    telemetry.filterNot {
-                        it.attributes.containsKey(PrivateSpan.key.name)
+        var result = spanSink.storeCompletedSpans(telemetry.map(SpanData::toEmbracePayload))
+        if (externalExporters.isNotEmpty() && result == StoreDataResult.SUCCESS) {
+            EmbTrace.trace("otel-external-export") {
+                externalExporters.forEach { exporter ->
+                    try {
+                        exporter.export(
+                            telemetry.filterNot {
+                                it.attributes.containsKey(PrivateSpan.key.name)
+                            }
+                        )
+                    } catch (ignored: Throwable) {
+                        result = StoreDataResult.FAILURE
                     }
-                )
+                }
             }
         }
+
         return when (result) {
             StoreDataResult.SUCCESS -> OperationResultCode.Success
             StoreDataResult.FAILURE -> OperationResultCode.Failure

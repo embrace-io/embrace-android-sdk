@@ -2,11 +2,13 @@ package io.embrace.android.embracesdk.testcases
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.Severity
-import io.embrace.android.embracesdk.fakes.FakeOtelJavaSpanExporter
+import io.embrace.android.embracesdk.fakes.FakeLogRecordExporter
+import io.embrace.android.embracesdk.fakes.FakeSpanExporter
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.embrace.android.embracesdk.internal.toStringMap
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
+import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.opentelemetry.semconv.ServiceAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -15,6 +17,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
+@OptIn(ExperimentalApi::class)
 @RunWith(AndroidJUnit4::class)
 internal class OTelExportTest {
 
@@ -24,7 +27,7 @@ internal class OTelExportTest {
 
     @Test
     fun `session span exported`() {
-        val fakeSpanExporter = FakeOtelJavaSpanExporter()
+        val fakeSpanExporter = FakeSpanExporter()
         testRule.runTest(
             preSdkStartAction = {
                 embrace.setResourceAttribute(ServiceAttributes.SERVICE_NAME.key, "my.app")
@@ -53,7 +56,7 @@ internal class OTelExportTest {
 
     @Test
     fun `a SpanExporter added after initialization won't be used`() {
-        val fakeSpanExporter = FakeOtelJavaSpanExporter()
+        val fakeSpanExporter = FakeSpanExporter()
 
         testRule.runTest(
             testCaseAction = {
@@ -64,7 +67,7 @@ internal class OTelExportTest {
             },
             assertAction = {
                 assertNotNull(getSingleSessionEnvelope())
-                assertTrue(fakeSpanExporter.exportedSpans.size == 0)
+                assertTrue(fakeSpanExporter.exportedSpans.isEmpty())
             }
         )
     }
@@ -98,5 +101,34 @@ internal class OTelExportTest {
                 }
             }
         )
+    }
+
+    @Suppress("DEPRECATION")
+    @OptIn(ExperimentalApi::class)
+    @Test
+    fun `add opentelemetry-kotlin exporters`() {
+        val logRecordExporter = FakeLogRecordExporter()
+        val spanExporter = FakeSpanExporter()
+        val spanName = "test"
+        val logMessage = "Hello, World!"
+
+        testRule.runTest(
+            preSdkStartAction = {
+                embrace.addLogRecordExporter(logRecordExporter)
+                embrace.addSpanExporter(spanExporter)
+            },
+            testCaseAction = {
+                recordSession {
+                    embrace.startSpan(spanName)?.stop()
+                    embrace.logMessage(logMessage, Severity.INFO)
+                }
+            },
+            otelExportAssertion = {
+                awaitSpans(1) { it.name == spanName }
+                awaitLogs(1) { it.body.asString() == logMessage }
+            }
+        )
+        spanExporter.exportedSpans.single { it.name == spanName }
+        logRecordExporter.exportedLogs.single { it.body == logMessage }
     }
 }

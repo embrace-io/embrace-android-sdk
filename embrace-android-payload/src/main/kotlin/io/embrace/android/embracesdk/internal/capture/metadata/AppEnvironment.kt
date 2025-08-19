@@ -1,11 +1,9 @@
 package io.embrace.android.embracesdk.internal.capture.metadata
 
-import android.content.pm.ApplicationInfo
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 
-class AppEnvironment(appInfo: ApplicationInfo) {
-    val isDebug: Boolean = with(appInfo) { flags and ApplicationInfo.FLAG_DEBUGGABLE != 0 }
+class AppEnvironment(val isDebug: Boolean) {
 
     val environment: Environment = if (isDebug) Environment.DEV else Environment.PROD
 

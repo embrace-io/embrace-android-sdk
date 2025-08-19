@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.injection
 
 import android.app.Application
 import android.content.Context
+import android.content.pm.ApplicationInfo
 import io.embrace.android.embracesdk.internal.AndroidResourcesService
 import io.embrace.android.embracesdk.internal.EmbraceAndroidResourcesService
 import io.embrace.android.embracesdk.internal.buildinfo.BuildInfoService
@@ -11,7 +12,7 @@ import io.embrace.android.embracesdk.internal.registry.ServiceRegistry
 
 class CoreModuleImpl(
     ctx: Context,
-    initModule: InitModule
+    initModule: InitModule,
 ) : CoreModule {
 
     override val context: Context by singleton {
@@ -35,8 +36,11 @@ class CoreModuleImpl(
         EmbraceAndroidResourcesService(context)
     }
 
-    override val isDebug: Boolean by lazy {
-        AppEnvironment(context.applicationInfo).isDebug
+    override val appEnvironment: AppEnvironment by lazy {
+        val isDebug: Boolean = with(context.applicationInfo) {
+            flags and ApplicationInfo.FLAG_DEBUGGABLE != 0
+        }
+        AppEnvironment(isDebug)
     }
 
     override val buildInfoService: BuildInfoService by lazy {

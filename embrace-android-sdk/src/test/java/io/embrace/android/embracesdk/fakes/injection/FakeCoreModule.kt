@@ -26,7 +26,7 @@ public class FakeCoreModule(
         if (isMockKMock(application)) getMockedContext() else application.applicationContext,
     override val serviceRegistry: ServiceRegistry = ServiceRegistry(),
     override val resources: FakeAndroidResourcesService = FakeAndroidResourcesService(),
-    override val isDebug: Boolean = if (isMockKMock(context)) false else AppEnvironment(context.applicationInfo).isDebug,
+    override val appEnvironment: AppEnvironment = AppEnvironment(true),
     override val buildInfoService: BuildInfoService = FakeBuildInfoService(),
     override val packageVersionInfo: PackageVersionInfo = fakePackageVersionInfo,
 ) : CoreModule {

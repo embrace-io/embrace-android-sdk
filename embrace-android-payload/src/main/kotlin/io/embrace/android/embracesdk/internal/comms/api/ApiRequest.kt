@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.comms.api
 
 import com.squareup.moshi.JsonClass
-import io.embrace.android.embracesdk.network.http.HttpMethod
 
 @JsonClass(generateAdapter = true)
 data class ApiRequest(

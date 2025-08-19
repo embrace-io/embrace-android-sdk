@@ -18,7 +18,6 @@ dependencies {
     implementation(project(":embrace-android-api"))
     testImplementation(project(":embrace-android-api"))
     testImplementation(project(":embrace-android-core"))
-    testImplementation(project(":embrace-android-payload"))
     testImplementation(platform(libs.opentelemetry.bom))
     testImplementation(libs.opentelemetry.semconv)
     testImplementation(libs.opentelemetry.semconv.incubating)

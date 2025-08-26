@@ -5,12 +5,22 @@ plugins {
     id("org.jetbrains.kotlin.android")
 }
 
+repositories {
+    google()
+    mavenCentral()
+    mavenLocal()
+}
+
 integrationTest.configureAndroidProject(project)
 
+embrace {
+    autoAddEmbraceDependencies.set(true)
+}
+
 android {
-    compileSdk = 33
+    compileSdk = 34
 
     defaultConfig {
-        targetSdk = 33
+        targetSdk = 34
     }
 }

@@ -33,5 +33,5 @@ abstract class EmbraceBuildLogicExtension(objectFactory: ObjectFactory) {
      * The JVM target for this module.
      */
     val jvmTarget: Property<JavaVersion> =
-        objectFactory.property(JavaVersion::class.java).convention(JavaVersion.VERSION_11)
+        objectFactory.property(JavaVersion::class.java).convention(JavaVersion.VERSION_1_8)
 }

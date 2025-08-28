@@ -7,6 +7,7 @@ import io.embrace.android.gradle.plugin.network.EmbraceEndpoint
 import io.embrace.android.gradle.plugin.tasks.EmbraceTask
 import io.embrace.android.gradle.plugin.tasks.EmbraceUploadTask
 import io.embrace.android.gradle.plugin.tasks.common.RequestParams
+import org.gradle.api.JavaVersion
 import org.gradle.api.Project
 import org.gradle.api.model.ObjectFactory
 import org.gradle.api.provider.Property
@@ -57,7 +58,7 @@ abstract class IntegrationTestExtension(objectFactory: ObjectFactory) {
 
     fun configureSharedObjectObjectFilesUploadTask(
         project: Project,
-        task: EmbraceUploadTask
+        task: EmbraceUploadTask,
     ) {
         configureEmbraceTask(task)
         task.requestParams.set(
@@ -105,6 +106,11 @@ abstract class IntegrationTestExtension(objectFactory: ObjectFactory) {
                         "proguard-rules.pro"
                     )
                 }
+            }
+            compileOptions {
+                val jvmVersion = JavaVersion.current()
+                sourceCompatibility = jvmVersion
+                targetCompatibility = jvmVersion
             }
         }
     }

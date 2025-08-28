@@ -6,3 +6,13 @@ plugins {
 }
 
 integrationTest.configureAndroidProject(project)
+
+repositories {
+    google()
+    mavenCentral()
+    mavenLocal()
+}
+
+embrace {
+    autoAddEmbraceDependencies.set(true)
+}

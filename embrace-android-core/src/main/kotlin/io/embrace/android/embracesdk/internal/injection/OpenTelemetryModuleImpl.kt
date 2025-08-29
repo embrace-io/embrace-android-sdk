@@ -28,12 +28,14 @@ internal class OpenTelemetryModuleImpl(
     private val initModule: InitModule,
     override val openTelemetryClock: EmbClock = EmbClock(
         embraceClock = initModule.clock
-    ),
+    )
 ) : OpenTelemetryModule {
 
     init {
-        // Enforce the use of default ThreadLocal ContextStorage of the OTel Java to bypass SPI looking that violates Android strict mode
-        System.setProperty("io.opentelemetry.context.contextStorageProvider", "default")
+        if (!initModule.useKotlinSdk) {
+            // Enforce the use of default OTel Java SDK ThreadLocal ContextStorage to bypass SPI looking that violates Android strict mode
+            System.setProperty("io.opentelemetry.context.contextStorageProvider", "default")
+        }
     }
 
     override val spanRepository: SpanRepository by lazy {
@@ -52,7 +54,8 @@ internal class OpenTelemetryModuleImpl(
             sdkVersion = BuildConfig.VERSION_NAME,
             systemInfo = initModule.systemInfo,
             sessionIdProvider = { currentSessionSpan.getSessionId() },
-            processIdentifierProvider = initModule.processIdentifierProvider
+            processIdentifierProvider = initModule.processIdentifierProvider,
+            useKotlinSdk = initModule.useKotlinSdk,
         )
     }
 
@@ -62,7 +65,7 @@ internal class OpenTelemetryModuleImpl(
                 OtelSdkWrapper(
                     otelClock = openTelemetryClock,
                     configuration = otelSdkConfig,
-                    spanService = spanService
+                    spanService = spanService,
                 )
             } catch (exc: NoClassDefFoundError) {
                 throw LinkageError(

@@ -183,16 +183,16 @@ private class EmbraceSpanImpl(
 
                 startedSpan.get()?.let { spanToStop ->
                     spanId?.let { stopCallback?.invoke(it) }
-                    populateAttributes(spanToStop)
-                    populateEvents(spanToStop)
-                    populateLinks(spanToStop)
-
                     if (errorCode != null) {
                         status = StatusData.Error(null)
                         spanToStop.setEmbraceAttribute(errorCode.fromErrorCode())
                     } else if (status is StatusData.Error) {
                         spanToStop.setEmbraceAttribute(ErrorCodeAttribute.Failure)
                     }
+
+                    populateAttributes(spanToStop)
+                    populateEvents(spanToStop)
+                    populateLinks(spanToStop)
 
                     EmbTrace.trace("otel-span-end") {
                         spanToStop.end(attemptedEndTimeMs.millisToNanos())
@@ -326,11 +326,13 @@ private class EmbraceSpanImpl(
     }
 
     override fun asNewContext(): Context? = startedSpan.get()?.run {
-        // assumes that the underlying instance of Span implements ImplicitContextKeyed. This
-        // should always be true when opentelemetry-kotlin is used to create spans, but
-        // we avoid exposing this fact in the public interface.
-        val span = this as ImplicitContextKeyed
-        return span.storeInContext(parentContext.toOtelJavaContext()).toOtelKotlinContext()
+        return if (this is ImplicitContextKeyed) {
+            // If the underlying instance of Span implements ImplicitContextKeyed, assume it's the compat implementation
+            val span = this as ImplicitContextKeyed
+            return span.storeInContext(parentContext.toOtelJavaContext()).toOtelKotlinContext()
+        } else {
+            otelSpanStartArgs.objectCreator.context.storeSpan(parentContext, this)
+        }
     }
 
     override fun storeInContext(context: OtelJavaContext): OtelJavaContext {

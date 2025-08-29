@@ -6,13 +6,12 @@ import io.embrace.android.embracesdk.fakes.fakeObjectCreator
 import io.embrace.android.embracesdk.fixtures.TOO_LONG_INTERNAL_SPAN_NAME
 import io.embrace.android.embracesdk.fixtures.TOO_LONG_SPAN_NAME
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
+import io.embrace.android.embracesdk.internal.otel.get
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.embrace.android.embracesdk.internal.otel.schema.PrivateSpan
 import io.embrace.opentelemetry.kotlin.Clock
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
-import io.embrace.opentelemetry.kotlin.OpenTelemetry
 import io.embrace.opentelemetry.kotlin.OpenTelemetryInstance
-import io.embrace.opentelemetry.kotlin.createOpenTelemetryKotlin
 import io.embrace.opentelemetry.kotlin.getTracer
 import io.embrace.opentelemetry.kotlin.tracing.Tracer
 import io.embrace.opentelemetry.kotlin.tracing.model.Span
@@ -29,14 +28,12 @@ internal class OtelSpanStartArgsTest {
     private lateinit var clock: FakeClock
     private lateinit var otelClock: Clock
     private lateinit var tracer: Tracer
-    private lateinit var api: OpenTelemetry
 
     @Before
     fun setup() {
         clock = FakeClock()
         otelClock = FakeOtelKotlinClock(clock)
-        api = OpenTelemetryInstance.createOpenTelemetryKotlin(clock = otelClock)
-        tracer = api.getTracer("my_tracer")
+        tracer = OpenTelemetryInstance.get(clock = otelClock).getTracer("test-tracer")
     }
 
     @Test
@@ -70,8 +67,7 @@ internal class OtelSpanStartArgsTest {
     @Test
     fun `add parent after initial creation`() {
         val parent = tracer.createSpan("parent")
-        val creator = api.objectCreator
-        val ctx = creator.context.storeSpan(creator.context.root(), parent)
+        val ctx = fakeObjectCreator.context.storeSpan(fakeObjectCreator.context.root(), parent)
         val args = OtelSpanStartArgs(
             name = "test",
             type = EmbType.Performance.Default,
@@ -81,7 +77,7 @@ internal class OtelSpanStartArgsTest {
             parentCtx = ctx,
             objectCreator = fakeObjectCreator
         )
-        val spanContext = creator.span.fromContext(args.parentContext).spanContext
+        val spanContext = fakeObjectCreator.span.fromContext(args.parentContext).spanContext
         assertEquals(parent.spanContext.traceId, spanContext.traceId)
 
         val startTime = otelClock.now()

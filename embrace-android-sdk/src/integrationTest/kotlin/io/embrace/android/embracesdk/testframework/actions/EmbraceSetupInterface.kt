@@ -34,6 +34,7 @@ import io.embrace.android.embracesdk.internal.injection.createEssentialServiceMo
 import io.embrace.android.embracesdk.internal.injection.createNativeCoreModule
 import io.embrace.android.embracesdk.internal.injection.createWorkerThreadModule
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.otel.config.USE_KOTLIN_SDK
 import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
 import io.embrace.android.embracesdk.internal.prefs.PreferencesService
@@ -46,7 +47,8 @@ import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 /**
  * Test harness for which an instance is generated each test run and provided to the test by the Rule
  */
-internal class EmbraceSetupInterface @JvmOverloads constructor(
+internal class EmbraceSetupInterface(
+    private val useKotlinSdk: Boolean = USE_KOTLIN_SDK,
     workerToFake: Worker.Background? = null,
     anrMonitoringThread: Thread? = null,
     fakeStorageLayer: Boolean = false,
@@ -73,7 +75,8 @@ internal class EmbraceSetupInterface @JvmOverloads constructor(
     private val fakeInitModule: FakeInitModule = FakeInitModule(
         clock = fakeClock,
         logger = FakeEmbLogger(ignoredErrors = ignoredInternalErrors),
-        processIdentifier = processIdentifier
+        processIdentifier = processIdentifier,
+        useKotlinSdk = useKotlinSdk
     )
 
     private val workerThreadModule: WorkerThreadModule = initWorkerThreadModule(

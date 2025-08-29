@@ -50,6 +50,7 @@ internal class OpenTelemetryModuleImpl(
             logSink = logSink,
             sdkName = BuildConfig.LIBRARY_PACKAGE_NAME,
             sdkVersion = BuildConfig.VERSION_NAME,
+            appVersionName = initModule.instrumentedConfig.project.getAppVersionName(),
             systemInfo = initModule.systemInfo,
             sessionIdProvider = { currentSessionSpan.getSessionId() },
             processIdentifierProvider = initModule.processIdentifierProvider

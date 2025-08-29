@@ -46,4 +46,18 @@ interface ProjectConfig {
      * This is not possible to specify in the embrace-config.json.
      */
     fun getReactNativeBundleId(): String? = null
+
+    /**
+     * The project's app version name
+     *
+     * This is not possible to specify in the embrace-config.json.
+     */
+    fun getAppVersionName(): String? = null
+
+    /**
+     * The project's app version code
+     *
+     * This is not possible to specify in the embrace-config.json.
+     */
+    fun getAppVersionCode(): String? = null
 }

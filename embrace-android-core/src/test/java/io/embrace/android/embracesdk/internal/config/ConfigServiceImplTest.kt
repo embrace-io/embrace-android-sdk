@@ -158,6 +158,7 @@ internal class ConfigServiceImplTest {
             LogSinkImpl(),
             BuildConfig.LIBRARY_PACKAGE_NAME,
             BuildConfig.VERSION_NAME,
+            appVersionName = null,
             SystemInfo()
         )
         cfg.addLogExporter(FakeOtelJavaLogRecordExporter())
@@ -176,6 +177,7 @@ internal class ConfigServiceImplTest {
             LogSinkImpl(),
             BuildConfig.LIBRARY_PACKAGE_NAME,
             BuildConfig.VERSION_NAME,
+            appVersionName = null,
             SystemInfo()
         ),
         appId: String? = "AbCdE",

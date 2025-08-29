@@ -45,6 +45,7 @@ internal class EmbraceSpanServiceTest {
             logSink = LogSinkImpl(),
             sdkName = "test-sdk",
             sdkVersion = "1.0",
+            appVersionName = null,
             systemInfo = SystemInfo(),
             sessionIdProvider = { "fake-session-id" },
             processIdentifierProvider = { "fake-pid" }

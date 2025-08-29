@@ -13,6 +13,7 @@ data class AndroidCompactedVariantData(
     val buildTypeName: String,
     val isBuildTypeDebuggable: Boolean,
     val versionName: String?,
+    val versionCode: Int?,
     val productFlavors: List<String>,
     val sourceMapPath: String,
     val buildId: String = UuidUtils.generateEmbraceUuid()
@@ -25,12 +26,18 @@ data class AndroidCompactedVariantData(
         fun from(variant: Variant): AndroidCompactedVariantData {
             val buildtype = variant.buildType?.lowercase()
             val debuggable = buildtype?.contains("debug") ?: false
+            
+            // Extract version information from variant outputs
+            val versionName = variant.outputs.firstOrNull()?.versionName?.orNull
+            val versionCode = variant.outputs.firstOrNull()?.versionCode?.orNull
+            
             return AndroidCompactedVariantData(
                 variant.name,
                 variant.flavorName ?: "",
                 variant.buildType ?: "",
                 debuggable,
-                "", // not used for now
+                versionName,
+                versionCode,
                 fetchProductFlavors(variant),
                 variant.name
             )

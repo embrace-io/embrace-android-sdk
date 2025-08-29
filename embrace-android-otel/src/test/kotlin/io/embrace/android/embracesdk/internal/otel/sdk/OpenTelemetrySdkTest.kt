@@ -39,6 +39,7 @@ internal class OpenTelemetrySdkTest {
             logSink = logSink,
             sdkName = "sdk",
             sdkVersion = "1.0",
+            appVersionName = null,
             systemInfo = systemInfo
         )
         spanExporter = FakeOtelJavaSpanExporter()

@@ -13,6 +13,7 @@ class ProjectConfigInstrumentationKtTest {
         null,
         null,
         null,
+        null,
         embraceConfig = EmbraceVariantConfig(
             "",
             "",
@@ -26,7 +27,9 @@ class ProjectConfigInstrumentationKtTest {
         ConfigMethod("getAppFramework", "()Ljava/lang/String;", "native"),
         ConfigMethod("getBuildId", "()Ljava/lang/String;", "my_id"),
         ConfigMethod("getBuildType", "()Ljava/lang/String;", "build_type"),
-        ConfigMethod("getBuildFlavor", "()Ljava/lang/String;", "build_flavor")
+        ConfigMethod("getBuildFlavor", "()Ljava/lang/String;", "build_flavor"),
+        ConfigMethod("getAppVersionName", "()Ljava/lang/String;", "1.2.3"),
+        ConfigMethod("getAppVersionCode", "()Ljava/lang/String;", "123")
     )
 
     @Test
@@ -52,11 +55,14 @@ class ProjectConfigInstrumentationKtTest {
                 ),
                 buildId = "my_id",
                 buildType = "build_type",
-                buildFlavor = "build_flavor"
+                buildFlavor = "build_flavor",
+                variantVersion = "1.2.3",
+                variantVersionCode = 123
             ),
             reactNativeBundleId = "a1B2c3"
         )
         verifyConfigMethodVisitor(instrumentation, ConfigMethod("getAppId", "()Ljava/lang/String;", "abcde"))
+        verifyConfigMethodVisitor(instrumentation, ConfigMethod("getReactNativeBundleId", "()Ljava/lang/String;", "a1B2c3"))
         methods.forEach { method ->
             verifyConfigMethodVisitor(instrumentation, method)
         }

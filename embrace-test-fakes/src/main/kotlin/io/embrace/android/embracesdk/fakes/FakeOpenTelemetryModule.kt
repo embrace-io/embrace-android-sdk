@@ -29,7 +29,7 @@ class FakeOpenTelemetryModule(
     private val systemInfo = SystemInfo()
 
     override val otelSdkConfig: OtelSdkConfig =
-        OtelSdkConfig(spanSink, logSink, sdkName, sdkVersion, systemInfo)
+        OtelSdkConfig(spanSink, logSink, sdkName, sdkVersion, appVersionName = null, systemInfo)
 
     override fun applyConfiguration(sensitiveKeysBehavior: SensitiveKeysBehavior, bypassValidation: Boolean) {
         // no-op
@@ -43,6 +43,7 @@ class FakeOpenTelemetryModule(
                 logSink,
                 sdkName,
                 sdkVersion,
+                appVersionName = null,
                 systemInfo
             ),
             FakeSpanService(),

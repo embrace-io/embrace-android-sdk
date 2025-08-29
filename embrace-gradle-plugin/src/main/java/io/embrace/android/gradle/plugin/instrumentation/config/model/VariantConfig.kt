@@ -13,6 +13,7 @@ import java.io.Serializable
 data class VariantConfig(
     val variantName: String,
     val variantVersion: String? = null,
+    val variantVersionCode: Int? = null,
     val buildId: String? = null,
     val buildType: String? = null,
     val buildFlavor: String? = null,
@@ -34,6 +35,7 @@ data class VariantConfig(
                 embraceConfig = embraceVariantConfig,
                 variantName = androidVariantConfig.name,
                 variantVersion = androidVariantConfig.versionName,
+                variantVersionCode = androidVariantConfig.versionCode,
                 buildType = androidVariantConfig.buildTypeName,
                 buildFlavor = androidVariantConfig.flavorName,
                 buildId = androidVariantConfig.buildId,

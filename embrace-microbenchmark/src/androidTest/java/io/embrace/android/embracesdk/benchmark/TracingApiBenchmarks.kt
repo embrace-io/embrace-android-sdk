@@ -51,6 +51,7 @@ class TracingApiBenchmarks {
                 logSink = LogSinkImpl(),
                 sdkName = "benchmark-test-sdk",
                 sdkVersion = "1.0",
+                appVersionName = null,
                 systemInfo = SystemInfo(),
                 sessionIdProvider = { "fake-session-id" },
                 processIdentifierProvider = { "fake-pid" }

@@ -30,6 +30,10 @@ class OtelSdkConfig(
     logSink: LogSink,
     val sdkName: String,
     val sdkVersion: String,
+    /**
+     * The mobile app's version name. If provided, this will be used for the service.version 
+     * attribute instead of the SDK version. If null, falls back to the SDK version.
+     */
     val appVersionName: String? = null,
     private val systemInfo: SystemInfo,
     private val sessionIdProvider: () -> String? = { null },

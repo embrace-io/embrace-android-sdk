@@ -63,3 +63,4 @@ docs/
 
 .DS_Store
 .kotlin
+embrace-gradle-plugin/META-INF/

@@ -1,8 +1,8 @@
 package io.embrace.android.gradle.plugin.tasks.registration
 
+import com.android.build.api.dsl.CommonExtension
 import com.android.build.api.variant.AndroidComponentsExtension
 import com.android.build.api.variant.Variant
-import com.android.build.gradle.BaseExtension
 import io.embrace.android.gradle.plugin.EmbraceLogger
 import io.embrace.android.gradle.plugin.config.PluginBehavior
 import io.embrace.android.gradle.plugin.config.variant.EmbraceVariantConfigurationBuilder
@@ -142,11 +142,11 @@ class TaskRegistrar(
 
     /**
      * Enhances variant data with version information extracted from Android extension.
-     * This is an AGP 8.x compatible approach to get version info when variant.outputs is not accessible.
+     * Uses CommonExtension for AGP 7.4.2+ compatibility.
      */
     private fun enhanceVariantWithVersionInfo(variant: AndroidCompactedVariantData): AndroidCompactedVariantData {
         return try {
-            val androidExtension = project.extensions.findByType(BaseExtension::class.java)
+            val androidExtension = project.extensions.findByType(CommonExtension::class.java)
             
             // Try to get version info from multiple sources in order of preference:
             // 1. Product flavor specific version (if applicable)

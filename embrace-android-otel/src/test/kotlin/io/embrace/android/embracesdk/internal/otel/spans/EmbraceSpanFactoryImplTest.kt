@@ -3,12 +3,12 @@ package io.embrace.android.embracesdk.internal.otel.spans
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeOtelKotlinClock
 import io.embrace.android.embracesdk.fakes.fakeObjectCreator
+import io.embrace.android.embracesdk.internal.otel.get
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.embrace.android.embracesdk.internal.otel.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.otel.sdk.DataValidator
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.OpenTelemetryInstance
-import io.embrace.opentelemetry.kotlin.createOpenTelemetryKotlin
 import io.embrace.opentelemetry.kotlin.getTracer
 import io.embrace.opentelemetry.kotlin.tracing.Tracer
 import org.junit.Assert.assertEquals
@@ -35,8 +35,7 @@ internal class EmbraceSpanFactoryImplTest {
                 updateNotified = true
             }
         }
-        val api = OpenTelemetryInstance.createOpenTelemetryKotlin(clock = openTelemetryClock)
-        tracer = api.getTracer("my_tracer")
+        tracer = OpenTelemetryInstance.get(clock = openTelemetryClock).getTracer("my_tracer")
         embraceSpanFactory = EmbraceSpanFactoryImpl(
             openTelemetryClock = openTelemetryClock,
             spanRepository = spanRepository,

@@ -6,5 +6,5 @@ import io.embrace.opentelemetry.kotlin.aliases.OtelJavaTracer
 class FakeOtelJavaTracer(
     val tracerKey: TracerKey = TracerKey(instrumentationScopeName = "fake-scope"),
 ) : OtelJavaTracer {
-    override fun spanBuilder(spanName: String): FakeSpanBuilder = FakeSpanBuilder(spanName, tracerKey)
+    override fun spanBuilder(spanName: String): FakeSpanBuilder = FakeSpanBuilder()
 }

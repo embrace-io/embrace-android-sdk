@@ -13,6 +13,7 @@ import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface
 import io.embrace.android.embracesdk.testframework.actions.EmbracePreSdkStartInterface
+import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaAttributes
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaContext
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaOpenTelemetry
@@ -37,7 +38,9 @@ internal class ExternalTracerTest {
 
     @Rule
     @JvmField
-    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule()
+    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule {
+        EmbraceSetupInterface(useKotlinSdk = false)
+    }
 
     private lateinit var spanExporter: FakeOtelJavaSpanExporter
     private lateinit var embOpenTelemetry: OtelJavaOpenTelemetry

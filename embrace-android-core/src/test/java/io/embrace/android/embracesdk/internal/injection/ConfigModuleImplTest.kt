@@ -20,7 +20,7 @@ internal class ConfigModuleImplTest {
         val module = ConfigModuleImpl(
             initModule = initModule,
             coreModule = createCoreModule(ApplicationProvider.getApplicationContext(), initModule),
-            openTelemetryModule = FakeOpenTelemetryModule(),
+            openTelemetryModule = FakeOpenTelemetryModule(useKotlinSdk = initModule.useKotlinSdk),
             workerThreadModule = FakeWorkerThreadModule(),
             androidServicesModule = FakeAndroidServicesModule(),
             framework = AppFramework.NATIVE,

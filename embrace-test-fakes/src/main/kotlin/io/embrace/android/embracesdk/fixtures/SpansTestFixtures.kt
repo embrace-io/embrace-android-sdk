@@ -15,7 +15,6 @@ import io.embrace.android.embracesdk.internal.utils.PropertyUtils
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.context.ContextKey
-import io.embrace.opentelemetry.kotlin.creator.current
 import io.embrace.opentelemetry.kotlin.tracing.StatusCode
 
 @OptIn(ExperimentalApi::class)
@@ -49,7 +48,7 @@ val testSpan: Span = EmbraceSpanData(
     )
 ).toEmbracePayload()
 
-val fakeContextKey: ContextKey<String> = fakeObjectCreator.context.current().createKey("fake-context-key")
+val fakeContextKey: ContextKey<String> = fakeObjectCreator.context.root().createKey("fake-context-key")
 
 private fun createMapOfSize(size: Int): Map<String, String> {
     val mutableMap = mutableMapOf<String, String>()

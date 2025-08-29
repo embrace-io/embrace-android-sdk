@@ -11,7 +11,6 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
 import io.embrace.android.embracesdk.fakes.FakeEmbraceSpanFactory
 import io.embrace.android.embracesdk.fakes.FakeTracer
-import io.embrace.android.embracesdk.fakes.fakeObjectCreator
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.arch.destination.SpanAttributeData
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
@@ -35,6 +34,7 @@ import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.opentelemetry.kotlin.Clock
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
+import io.embrace.opentelemetry.kotlin.creator.ObjectCreator
 import io.embrace.opentelemetry.kotlin.tracing.Tracer
 import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes
 import org.junit.Assert.assertEquals
@@ -57,6 +57,7 @@ internal class CurrentSessionSpanImplTests {
     private lateinit var currentSessionSpan: CurrentSessionSpanImpl
     private lateinit var spanService: SpanService
     private lateinit var tracer: Tracer
+    private lateinit var objectCreator: ObjectCreator
     private val clock = FakeClock(1000L)
 
     @Before
@@ -68,6 +69,7 @@ internal class CurrentSessionSpanImplTests {
         openTelemetryClock = initModule.openTelemetryModule.openTelemetryClock
         currentSessionSpan = initModule.openTelemetryModule.currentSessionSpan as CurrentSessionSpanImpl
         tracer = initModule.openTelemetryModule.otelSdkWrapper.sdkTracer
+        objectCreator = initModule.openTelemetryModule.otelSdkWrapper.kotlinApi.objectCreator
         spanService = initModule.openTelemetryModule.spanService
         spanService.initializeService(clock.now())
         otelLimitsConfig = initModule.instrumentedConfig.otelLimits
@@ -161,7 +163,7 @@ internal class CurrentSessionSpanImplTests {
                         internal = false,
                         private = false,
                         tracer = tracer,
-                        objectCreator = fakeObjectCreator,
+                        objectCreator = objectCreator,
                     )
                 )
             )
@@ -174,7 +176,7 @@ internal class CurrentSessionSpanImplTests {
                     internal = false,
                     private = false,
                     tracer = tracer,
-                    objectCreator = fakeObjectCreator,
+                    objectCreator = objectCreator,
                 )
             )
         )
@@ -186,7 +188,7 @@ internal class CurrentSessionSpanImplTests {
                     internal = true,
                     private = false,
                     tracer = tracer,
-                    objectCreator = fakeObjectCreator,
+                    objectCreator = objectCreator,
                 )
             )
         )
@@ -482,7 +484,7 @@ internal class CurrentSessionSpanImplTests {
             spanSink = spanSink,
             embraceSpanFactorySupplier = { FakeEmbraceSpanFactory() },
             tracerSupplier = { FakeTracer() },
-            objectCreatorSupplier = ::fakeObjectCreator
+            objectCreatorSupplier = ::objectCreator
         )
         assertFalse(sessionSpan.readySession())
     }

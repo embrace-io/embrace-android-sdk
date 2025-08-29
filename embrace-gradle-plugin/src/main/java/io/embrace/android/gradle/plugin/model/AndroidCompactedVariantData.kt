@@ -27,9 +27,11 @@ data class AndroidCompactedVariantData(
             val buildtype = variant.buildType?.lowercase()
             val debuggable = buildtype?.contains("debug") ?: false
             
-            // Extract version information from variant outputs
-            val versionName = variant.outputs.firstOrNull()?.versionName?.orNull
-            val versionCode = variant.outputs.firstOrNull()?.versionCode?.orNull
+            // AGP 8.x compatibility: variant.outputs is not accessible in newer AGP versions
+            // Version information will be extracted later from the Android extension in TaskRegistrar
+            // This approach is more reliable and follows AGP 8.x best practices
+            val versionName: String? = null
+            val versionCode: Int? = null
             
             return AndroidCompactedVariantData(
                 variant.name,

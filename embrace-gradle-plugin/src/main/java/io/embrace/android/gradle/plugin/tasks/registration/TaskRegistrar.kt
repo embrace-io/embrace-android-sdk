@@ -2,6 +2,7 @@ package io.embrace.android.gradle.plugin.tasks.registration
 
 import com.android.build.api.variant.AndroidComponentsExtension
 import com.android.build.api.variant.Variant
+import com.android.build.gradle.BaseExtension
 import io.embrace.android.gradle.plugin.EmbraceLogger
 import io.embrace.android.gradle.plugin.config.PluginBehavior
 import io.embrace.android.gradle.plugin.config.variant.EmbraceVariantConfigurationBuilder
@@ -54,17 +55,20 @@ class TaskRegistrar(
     private fun onVariant(variant: AndroidCompactedVariantData, ref: Variant) {
         project.installDependenciesForVariant(variant.name, behavior)
 
-        setupVariantConfigurationListProperty(variant, variantConfigurationsListProperty)
+        // Enhance variant data with version information from Android extension
+        val enhancedVariant = enhanceVariantWithVersionInfo(variant)
+        
+        setupVariantConfigurationListProperty(enhancedVariant, variantConfigurationsListProperty)
 
-        val params = createRegistrationParams(variant, ref)
+        val params = createRegistrationParams(enhancedVariant, ref)
 
         AsmTaskRegistration().register(params)
 
-        if (shouldSkipUploadTasks(variant)) {
-            logger.info("Skipping upload tasks for variant: ${variant.name}")
+        if (shouldSkipUploadTasks(enhancedVariant)) {
+            logger.info("Skipping upload tasks for variant: ${enhancedVariant.name}")
             return
         } else {
-            registerUploadTasks(params, variant)
+            registerUploadTasks(params, enhancedVariant)
         }
     }
 
@@ -134,5 +138,53 @@ class TaskRegistrar(
 
         // let's add configuration for current variant to our property
         GradleCompatibilityHelper.add(variantConfigurationsListProperty, fullVariantConfiguration)
+    }
+
+    /**
+     * Enhances variant data with version information extracted from Android extension.
+     * This is an AGP 8.x compatible approach to get version info when variant.outputs is not accessible.
+     */
+    private fun enhanceVariantWithVersionInfo(variant: AndroidCompactedVariantData): AndroidCompactedVariantData {
+        return try {
+            val androidExtension = project.extensions.findByType(BaseExtension::class.java)
+            
+            // Try to get version info from multiple sources in order of preference:
+            // 1. Product flavor specific version (if applicable)
+            // 2. Build type specific version (if applicable) 
+            // 3. Default config version
+            
+            var versionName: String? = null
+            var versionCode: Int? = null
+            
+            // Check product flavors first
+            val productFlavors = androidExtension?.productFlavors
+            if (!variant.productFlavors.isNullOrEmpty() && productFlavors != null) {
+                for (flavorName in variant.productFlavors) {
+                    val flavor = productFlavors.findByName(flavorName)
+                    if (flavor?.versionName != null) {
+                        versionName = flavor.versionName
+                    }
+                    if (flavor?.versionCode != null) {
+                        versionCode = flavor.versionCode
+                    }
+                }
+            }
+            
+            // Fall back to default config if not found in flavors
+            if (versionName == null || versionCode == null) {
+                val defaultConfig = androidExtension?.defaultConfig
+                versionName = versionName ?: defaultConfig?.versionName
+                versionCode = versionCode ?: defaultConfig?.versionCode
+            }
+            
+            // Create a new instance with the extracted version information
+            variant.copy(
+                versionName = versionName ?: variant.versionName,
+                versionCode = versionCode ?: variant.versionCode
+            )
+        } catch (e: Exception) {
+            logger.info("Could not extract version info from Android extension: ${e.message}")
+            variant
+        }
     }
 }

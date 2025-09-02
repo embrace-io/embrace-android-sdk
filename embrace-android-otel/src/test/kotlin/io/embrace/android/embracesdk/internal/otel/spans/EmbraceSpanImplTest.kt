@@ -29,6 +29,7 @@ import io.embrace.android.embracesdk.fixtures.maxSizeEventAttributes
 import io.embrace.android.embracesdk.fixtures.tooBigEventAttributes
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
+import io.embrace.android.embracesdk.internal.otel.get
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.embrace.android.embracesdk.internal.otel.schema.LinkType
 import io.embrace.android.embracesdk.internal.otel.schema.PrivateSpan
@@ -43,8 +44,8 @@ import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.OpenTelemetryInstance
 import io.embrace.opentelemetry.kotlin.context.Context
-import io.embrace.opentelemetry.kotlin.createOpenTelemetryKotlin
-import io.embrace.opentelemetry.kotlin.creator.current
+import io.embrace.opentelemetry.kotlin.getTracer
+import io.embrace.opentelemetry.kotlin.tracing.Tracer
 import io.embrace.opentelemetry.kotlin.tracing.ext.toOtelKotlinSpanContext
 import io.embrace.opentelemetry.kotlin.tracing.model.SpanKind
 import io.opentelemetry.semconv.ExceptionAttributes
@@ -63,17 +64,16 @@ internal class EmbraceSpanImplTest {
     private lateinit var spanRepository: SpanRepository
     private lateinit var serializer: PlatformSerializer
     private lateinit var dataValidator: DataValidator
+    private lateinit var tracer: Tracer
     private lateinit var embraceSpanFactory: EmbraceSpanFactory
     private var updateNotified: Boolean = false
     private var stoppedSpanId: String? = null
-    private val tracer = OpenTelemetryInstance.createOpenTelemetryKotlin().tracerProvider.getTracer(
-        "test-tracer"
-    )
 
     @Before
     fun setup() {
         fakeClock = FakeClock()
         val otelClock = FakeOtelKotlinClock(fakeClock)
+        tracer = OpenTelemetryInstance.get(clock = otelClock).getTracer("test-tracer")
         spanRepository = SpanRepository().apply { setSpanUpdateNotifier { updateNotified = true } }
         serializer = TestPlatformSerializer()
         dataValidator = DataValidator()
@@ -533,7 +533,7 @@ internal class EmbraceSpanImplTest {
 
     @Test
     fun `validate context objects are propagated from the parent to the child span`() {
-        val newParentContext = fakeObjectCreator.context.current().set(fakeContextKey, "fake-value")
+        val newParentContext = fakeObjectCreator.context.root().set(fakeContextKey, "fake-value")
         val wrapper = createWrapperForInternalSpan(parentContext = newParentContext)
         embraceSpan = embraceSpanFactory.create(wrapper)
 

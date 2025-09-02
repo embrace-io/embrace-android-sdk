@@ -37,5 +37,6 @@ dependencies {
 
     implementation(libs.opentelemetry.kotlin.api)
     implementation(libs.opentelemetry.kotlin.api.ext)
+    implementation(libs.opentelemetry.kotlin.sdk)
     implementation(libs.opentelemetry.kotlin.compat)
 }

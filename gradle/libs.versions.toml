@@ -89,6 +89,7 @@ bundletool = { module = "com.android.tools.build:bundletool", version.ref = "bun
 opentelemetry-kotlin = { module = "io.embrace.opentelemetry.kotlin:opentelemetry-kotlin", version.ref = "otelKotlin" }
 opentelemetry-kotlin-api = { module = "io.embrace.opentelemetry.kotlin:opentelemetry-kotlin-api", version.ref = "otelKotlin" }
 opentelemetry-kotlin-api-ext = { module = "io.embrace.opentelemetry.kotlin:opentelemetry-kotlin-api-ext", version.ref = "otelKotlin" }
+opentelemetry-kotlin-sdk = { module = "io.embrace.opentelemetry.kotlin:opentelemetry-kotlin-implementation", version.ref = "otelKotlin" }
 opentelemetry-kotlin-compat = { module = "io.embrace.opentelemetry.kotlin:opentelemetry-kotlin-compat", version.ref = "otelKotlin" }
 opentelemetry-kotlin-noop = { module = "io.embrace.opentelemetry.kotlin:opentelemetry-kotlin-noop", version.ref = "otelKotlin" }
 opentelemetry-java-aliases = { module = "io.embrace.opentelemetry.kotlin:opentelemetry-java-typealiases", version.ref = "otelKotlin" }

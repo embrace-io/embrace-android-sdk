@@ -9,7 +9,6 @@ import io.embrace.android.embracesdk.arch.assertNotPrivateSpan
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeOtelKotlinClock
 import io.embrace.android.embracesdk.fakes.FakeSpanService
-import io.embrace.android.embracesdk.fakes.fakeObjectCreator
 import io.embrace.android.embracesdk.fixtures.MAX_LENGTH_INTERNAL_SPAN_NAME
 import io.embrace.android.embracesdk.fixtures.MAX_LENGTH_SPAN_NAME
 import io.embrace.android.embracesdk.fixtures.TOO_LONG_ATTRIBUTE_KEY
@@ -626,7 +625,7 @@ internal class SpanServiceImplTest {
         val otelSdkWrapper = OtelSdkWrapper(
             otelClock = fakeClock,
             configuration = otelSdkConfig,
-            spanService = FakeSpanService()
+            spanService = FakeSpanService(),
         )
 
         return SpanServiceImpl(
@@ -640,7 +639,7 @@ internal class SpanServiceImplTest {
             dataValidator = dataValidator,
             canStartNewSpan = ::canStartNewSpan,
             initCallback = ::initCallback,
-            objectCreator = fakeObjectCreator
+            objectCreator = otelSdkWrapper.kotlinApi.objectCreator
         ).apply {
             initializeService(fakeClock.now().nanosToMillis())
         }

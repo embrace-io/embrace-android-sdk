@@ -11,9 +11,11 @@ import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModule
 import io.embrace.android.embracesdk.internal.injection.createInitModule
 import io.embrace.android.embracesdk.internal.injection.createOpenTelemetryModule
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
+import io.embrace.android.embracesdk.internal.otel.config.USE_KOTLIN_SDK
 import java.util.UUID
 
 class FakeInitModule(
+    override val useKotlinSdk: Boolean = USE_KOTLIN_SDK,
     clock: Clock = FakeClock(),
     logger: EmbLogger = FakeEmbLogger(),
     systemInfo: SystemInfo = SystemInfo(
@@ -25,15 +27,15 @@ class FakeInitModule(
         clock = clock,
         logger = logger,
         systemInfo = systemInfo,
+        useKotlinSdk = useKotlinSdk
     ),
     processIdentifier: String = UUID.randomUUID().toString(),
     override var instrumentedConfig: InstrumentedConfig = FakeInstrumentedConfig(),
-
 ) : InitModule by initModule {
 
     override val processIdentifierProvider: () -> String = { processIdentifier }
 
-    val openTelemetryModule: OpenTelemetryModule by lazy { createOpenTelemetryModule(initModule) }
+    val openTelemetryModule: OpenTelemetryModule by lazy { createOpenTelemetryModule(initModule = initModule) }
 
     fun getFakeClock(): FakeClock? = clock as? FakeClock
 }

@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.internal.otel.config.OtelSdkConfig
 import io.embrace.android.embracesdk.internal.otel.config.getMaxTotalAttributeCount
 import io.embrace.android.embracesdk.internal.otel.config.getMaxTotalEventCount
 import io.embrace.android.embracesdk.internal.otel.config.getMaxTotalLinkCount
+import io.embrace.android.embracesdk.internal.otel.get
 import io.embrace.android.embracesdk.internal.otel.impl.EmbOpenTelemetry
 import io.embrace.android.embracesdk.internal.otel.impl.EmbTracerProvider
 import io.embrace.android.embracesdk.internal.otel.logs.DefaultLogRecordProcessor
@@ -17,7 +18,6 @@ import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.OpenTelemetry
 import io.embrace.opentelemetry.kotlin.OpenTelemetryInstance
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaOpenTelemetry
-import io.embrace.opentelemetry.kotlin.createOpenTelemetryKotlin
 import io.embrace.opentelemetry.kotlin.decorateKotlinApi
 import io.embrace.opentelemetry.kotlin.logging.Logger
 import io.embrace.opentelemetry.kotlin.tracing.Tracer
@@ -34,9 +34,13 @@ class OtelSdkWrapper(
     spanService: SpanService,
     limits: OtelLimitsConfig = InstrumentedConfigImpl.otelLimits,
 ) {
+    private val useKotlinSdk: Boolean = configuration.useKotlinSdk
+
     init {
-        // Enforce the use of default ThreadLocal ContextStorage of the OTel Java to bypass SPI looking that violates Android strict mode
-        System.setProperty("io.opentelemetry.context.contextStorageProvider", "default")
+        if (!useKotlinSdk) {
+            // Enforce the use of default OTel Java SDK ThreadLocal ContextStorage to bypass SPI looking that violates Android strict mode
+            System.setProperty("io.opentelemetry.context.contextStorageProvider", "default")
+        }
     }
 
     val sdkTracer: Tracer by lazy {
@@ -58,16 +62,8 @@ class OtelSdkWrapper(
     }
 
     val kotlinApi: OpenTelemetry by lazy {
-        OpenTelemetryInstance.createOpenTelemetryKotlin(
-            loggerProvider = {
-                resource(attributes = configuration.resourceAction)
-                addLogRecordProcessor(
-                    DefaultLogRecordProcessor(configuration.logRecordExporter)
-                )
-                logLimits {
-                    attributeCountLimit = limits.getMaxTotalAttributeCount()
-                }
-            },
+        OpenTelemetryInstance.get(
+            useKotlinSdk = useKotlinSdk,
             tracerProvider = {
                 resource(attributes = configuration.resourceAction)
                 spanLimits {
@@ -83,7 +79,16 @@ class OtelSdkWrapper(
                 )
                 addSpanProcessor(configuration.spanProcessor)
             },
-            clock = otelClock
+            loggerProvider = {
+                resource(attributes = configuration.resourceAction)
+                addLogRecordProcessor(
+                    DefaultLogRecordProcessor(configuration.logRecordExporter)
+                )
+                logLimits {
+                    attributeCountLimit = limits.getMaxTotalAttributeCount()
+                }
+            },
+            clock = otelClock,
         )
     }
 

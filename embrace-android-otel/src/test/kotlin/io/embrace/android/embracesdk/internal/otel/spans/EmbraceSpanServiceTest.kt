@@ -5,7 +5,6 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeEmbraceSpanFactory
 import io.embrace.android.embracesdk.fakes.FakeOtelKotlinClock
 import io.embrace.android.embracesdk.fakes.FakeSpanService
-import io.embrace.android.embracesdk.fakes.fakeObjectCreator
 import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.otel.config.OtelSdkConfig
@@ -16,6 +15,8 @@ import io.embrace.android.embracesdk.internal.otel.sdk.OtelSdkWrapper
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
+import io.embrace.opentelemetry.kotlin.OpenTelemetry
+import io.embrace.opentelemetry.kotlin.createCompatOpenTelemetryInstance
 import io.embrace.opentelemetry.kotlin.tracing.Tracer
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -27,10 +28,12 @@ import org.junit.Test
 
 @OptIn(ExperimentalApi::class)
 internal class EmbraceSpanServiceTest {
+
     private lateinit var spanSink: SpanSink
     private lateinit var spanService: SpanService
     private lateinit var clock: FakeOtelKotlinClock
     private lateinit var tracer: Tracer
+    private lateinit var otel: OpenTelemetry
     private var spanCreationAllowed: Boolean = true
     private var initTimeMs: Long = 0L
 
@@ -39,6 +42,7 @@ internal class EmbraceSpanServiceTest {
         clock = FakeOtelKotlinClock(FakeClock(10000L))
         val fakeClock = FakeOtelKotlinClock(FakeClock())
         spanSink = SpanSinkImpl()
+        otel = createCompatOpenTelemetryInstance()
 
         val otelSdkConfig = OtelSdkConfig(
             spanSink = spanSink,
@@ -75,7 +79,7 @@ internal class EmbraceSpanServiceTest {
             },
             dataValidator = dataValidator,
             tracerSupplier = { tracer },
-            objectCreatorSupplier = { fakeObjectCreator }
+            openTelemetrySupplier = { otel }
         )
     }
 
@@ -88,7 +92,7 @@ internal class EmbraceSpanServiceTest {
             initCallback = ::initCallback,
             embraceSpanFactorySupplier = { FakeEmbraceSpanFactory() },
             tracerSupplier = { tracer },
-            objectCreatorSupplier = { fakeObjectCreator }
+            openTelemetrySupplier = { otel }
         )
         assertFalse(uninitializedService.initialized())
         assertNull(uninitializedService.createSpan("test-span"))

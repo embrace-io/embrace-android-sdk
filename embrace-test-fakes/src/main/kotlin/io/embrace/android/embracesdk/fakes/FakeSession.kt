@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.internal.payload.LifeEventType
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.session.SessionZygote
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
+import io.embrace.opentelemetry.kotlin.createCompatOpenTelemetryInstance
 
 fun fakeSessionZygote(): SessionZygote = SessionZygote(
     sessionId = "fakeSessionId",
@@ -34,7 +35,7 @@ fun fakeSessionEnvelope(
         sessionProperties = sessionProperties,
     )
     val spans = listOf(testSpan, checkNotNull(sessionSpan.snapshot()))
-    val spanSnapshots = listOfNotNull(FakeEmbraceSdkSpan.started().snapshot())
+    val spanSnapshots = listOfNotNull(FakeEmbraceSdkSpan.started(otel = createCompatOpenTelemetryInstance()).snapshot())
 
     return Envelope(
         resource = fakeEnvelopeResource,
@@ -74,7 +75,7 @@ fun fakeIncompleteSessionEnvelope(
         data = SessionPayload(
             spanSnapshots = listOfNotNull(
                 incompleteSessionSpan.snapshot(),
-                FakeEmbraceSdkSpan.started(clock = fakeClock).snapshot()
+                FakeEmbraceSdkSpan.started(clock = fakeClock, otel = createCompatOpenTelemetryInstance()).snapshot()
             )
         )
     )

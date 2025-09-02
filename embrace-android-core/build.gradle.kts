@@ -53,6 +53,7 @@ dependencies {
     testImplementation(libs.opentelemetry.sdk)
     testImplementation(libs.opentelemetry.semconv)
     testImplementation(libs.opentelemetry.semconv.incubating)
+    testImplementation(libs.opentelemetry.kotlin.compat)
     testImplementation(libs.lifecycle.runtime)
     testImplementation(libs.lifecycle.process)
     testImplementation(libs.lifecycle.testing)

@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.internal.otel.impl
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
 import io.embrace.android.embracesdk.fakes.FakeOtelKotlinClock
-import io.embrace.android.embracesdk.fakes.fakeObjectCreator
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
 import io.embrace.android.embracesdk.internal.otel.schema.ErrorCodeAttribute
@@ -11,6 +10,7 @@ import io.embrace.android.embracesdk.internal.otel.sdk.hasEmbraceAttribute
 import io.embrace.android.embracesdk.internal.otel.toOtelKotlin
 import io.embrace.opentelemetry.kotlin.Clock
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
+import io.embrace.opentelemetry.kotlin.createCompatOpenTelemetryInstance
 import io.embrace.opentelemetry.kotlin.tracing.data.StatusData
 import io.embrace.opentelemetry.kotlin.tracing.recordException
 import org.junit.Assert.assertEquals
@@ -32,11 +32,12 @@ internal class EmbSpanTest {
     fun setup() {
         fakeClock = FakeClock()
         openTelemetryClock = FakeOtelKotlinClock(fakeClock)
-        fakeEmbraceSpan = FakeEmbraceSdkSpan.started(clock = fakeClock)
+        val otel = createCompatOpenTelemetryInstance()
+        fakeEmbraceSpan = FakeEmbraceSdkSpan.started(clock = fakeClock, otel = otel)
         embSpan = EmbSpan(
             impl = fakeEmbraceSpan,
             clock = openTelemetryClock,
-            objectCreator = fakeObjectCreator
+            openTelemetry = otel
         )
     }
 

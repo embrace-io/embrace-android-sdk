@@ -53,7 +53,7 @@ class EmbTracerProvider(
             impl = tracerImpl,
             spanService = spanService,
             clock = clock,
-            objectCreator = impl.objectCreator
+            openTelemetry = impl
         )
         tracers[key] = tracer
         return tracer

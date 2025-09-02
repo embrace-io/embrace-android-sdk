@@ -2,16 +2,15 @@ package io.embrace.android.embracesdk.internal.otel.spans
 
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeOtelKotlinClock
-import io.embrace.android.embracesdk.fakes.fakeObjectCreator
 import io.embrace.android.embracesdk.fixtures.TOO_LONG_INTERNAL_SPAN_NAME
 import io.embrace.android.embracesdk.fixtures.TOO_LONG_SPAN_NAME
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
-import io.embrace.android.embracesdk.internal.otel.get
+import io.embrace.android.embracesdk.internal.otel.createOtelInstance
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.embrace.android.embracesdk.internal.otel.schema.PrivateSpan
 import io.embrace.opentelemetry.kotlin.Clock
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
-import io.embrace.opentelemetry.kotlin.OpenTelemetryInstance
+import io.embrace.opentelemetry.kotlin.OpenTelemetry
 import io.embrace.opentelemetry.kotlin.getTracer
 import io.embrace.opentelemetry.kotlin.tracing.Tracer
 import io.embrace.opentelemetry.kotlin.tracing.model.Span
@@ -28,12 +27,14 @@ internal class OtelSpanStartArgsTest {
     private lateinit var clock: FakeClock
     private lateinit var otelClock: Clock
     private lateinit var tracer: Tracer
+    private lateinit var otel: OpenTelemetry
 
     @Before
     fun setup() {
         clock = FakeClock()
         otelClock = FakeOtelKotlinClock(clock)
-        tracer = OpenTelemetryInstance.get(clock = otelClock).getTracer("test-tracer")
+        otel = createOtelInstance(clock = otelClock)
+        tracer = otel.getTracer("test-tracer")
     }
 
     @Test
@@ -46,7 +47,7 @@ internal class OtelSpanStartArgsTest {
             private = true,
             tracer = tracer,
             startTimeMs = originalStartTime,
-            objectCreator = fakeObjectCreator
+            openTelemetry = otel
         )
         val startTime = clock.tick()
         with(args.embraceAttributes.toSet()) {
@@ -54,7 +55,7 @@ internal class OtelSpanStartArgsTest {
             assertTrue(contains(EmbType.Performance.Default))
         }
         assertEquals("emb-test", args.initialSpanName)
-        val spanContext = fakeObjectCreator.span.fromContext(args.parentContext).spanContext
+        val spanContext = otel.spanFactory.fromContext(args.parentContext).spanContext
         assertFalse(spanContext.isValid)
 
         args.startSpan(startTime).assertSpan(
@@ -67,7 +68,7 @@ internal class OtelSpanStartArgsTest {
     @Test
     fun `add parent after initial creation`() {
         val parent = tracer.createSpan("parent")
-        val ctx = fakeObjectCreator.context.storeSpan(fakeObjectCreator.context.root(), parent)
+        val ctx = otel.contextFactory.storeSpan(otel.contextFactory.root(), parent)
         val args = OtelSpanStartArgs(
             name = "test",
             type = EmbType.Performance.Default,
@@ -75,9 +76,9 @@ internal class OtelSpanStartArgsTest {
             private = false,
             tracer = tracer,
             parentCtx = ctx,
-            objectCreator = fakeObjectCreator
+            openTelemetry = otel
         )
-        val spanContext = fakeObjectCreator.span.fromContext(args.parentContext).spanContext
+        val spanContext = otel.spanFactory.fromContext(args.parentContext).spanContext
         assertEquals(parent.spanContext.traceId, spanContext.traceId)
 
         val startTime = otelClock.now()
@@ -96,7 +97,7 @@ internal class OtelSpanStartArgsTest {
             private = false,
             tracer = tracer,
             spanKind = SpanKind.CLIENT,
-            objectCreator = fakeObjectCreator
+            openTelemetry = otel
         )
         val startTime = otelClock.now()
         args.startSpan(startTime).assertSpan(
@@ -114,7 +115,7 @@ internal class OtelSpanStartArgsTest {
             internal = false,
             private = false,
             tracer = tracer,
-            objectCreator = fakeObjectCreator
+            openTelemetry = otel
         )
         args.customAttributes["test-key"] = "test-value"
         assertEquals("test-value", args.customAttributes["test-key"])
@@ -130,7 +131,7 @@ internal class OtelSpanStartArgsTest {
             internal = false,
             private = false,
             tracer = tracer,
-            objectCreator = fakeObjectCreator
+            openTelemetry = otel
         )
 
         creator.startSpan(startTime).assertSpan(
@@ -144,7 +145,7 @@ internal class OtelSpanStartArgsTest {
             internal = true,
             private = false,
             tracer = tracer,
-            objectCreator = fakeObjectCreator
+            openTelemetry = otel
         )
 
         internalSpanCreator.startSpan(startTime).assertSpan(

@@ -13,11 +13,14 @@ import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.context.toOtelJavaContext
 import io.embrace.opentelemetry.kotlin.context.toOtelKotlinContext
+import io.embrace.opentelemetry.kotlin.createCompatOpenTelemetryInstance
 
 @OptIn(ExperimentalApi::class)
 class FakeSpanService(
     private val useKotlinSdk: Boolean = USE_KOTLIN_SDK
 ) : SpanService {
+
+    private val otel = createCompatOpenTelemetryInstance()
 
     val createdSpans: MutableList<FakeEmbraceSdkSpan> = mutableListOf()
 
@@ -37,8 +40,8 @@ class FakeSpanService(
         useKotlinSdk = useKotlinSdk,
         name = name,
         parentContext = parent?.run {
-            fakeObjectCreator.context.root().toOtelJavaContext().with(parent as EmbraceSdkSpan)
-        }?.toOtelKotlinContext() ?: fakeObjectCreator.context.root(),
+            otel.contextFactory.root().toOtelJavaContext().with(parent as EmbraceSdkSpan)
+        }?.toOtelKotlinContext() ?: otel.contextFactory.root(),
         type = type,
         internal = internal,
         private = private,
@@ -94,8 +97,8 @@ class FakeSpanService(
                 useKotlinSdk = useKotlinSdk,
                 name = name,
                 parentContext = parent?.run {
-                    fakeObjectCreator.context.root().toOtelJavaContext().with(parent as EmbraceSdkSpan).toOtelKotlinContext()
-                } ?: fakeObjectCreator.context.root(),
+                    otel.contextFactory.root().toOtelJavaContext().with(parent as EmbraceSdkSpan).toOtelKotlinContext()
+                } ?: otel.contextFactory.root(),
                 type = type,
                 internal = internal,
                 private = private

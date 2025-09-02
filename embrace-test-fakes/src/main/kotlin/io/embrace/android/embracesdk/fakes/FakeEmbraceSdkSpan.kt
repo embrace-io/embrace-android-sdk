@@ -29,13 +29,13 @@ import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
+import io.embrace.opentelemetry.kotlin.OpenTelemetry
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaContext
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanContext
 import io.embrace.opentelemetry.kotlin.context.Context
 import io.embrace.opentelemetry.kotlin.context.toOtelJavaContext
 import io.embrace.opentelemetry.kotlin.context.toOtelJavaContextKey
 import io.embrace.opentelemetry.kotlin.context.toOtelKotlinContext
-import io.embrace.opentelemetry.kotlin.creator.ObjectCreator
 import io.embrace.opentelemetry.kotlin.tracing.data.StatusData
 import io.embrace.opentelemetry.kotlin.tracing.ext.toOtelJavaSpanContext
 import io.embrace.opentelemetry.kotlin.tracing.model.Span
@@ -47,13 +47,9 @@ import java.util.concurrent.ConcurrentLinkedQueue
 @OptIn(ExperimentalApi::class)
 class FakeEmbraceSdkSpan(
     private val useKotlinSdk: Boolean = USE_KOTLIN_SDK,
-    private val objectCreator: ObjectCreator = if (useKotlinSdk) {
-        fakeObjectCreator
-    } else {
-        fakeCompatObjectCreator
-    },
+    private val otel: OpenTelemetry = createOtelInstance(),
     var name: String = "fake-span",
-    var parentContext: Context = objectCreator.context.root(),
+    var parentContext: Context = otel.contextFactory.root(),
     val type: EmbType = EmbType.Performance.Default,
     val internal: Boolean = false,
     val private: Boolean = internal,
@@ -72,7 +68,7 @@ class FakeEmbraceSdkSpan(
     val links: ConcurrentLinkedQueue<EmbraceLinkData> = ConcurrentLinkedQueue()
 
     override val parent: EmbraceSpan?
-        get() = parentContext.getEmbraceSpan(objectCreator)
+        get() = parentContext.getEmbraceSpan(otel)
 
     override val spanContext: OtelJavaSpanContext?
         get() = if (useKotlinSdk) {
@@ -111,15 +107,15 @@ class FakeEmbraceSdkSpan(
 
     private fun createFakeKotlinSdkSpan(timestampMs: Long): Span = FakeSpan(
         name = name,
-        spanContext = objectCreator.spanContext.create(
-            traceId = parent?.traceId ?: objectCreator.idCreator.generateTraceId(),
-            spanId = objectCreator.idCreator.generateSpanId(),
-            traceFlags = objectCreator.traceFlags.default,
-            traceState = objectCreator.traceState.default,
+        spanContext = otel.spanContextFactory.create(
+            traceId = parent?.traceId ?: otel.tracingIdFactory.generateTraceId(),
+            spanId = otel.tracingIdFactory.generateSpanId(),
+            traceFlags = otel.traceFlagsFactory.default,
+            traceState = otel.traceStateFactory.default,
         ),
         startTimestamp = timestampMs.millisToNanos(),
-        parent = parentContext.getEmbraceSpan(objectCreator)?.spanContext?.toOtelKotlin()
-            ?: objectCreator.spanContext.invalid
+        parent = parentContext.getEmbraceSpan(otel)?.spanContext?.toOtelKotlin()
+            ?: otel.spanContextFactory.invalid
     )
 
     override fun stop(errorCode: ErrorCode?, endTimeMs: Long?): Boolean {
@@ -192,7 +188,7 @@ class FakeEmbraceSdkSpan(
 
     override fun asNewContext(): Context? = if (useKotlinSdk) {
         sdkSpan?.let {
-            objectCreator.context.storeSpan(parentContext, it)
+            otel.contextFactory.storeSpan(parentContext, it)
         }
     } else {
         javaSdkSpan?.let {
@@ -251,7 +247,7 @@ class FakeEmbraceSdkSpan(
     }
 
     override fun storeInContext(context: OtelJavaContext): OtelJavaContext {
-        val spanKey = getOrCreateSpanKey(objectCreator)
+        val spanKey = getOrCreateSpanKey(otel)
         return context.with(spanKey.toOtelJavaContextKey(), this)
     }
 
@@ -269,7 +265,8 @@ class FakeEmbraceSdkSpan(
 
         fun started(
             parent: EmbraceSdkSpan? = null,
-            parentContext: Context = parent?.run { parent.asNewContext() } ?: fakeObjectCreator.context.root(),
+            otel: OpenTelemetry = createOtelInstance(),
+            parentContext: Context = parent?.run { parent.asNewContext() } ?: otel.contextFactory.root(),
             clock: FakeClock = FakeClock(),
         ): FakeEmbraceSdkSpan =
             FakeEmbraceSdkSpan(

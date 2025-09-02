@@ -69,7 +69,7 @@ class TracingApiBenchmarks {
             dataValidator = dataValidator,
             canStartNewSpan = { _, _ -> true },
             initCallback = { },
-            objectCreator = createCompatObjectCreator()
+            openTelemetry = createCompatObjectCreator()
         )
     }
 

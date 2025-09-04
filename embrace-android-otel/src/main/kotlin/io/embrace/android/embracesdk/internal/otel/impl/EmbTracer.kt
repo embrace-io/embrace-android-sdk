@@ -6,8 +6,8 @@ import io.embrace.android.embracesdk.internal.otel.spans.OtelSpanStartArgs
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.opentelemetry.kotlin.Clock
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
+import io.embrace.opentelemetry.kotlin.OpenTelemetry
 import io.embrace.opentelemetry.kotlin.context.Context
-import io.embrace.opentelemetry.kotlin.creator.ObjectCreator
 import io.embrace.opentelemetry.kotlin.tracing.Tracer
 import io.embrace.opentelemetry.kotlin.tracing.model.Span
 import io.embrace.opentelemetry.kotlin.tracing.model.SpanKind
@@ -19,7 +19,7 @@ import io.embrace.opentelemetry.kotlin.tracing.model.SpanRelationships
 @OptIn(ExperimentalApi::class)
 class EmbTracer(
     private val impl: Tracer,
-    private val objectCreator: ObjectCreator,
+    private val openTelemetry: OpenTelemetry,
     private val spanService: SpanService,
     private val clock: Clock,
 ) : Tracer {
@@ -37,8 +37,8 @@ class EmbTracer(
             internal = false,
             private = false,
             tracer = impl,
-            parentCtx = parentContext ?: objectCreator.getDefaultContext(),
-            objectCreator = objectCreator,
+            parentCtx = parentContext ?: openTelemetry.getDefaultContext(),
+            openTelemetry = openTelemetry,
         )
 
         spanService.createSpan(spanCreator)?.let { embraceSpan ->
@@ -46,10 +46,10 @@ class EmbTracer(
                 return EmbSpan(
                     impl = embraceSpan,
                     clock = clock,
-                    objectCreator = objectCreator,
+                    openTelemetry = openTelemetry,
                 )
             }
         }
-        return EmbInvalidSpan(objectCreator)
+        return EmbInvalidSpan(openTelemetry)
     }
 }

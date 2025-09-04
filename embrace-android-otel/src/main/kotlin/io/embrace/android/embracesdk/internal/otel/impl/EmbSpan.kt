@@ -5,8 +5,8 @@ import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.opentelemetry.kotlin.Clock
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
+import io.embrace.opentelemetry.kotlin.OpenTelemetry
 import io.embrace.opentelemetry.kotlin.attributes.MutableAttributeContainer
-import io.embrace.opentelemetry.kotlin.creator.ObjectCreator
 import io.embrace.opentelemetry.kotlin.tracing.data.StatusData
 import io.embrace.opentelemetry.kotlin.tracing.ext.toOtelJavaSpanContext
 import io.embrace.opentelemetry.kotlin.tracing.ext.toOtelKotlinSpanContext
@@ -23,7 +23,7 @@ import io.opentelemetry.context.Scope
 class EmbSpan(
     private val impl: EmbraceSdkSpan,
     private val clock: Clock,
-    private val objectCreator: ObjectCreator,
+    private val openTelemetry: OpenTelemetry,
 ) : Span, ImplicitContextKeyed {
 
     override fun setStringAttribute(key: String, value: String) {
@@ -67,7 +67,7 @@ class EmbSpan(
     }
 
     override val spanContext: SpanContext
-        get() = impl.spanContext?.toOtelKotlinSpanContext() ?: objectCreator.spanContext.invalid
+        get() = impl.spanContext?.toOtelKotlinSpanContext() ?: openTelemetry.spanContextFactory.invalid
 
     override fun isRecording(): Boolean = impl.isRecording
 
@@ -91,7 +91,7 @@ class EmbSpan(
         }
 
     override val parent: SpanContext
-        get() = impl.parent?.spanContext?.toOtelKotlinSpanContext() ?: objectCreator.spanContext.invalid
+        get() = impl.parent?.spanContext?.toOtelKotlinSpanContext() ?: openTelemetry.spanContextFactory.invalid
 
     override val spanKind: SpanKind
         get() = impl.spanKind
@@ -139,11 +139,11 @@ class EmbSpan(
     }
 
     private fun io.embrace.android.embracesdk.internal.payload.Link.retrieveSpanContext(): SpanContext {
-        return objectCreator.spanContext.create(
+        return openTelemetry.spanContextFactory.create(
             traceId = checkNotNull(traceId),
             spanId = checkNotNull(spanId),
-            traceFlags = objectCreator.traceFlags.default,
-            traceState = objectCreator.traceState.default,
+            traceFlags = openTelemetry.traceFlagsFactory.default,
+            traceState = openTelemetry.traceStateFactory.default,
         )
     }
 }

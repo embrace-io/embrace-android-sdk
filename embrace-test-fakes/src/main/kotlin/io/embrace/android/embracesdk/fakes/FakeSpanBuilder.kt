@@ -15,7 +15,7 @@ class FakeSpanBuilder : OtelJavaSpanBuilder {
 
     override fun startSpan(): FakeOtelJavaSpan = FakeOtelJavaSpan(parentContext = parentContext)
 
-    var parentContext: Context = fakeCompatObjectCreator.context.root()
+    var parentContext: Context = fakeOpenTelemetry().contextFactory.root()
     var attributes: MutableMap<Any, Any> = mutableMapOf()
 
     override fun setParent(context: OtelJavaContext): OtelJavaSpanBuilder = this

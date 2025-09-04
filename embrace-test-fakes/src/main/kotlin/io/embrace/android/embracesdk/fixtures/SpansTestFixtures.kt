@@ -2,7 +2,7 @@
 
 package io.embrace.android.embracesdk.fixtures
 
-import io.embrace.android.embracesdk.fakes.fakeObjectCreator
+import io.embrace.android.embracesdk.fakes.fakeOpenTelemetry
 import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
 import io.embrace.android.embracesdk.internal.otel.attrs.asPair
 import io.embrace.android.embracesdk.internal.otel.attrs.embSequenceId
@@ -48,7 +48,7 @@ val testSpan: Span = EmbraceSpanData(
     )
 ).toEmbracePayload()
 
-val fakeContextKey: ContextKey<String> = fakeObjectCreator.context.root().createKey("fake-context-key")
+val fakeContextKey: ContextKey<String> = fakeOpenTelemetry().contextFactory.root().createKey("fake-context-key")
 
 private fun createMapOfSize(size: Int): Map<String, String> {
     val mutableMap = mutableMapOf<String, String>()

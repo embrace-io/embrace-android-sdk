@@ -123,7 +123,7 @@ private class EmbraceSpanImpl(
 
     private val parentContext = otelSpanStartArgs.parentContext
 
-    override val parent: EmbraceSpan? = parentContext.getEmbraceSpan(otelSpanStartArgs.objectCreator)
+    override val parent: EmbraceSpan? = parentContext.getEmbraceSpan(otelSpanStartArgs.openTelemetry)
 
     override val spanContext: OtelJavaSpanContext?
         get() = startedSpan.get()?.spanContext?.toOtelJavaSpanContext()
@@ -331,13 +331,13 @@ private class EmbraceSpanImpl(
             val span = this as ImplicitContextKeyed
             return span.storeInContext(parentContext.toOtelJavaContext()).toOtelKotlinContext()
         } else {
-            otelSpanStartArgs.objectCreator.context.storeSpan(parentContext, this)
+            otelSpanStartArgs.openTelemetry.contextFactory.storeSpan(parentContext, this)
         }
     }
 
     override fun storeInContext(context: OtelJavaContext): OtelJavaContext {
         val impl = startedSpan.get() as? ImplicitContextKeyed
-        val spanKey = getOrCreateSpanKey(otelSpanStartArgs.objectCreator)
+        val spanKey = getOrCreateSpanKey(otelSpanStartArgs.openTelemetry)
         val base = context.with(spanKey.toOtelJavaContextKey(), this)
 
         return if (impl != null) {

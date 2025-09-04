@@ -5,7 +5,7 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeEmbraceSpanFactory
 import io.embrace.android.embracesdk.fakes.FakeOtelKotlinClock
 import io.embrace.android.embracesdk.fakes.FakeSpanService
-import io.embrace.android.embracesdk.fakes.fakeObjectCreator
+import io.embrace.android.embracesdk.fakes.fakeOpenTelemetry
 import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.otel.config.OtelSdkConfig
@@ -75,7 +75,7 @@ internal class EmbraceSpanServiceTest {
             },
             dataValidator = dataValidator,
             tracerSupplier = { tracer },
-            objectCreatorSupplier = { fakeObjectCreator }
+            openTelemetrySupplier = { fakeOpenTelemetry() }
         )
     }
 
@@ -88,7 +88,7 @@ internal class EmbraceSpanServiceTest {
             initCallback = ::initCallback,
             embraceSpanFactorySupplier = { FakeEmbraceSpanFactory() },
             tracerSupplier = { tracer },
-            objectCreatorSupplier = { fakeObjectCreator }
+            openTelemetrySupplier = { fakeOpenTelemetry() }
         )
         assertFalse(uninitializedService.initialized())
         assertNull(uninitializedService.createSpan("test-span"))

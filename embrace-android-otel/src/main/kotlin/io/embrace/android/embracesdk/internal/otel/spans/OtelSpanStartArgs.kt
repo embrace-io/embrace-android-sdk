@@ -49,7 +49,7 @@ class OtelSpanStartArgs(
         }
     }
 
-    internal fun startSpan(startTimeMs: Long): Span {
+    fun startSpan(startTimeMs: Long): Span {
         return tracer.createSpan(
             name = initialSpanName,
             parentContext = parentContext,

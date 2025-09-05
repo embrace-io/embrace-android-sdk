@@ -129,15 +129,15 @@ internal class OTelApiDelegateTest {
 
         val javaTracer = delegate.getOpenTelemetry().getTracer("test-java")
         val kotlinTracer = delegate.getOpenTelemetryKotlin().tracerProvider.getTracer("test-kotlin")
-        
+
         // Create spans with both APIs
         val javaSpan = javaTracer.spanBuilder("java-span").startSpan()
         val kotlinSpan = kotlinTracer.createSpan("kotlin-span")
-        
+
         // Both should go through Embrace's SpanService, so Embrace tracks when these exposed instances are used in 3rd party
         // instrumentation.
         assertEquals(2, spanService.createdSpans.size)
-        
+
         javaSpan.end()
         kotlinSpan.end()
     }

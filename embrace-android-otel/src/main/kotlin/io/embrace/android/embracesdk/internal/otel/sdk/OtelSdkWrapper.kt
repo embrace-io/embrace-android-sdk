@@ -60,7 +60,7 @@ class OtelSdkWrapper(
         }
     }
 
-    val kotlinApi: OpenTelemetry by lazy {
+    private val kotlinApi: OpenTelemetry by lazy {
         createSdkOtelInstance(
             useKotlinSdk = useKotlinSdk,
             tracerProvider = {

@@ -50,7 +50,7 @@ internal class OpenTelemetrySdkTest {
 
     @Test
     fun `check resource added by default logger`() {
-        sdk.kotlinApi.loggerProvider.getLogger("my_logger").log()
+        sdk.openTelemetryKotlin.loggerProvider.getLogger("my_logger").log()
         checkNotNull(logExporter.exportedLogs).single().resource.assertExpectedAttributes(
             expectedServiceName = configuration.sdkName,
             expectedServiceVersion = configuration.sdkVersion,
@@ -72,7 +72,7 @@ internal class OpenTelemetrySdkTest {
 
     @Test
     fun `instrumentation scope set properly on external tracer`() {
-        val tracer = sdk.kotlinApi.tracerProvider.getTracer(
+        val tracer = sdk.openTelemetryKotlin.tracerProvider.getTracer(
             name = "testScope",
             version = "v1",
             schemaUrl = "url"

@@ -64,7 +64,7 @@ internal class OTelApiDelegate(
     @ExperimentalApi
     override fun getOpenTelemetryKotlin(): OpenTelemetry {
         return if (sdkCallChecker.started.get()) {
-            bootstrapper.openTelemetryModule.otelSdkWrapper.kotlinApi
+            bootstrapper.openTelemetryModule.otelSdkWrapper.openTelemetryKotlin
         } else {
             OpenTelemetryInstance.noop()
         }

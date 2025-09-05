@@ -18,6 +18,7 @@ import io.embrace.android.embracesdk.internal.otel.schema.LinkType
 import io.embrace.android.embracesdk.internal.otel.sdk.hasEmbraceAttribute
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceLinkData
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
+import io.embrace.android.embracesdk.internal.otel.spans.OtelSpanStartArgs
 import io.embrace.android.embracesdk.internal.otel.spans.getEmbraceSpan
 import io.embrace.android.embracesdk.internal.otel.spans.getOrCreateSpanKey
 import io.embrace.android.embracesdk.internal.otel.toEmbracePayload
@@ -59,6 +60,7 @@ class FakeEmbraceSdkSpan(
     val private: Boolean = internal,
     override val autoTerminationMode: AutoTerminationMode = AutoTerminationMode.NONE,
     private val fakeClock: FakeClock = FakeClock(),
+    private val otelSpanStartArgs: OtelSpanStartArgs? = null
 ) : EmbraceSdkSpan {
 
     private var sdkSpan: Span? = null
@@ -135,6 +137,10 @@ class FakeEmbraceSdkSpan(
             }
 
             val timestamp = endTimeMs ?: fakeClock.now()
+
+            // Create and end a real span using the original tracer to ensure it gets exported
+            otelSpanStartArgs?.startSpan(spanStartTimeMs ?: fakeClock.now())?.end(timestamp.millisToNanos())
+
             if (useKotlinSdk) {
                 checkNotNull(sdkSpan).end(timestamp.millisToNanos())
             } else {

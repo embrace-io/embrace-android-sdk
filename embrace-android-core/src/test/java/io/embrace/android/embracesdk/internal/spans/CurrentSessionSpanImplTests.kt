@@ -69,7 +69,7 @@ internal class CurrentSessionSpanImplTests {
         openTelemetryClock = initModule.openTelemetryModule.openTelemetryClock
         currentSessionSpan = initModule.openTelemetryModule.currentSessionSpan as CurrentSessionSpanImpl
         tracer = initModule.openTelemetryModule.otelSdkWrapper.sdkTracer
-        objectCreator = initModule.openTelemetryModule.otelSdkWrapper.kotlinApi.objectCreator
+        objectCreator = initModule.openTelemetryModule.otelSdkWrapper.openTelemetryKotlin.objectCreator
         spanService = initModule.openTelemetryModule.spanService
         spanService.initializeService(clock.now())
         otelLimitsConfig = initModule.instrumentedConfig.otelLimits

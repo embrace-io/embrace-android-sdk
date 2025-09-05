@@ -58,6 +58,7 @@ class FakeSpanService(
             internal = otelSpanStartArgs.internal,
             private = otelSpanStartArgs.embraceAttributes.contains(PrivateSpan),
             autoTerminationMode = otelSpanStartArgs.autoTerminationMode,
+            otelSpanStartArgs = otelSpanStartArgs
         ).apply {
             createdSpans.add(this)
         }

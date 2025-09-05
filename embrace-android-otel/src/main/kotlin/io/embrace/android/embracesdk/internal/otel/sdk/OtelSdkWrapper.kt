@@ -96,4 +96,10 @@ class OtelSdkWrapper(
             EmbTracerProvider(kotlinApi, spanService, otelClock)
         }.toOtelJavaApi()
     }
+
+    val openTelemetryKotlin: OpenTelemetry by lazy {
+        EmbOpenTelemetry(kotlinApi) {
+            EmbTracerProvider(kotlinApi, spanService, otelClock)
+        }
+    }
 }

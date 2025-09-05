@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.fakes.FakeLogRecordExporter
 import io.embrace.android.embracesdk.fakes.FakeMutableAttributeContainer
 import io.embrace.android.embracesdk.fakes.FakeOtelJavaLogRecordExporter
 import io.embrace.android.embracesdk.fakes.FakeSpanExporter
+import io.embrace.android.embracesdk.fakes.FakeSpanService
 import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.fakeModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
@@ -120,5 +121,24 @@ internal class OTelApiDelegateTest {
         delegate.setResourceAttribute("test", "foo")
         val attrs = FakeMutableAttributeContainer().apply(cfg.resourceAction).attributes
         assertNull(attrs["test"])
+    }
+
+    @Test
+    fun `getOpenTelemetry and getOpenTelemetryKotlin should be wired through EmbraceSpanService`() {
+        val spanService = bootstrapper.openTelemetryModule.spanService as FakeSpanService
+
+        val javaTracer = delegate.getOpenTelemetry().getTracer("test-java")
+        val kotlinTracer = delegate.getOpenTelemetryKotlin().tracerProvider.getTracer("test-kotlin")
+        
+        // Create spans with both APIs
+        val javaSpan = javaTracer.spanBuilder("java-span").startSpan()
+        val kotlinSpan = kotlinTracer.createSpan("kotlin-span")
+        
+        // Both should go through Embrace's SpanService, so Embrace tracks when these exposed instances are used in 3rd party
+        // instrumentation.
+        assertEquals(2, spanService.createdSpans.size)
+        
+        javaSpan.end()
+        kotlinSpan.end()
     }
 }

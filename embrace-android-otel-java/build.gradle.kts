@@ -12,7 +12,8 @@ android {
 
 dependencies {
     compileOnly(project(":embrace-android-sdk"))
-    compileOnly(project(":embrace-internal-api"))
-    compileOnly(platform(libs.opentelemetry.bom))
-    compileOnly(libs.opentelemetry.api)
+    compileOnly(libs.opentelemetry.sdk)
+
+    implementation(libs.opentelemetry.java.aliases)
+    implementation(libs.opentelemetry.kotlin.compat)
 }

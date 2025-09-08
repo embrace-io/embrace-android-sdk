@@ -68,7 +68,7 @@ class TracingApiBenchmarks {
             dataValidator = dataValidator,
             canStartNewSpan = { _, _ -> true },
             initCallback = { },
-            openTelemetry = otelSdkWrapper.kotlinApi,
+            openTelemetry = otelSdkWrapper.openTelemetryKotlin,
         )
     }
 

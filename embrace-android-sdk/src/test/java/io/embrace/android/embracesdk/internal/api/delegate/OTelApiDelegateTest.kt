@@ -5,9 +5,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeLogRecordExporter
 import io.embrace.android.embracesdk.fakes.FakeMutableAttributeContainer
-import io.embrace.android.embracesdk.fakes.FakeOtelJavaLogRecordExporter
 import io.embrace.android.embracesdk.fakes.FakeSpanExporter
-import io.embrace.android.embracesdk.fakes.FakeSpanService
 import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.fakeModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
@@ -15,7 +13,6 @@ import io.embrace.android.embracesdk.internal.otel.config.OtelSdkConfig
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.OpenTelemetryInstance
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaOpenTelemetry
 import io.embrace.opentelemetry.kotlin.noop
 import io.opentelemetry.semconv.ServiceAttributes
 import org.junit.Assert.assertEquals
@@ -57,7 +54,7 @@ internal class OTelApiDelegateTest {
     @Test
     fun `add log exporter before start`() {
         sdkCallChecker.started.set(false)
-        delegate.addLogRecordExporter(FakeOtelJavaLogRecordExporter())
+        delegate.addLogRecordExporter(FakeLogRecordExporter())
         assertTrue(bootstrapper.openTelemetryModule.otelSdkConfig.hasConfiguredOtelExporters())
     }
 
@@ -69,17 +66,6 @@ internal class OTelApiDelegateTest {
     }
 
     @Test
-    fun `get opentelemetry before start`() {
-        sdkCallChecker.started.set(false)
-        assertEquals(OtelJavaOpenTelemetry.noop(), delegate.getOpenTelemetry())
-    }
-
-    @Test
-    fun `get opentelemetry after start`() {
-        assertNotEquals(OtelJavaOpenTelemetry.noop(), delegate.getOpenTelemetry())
-    }
-
-    @Test
     fun `get opentelemetry kotlin before start`() {
         sdkCallChecker.started.set(false)
         assertEquals(OpenTelemetryInstance.noop(), delegate.getOpenTelemetryKotlin())
@@ -88,17 +74,6 @@ internal class OTelApiDelegateTest {
     @Test
     fun `get opentelemetry kotlin after start`() {
         assertNotEquals(OpenTelemetryInstance.noop(), delegate.getOpenTelemetryKotlin())
-    }
-
-    @Test
-    fun `get tracer before start`() {
-        sdkCallChecker.started.set(false)
-        assertFalse(delegate.getOpenTelemetry().getTracer("foo").spanBuilder("test").startSpan().spanContext.isValid)
-    }
-
-    @Test
-    fun `get tracer after start`() {
-        assertTrue(delegate.getOpenTelemetry().getTracer("foo").spanBuilder("test").startSpan().spanContext.isValid)
     }
 
     @Test
@@ -122,24 +97,5 @@ internal class OTelApiDelegateTest {
         delegate.setResourceAttribute("test", "foo")
         val attrs = FakeMutableAttributeContainer().apply(cfg.resourceAction).attributes
         assertNull(attrs["test"])
-    }
-
-    @Test
-    fun `getOpenTelemetry and getOpenTelemetryKotlin should be wired through EmbraceSpanService`() {
-        val spanService = bootstrapper.openTelemetryModule.spanService as FakeSpanService
-
-        val javaTracer = delegate.getOpenTelemetry().getTracer("test-java")
-        val kotlinTracer = delegate.getOpenTelemetryKotlin().tracerProvider.getTracer("test-kotlin")
-
-        // Create spans with both APIs
-        val javaSpan = javaTracer.spanBuilder("java-span").startSpan()
-        val kotlinSpan = kotlinTracer.createSpan("kotlin-span")
-
-        // Both should go through Embrace's SpanService, so Embrace tracks when these exposed instances are used in 3rd party
-        // instrumentation.
-        assertEquals(2, spanService.createdSpans.size)
-
-        javaSpan.end()
-        kotlinSpan.end()
     }
 }

@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalApi::class)
+
 package io.embrace.android.embracesdk.testframework
 
 import android.content.Context
@@ -28,6 +30,9 @@ import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import io.embrace.android.embracesdk.testframework.export.FilteredLogExporter
 import io.embrace.android.embracesdk.testframework.export.FilteredSpanExporter
 import io.embrace.android.embracesdk.testframework.server.FakeApiServer
+import io.embrace.opentelemetry.kotlin.ExperimentalApi
+import io.embrace.opentelemetry.kotlin.logging.export.toOtelKotlinLogRecordExporter
+import io.embrace.opentelemetry.kotlin.tracing.export.toOtelKotlinSpanExporter
 import okhttp3.Protocol
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.Assert.assertEquals
@@ -149,8 +154,9 @@ internal class SdkIntegrationTestRule(
             embraceImpl = EmbraceImpl(clock = setup.fakeClock, bootstrapper = bootstrapper)
             EmbraceHooks.setImpl(embraceImpl)
             preSdkStartAction(preSdkStart)
-            embraceImpl.addSpanExporter(spanExporter)
-            embraceImpl.addLogRecordExporter(logExporter)
+            //TODO: Filtered span and log exporters should be migrated to Kotlin.
+            embraceImpl.addSpanExporter(spanExporter.toOtelKotlinSpanExporter())
+            embraceImpl.addLogRecordExporter(logExporter.toOtelKotlinLogRecordExporter())
 
             // persist config here before the SDK starts up
             persistConfig(persistedRemoteConfig)

@@ -639,7 +639,7 @@ internal class SpanServiceImplTest {
             dataValidator = dataValidator,
             canStartNewSpan = ::canStartNewSpan,
             initCallback = ::initCallback,
-            objectCreator = otelSdkWrapper.openTelemetryKotlin.objectCreator
+            openTelemetry = otelSdkWrapper.openTelemetryKotlin
         ).apply {
             initializeService(fakeClock.now().nanosToMillis())
         }

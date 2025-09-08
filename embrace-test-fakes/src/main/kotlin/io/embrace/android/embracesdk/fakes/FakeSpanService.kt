@@ -37,8 +37,8 @@ class FakeSpanService(
         useKotlinSdk = useKotlinSdk,
         name = name,
         parentContext = parent?.run {
-            fakeObjectCreator.context.root().toOtelJavaContext().with(parent as EmbraceSdkSpan)
-        }?.toOtelKotlinContext() ?: fakeObjectCreator.context.root(),
+            fakeOpenTelemetry().contextFactory.root().toOtelJavaContext().with(parent as EmbraceSdkSpan)
+        }?.toOtelKotlinContext() ?: fakeOpenTelemetry().contextFactory.root(),
         type = type,
         internal = internal,
         private = private,
@@ -95,8 +95,8 @@ class FakeSpanService(
                 useKotlinSdk = useKotlinSdk,
                 name = name,
                 parentContext = parent?.run {
-                    fakeObjectCreator.context.root().toOtelJavaContext().with(parent as EmbraceSdkSpan).toOtelKotlinContext()
-                } ?: fakeObjectCreator.context.root(),
+                    fakeOpenTelemetry().contextFactory.root().toOtelJavaContext().with(parent as EmbraceSdkSpan).toOtelKotlinContext()
+                } ?: fakeOpenTelemetry().contextFactory.root(),
                 type = type,
                 internal = internal,
                 private = private

@@ -2,13 +2,12 @@ package io.embrace.android.embracesdk.otel.java
 
 import io.embrace.android.embracesdk.Embrace
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
-import io.embrace.opentelemetry.kotlin.OpenTelemetryInstance
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaAttributeKey
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaLogRecordExporter
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaOpenTelemetry
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanExporter
-import io.embrace.opentelemetry.kotlin.decorateKotlinApi
 import io.embrace.opentelemetry.kotlin.logging.export.toOtelKotlinLogRecordExporter
+import io.embrace.opentelemetry.kotlin.toOtelJavaApi
 import io.embrace.opentelemetry.kotlin.tracing.export.toOtelKotlinSpanExporter
 
 /**
@@ -34,7 +33,7 @@ fun Embrace.addJavaLogRecordExporter(logRecordExporter: OtelJavaLogRecordExporte
 @OptIn(ExperimentalApi::class)
 fun Embrace.getJavaOpenTelemetry(): OtelJavaOpenTelemetry {
     // TODO: Should we return noop if getOpenTelemetryKotlin is noop?
-    return OpenTelemetryInstance.decorateKotlinApi(this.getOpenTelemetryKotlin())
+    return this.getOpenTelemetryKotlin().toOtelJavaApi()
 }
 
 /**

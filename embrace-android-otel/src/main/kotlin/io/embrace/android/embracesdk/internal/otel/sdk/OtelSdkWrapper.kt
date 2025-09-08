@@ -6,7 +6,7 @@ import io.embrace.android.embracesdk.internal.otel.config.OtelSdkConfig
 import io.embrace.android.embracesdk.internal.otel.config.getMaxTotalAttributeCount
 import io.embrace.android.embracesdk.internal.otel.config.getMaxTotalEventCount
 import io.embrace.android.embracesdk.internal.otel.config.getMaxTotalLinkCount
-import io.embrace.android.embracesdk.internal.otel.get
+import io.embrace.android.embracesdk.internal.otel.createSdkOtelInstance
 import io.embrace.android.embracesdk.internal.otel.impl.EmbOpenTelemetry
 import io.embrace.android.embracesdk.internal.otel.impl.EmbTracerProvider
 import io.embrace.android.embracesdk.internal.otel.logs.DefaultLogRecordProcessor
@@ -16,10 +16,9 @@ import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.opentelemetry.kotlin.Clock
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.OpenTelemetry
-import io.embrace.opentelemetry.kotlin.OpenTelemetryInstance
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaOpenTelemetry
-import io.embrace.opentelemetry.kotlin.decorateKotlinApi
 import io.embrace.opentelemetry.kotlin.logging.Logger
+import io.embrace.opentelemetry.kotlin.toOtelJavaApi
 import io.embrace.opentelemetry.kotlin.tracing.Tracer
 
 /**
@@ -62,7 +61,7 @@ class OtelSdkWrapper(
     }
 
     private val kotlinApi: OpenTelemetry by lazy {
-        OpenTelemetryInstance.get(
+        createSdkOtelInstance(
             useKotlinSdk = useKotlinSdk,
             tracerProvider = {
                 resource(attributes = configuration.resourceAction)
@@ -93,11 +92,9 @@ class OtelSdkWrapper(
     }
 
     val openTelemetryJava: OtelJavaOpenTelemetry by lazy {
-        OpenTelemetryInstance.decorateKotlinApi(
-            EmbOpenTelemetry(kotlinApi) {
-                EmbTracerProvider(kotlinApi, spanService, otelClock)
-            }
-        )
+        EmbOpenTelemetry(kotlinApi) {
+            EmbTracerProvider(kotlinApi, spanService, otelClock)
+        }.toOtelJavaApi()
     }
 
     val openTelemetryKotlin: OpenTelemetry by lazy {

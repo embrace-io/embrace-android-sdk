@@ -103,4 +103,9 @@ dependencies {
     testImplementation(libs.mockwebserver)
 
     androidTestImplementation(project(":embrace-test-fakes"))
+
+    testImplementation(project(":embrace-android-otel-java"))
+    testImplementation(libs.opentelemetry.kotlin.compat)
+    androidTestImplementation(project(":embrace-android-otel-java"))
+    androidTestImplementation(libs.opentelemetry.kotlin.compat)
 }

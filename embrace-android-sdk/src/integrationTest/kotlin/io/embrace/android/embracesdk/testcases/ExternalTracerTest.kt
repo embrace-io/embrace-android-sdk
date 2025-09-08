@@ -9,6 +9,8 @@ import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
 import io.embrace.android.embracesdk.internal.toEmbraceSpanData
+import io.embrace.android.embracesdk.otel.java.addJavaSpanExporter
+import io.embrace.android.embracesdk.otel.java.getJavaOpenTelemetry
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface
@@ -59,7 +61,7 @@ internal class ExternalTracerTest {
             },
             testCaseAction = {
                 initializeTracer()
-                embOpenTelemetry = embrace.getOpenTelemetry()
+                embOpenTelemetry = embrace.getJavaOpenTelemetry()
             },
             assertAction = {
                 val spanBuilder = embTracer.spanBuilder("test")
@@ -270,12 +272,29 @@ internal class ExternalTracerTest {
         )
     }
 
+    @Test
+    fun `getJavaOpenTelemetry returns noop before SDK start`() {
+        testRule.runTest(
+            preSdkStartAction = {
+                val otelJava = embrace.getJavaOpenTelemetry()
+                val tracer = otelJava.getTracer("test-tracer")
+                val span = tracer.spanBuilder("test-span").startSpan()
+
+                // Noop span should not be recording
+                assertEquals(false, span.isRecording)
+                span.end()
+            },
+            testCaseAction = {},
+            assertAction = {}
+        )
+    }
+
     private fun EmbracePreSdkStartInterface.setupExporter() {
-        embrace.addSpanExporter(spanExporter)
+        embrace.addJavaSpanExporter(spanExporter)
     }
 
     private fun EmbraceActionInterface.initializeTracer() {
-        embTracer = embrace.getOpenTelemetry().getTracer(
+        embTracer = embrace.getJavaOpenTelemetry().getTracer(
             "external-tracer",
             "1.0.0"
         )

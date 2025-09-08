@@ -32,6 +32,7 @@ fun Embrace.addJavaLogRecordExporter(logRecordExporter: OtelJavaLogRecordExporte
  */
 @OptIn(ExperimentalApi::class)
 fun Embrace.getJavaOpenTelemetry(): OtelJavaOpenTelemetry {
+    // TODO: Should we return noop if getOpenTelemetryKotlin is noop?
     return this.getOpenTelemetryKotlin().toOtelJavaApi()
 }
 

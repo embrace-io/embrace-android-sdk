@@ -6,10 +6,8 @@ public final class io/embrace/android/embracesdk/Embrace : io/embrace/android/em
 	public fun addLoadTraceChildSpan (Landroid/app/Activity;Ljava/lang/String;JJ)V
 	public fun addLoadTraceChildSpan (Landroid/app/Activity;Ljava/lang/String;JJLjava/util/Map;Ljava/util/List;Lio/embrace/android/embracesdk/spans/ErrorCode;)V
 	public fun addLogRecordExporter (Lio/embrace/opentelemetry/kotlin/logging/export/LogRecordExporter;)V
-	public fun addLogRecordExporter (Lio/opentelemetry/sdk/logs/export/LogRecordExporter;)V
 	public fun addSessionProperty (Ljava/lang/String;Ljava/lang/String;Z)Z
 	public fun addSpanExporter (Lio/embrace/opentelemetry/kotlin/tracing/export/SpanExporter;)V
-	public fun addSpanExporter (Lio/opentelemetry/sdk/trace/export/SpanExporter;)V
 	public fun addStartupTraceAttribute (Ljava/lang/String;Ljava/lang/String;)V
 	public fun addStartupTraceChildSpan (Ljava/lang/String;JJ)V
 	public fun addStartupTraceChildSpan (Ljava/lang/String;JJLjava/util/Map;Ljava/util/List;Lio/embrace/android/embracesdk/spans/ErrorCode;)V
@@ -33,7 +31,6 @@ public final class io/embrace/android/embracesdk/Embrace : io/embrace/android/em
 	public fun getDeviceId ()Ljava/lang/String;
 	public static final fun getInstance ()Lio/embrace/android/embracesdk/Embrace;
 	public fun getLastRunEndState ()Lio/embrace/android/embracesdk/LastRunEndState;
-	public fun getOpenTelemetry ()Lio/opentelemetry/api/OpenTelemetry;
 	public fun getOpenTelemetryKotlin ()Lio/embrace/opentelemetry/kotlin/OpenTelemetry;
 	public fun getSdkCurrentTimeMs ()J
 	public fun getSpan (Ljava/lang/String;)Lio/embrace/android/embracesdk/spans/EmbraceSpan;
@@ -67,7 +64,6 @@ public final class io/embrace/android/embracesdk/Embrace : io/embrace/android/em
 	public fun recordSpan (Ljava/lang/String;Lio/embrace/android/embracesdk/spans/EmbraceSpan;Ljava/util/Map;Ljava/util/List;Lio/embrace/android/embracesdk/spans/AutoTerminationMode;Lkotlin/jvm/functions/Function0;)Ljava/lang/Object;
 	public fun recordSpan (Ljava/lang/String;Ljava/util/Map;Ljava/util/List;Lio/embrace/android/embracesdk/spans/AutoTerminationMode;Lkotlin/jvm/functions/Function0;)Ljava/lang/Object;
 	public fun removeSessionProperty (Ljava/lang/String;)Z
-	public fun setResourceAttribute (Lio/opentelemetry/api/common/AttributeKey;Ljava/lang/String;)V
 	public fun setResourceAttribute (Ljava/lang/String;Ljava/lang/String;)V
 	public fun setUserEmail (Ljava/lang/String;)V
 	public fun setUserIdentifier (Ljava/lang/String;)V

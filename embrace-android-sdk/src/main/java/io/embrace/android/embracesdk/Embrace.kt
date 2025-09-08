@@ -15,9 +15,6 @@ import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.OpenTelemetry
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaLogRecordExporter
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaOpenTelemetry
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanExporter
 import io.embrace.opentelemetry.kotlin.logging.export.LogRecordExporter
 import io.embrace.opentelemetry.kotlin.tracing.export.SpanExporter
 
@@ -382,15 +379,6 @@ public class Embrace private constructor(
     }
 
     /**
-     * Adds a [OtelJavaSpanExporter] to the tracer.
-     *
-     * @param spanExporter the span exporter to add
-     */
-    override fun addSpanExporter(spanExporter: OtelJavaSpanExporter) {
-        impl.addSpanExporter(spanExporter)
-    }
-
-    /**
      * Adds a [SpanExporter] to the tracer.
      *
      * @param spanExporter the span exporter to add
@@ -398,10 +386,6 @@ public class Embrace private constructor(
     @ExperimentalApi
     override fun addSpanExporter(spanExporter: SpanExporter) {
         impl.addSpanExporter(spanExporter)
-    }
-
-    override fun getOpenTelemetry(): OtelJavaOpenTelemetry {
-        return impl.getOpenTelemetry()
     }
 
     /**
@@ -415,15 +399,6 @@ public class Embrace private constructor(
 
     override fun setResourceAttribute(key: String, value: String) {
         impl.setResourceAttribute(key, value)
-    }
-
-    /**
-     * Adds a [OtelJavaLogRecordExporter] to the open telemetry logger.
-     *
-     * @param logRecordExporter the LogRecord exporter to add
-     */
-    override fun addLogRecordExporter(logRecordExporter: OtelJavaLogRecordExporter) {
-        impl.addLogRecordExporter(logRecordExporter)
     }
 
     /**

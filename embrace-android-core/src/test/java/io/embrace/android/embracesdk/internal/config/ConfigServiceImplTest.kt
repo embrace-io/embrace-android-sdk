@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.config
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.core.BuildConfig
 import io.embrace.android.embracesdk.fakes.FakeClock
-import io.embrace.android.embracesdk.fakes.FakeOtelJavaLogRecordExporter
+import io.embrace.android.embracesdk.fakes.FakeLogRecordExporter
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
@@ -20,6 +20,7 @@ import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.prefs.PreferencesService
 import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateService
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
+import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.mockk.clearAllMocks
 import io.mockk.mockkStatic
 import io.mockk.unmockkAll
@@ -33,6 +34,7 @@ import org.junit.Before
 import org.junit.BeforeClass
 import org.junit.Test
 
+@OptIn(ExperimentalApi::class)
 internal class ConfigServiceImplTest {
 
     private lateinit var fakePreferenceService: PreferencesService
@@ -160,7 +162,7 @@ internal class ConfigServiceImplTest {
             BuildConfig.VERSION_NAME,
             SystemInfo()
         )
-        cfg.addLogExporter(FakeOtelJavaLogRecordExporter())
+        cfg.addLogExporter(FakeLogRecordExporter())
         val service = createService(config = cfg, appId = null)
         assertNotNull(service)
         assertTrue(service.isOnlyUsingOtelExporters())

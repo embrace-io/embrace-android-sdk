@@ -20,5 +20,5 @@ object OtelIds {
     /**
      * An invalid SpanId.
      */
-    val invalidSpanId: String = OtelJavaSpanId.getInvalid()
+    const val INVALID_SPAN_ID: String = "0000000000000000"
 }

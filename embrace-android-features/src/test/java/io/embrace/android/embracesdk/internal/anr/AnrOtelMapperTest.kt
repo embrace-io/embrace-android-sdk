@@ -215,7 +215,7 @@ internal class AnrOtelMapperTest {
     private fun Span.assertCommonOtelCharacteristics() {
         assertNotNull(traceId)
         assertNotNull(spanId)
-        assertEquals(OtelIds.invalidSpanId, parentSpanId)
+        assertEquals(OtelIds.INVALID_SPAN_ID, parentSpanId)
         assertEquals("emb-thread-blockage", name)
         assertEquals(START_TIME_MS, startTimeNanos?.nanosToMillis())
         assertSuccessful()

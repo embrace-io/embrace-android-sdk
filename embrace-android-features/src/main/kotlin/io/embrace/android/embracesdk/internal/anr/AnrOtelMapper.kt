@@ -30,7 +30,7 @@ class AnrOtelMapper(
             Span(
                 traceId = OtelIds.generateTraceId(),
                 spanId = OtelIds.generateSpanId(),
-                parentSpanId = OtelIds.invalidSpanId,
+                parentSpanId = OtelIds.INVALID_SPAN_ID,
                 name = "emb-thread-blockage",
                 startTimeNanos = interval.startTime.millisToNanos(),
                 endTimeNanos = (interval.endTime ?: clock.now()).millisToNanos(),

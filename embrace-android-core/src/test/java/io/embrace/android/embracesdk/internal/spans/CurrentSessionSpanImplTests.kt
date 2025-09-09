@@ -417,7 +417,7 @@ internal class CurrentSessionSpanImplTests {
             span = flushedSpans["emb-session"]?.toEmbracePayload(),
             expectedStartTimeMs = sessionStartTimeMs,
             expectedEndTimeMs = crashTimeMs,
-            expectedParentId = OtelIds.invalidSpanId,
+            expectedParentId = OtelIds.INVALID_SPAN_ID,
             expectedErrorCode = ErrorCode.FAILURE,
             expectedCustomAttributes = mapOf(
                 AppTerminationCause.Crash.asPair(),
@@ -430,7 +430,7 @@ internal class CurrentSessionSpanImplTests {
             span = flushedSpans[crashedSpanName]?.toEmbracePayload(),
             expectedStartTimeMs = crashSpanStartTimeMs,
             expectedEndTimeMs = crashTimeMs,
-            expectedParentId = OtelIds.invalidSpanId,
+            expectedParentId = OtelIds.INVALID_SPAN_ID,
             expectedErrorCode = ErrorCode.FAILURE,
             expectedCustomAttributes = mapOf(
                 EmbType.Performance.Default.asPair()

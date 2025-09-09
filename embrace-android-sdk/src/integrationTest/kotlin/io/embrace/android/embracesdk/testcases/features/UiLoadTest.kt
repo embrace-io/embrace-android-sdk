@@ -145,7 +145,7 @@ internal class UiLoadTest {
                         span = trace,
                         expectedStartTimeMs = expectedTraceStartTime,
                         expectedEndTimeMs = expectedTraceStartTime + calculateTotalTime(lifecycleStages = 4),
-                        expectedParentId = OtelIds.invalidSpanId,
+                        expectedParentId = OtelIds.INVALID_SPAN_ID,
                         expectedCustomAttributes = mapOf("manual-end" to "true")
                     )
 
@@ -200,7 +200,7 @@ internal class UiLoadTest {
                             lifecycleStages = 3,
                             activitiesFullyLoaded = 1
                         ),
-                        expectedParentId = OtelIds.invalidSpanId,
+                        expectedParentId = OtelIds.INVALID_SPAN_ID,
                         expectedStatus = Span.Status.ERROR,
                         expectedErrorCode = ErrorCode.USER_ABANDON,
                     )
@@ -269,7 +269,7 @@ internal class UiLoadTest {
                     span = trace,
                     expectedStartTimeMs = expectedTraceStartTime,
                     expectedEndTimeMs = expectedTraceStartTime + calculateTotalTime(lifecycleStages = 2),
-                    expectedParentId = OtelIds.invalidSpanId,
+                    expectedParentId = OtelIds.INVALID_SPAN_ID,
                 )
 
                 assertEmbraceSpanData(
@@ -322,7 +322,7 @@ internal class UiLoadTest {
                     span = trace,
                     expectedStartTimeMs = expectedTraceStartTime,
                     expectedEndTimeMs = expectedTraceStartTime + calculateTotalTime(lifecycleStages = 2),
-                    expectedParentId = OtelIds.invalidSpanId,
+                    expectedParentId = OtelIds.INVALID_SPAN_ID,
                 )
 
                 assertEmbraceSpanData(
@@ -377,7 +377,7 @@ internal class UiLoadTest {
                     span = trace,
                     expectedStartTimeMs = expectedTraceStartTime,
                     expectedEndTimeMs = expectedTraceStartTime + calculateTotalTime(lifecycleStages = 1),
-                    expectedParentId = OtelIds.invalidSpanId,
+                    expectedParentId = OtelIds.INVALID_SPAN_ID,
                 )
 
                 assertEmbraceSpanData(

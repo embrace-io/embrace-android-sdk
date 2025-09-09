@@ -21,7 +21,7 @@ import io.embrace.opentelemetry.kotlin.tracing.StatusCode
 val testSpan: Span = EmbraceSpanData(
     traceId = "19bb482ec1c7e6b2f10fb89e0ccc85fa",
     spanId = "342eb9c7f8cb54ff",
-    parentSpanId = OtelIds.invalidSpanId,
+    parentSpanId = OtelIds.INVALID_SPAN_ID,
     name = "emb-sdk-init",
     startTimeNanos = 1681972471806000000L,
     endTimeNanos = 1681972471871000000L,

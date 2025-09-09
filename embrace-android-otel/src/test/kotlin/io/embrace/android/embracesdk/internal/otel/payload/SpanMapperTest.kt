@@ -86,7 +86,7 @@ internal class SpanMapperTest {
 
         return copy(
             endTimeNanos = endTimeMs.millisToNanos(),
-            parentSpanId = parentSpanId ?: OtelIds.invalidSpanId,
+            parentSpanId = parentSpanId ?: OtelIds.INVALID_SPAN_ID,
             status = Span.Status.ERROR,
             attributes = newAttributes.map { Attribute(it.key, it.value) }.plus(attributes ?: emptyList())
         )

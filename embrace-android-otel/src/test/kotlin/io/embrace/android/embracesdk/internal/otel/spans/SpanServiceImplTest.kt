@@ -69,7 +69,7 @@ internal class SpanServiceImplTest {
         assertTrue(embraceSpan.start())
         assertTrue(embraceSpan.stop())
         with(verifyAndReturnSoleCompletedSpan("emb-test-span")) {
-            assertEquals(OtelIds.invalidSpanId, parentSpanId)
+            assertEquals(OtelIds.INVALID_SPAN_ID, parentSpanId)
             assertIsTypePerformance()
             assertNotPrivateSpan()
         }
@@ -121,7 +121,7 @@ internal class SpanServiceImplTest {
         assertTrue(embraceSpan.start())
         assertTrue(embraceSpan.stop())
         with(verifyAndReturnSoleCompletedSpan("emb-test-span")) {
-            assertEquals(OtelIds.invalidSpanId, parentSpanId)
+            assertEquals(OtelIds.INVALID_SPAN_ID, parentSpanId)
             assertIsTypePerformance()
         }
     }
@@ -150,7 +150,7 @@ internal class SpanServiceImplTest {
 
         with(currentSpans[1]) {
             assertEquals("emb-test-span", name)
-            assertEquals(OtelIds.invalidSpanId, parentSpanId)
+            assertEquals(OtelIds.INVALID_SPAN_ID, parentSpanId)
             assertEquals(parentSpan.spanId, spanId)
             assertEquals(parentSpan.traceId, traceId)
             assertNotPrivateSpan()
@@ -233,7 +233,7 @@ internal class SpanServiceImplTest {
             assertEquals(expectedStartTimeMs, startTimeNanos.nanosToMillis())
             assertEquals(expectedEndTimeMs, endTimeNanos.nanosToMillis())
             assertIsTypePerformance()
-            assertEquals(OtelIds.invalidSpanId, parentSpanId)
+            assertEquals(OtelIds.INVALID_SPAN_ID, parentSpanId)
             assertNotPrivateSpan()
             expectedAttributes.forEach {
                 assertEquals(it.value, attributes[it.key])
@@ -309,7 +309,7 @@ internal class SpanServiceImplTest {
 
         assertEquals(returnThis, lambdaReturn)
         with(verifyAndReturnSoleCompletedSpan("emb-test-span")) {
-            assertEquals(OtelIds.invalidSpanId, parentSpanId)
+            assertEquals(OtelIds.INVALID_SPAN_ID, parentSpanId)
             assertIsTypePerformance()
             assertNotPrivateSpan()
         }

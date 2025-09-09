@@ -12,7 +12,6 @@ import io.embrace.android.embracesdk.assertions.validateLinkToSpan
 import io.embrace.android.embracesdk.assertions.validateLinkToSpanContext
 import io.embrace.android.embracesdk.concurrency.SingleThreadTestScheduledExecutor
 import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
-import io.embrace.android.embracesdk.fakes.FakeOtelJavaSpanExporter
 import io.embrace.android.embracesdk.fakes.FakeSpanExporter
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
@@ -204,7 +203,7 @@ internal class TracingApiTest {
                     span = traceRootSpan,
                     expectedStartTimeMs = testStartTimeMs + 1,
                     expectedEndTimeMs = testStartTimeMs + 300,
-                    expectedParentId = OtelIds.invalidSpanId,
+                    expectedParentId = OtelIds.INVALID_SPAN_ID,
                     expectedCustomAttributes = mapOf(Pair("oMg", "OmG")),
                     expectedEvents = listOf(
                         SpanEvent(
@@ -275,7 +274,7 @@ internal class TracingApiTest {
                     span = sessionSpan,
                     expectedStartTimeMs = sessionStartTimeMs,
                     expectedEndTimeMs = sessionEndTimeMs,
-                    expectedParentId = OtelIds.invalidSpanId,
+                    expectedParentId = OtelIds.INVALID_SPAN_ID,
                     expectedSessionId = session.getSessionId(),
                     private = false
                 )
@@ -287,7 +286,7 @@ internal class TracingApiTest {
                     span = unendingSpanSnapshot,
                     expectedStartTimeMs = testStartTimeMs + 600,
                     expectedEndTimeMs = null,
-                    expectedParentId = OtelIds.invalidSpanId,
+                    expectedParentId = OtelIds.INVALID_SPAN_ID,
                     expectedStatus = Span.Status.UNSET,
                     expectedCustomAttributes = mapOf(Pair("unending-key", "unending-value")),
                     expectedEvents = listOf(

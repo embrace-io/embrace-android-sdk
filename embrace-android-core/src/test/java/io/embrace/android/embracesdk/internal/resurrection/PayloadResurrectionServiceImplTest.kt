@@ -98,7 +98,7 @@ class PayloadResurrectionServiceImplTest {
             span = sessionSpan,
             expectedStartTimeMs = expectedStartTimeMs,
             expectedEndTimeMs = expectedEndTimeMs,
-            expectedParentId = OtelIds.invalidSpanId,
+            expectedParentId = OtelIds.INVALID_SPAN_ID,
             expectedErrorCode = ErrorCode.FAILURE,
             expectedCustomAttributes = mapOf(
                 EmbType.Ux.Session.asPair()
@@ -140,7 +140,7 @@ class PayloadResurrectionServiceImplTest {
             span = resurrectedSnapshot,
             expectedStartTimeMs = checkNotNull(spanSnapshot.startTimeNanos?.nanosToMillis()),
             expectedEndTimeMs = checkNotNull(sessionSpan.endTimeNanos?.nanosToMillis()),
-            expectedParentId = OtelIds.invalidSpanId,
+            expectedParentId = OtelIds.INVALID_SPAN_ID,
             expectedErrorCode = ErrorCode.FAILURE,
             expectedCustomAttributes = mapOf(
                 EmbType.Performance.Default.asPair()

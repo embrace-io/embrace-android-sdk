@@ -137,7 +137,7 @@ internal class ExternalTracerTest {
                     span = parent,
                     expectedStartTimeMs = checkNotNull(startTimeMs),
                     expectedEndTimeMs = checkNotNull(endTimeMs),
-                    expectedParentId = OtelIds.invalidSpanId,
+                    expectedParentId = OtelIds.INVALID_SPAN_ID,
                     expectedCustomAttributes = mapOf("failures" to "1")
                 )
                 assertEmbraceSpanData(

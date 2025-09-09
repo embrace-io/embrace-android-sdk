@@ -14,6 +14,7 @@ import io.embrace.android.embracesdk.fakes.FakePayloadStorageService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.FakeSharedObjectLoader
 import io.embrace.android.embracesdk.fakes.FakeSymbolService
+import io.embrace.android.embracesdk.fakes.FakeTracingIdFactory
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.injection.FakeAnrModule
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
@@ -43,6 +44,7 @@ import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
+import io.embrace.opentelemetry.kotlin.ExperimentalApi
 
 /**
  * Test harness for which an instance is generated each test run and provided to the test by the Rule
@@ -85,6 +87,7 @@ internal class EmbraceSetupInterface(
         anrMonitoringThread = anrMonitoringThread
     )
 
+    @OptIn(ExperimentalApi::class)
     private val anrModule: AnrModule = if (anrMonitoringThread != null) {
         createAnrModule(
             fakeInitModule,
@@ -100,7 +103,8 @@ internal class EmbraceSetupInterface(
             anrOtelMapper = AnrOtelMapper(
                 anrService = fakeAnrService,
                 clock = fakeInitModule.clock,
-                spanService = fakeInitModule.openTelemetryModule.spanService
+                spanService = fakeInitModule.openTelemetryModule.spanService,
+                tracingIdFactory = FakeTracingIdFactory()
             )
         )
     }

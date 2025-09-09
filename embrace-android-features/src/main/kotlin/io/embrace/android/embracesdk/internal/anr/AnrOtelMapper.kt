@@ -12,24 +12,28 @@ import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
+import io.embrace.opentelemetry.kotlin.ExperimentalApi
+import io.embrace.opentelemetry.kotlin.factory.TracingIdFactory
 import io.opentelemetry.semconv.ExceptionAttributes
 import io.opentelemetry.semconv.JvmAttributes
 
 /**
  * Maps captured ANRs to OTel constructs.
  */
+@OptIn(ExperimentalApi::class)
 class AnrOtelMapper(
     private val anrService: AnrService,
     private val clock: Clock,
     private val spanService: SpanService,
+    private val tracingIdFactory: TracingIdFactory,
 ) {
     fun snapshot(): List<Span> = EmbTrace.trace("anr-snapshot") {
         anrService.getCapturedData().map { interval ->
             val attrs = mapIntervalToSpanAttributes(interval)
             val events = mapIntervalToSpanEvents(interval)
             Span(
-                traceId = OtelIds.generateTraceId(),
-                spanId = OtelIds.generateSpanId(),
+                traceId = tracingIdFactory.generateTraceId(),
+                spanId = tracingIdFactory.generateSpanId(),
                 parentSpanId = OtelIds.INVALID_SPAN_ID,
                 name = "emb-thread-blockage",
                 startTimeNanos = interval.startTime.millisToNanos(),

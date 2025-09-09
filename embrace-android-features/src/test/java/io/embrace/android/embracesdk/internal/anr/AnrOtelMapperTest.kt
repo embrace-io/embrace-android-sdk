@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.anr
 import io.embrace.android.embracesdk.arch.assertSuccessful
 import io.embrace.android.embracesdk.fakes.FakeAnrService
 import io.embrace.android.embracesdk.fakes.FakeClock
+import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
 import io.embrace.android.embracesdk.fakes.FakeSpanService
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
@@ -14,6 +15,7 @@ import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
 import io.embrace.android.embracesdk.internal.payload.ThreadInfo
+import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.opentelemetry.semconv.ExceptionAttributes
 import io.opentelemetry.semconv.JvmAttributes
 import org.junit.Assert.assertEquals
@@ -105,12 +107,18 @@ internal class AnrOtelMapperTest {
         )
     )
 
+    @OptIn(ExperimentalApi::class)
     @Before
     fun setUp() {
         anrService = FakeAnrService()
         spanService = FakeSpanService()
         clock = FakeClock()
-        mapper = AnrOtelMapper(anrService, clock, spanService)
+        mapper = AnrOtelMapper(
+            anrService,
+            clock,
+            spanService,
+            FakeOpenTelemetryModule().otelSdkWrapper.openTelemetryKotlin.tracingIdFactory
+        )
     }
 
     @Test

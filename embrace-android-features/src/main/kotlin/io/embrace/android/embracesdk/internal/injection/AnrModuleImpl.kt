@@ -12,7 +12,9 @@ import io.embrace.android.embracesdk.internal.anr.detection.ThreadMonitoringStat
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateService
 import io.embrace.android.embracesdk.internal.worker.Worker
+import io.embrace.opentelemetry.kotlin.ExperimentalApi
 
+@OptIn(ExperimentalApi::class)
 internal class AnrModuleImpl(
     initModule: InitModule,
     openTelemetryModule: OpenTelemetryModule,
@@ -45,7 +47,12 @@ internal class AnrModuleImpl(
 
     override val anrOtelMapper: AnrOtelMapper? by singleton {
         if (configService.autoDataCaptureBehavior.isAnrCaptureEnabled()) {
-            AnrOtelMapper(checkNotNull(anrService), initModule.clock, openTelemetryModule.spanService)
+            AnrOtelMapper(
+                checkNotNull(anrService),
+                initModule.clock,
+                openTelemetryModule.spanService,
+                openTelemetryModule.otelSdkWrapper.openTelemetryKotlin.tracingIdFactory
+            )
         } else {
             null
         }

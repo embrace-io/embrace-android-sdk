@@ -15,7 +15,6 @@ import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanFactory
 import io.embrace.android.embracesdk.internal.otel.spans.OtelSpanStartArgs
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
-import io.embrace.android.embracesdk.internal.otel.toOtelKotlin
 import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.utils.Uuid
@@ -109,14 +108,14 @@ internal class CurrentSessionSpanImpl(
 
         if (currentSessionSpan != spanToStop) {
             spanToStop?.spanContext?.let { spanToStopContext ->
-                currentSessionSpan?.addSystemLink(spanToStopContext.toOtelKotlin(), LinkType.EndedIn)
+                currentSessionSpan?.addSystemLink(spanToStopContext, LinkType.EndedIn)
             }
 
             val sessionId = currentSessionSpan?.getSystemAttribute(SessionIncubatingAttributes.SESSION_ID.key)
             if (sessionId != null) {
                 currentSessionSpan.spanContext?.let { sessionSpanContext ->
                     spanToStop?.addSystemLink(
-                        linkedSpanContext = sessionSpanContext.toOtelKotlin(),
+                        linkedSpanContext = sessionSpanContext,
                         type = LinkType.EndSession,
                         attributes = mapOf(SessionIncubatingAttributes.SESSION_ID.key to sessionId)
                     )
@@ -226,7 +225,7 @@ internal class CurrentSessionSpanImpl(
             previousSessionSpan?.spanContext?.let {
                 val prevSessionId = previousSessionSpan.getSystemAttribute(SessionIncubatingAttributes.SESSION_ID.key) ?: ""
                 addSystemLink(
-                    linkedSpanContext = it.toOtelKotlin(),
+                    linkedSpanContext = it,
                     type = LinkType.PreviousSession,
                     attributes = mapOf(SessionIncubatingAttributes.SESSION_ID.key to prevSessionId)
                 )

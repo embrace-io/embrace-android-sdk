@@ -267,11 +267,11 @@ public abstract interface class io/embrace/android/embracesdk/spans/EmbraceSpan 
 	public abstract fun addEvent (Ljava/lang/String;Ljava/lang/Long;Ljava/util/Map;)Z
 	public abstract fun addLink (Lio/embrace/android/embracesdk/spans/EmbraceSpan;)Z
 	public abstract fun addLink (Lio/embrace/android/embracesdk/spans/EmbraceSpan;Ljava/util/Map;)Z
-	public abstract fun addLink (Lio/opentelemetry/api/trace/SpanContext;)Z
-	public abstract fun addLink (Lio/opentelemetry/api/trace/SpanContext;Ljava/util/Map;)Z
+	public abstract fun addLink (Lio/embrace/opentelemetry/kotlin/tracing/model/SpanContext;)Z
+	public abstract fun addLink (Lio/embrace/opentelemetry/kotlin/tracing/model/SpanContext;Ljava/util/Map;)Z
 	public abstract fun getAutoTerminationMode ()Lio/embrace/android/embracesdk/spans/AutoTerminationMode;
 	public abstract fun getParent ()Lio/embrace/android/embracesdk/spans/EmbraceSpan;
-	public abstract fun getSpanContext ()Lio/opentelemetry/api/trace/SpanContext;
+	public abstract fun getSpanContext ()Lio/embrace/opentelemetry/kotlin/tracing/model/SpanContext;
 	public abstract fun getSpanId ()Ljava/lang/String;
 	public abstract fun getTraceId ()Ljava/lang/String;
 	public abstract fun isRecording ()Z
@@ -291,7 +291,7 @@ public final class io/embrace/android/embracesdk/spans/EmbraceSpan$DefaultImpls 
 	public static fun addEvent (Lio/embrace/android/embracesdk/spans/EmbraceSpan;Ljava/lang/String;Ljava/lang/Long;)Z
 	public static fun addLink (Lio/embrace/android/embracesdk/spans/EmbraceSpan;Lio/embrace/android/embracesdk/spans/EmbraceSpan;)Z
 	public static fun addLink (Lio/embrace/android/embracesdk/spans/EmbraceSpan;Lio/embrace/android/embracesdk/spans/EmbraceSpan;Ljava/util/Map;)Z
-	public static fun addLink (Lio/embrace/android/embracesdk/spans/EmbraceSpan;Lio/opentelemetry/api/trace/SpanContext;)Z
+	public static fun addLink (Lio/embrace/android/embracesdk/spans/EmbraceSpan;Lio/embrace/opentelemetry/kotlin/tracing/model/SpanContext;)Z
 	public static fun recordException (Lio/embrace/android/embracesdk/spans/EmbraceSpan;Ljava/lang/Throwable;)Z
 	public static fun start (Lio/embrace/android/embracesdk/spans/EmbraceSpan;)Z
 	public static fun stop (Lio/embrace/android/embracesdk/spans/EmbraceSpan;)Z

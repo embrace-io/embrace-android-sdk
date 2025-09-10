@@ -45,7 +45,6 @@ import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.context.Context
 import io.embrace.opentelemetry.kotlin.getTracer
 import io.embrace.opentelemetry.kotlin.tracing.Tracer
-import io.embrace.opentelemetry.kotlin.tracing.ext.toOtelKotlinSpanContext
 import io.embrace.opentelemetry.kotlin.tracing.model.SpanKind
 import io.opentelemetry.semconv.ExceptionAttributes
 import org.junit.Assert.assertEquals
@@ -232,7 +231,7 @@ internal class EmbraceSpanImplTest {
             assertTrue(start())
             val linkedSpan = FakeEmbraceSdkSpan.stopped()
             val spanContext = checkNotNull(linkedSpan.spanContext)
-            assertTrue(embraceSpan.addSystemLink(spanContext.toOtelKotlinSpanContext(), LinkType.PreviousSession))
+            assertTrue(embraceSpan.addSystemLink(spanContext, LinkType.PreviousSession))
             assertTrue(updateNotified)
         }
     }
@@ -426,12 +425,12 @@ internal class EmbraceSpanImplTest {
         assertTrue(embraceSpan.start())
         repeat(dataValidator.otelLimitsConfig.getMaxSystemLinkCount()) {
             val spanContext = checkNotNull(FakeEmbraceSdkSpan.stopped().spanContext)
-            assertTrue(embraceSpan.addSystemLink(spanContext.toOtelKotlinSpanContext(), LinkType.PreviousSession))
+            assertTrue(embraceSpan.addSystemLink(spanContext, LinkType.PreviousSession))
         }
 
         assertFalse(
             embraceSpan.addSystemLink(
-                checkNotNull(FakeEmbraceSdkSpan.stopped().spanContext).toOtelKotlinSpanContext(),
+                checkNotNull(FakeEmbraceSdkSpan.stopped().spanContext),
                 LinkType.PreviousSession
             )
         )
@@ -469,7 +468,7 @@ internal class EmbraceSpanImplTest {
             val linkAttrs = mapOf("link-attr" to "value")
             val spanContext = checkNotNull(linkedSpan.spanContext)
             assertTrue(embraceSpan.addLink(spanContext, linkAttrs))
-            assertTrue(embraceSpan.addSystemLink(spanContext.toOtelKotlinSpanContext(), LinkType.PreviousSession))
+            assertTrue(embraceSpan.addSystemLink(spanContext, LinkType.PreviousSession))
 
             val snapshot = checkNotNull(embraceSpan.snapshot())
 

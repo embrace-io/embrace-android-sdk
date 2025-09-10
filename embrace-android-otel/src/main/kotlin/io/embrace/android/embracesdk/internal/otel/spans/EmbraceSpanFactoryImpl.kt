@@ -27,15 +27,12 @@ import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.opentelemetry.kotlin.Clock
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaContext
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanContext
 import io.embrace.opentelemetry.kotlin.attributes.setAttributes
 import io.embrace.opentelemetry.kotlin.context.Context
 import io.embrace.opentelemetry.kotlin.context.toOtelJavaContext
 import io.embrace.opentelemetry.kotlin.context.toOtelJavaContextKey
 import io.embrace.opentelemetry.kotlin.context.toOtelKotlinContext
 import io.embrace.opentelemetry.kotlin.tracing.data.StatusData
-import io.embrace.opentelemetry.kotlin.tracing.ext.toOtelJavaSpanContext
-import io.embrace.opentelemetry.kotlin.tracing.ext.toOtelKotlinSpanContext
 import io.embrace.opentelemetry.kotlin.tracing.model.Span
 import io.embrace.opentelemetry.kotlin.tracing.model.SpanContext
 import io.embrace.opentelemetry.kotlin.tracing.model.SpanKind
@@ -125,8 +122,8 @@ private class EmbraceSpanImpl(
 
     override val parent: EmbraceSpan? = parentContext.getEmbraceSpan(otelSpanStartArgs.openTelemetry)
 
-    override val spanContext: OtelJavaSpanContext?
-        get() = startedSpan.get()?.spanContext?.toOtelJavaSpanContext()
+    override val spanContext: SpanContext?
+        get() = startedSpan.get()?.spanContext
 
     override val traceId: String?
         get() = spanContext?.traceId
@@ -311,9 +308,9 @@ private class EmbraceSpanImpl(
             EmbraceLinkData(linkedSpanContext, mutableMapOf(type.asPair()).apply { putAll(attributes) })
         }
 
-    override fun addLink(linkedSpanContext: OtelJavaSpanContext, attributes: Map<String, String>?): Boolean =
+    override fun addLink(linkedSpanContext: SpanContext, attributes: Map<String, String>?): Boolean =
         addObject(customLinks, customLinkCount, dataValidator.otelLimitsConfig.getMaxCustomLinkCount()) {
-            EmbraceLinkData(linkedSpanContext.toOtelKotlinSpanContext(), attributes ?: emptyMap())
+            EmbraceLinkData(linkedSpanContext, attributes ?: emptyMap())
         }
 
     override fun makeCurrent(): Scope {

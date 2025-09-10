@@ -37,7 +37,7 @@ agp-api = "7.4.2"
 apktoolLib = "2.11.1"
 bundletool = "1.18.1"
 vanniktechMavenPublish = "0.34.0"
-androidxBenchmark = "1.4.0"
+androidxBenchmark = "1.4.1"
 
 [libraries]
 binary-compatibility-validator = { module = "org.jetbrains.kotlinx:binary-compatibility-validator", version.ref = "binaryCompatibilityValidator" }

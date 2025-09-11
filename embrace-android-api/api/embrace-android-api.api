@@ -105,17 +105,9 @@ public abstract interface class io/embrace/android/embracesdk/internal/api/Netwo
 
 public abstract interface class io/embrace/android/embracesdk/internal/api/OTelApi {
 	public abstract fun addLogRecordExporter (Lio/embrace/opentelemetry/kotlin/logging/export/LogRecordExporter;)V
-	public abstract fun addLogRecordExporter (Lio/opentelemetry/sdk/logs/export/LogRecordExporter;)V
 	public abstract fun addSpanExporter (Lio/embrace/opentelemetry/kotlin/tracing/export/SpanExporter;)V
-	public abstract fun addSpanExporter (Lio/opentelemetry/sdk/trace/export/SpanExporter;)V
-	public abstract fun getOpenTelemetry ()Lio/opentelemetry/api/OpenTelemetry;
 	public abstract fun getOpenTelemetryKotlin ()Lio/embrace/opentelemetry/kotlin/OpenTelemetry;
-	public abstract fun setResourceAttribute (Lio/opentelemetry/api/common/AttributeKey;Ljava/lang/String;)V
 	public abstract fun setResourceAttribute (Ljava/lang/String;Ljava/lang/String;)V
-}
-
-public final class io/embrace/android/embracesdk/internal/api/OTelApi$DefaultImpls {
-	public static fun setResourceAttribute (Lio/embrace/android/embracesdk/internal/api/OTelApi;Lio/opentelemetry/api/common/AttributeKey;Ljava/lang/String;)V
 }
 
 public abstract interface class io/embrace/android/embracesdk/internal/api/SdkApi : io/embrace/android/embracesdk/internal/api/BreadcrumbApi, io/embrace/android/embracesdk/internal/api/EmbraceAndroidApi, io/embrace/android/embracesdk/internal/api/InstrumentationApi, io/embrace/android/embracesdk/internal/api/InternalWebViewApi, io/embrace/android/embracesdk/internal/api/LogsApi, io/embrace/android/embracesdk/internal/api/NetworkRequestApi, io/embrace/android/embracesdk/internal/api/OTelApi, io/embrace/android/embracesdk/internal/api/SdkStateApi, io/embrace/android/embracesdk/internal/api/SessionApi, io/embrace/android/embracesdk/internal/api/UserApi, io/embrace/android/embracesdk/spans/TracingApi {
@@ -133,7 +125,6 @@ public final class io/embrace/android/embracesdk/internal/api/SdkApi$DefaultImpl
 	public static fun recordSpan (Lio/embrace/android/embracesdk/internal/api/SdkApi;Ljava/lang/String;Lio/embrace/android/embracesdk/spans/AutoTerminationMode;Lkotlin/jvm/functions/Function0;)Ljava/lang/Object;
 	public static fun recordSpan (Lio/embrace/android/embracesdk/internal/api/SdkApi;Ljava/lang/String;Lio/embrace/android/embracesdk/spans/EmbraceSpan;Lio/embrace/android/embracesdk/spans/AutoTerminationMode;Lkotlin/jvm/functions/Function0;)Ljava/lang/Object;
 	public static fun recordSpan (Lio/embrace/android/embracesdk/internal/api/SdkApi;Ljava/lang/String;Ljava/util/Map;Ljava/util/List;Lio/embrace/android/embracesdk/spans/AutoTerminationMode;Lkotlin/jvm/functions/Function0;)Ljava/lang/Object;
-	public static fun setResourceAttribute (Lio/embrace/android/embracesdk/internal/api/SdkApi;Lio/opentelemetry/api/common/AttributeKey;Ljava/lang/String;)V
 	public static fun startSpan (Lio/embrace/android/embracesdk/internal/api/SdkApi;Ljava/lang/String;Lio/embrace/android/embracesdk/spans/AutoTerminationMode;)Lio/embrace/android/embracesdk/spans/EmbraceSpan;
 	public static fun startSpan (Lio/embrace/android/embracesdk/internal/api/SdkApi;Ljava/lang/String;Lio/embrace/android/embracesdk/spans/EmbraceSpan;Lio/embrace/android/embracesdk/spans/AutoTerminationMode;)Lio/embrace/android/embracesdk/spans/EmbraceSpan;
 }

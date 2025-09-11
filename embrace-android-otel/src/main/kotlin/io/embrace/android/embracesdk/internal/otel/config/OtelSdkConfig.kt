@@ -9,14 +9,10 @@ import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanProcessor
 import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaLogRecordExporter
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanExporter
 import io.embrace.opentelemetry.kotlin.attributes.MutableAttributeContainer
 import io.embrace.opentelemetry.kotlin.logging.export.LogRecordExporter
-import io.embrace.opentelemetry.kotlin.logging.export.toOtelKotlinLogRecordExporter
 import io.embrace.opentelemetry.kotlin.tracing.export.SpanExporter
 import io.embrace.opentelemetry.kotlin.tracing.export.SpanProcessor
-import io.embrace.opentelemetry.kotlin.tracing.export.toOtelKotlinSpanExporter
 import io.opentelemetry.semconv.ServiceAttributes
 import io.opentelemetry.semconv.incubating.AndroidIncubatingAttributes
 import io.opentelemetry.semconv.incubating.DeviceIncubatingAttributes
@@ -38,7 +34,7 @@ class OtelSdkConfig(
     private val systemInfo: SystemInfo,
     private val sessionIdProvider: () -> String? = { null },
     private val processIdentifierProvider: () -> String = IdGenerator.Companion::generateLaunchInstanceId,
-    val useKotlinSdk: Boolean = USE_KOTLIN_SDK
+    val useKotlinSdk: Boolean = USE_KOTLIN_SDK,
 ) {
 
     private val customAttributes: MutableMap<String, String> = ConcurrentHashMap()
@@ -102,14 +98,6 @@ class OtelSdkConfig(
             externalExporters = externalLogExporters.toList(),
             exportCheck = exportCheck,
         )
-    }
-
-    fun addSpanExporter(spanExporter: OtelJavaSpanExporter) {
-        externalSpanExporters.add(spanExporter.toOtelKotlinSpanExporter())
-    }
-
-    fun addLogExporter(logExporter: OtelJavaLogRecordExporter) {
-        externalLogExporters.add(logExporter.toOtelKotlinLogRecordExporter())
     }
 
     fun addSpanExporter(spanExporter: SpanExporter) {

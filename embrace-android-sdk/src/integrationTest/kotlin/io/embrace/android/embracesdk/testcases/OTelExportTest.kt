@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.fakes.FakeSpanExporter
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.embrace.android.embracesdk.internal.toStringMap
+import io.embrace.android.embracesdk.otel.java.setJavaResourceAttribute
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.opentelemetry.semconv.ServiceAttributes
@@ -79,7 +80,7 @@ internal class OTelExportTest {
 
         testRule.runTest(
             preSdkStartAction = {
-                embrace.setResourceAttribute(ServiceAttributes.SERVICE_NAME, "my.app")
+                embrace.setJavaResourceAttribute(ServiceAttributes.SERVICE_NAME, "my.app")
                 embrace.setResourceAttribute("test", "foo")
             },
             testCaseAction = {

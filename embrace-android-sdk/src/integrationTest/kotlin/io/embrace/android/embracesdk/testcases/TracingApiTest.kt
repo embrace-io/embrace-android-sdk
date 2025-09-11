@@ -37,9 +37,7 @@ import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbracePayloadAssertionInterface
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaContext
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanContext
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaTraceFlags
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaTraceState
+import io.embrace.opentelemetry.kotlin.tracing.model.SpanContext
 import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
@@ -364,12 +362,7 @@ internal class TracingApiTest {
     @Test
     fun `span links`() {
         val fakeSpan = FakeEmbraceSdkSpan.started()
-        val remoteSpanContext = OtelJavaSpanContext.createFromRemoteParent(
-            checkNotNull(fakeSpan.traceId),
-            checkNotNull(fakeSpan.spanId),
-            OtelJavaTraceFlags.getDefault(),
-            OtelJavaTraceState.getDefault()
-        )
+        val remoteSpanContext = checkNotNull(fakeSpan.spanContext)
         testRule.runTest(
             testCaseAction = {
                 recordSession {

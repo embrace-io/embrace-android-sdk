@@ -8,7 +8,6 @@ import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
 import io.embrace.android.embracesdk.internal.otel.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.otel.sdk.hasEmbraceAttribute
-import io.embrace.android.embracesdk.internal.otel.toOtelKotlin
 import io.embrace.opentelemetry.kotlin.Clock
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.tracing.data.StatusData
@@ -184,7 +183,7 @@ internal class EmbSpanTest {
     fun `add span link`() {
         with(embSpan) {
             val linkedSpanContext = checkNotNull(FakeEmbraceSdkSpan.started().spanContext)
-            addLink(linkedSpanContext.toOtelKotlin()) {
+            addLink(linkedSpanContext) {
                 setBooleanAttribute("boolean", true)
             }
             with(fakeEmbraceSpan.links.single()) {

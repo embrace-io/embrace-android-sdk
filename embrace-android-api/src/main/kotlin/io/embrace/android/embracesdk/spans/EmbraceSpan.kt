@@ -1,17 +1,19 @@
 package io.embrace.android.embracesdk.spans
 
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanContext
+import io.embrace.opentelemetry.kotlin.ExperimentalApi
+import io.embrace.opentelemetry.kotlin.tracing.model.SpanContext
 
 /**
  * Represents a Span that can be started and stopped with the appropriate [ErrorCode] if applicable. This wraps the OpenTelemetry Span
  * by adding an additional layer for local validation
  */
+@OptIn(ExperimentalApi::class)
 public interface EmbraceSpan {
 
     /**
      * The [SpanContext] for this [EmbraceSpan] instance. This is null if the span has not been started.
      */
-    public val spanContext: OtelJavaSpanContext?
+    public val spanContext: SpanContext?
 
     /**
      * ID of the Trace that this Span belongs to. The format adheres to the OpenTelemetry standard for Trace IDs
@@ -140,7 +142,7 @@ public interface EmbraceSpan {
      * Add a link to the span with the given [SpanContext]
      */
     public fun addLink(
-        linkedSpanContext: OtelJavaSpanContext
+        linkedSpanContext: SpanContext,
     ): Boolean = addLink(linkedSpanContext = linkedSpanContext, attributes = null)
 
     /**
@@ -158,5 +160,5 @@ public interface EmbraceSpan {
     /**
      * Add a link to the span with the given [SpanContext] with the given attributes
      */
-    public fun addLink(linkedSpanContext: OtelJavaSpanContext, attributes: Map<String, String>?): Boolean
+    public fun addLink(linkedSpanContext: SpanContext, attributes: Map<String, String>?): Boolean
 }

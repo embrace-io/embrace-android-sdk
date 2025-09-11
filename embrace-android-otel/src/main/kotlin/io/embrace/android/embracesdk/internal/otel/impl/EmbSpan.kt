@@ -8,8 +8,6 @@ import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.OpenTelemetry
 import io.embrace.opentelemetry.kotlin.attributes.MutableAttributeContainer
 import io.embrace.opentelemetry.kotlin.tracing.data.StatusData
-import io.embrace.opentelemetry.kotlin.tracing.ext.toOtelJavaSpanContext
-import io.embrace.opentelemetry.kotlin.tracing.ext.toOtelKotlinSpanContext
 import io.embrace.opentelemetry.kotlin.tracing.model.Link
 import io.embrace.opentelemetry.kotlin.tracing.model.Span
 import io.embrace.opentelemetry.kotlin.tracing.model.SpanContext
@@ -67,7 +65,7 @@ class EmbSpan(
     }
 
     override val spanContext: SpanContext
-        get() = impl.spanContext?.toOtelKotlinSpanContext() ?: openTelemetry.spanContextFactory.invalid
+        get() = impl.spanContext ?: openTelemetry.spanContextFactory.invalid
 
     override fun isRecording(): Boolean = impl.isRecording
 
@@ -78,7 +76,7 @@ class EmbSpan(
 
     override fun addLink(spanContext: SpanContext, attributes: MutableAttributeContainer.() -> Unit) {
         val attrs = EmbMutableAttributeContainer().apply(attributes).attributes
-        impl.addLink(spanContext.toOtelJavaSpanContext(), attrs)
+        impl.addLink(spanContext, attrs)
     }
 
     override val attributes: Map<String, Any>
@@ -91,7 +89,7 @@ class EmbSpan(
         }
 
     override val parent: SpanContext
-        get() = impl.parent?.spanContext?.toOtelKotlinSpanContext() ?: openTelemetry.spanContextFactory.invalid
+        get() = impl.parent?.spanContext ?: openTelemetry.spanContextFactory.invalid
 
     override val spanKind: SpanKind
         get() = impl.spanKind

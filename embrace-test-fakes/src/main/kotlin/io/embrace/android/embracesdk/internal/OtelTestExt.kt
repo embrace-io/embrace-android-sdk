@@ -3,6 +3,7 @@
 package io.embrace.android.embracesdk.internal
 
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
+import io.embrace.android.embracesdk.internal.otel.sdk.toEmbracePayload
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Link
@@ -12,6 +13,7 @@ import io.embrace.opentelemetry.kotlin.aliases.OtelJavaAttributes
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaEventData
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaLinkData
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanData
+import io.embrace.opentelemetry.kotlin.tracing.data.SpanData
 import io.opentelemetry.api.trace.StatusCode
 
 fun Map<String, String>.toOtelJava(): OtelJavaAttributes {
@@ -45,6 +47,20 @@ fun OtelJavaSpanData.toEmbraceSpanData(): EmbraceSpanData = EmbraceSpanData(
     },
     events = events?.mapNotNull { it.toEmbracePayload() } ?: emptyList(),
     attributes = attributes.toStringMap(),
+    links = links.map { it.toEmbracePayload() }
+)
+
+@OptIn(ExperimentalApi::class)
+fun SpanData.toEmbraceSpanData(): EmbraceSpanData = EmbraceSpanData(
+    traceId = spanContext.traceId,
+    spanId = spanContext.spanId,
+    parentSpanId = parent.spanId,
+    name = name,
+    startTimeNanos = startTimestamp,
+    endTimeNanos = endTimestamp!!,
+    status = status.statusCode,
+    events = events.mapNotNull { it.toEmbracePayload() },
+    attributes = attributes.mapValues { it.value.toString() },
     links = links.map { it.toEmbracePayload() }
 )
 

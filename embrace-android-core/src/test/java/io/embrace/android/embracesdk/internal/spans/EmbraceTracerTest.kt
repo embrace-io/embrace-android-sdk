@@ -356,7 +356,7 @@ internal class EmbraceTracerTest {
         assertEquals(name, currentSpan.name)
         currentSpan.assertIsTypePerformance()
         if (traceRoot) {
-            assertEquals(OtelIds.invalidSpanId, currentSpan.parentSpanId)
+            assertEquals(OtelIds.INVALID_SPAN_ID, currentSpan.parentSpanId)
         } else {
             assertNotNull(currentSpan.parentSpanId)
         }

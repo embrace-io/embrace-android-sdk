@@ -19,7 +19,7 @@ import io.embrace.opentelemetry.kotlin.tracing.StatusCode
 fun EmbraceSpanData.toEmbracePayload(): Span = Span(
     traceId = traceId,
     spanId = spanId,
-    parentSpanId = parentSpanId ?: OtelIds.invalidSpanId,
+    parentSpanId = parentSpanId ?: OtelIds.INVALID_SPAN_ID,
     name = name,
     startTimeNanos = startTimeNanos,
     endTimeNanos = endTimeNanos,
@@ -60,7 +60,7 @@ fun Span.toEmbracePayload(): EmbraceSpanData {
     return EmbraceSpanData(
         traceId = traceId ?: "",
         spanId = spanId ?: "",
-        parentSpanId = parentSpanId ?: OtelIds.invalidSpanId,
+        parentSpanId = parentSpanId ?: OtelIds.INVALID_SPAN_ID,
         name = name ?: "",
         startTimeNanos = startTimeNanos ?: 0,
         endTimeNanos = endTimeNanos ?: 0L,

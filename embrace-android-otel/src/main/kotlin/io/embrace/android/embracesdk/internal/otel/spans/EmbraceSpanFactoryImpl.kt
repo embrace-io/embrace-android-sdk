@@ -352,7 +352,7 @@ private class EmbraceSpanImpl(
             io.embrace.android.embracesdk.internal.payload.Span(
                 traceId = traceId,
                 spanId = spanId,
-                parentSpanId = parent?.spanId ?: OtelIds.invalidSpanId,
+                parentSpanId = parent?.spanId ?: OtelIds.INVALID_SPAN_ID,
                 name = name(),
                 startTimeNanos = spanStartTimeMs?.millisToNanos(),
                 endTimeNanos = spanEndTimeMs?.millisToNanos(),

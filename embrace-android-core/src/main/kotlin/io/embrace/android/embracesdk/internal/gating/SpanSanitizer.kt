@@ -29,7 +29,7 @@ internal class SpanSanitizer(
         val sanitizedSessionSpan = Span(
             sessionSpan.traceId,
             sessionSpan.spanId,
-            sessionSpan.parentSpanId ?: OtelIds.invalidSpanId,
+            sessionSpan.parentSpanId ?: OtelIds.INVALID_SPAN_ID,
             sessionSpan.name,
             sessionSpan.startTimeNanos,
             sessionSpan.endTimeNanos,

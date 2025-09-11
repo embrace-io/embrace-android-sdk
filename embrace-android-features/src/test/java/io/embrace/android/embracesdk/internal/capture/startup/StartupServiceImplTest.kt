@@ -51,7 +51,7 @@ internal class StartupServiceImplTest {
         assertEquals(1, currentSpans.size)
         with(currentSpans[0]) {
             assertEquals("emb-sdk-init", name)
-            assertEquals(OtelIds.invalidSpanId, parentSpanId)
+            assertEquals(OtelIds.INVALID_SPAN_ID, parentSpanId)
             assertEquals(startTimeMillis, startTimeNanos.nanosToMillis())
             assertEquals(endTimeMillis, endTimeNanos.nanosToMillis())
             assertIsTypePerformance()

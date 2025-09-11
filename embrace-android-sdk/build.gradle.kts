@@ -85,7 +85,6 @@ dependencies {
     ksp(libs.moshi.kotlin.codegen)
 
     implementation(libs.opentelemetry.api)
-    implementation(libs.opentelemetry.sdk)
     implementation(libs.opentelemetry.context)
     implementation(libs.opentelemetry.semconv)
     implementation(libs.opentelemetry.semconv.incubating)
@@ -101,6 +100,7 @@ dependencies {
     testImplementation(libs.kotlin.reflect)
     testImplementation(platform(libs.okhttp.bom))
     testImplementation(libs.mockwebserver)
+    testImplementation(libs.opentelemetry.sdk)
 
     androidTestImplementation(project(":embrace-test-fakes"))
 

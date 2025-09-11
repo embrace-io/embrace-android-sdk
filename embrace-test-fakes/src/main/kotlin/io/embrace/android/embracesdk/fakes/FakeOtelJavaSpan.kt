@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
 import io.embrace.android.embracesdk.internal.otel.spans.getEmbraceSpan
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaAttributeKey
@@ -18,10 +17,11 @@ class FakeOtelJavaSpan(
     parentContext: Context,
     var recording: Boolean = true,
 ) : OtelJavaSpan {
+    val openTelemetry = fakeOpenTelemetry(false)
     private val spanContext: OtelJavaSpanContext =
         OtelJavaSpanContext.create(
-            parentContext.getEmbraceSpan(fakeOpenTelemetry(false))?.traceId ?: OtelIds.generateTraceId(),
-            OtelIds.generateSpanId(),
+            parentContext.getEmbraceSpan(openTelemetry)?.traceId ?: openTelemetry.tracingIdFactory.generateTraceId(),
+            openTelemetry.tracingIdFactory.generateSpanId(),
             OtelJavaTraceFlags.getDefault(),
             OtelJavaTraceState.getDefault()
         )

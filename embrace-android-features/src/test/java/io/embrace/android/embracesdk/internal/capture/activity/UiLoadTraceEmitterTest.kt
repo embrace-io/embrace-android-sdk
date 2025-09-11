@@ -223,7 +223,7 @@ internal class UiLoadTraceEmitterTest {
                 span = trace.toEmbracePayload(),
                 expectedStartTimeMs = timestamps.first,
                 expectedEndTimeMs = timestamps.second,
-                expectedParentId = OtelIds.invalidSpanId,
+                expectedParentId = OtelIds.INVALID_SPAN_ID,
                 expectedCustomAttributes = customAttributes,
             )
 

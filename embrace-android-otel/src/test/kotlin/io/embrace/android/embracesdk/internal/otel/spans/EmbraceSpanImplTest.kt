@@ -475,7 +475,7 @@ internal class EmbraceSpanImplTest {
 
             assertEquals(traceId, snapshot.traceId)
             assertEquals(spanId, snapshot.spanId)
-            assertEquals(OtelIds.invalidSpanId, snapshot.parentSpanId)
+            assertEquals(OtelIds.INVALID_SPAN_ID, snapshot.parentSpanId)
             assertEquals(EXPECTED_SPAN_NAME.toEmbraceObjectName(), snapshot.name)
             assertTrue(hasEmbraceAttribute(EmbType.System.LowPower))
             assertTrue(hasEmbraceAttribute(PrivateSpan))

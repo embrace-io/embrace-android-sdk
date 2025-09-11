@@ -22,7 +22,6 @@ import io.embrace.android.embracesdk.internal.otel.spans.OtelSpanStartArgs
 import io.embrace.android.embracesdk.internal.otel.spans.getEmbraceSpan
 import io.embrace.android.embracesdk.internal.otel.spans.getOrCreateSpanKey
 import io.embrace.android.embracesdk.internal.otel.toEmbracePayload
-import io.embrace.android.embracesdk.internal.otel.toOtelKotlin
 import io.embrace.android.embracesdk.internal.payload.Link
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
 import io.embrace.android.embracesdk.spans.AutoTerminationMode
@@ -37,6 +36,7 @@ import io.embrace.opentelemetry.kotlin.context.toOtelJavaContext
 import io.embrace.opentelemetry.kotlin.context.toOtelJavaContextKey
 import io.embrace.opentelemetry.kotlin.context.toOtelKotlinContext
 import io.embrace.opentelemetry.kotlin.tracing.data.StatusData
+import io.embrace.opentelemetry.kotlin.tracing.ext.toOtelKotlinSpanContext
 import io.embrace.opentelemetry.kotlin.tracing.model.Span
 import io.embrace.opentelemetry.kotlin.tracing.model.SpanContext
 import io.embrace.opentelemetry.kotlin.tracing.model.SpanKind
@@ -74,7 +74,7 @@ class FakeEmbraceSdkSpan(
         get() = if (useKotlinSdk) {
             sdkSpan?.spanContext
         } else {
-            javaSdkSpan?.spanContext?.toOtelKotlin()
+            javaSdkSpan?.spanContext?.toOtelKotlinSpanContext()
         }
 
     override val traceId: String?

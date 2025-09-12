@@ -42,7 +42,7 @@ class FakeOpenTelemetryModule(
 
     override val openTelemetryClock: Clock = FakeOtelKotlinClock(FakeClock())
 
-    override val spanService: SpanService = FakeSpanService(otelSdkConfig.useKotlinSdk)
+    override val spanService: SpanService = FakeSpanService()
 
     override val otelSdkWrapper: OtelSdkWrapper =
         OtelSdkWrapper(

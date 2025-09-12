@@ -11,7 +11,6 @@ import io.embrace.android.embracesdk.internal.payload.SpanEvent
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.OpenTelemetry
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaImplicitContextKeyed
 import io.embrace.opentelemetry.kotlin.context.Context
 import io.embrace.opentelemetry.kotlin.context.ContextKey
 import io.embrace.opentelemetry.kotlin.tracing.data.StatusData
@@ -22,7 +21,7 @@ import io.embrace.opentelemetry.kotlin.tracing.model.SpanKind
  * An [EmbraceSpan] that has additional functionality to be used internally by the SDK
  */
 @OptIn(ExperimentalApi::class)
-interface EmbraceSdkSpan : EmbraceSpan, OtelJavaImplicitContextKeyed {
+interface EmbraceSdkSpan : EmbraceSpan {
 
     /**
      * Create a new context object based in this span and its parent's context. This can be used for the parent context for a new span

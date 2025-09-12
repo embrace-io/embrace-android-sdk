@@ -71,7 +71,6 @@ dependencies {
     implementation(project(":embrace-internal-api"))
     implementation(project(":embrace-android-otel"))
 
-    implementation(platform(libs.opentelemetry.bom))
     implementation(libs.opentelemetry.java.aliases)
 
     // lifecycle
@@ -84,8 +83,6 @@ dependencies {
     implementation(libs.moshi)
     ksp(libs.moshi.kotlin.codegen)
 
-    implementation(libs.opentelemetry.api)
-    implementation(libs.opentelemetry.context)
     implementation(libs.opentelemetry.semconv)
     implementation(libs.opentelemetry.semconv.incubating)
     implementation(libs.profileinstaller)

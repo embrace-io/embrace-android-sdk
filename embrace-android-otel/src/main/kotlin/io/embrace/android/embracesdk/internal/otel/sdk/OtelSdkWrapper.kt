@@ -16,9 +16,7 @@ import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.opentelemetry.kotlin.Clock
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.OpenTelemetry
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaOpenTelemetry
 import io.embrace.opentelemetry.kotlin.logging.Logger
-import io.embrace.opentelemetry.kotlin.toOtelJavaApi
 import io.embrace.opentelemetry.kotlin.tracing.Tracer
 
 /**
@@ -89,12 +87,6 @@ class OtelSdkWrapper(
             },
             clock = otelClock,
         )
-    }
-
-    val openTelemetryJava: OtelJavaOpenTelemetry by lazy {
-        EmbOpenTelemetry(kotlinApi) {
-            EmbTracerProvider(kotlinApi, spanService, otelClock)
-        }.toOtelJavaApi()
     }
 
     val openTelemetryKotlin: OpenTelemetry by lazy {

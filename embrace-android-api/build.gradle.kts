@@ -15,9 +15,6 @@ android {
 }
 
 dependencies {
-    compileOnly(platform(libs.opentelemetry.bom))
-    compileOnly(libs.opentelemetry.api)
     compileOnly(libs.opentelemetry.kotlin.api)
     implementation(libs.androidx.annotation)
-    implementation(libs.opentelemetry.java.aliases)
 }

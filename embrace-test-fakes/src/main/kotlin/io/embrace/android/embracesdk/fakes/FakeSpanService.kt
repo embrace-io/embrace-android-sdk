@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.android.embracesdk.internal.otel.config.USE_KOTLIN_SDK
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.embrace.android.embracesdk.internal.otel.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
@@ -15,9 +14,7 @@ import io.embrace.opentelemetry.kotlin.context.toOtelJavaContext
 import io.embrace.opentelemetry.kotlin.context.toOtelKotlinContext
 
 @OptIn(ExperimentalApi::class)
-class FakeSpanService(
-    private val useKotlinSdk: Boolean = USE_KOTLIN_SDK
-) : SpanService {
+class FakeSpanService : SpanService {
 
     val createdSpans: MutableList<FakeEmbraceSdkSpan> = mutableListOf()
 
@@ -34,7 +31,6 @@ class FakeSpanService(
         private: Boolean,
         autoTerminationMode: AutoTerminationMode,
     ): EmbraceSdkSpan = FakeEmbraceSdkSpan(
-        useKotlinSdk = useKotlinSdk,
         name = name,
         parentContext = parent?.run {
             fakeOpenTelemetry().contextFactory.root().toOtelJavaContext().with(parent as EmbraceSdkSpan)
@@ -51,7 +47,6 @@ class FakeSpanService(
         otelSpanStartArgs: OtelSpanStartArgs,
     ): EmbraceSdkSpan {
         return FakeEmbraceSdkSpan(
-            useKotlinSdk = useKotlinSdk,
             name = otelSpanStartArgs.initialSpanName,
             parentContext = otelSpanStartArgs.parentContext,
             type = otelSpanStartArgs.embraceAttributes.filterIsInstance<EmbType>().single(),
@@ -92,7 +87,6 @@ class FakeSpanService(
     ): Boolean {
         createdSpans.add(
             FakeEmbraceSdkSpan(
-                useKotlinSdk = useKotlinSdk,
                 name = name,
                 parentContext = parent?.run {
                     fakeOpenTelemetry().contextFactory.root().toOtelJavaContext().with(parent as EmbraceSdkSpan).toOtelKotlinContext()

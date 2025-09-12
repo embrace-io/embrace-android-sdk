@@ -10,8 +10,6 @@ import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
-import io.embrace.opentelemetry.kotlin.context.toOtelJavaContext
-import io.embrace.opentelemetry.kotlin.context.toOtelKotlinContext
 
 @OptIn(ExperimentalApi::class)
 class FakeSpanService : SpanService {
@@ -32,9 +30,7 @@ class FakeSpanService : SpanService {
         autoTerminationMode: AutoTerminationMode,
     ): EmbraceSdkSpan = FakeEmbraceSdkSpan(
         name = name,
-        parentContext = parent?.run {
-            fakeOpenTelemetry().contextFactory.root().toOtelJavaContext().with(parent as EmbraceSdkSpan)
-        }?.toOtelKotlinContext() ?: fakeOpenTelemetry().contextFactory.root(),
+        parentContext = fakeOpenTelemetry().contextFactory.root(),
         type = type,
         internal = internal,
         private = private,
@@ -88,9 +84,7 @@ class FakeSpanService : SpanService {
         createdSpans.add(
             FakeEmbraceSdkSpan(
                 name = name,
-                parentContext = parent?.run {
-                    fakeOpenTelemetry().contextFactory.root().toOtelJavaContext().with(parent as EmbraceSdkSpan).toOtelKotlinContext()
-                } ?: fakeOpenTelemetry().contextFactory.root(),
+                parentContext = fakeOpenTelemetry().contextFactory.root(),
                 type = type,
                 internal = internal,
                 private = private

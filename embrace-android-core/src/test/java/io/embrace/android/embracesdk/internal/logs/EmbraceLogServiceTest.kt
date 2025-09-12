@@ -17,13 +17,15 @@ import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.SessionRemoteConfig
 import io.embrace.android.embracesdk.internal.logs.attachments.Attachment
 import io.embrace.android.embracesdk.internal.payload.AppFramework
-import io.opentelemetry.semconv.incubating.LogIncubatingAttributes
+import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
+import io.embrace.opentelemetry.kotlin.semconv.LogAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
+@OptIn(IncubatingApi::class)
 internal class EmbraceLogServiceTest {
 
     private lateinit var logService: EmbraceLogService
@@ -80,12 +82,12 @@ internal class EmbraceLogServiceTest {
         val log = fakeLogWriter.logEvents.single()
         val attributes = log.schemaType.attributes()
         assertEquals("someValue", attributes["someProperty".toSessionPropertyAttributeName()])
-        assertTrue(attributes.containsKey(LogIncubatingAttributes.LOG_RECORD_UID.key))
+        assertTrue(attributes.containsKey(LogAttributes.LOG_RECORD_UID))
     }
 
     @Test
     fun `Embrace properties can not be overridden by custom properties`() {
-        val props = mapOf(LogIncubatingAttributes.LOG_RECORD_UID.key to "fakeUid")
+        val props = mapOf(LogAttributes.LOG_RECORD_UID to "fakeUid")
         logService.log(
             message = "Hello world",
             severity = Severity.INFO,
@@ -96,7 +98,7 @@ internal class EmbraceLogServiceTest {
         val log = fakeLogWriter.logEvents.single()
         assertNotEquals(
             "fakeUid",
-            log.schemaType.attributes()[LogIncubatingAttributes.LOG_RECORD_UID.key]
+            log.schemaType.attributes()[LogAttributes.LOG_RECORD_UID]
         )
     }
 

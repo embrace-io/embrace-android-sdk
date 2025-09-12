@@ -11,13 +11,14 @@ import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.attributes.MutableAttributeContainer
 import io.embrace.opentelemetry.kotlin.logging.export.LogRecordExporter
+import io.embrace.opentelemetry.kotlin.semconv.AndroidAttributes
+import io.embrace.opentelemetry.kotlin.semconv.DeviceAttributes
+import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
+import io.embrace.opentelemetry.kotlin.semconv.OsAttributes
+import io.embrace.opentelemetry.kotlin.semconv.ServiceAttributes
+import io.embrace.opentelemetry.kotlin.semconv.TelemetryAttributes
 import io.embrace.opentelemetry.kotlin.tracing.export.SpanExporter
 import io.embrace.opentelemetry.kotlin.tracing.export.SpanProcessor
-import io.opentelemetry.semconv.ServiceAttributes
-import io.opentelemetry.semconv.incubating.AndroidIncubatingAttributes
-import io.opentelemetry.semconv.incubating.DeviceIncubatingAttributes
-import io.opentelemetry.semconv.incubating.OsIncubatingAttributes
-import io.opentelemetry.semconv.incubating.TelemetryIncubatingAttributes
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -39,20 +40,21 @@ class OtelSdkConfig(
 
     private val customAttributes: MutableMap<String, String> = ConcurrentHashMap()
 
+    @OptIn(IncubatingApi::class)
     val resourceAction: MutableAttributeContainer.() -> Unit
         get() = {
-            setStringAttribute(ServiceAttributes.SERVICE_NAME.key, sdkName)
-            setStringAttribute(ServiceAttributes.SERVICE_VERSION.key, sdkVersion)
-            setStringAttribute(OsIncubatingAttributes.OS_NAME.key, systemInfo.osName)
-            setStringAttribute(OsIncubatingAttributes.OS_VERSION.key, systemInfo.osVersion)
-            setStringAttribute(OsIncubatingAttributes.OS_TYPE.key, systemInfo.osType)
-            setStringAttribute(OsIncubatingAttributes.OS_BUILD_ID.key, systemInfo.osBuild)
-            setStringAttribute(AndroidIncubatingAttributes.ANDROID_OS_API_LEVEL.key, systemInfo.androidOsApiLevel)
-            setStringAttribute(DeviceIncubatingAttributes.DEVICE_MANUFACTURER.key, systemInfo.deviceManufacturer)
-            setStringAttribute(DeviceIncubatingAttributes.DEVICE_MODEL_IDENTIFIER.key, systemInfo.deviceModel)
-            setStringAttribute(DeviceIncubatingAttributes.DEVICE_MODEL_NAME.key, systemInfo.deviceModel)
-            setStringAttribute(TelemetryIncubatingAttributes.TELEMETRY_DISTRO_NAME.key, sdkName)
-            setStringAttribute(TelemetryIncubatingAttributes.TELEMETRY_DISTRO_VERSION.key, sdkVersion)
+            setStringAttribute(ServiceAttributes.SERVICE_NAME, sdkName)
+            setStringAttribute(ServiceAttributes.SERVICE_VERSION, sdkVersion)
+            setStringAttribute(OsAttributes.OS_NAME, systemInfo.osName)
+            setStringAttribute(OsAttributes.OS_VERSION, systemInfo.osVersion)
+            setStringAttribute(OsAttributes.OS_TYPE, systemInfo.osType)
+            setStringAttribute(OsAttributes.OS_BUILD_ID, systemInfo.osBuild)
+            setStringAttribute(AndroidAttributes.ANDROID_OS_API_LEVEL, systemInfo.androidOsApiLevel)
+            setStringAttribute(DeviceAttributes.DEVICE_MANUFACTURER, systemInfo.deviceManufacturer)
+            setStringAttribute(DeviceAttributes.DEVICE_MODEL_IDENTIFIER, systemInfo.deviceModel)
+            setStringAttribute(DeviceAttributes.DEVICE_MODEL_NAME, systemInfo.deviceModel)
+            setStringAttribute(TelemetryAttributes.TELEMETRY_DISTRO_NAME, sdkName)
+            setStringAttribute(TelemetryAttributes.TELEMETRY_DISTRO_VERSION, sdkVersion)
 
             customAttributes.forEach {
                 setStringAttribute(it.key, it.value)

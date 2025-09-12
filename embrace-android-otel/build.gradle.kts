@@ -21,19 +21,15 @@ dependencies {
     testImplementation(project(":embrace-android-api"))
 
     compileOnly(libs.opentelemetry.api)
-    compileOnly(libs.opentelemetry.semconv)
-    compileOnly(libs.opentelemetry.semconv.incubating)
-    implementation(libs.opentelemetry.java.aliases)
 
     testImplementation(platform(libs.opentelemetry.bom))
     testImplementation(libs.opentelemetry.api)
     testImplementation(libs.opentelemetry.sdk)
-    testImplementation(libs.opentelemetry.semconv)
-    testImplementation(libs.opentelemetry.semconv.incubating)
 
     implementation(libs.opentelemetry.kotlin.api)
     implementation(libs.opentelemetry.kotlin.api.ext)
     implementation(libs.opentelemetry.kotlin.sdk)
     implementation(libs.opentelemetry.kotlin.compat)
+    implementation(libs.opentelemetry.kotlin.semconv)
     implementation(libs.opentelemetry.java.aliases)
 }

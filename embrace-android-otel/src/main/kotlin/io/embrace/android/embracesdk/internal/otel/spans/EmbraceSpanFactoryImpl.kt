@@ -32,13 +32,13 @@ import io.embrace.opentelemetry.kotlin.context.Context
 import io.embrace.opentelemetry.kotlin.context.toOtelJavaContext
 import io.embrace.opentelemetry.kotlin.context.toOtelJavaContextKey
 import io.embrace.opentelemetry.kotlin.context.toOtelKotlinContext
+import io.embrace.opentelemetry.kotlin.semconv.ExceptionAttributes
 import io.embrace.opentelemetry.kotlin.tracing.data.StatusData
 import io.embrace.opentelemetry.kotlin.tracing.model.Span
 import io.embrace.opentelemetry.kotlin.tracing.model.SpanContext
 import io.embrace.opentelemetry.kotlin.tracing.model.SpanKind
 import io.opentelemetry.context.ImplicitContextKeyed
 import io.opentelemetry.context.Scope
-import io.opentelemetry.semconv.ExceptionAttributes
 import java.util.Queue
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -225,15 +225,16 @@ private class EmbraceSpanImpl(
                 eventAttributes.putAll(attributes)
             }
 
+//            io.embrace.opentelemetry.kotlin.semconv.ErrorAttributes
             exception.javaClass.canonicalName?.let { type ->
-                eventAttributes[ExceptionAttributes.EXCEPTION_TYPE.key] = type
+                eventAttributes[ ExceptionAttributes.EXCEPTION_TYPE] = type
             }
 
             exception.message?.let { message ->
-                eventAttributes[ExceptionAttributes.EXCEPTION_MESSAGE.key] = message
+                eventAttributes[ExceptionAttributes.EXCEPTION_MESSAGE] = message
             }
 
-            eventAttributes[ExceptionAttributes.EXCEPTION_STACKTRACE.key] = exception.truncatedStacktraceText()
+            eventAttributes[ExceptionAttributes.EXCEPTION_STACKTRACE] = exception.truncatedStacktraceText()
 
             dataValidator.createTruncatedSpanEvent(
                 name = dataValidator.otelLimitsConfig.getExceptionEventName(),

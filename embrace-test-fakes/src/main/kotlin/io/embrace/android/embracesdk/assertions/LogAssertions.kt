@@ -12,13 +12,14 @@ import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.serialization.truncatedStacktrace
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.logging.model.SeverityNumber
-import io.opentelemetry.semconv.ExceptionAttributes
-import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes
+import io.embrace.opentelemetry.kotlin.semconv.ExceptionAttributes
+import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
+import io.embrace.opentelemetry.kotlin.semconv.SessionAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 
-@OptIn(ExperimentalApi::class)
+@OptIn(ExperimentalApi::class, IncubatingApi::class)
 fun assertOtelLogReceived(
     logReceived: Log?,
     expectedMessage: String,
@@ -40,18 +41,18 @@ fun assertOtelLogReceived(
         assertEquals(expectedSeverityNumber.severityNumber, log.severityNumber)
         assertEquals(expectedSeverityText ?: expectedSeverityNumber.name, log.severityText)
         assertEquals(expectedTimeMs.millisToNanos(), log.timeUnixNano)
-        assertFalse(log.attributes?.findAttributeValue(SessionIncubatingAttributes.SESSION_ID.key).isNullOrBlank())
+        assertFalse(log.attributes?.findAttributeValue(SessionAttributes.SESSION_ID).isNullOrBlank())
         expectedType?.let { assertAttribute(log, embExceptionHandling.name, it) }
         assertEquals(expectedState, log.attributes?.findAttributeValue(embState.name))
         expectedExceptionName?.let {
-            assertAttribute(log, ExceptionAttributes.EXCEPTION_TYPE.key, expectedExceptionName)
+            assertAttribute(log, ExceptionAttributes.EXCEPTION_TYPE, expectedExceptionName)
         }
         expectedExceptionMessage?.let {
-            assertAttribute(log, ExceptionAttributes.EXCEPTION_MESSAGE.key, expectedExceptionMessage)
+            assertAttribute(log, ExceptionAttributes.EXCEPTION_MESSAGE, expectedExceptionMessage)
         }
         expectedStacktrace?.let {
             val serializedStack = EmbraceSerializer().truncatedStacktrace(it.toTypedArray())
-            assertAttribute(log, ExceptionAttributes.EXCEPTION_STACKTRACE.key, serializedStack)
+            assertAttribute(log, ExceptionAttributes.EXCEPTION_STACKTRACE, serializedStack)
         }
         expectedProperties?.forEach { (key, value) ->
             assertAttribute(log, key, value.toString())

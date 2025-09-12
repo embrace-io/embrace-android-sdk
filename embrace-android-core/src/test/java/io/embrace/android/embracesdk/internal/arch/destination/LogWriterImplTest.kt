@@ -14,8 +14,9 @@ import io.embrace.android.embracesdk.internal.otel.attrs.embState
 import io.embrace.android.embracesdk.internal.otel.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.session.id.SessionData
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
-import io.opentelemetry.semconv.incubating.LogIncubatingAttributes
-import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes
+import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
+import io.embrace.opentelemetry.kotlin.semconv.LogAttributes
+import io.embrace.opentelemetry.kotlin.semconv.SessionAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -24,7 +25,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
-@OptIn(ExperimentalApi::class)
+@OptIn(ExperimentalApi::class, IncubatingApi::class)
 internal class LogWriterImplTest {
     private lateinit var logger: FakeOpenTelemetryLogger
     private lateinit var sessionIdTracker: FakeSessionIdTracker
@@ -61,9 +62,9 @@ internal class LogWriterImplTest {
         with(logger.logs.single()) {
             assertEquals("test", body)
             assertEquals(Severity.ERROR.name, severityNumber?.name)
-            assertEquals("fake-session-id", attributes[SessionIncubatingAttributes.SESSION_ID.key])
+            assertEquals("fake-session-id", attributes[SessionAttributes.SESSION_ID])
             assertNotNull(attributes[embState.name])
-            assertNotNull(attributes[LogIncubatingAttributes.LOG_RECORD_UID.key])
+            assertNotNull(attributes[LogAttributes.LOG_RECORD_UID])
             assertTrue(attributes[PrivateSpan.key.name] != null)
             assertEquals(clock.now().millisToNanos(), timestamp)
             assertNull(observedTimestamp)
@@ -105,7 +106,7 @@ internal class LogWriterImplTest {
         with(logger.logs.last()) {
             assertEquals(
                 "foreground-session",
-                attributes[SessionIncubatingAttributes.SESSION_ID.key]
+                attributes[SessionAttributes.SESSION_ID]
             )
             assertEquals("foreground", attributes[embState.name])
         }
@@ -122,7 +123,7 @@ internal class LogWriterImplTest {
         )
 
         with(logger.logs.last()) {
-            assertNull(attributes[SessionIncubatingAttributes.SESSION_ID.key])
+            assertNull(attributes[SessionAttributes.SESSION_ID])
             assertEquals("background", attributes[embState.name])
         }
     }
@@ -154,7 +155,7 @@ internal class LogWriterImplTest {
         )
 
         with(logger.logs.last()) {
-            assertNull(attributes[SessionIncubatingAttributes.SESSION_ID.key])
+            assertNull(attributes[SessionAttributes.SESSION_ID])
             assertNull(attributes[embState.name])
         }
     }
@@ -169,7 +170,7 @@ internal class LogWriterImplTest {
         )
 
         with(logger.logs.last()) {
-            assertNull(attributes[SessionIncubatingAttributes.SESSION_ID.key])
+            assertNull(attributes[SessionAttributes.SESSION_ID])
             assertEquals("background", attributes[embState.name])
         }
     }

@@ -35,12 +35,13 @@ import io.embrace.opentelemetry.kotlin.context.Context
 import io.embrace.opentelemetry.kotlin.context.toOtelJavaContext
 import io.embrace.opentelemetry.kotlin.context.toOtelJavaContextKey
 import io.embrace.opentelemetry.kotlin.context.toOtelKotlinContext
+import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
+import io.embrace.opentelemetry.kotlin.semconv.SessionAttributes
 import io.embrace.opentelemetry.kotlin.tracing.data.StatusData
 import io.embrace.opentelemetry.kotlin.tracing.ext.toOtelKotlinSpanContext
 import io.embrace.opentelemetry.kotlin.tracing.model.Span
 import io.embrace.opentelemetry.kotlin.tracing.model.SpanContext
 import io.embrace.opentelemetry.kotlin.tracing.model.SpanKind
-import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes
 import java.util.concurrent.ConcurrentLinkedQueue
 
 @OptIn(ExperimentalApi::class)
@@ -288,6 +289,7 @@ class FakeEmbraceSdkSpan(
                 stop()
             }
 
+        @OptIn(IncubatingApi::class)
         fun sessionSpan(
             sessionId: String,
             startTimeMs: Long,
@@ -308,7 +310,7 @@ class FakeEmbraceSdkSpan(
                     )
                 }
 
-                setSystemAttribute(SessionIncubatingAttributes.SESSION_ID.key, sessionId)
+                setSystemAttribute(SessionAttributes.SESSION_ID, sessionId)
                 setSystemAttribute(embProcessIdentifier.name, processIdentifier)
                 setSystemAttribute(embState.name, "foreground")
                 setSystemAttribute(

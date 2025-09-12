@@ -22,7 +22,8 @@ import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.assertions.assertMatches
 import io.embrace.android.embracesdk.assertions.getLogsOfType
-import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes
+import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
+import io.embrace.opentelemetry.kotlin.semconv.SessionAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
@@ -35,6 +36,7 @@ import org.junit.runner.RunWith
 /**
  * Verify functionality of the SDK if background activities are disabled
  */
+@OptIn(IncubatingApi::class)
 @RunWith(AndroidJUnit4::class)
 internal class BackgroundActivityDisabledTest {
 
@@ -87,7 +89,7 @@ internal class BackgroundActivityDisabledTest {
                             embState.name to "background"
                         )
                     )
-                    assertNull(attributes?.findAttributeValue(SessionIncubatingAttributes.SESSION_ID.key))
+                    assertNull(attributes?.findAttributeValue(SessionAttributes.SESSION_ID))
                 }
                 with(logs[1]) {
                     assertEquals("info", body)
@@ -96,14 +98,14 @@ internal class BackgroundActivityDisabledTest {
                             embState.name to "background"
                         )
                     )
-                    assertNull(attributes?.findAttributeValue(SessionIncubatingAttributes.SESSION_ID.key))
+                    assertNull(attributes?.findAttributeValue(SessionAttributes.SESSION_ID))
                 }
                 with(logs[2]) {
                     assertEquals("warning", body)
                     attributes?.assertMatches(
                         mapOf(
                             embState.name to "foreground",
-                            SessionIncubatingAttributes.SESSION_ID.key to sessions[1].getSessionId()
+                            SessionAttributes.SESSION_ID to sessions[1].getSessionId()
                         )
                     )
                 }
@@ -114,7 +116,7 @@ internal class BackgroundActivityDisabledTest {
                     attributes?.assertMatches(
                         mapOf(
                             embState.name to "foreground",
-                            SessionIncubatingAttributes.SESSION_ID.key to secondSession.getSessionId()
+                            SessionAttributes.SESSION_ID to secondSession.getSessionId()
                         )
                     )
                 }
@@ -192,8 +194,8 @@ internal class BackgroundActivityDisabledTest {
                 )
 
                 assertNotEquals(
-                    sessionSpan1.attributes?.findAttributeValue(SessionIncubatingAttributes.SESSION_ID.key),
-                    sessionSpan2.attributes?.findAttributeValue(SessionIncubatingAttributes.SESSION_ID.key)
+                    sessionSpan1.attributes?.findAttributeValue(SessionAttributes.SESSION_ID),
+                    sessionSpan2.attributes?.findAttributeValue(SessionAttributes.SESSION_ID)
                 )
 
                 assertEquals(
@@ -227,7 +229,7 @@ internal class BackgroundActivityDisabledTest {
         )
         with(checkNotNull(attributes)) {
             assertFalse(findAttributeValue(embProcessIdentifier.name).isNullOrBlank())
-            assertFalse(findAttributeValue(SessionIncubatingAttributes.SESSION_ID.key).isNullOrBlank())
+            assertFalse(findAttributeValue(SessionAttributes.SESSION_ID).isNullOrBlank())
         }
     }
 }

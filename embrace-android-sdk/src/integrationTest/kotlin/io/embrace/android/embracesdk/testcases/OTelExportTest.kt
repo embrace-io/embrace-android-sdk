@@ -10,7 +10,8 @@ import io.embrace.android.embracesdk.internal.toStringMap
 import io.embrace.android.embracesdk.otel.java.setJavaResourceAttribute
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
-import io.opentelemetry.semconv.ServiceAttributes
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaAttributeKey
+import io.embrace.opentelemetry.kotlin.semconv.ServiceAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
@@ -31,7 +32,7 @@ internal class OTelExportTest {
         val fakeSpanExporter = FakeSpanExporter()
         testRule.runTest(
             preSdkStartAction = {
-                embrace.setResourceAttribute(ServiceAttributes.SERVICE_NAME.key, "my.app")
+                embrace.setResourceAttribute(ServiceAttributes.SERVICE_NAME, "my.app")
                 embrace.setResourceAttribute("test", "foo")
                 embrace.addSpanExporter(fakeSpanExporter)
             },
@@ -48,7 +49,7 @@ internal class OTelExportTest {
             otelExportAssertion = {
                 val span = awaitSpans(1) { it.name == "test-span" }
                 with(span.single()) {
-                    assertEquals("my.app", resource.attributes[ServiceAttributes.SERVICE_NAME])
+                    assertEquals("my.app", resource.attributes.toStringMap()[ServiceAttributes.SERVICE_NAME])
                     assertEquals("foo", resource.attributes.asMap().filter { it.key.key == "test" }.values.single())
                 }
             }
@@ -80,7 +81,7 @@ internal class OTelExportTest {
 
         testRule.runTest(
             preSdkStartAction = {
-                embrace.setJavaResourceAttribute(ServiceAttributes.SERVICE_NAME, "my.app")
+                embrace.setJavaResourceAttribute(OtelJavaAttributeKey.stringKey(ServiceAttributes.SERVICE_NAME), "my.app")
                 embrace.setResourceAttribute("test", "foo")
             },
             testCaseAction = {
@@ -97,7 +98,7 @@ internal class OTelExportTest {
                     assertEquals("test message", body.asString())
                     assertEquals(logTimestampNanos, timestampEpochNanos)
                     assertEquals(logTimestampNanos, observedTimestampEpochNanos)
-                    assertEquals("my.app", resource.attributes[ServiceAttributes.SERVICE_NAME])
+                    assertEquals("my.app", resource.attributes.toStringMap()[ServiceAttributes.SERVICE_NAME])
                     assertEquals("foo", resource.attributes.asMap().filter { it.key.key == "test" }.values.single())
                 }
             }

@@ -12,7 +12,7 @@ import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.assertions.assertMatches
-import io.opentelemetry.semconv.UrlAttributes.URL_FULL
+import io.embrace.opentelemetry.kotlin.semconv.UrlAttributes.URL_FULL
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -46,7 +46,7 @@ internal class WebviewFeatureTest {
                 assertEquals("emb-webview-info", event.name)
                 event.attributes?.assertMatches(mapOf(
                     "emb.webview_info.tag" to "myWebView",
-                    URL_FULL.key to "https://embrace.io/"
+                    URL_FULL to "https://embrace.io/"
                 ))
 
 

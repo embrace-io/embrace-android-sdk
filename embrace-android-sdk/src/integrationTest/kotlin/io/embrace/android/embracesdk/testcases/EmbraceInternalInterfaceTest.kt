@@ -18,7 +18,7 @@ import io.embrace.android.embracesdk.network.http.HttpMethod
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.assertions.assertMatches
-import io.opentelemetry.semconv.HttpAttributes
+import io.embrace.opentelemetry.kotlin.semconv.HttpAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -162,7 +162,7 @@ internal class EmbraceInternalInterfaceTest {
                 val session = getSingleSessionEnvelope()
                 val spans = checkNotNull(session.data.spans)
                 val requests =
-                    checkNotNull(spans.filter { it.attributes?.findAttributeValue(HttpAttributes.HTTP_REQUEST_METHOD.key) != null })
+                    checkNotNull(spans.filter { it.attributes?.findAttributeValue(HttpAttributes.HTTP_REQUEST_METHOD) != null })
                 assertEquals(
                     "Unexpected number of requests in sent session: ${requests.size}",
                     4,

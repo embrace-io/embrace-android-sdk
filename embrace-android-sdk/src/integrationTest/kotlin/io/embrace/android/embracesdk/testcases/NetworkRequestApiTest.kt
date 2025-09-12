@@ -12,14 +12,15 @@ import io.embrace.android.embracesdk.network.http.HttpMethod
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbracePayloadAssertionInterface
 import io.embrace.android.embracesdk.assertions.assertMatches
-import io.opentelemetry.semconv.ExceptionAttributes
-import io.opentelemetry.semconv.HttpAttributes
-import io.opentelemetry.semconv.incubating.HttpIncubatingAttributes
+import io.embrace.opentelemetry.kotlin.semconv.ExceptionAttributes
+import io.embrace.opentelemetry.kotlin.semconv.HttpAttributes
+import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
+@OptIn(IncubatingApi::class)
 @RunWith(AndroidJUnit4::class)
 internal class NetworkRequestApiTest {
 
@@ -309,18 +310,18 @@ internal class NetworkRequestApiTest {
 
                     attributes?.assertMatches(mapOf(
                         "url.full" to expectedRequest.url,
-                        HttpAttributes.HTTP_REQUEST_METHOD.key to expectedRequest.httpMethod,
+                        HttpAttributes.HTTP_REQUEST_METHOD to expectedRequest.httpMethod,
                         "emb.trace_id" to expectedRequest.traceId,
                         "emb.w3c_traceparent" to expectedRequest.w3cTraceparent,
-                        HttpAttributes.HTTP_RESPONSE_STATUS_CODE.key to when {
+                        HttpAttributes.HTTP_RESPONSE_STATUS_CODE to when {
                             completed -> expectedRequest.responseCode
                             else -> null
                         },
-                        HttpIncubatingAttributes.HTTP_REQUEST_BODY_SIZE.key to when {
+                        HttpAttributes.HTTP_REQUEST_BODY_SIZE to when {
                             completed -> expectedRequest.bytesSent
                             else -> null
                         },
-                        HttpIncubatingAttributes.HTTP_RESPONSE_BODY_SIZE.key to when {
+                        HttpAttributes.HTTP_RESPONSE_BODY_SIZE to when {
                             completed -> expectedRequest.bytesReceived
                             else -> null
                         },
@@ -328,7 +329,7 @@ internal class NetworkRequestApiTest {
                             completed -> null
                             else -> expectedRequest.errorType
                         },
-                        ExceptionAttributes.EXCEPTION_MESSAGE.key to when {
+                        ExceptionAttributes.EXCEPTION_MESSAGE to when {
                             completed -> null
                             else -> expectedRequest.errorMessage
                         },
@@ -343,7 +344,7 @@ internal class NetworkRequestApiTest {
 
         val unfilteredSpans = checkNotNull(session.data.spans)
         val spans =
-            checkNotNull(unfilteredSpans.filter { it.attributes?.findAttributeValue(HttpAttributes.HTTP_REQUEST_METHOD.key) != null })
+            checkNotNull(unfilteredSpans.filter { it.attributes?.findAttributeValue(HttpAttributes.HTTP_REQUEST_METHOD) != null })
         assertEquals(
             "Unexpected number of requests in sent session: ${spans.size}",
             1,

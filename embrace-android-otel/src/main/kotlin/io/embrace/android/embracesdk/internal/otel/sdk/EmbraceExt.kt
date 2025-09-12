@@ -6,7 +6,7 @@ import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
-import io.opentelemetry.semconv.ExceptionAttributes
+import io.embrace.opentelemetry.kotlin.semconv.ExceptionAttributes
 
 fun EmbraceSpanData.hasEmbraceAttribute(embraceAttribute: EmbraceAttribute): Boolean =
     embraceAttribute.value == attributes[embraceAttribute.key.name]
@@ -26,7 +26,7 @@ fun String.toEmbraceUsageAttributeName(): String = EMBRACE_USAGE_ATTRIBUTE_NAME_
 
 fun String.isValidLongValueAttribute(): Boolean = longValueAttributes.contains(this)
 
-private val longValueAttributes: Set<String> = setOf(ExceptionAttributes.EXCEPTION_STACKTRACE.key)
+private val longValueAttributes: Set<String> = setOf(ExceptionAttributes.EXCEPTION_STACKTRACE)
 
 fun List<Attribute>.hasEmbraceAttributeKey(embraceAttributeKey: EmbraceAttributeKey): Boolean = any {
     it.key == embraceAttributeKey.name

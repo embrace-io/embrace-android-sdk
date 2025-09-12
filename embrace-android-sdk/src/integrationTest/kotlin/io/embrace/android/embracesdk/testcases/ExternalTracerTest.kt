@@ -22,7 +22,7 @@ import io.embrace.opentelemetry.kotlin.tracing.Tracer
 import io.embrace.opentelemetry.kotlin.tracing.data.SpanData
 import io.embrace.opentelemetry.kotlin.tracing.data.StatusData
 import io.embrace.opentelemetry.kotlin.tracing.recordException
-import io.opentelemetry.semconv.ExceptionAttributes
+import io.embrace.opentelemetry.kotlin.semconv.ExceptionAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
@@ -143,11 +143,11 @@ internal class ExternalTracerTest {
                             attributes = listOf(
                                 Attribute("bad", "yes"),
                                 Attribute(
-                                    ExceptionAttributes.EXCEPTION_TYPE.key,
+                                    ExceptionAttributes.EXCEPTION_TYPE,
                                     checkNotNull(RuntimeException::class.java.canonicalName)
                                 ),
-                                Attribute(ExceptionAttributes.EXCEPTION_MESSAGE.key, "bah"),
-                                Attribute(ExceptionAttributes.EXCEPTION_STACKTRACE.key, stacktrace)
+                                Attribute(ExceptionAttributes.EXCEPTION_MESSAGE, "bah"),
+                                Attribute(ExceptionAttributes.EXCEPTION_STACKTRACE, stacktrace)
                             )
                         )
                     )
@@ -232,11 +232,11 @@ internal class ExternalTracerTest {
                             attributes = listOf(
                                 Attribute("bad", "yes"),
                                 Attribute(
-                                    ExceptionAttributes.EXCEPTION_TYPE.key,
+                                    ExceptionAttributes.EXCEPTION_TYPE,
                                     checkNotNull(RuntimeException::class.java.canonicalName)
                                 ),
-                                Attribute(ExceptionAttributes.EXCEPTION_MESSAGE.key, "bah"),
-                                Attribute(ExceptionAttributes.EXCEPTION_STACKTRACE.key, stacktrace)
+                                Attribute(ExceptionAttributes.EXCEPTION_MESSAGE, "bah"),
+                                Attribute(ExceptionAttributes.EXCEPTION_STACKTRACE, stacktrace)
                             )
                         )
                     )

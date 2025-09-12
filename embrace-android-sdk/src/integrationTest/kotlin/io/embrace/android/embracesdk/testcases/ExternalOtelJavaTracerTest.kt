@@ -25,7 +25,7 @@ import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanData
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaStatusCode
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaTracer
 import io.opentelemetry.context.Context
-import io.opentelemetry.semconv.ExceptionAttributes
+import io.embrace.opentelemetry.kotlin.semconv.ExceptionAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNull
@@ -153,10 +153,10 @@ internal class ExternalOtelJavaTracerTest {
                             timestampNanos = checkNotNull(startTimeMs?.millisToNanos()),
                             attributes = listOf(
                                 Attribute("bad", "yes"),
-                                Attribute(ExceptionAttributes.EXCEPTION_MESSAGE.key, "bah"),
-                                Attribute(ExceptionAttributes.EXCEPTION_STACKTRACE.key, stacktrace),
+                                Attribute(ExceptionAttributes.EXCEPTION_MESSAGE, "bah"),
+                                Attribute(ExceptionAttributes.EXCEPTION_STACKTRACE, stacktrace),
                                 Attribute(
-                                    ExceptionAttributes.EXCEPTION_TYPE.key,
+                                    ExceptionAttributes.EXCEPTION_TYPE,
                                     checkNotNull(RuntimeException::class.java.canonicalName)
                                 )
                             )
@@ -241,10 +241,10 @@ internal class ExternalOtelJavaTracerTest {
                             timestampNanos = checkNotNull(startTimeMs?.millisToNanos()),
                             attributes = listOf(
                                 Attribute("bad", "yes"),
-                                Attribute(ExceptionAttributes.EXCEPTION_MESSAGE.key, "bah"),
-                                Attribute(ExceptionAttributes.EXCEPTION_STACKTRACE.key, stacktrace),
+                                Attribute(ExceptionAttributes.EXCEPTION_MESSAGE, "bah"),
+                                Attribute(ExceptionAttributes.EXCEPTION_STACKTRACE, stacktrace),
                                 Attribute(
-                                    ExceptionAttributes.EXCEPTION_TYPE.key,
+                                    ExceptionAttributes.EXCEPTION_TYPE,
                                     checkNotNull(RuntimeException::class.java.canonicalName)
                                 )
                             )

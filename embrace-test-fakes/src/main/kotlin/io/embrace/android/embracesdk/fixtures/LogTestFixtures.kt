@@ -8,7 +8,8 @@ import io.embrace.android.embracesdk.internal.otel.schema.SendMode
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
-import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes
+import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
+import io.embrace.opentelemetry.kotlin.semconv.SessionAttributes
 
 val testLog: Log = Log(
     traceId = "ceadd56622414a06ae382e4e5a70bcf7",
@@ -48,12 +49,13 @@ val testNativeCrashData: NativeCrashData = NativeCrashData(
     symbols = mapOf("key" to "value"),
 )
 
+@OptIn(IncubatingApi::class)
 val nativeCrashLog = Log(
     timeUnixNano = 1681972471806000000L,
     attributes = listOf(
         Attribute(embSendMode.name, SendMode.IMMEDIATE.name),
         EmbType.System.NativeCrash.toPayload(),
-        Attribute(SessionIncubatingAttributes.SESSION_ID.key, "bb6b5b1ea2ff48928382fe81d7991ced"),
+        Attribute(SessionAttributes.SESSION_ID, "bb6b5b1ea2ff48928382fe81d7991ced"),
         Attribute(embProcessIdentifier.name, "8115ec91-3e5e-4d8a-816d-cc40306f9822"),
     )
 )

@@ -35,8 +35,9 @@ import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.opentelemetry.kotlin.Clock
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.OpenTelemetry
+import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
+import io.embrace.opentelemetry.kotlin.semconv.SessionAttributes
 import io.embrace.opentelemetry.kotlin.tracing.Tracer
-import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
@@ -46,7 +47,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
-@OptIn(ExperimentalApi::class)
+@OptIn(ExperimentalApi::class, IncubatingApi::class)
 internal class CurrentSessionSpanImplTests {
 
     private lateinit var spanRepository: SpanRepository
@@ -581,7 +582,7 @@ internal class CurrentSessionSpanImplTests {
     @Test
     fun `span stop callback creates the correct span links`() {
         val sessionSpan = checkNotNull(spanRepository.getActiveSpans().single())
-        val sessionId = checkNotNull(sessionSpan.getSystemAttribute(SessionIncubatingAttributes.SESSION_ID.key))
+        val sessionId = checkNotNull(sessionSpan.getSystemAttribute(SessionAttributes.SESSION_ID))
         val span = spanService.startSpan("test")?.apply {
             stop()
         }
@@ -592,7 +593,7 @@ internal class CurrentSessionSpanImplTests {
         checkNotNull(spanSnapshot.links).single().validateSystemLink(
             linkedSpan = sessionSpanSnapshot,
             type = LinkType.EndSession,
-            expectedAttributes = mapOf(SessionIncubatingAttributes.SESSION_ID.key to sessionId)
+            expectedAttributes = mapOf(SessionAttributes.SESSION_ID to sessionId)
         )
         checkNotNull(sessionSpanSnapshot.links).single().validateSystemLink(spanSnapshot, LinkType.EndedIn)
     }

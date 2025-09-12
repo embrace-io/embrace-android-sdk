@@ -7,12 +7,14 @@ import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
-import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes
+import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
+import io.embrace.opentelemetry.kotlin.semconv.SessionAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Before
 import org.junit.Test
 
+@OptIn(IncubatingApi::class)
 internal class CurrentSessionSpanAttributeTests {
 
     private lateinit var spanRepository: SpanRepository
@@ -52,7 +54,7 @@ internal class CurrentSessionSpanAttributeTests {
     }
 
     private fun EmbraceSpanData.assertCommonSessionSpanAttrs() {
-        assertNotNull(attributes.findAttributeValue(SessionIncubatingAttributes.SESSION_ID.key))
+        assertNotNull(attributes.findAttributeValue(SessionAttributes.SESSION_ID))
         assertEquals("ux.session", attributes.findAttributeValue("emb.type"))
     }
 }

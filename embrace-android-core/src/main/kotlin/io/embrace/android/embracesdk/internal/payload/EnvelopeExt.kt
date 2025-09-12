@@ -3,15 +3,17 @@ package io.embrace.android.embracesdk.internal.payload
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.otel.spans.hasEmbraceAttribute
-import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes
+import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
+import io.embrace.opentelemetry.kotlin.semconv.SessionAttributes
 
 fun Envelope<SessionPayload>.getSessionSpan(): Span? {
     return data.spans?.singleOrNull { it.hasEmbraceAttribute(EmbType.Ux.Session) }
         ?: data.spanSnapshots?.singleOrNull { it.hasEmbraceAttribute(EmbType.Ux.Session) }
 }
 
+@OptIn(IncubatingApi::class)
 fun Envelope<SessionPayload>.getSessionId(): String? {
-    return getSessionSpan()?.attributes?.findAttributeValue(SessionIncubatingAttributes.SESSION_ID.key)
+    return getSessionSpan()?.attributes?.findAttributeValue(SessionAttributes.SESSION_ID)
 }
 
 fun Envelope<SessionPayload>.getSessionProperties(): Map<String, String> {

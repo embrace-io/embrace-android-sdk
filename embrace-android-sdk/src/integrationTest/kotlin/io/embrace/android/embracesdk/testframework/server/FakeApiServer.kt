@@ -12,7 +12,8 @@ import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.utils.threadLocal
 import io.embrace.android.embracesdk.assertions.getLastLog
-import io.opentelemetry.semconv.incubating.LogIncubatingAttributes
+import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
+import io.embrace.opentelemetry.kotlin.semconv.LogAttributes
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.zip.GZIPInputStream
 import okhttp3.mockwebserver.Dispatcher
@@ -94,13 +95,14 @@ internal class FakeApiServer(
         deliveryTracer.onServerCompletedRequest(endpoint.name, obj.getSessionId())
     }
 
+    @OptIn(IncubatingApi::class)
     @Suppress("UNCHECKED_CAST")
     private fun handleLogRequest(endpoint: Endpoint, envelope: Envelope<*>) {
         val obj = envelope as Envelope<LogPayload>
         logRequests.add(obj)
         deliveryTracer.onServerCompletedRequest(
             endpoint.name,
-            obj.getLastLog().attributes?.findAttributeValue(LogIncubatingAttributes.LOG_RECORD_UID.key) ?: ""
+            obj.getLastLog().attributes?.findAttributeValue(LogAttributes.LOG_RECORD_UID) ?: ""
         )
     }
 

@@ -13,7 +13,7 @@ import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.logging.model.SeverityNumber
-import io.opentelemetry.semconv.ExceptionAttributes
+import io.embrace.opentelemetry.kotlin.semconv.ExceptionAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Before
@@ -191,7 +191,7 @@ internal class FlutterInternalInterfaceTest {
                 )
                 log.attributes?.assertMatches(
                     mapOf(
-                        ExceptionAttributes.EXCEPTION_STACKTRACE.key to expectedStacktrace,
+                        ExceptionAttributes.EXCEPTION_STACKTRACE to expectedStacktrace,
                         "emb.exception.context" to expectedContext,
                         "emb.exception.library" to expectedLibrary,
                     )
@@ -237,7 +237,7 @@ internal class FlutterInternalInterfaceTest {
                 )
                 log.attributes?.assertMatches(
                     mapOf(
-                        ExceptionAttributes.EXCEPTION_STACKTRACE.key to expectedStacktrace,
+                        ExceptionAttributes.EXCEPTION_STACKTRACE to expectedStacktrace,
                         "emb.exception.context" to expectedContext,
                         "emb.exception.library" to expectedLibrary,
                     )

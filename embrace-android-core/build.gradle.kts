@@ -34,8 +34,6 @@ dependencies {
 
     compileOnly(platform(libs.opentelemetry.bom))
     compileOnly(libs.opentelemetry.api)
-    compileOnly(libs.opentelemetry.semconv)
-    compileOnly(libs.opentelemetry.semconv.incubating)
     implementation(libs.androidx.annotation)
     implementation(libs.lifecycle.process)
     implementation(platform(libs.okhttp.bom))
@@ -43,6 +41,7 @@ dependencies {
 
     implementation(libs.opentelemetry.kotlin.api)
     implementation(libs.opentelemetry.kotlin.api.ext)
+    implementation(libs.opentelemetry.kotlin.semconv)
     implementation(libs.opentelemetry.java.aliases)
 
     testImplementation(project(":embrace-android-payload"))
@@ -51,8 +50,6 @@ dependencies {
     testImplementation(platform(libs.opentelemetry.bom))
     testImplementation(libs.opentelemetry.api)
     testImplementation(libs.opentelemetry.sdk)
-    testImplementation(libs.opentelemetry.semconv)
-    testImplementation(libs.opentelemetry.semconv.incubating)
     testImplementation(libs.lifecycle.runtime)
     testImplementation(libs.lifecycle.process)
     testImplementation(libs.lifecycle.testing)

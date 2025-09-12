@@ -16,8 +16,8 @@ import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
 import io.embrace.android.embracesdk.internal.payload.ThreadInfo
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
-import io.opentelemetry.semconv.ExceptionAttributes
-import io.opentelemetry.semconv.JvmAttributes
+import io.embrace.opentelemetry.kotlin.semconv.ExceptionAttributes
+import io.embrace.opentelemetry.kotlin.semconv.JvmAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Before
@@ -243,12 +243,12 @@ internal class AnrOtelMapperTest {
 
         // validate threads
         val thread = checkNotNull(sample.threads?.single())
-        assertEquals(thread.state.toString(), attrs.findAttribute(JvmAttributes.JVM_THREAD_STATE.key).data)
+        assertEquals(thread.state.toString(), attrs.findAttribute(JvmAttributes.JVM_THREAD_STATE).data)
         assertEquals(thread.priority, attrs.findAttribute("thread_priority").data?.toInt())
         assertEquals(thread.frameCount, attrs.findAttribute("frame_count").data?.toInt())
         assertEquals(
             thread.lines?.joinToString("\n"),
-            attrs.findAttribute(ExceptionAttributes.EXCEPTION_STACKTRACE.key).data
+            attrs.findAttribute(ExceptionAttributes.EXCEPTION_STACKTRACE).data
         )
     }
 

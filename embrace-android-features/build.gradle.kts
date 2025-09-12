@@ -18,6 +18,7 @@ dependencies {
     compileOnly(project(":embrace-internal-api"))
     compileOnly(project(":embrace-android-otel"))
 
+    compileOnly(libs.opentelemetry.api)
     compileOnly(libs.opentelemetry.semconv)
     compileOnly(libs.opentelemetry.semconv.incubating)
     implementation(libs.lifecycle.process)

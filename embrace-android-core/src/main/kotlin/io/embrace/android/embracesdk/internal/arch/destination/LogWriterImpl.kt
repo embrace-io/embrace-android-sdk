@@ -13,8 +13,9 @@ import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.logging.Logger
 import io.embrace.opentelemetry.kotlin.logging.model.SeverityNumber
-import io.opentelemetry.semconv.incubating.LogIncubatingAttributes
-import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes
+import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
+import io.embrace.opentelemetry.kotlin.semconv.LogAttributes
+import io.embrace.opentelemetry.kotlin.semconv.SessionAttributes
 import java.util.concurrent.TimeUnit
 
 @OptIn(ExperimentalApi::class)
@@ -25,6 +26,7 @@ class LogWriterImpl(
     private val clock: Clock,
 ) : LogWriter {
 
+    @OptIn(IncubatingApi::class)
     override fun addLog(
         schemaType: SchemaType,
         severity: Severity,
@@ -45,13 +47,13 @@ class LogWriterImpl(
             severityText = getSeverityText(severityNumber),
             timestamp = TimeUnit.MILLISECONDS.toNanos(logTimeMs)
         ) {
-            setStringAttribute(LogIncubatingAttributes.LOG_RECORD_UID.key, Uuid.getEmbUuid())
+            setStringAttribute(LogAttributes.LOG_RECORD_UID, Uuid.getEmbUuid())
 
             if (addCurrentSessionInfo) {
                 var sessionState: String? = null
                 sessionIdTracker.getActiveSession()?.let { session ->
                     if (session.id.isNotBlank()) {
-                        setStringAttribute(SessionIncubatingAttributes.SESSION_ID.key, session.id)
+                        setStringAttribute(SessionAttributes.SESSION_ID, session.id)
                     }
                     sessionState = if (session.isForeground) {
                         FOREGROUND_STATE

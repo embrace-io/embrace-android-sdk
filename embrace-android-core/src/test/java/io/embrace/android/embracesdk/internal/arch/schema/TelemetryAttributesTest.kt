@@ -5,12 +5,14 @@ import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesS
 import io.embrace.android.embracesdk.internal.otel.attrs.embProcessIdentifier
 import io.embrace.android.embracesdk.internal.session.getSessionProperty
 import io.embrace.android.embracesdk.internal.utils.Uuid
-import io.opentelemetry.semconv.ExceptionAttributes
-import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes
+import io.embrace.opentelemetry.kotlin.semconv.ExceptionAttributes
+import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
+import io.embrace.opentelemetry.kotlin.semconv.SessionAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 
+@OptIn(IncubatingApi::class)
 internal class TelemetryAttributesTest {
 
     private lateinit var customAttributes: Map<String, String>
@@ -28,14 +30,14 @@ internal class TelemetryAttributesTest {
     @Test
     fun `only schema properties`() {
         telemetryAttributes = TelemetryAttributes()
-        telemetryAttributes.setAttribute(SessionIncubatingAttributes.SESSION_ID.key, sessionId)
-        telemetryAttributes.setAttribute(ExceptionAttributes.EXCEPTION_TYPE.key, "exceptionValue")
+        telemetryAttributes.setAttribute(SessionAttributes.SESSION_ID, sessionId)
+        telemetryAttributes.setAttribute(ExceptionAttributes.EXCEPTION_TYPE, "exceptionValue")
         val attributes = telemetryAttributes.snapshot()
         assertEquals(2, attributes.size)
-        assertEquals(sessionId, attributes[SessionIncubatingAttributes.SESSION_ID.key])
-        assertEquals("exceptionValue", attributes[ExceptionAttributes.EXCEPTION_TYPE.key])
-        assertEquals(sessionId, telemetryAttributes.getAttribute(SessionIncubatingAttributes.SESSION_ID.key))
-        assertEquals("exceptionValue", telemetryAttributes.getAttribute(ExceptionAttributes.EXCEPTION_TYPE.key))
+        assertEquals(sessionId, attributes[SessionAttributes.SESSION_ID])
+        assertEquals("exceptionValue", attributes[ExceptionAttributes.EXCEPTION_TYPE])
+        assertEquals(sessionId, telemetryAttributes.getAttribute(SessionAttributes.SESSION_ID))
+        assertEquals("exceptionValue", telemetryAttributes.getAttribute(ExceptionAttributes.EXCEPTION_TYPE))
     }
 
     @Test
@@ -44,7 +46,7 @@ internal class TelemetryAttributesTest {
             sessionPropertiesProvider = sessionPropertiesService::getProperties,
             customAttributes = customAttributes
         )
-        val sessionIdKey = SessionIncubatingAttributes.SESSION_ID.key
+        val sessionIdKey = SessionAttributes.SESSION_ID
         telemetryAttributes.setAttribute(sessionIdKey, sessionId)
         sessionPropertiesService.addProperty("perm", "permVal", true)
         sessionPropertiesService.addProperty("temp", "tempVal", false)
@@ -64,7 +66,7 @@ internal class TelemetryAttributesTest {
         telemetryAttributes = TelemetryAttributes(
             sessionPropertiesProvider = sessionPropertiesService::getProperties,
         )
-        val sessionIdKey = SessionIncubatingAttributes.SESSION_ID.key
+        val sessionIdKey = SessionAttributes.SESSION_ID
         telemetryAttributes.setAttribute(sessionIdKey, sessionId)
         telemetryAttributes.setAttribute(sessionIdKey, newSessionId)
         sessionPropertiesService.addProperty("perm", "permVal", true)
@@ -83,12 +85,12 @@ internal class TelemetryAttributesTest {
     fun `schema attribute values take priority if the same key is used`() {
         val newSessionId = Uuid.getEmbUuid()
         telemetryAttributes = TelemetryAttributes(
-            customAttributes = mapOf(SessionIncubatingAttributes.SESSION_ID.key to sessionId)
+            customAttributes = mapOf(SessionAttributes.SESSION_ID to sessionId)
         )
-        telemetryAttributes.setAttribute(SessionIncubatingAttributes.SESSION_ID.key, newSessionId)
+        telemetryAttributes.setAttribute(SessionAttributes.SESSION_ID, newSessionId)
         val attributes = telemetryAttributes.snapshot()
         assertEquals(1, attributes.size)
-        assertEquals(newSessionId, attributes[SessionIncubatingAttributes.SESSION_ID.key])
+        assertEquals(newSessionId, attributes[SessionAttributes.SESSION_ID])
     }
 
     @Test
@@ -100,7 +102,7 @@ internal class TelemetryAttributesTest {
             sessionPropertiesProvider = sessionPropertiesService::getProperties,
             customAttributes = customAttributes
         )
-        telemetryAttributes.setAttribute(SessionIncubatingAttributes.SESSION_ID.key, sessionId)
+        telemetryAttributes.setAttribute(SessionAttributes.SESSION_ID, sessionId)
 
         val attributes = telemetryAttributes.snapshot()
         assertEquals(4, attributes.size)
@@ -112,7 +114,7 @@ internal class TelemetryAttributesTest {
         val blankishValues = listOf("", " ", "null", "NULL")
 
         // Give me Union types, plz
-        val sessionIdKey = SessionIncubatingAttributes.SESSION_ID.key
+        val sessionIdKey = SessionAttributes.SESSION_ID
         blankishValues.forEach { value ->
             telemetryAttributes.setAttribute(sessionIdKey, value, true)
             assertEquals(value, telemetryAttributes.getAttribute(sessionIdKey))

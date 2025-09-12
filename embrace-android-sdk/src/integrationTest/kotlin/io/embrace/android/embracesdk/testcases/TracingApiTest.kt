@@ -37,8 +37,9 @@ import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbracePayloadAssertionInterface
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaContext
+import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
 import io.embrace.opentelemetry.kotlin.tracing.model.SpanContext
-import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes
+import io.embrace.opentelemetry.kotlin.semconv.SessionAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
@@ -52,7 +53,7 @@ import org.junit.runner.RunWith
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
-@OptIn(ExperimentalApi::class)
+@OptIn(ExperimentalApi::class, IncubatingApi::class)
 @RunWith(AndroidJUnit4::class)
 internal class TracingApiTest {
     @Rule
@@ -298,9 +299,9 @@ internal class TracingApiTest {
             },
             otelExportAssertion = {
                 val sessionSpan = awaitSpansWithType(2, EmbType.Ux.Session).last().toEmbraceSpanData().toEmbracePayload()
-                val sessionId = checkNotNull(sessionSpan.attributes?.findAttributeValue(SessionIncubatingAttributes.SESSION_ID.key))
+                val sessionId = checkNotNull(sessionSpan.attributes?.findAttributeValue(SessionAttributes.SESSION_ID))
                 val span = awaitSpans(1) { it.name == "test-trace-root" }.single().toEmbraceSpanData().toEmbracePayload()
-                assertEquals(sessionId, span.attributes?.findAttributeValue(SessionIncubatingAttributes.SESSION_ID.key))
+                assertEquals(sessionId, span.attributes?.findAttributeValue(SessionAttributes.SESSION_ID))
             }
         )
     }
@@ -428,15 +429,15 @@ internal class TracingApiTest {
                 val span1 = sessions.first().findSpanByName("span1")
                 val span2 = sessions.last().findSpanByName("span2")
 
-                assertEquals(sessionId1, span1.attributes?.findAttributeValue(SessionIncubatingAttributes.SESSION_ID.key))
-                assertEquals(sessionId1, span2.attributes?.findAttributeValue(SessionIncubatingAttributes.SESSION_ID.key))
+                assertEquals(sessionId1, span1.attributes?.findAttributeValue(SessionAttributes.SESSION_ID))
+                assertEquals(sessionId1, span2.attributes?.findAttributeValue(SessionAttributes.SESSION_ID))
 
             },
             otelExportAssertion = {
                 val span1 = awaitSpans(1) { it.name == "span1" }.single().toEmbraceSpanData().toEmbracePayload()
                 val span2 = awaitSpans(1) { it.name == "span2" }.single().toEmbraceSpanData().toEmbracePayload()
-                assertEquals(sessionId1, span1.attributes?.findAttributeValue(SessionIncubatingAttributes.SESSION_ID.key))
-                assertEquals(sessionId1, span2.attributes?.findAttributeValue(SessionIncubatingAttributes.SESSION_ID.key))
+                assertEquals(sessionId1, span1.attributes?.findAttributeValue(SessionAttributes.SESSION_ID))
+                assertEquals(sessionId1, span2.attributes?.findAttributeValue(SessionAttributes.SESSION_ID))
             }
         )
     }

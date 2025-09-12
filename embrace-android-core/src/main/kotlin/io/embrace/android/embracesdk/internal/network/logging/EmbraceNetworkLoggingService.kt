@@ -11,10 +11,10 @@ import io.embrace.android.embracesdk.internal.utils.NetworkUtils.stripUrl
 import io.embrace.android.embracesdk.internal.utils.toNonNullMap
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.spans.ErrorCode
-import io.opentelemetry.semconv.ErrorAttributes
-import io.opentelemetry.semconv.ExceptionAttributes
-import io.opentelemetry.semconv.HttpAttributes
-import io.opentelemetry.semconv.incubating.HttpIncubatingAttributes
+import io.embrace.opentelemetry.kotlin.semconv.ErrorAttributes
+import io.embrace.opentelemetry.kotlin.semconv.ExceptionAttributes
+import io.embrace.opentelemetry.kotlin.semconv.HttpAttributes
+import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
 
 /**
  * Logs network calls according to defined limits per domain.
@@ -84,14 +84,15 @@ internal class EmbraceNetworkLoggingService(
         }
     }
 
+    @OptIn(IncubatingApi::class)
     private fun generateSchemaAttributes(networkRequest: EmbraceNetworkRequest): Map<String, String> = mapOf(
         "url.full" to stripUrl(networkRequest.url),
-        HttpAttributes.HTTP_REQUEST_METHOD.key to networkRequest.httpMethod,
-        HttpAttributes.HTTP_RESPONSE_STATUS_CODE.key to networkRequest.responseCode,
-        HttpIncubatingAttributes.HTTP_REQUEST_BODY_SIZE.key to networkRequest.bytesSent,
-        HttpIncubatingAttributes.HTTP_RESPONSE_BODY_SIZE.key to networkRequest.bytesReceived,
-        ErrorAttributes.ERROR_TYPE.key to networkRequest.errorType,
-        ExceptionAttributes.EXCEPTION_MESSAGE.key to networkRequest.errorMessage,
+        HttpAttributes.HTTP_REQUEST_METHOD to networkRequest.httpMethod,
+        HttpAttributes.HTTP_RESPONSE_STATUS_CODE to networkRequest.responseCode,
+        HttpAttributes.HTTP_REQUEST_BODY_SIZE to networkRequest.bytesSent,
+        HttpAttributes.HTTP_RESPONSE_BODY_SIZE to networkRequest.bytesReceived,
+        ErrorAttributes.ERROR_TYPE to networkRequest.errorType,
+        ExceptionAttributes.EXCEPTION_MESSAGE to networkRequest.errorMessage,
         "emb.w3c_traceparent" to networkRequest.w3cTraceparent,
         "emb.trace_id" to getValidTraceId(networkRequest.traceId),
     ).toNonNullMap().mapValues { it.value.toString() }

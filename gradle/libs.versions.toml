@@ -14,7 +14,7 @@ openTelementrySemConv = "1.29.0-alpha"
 moshi = "1.15.2"
 lifecycle = "2.7.0" # version pinned to 2.7.0 because of AGP bug
 annotation = "1.9.1"
-otelKotlin = "0.4.2"
+otelKotlin = "0.5.1"
 protobuf = "4.32.1"
 profileinstaller = "1.3.1" # version pinned to 1.3.1 because of AGP bug
 okhttp = "4.12.0"
@@ -92,6 +92,7 @@ opentelemetry-kotlin-api-ext = { module = "io.embrace.opentelemetry.kotlin:opent
 opentelemetry-kotlin-sdk = { module = "io.embrace.opentelemetry.kotlin:opentelemetry-kotlin-implementation", version.ref = "otelKotlin" }
 opentelemetry-kotlin-compat = { module = "io.embrace.opentelemetry.kotlin:opentelemetry-kotlin-compat", version.ref = "otelKotlin" }
 opentelemetry-kotlin-noop = { module = "io.embrace.opentelemetry.kotlin:opentelemetry-kotlin-noop", version.ref = "otelKotlin" }
+opentelemetry-kotlin-semconv = { module = "io.embrace.opentelemetry.kotlin:opentelemetry-kotlin-semconv", version.ref = "otelKotlin" }
 opentelemetry-java-aliases = { module = "io.embrace.opentelemetry.kotlin:opentelemetry-java-typealiases", version.ref = "otelKotlin" }
 androidx-benchmark-junit4 = { group = "androidx.benchmark", name = "benchmark-junit4", version.ref = "androidxBenchmark" }
 

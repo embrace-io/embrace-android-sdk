@@ -24,8 +24,9 @@ import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.internal.utils.toUTF8String
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
-import io.opentelemetry.semconv.incubating.LogIncubatingAttributes
-import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes
+import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
+import io.embrace.opentelemetry.kotlin.semconv.LogAttributes
+import io.embrace.opentelemetry.kotlin.semconv.SessionAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -33,7 +34,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
-@OptIn(ExperimentalApi::class)
+@OptIn(ExperimentalApi::class, IncubatingApi::class)
 internal class NativeCrashDataSourceImplTest {
 
     private lateinit var crashProcessor: FakeNativeCrashProcessor
@@ -95,10 +96,10 @@ internal class NativeCrashDataSourceImplTest {
             assertTrue(attributes[EmbType.System.NativeCrash.key.name] != null)
             assertEquals("value", attributes["prop".toSessionPropertyAttributeName()])
             assertEquals("background", attributes[embState.name])
-            assertNotNull(attributes[LogIncubatingAttributes.LOG_RECORD_UID.key])
+            assertNotNull(attributes[LogAttributes.LOG_RECORD_UID])
             assertEquals(
                 testNativeCrashData.sessionId,
-                attributes[SessionIncubatingAttributes.SESSION_ID.key]
+                attributes[SessionAttributes.SESSION_ID]
             )
             assertEquals("1", attributes[embCrashNumber.name])
             assertEquals(testNativeCrashData.crash, attributes[embNativeCrashException.name])
@@ -125,8 +126,8 @@ internal class NativeCrashDataSourceImplTest {
 
         with(otelLogger.logs.single()) {
             assertTrue(attributes[EmbType.System.NativeCrash.key.name] != null)
-            assertNotNull(attributes[LogIncubatingAttributes.LOG_RECORD_UID.key])
-            assertNull(attributes[SessionIncubatingAttributes.SESSION_ID.key])
+            assertNotNull(attributes[LogAttributes.LOG_RECORD_UID])
+            assertNull(attributes[SessionAttributes.SESSION_ID])
             assertEquals("1", attributes[embCrashNumber.name])
             assertNull(attributes[embNativeCrashException.name])
             assertNull(attributes[embNativeCrashSymbols.name])
@@ -149,8 +150,8 @@ internal class NativeCrashDataSourceImplTest {
 
         with(otelLogger.logs.single()) {
             assertTrue(attributes[EmbType.System.NativeCrash.key.name] != null)
-            assertNotNull(attributes[LogIncubatingAttributes.LOG_RECORD_UID.key])
-            assertNull(attributes[SessionIncubatingAttributes.SESSION_ID.key])
+            assertNotNull(attributes[LogAttributes.LOG_RECORD_UID])
+            assertNull(attributes[SessionAttributes.SESSION_ID])
             assertEquals("1", attributes[embCrashNumber.name])
             assertNull(attributes[embState.name])
             assertNull(attributes[embNativeCrashException.name])

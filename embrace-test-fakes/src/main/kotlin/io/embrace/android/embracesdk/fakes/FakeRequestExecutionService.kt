@@ -8,7 +8,8 @@ import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
-import io.opentelemetry.semconv.incubating.LogIncubatingAttributes
+import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
+import io.embrace.opentelemetry.kotlin.semconv.LogAttributes
 import java.io.InputStream
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.zip.GZIPInputStream
@@ -45,6 +46,7 @@ class FakeRequestExecutionService(
         return responseAction(envelope)
     }
 
+    @OptIn(IncubatingApi::class)
     @Suppress("UNCHECKED_CAST")
     private fun processEnvelope(envelope: Envelope<*>) {
         if (strictMode) {
@@ -59,7 +61,7 @@ class FakeRequestExecutionService(
                 val log = envelope as Envelope<LogPayload>
                 val logs = log.data.logs ?: error("Log payload missing logs")
                 val lidList: List<String> = logs.map {
-                    it.attributes?.findAttributeValue(LogIncubatingAttributes.LOG_RECORD_UID.key)
+                    it.attributes?.findAttributeValue(LogAttributes.LOG_RECORD_UID)
                         ?: error("Log missing log id")
                 }
                 lidList.forEach { lid ->

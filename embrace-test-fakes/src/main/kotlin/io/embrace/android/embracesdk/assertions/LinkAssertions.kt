@@ -7,10 +7,12 @@ import io.embrace.android.embracesdk.internal.otel.schema.LinkType
 import io.embrace.android.embracesdk.internal.payload.Link
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
+import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
+import io.embrace.opentelemetry.kotlin.semconv.SessionAttributes
 import io.embrace.opentelemetry.kotlin.tracing.model.SpanContext
-import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes
 import org.junit.Assert.assertTrue
 
+@OptIn(IncubatingApi::class)
 fun Link.validatePreviousSessionLink(
     previousSessionSpan: Span,
     previousSessionId: String,
@@ -18,7 +20,7 @@ fun Link.validatePreviousSessionLink(
     validateSystemLink(
         linkedSpan = previousSessionSpan,
         type = LinkType.PreviousSession,
-        expectedAttributes = mapOf(SessionIncubatingAttributes.SESSION_ID.key to previousSessionId)
+        expectedAttributes = mapOf(SessionAttributes.SESSION_ID to previousSessionId)
     )
 }
 

@@ -13,7 +13,7 @@ import io.embrace.android.embracesdk.internal.otel.config.OtelSdkConfig
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.createNoopOpenTelemetry
-import io.opentelemetry.semconv.ServiceAttributes
+import io.embrace.opentelemetry.kotlin.semconv.ServiceAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
@@ -86,9 +86,9 @@ internal class OTelApiDelegateTest {
     @Test
     fun `override resource attribute before sdk starts`() {
         sdkCallChecker.started.set(false)
-        delegate.setResourceAttribute(ServiceAttributes.SERVICE_NAME.key, "foo")
+        delegate.setResourceAttribute(ServiceAttributes.SERVICE_NAME, "foo")
         val attrs = FakeMutableAttributeContainer().apply(cfg.resourceAction).attributes
-        assertEquals("foo", attrs[ServiceAttributes.SERVICE_NAME.key])
+        assertEquals("foo", attrs[ServiceAttributes.SERVICE_NAME])
     }
 
     @Test

@@ -25,8 +25,6 @@ dependencies {
     compileOnly(platform(libs.opentelemetry.bom))
     compileOnly(libs.opentelemetry.api)
     compileOnly(libs.opentelemetry.sdk)
-    compileOnly(libs.opentelemetry.semconv)
-    compileOnly(libs.opentelemetry.semconv.incubating)
     implementation(libs.opentelemetry.java.aliases)
 
     implementation(libs.junit)
@@ -39,4 +37,5 @@ dependencies {
     implementation(libs.opentelemetry.kotlin.api.ext)
     implementation(libs.opentelemetry.kotlin.sdk)
     implementation(libs.opentelemetry.kotlin.compat)
+    implementation(libs.opentelemetry.kotlin.semconv)
 }

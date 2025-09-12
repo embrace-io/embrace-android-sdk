@@ -44,9 +44,9 @@ import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.context.Context
 import io.embrace.opentelemetry.kotlin.getTracer
+import io.embrace.opentelemetry.kotlin.semconv.ExceptionAttributes
 import io.embrace.opentelemetry.kotlin.tracing.Tracer
 import io.embrace.opentelemetry.kotlin.tracing.model.SpanKind
-import io.opentelemetry.semconv.ExceptionAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -287,12 +287,12 @@ internal class EmbraceSpanImplTest {
                 assertEquals(timestampNanos, timestampNanos)
                 assertEquals(
                     IllegalStateException::class.java.canonicalName,
-                    attrs.single { it.key == ExceptionAttributes.EXCEPTION_TYPE.key }.data
+                    attrs.single { it.key == ExceptionAttributes.EXCEPTION_TYPE }.data
                 )
-                assertEquals("oops", attrs.single { it.key == ExceptionAttributes.EXCEPTION_MESSAGE.key }.data)
+                assertEquals("oops", attrs.single { it.key == ExceptionAttributes.EXCEPTION_MESSAGE }.data)
                 assertEquals(
                     firstExceptionStackTrace,
-                    attrs.single { it.key == ExceptionAttributes.EXCEPTION_STACKTRACE.key }.data
+                    attrs.single { it.key == ExceptionAttributes.EXCEPTION_STACKTRACE }.data
                 )
             }
             with(sanitizedEvents[1]) {
@@ -301,13 +301,13 @@ internal class EmbraceSpanImplTest {
                 assertEquals(timestampNanos, timestampNanos)
                 assertEquals(
                     RuntimeException::class.java.canonicalName,
-                    attrs.single { it.key == ExceptionAttributes.EXCEPTION_TYPE.key }.data
+                    attrs.single { it.key == ExceptionAttributes.EXCEPTION_TYPE }.data
                 )
-                assertEquals("haha", attrs.single { it.key == ExceptionAttributes.EXCEPTION_MESSAGE.key }.data)
+                assertEquals("haha", attrs.single { it.key == ExceptionAttributes.EXCEPTION_MESSAGE }.data)
                 assertEquals("myValue", attrs.single { it.key == "myKey" }.data)
                 assertEquals(
                     secondExceptionStackTrace,
-                    attrs.single { it.key == ExceptionAttributes.EXCEPTION_STACKTRACE.key }.data
+                    attrs.single { it.key == ExceptionAttributes.EXCEPTION_STACKTRACE }.data
                 )
             }
         }

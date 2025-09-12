@@ -19,12 +19,14 @@ import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.session.orchestrator.PayloadStore
 import io.embrace.android.embracesdk.internal.utils.PropertyUtils.truncate
 import io.embrace.android.embracesdk.internal.utils.Uuid
-import io.opentelemetry.semconv.incubating.LogIncubatingAttributes
+import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
+import io.embrace.opentelemetry.kotlin.semconv.LogAttributes
 import java.io.Serializable
 
 /**
  * Creates log records to be sent using the Open Telemetry Logs data model.
  */
+@OptIn(IncubatingApi::class)
 class EmbraceLogService(
     private val logWriter: LogWriter,
     private val configService: ConfigService,
@@ -100,7 +102,7 @@ class EmbraceLogService(
                 null
             },
         )
-        attributes.setAttribute(LogIncubatingAttributes.LOG_RECORD_UID.key, Uuid.getEmbUuid())
+        attributes.setAttribute(LogAttributes.LOG_RECORD_UID, Uuid.getEmbUuid())
         logAttrs.forEach {
             attributes.setAttribute(it.key, it.value)
         }
@@ -116,7 +118,7 @@ class EmbraceLogService(
         if (shouldLogBeGated(severity)) {
             return
         }
-        val logId = attributes.getAttribute(LogIncubatingAttributes.LOG_RECORD_UID.key)
+        val logId = attributes.getAttribute(LogAttributes.LOG_RECORD_UID)
         if (logId == null || !logCounters.getValue(severity).addIfAllowed()) {
             return
         }

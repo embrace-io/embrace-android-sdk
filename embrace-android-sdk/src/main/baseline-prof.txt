@@ -4043,9 +4043,9 @@ HSPLio/opentelemetry/semconv/ErrorAttributes;-><clinit>()V
 HSPLio/opentelemetry/semconv/ExceptionAttributes;-><clinit>()V
 HSPLio/opentelemetry/semconv/HttpAttributes;-><clinit>()V
 HSPLio/opentelemetry/semconv/ServiceAttributes;-><clinit>()V
-HSPLio/opentelemetry/semconv/incubating/AndroidIncubatingAttributes;-><clinit>()V
-HSPLio/opentelemetry/semconv/incubating/DeviceIncubatingAttributes;-><clinit>()V
-HSPLio/opentelemetry/semconv/incubating/HttpIncubatingAttributes;-><clinit>()V
-HSPLio/opentelemetry/semconv/incubating/OsIncubatingAttributes;-><clinit>()V
-HSPLio/opentelemetry/semconv/incubating/SessionIncubatingAttributes;-><clinit>()V
-HSPLio/opentelemetry/semconv/incubating/TelemetryIncubatingAttributes;-><clinit>()V
+HSPLio/opentelemetry/semconv/incubating/AndroidAttributes;-><clinit>()V
+HSPLio/opentelemetry/semconv/incubating/DeviceAttributes;-><clinit>()V
+HSPLio/opentelemetry/semconv/incubating/HttpAttributes;-><clinit>()V
+HSPLio/opentelemetry/semconv/incubating/OsAttributes;-><clinit>()V
+HSPLio/opentelemetry/semconv/incubating/SessionAttributes;-><clinit>()V
+HSPLio/opentelemetry/semconv/incubating/TelemetryAttributes;-><clinit>()V

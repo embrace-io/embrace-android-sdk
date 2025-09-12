@@ -20,8 +20,9 @@ import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.internal.utils.getThreadInfo
 import io.embrace.android.embracesdk.internal.utils.toUTF8String
-import io.opentelemetry.semconv.ExceptionAttributes
-import io.opentelemetry.semconv.incubating.LogIncubatingAttributes
+import io.embrace.opentelemetry.kotlin.semconv.ExceptionAttributes
+import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
+import io.embrace.opentelemetry.kotlin.semconv.LogAttributes
 import java.util.concurrent.CopyOnWriteArrayList
 
 /**
@@ -58,6 +59,7 @@ internal class CrashDataSourceImpl(
      *
      * @param exception the exception thrown by the thread
      */
+    @OptIn(IncubatingApi::class)
     override fun handleCrash(exception: Throwable) {
         if (!mainCrashHandled) {
             mainCrashHandled = true
@@ -69,19 +71,19 @@ internal class CrashDataSourceImpl(
             )
 
             val crashException = LegacyExceptionInfo.ofThrowable(exception)
-            crashAttributes.setAttribute(ExceptionAttributes.EXCEPTION_TYPE.key, crashException.name)
+            crashAttributes.setAttribute(ExceptionAttributes.EXCEPTION_TYPE, crashException.name)
             crashAttributes.setAttribute(
-                ExceptionAttributes.EXCEPTION_MESSAGE.key,
+                ExceptionAttributes.EXCEPTION_MESSAGE,
                 crashException.message
                     ?: ""
             )
             crashAttributes.setAttribute(
-                ExceptionAttributes.EXCEPTION_STACKTRACE.key,
+                ExceptionAttributes.EXCEPTION_STACKTRACE,
                 encodeToUTF8String(
                     serializer.toJson(crashException.lines, List::class.java),
                 ),
             )
-            crashAttributes.setAttribute(LogIncubatingAttributes.LOG_RECORD_UID.key, crashId)
+            crashAttributes.setAttribute(LogAttributes.LOG_RECORD_UID, crashId)
             crashAttributes.setAttribute(embCrashNumber, crashNumber.toString())
             crashAttributes.setAttribute(
                 EmbType.System.Crash.embAndroidCrashExceptionCause,

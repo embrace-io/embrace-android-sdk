@@ -26,19 +26,13 @@ import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.opentelemetry.kotlin.Clock
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaContext
 import io.embrace.opentelemetry.kotlin.attributes.setAttributes
 import io.embrace.opentelemetry.kotlin.context.Context
-import io.embrace.opentelemetry.kotlin.context.toOtelJavaContext
-import io.embrace.opentelemetry.kotlin.context.toOtelJavaContextKey
-import io.embrace.opentelemetry.kotlin.context.toOtelKotlinContext
 import io.embrace.opentelemetry.kotlin.semconv.ExceptionAttributes
 import io.embrace.opentelemetry.kotlin.tracing.data.StatusData
 import io.embrace.opentelemetry.kotlin.tracing.model.Span
 import io.embrace.opentelemetry.kotlin.tracing.model.SpanContext
 import io.embrace.opentelemetry.kotlin.tracing.model.SpanKind
-import io.opentelemetry.context.ImplicitContextKeyed
-import io.opentelemetry.context.Scope
 import java.util.Queue
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -227,7 +221,7 @@ private class EmbraceSpanImpl(
 
 //            io.embrace.opentelemetry.kotlin.semconv.ErrorAttributes
             exception.javaClass.canonicalName?.let { type ->
-                eventAttributes[ ExceptionAttributes.EXCEPTION_TYPE] = type
+                eventAttributes[ExceptionAttributes.EXCEPTION_TYPE] = type
             }
 
             exception.message?.let { message ->
@@ -314,35 +308,8 @@ private class EmbraceSpanImpl(
             EmbraceLinkData(linkedSpanContext, attributes ?: emptyMap())
         }
 
-    override fun makeCurrent(): Scope {
-        val impl = startedSpan.get() as? ImplicitContextKeyed
-        return if (impl != null) {
-            impl.makeCurrent()
-        } else {
-            super.makeCurrent()
-        }
-    }
-
     override fun asNewContext(): Context? = startedSpan.get()?.run {
-        return if (this is ImplicitContextKeyed) {
-            // If the underlying instance of Span implements ImplicitContextKeyed, assume it's the compat implementation
-            val span = this as ImplicitContextKeyed
-            return span.storeInContext(parentContext.toOtelJavaContext()).toOtelKotlinContext()
-        } else {
-            otelSpanStartArgs.openTelemetry.contextFactory.storeSpan(parentContext, this)
-        }
-    }
-
-    override fun storeInContext(context: OtelJavaContext): OtelJavaContext {
-        val impl = startedSpan.get() as? ImplicitContextKeyed
-        val spanKey = getOrCreateSpanKey(otelSpanStartArgs.openTelemetry)
-        val base = context.with(spanKey.toOtelJavaContextKey(), this)
-
-        return if (impl != null) {
-            impl.storeInContext(base)
-        } else {
-            base
-        }
+        return otelSpanStartArgs.openTelemetry.contextFactory.storeSpan(parentContext, this)
     }
 
     override fun snapshot(): io.embrace.android.embracesdk.internal.payload.Span? {

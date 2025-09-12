@@ -13,16 +13,13 @@ import io.embrace.opentelemetry.kotlin.tracing.model.Span
 import io.embrace.opentelemetry.kotlin.tracing.model.SpanContext
 import io.embrace.opentelemetry.kotlin.tracing.model.SpanEvent
 import io.embrace.opentelemetry.kotlin.tracing.model.SpanKind
-import io.opentelemetry.context.Context
-import io.opentelemetry.context.ImplicitContextKeyed
-import io.opentelemetry.context.Scope
 
 @OptIn(ExperimentalApi::class)
 class EmbSpan(
     private val impl: EmbraceSdkSpan,
     private val clock: Clock,
     private val openTelemetry: OpenTelemetry,
-) : Span, ImplicitContextKeyed {
+) : Span {
 
     override fun setStringAttribute(key: String, value: String) {
         impl.addAttribute(key, value)
@@ -118,14 +115,6 @@ class EmbSpan(
         get() = impl.links().map {
             EmbLink(it.retrieveSpanContext(), it.attributes.toMutableAttributeContainer())
         }
-
-    override fun storeInContext(context: Context): Context {
-        return impl.storeInContext(context)
-    }
-
-    override fun makeCurrent(): Scope {
-        return impl.makeCurrent()
-    }
 
     private fun List<Attribute>?.toMutableAttributeContainer(): MutableAttributeContainer {
         val raw = this ?: emptyList()

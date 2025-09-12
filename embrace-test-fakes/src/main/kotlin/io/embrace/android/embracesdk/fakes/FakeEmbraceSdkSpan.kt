@@ -9,7 +9,6 @@ import io.embrace.android.embracesdk.internal.otel.attrs.asPair
 import io.embrace.android.embracesdk.internal.otel.attrs.embHeartbeatTimeUnixNano
 import io.embrace.android.embracesdk.internal.otel.attrs.embProcessIdentifier
 import io.embrace.android.embracesdk.internal.otel.attrs.embState
-import io.embrace.android.embracesdk.internal.otel.config.USE_KOTLIN_SDK
 import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.embrace.android.embracesdk.internal.otel.schema.ErrorCodeAttribute
@@ -32,13 +31,10 @@ import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.OpenTelemetry
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaContext
 import io.embrace.opentelemetry.kotlin.context.Context
-import io.embrace.opentelemetry.kotlin.context.toOtelJavaContext
 import io.embrace.opentelemetry.kotlin.context.toOtelJavaContextKey
-import io.embrace.opentelemetry.kotlin.context.toOtelKotlinContext
 import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
 import io.embrace.opentelemetry.kotlin.semconv.SessionAttributes
 import io.embrace.opentelemetry.kotlin.tracing.data.StatusData
-import io.embrace.opentelemetry.kotlin.tracing.ext.toOtelKotlinSpanContext
 import io.embrace.opentelemetry.kotlin.tracing.model.Span
 import io.embrace.opentelemetry.kotlin.tracing.model.SpanContext
 import io.embrace.opentelemetry.kotlin.tracing.model.SpanKind
@@ -46,7 +42,6 @@ import java.util.concurrent.ConcurrentLinkedQueue
 
 @OptIn(ExperimentalApi::class)
 class FakeEmbraceSdkSpan(
-    private val useKotlinSdk: Boolean = USE_KOTLIN_SDK,
     private val openTelemetry: OpenTelemetry = fakeOpenTelemetry(),
     var name: String = "fake-span",
     var parentContext: Context = openTelemetry.contextFactory.root(),
@@ -59,7 +54,6 @@ class FakeEmbraceSdkSpan(
 ) : EmbraceSdkSpan {
 
     private var sdkSpan: Span? = null
-    private var javaSdkSpan: FakeOtelJavaSpan? = null
     var spanStartTimeMs: Long? = null
     var spanEndTimeMs: Long? = null
     override var status: StatusData = StatusData.Unset
@@ -72,11 +66,7 @@ class FakeEmbraceSdkSpan(
         get() = parentContext.getEmbraceSpan(openTelemetry)
 
     override val spanContext: SpanContext?
-        get() = if (useKotlinSdk) {
-            sdkSpan?.spanContext
-        } else {
-            javaSdkSpan?.spanContext?.toOtelKotlinSpanContext()
-        }
+        get() = sdkSpan?.spanContext
 
     override val traceId: String?
         get() = spanContext?.traceId
@@ -85,22 +75,14 @@ class FakeEmbraceSdkSpan(
         get() = spanContext?.spanId
 
     override val isRecording: Boolean
-        get() = if (useKotlinSdk) {
-            sdkSpan?.isRecording() ?: false
-        } else {
-            javaSdkSpan?.isRecording ?: false
-        }
+        get() = sdkSpan?.isRecording() ?: false
 
     override fun start(): Boolean = start(startTimeMs = null)
 
     override fun start(startTimeMs: Long?): Boolean {
         if (!started()) {
             val timestampMs = startTimeMs ?: fakeClock.now()
-            if (useKotlinSdk) {
-                sdkSpan = createFakeKotlinSdkSpan(timestampMs)
-            } else {
-                javaSdkSpan = FakeOtelJavaSpan(parentContext = parentContext)
-            }
+            sdkSpan = createFakeKotlinSdkSpan(timestampMs)
             spanStartTimeMs = timestampMs
         }
         return true
@@ -136,11 +118,7 @@ class FakeEmbraceSdkSpan(
             // Create and end a real span using the original tracer to ensure it gets exported
             otelSpanStartArgs?.startSpan(spanStartTimeMs ?: fakeClock.now())?.end(timestamp.millisToNanos())
 
-            if (useKotlinSdk) {
-                checkNotNull(sdkSpan).end(timestamp.millisToNanos())
-            } else {
-                checkNotNull(javaSdkSpan).recording = false
-            }
+            checkNotNull(sdkSpan).end(timestamp.millisToNanos())
 
             spanEndTimeMs = timestamp
         }
@@ -191,14 +169,8 @@ class FakeEmbraceSdkSpan(
         return true
     }
 
-    override fun asNewContext(): Context? = if (useKotlinSdk) {
-        sdkSpan?.let {
-            openTelemetry.contextFactory.storeSpan(parentContext, it)
-        }
-    } else {
-        javaSdkSpan?.let {
-            parentContext.toOtelJavaContext().with(this).with(it).toOtelKotlinContext()
-        }
+    override fun asNewContext(): Context? = sdkSpan?.let {
+        openTelemetry.contextFactory.storeSpan(parentContext, it)
     }
 
     override fun snapshot(): io.embrace.android.embracesdk.internal.payload.Span? {
@@ -256,11 +228,7 @@ class FakeEmbraceSdkSpan(
         return context.with(spanKey.toOtelJavaContextKey(), this)
     }
 
-    private fun started(): Boolean = if (useKotlinSdk) {
-        sdkSpan != null
-    } else {
-        javaSdkSpan != null
-    }
+    private fun started(): Boolean = sdkSpan != null
 
     companion object {
         fun notStarted(): FakeEmbraceSdkSpan =

@@ -45,5 +45,5 @@ sealed class TestMatrix(
      * The maximum version we currently run tests against. Newer versions may work, but are not
      * explicitly tested.
      */
-    object MaxVersion : TestMatrix("8.9.1", "8.13", "2.1.20", JdkEnv.JAVA_17)
+    object MaxVersion : TestMatrix("8.13.0", "9.0.0", "2.2.20", JdkEnv.JAVA_17)
 }

@@ -15,7 +15,8 @@ import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.embrace.android.embracesdk.internal.payload.JsException
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
-import io.opentelemetry.semconv.incubating.LogIncubatingAttributes
+import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
+import io.embrace.opentelemetry.kotlin.semconv.LogAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertSame
@@ -23,6 +24,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
+@OptIn(IncubatingApi::class)
 internal class CrashDataSourceImplTest {
 
     private lateinit var crashDataSource: CrashDataSourceImpl
@@ -111,7 +113,7 @@ internal class CrashDataSourceImplTest {
         assertEquals(1, logWriter.logEvents.size)
         val lastSentCrash = logWriter.logEvents.single()
         assertEquals(
-            logWriter.logEvents.single().schemaType.attributes()[LogIncubatingAttributes.LOG_RECORD_UID.key],
+            logWriter.logEvents.single().schemaType.attributes()[LogAttributes.LOG_RECORD_UID],
             sessionOrchestrator.crashId
         )
 
@@ -145,7 +147,7 @@ internal class CrashDataSourceImplTest {
         val lastSentCrashAttributes = logEvent.schemaType.attributes()
         assertEquals(1, anrService.crashCount)
         assertEquals(1, logWriter.logEvents.size)
-        assertEquals(lastSentCrashAttributes[LogIncubatingAttributes.LOG_RECORD_UID.key], sessionOrchestrator.crashId)
+        assertEquals(lastSentCrashAttributes[LogAttributes.LOG_RECORD_UID], sessionOrchestrator.crashId)
         assertEquals(
             "{\"n\":\"NullPointerException\",\"" +
                 "m\":\"Null pointer exception occurred\",\"" +

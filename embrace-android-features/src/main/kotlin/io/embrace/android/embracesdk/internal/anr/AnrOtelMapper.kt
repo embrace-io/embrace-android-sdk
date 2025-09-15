@@ -14,8 +14,8 @@ import io.embrace.android.embracesdk.internal.payload.SpanEvent
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.factory.TracingIdFactory
-import io.opentelemetry.semconv.ExceptionAttributes
-import io.opentelemetry.semconv.JvmAttributes
+import io.embrace.opentelemetry.kotlin.semconv.ExceptionAttributes
+import io.embrace.opentelemetry.kotlin.semconv.JvmAttributes
 
 /**
  * Maps captured ANRs to OTel constructs.
@@ -88,12 +88,12 @@ class AnrOtelMapper(
             attrs.add(Attribute("sample_code", it.toString()))
         }
         sample.threads?.singleOrNull()?.let { thread ->
-            attrs.add(Attribute(JvmAttributes.JVM_THREAD_STATE.key, thread.state.toString()))
+            attrs.add(Attribute(JvmAttributes.JVM_THREAD_STATE, thread.state.toString()))
             attrs.add(Attribute("thread_priority", thread.priority.toString()))
             attrs.add(Attribute("frame_count", thread.frameCount.toString()))
 
             thread.lines?.let { lines ->
-                attrs.add(Attribute(ExceptionAttributes.EXCEPTION_STACKTRACE.key, lines.joinToString("\n")))
+                attrs.add(Attribute(ExceptionAttributes.EXCEPTION_STACKTRACE, lines.joinToString("\n")))
             }
         }
         return SpanEvent(

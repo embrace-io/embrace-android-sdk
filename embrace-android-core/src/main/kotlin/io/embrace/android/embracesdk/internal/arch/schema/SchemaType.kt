@@ -9,11 +9,11 @@ import io.embrace.android.embracesdk.internal.otel.schema.SendMode
 import io.embrace.android.embracesdk.internal.payload.AppExitInfoData
 import io.embrace.android.embracesdk.internal.payload.NetworkCapturedCall
 import io.embrace.android.embracesdk.internal.utils.toNonNullMap
-import io.opentelemetry.semconv.ExceptionAttributes
-import io.opentelemetry.semconv.HttpAttributes
-import io.opentelemetry.semconv.UrlAttributes
-import io.opentelemetry.semconv.incubating.HttpIncubatingAttributes
-import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes
+import io.embrace.opentelemetry.kotlin.semconv.ExceptionAttributes
+import io.embrace.opentelemetry.kotlin.semconv.HttpAttributes
+import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
+import io.embrace.opentelemetry.kotlin.semconv.SessionAttributes
+import io.embrace.opentelemetry.kotlin.semconv.UrlAttributes
 
 /**
  * The collections of attribute schemas used by the associated telemetry types.
@@ -106,7 +106,7 @@ sealed class SchemaType(
         fixedObjectName = "web-view"
     ) {
         override val schemaAttributes: Map<String, String> = mapOf(
-            UrlAttributes.URL_FULL.key to url
+            UrlAttributes.URL_FULL to url
         ).toNonNullMap()
     }
 
@@ -180,26 +180,27 @@ sealed class SchemaType(
     class NetworkCapturedRequest(networkCapturedCall: NetworkCapturedCall) : SchemaType(
         telemetryType = EmbType.System.NetworkCapturedRequest
     ) {
+        @OptIn(IncubatingApi::class)
         override val schemaAttributes: Map<String, String> = mapOf(
             "duration" to networkCapturedCall.duration.toString(),
             "end-time" to networkCapturedCall.endTime.toString(),
-            HttpAttributes.HTTP_REQUEST_METHOD.key to networkCapturedCall.httpMethod,
-            UrlAttributes.URL_FULL.key to networkCapturedCall.matchedUrl,
+            HttpAttributes.HTTP_REQUEST_METHOD to networkCapturedCall.httpMethod,
+            UrlAttributes.URL_FULL to networkCapturedCall.matchedUrl,
             "network-id" to networkCapturedCall.networkId,
             "request-body" to networkCapturedCall.requestBody,
-            HttpIncubatingAttributes.HTTP_REQUEST_BODY_SIZE.key to networkCapturedCall.requestBodySize.toString(),
+            HttpAttributes.HTTP_REQUEST_BODY_SIZE to networkCapturedCall.requestBodySize.toString(),
             "request-query" to networkCapturedCall.requestQuery,
             "http.request.header" to networkCapturedCall.requestQueryHeaders.toString(),
             "request-size" to networkCapturedCall.requestSize.toString(),
             "response-body" to networkCapturedCall.responseBody,
-            HttpIncubatingAttributes.HTTP_RESPONSE_BODY_SIZE.key to networkCapturedCall.responseBodySize.toString(),
+            HttpAttributes.HTTP_RESPONSE_BODY_SIZE to networkCapturedCall.responseBodySize.toString(),
             "http.response.header" to networkCapturedCall.responseHeaders.toString(),
             "response-size" to networkCapturedCall.responseSize.toString(),
-            HttpAttributes.HTTP_RESPONSE_STATUS_CODE.key to networkCapturedCall.responseStatus.toString(),
-            SessionIncubatingAttributes.SESSION_ID.key to networkCapturedCall.sessionId,
+            HttpAttributes.HTTP_RESPONSE_STATUS_CODE to networkCapturedCall.responseStatus.toString(),
+            SessionAttributes.SESSION_ID to networkCapturedCall.sessionId,
             "start-time" to networkCapturedCall.startTime.toString(),
             "url" to networkCapturedCall.url,
-            ExceptionAttributes.EXCEPTION_MESSAGE.key to networkCapturedCall.errorMessage,
+            ExceptionAttributes.EXCEPTION_MESSAGE to networkCapturedCall.errorMessage,
             "encrypted-payload" to networkCapturedCall.encryptedPayload
         ).toNonNullMap()
     }
@@ -224,7 +225,7 @@ sealed class SchemaType(
         fixedObjectName = "webview-info"
     ) {
         override val schemaAttributes: Map<String, String> = mapOf(
-            UrlAttributes.URL_FULL.key to url,
+            UrlAttributes.URL_FULL to url,
             "emb.webview_info.web_vitals" to webVitals,
             "emb.webview_info.tag" to tag
         ).toNonNullMap()
@@ -268,12 +269,12 @@ sealed class SchemaType(
         fixedObjectName = "internal-error"
     ) {
         override val schemaAttributes: Map<String, String> = mapOf(
-            ExceptionAttributes.EXCEPTION_TYPE.key to throwable.javaClass.name,
-            ExceptionAttributes.EXCEPTION_STACKTRACE.key to throwable.stackTrace.joinToString(
+            ExceptionAttributes.EXCEPTION_TYPE to throwable.javaClass.name,
+            ExceptionAttributes.EXCEPTION_STACKTRACE to throwable.stackTrace.joinToString(
                 "\n",
                 transform = StackTraceElement::toString
             ),
-            ExceptionAttributes.EXCEPTION_MESSAGE.key to (throwable.message ?: "")
+            ExceptionAttributes.EXCEPTION_MESSAGE to (throwable.message ?: "")
         )
     }
 }

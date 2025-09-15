@@ -12,7 +12,7 @@ import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.payload.WebVital
 import io.embrace.android.embracesdk.internal.payload.WebVitalType
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
-import io.opentelemetry.semconv.UrlAttributes
+import io.embrace.opentelemetry.kotlin.semconv.UrlAttributes
 import org.junit.Assert
 import org.junit.Before
 import org.junit.Test
@@ -70,7 +70,7 @@ internal class EmbraceWebViewServiceTest {
             val webViewInfo = it.schemaType as SchemaType.WebViewInfo
             Assert.assertEquals(
                 "https://embrace.io/",
-                webViewInfo.attributes()[UrlAttributes.URL_FULL.key]
+                webViewInfo.attributes()[UrlAttributes.URL_FULL]
             )
             val webVitals = webViewInfo.attributes()["emb.webview_info.web_vitals"]?.let { it1 ->
                 serializer.fromJson(it1, List::class.java)
@@ -90,7 +90,7 @@ internal class EmbraceWebViewServiceTest {
             val webViewInfo = it.schemaType as SchemaType.WebViewInfo
             Assert.assertEquals(
                 "https://embrace.io/",
-                webViewInfo.attributes()[UrlAttributes.URL_FULL.key]
+                webViewInfo.attributes()[UrlAttributes.URL_FULL]
             )
             val webVitals = webViewInfo.attributes()["emb.webview_info.web_vitals"]?.let { it1 ->
                 serializer.fromJson(it1, List::class.java)
@@ -110,7 +110,7 @@ internal class EmbraceWebViewServiceTest {
         val webViewInfo = event.schemaType as SchemaType.WebViewInfo
         Assert.assertEquals(
             "https://embrace.io/",
-            webViewInfo.attributes()[UrlAttributes.URL_FULL.key]
+            webViewInfo.attributes()[UrlAttributes.URL_FULL]
         )
         val webVitals: List<WebVital>? = webViewInfo.attributes()["emb.webview_info.web_vitals"]?.let { wv ->
             val type = TypeUtils.typedList(WebVital::class)
@@ -138,7 +138,7 @@ internal class EmbraceWebViewServiceTest {
             val webViewInfo = it.schemaType as SchemaType.WebViewInfo
             Assert.assertEquals(
                 "https://embrace.io/",
-                webViewInfo.attributes()[UrlAttributes.URL_FULL.key]
+                webViewInfo.attributes()[UrlAttributes.URL_FULL]
             )
             val webVitals = webViewInfo.attributes()["emb.webview_info.web_vitals"]?.let { it1 ->
                 serializer.fromJson(it1, List::class.java)
@@ -157,7 +157,7 @@ internal class EmbraceWebViewServiceTest {
         val webViewInfo = event.schemaType as SchemaType.WebViewInfo
         Assert.assertEquals(
             "https://embrace.io/",
-            webViewInfo.attributes()[UrlAttributes.URL_FULL.key]
+            webViewInfo.attributes()[UrlAttributes.URL_FULL]
         )
         val webVitals: List<WebVital>? = webViewInfo.attributes()["emb.webview_info.web_vitals"]?.let { wv ->
             val type = TypeUtils.typedList(WebVital::class)

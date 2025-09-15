@@ -17,12 +17,14 @@ import io.embrace.android.embracesdk.internal.otel.attrs.embProcessIdentifier
 import io.embrace.android.embracesdk.internal.otel.logs.LogRequest
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.payload.LogPayload
-import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes
+import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
+import io.embrace.opentelemetry.kotlin.semconv.SessionAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
+@OptIn(IncubatingApi::class)
 internal class LogEnvelopeSourceImplTest {
 
     private val fakeBatchedPayload = LogPayload(logs = listOf(testLog))
@@ -97,7 +99,7 @@ internal class LogEnvelopeSourceImplTest {
     fun `check native crash envelope`() {
         val crashPayload = LogPayload(logs = listOf(nativeCrashLog))
         val crashLogAttributes = checkNotNull(nativeCrashLog.attributes)
-        val expectedSessionId = crashLogAttributes.findAttributeValue(SessionIncubatingAttributes.SESSION_ID.key)
+        val expectedSessionId = crashLogAttributes.findAttributeValue(SessionAttributes.SESSION_ID)
         val expectedProcessIdentifier = crashLogAttributes.findAttributeValue(embProcessIdentifier.name)
         val cachedCrashEnvelopeMetadata = createNativeCrashEnvelopeMetadata(
             sessionId = expectedSessionId,

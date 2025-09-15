@@ -23,7 +23,8 @@ import io.embrace.android.embracesdk.internal.utils.getSafeStackTrace
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.logging.model.SeverityNumber
-import io.opentelemetry.semconv.incubating.LogIncubatingAttributes
+import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
+import io.embrace.opentelemetry.kotlin.semconv.LogAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -32,7 +33,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
-@OptIn(ExperimentalApi::class)
+@OptIn(ExperimentalApi::class, IncubatingApi::class)
 @RunWith(AndroidJUnit4::class)
 internal class JvmCrashFeatureTest {
 
@@ -134,7 +135,7 @@ internal class JvmCrashFeatureTest {
                     "emb.android.react_native_crash.js_exception" to expectedJsException,
                     "emb.android.crash_number" to 1,
                     "emb.android.crash.exception_cause" to expectedExceptionCause,
-                    LogIncubatingAttributes.LOG_RECORD_UID.key to crashId
+                    LogAttributes.LOG_RECORD_UID to crashId
                 ))
                 assertNotNull(log.attributes?.findAttributeValue("emb.android.threads"))
             }
@@ -172,7 +173,7 @@ internal class JvmCrashFeatureTest {
             embState.name to state,
             "emb.android.crash_number" to 1,
             "emb.android.crash.exception_cause" to expectedExceptionCause,
-            LogIncubatingAttributes.LOG_RECORD_UID.key to crashId
+            LogAttributes.LOG_RECORD_UID to crashId
         ))
         assertNotNull(attributes?.findAttributeValue("emb.android.threads"))
     }

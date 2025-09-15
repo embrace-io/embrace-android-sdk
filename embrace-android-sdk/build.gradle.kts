@@ -86,12 +86,11 @@ dependencies {
 
     implementation(libs.opentelemetry.api)
     implementation(libs.opentelemetry.context)
-    implementation(libs.opentelemetry.semconv)
-    implementation(libs.opentelemetry.semconv.incubating)
     implementation(libs.profileinstaller)
 
     implementation(libs.opentelemetry.kotlin.api)
     implementation(libs.opentelemetry.kotlin.api.ext)
+    implementation(libs.opentelemetry.kotlin.semconv)
     implementation(libs.opentelemetry.kotlin.noop)
 
     testImplementation(project(":embrace-test-fakes"))

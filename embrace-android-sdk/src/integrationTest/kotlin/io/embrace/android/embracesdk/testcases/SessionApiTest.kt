@@ -9,13 +9,15 @@ import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.otel.attrs.embFreeDiskBytes
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
-import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes
+import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
+import io.embrace.opentelemetry.kotlin.semconv.SessionAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
+@OptIn(IncubatingApi::class)
 @RunWith(AndroidJUnit4::class)
 internal class SessionApiTest {
 
@@ -59,7 +61,7 @@ internal class SessionApiTest {
                 val spans = checkNotNull(message.data.spans)
                 val sessionSpan = spans.single { it.name == "emb-session" }
                 assertEquals(startTime, sessionSpan.startTimeNanos?.nanosToMillis())
-                assertNotNull(sessionSpan.attributes?.findAttributeValue(SessionIncubatingAttributes.SESSION_ID.key))
+                assertNotNull(sessionSpan.attributes?.findAttributeValue(SessionAttributes.SESSION_ID))
 
                 val attrs = checkNotNull(sessionSpan.attributes)
                 val attributeKeys = attrs.map { it.key }
@@ -96,7 +98,7 @@ internal class SessionApiTest {
     private companion object {
         // Attributes we want to know exist, but whose value we don't need to validate
         val validateExistenceOnly = setOf(
-            SessionIncubatingAttributes.SESSION_ID.key,
+            SessionAttributes.SESSION_ID,
             "emb.kotlin_on_classpath",
             "emb.okhttp3",
             "emb.process_identifier",

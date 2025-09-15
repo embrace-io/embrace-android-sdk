@@ -12,7 +12,8 @@ import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
 import io.embrace.android.embracesdk.internal.prefs.PreferencesService
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
-import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes
+import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
+import io.embrace.opentelemetry.kotlin.semconv.SessionAttributes
 
 internal class NativeCrashDataSourceImpl(
     private val nativeCrashProcessor: NativeCrashProcessor,
@@ -33,6 +34,7 @@ internal class NativeCrashDataSourceImpl(
 
     override fun getNativeCrashes(): List<NativeCrashData> = nativeCrashProcessor.getNativeCrashes()
 
+    @OptIn(IncubatingApi::class)
     override fun sendNativeCrash(
         nativeCrash: NativeCrashData,
         sessionProperties: Map<String, String>,
@@ -43,7 +45,7 @@ internal class NativeCrashDataSourceImpl(
             sessionPropertiesProvider = { sessionProperties }
         )
         crashAttributes.setAttribute(
-            key = SessionIncubatingAttributes.SESSION_ID.key,
+            key = SessionAttributes.SESSION_ID,
             value = nativeCrash.sessionId,
             keepBlankishValues = false,
         )

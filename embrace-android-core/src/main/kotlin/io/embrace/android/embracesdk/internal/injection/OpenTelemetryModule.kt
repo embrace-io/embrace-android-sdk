@@ -77,6 +77,7 @@ interface OpenTelemetryModule {
     fun applyConfiguration(
         sensitiveKeysBehavior: SensitiveKeysBehavior,
         bypassValidation: Boolean,
+        useKotlinSdk: Boolean
     )
 
     fun deviceStartTimeMs(): Long = openTelemetryClock.run { now() - SystemClock.elapsedRealtimeNanos() }.nanosToMillis()

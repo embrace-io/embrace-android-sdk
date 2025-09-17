@@ -57,7 +57,7 @@ class FakeOpenTelemetryModule(
     override val internalTracer: InternalTracer
         get() = TODO()
 
-    override fun applyConfiguration(sensitiveKeysBehavior: SensitiveKeysBehavior, bypassValidation: Boolean) {
+    override fun applyConfiguration(sensitiveKeysBehavior: SensitiveKeysBehavior, bypassValidation: Boolean, useKotlinSdk: Boolean) {
         // no-op
     }
 }

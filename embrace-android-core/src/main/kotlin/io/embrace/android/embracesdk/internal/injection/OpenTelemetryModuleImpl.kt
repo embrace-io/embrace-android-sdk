@@ -80,7 +80,7 @@ internal class OpenTelemetryModuleImpl(
 
     private var sensitiveKeysBehavior: SensitiveKeysBehavior? = null
 
-    override fun applyConfiguration(sensitiveKeysBehavior: SensitiveKeysBehavior, bypassValidation: Boolean) {
+    override fun applyConfiguration(sensitiveKeysBehavior: SensitiveKeysBehavior, bypassValidation: Boolean, useKotlinSdk: Boolean) {
         this.sensitiveKeysBehavior = sensitiveKeysBehavior
         this.bypassLimitsValidation = bypassValidation
     }

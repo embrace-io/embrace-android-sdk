@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.injection
 import io.embrace.android.embracesdk.core.BuildConfig
 import io.embrace.android.embracesdk.internal.config.behavior.REDACTED_LABEL
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehavior
+import io.embrace.android.embracesdk.internal.otel.config.DEFAULT_USE_KOTLIN_SDK
 import io.embrace.android.embracesdk.internal.otel.config.OtelSdkConfig
 import io.embrace.android.embracesdk.internal.otel.impl.EmbClock
 import io.embrace.android.embracesdk.internal.otel.logs.LogSink
@@ -31,12 +32,7 @@ internal class OpenTelemetryModuleImpl(
     )
 ) : OpenTelemetryModule {
 
-    init {
-        if (!initModule.useKotlinSdk) {
-            // Enforce the use of default OTel Java SDK ThreadLocal ContextStorage to bypass SPI looking that violates Android strict mode
-            System.setProperty("io.opentelemetry.context.contextStorageProvider", "default")
-        }
-    }
+    private var useKotlinSdk = DEFAULT_USE_KOTLIN_SDK
 
     override val spanRepository: SpanRepository by lazy {
         SpanRepository()
@@ -65,7 +61,7 @@ internal class OpenTelemetryModuleImpl(
                     otelClock = openTelemetryClock,
                     configuration = otelSdkConfig,
                     spanService = spanService,
-                    useKotlinSdk = initModule.useKotlinSdk,
+                    useKotlinSdk = useKotlinSdk,
                 )
             } catch (exc: NoClassDefFoundError) {
                 throw LinkageError(
@@ -83,6 +79,15 @@ internal class OpenTelemetryModuleImpl(
     override fun applyConfiguration(sensitiveKeysBehavior: SensitiveKeysBehavior, bypassValidation: Boolean, useKotlinSdk: Boolean) {
         this.sensitiveKeysBehavior = sensitiveKeysBehavior
         this.bypassLimitsValidation = bypassValidation
+        setupKotlinSdk(useKotlinSdk)
+    }
+
+    private fun setupKotlinSdk(useKotlinSdk: Boolean) {
+        this.useKotlinSdk = useKotlinSdk
+        if (!useKotlinSdk) {
+            // Enforce the use of default OTel Java SDK ThreadLocal ContextStorage to bypass SPI looking that violates Android strict mode
+            System.setProperty("io.opentelemetry.context.contextStorageProvider", "default")
+        }
     }
 
     private var internalSpanStopCallback: ((spanId: String) -> Unit)? = null

@@ -17,6 +17,7 @@ import io.embrace.android.embracesdk.internal.config.behavior.NetworkBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.NetworkBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.NetworkSpanForwardingBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.NetworkSpanForwardingBehaviorImpl
+import io.embrace.android.embracesdk.internal.config.behavior.OtelBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.SdkModeBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.SdkModeBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehaviorImpl
@@ -123,3 +124,8 @@ fun createWebViewVitalsBehavior(
  * A [SensitiveKeysBehaviorImpl] that returns default values.
  */
 internal fun createSensitiveKeysBehavior() = SensitiveKeysBehaviorImpl(InstrumentedConfigImpl)
+
+/**
+ * An [OtelBehaviorImpl] that returns default values.
+ */
+internal fun createOtelBehavior(remoteCfg: RemoteConfig? = null) = OtelBehaviorImpl(remoteCfg)

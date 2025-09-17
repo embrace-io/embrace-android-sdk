@@ -35,7 +35,7 @@ import io.embrace.android.embracesdk.internal.injection.createEssentialServiceMo
 import io.embrace.android.embracesdk.internal.injection.createNativeCoreModule
 import io.embrace.android.embracesdk.internal.injection.createWorkerThreadModule
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
-import io.embrace.android.embracesdk.internal.otel.config.USE_KOTLIN_SDK
+import io.embrace.android.embracesdk.internal.otel.config.DEFAULT_USE_KOTLIN_SDK
 import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
 import io.embrace.android.embracesdk.internal.prefs.PreferencesService
@@ -50,7 +50,7 @@ import io.embrace.opentelemetry.kotlin.ExperimentalApi
  * Test harness for which an instance is generated each test run and provided to the test by the Rule
  */
 internal class EmbraceSetupInterface(
-    private val useKotlinSdk: Boolean = USE_KOTLIN_SDK,
+    private val useKotlinSdk: Boolean = DEFAULT_USE_KOTLIN_SDK,
     workerToFake: Worker.Background? = null,
     anrMonitoringThread: Thread? = null,
     fakeStorageLayer: Boolean = false,

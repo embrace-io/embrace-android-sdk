@@ -31,11 +31,11 @@ import io.embrace.android.embracesdk.internal.injection.SessionOrchestrationModu
 import io.embrace.android.embracesdk.internal.injection.StorageModuleSupplier
 import io.embrace.android.embracesdk.internal.injection.SystemServiceModuleSupplier
 import io.embrace.android.embracesdk.internal.injection.WorkerThreadModuleSupplier
-import io.embrace.android.embracesdk.internal.otel.config.USE_KOTLIN_SDK
+import io.embrace.android.embracesdk.internal.otel.config.DEFAULT_USE_KOTLIN_SDK
 
 @Suppress("LongParameterList")
 internal fun fakeModuleInitBootstrapper(
-    useKotlinSdk: Boolean = USE_KOTLIN_SDK,
+    useKotlinSdk: Boolean = DEFAULT_USE_KOTLIN_SDK,
     fakeEmbLogger: FakeEmbLogger = FakeEmbLogger(),
     fakeClock: FakeClock = FakeClock(),
     fakeInitModule: FakeInitModule =

@@ -11,11 +11,11 @@ import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModule
 import io.embrace.android.embracesdk.internal.injection.createInitModule
 import io.embrace.android.embracesdk.internal.injection.createOpenTelemetryModule
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
-import io.embrace.android.embracesdk.internal.otel.config.USE_KOTLIN_SDK
+import io.embrace.android.embracesdk.internal.otel.config.DEFAULT_USE_KOTLIN_SDK
 import java.util.UUID
 
 class FakeInitModule(
-    override val useKotlinSdk: Boolean = USE_KOTLIN_SDK,
+    override val useKotlinSdk: Boolean = DEFAULT_USE_KOTLIN_SDK,
     clock: Clock = FakeClock(),
     logger: EmbLogger = FakeEmbLogger(),
     systemInfo: SystemInfo = SystemInfo(

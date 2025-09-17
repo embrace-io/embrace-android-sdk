@@ -3,8 +3,8 @@ package io.embrace.android.embracesdk.fakes
 import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehavior
 import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModule
+import io.embrace.android.embracesdk.internal.otel.config.DEFAULT_USE_KOTLIN_SDK
 import io.embrace.android.embracesdk.internal.otel.config.OtelSdkConfig
-import io.embrace.android.embracesdk.internal.otel.config.USE_KOTLIN_SDK
 import io.embrace.android.embracesdk.internal.otel.logs.LogSink
 import io.embrace.android.embracesdk.internal.otel.logs.LogSinkImpl
 import io.embrace.android.embracesdk.internal.otel.sdk.OtelSdkWrapper
@@ -24,7 +24,7 @@ class FakeOpenTelemetryModule(
     override val spanSink: SpanSink = SpanSinkImpl(),
     override val logSink: LogSink = LogSinkImpl(),
     override val spanRepository: SpanRepository = SpanRepository(),
-    useKotlinSdk: Boolean = USE_KOTLIN_SDK,
+    useKotlinSdk: Boolean = DEFAULT_USE_KOTLIN_SDK,
 ) : OpenTelemetryModule {
     private val sdkName = "sdk"
     private val sdkVersion = "1.0"

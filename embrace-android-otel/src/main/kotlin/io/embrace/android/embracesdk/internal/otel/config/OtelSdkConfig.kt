@@ -24,7 +24,7 @@ import java.util.concurrent.ConcurrentHashMap
 /**
  * Globally referenceable flag that determines which OTel SDK implementation is in use for the production SDK at runtime.
  */
-const val USE_KOTLIN_SDK: Boolean = false
+const val DEFAULT_USE_KOTLIN_SDK: Boolean = false
 
 @OptIn(ExperimentalApi::class)
 class OtelSdkConfig(
@@ -35,7 +35,7 @@ class OtelSdkConfig(
     private val systemInfo: SystemInfo,
     private val sessionIdProvider: () -> String? = { null },
     private val processIdentifierProvider: () -> String = IdGenerator.Companion::generateLaunchInstanceId,
-    val useKotlinSdk: Boolean = USE_KOTLIN_SDK,
+    val useKotlinSdk: Boolean = DEFAULT_USE_KOTLIN_SDK,
 ) {
 
     private val customAttributes: MutableMap<String, String> = ConcurrentHashMap()

@@ -8,7 +8,7 @@ import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.network.http.HttpUrlConnectionTracker.registerFactory
-import io.embrace.android.embracesdk.internal.otel.config.USE_KOTLIN_SDK
+import io.embrace.android.embracesdk.internal.otel.config.DEFAULT_USE_KOTLIN_SDK
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
@@ -29,7 +29,7 @@ internal class ModuleInitBootstrapper(
         createInitModule(
             clock = clock,
             logger = logger,
-            useKotlinSdk = USE_KOTLIN_SDK
+            useKotlinSdk = DEFAULT_USE_KOTLIN_SDK
         )
     },
     val openTelemetryModule: OpenTelemetryModule = EmbTrace.trace("otel-module") {

@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.otel
 
-import io.embrace.android.embracesdk.internal.otel.config.USE_KOTLIN_SDK
+import io.embrace.android.embracesdk.internal.otel.config.DEFAULT_USE_KOTLIN_SDK
 import io.embrace.android.embracesdk.internal.otel.spans.createContext
 import io.embrace.android.embracesdk.internal.otel.spans.getEmbraceSpan
 import io.embrace.opentelemetry.kotlin.Clock
@@ -15,7 +15,7 @@ import io.embrace.opentelemetry.kotlin.init.TracerProviderConfigDsl
 
 @OptIn(ExperimentalApi::class)
 internal fun createSdkOtelInstance(
-    useKotlinSdk: Boolean = USE_KOTLIN_SDK,
+    useKotlinSdk: Boolean = DEFAULT_USE_KOTLIN_SDK,
     tracerProvider: TracerProviderConfigDsl.() -> Unit = {},
     loggerProvider: LoggerProviderConfigDsl.() -> Unit = {},
     clock: Clock,
@@ -37,7 +37,7 @@ internal fun createSdkOtelInstance(
 
 @OptIn(ExperimentalApi::class)
 internal fun OpenTelemetry.getDefaultContext(): Context? {
-    return if (USE_KOTLIN_SDK) {
+    return if (DEFAULT_USE_KOTLIN_SDK) {
         contextFactory.root().getEmbraceSpan(this)?.createContext(this)
     } else {
         contextFactory.current().getEmbraceSpan(this)?.createContext(this)

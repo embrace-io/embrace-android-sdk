@@ -38,9 +38,4 @@ interface InitModule {
     val instrumentedConfig: InstrumentedConfig
 
     val processIdentifierProvider: () -> String
-
-    /**
-     * Use the Kotlin OTel SDK implementation
-     */
-    val useKotlinSdk: Boolean
 }

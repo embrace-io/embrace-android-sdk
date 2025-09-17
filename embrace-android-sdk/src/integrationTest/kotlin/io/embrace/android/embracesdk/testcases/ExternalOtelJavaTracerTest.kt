@@ -42,9 +42,7 @@ internal class ExternalOtelJavaTracerTest {
 
     @Rule
     @JvmField
-    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule {
-        EmbraceSetupInterface(useKotlinSdk = false)
-    }
+    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule()
 
     private lateinit var spanExporter: FakeOtelJavaSpanExporter
     private lateinit var embOpenTelemetry: OtelJavaOpenTelemetry

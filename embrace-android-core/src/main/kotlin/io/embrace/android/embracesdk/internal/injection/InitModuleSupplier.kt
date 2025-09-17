@@ -10,5 +10,4 @@ fun createInitModule(
     clock: Clock = NormalizedIntervalClock(),
     logger: EmbLogger = EmbLoggerImpl(),
     systemInfo: SystemInfo = SystemInfo(),
-    useKotlinSdk: Boolean
-): InitModule = InitModuleImpl(clock, logger, systemInfo, useKotlinSdk)
+): InitModule = InitModuleImpl(clock, logger, systemInfo)

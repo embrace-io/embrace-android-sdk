@@ -41,9 +41,7 @@ internal class ExternalTracerTest {
 
     @Rule
     @JvmField
-    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule {
-        EmbraceSetupInterface(useKotlinSdk = true)
-    }
+    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule()
 
     private lateinit var spanExporter: FakeSpanExporter
     private lateinit var embOpenTelemetry: OpenTelemetry

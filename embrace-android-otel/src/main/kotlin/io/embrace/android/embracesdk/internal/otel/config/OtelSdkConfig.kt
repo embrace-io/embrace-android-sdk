@@ -34,8 +34,7 @@ class OtelSdkConfig(
     val sdkVersion: String,
     private val systemInfo: SystemInfo,
     private val sessionIdProvider: () -> String? = { null },
-    private val processIdentifierProvider: () -> String = IdGenerator.Companion::generateLaunchInstanceId,
-    val useKotlinSdk: Boolean = DEFAULT_USE_KOTLIN_SDK,
+    private val processIdentifierProvider: () -> String = IdGenerator.Companion::generateLaunchInstanceId
 ) {
 
     private val customAttributes: MutableMap<String, String> = ConcurrentHashMap()

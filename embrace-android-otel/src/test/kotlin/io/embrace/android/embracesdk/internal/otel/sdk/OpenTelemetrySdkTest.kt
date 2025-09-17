@@ -91,14 +91,13 @@ internal class OpenTelemetrySdkTest {
         assertEquals("default", System.getProperty("io.opentelemetry.context.contextStorageProvider"))
     }
 
-    private fun createOtelSdkConfig(useKotlinSdk: Boolean): OtelSdkConfig {
+    private fun createOtelSdkConfig(): OtelSdkConfig {
         val configuration = OtelSdkConfig(
             spanSink = spanSink,
             logSink = logSink,
             sdkName = "sdk",
             sdkVersion = "1.0",
             systemInfo = systemInfo,
-            useKotlinSdk = useKotlinSdk,
         )
         spanExporter = FakeSpanExporter()
         logExporter = FakeLogRecordExporter()
@@ -109,11 +108,12 @@ internal class OpenTelemetrySdkTest {
     }
 
     private fun createSdkWrapper(useKotlinSdk: Boolean): OtelSdkWrapper {
-        configuration = createOtelSdkConfig(useKotlinSdk)
+        configuration = createOtelSdkConfig()
         return OtelSdkWrapper(
             otelClock = FakeOtelKotlinClock(FakeClock()),
             configuration = configuration,
             spanService = FakeSpanService(),
+            useKotlinSdk = useKotlinSdk,
         )
     }
 }

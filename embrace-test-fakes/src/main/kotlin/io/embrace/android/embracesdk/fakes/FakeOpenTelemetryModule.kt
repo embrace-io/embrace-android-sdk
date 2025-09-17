@@ -37,7 +37,6 @@ class FakeOpenTelemetryModule(
             sdkName = sdkName,
             sdkVersion = sdkVersion,
             systemInfo = systemInfo,
-            useKotlinSdk = useKotlinSdk,
         )
 
     override val openTelemetryClock: Clock = FakeOtelKotlinClock(FakeClock())
@@ -49,6 +48,7 @@ class FakeOpenTelemetryModule(
             otelClock = openTelemetryClock,
             configuration = otelSdkConfig,
             spanService = spanService,
+            useKotlinSdk = useKotlinSdk,
         )
 
     override val embraceTracer: EmbraceTracer

@@ -55,7 +55,6 @@ internal class OpenTelemetryModuleImpl(
             systemInfo = initModule.systemInfo,
             sessionIdProvider = { currentSessionSpan.getSessionId() },
             processIdentifierProvider = initModule.processIdentifierProvider,
-            useKotlinSdk = initModule.useKotlinSdk,
         )
     }
 
@@ -66,6 +65,7 @@ internal class OpenTelemetryModuleImpl(
                     otelClock = openTelemetryClock,
                     configuration = otelSdkConfig,
                     spanService = spanService,
+                    useKotlinSdk = initModule.useKotlinSdk,
                 )
             } catch (exc: NoClassDefFoundError) {
                 throw LinkageError(

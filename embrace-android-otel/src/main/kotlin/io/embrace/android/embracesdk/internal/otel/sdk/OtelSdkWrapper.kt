@@ -10,7 +10,6 @@ import io.embrace.android.embracesdk.internal.otel.createSdkOtelInstance
 import io.embrace.android.embracesdk.internal.otel.impl.EmbOpenTelemetry
 import io.embrace.android.embracesdk.internal.otel.impl.EmbTracerProvider
 import io.embrace.android.embracesdk.internal.otel.logs.DefaultLogRecordProcessor
-import io.embrace.android.embracesdk.internal.otel.spans.DefaultSpanProcessor
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.opentelemetry.kotlin.Clock
@@ -68,12 +67,6 @@ class OtelSdkWrapper(
                     attributeCountLimit = limits.getMaxTotalAttributeCount()
                     linkCountLimit = limits.getMaxTotalLinkCount()
                 }
-                addSpanProcessor(
-                    DefaultSpanProcessor(
-                        configuration.spanExporter,
-                        configuration.processIdentifier
-                    )
-                )
                 addSpanProcessor(configuration.spanProcessor)
             },
             loggerProvider = {

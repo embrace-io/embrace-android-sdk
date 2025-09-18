@@ -74,7 +74,7 @@ class OtelSdkConfig(
         exportEnabled = false
     }
 
-    val spanExporter: SpanExporter by lazy {
+    private val spanExporter: SpanExporter by lazy {
         DefaultSpanExporter(
             spanSink = spanSink,
             externalExporters = externalSpanExporters.toList(),
@@ -84,7 +84,8 @@ class OtelSdkConfig(
     val spanProcessor: SpanProcessor by lazy {
         EmbraceSpanProcessor(
             sessionIdProvider,
-            processIdentifier
+            processIdentifier,
+            spanExporter
         )
     }
 

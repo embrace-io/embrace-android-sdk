@@ -32,6 +32,9 @@ dependencies {
     implementation(project(":embrace-android-otel"))
     compileOnly(project(":embrace-android-api"))
 
+    compileOnly(libs.opentelemetry.api)
+    compileOnly(libs.opentelemetry.semconv)
+    compileOnly(libs.opentelemetry.semconv.incubating)
     compileOnly(platform(libs.opentelemetry.bom))
     compileOnly(libs.opentelemetry.api)
     implementation(libs.androidx.annotation)

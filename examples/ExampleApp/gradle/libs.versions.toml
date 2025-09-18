@@ -12,7 +12,7 @@ embrace = "7.9.1"
 navigationCompose = "2.9.4"
 okhttp = "5.1.0"
 otel = "1.54.0"
-firebase = "25.0.0"
+firebase = "25.0.1"
 uiautomator = "2.3.0"
 benchmarkMacroJunit4 = "1.4.1"
 

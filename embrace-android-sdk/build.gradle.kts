@@ -83,9 +83,6 @@ dependencies {
     implementation(libs.moshi)
     ksp(libs.moshi.kotlin.codegen)
 
-    implementation(libs.opentelemetry.api)
-    implementation(libs.opentelemetry.semconv)
-    implementation(libs.opentelemetry.semconv.incubating)
     implementation(libs.profileinstaller)
 
     implementation(libs.opentelemetry.kotlin.api)

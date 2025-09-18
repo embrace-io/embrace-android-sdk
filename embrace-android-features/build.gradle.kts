@@ -17,19 +17,12 @@ dependencies {
     compileOnly(project(":embrace-android-payload"))
     compileOnly(project(":embrace-internal-api"))
     compileOnly(project(":embrace-android-otel"))
-    compileOnly(platform(libs.opentelemetry.bom))
-    compileOnly(libs.opentelemetry.api)
-    compileOnly(libs.opentelemetry.context)
 
-    compileOnly(libs.opentelemetry.api)
-    compileOnly(libs.opentelemetry.semconv)
-    compileOnly(libs.opentelemetry.semconv.incubating)
     implementation(libs.lifecycle.process)
 
     implementation(libs.opentelemetry.kotlin.api)
     implementation(libs.opentelemetry.kotlin.api.ext)
     implementation(libs.opentelemetry.kotlin.semconv)
-    implementation(libs.opentelemetry.java.aliases)
 
     testImplementation(project(":embrace-android-api"))
     testImplementation(project(":embrace-android-core"))

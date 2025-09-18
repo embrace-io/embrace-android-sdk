@@ -31,9 +31,7 @@ internal class ApkDisassembler {
 
     private fun decodeApk(apkFile: File): File {
         val outDir = Files.createTempDirectory("decoded_apk").toFile()
-        val config = Config().apply {
-            isForceDelete = true
-        }
+        val config = Config()
         ApkDecoder(ExtFile(apkFile), config).decode(outDir)
         return outDir
     }

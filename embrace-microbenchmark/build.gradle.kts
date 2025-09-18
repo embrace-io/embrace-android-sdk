@@ -13,7 +13,6 @@ android {
     defaultConfig {
         minSdk = 26
         testInstrumentationRunner = "androidx.benchmark.junit4.AndroidBenchmarkRunner"
-        testInstrumentationRunnerArguments["androidx.benchmark.dryRunMode.enable"] = "true"
     }
 
     testBuildType = "release"

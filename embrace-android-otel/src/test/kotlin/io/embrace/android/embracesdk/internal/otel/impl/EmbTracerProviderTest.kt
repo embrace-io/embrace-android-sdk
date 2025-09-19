@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeOtelKotlinClock
 import io.embrace.android.embracesdk.fakes.FakeSpanService
 import io.embrace.android.embracesdk.fakes.FakeTracerProvider
+import io.embrace.android.embracesdk.fakes.TestConstants.TESTS_DEFAULT_USE_KOTLIN_SDK
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.createNoopOpenTelemetry
 import org.junit.Assert.assertNotSame
@@ -29,7 +30,7 @@ internal class EmbTracerProviderTest {
             impl = otel,
             spanService = spanService,
             clock = openTelemetryClock,
-            useKotlinSdk = true
+            useKotlinSdk = TESTS_DEFAULT_USE_KOTLIN_SDK
         )
     }
 

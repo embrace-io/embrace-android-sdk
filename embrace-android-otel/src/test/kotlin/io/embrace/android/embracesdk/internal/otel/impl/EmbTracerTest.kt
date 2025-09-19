@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeOtelKotlinClock
 import io.embrace.android.embracesdk.fakes.FakeSpanService
 import io.embrace.android.embracesdk.fakes.FakeTracer
+import io.embrace.android.embracesdk.fakes.TestConstants.TESTS_DEFAULT_USE_KOTLIN_SDK
 import io.embrace.android.embracesdk.fakes.fakeOpenTelemetry
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
@@ -30,7 +31,7 @@ internal class EmbTracerTest {
             spanService = spanService,
             clock = openTelemetryClock,
             openTelemetry = fakeOpenTelemetry(),
-            useKotlinSdk = true
+            useKotlinSdk = TESTS_DEFAULT_USE_KOTLIN_SDK
         )
     }
 

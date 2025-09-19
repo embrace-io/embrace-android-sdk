@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeEmbraceSpanFactory
 import io.embrace.android.embracesdk.fakes.FakeOtelKotlinClock
 import io.embrace.android.embracesdk.fakes.FakeSpanService
+import io.embrace.android.embracesdk.fakes.TestConstants.TESTS_DEFAULT_USE_KOTLIN_SDK
 import io.embrace.android.embracesdk.fakes.fakeOpenTelemetry
 import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
@@ -53,7 +54,7 @@ internal class EmbraceSpanServiceTest {
             otelClock = fakeClock,
             configuration = otelSdkConfig,
             spanService = FakeSpanService(),
-            useKotlinSdk = true
+            useKotlinSdk = TESTS_DEFAULT_USE_KOTLIN_SDK
         )
         tracer = otelSdkWrapper.sdkTracer
         spanService = createEmbraceSpanService()

@@ -17,7 +17,8 @@ class AndroidNdkTest {
     @JvmField
     val rule: PluginIntegrationTestRule = PluginIntegrationTestRule()
 
-    private val defaultExpectedVariants = listOf("debug", "release")
+    private val defaultExpectedVariants = listOf("release")
+    private val variantsSentInBuildTelemetry = listOf("debug", "release")
     private val defaultExpectedLibs = listOf("libemb-donuts.so", "libemb-crisps.so")
     private val defaultExpectedArchs = listOf("x86_64", "x86", "armeabi-v7a", "arm64-v8a")
 
@@ -35,7 +36,7 @@ class AndroidNdkTest {
                 )
             },
             assertions = {
-                verifyBuildTelemetryRequestSent(defaultExpectedVariants)
+                verifyBuildTelemetryRequestSent(variantsSentInBuildTelemetry)
                 verifyHandshakes(defaultExpectedLibs, defaultExpectedArchs, defaultExpectedVariants)
                 verifyUploads(defaultExpectedLibs, defaultExpectedArchs, defaultExpectedVariants)
             }
@@ -56,7 +57,7 @@ class AndroidNdkTest {
                 )
             },
             assertions = {
-                verifyBuildTelemetryRequestSent(defaultExpectedVariants)
+                verifyBuildTelemetryRequestSent(variantsSentInBuildTelemetry)
                 verifyHandshakes(defaultExpectedLibs, defaultExpectedArchs, defaultExpectedVariants)
                 verifyUploads(defaultExpectedLibs, defaultExpectedArchs, defaultExpectedVariants)
             }
@@ -114,7 +115,7 @@ class AndroidNdkTest {
                 )
             },
             assertions = {
-                verifyBuildTelemetryRequestSent(defaultExpectedVariants)
+                verifyBuildTelemetryRequestSent(variantsSentInBuildTelemetry)
                 verifyHandshakes(defaultExpectedLibs, defaultExpectedArchs, defaultExpectedVariants)
                 verifyUploads(defaultExpectedLibs, defaultExpectedArchs, defaultExpectedVariants)
             }
@@ -133,7 +134,7 @@ class AndroidNdkTest {
                 setupMockResponses(expectedLibs, defaultExpectedArchs, defaultExpectedVariants)
             },
             assertions = {
-                verifyBuildTelemetryRequestSent(defaultExpectedVariants)
+                verifyBuildTelemetryRequestSent(variantsSentInBuildTelemetry)
                 verifyHandshakes(expectedLibs, defaultExpectedArchs, defaultExpectedVariants)
                 verifyUploads(expectedLibs, defaultExpectedArchs, defaultExpectedVariants)
             }
@@ -154,7 +155,7 @@ class AndroidNdkTest {
                 )
             },
             assertions = {
-                verifyBuildTelemetryRequestSent(defaultExpectedVariants)
+                verifyBuildTelemetryRequestSent(variantsSentInBuildTelemetry)
                 verifyHandshakes(defaultExpectedLibs, defaultExpectedArchs, defaultExpectedVariants)
                 verifyNoUploads()
             }
@@ -177,7 +178,7 @@ class AndroidNdkTest {
                 )
             },
             assertions = {
-                verifyBuildTelemetryRequestSent(defaultExpectedVariants)
+                verifyBuildTelemetryRequestSent(variantsSentInBuildTelemetry)
                 verifyHandshakes(defaultExpectedLibs, defaultExpectedArchs, defaultExpectedVariants)
                 verifyUploads(expectedLibs, expectedArchs, defaultExpectedVariants)
             }
@@ -191,10 +192,25 @@ class AndroidNdkTest {
             task = "assembleRelease",
             projectType = ProjectType.ANDROID,
             assertions = {
-                verifyBuildTelemetryRequestSent(defaultExpectedVariants)
+                verifyBuildTelemetryRequestSent(variantsSentInBuildTelemetry)
                 verifyNoHandshakes()
                 verifyNoUploads()
                 verifyJvmMappingRequestsSent(1)
+            }
+        )
+    }
+
+    @Test
+    fun `debug builds should not upload symbols`() {
+        rule.runTest(
+            fixture = "android-cmake",
+            task = "assembleDebug",
+            projectType = ProjectType.ANDROID,
+            assertions = {
+                verifyBuildTelemetryRequestSent(variantsSentInBuildTelemetry)
+                verifyNoHandshakes()
+                verifyNoUploads()
+                verifyJvmMappingRequestsSent(0)
             }
         )
     }

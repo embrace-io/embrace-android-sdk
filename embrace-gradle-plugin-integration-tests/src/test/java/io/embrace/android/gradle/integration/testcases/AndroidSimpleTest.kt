@@ -28,6 +28,20 @@ class AndroidSimpleTest {
     }
 
     @Test
+    fun `debug builds should not upload symbols`() {
+        rule.runTest(
+            fixture = "android-simple",
+            task = "assembleDebug",
+            projectType = ProjectType.ANDROID,
+            assertions = {
+                verifyNoHandshakes()
+                verifyNoUploads()
+                verifyJvmMappingRequestsSent(0)
+            }
+        )
+    }
+
+    @Test
     fun assembleRelease() {
         rule.runTest(
             fixture = "android-simple",

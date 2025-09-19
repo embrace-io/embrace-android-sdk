@@ -45,6 +45,23 @@ class UnityTest {
         )
     }
 
+    @Test
+    fun `debug builds should not upload symbols`() {
+        rule.runTest(
+            fixture = "unity-fake-project",
+            task = "assembleDebug",
+            projectType = ProjectType.ANDROID,
+            setup = {
+                setupMockResponses(emptyList(), emptyList(), listOf("release"))
+            },
+            assertions = {
+                verifyNoHandshakes()
+                verifyNoUploads()
+                verifyJvmMappingRequestsSent(0)
+            }
+        )
+    }
+
     /**
      * Verifies the LineNumberMappings.json file is sent
      */

@@ -15,7 +15,8 @@ class ReactNativeAndroidTest {
     @JvmField
     val rule: PluginIntegrationTestRule = PluginIntegrationTestRule()
 
-    private val defaultExpectedVariants = listOf("debug", "release")
+    private val defaultExpectedVariants = listOf("release")
+    private val variantsSentInBuildTelemetry = listOf("debug", "release")
     private val defaultExpectedLibs = listOf(
         "libappmodules.so",
         "libc++_shared.so",
@@ -49,7 +50,7 @@ class ReactNativeAndroidTest {
                 setupMockResponses(handshakeLibs, handshakeArchs, defaultExpectedVariants)
             },
             assertions = {
-                verifyBuildTelemetryRequestSent(defaultExpectedVariants)
+                verifyBuildTelemetryRequestSent(variantsSentInBuildTelemetry)
                 verifyHandshakes(defaultExpectedLibs, defaultExpectedArchs, defaultExpectedVariants)
                 verifyUploads(handshakeLibs, handshakeArchs, defaultExpectedVariants)
             }
@@ -85,6 +86,31 @@ class ReactNativeAndroidTest {
             assertions = { projectDir ->
                 verifyNoUploads()
                 verifyAsmInjection(projectDir, null)
+            }
+        )
+    }
+
+    @Test
+    fun `debug builds should not upload symbols`() {
+        val handshakeLibs = listOf(
+            "libfbjni.so",
+            "libhermes.so",
+            "libhermestooling.so",
+        )
+        val handshakeArchs = listOf("arm64-v8a", "armeabi-v7a")
+        rule.runTest(
+            fixture = "react-native-android",
+            task = "assembleDebug",
+            androidProjectRoot = "android",
+            setup = { projectDir ->
+                installNodeModules(projectDir)
+                setupMockResponses(handshakeLibs, handshakeArchs, defaultExpectedVariants)
+            },
+            assertions = {
+                verifyBuildTelemetryRequestSent(variantsSentInBuildTelemetry)
+                verifyNoHandshakes()
+                verifyNoUploads()
+                verifyJvmMappingRequestsSent(0)
             }
         )
     }

@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.internal.otel.sdk
 
 import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.OtelLimitsConfig
-import io.embrace.android.embracesdk.internal.otel.config.DEFAULT_USE_KOTLIN_SDK
 import io.embrace.android.embracesdk.internal.otel.config.OtelSdkConfig
 import io.embrace.android.embracesdk.internal.otel.config.getMaxTotalAttributeCount
 import io.embrace.android.embracesdk.internal.otel.config.getMaxTotalEventCount
@@ -31,7 +30,7 @@ class OtelSdkWrapper(
     configuration: OtelSdkConfig,
     spanService: SpanService,
     limits: OtelLimitsConfig = InstrumentedConfigImpl.otelLimits,
-    val useKotlinSdk: Boolean = DEFAULT_USE_KOTLIN_SDK,
+    val useKotlinSdk: Boolean,
 ) {
 
     init {
@@ -92,7 +91,7 @@ class OtelSdkWrapper(
 
     val openTelemetryKotlin: OpenTelemetry by lazy {
         EmbOpenTelemetry(kotlinApi) {
-            EmbTracerProvider(kotlinApi, spanService, otelClock)
+            EmbTracerProvider(kotlinApi, spanService, otelClock, useKotlinSdk)
         }
     }
 }

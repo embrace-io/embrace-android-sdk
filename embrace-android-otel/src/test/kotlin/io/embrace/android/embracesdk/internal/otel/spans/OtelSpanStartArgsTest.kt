@@ -32,7 +32,7 @@ internal class OtelSpanStartArgsTest {
     fun setup() {
         clock = FakeClock()
         otelClock = FakeOtelKotlinClock(clock)
-        tracer = createSdkOtelInstance(clock = otelClock).getTracer("test-tracer")
+        tracer = createSdkOtelInstance(clock = otelClock, useKotlinSdk = false).getTracer("test-tracer")
     }
 
     @Test
@@ -53,7 +53,7 @@ internal class OtelSpanStartArgsTest {
             assertTrue(contains(EmbType.Performance.Default))
         }
         assertEquals("emb-test", args.initialSpanName)
-        val spanContext = fakeOpenTelemetry().spanFactory.fromContext(args.parentContext).spanContext
+        val spanContext = fakeOpenTelemetry(false).spanFactory.fromContext(args.parentContext).spanContext
         assertFalse(spanContext.isValid)
 
         args.startSpan(startTime).assertSpan(
@@ -66,7 +66,7 @@ internal class OtelSpanStartArgsTest {
     @Test
     fun `add parent after initial creation`() {
         val parent = tracer.createSpan("parent")
-        val ctx = fakeOpenTelemetry().contextFactory.storeSpan(fakeOpenTelemetry().contextFactory.root(), parent)
+        val ctx = fakeOpenTelemetry(false).contextFactory.storeSpan(fakeOpenTelemetry().contextFactory.root(), parent)
         val args = OtelSpanStartArgs(
             name = "test",
             type = EmbType.Performance.Default,
@@ -76,7 +76,7 @@ internal class OtelSpanStartArgsTest {
             parentCtx = ctx,
             openTelemetry = fakeOpenTelemetry()
         )
-        val spanContext = fakeOpenTelemetry().spanFactory.fromContext(args.parentContext).spanContext
+        val spanContext = fakeOpenTelemetry(false).spanFactory.fromContext(args.parentContext).spanContext
         assertEquals(parent.spanContext.traceId, spanContext.traceId)
 
         val startTime = otelClock.now()

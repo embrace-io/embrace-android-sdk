@@ -626,6 +626,7 @@ internal class SpanServiceImplTest {
             otelClock = fakeClock,
             configuration = otelSdkConfig,
             spanService = FakeSpanService(),
+            useKotlinSdk = true
         )
 
         return SpanServiceImpl(

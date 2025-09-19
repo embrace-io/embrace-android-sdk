@@ -71,7 +71,7 @@ internal class EmbraceSpanImplTest {
     fun setup() {
         fakeClock = FakeClock()
         val otelClock = FakeOtelKotlinClock(fakeClock)
-        tracer = createSdkOtelInstance(clock = otelClock).getTracer("test-tracer")
+        tracer = createSdkOtelInstance(clock = otelClock, useKotlinSdk = true).getTracer("test-tracer")
         spanRepository = SpanRepository().apply { setSpanUpdateNotifier { updateNotified = true } }
         serializer = TestPlatformSerializer()
         dataValidator = DataValidator()

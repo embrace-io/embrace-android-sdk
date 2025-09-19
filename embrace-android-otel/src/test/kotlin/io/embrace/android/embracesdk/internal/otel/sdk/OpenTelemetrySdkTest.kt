@@ -7,7 +7,6 @@ import io.embrace.android.embracesdk.fakes.FakeOtelKotlinClock
 import io.embrace.android.embracesdk.fakes.FakeSpanExporter
 import io.embrace.android.embracesdk.fakes.FakeSpanService
 import io.embrace.android.embracesdk.internal.SystemInfo
-import io.embrace.android.embracesdk.internal.otel.config.DEFAULT_USE_KOTLIN_SDK
 import io.embrace.android.embracesdk.internal.otel.config.OtelSdkConfig
 import io.embrace.android.embracesdk.internal.otel.logs.LogSink
 import io.embrace.android.embracesdk.internal.otel.logs.LogSinkImpl
@@ -35,7 +34,7 @@ internal class OpenTelemetrySdkTest {
         spanSink = SpanSinkImpl()
         logSink = LogSinkImpl()
         systemInfo = SystemInfo()
-        sdk = createSdkWrapper(DEFAULT_USE_KOTLIN_SDK)
+        sdk = createSdkWrapper(useKotlinSdk = false)
     }
 
     @Test

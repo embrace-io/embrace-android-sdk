@@ -30,6 +30,7 @@ internal class EmbTracerTest {
             spanService = spanService,
             clock = openTelemetryClock,
             openTelemetry = fakeOpenTelemetry(),
+            useKotlinSdk = true
         )
     }
 

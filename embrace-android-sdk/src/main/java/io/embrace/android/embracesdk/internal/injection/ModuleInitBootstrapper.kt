@@ -176,7 +176,7 @@ internal class ModuleInitBootstrapper(
                         openTelemetryModule.applyConfiguration(
                             sensitiveKeysBehavior = configModule.configService.sensitiveKeysBehavior,
                             bypassValidation = configModule.configService.isOnlyUsingOtelExporters(),
-                            useKotlinSdk = configModule.configService.otelBehavior.shouldUseKotlinSdk()
+                            otelBehavior = configModule.configService.otelBehavior
                         )
                     }
 

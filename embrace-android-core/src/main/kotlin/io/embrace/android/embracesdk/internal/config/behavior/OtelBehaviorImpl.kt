@@ -2,7 +2,8 @@ package io.embrace.android.embracesdk.internal.config.behavior
 
 import io.embrace.android.embracesdk.internal.config.UnimplementedConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
-import io.embrace.android.embracesdk.internal.otel.config.DEFAULT_USE_KOTLIN_SDK
+
+private const val DEFAULT_USE_KOTLIN_SDK: Boolean = false
 
 /**
  * Provides the behavior for OpenTelemetry configuration

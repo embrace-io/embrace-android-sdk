@@ -52,7 +52,8 @@ internal class EmbraceSpanServiceTest {
         val otelSdkWrapper = OtelSdkWrapper(
             otelClock = fakeClock,
             configuration = otelSdkConfig,
-            spanService = FakeSpanService()
+            spanService = FakeSpanService(),
+            useKotlinSdk = true
         )
         tracer = otelSdkWrapper.sdkTracer
         spanService = createEmbraceSpanService()

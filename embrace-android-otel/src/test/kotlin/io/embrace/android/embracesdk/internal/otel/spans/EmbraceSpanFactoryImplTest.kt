@@ -34,7 +34,7 @@ internal class EmbraceSpanFactoryImplTest {
                 updateNotified = true
             }
         }
-        tracer = createSdkOtelInstance(clock = openTelemetryClock).getTracer("my_tracer")
+        tracer = createSdkOtelInstance(clock = openTelemetryClock, useKotlinSdk = true).getTracer("my_tracer")
         embraceSpanFactory = EmbraceSpanFactoryImpl(
             openTelemetryClock = openTelemetryClock,
             spanRepository = spanRepository,

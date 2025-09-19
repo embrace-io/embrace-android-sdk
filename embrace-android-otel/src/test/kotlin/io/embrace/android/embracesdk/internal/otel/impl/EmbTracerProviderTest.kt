@@ -28,7 +28,8 @@ internal class EmbTracerProviderTest {
         embTracerProvider = EmbTracerProvider(
             impl = otel,
             spanService = spanService,
-            clock = openTelemetryClock
+            clock = openTelemetryClock,
+            useKotlinSdk = true
         )
     }
 

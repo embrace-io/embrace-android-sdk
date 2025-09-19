@@ -18,7 +18,7 @@ class EmbraceSpanProcessorTest {
     @Test
     fun `test export`() {
         val spanExporter = FakeSpanExporter()
-        val processor = EmbraceSpanProcessor({ "sid"}, "pid", spanExporter)
+        val processor = EmbraceSpanProcessor({ "sid" }, "pid", spanExporter)
         val span = FakeReadWriteSpan()
         processor.onStart(span, mockk(relaxed = true))
 

@@ -83,7 +83,7 @@ class TaskRegistrar(
     }
 
     private fun shouldSkipUploadTasks(variant: AndroidCompactedVariantData): Boolean {
-        return behavior.isPluginDisabledForVariant(variant.name) ||
+        return variant.isBuildTypeDebuggable || behavior.isPluginDisabledForVariant(variant.name) ||
             !shouldRegisterUploadTasks(variant, variantConfigurationsListProperty)
     }
 

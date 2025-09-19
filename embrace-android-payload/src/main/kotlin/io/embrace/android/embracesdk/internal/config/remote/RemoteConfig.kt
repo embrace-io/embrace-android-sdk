@@ -97,4 +97,7 @@ data class RemoteConfig(
 
     @Json(name = "ui_load_instrumentation_enabled_v2")
     val uiLoadInstrumentationEnabled: Boolean? = null,
+
+    @Json(name = "otel_kotlin_sdk")
+    val otelKotlinSdkConfig: OtelKotlinSdkConfig? = null,
 )

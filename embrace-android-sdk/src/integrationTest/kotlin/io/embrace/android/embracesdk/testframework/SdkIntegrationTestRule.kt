@@ -22,6 +22,7 @@ import io.embrace.android.embracesdk.internal.injection.EssentialServiceModule
 import io.embrace.android.embracesdk.internal.injection.EssentialServiceModuleImpl
 import io.embrace.android.embracesdk.internal.injection.InitModule
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
+import io.embrace.android.embracesdk.internal.otel.config.DEFAULT_USE_KOTLIN_SDK
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface
 import io.embrace.android.embracesdk.testframework.actions.EmbraceOtelExportAssertionInterface
@@ -164,7 +165,12 @@ internal class SdkIntegrationTestRule(
             bootstrapper.openTelemetryModule.applyConfiguration(
                 sensitiveKeysBehavior = SensitiveKeysBehaviorImpl(instrumentedConfig),
                 bypassValidation = false,
-                useKotlinSdk = persistedRemoteConfig.killSwitchConfig?.disableOtelKotlinSdk != true
+                useKotlinSdk = when (persistedRemoteConfig.otelKotlinSdkConfig?.pctEnabled) {
+                    null -> DEFAULT_USE_KOTLIN_SDK // No percentage configured, use default
+                    0.0f -> false // Explicitly disabled
+                    100.0f -> true // Explicitly enabled
+                    else -> true // For integration tests, assume device is in the rollout group
+                }
             )
 
             if (startSdk) {

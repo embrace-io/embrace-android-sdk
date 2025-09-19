@@ -15,7 +15,4 @@ data class KillSwitchRemoteConfig(
 
     @Json(name = "jetpack_compose")
     val jetpackCompose: Boolean? = null,
-
-    @Json(name = "otel_kotlin_sdk")
-    val disableOtelKotlinSdk: Boolean? = null,
 )

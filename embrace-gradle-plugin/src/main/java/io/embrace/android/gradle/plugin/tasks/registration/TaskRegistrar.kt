@@ -3,6 +3,8 @@ package io.embrace.android.gradle.plugin.tasks.registration
 import com.android.build.api.variant.AndroidComponentsExtension
 import com.android.build.api.variant.Variant
 import io.embrace.android.gradle.plugin.EmbraceLogger
+import io.embrace.android.gradle.plugin.agp.AgpWrapper
+import io.embrace.android.gradle.plugin.buildreporter.BuildTelemetryService
 import io.embrace.android.gradle.plugin.config.PluginBehavior
 import io.embrace.android.gradle.plugin.config.variant.EmbraceVariantConfigurationBuilder
 import io.embrace.android.gradle.plugin.dependency.installDependenciesForVariant
@@ -25,6 +27,7 @@ class TaskRegistrar(
     private val behavior: PluginBehavior,
     private val embraceVariantConfigurationBuilder: EmbraceVariantConfigurationBuilder,
     private val variantConfigurationsListProperty: ListProperty<VariantConfig>,
+    private val agpWrapper: AgpWrapper
 ) {
 
     private val logger = EmbraceLogger(TaskRegistrar::class.java)
@@ -101,6 +104,12 @@ class TaskRegistrar(
         if (behavior.isIl2CppMappingFilesUploadEnabled) {
             Il2CppUploadTaskRegistration().register(params)
         }
+        BuildTelemetryService.register(
+            project,
+            variantConfigurationsListProperty,
+            behavior,
+            agpWrapper
+        )
     }
 
     private fun shouldRegisterUploadTasks(

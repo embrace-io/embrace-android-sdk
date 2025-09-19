@@ -7,7 +7,6 @@ import io.embrace.android.gradle.plugin.agp.AgpVersion
 import io.embrace.android.gradle.plugin.agp.AgpWrapper
 import io.embrace.android.gradle.plugin.agp.AgpWrapperImpl
 import io.embrace.android.gradle.plugin.api.EmbraceExtension
-import io.embrace.android.gradle.plugin.buildreporter.BuildTelemetryService
 import io.embrace.android.gradle.plugin.config.PluginBehaviorImpl
 import io.embrace.android.gradle.plugin.config.variant.EmbraceVariantConfigurationBuilder
 import io.embrace.android.gradle.plugin.gradle.getProperty
@@ -35,13 +34,6 @@ class EmbraceGradlePluginDelegate {
 
         val behavior = PluginBehaviorImpl(project, extension, embrace)
 
-        BuildTelemetryService.register(
-            project,
-            variantConfigurationsListProperty,
-            behavior,
-            agpWrapper
-        )
-
         val embraceVariantConfigurationBuilder =
             EmbraceVariantConfigurationBuilder(
                 project.layout.projectDirectory,
@@ -52,7 +44,8 @@ class EmbraceGradlePluginDelegate {
             project,
             behavior,
             embraceVariantConfigurationBuilder,
-            variantConfigurationsListProperty
+            variantConfigurationsListProperty,
+            agpWrapper
         )
 
         taskRegistrar.registerTasks()

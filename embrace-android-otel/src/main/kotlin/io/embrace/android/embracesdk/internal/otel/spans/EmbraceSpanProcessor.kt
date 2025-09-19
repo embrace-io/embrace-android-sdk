@@ -7,6 +7,7 @@ import io.embrace.opentelemetry.kotlin.context.Context
 import io.embrace.opentelemetry.kotlin.export.OperationResultCode
 import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
 import io.embrace.opentelemetry.kotlin.semconv.SessionAttributes
+import io.embrace.opentelemetry.kotlin.tracing.export.SpanExporter
 import io.embrace.opentelemetry.kotlin.tracing.export.SpanProcessor
 import io.embrace.opentelemetry.kotlin.tracing.model.ReadWriteSpan
 import io.embrace.opentelemetry.kotlin.tracing.model.ReadableSpan
@@ -16,6 +17,7 @@ import java.util.concurrent.atomic.AtomicLong
 class EmbraceSpanProcessor(
     private val sessionIdProvider: () -> String?,
     private val processIdentifier: String,
+    private val spanExporter: SpanExporter,
 ) : SpanProcessor {
 
     private val counter = AtomicLong(1)
@@ -30,6 +32,7 @@ class EmbraceSpanProcessor(
     }
 
     override fun onEnd(span: ReadableSpan) {
+        spanExporter.export(mutableListOf(span))
     }
 
     override fun isStartRequired() = true

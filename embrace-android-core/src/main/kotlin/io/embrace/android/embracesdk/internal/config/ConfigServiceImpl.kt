@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.internal.config.behavior.DataCaptureEventBe
 import io.embrace.android.embracesdk.internal.config.behavior.LogMessageBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.NetworkBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.NetworkSpanForwardingBehaviorImpl
+import io.embrace.android.embracesdk.internal.config.behavior.OtelBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.SdkModeBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.SessionBehaviorImpl
@@ -47,6 +48,7 @@ internal class ConfigServiceImpl(
     override val webViewVitalsBehavior = WebViewVitalsBehaviorImpl(thresholdCheck, remoteConfig)
     override val networkSpanForwardingBehavior =
         NetworkSpanForwardingBehaviorImpl(thresholdCheck, instrumentedConfig, remoteConfig)
+    override val otelBehavior = OtelBehaviorImpl(thresholdCheck, remoteConfig)
 
     override val appId: String? = resolveAppId(instrumentedConfig.project.getAppId(), openTelemetryCfg)
 

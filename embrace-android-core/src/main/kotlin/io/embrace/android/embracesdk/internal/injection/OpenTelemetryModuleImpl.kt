@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.injection
 
 import io.embrace.android.embracesdk.core.BuildConfig
+import io.embrace.android.embracesdk.internal.config.behavior.OtelBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.REDACTED_LABEL
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehavior
 import io.embrace.android.embracesdk.internal.otel.config.OtelSdkConfig
@@ -31,12 +32,7 @@ internal class OpenTelemetryModuleImpl(
     )
 ) : OpenTelemetryModule {
 
-    init {
-        if (!initModule.useKotlinSdk) {
-            // Enforce the use of default OTel Java SDK ThreadLocal ContextStorage to bypass SPI looking that violates Android strict mode
-            System.setProperty("io.opentelemetry.context.contextStorageProvider", "default")
-        }
-    }
+    private var otelBehavior: OtelBehavior? = null
 
     override val spanRepository: SpanRepository by lazy {
         SpanRepository()
@@ -55,7 +51,6 @@ internal class OpenTelemetryModuleImpl(
             systemInfo = initModule.systemInfo,
             sessionIdProvider = { currentSessionSpan.getSessionId() },
             processIdentifierProvider = initModule.processIdentifierProvider,
-            useKotlinSdk = initModule.useKotlinSdk,
         )
     }
 
@@ -66,6 +61,8 @@ internal class OpenTelemetryModuleImpl(
                     otelClock = openTelemetryClock,
                     configuration = otelSdkConfig,
                     spanService = spanService,
+                    // adding guard in case this is accessed before we fetch the config
+                    useKotlinSdk = otelBehavior?.shouldUseKotlinSdk() ?: false,
                 )
             } catch (exc: NoClassDefFoundError) {
                 throw LinkageError(
@@ -80,9 +77,18 @@ internal class OpenTelemetryModuleImpl(
 
     private var sensitiveKeysBehavior: SensitiveKeysBehavior? = null
 
-    override fun applyConfiguration(sensitiveKeysBehavior: SensitiveKeysBehavior, bypassValidation: Boolean) {
+    override fun applyConfiguration(sensitiveKeysBehavior: SensitiveKeysBehavior, bypassValidation: Boolean, otelBehavior: OtelBehavior) {
         this.sensitiveKeysBehavior = sensitiveKeysBehavior
         this.bypassLimitsValidation = bypassValidation
+        setupOtelBehavior(otelBehavior)
+    }
+
+    private fun setupOtelBehavior(otelBehavior: OtelBehavior) {
+        this.otelBehavior = otelBehavior
+        if (!otelBehavior.shouldUseKotlinSdk()) {
+            // Enforce the use of default OTel Java SDK ThreadLocal ContextStorage to bypass SPI looking that violates Android strict mode
+            System.setProperty("io.opentelemetry.context.contextStorageProvider", "default")
+        }
     }
 
     private var internalSpanStopCallback: ((spanId: String) -> Unit)? = null

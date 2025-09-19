@@ -1,10 +1,10 @@
 package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.internal.SystemInfo
+import io.embrace.android.embracesdk.internal.config.behavior.OtelBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehavior
 import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModule
 import io.embrace.android.embracesdk.internal.otel.config.OtelSdkConfig
-import io.embrace.android.embracesdk.internal.otel.config.USE_KOTLIN_SDK
 import io.embrace.android.embracesdk.internal.otel.logs.LogSink
 import io.embrace.android.embracesdk.internal.otel.logs.LogSinkImpl
 import io.embrace.android.embracesdk.internal.otel.sdk.OtelSdkWrapper
@@ -24,7 +24,7 @@ class FakeOpenTelemetryModule(
     override val spanSink: SpanSink = SpanSinkImpl(),
     override val logSink: LogSink = LogSinkImpl(),
     override val spanRepository: SpanRepository = SpanRepository(),
-    useKotlinSdk: Boolean = USE_KOTLIN_SDK,
+    useKotlinSdk: Boolean = true,
 ) : OpenTelemetryModule {
     private val sdkName = "sdk"
     private val sdkVersion = "1.0"
@@ -37,7 +37,6 @@ class FakeOpenTelemetryModule(
             sdkName = sdkName,
             sdkVersion = sdkVersion,
             systemInfo = systemInfo,
-            useKotlinSdk = useKotlinSdk,
         )
 
     override val openTelemetryClock: Clock = FakeOtelKotlinClock(FakeClock())
@@ -49,6 +48,7 @@ class FakeOpenTelemetryModule(
             otelClock = openTelemetryClock,
             configuration = otelSdkConfig,
             spanService = spanService,
+            useKotlinSdk = useKotlinSdk,
         )
 
     override val embraceTracer: EmbraceTracer
@@ -57,7 +57,7 @@ class FakeOpenTelemetryModule(
     override val internalTracer: InternalTracer
         get() = TODO()
 
-    override fun applyConfiguration(sensitiveKeysBehavior: SensitiveKeysBehavior, bypassValidation: Boolean) {
+    override fun applyConfiguration(sensitiveKeysBehavior: SensitiveKeysBehavior, bypassValidation: Boolean, otelBehavior: OtelBehavior) {
         // no-op
     }
 }

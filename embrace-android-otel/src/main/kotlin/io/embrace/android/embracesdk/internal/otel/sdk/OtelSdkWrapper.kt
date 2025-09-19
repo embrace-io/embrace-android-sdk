@@ -30,8 +30,8 @@ class OtelSdkWrapper(
     configuration: OtelSdkConfig,
     spanService: SpanService,
     limits: OtelLimitsConfig = InstrumentedConfigImpl.otelLimits,
+    val useKotlinSdk: Boolean,
 ) {
-    private val useKotlinSdk: Boolean = configuration.useKotlinSdk
 
     init {
         if (!useKotlinSdk) {
@@ -91,7 +91,7 @@ class OtelSdkWrapper(
 
     val openTelemetryKotlin: OpenTelemetry by lazy {
         EmbOpenTelemetry(kotlinApi) {
-            EmbTracerProvider(kotlinApi, spanService, otelClock)
+            EmbTracerProvider(kotlinApi, spanService, otelClock, useKotlinSdk)
         }
     }
 }

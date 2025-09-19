@@ -21,11 +21,6 @@ import io.embrace.opentelemetry.kotlin.tracing.export.SpanExporter
 import io.embrace.opentelemetry.kotlin.tracing.export.SpanProcessor
 import java.util.concurrent.ConcurrentHashMap
 
-/**
- * Globally referenceable flag that determines which OTel SDK implementation is in use for the production SDK at runtime.
- */
-const val USE_KOTLIN_SDK: Boolean = false
-
 @OptIn(ExperimentalApi::class)
 class OtelSdkConfig(
     spanSink: SpanSink,
@@ -34,8 +29,7 @@ class OtelSdkConfig(
     val sdkVersion: String,
     private val systemInfo: SystemInfo,
     private val sessionIdProvider: () -> String? = { null },
-    private val processIdentifierProvider: () -> String = IdGenerator.Companion::generateLaunchInstanceId,
-    val useKotlinSdk: Boolean = USE_KOTLIN_SDK,
+    private val processIdentifierProvider: () -> String = IdGenerator.Companion::generateLaunchInstanceId
 ) {
 
     private val customAttributes: MutableMap<String, String> = ConcurrentHashMap()

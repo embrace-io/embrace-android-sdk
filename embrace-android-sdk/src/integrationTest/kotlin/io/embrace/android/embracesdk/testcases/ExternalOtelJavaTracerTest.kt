@@ -4,6 +4,8 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.assertEmbraceSpanData
 import io.embrace.android.embracesdk.fakes.FakeOtelJavaSpanExporter
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
+import io.embrace.android.embracesdk.internal.config.remote.OtelKotlinSdkConfig
+import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
 import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
 import io.embrace.android.embracesdk.internal.payload.Attribute
@@ -15,7 +17,6 @@ import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface
 import io.embrace.android.embracesdk.testframework.actions.EmbracePreSdkStartInterface
-import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaAttributes
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaContext
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaOpenTelemetry
@@ -24,8 +25,8 @@ import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanContext
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanData
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaStatusCode
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaTracer
-import io.opentelemetry.context.Context
 import io.embrace.opentelemetry.kotlin.semconv.ExceptionAttributes
+import io.opentelemetry.context.Context
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNull
@@ -40,13 +41,15 @@ internal class ExternalOtelJavaTracerTest {
 
     @Rule
     @JvmField
-    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule {
-        EmbraceSetupInterface(useKotlinSdk = false)
-    }
+    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule()
 
     private lateinit var spanExporter: FakeOtelJavaSpanExporter
     private lateinit var embOpenTelemetry: OtelJavaOpenTelemetry
     private lateinit var embTracer: OtelJavaTracer
+
+    private val remoteConfig = RemoteConfig(
+        otelKotlinSdkConfig = OtelKotlinSdkConfig(pctEnabled = 0.0f) // Disable Kotlin SDK (use Java SDK)
+    )
 
     @Before
     fun setup() {
@@ -56,6 +59,7 @@ internal class ExternalOtelJavaTracerTest {
     @Test
     fun `check correctness of implementations used by Tracer`() {
         testRule.runTest(
+            persistedRemoteConfig = remoteConfig,
             preSdkStartAction = {
                 setupExporter()
             },
@@ -81,6 +85,7 @@ internal class ExternalOtelJavaTracerTest {
         var parentContext: OtelJavaContext?
 
         testRule.runTest(
+            persistedRemoteConfig = remoteConfig,
             preSdkStartAction = {
                 setupExporter()
             },
@@ -179,6 +184,7 @@ internal class ExternalOtelJavaTracerTest {
     @Test
     fun `span with explicit parent`() {
         testRule.runTest(
+            persistedRemoteConfig = remoteConfig,
             preSdkStartAction = {
                 setupExporter()
             },
@@ -210,6 +216,7 @@ internal class ExternalOtelJavaTracerTest {
         var endTimeMs: Long? = null
 
         testRule.runTest(
+            persistedRemoteConfig = remoteConfig,
             preSdkStartAction = {
                 setupExporter()
             },
@@ -258,6 +265,7 @@ internal class ExternalOtelJavaTracerTest {
     @Test
     fun `opentelemetry instance can be used to log spans`() {
         testRule.runTest(
+            persistedRemoteConfig = remoteConfig,
             preSdkStartAction = {
                 setupExporter()
             },
@@ -275,6 +283,7 @@ internal class ExternalOtelJavaTracerTest {
     @Test
     fun `getJavaOpenTelemetry returns noop before SDK start`() {
         testRule.runTest(
+            persistedRemoteConfig = remoteConfig,
             preSdkStartAction = {
                 val otelJava = embrace.getJavaOpenTelemetry()
                 val tracer = otelJava.getTracer("test-tracer")

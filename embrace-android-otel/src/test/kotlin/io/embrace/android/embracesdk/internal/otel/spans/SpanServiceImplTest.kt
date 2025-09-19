@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.arch.assertNotPrivateSpan
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeOtelKotlinClock
 import io.embrace.android.embracesdk.fakes.FakeSpanService
+import io.embrace.android.embracesdk.fakes.TestConstants.TESTS_DEFAULT_USE_KOTLIN_SDK
 import io.embrace.android.embracesdk.fixtures.MAX_LENGTH_INTERNAL_SPAN_NAME
 import io.embrace.android.embracesdk.fixtures.MAX_LENGTH_SPAN_NAME
 import io.embrace.android.embracesdk.fixtures.TOO_LONG_ATTRIBUTE_KEY
@@ -626,6 +627,7 @@ internal class SpanServiceImplTest {
             otelClock = fakeClock,
             configuration = otelSdkConfig,
             spanService = FakeSpanService(),
+            useKotlinSdk = TESTS_DEFAULT_USE_KOTLIN_SDK
         )
 
         return SpanServiceImpl(

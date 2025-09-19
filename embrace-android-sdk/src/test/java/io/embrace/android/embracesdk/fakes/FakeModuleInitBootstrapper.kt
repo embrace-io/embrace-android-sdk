@@ -31,17 +31,13 @@ import io.embrace.android.embracesdk.internal.injection.SessionOrchestrationModu
 import io.embrace.android.embracesdk.internal.injection.StorageModuleSupplier
 import io.embrace.android.embracesdk.internal.injection.SystemServiceModuleSupplier
 import io.embrace.android.embracesdk.internal.injection.WorkerThreadModuleSupplier
-import io.embrace.android.embracesdk.internal.otel.config.USE_KOTLIN_SDK
 
 @Suppress("LongParameterList")
 internal fun fakeModuleInitBootstrapper(
-    useKotlinSdk: Boolean = USE_KOTLIN_SDK,
     fakeEmbLogger: FakeEmbLogger = FakeEmbLogger(),
     fakeClock: FakeClock = FakeClock(),
-    fakeInitModule: FakeInitModule =
-        FakeInitModule(clock = fakeClock, logger = fakeEmbLogger, useKotlinSdk = useKotlinSdk),
-    fakeOpenTelemetryModule: FakeOpenTelemetryModule =
-        FakeOpenTelemetryModule(useKotlinSdk = fakeInitModule.useKotlinSdk),
+    fakeInitModule: FakeInitModule = FakeInitModule(clock = fakeClock, logger = fakeEmbLogger),
+    fakeOpenTelemetryModule: FakeOpenTelemetryModule = FakeOpenTelemetryModule(),
     coreModuleSupplier: CoreModuleSupplier = { _, _ -> FakeCoreModule() },
     systemServiceModuleSupplier: SystemServiceModuleSupplier = { _, _ -> FakeSystemServiceModule() },
     androidServicesModuleSupplier: AndroidServicesModuleSupplier = { _, _ -> FakeAndroidServicesModule() },

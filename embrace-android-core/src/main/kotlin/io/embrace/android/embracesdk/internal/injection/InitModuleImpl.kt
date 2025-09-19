@@ -7,7 +7,6 @@ import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedCo
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.InstrumentedConfig
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
-import io.embrace.android.embracesdk.internal.otel.config.USE_KOTLIN_SDK
 import io.embrace.android.embracesdk.internal.otel.sdk.IdGenerator
 import io.embrace.android.embracesdk.internal.serialization.DecoratedSerializer
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
@@ -19,7 +18,6 @@ internal class InitModuleImpl(
     override val clock: Clock = NormalizedIntervalClock(),
     override val logger: EmbLogger = EmbLoggerImpl(),
     override val systemInfo: SystemInfo = SystemInfo(),
-    override val useKotlinSdk: Boolean = USE_KOTLIN_SDK,
     override val processIdentifierProvider: () -> String = IdGenerator.Companion::generateLaunchInstanceId,
 ) : InitModule {
 

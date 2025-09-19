@@ -8,7 +8,6 @@ import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.network.http.HttpUrlConnectionTracker.registerFactory
-import io.embrace.android.embracesdk.internal.otel.config.USE_KOTLIN_SDK
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
@@ -28,8 +27,7 @@ internal class ModuleInitBootstrapper(
     val initModule: InitModule = EmbTrace.trace("init-module") {
         createInitModule(
             clock = clock,
-            logger = logger,
-            useKotlinSdk = USE_KOTLIN_SDK
+            logger = logger
         )
     },
     val openTelemetryModule: OpenTelemetryModule = EmbTrace.trace("otel-module") {
@@ -177,7 +175,8 @@ internal class ModuleInitBootstrapper(
                         serviceRegistry.registerService(lazy { configModule.remoteConfigSource })
                         openTelemetryModule.applyConfiguration(
                             sensitiveKeysBehavior = configModule.configService.sensitiveKeysBehavior,
-                            bypassValidation = configModule.configService.isOnlyUsingOtelExporters()
+                            bypassValidation = configModule.configService.isOnlyUsingOtelExporters(),
+                            otelBehavior = configModule.configService.otelBehavior
                         )
                     }
 

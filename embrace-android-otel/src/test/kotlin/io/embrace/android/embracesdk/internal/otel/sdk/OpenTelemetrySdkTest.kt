@@ -8,7 +8,6 @@ import io.embrace.android.embracesdk.fakes.FakeSpanExporter
 import io.embrace.android.embracesdk.fakes.FakeSpanService
 import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.otel.config.OtelSdkConfig
-import io.embrace.android.embracesdk.internal.otel.config.USE_KOTLIN_SDK
 import io.embrace.android.embracesdk.internal.otel.logs.LogSink
 import io.embrace.android.embracesdk.internal.otel.logs.LogSinkImpl
 import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
@@ -35,7 +34,7 @@ internal class OpenTelemetrySdkTest {
         spanSink = SpanSinkImpl()
         logSink = LogSinkImpl()
         systemInfo = SystemInfo()
-        sdk = createSdkWrapper(USE_KOTLIN_SDK)
+        sdk = createSdkWrapper()
     }
 
     @Test
@@ -87,18 +86,17 @@ internal class OpenTelemetrySdkTest {
 
     @Test
     fun `verify that the default StorageContext is used if Java SDK is used`() {
-        sdk = createSdkWrapper(false)
+        sdk = createSdkWrapper()
         assertEquals("default", System.getProperty("io.opentelemetry.context.contextStorageProvider"))
     }
 
-    private fun createOtelSdkConfig(useKotlinSdk: Boolean): OtelSdkConfig {
+    private fun createOtelSdkConfig(): OtelSdkConfig {
         val configuration = OtelSdkConfig(
             spanSink = spanSink,
             logSink = logSink,
             sdkName = "sdk",
             sdkVersion = "1.0",
             systemInfo = systemInfo,
-            useKotlinSdk = useKotlinSdk,
         )
         spanExporter = FakeSpanExporter()
         logExporter = FakeLogRecordExporter()
@@ -108,12 +106,13 @@ internal class OpenTelemetrySdkTest {
         return configuration
     }
 
-    private fun createSdkWrapper(useKotlinSdk: Boolean): OtelSdkWrapper {
-        configuration = createOtelSdkConfig(useKotlinSdk)
+    private fun createSdkWrapper(): OtelSdkWrapper {
+        configuration = createOtelSdkConfig()
         return OtelSdkWrapper(
             otelClock = FakeOtelKotlinClock(FakeClock()),
             configuration = configuration,
             spanService = FakeSpanService(),
+            useKotlinSdk = false,
         )
     }
 }

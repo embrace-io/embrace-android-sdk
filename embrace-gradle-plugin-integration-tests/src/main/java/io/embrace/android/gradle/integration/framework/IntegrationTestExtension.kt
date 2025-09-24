@@ -86,14 +86,15 @@ abstract class IntegrationTestExtension(objectFactory: ObjectFactory) {
         val android = checkNotNull(project.extensions.findByType(ApplicationExtension::class.java))
 
         val customMinSdk = project.findProperty("minSdk")?.toString()?.toIntOrNull()
+        val targetAndCompileSdk = project.findProperty("targetAndCompileSdk")?.toString()?.toIntOrNull()
 
         android.apply {
             namespace = "com.example"
-            compileSdk = 36
+            compileSdk = targetAndCompileSdk ?: 36
 
             defaultConfig {
                 applicationId = "com.example.app"
-                targetSdk = 36
+                targetSdk = targetAndCompileSdk ?: 36
                 minSdk = customMinSdk ?: 26
                 versionCode = 1
                 versionName = "1.0"

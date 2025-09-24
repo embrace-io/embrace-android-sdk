@@ -20,8 +20,7 @@ class AgpSupportTest {
 
     @Test
     fun `minimum supported version`() = runTest(
-        testMatrix = MinVersion,
-        fixture = "android-version-support-gradle-7"
+        testMatrix = MinVersion
     )
 
     @Test
@@ -53,10 +52,9 @@ class AgpSupportTest {
 
     private fun runTest(
         testMatrix: TestMatrix,
-        fixture: String = "android-version-support",
     ) {
         rule.runTest(
-            fixture = fixture,
+            fixture = "android-version-support",
             task = "assembleRelease",
             testMatrix = testMatrix,
             projectType = ProjectType.ANDROID,

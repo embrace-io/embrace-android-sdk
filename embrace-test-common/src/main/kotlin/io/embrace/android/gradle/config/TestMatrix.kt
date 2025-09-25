@@ -19,12 +19,12 @@ sealed class TestMatrix(
     val jdk: JdkEnv,
 ) {
 
-    object UnsupportedOldGradleVersion : TestMatrix("7.4.2", "7.5", "1.9.25", JdkEnv.JAVA_11)
+    object UnsupportedOldGradleVersion : TestMatrix("8.0.0", "8.0", "1.9.25", JdkEnv.JAVA_17)
 
     /**
      * The minimum version we support & run tests against.
      */
-    object MinVersion : TestMatrix("7.4.2", "7.5.1", "1.9.25", JdkEnv.JAVA_11)
+    object MinVersion : TestMatrix("8.0.2", "8.0.2", "1.9.25", JdkEnv.JAVA_17)
 
     /**
      * Older than middle of the pack, but not as bad as our minimum.

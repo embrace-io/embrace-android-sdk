@@ -19,10 +19,7 @@ class AgpSupportTest {
     val rule: PluginIntegrationTestRule = PluginIntegrationTestRule()
 
     @Test
-    fun `minimum supported version`() = runTest(
-        testMatrix = MinVersion,
-        fixture = "android-version-support-gradle-7"
-    )
+    fun `minimum supported version`() = runTest(MinVersion)
 
     @Test
     fun `older version`() = runTest(OlderVersion)
@@ -51,12 +48,9 @@ class AgpSupportTest {
         )
     }
 
-    private fun runTest(
-        testMatrix: TestMatrix,
-        fixture: String = "android-version-support",
-    ) {
+    private fun runTest(testMatrix: TestMatrix) {
         rule.runTest(
-            fixture = fixture,
+            fixture = "android-version-support",
             task = "assembleRelease",
             testMatrix = testMatrix,
             projectType = ProjectType.ANDROID,

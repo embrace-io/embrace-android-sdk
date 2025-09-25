@@ -18,10 +18,12 @@ class FakeOpenTelemetryLogger : Logger {
         context: Context?,
         severityNumber: SeverityNumber?,
         severityText: String?,
-        attributes: MutableAttributeContainer.() -> Unit,
+        attributes: (MutableAttributeContainer.() -> Unit)?,
     ) {
         val container = FakeMutableAttributeContainer()
-        attributes(container)
+        if (attributes != null) {
+            attributes(container)
+        }
         logs.add(
             FakeLogRecord(
                 body = body,

@@ -27,7 +27,7 @@ class EmbTracerProvider(
         name: String,
         version: String?,
         schemaUrl: String?,
-        attributes: MutableAttributeContainer.() -> Unit,
+        attributes: (MutableAttributeContainer.() -> Unit)?,
     ): Tracer {
         val key = TracerKey(
             instrumentationScopeName = name,

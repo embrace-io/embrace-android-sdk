@@ -66,14 +66,20 @@ class EmbSpan(
 
     override fun isRecording(): Boolean = impl.isRecording
 
-    override fun addEvent(name: String, timestamp: Long?, attributes: MutableAttributeContainer.() -> Unit) {
-        val attrs = EmbMutableAttributeContainer().apply(attributes).attributes
-        impl.addEvent(name, timestamp, attrs)
+    override fun addEvent(name: String, timestamp: Long?, attributes: (MutableAttributeContainer.() -> Unit)?) {
+        val container = EmbMutableAttributeContainer()
+        if (attributes != null) {
+            container.attributes()
+        }
+        impl.addEvent(name, timestamp, container.attributes)
     }
 
-    override fun addLink(spanContext: SpanContext, attributes: MutableAttributeContainer.() -> Unit) {
-        val attrs = EmbMutableAttributeContainer().apply(attributes).attributes
-        impl.addLink(spanContext, attrs)
+    override fun addLink(spanContext: SpanContext, attributes: (MutableAttributeContainer.() -> Unit)?) {
+        val container = EmbMutableAttributeContainer()
+        if (attributes != null) {
+            container.attributes()
+        }
+        impl.addLink(spanContext, container.attributes)
     }
 
     override val attributes: Map<String, Any>

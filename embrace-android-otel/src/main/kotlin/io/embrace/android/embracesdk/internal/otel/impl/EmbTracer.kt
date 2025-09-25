@@ -30,7 +30,7 @@ class EmbTracer(
         parentContext: Context?,
         spanKind: SpanKind,
         startTimestamp: Long?,
-        action: SpanRelationships.() -> Unit,
+        action: (SpanRelationships.() -> Unit)?,
     ): Span {
         val spanCreator = OtelSpanStartArgs(
             name = name,

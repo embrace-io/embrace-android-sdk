@@ -26,10 +26,10 @@ class FakeSpan(
 
     override val attributes: Map<String, Any> = attrs
 
-    override fun addEvent(name: String, timestamp: Long?, attributes: MutableAttributeContainer.() -> Unit) {
+    override fun addEvent(name: String, timestamp: Long?, attributes: (MutableAttributeContainer.() -> Unit)?) {
     }
 
-    override fun addLink(spanContext: SpanContext, attributes: MutableAttributeContainer.() -> Unit) {
+    override fun addLink(spanContext: SpanContext, attributes: (MutableAttributeContainer.() -> Unit)?) {
     }
 
     override fun end() {

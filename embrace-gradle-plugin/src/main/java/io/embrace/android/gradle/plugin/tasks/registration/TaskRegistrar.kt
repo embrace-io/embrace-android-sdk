@@ -8,7 +8,6 @@ import io.embrace.android.gradle.plugin.buildreporter.BuildTelemetryService
 import io.embrace.android.gradle.plugin.config.PluginBehavior
 import io.embrace.android.gradle.plugin.config.variant.EmbraceVariantConfigurationBuilder
 import io.embrace.android.gradle.plugin.dependency.installDependenciesForVariant
-import io.embrace.android.gradle.plugin.gradle.GradleCompatibilityHelper
 import io.embrace.android.gradle.plugin.instrumentation.AsmTaskRegistration
 import io.embrace.android.gradle.plugin.instrumentation.config.model.VariantConfig
 import io.embrace.android.gradle.plugin.model.AndroidCompactedVariantData
@@ -27,7 +26,7 @@ class TaskRegistrar(
     private val behavior: PluginBehavior,
     private val embraceVariantConfigurationBuilder: EmbraceVariantConfigurationBuilder,
     private val variantConfigurationsListProperty: ListProperty<VariantConfig>,
-    private val agpWrapper: AgpWrapper
+    private val agpWrapper: AgpWrapper,
 ) {
 
     private val logger = EmbraceLogger(TaskRegistrar::class.java)
@@ -142,6 +141,6 @@ class TaskRegistrar(
         )
 
         // let's add configuration for current variant to our property
-        GradleCompatibilityHelper.add(variantConfigurationsListProperty, fullVariantConfiguration)
+        variantConfigurationsListProperty.add(fullVariantConfiguration)
     }
 }

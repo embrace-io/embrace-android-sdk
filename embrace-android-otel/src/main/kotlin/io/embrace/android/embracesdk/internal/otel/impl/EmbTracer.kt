@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.otel.impl
 
+import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.otel.getDefaultContext
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.embrace.android.embracesdk.internal.otel.spans.OtelSpanStartArgs
@@ -40,17 +41,24 @@ class EmbTracer(
             tracer = impl,
             parentCtx = parentContext ?: openTelemetry.getDefaultContext(useKotlinSdk),
             openTelemetry = openTelemetry,
+            spanKind = spanKind,
+            startTimeMs = startTimestamp?.nanosToMillis()
         )
+        var span: Span? = null
 
         spanService.createSpan(spanCreator)?.let { embraceSpan ->
             if (embraceSpan.start()) {
-                return EmbSpan(
+                span = EmbSpan(
                     impl = embraceSpan,
                     clock = clock,
                     openTelemetry = openTelemetry,
                 )
             }
         }
-        return EmbInvalidSpan(openTelemetry)
+        val ref = span ?: EmbInvalidSpan(openTelemetry)
+        if (action != null) {
+            action(ref)
+        }
+        return ref
     }
 }

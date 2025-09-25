@@ -8,8 +8,8 @@ class GradleVersionTest {
 
     @Test
     fun testComparator() {
-        assertEquals(0, GradleVersion.GRADLE_8_0.compareTo(GradleVersion.GRADLE_8_0))
-        assertEquals(1, GradleVersion.CURRENT.compareTo(GradleVersion.GRADLE_8_0))
-        assertEquals(-1, GradleVersion.GRADLE_8_0.compareTo(GradleVersion.CURRENT))
+        assertEquals(0, GradleVersion.MIN_VERSION.compareTo(GradleVersion.MIN_VERSION))
+        assertEquals(1, GradleVersion.CURRENT.compareTo(GradleVersion.MIN_VERSION))
+        assertEquals(-1, GradleVersion.MIN_VERSION.compareTo(GradleVersion.CURRENT))
     }
 }

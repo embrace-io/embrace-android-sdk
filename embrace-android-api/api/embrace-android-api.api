@@ -3,6 +3,7 @@ public final class io/embrace/android/embracesdk/AppFramework : java/lang/Enum {
 	public static final field NATIVE Lio/embrace/android/embracesdk/AppFramework;
 	public static final field REACT_NATIVE Lio/embrace/android/embracesdk/AppFramework;
 	public static final field UNITY Lio/embrace/android/embracesdk/AppFramework;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public static fun valueOf (Ljava/lang/String;)Lio/embrace/android/embracesdk/AppFramework;
 	public static fun values ()[Lio/embrace/android/embracesdk/AppFramework;
 }
@@ -11,6 +12,7 @@ public final class io/embrace/android/embracesdk/LastRunEndState : java/lang/Enu
 	public static final field CLEAN_EXIT Lio/embrace/android/embracesdk/LastRunEndState;
 	public static final field CRASH Lio/embrace/android/embracesdk/LastRunEndState;
 	public static final field INVALID Lio/embrace/android/embracesdk/LastRunEndState;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public final fun getValue ()I
 	public static fun valueOf (Ljava/lang/String;)Lio/embrace/android/embracesdk/LastRunEndState;
 	public static fun values ()[Lio/embrace/android/embracesdk/LastRunEndState;
@@ -20,6 +22,7 @@ public final class io/embrace/android/embracesdk/Severity : java/lang/Enum {
 	public static final field ERROR Lio/embrace/android/embracesdk/Severity;
 	public static final field INFO Lio/embrace/android/embracesdk/Severity;
 	public static final field WARNING Lio/embrace/android/embracesdk/Severity;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public static fun valueOf (Ljava/lang/String;)Lio/embrace/android/embracesdk/Severity;
 	public static fun values ()[Lio/embrace/android/embracesdk/Severity;
 }
@@ -245,6 +248,7 @@ public final class io/embrace/android/embracesdk/network/http/HttpMethod : java/
 	public static final field PUT Lio/embrace/android/embracesdk/network/http/HttpMethod;
 	public static final field TRACE Lio/embrace/android/embracesdk/network/http/HttpMethod;
 	public static final fun fromString (Ljava/lang/String;)Lio/embrace/android/embracesdk/network/http/HttpMethod;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public static fun valueOf (Ljava/lang/String;)Lio/embrace/android/embracesdk/network/http/HttpMethod;
 	public static fun values ()[Lio/embrace/android/embracesdk/network/http/HttpMethod;
 }
@@ -256,6 +260,7 @@ public final class io/embrace/android/embracesdk/network/http/HttpMethod$Compani
 public final class io/embrace/android/embracesdk/spans/AutoTerminationMode : java/lang/Enum {
 	public static final field NONE Lio/embrace/android/embracesdk/spans/AutoTerminationMode;
 	public static final field ON_BACKGROUND Lio/embrace/android/embracesdk/spans/AutoTerminationMode;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public static fun valueOf (Ljava/lang/String;)Lio/embrace/android/embracesdk/spans/AutoTerminationMode;
 	public static fun values ()[Lio/embrace/android/embracesdk/spans/AutoTerminationMode;
 }
@@ -304,8 +309,6 @@ public final class io/embrace/android/embracesdk/spans/EmbraceSpanEvent {
 	public final fun component1 ()Ljava/lang/String;
 	public final fun component2 ()J
 	public final fun component3 ()Ljava/util/Map;
-	public final fun copy (Ljava/lang/String;JLjava/util/Map;)Lio/embrace/android/embracesdk/spans/EmbraceSpanEvent;
-	public static synthetic fun copy$default (Lio/embrace/android/embracesdk/spans/EmbraceSpanEvent;Ljava/lang/String;JLjava/util/Map;ILjava/lang/Object;)Lio/embrace/android/embracesdk/spans/EmbraceSpanEvent;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getAttributes ()Ljava/util/Map;
 	public final fun getName ()Ljava/lang/String;
@@ -322,6 +325,7 @@ public final class io/embrace/android/embracesdk/spans/ErrorCode : java/lang/Enu
 	public static final field FAILURE Lio/embrace/android/embracesdk/spans/ErrorCode;
 	public static final field UNKNOWN Lio/embrace/android/embracesdk/spans/ErrorCode;
 	public static final field USER_ABANDON Lio/embrace/android/embracesdk/spans/ErrorCode;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public static fun valueOf (Ljava/lang/String;)Lio/embrace/android/embracesdk/spans/ErrorCode;
 	public static fun values ()[Lio/embrace/android/embracesdk/spans/ErrorCode;
 }

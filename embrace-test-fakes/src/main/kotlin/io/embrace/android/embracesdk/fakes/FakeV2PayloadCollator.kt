@@ -26,10 +26,6 @@ class FakeV2PayloadCollator(
             ApplicationState.BACKGROUND -> {
                 baCount.incrementAndGet()
             }
-
-            else -> {
-                error("Unknown appState")
-            }
         }
         SessionZygote(
             sessionId = currentSessionSpan.getSessionId(),

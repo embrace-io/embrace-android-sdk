@@ -40,7 +40,7 @@ inline fun <reified T> factory(
     noinline provider: Provider<T>,
 ): ReadOnlyProperty<Any?, T> = FactoryDelegate(provider)
 
-class FactoryDelegate<T>(private inline val provider: Provider<T>) : ReadOnlyProperty<Any?, T> {
+class FactoryDelegate<T>(private val provider: Provider<T>) : ReadOnlyProperty<Any?, T> {
 
     override fun getValue(thisRef: Any?, property: KProperty<*>): T = provider()
 }

@@ -7,8 +7,6 @@ sealed class GradleVersion(private val version: org.gradle.util.GradleVersion) :
 
     object MIN_VERSION : GradleVersion(version("8.0.2"))
     object CURRENT : GradleVersion(org.gradle.util.GradleVersion.current())
-    object GRADLE_7_6 : GradleVersion(version("7.6"))
-    object GRADLE_8_0 : GradleVersion(version("8.0"))
     object GRADLE_8_5 : GradleVersion(version("8.5"))
 
     override fun compareTo(other: GradleVersion): Int {

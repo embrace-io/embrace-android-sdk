@@ -4,7 +4,7 @@ public final class io/embrace/test/fixtures/TestApplication extends android/app/
 
   // compiled from: TestApplication.kt
 
-  @Lkotlin/Metadata;(mv={1, 8, 0}, k=1, xi=48, d1={"\u0000\u0012\n\u0002\u0018\u0002\n\u0002\u0018\u0002\n\u0002\u0008\u0002\n\u0002\u0010\u0002\n\u0000\u0018\u00002\u00020\u0001B\u0005\u00a2\u0006\u0002\u0010\u0002J\u0008\u0010\u0003\u001a\u00020\u0004H\u0016\u00a8\u0006\u0005"}, d2={"Lio/embrace/test/fixtures/TestApplication;", "Landroid/app/Application;", "()V", "onCreate", "", "embrace-bytecode-instrumentation-tests_release"})
+  @Lkotlin/Metadata;(mv={2, 0, 0}, k=1, xi=48, d1={"\u0000\u0012\n\u0002\u0018\u0002\n\u0002\u0018\u0002\n\u0002\u0008\u0003\n\u0002\u0010\u0002\n\u0000\u0018\u00002\u00020\u0001B\u0007\u00a2\u0006\u0004\u0008\u0002\u0010\u0003J\u0008\u0010\u0004\u001a\u00020\u0005H\u0016\u00a8\u0006\u0006"}, d2={"Lio/embrace/test/fixtures/TestApplication;", "Landroid/app/Application;", "<init>", "()V", "onCreate", "", "embrace-bytecode-instrumentation-tests_release"})
 
   // access flags 0x1
   public <init>()V
@@ -21,15 +21,16 @@ public final class io/embrace/test/fixtures/TestApplication extends android/app/
   // access flags 0x1
   public onCreate()V
    L0
-    LINENUMBER 7 L0
     ALOAD 0
-    INVOKESPECIAL android/app/Application.onCreate ()V
    L1
-    LINENUMBER 8 L1
+    LINENUMBER 7 L1
+    INVOKESPECIAL android/app/Application.onCreate ()V
+   L2
+    LINENUMBER 8 L2
     INVOKESTATIC io/embrace/android/embracesdk/internal/instrumentation/bytecode/ApplicationInitTimeBytecodeEntrypoint.applicationInitEnd ()V
     RETURN
-   L2
-    LOCALVARIABLE this Lio/embrace/test/fixtures/TestApplication; L0 L2 0
+   L3
+    LOCALVARIABLE this Lio/embrace/test/fixtures/TestApplication; L0 L3 0
     MAXSTACK = 1
     MAXLOCALS = 1
 }

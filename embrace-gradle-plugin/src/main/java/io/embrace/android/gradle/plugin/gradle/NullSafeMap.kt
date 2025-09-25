@@ -22,7 +22,7 @@ fun <O, I : Any> Provider<I>.nullSafeMap(transform: (I) -> O?): Provider<O> {
 /**
  * Workaround that creates an explicit anon inner class so that configuration cache isn't broken.
  */
-@Suppress("ObjectLiteralToLambda")
+@Suppress("ObjectLiteralToLambda", "WRONG_NULLABILITY_FOR_JAVA_OVERRIDE")
 inline fun <T, R> Provider<T>.safeFlatMap(
     crossinline transform: (T) -> Provider<R>
 ): Provider<R> = flatMap(object : Transformer<Provider<R>, T> {

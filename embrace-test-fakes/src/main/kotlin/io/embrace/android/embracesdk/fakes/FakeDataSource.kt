@@ -40,6 +40,7 @@ class FakeDataSource(
         }
     }
 
+    @Deprecated("")
     override fun onLowMemory() {
     }
 

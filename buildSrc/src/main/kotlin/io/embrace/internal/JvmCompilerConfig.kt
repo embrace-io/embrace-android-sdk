@@ -30,8 +30,8 @@ fun Project.configureCompilers(module: EmbraceBuildLogicExtension) {
         when (val kotlin = project.extensions.getByName("kotlin")) {
             is KotlinJvmProjectExtension -> {
                 kotlin.compilerOptions {
-                    apiVersion.set(KotlinVersion.KOTLIN_1_8)
-                    languageVersion.set(KotlinVersion.KOTLIN_1_8)
+                    apiVersion.set(KotlinVersion.KOTLIN_2_0)
+                    languageVersion.set(KotlinVersion.KOTLIN_2_0)
                     jvmTarget.set(target)
                     allWarningsAsErrors.set(true)
                 }
@@ -39,8 +39,8 @@ fun Project.configureCompilers(module: EmbraceBuildLogicExtension) {
 
             is KotlinAndroidExtension -> {
                 kotlin.compilerOptions {
-                    apiVersion.set(KotlinVersion.KOTLIN_1_8)
-                    languageVersion.set(KotlinVersion.KOTLIN_1_8)
+                    apiVersion.set(KotlinVersion.KOTLIN_2_0)
+                    languageVersion.set(KotlinVersion.KOTLIN_2_0)
                     jvmTarget.set(target)
                     allWarningsAsErrors.set(true)
                 }

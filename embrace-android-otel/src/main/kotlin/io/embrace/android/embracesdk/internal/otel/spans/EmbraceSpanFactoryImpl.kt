@@ -364,7 +364,13 @@ private class EmbraceSpanImpl(
         get() = startedSpan.get()?.spanKind ?: SpanKind.INTERNAL
 
     override fun events(): List<SpanEvent> {
-        val redactedCustomEvents = customEvents.map { it.copy(attributes = it.attributes.redactIfSensitive()) }
+        val redactedCustomEvents = customEvents.mapNotNull {
+            EmbraceSpanEvent.create(
+                name = it.name,
+                timestampMs = it.timestampNanos.nanosToMillis(),
+                attributes = it.attributes.redactIfSensitive()
+            )
+        }
         return systemEvents.map(EmbraceSpanEvent::toEmbracePayload) +
             redactedCustomEvents.map(EmbraceSpanEvent::toEmbracePayload)
     }
@@ -419,8 +425,13 @@ private class EmbraceSpanImpl(
     }
 
     private fun populateEvents(spanToStop: Span) {
-        val redactedCustomEvents = customEvents.map { it.copy(attributes = it.attributes.redactIfSensitive()) }
-
+        val redactedCustomEvents = customEvents.mapNotNull {
+            EmbraceSpanEvent.create(
+                name = it.name,
+                timestampMs = it.timestampNanos.nanosToMillis(),
+                attributes = it.attributes.redactIfSensitive()
+            )
+        }
         (systemEvents + redactedCustomEvents).forEach { event ->
             val eventAttributes = dataValidator.truncateAttributes(event.attributes, internal)
 

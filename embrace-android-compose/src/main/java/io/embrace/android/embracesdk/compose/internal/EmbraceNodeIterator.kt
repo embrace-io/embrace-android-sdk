@@ -1,10 +1,9 @@
-@file:Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
-
 package io.embrace.android.embracesdk.compose.internal
 
+import android.annotation.SuppressLint
 import android.view.View
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.platform.AndroidComposeView
+import androidx.compose.ui.platform.ViewRootForTest
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsConfiguration
 import androidx.compose.ui.semantics.SemanticsNode
@@ -22,8 +21,9 @@ internal class EmbraceNodeIterator {
      *  we collect the compose tree and iterate over it to find the clicked view,
      *  by comparing with the received position (x,y)
      *  */
+    @SuppressLint("VisibleForTests")
     fun findClickedElement(root: View, x: Float, y: Float) {
-        val semanticsOwner = if (root is AndroidComposeView) root.semanticsOwner else return
+        val semanticsOwner = if (root is ViewRootForTest) root.semanticsOwner else return
         val semanticsNodes = semanticsOwner.getAllSemanticsNodes(true)
 
         findClickedElement(semanticsNodes, x, y)?.let {

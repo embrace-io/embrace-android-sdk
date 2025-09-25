@@ -5,6 +5,7 @@ import java.util.concurrent.TimeUnit
 /**
  * Represents an Event in an [EmbraceSpan]
  */
+@ConsistentCopyVisibility
 public data class EmbraceSpanEvent internal constructor(
     /**
      * The name of the event

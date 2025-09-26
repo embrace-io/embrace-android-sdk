@@ -17,7 +17,6 @@ fun Project.configureJvmWarningsAsErrors() {
 fun Project.configureCompilers(module: EmbraceBuildLogicExtension) {
     project.afterEvaluate {
         val target = when (module.jvmTarget.get()) {
-            JavaVersion.VERSION_1_8 -> JvmTarget.JVM_1_8
             JavaVersion.VERSION_11 -> JvmTarget.JVM_11
             else -> error("Unsupported jvm target: ${module.jvmTarget.get()}")
         }

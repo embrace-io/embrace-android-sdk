@@ -210,7 +210,7 @@ class FakeEmbraceSdkSpan(
 
     override fun name(): String = name
 
-    override val spanKind: SpanKind = SpanKind.INTERNAL
+    override val spanKind: SpanKind = otelSpanStartArgs?.spanKind ?: SpanKind.INTERNAL
 
     override fun events(): List<SpanEvent> {
         throw UnsupportedOperationException()

@@ -36,6 +36,7 @@ internal class FakeApiServer(
     private val serializer by threadLocal { TestPlatformSerializer() }
     private val sessionRequests = CopyOnWriteArrayList<Envelope<SessionPayload>>()
     private val logRequests = CopyOnWriteArrayList<Envelope<LogPayload>>()
+    private val logRequestHeaders = CopyOnWriteArrayList<Map<String, String>>()
     private val attachments = CopyOnWriteArrayList<List<FormPart>>()
     private val configRequests = CopyOnWriteArrayList<String>()
 
@@ -60,6 +61,11 @@ internal class FakeApiServer(
      */
     fun getConfigRequests(): List<String> = configRequests.toList()
 
+    /**
+     * Returns the headers from log requests in the order they were received.
+     */
+    fun getLogRequestHeaders(): List<Map<String, String>> = logRequestHeaders.toList()
+
     override fun dispatch(request: RecordedRequest): MockResponse {
         val endpoint = request.asEndpoint()
         deliveryTracer.onServerReceivedRequest(endpoint.name)
@@ -78,11 +84,12 @@ internal class FakeApiServer(
         endpoint: Endpoint,
     ): MockResponse {
         val envelope = deserializeEnvelope(request, endpoint)
-        validateHeaders(request.headers.toMultimap().mapValues { it.value.joinToString() })
+        val headers = request.headers.toMultimap().mapValues { it.value.joinToString() }
+        validateHeaders(headers)
 
         when (endpoint) {
             Endpoint.SESSIONS -> handleSessionRequest(endpoint, envelope)
-            Endpoint.LOGS -> handleLogRequest(endpoint, envelope)
+            Endpoint.LOGS -> handleLogRequest(endpoint, envelope, headers)
             else -> error("Unsupported endpoint $endpoint")
         }
         return MockResponse().setResponseCode(200)
@@ -97,9 +104,10 @@ internal class FakeApiServer(
 
     @OptIn(IncubatingApi::class)
     @Suppress("UNCHECKED_CAST")
-    private fun handleLogRequest(endpoint: Endpoint, envelope: Envelope<*>) {
+    private fun handleLogRequest(endpoint: Endpoint, envelope: Envelope<*>, headers: Map<String, String>) {
         val obj = envelope as Envelope<LogPayload>
         logRequests.add(obj)
+        logRequestHeaders.add(headers)
         deliveryTracer.onServerCompletedRequest(
             endpoint.name,
             obj.getLastLog().attributes?.findAttributeValue(LogAttributes.LOG_RECORD_UID) ?: ""

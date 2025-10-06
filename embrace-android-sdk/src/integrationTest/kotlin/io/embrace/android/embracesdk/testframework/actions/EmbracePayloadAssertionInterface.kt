@@ -66,6 +66,13 @@ internal class EmbracePayloadAssertionInterface(
     internal fun getLogEnvelopes(expectedSize: Int) = retrieveLogEnvelopes(expectedSize)
     internal fun getSingleLogEnvelope() = getLogEnvelopes(1).single()
 
+    /**
+     * Returns the headers from log requests in the order they were received.
+     */
+    internal fun getLogRequestHeaders(): List<Map<String, String>> {
+        return checkNotNull(apiServer).getLogRequestHeaders()
+    }
+
     private fun retrieveLogEnvelopes(
         expectedSize: Int,
     ): List<Envelope<LogPayload>> {

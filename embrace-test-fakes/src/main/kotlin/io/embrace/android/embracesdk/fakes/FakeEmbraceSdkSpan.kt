@@ -88,8 +88,8 @@ class FakeEmbraceSdkSpan(
     private fun createFakeKotlinSdkSpan(timestampMs: Long): Span = FakeSpan(
         name = name,
         spanContext = openTelemetry.spanContextFactory.create(
-            traceId = parent?.traceId ?: openTelemetry.tracingIdFactory.generateTraceId(),
-            spanId = openTelemetry.tracingIdFactory.generateSpanId(),
+            traceId = parent?.traceId ?: openTelemetry.tracingIdFactory.generateTraceIdBytes().toHexString(),
+            spanId = openTelemetry.tracingIdFactory.generateSpanIdBytes().toHexString(),
             traceFlags = openTelemetry.traceFlagsFactory.default,
             traceState = openTelemetry.traceStateFactory.default,
         ),

@@ -5,15 +5,24 @@ import io.embrace.opentelemetry.kotlin.factory.TracingIdFactory
 import kotlin.random.Random
 
 @OptIn(ExperimentalApi::class)
-class FakeTracingIdFactory : TracingIdFactory {
-    override val invalidSpanId: String = "0000000000000000"
-    override val invalidTraceId: String = "00000000000000000000000000000000"
+class FakeTracingIdFactory(private val random: Random = Random(0)) : TracingIdFactory {
 
-    override fun generateSpanId(): String {
-        return Random.nextLong().toULong().toString(16).padStart(16, '0')
+    private companion object {
+        private const val TRACE_ID_BYTES = 16
+        private const val SPAN_ID_BYTES = 8
     }
 
-    override fun generateTraceId(): String {
-        return Random.nextLong().toULong().toString(16).padStart(32, '0')
+    override fun generateTraceIdBytes(): ByteArray = generateId(TRACE_ID_BYTES)
+    override fun generateSpanIdBytes(): ByteArray = generateId(SPAN_ID_BYTES)
+
+    override val invalidTraceId: ByteArray = ByteArray(TRACE_ID_BYTES)
+    override val invalidSpanId: ByteArray = ByteArray(SPAN_ID_BYTES)
+
+    private fun generateId(length: Int): ByteArray {
+        val bytes = ByteArray(length)
+        do {
+            random.nextBytes(bytes)
+        } while (bytes.all { it == 0.toByte() }) // reject all-zero IDs
+        return bytes
     }
 }

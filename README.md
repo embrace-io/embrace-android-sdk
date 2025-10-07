@@ -81,6 +81,10 @@ For details about the features the Embrace Android SDK supports, refer to our [f
 ## Existing Embrace Customers Upgrading from 5.x
 - For existing customers on older versions of the Embrace SDK, follow the instructions in our [upgrade guide](https://github.com/embrace-io/embrace-android-sdk/blob/main/UPGRADING.md).
 
+## Considerations for building this library locally
+- For integration tests to run, NDK versions 22.1.7171670 and 27.0.12077973 should be installed. You can install them through Settings > Android SDK > SDK Tools.
+- NDK 22.1.7171670 requires Rosetta 2 to run on Macs with M processors. You can install it with `softwareupdate --install-rosetta`
+
 ## Support 
 
 We appreciate any feedback you have on the SDK and the APIs that it provides. To contribute to this project, please see our [Contribution Guidelines](https://github.com/embrace-io/embrace-android-sdk/blob/master/CONTRIBUTING.md). There, you'll be able to submit a feature request, create a bug report, or submit a pull request.

@@ -14,6 +14,7 @@ import io.embrace.android.embracesdk.internal.payload.SpanEvent
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.factory.TracingIdFactory
+import io.embrace.opentelemetry.kotlin.factory.toHexString
 import io.embrace.opentelemetry.kotlin.semconv.ExceptionAttributes
 import io.embrace.opentelemetry.kotlin.semconv.JvmAttributes
 
@@ -32,8 +33,8 @@ class AnrOtelMapper(
             val attrs = mapIntervalToSpanAttributes(interval)
             val events = mapIntervalToSpanEvents(interval)
             Span(
-                traceId = tracingIdFactory.generateTraceId(),
-                spanId = tracingIdFactory.generateSpanId(),
+                traceId = tracingIdFactory.generateTraceIdBytes().toHexString(),
+                spanId = tracingIdFactory.generateSpanIdBytes().toHexString(),
                 parentSpanId = OtelIds.INVALID_SPAN_ID,
                 name = "emb-thread-blockage",
                 startTimeNanos = interval.startTime.millisToNanos(),

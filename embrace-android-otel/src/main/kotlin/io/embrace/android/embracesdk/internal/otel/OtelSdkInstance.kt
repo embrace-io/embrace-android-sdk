@@ -20,17 +20,17 @@ internal fun createSdkOtelInstance(
     clock: Clock,
 ): OpenTelemetry {
     return if (useKotlinSdk) {
-        createOpenTelemetry(
-            tracerProvider = tracerProvider,
-            loggerProvider = loggerProvider,
-            clock = clock,
-        )
+        createOpenTelemetry {
+            tracerProvider { tracerProvider() }
+            loggerProvider { loggerProvider() }
+            this.clock = clock
+        }
     } else {
-        createCompatOpenTelemetry(
-            tracerProvider = tracerProvider,
-            loggerProvider = loggerProvider,
-            clock = clock
-        )
+        createCompatOpenTelemetry {
+            tracerProvider { tracerProvider() }
+            loggerProvider { loggerProvider() }
+            this.clock = clock
+        }
     }
 }
 

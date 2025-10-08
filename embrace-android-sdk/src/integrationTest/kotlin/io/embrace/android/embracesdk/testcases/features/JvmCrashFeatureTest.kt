@@ -63,7 +63,7 @@ internal class JvmCrashFeatureTest {
                 assertEquals(0, session.data.spanSnapshots?.size)
                 getSingleLogEnvelope().getLastLog().assertCrash(
                     state = "foreground",
-                    crashId = session.getCrashedId(),
+                    crashIdFromSession = session.getCrashedId(),
                     crashTimeMs = crashTimeMs,
                 )
             }
@@ -82,7 +82,24 @@ internal class JvmCrashFeatureTest {
                 val ba = getSingleSessionEnvelope(ApplicationState.BACKGROUND)
                 assertEquals(0, ba.data.spanSnapshots?.size)
                 getSingleLogEnvelope().getLastLog().assertCrash(
-                    crashId = ba.getCrashedId(),
+                    crashIdFromSession = ba.getCrashedId(),
+                    crashTimeMs = crashTimeMs,
+                )
+            }
+        )
+    }
+
+    @Test
+    fun `app crash in the background generates a crash log even if background activity disabled`() {
+        testRule.runTest(
+            persistedRemoteConfig = RemoteConfig(backgroundActivityConfig = BackgroundActivityRemoteConfig(0f)),
+            testCaseAction = {
+                crashTimeMs = clock.now()
+                simulateJvmUncaughtException(testException)
+            },
+            assertAction = {
+                getSingleLogEnvelope().getLastLog().assertCrash(
+                    crashIdFromSession = null,
                     crashTimeMs = crashTimeMs,
                 )
             }
@@ -131,12 +148,14 @@ internal class JvmCrashFeatureTest {
                 val message = getSingleSessionEnvelope()
                 val crashId = message.getSessionSpan()?.attributes?.findAttributeValue(embCrashId.name)
                 assertNotNull(crashId)
-                log.attributes?.assertMatches(mapOf(
-                    "emb.android.react_native_crash.js_exception" to expectedJsException,
-                    "emb.android.crash_number" to 1,
-                    "emb.android.crash.exception_cause" to expectedExceptionCause,
-                    LogAttributes.LOG_RECORD_UID to crashId
-                ))
+                log.attributes?.assertMatches(
+                    mapOf(
+                        "emb.android.react_native_crash.js_exception" to expectedJsException,
+                        "emb.android.crash_number" to 1,
+                        "emb.android.crash.exception_cause" to expectedExceptionCause,
+                        LogAttributes.LOG_RECORD_UID to crashId
+                    )
+                )
                 assertNotNull(log.attributes?.findAttributeValue("emb.android.threads"))
             }
         )
@@ -149,7 +168,7 @@ internal class JvmCrashFeatureTest {
     }
 
     private fun Log.assertCrash(
-        crashId: String,
+        crashIdFromSession: String?,
         state: String = "background",
         crashTimeMs: Long,
     ) {
@@ -164,17 +183,26 @@ internal class JvmCrashFeatureTest {
             expectedProperties = emptyMap(),
             expectedEmbType = "sys.android.crash",
             expectedState = state,
+            hasSession = crashIdFromSession != null,
         )
 
         val exceptionInfo = LegacyExceptionInfo.ofThrowable(testException)
         val expectedExceptionCause = serializer.toJson(listOf(exceptionInfo), List::class.java)
 
-        attributes?.assertMatches(mapOf(
-            embState.name to state,
-            "emb.android.crash_number" to 1,
-            "emb.android.crash.exception_cause" to expectedExceptionCause,
-            LogAttributes.LOG_RECORD_UID to crashId
-        ))
+        attributes?.assertMatches(
+            mapOf(
+                embState.name to state,
+                "emb.android.crash_number" to 1,
+                "emb.android.crash.exception_cause" to expectedExceptionCause,
+            )
+        )
+
+        val foundCrashId = attributes?.findAttributeValue(LogAttributes.LOG_RECORD_UID)
+        if (crashIdFromSession != null) {
+            assertEquals(crashIdFromSession, foundCrashId)
+        } else {
+            assertNotNull(foundCrashId)
+        }
         assertNotNull(attributes?.findAttributeValue("emb.android.threads"))
     }
 }

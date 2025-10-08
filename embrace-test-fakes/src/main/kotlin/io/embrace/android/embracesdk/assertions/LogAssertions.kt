@@ -18,6 +18,7 @@ import io.embrace.opentelemetry.kotlin.semconv.SessionAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 
 @OptIn(ExperimentalApi::class, IncubatingApi::class)
 fun assertOtelLogReceived(
@@ -33,6 +34,7 @@ fun assertOtelLogReceived(
     expectedProperties: Map<String, Any>? = null,
     expectedEmbType: String = "sys.log",
     expectedState: String = "background",
+    hasSession: Boolean = true,
 ) {
     assertNotNull(logReceived)
     logReceived?.let { log ->
@@ -41,7 +43,11 @@ fun assertOtelLogReceived(
         assertEquals(expectedSeverityNumber.severityNumber, log.severityNumber)
         assertEquals(expectedSeverityText ?: expectedSeverityNumber.name, log.severityText)
         assertEquals(expectedTimeMs.millisToNanos(), log.timeUnixNano)
-        assertFalse(log.attributes?.findAttributeValue(SessionAttributes.SESSION_ID).isNullOrBlank())
+        if (hasSession) {
+            assertFalse(log.attributes?.findAttributeValue(SessionAttributes.SESSION_ID).isNullOrBlank())
+        } else {
+            assertNull(log.attributes?.find { it.key == SessionAttributes.SESSION_ID })
+        }
         expectedType?.let { assertAttribute(log, embExceptionHandling.name, it) }
         assertEquals(expectedState, log.attributes?.findAttributeValue(embState.name))
         expectedExceptionName?.let {

@@ -81,6 +81,9 @@ For details about the features the Embrace Android SDK supports, refer to our [f
 ## Existing Embrace Customers Upgrading from 5.x
 - For existing customers on older versions of the Embrace SDK, follow the instructions in our [upgrade guide](https://github.com/embrace-io/embrace-android-sdk/blob/main/UPGRADING.md).
 
+## Considerations for building this library locally
+- For integration tests to run, NDK 29.0.14206865 should be installed. You can install it through Settings > Android SDK > SDK Tools.
+
 ## Support 
 
 We appreciate any feedback you have on the SDK and the APIs that it provides. To contribute to this project, please see our [Contribution Guidelines](https://github.com/embrace-io/embrace-android-sdk/blob/master/CONTRIBUTING.md). There, you'll be able to submit a feature request, create a bug report, or submit a pull request.

@@ -166,7 +166,7 @@ internal class SdkIntegrationTestRule(
             bootstrapper.openTelemetryModule.applyConfiguration(
                 sensitiveKeysBehavior = SensitiveKeysBehaviorImpl(instrumentedConfig),
                 bypassValidation = false,
-                otelBehavior = OtelBehaviorImpl(BehaviorThresholdCheck { "123456" }, persistedRemoteConfig)
+                otelBehavior = OtelBehaviorImpl(BehaviorThresholdCheck { "123456" }, instrumentedConfig, persistedRemoteConfig)
             )
 
             if (startSdk) {

@@ -162,4 +162,11 @@ interface EnabledFeatureConfig {
      * Will be true only if sdk_config.automatic_data_capture.end_startup_with_app_ready is true
      */
     fun isEndStartupWithAppReadyEnabled(): Boolean = false
+
+    /**
+     * Gates whether opentelemetry-kotlin-implementation should be used instead of opentelemetry-kotlin-compat. Defaults to false.
+     *
+     * sdk_config.otel.enable_otel_kotlin_sdk
+     */
+    fun isOtelKotlinSdkEnabled(): Boolean = false
 }

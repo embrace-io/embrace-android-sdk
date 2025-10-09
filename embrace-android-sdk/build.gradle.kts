@@ -12,7 +12,7 @@ embrace {
 description = "Embrace Android SDK: Core"
 
 android {
-    ndkVersion = "22.1.7171670"
+    ndkVersion = "29.0.14206865"
 
     defaultConfig {
         namespace = "io.embrace.android.embracesdk"

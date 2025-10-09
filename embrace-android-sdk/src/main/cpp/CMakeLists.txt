@@ -38,7 +38,6 @@ add_library(# Sets the name of the library.
         )
 
 include_directories(
-        3rdparty/libunwind/include
         3rdparty/libunwindstack-ndk/include
         3rdparty/parson
 )
@@ -75,9 +74,3 @@ set_target_properties(embrace-native
 add_subdirectory(3rdparty/libunwindstack-ndk/cmake)
 target_link_libraries(embrace-native unwindstack)
 target_link_options(embrace-native PRIVATE "-Wl,-z,max-page-size=16384")
-if (${ANDROID_ABI} STREQUAL "armeabi" OR ${ANDROID_ABI} STREQUAL "armeabi-v7a")
-    add_library(libunwind STATIC IMPORTED)
-    set_target_properties(libunwind PROPERTIES IMPORTED_LOCATION
-            ${ANDROID_NDK}/sources/cxx-stl/llvm-libc++/libs/${ANDROID_ABI}/libunwind.a)
-    target_link_libraries(embrace-native libunwind)
-endif ()

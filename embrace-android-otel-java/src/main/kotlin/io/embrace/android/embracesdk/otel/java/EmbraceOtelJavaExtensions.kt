@@ -29,10 +29,12 @@ fun Embrace.addJavaLogRecordExporter(logRecordExporter: OtelJavaLogRecordExporte
 /**
  * Returns an [OtelJavaOpenTelemetry] that provides working [Tracer] implementations that will record spans that fit into the Embrace data
  * model.
+ *
+ * Note: `sdk_config.otel.enable_otel_kotlin_sdk` must be set to `false` in your embrace-config.json file when using this method.
+ * If it is set to `true`, the OtelJavaOpenTelemetry instance may behave inconsistently.
  */
 @OptIn(ExperimentalApi::class)
 fun Embrace.getJavaOpenTelemetry(): OtelJavaOpenTelemetry {
-    // TODO: Should we return noop if getOpenTelemetryKotlin is noop?
     return this.getOpenTelemetryKotlin().toOtelJavaApi()
 }
 

@@ -19,6 +19,12 @@ data class SdkLocalConfig(
     val taps: TapsLocalConfig? = null,
 
     /**
+     * OpenTelemetry config settings
+     */
+    @Json(name = "otel")
+    val otel: OpenTelemetryLocalConfig? = null,
+
+    /**
      * View settings
      */
     @Json(name = "view_config")

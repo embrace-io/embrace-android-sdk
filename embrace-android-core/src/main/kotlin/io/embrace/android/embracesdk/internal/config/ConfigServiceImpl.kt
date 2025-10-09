@@ -48,7 +48,7 @@ internal class ConfigServiceImpl(
     override val webViewVitalsBehavior = WebViewVitalsBehaviorImpl(thresholdCheck, remoteConfig)
     override val networkSpanForwardingBehavior =
         NetworkSpanForwardingBehaviorImpl(thresholdCheck, instrumentedConfig, remoteConfig)
-    override val otelBehavior = OtelBehaviorImpl(thresholdCheck, remoteConfig)
+    override val otelBehavior = OtelBehaviorImpl(thresholdCheck, instrumentedConfig, remoteConfig)
 
     override val appId: String? = resolveAppId(instrumentedConfig.project.getAppId(), openTelemetryCfg)
 

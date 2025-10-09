@@ -1,12 +1,12 @@
 package io.embrace.android.embracesdk.internal.config.behavior
 
-import io.embrace.android.embracesdk.internal.config.UnimplementedConfig
-import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.internal.config.instrumented.schema.EnabledFeatureConfig
+import io.embrace.android.embracesdk.internal.config.remote.OtelKotlinSdkConfig
 
 /**
  * Provides the behavior for OpenTelemetry configuration
  */
-interface OtelBehavior : ConfigBehavior<UnimplementedConfig, RemoteConfig> {
+interface OtelBehavior : ConfigBehavior<EnabledFeatureConfig, OtelKotlinSdkConfig> {
 
     /**
      * Whether the Kotlin OpenTelemetry SDK should be used instead of the Java one.

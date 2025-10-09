@@ -9,6 +9,7 @@ import io.embrace.android.gradle.plugin.instrumentation.config.model.ComposeLoca
 import io.embrace.android.gradle.plugin.instrumentation.config.model.CrashHandlerLocalConfig
 import io.embrace.android.gradle.plugin.instrumentation.config.model.EmbraceVariantConfig
 import io.embrace.android.gradle.plugin.instrumentation.config.model.NetworkLocalConfig
+import io.embrace.android.gradle.plugin.instrumentation.config.model.OpenTelemetryLocalConfig
 import io.embrace.android.gradle.plugin.instrumentation.config.model.SdkLocalConfig
 import io.embrace.android.gradle.plugin.instrumentation.config.model.TapsLocalConfig
 import io.embrace.android.gradle.plugin.instrumentation.config.model.VariantConfig
@@ -96,6 +97,9 @@ class EnabledFeatureConfigInstrumentationKtTest {
                         ),
                         crashHandler = CrashHandlerLocalConfig(
                             enabled = true
+                        ),
+                        otel = OpenTelemetryLocalConfig(
+                            otelKotlinSdkEnabled = false
                         ),
                         networking = NetworkLocalConfig(
                             captureRequestContentLength = true,

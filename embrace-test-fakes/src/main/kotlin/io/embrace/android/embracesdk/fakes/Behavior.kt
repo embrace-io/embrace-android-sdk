@@ -128,7 +128,7 @@ internal fun createSensitiveKeysBehavior() = SensitiveKeysBehaviorImpl(Instrumen
 /**
  * An [OtelBehaviorImpl] that returns default values.
  */
-internal fun createOtelBehavior(
+fun createOtelBehavior(
     thresholdCheck: BehaviorThresholdCheck = behaviorThresholdCheck,
     remoteCfg: RemoteConfig? = null
-) = OtelBehaviorImpl(thresholdCheck, remoteCfg)
+) = OtelBehaviorImpl(thresholdCheck, InstrumentedConfigImpl, remoteCfg)

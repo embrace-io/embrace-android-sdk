@@ -37,5 +37,6 @@ fun createEnabledFeatureConfigInstrumentation(cfg: VariantConfig) = modelSdkConf
             }
         }
         boolMethod("isEndStartupWithAppReadyEnabled") { automaticDataCaptureConfig?.endStartupWithAppReadyEnabled }
+        boolMethod("isOtelKotlinSdkEnabled") { otel?.otelKotlinSdkEnabled }
     }
 }

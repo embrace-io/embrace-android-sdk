@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.internal.session.message
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeMetadataSource
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeResourceSource
-import io.embrace.android.embracesdk.fakes.FakeGatingService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeSessionPayloadSource
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
@@ -32,13 +31,11 @@ internal class PayloadMessageCollatorImplTest {
     private lateinit var coreModule: CoreModule
     private lateinit var currentSessionSpan: CurrentSessionSpan
     private lateinit var collator: PayloadMessageCollatorImpl
-    private lateinit var gatingService: FakeGatingService
 
     @Before
     fun setUp() {
         initModule = FakeInitModule()
         coreModule = CoreModuleImpl(RuntimeEnvironment.getApplication(), initModule)
-        gatingService = FakeGatingService()
         val sessionEnvelopeSource = SessionEnvelopeSourceImpl(
             metadataSource = FakeEnvelopeMetadataSource(),
             resourceSource = FakeEnvelopeResourceSource(),
@@ -46,7 +43,6 @@ internal class PayloadMessageCollatorImplTest {
         )
         currentSessionSpan = initModule.openTelemetryModule.currentSessionSpan
         collator = PayloadMessageCollatorImpl(
-            gatingService = gatingService,
             preferencesService = FakePreferenceService(),
             currentSessionSpan = currentSessionSpan,
             sessionEnvelopeSource = sessionEnvelopeSource
@@ -103,7 +99,6 @@ internal class PayloadMessageCollatorImplTest {
             )
         )
         payload.verifyFinalFieldsPopulated()
-        assertEquals(1, gatingService.envelopesFiltered.size)
     }
 
     @Test
@@ -130,7 +125,6 @@ internal class PayloadMessageCollatorImplTest {
             )
         )
         payload.verifyFinalFieldsPopulated()
-        assertEquals(1, gatingService.envelopesFiltered.size)
     }
 
     @Test

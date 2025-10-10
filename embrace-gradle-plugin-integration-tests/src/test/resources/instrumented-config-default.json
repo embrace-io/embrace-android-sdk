@@ -173,17 +173,6 @@
           "signature": "getSensitiveKeysDenylist()Ljava/util/List;"
         }
       ]
-    },
-    {
-      "className": "SessionConfigImpl",
-      "methods": [
-        {
-          "signature": "getFullSessionEvents()Ljava/util/List;"
-        },
-        {
-          "signature": "getSessionComponents()Ljava/util/List;"
-        }
-      ]
     }
   ]
 }

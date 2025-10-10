@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.injection
 
-import io.embrace.android.embracesdk.internal.gating.GatingService
 import io.embrace.android.embracesdk.internal.session.MemoryCleanerService
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactory
 import io.embrace.android.embracesdk.internal.session.message.PayloadMessageCollator
@@ -13,5 +12,4 @@ interface SessionOrchestrationModule {
     val sessionOrchestrator: SessionOrchestrator
     val sessionSpanAttrPopulator: SessionSpanAttrPopulator
     val memoryCleanerService: MemoryCleanerService
-    val gatingService: GatingService
 }

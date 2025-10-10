@@ -203,19 +203,6 @@
           "returnValue": "secret"
         }
       ]
-    },
-    {
-      "className": "SessionConfigImpl",
-      "methods": [
-        {
-          "signature": "getFullSessionEvents()Ljava/util/List;",
-          "returnValue": "crash,log"
-        },
-        {
-          "signature": "getSessionComponents()Ljava/util/List;",
-          "returnValue": "component_a,component_b"
-        }
-      ]
     }
   ]
 }

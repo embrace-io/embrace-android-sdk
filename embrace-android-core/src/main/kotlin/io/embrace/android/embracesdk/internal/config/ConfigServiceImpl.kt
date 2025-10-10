@@ -40,7 +40,7 @@ internal class ConfigServiceImpl(
     override val sensitiveKeysBehavior = SensitiveKeysBehaviorImpl(instrumentedConfig)
     override val logMessageBehavior = LogMessageBehaviorImpl(remoteConfig)
     override val anrBehavior = AnrBehaviorImpl(thresholdCheck, instrumentedConfig, remoteConfig)
-    override val sessionBehavior = SessionBehaviorImpl(instrumentedConfig, remoteConfig)
+    override val sessionBehavior = SessionBehaviorImpl(remoteConfig)
     override val networkBehavior = NetworkBehaviorImpl(instrumentedConfig, remoteConfig)
     override val dataCaptureEventBehavior = DataCaptureEventBehaviorImpl(remoteConfig)
     override val sdkModeBehavior = SdkModeBehaviorImpl(thresholdCheck, remoteConfig)

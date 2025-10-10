@@ -54,12 +54,6 @@ class InstrumentedConfigClassVisitorFactoryTest {
     }
 
     @Test
-    fun `should create visitor for SessionConfigImpl`() {
-        val visitor = createVisitor("$embracePackage.SessionConfigImpl")
-        assertTrue(visitor is ConfigInstrumentationClassVisitor)
-    }
-
-    @Test
     fun `should create visitor for Base64SharedObjectFilesMap`() {
         val visitor = createVisitor("$embracePackage.Base64SharedObjectFilesMapImpl")
         assertTrue(visitor is ConfigInstrumentationClassVisitor)

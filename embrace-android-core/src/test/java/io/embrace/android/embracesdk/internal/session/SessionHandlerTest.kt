@@ -5,8 +5,6 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeMetadataSource
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeResourceSource
-import io.embrace.android.embracesdk.fakes.FakeGatingService
-import io.embrace.android.embracesdk.fakes.FakeLogService
 import io.embrace.android.embracesdk.fakes.FakeMemoryCleanerService
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakeOtelPayloadMapper
@@ -22,7 +20,6 @@ import io.embrace.android.embracesdk.fakes.injection.FakePayloadSourceModule
 import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
 import io.embrace.android.embracesdk.internal.envelope.session.SessionEnvelopeSourceImpl
 import io.embrace.android.embracesdk.internal.envelope.session.SessionPayloadSourceImpl
-import io.embrace.android.embracesdk.internal.gating.EmbraceGatingService
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
@@ -58,7 +55,6 @@ internal class SessionHandlerTest {
     private lateinit var preferencesService: FakePreferenceService
     private lateinit var sessionIdTracker: FakeSessionIdTracker
     private lateinit var metadataService: FakeMetadataService
-    private lateinit var gatingService: FakeGatingService
     private lateinit var configService: FakeConfigService
     private lateinit var memoryCleanerService: FakeMemoryCleanerService
     private lateinit var payloadFactory: PayloadFactory
@@ -82,7 +78,6 @@ internal class SessionHandlerTest {
         configService = FakeConfigService(
             sessionBehavior = createSessionBehavior()
         )
-        gatingService = FakeGatingService(EmbraceGatingService(configService, FakeLogService()))
         preferencesService = FakePreferenceService()
         val initModule = FakeInitModule(clock = clock)
         spanSink = initModule.openTelemetryModule.spanSink
@@ -103,7 +98,6 @@ internal class SessionHandlerTest {
             sessionPayloadSource = sessionPayloadSource
         )
         val collator = PayloadMessageCollatorImpl(
-            gatingService,
             SessionEnvelopeSourceImpl(
                 metadataSource = FakeEnvelopeMetadataSource(),
                 resourceSource = FakeEnvelopeResourceSource(),

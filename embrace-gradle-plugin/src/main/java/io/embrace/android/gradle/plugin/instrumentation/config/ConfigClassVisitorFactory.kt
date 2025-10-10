@@ -5,7 +5,6 @@ import io.embrace.android.gradle.plugin.instrumentation.config.arch.sdk.createEn
 import io.embrace.android.gradle.plugin.instrumentation.config.arch.sdk.createNetworkCaptureConfigInstrumentation
 import io.embrace.android.gradle.plugin.instrumentation.config.arch.sdk.createProjectConfigInstrumentation
 import io.embrace.android.gradle.plugin.instrumentation.config.arch.sdk.createRedactionConfigInstrumentation
-import io.embrace.android.gradle.plugin.instrumentation.config.arch.sdk.createSessionConfigInstrumentation
 import io.embrace.android.gradle.plugin.instrumentation.config.arch.sdk.createSharedObjectFilesMapInstrumentation
 import io.embrace.android.gradle.plugin.instrumentation.config.model.VariantConfig
 import io.embrace.android.gradle.plugin.instrumentation.config.visitor.ConfigInstrumentationClassVisitor
@@ -18,7 +17,6 @@ object ConfigClassVisitorFactory {
         NetworkCaptureConfig,
         ProjectConfig,
         RedactionConfig,
-        SessionConfig,
         Base64SharedObjectFilesMap;
 
         val className = "io.embrace.android.embracesdk.internal.config.instrumented.${name}Impl"
@@ -36,7 +34,6 @@ object ConfigClassVisitorFactory {
                 NetworkCaptureConfig -> createNetworkCaptureConfigInstrumentation(cfg)
                 ProjectConfig -> createProjectConfigInstrumentation(cfg, reactNativeBundleId)
                 RedactionConfig -> createRedactionConfigInstrumentation(cfg)
-                SessionConfig -> createSessionConfigInstrumentation(cfg)
                 Base64SharedObjectFilesMap -> createSharedObjectFilesMapInstrumentation(encodedSharedObjectFilesMap)
             }
             return ConfigInstrumentationClassVisitor(instrumentation, api, cv)

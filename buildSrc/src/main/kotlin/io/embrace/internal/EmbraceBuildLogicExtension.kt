@@ -17,12 +17,6 @@ abstract class EmbraceBuildLogicExtension(objectFactory: ObjectFactory) {
         objectFactory.property(Boolean::class.java).convention(false)
 
     /**
-     * Whether this module contains an Android library or not.
-     */
-    val androidModule: Property<Boolean> =
-        objectFactory.property(Boolean::class.java).convention(true)
-
-    /**
      * If this is false then the module will not be published & will be treated as something that
      * contains internal code used for testing.
      */

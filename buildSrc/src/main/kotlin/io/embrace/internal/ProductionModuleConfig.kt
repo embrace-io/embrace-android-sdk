@@ -10,7 +10,6 @@ fun Project.configureProductionModule(
     module: EmbraceBuildLogicExtension,
 ) {
     with(project.pluginManager) {
-        apply("checkstyle")
         apply("org.jetbrains.kotlinx.kover")
         apply("com.vanniktech.maven.publish")
         apply("binary-compatibility-validator")
@@ -42,8 +41,6 @@ fun Project.configureProductionModule(
             getByName("test").resources.srcDir("src/integrationTest/resources")
         }
     }
-
-    configureCheckstyle()
 
     project.dependencies.apply {
         add("implementation", findLibrary("kotlin.stdlib"))

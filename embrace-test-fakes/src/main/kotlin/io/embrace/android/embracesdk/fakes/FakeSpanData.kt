@@ -64,7 +64,7 @@ class FakeSpanData(
     override fun getTotalAttributeCount(): Int = attributes.size()
 
     @Deprecated("Deprecated in Java")
-    @Suppress("TYPEALIAS_EXPANSION_DEPRECATION")
+    @Suppress("TYPEALIAS_EXPANSION_DEPRECATION", "DEPRECATION")
     override fun getInstrumentationLibraryInfo(): OtelJavaInstrumentationLibraryInfo = OtelJavaInstrumentationLibraryInfo.empty()
     override fun getResource(): OtelJavaResource = resource
 

@@ -60,5 +60,7 @@ internal class MemoryWarningDataSource(
     }
 
     override fun onConfigurationChanged(configuration: Configuration) {}
+
+    @Deprecated("")
     override fun onLowMemory() {}
 }

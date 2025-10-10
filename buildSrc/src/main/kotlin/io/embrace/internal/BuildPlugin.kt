@@ -21,16 +21,28 @@ class BuildPlugin : Plugin<Project> {
         project.configureDetekt()
 
         project.pluginManager.withPlugin("com.android.library") {
-            onAgpApplied(project, module)
+            onAgpPluginApplied(project, module)
+        }
+        project.pluginManager.withPlugin("org.jetbrains.kotlin.jvm") {
+            onJvmPluginApplied(project, module)
         }
         project.configureCompilers(module)
     }
 
-    private fun onAgpApplied(project: Project, module: EmbraceBuildLogicExtension) {
+    private fun onJvmPluginApplied(project: Project, module: EmbraceBuildLogicExtension) {
+        applyCommonSettings(project, module)
+    }
+
+    private fun onAgpPluginApplied(project: Project, module: EmbraceBuildLogicExtension) {
+        applyCommonSettings(project, module)
         val android = project.extensions.getByType(LibraryExtension::class.java)
         android.configureAndroidCompileOptions()
         android.configureLint(project)
+        project.configureAndroidProductionModule(android)
+    }
+
+    private fun applyCommonSettings(project: Project, module: EmbraceBuildLogicExtension) {
+        project.configureProductionModule(module)
         project.configureExplicitApiMode(module)
-        project.configureProductionModule(android, module)
     }
 }

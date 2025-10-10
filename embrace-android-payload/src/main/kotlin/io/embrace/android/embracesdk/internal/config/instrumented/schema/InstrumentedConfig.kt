@@ -11,6 +11,5 @@ interface InstrumentedConfig {
     val otelLimits: OtelLimitsConfig
     val project: ProjectConfig
     val redaction: RedactionConfig
-    val session: SessionConfig
     val symbols: Base64SharedObjectFilesMap
 }

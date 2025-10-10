@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.internal.session
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
-import io.embrace.android.embracesdk.fakes.FakeGatingService
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
@@ -101,9 +100,7 @@ internal class PayloadFactorySessionTest {
 
         val payloadSourceModule = FakePayloadSourceModule()
         val logger = EmbLoggerImpl()
-        val gatingService = FakeGatingService()
         val collator = PayloadMessageCollatorImpl(
-            gatingService,
             payloadSourceModule.sessionEnvelopeSource,
             preferencesService,
             currentSessionSpan

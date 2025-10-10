@@ -8,7 +8,6 @@ import io.embrace.android.embracesdk.internal.config.instrumented.schema.Network
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.OtelLimitsConfig
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.ProjectConfig
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.RedactionConfig
-import io.embrace.android.embracesdk.internal.config.instrumented.schema.SessionConfig
 
 /**
  * This class and its contents are instrumented by the embrace gradle plugin to alter its return values
@@ -28,7 +27,6 @@ object InstrumentedConfigImpl : InstrumentedConfig {
     override val otelLimits: OtelLimitsConfig = OtelLimitsConfigImpl
     override val project: ProjectConfig = ProjectConfigImpl
     override val redaction: RedactionConfig = RedactionConfigImpl
-    override val session: SessionConfig = SessionConfigImpl
     override val symbols: Base64SharedObjectFilesMap = Base64SharedObjectFilesMapImpl
 }
 
@@ -49,9 +47,6 @@ object ProjectConfigImpl : ProjectConfig
 
 @EmbraceInstrumented
 object RedactionConfigImpl : RedactionConfig
-
-@EmbraceInstrumented
-object SessionConfigImpl : SessionConfig
 
 @EmbraceInstrumented
 object Base64SharedObjectFilesMapImpl : Base64SharedObjectFilesMap

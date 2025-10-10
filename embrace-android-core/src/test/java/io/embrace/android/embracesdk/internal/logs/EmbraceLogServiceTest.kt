@@ -9,12 +9,9 @@ import io.embrace.android.embracesdk.fakes.FakeSessionPropertiesService
 import io.embrace.android.embracesdk.fakes.behavior.FakeLogMessageBehavior
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.config.FakeRedactionConfig
-import io.embrace.android.embracesdk.fakes.createSessionBehavior
 import io.embrace.android.embracesdk.internal.capture.session.toSessionPropertyAttributeName
 import io.embrace.android.embracesdk.internal.config.behavior.REDACTED_LABEL
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehaviorImpl
-import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
-import io.embrace.android.embracesdk.internal.config.remote.SessionRemoteConfig
 import io.embrace.android.embracesdk.internal.logs.attachments.Attachment
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
@@ -100,30 +97,6 @@ internal class EmbraceLogServiceTest {
             "fakeUid",
             log.schemaType.attributes()[LogAttributes.LOG_RECORD_UID]
         )
-    }
-
-    @Test
-    fun `info and warning logs are gated correctly`() {
-        // given a config that gates info and warning logs
-        fakeConfigService = FakeConfigService(
-            sessionBehavior = createSessionBehavior(
-                remoteCfg = RemoteConfig(
-                    sessionConfig = SessionRemoteConfig(
-                        isEnabled = true,
-                        sessionComponents = emptySet() // empty set will gate everything
-                    )
-                )
-            )
-        )
-        logService = createEmbraceLogService()
-
-        // when logging some messages
-        logService.log("info", Severity.INFO, LogExceptionType.NONE)
-        logService.log("warning!", Severity.WARNING, LogExceptionType.NONE)
-        logService.log("error!", Severity.ERROR, LogExceptionType.NONE)
-
-        // then only errors are logged
-        assertEquals(1, fakeLogWriter.logEvents.size)
     }
 
     @Test

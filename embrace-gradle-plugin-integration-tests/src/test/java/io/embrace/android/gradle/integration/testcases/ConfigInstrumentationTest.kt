@@ -26,7 +26,6 @@ class ConfigInstrumentationTest {
         "OtelLimitsConfigImpl",
         "ProjectConfigImpl",
         "RedactionConfigImpl",
-        "SessionConfigImpl",
     ).map {
         "/io/embrace/android/embracesdk/internal/config/instrumented/$it"
     }

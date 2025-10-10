@@ -91,16 +91,8 @@ class EmbraceLogService(
         logAttrs: Map<String, String>,
     ): TelemetryAttributes {
         val attributes = TelemetryAttributes(
-            sessionPropertiesProvider = if (!configService.sessionBehavior.shouldGateSessionProperties()) {
-                sessionPropertiesService::getProperties
-            } else {
-                { null }
-            },
-            customAttributes = if (!configService.sessionBehavior.shouldGateLogProperties()) {
-                customProperties?.mapValues { it.value.toString() } ?: emptyMap()
-            } else {
-                null
-            },
+            sessionPropertiesProvider = sessionPropertiesService::getProperties,
+            customAttributes = customProperties?.mapValues { it.value.toString() } ?: emptyMap(),
         )
         attributes.setAttribute(LogAttributes.LOG_RECORD_UID, Uuid.getEmbUuid())
         logAttrs.forEach {
@@ -115,29 +107,11 @@ class EmbraceLogService(
         attributes: TelemetryAttributes,
         schemaProvider: (TelemetryAttributes) -> SchemaType,
     ) {
-        if (shouldLogBeGated(severity)) {
-            return
-        }
         val logId = attributes.getAttribute(LogAttributes.LOG_RECORD_UID)
         if (logId == null || !logCounters.getValue(severity).addIfAllowed()) {
             return
         }
         logWriter.addLog(schemaProvider(attributes), severity, trimToMaxLength(message))
-    }
-
-    /**
-     * Checks if the info or warning log event should be gated based on gating config. Error logs
-     * should never be gated.
-     *
-     * @param severity of the log event
-     * @return true if the log should be gated
-     */
-    private fun shouldLogBeGated(severity: Severity): Boolean {
-        return when (severity) {
-            Severity.INFO -> configService.sessionBehavior.shouldGateInfoLog()
-            Severity.WARNING -> configService.sessionBehavior.shouldGateWarnLog()
-            else -> false
-        }
     }
 
     private fun trimToMaxLength(message: String): String {

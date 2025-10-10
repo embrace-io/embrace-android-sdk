@@ -44,7 +44,7 @@ fun createAnrBehavior(
  */
 fun createSessionBehavior(
     remoteCfg: RemoteConfig? = null,
-): SessionBehavior = SessionBehaviorImpl(InstrumentedConfigImpl, remoteCfg)
+): SessionBehavior = SessionBehaviorImpl(remoteCfg)
 
 /**
  * A [NetworkBehaviorImpl] that returns default values.

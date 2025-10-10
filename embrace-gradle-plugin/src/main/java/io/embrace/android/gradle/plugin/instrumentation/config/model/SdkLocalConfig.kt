@@ -94,12 +94,6 @@ data class SdkLocalConfig(
     val baseUrls: BaseUrlLocalConfig? = null,
 
     /**
-     * Session config settings
-     */
-    @Json(name = "session")
-    val sessionConfig: SessionLocalConfig? = null,
-
-    /**
      * Whether signal handler detection should be enabled or not
      */
     @Json(name = "sig_handler_detection")

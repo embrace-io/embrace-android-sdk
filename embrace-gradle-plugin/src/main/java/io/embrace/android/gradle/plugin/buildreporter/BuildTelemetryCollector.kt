@@ -9,7 +9,6 @@ import io.embrace.android.gradle.plugin.instrumentation.config.model.VariantConf
 import io.embrace.android.gradle.plugin.system.JavaSystemWrapper
 import io.embrace.embrace_gradle_plugin.BuildConfig
 import org.gradle.api.Project
-import org.gradle.api.internal.StartParameterInternal
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Provider
 import org.gradle.api.provider.ProviderFactory
@@ -81,12 +80,10 @@ class BuildTelemetryCollector {
         return try {
             if (isAtLeast(GradleVersion.GRADLE_8_5)) {
                 return BuildFeaturesWrapper().isConfigurationCacheEnabled(project).get()
-            } else if (isAtLeast(GradleVersion.GRADLE_7_6)) {
+            } else {
                 val isConfigurationCacheRequestedMethod =
                     this.gradle.startParameter::class.java.getMethod("isConfigurationCacheRequested")
                 return isConfigurationCacheRequestedMethod.invoke(this.gradle.startParameter) as Boolean
-            } else {
-                (this.gradle.startParameter as StartParameterInternal).configurationCache.get()
             }
         } catch (e: Throwable) {
             false

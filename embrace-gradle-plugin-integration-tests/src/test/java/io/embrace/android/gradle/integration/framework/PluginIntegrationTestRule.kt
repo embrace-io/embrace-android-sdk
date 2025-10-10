@@ -233,6 +233,7 @@ class PluginIntegrationTestRule : ExternalResource() {
                 "-Pagp_version=${testMatrix.agp}",
                 "-Pkotlin_version=${testMatrix.kotlin}",
                 "-Pplugin_snapshot_version=${loadSnapshotVersion()}",
+                "-PcompileAndTargetSdk=${testMatrix.compileAndTargetSdk}",
             )
         )
         // Android projects currently require this flag to compile

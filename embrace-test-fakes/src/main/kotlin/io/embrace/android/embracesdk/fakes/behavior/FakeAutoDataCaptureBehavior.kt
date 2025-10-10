@@ -5,7 +5,6 @@ import io.embrace.android.embracesdk.internal.config.instrumented.schema.Enabled
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 
 class FakeAutoDataCaptureBehavior(
-    private val memoryServiceEnabled: Boolean = true,
     private val thermalStatusCaptureEnabled: Boolean = true,
     private val powerSaveModeServiceEnabled: Boolean = true,
     private val networkConnectivityServiceEnabled: Boolean = true,
@@ -25,7 +24,6 @@ class FakeAutoDataCaptureBehavior(
     override val remote: RemoteConfig
         get() = throw UnsupportedOperationException()
 
-    override fun isMemoryWarningCaptureEnabled(): Boolean = memoryServiceEnabled
     override fun isThermalStatusCaptureEnabled(): Boolean = thermalStatusCaptureEnabled
     override fun isPowerSaveModeCaptureEnabled(): Boolean = powerSaveModeServiceEnabled
     override fun isNetworkConnectivityCaptureEnabled(): Boolean = networkConnectivityServiceEnabled

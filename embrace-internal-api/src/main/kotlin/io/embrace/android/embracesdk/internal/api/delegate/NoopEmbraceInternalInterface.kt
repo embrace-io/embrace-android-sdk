@@ -3,7 +3,6 @@
 package io.embrace.android.embracesdk.internal.api.delegate
 
 import android.annotation.SuppressLint
-import io.embrace.android.embracesdk.LogType
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
 import io.embrace.android.embracesdk.internal.InternalTracingApi
 import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData
@@ -20,15 +19,6 @@ internal class NoopEmbraceInternalInterface(
     override fun logWarning(message: String, properties: Map<String, Any>?, stacktrace: String?) {}
 
     override fun logError(message: String, properties: Map<String, Any>?, stacktrace: String?, isException: Boolean) {}
-
-    @Suppress("DEPRECATION")
-    override fun logHandledException(
-        throwable: Throwable,
-        type: LogType,
-        properties: Map<String, Any>?,
-        customStackTrace: Array<StackTraceElement>?,
-    ) {
-    }
 
     override fun recordCompletedNetworkRequest(
         url: String,

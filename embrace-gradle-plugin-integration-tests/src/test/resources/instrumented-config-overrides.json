@@ -61,10 +61,6 @@
           "returnValue": "false"
         },
         {
-          "signature": "isMemoryWarningCaptureEnabled()Z",
-          "returnValue": "false"
-        },
-        {
           "signature": "isNativeCrashCaptureEnabled()Z",
           "returnValue": "true"
         },

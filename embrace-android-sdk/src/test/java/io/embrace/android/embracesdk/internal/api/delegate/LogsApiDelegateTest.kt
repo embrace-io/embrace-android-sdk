@@ -10,7 +10,6 @@ import io.embrace.android.embracesdk.fakes.FakeSessionOrchestrator
 import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.fakeModuleInitBootstrapper
 import io.embrace.android.embracesdk.fakes.injection.FakeLogModule
-import io.embrace.android.embracesdk.internal.payload.AppFramework
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
@@ -29,7 +28,7 @@ internal class LogsApiDelegateTest {
         val moduleInitBootstrapper = fakeModuleInitBootstrapper(
             logModuleSupplier = { _, _, _, _, _, _, _, _ -> FakeLogModule(logService = logService) }
         )
-        moduleInitBootstrapper.init(ApplicationProvider.getApplicationContext(), AppFramework.NATIVE, 0)
+        moduleInitBootstrapper.init(ApplicationProvider.getApplicationContext(), 0)
         orchestrator = moduleInitBootstrapper.sessionOrchestrationModule.sessionOrchestrator as FakeSessionOrchestrator
 
         val sdkCallChecker = SdkCallChecker(FakeEmbLogger(), FakeTelemetryService())

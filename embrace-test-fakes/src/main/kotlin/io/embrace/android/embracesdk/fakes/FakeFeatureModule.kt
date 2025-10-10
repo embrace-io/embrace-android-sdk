@@ -28,5 +28,4 @@ class FakeFeatureModule : FeatureModule {
     override val thermalStateDataSource: DataSourceState<ThermalStateDataSource> = DataSourceState({ null })
     override val webViewDataSource: DataSourceState<WebViewDataSource> = DataSourceState({ null })
     override val internalErrorDataSource: DataSourceState<InternalErrorDataSource> = DataSourceState({ null })
-    override fun registerFeatures() {}
 }

@@ -2,7 +2,6 @@
 
 package io.embrace.android.embracesdk.internal.api
 
-import io.embrace.android.embracesdk.LogType
 import io.embrace.android.embracesdk.internal.api.delegate.NoopEmbraceInternalInterface
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.http.HttpMethod
@@ -29,7 +28,6 @@ internal class NoopEmbraceInternalInterfaceTest {
         impl.logInfo("", emptyMap())
         impl.logWarning("", emptyMap(), null)
         impl.logError("", emptyMap(), null, false)
-        impl.logHandledException(Throwable("handled exception"), LogType.ERROR, emptyMap(), null)
         impl.recordCompletedNetworkRequest(
             "https://google.com",
             "get",

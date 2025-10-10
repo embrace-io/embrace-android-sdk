@@ -20,9 +20,6 @@ class AutoDataCaptureBehaviorImpl(
 
     override val local = local.enabledFeatures
 
-    @Suppress("DEPRECATION")
-    override fun isMemoryWarningCaptureEnabled(): Boolean = local.isMemoryWarningCaptureEnabled()
-
     override fun isThermalStatusCaptureEnabled(): Boolean {
         return thresholdCheck.isBehaviorEnabled(remote?.dataConfig?.pctThermalStatusEnabled)
             ?: THERMAL_STATUS_ENABLED_DEFAULT

@@ -8,7 +8,6 @@ import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.network.http.HttpUrlConnectionTracker.registerFactory
-import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.Provider
@@ -117,7 +116,6 @@ internal class ModuleInitBootstrapper(
     @JvmOverloads
     fun init(
         context: Context,
-        appFramework: AppFramework,
         sdkStartTimeMs: Long,
         versionChecker: VersionChecker = BuildVersionChecker,
     ): Boolean {
@@ -152,7 +150,6 @@ internal class ModuleInitBootstrapper(
                             openTelemetryModule,
                             workerThreadModule,
                             androidServicesModule,
-                            appFramework
                         )
                     }
 
@@ -254,7 +251,6 @@ internal class ModuleInitBootstrapper(
                         )
                     }
                     postInit(FeatureModule::class) {
-                        featureModule.registerFeatures()
                         initModule.logger.errorHandlerProvider = { featureModule.internalErrorDataSource.dataSource }
                     }
 

@@ -27,14 +27,6 @@ interface EnabledFeatureConfig {
     fun isViewClickCoordinateCaptureEnabled(): Boolean = false
 
     /**
-     * Gates memory warning capture
-     *
-     * sdk_config.automatic_data_capture.memory_info
-     */
-    @Deprecated("Will be removed in a future release.")
-    fun isMemoryWarningCaptureEnabled(): Boolean = true
-
-    /**
      * Gates power save mode capture
      *
      * sdk_config.automatic_data_capture.power_save_mode_info

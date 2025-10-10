@@ -2,7 +2,6 @@
 
 package io.embrace.android.embracesdk.internal
 
-import io.embrace.android.embracesdk.LogType
 import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData
 import io.embrace.android.embracesdk.internal.payload.TapBreadcrumb
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
@@ -37,16 +36,6 @@ interface EmbraceInternalInterface : InternalTracingApi {
         properties: Map<String, Any>?,
         stacktrace: String?,
         isException: Boolean,
-    )
-
-    /**
-     * Backwards compatible way for hosted SDKs to log a handled exception with different log levels
-     */
-    fun logHandledException(
-        throwable: Throwable,
-        type: LogType,
-        properties: Map<String, Any>?,
-        customStackTrace: Array<StackTraceElement>?,
     )
 
     /**

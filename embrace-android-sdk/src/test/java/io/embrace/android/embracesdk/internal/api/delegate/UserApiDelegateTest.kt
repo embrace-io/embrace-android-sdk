@@ -7,7 +7,6 @@ import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.fakeModuleInitBootstrapper
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
-import io.embrace.android.embracesdk.internal.payload.AppFramework
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -34,7 +33,6 @@ internal class UserApiDelegateTest {
         )
         moduleInitBootstrapper.init(
             ApplicationProvider.getApplicationContext(),
-            AppFramework.NATIVE,
             0
         )
         val sdkCallChecker = SdkCallChecker(FakeEmbLogger(), FakeTelemetryService())

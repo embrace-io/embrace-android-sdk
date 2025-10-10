@@ -6,12 +6,6 @@ import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 interface AutoDataCaptureBehavior : ConfigBehavior<EnabledFeatureConfig, RemoteConfig> {
 
     /**
-     * Returns true if [io.embrace.android.embracesdk.MemoryService] should
-     * automatically capture data.
-     */
-    fun isMemoryWarningCaptureEnabled(): Boolean
-
-    /**
      * Returns true if SDK should automatically capture thermal status data
      */
     fun isThermalStatusCaptureEnabled(): Boolean

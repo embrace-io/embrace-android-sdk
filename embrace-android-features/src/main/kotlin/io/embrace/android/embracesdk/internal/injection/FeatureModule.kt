@@ -9,7 +9,6 @@ import io.embrace.android.embracesdk.internal.capture.crumbs.RnActionDataSource
 import io.embrace.android.embracesdk.internal.capture.crumbs.TapDataSource
 import io.embrace.android.embracesdk.internal.capture.crumbs.ViewDataSource
 import io.embrace.android.embracesdk.internal.capture.crumbs.WebViewUrlDataSource
-import io.embrace.android.embracesdk.internal.capture.memory.MemoryWarningDataSource
 import io.embrace.android.embracesdk.internal.capture.powersave.LowPowerDataSource
 import io.embrace.android.embracesdk.internal.capture.telemetry.InternalErrorDataSource
 import io.embrace.android.embracesdk.internal.capture.thermalstate.ThermalStateDataSource
@@ -28,12 +27,4 @@ interface FeatureModule {
     val applicationExitInfoDataSource: DataSourceState<AeiDataSource>
     val internalErrorDataSource: DataSourceState<InternalErrorDataSource>
     val networkStatusDataSource: DataSourceState<NetworkStatusDataSource>
-
-    /**
-     * Called by the embrace-android-core module. The implementation of this should add any features
-     * to the [EmbraceFeatureRegistry] that are _not_ directly referenced by the
-     * embrace-android-core module. As an example, [MemoryWarningDataSource] is not directly
-     * referenced anywhere, but [BreadcrumbDataSource] is.
-     */
-    fun registerFeatures()
 }

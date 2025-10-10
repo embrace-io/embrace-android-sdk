@@ -3,7 +3,6 @@
 package io.embrace.android.embracesdk.internal.api
 
 import android.content.Context
-import io.embrace.android.embracesdk.AppFramework
 import io.embrace.android.embracesdk.annotation.InternalApi
 
 /**
@@ -26,24 +25,6 @@ public interface EmbraceAndroidApi {
      * @param context an instance of the application context
      */
     public fun start(context: Context)
-
-    /**
-     * Starts instrumentation of the Android application using the Embrace SDK. This should be
-     * called during creation of the application, as early as possible.
-     *
-     * See [Embrace Docs](https://embrace.io/docs/android/) for
-     * integration instructions. For compatibility with other networking SDKs such as Akamai,
-     * the Embrace SDK must be initialized after any other SDK.
-     *
-     * @param context                  an instance of context
-     * @param appFramework             the AppFramework of the application
-     */
-    @Suppress("DEPRECATION")
-    @Deprecated("Use {@link #start(Context)} instead.")
-    public fun start(
-        context: Context,
-        appFramework: AppFramework,
-    )
 
     /**
      * Records that a view 'started'. You should call this when your app starts displaying an

@@ -25,7 +25,6 @@ internal class AutoDataCaptureBehaviorImplTest {
     @Test
     fun testDefaults() {
         with(createAutoDataCaptureBehavior()) {
-            assertTrue(isMemoryWarningCaptureEnabled())
             assertTrue(isPowerSaveModeCaptureEnabled())
             assertTrue(isNetworkConnectivityCaptureEnabled())
             assertTrue(isAnrCaptureEnabled())

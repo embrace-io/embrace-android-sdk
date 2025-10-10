@@ -40,6 +40,7 @@ import io.embrace.android.embracesdk.internal.fromFramework
 import io.embrace.android.embracesdk.internal.injection.InternalInterfaceModule
 import io.embrace.android.embracesdk.internal.injection.InternalInterfaceModuleImpl
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
+import io.embrace.android.embracesdk.internal.injection.asFile
 import io.embrace.android.embracesdk.internal.injection.embraceImplInject
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.payload.AppFramework

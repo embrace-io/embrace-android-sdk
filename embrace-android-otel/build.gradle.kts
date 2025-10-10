@@ -15,6 +15,7 @@ android {
 
 dependencies {
     implementation(project(":embrace-android-infra"))
+    implementation(project(":embrace-android-utils"))
     implementation(project(":embrace-android-payload"))
     compileOnly(project(":embrace-android-api"))
     testImplementation(project(":embrace-android-payload"))

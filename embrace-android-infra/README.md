@@ -1,3 +1,3 @@
 # embrace-android-infra
 
-Core infrastructure/types that are used across most modules.
+JVM-only core infrastructure/types that are used across most modules.

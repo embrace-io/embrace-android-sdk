@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.otel.java
 
 import io.embrace.android.embracesdk.Embrace
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaAttributeKey
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaLogRecordExporter
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaOpenTelemetry
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanExporter
@@ -37,17 +36,3 @@ fun Embrace.addJavaLogRecordExporter(logRecordExporter: OtelJavaLogRecordExporte
 fun Embrace.getJavaOpenTelemetry(): OtelJavaOpenTelemetry {
     return this.getOpenTelemetryKotlin().toOtelJavaApi()
 }
-
-/**
- * Set an attribute on the resource used by the OTel SDK instance with the given key and String value.
- * The value set will override any value set previously or by the Embrace SDK.
- * This must be called before the SDK is started in order for it to take effect.
- */
-@Deprecated(
-    "Use setResourceAttribute(key: String, value: String) instead.",
-    ReplaceWith("setResourceAttribute(key.key, value)")
-)
-fun Embrace.setJavaResourceAttribute(
-    key: OtelJavaAttributeKey<String>,
-    value: String,
-): Unit = setResourceAttribute(key.key, value)

@@ -3,7 +3,6 @@
 package io.embrace.android.embracesdk.testcases
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.LogType
 import io.embrace.android.embracesdk.assertions.findEventOfType
 import io.embrace.android.embracesdk.assertions.findSessionSpan
 import io.embrace.android.embracesdk.assertions.findSpansByName
@@ -49,7 +48,6 @@ internal class EmbraceInternalInterfaceTest {
                     logInfo("", null)
                     logWarning("", null, null)
                     logError("", null, null, false)
-                    logHandledException(NullPointerException(), LogType.ERROR, null, null)
                     recordCompletedNetworkRequest(
                         url = "",
                         httpMethod = "GET",

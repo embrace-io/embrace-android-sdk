@@ -1,13 +1,3 @@
-public final class io/embrace/android/embracesdk/AppFramework : java/lang/Enum {
-	public static final field FLUTTER Lio/embrace/android/embracesdk/AppFramework;
-	public static final field NATIVE Lio/embrace/android/embracesdk/AppFramework;
-	public static final field REACT_NATIVE Lio/embrace/android/embracesdk/AppFramework;
-	public static final field UNITY Lio/embrace/android/embracesdk/AppFramework;
-	public static fun getEntries ()Lkotlin/enums/EnumEntries;
-	public static fun valueOf (Ljava/lang/String;)Lio/embrace/android/embracesdk/AppFramework;
-	public static fun values ()[Lio/embrace/android/embracesdk/AppFramework;
-}
-
 public final class io/embrace/android/embracesdk/LastRunEndState : java/lang/Enum {
 	public static final field CLEAN_EXIT Lio/embrace/android/embracesdk/LastRunEndState;
 	public static final field CRASH Lio/embrace/android/embracesdk/LastRunEndState;
@@ -42,9 +32,6 @@ public abstract interface annotation class io/embrace/android/embracesdk/annotat
 public abstract interface annotation class io/embrace/android/embracesdk/annotation/NotTracedActivity : java/lang/annotation/Annotation {
 }
 
-public abstract interface annotation class io/embrace/android/embracesdk/annotation/StartupActivity : java/lang/annotation/Annotation {
-}
-
 public abstract interface class io/embrace/android/embracesdk/internal/api/BreadcrumbApi {
 	public abstract fun addBreadcrumb (Ljava/lang/String;)V
 }
@@ -55,7 +42,6 @@ public abstract interface class io/embrace/android/embracesdk/internal/api/Embra
 	public abstract fun disable ()V
 	public abstract fun endView (Ljava/lang/String;)Z
 	public abstract fun start (Landroid/content/Context;)V
-	public abstract fun start (Landroid/content/Context;Lio/embrace/android/embracesdk/AppFramework;)V
 	public abstract fun startView (Ljava/lang/String;)Z
 }
 

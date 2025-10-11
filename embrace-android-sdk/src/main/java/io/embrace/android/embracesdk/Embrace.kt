@@ -48,11 +48,6 @@ public class Embrace private constructor(
         impl.start(context)
     }
 
-    @Deprecated("Use {@link #start(Context)} instead.", ReplaceWith("start(Context)"))
-    override fun start(context: Context, appFramework: AppFramework) {
-        impl.start(context, appFramework)
-    }
-
     override val isStarted: Boolean
         get() = impl.isStarted
 

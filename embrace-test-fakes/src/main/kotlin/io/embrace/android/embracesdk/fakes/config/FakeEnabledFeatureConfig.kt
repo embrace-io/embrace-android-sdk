@@ -9,7 +9,6 @@ class FakeEnabledFeatureConfig(
     private val activityBreadcrumbCapture: Boolean = base.isActivityBreadcrumbCaptureEnabled(),
     private val composeClickCapture: Boolean = base.isComposeClickCaptureEnabled(),
     private val viewClickCoordCapture: Boolean = base.isViewClickCoordinateCaptureEnabled(),
-    private val memoryWarningCapture: Boolean = base.isMemoryWarningCaptureEnabled(),
     private val powerSaveCapture: Boolean = base.isPowerSaveModeCaptureEnabled(),
     private val networkConnectivityCapture: Boolean = base.isNetworkConnectivityCaptureEnabled(),
     private val anrCapture: Boolean = base.isAnrCaptureEnabled(),
@@ -35,8 +34,6 @@ class FakeEnabledFeatureConfig(
     override fun isComposeClickCaptureEnabled(): Boolean = composeClickCapture
     override fun isViewClickCoordinateCaptureEnabled(): Boolean = viewClickCoordCapture
 
-    @Deprecated("Will be removed in a future release.")
-    override fun isMemoryWarningCaptureEnabled(): Boolean = memoryWarningCapture
     override fun isPowerSaveModeCaptureEnabled(): Boolean = powerSaveCapture
     override fun isNetworkConnectivityCaptureEnabled(): Boolean = networkConnectivityCapture
     override fun isAnrCaptureEnabled(): Boolean = anrCapture

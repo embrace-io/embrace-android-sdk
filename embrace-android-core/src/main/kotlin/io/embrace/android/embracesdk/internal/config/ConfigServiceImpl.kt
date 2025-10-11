@@ -27,7 +27,6 @@ import io.embrace.android.embracesdk.internal.prefs.PreferencesService
 internal class ConfigServiceImpl(
     openTelemetryCfg: OtelSdkConfig,
     preferencesService: PreferencesService,
-    suppliedFramework: AppFramework,
     instrumentedConfig: InstrumentedConfig,
     remoteConfig: RemoteConfig?,
     thresholdCheck: BehaviorThresholdCheck = BehaviorThresholdCheck { preferencesService.deviceIdentifier },
@@ -71,5 +70,5 @@ internal class ConfigServiceImpl(
 
     override val appFramework: AppFramework = instrumentedConfig.project.getAppFramework()?.let {
         AppFramework.fromString(it)
-    } ?: suppliedFramework
+    } ?: AppFramework.NATIVE
 }

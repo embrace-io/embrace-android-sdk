@@ -31,7 +31,6 @@ class EnabledFeatureConfigInstrumentationKtTest {
         ConfigMethod("isActivityBreadcrumbCaptureEnabled", "()Z", true),
         ConfigMethod("isComposeClickCaptureEnabled", "()Z", true),
         ConfigMethod("isViewClickCoordinateCaptureEnabled", "()Z", true),
-        ConfigMethod("isMemoryWarningCaptureEnabled", "()Z", true),
         ConfigMethod("isPowerSaveModeCaptureEnabled", "()Z", true),
         ConfigMethod("isNetworkConnectivityCaptureEnabled", "()Z", true),
         ConfigMethod("isAnrCaptureEnabled", "()Z", true),
@@ -80,7 +79,6 @@ class EnabledFeatureConfigInstrumentationKtTest {
                             aeiCaptureEnabled = true
                         ),
                         automaticDataCaptureConfig = AutomaticDataCaptureLocalConfig(
-                            memoryServiceEnabled = true,
                             powerSaveModeServiceEnabled = true,
                             networkConnectivityServiceEnabled = true,
                             anrServiceEnabled = true,

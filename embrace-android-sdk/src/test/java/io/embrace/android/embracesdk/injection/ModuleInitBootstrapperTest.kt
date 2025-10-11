@@ -13,7 +13,6 @@ import io.embrace.android.embracesdk.internal.injection.EssentialServiceModuleIm
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
-import io.embrace.android.embracesdk.internal.payload.AppFramework
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -42,7 +41,7 @@ internal class ModuleInitBootstrapperTest {
         moduleInitBootstrapper = ModuleInitBootstrapper(
             logger = logger,
             clock = clock,
-            configModuleSupplier = { _, _, _, _, _, _ -> FakeConfigModule(FakeConfigService()) },
+            configModuleSupplier = { _, _, _, _, _ -> FakeConfigModule(FakeConfigService()) },
             coreModuleSupplier = { _, _ -> coreModule },
             nativeFeatureModuleSupplier = { _, _, _, _, _ -> FakeNativeFeatureModule() },
         )
@@ -55,7 +54,6 @@ internal class ModuleInitBootstrapperTest {
             assertTrue(
                 moduleInitBootstrapper.init(
                     context = context,
-                    appFramework = AppFramework.NATIVE,
                     sdkStartTimeMs = 0L,
                 )
             )
@@ -79,14 +77,12 @@ internal class ModuleInitBootstrapperTest {
         assertTrue(
             moduleInitBootstrapper.init(
                 context = context,
-                appFramework = AppFramework.NATIVE,
                 sdkStartTimeMs = 0L,
             )
         )
         assertFalse(
             moduleInitBootstrapper.init(
                 context = context,
-                appFramework = AppFramework.NATIVE,
                 sdkStartTimeMs = 0L,
             )
         )
@@ -97,7 +93,6 @@ internal class ModuleInitBootstrapperTest {
         assertTrue(
             moduleInitBootstrapper.init(
                 context = context,
-                appFramework = AppFramework.NATIVE,
                 sdkStartTimeMs = 0L,
             )
         )
@@ -108,7 +103,6 @@ internal class ModuleInitBootstrapperTest {
         assertTrue(
             moduleInitBootstrapper.init(
                 context = context,
-                appFramework = AppFramework.NATIVE,
                 sdkStartTimeMs = 0L,
             )
         )

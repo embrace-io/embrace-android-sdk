@@ -8,7 +8,6 @@ import io.embrace.android.embracesdk.fakes.FakeSessionPropertiesService
 import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.fakeModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
-import io.embrace.android.embracesdk.internal.payload.AppFramework
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -24,7 +23,7 @@ internal class ViewTrackingApiDelegateTest {
     @Before
     fun setUp() {
         val moduleInitBootstrapper = fakeModuleInitBootstrapper()
-        moduleInitBootstrapper.init(ApplicationProvider.getApplicationContext(), AppFramework.NATIVE, 0)
+        moduleInitBootstrapper.init(ApplicationProvider.getApplicationContext(), 0)
         orchestrator = moduleInitBootstrapper.sessionOrchestrationModule.sessionOrchestrator as FakeSessionOrchestrator
         sessionPropertiesService =
             moduleInitBootstrapper.essentialServiceModule.sessionPropertiesService as FakeSessionPropertiesService

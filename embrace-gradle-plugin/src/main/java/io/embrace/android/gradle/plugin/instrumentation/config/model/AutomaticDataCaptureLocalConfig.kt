@@ -6,8 +6,6 @@ import java.io.Serializable
 
 @JsonClass(generateAdapter = true)
 data class AutomaticDataCaptureLocalConfig(
-    @Json(name = "memory_info")
-    val memoryServiceEnabled: Boolean? = null,
 
     @Json(name = "power_save_mode_info")
     val powerSaveModeServiceEnabled: Boolean? = null,

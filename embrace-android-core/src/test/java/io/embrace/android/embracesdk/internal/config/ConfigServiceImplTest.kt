@@ -186,7 +186,6 @@ internal class ConfigServiceImplTest {
         return ConfigServiceImpl(
             openTelemetryCfg = config,
             preferencesService = fakePreferenceService,
-            suppliedFramework = AppFramework.NATIVE,
             instrumentedConfig = FakeInstrumentedConfig(project = FakeProjectConfig(appId = appId)),
             remoteConfig = remoteConfig,
             thresholdCheck = thresholdCheck

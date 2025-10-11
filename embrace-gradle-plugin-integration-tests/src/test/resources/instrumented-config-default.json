@@ -48,9 +48,6 @@
           "signature": "isJvmCrashCaptureEnabled()Z"
         },
         {
-          "signature": "isMemoryWarningCaptureEnabled()Z"
-        },
-        {
           "signature": "isNativeCrashCaptureEnabled()Z"
         },
         {

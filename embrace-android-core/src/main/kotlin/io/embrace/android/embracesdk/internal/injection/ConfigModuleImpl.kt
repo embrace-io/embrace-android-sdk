@@ -8,7 +8,6 @@ import io.embrace.android.embracesdk.internal.config.source.CombinedRemoteConfig
 import io.embrace.android.embracesdk.internal.config.source.OkHttpRemoteConfigSource
 import io.embrace.android.embracesdk.internal.config.store.RemoteConfigStore
 import io.embrace.android.embracesdk.internal.config.store.RemoteConfigStoreImpl
-import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.worker.Worker
 import okhttp3.OkHttpClient
@@ -22,7 +21,6 @@ internal class ConfigModuleImpl(
     openTelemetryModule: OpenTelemetryModule,
     workerThreadModule: WorkerThreadModule,
     androidServicesModule: AndroidServicesModule,
-    framework: AppFramework,
 ) : ConfigModule {
 
     companion object {
@@ -55,7 +53,6 @@ internal class ConfigModuleImpl(
             ConfigServiceImpl(
                 openTelemetryCfg = openTelemetryModule.otelSdkConfig,
                 preferencesService = androidServicesModule.preferencesService,
-                suppliedFramework = framework,
                 instrumentedConfig = initModule.instrumentedConfig,
                 remoteConfig = combinedRemoteConfigSource?.getConfig(),
             )

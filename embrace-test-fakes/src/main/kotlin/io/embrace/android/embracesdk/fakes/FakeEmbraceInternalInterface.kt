@@ -2,7 +2,6 @@
 
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.android.embracesdk.LogType
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
 import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData
 import io.embrace.android.embracesdk.internal.payload.TapBreadcrumb
@@ -31,14 +30,6 @@ class FakeEmbraceInternalInterface(
         properties: Map<String, Any>?,
         stacktrace: String?,
         isException: Boolean,
-    ) {
-    }
-
-    override fun logHandledException(
-        throwable: Throwable,
-        type: LogType,
-        properties: Map<String, Any>?,
-        customStackTrace: Array<StackTraceElement>?,
     ) {
     }
 

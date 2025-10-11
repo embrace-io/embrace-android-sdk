@@ -10,7 +10,6 @@ fun createEnabledFeatureConfigInstrumentation(cfg: VariantConfig) = modelSdkConf
         boolMethod("isActivityBreadcrumbCaptureEnabled") { viewConfig?.enableAutomaticActivityCapture }
         boolMethod("isComposeClickCaptureEnabled") { composeConfig?.captureComposeOnClick }
         boolMethod("isViewClickCoordinateCaptureEnabled") { taps?.captureCoordinates }
-        boolMethod("isMemoryWarningCaptureEnabled") { automaticDataCaptureConfig?.memoryServiceEnabled }
         boolMethod("isPowerSaveModeCaptureEnabled") { automaticDataCaptureConfig?.powerSaveModeServiceEnabled }
         boolMethod(
             "isNetworkConnectivityCaptureEnabled"

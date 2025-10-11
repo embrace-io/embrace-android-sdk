@@ -10,7 +10,6 @@ import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.fakeModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.otel.config.OtelSdkConfig
-import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.createNoopOpenTelemetry
 import io.embrace.opentelemetry.kotlin.semconv.ServiceAttributes
@@ -35,7 +34,7 @@ internal class OTelApiDelegateTest {
     @Before
     fun setUp() {
         bootstrapper = fakeModuleInitBootstrapper()
-        bootstrapper.init(ApplicationProvider.getApplicationContext(), AppFramework.NATIVE, 0)
+        bootstrapper.init(ApplicationProvider.getApplicationContext(), 0)
         cfg = bootstrapper.openTelemetryModule.otelSdkConfig
 
         sdkCallChecker = SdkCallChecker(FakeEmbLogger(), FakeTelemetryService())

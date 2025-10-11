@@ -69,7 +69,6 @@ public final class io/embrace/android/embracesdk/Embrace : io/embrace/android/em
 	public fun setUserIdentifier (Ljava/lang/String;)V
 	public fun setUsername (Ljava/lang/String;)V
 	public fun start (Landroid/content/Context;)V
-	public fun start (Landroid/content/Context;Lio/embrace/android/embracesdk/AppFramework;)V
 	public fun startSpan (Ljava/lang/String;Lio/embrace/android/embracesdk/spans/AutoTerminationMode;)Lio/embrace/android/embracesdk/spans/EmbraceSpan;
 	public fun startSpan (Ljava/lang/String;Lio/embrace/android/embracesdk/spans/EmbraceSpan;Lio/embrace/android/embracesdk/spans/AutoTerminationMode;)Lio/embrace/android/embracesdk/spans/EmbraceSpan;
 	public fun startSpan (Ljava/lang/String;Lio/embrace/android/embracesdk/spans/EmbraceSpan;Ljava/lang/Long;Lio/embrace/android/embracesdk/spans/AutoTerminationMode;)Lio/embrace/android/embracesdk/spans/EmbraceSpan;

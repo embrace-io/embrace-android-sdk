@@ -36,12 +36,10 @@ import io.embrace.android.embracesdk.internal.api.delegate.ViewTrackingApiDelega
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.clock.NormalizedIntervalClock
 import io.embrace.android.embracesdk.internal.delivery.storage.StorageLocation
-import io.embrace.android.embracesdk.internal.fromFramework
 import io.embrace.android.embracesdk.internal.injection.InternalInterfaceModule
 import io.embrace.android.embracesdk.internal.injection.InternalInterfaceModuleImpl
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.injection.embraceImplInject
-import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.EmbTrace.end
@@ -121,36 +119,14 @@ internal class EmbraceImpl(
 
     private val configService by embraceImplInject { bootstrapper.configModule.configService }
 
-    @Suppress("DEPRECATION")
-    override fun start(context: Context) = start(context, io.embrace.android.embracesdk.AppFramework.NATIVE)
-
-    @Suppress("DEPRECATION")
-    @Deprecated("Use {@link #start(Context)} instead.", ReplaceWith("start(context)"))
-    override fun start(context: Context, appFramework: io.embrace.android.embracesdk.AppFramework) {
-        try {
-            start("sdk-start")
-            startImpl(context, appFramework)
-            end()
-        } catch (t: Throwable) {
-            runCatching {
-                logger.trackInternalError(InternalErrorType.SDK_START_FAIL, t)
-            }
-        }
-    }
-
-    @Suppress("DEPRECATION", "CyclomaticComplexMethod", "ComplexMethod")
-    private fun startImpl(
-        context: Context,
-        framework: io.embrace.android.embracesdk.AppFramework,
-    ) {
+    override fun start(context: Context) {
         if (application != null) {
             return
         }
 
         val startTimeMs = clock.now()
 
-        val appFramework = fromFramework(framework)
-        if (!bootstrapper.init(context, appFramework, startTimeMs)) {
+        if (!bootstrapper.init(context, startTimeMs)) {
             if (bootstrapper.configModule.configService.sdkModeBehavior.isSdkDisabled()) {
                 stop()
             }

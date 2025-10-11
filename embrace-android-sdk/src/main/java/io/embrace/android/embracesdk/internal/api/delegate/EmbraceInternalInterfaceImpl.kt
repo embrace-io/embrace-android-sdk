@@ -1,10 +1,7 @@
-@file:Suppress("DEPRECATION")
-
 package io.embrace.android.embracesdk.internal.api.delegate
 
 import android.annotation.SuppressLint
 import io.embrace.android.embracesdk.EmbraceImpl
-import io.embrace.android.embracesdk.LogType
 import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
 import io.embrace.android.embracesdk.internal.InternalTracingApi
@@ -46,25 +43,6 @@ internal class EmbraceInternalInterfaceImpl(
         isException: Boolean,
     ) {
         embraceImpl.logMessage(message, Severity.ERROR, properties)
-    }
-
-    override fun logHandledException(
-        throwable: Throwable,
-        type: LogType,
-        properties: Map<String, Any>?,
-        customStackTrace: Array<StackTraceElement>?,
-    ) {
-        val eventType = when (type) {
-            LogType.ERROR -> Severity.ERROR
-            LogType.WARNING -> Severity.WARNING
-            else -> Severity.INFO
-        }
-        embraceImpl.logMessage(
-            severity = eventType,
-            message = throwable.message ?: "",
-            properties = properties,
-            stackTraceElements = customStackTrace ?: throwable.stackTrace,
-        )
     }
 
     override fun logComposeTap(point: Pair<Float, Float>, elementName: String) {

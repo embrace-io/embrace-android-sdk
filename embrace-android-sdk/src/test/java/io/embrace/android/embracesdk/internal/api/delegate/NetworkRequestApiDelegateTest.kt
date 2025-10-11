@@ -9,7 +9,6 @@ import io.embrace.android.embracesdk.fakes.FakeSessionOrchestrator
 import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.behavior.FakeNetworkSpanForwardingBehavior
 import io.embrace.android.embracesdk.fakes.fakeModuleInitBootstrapper
-import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.http.HttpMethod
 import org.junit.Assert.assertEquals
@@ -30,7 +29,7 @@ internal class NetworkRequestApiDelegateTest {
     @Before
     fun setUp() {
         val moduleInitBootstrapper = fakeModuleInitBootstrapper()
-        moduleInitBootstrapper.init(ApplicationProvider.getApplicationContext(), AppFramework.NATIVE, 0)
+        moduleInitBootstrapper.init(ApplicationProvider.getApplicationContext(), 0)
         configService = moduleInitBootstrapper.configModule.configService as FakeConfigService
         networkLoggingService = moduleInitBootstrapper.logModule.networkLoggingService as FakeNetworkLoggingService
         orchestrator = moduleInitBootstrapper.sessionOrchestrationModule.sessionOrchestrator as FakeSessionOrchestrator

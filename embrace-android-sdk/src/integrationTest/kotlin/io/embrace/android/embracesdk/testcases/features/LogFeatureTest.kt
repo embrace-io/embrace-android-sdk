@@ -12,6 +12,7 @@ import io.embrace.android.embracesdk.internal.capture.session.isSessionPropertyA
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.embrace.android.embracesdk.internal.payload.Envelope
+import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.utils.getSafeStackTrace
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
@@ -243,7 +244,7 @@ internal class LogFeatureTest {
                 clock.tick(2000L)
             },
             assertAction = {
-                val logs = groupLogsBySeverity(getSingleLogEnvelope())
+                val logs = groupLogsFromEnvelopes(getLogEnvelopes(Severity.values().size))
 
                 Severity.values().forEach { severity ->
                     assertOtelLogReceived(
@@ -277,7 +278,7 @@ internal class LogFeatureTest {
                 clock.tick(2000L)
             },
             assertAction = {
-                val logs = groupLogsBySeverity(getSingleLogEnvelope())
+                val logs = groupLogsFromEnvelopes(getLogEnvelopes(Severity.values().size))
 
                 Severity.values().forEach { severity ->
                     val expectedMessage = "test message ${severity.name}"
@@ -336,7 +337,7 @@ internal class LogFeatureTest {
                 clock.tick(2000L)
             },
             assertAction = {
-                val logs = groupLogsBySeverity(getSingleLogEnvelope())
+                val logs = groupLogsFromEnvelopes(getLogEnvelopes(Severity.values().size))
 
                 Severity.values().forEach { severity ->
                     assertOtelLogReceived(
@@ -366,7 +367,7 @@ internal class LogFeatureTest {
                 clock.tick(2000L)
             },
             assertAction = {
-                val logs = groupLogsBySeverity(getSingleLogEnvelope())
+                val logs = groupLogsFromEnvelopes(getLogEnvelopes(Severity.values().size))
 
                 Severity.values().forEach { severity ->
                     assertOtelLogReceived(
@@ -403,8 +404,7 @@ internal class LogFeatureTest {
                 clock.tick(2000L)
             },
             assertAction = {
-                val envelope = getSingleLogEnvelope()
-                val logs = groupLogsBySeverity(envelope)
+                val logs = groupLogsFromEnvelopes(getLogEnvelopes(Severity.values().size))
 
                 Severity.values().forEach { severity ->
                     val expectedMessage = "test message ${severity.name}"
@@ -489,6 +489,15 @@ internal class LogFeatureTest {
         checkNotNull(envelope.data.logs?.associateBy {
             getEmbraceSeverity(checkNotNull(it.severityNumber))
         })
+
+    /**
+     * Groups logs from multiple envelopes by severity.
+     * Used for tests where logs are sent immediately (one envelope per log).
+     */
+    private fun groupLogsFromEnvelopes(envelopes: List<Envelope<LogPayload>>): Map<Severity, Log> =
+        envelopes.flatMap { it.data.logs.orEmpty() }.associateBy {
+            getEmbraceSeverity(checkNotNull(it.severityNumber))
+        }
 
     companion object {
         private val testException = IllegalArgumentException("nooooooo")

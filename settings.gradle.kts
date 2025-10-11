@@ -4,6 +4,7 @@ include(
     ":embrace-android-sdk",
     ":embrace-android-core",
     ":embrace-android-infra",
+    ":embrace-android-utils",
     ":embrace-android-features",
     ":embrace-android-payload",
     ":embrace-android-delivery",

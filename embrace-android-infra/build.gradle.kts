@@ -1,15 +1,11 @@
 plugins {
-    id("com.android.library")
-    kotlin("android")
+    kotlin("jvm")
     id("io.embrace.internal.build-logic")
 }
 
 description = "Embrace Android SDK: Infra"
 
-android {
-    namespace = "io.embrace.android.embracesdk.infra"
-}
-
 dependencies {
     implementation(libs.androidx.annotation)
+    testImplementation(libs.junit)
 }

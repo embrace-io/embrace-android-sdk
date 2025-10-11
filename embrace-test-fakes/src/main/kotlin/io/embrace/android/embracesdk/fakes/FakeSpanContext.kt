@@ -13,4 +13,6 @@ class FakeSpanContext : SpanContext {
     override val traceFlags: TraceFlags = FakeTraceFlags()
     override val traceId: String = ""
     override val traceState: TraceState = FakeTraceState()
+    override val spanIdBytes: ByteArray = spanId.toByteArray()
+    override val traceIdBytes: ByteArray = traceId.toByteArray()
 }

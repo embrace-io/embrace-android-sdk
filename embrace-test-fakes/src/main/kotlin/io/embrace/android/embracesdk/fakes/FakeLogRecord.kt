@@ -10,6 +10,7 @@ class FakeLogRecord(
     val severityNumber: SeverityNumber?,
     val timestamp: Long?,
     val body: String?,
+    val eventName: String?,
     val context: Context?,
     val severityText: String?,
     val attributes: Map<String, Any>,

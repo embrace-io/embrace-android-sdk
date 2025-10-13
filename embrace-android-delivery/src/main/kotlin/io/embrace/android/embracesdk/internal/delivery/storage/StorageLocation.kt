@@ -1,11 +1,6 @@
 package io.embrace.android.embracesdk.internal.delivery.storage
 
-import android.content.Context
-import io.embrace.android.embracesdk.internal.logging.EmbLogger
-import io.embrace.android.embracesdk.internal.logging.InternalErrorType
-import java.io.File
-
-enum class StorageLocation(private val dir: String) {
+enum class StorageLocation(val dir: String) {
 
     /**
      * A complete payload that is ready to send
@@ -25,17 +20,5 @@ enum class StorageLocation(private val dir: String) {
     /**
      * Cached envelopes
      */
-    ENVELOPE("embrace_envelopes");
-
-    /**
-     * Get the directory as a [File] object
-     */
-    fun asFile(ctx: Context, logger: EmbLogger): Lazy<File> = lazy {
-        try {
-            File(ctx.filesDir, dir).apply(File::mkdirs)
-        } catch (exc: Throwable) {
-            logger.trackInternalError(InternalErrorType.PAYLOAD_STORAGE_FAIL, exc)
-            File(ctx.cacheDir, dir).apply(File::mkdirs)
-        }
-    }
+    ENVELOPE("embrace_envelopes")
 }

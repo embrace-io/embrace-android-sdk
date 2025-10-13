@@ -84,7 +84,7 @@ class OkHttpRequestExecutionService(
             .headers(
                 apiRequest
                     .getHeaders()
-                    .plus("X-EM-TYPES" to payloadType)
+                    .plus("X-EM-PAYLOAD-TYPES" to payloadType)
                     .toHeaders()
             )
             .post(ApiRequestBody(payloadStream))

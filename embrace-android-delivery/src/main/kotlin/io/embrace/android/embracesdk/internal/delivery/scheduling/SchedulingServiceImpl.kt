@@ -136,7 +136,7 @@ class SchedulingServiceImpl(
                         executionService.attemptHttpRequest(
                             payloadStream = { this },
                             envelopeType = payload.envelopeType,
-                            payloadType = payload.payloadType.value
+                            payloadType = payload.payloadTypesHeader
                         )
                     } ?: ExecutionResult.NotAttempted
                 } catch (t: Throwable) {

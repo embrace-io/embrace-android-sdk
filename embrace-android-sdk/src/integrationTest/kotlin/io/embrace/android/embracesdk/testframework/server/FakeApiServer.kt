@@ -38,6 +38,7 @@ internal class FakeApiServer(
     private val logRequests = CopyOnWriteArrayList<Envelope<LogPayload>>()
     private val attachments = CopyOnWriteArrayList<List<FormPart>>()
     private val configRequests = CopyOnWriteArrayList<String>()
+    private val payloadTypesHeaders = CopyOnWriteArrayList<String>()
 
     /**
      * Returns a list of session envelopes in the order in which the server received them.
@@ -60,6 +61,11 @@ internal class FakeApiServer(
      */
     fun getConfigRequests(): List<String> = configRequests.toList()
 
+    /**
+     * Returns a list of X-EM-PAYLOAD-TYPES headers in the order in which the server received them.
+     */
+    fun getPayloadTypesHeaders(): List<String> = payloadTypesHeaders.toList()
+
     override fun dispatch(request: RecordedRequest): MockResponse {
         val endpoint = request.asEndpoint()
         deliveryTracer.onServerReceivedRequest(endpoint.name)
@@ -78,7 +84,11 @@ internal class FakeApiServer(
         endpoint: Endpoint,
     ): MockResponse {
         val envelope = deserializeEnvelope(request, endpoint)
-        validateHeaders(request.headers.toMultimap().mapValues { it.value.joinToString() })
+        val headers = request.headers.toMultimap().mapValues { it.value.joinToString() }
+        validateHeaders(headers)
+
+        // Capture X-EM-PAYLOAD-TYPES header
+        headers["x-em-payload-types"]?.let { payloadTypesHeaders.add(it) }
 
         when (endpoint) {
             Endpoint.SESSIONS -> handleSessionRequest(endpoint, envelope)

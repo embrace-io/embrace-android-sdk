@@ -62,11 +62,11 @@ sealed class EmbType(type: String, subtype: String?) : EmbraceAttribute {
 
         object Log : System("log")
 
-        object Exception : System("exception")
+        object Exception : System("exception", SendMode.IMMEDIATE)
 
         object InternalError : System("internal")
 
-        object FlutterException : System("flutter_exception") {
+        object FlutterException : System("flutter_exception", SendMode.IMMEDIATE) {
             /**
              * Attribute name for the exception context in a log representing an exception
              */

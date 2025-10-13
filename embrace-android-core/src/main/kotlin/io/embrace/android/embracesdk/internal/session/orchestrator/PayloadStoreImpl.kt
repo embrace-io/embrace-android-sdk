@@ -38,7 +38,8 @@ internal class PayloadStoreImpl(
     override fun storeLogPayload(envelope: Envelope<LogPayload>, attemptImmediateRequest: Boolean) {
         val type = findSupportedEnvelopeType(envelope.data.logs)
         val payloadType = getPayloadType(envelope)
-        intakeService.take(envelope, createMetadata(type, payloadType = payloadType))
+        val payloadTypesHeader = getPayloadTypesHeader(envelope)
+        intakeService.take(envelope, createMetadata(type, payloadType = payloadType, payloadTypesHeader = payloadTypesHeader))
     }
 
     override fun storeAttachment(envelope: Envelope<Pair<String, ByteArray>>) {
@@ -87,6 +88,7 @@ internal class PayloadStoreImpl(
         type: SupportedEnvelopeType,
         complete: Boolean = true,
         payloadType: PayloadType,
+        payloadTypesHeader: String = payloadType.value,
     ): StoredTelemetryMetadata {
         return StoredTelemetryMetadata(
             clock.now(),
@@ -94,14 +96,26 @@ internal class PayloadStoreImpl(
             processIdProvider(),
             type,
             complete,
-            payloadType = payloadType
+            payloadType = payloadType,
+            payloadTypesHeader = payloadTypesHeader
         )
     }
 
     /**
-     * Returns the payload type for the given [Envelope], to be sent within the X-EM-TYPES header.
+     * Returns the payload type for the given [Envelope].
      */
     private fun getPayloadType(envelope: Envelope<LogPayload>) = fromValue(
         envelope.data.logs?.firstOrNull()?.attributes?.findAttributeValue("emb.type")
     )
+
+    /**
+     * Returns all unique payload types in the envelope as a comma-separated string.
+     * Used for X-EM-PAYLOAD-TYPES header.
+     */
+    private fun getPayloadTypesHeader(envelope: Envelope<LogPayload>): String {
+        return envelope.data.logs
+            ?.mapNotNull { log -> log.attributes?.findAttributeValue("emb.type") }
+            ?.distinct()
+            ?.joinToString(",") ?: ""
+    }
 }

@@ -326,4 +326,8 @@ internal class EmbracePayloadAssertionInterface(
                 "All received envelopes: $envelopes.\n${deliveryTracer.generateReport()}", exc
         )
     }
+
+    internal fun getPayloadTypesHeaders(): List<String> {
+        return checkNotNull(apiServer).getPayloadTypesHeaders()
+    }
 }

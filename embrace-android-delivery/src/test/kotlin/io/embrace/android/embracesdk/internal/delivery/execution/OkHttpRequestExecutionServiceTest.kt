@@ -227,7 +227,7 @@ class OkHttpRequestExecutionServiceTest {
         assertEquals("gzip", request.getHeader("Content-Encoding"))
         assertEquals(testAppId, request.getHeader("X-EM-AID"))
         assertEquals(testDeviceId, request.getHeader("X-EM-DID"))
-        assertEquals(PayloadType.SESSION.value, request.getHeader("X-EM-TYPES"))
+        assertEquals(PayloadType.SESSION.value, request.getHeader("X-EM-PAYLOAD-TYPES"))
     }
 
     @Test
@@ -245,6 +245,6 @@ class OkHttpRequestExecutionServiceTest {
         // then the request should include the expected headers
         val request = server.takeRequest()
 
-        assertEquals(PayloadType.AEI.value, request.getHeader("X-EM-TYPES"))
+        assertEquals(PayloadType.AEI.value, request.getHeader("X-EM-PAYLOAD-TYPES"))
     }
 }

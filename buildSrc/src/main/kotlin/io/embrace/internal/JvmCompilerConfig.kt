@@ -26,6 +26,7 @@ fun Project.configureCompilers(module: EmbraceBuildLogicExtension) {
             targetCompatibility = module.jvmTarget.get().toString()
         }
 
+        val coreLibrariesVersion = "2.0.21"
         when (val kotlin = project.extensions.getByName("kotlin")) {
             is KotlinJvmProjectExtension -> {
                 kotlin.compilerOptions {
@@ -34,6 +35,7 @@ fun Project.configureCompilers(module: EmbraceBuildLogicExtension) {
                     jvmTarget.set(target)
                     allWarningsAsErrors.set(true)
                 }
+                kotlin.coreLibrariesVersion = coreLibrariesVersion
             }
 
             is KotlinAndroidExtension -> {
@@ -43,6 +45,7 @@ fun Project.configureCompilers(module: EmbraceBuildLogicExtension) {
                     jvmTarget.set(target)
                     allWarningsAsErrors.set(true)
                 }
+                kotlin.coreLibrariesVersion = coreLibrariesVersion
             }
 
             else -> error("Unsupported kotlin plugin type: ${kotlin::class.java.name}")

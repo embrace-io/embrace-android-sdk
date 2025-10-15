@@ -30,24 +30,13 @@ dependencies {
     implementation(libs.apktool.lib)
 }
 
-// ensure that the plugin + SDK is published to maven local before running integration tests
-tasks.withType(Test::class.java).configureEach {
-    val modules = listOf(
-        ":embrace-gradle-plugin-integration-tests",
-        ":embrace-gradle-plugin",
-        ":embrace-android-sdk",
-        ":embrace-android-core",
-        ":embrace-android-api",
-        ":embrace-android-fcm",
-        ":embrace-android-okhttp3",
-        ":embrace-android-infra",
-        ":embrace-android-features",
-        ":embrace-android-payload",
-        ":embrace-android-delivery",
-        ":embrace-android-otel",
-        ":embrace-internal-api"
+// Ensure all publishable modules are published to maven local before running integration tests
+tasks.withType<Test>().configureEach {
+    dependsOn(
+        rootProject.subprojects
+            .filter { it.plugins.hasPlugin(MavenPublishPlugin::class.java) }
+            .map { it.tasks.named("publishToMavenLocal") }
     )
-    modules.forEach { dependsOn("$it:publishToMavenLocal") }
 }
 
 group = "io.embrace"

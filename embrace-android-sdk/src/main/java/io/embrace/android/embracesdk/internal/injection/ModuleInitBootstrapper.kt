@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.internal.clock.NormalizedIntervalClock
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
-import io.embrace.android.embracesdk.internal.network.http.HttpUrlConnectionTracker.registerFactory
+import io.embrace.android.embracesdk.internal.network.http.HttpUrlConnectionTracker.registerUrlStreamHandlerFactory
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.Provider
@@ -208,7 +208,12 @@ internal class ModuleInitBootstrapper(
                             val networkBehavior = configModule.configService.networkBehavior
                             if (networkBehavior.isHttpUrlConnectionCaptureEnabled()) {
                                 EmbTrace.trace("network-monitoring-installation") {
-                                    registerFactory(networkBehavior.isRequestContentLengthCaptureEnabled())
+                                    registerUrlStreamHandlerFactory(
+                                        networkBehavior.isRequestContentLengthCaptureEnabled(),
+                                        fun(t: Throwable) {
+                                            logger.trackInternalError(InternalErrorType.INSTRUMENTATION_REG_FAIL, t)
+                                        }
+                                    )
                                 }
                             }
                             workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker).submit {

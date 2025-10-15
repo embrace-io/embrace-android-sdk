@@ -98,7 +98,6 @@ dependencies {
     testImplementation(project(":embrace-test-fakes"))
     testImplementation(libs.protobuf.java)
     testImplementation(libs.protobuf.java.util)
-    testImplementation(libs.kotlin.reflect)
     testImplementation(platform(libs.okhttp.bom))
     testImplementation(libs.mockwebserver)
 

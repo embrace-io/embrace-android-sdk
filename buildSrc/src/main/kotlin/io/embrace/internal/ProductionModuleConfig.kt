@@ -46,7 +46,6 @@ fun Project.configureProductionModule(
     configureCheckstyle()
 
     project.dependencies.apply {
-        add("implementation", findLibrary("kotlin.stdlib"))
         add("lintChecks", project.project(":embrace-lint"))
 
         add("testImplementation", findLibrary("junit"))

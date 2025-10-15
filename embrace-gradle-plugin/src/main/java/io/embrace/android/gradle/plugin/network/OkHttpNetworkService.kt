@@ -221,6 +221,6 @@ class OkHttpNetworkService(
     }
 
     companion object {
-        private const val NETWORK_WRITE_TIMEOUT_SECONDS = 120L
+        private const val NETWORK_WRITE_TIMEOUT_SECONDS = 300L
     }
 }

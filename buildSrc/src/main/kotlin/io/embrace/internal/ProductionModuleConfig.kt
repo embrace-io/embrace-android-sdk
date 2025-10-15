@@ -16,7 +16,6 @@ fun Project.configureProductionModule(
     project.configureBinaryCompatValidation(module)
 
     project.dependencies.apply {
-        add("implementation", findLibrary("kotlin.stdlib"))
         add("testImplementation", findLibrary("junit"))
         add("testImplementation", findLibrary("mockk"))
         add("testImplementation", project(":embrace-test-common"))

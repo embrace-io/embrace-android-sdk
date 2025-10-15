@@ -52,5 +52,5 @@ dependencies {
     testImplementation(libs.lifecycle.runtime)
     testImplementation(libs.lifecycle.process)
     testImplementation(libs.lifecycle.testing)
-    testImplementation(libs.kotlin.reflect)
+    testImplementation(kotlin("reflect"))
 }

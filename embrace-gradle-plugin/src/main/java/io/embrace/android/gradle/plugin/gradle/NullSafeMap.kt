@@ -1,3 +1,5 @@
+@file:Suppress("NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS", "UPPER_BOUND_VIOLATED_BASED_ON_JAVA_ANNOTATIONS")
+
 package io.embrace.android.gradle.plugin.gradle
 
 import org.gradle.api.Transformer
@@ -11,7 +13,7 @@ import org.gradle.api.provider.Provider
  */
 fun <O, I : Any> Provider<I>.nullSafeMap(transform: (I) -> O?): Provider<O> {
     return map(
-        object : io.embrace.android.gradle.plugin.gradle.NullSafeTransformer<O?, I>() {
+        object : NullSafeTransformer<O?, I>() {
             override fun transform(input: I): O? {
                 return transform(input)
             }
@@ -24,7 +26,7 @@ fun <O, I : Any> Provider<I>.nullSafeMap(transform: (I) -> O?): Provider<O> {
  */
 @Suppress("ObjectLiteralToLambda", "WRONG_NULLABILITY_FOR_JAVA_OVERRIDE")
 inline fun <T, R> Provider<T>.safeFlatMap(
-    crossinline transform: (T) -> Provider<R>
+    crossinline transform: (T) -> Provider<R>,
 ): Provider<R> = flatMap(object : Transformer<Provider<R>, T> {
     override fun transform(input: T): Provider<R> {
         return transform(input)

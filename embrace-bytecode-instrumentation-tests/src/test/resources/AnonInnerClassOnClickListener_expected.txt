@@ -15,6 +15,7 @@ class io/embrace/test/fixtures/AnonInnerClassOnClickListener$1 implements androi
 
   // access flags 0x0
   <init>(Lio/embrace/test/fixtures/AnonInnerClassOnClickListener;)V
+    // parameter final mandated  <no name>
    L0
     LINENUMBER 10 L0
     ALOAD 0

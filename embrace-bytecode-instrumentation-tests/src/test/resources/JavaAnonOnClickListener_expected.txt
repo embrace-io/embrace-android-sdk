@@ -15,6 +15,7 @@ class io/embrace/test/fixtures/JavaAnonOnClickListener$1 implements android/view
 
   // access flags 0x0
   <init>(Lio/embrace/test/fixtures/JavaAnonOnClickListener;)V
+    // parameter final mandated  <no name>
    L0
     LINENUMBER 22 L0
     ALOAD 0

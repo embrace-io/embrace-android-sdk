@@ -40,7 +40,6 @@ public class FakeCoreModule(
             versionCode = 99
         }
 
-        @Suppress("DEPRECATION")
         private val fakePackageVersionInfo = PackageVersionInfo(fakePackageInfo)
 
         public fun getMockedContext(): Context {

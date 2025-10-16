@@ -21,7 +21,6 @@ internal class EnvelopeResourceSourceImpl(
     private val rnBundleIdTracker: RnBundleIdTracker,
 ) : EnvelopeResourceSource {
 
-    @Suppress("DEPRECATION")
     override fun getEnvelopeResource(): EnvelopeResource {
         return EnvelopeResource(
             appVersion = packageVersionInfo.versionName,

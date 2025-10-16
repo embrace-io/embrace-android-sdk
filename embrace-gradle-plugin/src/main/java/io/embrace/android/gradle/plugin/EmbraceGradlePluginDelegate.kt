@@ -1,5 +1,3 @@
-@file:Suppress("DEPRECATION")
-
 package io.embrace.android.gradle.plugin
 
 import io.embrace.android.gradle.plugin.agp.AgpUtils
@@ -12,7 +10,6 @@ import io.embrace.android.gradle.plugin.config.variant.EmbraceVariantConfigurati
 import io.embrace.android.gradle.plugin.gradle.getProperty
 import io.embrace.android.gradle.plugin.instrumentation.config.model.VariantConfig
 import io.embrace.android.gradle.plugin.tasks.registration.TaskRegistrar
-import io.embrace.android.gradle.swazzler.plugin.extension.SwazzlerExtension
 import org.gradle.api.Project
 import org.gradle.api.provider.ListProperty
 
@@ -26,13 +23,12 @@ class EmbraceGradlePluginDelegate {
     fun onAndroidPluginApplied(
         project: Project,
         variantConfigurationsListProperty: ListProperty<VariantConfig>,
-        extension: SwazzlerExtension,
         embrace: EmbraceExtension,
     ) {
         val agpWrapper = AgpWrapperImpl(project)
         validateMinAgpVersion(agpWrapper)
 
-        val behavior = PluginBehaviorImpl(project, extension, embrace)
+        val behavior = PluginBehaviorImpl(project, embrace)
 
         val embraceVariantConfigurationBuilder =
             EmbraceVariantConfigurationBuilder(

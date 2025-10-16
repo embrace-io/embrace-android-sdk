@@ -43,7 +43,6 @@ internal class BackgroundWorkerTest {
         }
     }
 
-    @Suppress("DEPRECATION")
     @Test
     fun testScheduleAtFixedRate() {
         val impl = BlockingScheduledExecutorService()

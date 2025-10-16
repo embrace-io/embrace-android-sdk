@@ -70,7 +70,6 @@ internal class LivenessCheckScheduler(
         }
     }
 
-    @Suppress("DEPRECATION")
     private fun scheduleRegularHeartbeats() {
         intervalMs = configService.anrBehavior.getSamplingIntervalMs()
         val runnable = Runnable(::checkHeartbeat)

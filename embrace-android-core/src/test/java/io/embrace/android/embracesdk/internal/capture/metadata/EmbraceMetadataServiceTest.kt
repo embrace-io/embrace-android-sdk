@@ -64,7 +64,6 @@ internal class EmbraceMetadataServiceTest {
             unmockkAll()
         }
 
-        @Suppress("DEPRECATION")
         private fun initContext() {
             packageInfo.versionName = "1.0.0"
             @Suppress("DEPRECATION")
@@ -99,7 +98,6 @@ internal class EmbraceMetadataServiceTest {
         )
     }
 
-    @Suppress("DEPRECATION")
     private fun getMetadataService(
         framework: AppFramework = AppFramework.NATIVE,
         precompute: Boolean = true,

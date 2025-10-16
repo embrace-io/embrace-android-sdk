@@ -1,5 +1,3 @@
-@file:Suppress("DEPRECATION")
-
 package io.embrace.android.embracesdk.internal
 
 import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData

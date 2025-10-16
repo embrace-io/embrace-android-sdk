@@ -19,7 +19,6 @@ private const val ERR_MSG = "err_msg"
 private val httpMethod = HttpMethod.GET
 private val traceParent = IdGenerator.generateW3CTraceparent()
 
-@Suppress("DEPRECATION")
 internal class EmbraceNetworkRequestTest {
 
     @Test

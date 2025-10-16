@@ -68,7 +68,6 @@ internal class EmbraceMetadataService(
         }
     }
 
-    @Suppress("DEPRECATION")
     @RequiresApi(Build.VERSION_CODES.O)
     private fun getDeviceDiskAppUsage(
         storageStatsManager: StorageStatsManager?,

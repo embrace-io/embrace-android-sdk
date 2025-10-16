@@ -1,5 +1,3 @@
-@file:Suppress("DEPRECATION")
-
 package io.embrace.android.embracesdk.internal.api.delegate
 
 import android.annotation.SuppressLint

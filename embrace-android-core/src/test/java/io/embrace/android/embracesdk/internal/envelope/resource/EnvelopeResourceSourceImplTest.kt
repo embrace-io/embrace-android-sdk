@@ -42,7 +42,6 @@ internal class EnvelopeResourceSourceImplTest {
             unmockkAll()
         }
 
-        @Suppress("DEPRECATION")
         private fun initContext() {
             packageInfo.packageName = "com.embrace.fake"
             packageInfo.versionName = "1.0.0"

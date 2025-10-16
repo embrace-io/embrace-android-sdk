@@ -1,9 +1,6 @@
-@file:Suppress("DEPRECATION")
-
 package io.embrace.android.gradle.plugin.config
 
 import io.embrace.android.gradle.plugin.api.EmbraceExtension
-import io.embrace.android.gradle.swazzler.plugin.extension.SwazzlerExtension
 import org.gradle.api.Action
 import org.gradle.api.Project
 import org.gradle.testfixtures.ProjectBuilder
@@ -16,16 +13,14 @@ import org.junit.Test
 class PluginBehaviorImplTest {
 
     private lateinit var project: Project
-    private lateinit var extension: SwazzlerExtension
     private lateinit var embrace: EmbraceExtension
     private lateinit var behavior: PluginBehavior
 
     @Before
     fun setUp() {
         project = ProjectBuilder.builder().build()
-        extension = project.extensions.create("swazzler", SwazzlerExtension::class.java)
         embrace = project.extensions.create("embrace", EmbraceExtension::class.java)
-        behavior = PluginBehaviorImpl(project, extension, embrace)
+        behavior = PluginBehaviorImpl(project, embrace)
     }
 
     @Test
@@ -145,12 +140,6 @@ class PluginBehaviorImplTest {
     }
 
     @Test
-    fun `autoAddEmbraceDependencies disabled via swazzler`() {
-        extension.disableDependencyInjection.set(true)
-        assertFalse(behavior.autoAddEmbraceDependencies)
-    }
-
-    @Test
     fun `autoAddEmbraceDependencies disabled via embrace`() {
         embrace.autoAddEmbraceDependencies.set(false)
         assertFalse(behavior.autoAddEmbraceDependencies)
@@ -168,12 +157,6 @@ class PluginBehaviorImplTest {
     @Test
     fun `autoAddEmbraceComposeDependency default`() {
         assertFalse(behavior.autoAddEmbraceComposeDependency)
-    }
-
-    @Test
-    fun `autoAddEmbraceComposeDependency enabled via swazzler`() {
-        extension.disableComposeDependencyInjection.set(false)
-        assertTrue(behavior.autoAddEmbraceComposeDependency)
     }
 
     @Test
@@ -200,18 +183,6 @@ class PluginBehaviorImplTest {
     }
 
     @Test
-    fun `instrumentation disabled for variant via swazzler`() {
-        val disabledVariant = "foo"
-        extension.variantFilter = Action {
-            if (it.name == disabledVariant) {
-                it.enabled = false
-            }
-        }
-        assertTrue(behavior.isInstrumentationDisabledForVariant(disabledVariant))
-        assertFalse(behavior.isInstrumentationDisabledForVariant("bar"))
-    }
-
-    @Test
     fun `instrumentation disabled for variant via embrace`() {
         val disabledVariant = "foo"
         embrace.buildVariantFilter = Action {
@@ -226,18 +197,6 @@ class PluginBehaviorImplTest {
     @Test
     fun `plugin enabled for variant`() {
         assertFalse(behavior.isPluginDisabledForVariant("foo"))
-    }
-
-    @Test
-    fun `plugin disabled for variant via swazzler`() {
-        val disabledVariant = "foo"
-        extension.variantFilter = Action {
-            if (it.name == disabledVariant) {
-                it.swazzlerOff = true
-            }
-        }
-        assertTrue(behavior.isPluginDisabledForVariant(disabledVariant))
-        assertFalse(behavior.isPluginDisabledForVariant("bar"))
     }
 
     @Test

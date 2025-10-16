@@ -1,5 +1,3 @@
-@file:Suppress("DEPRECATION")
-
 package io.embrace.android.gradle.plugin.ndk
 
 import com.android.build.api.variant.Variant
@@ -19,7 +17,6 @@ import io.embrace.android.gradle.plugin.tasks.ndk.NdkUploadTasksRegistration
 import io.embrace.android.gradle.plugin.tasks.ndk.UploadSharedObjectFilesTask
 import io.embrace.android.gradle.plugin.tasks.registration.RegistrationParams
 import io.embrace.android.gradle.plugin.util.capitalizedString
-import io.embrace.android.gradle.swazzler.plugin.extension.SwazzlerExtension
 import io.mockk.every
 import io.mockk.mockk
 import org.gradle.api.DefaultTask
@@ -59,7 +56,6 @@ class NdkUploadTasksRegistrationTest {
 
     private val mockVariant = mockk<Variant>(relaxed = true)
 
-    private lateinit var swazzlerExtension: SwazzlerExtension
     private lateinit var embraceExtension: EmbraceExtension
     private lateinit var project: Project
     private lateinit var variantConfigurationsListProperty: ListProperty<VariantConfig>
@@ -71,11 +67,9 @@ class NdkUploadTasksRegistrationTest {
         every { mockVariant.name } returns testVariantName
         project = projectBuilder.build()
         variantConfigurationsListProperty = project.objects.listProperty(VariantConfig::class.java).convention(emptyList())
-        swazzlerExtension = project.extensions.create("swazzler", SwazzlerExtension::class.java)
         embraceExtension = project.extensions.create("embrace", EmbraceExtension::class.java)
         testBehavior = PluginBehaviorImpl(
             project,
-            swazzlerExtension,
             embraceExtension
         )
         testRegistrationParams = RegistrationParams(

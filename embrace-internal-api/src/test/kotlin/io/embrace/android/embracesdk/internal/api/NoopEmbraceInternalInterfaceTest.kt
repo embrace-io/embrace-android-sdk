@@ -1,5 +1,3 @@
-@file:Suppress("DEPRECATION")
-
 package io.embrace.android.embracesdk.internal.api
 
 import io.embrace.android.embracesdk.internal.api.delegate.NoopEmbraceInternalInterface
@@ -22,7 +20,6 @@ internal class NoopEmbraceInternalInterfaceTest {
         )
     }
 
-    @Suppress("DEPRECATION")
     @Test
     fun `check no errors thrown when invoked`() {
         impl.logInfo("", emptyMap())

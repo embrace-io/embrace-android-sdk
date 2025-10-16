@@ -1,5 +1,3 @@
-@file:Suppress("DEPRECATION")
-
 package io.embrace.android.embracesdk.testcases
 
 import androidx.test.ext.junit.runners.AndroidJUnit4

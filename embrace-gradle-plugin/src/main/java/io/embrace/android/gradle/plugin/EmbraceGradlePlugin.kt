@@ -1,16 +1,12 @@
-@file:Suppress("DEPRECATION")
-
 package io.embrace.android.gradle.plugin
 
 import io.embrace.android.gradle.plugin.api.EmbraceExtension
 import io.embrace.android.gradle.plugin.gradle.GradleVersion
 import io.embrace.android.gradle.plugin.gradle.GradleVersion.Companion.isAtLeast
 import io.embrace.android.gradle.plugin.instrumentation.config.model.VariantConfig
-import io.embrace.android.gradle.swazzler.plugin.extension.SwazzlerExtension
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 
-const val EXTENSION_NAME = "swazzler"
 private const val ANDROID_APPLICATION_PLUGIN = "com.android.application"
 
 /**
@@ -25,12 +21,6 @@ class EmbraceGradlePlugin : Plugin<Project> {
 
     override fun apply(project: Project) {
         validateMinGradleVersion()
-
-        val extension = project.extensions.create(
-            EXTENSION_NAME,
-            SwazzlerExtension::class.java,
-            project.objects
-        )
 
         val embrace = project.extensions.create(
             "embrace",
@@ -49,7 +39,6 @@ class EmbraceGradlePlugin : Plugin<Project> {
             impl.onAndroidPluginApplied(
                 project,
                 variantConfigurationsListProperty,
-                extension,
                 embrace,
             )
         }

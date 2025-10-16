@@ -17,6 +17,10 @@ fun configureTestOptions(android: LibraryExtension) {
                     this.exceptionFormat = TestExceptionFormat.FULL
                 }
                 test.maxParallelForks = (Runtime.getRuntime().availableProcessors() / 3) + 1
+
+                // Disable test discovery failure for modules without test sources
+                test.failOnNoDiscoveredTests.set(false)
+
             }
         }
         execution = "ANDROIDX_TEST_ORCHESTRATOR"

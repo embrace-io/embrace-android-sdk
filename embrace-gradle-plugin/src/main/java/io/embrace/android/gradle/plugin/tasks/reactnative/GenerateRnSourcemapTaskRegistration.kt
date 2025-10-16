@@ -1,3 +1,5 @@
+@file:Suppress("NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS", "UPPER_BOUND_VIOLATED_BASED_ON_JAVA_ANNOTATIONS")
+
 package io.embrace.android.gradle.plugin.tasks.reactnative
 
 import io.embrace.android.gradle.plugin.gradle.lazyTaskLookup

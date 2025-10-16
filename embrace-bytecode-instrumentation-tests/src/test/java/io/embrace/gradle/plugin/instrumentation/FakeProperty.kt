@@ -1,3 +1,5 @@
+@file:Suppress("UPPER_BOUND_VIOLATED_BASED_ON_JAVA_ANNOTATIONS")
+
 package io.embrace.gradle.plugin.instrumentation
 
 import io.mockk.every

@@ -55,6 +55,7 @@ fun <T : Task> Project.tryGetTaskProvider(taskName: String, taskType: Class<T>):
  * @param name The name of the task to look up.
  * @return A [Provider] of the task, or `provider { null }` if the task is not present.
  */
+@Suppress("UPPER_BOUND_VIOLATED_BASED_ON_JAVA_ANNOTATIONS")
 inline fun <reified T : Task> Project.lazyTaskLookup(name: String): Provider<T?> {
     return provider {
         tryGetTaskProvider(name, T::class.java)

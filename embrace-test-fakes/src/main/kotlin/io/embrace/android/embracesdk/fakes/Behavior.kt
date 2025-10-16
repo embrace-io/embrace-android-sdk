@@ -23,8 +23,6 @@ import io.embrace.android.embracesdk.internal.config.behavior.SdkModeBehaviorImp
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.SessionBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.SessionBehaviorImpl
-import io.embrace.android.embracesdk.internal.config.behavior.WebViewVitalsBehavior
-import io.embrace.android.embracesdk.internal.config.behavior.WebViewVitalsBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.utils.Uuid
@@ -111,14 +109,6 @@ fun createNetworkSpanForwardingBehavior(
     InstrumentedConfigImpl,
     remoteConfig
 )
-
-/**
- * A [WebViewVitalsBehaviorImpl] that returns default values.
- */
-fun createWebViewVitalsBehavior(
-    thresholdCheck: BehaviorThresholdCheck = behaviorThresholdCheck,
-    remoteCfg: RemoteConfig? = null,
-): WebViewVitalsBehavior = WebViewVitalsBehaviorImpl(thresholdCheck, remoteCfg)
 
 /**
  * A [SensitiveKeysBehaviorImpl] that returns default values.

@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.testcases
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.ResourceReader
 import io.embrace.android.embracesdk.assertions.toMap
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
@@ -40,10 +39,6 @@ internal class SessionApiTest {
                     embrace.setUserIdentifier("some id")
                     embrace.setUserEmail("user@email.com")
                     embrace.setUsername("John Doe")
-
-                    // add webview information
-                    val msg = ResourceReader.readResourceAsText("expected-webview-core-vital.json")
-                    embrace.trackWebViewPerformance("myWebView", msg)
                 }.startTimeMs
             },
             assertAction = {

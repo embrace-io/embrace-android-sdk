@@ -89,12 +89,6 @@ data class RemoteConfig(
     @Json(name = "network_span_forwarding")
     val networkSpanForwardingRemoteConfig: NetworkSpanForwardingRemoteConfig? = null,
 
-    /**
-     * Web view vitals settings
-     */
-    @Json(name = "webview_vitals_beta")
-    val webViewVitals: WebViewVitals? = null,
-
     @Json(name = "ui_load_instrumentation_enabled_v2")
     val uiLoadInstrumentationEnabled: Boolean? = null,
 

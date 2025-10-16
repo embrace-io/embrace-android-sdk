@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.api.delegate
 
-import android.webkit.ConsoleMessage
 import io.embrace.android.embracesdk.internal.api.InternalWebViewApi
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.injection.embraceImplInject
@@ -14,8 +13,6 @@ internal class InternalWebViewApiDelegate(
     private val webViewUrlDataSource by embraceImplInject(sdkCallChecker) {
         bootstrapper.featureModule.webViewUrlDataSource.dataSource
     }
-    private val webviewService by embraceImplInject(sdkCallChecker) { bootstrapper.dataCaptureServiceModule.webviewService }
-    private val configService by embraceImplInject(sdkCallChecker) { bootstrapper.configModule.configService }
     private val sessionOrchestrator by embraceImplInject(sdkCallChecker) {
         bootstrapper.sessionOrchestrationModule.sessionOrchestrator
     }
@@ -25,18 +22,6 @@ internal class InternalWebViewApiDelegate(
             webViewUrlDataSource
             webViewUrlDataSource?.logWebView(url, sdkClock.now())
             sessionOrchestrator?.reportBackgroundActivityStateChange()
-        }
-    }
-
-    override fun trackWebViewPerformance(tag: String, consoleMessage: ConsoleMessage) {
-        consoleMessage.message()?.let { message ->
-            trackWebViewPerformance(tag, message)
-        }
-    }
-
-    override fun trackWebViewPerformance(tag: String, message: String) {
-        if (sdkCallChecker.started.get() && configService?.webViewVitalsBehavior?.isWebViewVitalsEnabled() == true) {
-            webviewService?.collectWebData(tag, message)
         }
     }
 }

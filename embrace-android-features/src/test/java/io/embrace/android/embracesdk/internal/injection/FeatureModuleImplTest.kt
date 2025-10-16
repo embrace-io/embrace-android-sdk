@@ -35,12 +35,11 @@ internal class FeatureModuleImplTest {
         assertNotNull(module.pushNotificationDataSource)
         assertNotNull(module.tapDataSource)
         assertNotNull(module.rnActionDataSource)
-        assertNotNull(module.webViewDataSource)
         assertNotNull(module.lowPowerDataSource)
         assertNotNull(module.applicationExitInfoDataSource)
         assertNotNull(module.internalErrorDataSource)
 
-        val expectedFeatures = 12
+        val expectedFeatures = 11
         assertEquals(expectedFeatures, registry.states.size)
     }
 }

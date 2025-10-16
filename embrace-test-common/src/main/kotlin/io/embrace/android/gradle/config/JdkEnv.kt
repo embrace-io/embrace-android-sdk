@@ -1,8 +1,8 @@
 package io.embrace.android.gradle.config
 
 enum class JdkEnv(val path: String) {
-    JAVA_11(resolveJdkPath(11)),
-    JAVA_17(resolveJdkPath(17))
+    JAVA_17(resolveJdkPath(17)),
+    JAVA_21(resolveJdkPath(21))
 }
 
 private fun resolveJdkPath(version: Int): String {

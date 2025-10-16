@@ -15,6 +15,7 @@ class io/embrace/test/fixtures/AnonInnerClassOnLongClickListener$1 implements an
 
   // access flags 0x0
   <init>(Lio/embrace/test/fixtures/AnonInnerClassOnLongClickListener;)V
+    // parameter final mandated  <no name>
    L0
     LINENUMBER 10 L0
     ALOAD 0

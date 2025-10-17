@@ -20,8 +20,8 @@ class FakeOtelJavaSpan(
     val openTelemetry = fakeOpenTelemetry(false)
     private val spanContext: OtelJavaSpanContext =
         OtelJavaSpanContext.create(
-            parentContext.getEmbraceSpan(openTelemetry)?.traceId ?: openTelemetry.tracingIdFactory.generateTraceId(),
-            openTelemetry.tracingIdFactory.generateSpanId(),
+            parentContext.getEmbraceSpan(openTelemetry)?.traceId ?: openTelemetry.tracingIdFactory.generateTraceIdBytes().toHexString(),
+            openTelemetry.tracingIdFactory.generateSpanIdBytes().toHexString(),
             OtelJavaTraceFlags.getDefault(),
             OtelJavaTraceState.getDefault()
         )

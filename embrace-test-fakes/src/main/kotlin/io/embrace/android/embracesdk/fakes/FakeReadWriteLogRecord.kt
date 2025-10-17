@@ -12,6 +12,7 @@ import io.embrace.opentelemetry.kotlin.tracing.model.SpanContext
 class FakeReadWriteLogRecord(
     private val attributeContainer: MutableAttributeContainer = FakeMutableAttributeContainer(),
     override var body: String? = null,
+    override var eventName: String? = null,
     override val instrumentationScopeInfo: InstrumentationScopeInfo = FakeInstrumentationScopeInfo(),
     override var observedTimestamp: Long? = null,
     override val resource: Resource = FakeResource(),

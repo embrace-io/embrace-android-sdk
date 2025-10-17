@@ -8,7 +8,6 @@ import io.embrace.opentelemetry.kotlin.OpenTelemetry
 import io.embrace.opentelemetry.kotlin.context.Context
 import io.embrace.opentelemetry.kotlin.createCompatOpenTelemetry
 import io.embrace.opentelemetry.kotlin.createOpenTelemetry
-import io.embrace.opentelemetry.kotlin.factory.current
 import io.embrace.opentelemetry.kotlin.init.LoggerProviderConfigDsl
 import io.embrace.opentelemetry.kotlin.init.TracerProviderConfigDsl
 
@@ -20,17 +19,17 @@ internal fun createSdkOtelInstance(
     clock: Clock,
 ): OpenTelemetry {
     return if (useKotlinSdk) {
-        createOpenTelemetry(
-            tracerProvider = tracerProvider,
-            loggerProvider = loggerProvider,
-            clock = clock,
-        )
+        createOpenTelemetry {
+            tracerProvider { tracerProvider() }
+            loggerProvider { loggerProvider() }
+            this.clock = clock
+        }
     } else {
-        createCompatOpenTelemetry(
-            tracerProvider = tracerProvider,
-            loggerProvider = loggerProvider,
-            clock = clock
-        )
+        createCompatOpenTelemetry {
+            tracerProvider { tracerProvider() }
+            loggerProvider { loggerProvider() }
+            this.clock = clock
+        }
     }
 }
 
@@ -39,6 +38,6 @@ internal fun OpenTelemetry.getDefaultContext(useKotlinSdk: Boolean): Context? {
     return if (useKotlinSdk) {
         contextFactory.root().getEmbraceSpan(this)?.createContext(this)
     } else {
-        contextFactory.current().getEmbraceSpan(this)?.createContext(this)
+        contextFactory.implicitContext().getEmbraceSpan(this)?.createContext(this)
     }
 }

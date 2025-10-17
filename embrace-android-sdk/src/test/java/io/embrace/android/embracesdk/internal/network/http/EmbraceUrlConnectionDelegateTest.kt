@@ -32,7 +32,7 @@ internal class EmbraceUrlConnectionDelegateTest {
 
     @Before
     fun setup() {
-        internalApi = FakeInternalNetworkApi()
+        internalApi = FakeInternalNetworkApi(time = REQUEST_TIME)
         instance = internalApi
         internalApi.internalInterface.captureNetworkBody = true
     }
@@ -550,23 +550,22 @@ internal class EmbraceUrlConnectionDelegateTest {
         responseBody: String? = null,
     ) {
         val request = retrieveNetworkRequest()
-        with(request) {
-            assertEquals(url, url)
-            assertEquals(httpMethod, httpMethod)
-            assertEquals(startTime, startTime)
-            assertEquals(endTime, endTime)
-            assertEquals(httpStatus, responseCode)
-            assertEquals(requestSize?.toLong(), bytesOut)
-            assertEquals(responseBodySize?.toLong(), bytesIn)
-            assertEquals(errorType, errorType)
-            assertEquals(errorMessage, errorMessage)
-            assertEquals(traceId, traceId)
-            assertEquals(w3cTraceparent, w3cTraceparent)
-            if (networkDataCaptured) {
-                validateNetworkCaptureData(responseBody)
-            } else {
-                assertNull(networkCaptureData)
-            }
+
+        assertEquals(url, request.url)
+        assertEquals(httpMethod, request.httpMethod)
+        assertEquals(startTime, request.startTime)
+        assertEquals(endTime, request.endTime)
+        assertEquals(httpStatus, request.responseCode)
+        assertEquals(requestSize?.toLong(), request.bytesOut)
+        assertEquals(responseBodySize?.toLong(), request.bytesIn)
+        assertEquals(errorType, request.errorType)
+        assertEquals(errorMessage, request.errorMessage)
+        assertEquals(traceId, request.traceId)
+        assertEquals(w3cTraceparent, request.w3cTraceparent)
+        if (networkDataCaptured) {
+            validateNetworkCaptureData(responseBody)
+        } else {
+            assertNull(request.networkCaptureData)
         }
     }
 

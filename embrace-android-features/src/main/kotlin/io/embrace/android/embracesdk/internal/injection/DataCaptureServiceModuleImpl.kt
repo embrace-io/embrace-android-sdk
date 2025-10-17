@@ -18,7 +18,7 @@ import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
 
-internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
+internal class DataCaptureServiceModuleImpl(
     initModule: InitModule,
     openTelemetryModule: OpenTelemetryModule,
     configService: ConfigService,

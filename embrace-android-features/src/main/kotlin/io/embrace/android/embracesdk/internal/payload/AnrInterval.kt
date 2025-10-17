@@ -4,7 +4,7 @@ package io.embrace.android.embracesdk.internal.payload
  * Intervals during which the UI thread was blocked for more than 1 second, which
  * determines that the application is not responding (ANR).
  */
-data class AnrInterval @JvmOverloads constructor(
+data class AnrInterval(
 
     /**
      * The time at which the application stopped responding.

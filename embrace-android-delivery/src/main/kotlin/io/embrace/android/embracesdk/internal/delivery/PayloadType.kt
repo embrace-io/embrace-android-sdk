@@ -19,10 +19,10 @@ enum class PayloadType(
 
     companion object {
 
-        private val filenameMap = PayloadType.values().associateBy { it.filenameComponent }
+        private val filenameMap = PayloadType.entries.associateBy { it.filenameComponent }
 
         fun fromValue(value: String?): PayloadType {
-            return values().firstOrNull { it.value == value } ?: UNKNOWN
+            return PayloadType.entries.firstOrNull { it.value == value } ?: UNKNOWN
         }
 
         fun fromFilenameComponent(component: String): PayloadType = filenameMap[component] ?: UNKNOWN

@@ -274,7 +274,7 @@ internal class SpanServiceImplTest {
 
     @Test
     fun `record spans with different ending error codes `() {
-        ErrorCode.values().forEach { errorCode ->
+        ErrorCode.entries.forEach { errorCode ->
             assertTrue(
                 spansService.recordCompletedSpan(
                     name = "test${errorCode.name}",

@@ -18,12 +18,12 @@ internal fun logTouchEvent(view: View, breadcrumbType: TapBreadcrumbType) {
         } catch (e: Exception) {
             Pair(0.0f, 0.0f)
         }
-        EmbraceInternalApi.getInstance().internalInterface.logTap(
+        EmbraceInternalApi.internalInterface.logTap(
             point,
             viewName,
             breadcrumbType
         )
     } catch (throwable: Throwable) {
-        EmbraceInternalApi.getInstance().internalInterface.logInternalError(throwable)
+        EmbraceInternalApi.internalInterface.logInternalError(throwable)
     }
 }

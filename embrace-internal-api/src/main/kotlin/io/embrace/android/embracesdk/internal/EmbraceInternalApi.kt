@@ -10,19 +10,16 @@ import io.embrace.android.embracesdk.internal.api.delegate.NoopUnityInternalInte
  * Provides access to internal Embrace SDK APIs. This is intended for use by Embrace's SDKs only and is subject
  * to breaking changes without warning.
  */
-class EmbraceInternalApi private constructor() : InternalInterfaceApi {
+object EmbraceInternalApi : InternalInterfaceApi {
 
-    companion object {
-        const val CUSTOM_TRACE_ID_HEADER_NAME: String = "x-emb-trace-id"
-        var internalTracingApi: InternalTracingApi? = null
-        var internalInterfaceApi: InternalInterfaceApi? = null
-        var isStarted: () -> Boolean = { false }
+    const val CUSTOM_TRACE_ID_HEADER_NAME: String = "x-emb-trace-id"
+    var internalTracingApi: InternalTracingApi? = null
+    var internalInterfaceApi: InternalInterfaceApi? = null
+    var isStarted: () -> Boolean = { false }
 
-        private val instance = EmbraceInternalApi()
-
-        @JvmStatic
-        fun getInstance(): EmbraceInternalApi = instance
-    }
+    @JvmStatic
+    @Deprecated("", replaceWith = ReplaceWith("EmbraceInternalApi"))
+    fun getInstance(): EmbraceInternalApi = this
 
     private val noopEmbraceInternalInterface by lazy {
         NoopEmbraceInternalInterface(internalTracingApi ?: NoopInternalTracingApi())

@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.okhttp3
 
 import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.internal.EmbraceInternalApi
-import io.embrace.android.embracesdk.internal.EmbraceInternalApi.Companion.CUSTOM_TRACE_ID_HEADER_NAME
+import io.embrace.android.embracesdk.internal.EmbraceInternalApi.CUSTOM_TRACE_ID_HEADER_NAME
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.network.http.EmbraceHttpPathOverride
 import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData

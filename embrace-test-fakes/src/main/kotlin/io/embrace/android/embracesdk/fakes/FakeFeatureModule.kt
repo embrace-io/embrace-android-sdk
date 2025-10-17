@@ -12,7 +12,6 @@ import io.embrace.android.embracesdk.internal.capture.crumbs.WebViewUrlDataSourc
 import io.embrace.android.embracesdk.internal.capture.powersave.LowPowerDataSource
 import io.embrace.android.embracesdk.internal.capture.telemetry.InternalErrorDataSource
 import io.embrace.android.embracesdk.internal.capture.thermalstate.ThermalStateDataSource
-import io.embrace.android.embracesdk.internal.capture.webview.WebViewDataSource
 import io.embrace.android.embracesdk.internal.injection.FeatureModule
 
 class FakeFeatureModule : FeatureModule {
@@ -26,6 +25,5 @@ class FakeFeatureModule : FeatureModule {
     override val networkStatusDataSource: DataSourceState<NetworkStatusDataSource> = DataSourceState({ null })
     override val rnActionDataSource: DataSourceState<RnActionDataSource> = DataSourceState({ null })
     override val thermalStateDataSource: DataSourceState<ThermalStateDataSource> = DataSourceState({ null })
-    override val webViewDataSource: DataSourceState<WebViewDataSource> = DataSourceState({ null })
     override val internalErrorDataSource: DataSourceState<InternalErrorDataSource> = DataSourceState({ null })
 }

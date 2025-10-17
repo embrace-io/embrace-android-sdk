@@ -13,7 +13,6 @@ import io.embrace.android.embracesdk.internal.config.behavior.OtelBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.SdkModeBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.SessionBehavior
-import io.embrace.android.embracesdk.internal.config.behavior.WebViewVitalsBehavior
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 
 /**
@@ -67,11 +66,6 @@ interface ConfigService {
      * Provides whether the SDK should enable certain 'behavior' modes, such as 'integration mode'
      */
     val sdkModeBehavior: SdkModeBehavior
-
-    /**
-     * Provides whether the SDK should enable certain 'behavior' of web vitals
-     */
-    val webViewVitalsBehavior: WebViewVitalsBehavior
 
     /**
      * Provides behavior for the app exit info feature

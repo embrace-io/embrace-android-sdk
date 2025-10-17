@@ -24,7 +24,6 @@ internal class DataCaptureServiceModuleImplTest {
             FakeFeatureModule()
         )
 
-        assertNotNull(module.webviewService)
         assertNotNull(module.activityBreadcrumbTracker)
         assertNotNull(module.appStartupDataCollector)
         assertNotNull(module.pushNotificationService)

@@ -6,7 +6,6 @@ import io.embrace.android.embracesdk.internal.capture.crumbs.PushNotificationCap
 import io.embrace.android.embracesdk.internal.capture.startup.AppStartupDataCollector
 import io.embrace.android.embracesdk.internal.capture.startup.StartupService
 import io.embrace.android.embracesdk.internal.capture.startup.StartupTracker
-import io.embrace.android.embracesdk.internal.capture.webview.WebViewService
 import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityLifecycleListener
 
 /**
@@ -21,11 +20,6 @@ interface DataCaptureServiceModule {
      * Captures breadcrumbs
      */
     val activityBreadcrumbTracker: ActivityBreadcrumbTracker
-
-    /**
-     * Captures information from webviews
-     */
-    val webviewService: WebViewService
 
     /**
      * Captures push notifications

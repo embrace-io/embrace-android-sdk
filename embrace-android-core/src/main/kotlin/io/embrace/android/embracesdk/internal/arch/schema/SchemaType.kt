@@ -216,21 +216,6 @@ sealed class SchemaType(
         ).toNonNullMap()
     }
 
-    class WebViewInfo(
-        url: String,
-        webVitals: String,
-        tag: String?,
-    ) : SchemaType(
-        telemetryType = EmbType.System.WebViewInfo,
-        fixedObjectName = "webview-info"
-    ) {
-        override val schemaAttributes: Map<String, String> = mapOf(
-            UrlAttributes.URL_FULL to url,
-            "emb.webview_info.web_vitals" to webVitals,
-            "emb.webview_info.tag" to tag
-        ).toNonNullMap()
-    }
-
     class ReactNativeAction(
         name: String,
         outcome: String,

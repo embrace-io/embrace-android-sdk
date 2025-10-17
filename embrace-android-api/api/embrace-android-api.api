@@ -64,8 +64,6 @@ public final class io/embrace/android/embracesdk/internal/api/InstrumentationApi
 
 public abstract interface class io/embrace/android/embracesdk/internal/api/InternalWebViewApi {
 	public abstract fun logWebView (Ljava/lang/String;)V
-	public abstract fun trackWebViewPerformance (Ljava/lang/String;Landroid/webkit/ConsoleMessage;)V
-	public abstract fun trackWebViewPerformance (Ljava/lang/String;Ljava/lang/String;)V
 }
 
 public abstract interface class io/embrace/android/embracesdk/internal/api/LogsApi {

@@ -10,8 +10,6 @@ import io.embrace.android.embracesdk.internal.capture.startup.AppStartupTraceEmi
 import io.embrace.android.embracesdk.internal.capture.startup.StartupService
 import io.embrace.android.embracesdk.internal.capture.startup.StartupServiceImpl
 import io.embrace.android.embracesdk.internal.capture.startup.StartupTracker
-import io.embrace.android.embracesdk.internal.capture.webview.EmbraceWebViewService
-import io.embrace.android.embracesdk.internal.capture.webview.WebViewService
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.process.ProcessInfoImpl
 import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityLifecycleListener
@@ -27,14 +25,6 @@ internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
     versionChecker: VersionChecker = BuildVersionChecker,
     featureModule: FeatureModule,
 ) : DataCaptureServiceModule {
-
-    override val webviewService: WebViewService by singleton {
-        EmbraceWebViewService(
-            configService,
-            initModule.jsonSerializer,
-            initModule.logger,
-        ) { featureModule.webViewDataSource.dataSource }
-    }
 
     override val activityBreadcrumbTracker: ActivityBreadcrumbTracker by singleton {
         EmbTrace.trace("breadcrumb-service-init") {

@@ -14,7 +14,6 @@ import io.embrace.android.embracesdk.internal.config.behavior.OtelBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.SdkModeBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.SessionBehaviorImpl
-import io.embrace.android.embracesdk.internal.config.behavior.WebViewVitalsBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.InstrumentedConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.otel.config.OtelSdkConfig
@@ -44,7 +43,6 @@ internal class ConfigServiceImpl(
     override val dataCaptureEventBehavior = DataCaptureEventBehaviorImpl(remoteConfig)
     override val sdkModeBehavior = SdkModeBehaviorImpl(thresholdCheck, remoteConfig)
     override val appExitInfoBehavior = AppExitInfoBehaviorImpl(thresholdCheck, instrumentedConfig, remoteConfig)
-    override val webViewVitalsBehavior = WebViewVitalsBehaviorImpl(thresholdCheck, remoteConfig)
     override val networkSpanForwardingBehavior =
         NetworkSpanForwardingBehaviorImpl(thresholdCheck, instrumentedConfig, remoteConfig)
     override val otelBehavior = OtelBehaviorImpl(thresholdCheck, instrumentedConfig, remoteConfig)

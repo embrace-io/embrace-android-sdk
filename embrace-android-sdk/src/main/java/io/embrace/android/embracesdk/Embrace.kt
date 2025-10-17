@@ -5,7 +5,6 @@ package io.embrace.android.embracesdk
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
-import android.webkit.ConsoleMessage
 import io.embrace.android.embracesdk.internal.api.SdkApi
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
@@ -426,14 +425,6 @@ public class Embrace private constructor(
             isNotification,
             hasData
         )
-    }
-
-    override fun trackWebViewPerformance(tag: String, consoleMessage: ConsoleMessage) {
-        impl.trackWebViewPerformance(tag, consoleMessage)
-    }
-
-    override fun trackWebViewPerformance(tag: String, message: String) {
-        impl.trackWebViewPerformance(tag, message)
     }
 
     override fun applicationInitStart() {

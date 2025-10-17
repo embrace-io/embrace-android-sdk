@@ -19,7 +19,6 @@ import io.embrace.android.embracesdk.internal.capture.powersave.LowPowerDataSour
 import io.embrace.android.embracesdk.internal.capture.telemetry.InternalErrorDataSource
 import io.embrace.android.embracesdk.internal.capture.telemetry.InternalErrorDataSourceImpl
 import io.embrace.android.embracesdk.internal.capture.thermalstate.ThermalStateDataSource
-import io.embrace.android.embracesdk.internal.capture.webview.WebViewDataSource
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.Provider
@@ -109,20 +108,6 @@ internal class FeatureModuleImpl(
                     initModule.logger
                 )
             }
-        )
-    }
-
-    override val webViewDataSource: DataSourceState<WebViewDataSource> by dataSourceState {
-        DataSourceState(
-            factory = {
-                WebViewDataSource(
-                    webViewVitalsBehavior = configService.webViewVitalsBehavior,
-                    writer = otelModule.currentSessionSpan,
-                    logger = initModule.logger,
-                    serializer = initModule.jsonSerializer
-                )
-            },
-            configGate = { configService.webViewVitalsBehavior.isWebViewVitalsEnabled() }
         )
     }
 

@@ -15,7 +15,7 @@ internal class EmbraceSessionProperties(
     private val temporary: MutableMap<String, String> = HashMap()
     private val permanentPropertiesReference = AtomicReference(NOT_LOADED)
     private val permanentPropertiesProvider: Provider<MutableMap<String, String>> = {
-        preferencesService.permanentSessionProperties?.let(::HashMap) ?: HashMap()
+        preferencesService.permanentSessionProperties?.let { HashMap(it) } ?: HashMap()
     }
 
     private fun permanentProperties(): MutableMap<String, String> {

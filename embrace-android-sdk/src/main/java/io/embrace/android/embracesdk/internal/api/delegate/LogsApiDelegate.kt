@@ -123,15 +123,13 @@ internal class LogsApiDelegate(
     }
 
     private fun logAttachmentErrorIfNeeded(obj: Attachment) {
-        if (obj.errorCode != null) {
-            val msg = when (obj.errorCode) {
-                ATTACHMENT_TOO_LARGE -> "Supplied attachment exceeds 1Mb limit. This attachment will not be uploaded."
-                OVER_MAX_ATTACHMENTS -> "A maximum of 5 attachments are allowed per session. This attachment will not be uploaded."
-                UNKNOWN -> "An unknown error occurred while processing the attachment."
-                null -> null
-            } ?: return
-            logger?.logError(msg, RuntimeException(msg))
+        val msg = when (obj.errorCode) {
+            ATTACHMENT_TOO_LARGE -> "Supplied attachment exceeds 1Mb limit. This attachment will not be uploaded."
+            OVER_MAX_ATTACHMENTS -> "A maximum of 5 attachments are allowed per session. This attachment will not be uploaded."
+            UNKNOWN -> "An unknown error occurred while processing the attachment."
+            else -> return
         }
+        logger?.logError(msg, RuntimeException(msg))
     }
 
     override fun logException(

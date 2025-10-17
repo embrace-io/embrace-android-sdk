@@ -41,18 +41,27 @@ class EmbTracer(
             private = false,
             tracer = impl,
             parentCtx = parentCtx,
+            spanKind = spanKind,
+            startTimeMs = startTimestamp,
             objectCreator = objectCreator,
         )
+        var span: Span? = null
 
         spanService.createSpan(spanCreator)?.let { embraceSpan ->
             if (embraceSpan.start()) {
-                return EmbSpan(
+                span = EmbSpan(
                     impl = embraceSpan,
                     clock = clock,
                     objectCreator = objectCreator,
                 )
             }
         }
-        return EmbInvalidSpan(objectCreator)
+        val ref = span
+        return if (ref == null) {
+            EmbInvalidSpan(objectCreator)
+        } else {
+            action(ref)
+            ref
+        }
     }
 }

@@ -42,7 +42,7 @@ internal class EmbraceInternalInterfaceTest {
             startSdk = false,
             testCaseAction = {
                 assertFalse(embrace.isStarted)
-                with(EmbraceInternalApi.getInstance().internalInterface) {
+                with(EmbraceInternalApi.internalInterface) {
                     logInfo("", null)
                     logWarning("", null, null)
                     logError("", null, null, false)
@@ -107,7 +107,7 @@ internal class EmbraceInternalInterfaceTest {
             testCaseAction = {
                 recordSession {
                     clock.tick()
-                    EmbraceInternalApi.getInstance().internalInterface.recordCompletedNetworkRequest(
+                    EmbraceInternalApi.internalInterface.recordCompletedNetworkRequest(
                         url = URL,
                         httpMethod = "GET",
                         startTime = START_TIME,
@@ -119,7 +119,7 @@ internal class EmbraceInternalInterfaceTest {
                         networkCaptureData = null
                     )
 
-                    EmbraceInternalApi.getInstance().internalInterface.recordIncompleteNetworkRequest(
+                    EmbraceInternalApi.internalInterface.recordIncompleteNetworkRequest(
                         url = URL,
                         httpMethod = "GET",
                         startTime = START_TIME,
@@ -129,7 +129,7 @@ internal class EmbraceInternalInterfaceTest {
                         networkCaptureData = null
                     )
 
-                    EmbraceInternalApi.getInstance().internalInterface.recordIncompleteNetworkRequest(
+                    EmbraceInternalApi.internalInterface.recordIncompleteNetworkRequest(
                         url = URL,
                         httpMethod = "GET",
                         startTime = START_TIME,
@@ -140,7 +140,7 @@ internal class EmbraceInternalInterfaceTest {
                         networkCaptureData = null
                     )
 
-                    EmbraceInternalApi.getInstance().internalInterface.recordNetworkRequest(
+                    EmbraceInternalApi.internalInterface.recordNetworkRequest(
                         embraceNetworkRequest = EmbraceNetworkRequest.fromCompletedRequest(
                             URL,
                             HttpMethod.POST,
@@ -177,7 +177,7 @@ internal class EmbraceInternalInterfaceTest {
         testRule.runTest(
             testCaseAction = {
                 recordSession {
-                    EmbraceInternalApi.getInstance().internalInterface.logComposeTap(
+                    EmbraceInternalApi.internalInterface.logComposeTap(
                         Pair(expectedX, expectedY),
                         expectedElementName
                     )
@@ -213,19 +213,19 @@ internal class EmbraceInternalInterfaceTest {
             testCaseAction = {
                 recordSession {
                     assertTrue(
-                        EmbraceInternalApi.getInstance().internalInterface.shouldCaptureNetworkBody(
+                        EmbraceInternalApi.internalInterface.shouldCaptureNetworkBody(
                             "capture.me",
                             "GET"
                         )
                     )
                     assertFalse(
-                        EmbraceInternalApi.getInstance().internalInterface.shouldCaptureNetworkBody(
+                        EmbraceInternalApi.internalInterface.shouldCaptureNetworkBody(
                             "capture.me",
                             "POST"
                         )
                     )
-                    assertFalse(EmbraceInternalApi.getInstance().internalInterface.shouldCaptureNetworkBody(URL, "GET"))
-                    assertFalse(EmbraceInternalApi.getInstance().internalInterface.isNetworkSpanForwardingEnabled())
+                    assertFalse(EmbraceInternalApi.internalInterface.shouldCaptureNetworkBody(URL, "GET"))
+                    assertFalse(EmbraceInternalApi.internalInterface.isNetworkSpanForwardingEnabled())
                 }
             }
         )
@@ -236,7 +236,7 @@ internal class EmbraceInternalInterfaceTest {
         testRule.runTest(
             testCaseAction = {
                 recordSession {
-                    with(EmbraceInternalApi.getInstance().internalInterface) {
+                    with(EmbraceInternalApi.internalInterface) {
                         val parentSpanId = checkNotNull(startSpan(name = "tz-parent-span"))
                         clock.tick(10)
                         val childSpanId =
@@ -301,7 +301,7 @@ internal class EmbraceInternalInterfaceTest {
     fun `span logging across sessions`() {
         testRule.runTest(
             testCaseAction = {
-                val internalInterface = checkNotNull(EmbraceInternalApi.getInstance().internalInterface)
+                val internalInterface = checkNotNull(EmbraceInternalApi.internalInterface)
                 var stoppedParentId = ""
                 var activeParentId = ""
                 recordSession {

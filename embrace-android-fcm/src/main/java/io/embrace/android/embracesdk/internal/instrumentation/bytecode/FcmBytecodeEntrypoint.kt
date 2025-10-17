@@ -28,7 +28,7 @@ object FcmBytecodeEntrypoint {
                 message.data.isNotEmpty()
             )
         } catch (e: Exception) {
-            EmbraceInternalApi.getInstance().internalInterface.logInternalError(e)
+            EmbraceInternalApi.internalInterface.logInternalError(e)
         }
     }
 }

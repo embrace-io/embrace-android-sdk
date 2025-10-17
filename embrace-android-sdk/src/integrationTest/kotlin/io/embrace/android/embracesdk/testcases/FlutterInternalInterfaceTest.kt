@@ -69,8 +69,8 @@ internal class FlutterInternalInterfaceTest {
             instrumentedConfig = instrumentedConfig,
             testCaseAction = {
                 recordSession {
-                    EmbraceInternalApi.getInstance().flutterInternalInterface.setDartVersion("28.9.1")
-                    EmbraceInternalApi.getInstance().flutterInternalInterface.setEmbraceFlutterSdkVersion("1.2.3")
+                    EmbraceInternalApi.flutterInternalInterface.setDartVersion("28.9.1")
+                    EmbraceInternalApi.flutterInternalInterface.setEmbraceFlutterSdkVersion("1.2.3")
                 }
             },
             assertAction = {
@@ -89,8 +89,8 @@ internal class FlutterInternalInterfaceTest {
             instrumentedConfig = instrumentedConfig,
             testCaseAction = {
                 recordSession {
-                    EmbraceInternalApi.getInstance().flutterInternalInterface.setDartVersion("28.9.1")
-                    EmbraceInternalApi.getInstance().flutterInternalInterface.setEmbraceFlutterSdkVersion("1.2.3")
+                    EmbraceInternalApi.flutterInternalInterface.setDartVersion("28.9.1")
+                    EmbraceInternalApi.flutterInternalInterface.setEmbraceFlutterSdkVersion("1.2.3")
                 }
                 recordSession()
             },
@@ -110,13 +110,13 @@ internal class FlutterInternalInterfaceTest {
             instrumentedConfig = instrumentedConfig,
             testCaseAction = {
                 recordSession {
-                    EmbraceInternalApi.getInstance().flutterInternalInterface.setDartVersion("28.9.1")
-                    EmbraceInternalApi.getInstance().flutterInternalInterface.setEmbraceFlutterSdkVersion("1.2.3")
+                    EmbraceInternalApi.flutterInternalInterface.setDartVersion("28.9.1")
+                    EmbraceInternalApi.flutterInternalInterface.setEmbraceFlutterSdkVersion("1.2.3")
                 }
 
                 recordSession {
-                    EmbraceInternalApi.getInstance().flutterInternalInterface.setDartVersion(null)
-                    EmbraceInternalApi.getInstance().flutterInternalInterface.setEmbraceFlutterSdkVersion(null)
+                    EmbraceInternalApi.flutterInternalInterface.setDartVersion(null)
+                    EmbraceInternalApi.flutterInternalInterface.setEmbraceFlutterSdkVersion(null)
                 }
             },
             assertAction = {
@@ -135,13 +135,13 @@ internal class FlutterInternalInterfaceTest {
             instrumentedConfig = instrumentedConfig,
             testCaseAction = {
                 recordSession {
-                    EmbraceInternalApi.getInstance().flutterInternalInterface.setDartVersion("28.9.1")
-                    EmbraceInternalApi.getInstance().flutterInternalInterface.setEmbraceFlutterSdkVersion("1.2.3")
+                    EmbraceInternalApi.flutterInternalInterface.setDartVersion("28.9.1")
+                    EmbraceInternalApi.flutterInternalInterface.setEmbraceFlutterSdkVersion("1.2.3")
                 }
 
                 recordSession {
-                    EmbraceInternalApi.getInstance().flutterInternalInterface.setDartVersion("28.9.2")
-                    EmbraceInternalApi.getInstance().flutterInternalInterface.setEmbraceFlutterSdkVersion("1.2.4")
+                    EmbraceInternalApi.flutterInternalInterface.setDartVersion("28.9.2")
+                    EmbraceInternalApi.flutterInternalInterface.setEmbraceFlutterSdkVersion("1.2.4")
                 }
             },
             assertAction = {
@@ -166,7 +166,7 @@ internal class FlutterInternalInterfaceTest {
             instrumentedConfig = instrumentedConfig,
             testCaseAction = {
                 sessionStartTimeMs = recordSession {
-                    EmbraceInternalApi.getInstance().flutterInternalInterface.logHandledDartException(
+                    EmbraceInternalApi.flutterInternalInterface.logHandledDartException(
                         expectedStacktrace,
                         expectedName,
                         expectedMessage,
@@ -212,7 +212,7 @@ internal class FlutterInternalInterfaceTest {
             instrumentedConfig = instrumentedConfig,
             testCaseAction = {
                 sessionStartTimeMs = recordSession {
-                    EmbraceInternalApi.getInstance().flutterInternalInterface.logUnhandledDartException(
+                    EmbraceInternalApi.flutterInternalInterface.logUnhandledDartException(
                         expectedStacktrace,
                         expectedName,
                         expectedMessage,

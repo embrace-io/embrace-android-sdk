@@ -117,7 +117,7 @@ internal class JvmCrashFeatureTest {
             ),
             testCaseAction = {
                 crashTimeMs = recordSession {
-                    EmbraceInternalApi.getInstance().reactNativeInternalInterface.logUnhandledJsException(
+                    EmbraceInternalApi.reactNativeInternalInterface.logUnhandledJsException(
                         "name",
                         "message",
                         "type",

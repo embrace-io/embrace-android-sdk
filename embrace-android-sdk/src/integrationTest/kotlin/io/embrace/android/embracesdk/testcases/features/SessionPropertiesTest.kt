@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.assertions.findSessionSpan
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
+import io.embrace.android.embracesdk.internal.api.SdkApi
 import io.embrace.android.embracesdk.internal.payload.ApplicationState
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.session.getSessionProperty
@@ -154,11 +155,11 @@ internal class SessionPropertiesTest {
         recordSession()
     }
 
-    private fun Embrace.addPermanentProperty(key: String) {
+    private fun SdkApi.addPermanentProperty(key: String) {
         addSessionProperty(key, VALUE, true)
     }
 
-    private fun Embrace.addTemporaryProperty(key: String) {
+    private fun SdkApi.addTemporaryProperty(key: String) {
         addSessionProperty(key, VALUE, false)
     }
 

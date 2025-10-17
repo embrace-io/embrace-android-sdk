@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.otel.java
 
-import io.embrace.android.embracesdk.Embrace
+import io.embrace.android.embracesdk.internal.api.SdkApi
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaLogRecordExporter
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaOpenTelemetry
@@ -13,7 +13,7 @@ import io.embrace.opentelemetry.kotlin.tracing.export.toOtelKotlinSpanExporter
  * Adds an [OtelJavaSpanExporter] that OTel Spans will be exported to after completion.
  */
 @OptIn(ExperimentalApi::class)
-fun Embrace.addJavaSpanExporter(spanExporter: OtelJavaSpanExporter) {
+fun SdkApi.addJavaSpanExporter(spanExporter: OtelJavaSpanExporter) {
     this.addSpanExporter(spanExporter.toOtelKotlinSpanExporter())
 }
 
@@ -21,7 +21,7 @@ fun Embrace.addJavaSpanExporter(spanExporter: OtelJavaSpanExporter) {
  * Adds an [OtelJavaLogRecordExporter] that OTel LogRecords will be exported to after completion.
  */
 @OptIn(ExperimentalApi::class)
-fun Embrace.addJavaLogRecordExporter(logRecordExporter: OtelJavaLogRecordExporter) {
+fun SdkApi.addJavaLogRecordExporter(logRecordExporter: OtelJavaLogRecordExporter) {
     this.addLogRecordExporter(logRecordExporter.toOtelKotlinLogRecordExporter())
 }
 
@@ -33,6 +33,6 @@ fun Embrace.addJavaLogRecordExporter(logRecordExporter: OtelJavaLogRecordExporte
  * If it is set to `true`, the OtelJavaOpenTelemetry instance may behave inconsistently.
  */
 @OptIn(ExperimentalApi::class)
-fun Embrace.getJavaOpenTelemetry(): OtelJavaOpenTelemetry {
+fun SdkApi.getJavaOpenTelemetry(): OtelJavaOpenTelemetry {
     return this.getOpenTelemetryKotlin().toOtelJavaApi()
 }

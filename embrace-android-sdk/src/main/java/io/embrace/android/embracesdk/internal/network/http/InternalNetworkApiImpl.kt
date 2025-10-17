@@ -8,7 +8,7 @@ import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 internal class InternalNetworkApiImpl : InternalNetworkApi {
 
     private val embrace: Embrace
-        get() = Embrace.getInstance()
+        get() = Embrace
 
     private fun getInternalInterface(): EmbraceInternalInterface =
         checkNotNull(EmbraceInternalApi.getInstance().internalInterface)

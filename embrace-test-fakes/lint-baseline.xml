@@ -206,7 +206,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/embrace/android/embracesdk/fakes/FakeSessionOrchestrationModule.kt"
-            line="20"
+            line="18"
             column="17"/>
     </issue>
 

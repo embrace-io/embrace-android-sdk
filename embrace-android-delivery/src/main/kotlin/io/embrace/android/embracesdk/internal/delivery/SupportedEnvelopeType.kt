@@ -21,7 +21,7 @@ enum class SupportedEnvelopeType(
 
     companion object {
         private val valueMap =
-            SupportedEnvelopeType.values().associateBy(SupportedEnvelopeType::priority)
+            SupportedEnvelopeType.entries.associateBy(SupportedEnvelopeType::priority)
 
         /**
          * Returns the [SupportedEnvelopeType] that corresponds to the given priority, if any.

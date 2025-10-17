@@ -240,7 +240,6 @@ internal class EmbraceImpl(
         }
     }
 
-    @JvmOverloads
     fun logMessage(
         severity: Severity,
         message: String,

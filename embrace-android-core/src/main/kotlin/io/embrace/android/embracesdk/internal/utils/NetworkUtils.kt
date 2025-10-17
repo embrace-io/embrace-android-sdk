@@ -17,7 +17,6 @@ object NetworkUtils {
     private val IpAddrPattern = Pattern.compile("$IPV4_PATTERN|$IPV6_PATTERN")
     private val DomainPattern = Pattern.compile("$DNS_PATTERN|$IPV4_PATTERN|$IPV6_PATTERN")
 
-    @JvmStatic
     fun getValidTraceId(traceId: String?): String? {
         if (traceId == null) {
             return null
@@ -40,7 +39,6 @@ object NetworkUtils {
      * @param originalUrl the URL
      * @return the hostname or IP address
      */
-    @JvmStatic
     fun getDomain(originalUrl: String): String? {
         // This is necessary for the "new URL(url)" logic.
         val url = if (!originalUrl.startsWith("http")) "http://$originalUrl" else originalUrl
@@ -63,7 +61,6 @@ object NetworkUtils {
      * @param domain the hostname to test
      * @return true if the domain is an IP address, false otherwise
      */
-    @JvmStatic
     fun isIpAddress(domain: String?): Boolean =
         if (domain == null) false else IpAddrPattern.matcher(domain).find()
 
@@ -73,7 +70,6 @@ object NetworkUtils {
      * @param url the URL to parse
      * @return the URL with the hash fragment and query string parameters removed
      */
-    @JvmStatic
     fun stripUrl(url: String): String {
         val pathPos: Int = url.lastIndexOf('/')
         val suffix: String = if (pathPos < 0) url else url.substring(pathPos)
@@ -92,7 +88,6 @@ object NetworkUtils {
         )
     }
 
-    @JvmStatic
     fun getUrlPath(url: String?): String? = try {
         URL(url).path
     } catch (exception: Exception) {

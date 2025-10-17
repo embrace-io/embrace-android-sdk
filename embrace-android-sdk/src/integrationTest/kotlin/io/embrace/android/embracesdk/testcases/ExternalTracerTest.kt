@@ -19,6 +19,7 @@ import io.embrace.opentelemetry.kotlin.aliases.OtelJavaOpenTelemetry
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpan
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanContext
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanData
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanKind
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaStatusCode
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaTracer
 import io.opentelemetry.context.Context
@@ -31,6 +32,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.util.concurrent.TimeUnit
 
 @RunWith(AndroidJUnit4::class)
 internal class ExternalTracerTest {
@@ -161,6 +163,57 @@ internal class ExternalTracerTest {
 
                 assertTrue("Timed out waiting for the span to be exported", spanExporter.awaitSpanExport(3))
                 val exportedSpan: OtelJavaSpanData = spanExporter.exportedSpans.single { it.name == "external-span" }
+                assertEquals(parent.toEmbracePayload(), exportedSpan.toEmbraceSpanData())
+                with(exportedSpan.instrumentationScopeInfo) {
+                    assertEquals("external-tracer", name)
+                    assertEquals("1.0.0", version)
+                    assertNull(schemaUrl)
+                }
+            }
+        )
+    }
+
+    @Test
+    fun `otel span builder parameters propagated correctly`() {
+        var startTimeMs: Long? = null
+        var endTimeMs: Long? = null
+
+        testRule.runTest(
+            preSdkStartAction = {
+                setupExporter()
+            },
+            testCaseAction = {
+                initializeTracer()
+                recordSession {
+                    val pastTs = clock.now() - 100L
+                    startTimeMs = pastTs
+                    val spanBuilder = embTracer.spanBuilder("external-span").apply {
+                        setStartTimestamp(pastTs, TimeUnit.MILLISECONDS)
+                        setSpanKind(OtelJavaSpanKind.CLIENT)
+                        setAttribute("builder-attribute", "dope")
+                    }
+
+                    val span = spanBuilder.startSpan()
+                    endTimeMs = clock.tick()
+                    span.end()
+                }
+            },
+            assertAction = {
+                val sessionMessage = getSingleSessionEnvelope()
+                val spans = checkNotNull(sessionMessage.data.spans)
+                val recordedSpans = spans.associateBy { it.name }
+                val parent = checkNotNull(recordedSpans["external-span"])
+                assertEmbraceSpanData(
+                    span = parent,
+                    expectedStartTimeMs = checkNotNull(startTimeMs),
+                    expectedEndTimeMs = checkNotNull(endTimeMs),
+                    expectedParentId = OtelIds.invalidSpanId,
+                    expectedCustomAttributes = mapOf("builder-attribute" to "dope")
+                )
+
+                assertTrue("Timed out waiting for the span to be exported", spanExporter.awaitSpanExport(2))
+                val exportedSpan: OtelJavaSpanData = spanExporter.exportedSpans.single { it.name == "external-span" }
+                assertEquals(OtelJavaSpanKind.CLIENT, exportedSpan.kind)
                 assertEquals(parent.toEmbracePayload(), exportedSpan.toEmbraceSpanData())
                 with(exportedSpan.instrumentationScopeInfo) {
                     assertEquals("external-tracer", name)

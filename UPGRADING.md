@@ -1,6 +1,71 @@
 # Upgrade guide
 
-# Upgrading to the new Embrace Gradle Plugin DSL
+# Upgrading from 7.x to 8.x
+
+## Minimum supported versions
+
+| Technology                              | Minimum supported version |
+|-----------------------------------------|---------------------------|
+| Kotlin                                  | 2.0.21                    |
+| AGP                                     | 8.0.2                     |
+| Gradle                                  | 8.0.2                     |
+| JDK (build-time)                        | 17                        |
+| sourceCompatibility/targetCompatibility | 11                        |
+| minSdk                                  | 21                        |
+
+## Notable features
+
+The SDK now uses [opentelemetry-kotlin](https://github.com/embrace-io/opentelemetry-kotlin)'s API for capturing telemetry internally.
+Under the hood [opentelemetry-java](https://github.com/open-telemetry/opentelemetry-java) is currently still responsible for processing the telemetry.
+
+The new `embrace-android-otel-java` module provides a compatibility layer if you wish to use opentelemetry-java's APIs to perform operations
+such as adding exporters.
+
+## Removed APIs
+
+Various deprecated APIs have been removed. Please migrate to the documented new APIs where applicable, or
+get in touch if you do have a use-case that is no longer met.
+
+### Embrace Android SDK removed APIs
+
+| Old API                                                                 | New API                                                                                                |
+|-------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------|
+| `Embrace.getInstance().start(Context, AppFramework)`                    | `Embrace.getInstance().start(Context)`                                                                 |
+| `Embrace.getInstance().addLogRecordExporter(LogRecordExporter)`         | Type changed to opentelemetry-kotlin API. Alternative available in `embrace-android-otel-java` module. |
+| `Embrace.getInstance().addSpanExporter(SpanExporter)`                   | Type changed to opentelemetry-kotlin API. Alternative available in `embrace-android-otel-java` module. |
+| `Embrace.getInstance().getOpenTelemetry()`                              | `Embrace.getInstance().getOpenTelemetryKotlin()` or `Embrace.getInstance().getJavaOpenTelemetry()`     |
+| `Embrace.getInstance().setResourceAttribute(AttributeKey, String)`      | `Embrace.getInstance().setResourceAttribute(String, String)`                                           |
+| `EmbraceSpan.addLink(SpanContext)`                                      | Type changed to symbol declared in embrace-android-sdk.                                                |
+| `EmbraceSpan.addLink(SpanContext, Map)`                                 | Type changed to symbol declared in embrace-android-sdk.                                                |
+| `EmbraceSpan.getSpanContext()`                                          | Type changed to symbol declared in embrace-android-sdk.                                                |
+| `Embrace.getInstance().trackWebViewPerformance(String, ConsoleMessage)` | Obsolete - no alternative provided.                                                                    |
+| `Embrace.getInstance().trackWebViewPerformance(String, String)`         | Obsolete - no alternative provided.                                                                    |
+| `AppFramework`                                                          | Obsolete - no alternative provided.                                                                    |
+| `StartupActivity`                                                       | Obsolete - no alternative provided.                                                                    |
+
+### Embrace Gradle Plugin removed APIs
+
+| Old API                                               | New API                                                                 |
+|-------------------------------------------------------|-------------------------------------------------------------------------|
+| `swazzler.disableDependencyInjection`                 | `embrace.autoAddEmbraceDependencies`                                    |
+| `swazzler.disableComposeDependencyInjection`          | `embrace.autoAddEmbraceComposeClickDependency`                          |
+| `swazzler.instrumentOkHttp`                           | `embrace.bytecodeInstrumentation.okhttpEnabled`                         |
+| `swazzler.instrumentOnClick`                          | `embrace.bytecodeInstrumentation.onClickEnabled`                        |
+| `swazzler.instrumentOnLongClick`                      | `embrace.bytecodeInstrumentation.onLongClickEnabled`                    |
+| `swazzler.instrumentWebview`                          | `embrace.bytecodeInstrumentation.webviewOnPageStartedEnabled`           |
+| `swazzler.instrumentFirebaseMessaging`                | `embrace.bytecodeInstrumentation.firebasePushNotificationsEnabled`      |
+| `swazzler.classSkipList`                              | `embrace.bytecodeInstrumentation.classIgnorePatterns`                   |
+| `swazzler.variantFilter`                              | `embrace.buildVariantFilter`                                            |
+| `SwazzlerExtension.Variant.enabled`                   | `embrace.buildVariantFilter.disableBytecodeInstrumentationForVariant()` |
+| `SwazzlerExtension.Variant.swazzlerOff`               | `embrace.buildVariantFilter.disablePluginForVariant()`                  |
+| `SwazzlerExtension.Variant.setSwazzlingEnabled()`     | `embrace.buildVariantFilter.disableBytecodeInstrumentationForVariant()` |
+| `SwazzlerExtension.Variant.disablePluginForVariant()` | `embrace.buildVariantFilter.disablePluginForVariant()`                  |
+| `embrace.disableCollectBuildData`                     | `embrace.telemetryEnabled`                                              |
+| `swazzler.customSymbolsDirectory`                     | `embrace.customSymbolsDirectory`                                        |
+| `swazzler.forceIncrementalOverwrite`                  | Obsolete - no alternative provided.                                     |
+| `swazzler.disableRNBundleRetriever`                   | Obsolete - no alternative provided.                                     |
+
+# Upgrading to 7.3.0 with the new Embrace Gradle Plugin DSL
 
 The Embrace Gradle Plugin previously had a DSL via the 'swazzler' extension. This has been replaced with a new DSL via the 'embrace'
 extension.
@@ -24,9 +89,10 @@ below:
 | `SwazzlerExtension.Variant.setSwazzlingEnabled()`     | `embrace.buildVariantFilter.disableBytecodeInstrumentationForVariant()` |
 | `SwazzlerExtension.Variant.disablePluginForVariant()` | `embrace.buildVariantFilter.disablePluginForVariant()`                  |
 | `embrace.disableCollectBuildData`                     | `embrace.telemetryEnabled`                                              |
+| `swazzler.customSymbolsDirectory`                     | `embrace.customSymbolsDirectory`                                        |
 | `swazzler.forceIncrementalOverwrite`                  | Obsolete - no alternative provided.                                     |
 | `swazzler.disableRNBundleRetriever`                   | Obsolete - no alternative provided.                                     |
-| `swazzler.customSymbolsDirectory`                     | Obsolete - no alternative provided.                                     |
+
 
 The following project properties are now ignored and have no effect. You should remove them from your `gradle.properties` file:
 

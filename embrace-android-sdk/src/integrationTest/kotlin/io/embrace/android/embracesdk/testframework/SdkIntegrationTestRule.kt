@@ -4,7 +4,6 @@ package io.embrace.android.embracesdk.testframework
 
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
-import io.embrace.android.embracesdk.EmbraceHooks
 import io.embrace.android.embracesdk.EmbraceImpl
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
@@ -36,11 +35,11 @@ import io.embrace.android.embracesdk.testframework.server.FakeApiServer
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.logging.export.toOtelKotlinLogRecordExporter
 import io.embrace.opentelemetry.kotlin.tracing.export.toOtelKotlinSpanExporter
+import java.io.File
 import okhttp3.Protocol
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.Assert.assertEquals
 import org.junit.rules.ExternalResource
-import java.io.File
 
 /**
  * A [org.junit.Rule] that is responsible for setting up and tearing down the Embrace SDK for use in
@@ -139,14 +138,14 @@ internal class SdkIntegrationTestRule(
         }
         baseUrl = server.url("api").toString()
 
-        preSdkStart = EmbracePreSdkStartInterface(setup)
+        preSdkStart = EmbracePreSdkStartInterface(setup) { embraceImpl }
         bootstrapper = setup.createBootstrapper(
             instrumentedConfig.copy(
                 baseUrls = FakeBaseUrlConfig(configImpl = baseUrl, dataImpl = baseUrl)
             ),
             deliveryTracer
         )
-        action = EmbraceActionInterface(setup, bootstrapper)
+        action = EmbraceActionInterface(setup, bootstrapper) { embraceImpl }
         payloadAssertion = EmbracePayloadAssertionInterface(bootstrapper, apiServer)
         spanExporter = FilteredSpanExporter()
         logExporter = FilteredLogExporter()
@@ -155,7 +154,6 @@ internal class SdkIntegrationTestRule(
         setupAction(setup)
         with(setup) {
             embraceImpl = EmbraceImpl(clock = setup.fakeClock, bootstrapper = bootstrapper)
-            EmbraceHooks.setImpl(embraceImpl)
             preSdkStartAction(preSdkStart)
             //TODO: Filtered span and log exporters should be migrated to Kotlin.
             embraceImpl.addSpanExporter(spanExporter.toOtelKotlinSpanExporter())

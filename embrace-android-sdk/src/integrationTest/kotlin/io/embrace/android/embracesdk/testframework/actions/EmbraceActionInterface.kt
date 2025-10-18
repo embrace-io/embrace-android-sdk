@@ -4,6 +4,7 @@ import android.app.Activity
 import androidx.lifecycle.Lifecycle
 import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.fakes.FakeClock
+import io.embrace.android.embracesdk.internal.api.SdkApi
 import io.embrace.android.embracesdk.internal.comms.delivery.NetworkStatus
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import org.robolectric.Robolectric
@@ -15,12 +16,13 @@ import org.robolectric.android.controller.ActivityController
 internal class EmbraceActionInterface(
     private val setup: EmbraceSetupInterface,
     private val bootstrapper: ModuleInitBootstrapper,
+    private val embraceSupplier: () -> SdkApi,
 ) {
 
     /**
      * The [Embrace] instance that can be used for testing
      */
-    val embrace = Embrace.getInstance()
+    val embrace: SdkApi by lazy { embraceSupplier() }
 
     val clock: FakeClock
         get() = setup.getClock()

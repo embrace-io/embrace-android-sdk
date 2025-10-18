@@ -15,6 +15,6 @@ public object AutoSdkInitializationBytecodeEntrypoint {
     @Keep
     @JvmStatic
     public fun onCreate(application: Application) {
-        Embrace.getInstance().start(application)
+        Embrace.start(application)
     }
 }

@@ -14,12 +14,12 @@ public object ApplicationInitTimeBytecodeEntrypoint {
     @Keep
     @JvmStatic
     public fun applicationInitStart() {
-        Embrace.getInstance().applicationInitStart()
+        Embrace.applicationInitStart()
     }
 
     @Keep
     @JvmStatic
     public fun applicationInitEnd() {
-        Embrace.getInstance().applicationInitEnd()
+        Embrace.applicationInitEnd()
     }
 }

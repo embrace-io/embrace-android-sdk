@@ -11,13 +11,13 @@ object FcmBytecodeEntrypoint {
     @JvmStatic
     @Keep
     fun onMessageReceived(message: RemoteMessage) {
-        if (!Embrace.getInstance().isStarted) {
+        if (!Embrace.isStarted) {
             return
         }
         try {
             val notification: RemoteMessage.Notification? = message.notification
 
-            Embrace.getInstance().logPushNotification(
+            Embrace.logPushNotification(
                 notification?.title,
                 notification?.body,
                 message.from,

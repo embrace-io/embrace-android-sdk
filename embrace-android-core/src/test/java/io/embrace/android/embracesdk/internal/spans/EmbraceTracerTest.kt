@@ -70,7 +70,7 @@ internal class EmbraceTracerTest {
 
     @Test
     fun `stop EmbraceSpan with different error codes`() {
-        ErrorCode.values().forEach { errorCode ->
+        ErrorCode.entries.forEach { errorCode ->
             val embraceSpan = checkNotNull(embraceTracer.createSpan(name = "test-span"))
             assertNotNull(embraceSpan)
             assertTrue(embraceSpan.start())

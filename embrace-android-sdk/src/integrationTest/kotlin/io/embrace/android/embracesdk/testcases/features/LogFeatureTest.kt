@@ -122,7 +122,7 @@ internal class LogFeatureTest {
         testRule.runTest(
             instrumentedConfig = instrumentedConfig,
             testCaseAction = {
-                Severity.values().forEach { severity ->
+                Severity.entries.forEach { severity ->
                     logTimestamps.add(clock.now())
                     val expectedMessage = "test message ${severity.name}"
                     embrace.logMessage(expectedMessage, severity)
@@ -132,7 +132,7 @@ internal class LogFeatureTest {
             assertAction = {
                 val logs = groupLogsBySeverity(getSingleLogEnvelope())
 
-                Severity.values().forEach { severity ->
+                Severity.entries.forEach { severity ->
                     val expectedMessage = "test message ${severity.name}"
                     assertOtelLogReceived(
                         logs[severity],
@@ -151,7 +151,7 @@ internal class LogFeatureTest {
         testRule.runTest(
             instrumentedConfig = instrumentedConfig,
             testCaseAction = {
-                Severity.values().forEach { severity ->
+                Severity.entries.forEach { severity ->
                     logTimestamps.add(clock.now())
                     val expectedMessage = "test message ${severity.name}"
                     embrace.logMessage(expectedMessage, severity, customProperties)
@@ -160,7 +160,7 @@ internal class LogFeatureTest {
             },
             assertAction = {
                 val logs = groupLogsBySeverity(getSingleLogEnvelope())
-                Severity.values().forEach { severity ->
+                Severity.entries.forEach { severity ->
                     val expectedMessage = "test message ${severity.name}"
 
                     assertOtelLogReceived(
@@ -234,7 +234,7 @@ internal class LogFeatureTest {
         testRule.runTest(
             instrumentedConfig = instrumentedConfig,
             testCaseAction = {
-                Severity.values().forEach { severity ->
+                Severity.entries.forEach { severity ->
                     logTimestamps.add(clock.now())
                     embrace.logException(
                         testException, severity,
@@ -244,9 +244,9 @@ internal class LogFeatureTest {
                 clock.tick(2000L)
             },
             assertAction = {
-                val logs = groupLogsFromEnvelopes(getLogEnvelopes(Severity.values().size))
+                val logs = groupLogsFromEnvelopes(getLogEnvelopes(Severity.entries.size))
 
-                Severity.values().forEach { severity ->
+                Severity.entries.forEach { severity ->
                     assertOtelLogReceived(
                         logs[severity],
                         expectedMessage = checkNotNull(testException.message),
@@ -270,7 +270,7 @@ internal class LogFeatureTest {
         testRule.runTest(
             instrumentedConfig = instrumentedConfig,
             testCaseAction = {
-                Severity.values().forEach { severity ->
+                Severity.entries.forEach { severity ->
                     logTimestamps.add(clock.now())
                     val expectedMessage = "test message ${severity.name}"
                     embrace.logException(testException, severity, customProperties, expectedMessage)
@@ -278,9 +278,9 @@ internal class LogFeatureTest {
                 clock.tick(2000L)
             },
             assertAction = {
-                val logs = groupLogsFromEnvelopes(getLogEnvelopes(Severity.values().size))
+                val logs = groupLogsFromEnvelopes(getLogEnvelopes(Severity.entries.size))
 
-                Severity.values().forEach { severity ->
+                Severity.entries.forEach { severity ->
                     val expectedMessage = "test message ${severity.name}"
                     assertOtelLogReceived(
                         logs[severity],
@@ -330,16 +330,16 @@ internal class LogFeatureTest {
         testRule.runTest(
             instrumentedConfig = instrumentedConfig,
             testCaseAction = {
-                Severity.values().forEach { severity ->
+                Severity.entries.forEach { severity ->
                     logTimestamps.add(clock.now())
                     embrace.logCustomStacktrace(stacktrace, severity)
                 }
                 clock.tick(2000L)
             },
             assertAction = {
-                val logs = groupLogsFromEnvelopes(getLogEnvelopes(Severity.values().size))
+                val logs = groupLogsFromEnvelopes(getLogEnvelopes(Severity.entries.size))
 
-                Severity.values().forEach { severity ->
+                Severity.entries.forEach { severity ->
                     assertOtelLogReceived(
                         logs[severity],
                         expectedMessage = "",
@@ -360,16 +360,16 @@ internal class LogFeatureTest {
         testRule.runTest(
             instrumentedConfig = instrumentedConfig,
             testCaseAction = {
-                Severity.values().forEach { severity ->
+                Severity.entries.forEach { severity ->
                     logTimestamps.add(clock.now())
                     embrace.logCustomStacktrace(stacktrace, severity, customProperties)
                 }
                 clock.tick(2000L)
             },
             assertAction = {
-                val logs = groupLogsFromEnvelopes(getLogEnvelopes(Severity.values().size))
+                val logs = groupLogsFromEnvelopes(getLogEnvelopes(Severity.entries.size))
 
-                Severity.values().forEach { severity ->
+                Severity.entries.forEach { severity ->
                     assertOtelLogReceived(
                         logs[severity],
                         expectedMessage = "",
@@ -391,7 +391,7 @@ internal class LogFeatureTest {
         testRule.runTest(
             instrumentedConfig = instrumentedConfig,
             testCaseAction = {
-                Severity.values().forEach { severity ->
+                Severity.entries.forEach { severity ->
                     logTimestamps.add(clock.now())
                     val expectedMessage = "test message ${severity.name}"
                     embrace.logCustomStacktrace(
@@ -404,9 +404,9 @@ internal class LogFeatureTest {
                 clock.tick(2000L)
             },
             assertAction = {
-                val logs = groupLogsFromEnvelopes(getLogEnvelopes(Severity.values().size))
+                val logs = groupLogsFromEnvelopes(getLogEnvelopes(Severity.entries.size))
 
-                Severity.values().forEach { severity ->
+                Severity.entries.forEach { severity ->
                     val expectedMessage = "test message ${severity.name}"
                     assertOtelLogReceived(
                         logs[severity],

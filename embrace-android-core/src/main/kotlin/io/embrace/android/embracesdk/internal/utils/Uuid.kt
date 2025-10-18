@@ -11,8 +11,6 @@ object Uuid {
      * @param uuid the uuid.
      * @return the Embrace UUID.
      */
-    @JvmStatic
-    @JvmOverloads
     fun getEmbUuid(uuid: String? = null): String {
         val input = uuid ?: UUID.randomUUID().toString()
 

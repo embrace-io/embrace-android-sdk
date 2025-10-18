@@ -22,7 +22,6 @@ sealed class GradleVersion(private val version: org.gradle.util.GradleVersion) :
         /**
          * Returns true if the current AGP version exceeds the specified version.
          */
-        @JvmStatic
         fun isAtLeast(version: GradleVersion): Boolean = CURRENT >= version
     }
 }

@@ -50,7 +50,7 @@ internal class UnityInternalInterfaceTest {
             instrumentedConfig = instrumentedConfig,
             testCaseAction = {
                 recordSession {
-                    EmbraceInternalApi.getInstance().unityInternalInterface.setUnityMetaData(
+                    EmbraceInternalApi.unityInternalInterface.setUnityMetaData(
                         "28.9.1",
                         "unity build id",
                         "1.2.3"
@@ -74,7 +74,7 @@ internal class UnityInternalInterfaceTest {
             instrumentedConfig = instrumentedConfig,
             testCaseAction = {
                 recordSession {
-                    EmbraceInternalApi.getInstance().unityInternalInterface.setUnityMetaData(
+                    EmbraceInternalApi.unityInternalInterface.setUnityMetaData(
                         "28.9.1",
                         "unity build id",
                         "1.2.3"
@@ -99,7 +99,7 @@ internal class UnityInternalInterfaceTest {
             instrumentedConfig = instrumentedConfig,
             testCaseAction = {
                 recordSession {
-                    EmbraceInternalApi.getInstance().unityInternalInterface.setUnityMetaData(
+                    EmbraceInternalApi.unityInternalInterface.setUnityMetaData(
                         "28.9.1",
                         "unity build id",
                         "1.2.3"
@@ -107,7 +107,7 @@ internal class UnityInternalInterfaceTest {
                 }
 
                 recordSession {
-                    EmbraceInternalApi.getInstance().unityInternalInterface.setUnityMetaData(
+                    EmbraceInternalApi.unityInternalInterface.setUnityMetaData(
                         "28.9.2",
                         "new unity build id",
                         "1.2.4"

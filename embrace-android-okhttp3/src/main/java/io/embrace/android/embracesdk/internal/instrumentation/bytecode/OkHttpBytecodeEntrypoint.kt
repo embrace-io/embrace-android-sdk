@@ -35,7 +35,7 @@ object OkHttpBytecodeEntrypoint {
      * @param thiz the OkHttpClient builder in matter.
      */
     private fun addEmbraceInterceptors(thiz: OkHttpClient.Builder) {
-        val internalApi = EmbraceInternalApi.getInstance()
+        val internalApi = EmbraceInternalApi
         try {
             val embrace = Embrace
             addInterceptor(

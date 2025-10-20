@@ -11,7 +11,7 @@ internal class InternalNetworkApiImpl : InternalNetworkApi {
         get() = Embrace
 
     private fun getInternalInterface(): EmbraceInternalInterface =
-        checkNotNull(EmbraceInternalApi.getInstance().internalInterface)
+        checkNotNull(EmbraceInternalApi.internalInterface)
 
     override fun getSdkCurrentTimeMs(): Long = embrace.getSdkCurrentTimeMs()
 

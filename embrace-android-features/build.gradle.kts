@@ -18,6 +18,7 @@ dependencies {
     compileOnly(project(":embrace-android-payload"))
     compileOnly(project(":embrace-internal-api"))
     compileOnly(project(":embrace-android-otel"))
+    implementation(project(":embrace-android-instrumentation-power-save"))
 
     implementation(libs.lifecycle.process)
 

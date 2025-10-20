@@ -19,6 +19,7 @@ dependencies {
     compileOnly(project(":embrace-android-sdk"))
     compileOnly(project(":embrace-android-payload"))
     compileOnly(project(":embrace-android-features"))
+    compileOnly(project(":embrace-android-instrumentation-power-save"))
     compileOnly(project(":embrace-android-delivery"))
     compileOnly(project(":embrace-internal-api"))
     implementation(project(":embrace-android-otel"))

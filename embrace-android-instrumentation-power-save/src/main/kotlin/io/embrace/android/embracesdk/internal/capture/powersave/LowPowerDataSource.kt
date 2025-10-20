@@ -10,7 +10,6 @@ import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
-import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 
@@ -20,7 +19,7 @@ class LowPowerDataSource(
     logger: EmbLogger,
     private val backgroundWorker: BackgroundWorker,
     private val clock: Clock,
-    provider: Provider<PowerManager?>,
+    provider: () -> PowerManager?,
 ) : SpanDataSourceImpl(
     destination = spanService,
     logger = logger,

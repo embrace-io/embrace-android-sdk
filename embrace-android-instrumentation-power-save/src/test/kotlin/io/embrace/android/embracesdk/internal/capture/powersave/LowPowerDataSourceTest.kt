@@ -12,7 +12,7 @@ import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.otel.attrs.asPair
 import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.mockk.mockk
-import org.junit.Assert.assertEquals
+import org.junit.Assert
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -57,7 +57,7 @@ internal class LowPowerDataSourceTest {
     @Test
     fun `no span recorded for unbalanced calls`() {
         dataSource.onPowerSaveModeChanged(false)
-        assertEquals(0, spanService.createdSpans.size)
+        Assert.assertEquals(0, spanService.createdSpans.size)
     }
 
     @Test
@@ -66,7 +66,9 @@ internal class LowPowerDataSourceTest {
             dataSource.onPowerSaveModeChanged(true)
             dataSource.onPowerSaveModeChanged(false)
         }
-        assertEquals(100, spanService.createdSpans.count { it.type == EmbType.System.LowPower })
+        Assert.assertEquals(
+            100,
+            spanService.createdSpans.count { it.type == EmbType.System.LowPower })
     }
 
     @Test
@@ -79,9 +81,9 @@ internal class LowPowerDataSourceTest {
 
     private fun assertSpanAdded() {
         val span = spanService.createdSpans.single()
-        assertEquals(EmbType.System.LowPower, span.type)
-        assertEquals("device-low-power", span.name)
-        assertEquals(
+        Assert.assertEquals(EmbType.System.LowPower, span.type)
+        Assert.assertEquals("device-low-power", span.name)
+        Assert.assertEquals(
             mapOf(EmbType.System.LowPower.asPair()),
             span.attributes
         )

@@ -1,6 +1,8 @@
 package io.embrace.android.gradle.plugin.config
 
 import io.embrace.android.gradle.plugin.api.EmbraceExtension
+import io.embrace.android.gradle.plugin.util.getBoolProperty
+import io.embrace.android.gradle.plugin.util.getProperty
 import org.gradle.api.Project
 import org.gradle.api.provider.Provider
 

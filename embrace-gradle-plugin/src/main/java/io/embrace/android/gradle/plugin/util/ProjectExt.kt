@@ -1,4 +1,4 @@
-package io.embrace.android.gradle.plugin.config
+package io.embrace.android.gradle.plugin.util
 
 import org.gradle.api.Project
 

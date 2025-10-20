@@ -271,15 +271,11 @@ public final class io/embrace/android/embracesdk/spans/EmbraceSpan$DefaultImpls 
 
 public final class io/embrace/android/embracesdk/spans/EmbraceSpanEvent {
 	public static final field Companion Lio/embrace/android/embracesdk/spans/EmbraceSpanEvent$Companion;
-	public final fun component1 ()Ljava/lang/String;
-	public final fun component2 ()J
-	public final fun component3 ()Ljava/util/Map;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getAttributes ()Ljava/util/Map;
 	public final fun getName ()Ljava/lang/String;
 	public final fun getTimestampNanos ()J
 	public fun hashCode ()I
-	public fun toString ()Ljava/lang/String;
 }
 
 public final class io/embrace/android/embracesdk/spans/EmbraceSpanEvent$Companion {

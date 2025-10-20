@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.otel.logs
 
-import io.embrace.android.embracesdk.internal.otel.attrs.embSendMode
-import io.embrace.android.embracesdk.internal.otel.schema.SendMode
+import io.embrace.android.embracesdk.internal.arch.attrs.embSendMode
+import io.embrace.android.embracesdk.internal.arch.schema.SendMode
 import io.embrace.android.embracesdk.internal.otel.sdk.StoreDataResult
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.payload.Log

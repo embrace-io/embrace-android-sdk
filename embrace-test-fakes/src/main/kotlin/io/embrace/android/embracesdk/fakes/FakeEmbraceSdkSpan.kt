@@ -1,19 +1,18 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.android.embracesdk.internal.capture.session.toSessionPropertyAttributeName
+import io.embrace.android.embracesdk.internal.arch.attrs.EmbraceAttribute
+import io.embrace.android.embracesdk.internal.arch.attrs.asPair
+import io.embrace.android.embracesdk.internal.arch.attrs.embHeartbeatTimeUnixNano
+import io.embrace.android.embracesdk.internal.arch.attrs.embProcessIdentifier
+import io.embrace.android.embracesdk.internal.arch.attrs.embState
+import io.embrace.android.embracesdk.internal.arch.attrs.toEmbraceAttributeName
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
+import io.embrace.android.embracesdk.internal.arch.schema.LinkType
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.clock.normalizeTimestampAsMillis
 import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
-import io.embrace.android.embracesdk.internal.otel.attrs.EmbraceAttribute
-import io.embrace.android.embracesdk.internal.otel.attrs.asPair
-import io.embrace.android.embracesdk.internal.otel.attrs.embHeartbeatTimeUnixNano
-import io.embrace.android.embracesdk.internal.otel.attrs.embProcessIdentifier
-import io.embrace.android.embracesdk.internal.otel.attrs.embState
 import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
-import io.embrace.android.embracesdk.internal.otel.schema.EmbType
-import io.embrace.android.embracesdk.internal.otel.schema.ErrorCodeAttribute
-import io.embrace.android.embracesdk.internal.otel.schema.ErrorCodeAttribute.Failure.fromErrorCode
-import io.embrace.android.embracesdk.internal.otel.schema.LinkType
 import io.embrace.android.embracesdk.internal.otel.sdk.hasEmbraceAttribute
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceLinkData
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
@@ -265,7 +264,7 @@ class FakeEmbraceSdkSpan(
                 start(startTimeMs)
                 sessionProperties?.forEach {
                     addSystemAttribute(
-                        key = it.key.toSessionPropertyAttributeName(),
+                        key = it.key.toEmbraceAttributeName(),
                         value = it.value
                     )
                 }

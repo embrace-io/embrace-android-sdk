@@ -2,8 +2,8 @@
 
 package io.embrace.android.embracesdk.assertions
 
-import io.embrace.android.embracesdk.internal.otel.attrs.asPair
-import io.embrace.android.embracesdk.internal.otel.schema.LinkType
+import io.embrace.android.embracesdk.internal.arch.attrs.asPair
+import io.embrace.android.embracesdk.internal.arch.schema.LinkType
 import io.embrace.android.embracesdk.internal.payload.Link
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.opentelemetry.kotlin.ExperimentalApi

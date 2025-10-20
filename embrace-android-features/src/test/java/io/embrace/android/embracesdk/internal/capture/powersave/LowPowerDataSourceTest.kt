@@ -8,9 +8,9 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeSpanService
 import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
+import io.embrace.android.embracesdk.internal.arch.attrs.asPair
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
-import io.embrace.android.embracesdk.internal.otel.attrs.asPair
-import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.mockk.mockk
 import org.junit.Assert.assertEquals
 import org.junit.Before

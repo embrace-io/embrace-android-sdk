@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.otel.spans
 
-import io.embrace.android.embracesdk.internal.otel.attrs.embProcessIdentifier
-import io.embrace.android.embracesdk.internal.otel.attrs.embSequenceId
+import io.embrace.android.embracesdk.internal.arch.attrs.embProcessIdentifier
+import io.embrace.android.embracesdk.internal.arch.attrs.embSequenceId
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.context.Context
 import io.embrace.opentelemetry.kotlin.export.OperationResultCode

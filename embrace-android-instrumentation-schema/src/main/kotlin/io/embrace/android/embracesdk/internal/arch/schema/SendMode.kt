@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.internal.otel.schema
+package io.embrace.android.embracesdk.internal.arch.schema
 
 /**
  * How a given payload should be delivered to the Embrace server

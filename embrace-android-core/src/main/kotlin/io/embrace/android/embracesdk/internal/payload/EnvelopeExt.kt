@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.payload
 
-import io.embrace.android.embracesdk.internal.otel.schema.EmbType
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.otel.spans.hasEmbraceAttribute
 import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi

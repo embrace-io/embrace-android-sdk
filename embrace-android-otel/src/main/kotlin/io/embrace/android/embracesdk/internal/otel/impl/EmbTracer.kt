@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.internal.otel.impl
 
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.otel.getDefaultContext
-import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.embrace.android.embracesdk.internal.otel.spans.OtelSpanStartArgs
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.opentelemetry.kotlin.Clock

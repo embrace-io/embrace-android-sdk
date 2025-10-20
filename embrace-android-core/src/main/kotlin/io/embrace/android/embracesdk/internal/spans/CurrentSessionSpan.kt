@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.internal.spans
 
 import io.embrace.android.embracesdk.internal.Initializable
 import io.embrace.android.embracesdk.internal.arch.destination.SessionSpanWriter
-import io.embrace.android.embracesdk.internal.otel.schema.AppTerminationCause
+import io.embrace.android.embracesdk.internal.arch.schema.AppTerminationCause
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 

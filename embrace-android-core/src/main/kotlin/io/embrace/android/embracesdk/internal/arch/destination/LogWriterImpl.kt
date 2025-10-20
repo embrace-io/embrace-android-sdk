@@ -1,10 +1,10 @@
 package io.embrace.android.embracesdk.internal.arch.destination
 
 import io.embrace.android.embracesdk.Severity
+import io.embrace.android.embracesdk.internal.arch.attrs.embState
+import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.clock.Clock
-import io.embrace.android.embracesdk.internal.otel.attrs.embState
-import io.embrace.android.embracesdk.internal.otel.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.internal.session.lifecycle.EmbraceProcessStateService.Companion.BACKGROUND_STATE
 import io.embrace.android.embracesdk.internal.session.lifecycle.EmbraceProcessStateService.Companion.FOREGROUND_STATE

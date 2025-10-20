@@ -1,15 +1,13 @@
 package io.embrace.android.embracesdk.internal.otel.spans
 
+import io.embrace.android.embracesdk.internal.arch.attrs.EmbraceAttribute
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
+import io.embrace.android.embracesdk.internal.arch.schema.LinkType
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.clock.normalizeTimestampAsMillis
-import io.embrace.android.embracesdk.internal.otel.attrs.EmbraceAttribute
-import io.embrace.android.embracesdk.internal.otel.attrs.asPair
 import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
-import io.embrace.android.embracesdk.internal.otel.schema.EmbType
-import io.embrace.android.embracesdk.internal.otel.schema.ErrorCodeAttribute
-import io.embrace.android.embracesdk.internal.otel.schema.ErrorCodeAttribute.Failure.fromErrorCode
-import io.embrace.android.embracesdk.internal.otel.schema.LinkType
 import io.embrace.android.embracesdk.internal.otel.sdk.DataValidator
 import io.embrace.android.embracesdk.internal.otel.sdk.hasEmbraceAttribute
 import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
@@ -176,7 +174,7 @@ private class EmbraceSpanImpl(
                     spanId?.let { stopCallback?.invoke(it) }
                     if (errorCode != null) {
                         status = StatusData.Error(null)
-                        spanToStop.setEmbraceAttribute(errorCode.fromErrorCode())
+                        spanToStop.setEmbraceAttribute(errorCode.toEmbraceErrorCode())
                     } else if (status is StatusData.Error) {
                         spanToStop.setEmbraceAttribute(ErrorCodeAttribute.Failure)
                     }
@@ -200,6 +198,12 @@ private class EmbraceSpanImpl(
 
             return successful
         }
+    }
+
+    private fun ErrorCode.toEmbraceErrorCode(): ErrorCodeAttribute = when (this) {
+        ErrorCode.FAILURE -> ErrorCodeAttribute.Failure
+        ErrorCode.USER_ABANDON -> ErrorCodeAttribute.UserAbandon
+        ErrorCode.UNKNOWN -> ErrorCodeAttribute.Unknown
     }
 
     override fun addEvent(name: String, timestampMs: Long?, attributes: Map<String, String>?): Boolean =
@@ -300,7 +304,8 @@ private class EmbraceSpanImpl(
 
     override fun addSystemLink(linkedSpanContext: SpanContext, type: LinkType, attributes: Map<String, String>): Boolean =
         addObject(systemLinks, systemLinkCount, dataValidator.otelLimitsConfig.getMaxSystemLinkCount()) {
-            EmbraceLinkData(linkedSpanContext, mutableMapOf(type.asPair()).apply { putAll(attributes) })
+            val attrs = mutableMapOf(type.key.name to type.value)
+            EmbraceLinkData(linkedSpanContext, attrs.apply { putAll(attributes) })
         }
 
     override fun addLink(linkedSpanContext: SpanContext, attributes: Map<String, String>?): Boolean =

@@ -25,7 +25,28 @@ internal class NetworkCaptureDataSourceImpl(
      */
     override fun logNetworkCapturedCall(networkCapturedCall: NetworkCapturedCall) {
         return logWriter.addLog(
-            SchemaType.NetworkCapturedRequest(networkCapturedCall),
+            SchemaType.NetworkCapturedRequest(
+                duration = networkCapturedCall.duration,
+                endTime = networkCapturedCall.endTime,
+                httpMethod = networkCapturedCall.httpMethod,
+                matchedUrl = networkCapturedCall.matchedUrl,
+                networkId = networkCapturedCall.networkId,
+                requestBody = networkCapturedCall.requestBody,
+                requestBodySize = networkCapturedCall.requestBodySize,
+                requestQuery = networkCapturedCall.requestQuery,
+                requestQueryHeaders = networkCapturedCall.requestQueryHeaders,
+                requestSize = networkCapturedCall.requestSize,
+                responseBody = networkCapturedCall.responseBody,
+                responseBodySize = networkCapturedCall.responseBodySize,
+                responseHeaders = networkCapturedCall.responseHeaders,
+                responseSize = networkCapturedCall.responseSize,
+                responseStatus = networkCapturedCall.responseStatus,
+                sessionId = networkCapturedCall.sessionId,
+                startTime = networkCapturedCall.startTime,
+                url = networkCapturedCall.url,
+                errorMessage = networkCapturedCall.errorMessage,
+                encryptedPayload = networkCapturedCall.encryptedPayload
+            ),
             Severity.INFO,
             networkCapturedCall.networkId
         )

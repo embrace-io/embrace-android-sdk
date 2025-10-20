@@ -6,12 +6,12 @@ import io.embrace.android.embracesdk.fakes.FakeClock.Companion.DEFAULT_FAKE_CURR
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryLogger
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
+import io.embrace.android.embracesdk.internal.arch.attrs.asPair
+import io.embrace.android.embracesdk.internal.arch.attrs.embState
+import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.arch.schema.TelemetryAttributes
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
-import io.embrace.android.embracesdk.internal.otel.attrs.asPair
-import io.embrace.android.embracesdk.internal.otel.attrs.embState
-import io.embrace.android.embracesdk.internal.otel.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.session.id.SessionData
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi

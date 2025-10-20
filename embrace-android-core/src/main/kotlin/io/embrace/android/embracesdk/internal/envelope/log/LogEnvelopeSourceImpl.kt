@@ -1,11 +1,11 @@
 package io.embrace.android.embracesdk.internal.envelope.log
 
+import io.embrace.android.embracesdk.internal.arch.attrs.embProcessIdentifier
 import io.embrace.android.embracesdk.internal.delivery.PayloadType
 import io.embrace.android.embracesdk.internal.delivery.storage.CachedLogEnvelopeStore
 import io.embrace.android.embracesdk.internal.delivery.storage.CachedLogEnvelopeStore.Companion.createNativeCrashEnvelopeMetadata
 import io.embrace.android.embracesdk.internal.envelope.metadata.EnvelopeMetadataSource
 import io.embrace.android.embracesdk.internal.envelope.resource.EnvelopeResourceSource
-import io.embrace.android.embracesdk.internal.otel.attrs.embProcessIdentifier
 import io.embrace.android.embracesdk.internal.otel.logs.LogRequest
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.payload.Envelope

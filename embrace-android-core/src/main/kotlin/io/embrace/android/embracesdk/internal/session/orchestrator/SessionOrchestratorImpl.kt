@@ -2,14 +2,14 @@ package io.embrace.android.embracesdk.internal.session.orchestrator
 
 import io.embrace.android.embracesdk.internal.arch.DataCaptureOrchestrator
 import io.embrace.android.embracesdk.internal.arch.SessionType
+import io.embrace.android.embracesdk.internal.arch.attrs.embHeartbeatTimeUnixNano
+import io.embrace.android.embracesdk.internal.arch.attrs.embTerminated
 import io.embrace.android.embracesdk.internal.arch.destination.SessionSpanWriter
 import io.embrace.android.embracesdk.internal.arch.destination.SpanAttributeData
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.delivery.caching.PayloadCachingService
-import io.embrace.android.embracesdk.internal.otel.attrs.embHeartbeatTimeUnixNano
-import io.embrace.android.embracesdk.internal.otel.attrs.embTerminated
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.session.SessionZygote

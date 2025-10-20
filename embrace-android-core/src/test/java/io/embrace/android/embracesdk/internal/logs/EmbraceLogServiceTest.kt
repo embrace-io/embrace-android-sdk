@@ -9,7 +9,7 @@ import io.embrace.android.embracesdk.fakes.FakeSessionPropertiesService
 import io.embrace.android.embracesdk.fakes.behavior.FakeLogMessageBehavior
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.config.FakeRedactionConfig
-import io.embrace.android.embracesdk.internal.capture.session.toSessionPropertyAttributeName
+import io.embrace.android.embracesdk.internal.arch.attrs.toEmbraceAttributeName
 import io.embrace.android.embracesdk.internal.config.behavior.REDACTED_LABEL
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehaviorImpl
 import io.embrace.android.embracesdk.internal.logs.attachments.Attachment
@@ -78,7 +78,7 @@ internal class EmbraceLogServiceTest {
         // then the telemetry attributes are set correctly
         val log = fakeLogWriter.logEvents.single()
         val attributes = log.schemaType.attributes()
-        assertEquals("someValue", attributes["someProperty".toSessionPropertyAttributeName()])
+        assertEquals("someValue", attributes["someProperty".toEmbraceAttributeName()])
         assertTrue(attributes.containsKey(LogAttributes.LOG_RECORD_UID))
     }
 

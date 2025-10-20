@@ -1,9 +1,9 @@
 package io.embrace.android.embracesdk.internal.otel.spans
 
+import io.embrace.android.embracesdk.internal.arch.attrs.EmbraceAttribute
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
-import io.embrace.android.embracesdk.internal.otel.attrs.EmbraceAttribute
-import io.embrace.android.embracesdk.internal.otel.schema.EmbType
-import io.embrace.android.embracesdk.internal.otel.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.otel.sdk.toEmbraceObjectName
 import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.opentelemetry.kotlin.ExperimentalApi

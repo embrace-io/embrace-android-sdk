@@ -2,9 +2,9 @@
 
 package io.embrace.android.embracesdk.fakes
 
+import io.embrace.android.embracesdk.internal.arch.attrs.asPair
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
-import io.embrace.android.embracesdk.internal.otel.attrs.asPair
-import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.embrace.android.embracesdk.internal.otel.sdk.DataValidator
 import io.embrace.android.embracesdk.internal.toOtelJava
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaAttributes

@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.otel.spans
 
-import io.embrace.android.embracesdk.internal.otel.schema.EmbType
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.utils.lockAndRun
 import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan

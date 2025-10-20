@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.capture.session
 
+import io.embrace.android.embracesdk.internal.arch.attrs.toEmbraceAttributeName
 import io.embrace.android.embracesdk.internal.arch.destination.SessionSpanWriter
 import io.embrace.android.embracesdk.internal.arch.destination.SpanAttributeData
 import io.embrace.android.embracesdk.internal.config.ConfigService
@@ -57,7 +58,7 @@ internal class EmbraceSessionProperties(
             }
             writer.addSessionAttribute(
                 SpanAttributeData(
-                    sanitizedKey.toSessionPropertyAttributeName(),
+                    sanitizedKey.toEmbraceAttributeName(),
                     sanitizedValue
                 )
             )
@@ -78,7 +79,7 @@ internal class EmbraceSessionProperties(
                 preferencesService.permanentSessionProperties = permanentProperties()
                 existed = true
             }
-            writer.removeSessionAttribute(sanitizedKey.toSessionPropertyAttributeName())
+            writer.removeSessionAttribute(sanitizedKey.toEmbraceAttributeName())
             return existed
         }
     }
@@ -99,7 +100,7 @@ internal class EmbraceSessionProperties(
         permanentProperties().entries.forEach {
             writer.addSessionAttribute(
                 SpanAttributeData(
-                    it.key.toSessionPropertyAttributeName(),
+                    it.key.toEmbraceAttributeName(),
                     it.value
                 )
             )

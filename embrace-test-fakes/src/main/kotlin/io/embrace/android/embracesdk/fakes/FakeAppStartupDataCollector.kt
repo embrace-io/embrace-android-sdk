@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.internal.capture.startup.AppStartupDataCollector
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
-import io.embrace.android.embracesdk.internal.otel.schema.ErrorCodeAttribute.UserAbandon.fromErrorCode
 import io.embrace.android.embracesdk.internal.otel.sdk.DataValidator
 import io.embrace.android.embracesdk.internal.toOtelJava
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent

@@ -3,11 +3,11 @@
 package io.embrace.android.embracesdk.fixtures
 
 import io.embrace.android.embracesdk.fakes.fakeOpenTelemetry
+import io.embrace.android.embracesdk.internal.arch.attrs.asPair
+import io.embrace.android.embracesdk.internal.arch.attrs.embSequenceId
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
-import io.embrace.android.embracesdk.internal.otel.attrs.asPair
-import io.embrace.android.embracesdk.internal.otel.attrs.embSequenceId
 import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
-import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.payload.Span

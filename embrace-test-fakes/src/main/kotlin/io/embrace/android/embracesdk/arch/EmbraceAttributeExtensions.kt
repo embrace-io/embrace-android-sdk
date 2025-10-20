@@ -4,11 +4,11 @@ package io.embrace.android.embracesdk.arch
 
 import io.embrace.android.embracesdk.fakes.LogEventData
 import io.embrace.android.embracesdk.fakes.SpanEventData
-import io.embrace.android.embracesdk.internal.otel.attrs.EmbraceAttribute
-import io.embrace.android.embracesdk.internal.otel.schema.EmbType
-import io.embrace.android.embracesdk.internal.otel.schema.ErrorCodeAttribute
-import io.embrace.android.embracesdk.internal.otel.schema.ErrorCodeAttribute.Failure.fromErrorCode
-import io.embrace.android.embracesdk.internal.otel.schema.PrivateSpan
+import io.embrace.android.embracesdk.fakes.fromErrorCode
+import io.embrace.android.embracesdk.internal.arch.attrs.EmbraceAttribute
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
+import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.otel.sdk.hasEmbraceAttribute
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.otel.toEmbracePayload

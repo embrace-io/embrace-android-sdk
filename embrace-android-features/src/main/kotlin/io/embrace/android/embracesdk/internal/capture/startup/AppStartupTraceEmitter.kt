@@ -1,10 +1,10 @@
 package io.embrace.android.embracesdk.internal.capture.startup
 
 import android.os.Build.VERSION_CODES
+import io.embrace.android.embracesdk.internal.arch.attrs.embStartupActivityName
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
-import io.embrace.android.embracesdk.internal.otel.attrs.embStartupActivityName
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.process.ProcessInfo

@@ -6,6 +6,7 @@ include(
     ":embrace-android-infra",
     ":embrace-android-utils",
     ":embrace-android-features",
+    ":embrace-android-instrumentation-schema",
     ":embrace-android-payload",
     ":embrace-android-delivery",
     ":embrace-android-okhttp3",

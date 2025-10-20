@@ -32,6 +32,7 @@ import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaContext
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpan
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanContext
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanKind
 import io.embrace.opentelemetry.kotlin.context.Context
 import io.embrace.opentelemetry.kotlin.context.toOtelJavaContext
 import io.embrace.opentelemetry.kotlin.context.toOtelJavaContextKey
@@ -52,10 +53,11 @@ class FakeEmbraceSdkSpan(
     val private: Boolean = internal,
     override val autoTerminationMode: AutoTerminationMode = AutoTerminationMode.NONE,
     private val fakeClock: FakeClock = FakeClock(),
-) : EmbraceSdkSpan {
-
-    private var sdkSpan: OtelJavaSpan? = null
+    override var spanKind: SpanKind = SpanKind.INTERNAL,
     var spanStartTimeMs: Long? = null
+) : EmbraceSdkSpan {
+    private var sdkSpan: OtelJavaSpan? = null
+
     var spanEndTimeMs: Long? = null
     override var status: StatusData = StatusData.Unset
     var errorCode: ErrorCode? = null
@@ -82,10 +84,11 @@ class FakeEmbraceSdkSpan(
 
     override fun start(startTimeMs: Long?): Boolean {
         if (!started()) {
-            val timestampMs = startTimeMs ?: fakeClock.now()
+            val timestampMs = startTimeMs ?: spanStartTimeMs ?: fakeClock.now()
             sdkSpan = FakeSpanBuilder(name)
                 .setStartTimestamp(timestampMs, TimeUnit.MILLISECONDS)
                 .setParent(parentContext.toOtelJavaContext())
+                .setSpanKind(spanKind.toOtelJavaSpanKind())
                 .startSpan()
             spanStartTimeMs = timestampMs
         }
@@ -199,8 +202,6 @@ class FakeEmbraceSdkSpan(
 
     override fun name(): String = name
 
-    override val spanKind: SpanKind = SpanKind.INTERNAL
-
     override fun events(): List<SpanEvent> {
         throw UnsupportedOperationException()
     }
@@ -215,6 +216,14 @@ class FakeEmbraceSdkSpan(
     }
 
     private fun started(): Boolean = sdkSpan != null
+
+    private fun SpanKind.toOtelJavaSpanKind(): OtelJavaSpanKind = when (this) {
+        SpanKind.INTERNAL -> OtelJavaSpanKind.INTERNAL
+        SpanKind.CLIENT -> OtelJavaSpanKind.CLIENT
+        SpanKind.SERVER -> OtelJavaSpanKind.SERVER
+        SpanKind.PRODUCER -> OtelJavaSpanKind.PRODUCER
+        SpanKind.CONSUMER -> OtelJavaSpanKind.CONSUMER
+    }
 
     companion object {
         fun notStarted(): FakeEmbraceSdkSpan = FakeEmbraceSdkSpan(name = "not-started")

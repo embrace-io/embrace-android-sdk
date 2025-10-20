@@ -10,6 +10,6 @@ fun LibraryExtension.configureLint(project: Project) {
         checkAllWarnings = true
         checkReleaseBuilds = false // run on CI instead, speeds up release builds
         baseline = project.file("lint-baseline.xml")
-        disable.addAll(setOf("GradleDependency", "NewerVersionAvailable"))
+        disable.addAll(setOf("GradleDependency", "NewerVersionAvailable", "AndroidGradlePluginVersion"))
     }
 }

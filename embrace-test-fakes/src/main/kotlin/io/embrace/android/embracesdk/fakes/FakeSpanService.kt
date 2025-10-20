@@ -12,6 +12,7 @@ import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.context.toOtelJavaContext
 import io.embrace.opentelemetry.kotlin.context.toOtelKotlinContext
+import io.embrace.opentelemetry.kotlin.tracing.model.SpanKind
 
 @OptIn(ExperimentalApi::class)
 class FakeSpanService : SpanService {
@@ -44,7 +45,7 @@ class FakeSpanService : SpanService {
     }
 
     override fun createSpan(
-        otelSpanStartArgs: OtelSpanStartArgs
+        otelSpanStartArgs: OtelSpanStartArgs,
     ): EmbraceSdkSpan {
         return FakeEmbraceSdkSpan(
             name = otelSpanStartArgs.initialSpanName,
@@ -53,6 +54,8 @@ class FakeSpanService : SpanService {
             internal = otelSpanStartArgs.internal,
             private = otelSpanStartArgs.embraceAttributes.contains(PrivateSpan),
             autoTerminationMode = otelSpanStartArgs.autoTerminationMode,
+            spanKind = otelSpanStartArgs.spanKind ?: SpanKind.INTERNAL,
+            spanStartTimeMs = otelSpanStartArgs.startTimeMs
         ).apply {
             createdSpans.add(this)
         }

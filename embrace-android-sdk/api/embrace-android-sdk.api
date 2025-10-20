@@ -1,5 +1,5 @@
 public final class io/embrace/android/embracesdk/Embrace : io/embrace/android/embracesdk/internal/api/SdkApi {
-	public static final field Companion Lio/embrace/android/embracesdk/Embrace$Companion;
+	public static final field INSTANCE Lio/embrace/android/embracesdk/Embrace;
 	public fun activityLoaded (Landroid/app/Activity;)V
 	public fun addBreadcrumb (Ljava/lang/String;)V
 	public fun addLoadTraceAttribute (Landroid/app/Activity;Ljava/lang/String;Ljava/lang/String;)V
@@ -73,10 +73,6 @@ public final class io/embrace/android/embracesdk/Embrace : io/embrace/android/em
 	public fun startSpan (Ljava/lang/String;Lio/embrace/android/embracesdk/spans/EmbraceSpan;Lio/embrace/android/embracesdk/spans/AutoTerminationMode;)Lio/embrace/android/embracesdk/spans/EmbraceSpan;
 	public fun startSpan (Ljava/lang/String;Lio/embrace/android/embracesdk/spans/EmbraceSpan;Ljava/lang/Long;Lio/embrace/android/embracesdk/spans/AutoTerminationMode;)Lio/embrace/android/embracesdk/spans/EmbraceSpan;
 	public fun startView (Ljava/lang/String;)Z
-}
-
-public final class io/embrace/android/embracesdk/Embrace$Companion {
-	public final fun getInstance ()Lio/embrace/android/embracesdk/Embrace;
 }
 
 public final class io/embrace/android/embracesdk/internal/instrumentation/bytecode/ApplicationInitTimeBytecodeEntrypoint {

@@ -1,6 +1,8 @@
 package io.embrace.android.embracesdk.testcases.features
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.Embrace
+import io.embrace.android.embracesdk.EmbraceImpl
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.config.FakeProjectConfig
 import io.embrace.android.embracesdk.internal.EmbraceInternalApi
@@ -52,7 +54,7 @@ internal class PayloadTypesHeaderTest {
             },
             testCaseAction = {
                 embrace.logInfo("some message")
-                embrace.impl.internalInterface.logInternalError("some internal error", "oh no!")
+                (embrace as EmbraceImpl).internalInterface.logInternalError("some internal error", "oh no!")
                 embrace.logWarning("uh oh!")
                 clock.tick(2000L)
             },
@@ -84,7 +86,7 @@ internal class PayloadTypesHeaderTest {
             },
             testCaseAction = {
                 embrace.logInfo("log message")
-                embrace.impl.internalInterface.logInternalError("internal error", "oh no!")
+                (embrace as EmbraceImpl).internalInterface.logInternalError("internal error", "oh no!")
                 EmbraceInternalApi.getInstance().flutterInternalInterface.logUnhandledDartException(
                     "Flutter stacktrace",
                     "FlutterException",
@@ -128,7 +130,7 @@ internal class PayloadTypesHeaderTest {
             },
             testCaseAction = {
                 embrace.logInfo("log message")
-                embrace.impl.internalInterface.logInternalError("internal error", "oh no!")
+                (embrace as EmbraceImpl).internalInterface.logInternalError("internal error", "oh no!")
                 EmbraceInternalApi.getInstance().unityInternalInterface.logUnhandledUnityException(
                     "UnityException",
                     "Unity error occurred",

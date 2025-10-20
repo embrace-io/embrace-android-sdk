@@ -14,6 +14,6 @@ public object WebViewClientBytecodeEntrypoint {
     @JvmStatic
     @Keep
     public fun onPageStarted(url: String?,) {
-        Embrace.getInstance().logWebView(url)
+        Embrace.logWebView(url)
     }
 }

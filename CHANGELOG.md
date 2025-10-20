@@ -1,5 +1,27 @@
 # Embrace Android SDK Changelog
 
+## 7.9.2
+
+*October 20, 2025*
+
+- Propagate arguments correctly when starting span directly via OTel API
+
+## 7.9.1
+
+*August 29, 2025*
+
+- Restore the minimum Java runtime compatibility version to 1.8
+
+## 7.9.0
+
+*August 27, 2025*
+
+:::info Important
+This release bumped the minimum runtime Java version to 11. Compatibility with 1.8 is restored in 7.9.1.
+:::
+
+- Fix transitive dependency issue to restore the minimum Kotlin version to 1.8.22.
+
 ## 7.8.0
 *August 11, 2025*
 

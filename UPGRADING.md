@@ -16,12 +16,18 @@
 ## Notable features
 
 The SDK now uses [opentelemetry-kotlin](https://github.com/embrace-io/opentelemetry-kotlin)'s API for capturing telemetry internally.
-Under the hood [opentelemetry-java](https://github.com/open-telemetry/opentelemetry-java) is currently still responsible for processing the telemetry.
+Under the hood [opentelemetry-java](https://github.com/open-telemetry/opentelemetry-java) is currently still responsible for processing the
+telemetry.
 
 The new `embrace-android-otel-java` module provides a compatibility layer if you wish to use opentelemetry-java's APIs to perform operations
 such as adding exporters.
 
-## Removed APIs
+## Embrace.getInstance() deprecated
+
+`Embrace.getInstance()` is deprecated in favour of `Embrace`. For example, you can now call `Embrace.start(Context)` instead
+of `Embrace.getInstance().start(Context)`.
+
+## Altered APIs
 
 Various deprecated APIs have been removed. Please migrate to the documented new APIs where applicable, or
 get in touch if you do have a use-case that is no longer met.
@@ -30,11 +36,11 @@ get in touch if you do have a use-case that is no longer met.
 
 | Old API                                                                 | New API                                                                                                |
 |-------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------|
-| `Embrace.getInstance().start(Context, AppFramework)`                    | `Embrace.getInstance().start(Context)`                                                                 |
+| `Embrace.getInstance().start(Context, AppFramework)`                    | `Embrace.start(Context)`                                                                               |
 | `Embrace.getInstance().addLogRecordExporter(LogRecordExporter)`         | Type changed to opentelemetry-kotlin API. Alternative available in `embrace-android-otel-java` module. |
 | `Embrace.getInstance().addSpanExporter(SpanExporter)`                   | Type changed to opentelemetry-kotlin API. Alternative available in `embrace-android-otel-java` module. |
-| `Embrace.getInstance().getOpenTelemetry()`                              | `Embrace.getInstance().getOpenTelemetryKotlin()` or `Embrace.getInstance().getJavaOpenTelemetry()`     |
-| `Embrace.getInstance().setResourceAttribute(AttributeKey, String)`      | `Embrace.getInstance().setResourceAttribute(String, String)`                                           |
+| `Embrace.getInstance().getOpenTelemetry()`                              | `Embrace.getOpenTelemetryKotlin()` or `Embrace.getJavaOpenTelemetry()`                                 |
+| `Embrace.getInstance().setResourceAttribute(AttributeKey, String)`      | `Embrace.setResourceAttribute(String, String)`                                                         |
 | `EmbraceSpan.addLink(SpanContext)`                                      | Type changed to symbol declared in embrace-android-sdk.                                                |
 | `EmbraceSpan.addLink(SpanContext, Map)`                                 | Type changed to symbol declared in embrace-android-sdk.                                                |
 | `EmbraceSpan.getSpanContext()`                                          | Type changed to symbol declared in embrace-android-sdk.                                                |
@@ -65,6 +71,27 @@ get in touch if you do have a use-case that is no longer met.
 | `swazzler.forceIncrementalOverwrite`                  | Obsolete - no alternative provided.                                     |
 | `swazzler.disableRNBundleRetriever`                   | Obsolete - no alternative provided.                                     |
 
+### Embrace Android SDK overload changes
+
+The following functions had overloads manually defined. These have been replaced with one function
+that uses Kotlin's default parameter values.
+
+| Altered APIs                                  |
+|-----------------------------------------------|
+| `Embrace.getInstance().logCustomStacktrace()` |
+| `Embrace.getInstance().logException()`        |
+| `Embrace.getInstance().logMessage()`          |
+| `Embrace.getInstance().createSpan()`          |
+| `Embrace.getInstance().recordCompletedSpan()` |
+| `Embrace.getInstance().recordSpan()`          |
+| `Embrace.getInstance().startSpan()`           |
+| `Embrace.getInstance().endSession()`          |
+| `EmbraceSpan.addEvent()`                      |
+| `EmbraceSpan.addLink()`                       |
+| `EmbraceSpan.recordException()`               |
+| `EmbraceSpan.start()`                         |
+| `EmbraceSpan.stop()`                          |
+
 # Upgrading to 7.3.0 with the new Embrace Gradle Plugin DSL
 
 The Embrace Gradle Plugin previously had a DSL via the 'swazzler' extension. This has been replaced with a new DSL via the 'embrace'
@@ -92,7 +119,6 @@ below:
 | `swazzler.customSymbolsDirectory`                     | `embrace.customSymbolsDirectory`                                        |
 | `swazzler.forceIncrementalOverwrite`                  | Obsolete - no alternative provided.                                     |
 | `swazzler.disableRNBundleRetriever`                   | Obsolete - no alternative provided.                                     |
-
 
 The following project properties are now ignored and have no effect. You should remove them from your `gradle.properties` file:
 

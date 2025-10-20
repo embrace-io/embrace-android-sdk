@@ -289,7 +289,7 @@ internal class EmbraceTracerTest {
         val span = checkNotNull(embraceTracer.startSpan(name = "my-span"))
         val eventTimeNanos = clock.now().millisToNanos()
         clock.tick(10L)
-        assertTrue(span.addEvent(name = "first event", timestampMs = eventTimeNanos, attributes = null))
+        assertTrue(span.addEvent(name = "first event", timestampMs = eventTimeNanos, attributes = emptyMap()))
         assertTrue(
             span.addEvent(
                 name = "second event",

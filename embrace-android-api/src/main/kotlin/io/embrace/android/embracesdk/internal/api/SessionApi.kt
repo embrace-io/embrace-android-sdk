@@ -36,13 +36,8 @@ public interface SessionApi {
 
     /**
      * Ends the current session and starts a new one.
-     */
-    public fun endSession()
-
-    /**
-     * Ends the current session and starts a new one.
      *
      * @param clearUserInfo Pass in true to clear all user info set on this device.
      */
-    public fun endSession(clearUserInfo: Boolean)
+    public fun endSession(clearUserInfo: Boolean = false)
 }

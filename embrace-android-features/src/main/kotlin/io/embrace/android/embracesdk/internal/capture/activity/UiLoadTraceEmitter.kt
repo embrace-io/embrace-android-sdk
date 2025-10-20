@@ -304,7 +304,7 @@ class UiLoadTraceEmitter(
 
     private fun endChildSpan(instanceId: Int, timestampMs: Long, lifecycleStage: LifecycleStage) {
         activeTraces[instanceId]?.let { trace ->
-            trace.children[lifecycleStage]?.stop(timestampMs)
+            trace.children[lifecycleStage]?.stop(endTimeMs = timestampMs)
         }
     }
 

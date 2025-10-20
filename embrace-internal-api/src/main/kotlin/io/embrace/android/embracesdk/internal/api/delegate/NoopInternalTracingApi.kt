@@ -16,7 +16,7 @@ internal class NoopInternalTracingApi : InternalTracingApi {
         spanId: String,
         name: String,
         timestampMs: Long?,
-        attributes: Map<String, String>?,
+        attributes: Map<String, String>,
     ): Boolean {
         return false
     }
@@ -28,8 +28,8 @@ internal class NoopInternalTracingApi : InternalTracingApi {
     override fun <T> recordSpan(
         name: String,
         parentSpanId: String?,
-        attributes: Map<String, String>?,
-        events: List<Map<String, Any>>?,
+        attributes: Map<String, String>,
+        events: List<Map<String, Any>>,
         code: () -> T,
     ): T {
         return code()
@@ -41,8 +41,8 @@ internal class NoopInternalTracingApi : InternalTracingApi {
         endTimeMs: Long,
         errorCode: ErrorCode?,
         parentSpanId: String?,
-        attributes: Map<String, String>?,
-        events: List<Map<String, Any>>?,
+        attributes: Map<String, String>,
+        events: List<Map<String, Any>>,
     ): Boolean {
         return false
     }

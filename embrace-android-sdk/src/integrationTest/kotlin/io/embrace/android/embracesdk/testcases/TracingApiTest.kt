@@ -39,6 +39,8 @@ import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaContext
 import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
 import io.embrace.opentelemetry.kotlin.semconv.SessionAttributes
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
@@ -49,8 +51,6 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
 
 @OptIn(ExperimentalApi::class, IncubatingApi::class)
 @RunWith(AndroidJUnit4::class)
@@ -104,7 +104,7 @@ internal class TracingApiTest {
                     })
                     val failedOpStartTimeMs = embrace.getSdkCurrentTimeMs()
                     clock.tick(200L)
-                    parentSpan.addEvent(name = "delayed event", timestampMs = clock.now() - 50L, null)
+                    parentSpan.addEvent(name = "delayed event", timestampMs = clock.now() - 50L, emptyMap())
                     val failedOpEndTimeMs = embrace.getSdkCurrentTimeMs()
 
                     assertTrue(parentSpan.stop())

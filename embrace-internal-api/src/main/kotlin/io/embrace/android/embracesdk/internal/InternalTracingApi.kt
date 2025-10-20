@@ -33,7 +33,7 @@ interface InternalTracingApi {
         spanId: String,
         name: String,
         timestampMs: Long? = null,
-        attributes: Map<String, String>? = null,
+        attributes: Map<String, String> = emptyMap(),
     ): Boolean
 
     /**
@@ -64,8 +64,8 @@ interface InternalTracingApi {
     fun <T> recordSpan(
         name: String,
         parentSpanId: String? = null,
-        attributes: Map<String, String>? = null,
-        events: List<Map<String, Any>>? = null,
+        attributes: Map<String, String> = emptyMap(),
+        events: List<Map<String, Any>> = emptyList(),
         code: () -> T,
     ): T
 
@@ -78,7 +78,7 @@ interface InternalTracingApi {
         endTimeMs: Long,
         errorCode: ErrorCode? = null,
         parentSpanId: String? = null,
-        attributes: Map<String, String>? = null,
-        events: List<Map<String, Any>>? = null,
+        attributes: Map<String, String> = emptyMap(),
+        events: List<Map<String, Any>> = emptyList(),
     ): Boolean
 }

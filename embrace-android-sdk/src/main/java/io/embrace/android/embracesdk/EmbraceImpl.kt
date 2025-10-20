@@ -267,7 +267,7 @@ internal class EmbraceImpl(
     override fun logMessage(
         message: String,
         severity: Severity,
-        properties: Map<String, Any>?,
+        properties: Map<String, Any>,
         attachment: ByteArray,
     ) {
         logsApiDelegate.logMessage(
@@ -281,7 +281,7 @@ internal class EmbraceImpl(
     override fun logMessage(
         message: String,
         severity: Severity,
-        properties: Map<String, Any>?,
+        properties: Map<String, Any>,
         attachmentId: String,
         attachmentUrl: String,
     ) {

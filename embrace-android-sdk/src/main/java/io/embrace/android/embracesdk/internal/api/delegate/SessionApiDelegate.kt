@@ -41,8 +41,6 @@ internal class SessionApiDelegate(
         return false
     }
 
-    override fun endSession() = endSession(false)
-
     /**
      * Ends the current session and starts a new one.
      *

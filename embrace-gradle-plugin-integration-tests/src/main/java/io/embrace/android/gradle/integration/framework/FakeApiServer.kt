@@ -8,11 +8,11 @@ import java.util.LinkedList
 
 class FakeApiServer : Dispatcher() {
 
-    private val endpoints = EmbraceEndpoint.values().associateBy(EmbraceEndpoint::url)
-    private val receivedRequests = EmbraceEndpoint.values().associateWith {
+    private val endpoints = EmbraceEndpoint.entries.associateBy(EmbraceEndpoint::url)
+    private val receivedRequests = EmbraceEndpoint.entries.associateWith {
         mutableListOf<RecordedRequest>()
     }
-    private val enqueuedResponses = EmbraceEndpoint.values().associateWith {
+    private val enqueuedResponses = EmbraceEndpoint.entries.associateWith {
         LinkedList<MockResponse>()
     }
 

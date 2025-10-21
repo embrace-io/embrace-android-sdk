@@ -23,7 +23,7 @@ class MissingConfigFileTest {
                 File(projectDir, "src/main/embrace-config.json").delete()
             },
             assertions = {
-                val endpoints = EmbraceEndpoint.values()
+                val endpoints = EmbraceEndpoint.entries
                 endpoints.forEach {
                     verifyNoRequestsSent(it)
                 }

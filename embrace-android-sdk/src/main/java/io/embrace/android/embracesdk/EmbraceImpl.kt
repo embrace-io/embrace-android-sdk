@@ -230,7 +230,7 @@ internal class EmbraceImpl(
             stop()
             Executors.newSingleThreadExecutor().execute {
                 runCatching {
-                    StorageLocation.values().map { it.asFile(bootstrapper.coreModule.context, logger).value }.forEach {
+                    StorageLocation.entries.map { it.asFile(bootstrapper.coreModule.context, logger).value }.forEach {
                         it.deleteRecursively()
                     }
                 }.onFailure { exception ->

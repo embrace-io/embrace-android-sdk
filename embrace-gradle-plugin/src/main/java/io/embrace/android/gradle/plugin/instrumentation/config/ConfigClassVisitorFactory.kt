@@ -52,7 +52,7 @@ object ConfigClassVisitorFactory {
         api: Int,
         cv: ClassVisitor?,
     ): ClassVisitor? {
-        val type = ConfigClassType.values().singleOrNull { it.className == className }
+        val type = ConfigClassType.entries.singleOrNull { it.className == className }
         return type?.createClassVisitor(cfg, encodedSharedObjectFilesMap, reactNativeBundleId, api, cv)
     }
 }

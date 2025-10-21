@@ -39,7 +39,7 @@ internal class DisableSdkFeatureTest {
     @Before
     fun setUp() {
         val ctx = ApplicationProvider.getApplicationContext<Context>()
-        embraceDirs = StorageLocation.values().map { it.asFile(ctx, FakeEmbLogger()).value }
+        embraceDirs = StorageLocation.entries.map { it.asFile(ctx, FakeEmbLogger()).value }
     }
 
     @Test

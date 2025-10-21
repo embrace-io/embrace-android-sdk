@@ -131,8 +131,8 @@ internal class PayloadMessageCollatorImplTest {
     fun `session span is created when session payload is built if it did not exist before`() {
         currentSessionSpan.endSession(startNewSession = false)
         listOf(true, false).forEach { startupTemperature ->
-            LifeEventType.values().forEach { lifeEventType ->
-                ApplicationState.values().forEach { previousState ->
+            LifeEventType.entries.forEach { lifeEventType ->
+                ApplicationState.entries.forEach { previousState ->
                     collator.buildInitialSession(
                         InitialEnvelopeParams(
                             coldStart = startupTemperature,

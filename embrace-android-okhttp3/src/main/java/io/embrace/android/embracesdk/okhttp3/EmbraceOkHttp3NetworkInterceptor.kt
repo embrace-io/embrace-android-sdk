@@ -33,7 +33,7 @@ import kotlin.math.abs
  * - Observe the data just as it will be transmitted over the network.
  * - Access to the Connection that carries the request.
  */
-class EmbraceOkHttp3NetworkInterceptor @JvmOverloads constructor(
+class EmbraceOkHttp3NetworkInterceptor(
     private val embrace: Embrace,
     private val embraceInternalApi: EmbraceInternalApi,
     // A clock that mirrors the one used by OkHttp to get timestamps

@@ -49,7 +49,6 @@ class LegacyExceptionInfo(
          * @param throwable the exception
          * @return the stacktrace instance
          */
-        @JvmStatic
         fun ofThrowable(throwable: Throwable): LegacyExceptionInfo {
             val name = throwable.javaClass.name
             val message = throwable.message ?: ""

@@ -166,7 +166,6 @@ internal class LogsApiDelegate(
         )
     }
 
-    @JvmOverloads
     fun logMessageImpl(
         severity: Severity,
         message: String,

@@ -5,14 +5,12 @@ import io.embrace.android.embracesdk.internal.api.ViewTrackingApi
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.injection.embraceImplInject
 import io.embrace.android.embracesdk.internal.payload.AppFramework
-import io.embrace.android.embracesdk.internal.payload.TapBreadcrumb
 
 internal class ViewTrackingApiDelegate(
     bootstrapper: ModuleInitBootstrapper,
     private val sdkCallChecker: SdkCallChecker,
 ) : ViewTrackingApi {
 
-    private val sdkClock = bootstrapper.initModule.clock
     private val featureModule by embraceImplInject(sdkCallChecker) {
         bootstrapper.featureModule
     }
@@ -56,13 +54,6 @@ internal class ViewTrackingApiDelegate(
             return featureModule?.viewDataSource?.dataSource?.endView(name) ?: false
         }
         return false
-    }
-
-    override fun logTap(point: Pair<Float?, Float?>, elementName: String, type: TapBreadcrumb.TapBreadcrumbType) {
-        if (sdkCallChecker.check("log_tap")) {
-            featureModule?.tapDataSource?.dataSource?.logTap(point, elementName, sdkClock.now(), type)
-            sessionOrchestrator?.reportBackgroundActivityStateChange()
-        }
     }
 
     override fun logRnAction(

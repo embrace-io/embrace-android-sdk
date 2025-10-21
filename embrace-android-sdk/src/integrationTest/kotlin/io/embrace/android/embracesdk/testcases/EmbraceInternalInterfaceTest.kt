@@ -1,21 +1,19 @@
 package io.embrace.android.embracesdk.testcases
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.assertions.findEventOfType
-import io.embrace.android.embracesdk.assertions.findSessionSpan
+import io.embrace.android.embracesdk.assertions.assertMatches
 import io.embrace.android.embracesdk.assertions.findSpansByName
 import io.embrace.android.embracesdk.internal.EmbraceInternalApi
-import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.config.remote.NetworkCaptureRuleRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
-import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
+import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.http.HttpMethod
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
-import io.embrace.android.embracesdk.assertions.assertMatches
 import io.embrace.opentelemetry.kotlin.semconv.HttpAttributes
+import java.net.SocketException
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -24,7 +22,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import java.net.SocketException
 
 /**
  * Validation of the internal API
@@ -92,7 +89,6 @@ internal class EmbraceInternalInterfaceTest {
                         )
                     )
 
-                    logComposeTap(Pair(0.0f, 0.0f), "")
                     assertFalse(shouldCaptureNetworkBody("", ""))
                     assertFalse(isNetworkSpanForwardingEnabled())
                 }
@@ -169,33 +165,6 @@ internal class EmbraceInternalInterfaceTest {
     }
 
     @Test
-    fun `compose tap logging works as expected`() {
-        val expectedX = 10.0f
-        val expectedY = 99f
-        val expectedElementName = "button"
-
-        testRule.runTest(
-            testCaseAction = {
-                recordSession {
-                    EmbraceInternalApi.internalInterface.logComposeTap(
-                        Pair(expectedX, expectedY),
-                        expectedElementName
-                    )
-                }
-            },
-            assertAction = {
-                val session = getSingleSessionEnvelope()
-                val tapBreadcrumb = session.findSessionSpan().findEventOfType(EmbType.Ux.Tap)
-                tapBreadcrumb.attributes?.assertMatches(mapOf(
-                    "view.name" to "button",
-                    "tap.coords" to "0,0",
-                    "tap.type" to "tap",
-                ))
-            }
-        )
-    }
-
-    @Test
     fun `access check methods work as expected`() {
         testRule.runTest(
             persistedRemoteConfig = RemoteConfig(
@@ -266,15 +235,19 @@ internal class EmbraceInternalInterfaceTest {
                         .associateBy { it.name })
                 assertEquals(4, spans.size)
                 with(checkNotNull(spans["tz-parent-span"])) {
-                    attributes?.assertMatches(mapOf(
-                        "testkey" to "testvalue",
-                    ))
+                    attributes?.assertMatches(
+                        mapOf(
+                            "testkey" to "testvalue",
+                        )
+                    )
                 }
                 with(checkNotNull(spans["tz-child-span"])) {
                     val spanEvent = checkNotNull(events)[0]
-                    spanEvent.attributes?.assertMatches(mapOf(
-                        "key" to "value",
-                    ))
+                    spanEvent.attributes?.assertMatches(
+                        mapOf(
+                            "key" to "value",
+                        )
+                    )
                     assertEquals("cool event bro", spanEvent.name)
                     assertEquals(Span.Status.ERROR, status)
                 }

@@ -6,7 +6,7 @@ import io.embrace.android.embracesdk.internal.utils.Provider
 /**
  * Holds the current state of the service. This class automatically handles changes in config
  * that enable/disable the service, and creates new instances of the service as required.
- * It also is capable of disabling the service if the [SessionType] is not supported.
+ * It also is capable of disabling the service if the SessionType is not supported.
  */
 class DataSourceState<T : DataSource<*>>(
 

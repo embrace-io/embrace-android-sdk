@@ -4,7 +4,6 @@ import android.annotation.SuppressLint
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
 import io.embrace.android.embracesdk.internal.InternalTracingApi
 import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData
-import io.embrace.android.embracesdk.internal.payload.TapBreadcrumb
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 
 @SuppressLint("EmbracePublicApiPackageRule")
@@ -56,8 +55,6 @@ internal class NoopEmbraceInternalInterface(
 
     override fun recordNetworkRequest(embraceNetworkRequest: EmbraceNetworkRequest) {}
 
-    override fun logComposeTap(point: Pair<Float, Float>, elementName: String) {}
-
     override fun shouldCaptureNetworkBody(url: String, method: String): Boolean = false
 
     override fun isNetworkSpanForwardingEnabled(): Boolean = false
@@ -71,6 +68,4 @@ internal class NoopEmbraceInternalInterface(
     override fun logInternalError(error: Throwable) {}
 
     override fun stopSdk() {}
-
-    override fun logTap(point: Pair<Float?, Float?>, elementName: String, type: TapBreadcrumb.TapBreadcrumbType) {}
 }

@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal
 
 import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData
-import io.embrace.android.embracesdk.internal.payload.TapBreadcrumb
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 
 /**
@@ -86,23 +85,6 @@ interface EmbraceInternalInterface : InternalTracingApi {
     fun recordNetworkRequest(
         embraceNetworkRequest: EmbraceNetworkRequest,
     )
-
-    /**
-     * Logs a tap on a screen element.
-     *
-     * @param point       the coordinates of the screen tap
-     * @param elementName the name of the element which was tapped
-     * @param type        the type of tap that occurred
-     */
-    fun logTap(point: Pair<Float?, Float?>, elementName: String, type: TapBreadcrumb.TapBreadcrumbType)
-
-    /**
-     * Logs a tap on a Compose screen element.
-     *
-     * @param point       the coordinates of the screen tap
-     * @param elementName the name of the element which was tapped
-     */
-    fun logComposeTap(point: Pair<Float, Float>, elementName: String)
 
     /**
      * For the given URL and method, whether the response body should be captured for network request logging

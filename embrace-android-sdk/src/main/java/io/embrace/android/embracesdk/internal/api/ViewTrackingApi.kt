@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.api
 
 import android.app.Application
-import io.embrace.android.embracesdk.internal.payload.TapBreadcrumb
 
 internal interface ViewTrackingApi {
 
@@ -36,15 +35,6 @@ internal interface ViewTrackingApi {
      * @param name the name of the view to log
      */
     fun endView(name: String): Boolean
-
-    /**
-     * Logs a tap on a screen element.
-     *
-     * @param point       the coordinates of the screen tap
-     * @param elementName the name of the element which was tapped
-     * @param type        the type of tap that occurred
-     */
-    fun logTap(point: Pair<Float?, Float?>, elementName: String, type: TapBreadcrumb.TapBreadcrumbType)
 
     /**
      * Logs a React Native Redux Action.

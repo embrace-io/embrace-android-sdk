@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.internal.config.behavior
 
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.InstrumentedConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
-import io.embrace.android.embracesdk.internal.utils.DEFAULT_STACKTRACE_SIZE_LIMIT
 
 /**
  * Provides the behavior that the ANR feature should follow.

@@ -16,24 +16,23 @@ import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehav
 import io.embrace.android.embracesdk.internal.config.behavior.SessionBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.InstrumentedConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
-import io.embrace.android.embracesdk.internal.otel.config.OtelSdkConfig
 import io.embrace.android.embracesdk.internal.payload.AppFramework
-import io.embrace.android.embracesdk.internal.prefs.PreferencesService
 
 /**
  * Loads configuration for the app from the Embrace API.
  */
-internal class ConfigServiceImpl(
-    openTelemetryCfg: OtelSdkConfig,
-    preferencesService: PreferencesService,
+class ConfigServiceImpl(
     instrumentedConfig: InstrumentedConfig,
     remoteConfig: RemoteConfig?,
-    thresholdCheck: BehaviorThresholdCheck = BehaviorThresholdCheck { preferencesService.deviceIdentifier },
+    deviceIdSupplier: () -> String,
+    private val hasConfiguredOtelExporters: () -> Boolean,
 ) : ConfigService {
 
+    private val thresholdCheck: BehaviorThresholdCheck = BehaviorThresholdCheck(deviceIdSupplier)
     override val backgroundActivityBehavior =
         BackgroundActivityBehaviorImpl(thresholdCheck, instrumentedConfig, remoteConfig)
-    override val autoDataCaptureBehavior = AutoDataCaptureBehaviorImpl(thresholdCheck, instrumentedConfig, remoteConfig)
+    override val autoDataCaptureBehavior =
+        AutoDataCaptureBehaviorImpl(thresholdCheck, instrumentedConfig, remoteConfig)
     override val breadcrumbBehavior = BreadcrumbBehaviorImpl(instrumentedConfig, remoteConfig)
     override val sensitiveKeysBehavior = SensitiveKeysBehaviorImpl(instrumentedConfig)
     override val logMessageBehavior = LogMessageBehaviorImpl(remoteConfig)
@@ -42,29 +41,23 @@ internal class ConfigServiceImpl(
     override val networkBehavior = NetworkBehaviorImpl(instrumentedConfig, remoteConfig)
     override val dataCaptureEventBehavior = DataCaptureEventBehaviorImpl(remoteConfig)
     override val sdkModeBehavior = SdkModeBehaviorImpl(thresholdCheck, remoteConfig)
-    override val appExitInfoBehavior = AppExitInfoBehaviorImpl(thresholdCheck, instrumentedConfig, remoteConfig)
+    override val appExitInfoBehavior =
+        AppExitInfoBehaviorImpl(thresholdCheck, instrumentedConfig, remoteConfig)
     override val networkSpanForwardingBehavior =
         NetworkSpanForwardingBehaviorImpl(thresholdCheck, instrumentedConfig, remoteConfig)
     override val otelBehavior = OtelBehaviorImpl(thresholdCheck, instrumentedConfig, remoteConfig)
 
-    override val appId: String? = resolveAppId(instrumentedConfig.project.getAppId(), openTelemetryCfg)
-
-    override fun isOnlyUsingOtelExporters(): Boolean = appId.isNullOrEmpty()
-
-    /**
-     * Loads the build information from resources provided by the config file packaged within the application by Gradle at
-     * build-time.
-     *
-     * @return the local configuration
-     */
-    fun resolveAppId(id: String?, openTelemetryCfg: OtelSdkConfig): String? {
-        require(!id.isNullOrEmpty() || openTelemetryCfg.hasConfiguredOtelExporters()) {
+    override val appId: String? = run {
+        val id = instrumentedConfig.project.getAppId()
+        require(!id.isNullOrEmpty() || hasConfiguredOtelExporters()) {
             "No appId supplied in embrace-config.json. This is required if you want to " +
                 "send data to Embrace, unless you configure an OTel exporter and add" +
                 " embrace.disableMappingFileUpload=true to gradle.properties."
         }
-        return id
+        id
     }
+
+    override fun isOnlyUsingOtelExporters(): Boolean = appId.isNullOrEmpty()
 
     override val appFramework: AppFramework = instrumentedConfig.project.getAppFramework()?.let {
         AppFramework.fromString(it)

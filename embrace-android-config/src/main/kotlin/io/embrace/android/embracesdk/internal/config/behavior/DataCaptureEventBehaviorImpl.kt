@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.config.behavior
 
-import io.embrace.android.embracesdk.internal.PatternCache
+import io.embrace.android.embracesdk.internal.config.PatternCache
 import io.embrace.android.embracesdk.internal.config.UnimplementedConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 

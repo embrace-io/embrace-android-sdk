@@ -18,7 +18,7 @@ import io.embrace.android.embracesdk.internal.config.behavior.SessionBehavior
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 
 /**
- * Fake [ConfigService] used for testing. Note that the
+ * Fake [io.embrace.android.embracesdk.internal.config.ConfigService] used for testing. Note that the
  * current config values of this object will be propagated, and you can trigger this fake update even if you have not changed the underlying
  * data. Beware of this difference in implementation compared to the real EmbraceConfigService
  */

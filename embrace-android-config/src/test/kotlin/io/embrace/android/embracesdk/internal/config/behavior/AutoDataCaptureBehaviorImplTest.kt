@@ -1,12 +1,12 @@
 package io.embrace.android.embracesdk.internal.config.behavior
 
+import io.embrace.android.embracesdk.fakes.FAKE_DEVICE_ID
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.createAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.internal.config.remote.DataRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.KillSwitchRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
-import io.embrace.android.embracesdk.internal.utils.Uuid
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -131,7 +131,7 @@ internal class AutoDataCaptureBehaviorImplTest {
         localUiLoadTracingTraceAllEnabled: Boolean,
         remote: RemoteConfig,
     ) = AutoDataCaptureBehaviorImpl(
-        thresholdCheck = BehaviorThresholdCheck(Uuid::getEmbUuid),
+        thresholdCheck = BehaviorThresholdCheck { FAKE_DEVICE_ID },
         local = FakeInstrumentedConfig(
             enabledFeatures = FakeEnabledFeatureConfig(
                 uiLoadTracingTraceAll = localUiLoadTracingTraceAllEnabled,

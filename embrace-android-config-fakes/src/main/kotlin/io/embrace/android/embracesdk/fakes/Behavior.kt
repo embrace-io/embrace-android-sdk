@@ -25,9 +25,12 @@ import io.embrace.android.embracesdk.internal.config.behavior.SessionBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.SessionBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
-import io.embrace.android.embracesdk.internal.utils.Uuid
 
-private val behaviorThresholdCheck = BehaviorThresholdCheck(Uuid::getEmbUuid)
+const val FAKE_DEVICE_ID = "D586C4E25C064764BF53A808A38B92FE"
+
+private val behaviorThresholdCheck = BehaviorThresholdCheck {
+    FAKE_DEVICE_ID
+}
 
 /**
  * A [AnrBehavior] that returns default values.
@@ -113,7 +116,7 @@ fun createNetworkSpanForwardingBehavior(
 /**
  * A [SensitiveKeysBehaviorImpl] that returns default values.
  */
-internal fun createSensitiveKeysBehavior() = SensitiveKeysBehaviorImpl(InstrumentedConfigImpl)
+fun createSensitiveKeysBehavior() = SensitiveKeysBehaviorImpl(InstrumentedConfigImpl)
 
 /**
  * An [OtelBehaviorImpl] that returns default values.

@@ -1,10 +1,10 @@
-package io.embrace.android.embracesdk.internal
+package io.embrace.android.embracesdk.internal.config
 
 import java.util.regex.Pattern
 
 internal class PatternCache {
 
-    private val memo: MutableMap<Set<String>, Collection<Pattern>> = HashMap()
+    private val memo: MutableMap<Set<String>, Collection<Pattern>> = mutableMapOf()
 
     fun doesStringMatchesPatternInSet(string: String, patternSet: Set<String>): Boolean {
         val patterns = memo.getOrPut(patternSet) {

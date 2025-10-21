@@ -31,6 +31,7 @@ dependencies {
     implementation(project(":embrace-android-utils"))
     implementation(project(":embrace-internal-api"))
     implementation(project(":embrace-android-otel"))
+    api(project(":embrace-android-config"))
     implementation(project(":embrace-android-instrumentation-schema"))
     compileOnly(project(":embrace-android-api"))
 

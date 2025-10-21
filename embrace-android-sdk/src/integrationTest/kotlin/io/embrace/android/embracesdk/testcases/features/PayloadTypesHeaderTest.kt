@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.testcases.features
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.EmbraceImpl
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.config.FakeProjectConfig

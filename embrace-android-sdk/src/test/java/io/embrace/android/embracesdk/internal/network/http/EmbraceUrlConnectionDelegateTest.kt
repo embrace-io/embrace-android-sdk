@@ -2,9 +2,9 @@ package io.embrace.android.embracesdk.internal.network.http
 
 import io.embrace.android.embracesdk.fakes.FakeInternalNetworkApi
 import io.embrace.android.embracesdk.internal.config.behavior.NetworkSpanForwardingBehaviorImpl.Companion.TRACEPARENT_HEADER_NAME
-import io.embrace.android.embracesdk.internal.network.http.EmbraceHttpPathOverride.PATH_OVERRIDE
 import io.embrace.android.embracesdk.internal.network.http.EmbraceUrlConnectionDelegate.CONTENT_ENCODING
 import io.embrace.android.embracesdk.internal.network.http.EmbraceUrlConnectionDelegate.CONTENT_LENGTH
+import io.embrace.android.embracesdk.internal.network.logging.PATH_OVERRIDE
 import io.embrace.android.embracesdk.network.http.HttpMethod
 import io.mockk.every
 import io.mockk.mockk

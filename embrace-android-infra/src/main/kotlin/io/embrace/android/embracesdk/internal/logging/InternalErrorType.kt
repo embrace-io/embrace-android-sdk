@@ -37,4 +37,5 @@ enum class InternalErrorType {
     NATIVE_READ_FAIL,
     APP_LAUNCH_TRACE_FAIL,
     UI_CALLBACK_FAIL,
+    INSTRUMENTATION_REG_FAIL,
 }

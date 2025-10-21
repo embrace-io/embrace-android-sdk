@@ -4,8 +4,8 @@ import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.internal.EmbraceInternalApi
 import io.embrace.android.embracesdk.internal.EmbraceInternalApi.CUSTOM_TRACE_ID_HEADER_NAME
 import io.embrace.android.embracesdk.internal.clock.Clock
-import io.embrace.android.embracesdk.internal.network.http.EmbraceHttpPathOverride
 import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData
+import io.embrace.android.embracesdk.internal.network.logging.getOverriddenURLString
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.http.HttpMethod
 import okhttp3.Interceptor
@@ -112,7 +112,7 @@ class EmbraceOkHttp3NetworkInterceptor(
 
         embrace.recordNetworkRequest(
             EmbraceNetworkRequest.fromCompletedRequest(
-                EmbraceHttpPathOverride.getURLString(EmbraceOkHttp3PathOverrideRequest(request)),
+                getOverriddenURLString(EmbraceOkHttp3PathOverrideRequest(request)),
                 HttpMethod.fromString(request.method),
                 response.sentRequestAtMillis + offset,
                 response.receivedResponseAtMillis + offset,

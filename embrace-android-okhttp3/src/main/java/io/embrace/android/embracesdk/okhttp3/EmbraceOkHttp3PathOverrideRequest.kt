@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.okhttp3
 
-import io.embrace.android.embracesdk.internal.network.http.HttpPathOverrideRequest
+import io.embrace.android.embracesdk.internal.network.logging.HttpPathOverrideRequest
 import okhttp3.Request
 
 internal class EmbraceOkHttp3PathOverrideRequest(private val request: Request) : HttpPathOverrideRequest {

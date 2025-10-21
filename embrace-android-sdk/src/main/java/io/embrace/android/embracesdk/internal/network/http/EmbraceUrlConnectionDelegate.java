@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.network.http;
 
 import static io.embrace.android.embracesdk.internal.EmbraceInternalApi.CUSTOM_TRACE_ID_HEADER_NAME;
 import static io.embrace.android.embracesdk.internal.config.behavior.NetworkSpanForwardingBehaviorImpl.TRACEPARENT_HEADER_NAME;
+import static io.embrace.android.embracesdk.internal.network.logging.EmbraceHttpPathOverrideKt.getOverriddenURLString;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -31,6 +32,7 @@ import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLSocketFactory;
 
 import io.embrace.android.embracesdk.annotation.InternalApi;
+import io.embrace.android.embracesdk.internal.network.logging.EmbraceHttpPathOverrideKt;
 import io.embrace.android.embracesdk.internal.utils.exceptions.function.CheckedSupplier;
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest;
 import io.embrace.android.embracesdk.network.http.HttpMethod;
@@ -532,7 +534,7 @@ class EmbraceUrlConnectionDelegate<T extends HttpURLConnection> implements Embra
             this.didLogNetworkCall = true;  // TODO: Wouldn't this mean that the network call might not be logged
             long endTime = internalNetworkApi.getSdkCurrentTimeMs();
 
-            String url = EmbraceHttpPathOverride.getURLString(new EmbraceHttpUrlConnectionOverride(this.connection));
+            String url = EmbraceHttpPathOverrideKt.getOverriddenURLString(new EmbraceHttpUrlConnectionOverride(this.connection));
 
             try {
                 long bytesOut = this.outputStream == null ? 0 : Math.max(this.outputStream.getCount(), 0);

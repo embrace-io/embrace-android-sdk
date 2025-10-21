@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.okhttp3
 import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.internal.EmbraceInternalApi
 import io.embrace.android.embracesdk.internal.EmbraceInternalApi.CUSTOM_TRACE_ID_HEADER_NAME
-import io.embrace.android.embracesdk.internal.network.http.EmbraceHttpPathOverride
+import io.embrace.android.embracesdk.internal.network.logging.getOverriddenURLString
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.http.HttpMethod
 import okhttp3.Interceptor
@@ -37,7 +37,7 @@ class EmbraceOkHttp3ApplicationInterceptor(
         } catch (e: EmbraceCustomPathException) {
             if (embrace.isStarted) {
                 val urlString =
-                    EmbraceHttpPathOverride.getURLString(EmbraceOkHttp3PathOverrideRequest(request), e.customPath)
+                    getOverriddenURLString(EmbraceOkHttp3PathOverrideRequest(request), e.customPath)
                 embrace.recordNetworkRequest(
                     EmbraceNetworkRequest.fromIncompleteRequest(
                         urlString,
@@ -62,7 +62,7 @@ class EmbraceOkHttp3ApplicationInterceptor(
         } catch (e: Exception) {
             // we are interested in errors.
             if (embrace.isStarted) {
-                val urlString = EmbraceHttpPathOverride.getURLString(EmbraceOkHttp3PathOverrideRequest(request))
+                val urlString = getOverriddenURLString(EmbraceOkHttp3PathOverrideRequest(request))
                 val errorType = e.javaClass.canonicalName
                 val errorMessage = e.message
                 embrace.recordNetworkRequest(

@@ -9,6 +9,8 @@ import io.embrace.android.embracesdk.fakes.FakeClock.Companion.DEFAULT_FAKE_CURR
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeProcessInfo
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
+import io.embrace.android.embracesdk.internal.arch.attrs.embStartupActivityName
+import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.capture.activity.hasPrePostEvents
 import io.embrace.android.embracesdk.internal.capture.startup.AppStartupTraceEmitter.Companion.ACTIVITY_FIRST_DRAW_SPAN
 import io.embrace.android.embracesdk.internal.capture.startup.AppStartupTraceEmitter.Companion.ACTIVITY_INIT_DELAY_SPAN
@@ -21,9 +23,7 @@ import io.embrace.android.embracesdk.internal.capture.startup.AppStartupTraceEmi
 import io.embrace.android.embracesdk.internal.capture.startup.AppStartupTraceEmitter.Companion.PROCESS_INIT_SPAN
 import io.embrace.android.embracesdk.internal.capture.startup.AppStartupTraceEmitter.Companion.WARM_APP_STARTUP_ROOT_SPAN
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
-import io.embrace.android.embracesdk.internal.otel.attrs.embStartupActivityName
 import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
-import io.embrace.android.embracesdk.internal.otel.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService

@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.testframework.export
 
 import io.embrace.android.embracesdk.assertions.returnIfConditionMet
-import io.embrace.android.embracesdk.internal.otel.schema.EmbType
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaCompletableResultCode
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanData
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanExporter

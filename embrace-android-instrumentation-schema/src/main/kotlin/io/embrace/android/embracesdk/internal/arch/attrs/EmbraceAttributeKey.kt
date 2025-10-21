@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.internal.otel.attrs
+package io.embrace.android.embracesdk.internal.arch.attrs
 
 /**
  * Embrace-specific implementation of an OTel Attribute key. Contains business logic on how the key name should be prefixed.

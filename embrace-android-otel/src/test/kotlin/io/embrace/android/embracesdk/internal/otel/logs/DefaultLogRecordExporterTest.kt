@@ -3,8 +3,8 @@ package io.embrace.android.embracesdk.internal.otel.logs
 import io.embrace.android.embracesdk.fakes.FakeLogRecordExporter
 import io.embrace.android.embracesdk.fakes.FakeMutableAttributeContainer
 import io.embrace.android.embracesdk.fakes.FakeReadWriteLogRecord
+import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
-import io.embrace.android.embracesdk.internal.otel.schema.PrivateSpan
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse

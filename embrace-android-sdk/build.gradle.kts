@@ -71,6 +71,7 @@ dependencies {
     implementation(project(":embrace-android-delivery"))
     implementation(project(":embrace-internal-api"))
     implementation(project(":embrace-android-otel"))
+    implementation(project(":embrace-android-instrumentation-schema"))
 
     implementation(libs.opentelemetry.java.aliases)
 

@@ -10,10 +10,10 @@ import io.embrace.android.embracesdk.fixtures.nativeCrashLog
 import io.embrace.android.embracesdk.fixtures.nativeCrashWithoutSessionLog
 import io.embrace.android.embracesdk.fixtures.sendImmediatelyLog
 import io.embrace.android.embracesdk.fixtures.testLog
+import io.embrace.android.embracesdk.internal.arch.attrs.embProcessIdentifier
 import io.embrace.android.embracesdk.internal.delivery.PayloadType
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
 import io.embrace.android.embracesdk.internal.delivery.storage.CachedLogEnvelopeStore.Companion.createNativeCrashEnvelopeMetadata
-import io.embrace.android.embracesdk.internal.otel.attrs.embProcessIdentifier
 import io.embrace.android.embracesdk.internal.otel.logs.LogRequest
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.payload.LogPayload

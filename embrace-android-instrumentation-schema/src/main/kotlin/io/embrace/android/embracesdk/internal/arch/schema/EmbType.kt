@@ -1,7 +1,7 @@
-package io.embrace.android.embracesdk.internal.otel.schema
+package io.embrace.android.embracesdk.internal.arch.schema
 
-import io.embrace.android.embracesdk.internal.otel.attrs.EmbraceAttribute
-import io.embrace.android.embracesdk.internal.otel.attrs.EmbraceAttributeKey
+import io.embrace.android.embracesdk.internal.arch.attrs.EmbraceAttribute
+import io.embrace.android.embracesdk.internal.arch.attrs.EmbraceAttributeKey
 
 /**
  * Represents a telemetry type (emb.type). For example, "ux.view" is a type that represents

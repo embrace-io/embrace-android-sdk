@@ -23,17 +23,17 @@ import io.embrace.android.embracesdk.fakes.fakeIncompleteSessionEnvelope
 import io.embrace.android.embracesdk.fakes.fakeLaterEnvelopeMetadata
 import io.embrace.android.embracesdk.fakes.fakeLaterEnvelopeResource
 import io.embrace.android.embracesdk.fixtures.fakeCachedSessionStoredTelemetryMetadata
-import io.embrace.android.embracesdk.internal.capture.session.isSessionPropertyAttributeName
+import io.embrace.android.embracesdk.internal.arch.attrs.asPair
+import io.embrace.android.embracesdk.internal.arch.attrs.embCrashId
+import io.embrace.android.embracesdk.internal.arch.attrs.embState
+import io.embrace.android.embracesdk.internal.arch.attrs.isEmbraceAttributeName
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.delivery.PayloadType
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType.CRASH
-import io.embrace.android.embracesdk.internal.otel.attrs.asPair
-import io.embrace.android.embracesdk.internal.otel.attrs.embCrashId
-import io.embrace.android.embracesdk.internal.otel.attrs.embState
 import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
-import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanData
@@ -291,13 +291,13 @@ class PayloadResurrectionServiceImplTest {
         assertEquals(2, nativeCrashService.nativeCrashesSent.size)
         with(nativeCrashService.nativeCrashesSent.first()) {
             assertEquals(deadSessionCrashData, first)
-            assertTrue(second.keys.none { it.isSessionPropertyAttributeName() })
+            assertTrue(second.keys.none { it.isEmbraceAttributeName() })
         }
         with(nativeCrashService.nativeCrashesSent.last()) {
             assertEquals(earlierSessionCrashData, first)
             assertEquals(
                 "earlier",
-                second.findAttributeValue(second.keys.single { it.isSessionPropertyAttributeName() })
+                second.findAttributeValue(second.keys.single { it.isEmbraceAttributeName() })
             )
         }
     }
@@ -328,7 +328,7 @@ class PayloadResurrectionServiceImplTest {
         assertEquals(1, nativeCrashService.nativeCrashesSent.size)
         with(nativeCrashService.nativeCrashesSent.first()) {
             assertEquals(deadSessionCrashData, first)
-            assertTrue(second.keys.none { it.isSessionPropertyAttributeName() || embState.name == it })
+            assertTrue(second.keys.none { it.isEmbraceAttributeName() || embState.name == it })
         }
     }
 
@@ -347,7 +347,7 @@ class PayloadResurrectionServiceImplTest {
         assertEquals(1, nativeCrashService.nativeCrashesSent.size)
         with(nativeCrashService.nativeCrashesSent.first()) {
             assertEquals(deadSessionCrashData, first)
-            assertTrue(second.keys.none { it.isSessionPropertyAttributeName() || embState.name == it })
+            assertTrue(second.keys.none { it.isEmbraceAttributeName() || embState.name == it })
         }
     }
 

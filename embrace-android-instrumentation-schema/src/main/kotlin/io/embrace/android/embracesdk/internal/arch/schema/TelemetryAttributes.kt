@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.internal.arch.schema
 
-import io.embrace.android.embracesdk.internal.capture.session.toSessionPropertyAttributeName
-import io.embrace.android.embracesdk.internal.otel.attrs.EmbraceAttributeKey
-import io.embrace.android.embracesdk.internal.utils.isBlankish
+import io.embrace.android.embracesdk.internal.arch.attrs.EmbraceAttributeKey
+import io.embrace.android.embracesdk.internal.arch.attrs.toEmbraceAttributeName
+import io.embrace.android.embracesdk.internal.arch.isBlankish
 
 /**
  * Object that aggregates various attributes and returns a [Map] that represents the values at the current state
@@ -21,7 +21,7 @@ class TelemetryAttributes(
         val result = mutableMapOf<String, String>()
         customAttributes?.let { result.putAll(it) }
         sessionPropertiesProvider()?.let { properties ->
-            result.putAll(properties.mapKeys { property -> property.key.toSessionPropertyAttributeName() })
+            result.putAll(properties.mapKeys { property -> property.key.toEmbraceAttributeName() })
         }
 
         result.putAll(map.mapKeys { it.key })

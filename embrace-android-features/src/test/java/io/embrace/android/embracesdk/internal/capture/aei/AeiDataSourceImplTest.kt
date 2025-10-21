@@ -9,8 +9,8 @@ import io.embrace.android.embracesdk.fakes.FakeLogWriter
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.behavior.FakeAppExitInfoBehavior
 import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
-import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.unmockkAll

@@ -1,10 +1,10 @@
 package io.embrace.android.embracesdk.fixtures
 
 import io.embrace.android.embracesdk.arch.toPayload
-import io.embrace.android.embracesdk.internal.otel.attrs.embProcessIdentifier
-import io.embrace.android.embracesdk.internal.otel.attrs.embSendMode
-import io.embrace.android.embracesdk.internal.otel.schema.EmbType
-import io.embrace.android.embracesdk.internal.otel.schema.SendMode
+import io.embrace.android.embracesdk.internal.arch.attrs.embProcessIdentifier
+import io.embrace.android.embracesdk.internal.arch.attrs.embSendMode
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.arch.schema.SendMode
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData

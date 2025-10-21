@@ -1,7 +1,7 @@
-package io.embrace.android.embracesdk.internal.otel.schema
+package io.embrace.android.embracesdk.internal.arch.schema
 
-import io.embrace.android.embracesdk.internal.otel.attrs.EmbraceAttribute
-import io.embrace.android.embracesdk.internal.otel.attrs.EmbraceAttributeKey
+import io.embrace.android.embracesdk.internal.arch.attrs.EmbraceAttribute
+import io.embrace.android.embracesdk.internal.arch.attrs.EmbraceAttributeKey
 
 /**
  * Attribute that stores the reason an app instance terminated

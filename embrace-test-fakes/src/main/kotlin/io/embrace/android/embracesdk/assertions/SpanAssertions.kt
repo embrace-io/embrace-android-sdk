@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.assertions
 
-import io.embrace.android.embracesdk.internal.otel.schema.EmbType
-import io.embrace.android.embracesdk.internal.otel.schema.LinkType
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.arch.schema.LinkType
 import io.embrace.android.embracesdk.internal.otel.sdk.hasEmbraceAttribute
 import io.embrace.android.embracesdk.internal.otel.sdk.hasEmbraceAttributeKey
 import io.embrace.android.embracesdk.internal.payload.Link

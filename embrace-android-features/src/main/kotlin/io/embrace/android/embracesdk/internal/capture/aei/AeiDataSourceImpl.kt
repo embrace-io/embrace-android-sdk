@@ -70,7 +70,20 @@ internal class AeiDataSourceImpl(
                 captureAction = {
                     val capture = configService.autoDataCaptureBehavior.isNativeCrashCaptureEnabled() || !obj.hasNativeTombstone()
                     if (capture) {
-                        val schemaType = AeiLog(obj, crashNumber, aeiNumber)
+                        val schemaType = AeiLog(
+                            sessionId = obj.sessionId,
+                            sessionIdError = obj.sessionIdError,
+                            importance = obj.importance,
+                            pss = obj.pss,
+                            reason = obj.reason,
+                            rss = obj.rss,
+                            status = obj.status,
+                            timestamp = obj.timestamp,
+                            description = obj.description,
+                            traceStatus = obj.traceStatus,
+                            crashNumber = crashNumber,
+                            aeiNumber = aeiNumber
+                        )
                         addLog(schemaType, INFO, obj.trace ?: "")
                     }
 

@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.internal.arch.schema
 
 import io.embrace.android.embracesdk.fakes.FakeSessionPropertiesService
+import io.embrace.android.embracesdk.internal.arch.attrs.embProcessIdentifier
 import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
-import io.embrace.android.embracesdk.internal.otel.attrs.embProcessIdentifier
 import io.embrace.android.embracesdk.internal.session.getSessionProperty
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.opentelemetry.kotlin.semconv.ExceptionAttributes

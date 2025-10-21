@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.internal.otel.attrs
+package io.embrace.android.embracesdk.internal.arch.attrs
 
 /**
  * Converts [EmbraceAttribute] to a [Pair]

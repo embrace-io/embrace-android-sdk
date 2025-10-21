@@ -1,12 +1,16 @@
 package io.embrace.android.embracesdk.internal.session.orchestrator
 
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.Crash
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.FlutterException
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.NativeCrash
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.NetworkCapturedRequest
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.ReactNativeCrash
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.delivery.PayloadType
 import io.embrace.android.embracesdk.internal.delivery.PayloadType.Companion.fromValue
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
 import io.embrace.android.embracesdk.internal.delivery.intake.IntakeService
-import io.embrace.android.embracesdk.internal.otel.schema.EmbType.System
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.Log
@@ -72,11 +76,11 @@ internal class PayloadStoreImpl(
         val embType: String? = logs?.firstOrNull()?.attributes?.findAttributeValue("emb.type")
 
         return when (embType) {
-            System.Crash.value -> SupportedEnvelopeType.CRASH
-            System.NativeCrash.value -> SupportedEnvelopeType.CRASH
-            System.ReactNativeCrash.value -> SupportedEnvelopeType.CRASH
-            System.FlutterException.value -> SupportedEnvelopeType.CRASH
-            System.NetworkCapturedRequest.value -> SupportedEnvelopeType.BLOB
+            Crash.value -> SupportedEnvelopeType.CRASH
+            NativeCrash.value -> SupportedEnvelopeType.CRASH
+            ReactNativeCrash.value -> SupportedEnvelopeType.CRASH
+            FlutterException.value -> SupportedEnvelopeType.CRASH
+            NetworkCapturedRequest.value -> SupportedEnvelopeType.BLOB
             else -> SupportedEnvelopeType.LOG
         }
     }

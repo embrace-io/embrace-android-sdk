@@ -1,9 +1,7 @@
-package io.embrace.android.embracesdk.internal.otel.attrs
-
-import io.embrace.android.embracesdk.internal.payload.ThreadInfo
+package io.embrace.android.embracesdk.internal.arch.attrs
 
 /**
- * A snapshot of the current call stack of the threads running in the app process per [ThreadInfo]
+ * A snapshot of the current call stack of the threads running in the app process per [io.embrace.android.embracesdk.internal.payload.ThreadInfo]
  */
 val embAndroidThreads: EmbraceAttributeKey = EmbraceAttributeKey.create("android.threads")
 

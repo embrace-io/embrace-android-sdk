@@ -1,24 +1,21 @@
 package io.embrace.android.embracesdk.internal.arch.schema
 
-import io.embrace.android.embracesdk.internal.capture.session.toSessionPropertyAttributeName
-import io.embrace.android.embracesdk.internal.otel.attrs.embAeiNumber
-import io.embrace.android.embracesdk.internal.otel.attrs.embCrashNumber
-import io.embrace.android.embracesdk.internal.otel.attrs.embSendMode
-import io.embrace.android.embracesdk.internal.otel.schema.EmbType
-import io.embrace.android.embracesdk.internal.otel.schema.SendMode
-import io.embrace.android.embracesdk.internal.payload.AppExitInfoData
-import io.embrace.android.embracesdk.internal.payload.NetworkCapturedCall
-import io.embrace.android.embracesdk.internal.utils.toNonNullMap
+import io.embrace.android.embracesdk.internal.arch.attrs.embAeiNumber
+import io.embrace.android.embracesdk.internal.arch.attrs.embCrashNumber
+import io.embrace.android.embracesdk.internal.arch.attrs.embSendMode
+import io.embrace.android.embracesdk.internal.arch.attrs.toEmbraceAttributeName
 import io.embrace.opentelemetry.kotlin.semconv.ExceptionAttributes
 import io.embrace.opentelemetry.kotlin.semconv.HttpAttributes
 import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
 import io.embrace.opentelemetry.kotlin.semconv.SessionAttributes
 import io.embrace.opentelemetry.kotlin.semconv.UrlAttributes
+import kotlin.Suppress
 
 /**
  * The collections of attribute schemas used by the associated telemetry types.
  *
- * Each schema contains an [EmbType] that it is being applied to, as well as an optional [fixedObjectName] used for the recorded
+ * Each schema contains an [io.embrace.android.embracesdk.internal.arch.schema.EmbType]
+ * that it is being applied to, as well as an optional [fixedObjectName] used for the recorded
  * telemetry data object if the same, fixed name is used for every instance.
  */
 
@@ -118,21 +115,30 @@ sealed class SchemaType(
     }
 
     class AeiLog(
-        message: AppExitInfoData,
+        sessionId: String?,
+        sessionIdError: String?,
+        importance: Int?,
+        pss: Long?,
+        reason: Int?,
+        rss: Long?,
+        status: Int?,
+        timestamp: Long?,
+        description: String?,
+        traceStatus: String?,
         crashNumber: Int?,
         aeiNumber: Int?,
     ) : SchemaType(EmbType.System.Exit) {
         override val schemaAttributes: Map<String, String> = mapOf(
-            "aei_session_id" to message.sessionId,
-            "session_id_error" to message.sessionIdError,
-            "process_importance" to message.importance.toString(),
-            "pss" to message.pss.toString(),
-            "reason" to message.reason.toString(),
-            "rss" to message.rss.toString(),
-            "exit_status" to message.status.toString(),
-            "timestamp" to message.timestamp.toString(),
-            "description" to message.description,
-            "trace_status" to message.traceStatus,
+            "aei_session_id" to sessionId,
+            "session_id_error" to sessionIdError,
+            "process_importance" to importance.toString(),
+            "pss" to pss.toString(),
+            "reason" to reason.toString(),
+            "rss" to rss.toString(),
+            "exit_status" to status.toString(),
+            "timestamp" to timestamp.toString(),
+            "description" to description,
+            "trace_status" to traceStatus,
             embCrashNumber.name to crashNumber.toString(),
             embAeiNumber.name to aeiNumber.toString()
         ).toNonNullMap()
@@ -177,42 +183,63 @@ sealed class SchemaType(
         override val schemaAttributes: Map<String, String> = emptyMap()
     }
 
-    class NetworkCapturedRequest(networkCapturedCall: NetworkCapturedCall) : SchemaType(
+    class NetworkCapturedRequest(
+        duration: Long?,
+        endTime: Long?,
+        httpMethod: String?,
+        matchedUrl: String?,
+        networkId: String,
+        requestBody: String?,
+        requestBodySize: Int?,
+        requestQuery: String?,
+        requestQueryHeaders: Map<String, String>?,
+        requestSize: Int?,
+        responseBody: String?,
+        responseBodySize: Int?,
+        responseHeaders: Map<String, String>?,
+        responseSize: Int?,
+        responseStatus: Int?,
+        sessionId: String?,
+        startTime: Long?,
+        url: String?,
+        errorMessage: String?,
+        encryptedPayload: String?,
+    ) : SchemaType(
         telemetryType = EmbType.System.NetworkCapturedRequest
     ) {
         @OptIn(IncubatingApi::class)
         override val schemaAttributes: Map<String, String> = mapOf(
-            "duration" to networkCapturedCall.duration.toString(),
-            "end-time" to networkCapturedCall.endTime.toString(),
-            HttpAttributes.HTTP_REQUEST_METHOD to networkCapturedCall.httpMethod,
-            UrlAttributes.URL_FULL to networkCapturedCall.matchedUrl,
-            "network-id" to networkCapturedCall.networkId,
-            "request-body" to networkCapturedCall.requestBody,
-            HttpAttributes.HTTP_REQUEST_BODY_SIZE to networkCapturedCall.requestBodySize.toString(),
-            "request-query" to networkCapturedCall.requestQuery,
-            "http.request.header" to networkCapturedCall.requestQueryHeaders.toString(),
-            "request-size" to networkCapturedCall.requestSize.toString(),
-            "response-body" to networkCapturedCall.responseBody,
-            HttpAttributes.HTTP_RESPONSE_BODY_SIZE to networkCapturedCall.responseBodySize.toString(),
-            "http.response.header" to networkCapturedCall.responseHeaders.toString(),
-            "response-size" to networkCapturedCall.responseSize.toString(),
-            HttpAttributes.HTTP_RESPONSE_STATUS_CODE to networkCapturedCall.responseStatus.toString(),
-            SessionAttributes.SESSION_ID to networkCapturedCall.sessionId,
-            "start-time" to networkCapturedCall.startTime.toString(),
-            "url" to networkCapturedCall.url,
-            ExceptionAttributes.EXCEPTION_MESSAGE to networkCapturedCall.errorMessage,
-            "encrypted-payload" to networkCapturedCall.encryptedPayload
+            "duration" to duration.toString(),
+            "end-time" to endTime.toString(),
+            HttpAttributes.HTTP_REQUEST_METHOD to httpMethod,
+            UrlAttributes.URL_FULL to matchedUrl,
+            "network-id" to networkId,
+            "request-body" to requestBody,
+            HttpAttributes.HTTP_REQUEST_BODY_SIZE to requestBodySize.toString(),
+            "request-query" to requestQuery,
+            "http.request.header" to requestQueryHeaders.toString(),
+            "request-size" to requestSize.toString(),
+            "response-body" to responseBody,
+            HttpAttributes.HTTP_RESPONSE_BODY_SIZE to responseBodySize.toString(),
+            "http.response.header" to responseHeaders.toString(),
+            "response-size" to responseSize.toString(),
+            HttpAttributes.HTTP_RESPONSE_STATUS_CODE to responseStatus.toString(),
+            SessionAttributes.SESSION_ID to sessionId,
+            "start-time" to startTime.toString(),
+            "url" to url,
+            ExceptionAttributes.EXCEPTION_MESSAGE to errorMessage,
+            "encrypted-payload" to encryptedPayload
         ).toNonNullMap()
     }
 
     class NetworkStatus(
-        networkStatus: io.embrace.android.embracesdk.internal.comms.delivery.NetworkStatus,
+        networkStatus: String,
     ) : SchemaType(
         telemetryType = EmbType.System.NetworkStatus,
         fixedObjectName = "network-status"
     ) {
         override val schemaAttributes: Map<String, String> = mapOf(
-            "network" to networkStatus.value
+            "network" to networkStatus
         ).toNonNullMap()
     }
 
@@ -232,7 +259,7 @@ sealed class SchemaType(
         )
             .plus(
                 properties
-                    .mapKeys { it.key.toString().toSessionPropertyAttributeName() }
+                    .mapKeys { it.key.toString().toEmbraceAttributeName() }
                     .mapValues { it.value.toString() }
             )
             .toNonNullMap()
@@ -262,4 +289,9 @@ sealed class SchemaType(
             ExceptionAttributes.EXCEPTION_MESSAGE to (throwable.message ?: "")
         )
     }
+}
+
+@Suppress("UNCHECKED_CAST")
+private fun <K, V> Map<K, V?>.toNonNullMap(): Map<K, V> {
+    return filter { it.value != null } as Map<K, V>
 }

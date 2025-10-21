@@ -1,5 +1,10 @@
 package io.embrace.android.embracesdk.internal.resurrection
 
+import io.embrace.android.embracesdk.internal.arch.attrs.embCrashId
+import io.embrace.android.embracesdk.internal.arch.attrs.embHeartbeatTimeUnixNano
+import io.embrace.android.embracesdk.internal.arch.attrs.embProcessIdentifier
+import io.embrace.android.embracesdk.internal.arch.attrs.embState
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
@@ -10,11 +15,6 @@ import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageSer
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.ndk.NativeCrashService
-import io.embrace.android.embracesdk.internal.otel.attrs.embCrashId
-import io.embrace.android.embracesdk.internal.otel.attrs.embHeartbeatTimeUnixNano
-import io.embrace.android.embracesdk.internal.otel.attrs.embProcessIdentifier
-import io.embrace.android.embracesdk.internal.otel.attrs.embState
-import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.otel.spans.hasEmbraceAttribute
 import io.embrace.android.embracesdk.internal.otel.spans.toFailedSpan

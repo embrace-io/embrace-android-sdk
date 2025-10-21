@@ -25,10 +25,10 @@ import io.embrace.android.embracesdk.fixtures.tooBigCustomEvents
 import io.embrace.android.embracesdk.fixtures.tooBigSystemAttributes
 import io.embrace.android.embracesdk.fixtures.tooBigSystemEvents
 import io.embrace.android.embracesdk.internal.SystemInfo
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.otel.config.OtelSdkConfig
 import io.embrace.android.embracesdk.internal.otel.logs.LogSinkImpl
-import io.embrace.android.embracesdk.internal.otel.schema.EmbType
 import io.embrace.android.embracesdk.internal.otel.sdk.DataValidator
 import io.embrace.android.embracesdk.internal.otel.sdk.OtelSdkWrapper
 import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds

@@ -4,10 +4,10 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.findSessionSpan
 import io.embrace.android.embracesdk.assertions.getSessionId
 import io.embrace.android.embracesdk.assertions.hasSpanSnapshotsOfType
-import io.embrace.android.embracesdk.internal.otel.schema.EmbType
-import io.embrace.android.embracesdk.internal.otel.attrs.embErrorLogCount
-import io.embrace.android.embracesdk.internal.otel.attrs.embSessionEndType
-import io.embrace.android.embracesdk.internal.otel.attrs.embSessionStartType
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.arch.attrs.embErrorLogCount
+import io.embrace.android.embracesdk.internal.arch.attrs.embSessionEndType
+import io.embrace.android.embracesdk.internal.arch.attrs.embSessionStartType
 import io.embrace.android.embracesdk.internal.payload.LifeEventType
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.assertions.assertMatches

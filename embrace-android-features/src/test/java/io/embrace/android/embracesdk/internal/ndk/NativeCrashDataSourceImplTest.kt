@@ -8,17 +8,17 @@ import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fixtures.testNativeCrashData
+import io.embrace.android.embracesdk.internal.arch.attrs.embCrashNumber
+import io.embrace.android.embracesdk.internal.arch.attrs.embState
+import io.embrace.android.embracesdk.internal.arch.attrs.toEmbraceAttributeName
 import io.embrace.android.embracesdk.internal.arch.destination.LogWriter
 import io.embrace.android.embracesdk.internal.arch.destination.LogWriterImpl
-import io.embrace.android.embracesdk.internal.capture.session.toSessionPropertyAttributeName
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.NativeCrash.embNativeCrashException
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.NativeCrash.embNativeCrashSymbols
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
-import io.embrace.android.embracesdk.internal.otel.attrs.embCrashNumber
-import io.embrace.android.embracesdk.internal.otel.attrs.embState
-import io.embrace.android.embracesdk.internal.otel.schema.EmbType
-import io.embrace.android.embracesdk.internal.otel.schema.EmbType.System.NativeCrash.embNativeCrashException
-import io.embrace.android.embracesdk.internal.otel.schema.EmbType.System.NativeCrash.embNativeCrashSymbols
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.session.id.SessionIdTracker
@@ -94,7 +94,7 @@ internal class NativeCrashDataSourceImplTest {
             assertEquals(testNativeCrashData.timestamp, timestamp?.nanosToMillis())
             assertNull(observedTimestamp?.nanosToMillis())
             assertTrue(attributes[EmbType.System.NativeCrash.key.name] != null)
-            assertEquals("value", attributes["prop".toSessionPropertyAttributeName()])
+            assertEquals("value", attributes["prop".toEmbraceAttributeName()])
             assertEquals("background", attributes[embState.name])
             assertNotNull(attributes[LogAttributes.LOG_RECORD_UID])
             assertEquals(

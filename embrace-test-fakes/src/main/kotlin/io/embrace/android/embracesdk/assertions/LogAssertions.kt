@@ -3,9 +3,9 @@
 package io.embrace.android.embracesdk.assertions
 
 import io.embrace.android.embracesdk.Severity
+import io.embrace.android.embracesdk.internal.arch.attrs.embExceptionHandling
+import io.embrace.android.embracesdk.internal.arch.attrs.embState
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
-import io.embrace.android.embracesdk.internal.otel.attrs.embExceptionHandling
-import io.embrace.android.embracesdk.internal.otel.attrs.embState
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer

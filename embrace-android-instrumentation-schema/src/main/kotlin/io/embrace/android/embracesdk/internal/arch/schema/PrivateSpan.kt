@@ -1,7 +1,7 @@
-package io.embrace.android.embracesdk.internal.otel.schema
+package io.embrace.android.embracesdk.internal.arch.schema
 
-import io.embrace.android.embracesdk.internal.otel.attrs.EmbraceAttribute
-import io.embrace.android.embracesdk.internal.otel.attrs.EmbraceAttributeKey
+import io.embrace.android.embracesdk.internal.arch.attrs.EmbraceAttribute
+import io.embrace.android.embracesdk.internal.arch.attrs.EmbraceAttributeKey
 
 /**
  * Denotes a private span recorded by Embrace for diagnostic or internal usage purposes that is not meant to be consumed directly by

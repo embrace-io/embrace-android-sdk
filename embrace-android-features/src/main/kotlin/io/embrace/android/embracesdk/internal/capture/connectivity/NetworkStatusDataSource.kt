@@ -43,7 +43,7 @@ class NetworkStatusDataSource(
             countsTowardsLimits = true,
             inputValidation = NoInputValidation
         ) {
-            startSpanCapture(SchemaType.NetworkStatus(status), timestamp).apply {
+            startSpanCapture(SchemaType.NetworkStatus(status.value), timestamp).apply {
                 span = this
             }
         }

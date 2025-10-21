@@ -1,10 +1,9 @@
 package io.embrace.android.embracesdk.internal.utils
 
 import android.os.Build
+import io.embrace.android.embracesdk.internal.config.behavior.DEFAULT_STACKTRACE_SIZE_LIMIT
 import io.embrace.android.embracesdk.internal.payload.ThreadInfo
 import kotlin.math.min
-
-const val DEFAULT_STACKTRACE_SIZE_LIMIT = 200
 
 fun getThreadInfo(
     thread: Thread,

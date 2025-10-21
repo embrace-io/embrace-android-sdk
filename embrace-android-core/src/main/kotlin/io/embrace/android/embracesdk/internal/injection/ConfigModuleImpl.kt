@@ -51,10 +51,10 @@ internal class ConfigModuleImpl(
     override val configService: ConfigService by singleton {
         EmbTrace.trace("config-service-init") {
             ConfigServiceImpl(
-                openTelemetryCfg = openTelemetryModule.otelSdkConfig,
-                preferencesService = androidServicesModule.preferencesService,
                 instrumentedConfig = initModule.instrumentedConfig,
                 remoteConfig = combinedRemoteConfigSource?.getConfig(),
+                deviceIdSupplier = androidServicesModule.preferencesService::deviceIdentifier,
+                hasConfiguredOtelExporters = openTelemetryModule.otelSdkConfig::hasConfiguredOtelExporters,
             )
         }
     }

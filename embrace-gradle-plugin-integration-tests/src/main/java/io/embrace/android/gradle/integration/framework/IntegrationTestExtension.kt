@@ -85,8 +85,8 @@ abstract class IntegrationTestExtension(objectFactory: ObjectFactory) {
 
         val android = checkNotNull(project.extensions.findByType(ApplicationExtension::class.java))
 
-        val customMinSdk = project.findProperty("minSdk")?.toString()?.toIntOrNull()
-        val compileAndTargetSdk = project.findProperty("compileAndTargetSdk")?.toString()?.toIntOrNull()
+        val customMinSdk = project.providers.gradleProperty("minSdk").orNull?.toIntOrNull()
+        val compileAndTargetSdk = project.providers.gradleProperty("compileAndTargetSdk").orNull?.toIntOrNull()
 
         android.apply {
             namespace = "com.example"

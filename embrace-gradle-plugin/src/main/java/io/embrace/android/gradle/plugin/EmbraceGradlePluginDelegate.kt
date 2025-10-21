@@ -7,9 +7,9 @@ import io.embrace.android.gradle.plugin.agp.AgpWrapperImpl
 import io.embrace.android.gradle.plugin.api.EmbraceExtension
 import io.embrace.android.gradle.plugin.config.PluginBehaviorImpl
 import io.embrace.android.gradle.plugin.config.variant.EmbraceVariantConfigurationBuilder
-import io.embrace.android.gradle.plugin.gradle.getProperty
 import io.embrace.android.gradle.plugin.instrumentation.config.model.VariantConfig
 import io.embrace.android.gradle.plugin.tasks.registration.TaskRegistrar
+import io.embrace.android.gradle.plugin.util.getProperty
 import org.gradle.api.Project
 import org.gradle.api.provider.ListProperty
 
@@ -105,7 +105,7 @@ class EmbraceGradlePluginDelegate {
 
         if (minSdk < 26) {
             if (agpWrapper.version < AgpVersion.AGP_8_3_0 ||
-                project.getProperty("android.useFullClasspathForDexingTransform").orNull != "true"
+                project.getProperty("android.useFullClasspathForDexingTransform") != "true"
             ) {
                 error(
                     "To use the Embrace SDK when your minSdk is lower than 26 " +

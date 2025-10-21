@@ -8,17 +8,6 @@ import io.embrace.android.embracesdk.annotation.InternalApi
  */
 @InternalApi
 public interface LogsApi {
-    /**
-     * Remotely logs a message at the given severity level. These log messages will appear as part of the session
-     * timeline, and can be used to describe what was happening at a particular time within the app.
-     *
-     * @param message  the message to remotely log
-     * @param severity the severity level of the log message
-     */
-    public fun logMessage(
-        message: String,
-        severity: Severity,
-    )
 
     /**
      * Remotely logs a message at the given severity level. These log messages will appear as part of the session
@@ -31,7 +20,7 @@ public interface LogsApi {
     public fun logMessage(
         message: String,
         severity: Severity,
-        properties: Map<String, Any>?,
+        properties: Map<String, Any> = emptyMap(),
     )
 
     /**
@@ -47,7 +36,7 @@ public interface LogsApi {
     public fun logMessage(
         message: String,
         severity: Severity,
-        properties: Map<String, Any>?,
+        properties: Map<String, Any> = emptyMap(),
         attachment: ByteArray,
     )
 
@@ -65,7 +54,7 @@ public interface LogsApi {
     public fun logMessage(
         message: String,
         severity: Severity,
-        properties: Map<String, Any>?,
+        properties: Map<String, Any> = emptyMap(),
         attachmentId: String,
         attachmentUrl: String,
     )
@@ -95,43 +84,6 @@ public interface LogsApi {
     public fun logError(message: String)
 
     /**
-     * Remotely logs a Throwable/Exception at ERROR level. These log messages and stacktraces
-     * will appear as part of the session timeline, and can be used to describe what was happening
-     * at a particular time within the app.
-     *
-     * @param throwable the throwable to remotely log
-     */
-    public fun logException(throwable: Throwable)
-
-    /**
-     * Remotely logs a Throwable/Exception at given severity level. These log messages and stacktraces
-     * will appear as part of the session timeline, and can be used to describe what was happening
-     * at a particular time within the app.
-     *
-     * @param throwable the throwable to remotely log
-     * @param severity  the severity level of the log message
-     */
-    public fun logException(
-        throwable: Throwable,
-        severity: Severity,
-    )
-
-    /**
-     * Remotely logs a Throwable/Exception at given severity level. These log messages and stacktraces
-     * will appear as part of the session timeline, and can be used to describe what was happening
-     * at a particular time within the app.
-     *
-     * @param throwable  the throwable to remotely log
-     * @param severity   the severity level of the log message
-     * @param properties custom key-value pairs to include with the log message
-     */
-    public fun logException(
-        throwable: Throwable,
-        severity: Severity,
-        properties: Map<String, Any>?,
-    )
-
-    /**
      * Remotely logs a Throwable/Exception at given severity level. These log messages and stacktraces
      * will appear as part of the session timeline, and can be used to describe what was happening
      * at a particular time within the app.
@@ -143,46 +95,9 @@ public interface LogsApi {
      */
     public fun logException(
         throwable: Throwable,
-        severity: Severity,
-        properties: Map<String, Any>?,
-        message: String?,
-    )
-
-    /**
-     * Remotely logs a custom stacktrace at ERROR level. These log messages and stacktraces
-     * will appear as part of the session timeline, and can be used to describe what was happening
-     * at a particular time within the app.
-     *
-     * @param stacktraceElements the stacktrace to remotely log
-     */
-    public fun logCustomStacktrace(stacktraceElements: Array<StackTraceElement>)
-
-    /**
-     * Remotely logs a custom stacktrace at given severity level. These log messages and stacktraces
-     * will appear as part of the session timeline, and can be used to describe what was happening
-     * at a particular time within the app.
-     *
-     * @param stacktraceElements the stacktrace to remotely log
-     * @param severity           the severity level of the log message
-     */
-    public fun logCustomStacktrace(
-        stacktraceElements: Array<StackTraceElement>,
-        severity: Severity,
-    )
-
-    /**
-     * Remotely logs a custom stacktrace at given severity level. These log messages and stacktraces
-     * will appear as part of the session timeline, and can be used to describe what was happening
-     * at a particular time within the app.
-     *
-     * @param stacktraceElements the stacktrace to remotely log
-     * @param severity           the severity level of the log message
-     * @param properties         custom key-value pairs to include with the log message
-     */
-    public fun logCustomStacktrace(
-        stacktraceElements: Array<StackTraceElement>,
-        severity: Severity,
-        properties: Map<String, Any>?,
+        severity: Severity = Severity.ERROR,
+        properties: Map<String, Any> = emptyMap(),
+        message: String? = null,
     )
 
     /**
@@ -197,9 +112,9 @@ public interface LogsApi {
      */
     public fun logCustomStacktrace(
         stacktraceElements: Array<StackTraceElement>,
-        severity: Severity,
-        properties: Map<String, Any>?,
-        message: String?,
+        severity: Severity = Severity.ERROR,
+        properties: Map<String, Any> = emptyMap(),
+        message: String? = null,
     )
 
     /**

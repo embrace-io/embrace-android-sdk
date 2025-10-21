@@ -103,7 +103,7 @@ class FakeEmbraceInternalInterface(
         spanId: String,
         name: String,
         timestampMs: Long?,
-        attributes: Map<String, String>?,
+        attributes: Map<String, String>,
     ): Boolean {
         return true
     }
@@ -115,8 +115,8 @@ class FakeEmbraceInternalInterface(
     override fun <T> recordSpan(
         name: String,
         parentSpanId: String?,
-        attributes: Map<String, String>?,
-        events: List<Map<String, Any>>?,
+        attributes: Map<String, String>,
+        events: List<Map<String, Any>>,
         code: () -> T,
     ): T {
         return code()
@@ -128,8 +128,8 @@ class FakeEmbraceInternalInterface(
         endTimeMs: Long,
         errorCode: ErrorCode?,
         parentSpanId: String?,
-        attributes: Map<String, String>?,
-        events: List<Map<String, Any>>?,
+        attributes: Map<String, String>,
+        events: List<Map<String, Any>>,
     ): Boolean {
         return true
     }

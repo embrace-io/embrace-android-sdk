@@ -41,61 +41,20 @@ public interface EmbraceSpan {
     public val autoTerminationMode: AutoTerminationMode
 
     /**
-     * Start recording of the Span. Returns true if this call triggered the start of the recording. Returns false if the Span has already
-     * been started or has been stopped.
-     */
-    public fun start(): Boolean = start(startTimeMs = null)
-
-    /**
      * Start recording of the Span with the given start time. Returns true if this call triggered the start of the recording.
      * Returns false if the Span has already been started or has been stopped.
      */
-    public fun start(startTimeMs: Long?): Boolean
-
-    /**
-     * Stop the recording of the Span to mark a successful completion of the underlying operation. Returns true if this call triggered
-     * the stopping of the recording. Returns false if the Span has not been started or if has already been stopped.
-     */
-    public fun stop(): Boolean = stop(errorCode = null, endTimeMs = null)
-
-    /**
-     * Stop the recording of the Span with an [ErrorCode], a non-null value indicating an unsuccessful completion of the underlying
-     * operation with the given reason. Returns true if this call triggered the stopping of the recording. Returns false if the Span has
-     * not been started or if has already been stopped.
-     */
-    public fun stop(errorCode: ErrorCode?): Boolean = stop(errorCode = errorCode, endTimeMs = null)
-
-    /**
-     * Stop the recording of the Span at the given time to mark the successful completion of the underlying operation. Returns true
-     * if this call triggered the stopping of the recording. Returns false if the Span has not been started or if has already been stopped.
-     */
-    public fun stop(endTimeMs: Long?): Boolean = stop(errorCode = null, endTimeMs = endTimeMs)
+    public fun start(startTimeMs: Long? = null): Boolean
 
     /**
      * Stop the recording of the Span with an [ErrorCode] the the specific time, a non-null value indicating an unsuccessful completion of
      * the underlying operation with the given reason. Returns true if this call triggered the stopping of the recording. Returns false if
      * the Span has not been started or if has already been stopped.
      */
-    public fun stop(errorCode: ErrorCode?, endTimeMs: Long?): Boolean
-
-    /**
-     * Add an [EmbraceSpanEvent] with the given [name] at the current time. Returns false if the Event was definitely not successfully
-     * added. Returns true if the validation at the Embrace level has passed and the call to add the Event at the OpenTelemetry level was
-     * successful.
-     */
-    public fun addEvent(
-        name: String,
-    ): Boolean = addEvent(name = name, timestampMs = null, attributes = null)
-
-    /**
-     * Add an [EmbraceSpanEvent] with the given [name] and [timestampMs]. Optionally, a set of attributes associated with the event can
-     * be passed in. Returns false if the Event was definitely not successfully added. Returns true if the validation at the Embrace
-     * level has passed and the call to add the Event at the OpenTelemetry level was successful.
-     */
-    public fun addEvent(
-        name: String,
-        timestampMs: Long?,
-    ): Boolean = addEvent(name = name, timestampMs = timestampMs, attributes = null)
+    public fun stop(
+        errorCode: ErrorCode? = null,
+        endTimeMs: Long? = null,
+    ): Boolean
 
     /**
      * Add an [EmbraceSpanEvent] with the given [name]. If [timestampMs] is null, the current time will be used. Optionally, the specific
@@ -105,22 +64,19 @@ public interface EmbraceSpan {
      */
     public fun addEvent(
         name: String,
-        timestampMs: Long?,
-        attributes: Map<String, String>?,
+        timestampMs: Long? = null,
+        attributes: Map<String, String> = emptyMap(),
     ): Boolean
 
     /**
-     * Record the given [Throwable] as a Span Event at the current time. Returns false if event was definitely not recorded. Returns true
-     * if the validation at the Embrace level has passed and the call to add the Event at the OpenTelemetry level was successful.
-     */
-    public fun recordException(exception: Throwable): Boolean = recordException(exception, null)
-
-    /**
-     * Record the given [Throwable] as a Span Event at the current with the given set of [Attributes]. Returns false if event was
+     * Record the given [Throwable] as a Span Event at the current with the given set of attributes. Returns false if event was
      * definitely not recorded. Returns true if the validation at the Embrace level has passed and the call to add the Event at the
      * OpenTelemetry level was successful.
      */
-    public fun recordException(exception: Throwable, attributes: Map<String, String>?): Boolean
+    public fun recordException(
+        exception: Throwable,
+        attributes: Map<String, String> = emptyMap(),
+    ): Boolean
 
     /**
      * Add the given key-value pair as an Attribute to the Event. Returns false if the Attribute was definitely not added. Returns true
@@ -134,21 +90,12 @@ public interface EmbraceSpan {
     public fun updateName(newName: String): Boolean
 
     /**
-     * Add a link to the given [EmbraceSpan]
-     */
-    public fun addLink(linkedSpan: EmbraceSpan): Boolean = addLink(linkedSpan = linkedSpan, attributes = null)
-
-    /**
-     * Add a link to the span with the given [SpanContext]
-     */
-    public fun addLink(
-        linkedSpanContext: SpanContext,
-    ): Boolean = addLink(linkedSpanContext = linkedSpanContext, attributes = null)
-
-    /**
      * Add a link to the given [EmbraceSpan] with the given attributes
      */
-    public fun addLink(linkedSpan: EmbraceSpan, attributes: Map<String, String>?): Boolean {
+    public fun addLink(
+        linkedSpan: EmbraceSpan,
+        attributes: Map<String, String> = emptyMap(),
+    ): Boolean {
         val spanContext = linkedSpan.spanContext
         return if (spanContext != null) {
             addLink(linkedSpanContext = spanContext, attributes = attributes)
@@ -160,5 +107,8 @@ public interface EmbraceSpan {
     /**
      * Add a link to the span with the given [SpanContext] with the given attributes
      */
-    public fun addLink(linkedSpanContext: SpanContext, attributes: Map<String, String>?): Boolean
+    public fun addLink(
+        linkedSpanContext: SpanContext,
+        attributes: Map<String, String> = emptyMap(),
+    ): Boolean
 }

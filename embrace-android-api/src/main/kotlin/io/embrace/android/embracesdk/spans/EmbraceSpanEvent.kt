@@ -5,22 +5,21 @@ import java.util.concurrent.TimeUnit
 /**
  * Represents an Event in an [EmbraceSpan]
  */
-@ConsistentCopyVisibility
-public data class EmbraceSpanEvent internal constructor(
+public class EmbraceSpanEvent internal constructor(
     /**
      * The name of the event
      */
-    val name: String,
+    public val name: String,
 
     /**
      * The timestamp of the event in nanoseconds
      */
-    val timestampNanos: Long,
+    public val timestampNanos: Long,
 
     /**
      * The attributes of this event
      */
-    val attributes: Map<String, String>,
+    public val attributes: Map<String, String>,
 ) {
 
     /**
@@ -37,5 +36,25 @@ public data class EmbraceSpanEvent internal constructor(
                 attributes = attributes ?: emptyMap()
             )
         }
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as EmbraceSpanEvent
+
+        if (timestampNanos != other.timestampNanos) return false
+        if (name != other.name) return false
+        if (attributes != other.attributes) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = timestampNanos.hashCode()
+        result = 31 * result + name.hashCode()
+        result = 31 * result + attributes.hashCode()
+        return result
     }
 }

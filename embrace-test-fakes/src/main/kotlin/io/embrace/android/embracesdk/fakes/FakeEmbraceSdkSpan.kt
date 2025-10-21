@@ -73,8 +73,6 @@ class FakeEmbraceSdkSpan(
     override val isRecording: Boolean
         get() = sdkSpan?.isRecording() ?: false
 
-    override fun start(): Boolean = start(startTimeMs = null)
-
     override fun start(startTimeMs: Long?): Boolean {
         if (!started()) {
             val timestampMs = startTimeMs ?: fakeClock.now()
@@ -121,7 +119,7 @@ class FakeEmbraceSdkSpan(
         return true
     }
 
-    override fun addEvent(name: String, timestampMs: Long?, attributes: Map<String, String>?): Boolean {
+    override fun addEvent(name: String, timestampMs: Long?, attributes: Map<String, String>): Boolean {
         events.add(
             EmbraceSpanEvent.create(
                 name = name,
@@ -132,11 +130,11 @@ class FakeEmbraceSdkSpan(
         return true
     }
 
-    override fun recordException(exception: Throwable, attributes: Map<String, String>?): Boolean =
+    override fun recordException(exception: Throwable, attributes: Map<String, String>): Boolean =
         addEvent(InstrumentedConfigImpl.otelLimits.getExceptionEventName(), null, attributes)
 
     override fun addSystemEvent(name: String, timestampMs: Long?, attributes: Map<String, String>?): Boolean =
-        addEvent(name, timestampMs, attributes)
+        addEvent(name, timestampMs, attributes ?: emptyMap())
 
     override fun removeSystemEvents(type: EmbType): Boolean {
         events.removeAll { it.hasEmbraceAttribute(type) }
@@ -155,8 +153,8 @@ class FakeEmbraceSdkSpan(
         return true
     }
 
-    override fun addLink(linkedSpanContext: SpanContext, attributes: Map<String, String>?): Boolean {
-        links.add(EmbraceLinkData(linkedSpanContext, attributes ?: emptyMap()))
+    override fun addLink(linkedSpanContext: SpanContext, attributes: Map<String, String>): Boolean {
+        links.add(EmbraceLinkData(linkedSpanContext, attributes))
         return true
     }
 
@@ -277,7 +275,7 @@ class FakeEmbraceSdkSpan(
                     (lastHeartbeatTimeMs ?: this.spanStartTimeMs)!!.millisToNanos().toString()
                 )
                 if (endTimeMs != null) {
-                    stop(endTimeMs)
+                    stop(endTimeMs = endTimeMs)
                 }
             }
     }

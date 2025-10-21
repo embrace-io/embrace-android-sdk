@@ -25,7 +25,7 @@ internal class EmbraceInternalInterfaceImpl(
 ) : EmbraceInternalInterface, InternalTracingApi by internalTracer {
 
     override fun logInfo(message: String, properties: Map<String, Any>?) {
-        embraceImpl.logMessage(message, Severity.INFO, properties)
+        embraceImpl.logMessage(message, Severity.INFO, properties ?: emptyMap())
     }
 
     override fun logWarning(
@@ -33,7 +33,7 @@ internal class EmbraceInternalInterfaceImpl(
         properties: Map<String, Any>?,
         stacktrace: String?,
     ) {
-        embraceImpl.logMessage(message, Severity.WARNING, properties)
+        embraceImpl.logMessage(message, Severity.WARNING, properties ?: emptyMap())
     }
 
     override fun logError(
@@ -42,7 +42,7 @@ internal class EmbraceInternalInterfaceImpl(
         stacktrace: String?,
         isException: Boolean,
     ) {
-        embraceImpl.logMessage(message, Severity.ERROR, properties)
+        embraceImpl.logMessage(message, Severity.ERROR, properties ?: emptyMap())
     }
 
     override fun logComposeTap(point: Pair<Float, Float>, elementName: String) {

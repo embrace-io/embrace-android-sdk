@@ -37,8 +37,8 @@ class InternalTracer(
     override fun <T> recordSpan(
         name: String,
         parentSpanId: String?,
-        attributes: Map<String, String>?,
-        events: List<Map<String, Any>>?,
+        attributes: Map<String, String>,
+        events: List<Map<String, Any>>,
         code: () -> T,
     ): T {
         val parent = validateParent(parentSpanId)
@@ -47,7 +47,7 @@ class InternalTracer(
                 name = name,
                 parent = parent.spanReference,
                 attributes = attributes,
-                events = events?.mapNotNull { mapToEvent(it) },
+                events = events.mapNotNull { mapToEvent(it) },
                 code = code
             )
         } else {
@@ -61,8 +61,8 @@ class InternalTracer(
         endTimeMs: Long,
         errorCode: ErrorCode?,
         parentSpanId: String?,
-        attributes: Map<String, String>?,
-        events: List<Map<String, Any>>?,
+        attributes: Map<String, String>,
+        events: List<Map<String, Any>>,
     ): Boolean {
         val parent = validateParent(parentSpanId)
         return if (parent.isValid) {
@@ -73,7 +73,7 @@ class InternalTracer(
                 errorCode = errorCode,
                 parent = parent.spanReference,
                 attributes = attributes,
-                events = events?.mapNotNull { mapToEvent(it) }
+                events = events.mapNotNull { mapToEvent(it) }
             )
         } else {
             false
@@ -84,7 +84,7 @@ class InternalTracer(
         spanId: String,
         name: String,
         timestampMs: Long?,
-        attributes: Map<String, String>?,
+        attributes: Map<String, String>,
     ): Boolean =
         spanRepository.getSpan(spanId = spanId)?.addEvent(
             name = name,

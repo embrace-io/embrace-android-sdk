@@ -203,7 +203,7 @@ internal class EmbraceSpanImplTest {
                     attributes = mapOf(Pair("key", "value"), Pair("key2", "value1"))
                 )
             )
-            assertTrue(addEvent(name = "past event", timestampMs = fakeClock.now() - 1L, attributes = null))
+            assertTrue(addEvent(name = "past event", timestampMs = fakeClock.now() - 1L, attributes = emptyMap()))
             assertTrue(
                 addEvent(
                     name = "future event",
@@ -334,7 +334,7 @@ internal class EmbraceSpanImplTest {
             assertTrue(addEvent(name = "yo", timestampMs = null, attributes = tooBigEventAttributes))
             assertEquals(10, events().last().attributes?.size)
             assertTrue(addEvent(name = MAX_LENGTH_EVENT_NAME))
-            assertTrue(addEvent(name = MAX_LENGTH_EVENT_NAME, timestampMs = null, attributes = null))
+            assertTrue(addEvent(name = MAX_LENGTH_EVENT_NAME, timestampMs = null, attributes = emptyMap()))
             assertTrue(addEvent(name = "yo", timestampMs = null, attributes = maxSizeEventAttributes))
             assertTrue(recordException(exception = RuntimeException()))
             repeat(dataValidator.otelLimitsConfig.getMaxCustomEventCount() - 7) {

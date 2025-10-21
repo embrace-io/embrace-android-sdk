@@ -20,10 +20,8 @@ public final class io/embrace/android/embracesdk/Embrace : io/embrace/android/em
 	public fun clearUserIdentifier ()V
 	public fun clearUserPersona (Ljava/lang/String;)V
 	public fun clearUsername ()V
-	public fun createSpan (Ljava/lang/String;Lio/embrace/android/embracesdk/spans/AutoTerminationMode;)Lio/embrace/android/embracesdk/spans/EmbraceSpan;
 	public fun createSpan (Ljava/lang/String;Lio/embrace/android/embracesdk/spans/EmbraceSpan;Lio/embrace/android/embracesdk/spans/AutoTerminationMode;)Lio/embrace/android/embracesdk/spans/EmbraceSpan;
 	public fun disable ()V
-	public fun endSession ()V
 	public fun endSession (Z)V
 	public fun endView (Ljava/lang/String;)Z
 	public fun generateW3cTraceparent ()Ljava/lang/String;
@@ -35,42 +33,25 @@ public final class io/embrace/android/embracesdk/Embrace : io/embrace/android/em
 	public fun getSdkCurrentTimeMs ()J
 	public fun getSpan (Ljava/lang/String;)Lio/embrace/android/embracesdk/spans/EmbraceSpan;
 	public fun isStarted ()Z
-	public fun logCustomStacktrace ([Ljava/lang/StackTraceElement;)V
-	public fun logCustomStacktrace ([Ljava/lang/StackTraceElement;Lio/embrace/android/embracesdk/Severity;)V
-	public fun logCustomStacktrace ([Ljava/lang/StackTraceElement;Lio/embrace/android/embracesdk/Severity;Ljava/util/Map;)V
 	public fun logCustomStacktrace ([Ljava/lang/StackTraceElement;Lio/embrace/android/embracesdk/Severity;Ljava/util/Map;Ljava/lang/String;)V
 	public fun logError (Ljava/lang/String;)V
-	public fun logException (Ljava/lang/Throwable;)V
-	public fun logException (Ljava/lang/Throwable;Lio/embrace/android/embracesdk/Severity;)V
-	public fun logException (Ljava/lang/Throwable;Lio/embrace/android/embracesdk/Severity;Ljava/util/Map;)V
 	public fun logException (Ljava/lang/Throwable;Lio/embrace/android/embracesdk/Severity;Ljava/util/Map;Ljava/lang/String;)V
 	public fun logInfo (Ljava/lang/String;)V
-	public fun logMessage (Ljava/lang/String;Lio/embrace/android/embracesdk/Severity;)V
 	public fun logMessage (Ljava/lang/String;Lio/embrace/android/embracesdk/Severity;Ljava/util/Map;)V
 	public fun logMessage (Ljava/lang/String;Lio/embrace/android/embracesdk/Severity;Ljava/util/Map;Ljava/lang/String;Ljava/lang/String;)V
 	public fun logMessage (Ljava/lang/String;Lio/embrace/android/embracesdk/Severity;Ljava/util/Map;[B)V
 	public fun logPushNotification (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Boolean;Ljava/lang/Boolean;)V
 	public fun logWarning (Ljava/lang/String;)V
 	public fun logWebView (Ljava/lang/String;)V
-	public fun recordCompletedSpan (Ljava/lang/String;JJ)Z
-	public fun recordCompletedSpan (Ljava/lang/String;JJLio/embrace/android/embracesdk/spans/EmbraceSpan;)Z
-	public fun recordCompletedSpan (Ljava/lang/String;JJLio/embrace/android/embracesdk/spans/ErrorCode;)Z
-	public fun recordCompletedSpan (Ljava/lang/String;JJLio/embrace/android/embracesdk/spans/ErrorCode;Lio/embrace/android/embracesdk/spans/EmbraceSpan;)Z
 	public fun recordCompletedSpan (Ljava/lang/String;JJLio/embrace/android/embracesdk/spans/ErrorCode;Lio/embrace/android/embracesdk/spans/EmbraceSpan;Ljava/util/Map;Ljava/util/List;)Z
-	public fun recordCompletedSpan (Ljava/lang/String;JJLjava/util/Map;Ljava/util/List;)Z
 	public fun recordNetworkRequest (Lio/embrace/android/embracesdk/network/EmbraceNetworkRequest;)V
-	public fun recordSpan (Ljava/lang/String;Lio/embrace/android/embracesdk/spans/AutoTerminationMode;Lkotlin/jvm/functions/Function0;)Ljava/lang/Object;
-	public fun recordSpan (Ljava/lang/String;Lio/embrace/android/embracesdk/spans/EmbraceSpan;Lio/embrace/android/embracesdk/spans/AutoTerminationMode;Lkotlin/jvm/functions/Function0;)Ljava/lang/Object;
 	public fun recordSpan (Ljava/lang/String;Lio/embrace/android/embracesdk/spans/EmbraceSpan;Ljava/util/Map;Ljava/util/List;Lio/embrace/android/embracesdk/spans/AutoTerminationMode;Lkotlin/jvm/functions/Function0;)Ljava/lang/Object;
-	public fun recordSpan (Ljava/lang/String;Ljava/util/Map;Ljava/util/List;Lio/embrace/android/embracesdk/spans/AutoTerminationMode;Lkotlin/jvm/functions/Function0;)Ljava/lang/Object;
 	public fun removeSessionProperty (Ljava/lang/String;)Z
 	public fun setResourceAttribute (Ljava/lang/String;Ljava/lang/String;)V
 	public fun setUserEmail (Ljava/lang/String;)V
 	public fun setUserIdentifier (Ljava/lang/String;)V
 	public fun setUsername (Ljava/lang/String;)V
 	public fun start (Landroid/content/Context;)V
-	public fun startSpan (Ljava/lang/String;Lio/embrace/android/embracesdk/spans/AutoTerminationMode;)Lio/embrace/android/embracesdk/spans/EmbraceSpan;
-	public fun startSpan (Ljava/lang/String;Lio/embrace/android/embracesdk/spans/EmbraceSpan;Lio/embrace/android/embracesdk/spans/AutoTerminationMode;)Lio/embrace/android/embracesdk/spans/EmbraceSpan;
 	public fun startSpan (Ljava/lang/String;Lio/embrace/android/embracesdk/spans/EmbraceSpan;Ljava/lang/Long;Lio/embrace/android/embracesdk/spans/AutoTerminationMode;)Lio/embrace/android/embracesdk/spans/EmbraceSpan;
 	public fun startView (Ljava/lang/String;)Z
 }

@@ -107,7 +107,7 @@ internal class SpanServiceImplTest {
         val embraceSpan = checkNotNull(spansService.createSpan(name = "test-span"))
         assertNull(embraceSpan.parent)
         assertTrue(embraceSpan.start(clock.now() - 1))
-        assertTrue(embraceSpan.stop(clock.now() + 10))
+        assertTrue(embraceSpan.stop(endTimeMs = clock.now() + 10))
         verifyAndReturnSoleCompletedSpan("emb-test-span")
     }
 

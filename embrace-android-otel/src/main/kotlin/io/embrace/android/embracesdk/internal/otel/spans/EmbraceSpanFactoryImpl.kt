@@ -206,24 +206,21 @@ private class EmbraceSpanImpl(
         ErrorCode.UNKNOWN -> ErrorCodeAttribute.Unknown
     }
 
-    override fun addEvent(name: String, timestampMs: Long?, attributes: Map<String, String>?): Boolean =
+    override fun addEvent(name: String, timestampMs: Long?, attributes: Map<String, String>): Boolean =
         addObject(customEvents, customEventCount, dataValidator.otelLimitsConfig.getMaxCustomEventCount()) {
             dataValidator.createTruncatedSpanEvent(
                 name = name,
                 timestampMs = timestampMs?.normalizeTimestampAsMillis() ?: openTelemetryClock.now().nanosToMillis(),
                 internal = internal,
-                attributes = attributes ?: emptyMap(),
+                attributes = attributes,
             )
         }
 
-    override fun recordException(exception: Throwable, attributes: Map<String, String>?): Boolean =
+    override fun recordException(exception: Throwable, attributes: Map<String, String>): Boolean =
         addObject(customEvents, customEventCount, dataValidator.otelLimitsConfig.getMaxCustomEventCount()) {
             val eventAttributes = mutableMapOf<String, String>()
-            if (attributes != null) {
-                eventAttributes.putAll(attributes)
-            }
+            eventAttributes.putAll(attributes)
 
-//            io.embrace.opentelemetry.kotlin.semconv.ErrorAttributes
             exception.javaClass.canonicalName?.let { type ->
                 eventAttributes[ExceptionAttributes.EXCEPTION_TYPE] = type
             }
@@ -308,9 +305,9 @@ private class EmbraceSpanImpl(
             EmbraceLinkData(linkedSpanContext, attrs.apply { putAll(attributes) })
         }
 
-    override fun addLink(linkedSpanContext: SpanContext, attributes: Map<String, String>?): Boolean =
+    override fun addLink(linkedSpanContext: SpanContext, attributes: Map<String, String>): Boolean =
         addObject(customLinks, customLinkCount, dataValidator.otelLimitsConfig.getMaxCustomLinkCount()) {
-            EmbraceLinkData(linkedSpanContext, attributes ?: emptyMap())
+            EmbraceLinkData(linkedSpanContext, attributes)
         }
 
     override fun asNewContext(): Context? = startedSpan.get()?.run {

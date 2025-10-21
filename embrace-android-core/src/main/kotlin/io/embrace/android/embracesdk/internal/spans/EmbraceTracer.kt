@@ -43,17 +43,16 @@ class EmbraceTracer(
     override fun <T> recordSpan(
         name: String,
         parent: EmbraceSpan?,
-        attributes: Map<String, String>?,
-        events: List<EmbraceSpanEvent>?,
+        attributes: Map<String, String>,
+        events: List<EmbraceSpanEvent>,
         autoTerminationMode: AutoTerminationMode,
         code: () -> T,
     ): T = spanService.recordSpan(
         name = name,
         parent = parent,
         internal = false,
-        private = false,
-        attributes = attributes ?: emptyMap(),
-        events = events ?: emptyList(),
+        attributes = attributes,
+        events = events,
         autoTerminationMode = autoTerminationMode,
         code = code
     )
@@ -64,17 +63,16 @@ class EmbraceTracer(
         endTimeMs: Long,
         errorCode: ErrorCode?,
         parent: EmbraceSpan?,
-        attributes: Map<String, String>?,
-        events: List<EmbraceSpanEvent>?,
+        attributes: Map<String, String>,
+        events: List<EmbraceSpanEvent>,
     ): Boolean = spanService.recordCompletedSpan(
         name = name,
         startTimeMs = startTimeMs.normalizeTimestampAsMillis(),
         endTimeMs = endTimeMs.normalizeTimestampAsMillis(),
         parent = parent,
         internal = false,
-        private = false,
-        attributes = attributes ?: emptyMap(),
-        events = events ?: emptyList(),
+        attributes = attributes,
+        events = events,
         errorCode = errorCode
     )
 

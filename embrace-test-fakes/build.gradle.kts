@@ -22,7 +22,9 @@ dependencies {
     compileOnly(project(":embrace-android-delivery"))
     compileOnly(project(":embrace-internal-api"))
     compileOnly(project(":embrace-android-otel"))
+    compileOnly(project(":embrace-android-instrumentation-api"))
     compileOnly(project(":embrace-android-instrumentation-schema"))
+    compileOnly(project(":embrace-android-instrumentation-taps"))
     api(project(":embrace-android-config-fakes"))
 
     compileOnly(platform(libs.opentelemetry.bom))

@@ -6,13 +6,13 @@ import io.embrace.android.embracesdk.internal.arch.EmbraceFeatureRegistry
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSource
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState
 import io.embrace.android.embracesdk.internal.arch.destination.LogWriter
+import io.embrace.android.embracesdk.internal.arch.registerDataSource
 import io.embrace.android.embracesdk.internal.capture.aei.AeiDataSource
 import io.embrace.android.embracesdk.internal.capture.aei.AeiDataSourceImpl
 import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkStatusDataSource
 import io.embrace.android.embracesdk.internal.capture.crumbs.BreadcrumbDataSource
 import io.embrace.android.embracesdk.internal.capture.crumbs.PushNotificationDataSource
 import io.embrace.android.embracesdk.internal.capture.crumbs.RnActionDataSource
-import io.embrace.android.embracesdk.internal.capture.crumbs.TapDataSource
 import io.embrace.android.embracesdk.internal.capture.crumbs.ViewDataSource
 import io.embrace.android.embracesdk.internal.capture.crumbs.WebViewUrlDataSource
 import io.embrace.android.embracesdk.internal.capture.powersave.LowPowerDataSource
@@ -20,6 +20,7 @@ import io.embrace.android.embracesdk.internal.capture.telemetry.InternalErrorDat
 import io.embrace.android.embracesdk.internal.capture.telemetry.InternalErrorDataSourceImpl
 import io.embrace.android.embracesdk.internal.capture.thermalstate.ThermalStateDataSource
 import io.embrace.android.embracesdk.internal.config.ConfigService
+import io.embrace.android.embracesdk.internal.instrumentation.TapDataSource
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.worker.Worker
@@ -80,8 +81,11 @@ internal class FeatureModuleImpl(
                 TapDataSource(
                     breadcrumbBehavior = configService.breadcrumbBehavior,
                     writer = otelModule.currentSessionSpan,
-                    logger = initModule.logger
-                )
+                    logger = initModule.logger,
+                    clock = initModule.clock,
+                ).apply {
+                    registerDataSource(TapDataSource.KEY, this)
+                }
             }
         )
     }

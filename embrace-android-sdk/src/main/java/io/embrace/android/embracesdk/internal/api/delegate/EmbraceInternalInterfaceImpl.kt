@@ -10,7 +10,6 @@ import io.embrace.android.embracesdk.internal.injection.InitModule
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData
 import io.embrace.android.embracesdk.internal.network.logging.NetworkCaptureService
-import io.embrace.android.embracesdk.internal.payload.TapBreadcrumb
 import io.embrace.android.embracesdk.internal.spans.InternalTracer
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.http.HttpMethod
@@ -43,10 +42,6 @@ internal class EmbraceInternalInterfaceImpl(
         isException: Boolean,
     ) {
         embraceImpl.logMessage(message, Severity.ERROR, properties ?: emptyMap())
-    }
-
-    override fun logComposeTap(point: Pair<Float, Float>, elementName: String) {
-        embraceImpl.logTap(point, elementName, TapBreadcrumb.TapBreadcrumbType.TAP)
     }
 
     override fun recordCompletedNetworkRequest(
@@ -157,10 +152,6 @@ internal class EmbraceInternalInterfaceImpl(
 
     override fun logInternalError(error: Throwable) {
         initModule.logger.trackInternalError(InternalErrorType.INTERNAL_INTERFACE_FAIL, error)
-    }
-
-    override fun logTap(point: Pair<Float?, Float?>, elementName: String, type: TapBreadcrumb.TapBreadcrumbType) {
-        embraceImpl.logTap(point, elementName, type)
     }
 
     override fun stopSdk() {

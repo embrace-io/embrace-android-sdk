@@ -6,12 +6,12 @@ import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkStatus
 import io.embrace.android.embracesdk.internal.capture.crumbs.BreadcrumbDataSource
 import io.embrace.android.embracesdk.internal.capture.crumbs.PushNotificationDataSource
 import io.embrace.android.embracesdk.internal.capture.crumbs.RnActionDataSource
-import io.embrace.android.embracesdk.internal.capture.crumbs.TapDataSource
 import io.embrace.android.embracesdk.internal.capture.crumbs.ViewDataSource
 import io.embrace.android.embracesdk.internal.capture.crumbs.WebViewUrlDataSource
 import io.embrace.android.embracesdk.internal.capture.powersave.LowPowerDataSource
 import io.embrace.android.embracesdk.internal.capture.telemetry.InternalErrorDataSource
 import io.embrace.android.embracesdk.internal.capture.thermalstate.ThermalStateDataSource
+import io.embrace.android.embracesdk.internal.instrumentation.TapDataSource
 
 interface FeatureModule {
     val breadcrumbDataSource: DataSourceState<BreadcrumbDataSource>

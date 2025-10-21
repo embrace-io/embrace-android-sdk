@@ -1,7 +1,5 @@
 package io.embrace.android.embracesdk.internal.network.logging
 
-import io.mockk.every
-import io.mockk.mockk
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -9,25 +7,40 @@ internal class EmbraceHttpPathOverrideTest {
 
     @Test
     fun `check override path validity`() {
-        val request: HttpPathOverrideRequest = mockk(relaxed = true)
-        every { request.getURLString() } answers { defaultUrl }
-        every { request.getOverriddenURL(customPath) } answers { customUrl }
-        every { request.getOverriddenURL("/error") } answers { throw RuntimeException() }
+        val request: HttpPathOverrideRequest = FakeHttpOverrideRequest(
+            urlString = DEFAULT_URL,
+            overriddenUrlStringProvider = ::customUrlProvider
+        )
 
-        assertEquals(defaultUrl, getOverriddenURLString(request, null))
-        assertEquals(defaultUrl, getOverriddenURLString(request, ""))
-        assertEquals(defaultUrl, getOverriddenURLString(request, "/a".repeat(1025)))
-        assertEquals(defaultUrl, getOverriddenURLString(request, "/屈福特"))
-        assertEquals(defaultUrl, getOverriddenURLString(request, "watford"))
-        assertEquals(defaultUrl, getOverriddenURLString(request, "/custom#"))
-        assertEquals(defaultUrl, getOverriddenURLString(request, ""))
-        assertEquals(defaultUrl, getOverriddenURLString(request, "/error"))
-        assertEquals(customUrl, getOverriddenURLString(request, customPath))
+        assertEquals(DEFAULT_URL, getOverriddenURLString(request, null))
+        assertEquals(DEFAULT_URL, getOverriddenURLString(request, ""))
+        assertEquals(DEFAULT_URL, getOverriddenURLString(request, "/a".repeat(1025)))
+        assertEquals(DEFAULT_URL, getOverriddenURLString(request, "/屈福特"))
+        assertEquals(DEFAULT_URL, getOverriddenURLString(request, "watford"))
+        assertEquals(DEFAULT_URL, getOverriddenURLString(request, "/custom#"))
+        assertEquals(DEFAULT_URL, getOverriddenURLString(request, ""))
+        assertEquals(DEFAULT_URL, getOverriddenURLString(request, "/error"))
+        assertEquals(CUSTOM_URL, getOverriddenURLString(request, CUSTOM_PATH))
     }
 
     companion object {
-        private const val defaultUrl = "https://embrace.io/default-path"
-        private const val customPath = "/custom-path"
-        private const val customUrl = "https://embrace.io$customPath"
+        private fun customUrlProvider(pathOverride: String): String {
+            return when (pathOverride) {
+                CUSTOM_PATH -> {
+                    CUSTOM_URL
+                }
+
+                "/error" -> {
+                    throw RuntimeException()
+                }
+
+                else -> {
+                    DEFAULT_URL
+                }
+            }
+        }
+        private const val DEFAULT_URL = "https://embrace.io/default-path"
+        private const val CUSTOM_PATH = "/custom-path"
+        private const val CUSTOM_URL = "https://embrace.io$CUSTOM_PATH"
     }
 }

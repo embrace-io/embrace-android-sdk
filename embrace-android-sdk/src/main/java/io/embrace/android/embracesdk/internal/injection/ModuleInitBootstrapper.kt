@@ -209,11 +209,10 @@ internal class ModuleInitBootstrapper(
                             if (networkBehavior.isHttpUrlConnectionCaptureEnabled()) {
                                 EmbTrace.trace("network-monitoring-installation") {
                                     registerUrlStreamHandlerFactory(
-                                        networkBehavior.isRequestContentLengthCaptureEnabled(),
-                                        fun(t: Throwable) {
-                                            logger.trackInternalError(InternalErrorType.INSTRUMENTATION_REG_FAIL, t)
-                                        }
-                                    )
+                                        networkBehavior.isRequestContentLengthCaptureEnabled()
+                                    ) { t ->
+                                        logger.trackInternalError(InternalErrorType.INSTRUMENTATION_REG_FAIL, t)
+                                    }
                                 }
                             }
                             workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker).submit {

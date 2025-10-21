@@ -21,22 +21,20 @@ private const val RELATIVE_PATH_MAX_LENGTH = 1024
  */
 private val RELATIVE_PATH_PATTERN: Pattern = Pattern.compile("[A-Za-z0-9-._~:/\\[\\]@!$&'()*+,;=]+")
 
+@JvmOverloads
 @InternalApi
-fun getOverriddenURLString(request: HttpPathOverrideRequest): String {
-    return getOverriddenURLString(request, request.getHeaderByName(PATH_OVERRIDE))
-}
-
-@InternalApi
-fun getOverriddenURLString(request: HttpPathOverrideRequest, pathOverride: String?): String {
-    var url: String
-    try {
+fun getOverriddenURLString(
+    request: HttpPathOverrideRequest,
+    pathOverride: String? = request.getHeaderByName(PATH_OVERRIDE)
+): String {
+    val url = try {
         if (pathOverride != null && validatePathOverride(pathOverride)) {
-            url = request.getOverriddenURL(pathOverride)
+            request.getOverriddenURL(pathOverride)
         } else {
-            url = request.getURLString()
+            request.getURLString()
         }
-    } catch (e: Exception) {
-        url = request.getURLString()
+    } catch (_: Exception) {
+        request.getURLString()
     }
     return url
 }

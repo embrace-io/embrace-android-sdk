@@ -11,6 +11,7 @@ class FakeEmbraceInternalInterface(
 ) : EmbraceInternalInterface {
 
     var networkRequests: MutableList<EmbraceNetworkRequest> = mutableListOf()
+    val internalErrors: MutableList<Throwable> = mutableListOf()
 
     override fun startSpan(name: String, parentSpanId: String?, startTimeMs: Long?): String? {
         return null
@@ -86,6 +87,7 @@ class FakeEmbraceInternalInterface(
     }
 
     override fun logInternalError(error: Throwable) {
+        internalErrors.add(error)
     }
 
     override fun stopSdk() {

@@ -234,10 +234,6 @@ internal class EmbraceImpl(
         }
     }
 
-    @Suppress("EmptyFunctionBlock")
-    fun startInstrumentationHook() {
-    }
-
     private fun registerDeliveryNetworkListener() {
         bootstrapper.deliveryModule.schedulingService?.let(
             bootstrapper.essentialServiceModule.networkConnectivityService::addNetworkConnectivityListener

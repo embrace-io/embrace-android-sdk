@@ -204,23 +204,6 @@ internal class ModuleInitBootstrapper(
                                 lazy { networkConnectivityService }
                             )
 
-                            val networkBehavior = configModule.configService.networkBehavior
-                            if (networkBehavior.isHttpUrlConnectionCaptureEnabled()) {
-                                EmbTrace.trace("network-monitoring-installation") {
-                                    try {
-                                        val trackerClass =
-                                            Class.forName("io.embrace.android.embracesdk.instrumentation.huc.HttpUrlConnectionTracker")
-
-                                        trackerClass.kotlin
-                                        val instanceField = trackerClass.getDeclaredField("INSTANCE")
-                                        val trackerInstance = instanceField.get(null)
-                                        val initMethod = trackerClass.getDeclaredMethod("init")
-                                        initMethod.invoke(trackerInstance)
-                                    } catch (t: Throwable) {
-                                        logger.trackInternalError(InternalErrorType.INSTRUMENTATION_REG_FAIL, t)
-                                    }
-                                }
-                            }
                             workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker).submit {
                                 EmbTrace.trace("network-connectivity-registration") {
                                     essentialServiceModule.networkConnectivityService.register()

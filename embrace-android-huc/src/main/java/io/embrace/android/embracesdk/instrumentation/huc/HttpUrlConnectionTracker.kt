@@ -1,7 +1,10 @@
 package io.embrace.android.embracesdk.instrumentation.huc
 
 import io.embrace.android.embracesdk.annotation.InternalApi
-import io.embrace.android.embracesdk.internal.api.SdkApi
+import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
+import io.embrace.android.embracesdk.internal.api.InstrumentationApi
+import io.embrace.android.embracesdk.internal.api.NetworkRequestApi
+import io.embrace.android.embracesdk.internal.api.SdkStateApi
 import java.lang.reflect.Field
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Modifier
@@ -47,8 +50,19 @@ internal object HttpUrlConnectionTracker {
      * This relies on the Embrace SDK being initialized second, so that the Embrace SDK is able to
      * detect an existing [URLStreamHandlerFactory] and wrap it with its interception logic.
      */
-    fun registerUrlStreamHandlerFactory(requestContentLengthCaptureEnabled: Boolean, sdkApi: SdkApi) {
-        internalNetworkApi = InternalNetworkApiImpl(sdkApi)
+    fun registerUrlStreamHandlerFactory(
+        requestContentLengthCaptureEnabled: Boolean,
+        sdkStateApi: SdkStateApi,
+        instrumentationApi: InstrumentationApi,
+        networkRequestApi: NetworkRequestApi,
+        internalInterface: EmbraceInternalInterface,
+    ) {
+        internalNetworkApi = InternalNetworkApiImpl(
+            sdkStateApi = sdkStateApi,
+            instrumentationApi = instrumentationApi,
+            networkRequestApi = networkRequestApi,
+            internalInterface = internalInterface
+        )
         registerFactory(requestContentLengthCaptureEnabled)
     }
 

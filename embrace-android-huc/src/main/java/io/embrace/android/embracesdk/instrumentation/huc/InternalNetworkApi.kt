@@ -12,7 +12,7 @@ internal interface InternalNetworkApi {
     fun generateW3cTraceparent(): String?
 }
 
-object NoopInternalNetworkApi : InternalNetworkApi {
+internal object NoopInternalNetworkApi : InternalNetworkApi {
     override fun isNetworkSpanForwardingEnabled(): Boolean = false
     override fun recordNetworkRequest(embraceNetworkRequest: EmbraceNetworkRequest) {}
     override fun shouldCaptureNetworkBody(url: String, method: String): Boolean = false

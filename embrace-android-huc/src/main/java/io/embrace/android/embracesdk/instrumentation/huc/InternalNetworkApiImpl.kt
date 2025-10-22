@@ -1,34 +1,35 @@
 package io.embrace.android.embracesdk.instrumentation.huc
 
-import io.embrace.android.embracesdk.internal.EmbraceInternalApi
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
-import io.embrace.android.embracesdk.internal.api.SdkApi
+import io.embrace.android.embracesdk.internal.api.InstrumentationApi
+import io.embrace.android.embracesdk.internal.api.NetworkRequestApi
+import io.embrace.android.embracesdk.internal.api.SdkStateApi
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 
 internal class InternalNetworkApiImpl(
-    private val sdkApi: SdkApi
+    private val sdkStateApi: SdkStateApi,
+    private val instrumentationApi: InstrumentationApi,
+    private val networkRequestApi: NetworkRequestApi,
+    private val internalInterface: EmbraceInternalInterface,
 ) : InternalNetworkApi {
-    private fun getInternalInterface(): EmbraceInternalInterface =
-        checkNotNull(EmbraceInternalApi.internalInterface)
+    override fun getSdkCurrentTimeMs(): Long = instrumentationApi.getSdkCurrentTimeMs()
 
-    override fun getSdkCurrentTimeMs(): Long = sdkApi.getSdkCurrentTimeMs()
+    override fun isStarted(): Boolean = sdkStateApi.isStarted
 
-    override fun isStarted(): Boolean = sdkApi.isStarted
+    override fun generateW3cTraceparent(): String? = networkRequestApi.generateW3cTraceparent()
 
-    override fun generateW3cTraceparent(): String? = sdkApi.generateW3cTraceparent()
-
-    override fun isNetworkSpanForwardingEnabled(): Boolean = getInternalInterface().isNetworkSpanForwardingEnabled()
+    override fun isNetworkSpanForwardingEnabled(): Boolean = internalInterface.isNetworkSpanForwardingEnabled()
 
     override fun recordNetworkRequest(embraceNetworkRequest: EmbraceNetworkRequest) =
-        getInternalInterface().recordNetworkRequest(
+        networkRequestApi.recordNetworkRequest(
             embraceNetworkRequest
         )
 
     override fun shouldCaptureNetworkBody(url: String, method: String): Boolean =
-        getInternalInterface().shouldCaptureNetworkBody(
-            url,
-            method
+        internalInterface.shouldCaptureNetworkBody(
+            url = url,
+            method = method
         )
 
-    override fun logInternalError(error: Throwable) = getInternalInterface().logInternalError(error)
+    override fun logInternalError(error: Throwable) = internalInterface.logInternalError(error)
 }

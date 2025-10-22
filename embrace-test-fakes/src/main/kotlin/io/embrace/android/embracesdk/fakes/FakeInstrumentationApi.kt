@@ -9,17 +9,14 @@ class FakeInstrumentationApi(
     private val sdkCurrentTimeMs: Long = 1000
 ) : InstrumentationApi {
     override fun appReady() {
-        TODO("Not yet implemented")
     }
 
     override fun activityLoaded(activity: Activity) {
-        TODO("Not yet implemented")
     }
 
     override fun getSdkCurrentTimeMs(): Long = sdkCurrentTimeMs
 
     override fun addLoadTraceAttribute(activity: Activity, key: String, value: String) {
-        TODO("Not yet implemented")
     }
 
     override fun addLoadTraceChildSpan(
@@ -31,11 +28,9 @@ class FakeInstrumentationApi(
         events: List<EmbraceSpanEvent>,
         errorCode: ErrorCode?,
     ) {
-        TODO("Not yet implemented")
     }
 
     override fun addStartupTraceAttribute(key: String, value: String) {
-        TODO("Not yet implemented")
     }
 
     override fun addStartupTraceChildSpan(
@@ -46,6 +41,5 @@ class FakeInstrumentationApi(
         events: List<EmbraceSpanEvent>,
         errorCode: ErrorCode?,
     ) {
-        TODO("Not yet implemented")
     }
 }

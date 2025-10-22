@@ -56,6 +56,7 @@ val codeCoverageModules = listOf( // FIXME: future: add gradle plugin to code co
     ":embrace-android-fcm",
     ":embrace-android-compose",
     ":embrace-android-otel",
+    ":embrace-android-huc",
 )
 codeCoverageModules.forEach { projectName ->
     dependencies.add("kover", project(projectName))

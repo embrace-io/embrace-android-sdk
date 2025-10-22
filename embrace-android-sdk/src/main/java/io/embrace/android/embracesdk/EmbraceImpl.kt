@@ -41,6 +41,7 @@ import io.embrace.android.embracesdk.internal.injection.InternalInterfaceModuleI
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.injection.asFile
 import io.embrace.android.embracesdk.internal.injection.embraceImplInject
+import io.embrace.android.embracesdk.internal.instrumentation.bytecode.InstrumentationInitializer
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.EmbTrace.end
@@ -176,6 +177,13 @@ internal class EmbraceImpl(
         val endTimeMs = clock.now()
         sdkCallChecker.started.set(true)
         end()
+
+        if (configModule.configService.networkBehavior.isHttpUrlConnectionCaptureEnabled()) {
+            EmbTrace.trace("network-monitoring-installation") {
+                InstrumentationInitializer().postSdkInit()
+            }
+        }
+
         val inForeground = !bootstrapper.essentialServiceModule.processStateService.isInBackground
         start("startup-tracking")
         val dataCaptureServiceModule = bootstrapper.dataCaptureServiceModule
@@ -199,6 +207,10 @@ internal class EmbraceImpl(
             registerDeliveryNetworkListener()
             bootstrapper.deliveryModule.schedulingService?.onPayloadIntake()
         }
+    }
+
+    @Suppress("EmptyFunctionBlock")
+    fun startInstrumentationHook() {
     }
 
     private fun registerDeliveryNetworkListener() {

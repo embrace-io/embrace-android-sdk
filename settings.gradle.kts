@@ -14,7 +14,7 @@ include(
     ":embrace-android-payload",
     ":embrace-android-delivery",
     ":embrace-android-okhttp3",
-    ":embrace-android-huc",
+    ":embrace-android-instrumentation-huc",
     ":embrace-android-fcm",
     ":embrace-android-compose",
     ":embrace-android-otel",

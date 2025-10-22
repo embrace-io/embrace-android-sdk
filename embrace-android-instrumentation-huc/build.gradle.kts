@@ -1,13 +1,13 @@
 plugins {
-    id("com.android.library")
     kotlin("android")
+    id("com.android.library")
     id("io.embrace.internal.build-logic")
 }
 
-description = "Embrace Android SDK: HUC"
+description = "Embrace Android SDK: HttpUrlConnection instrumentation"
 
 android {
-    namespace = "io.embrace.android.embracesdk.huc"
+    namespace = "io.embrace.android.embracesdk.instrumentation.huc"
 }
 
 dependencies {

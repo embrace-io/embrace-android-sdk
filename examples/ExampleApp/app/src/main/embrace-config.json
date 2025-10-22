@@ -1,3 +1,8 @@
 {
-  "ndk_enabled": true
+  "ndk_enabled": true,
+  "sdk_config": {
+    "networking": {
+      "enable_native_monitoring": false
+    }
+  }
 }

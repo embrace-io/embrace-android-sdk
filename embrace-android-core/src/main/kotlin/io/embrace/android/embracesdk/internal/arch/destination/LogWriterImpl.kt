@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.arch.destination
 
-import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.internal.arch.attrs.embState
 import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
@@ -29,7 +28,7 @@ class LogWriterImpl(
     @OptIn(IncubatingApi::class)
     override fun addLog(
         schemaType: SchemaType,
-        severity: Severity,
+        severity: LogSeverity,
         message: String,
         isPrivate: Boolean,
         addCurrentSessionInfo: Boolean,
@@ -37,9 +36,9 @@ class LogWriterImpl(
     ) {
         val logTimeMs = timestampMs ?: clock.now()
         val severityNumber = when (severity) {
-            Severity.INFO -> SeverityNumber.INFO
-            Severity.WARNING -> SeverityNumber.WARN
-            Severity.ERROR -> SeverityNumber.ERROR
+            LogSeverity.INFO -> SeverityNumber.INFO
+            LogSeverity.WARNING -> SeverityNumber.WARN
+            LogSeverity.ERROR -> SeverityNumber.ERROR
         }
         logger.log(
             body = message,

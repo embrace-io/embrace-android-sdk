@@ -4,6 +4,7 @@ import android.os.Parcelable
 import io.embrace.android.embracesdk.LogExceptionType
 import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.internal.arch.attrs.embExceptionHandling
+import io.embrace.android.embracesdk.internal.arch.destination.LogSeverity
 import io.embrace.android.embracesdk.internal.arch.destination.LogWriter
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType.Exception
@@ -111,7 +112,12 @@ class EmbraceLogService(
         if (logId == null || !logCounters.getValue(severity).addIfAllowed()) {
             return
         }
-        logWriter.addLog(schemaProvider(attributes), severity, trimToMaxLength(message))
+        val logSeverity = when (severity) {
+            Severity.INFO -> LogSeverity.INFO
+            Severity.WARNING -> LogSeverity.WARNING
+            Severity.ERROR -> LogSeverity.ERROR
+        }
+        logWriter.addLog(schemaProvider(attributes), logSeverity, trimToMaxLength(message))
     }
 
     private fun trimToMaxLength(message: String): String {

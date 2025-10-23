@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.arch.destination
 
-import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 
 /**
@@ -9,7 +8,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 interface LogWriter {
     fun addLog(
         schemaType: SchemaType,
-        severity: Severity,
+        severity: LogSeverity,
         message: String,
         isPrivate: Boolean = false,
         addCurrentSessionInfo: Boolean = true,

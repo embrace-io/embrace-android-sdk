@@ -56,7 +56,7 @@ internal class LogWriterImplTest {
                     customAttributes = mapOf(PrivateSpan.asPair())
                 )
             ),
-            severity = Severity.ERROR,
+            severity = LogSeverity.ERROR,
             message = "test"
         )
         with(logger.logs.single()) {
@@ -75,7 +75,7 @@ internal class LogWriterImplTest {
     fun `check that private value is set`() {
         logWriterImpl.addLog(
             schemaType = SchemaType.Log(TelemetryAttributes()),
-            severity = Severity.ERROR,
+            severity = LogSeverity.ERROR,
             message = "test",
             isPrivate = true
         )
@@ -84,7 +84,7 @@ internal class LogWriterImplTest {
         }
         logWriterImpl.addLog(
             schemaType = SchemaType.Log(TelemetryAttributes()),
-            severity = Severity.ERROR,
+            severity = LogSeverity.ERROR,
             message = "test",
             isPrivate = false
         )
@@ -99,7 +99,7 @@ internal class LogWriterImplTest {
         processStateService.isInBackground = true
         logWriterImpl.addLog(
             schemaType = SchemaType.Log(TelemetryAttributes()),
-            severity = Severity.ERROR,
+            severity = LogSeverity.ERROR,
             message = "test"
         )
 
@@ -118,7 +118,7 @@ internal class LogWriterImplTest {
         processStateService.isInBackground = true
         logWriterImpl.addLog(
             schemaType = SchemaType.Log(TelemetryAttributes()),
-            severity = Severity.ERROR,
+            severity = LogSeverity.ERROR,
             message = "test"
         )
 
@@ -133,7 +133,7 @@ internal class LogWriterImplTest {
         val fakeTimeMs = DEFAULT_FAKE_CURRENT_TIME
         logWriterImpl.addLog(
             schemaType = SchemaType.Log(TelemetryAttributes()),
-            severity = Severity.ERROR,
+            severity = LogSeverity.ERROR,
             message = "test",
             timestampMs = fakeTimeMs
         )
@@ -149,7 +149,7 @@ internal class LogWriterImplTest {
         sessionIdTracker.setActiveSession("foreground-session", true)
         logWriterImpl.addLog(
             schemaType = SchemaType.Log(TelemetryAttributes()),
-            severity = Severity.ERROR,
+            severity = LogSeverity.ERROR,
             message = "test",
             addCurrentSessionInfo = false,
         )
@@ -165,7 +165,7 @@ internal class LogWriterImplTest {
         sessionIdTracker.sessionData = SessionData("", false)
         logWriterImpl.addLog(
             schemaType = SchemaType.Log(TelemetryAttributes()),
-            severity = Severity.ERROR,
+            severity = LogSeverity.ERROR,
             message = "test"
         )
 

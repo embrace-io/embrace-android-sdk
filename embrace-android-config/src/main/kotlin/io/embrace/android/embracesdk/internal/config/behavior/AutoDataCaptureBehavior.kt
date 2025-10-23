@@ -1,9 +1,6 @@
 package io.embrace.android.embracesdk.internal.config.behavior
 
-import io.embrace.android.embracesdk.internal.config.instrumented.schema.EnabledFeatureConfig
-import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
-
-interface AutoDataCaptureBehavior : ConfigBehavior<EnabledFeatureConfig, RemoteConfig> {
+interface AutoDataCaptureBehavior {
 
     /**
      * Returns true if SDK should automatically capture thermal status data

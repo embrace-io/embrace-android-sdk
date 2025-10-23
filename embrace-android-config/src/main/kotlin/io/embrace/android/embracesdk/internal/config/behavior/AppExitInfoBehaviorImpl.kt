@@ -21,8 +21,8 @@ class AppExitInfoBehaviorImpl(
         const val AEI_MAX_NUM_DEFAULT: Int = 0 // 0 means no limit
     }
 
-    override val local = local.enabledFeatures
-    override val remote = remote?.appExitInfoConfig
+    private val local = local.enabledFeatures
+    private val remote = remote?.appExitInfoConfig
 
     override fun getTraceMaxLimit(): Int = remote?.appExitInfoTracesLimit ?: MAX_TRACE_SIZE_BYTES
 

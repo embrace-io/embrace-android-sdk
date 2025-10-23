@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.config.behavior
 
-import io.embrace.android.embracesdk.internal.config.instrumented.schema.InstrumentedConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 
 /**
@@ -8,7 +7,6 @@ import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
  */
 class AnrBehaviorImpl(
     private val thresholdCheck: BehaviorThresholdCheck,
-    local: InstrumentedConfig,
     remote: RemoteConfig?,
 ) : AnrBehavior {
 
@@ -21,8 +19,7 @@ class AnrBehaviorImpl(
         private const val DEFAULT_ANR_MIN_CAPTURE_DURATION = 1000
     }
 
-    override val local = local.enabledFeatures
-    override val remote = remote?.anrConfig
+    private val remote = remote?.anrConfig
 
     override fun isAnrCaptureEnabled(): Boolean {
         return thresholdCheck.isBehaviorEnabled(remote?.pctEnabled)

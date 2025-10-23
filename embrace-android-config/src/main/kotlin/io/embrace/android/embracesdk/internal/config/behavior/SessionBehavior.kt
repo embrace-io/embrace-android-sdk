@@ -1,9 +1,6 @@
 package io.embrace.android.embracesdk.internal.config.behavior
 
-import io.embrace.android.embracesdk.internal.config.UnimplementedConfig
-import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
-
-interface SessionBehavior : ConfigBehavior<UnimplementedConfig, RemoteConfig> {
+interface SessionBehavior {
 
     /**
      * Whether session control is enabled, meaning that features should be gated.

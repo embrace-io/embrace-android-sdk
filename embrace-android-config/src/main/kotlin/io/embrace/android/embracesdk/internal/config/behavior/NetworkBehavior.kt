@@ -1,10 +1,8 @@
 package io.embrace.android.embracesdk.internal.config.behavior
 
-import io.embrace.android.embracesdk.internal.config.instrumented.schema.InstrumentedConfig
 import io.embrace.android.embracesdk.internal.config.remote.NetworkCaptureRuleRemoteConfig
-import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 
-interface NetworkBehavior : ConfigBehavior<InstrumentedConfig, RemoteConfig> {
+interface NetworkBehavior {
 
     /**
      * Control whether request size for native Android requests is captured.

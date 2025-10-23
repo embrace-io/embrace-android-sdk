@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.config.behavior
 
-import io.embrace.android.embracesdk.internal.config.UnimplementedConfig
 import io.embrace.android.embracesdk.internal.config.remote.LogRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 
@@ -17,8 +16,7 @@ class LogMessageBehaviorImpl(
         private const val DEFAULT_LOG_ERROR_LIMIT = 250
     }
 
-    override val remote: LogRemoteConfig? = remote?.logConfig
-    override val local: UnimplementedConfig = null
+    private val remote: LogRemoteConfig? = remote?.logConfig
 
     override fun getLogMessageMaximumAllowedLength(): Int {
         return remote?.logMessageMaximumAllowedLength ?: LOG_MESSAGE_MAXIMUM_ALLOWED_LENGTH

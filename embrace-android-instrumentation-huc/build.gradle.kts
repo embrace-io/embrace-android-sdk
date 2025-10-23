@@ -14,8 +14,12 @@ dependencies {
     compileOnly(project(":embrace-android-core"))
     compileOnly(project(":embrace-android-sdk"))
     compileOnly(project(":embrace-internal-api"))
+    implementation(libs.androidx.annotation)
+
     testImplementation(project(":embrace-android-core"))
     testImplementation(project(":embrace-android-sdk"))
     testImplementation(project(":embrace-internal-api"))
-    implementation(libs.androidx.annotation)
+    testImplementation(project(":embrace-test-fakes"))
+    testImplementation(libs.mockk)
+    testImplementation(libs.robolectric)
 }

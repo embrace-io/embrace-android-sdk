@@ -3,10 +3,7 @@ plugins {
     kotlin("android")
     id("io.embrace.internal.build-logic")
     id("com.google.devtools.ksp")
-}
-
-embrace {
-    containsPublicApi.set(true)
+    id("com.vanniktech.maven.publish")
 }
 
 description = "Embrace Android SDK: Core"
@@ -97,18 +94,25 @@ dependencies {
     implementation(libs.opentelemetry.kotlin.semconv)
     implementation(libs.opentelemetry.kotlin.noop)
 
+    androidTestImplementation(project(":embrace-test-fakes"))
+    androidTestImplementation(project(":embrace-android-otel-java"))
+    androidTestImplementation(libs.androidx.test.core)
+    androidTestImplementation(libs.androidx.test.runner)
+    androidTestUtil(libs.androidx.test.orchestrator)
+
+    testImplementation(project(":embrace-android-otel-java"))
     testImplementation(project(":embrace-test-fakes"))
+    testImplementation(project(":embrace-test-common"))
     testImplementation(project(":embrace-android-instrumentation-huc"))
     testImplementation(libs.protobuf.java)
     testImplementation(libs.protobuf.java.util)
     testImplementation(platform(libs.okhttp.bom))
     testImplementation(libs.mockwebserver)
+    testImplementation(libs.mockk)
     testImplementation(libs.opentelemetry.sdk)
-
-    androidTestImplementation(project(":embrace-test-fakes"))
-
-    testImplementation(project(":embrace-android-otel-java"))
+    testImplementation(libs.robolectric)
     testImplementation(libs.opentelemetry.kotlin.compat)
-    androidTestImplementation(project(":embrace-android-otel-java"))
     androidTestImplementation(libs.opentelemetry.kotlin.compat)
+
+    lintChecks(project(":embrace-lint"))
 }

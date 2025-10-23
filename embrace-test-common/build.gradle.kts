@@ -4,10 +4,6 @@ plugins {
     id("io.embrace.internal.build-logic")
 }
 
-embrace {
-    productionModule.set(false)
-}
-
 dependencies {
     implementation(platform(libs.okhttp.bom))
     implementation(libs.mockwebserver)

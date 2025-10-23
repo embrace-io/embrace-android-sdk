@@ -6,11 +6,6 @@ plugins {
     id("io.embrace.internal.build-logic")
 }
 
-embrace {
-    productionModule.set(false)
-    jvmTarget.set(JavaVersion.VERSION_11)
-}
-
 android {
     namespace = "io.embrace.android.gradle.test.fixtures"
     compileSdk = 36
@@ -37,9 +32,10 @@ dependencies {
     implementation(libs.okhttp)
     implementation(libs.appcompat)
 
+    testImplementation(project(":embrace-gradle-plugin"))
     testImplementation(libs.agp.api)
     testImplementation(libs.junit)
-    testImplementation(project(":embrace-gradle-plugin"))
     testImplementation(libs.asm.util)
     testImplementation(libs.gradle.test.kit)
+    testImplementation(libs.mockk)
 }

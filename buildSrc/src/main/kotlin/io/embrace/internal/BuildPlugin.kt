@@ -7,8 +7,6 @@ import org.gradle.api.Project
 class BuildPlugin : Plugin<Project> {
 
     override fun apply(project: Project) {
-        val module = project.extensions.create("embrace", EmbraceBuildLogicExtension::class.java)
-
         with(project.pluginManager) {
             apply("io.gitlab.arturbosch.detekt")
         }
@@ -21,28 +19,28 @@ class BuildPlugin : Plugin<Project> {
         project.configureDetekt()
 
         project.pluginManager.withPlugin("com.android.library") {
-            onAgpPluginApplied(project, module)
+            onAgpPluginApplied(project)
         }
         project.pluginManager.withPlugin("org.jetbrains.kotlin.jvm") {
-            onJvmPluginApplied(project, module)
+            onJvmPluginApplied(project)
         }
-        project.configureCompilers(module)
+        project.configureCompilers()
     }
 
-    private fun onJvmPluginApplied(project: Project, module: EmbraceBuildLogicExtension) {
-        applyCommonSettings(project, module)
+    private fun onJvmPluginApplied(project: Project) {
+        applyCommonSettings(project)
     }
 
-    private fun onAgpPluginApplied(project: Project, module: EmbraceBuildLogicExtension) {
-        applyCommonSettings(project, module)
+    private fun onAgpPluginApplied(project: Project) {
+        applyCommonSettings(project)
         val android = project.extensions.getByType(LibraryExtension::class.java)
         android.configureAndroidCompileOptions()
         android.configureLint(project)
         project.configureAndroidProductionModule(android)
     }
 
-    private fun applyCommonSettings(project: Project, module: EmbraceBuildLogicExtension) {
-        project.configureProductionModule(module)
-        project.configureExplicitApiMode(module)
+    private fun applyCommonSettings(project: Project) {
+        project.configureProductionModule()
+        project.configureExplicitApiMode()
     }
 }

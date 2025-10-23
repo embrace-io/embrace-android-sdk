@@ -8,11 +8,6 @@ plugins {
     id("io.embrace.internal.build-logic")
 }
 
-embrace {
-    productionModule.set(false)
-    jvmTarget.set(JavaVersion.VERSION_11)
-}
-
 dependencies {
     compileOnly(libs.agp.api)
     compileOnly(gradleApi())

@@ -4,41 +4,22 @@ import org.gradle.api.Project
 import org.gradle.api.artifacts.VersionCatalogsExtension
 import org.gradle.kotlin.dsl.getByType
 
-fun Project.configureProductionModule(
-    module: EmbraceBuildLogicExtension,
-) {
+fun Project.configureProductionModule() {
     with(project.pluginManager) {
         apply("org.jetbrains.kotlinx.kover")
-        apply("com.vanniktech.maven.publish")
-        apply("binary-compatibility-validator")
     }
 
-    project.configureBinaryCompatValidation(module)
+    project.configureBinaryCompatValidation()
 
     project.dependencies.apply {
         add("testImplementation", findLibrary("junit"))
-        add("testImplementation", findLibrary("mockk"))
-        add("testImplementation", project(":embrace-test-common"))
 
         if (project.plugins.hasPlugin("com.android.library")) {
             add("testImplementation", findLibrary("androidx.test.core"))
             add("testImplementation", findLibrary("androidx.test.junit"))
-            add("testImplementation", findLibrary("robolectric"))
-            add("testImplementation", findLibrary("mockwebserver"))
-            add("testImplementation", project(":embrace-test-fakes"))
-
-            add("lintChecks", project.project(":embrace-lint"))
-            add("androidTestImplementation", findLibrary("androidx.test.core"))
-            add("androidTestImplementation", findLibrary("androidx.test.runner"))
-            add("androidTestUtil", findLibrary("androidx.test.orchestrator"))
         }
     }
-
-    project.afterEvaluate {
-        if (module.productionModule.get()) {
-            configurePublishing()
-        }
-    }
+    configurePublishing()
 }
 
 // workaround: see https://medium.com/@saulmm2/android-gradle-precompiled-scripts-tomls-kotlin-dsl-df3c27ea017c

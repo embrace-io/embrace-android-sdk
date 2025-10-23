@@ -14,41 +14,36 @@ fun Project.configureJvmWarningsAsErrors() {
     }
 }
 
-fun Project.configureCompilers(module: EmbraceBuildLogicExtension) {
-    project.afterEvaluate {
-        val target = when (module.jvmTarget.get()) {
-            JavaVersion.VERSION_11 -> JvmTarget.JVM_11
-            else -> error("Unsupported jvm target: ${module.jvmTarget.get()}")
-        }
-        // ensure the Kotlin + Java compilers both use the same language level.
-        project.tasks.withType(JavaCompile::class.java).configureEach {
-            sourceCompatibility = module.jvmTarget.get().toString()
-            targetCompatibility = module.jvmTarget.get().toString()
-        }
+fun Project.configureCompilers() {
+    val target = JvmTarget.JVM_11
+    // ensure the Kotlin + Java compilers both use the same language level.
+    project.tasks.withType(JavaCompile::class.java).configureEach {
+        sourceCompatibility = "11"
+        targetCompatibility = "11"
+    }
 
-        val coreLibrariesVersion = "2.0.21"
-        when (val kotlin = project.extensions.getByName("kotlin")) {
-            is KotlinJvmProjectExtension -> {
-                kotlin.compilerOptions {
-                    apiVersion.set(KotlinVersion.KOTLIN_2_0)
-                    languageVersion.set(KotlinVersion.KOTLIN_2_0)
-                    jvmTarget.set(target)
-                    allWarningsAsErrors.set(true)
-                }
-                kotlin.coreLibrariesVersion = coreLibrariesVersion
+    val coreLibrariesVersion = "2.0.21"
+    when (val kotlin = project.extensions.getByName("kotlin")) {
+        is KotlinJvmProjectExtension -> {
+            kotlin.compilerOptions {
+                apiVersion.set(KotlinVersion.KOTLIN_2_0)
+                languageVersion.set(KotlinVersion.KOTLIN_2_0)
+                jvmTarget.set(target)
+                allWarningsAsErrors.set(true)
             }
-
-            is KotlinAndroidExtension -> {
-                kotlin.compilerOptions {
-                    apiVersion.set(KotlinVersion.KOTLIN_2_0)
-                    languageVersion.set(KotlinVersion.KOTLIN_2_0)
-                    jvmTarget.set(target)
-                    allWarningsAsErrors.set(true)
-                }
-                kotlin.coreLibrariesVersion = coreLibrariesVersion
-            }
-
-            else -> error("Unsupported kotlin plugin type: ${kotlin::class.java.name}")
+            kotlin.coreLibrariesVersion = coreLibrariesVersion
         }
+
+        is KotlinAndroidExtension -> {
+            kotlin.compilerOptions {
+                apiVersion.set(KotlinVersion.KOTLIN_2_0)
+                languageVersion.set(KotlinVersion.KOTLIN_2_0)
+                jvmTarget.set(JvmTarget.JVM_11)
+                allWarningsAsErrors.set(true)
+            }
+            kotlin.coreLibrariesVersion = coreLibrariesVersion
+        }
+
+        else -> error("Unsupported kotlin plugin type: ${kotlin::class.java.name}")
     }
 }

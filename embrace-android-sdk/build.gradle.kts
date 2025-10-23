@@ -95,6 +95,7 @@ dependencies {
     implementation(libs.opentelemetry.kotlin.noop)
 
     testImplementation(project(":embrace-test-fakes"))
+    testImplementation(project(":embrace-android-instrumentation-huc"))
     testImplementation(libs.protobuf.java)
     testImplementation(libs.protobuf.java.util)
     testImplementation(platform(libs.okhttp.bom))

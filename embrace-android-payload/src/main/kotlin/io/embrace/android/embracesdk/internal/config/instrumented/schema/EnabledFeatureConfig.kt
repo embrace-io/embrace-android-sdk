@@ -122,7 +122,7 @@ interface EnabledFeatureConfig {
      *
      * sdk_config.networking.enable_native_monitoring
      */
-    fun isHttpUrlConnectionCaptureEnabled(): Boolean = true
+    fun isHttpUrlConnectionCaptureEnabled(): Boolean = false
 
     /**
      * Gates whether network span forwarding should be enabled

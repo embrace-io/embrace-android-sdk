@@ -10,8 +10,7 @@ import androidx.compose.ui.semantics.SemanticsNode
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getAllSemanticsNodes
 import androidx.compose.ui.semantics.getOrNull
-import io.embrace.android.embracesdk.internal.arch.retrieveDataSource
-import io.embrace.android.embracesdk.internal.instrumentation.TapDataSource
+import io.embrace.android.embracesdk.internal.instrumentation.tapDataSource
 
 private const val UNKNOWN_ELEMENT_NAME = "Unlabeled Compose element"
 
@@ -29,8 +28,7 @@ internal class EmbraceNodeIterator {
 
         findClickedElement(semanticsNodes, x, y)?.let {
             val clickedView = ClickedView(it, x, y)
-            val dataSource = retrieveDataSource<TapDataSource>(TapDataSource.KEY) ?: return
-            dataSource.logComposeTap(
+            tapDataSource?.logComposeTap(
                 Pair(clickedView.x, clickedView.y),
                 clickedView.tag
             )

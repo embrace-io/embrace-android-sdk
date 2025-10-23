@@ -20,7 +20,6 @@ dependencies {
     compileOnly(project(":embrace-android-otel"))
     implementation(project(":embrace-android-instrumentation-api"))
     implementation(project(":embrace-android-instrumentation-schema"))
-    implementation(project(":embrace-android-instrumentation-taps"))
 
     implementation(libs.lifecycle.process)
 

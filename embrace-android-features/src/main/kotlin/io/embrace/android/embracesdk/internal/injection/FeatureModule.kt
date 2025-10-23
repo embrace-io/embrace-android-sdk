@@ -11,13 +11,11 @@ import io.embrace.android.embracesdk.internal.capture.crumbs.WebViewUrlDataSourc
 import io.embrace.android.embracesdk.internal.capture.powersave.LowPowerDataSource
 import io.embrace.android.embracesdk.internal.capture.telemetry.InternalErrorDataSource
 import io.embrace.android.embracesdk.internal.capture.thermalstate.ThermalStateDataSource
-import io.embrace.android.embracesdk.internal.instrumentation.TapDataSource
 
 interface FeatureModule {
     val breadcrumbDataSource: DataSourceState<BreadcrumbDataSource>
     val viewDataSource: DataSourceState<ViewDataSource>
     val pushNotificationDataSource: DataSourceState<PushNotificationDataSource>
-    val tapDataSource: DataSourceState<TapDataSource>
     val webViewUrlDataSource: DataSourceState<WebViewUrlDataSource>
     val rnActionDataSource: DataSourceState<RnActionDataSource>
     val lowPowerDataSource: DataSourceState<LowPowerDataSource>

@@ -5,27 +5,26 @@ import android.os.PowerManager
 import androidx.annotation.RequiresApi
 import io.embrace.android.embracesdk.internal.arch.datasource.NoInputValidation
 import io.embrace.android.embracesdk.internal.arch.datasource.SpanDataSourceImpl
-import io.embrace.android.embracesdk.internal.arch.datasource.startSpanCapture
+import io.embrace.android.embracesdk.internal.arch.destination.SpanToken
+import io.embrace.android.embracesdk.internal.arch.destination.TraceWriter
 import io.embrace.android.embracesdk.internal.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
-import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
-import io.embrace.android.embracesdk.spans.EmbraceSpan
 import java.util.concurrent.Executor
 
 @RequiresApi(Build.VERSION_CODES.Q)
 class ThermalStateDataSource(
-    spanService: SpanService,
+    traceWriter: TraceWriter,
     logger: EmbLogger,
     private val backgroundWorker: BackgroundWorker,
     private val clock: Clock,
     powerManagerProvider: Provider<PowerManager?>,
 ) : SpanDataSourceImpl(
-    destination = spanService,
+    destination = traceWriter,
     logger = logger,
     limitStrategy = UpToLimitStrategy { MAX_CAPTURED_THERMAL_STATES }
 ) {
@@ -37,7 +36,7 @@ class ThermalStateDataSource(
 
     private val powerManager: PowerManager? by lazy(powerManagerProvider)
 
-    private var span: EmbraceSpan? = null
+    private var span: SpanToken? = null
 
     override fun enableDataCapture() {
         backgroundWorker.submit {

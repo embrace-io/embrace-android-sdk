@@ -6,7 +6,7 @@ import android.os.PowerManager
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeClock
-import io.embrace.android.embracesdk.fakes.FakeSpanService
+import io.embrace.android.embracesdk.fakes.FakeTraceWriter
 import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
 import io.embrace.android.embracesdk.internal.arch.attrs.asPair
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
@@ -22,14 +22,14 @@ import org.robolectric.RuntimeEnvironment
 internal class LowPowerDataSourceTest {
 
     private lateinit var dataSource: LowPowerDataSource
-    private lateinit var spanService: FakeSpanService
+    private lateinit var traceWriter: FakeTraceWriter
 
     @Before
     fun setUp() {
-        spanService = FakeSpanService()
+        traceWriter = FakeTraceWriter()
         dataSource = LowPowerDataSource(
             ApplicationProvider.getApplicationContext(),
-            spanService,
+            traceWriter,
             EmbLoggerImpl(),
             fakeBackgroundWorker(),
             FakeClock()
@@ -57,7 +57,7 @@ internal class LowPowerDataSourceTest {
     @Test
     fun `no span recorded for unbalanced calls`() {
         dataSource.onPowerSaveModeChanged(false)
-        assertEquals(0, spanService.createdSpans.size)
+        assertEquals(0, traceWriter.createdSpans.size)
     }
 
     @Test
@@ -66,7 +66,7 @@ internal class LowPowerDataSourceTest {
             dataSource.onPowerSaveModeChanged(true)
             dataSource.onPowerSaveModeChanged(false)
         }
-        assertEquals(100, spanService.createdSpans.count { it.type == EmbType.System.LowPower })
+        assertEquals(100, traceWriter.createdSpans.count { it.type == EmbType.System.LowPower })
     }
 
     @Test
@@ -78,7 +78,7 @@ internal class LowPowerDataSourceTest {
     }
 
     private fun assertSpanAdded() {
-        val span = spanService.createdSpans.single()
+        val span = traceWriter.createdSpans.single()
         assertEquals(EmbType.System.LowPower, span.type)
         assertEquals("device-low-power", span.name)
         assertEquals(

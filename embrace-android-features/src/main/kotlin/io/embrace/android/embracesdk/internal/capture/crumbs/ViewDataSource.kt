@@ -2,14 +2,13 @@ package io.embrace.android.embracesdk.internal.capture.crumbs
 
 import io.embrace.android.embracesdk.internal.arch.datasource.NoInputValidation
 import io.embrace.android.embracesdk.internal.arch.datasource.SpanDataSourceImpl
-import io.embrace.android.embracesdk.internal.arch.datasource.startSpanCapture
+import io.embrace.android.embracesdk.internal.arch.destination.SpanToken
+import io.embrace.android.embracesdk.internal.arch.destination.TraceWriter
 import io.embrace.android.embracesdk.internal.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.behavior.BreadcrumbBehavior
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
-import io.embrace.android.embracesdk.internal.otel.spans.SpanService
-import io.embrace.android.embracesdk.spans.EmbraceSpan
 
 /**
  * Captures fragment views.
@@ -17,15 +16,15 @@ import io.embrace.android.embracesdk.spans.EmbraceSpan
 class ViewDataSource(
     breadcrumbBehavior: BreadcrumbBehavior,
     private val clock: Clock,
-    spanService: SpanService,
+    traceWriter: TraceWriter,
     logger: EmbLogger,
 ) : SpanDataSourceImpl(
-    spanService,
+    traceWriter,
     logger,
     UpToLimitStrategy { breadcrumbBehavior.getFragmentBreadcrumbLimit() }
 ) {
 
-    private val viewSpans: LinkedHashMap<String, EmbraceSpan> = LinkedHashMap()
+    private val viewSpans: LinkedHashMap<String, SpanToken> = LinkedHashMap()
 
     /**
      * Called when a view is started. If a view with the same name is already running, it will be ended.

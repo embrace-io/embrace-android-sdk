@@ -6,6 +6,8 @@ import io.embrace.android.embracesdk.internal.arch.EmbraceFeatureRegistry
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSource
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState
 import io.embrace.android.embracesdk.internal.arch.destination.LogWriter
+import io.embrace.android.embracesdk.internal.arch.destination.TraceWriter
+import io.embrace.android.embracesdk.internal.arch.destination.TraceWriterImpl
 import io.embrace.android.embracesdk.internal.capture.aei.AeiDataSource
 import io.embrace.android.embracesdk.internal.capture.aei.AeiDataSourceImpl
 import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkStatusDataSource
@@ -35,6 +37,10 @@ internal class FeatureModuleImpl(
     configService: ConfigService,
 ) : FeatureModule {
 
+    private val traceWriter: TraceWriter by singleton {
+        TraceWriterImpl(otelModule.spanService)
+    }
+
     override val breadcrumbDataSource: DataSourceState<BreadcrumbDataSource> by dataSourceState {
         DataSourceState(
             factory = {
@@ -53,7 +59,7 @@ internal class FeatureModuleImpl(
                 ViewDataSource(
                     configService.breadcrumbBehavior,
                     initModule.clock,
-                    otelModule.spanService,
+                    traceWriter,
                     initModule.logger
                 )
             }
@@ -91,7 +97,7 @@ internal class FeatureModuleImpl(
             factory = {
                 RnActionDataSource(
                     breadcrumbBehavior = configService.breadcrumbBehavior,
-                    otelModule.spanService,
+                    traceWriter,
                     initModule.logger
                 )
             }
@@ -106,7 +112,7 @@ internal class FeatureModuleImpl(
                     backgroundWorker = workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker),
                     clock = initModule.clock,
                     provider = { systemServiceModule.powerManager },
-                    spanService = otelModule.spanService,
+                    traceWriter = traceWriter,
                     logger = initModule.logger
                 )
             },
@@ -117,7 +123,7 @@ internal class FeatureModuleImpl(
     private val thermalService: ThermalStateDataSource? by singleton {
         if (BuildVersionChecker.isAtLeast(Build.VERSION_CODES.Q)) {
             ThermalStateDataSource(
-                spanService = otelModule.spanService,
+                traceWriter = traceWriter,
                 logger = initModule.logger,
                 backgroundWorker = workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker),
                 clock = initModule.clock,
@@ -177,7 +183,7 @@ internal class FeatureModuleImpl(
             factory = {
                 NetworkStatusDataSource(
                     clock = initModule.clock,
-                    spanService = otelModule.spanService,
+                    traceWriter = traceWriter,
                     logger = initModule.logger
                 )
             },

@@ -1,17 +1,17 @@
 package io.embrace.android.embracesdk.internal.arch.datasource
 
+import io.embrace.android.embracesdk.internal.arch.destination.TraceWriter
 import io.embrace.android.embracesdk.internal.arch.limits.LimitStrategy
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
-import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 
 /**
  * Base class for data sources.
  */
 abstract class SpanDataSourceImpl(
-    destination: SpanService,
+    destination: TraceWriter,
     logger: EmbLogger,
     limitStrategy: LimitStrategy,
-) : SpanDataSource, DataSourceImpl<SpanService>(
+) : SpanDataSource, DataSourceImpl<TraceWriter>(
     destination = destination,
     logger = logger,
     limitStrategy = limitStrategy,
@@ -20,6 +20,6 @@ abstract class SpanDataSourceImpl(
     override fun captureSpanData(
         countsTowardsLimits: Boolean,
         inputValidation: () -> Boolean,
-        captureAction: SpanService.() -> Unit,
+        captureAction: TraceWriter.() -> Unit,
     ): Boolean = captureDataImpl(inputValidation, captureAction, countsTowardsLimits)
 }

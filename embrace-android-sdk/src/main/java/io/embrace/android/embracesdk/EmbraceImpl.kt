@@ -41,6 +41,7 @@ import io.embrace.android.embracesdk.internal.injection.InternalInterfaceModuleI
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.injection.asFile
 import io.embrace.android.embracesdk.internal.injection.embraceImplInject
+import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.EmbTrace.end
@@ -176,6 +177,38 @@ internal class EmbraceImpl(
         val endTimeMs = clock.now()
         sdkCallChecker.started.set(true)
         end()
+
+        if (configModule.configService.networkBehavior.isHttpUrlConnectionCaptureEnabled()) {
+            EmbTrace.trace("network-monitoring-installation") {
+                runCatching {
+                    Class.forName("io.embrace.android.embracesdk.instrumentation.huc.HttpUrlConnectionTracker")
+                }.getOrNull()?.let { trackerClass ->
+                    try {
+                        val objectField = trackerClass.getDeclaredField("INSTANCE")
+                        val trackerObject = objectField.get(null)
+                        val initMethod = trackerClass.getDeclaredMethod(
+                            "registerUrlStreamHandlerFactory",
+                            Boolean::class.java,
+                            SdkStateApi::class.java,
+                            InstrumentationApi::class.java,
+                            NetworkRequestApi::class.java,
+                            EmbraceInternalInterface::class.java,
+                        )
+                        initMethod.invoke(
+                            trackerObject,
+                            configModule.configService.networkBehavior.isRequestContentLengthCaptureEnabled(),
+                            sdkStateApiDelegate,
+                            instrumentationApiDelegate,
+                            networkRequestApiDelegate,
+                            internalInterface,
+                        )
+                    } catch (t: Throwable) {
+                        logger.trackInternalError(InternalErrorType.INSTRUMENTATION_REG_FAIL, t)
+                    }
+                }
+            }
+        }
+
         val inForeground = !bootstrapper.essentialServiceModule.processStateService.isInBackground
         start("startup-tracking")
         val dataCaptureServiceModule = bootstrapper.dataCaptureServiceModule

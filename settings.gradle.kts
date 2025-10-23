@@ -11,6 +11,7 @@ include(
     ":embrace-android-instrumentation-api",
     ":embrace-android-instrumentation-api-fakes",
     ":embrace-android-instrumentation-huc",
+    ":embrace-android-instrumentation-huc-lite",
     ":embrace-android-instrumentation-taps",
     ":embrace-android-instrumentation-schema",
     ":embrace-android-payload",

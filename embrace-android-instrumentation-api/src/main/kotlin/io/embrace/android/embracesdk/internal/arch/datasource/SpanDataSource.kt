@@ -1,19 +1,15 @@
 package io.embrace.android.embracesdk.internal.arch.datasource
 
-import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
-import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
-import io.embrace.android.embracesdk.internal.otel.spans.SpanService
-import io.embrace.android.embracesdk.spans.AutoTerminationMode
-import io.embrace.android.embracesdk.spans.EmbraceSpan
+import io.embrace.android.embracesdk.internal.arch.destination.TraceWriter
 
 /**
  * A [DataSource] that adds or alters a span.
  */
-interface SpanDataSource : DataSource<SpanService> {
+interface SpanDataSource : DataSource<TraceWriter> {
 
     /**
      * The DataSource should call this function when it wants to start, stop, or mutate
-     * an [EmbraceSpan]. [captureData] should only be used for adding to the session span.
+     * a span. [captureData] should only be used for adding to the session span.
      *
      * The [countsTowardsLimits] parameter should be true if the [captureAction] will add data
      * that should count towards the limits.
@@ -31,23 +27,6 @@ interface SpanDataSource : DataSource<SpanService> {
     fun captureSpanData(
         countsTowardsLimits: Boolean,
         inputValidation: () -> Boolean,
-        captureAction: SpanService.() -> Unit,
+        captureAction: TraceWriter.() -> Unit,
     ): Boolean
-}
-
-fun SpanService.startSpanCapture(
-    schemaType: SchemaType,
-    startTimeMs: Long,
-    autoTerminationMode: AutoTerminationMode = AutoTerminationMode.NONE,
-): EmbraceSdkSpan? {
-    return startSpan(
-        name = schemaType.fixedObjectName,
-        startTimeMs = startTimeMs,
-        type = schemaType.telemetryType,
-        autoTerminationMode = autoTerminationMode,
-    )?.apply {
-        schemaType.attributes().forEach {
-            addAttribute(it.key, it.value)
-        }
-    }
 }

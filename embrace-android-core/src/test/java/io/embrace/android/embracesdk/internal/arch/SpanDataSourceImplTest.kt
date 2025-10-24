@@ -1,10 +1,11 @@
 package io.embrace.android.embracesdk.internal.arch
 
-import io.embrace.android.embracesdk.fakes.FakeSpanService
+import io.embrace.android.embracesdk.fakes.FakeTraceWriter
 import io.embrace.android.embracesdk.internal.arch.datasource.SpanDataSourceImpl
 import io.embrace.android.embracesdk.internal.arch.limits.LimitStrategy
 import io.embrace.android.embracesdk.internal.arch.limits.NoopLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.limits.UpToLimitStrategy
+import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -15,10 +16,10 @@ internal class SpanDataSourceImplTest {
 
     @Test
     fun `capture data successfully`() {
-        val dst = FakeSpanService()
+        val dst = FakeTraceWriter()
         val source = FakeDataSourceImpl(dst)
         val success = source.captureData(inputValidation = { true }) {
-            createSpan("test")
+            startSpanCapture(SchemaType.LowPower, 0)
         }
         assertTrue(success)
         assertEquals(1, dst.createdSpans.size)
@@ -26,7 +27,7 @@ internal class SpanDataSourceImplTest {
 
     @Test
     fun `capture data threw exception`() {
-        val dst = FakeSpanService()
+        val dst = FakeTraceWriter()
         val source = FakeDataSourceImpl(dst)
         val success = source.captureData(inputValidation = { true }) {
             error("Whoops!")
@@ -37,7 +38,7 @@ internal class SpanDataSourceImplTest {
 
     @Test
     fun `capture data respects limits`() {
-        val dst = FakeSpanService()
+        val dst = FakeTraceWriter()
         val source = FakeDataSourceImpl(dst, UpToLimitStrategy { 2 })
 
         var count = 0
@@ -51,7 +52,7 @@ internal class SpanDataSourceImplTest {
 
     @Test
     fun `capture data respects validation`() {
-        val dst = FakeSpanService()
+        val dst = FakeTraceWriter()
         val source = FakeDataSourceImpl(dst, UpToLimitStrategy { 2 })
 
         var count = 0
@@ -65,10 +66,10 @@ internal class SpanDataSourceImplTest {
 
     @Test
     fun `start span succeeds`() {
-        val dst = FakeSpanService()
+        val dst = FakeTraceWriter()
         val source = FakeDataSourceImpl(dst)
         val success = source.captureSpanData(true, inputValidation = { true }) {
-            createSpan("test")
+            startSpanCapture(SchemaType.LowPower, 0)
         }
         assertTrue(success)
         assertEquals(1, dst.createdSpans.size)
@@ -76,7 +77,7 @@ internal class SpanDataSourceImplTest {
 
     @Test
     fun `start span data threw exception`() {
-        val dst = FakeSpanService()
+        val dst = FakeTraceWriter()
         val source = FakeDataSourceImpl(dst)
         val success = source.captureSpanData(true, inputValidation = { true }) {
             error("Whoops!")
@@ -87,7 +88,7 @@ internal class SpanDataSourceImplTest {
 
     @Test
     fun `start span respects limits`() {
-        val dst = FakeSpanService()
+        val dst = FakeTraceWriter()
         val source = FakeDataSourceImpl(dst, UpToLimitStrategy { 2 })
 
         var count = 0
@@ -101,7 +102,7 @@ internal class SpanDataSourceImplTest {
 
     @Test
     fun `start span respects validation`() {
-        val dst = FakeSpanService()
+        val dst = FakeTraceWriter()
         val source = FakeDataSourceImpl(dst, UpToLimitStrategy { 2 })
 
         var count = 0
@@ -115,10 +116,10 @@ internal class SpanDataSourceImplTest {
 
     @Test
     fun `stop span succeeeds`() {
-        val dst = FakeSpanService()
+        val dst = FakeTraceWriter()
         val source = FakeDataSourceImpl(dst)
         val success = source.captureSpanData(false, inputValidation = { true }) {
-            createSpan("test")
+            startSpanCapture(SchemaType.LowPower, 0)
         }
         assertTrue(success)
         assertEquals(1, dst.createdSpans.size)
@@ -126,7 +127,7 @@ internal class SpanDataSourceImplTest {
 
     @Test
     fun `stop span data threw exception`() {
-        val dst = FakeSpanService()
+        val dst = FakeTraceWriter()
         val source = FakeDataSourceImpl(dst)
         val success = source.captureSpanData(false, inputValidation = { true }) {
             error("Whoops!")
@@ -137,7 +138,7 @@ internal class SpanDataSourceImplTest {
 
     @Test
     fun `stop span does not increment limits`() {
-        val dst = FakeSpanService()
+        val dst = FakeTraceWriter()
         val source = FakeDataSourceImpl(dst, UpToLimitStrategy { 2 })
 
         var count = 0
@@ -151,7 +152,7 @@ internal class SpanDataSourceImplTest {
 
     @Test
     fun `stop span respects validation`() {
-        val dst = FakeSpanService()
+        val dst = FakeTraceWriter()
         val source = FakeDataSourceImpl(dst, UpToLimitStrategy { 2 })
 
         var count = 0
@@ -164,7 +165,7 @@ internal class SpanDataSourceImplTest {
     }
 
     private class FakeDataSourceImpl(
-        dst: FakeSpanService,
+        dst: FakeTraceWriter,
         limitStrategy: LimitStrategy = NoopLimitStrategy,
     ) : SpanDataSourceImpl(dst, EmbLoggerImpl(), limitStrategy)
 }

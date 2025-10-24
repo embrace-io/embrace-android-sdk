@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.internal.capture.thermalstate
 
 import android.os.PowerManager
 import io.embrace.android.embracesdk.fakes.FakeClock
-import io.embrace.android.embracesdk.fakes.FakeSpanService
+import io.embrace.android.embracesdk.fakes.FakeTraceWriter
 import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
@@ -15,14 +15,14 @@ import org.junit.Test
 internal class ThermalStateDataSourceTest {
 
     private lateinit var dataSource: ThermalStateDataSource
-    private lateinit var spanWriter: FakeSpanService
+    private lateinit var traceWriter: FakeTraceWriter
     private val mockPowerManager = mockk<PowerManager>(relaxed = true)
 
     @Before
     fun setUp() {
-        spanWriter = FakeSpanService()
+        traceWriter = FakeTraceWriter()
         dataSource = ThermalStateDataSource(
-            spanWriter,
+            traceWriter,
             EmbLoggerImpl(),
             fakeBackgroundWorker(),
             FakeClock(100),
@@ -36,13 +36,13 @@ internal class ThermalStateDataSourceTest {
             handleThermalStateChange(PowerManager.THERMAL_STATUS_SEVERE)
             handleThermalStateChange(PowerManager.THERMAL_STATUS_CRITICAL)
         }
-        assertEquals(3, spanWriter.createdSpans.size)
-        spanWriter.createdSpans.forEach {
+        assertEquals(3, traceWriter.createdSpans.size)
+        traceWriter.createdSpans.forEach {
             assertEquals(EmbType.Performance.ThermalState, it.type)
         }
-        assertEquals(PowerManager.THERMAL_STATUS_NONE, spanWriter.createdSpans[0].attributes["status"]?.toInt())
-        assertEquals(PowerManager.THERMAL_STATUS_SEVERE, spanWriter.createdSpans[1].attributes["status"]?.toInt())
-        assertEquals(PowerManager.THERMAL_STATUS_CRITICAL, spanWriter.createdSpans[2].attributes["status"]?.toInt())
+        assertEquals(PowerManager.THERMAL_STATUS_NONE, traceWriter.createdSpans[0].attributes["status"]?.toInt())
+        assertEquals(PowerManager.THERMAL_STATUS_SEVERE, traceWriter.createdSpans[1].attributes["status"]?.toInt())
+        assertEquals(PowerManager.THERMAL_STATUS_CRITICAL, traceWriter.createdSpans[2].attributes["status"]?.toInt())
     }
 
     @Test
@@ -51,7 +51,7 @@ internal class ThermalStateDataSourceTest {
             dataSource.handleThermalStateChange(PowerManager.THERMAL_STATUS_SEVERE)
         }
 
-        assertEquals(100, spanWriter.createdSpans.size)
+        assertEquals(100, traceWriter.createdSpans.size)
     }
 
     @Test

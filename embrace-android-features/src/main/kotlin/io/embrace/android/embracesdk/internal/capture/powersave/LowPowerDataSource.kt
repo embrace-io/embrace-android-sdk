@@ -4,25 +4,24 @@ import android.content.Context
 import android.os.PowerManager
 import io.embrace.android.embracesdk.internal.arch.datasource.NoInputValidation
 import io.embrace.android.embracesdk.internal.arch.datasource.SpanDataSourceImpl
-import io.embrace.android.embracesdk.internal.arch.datasource.startSpanCapture
+import io.embrace.android.embracesdk.internal.arch.destination.SpanToken
+import io.embrace.android.embracesdk.internal.arch.destination.TraceWriter
 import io.embrace.android.embracesdk.internal.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
-import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
-import io.embrace.android.embracesdk.spans.EmbraceSpan
 
 class LowPowerDataSource(
     private val context: Context,
-    spanService: SpanService,
+    traceWriter: TraceWriter,
     logger: EmbLogger,
     private val backgroundWorker: BackgroundWorker,
     private val clock: Clock,
     provider: Provider<PowerManager?>,
 ) : SpanDataSourceImpl(
-    destination = spanService,
+    destination = traceWriter,
     logger = logger,
     limitStrategy = UpToLimitStrategy { MAX_CAPTURED_POWER_MODE_INTERVALS }
 ) {
@@ -32,7 +31,7 @@ class LowPowerDataSource(
     }
 
     private val receiver = PowerSaveModeReceiver(provider, ::onPowerSaveModeChanged)
-    private var span: EmbraceSpan? = null
+    private var span: SpanToken? = null
 
     override fun enableDataCapture(): Unit = receiver.register(context, backgroundWorker)
     override fun disableDataCapture(): Unit = receiver.unregister(context)

@@ -1,18 +1,18 @@
 package io.embrace.android.embracesdk.internal.capture.crumbs
 
 import io.embrace.android.embracesdk.internal.arch.datasource.SpanDataSourceImpl
+import io.embrace.android.embracesdk.internal.arch.destination.TraceWriter
 import io.embrace.android.embracesdk.internal.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.config.behavior.BreadcrumbBehavior
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
-import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 
 class RnActionDataSource(
     breadcrumbBehavior: BreadcrumbBehavior,
-    spanService: SpanService,
+    traceWriter: TraceWriter,
     logger: EmbLogger,
 ) : SpanDataSourceImpl(
-    spanService,
+    traceWriter,
     logger,
     UpToLimitStrategy { breadcrumbBehavior.getCustomBreadcrumbLimit() }
 ) {

@@ -13,8 +13,8 @@ import io.embrace.opentelemetry.kotlin.aliases.OtelJavaAttributes
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaEventData
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaLinkData
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanData
+import io.embrace.opentelemetry.kotlin.aliases.OtelJavaStatusCode
 import io.embrace.opentelemetry.kotlin.tracing.data.SpanData
-import io.opentelemetry.api.trace.StatusCode
 
 fun Map<String, String>.toOtelJava(): OtelJavaAttributes {
     val builder = OtelJavaAttributes.builder()
@@ -40,9 +40,9 @@ fun OtelJavaSpanData.toEmbraceSpanData(): EmbraceSpanData = EmbraceSpanData(
     startTimeNanos = startEpochNanos,
     endTimeNanos = endEpochNanos,
     status = when (status.statusCode) {
-        StatusCode.UNSET -> io.embrace.opentelemetry.kotlin.tracing.StatusCode.UNSET
-        StatusCode.OK -> io.embrace.opentelemetry.kotlin.tracing.StatusCode.OK
-        StatusCode.ERROR -> io.embrace.opentelemetry.kotlin.tracing.StatusCode.ERROR
+        OtelJavaStatusCode.UNSET -> io.embrace.opentelemetry.kotlin.tracing.StatusCode.UNSET
+        OtelJavaStatusCode.OK -> io.embrace.opentelemetry.kotlin.tracing.StatusCode.OK
+        OtelJavaStatusCode.ERROR -> io.embrace.opentelemetry.kotlin.tracing.StatusCode.ERROR
         else -> io.embrace.opentelemetry.kotlin.tracing.StatusCode.UNSET
     },
     events = events?.mapNotNull { it.toEmbracePayload() } ?: emptyList(),

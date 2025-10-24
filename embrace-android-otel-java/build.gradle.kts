@@ -12,7 +12,7 @@ android {
 }
 
 dependencies {
-    compileOnly(project(":embrace-android-sdk"))
+    compileOnly(project(":embrace-android-api"))
     compileOnly(libs.opentelemetry.sdk)
 
     implementation(libs.opentelemetry.java.aliases)

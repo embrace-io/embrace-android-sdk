@@ -9,6 +9,10 @@ android {
 }
 
 dependencies {
+    implementation(project(":embrace-test-common"))
+    implementation(project(":embrace-android-config-fakes"))
+    implementation(project(":embrace-android-delivery-fakes"))
+
     compileOnly(project(":embrace-android-core"))
     compileOnly(project(":embrace-android-infra"))
     compileOnly(project(":embrace-android-utils"))
@@ -18,10 +22,8 @@ dependencies {
     compileOnly(project(":embrace-android-delivery"))
     compileOnly(project(":embrace-internal-api"))
     compileOnly(project(":embrace-android-otel"))
-    compileOnly(project(":embrace-android-instrumentation-api"))
     compileOnly(project(":embrace-android-instrumentation-schema"))
-    compileOnly(project(":embrace-android-instrumentation-taps"))
-    api(project(":embrace-android-config-fakes"))
+    compileOnly(project(":embrace-android-instrumentation-api"))
 
     compileOnly(platform(libs.opentelemetry.bom))
     compileOnly(libs.opentelemetry.api)
@@ -31,7 +33,6 @@ dependencies {
     implementation(libs.junit)
     implementation(platform(libs.okhttp.bom))
     implementation(libs.okhttp)
-    implementation(libs.robolectric)
     implementation(libs.lifecycle.runtime)
 
     implementation(libs.opentelemetry.kotlin.api)

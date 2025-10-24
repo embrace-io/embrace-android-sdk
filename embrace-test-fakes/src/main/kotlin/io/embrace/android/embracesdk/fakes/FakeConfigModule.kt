@@ -19,5 +19,6 @@ class FakeConfigModule(
     override val remoteConfigSource: RemoteConfigSource = FakeRemoteConfigSource(),
     override val remoteConfigStore: FakeRemoteConfigStore = FakeRemoteConfigStore(),
     override val urlBuilder: ApiUrlBuilder = FakeApiUrlBuilder(),
-    override val okHttpClient: OkHttpClient = OkHttpClient(),
-) : ConfigModule
+) : ConfigModule {
+    override val okHttpClient: OkHttpClient by lazy { OkHttpClient() }
+}

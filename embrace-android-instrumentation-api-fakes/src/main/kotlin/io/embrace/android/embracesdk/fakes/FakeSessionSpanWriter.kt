@@ -6,12 +6,11 @@ import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 
 class FakeSessionSpanWriter : SessionSpanWriter {
-    val addedEvents = mutableListOf<SpanEventData>()
+    val addedEvents = mutableListOf<FakeSessionEvent>()
     val attributes = mutableMapOf<String, String>()
-    var sessionSpan: FakeEmbraceSdkSpan? = null
 
     override fun addSessionEvent(schemaType: SchemaType, startTimeMs: Long): Boolean {
-        addedEvents.add(SpanEventData(schemaType, startTimeMs))
+        addedEvents.add(FakeSessionEvent(schemaType, startTimeMs))
         return true
     }
 

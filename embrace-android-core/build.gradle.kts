@@ -47,6 +47,8 @@ dependencies {
     testImplementation(project(":embrace-android-features"))
     testImplementation(project(":embrace-test-fakes"))
     testImplementation(project(":embrace-test-common"))
+    testImplementation(project(":embrace-android-config-fakes"))
+    testImplementation(project(":embrace-android-delivery-fakes"))
     testImplementation(platform(libs.opentelemetry.bom))
     testImplementation(libs.opentelemetry.api)
     testImplementation(libs.opentelemetry.sdk)

@@ -36,7 +36,7 @@ internal class TapBreadcrumbDataSourceTest {
         )
         with(writer.addedEvents.single()) {
             assertEquals(EmbType.Ux.Tap, schemaType.telemetryType)
-            assertEquals(clock.now(), spanStartTimeMs)
+            assertEquals(clock.now(), startTimeMs)
             assertEquals(
                 mapOf(
                     "view.name" to "my-button-id",

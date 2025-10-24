@@ -1,8 +1,6 @@
 package io.embrace.android.embracesdk.fakes.behavior
 
 import io.embrace.android.embracesdk.internal.config.behavior.AutoDataCaptureBehavior
-import io.embrace.android.embracesdk.internal.config.instrumented.schema.EnabledFeatureConfig
-import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 
 class FakeAutoDataCaptureBehavior(
     private val thermalStatusCaptureEnabled: Boolean = true,
@@ -18,11 +16,6 @@ class FakeAutoDataCaptureBehavior(
     private val uiLoadTracingTraceAll: Boolean = true,
     private val endStartupWithAppReady: Boolean = false,
 ) : AutoDataCaptureBehavior {
-
-    override val local: EnabledFeatureConfig
-        get() = throw UnsupportedOperationException()
-    override val remote: RemoteConfig
-        get() = throw UnsupportedOperationException()
 
     override fun isThermalStatusCaptureEnabled(): Boolean = thermalStatusCaptureEnabled
     override fun isPowerSaveModeCaptureEnabled(): Boolean = powerSaveModeServiceEnabled

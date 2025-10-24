@@ -1,18 +1,15 @@
 package io.embrace.android.embracesdk.internal.config.behavior
 
 import io.embrace.android.embracesdk.internal.config.PatternCache
-import io.embrace.android.embracesdk.internal.config.UnimplementedConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 
 class DataCaptureEventBehaviorImpl(
-    override val remote: RemoteConfig?,
+    private val remote: RemoteConfig?,
 ) : DataCaptureEventBehavior {
 
     private companion object {
         private const val DEFAULT_INTERNAL_EXCEPTION_CAPTURE = true
     }
-
-    override val local: UnimplementedConfig = null
 
     private val patternCache = PatternCache()
 

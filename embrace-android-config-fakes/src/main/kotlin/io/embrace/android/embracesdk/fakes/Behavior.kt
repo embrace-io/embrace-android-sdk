@@ -38,7 +38,7 @@ private val behaviorThresholdCheck = BehaviorThresholdCheck {
 fun createAnrBehavior(
     thresholdCheck: BehaviorThresholdCheck = behaviorThresholdCheck,
     remoteCfg: RemoteConfig? = null,
-): AnrBehavior = AnrBehaviorImpl(thresholdCheck, InstrumentedConfigImpl, remoteCfg)
+): AnrBehavior = AnrBehaviorImpl(thresholdCheck, remoteCfg)
 
 /**
  * A [SessionBehaviorImpl] that returns default values.

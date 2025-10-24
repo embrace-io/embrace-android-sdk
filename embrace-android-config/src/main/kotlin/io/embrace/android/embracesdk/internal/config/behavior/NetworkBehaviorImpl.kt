@@ -10,8 +10,8 @@ import kotlin.math.min
  * Provides the behavior that functionality relating to network call capture should follow.
  */
 class NetworkBehaviorImpl(
-    override val local: InstrumentedConfig,
-    override val remote: RemoteConfig?,
+    private val local: InstrumentedConfig,
+    private val remote: RemoteConfig?,
     private val disabledUrlPatterns: List<String>? = null,
 ) : NetworkBehavior {
 

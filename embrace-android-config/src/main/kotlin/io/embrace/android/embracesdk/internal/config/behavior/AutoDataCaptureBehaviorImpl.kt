@@ -10,7 +10,7 @@ import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 class AutoDataCaptureBehaviorImpl(
     private val thresholdCheck: BehaviorThresholdCheck,
     local: InstrumentedConfig,
-    override val remote: RemoteConfig?,
+    private val remote: RemoteConfig?,
 ) : AutoDataCaptureBehavior {
 
     private companion object {
@@ -18,7 +18,7 @@ class AutoDataCaptureBehaviorImpl(
         const val UI_LOAD_REMOTE_ENABLED_DEFAULT = true
     }
 
-    override val local = local.enabledFeatures
+    private val local = local.enabledFeatures
 
     override fun isThermalStatusCaptureEnabled(): Boolean {
         return thresholdCheck.isBehaviorEnabled(remote?.dataConfig?.pctThermalStatusEnabled)

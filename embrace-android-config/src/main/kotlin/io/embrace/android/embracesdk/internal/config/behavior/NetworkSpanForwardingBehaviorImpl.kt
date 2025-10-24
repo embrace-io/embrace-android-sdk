@@ -18,8 +18,8 @@ class NetworkSpanForwardingBehaviorImpl(
         const val TRACEPARENT_HEADER_NAME: String = "traceparent"
     }
 
-    override val local: EnabledFeatureConfig = local.enabledFeatures
-    override val remote: NetworkSpanForwardingRemoteConfig? = remote?.networkSpanForwardingRemoteConfig
+    private val local: EnabledFeatureConfig = local.enabledFeatures
+    private val remote: NetworkSpanForwardingRemoteConfig? = remote?.networkSpanForwardingRemoteConfig
 
     override fun isNetworkSpanForwardingEnabled(): Boolean {
         return remote?.pctEnabled?.let { thresholdCheck.isBehaviorEnabled(it) }

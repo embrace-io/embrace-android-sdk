@@ -14,8 +14,8 @@ class BackgroundActivityBehaviorImpl(
     remote: RemoteConfig?,
 ) : BackgroundActivityBehavior {
 
-    override val local: EnabledFeatureConfig = local.enabledFeatures
-    override val remote: BackgroundActivityRemoteConfig? = remote?.backgroundActivityConfig
+    private val local: EnabledFeatureConfig = local.enabledFeatures
+    private val remote: BackgroundActivityRemoteConfig? = remote?.backgroundActivityConfig
 
     override fun isBackgroundActivityCaptureEnabled(): Boolean {
         return remote?.threshold?.let(thresholdCheck::isBehaviorEnabled)

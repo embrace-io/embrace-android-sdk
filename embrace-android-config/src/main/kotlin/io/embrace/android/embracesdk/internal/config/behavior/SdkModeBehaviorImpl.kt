@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.config.behavior
 
-import io.embrace.android.embracesdk.internal.config.UnimplementedConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 
 /**
@@ -8,7 +7,7 @@ import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
  */
 class SdkModeBehaviorImpl(
     private val thresholdCheck: BehaviorThresholdCheck,
-    override val remote: RemoteConfig?,
+    private val remote: RemoteConfig?,
 ) : SdkModeBehavior {
 
     private companion object {
@@ -18,8 +17,6 @@ class SdkModeBehaviorImpl(
          */
         private const val DEFAULT_THRESHOLD = 100
     }
-
-    override val local: UnimplementedConfig = null
 
     /**
      * The % of devices that should be enabled.

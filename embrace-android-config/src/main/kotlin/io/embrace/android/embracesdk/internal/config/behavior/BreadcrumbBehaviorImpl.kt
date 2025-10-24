@@ -10,7 +10,7 @@ import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
  */
 class BreadcrumbBehaviorImpl(
     local: InstrumentedConfig,
-    override val remote: RemoteConfig?,
+    private val remote: RemoteConfig?,
 ) : BreadcrumbBehavior {
 
     private companion object {
@@ -21,7 +21,7 @@ class BreadcrumbBehaviorImpl(
         const val DEFAULT_BREADCRUMB_LIMIT = 100
     }
 
-    override val local: EnabledFeatureConfig = local.enabledFeatures
+    private val local: EnabledFeatureConfig = local.enabledFeatures
 
     override fun getCustomBreadcrumbLimit(): Int =
         remote?.uiConfig?.breadcrumbs ?: DEFAULT_BREADCRUMB_LIMIT

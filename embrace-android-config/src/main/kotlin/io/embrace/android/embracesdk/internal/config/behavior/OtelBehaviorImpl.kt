@@ -12,8 +12,8 @@ class OtelBehaviorImpl(
     remote: RemoteConfig?,
 ) : OtelBehavior {
 
-    override val local = local.enabledFeatures
-    override val remote = remote?.otelKotlinSdkConfig
+    private val local = local.enabledFeatures
+    private val remote = remote?.otelKotlinSdkConfig
 
     override fun shouldUseKotlinSdk(): Boolean {
         return thresholdCheck.isBehaviorEnabled(remote?.pctEnabled) ?: local.isOtelKotlinSdkEnabled()

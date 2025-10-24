@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.network.logging
 
-import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.internal.arch.datasource.LogDataSourceImpl
+import io.embrace.android.embracesdk.internal.arch.destination.LogSeverity
 import io.embrace.android.embracesdk.internal.arch.destination.LogWriter
 import io.embrace.android.embracesdk.internal.arch.limits.NoopLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
@@ -47,7 +47,7 @@ internal class NetworkCaptureDataSourceImpl(
                 errorMessage = networkCapturedCall.errorMessage,
                 encryptedPayload = networkCapturedCall.encryptedPayload
             ),
-            Severity.INFO,
+            LogSeverity.INFO,
             networkCapturedCall.networkId
         )
     }

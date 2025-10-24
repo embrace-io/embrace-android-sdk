@@ -1,9 +1,9 @@
 package io.embrace.android.embracesdk.internal.capture.crash
 
-import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.internal.arch.attrs.embAndroidThreads
 import io.embrace.android.embracesdk.internal.arch.attrs.embCrashNumber
 import io.embrace.android.embracesdk.internal.arch.datasource.LogDataSourceImpl
+import io.embrace.android.embracesdk.internal.arch.destination.LogSeverity
 import io.embrace.android.embracesdk.internal.arch.destination.LogWriter
 import io.embrace.android.embracesdk.internal.arch.limits.NoopLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
@@ -107,7 +107,7 @@ internal class CrashDataSourceImpl(
                 )
             }
 
-            logWriter.addLog(getSchemaType(crashAttributes), Severity.ERROR, "")
+            logWriter.addLog(getSchemaType(crashAttributes), LogSeverity.ERROR, "")
 
             // finally, notify other services that need to perform tear down
             handlers.forEach { it.value?.handleCrash(crashId) }

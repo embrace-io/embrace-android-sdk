@@ -4,9 +4,9 @@ import android.app.ActivityManager
 import android.app.ApplicationExitInfo
 import android.os.Build.VERSION_CODES
 import androidx.annotation.RequiresApi
-import io.embrace.android.embracesdk.Severity.INFO
 import io.embrace.android.embracesdk.internal.arch.datasource.LogDataSourceImpl
 import io.embrace.android.embracesdk.internal.arch.datasource.NoInputValidation
+import io.embrace.android.embracesdk.internal.arch.destination.LogSeverity
 import io.embrace.android.embracesdk.internal.arch.destination.LogWriter
 import io.embrace.android.embracesdk.internal.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType.AeiLog
@@ -84,7 +84,7 @@ internal class AeiDataSourceImpl(
                             crashNumber = crashNumber,
                             aeiNumber = aeiNumber
                         )
-                        addLog(schemaType, INFO, obj.trace ?: "")
+                        addLog(schemaType, LogSeverity.INFO, obj.trace ?: "")
                     }
 
                     // always count AEI as delivered once we process it & submit to the OTel logging system, or discard

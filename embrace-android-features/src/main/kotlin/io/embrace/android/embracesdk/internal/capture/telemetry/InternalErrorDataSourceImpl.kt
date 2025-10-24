@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.internal.capture.telemetry
 
-import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.internal.arch.datasource.LogDataSourceImpl
 import io.embrace.android.embracesdk.internal.arch.datasource.NoInputValidation
+import io.embrace.android.embracesdk.internal.arch.destination.LogSeverity
 import io.embrace.android.embracesdk.internal.arch.destination.LogWriter
 import io.embrace.android.embracesdk.internal.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
@@ -25,7 +25,7 @@ internal class InternalErrorDataSourceImpl(
     override fun trackInternalError(type: InternalErrorType, throwable: Throwable) {
         captureData(NoInputValidation) {
             val schemaType = SchemaType.InternalError(throwable)
-            addLog(schemaType, Severity.ERROR, "", true)
+            addLog(schemaType, LogSeverity.ERROR, "", true)
         }
     }
 }

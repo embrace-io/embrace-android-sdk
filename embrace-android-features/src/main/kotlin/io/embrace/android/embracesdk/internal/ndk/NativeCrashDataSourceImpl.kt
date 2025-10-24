@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.internal.ndk
 
-import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.internal.arch.attrs.embCrashNumber
 import io.embrace.android.embracesdk.internal.arch.datasource.LogDataSourceImpl
+import io.embrace.android.embracesdk.internal.arch.destination.LogSeverity
 import io.embrace.android.embracesdk.internal.arch.destination.LogWriter
 import io.embrace.android.embracesdk.internal.arch.limits.NoopLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
@@ -82,7 +82,7 @@ internal class NativeCrashDataSourceImpl(
 
         logWriter.addLog(
             schemaType = SchemaType.NativeCrash(crashAttributes),
-            severity = Severity.ERROR,
+            severity = LogSeverity.ERROR,
             message = "",
             addCurrentSessionInfo = false,
             timestampMs = nativeCrash.timestamp

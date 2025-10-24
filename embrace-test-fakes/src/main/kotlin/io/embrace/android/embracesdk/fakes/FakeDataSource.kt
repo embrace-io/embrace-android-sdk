@@ -3,13 +3,13 @@ package io.embrace.android.embracesdk.fakes
 import android.content.ComponentCallbacks2
 import android.content.Context
 import android.content.res.Configuration
-import io.embrace.android.embracesdk.internal.arch.datasource.EventDataSource
+import io.embrace.android.embracesdk.internal.arch.datasource.DataSource
 import io.embrace.android.embracesdk.internal.arch.destination.SessionSpanWriter
 import io.embrace.android.embracesdk.internal.arch.destination.SpanAttributeData
 
 class FakeDataSource(
     private val ctx: Context,
-) : EventDataSource, ComponentCallbacks2 {
+) : DataSource<SessionSpanWriter>, ComponentCallbacks2 {
 
     var enableDataCaptureCount: Int = 0
     var disableDataCaptureCount: Int = 0

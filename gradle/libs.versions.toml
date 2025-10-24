@@ -36,6 +36,11 @@ apktoolLib = "2.11.1"
 bundletool = "1.18.2"
 vanniktechMavenPublish = "0.34.0"
 androidxBenchmark = "1.4.1"
+jvmTargetCompatibility = "11"
+kotlinCoreLibrariesVersion = "2.0.21"
+minCompileSdk = "34"
+compileSdk = "36"
+minSdk = "21"
 
 [libraries]
 binary-compatibility-validator = { module = "org.jetbrains.kotlinx:binary-compatibility-validator", version.ref = "binaryCompatibilityValidator" }

@@ -20,6 +20,7 @@ include(
     ":embrace-android-fcm",
     ":embrace-android-compose",
     ":embrace-android-otel",
+    ":embrace-android-otel-fakes",
     ":embrace-android-otel-java",
     ":embrace-lint",
     ":embrace-test-common",

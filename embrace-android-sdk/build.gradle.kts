@@ -105,6 +105,7 @@ dependencies {
     testImplementation(project(":embrace-test-common"))
     testImplementation(project(":embrace-android-config-fakes"))
     testImplementation(project(":embrace-android-delivery-fakes"))
+    testImplementation(project(":embrace-android-otel-fakes"))
     testImplementation(project(":embrace-android-instrumentation-huc"))
     testImplementation(libs.protobuf.java)
     testImplementation(libs.protobuf.java.util)

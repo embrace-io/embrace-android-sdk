@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.anr
 
-import io.embrace.android.embracesdk.arch.assertSuccessful
+import io.embrace.android.embracesdk.assertions.assertSuccessful
 import io.embrace.android.embracesdk.fakes.FakeAnrService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule

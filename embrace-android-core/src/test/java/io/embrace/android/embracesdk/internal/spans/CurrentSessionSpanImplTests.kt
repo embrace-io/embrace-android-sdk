@@ -1,9 +1,9 @@
 package io.embrace.android.embracesdk.internal.spans
 
-import io.embrace.android.embracesdk.arch.assertError
-import io.embrace.android.embracesdk.arch.assertHasEmbraceAttribute
-import io.embrace.android.embracesdk.arch.assertIsType
 import io.embrace.android.embracesdk.assertions.assertEmbraceSpanData
+import io.embrace.android.embracesdk.assertions.assertError
+import io.embrace.android.embracesdk.assertions.assertHasEmbraceAttribute
+import io.embrace.android.embracesdk.assertions.assertIsType
 import io.embrace.android.embracesdk.assertions.findEventOfType
 import io.embrace.android.embracesdk.assertions.validatePreviousSessionLink
 import io.embrace.android.embracesdk.assertions.validateSystemLink

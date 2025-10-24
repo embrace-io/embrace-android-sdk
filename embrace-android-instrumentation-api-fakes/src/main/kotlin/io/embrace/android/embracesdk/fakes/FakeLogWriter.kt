@@ -6,7 +6,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 
 class FakeLogWriter : LogWriter {
 
-    val logEvents: MutableList<LogEventData> = mutableListOf()
+    val logEvents: MutableList<FakeLogData> = mutableListOf()
 
     override fun addLog(
         schemaType: SchemaType,
@@ -16,6 +16,6 @@ class FakeLogWriter : LogWriter {
         addCurrentSessionInfo: Boolean,
         timestampMs: Long?,
     ) {
-        logEvents.add(LogEventData(schemaType, severity, message))
+        logEvents.add(FakeLogData(schemaType, severity, message))
     }
 }

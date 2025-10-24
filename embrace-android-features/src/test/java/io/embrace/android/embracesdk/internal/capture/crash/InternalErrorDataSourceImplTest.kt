@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.capture.crash
 
+import io.embrace.android.embracesdk.fakes.FakeLogData
 import io.embrace.android.embracesdk.fakes.FakeLogWriter
-import io.embrace.android.embracesdk.fakes.LogEventData
 import io.embrace.android.embracesdk.internal.arch.destination.LogSeverity
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.capture.telemetry.InternalErrorDataSourceImpl
@@ -58,7 +58,7 @@ internal class InternalErrorDataSourceImplTest {
         assertEquals(10, logWriter.logEvents.size)
     }
 
-    private fun assertInternalErrorLogged(data: LogEventData): Map<String, String> {
+    private fun assertInternalErrorLogged(data: FakeLogData): Map<String, String> {
         assertEquals(LogSeverity.ERROR, data.severity)
         assertEquals("", data.message)
         assertEquals(EmbType.System.InternalError, data.schemaType.telemetryType)

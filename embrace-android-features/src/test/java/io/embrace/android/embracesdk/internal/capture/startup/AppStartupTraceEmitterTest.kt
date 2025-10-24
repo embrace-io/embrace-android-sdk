@@ -2,8 +2,8 @@ package io.embrace.android.embracesdk.internal.capture.startup
 
 import android.os.Build.VERSION_CODES
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.arch.assertDoesNotHaveEmbraceAttribute
-import io.embrace.android.embracesdk.arch.assertError
+import io.embrace.android.embracesdk.assertions.assertDoesNotHaveEmbraceAttribute
+import io.embrace.android.embracesdk.assertions.assertError
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeClock.Companion.DEFAULT_FAKE_CURRENT_TIME
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger

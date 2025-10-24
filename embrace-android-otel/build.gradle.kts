@@ -28,8 +28,8 @@ dependencies {
     implementation(libs.opentelemetry.java.aliases)
 
     testImplementation(platform(libs.opentelemetry.bom))
-    testImplementation(project(":embrace-test-fakes"))
     testImplementation(project(":embrace-test-common"))
+    testImplementation(project(":embrace-android-otel-fakes"))
     testImplementation(libs.opentelemetry.api)
     testImplementation(libs.opentelemetry.sdk)
     testImplementation(libs.robolectric)

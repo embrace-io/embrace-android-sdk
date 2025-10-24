@@ -1,8 +1,5 @@
 package io.embrace.android.embracesdk.assertions
 
-import io.embrace.android.embracesdk.arch.assertError
-import io.embrace.android.embracesdk.arch.assertIsPrivateSpan
-import io.embrace.android.embracesdk.arch.assertNotPrivateSpan
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue

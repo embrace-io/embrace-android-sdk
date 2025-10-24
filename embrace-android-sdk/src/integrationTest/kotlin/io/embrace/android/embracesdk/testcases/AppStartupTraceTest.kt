@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.testcases
 
 import android.os.Build
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.arch.assertError
+import io.embrace.android.embracesdk.assertions.assertError
 import io.embrace.android.embracesdk.assertions.findSpansOfType
 import io.embrace.android.embracesdk.fakes.FakeActivity
 import io.embrace.android.embracesdk.fakes.FakeSplashScreenActivity

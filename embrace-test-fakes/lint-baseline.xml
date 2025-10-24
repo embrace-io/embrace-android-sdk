@@ -233,80 +233,6 @@
     </issue>
 
     <issue
-        id="InvalidPackage"
-        message="Invalid package reference in org.bouncycastle:bcprov-jdk18on; not included in Android: `javax.naming.directory`. Referenced from `org.bouncycastle.jce.provider.CrlCache`.">
-        <location
-            file="$GRADLE_USER_HOME/caches/modules-2/files-2.1/org.bouncycastle/bcprov-jdk18on/1.77/2cc971b6c20949c1ff98d1a4bc741ee848a09523/bcprov-jdk18on-1.77.jar"/>
-    </issue>
-
-    <issue
-        id="InvalidPackage"
-        message="Invalid package reference in org.bouncycastle:bcprov-jdk18on; not included in Android: `javax.naming`. Referenced from `org.bouncycastle.jce.provider.X509LDAPCertStoreSpi`.">
-        <location
-            file="$GRADLE_USER_HOME/caches/modules-2/files-2.1/org.bouncycastle/bcprov-jdk18on/1.77/2cc971b6c20949c1ff98d1a4bc741ee848a09523/bcprov-jdk18on-1.77.jar"/>
-    </issue>
-
-    <issue
-        id="InvalidPackage"
-        message="Invalid package reference in org.robolectric:resources; not included in Android: `javax.xml.stream`. Referenced from `org.robolectric.res.NodeHandler`.">
-        <location
-            file="$GRADLE_USER_HOME/caches/modules-2/files-2.1/org.robolectric/resources/4.12.1/27d487d37469973f0f84e56706730db2705aa6b8/resources-4.12.1.jar"/>
-    </issue>
-
-    <issue
-        id="InvalidPackage"
-        message="Invalid package reference in org.robolectric:shadows-framework; not included in Android: `java.awt.geom`. Referenced from `org.robolectric.shadows.CachedPathIteratorFactory`.">
-        <location
-            file="$GRADLE_USER_HOME/caches/modules-2/files-2.1/org.robolectric/shadows-framework/4.12.1/356321ebb0ef309b3fbcb9865b0e682287abfd0f/shadows-framework-4.12.1.jar"/>
-    </issue>
-
-    <issue
-        id="InvalidPackage"
-        message="Invalid package reference in org.robolectric:shadows-framework; not included in Android: `java.awt.image`. Referenced from `org.robolectric.shadows.AutoValue_ImageUtil_RobolectricBufferedImage`.">
-        <location
-            file="$GRADLE_USER_HOME/caches/modules-2/files-2.1/org.robolectric/shadows-framework/4.12.1/356321ebb0ef309b3fbcb9865b0e682287abfd0f/shadows-framework-4.12.1.jar"/>
-    </issue>
-
-    <issue
-        id="InvalidPackage"
-        message="Invalid package reference in org.robolectric:shadows-framework; not included in Android: `java.awt`. Referenced from `org.robolectric.shadows.ImageUtil`.">
-        <location
-            file="$GRADLE_USER_HOME/caches/modules-2/files-2.1/org.robolectric/shadows-framework/4.12.1/356321ebb0ef309b3fbcb9865b0e682287abfd0f/shadows-framework-4.12.1.jar"/>
-    </issue>
-
-    <issue
-        id="InvalidPackage"
-        message="Invalid package reference in org.robolectric:shadows-framework; not included in Android: `javax.imageio.stream`. Referenced from `org.robolectric.shadows.ImageUtil`.">
-        <location
-            file="$GRADLE_USER_HOME/caches/modules-2/files-2.1/org.robolectric/shadows-framework/4.12.1/356321ebb0ef309b3fbcb9865b0e682287abfd0f/shadows-framework-4.12.1.jar"/>
-    </issue>
-
-    <issue
-        id="InvalidPackage"
-        message="Invalid package reference in org.robolectric:shadows-framework; not included in Android: `javax.imageio`. Referenced from `org.robolectric.shadows.ImageUtil`.">
-        <location
-            file="$GRADLE_USER_HOME/caches/modules-2/files-2.1/org.robolectric/shadows-framework/4.12.1/356321ebb0ef309b3fbcb9865b0e682287abfd0f/shadows-framework-4.12.1.jar"/>
-    </issue>
-
-    <issue
-        id="InvalidPackage"
-        message="Invalid package reference in org.robolectric:utils; not included in Android: `javax.inject`. Referenced from `org.robolectric.util.inject.Injector`.">
-        <location
-            file="$GRADLE_USER_HOME/caches/modules-2/files-2.1/org.robolectric/utils/4.12.1/d5a680f8c337bea14ef9a410e30e683c11e4b429/utils-4.12.1.jar"/>
-    </issue>
-
-    <issue
-        id="NewApi"
-        message="Call requires API level 24, or core library desugaring (current min is 21): `java.util.Collection#removeIf`"
-        errorLine1="            latches.removeIf { it.count == 0L }"
-        errorLine2="                    ~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/embrace/android/embracesdk/fakes/FakeOtelJavaSpanExporter.kt"
-            line="24"
-            column="21"/>
-    </issue>
-
-    <issue
         id="NewApi"
         message="Call requires API level 26, or core library desugaring (current min is 21): `java.nio.file.Files#createTempDirectory`"
         errorLine1="        Files.createTempDirectory(&quot;cache_temp&quot;).toFile()"
@@ -348,28 +274,6 @@
             file="src/main/kotlin/io/embrace/android/embracesdk/fakes/FakeStorageService.kt"
             line="16"
             column="49"/>
-    </issue>
-
-    <issue
-        id="SyntheticAccessor"
-        message="Access to `private` method `newTraceRootContext` of class `Companion` requires synthetic accessor"
-        errorLine1="    private var spanContext: OtelJavaSpanContext = newTraceRootContext(),"
-        errorLine2="                                                   ~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/embrace/android/embracesdk/fakes/FakeSpanData.kt"
-            line="29"
-            column="52"/>
-    </issue>
-
-    <issue
-        id="SyntheticAccessor"
-        message="Access to `private` method `newTraceRootContext` of class `Companion` requires synthetic accessor"
-        errorLine1="    private var spanContext: OtelJavaSpanContext = newTraceRootContext(),"
-        errorLine2="                                                   ~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/embrace/android/embracesdk/fakes/FakeSpanData.kt"
-            line="29"
-            column="52"/>
     </issue>
 
 </issues>

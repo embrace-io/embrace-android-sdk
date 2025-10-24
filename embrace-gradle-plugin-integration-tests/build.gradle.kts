@@ -6,11 +6,6 @@ plugins {
     id("io.embrace.internal.build-logic")
 }
 
-embrace {
-    productionModule.set(false)
-    jvmTarget.set(JavaVersion.VERSION_11)
-}
-
 dependencies {
     implementation(gradleApi())
     implementation(gradleTestKit())
@@ -24,10 +19,11 @@ dependencies {
     implementation(libs.junit)
     implementation(platform(libs.okhttp.bom))
     implementation(libs.mockwebserver)
-    testImplementation(project(":embrace-test-common"))
     implementation(libs.zstd.jni)
     implementation(libs.bundletool)
     implementation(libs.apktool.lib)
+
+    testImplementation(project(":embrace-test-common"))
 }
 
 // Ensure all publishable modules are published to maven local before running integration tests

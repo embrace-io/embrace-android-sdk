@@ -1,11 +1,8 @@
 plugins {
     id("com.android.library")
     kotlin("android")
-
     id("io.embrace.internal.build-logic")
-}
-
-embrace {
+    id("com.vanniktech.maven.publish")
 }
 
 description = "Embrace Android SDK: Core"
@@ -46,14 +43,18 @@ dependencies {
     implementation(libs.opentelemetry.kotlin.semconv)
     implementation(libs.opentelemetry.java.aliases)
 
-    testImplementation(project(":embrace-android-payload"))
     testImplementation(project(":embrace-android-api"))
     testImplementation(project(":embrace-android-features"))
+    testImplementation(project(":embrace-test-fakes"))
+    testImplementation(project(":embrace-test-common"))
     testImplementation(platform(libs.opentelemetry.bom))
     testImplementation(libs.opentelemetry.api)
     testImplementation(libs.opentelemetry.sdk)
     testImplementation(libs.lifecycle.runtime)
     testImplementation(libs.lifecycle.process)
     testImplementation(libs.lifecycle.testing)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.mockwebserver)
+    testImplementation(libs.mockk)
     testImplementation(kotlin("reflect"))
 }

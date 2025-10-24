@@ -2,10 +2,7 @@ plugins {
     id("com.android.library")
     kotlin("android")
     id("io.embrace.internal.build-logic")
-}
-
-embrace {
-    containsPublicApi.set(true)
+    id("com.vanniktech.maven.publish")
 }
 
 description = "Embrace Android SDK: API"
@@ -17,4 +14,5 @@ android {
 dependencies {
     compileOnly(libs.opentelemetry.kotlin.api)
     implementation(libs.androidx.annotation)
+    lintChecks(project(":embrace-lint"))
 }

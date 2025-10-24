@@ -2,9 +2,7 @@ plugins {
     id("com.android.library")
     kotlin("android")
     id("io.embrace.internal.build-logic")
-}
-
-embrace {
+    id("com.vanniktech.maven.publish")
 }
 
 description = "Embrace Android SDK: OTel"
@@ -22,15 +20,17 @@ dependencies {
     testImplementation(project(":embrace-android-payload"))
     testImplementation(project(":embrace-android-api"))
 
-
-    testImplementation(platform(libs.opentelemetry.bom))
-    testImplementation(libs.opentelemetry.api)
-    testImplementation(libs.opentelemetry.sdk)
-
     implementation(libs.opentelemetry.kotlin.api)
     implementation(libs.opentelemetry.kotlin.api.ext)
     implementation(libs.opentelemetry.kotlin.sdk)
     implementation(libs.opentelemetry.kotlin.compat)
     implementation(libs.opentelemetry.kotlin.semconv)
     implementation(libs.opentelemetry.java.aliases)
+
+    testImplementation(platform(libs.opentelemetry.bom))
+    testImplementation(project(":embrace-test-fakes"))
+    testImplementation(libs.opentelemetry.api)
+    testImplementation(libs.opentelemetry.sdk)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.mockk)
 }

@@ -2,6 +2,7 @@ plugins {
     id("com.android.library")
     kotlin("android")
     id("io.embrace.internal.build-logic")
+    id("com.vanniktech.maven.publish")
 }
 
 description = "Embrace Android SDK: OkHttp3"
@@ -21,5 +22,8 @@ dependencies {
     testImplementation(project(":embrace-android-infra"))
     testImplementation(project(":embrace-android-sdk"))
     testImplementation(project(":embrace-internal-api"))
+    testImplementation(libs.mockk)
+    testImplementation(libs.mockwebserver)
+
     implementation(libs.androidx.annotation)
 }

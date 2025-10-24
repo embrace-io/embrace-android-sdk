@@ -4,6 +4,9 @@ import com.vanniktech.maven.publish.MavenPublishBaseExtension
 import org.gradle.api.Project
 
 fun Project.configurePublishing() {
+    if (disableDefaultPublishConfig()) {
+        return
+    }
     project.pluginManager.withPlugin("com.vanniktech.maven.publish") {
         val mavenPublishing = project.extensions.getByType(MavenPublishBaseExtension::class.java)
         mavenPublishing.apply {

@@ -16,16 +16,16 @@ fun Project.configureDetekt() {
             project.file("${project.projectDir}/config/detekt/baseline.xml") // suppress pre-existing issues
     }
     project.tasks.withType(Detekt::class.java).configureEach {
-        jvmTarget = "1.8"
+        jvmTarget = "11"
         reports {
-            html.required.set(true)
+            html.required.set(false)
             xml.required.set(false)
-            txt.required.set(true)
+            txt.required.set(false)
             sarif.required.set(false)
             md.required.set(false)
         }
     }
     project.tasks.withType(DetektCreateBaselineTask::class.java).configureEach {
-        jvmTarget = "1.8"
+        jvmTarget = "11"
     }
 }

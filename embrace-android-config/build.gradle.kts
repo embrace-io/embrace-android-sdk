@@ -1,9 +1,7 @@
 plugins {
     kotlin("jvm")
     id("io.embrace.internal.build-logic")
-}
-
-embrace {
+    id("com.vanniktech.maven.publish")
 }
 
 dependencies {

@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.core.BuildConfig
 import io.embrace.android.embracesdk.internal.EmbraceInternalApi
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
 import io.embrace.android.embracesdk.internal.FlutterInternalInterface
+import io.embrace.android.embracesdk.internal.InstrumentationInstallArgsImpl
 import io.embrace.android.embracesdk.internal.InternalInterfaceApi
 import io.embrace.android.embracesdk.internal.ReactNativeInternalInterface
 import io.embrace.android.embracesdk.internal.UnityInternalInterface
@@ -33,6 +34,7 @@ import io.embrace.android.embracesdk.internal.api.delegate.SdkStateApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.SessionApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.UserApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.ViewTrackingApiDelegate
+import io.embrace.android.embracesdk.internal.arch.InstrumentationProvider
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.clock.NormalizedIntervalClock
 import io.embrace.android.embracesdk.internal.delivery.storage.StorageLocation
@@ -48,6 +50,7 @@ import io.embrace.android.embracesdk.internal.utils.EmbTrace.end
 import io.embrace.android.embracesdk.internal.utils.EmbTrace.start
 import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.spans.TracingApi
+import java.util.ServiceLoader
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -174,6 +177,8 @@ internal class EmbraceImpl(
         val startMsg = "Embrace SDK version ${BuildConfig.VERSION_NAME} started" + appId?.run { " for appId =  $this" }
         logger.logInfo(startMsg)
 
+        registerInstrumentation()
+
         val endTimeMs = clock.now()
         sdkCallChecker.started.set(true)
         end()
@@ -231,6 +236,27 @@ internal class EmbraceImpl(
         worker.submit { // potentially trigger first delivery attempt by firing network status callback
             registerDeliveryNetworkListener()
             bootstrapper.deliveryModule.schedulingService?.onPayloadIntake()
+        }
+    }
+
+    /**
+     * Loads instrumentation via SPI and registers it with the SDK.
+     */
+    private fun registerInstrumentation() {
+        val loader = ServiceLoader.load(InstrumentationProvider::class.java)
+        val instrumentationContext = InstrumentationInstallArgsImpl(
+            bootstrapper.configModule.configService,
+            bootstrapper.openTelemetryModule.currentSessionSpan,
+            bootstrapper.initModule.logger,
+            bootstrapper.initModule.clock
+        )
+        loader.forEach { provider ->
+            try {
+                val dataSourceState = provider.register(instrumentationContext)
+                bootstrapper.dataSourceModule.embraceFeatureRegistry.add(dataSourceState)
+            } catch (exc: Throwable) {
+                logger.trackInternalError(InternalErrorType.INSTRUMENTATION_REG_FAIL, exc)
+            }
         }
     }
 

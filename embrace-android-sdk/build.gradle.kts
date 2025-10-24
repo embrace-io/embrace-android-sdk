@@ -75,6 +75,9 @@ dependencies {
     implementation(project(":embrace-android-instrumentation-schema"))
     implementation(project(":embrace-android-instrumentation-api"))
 
+    // automatically included instrumentation
+    implementation(project(":embrace-android-instrumentation-taps"))
+
     implementation(libs.opentelemetry.java.aliases)
 
     // lifecycle

@@ -16,18 +16,22 @@ fun Project.configureJvmWarningsAsErrors() {
 
 fun Project.configureCompilers() {
     val target = JvmTarget.JVM_11
+    val compatVersion = resolveVersionFromCatalog("jvmTargetCompatibility")
+
     // ensure the Kotlin + Java compilers both use the same language level.
     project.tasks.withType(JavaCompile::class.java).configureEach {
-        sourceCompatibility = "11"
-        targetCompatibility = "11"
+        sourceCompatibility = compatVersion
+        targetCompatibility = compatVersion
     }
 
-    val coreLibrariesVersion = "2.0.21"
+    val coreLibrariesVersion = resolveVersionFromCatalog("kotlinCoreLibrariesVersion")
+    val minKotlinVersion = KotlinVersion.KOTLIN_2_0
+
     when (val kotlin = project.extensions.getByName("kotlin")) {
         is KotlinJvmProjectExtension -> {
             kotlin.compilerOptions {
-                apiVersion.set(KotlinVersion.KOTLIN_2_0)
-                languageVersion.set(KotlinVersion.KOTLIN_2_0)
+                apiVersion.set(minKotlinVersion)
+                languageVersion.set(minKotlinVersion)
                 jvmTarget.set(target)
                 allWarningsAsErrors.set(true)
             }
@@ -36,9 +40,9 @@ fun Project.configureCompilers() {
 
         is KotlinAndroidExtension -> {
             kotlin.compilerOptions {
-                apiVersion.set(KotlinVersion.KOTLIN_2_0)
-                languageVersion.set(KotlinVersion.KOTLIN_2_0)
-                jvmTarget.set(JvmTarget.JVM_11)
+                apiVersion.set(minKotlinVersion)
+                languageVersion.set(minKotlinVersion)
+                jvmTarget.set(target)
                 allWarningsAsErrors.set(true)
             }
             kotlin.coreLibrariesVersion = coreLibrariesVersion

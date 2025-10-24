@@ -34,7 +34,7 @@ class BuildPlugin : Plugin<Project> {
     private fun onAgpPluginApplied(project: Project) {
         applyCommonSettings(project)
         val android = project.extensions.getByType(LibraryExtension::class.java)
-        android.configureAndroidCompileOptions()
+        android.configureAndroidCompileOptions(project)
         android.configureLint(project)
         project.configureAndroidProductionModule(android)
     }

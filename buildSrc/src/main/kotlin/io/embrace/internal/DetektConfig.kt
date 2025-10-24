@@ -7,6 +7,7 @@ import org.gradle.api.Project
 
 fun Project.configureDetekt() {
     val detekt = project.extensions.getByType(DetektExtension::class.java)
+    val targetVersion = resolveVersionFromCatalog("jvmTargetCompatibility")
 
     detekt.apply {
         buildUponDefaultConfig = true
@@ -16,7 +17,7 @@ fun Project.configureDetekt() {
             project.file("${project.projectDir}/config/detekt/baseline.xml") // suppress pre-existing issues
     }
     project.tasks.withType(Detekt::class.java).configureEach {
-        jvmTarget = "11"
+        jvmTarget = targetVersion
         reports {
             html.required.set(false)
             xml.required.set(false)
@@ -26,6 +27,6 @@ fun Project.configureDetekt() {
         }
     }
     project.tasks.withType(DetektCreateBaselineTask::class.java).configureEach {
-        jvmTarget = "11"
+        jvmTarget = targetVersion
     }
 }

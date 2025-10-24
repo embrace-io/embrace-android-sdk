@@ -13,7 +13,7 @@ fun Project.configureAndroidProductionModule(android: LibraryExtension) {
 
         defaultConfig {
             testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-            aarMetadata.minCompileSdk = 34
+            aarMetadata.minCompileSdk = resolveVersionFromCatalog("minCompileSdk").toInt()
         }
 
         configureTestOptions(this)

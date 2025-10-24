@@ -2,13 +2,15 @@ package io.embrace.internal
 
 import com.android.build.api.dsl.LibraryExtension
 import org.gradle.api.JavaVersion
+import org.gradle.api.Project
 
-fun LibraryExtension.configureAndroidCompileOptions() {
-    compileSdk = 36
-    defaultConfig.minSdk = 21
+fun LibraryExtension.configureAndroidCompileOptions(project: Project) {
+    compileSdk = project.resolveVersionFromCatalog("compileSdk").toInt()
+    defaultConfig.minSdk = project.resolveVersionFromCatalog("minSdk").toInt()
+    val javaVersion = JavaVersion.VERSION_11
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = javaVersion
+        targetCompatibility = javaVersion
     }
 }

@@ -1,14 +1,11 @@
 plugins {
     kotlin("jvm")
-    alias(libs.plugins.google.ksp)
     id("io.embrace.internal.build-logic")
 }
 
 dependencies {
+    implementation(project(":embrace-test-common"))
+    implementation(project(":embrace-android-delivery"))
     implementation(project(":embrace-android-payload"))
     implementation(project(":embrace-android-infra"))
-    implementation(platform(libs.okhttp.bom))
-    implementation(libs.mockwebserver)
-    implementation(libs.moshi)
-    ksp(libs.moshi.kotlin.codegen)
 }

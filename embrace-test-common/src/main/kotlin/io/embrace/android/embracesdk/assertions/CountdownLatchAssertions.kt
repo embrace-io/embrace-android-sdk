@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.assertions
 
-import io.embrace.android.embracesdk.internal.utils.Provider
 import org.junit.Assert.assertEquals
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
@@ -16,7 +15,7 @@ fun CountDownLatch.assertCountedDown(waitTimeMs: Long = 1000L) {
  * elapses. Otherwise, throws [TimeoutException]
  */
 inline fun <T, R> returnIfConditionMet(
-    desiredValueSupplier: Provider<T>,
+    desiredValueSupplier: () -> T,
     waitTimeMs: Int = 1000,
     checkIntervalMs: Int = 10,
     dataProvider: () -> R,

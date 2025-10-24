@@ -36,6 +36,7 @@ dependencies {
     testImplementation(project(":embrace-android-otel"))
     testImplementation(project(":embrace-test-fakes"))
     testImplementation(project(":embrace-test-common"))
+    testImplementation(project(":embrace-android-config-fakes"))
     testImplementation(libs.robolectric)
     testImplementation(platform(libs.opentelemetry.bom))
     testImplementation(libs.opentelemetry.api)

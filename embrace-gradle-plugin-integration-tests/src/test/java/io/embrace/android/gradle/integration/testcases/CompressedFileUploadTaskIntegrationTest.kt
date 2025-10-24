@@ -1,14 +1,14 @@
 package io.embrace.android.gradle.integration.testcases
 
+import io.embrace.android.embracesdk.FormPart
+import io.embrace.android.embracesdk.validateBodyApiToken
+import io.embrace.android.embracesdk.validateBodyAppId
+import io.embrace.android.embracesdk.validateBodyBuildId
+import io.embrace.android.embracesdk.validateMappingFile
 import io.embrace.android.gradle.integration.framework.AssertionInterface
 import io.embrace.android.gradle.integration.framework.IntegrationTestDefaults
 import io.embrace.android.gradle.integration.framework.PluginIntegrationTestRule
 import io.embrace.android.gradle.integration.framework.file
-import io.embrace.android.gradle.network.FormPart
-import io.embrace.android.gradle.network.validateBodyApiToken
-import io.embrace.android.gradle.network.validateBodyAppId
-import io.embrace.android.gradle.network.validateBodyBuildId
-import io.embrace.android.gradle.network.validateMappingFile
 import io.embrace.android.gradle.plugin.network.EmbraceEndpoint
 import org.gradle.testkit.runner.TaskOutcome
 import org.junit.Assert.assertEquals

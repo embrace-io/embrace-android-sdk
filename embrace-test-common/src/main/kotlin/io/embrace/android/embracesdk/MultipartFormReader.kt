@@ -1,4 +1,4 @@
-package io.embrace.android.gradle.network
+package io.embrace.android.embracesdk
 
 import okhttp3.MultipartReader
 import okhttp3.mockwebserver.RecordedRequest

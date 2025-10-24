@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.android.embracesdk.internal.arch.destination.LogSeverity
+import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 
 /**
@@ -13,6 +13,6 @@ import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
  */
 class LogEventData(
     val schemaType: SchemaType,
-    val severity: LogSeverity,
+    val severity: Severity,
     val message: String,
 )

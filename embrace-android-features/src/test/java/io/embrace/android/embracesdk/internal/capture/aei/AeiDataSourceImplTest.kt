@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.internal.capture.aei
 
 import android.app.ActivityManager
 import android.app.ApplicationExitInfo
-import io.embrace.android.embracesdk.arch.assertIsType
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeLogWriter
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
@@ -353,7 +352,7 @@ internal class AeiDataSourceImplTest {
     private fun getAeiLogAttrs(): Map<String, String> {
         val logEventData = logWriter.logEvents.single()
         assertEquals(LogSeverity.INFO, logEventData.severity)
-        logEventData.assertIsType(EmbType.System.Exit)
+        assertEquals(EmbType.System.Exit, logEventData.schemaType.telemetryType)
         return logEventData.schemaType.attributes()
     }
 }

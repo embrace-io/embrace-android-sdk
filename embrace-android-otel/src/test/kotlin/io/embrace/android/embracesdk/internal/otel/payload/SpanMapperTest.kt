@@ -1,9 +1,9 @@
 package io.embrace.android.embracesdk.internal.otel.payload
 
-import io.embrace.android.embracesdk.arch.assertError
-import io.embrace.android.embracesdk.arch.assertIsTypePerformance
-import io.embrace.android.embracesdk.arch.assertNotPrivateSpan
-import io.embrace.android.embracesdk.arch.assertSuccessful
+import io.embrace.android.embracesdk.assertions.assertError
+import io.embrace.android.embracesdk.assertions.assertIsTypePerformance
+import io.embrace.android.embracesdk.assertions.assertNotPrivateSpan
+import io.embrace.android.embracesdk.assertions.assertSuccessful
 import io.embrace.android.embracesdk.fakes.FakeSpanData
 import io.embrace.android.embracesdk.internal.arch.schema.AppTerminationCause
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType

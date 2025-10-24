@@ -1,11 +1,11 @@
 package io.embrace.android.embracesdk.internal.otel.spans
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.arch.assertError
-import io.embrace.android.embracesdk.arch.assertIsPrivateSpan
-import io.embrace.android.embracesdk.arch.assertIsType
-import io.embrace.android.embracesdk.arch.assertIsTypePerformance
-import io.embrace.android.embracesdk.arch.assertNotPrivateSpan
+import io.embrace.android.embracesdk.assertions.assertError
+import io.embrace.android.embracesdk.assertions.assertIsPrivateSpan
+import io.embrace.android.embracesdk.assertions.assertIsType
+import io.embrace.android.embracesdk.assertions.assertIsTypePerformance
+import io.embrace.android.embracesdk.assertions.assertNotPrivateSpan
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeOtelKotlinClock
 import io.embrace.android.embracesdk.fakes.FakeSpanService

@@ -1,9 +1,9 @@
 package io.embrace.android.embracesdk.internal.spans
 
-import io.embrace.android.embracesdk.arch.assertError
-import io.embrace.android.embracesdk.arch.assertIsTypePerformance
-import io.embrace.android.embracesdk.arch.assertNotPrivateSpan
-import io.embrace.android.embracesdk.arch.assertSuccessful
+import io.embrace.android.embracesdk.assertions.assertError
+import io.embrace.android.embracesdk.assertions.assertIsTypePerformance
+import io.embrace.android.embracesdk.assertions.assertNotPrivateSpan
+import io.embrace.android.embracesdk.assertions.assertSuccessful
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fixtures.TOO_LONG_SPAN_NAME

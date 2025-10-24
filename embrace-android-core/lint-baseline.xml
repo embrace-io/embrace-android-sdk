@@ -23,15 +23,4 @@
             column="49"/>
     </issue>
 
-    <issue
-        id="EmbracePublicApiPackageRule"
-        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
-        errorLine1="enum class LogExceptionType(val value: String) {"
-        errorLine2="           ~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/embrace/android/embracesdk/LogExceptionType.kt"
-            line="10"
-            column="12"/>
-    </issue>
-
 </issues>

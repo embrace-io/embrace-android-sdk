@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.fixtures
 
-import io.embrace.android.embracesdk.arch.toPayload
+import io.embrace.android.embracesdk.assertions.toPayload
 import io.embrace.android.embracesdk.internal.arch.attrs.embProcessIdentifier
 import io.embrace.android.embracesdk.internal.arch.attrs.embSendMode
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType

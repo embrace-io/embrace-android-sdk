@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.capture.crash
 
-import io.embrace.android.embracesdk.arch.assertIsType
 import io.embrace.android.embracesdk.fakes.FakeAnrService
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeCrashFileMarker
@@ -143,7 +142,7 @@ internal class CrashDataSourceImplTest {
         crashDataSource.handleCrash(testException)
 
         val logEvent = logWriter.logEvents.single()
-        logEvent.assertIsType(EmbType.System.ReactNativeCrash)
+        assertEquals(EmbType.System.ReactNativeCrash, logEvent.schemaType.telemetryType)
         val lastSentCrashAttributes = logEvent.schemaType.attributes()
         assertEquals(1, anrService.crashCount)
         assertEquals(1, logWriter.logEvents.size)

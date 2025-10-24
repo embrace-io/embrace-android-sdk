@@ -1,9 +1,7 @@
 @file:OptIn(ExperimentalApi::class)
 
-package io.embrace.android.embracesdk.arch
+package io.embrace.android.embracesdk.assertions
 
-import io.embrace.android.embracesdk.fakes.LogEventData
-import io.embrace.android.embracesdk.fakes.SpanEventData
 import io.embrace.android.embracesdk.fakes.fromErrorCode
 import io.embrace.android.embracesdk.internal.arch.attrs.EmbraceAttribute
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
@@ -95,17 +93,3 @@ fun Span.assertSuccessful() {
     assertNotEquals(Span.Status.ERROR, status)
     assertEquals(0, checkNotNull(attributes).filter { it.key == ErrorCodeAttribute.Failure.key.name }.size)
 }
-
-/**
- * Assert [SpanEventData] is of type [telemetryType]
- */
-fun SpanEventData.assertIsType(
-    telemetryType: EmbType,
-): Unit = assertEquals(telemetryType, schemaType.telemetryType)
-
-/**
- * Assert [LogEventData] is of type [telemetryType]
- */
-fun LogEventData.assertIsType(
-    telemetryType: EmbType,
-): Unit = assertEquals(telemetryType, schemaType.telemetryType)

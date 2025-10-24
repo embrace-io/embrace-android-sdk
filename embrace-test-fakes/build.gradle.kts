@@ -12,6 +12,8 @@ dependencies {
     implementation(project(":embrace-test-common"))
     implementation(project(":embrace-android-config-fakes"))
     implementation(project(":embrace-android-delivery-fakes"))
+    implementation(project(":embrace-android-otel-fakes"))
+    implementation(project(":embrace-android-instrumentation-api-fakes"))
 
     compileOnly(project(":embrace-android-core"))
     compileOnly(project(":embrace-android-infra"))

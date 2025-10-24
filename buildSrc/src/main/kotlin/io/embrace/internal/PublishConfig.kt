@@ -7,36 +7,41 @@ fun Project.configurePublishing() {
     if (disableDefaultPublishConfig()) {
         return
     }
-    project.pluginManager.withPlugin("com.vanniktech.maven.publish") {
-        val mavenPublishing = project.extensions.getByType(MavenPublishBaseExtension::class.java)
-        mavenPublishing.apply {
-            coordinates("io.embrace", project.name, project.version.toString())
+    pluginManager.withPlugin("com.vanniktech.maven.publish") {
+        setupMavenPublishing()
+        configureDependencyChecks()
+    }
+}
 
-            publishToMavenCentral()
-            signAllPublications()
+private fun Project.setupMavenPublishing() {
+    val mavenPublishing = project.extensions.getByType(MavenPublishBaseExtension::class.java)
+    mavenPublishing.apply {
+        coordinates("io.embrace", project.name, project.version.toString())
 
-            pom {
-                name.set(project.name)
-                description.set("Embrace Android SDK")
-                url.set("https://github.com/embrace-io/embrace-android-sdk")
-                licenses {
-                    license {
-                        name.set("Embrace License")
-                        url.set("https://embrace.io/docs/terms-of-service/")
-                    }
+        publishToMavenCentral()
+        signAllPublications()
+
+        pom {
+            name.set(project.name)
+            description.set("Embrace Android SDK")
+            url.set("https://github.com/embrace-io/embrace-android-sdk")
+            licenses {
+                license {
+                    name.set("Embrace License")
+                    url.set("https://embrace.io/docs/terms-of-service/")
                 }
-                developers {
-                    developer {
-                        id.set("dev1")
-                        name.set("Embrace")
-                        email.set("support@embrace.io")
-                    }
+            }
+            developers {
+                developer {
+                    id.set("dev1")
+                    name.set("Embrace")
+                    email.set("support@embrace.io")
                 }
-                scm {
-                    connection.set("scm:git:github.com/embrace-io/embrace-android-sdk.git")
-                    developerConnection.set("scm:git:ssh://github.com/embrace-io/embrace-android-sdk.git")
-                    url.set("https://github.com/embrace-io/embrace-android-sdk/tree/main")
-                }
+            }
+            scm {
+                connection.set("scm:git:github.com/embrace-io/embrace-android-sdk.git")
+                developerConnection.set("scm:git:ssh://github.com/embrace-io/embrace-android-sdk.git")
+                url.set("https://github.com/embrace-io/embrace-android-sdk/tree/main")
             }
         }
     }

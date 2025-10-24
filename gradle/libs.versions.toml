@@ -1,5 +1,7 @@
 [versions]
 
+# Minimum Kotlin version that customers can use with the SDK
+minSupportedKotlinVersion = "2.0.21"
 # Some dependencies are pinned to old versions because of an unpatched AGP issue in 7.x: https://issuetracker.google.com/issues/377760847
 binaryCompatibilityValidator = "0.18.1"
 agp = "8.13.0"
@@ -40,6 +42,7 @@ androidxBenchmark = "1.4.1"
 [libraries]
 binary-compatibility-validator = { module = "org.jetbrains.kotlinx:binary-compatibility-validator", version.ref = "binaryCompatibilityValidator" }
 detekt-gradle-plugin = { module = "io.gitlab.arturbosch.detekt:detekt-gradle-plugin", version.ref = "detekt" }
+kotlin-metadata-jvm = { module = "org.jetbrains.kotlin:kotlin-metadata-jvm", version.ref = "kotlinGradlePlugin" }
 vanniktech-maven-publish = { module = "com.vanniktech.maven.publish:com.vanniktech.maven.publish.gradle.plugin", version.ref = "vanniktechMavenPublish" }
 agp = { module = "com.android.tools.build:gradle", version.ref = "agp" }
 kotlin-gradle-plugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlinGradlePlugin" }

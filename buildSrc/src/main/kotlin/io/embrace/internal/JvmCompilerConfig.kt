@@ -22,7 +22,7 @@ fun Project.configureCompilers() {
         targetCompatibility = "11"
     }
 
-    val coreLibrariesVersion = "2.0.21"
+    val minSupportedKotlinVersion = findVersion("minSupportedKotlinVersion")
     when (val kotlin = project.extensions.getByName("kotlin")) {
         is KotlinJvmProjectExtension -> {
             kotlin.compilerOptions {
@@ -31,7 +31,7 @@ fun Project.configureCompilers() {
                 jvmTarget.set(target)
                 allWarningsAsErrors.set(true)
             }
-            kotlin.coreLibrariesVersion = coreLibrariesVersion
+            kotlin.coreLibrariesVersion = minSupportedKotlinVersion
         }
 
         is KotlinAndroidExtension -> {
@@ -41,7 +41,7 @@ fun Project.configureCompilers() {
                 jvmTarget.set(JvmTarget.JVM_11)
                 allWarningsAsErrors.set(true)
             }
-            kotlin.coreLibrariesVersion = coreLibrariesVersion
+            kotlin.coreLibrariesVersion = minSupportedKotlinVersion
         }
 
         else -> error("Unsupported kotlin plugin type: ${kotlin::class.java.name}")

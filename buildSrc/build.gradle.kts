@@ -20,6 +20,7 @@ dependencies {
     implementation(libs.detekt.gradle.plugin)
     implementation(libs.binary.compatibility.validator)
     implementation(libs.vanniktech.maven.publish)
+    implementation(libs.kotlin.metadata.jvm)
 }
 
 gradlePlugin {

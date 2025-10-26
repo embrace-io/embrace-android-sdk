@@ -77,6 +77,7 @@ dependencies {
     testImplementation(project(":embrace-android-delivery-fakes"))
     testImplementation(project(":embrace-android-otel-fakes"))
     testImplementation(project(":embrace-android-instrumentation-huc"))
+    testImplementation(project(":embrace-android-instrumentation-huc-lite"))
     testImplementation(project(":embrace-android-instrumentation-power-save"))
     testImplementation(project(":embrace-android-instrumentation-thermal-state"))
     testImplementation(libs.protobuf.java)

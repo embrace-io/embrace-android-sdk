@@ -22,6 +22,10 @@ class FakeEnabledFeatureConfig(
     private val fcmPiiCapture: Boolean = base.isFcmPiiDataCaptureEnabled(),
     private val requestContentLengthCapture: Boolean = base.isRequestContentLengthCaptureEnabled(),
     private val httpUrlConnectionCapture: Boolean = base.isHttpUrlConnectionCaptureEnabled(),
+    /**
+     * Disable [hucLiteInstrumentation] by default so integration tests don't attempt to load this which will cause an error
+     */
+    private val hucLiteInstrumentation: Boolean = false,
     private val networkSpanForwarding: Boolean = base.isNetworkSpanForwardingEnabled(),
     private val uiLoadTracingEnabled: Boolean = base.isUiLoadTracingEnabled(),
     private val uiLoadTracingTraceAll: Boolean = base.isUiLoadTracingTraceAll(),
@@ -47,6 +51,7 @@ class FakeEnabledFeatureConfig(
     override fun isFcmPiiDataCaptureEnabled(): Boolean = fcmPiiCapture
     override fun isRequestContentLengthCaptureEnabled(): Boolean = requestContentLengthCapture
     override fun isHttpUrlConnectionCaptureEnabled(): Boolean = httpUrlConnectionCapture
+    override fun isHucLiteInstrumentationEnabled(): Boolean = hucLiteInstrumentation
     override fun isNetworkSpanForwardingEnabled(): Boolean = networkSpanForwarding
     override fun isUiLoadTracingEnabled(): Boolean = uiLoadTracingEnabled
     override fun isUiLoadTracingTraceAll(): Boolean = uiLoadTracingTraceAll

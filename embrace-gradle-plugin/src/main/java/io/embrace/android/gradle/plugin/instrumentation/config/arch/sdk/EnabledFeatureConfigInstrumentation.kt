@@ -25,6 +25,7 @@ fun createEnabledFeatureConfigInstrumentation(cfg: VariantConfig) = modelSdkConf
         boolMethod("isFcmPiiDataCaptureEnabled") { captureFcmPiiData }
         boolMethod("isRequestContentLengthCaptureEnabled") { networking?.captureRequestContentLength }
         boolMethod("isHttpUrlConnectionCaptureEnabled") { networking?.enableNativeMonitoring }
+        boolMethod("isHucLiteInstrumentationEnabled") { networking?.enableHucLiteInstrumentation }
         boolMethod("isNetworkSpanForwardingEnabled") { networking?.enableNetworkSpanForwarding }
         boolMethod("isUiLoadTracingEnabled") { automaticDataCaptureConfig?.uiLoadPerfTracingDisabled != true }
         boolMethod("isUiLoadTracingTraceAll") {

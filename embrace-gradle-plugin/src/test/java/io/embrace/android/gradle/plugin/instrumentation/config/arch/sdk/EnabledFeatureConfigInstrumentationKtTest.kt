@@ -45,6 +45,7 @@ class EnabledFeatureConfigInstrumentationKtTest {
         ConfigMethod("isFcmPiiDataCaptureEnabled", "()Z", true),
         ConfigMethod("isRequestContentLengthCaptureEnabled", "()Z", true),
         ConfigMethod("isHttpUrlConnectionCaptureEnabled", "()Z", true),
+        ConfigMethod("isHucLiteInstrumentationEnabled", "()Z", true),
         ConfigMethod("isNetworkSpanForwardingEnabled", "()Z", true),
         ConfigMethod("isUiLoadTracingEnabled", "()Z", true),
         ConfigMethod("isUiLoadTracingTraceAll", "()Z", true),
@@ -102,6 +103,7 @@ class EnabledFeatureConfigInstrumentationKtTest {
                         networking = NetworkLocalConfig(
                             captureRequestContentLength = true,
                             enableNativeMonitoring = true,
+                            enableHucLiteInstrumentation = true,
                             enableNetworkSpanForwarding = true
                         ),
                         sigHandlerDetection = true,

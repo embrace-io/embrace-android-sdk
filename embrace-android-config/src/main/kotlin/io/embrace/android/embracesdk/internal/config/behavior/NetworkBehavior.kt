@@ -15,6 +15,11 @@ interface NetworkBehavior {
     fun isHttpUrlConnectionCaptureEnabled(): Boolean
 
     /**
+     * Enable HUC Lite instrumentation.
+     */
+    fun isHucLiteInstrumentationEnabled(): Boolean
+
+    /**
      * Map of limits being enforced for each domain suffix for the maximum number of requests that are logged given that suffix. The
      * algorithm to generate the limits for each domain suffix is as follows:
      *

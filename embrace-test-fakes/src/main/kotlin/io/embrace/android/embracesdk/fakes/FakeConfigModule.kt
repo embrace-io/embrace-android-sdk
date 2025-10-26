@@ -10,9 +10,7 @@ import okhttp3.OkHttpClient
 
 class FakeConfigModule(
     override val configService: ConfigService = FakeConfigService(
-        networkBehavior = FakeNetworkBehavior(
-            captureHttpUrlConnectionRequests = false
-        )
+        networkBehavior = FakeNetworkBehavior()
     ),
     override val combinedRemoteConfigSource: CombinedRemoteConfigSource? = null,
 

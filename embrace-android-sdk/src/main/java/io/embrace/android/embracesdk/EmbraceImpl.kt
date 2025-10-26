@@ -37,6 +37,7 @@ import io.embrace.android.embracesdk.internal.api.delegate.ViewTrackingApiDelega
 import io.embrace.android.embracesdk.internal.arch.InstrumentationProvider
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.clock.NormalizedIntervalClock
+import io.embrace.android.embracesdk.internal.config.behavior.NetworkBehavior
 import io.embrace.android.embracesdk.internal.delivery.storage.StorageLocation
 import io.embrace.android.embracesdk.internal.injection.InternalInterfaceModule
 import io.embrace.android.embracesdk.internal.injection.InternalInterfaceModuleImpl
@@ -183,36 +184,7 @@ internal class EmbraceImpl(
         sdkCallChecker.started.set(true)
         end()
 
-        if (configModule.configService.networkBehavior.isHttpUrlConnectionCaptureEnabled()) {
-            EmbTrace.trace("network-monitoring-installation") {
-                runCatching {
-                    Class.forName("io.embrace.android.embracesdk.instrumentation.huc.HttpUrlConnectionTracker")
-                }.getOrNull()?.let { trackerClass ->
-                    try {
-                        val objectField = trackerClass.getDeclaredField("INSTANCE")
-                        val trackerObject = objectField.get(null)
-                        val initMethod = trackerClass.getDeclaredMethod(
-                            "registerUrlStreamHandlerFactory",
-                            Boolean::class.java,
-                            SdkStateApi::class.java,
-                            InstrumentationApi::class.java,
-                            NetworkRequestApi::class.java,
-                            EmbraceInternalInterface::class.java,
-                        )
-                        initMethod.invoke(
-                            trackerObject,
-                            configModule.configService.networkBehavior.isRequestContentLengthCaptureEnabled(),
-                            sdkStateApiDelegate,
-                            instrumentationApiDelegate,
-                            networkRequestApiDelegate,
-                            internalInterface,
-                        )
-                    } catch (t: Throwable) {
-                        logger.trackInternalError(InternalErrorType.INSTRUMENTATION_REG_FAIL, t)
-                    }
-                }
-            }
-        }
+        initializeHucInstrumentation(configModule.configService.networkBehavior)
 
         val inForeground = !bootstrapper.essentialServiceModule.processStateService.isInBackground
         start("startup-tracking")
@@ -239,6 +211,7 @@ internal class EmbraceImpl(
         }
     }
 
+
     /**
      * Loads instrumentation via SPI and registers it with the SDK.
      */
@@ -263,6 +236,51 @@ internal class EmbraceImpl(
             }
         }
     }
+
+    private fun initializeHucInstrumentation(networkBehavior: NetworkBehavior) {
+        try {
+            if (networkBehavior.isHttpUrlConnectionCaptureEnabled()) {
+                val trackerClass = Class.forName("io.embrace.android.embracesdk.instrumentation.huc.HttpUrlConnectionTracker")
+                val objectField = trackerClass.getDeclaredField("INSTANCE")
+                val trackerObject = objectField.get(null)
+                val initMethod = trackerClass.getDeclaredMethod(
+                    "registerUrlStreamHandlerFactory",
+                    Boolean::class.java,
+                    SdkStateApi::class.java,
+                    InstrumentationApi::class.java,
+                    NetworkRequestApi::class.java,
+                    EmbraceInternalInterface::class.java,
+                )
+                initMethod.invoke(
+                    trackerObject,
+                    networkBehavior.isRequestContentLengthCaptureEnabled(),
+                    sdkStateApiDelegate,
+                    instrumentationApiDelegate,
+                    networkRequestApiDelegate,
+                    internalInterface,
+                )
+            } else if (networkBehavior.isHucLiteInstrumentationEnabled()) {
+                EmbTrace.trace("huc-lite-installation") {
+                    val instrumentationClass =
+                        Class.forName("io.embrace.android.embracesdk.instrumentation.huclite.InstrumentationInitializer")
+                    val instrumentationObject = instrumentationClass.getDeclaredConstructor().newInstance()
+                    val initMethod = instrumentationObject::class.java.getDeclaredMethod(
+                        "installURLStreamHandlerFactory",
+                        Function1::class.java
+                    )
+                    initMethod.invoke(
+                        instrumentationObject,
+                        fun(t: Throwable) {
+                            internalInterface.logInternalError(t)
+                        }
+                    )
+                }
+            }
+        } catch (t: Throwable) {
+            logger.trackInternalError(InternalErrorType.INSTRUMENTATION_REG_FAIL, t)
+        }
+    }
+
 
     private fun registerDeliveryNetworkListener() {
         bootstrapper.deliveryModule.schedulingService?.let(

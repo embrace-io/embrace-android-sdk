@@ -211,7 +211,6 @@ internal class EmbraceImpl(
         }
     }
 
-
     /**
      * Loads instrumentation via SPI and registers it with the SDK.
      */
@@ -280,7 +279,6 @@ internal class EmbraceImpl(
             logger.trackInternalError(InternalErrorType.INSTRUMENTATION_REG_FAIL, t)
         }
     }
-
 
     private fun registerDeliveryNetworkListener() {
         bootstrapper.deliveryModule.schedulingService?.let(

@@ -10,6 +10,7 @@ android {
 
 dependencies {
     compileOnly(project(":embrace-android-api"))
+    implementation(project(":embrace-android-envelope"))
     testImplementation(project(":embrace-android-api"))
     testImplementation(libs.mockk)
 }

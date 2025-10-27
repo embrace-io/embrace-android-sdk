@@ -10,8 +10,8 @@ import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeSystemServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
-import io.embrace.android.embracesdk.internal.DeviceArchitectureImpl
 import io.embrace.android.embracesdk.internal.capture.metadata.EmbraceMetadataService
+import io.embrace.android.embracesdk.internal.envelope.DeviceArchitectureImpl
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -26,7 +26,7 @@ internal class PayloadSourceModuleImplTest {
         val initModule = FakeInitModule()
         val module = PayloadSourceModuleImpl(
             initModule,
-            CoreModuleImpl(RuntimeEnvironment.getApplication(), initModule),
+            CoreModuleImpl(RuntimeEnvironment.getApplication()),
             FakeWorkerThreadModule(),
             FakeSystemServiceModule(),
             FakeAndroidServicesModule(),

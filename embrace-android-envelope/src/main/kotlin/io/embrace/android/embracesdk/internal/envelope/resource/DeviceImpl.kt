@@ -21,7 +21,7 @@ internal class DeviceImpl(
     private val logger: EmbLogger,
 ) : Device {
     override var isJailbroken: Boolean? = false
-    override var screenResolution: String = ""
+    override var screenResolution: String = getScreenResolution(windowManager)
     private val jailbreakLocations: List<String> = listOf(
         "/sbin/",
         "/system/bin/",
@@ -35,24 +35,6 @@ internal class DeviceImpl(
 
     init {
         asyncRetrieveIsJailbroken()
-        asyncRetrieveScreenResolution()
-    }
-
-    private fun asyncRetrieveScreenResolution() {
-        // if the screenResolution exists in memory, don't try to retrieve it
-        if (screenResolution.isNotEmpty()) {
-            return
-        }
-        backgroundWorker.submit {
-            val storedScreenResolution = persistedScreenResolution
-            // get from shared preferences
-            if (storedScreenResolution != null) {
-                screenResolution = storedScreenResolution
-            } else {
-                screenResolution = getScreenResolution(windowManager)
-                persistedScreenResolution = screenResolution
-            }
-        }
     }
 
     @Suppress("DEPRECATION")

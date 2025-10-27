@@ -5,6 +5,7 @@ include(
     ":embrace-android-core",
     ":embrace-android-config",
     ":embrace-android-config-fakes",
+    ":embrace-android-envelope",
     ":embrace-android-infra",
     ":embrace-android-utils",
     ":embrace-android-features",

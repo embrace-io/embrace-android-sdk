@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.internal.capture.metadata
 
 import android.content.Context
-import io.embrace.android.embracesdk.internal.buildinfo.BuildInfo
 import io.embrace.android.embracesdk.internal.config.ConfigService
+import io.embrace.android.embracesdk.internal.config.instrumented.schema.ProjectConfig
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.prefs.PreferencesService
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
@@ -14,7 +14,7 @@ import java.util.Locale
 import java.util.concurrent.Future
 
 internal class RnBundleIdTrackerImpl(
-    private val buildInfo: BuildInfo,
+    private val projectConfig: ProjectConfig,
     private val context: Context,
     private val configService: ConfigService,
     private val preferencesService: PreferencesService,
@@ -35,12 +35,12 @@ internal class RnBundleIdTrackerImpl(
                     return@submit computeReactNativeBundleId(
                         context,
                         lastKnownJsBundleUrl,
-                        buildInfo.rnBundleId,
+                        projectConfig.getReactNativeBundleId()
                     )
                 }
             }
         } else {
-            metadataBackgroundWorker.submit<String?> { buildInfo.buildId }
+            metadataBackgroundWorker.submit<String?> { projectConfig.getReactNativeBundleId() }
         }
 
     /**
@@ -69,7 +69,7 @@ internal class RnBundleIdTrackerImpl(
                 val bundleId = computeReactNativeBundleId(
                     context,
                     jsBundleUrl,
-                    buildInfo.rnBundleId,
+                    projectConfig.getReactNativeBundleId(),
                 )
                 if (forceUpdate != null) {
                     // if we have a value for forceUpdate, it means the bundleId is cacheable and we should store it.

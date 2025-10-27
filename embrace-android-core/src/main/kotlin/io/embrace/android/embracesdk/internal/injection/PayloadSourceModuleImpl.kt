@@ -1,11 +1,12 @@
 package io.embrace.android.embracesdk.internal.injection
 
-import io.embrace.android.embracesdk.internal.DeviceArchitecture
-import io.embrace.android.embracesdk.internal.DeviceArchitectureImpl
+import io.embrace.android.embracesdk.core.BuildConfig
 import io.embrace.android.embracesdk.internal.capture.metadata.EmbraceMetadataService
 import io.embrace.android.embracesdk.internal.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.internal.capture.metadata.RnBundleIdTracker
 import io.embrace.android.embracesdk.internal.capture.metadata.RnBundleIdTrackerImpl
+import io.embrace.android.embracesdk.internal.envelope.DeviceArchitecture
+import io.embrace.android.embracesdk.internal.envelope.DeviceArchitectureImpl
 import io.embrace.android.embracesdk.internal.envelope.log.LogEnvelopeSource
 import io.embrace.android.embracesdk.internal.envelope.log.LogEnvelopeSourceImpl
 import io.embrace.android.embracesdk.internal.envelope.log.LogPayloadSourceImpl
@@ -44,7 +45,7 @@ internal class PayloadSourceModuleImpl(
 
     override val rnBundleIdTracker: RnBundleIdTracker by singleton {
         RnBundleIdTrackerImpl(
-            coreModule.buildInfoService.getBuildInfo(),
+            initModule.instrumentedConfig.project,
             coreModule.context,
             configModule.configService,
             androidServicesModule.preferencesService,
@@ -98,7 +99,7 @@ internal class PayloadSourceModuleImpl(
             EnvelopeResourceSourceImpl(
                 hostedSdkVersionInfo,
                 coreModule.appEnvironment.environment,
-                EmbTrace.trace("buildInfo") { coreModule.buildInfoService.getBuildInfo() },
+                initModule.instrumentedConfig.project,
                 EmbTrace.trace("packageInfo") { coreModule.packageVersionInfo },
                 configModule.configService.appFramework,
                 deviceArchitecture,
@@ -111,7 +112,9 @@ internal class PayloadSourceModuleImpl(
                         initModule.logger
                     )
                 },
-                rnBundleIdTracker
+                rnBundleIdTracker,
+                BuildConfig.VERSION_NAME,
+                BuildConfig.VERSION_CODE.toIntOrNull(),
             )
         }
     }

@@ -13,4 +13,4 @@ typealias CoreModuleSupplier = (
 fun createCoreModule(
     context: Context,
     initModule: InitModule
-): CoreModule = CoreModuleImpl(context, initModule)
+): CoreModule = CoreModuleImpl(context)

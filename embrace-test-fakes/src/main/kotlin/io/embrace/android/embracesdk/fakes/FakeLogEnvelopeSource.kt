@@ -2,8 +2,6 @@ package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.internal.envelope.log.LogEnvelopeSource
 import io.embrace.android.embracesdk.internal.envelope.log.LogPayloadSource
-import io.embrace.android.embracesdk.internal.envelope.metadata.EnvelopeMetadataSource
-import io.embrace.android.embracesdk.internal.envelope.resource.EnvelopeResourceSource
 import io.embrace.android.embracesdk.internal.otel.logs.LogRequest
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.Envelope.Companion.createLogEnvelope

@@ -1,9 +1,9 @@
-package io.embrace.android.embracesdk.internal
+package io.embrace.android.embracesdk.internal.envelope
 
 import android.os.Build
 import android.text.TextUtils
 
-internal open class DeviceArchitectureImpl : DeviceArchitecture {
+open class DeviceArchitectureImpl : DeviceArchitecture {
     override val architecture: String
         get() = Build.SUPPORTED_ABIS[0]
 

@@ -19,7 +19,7 @@ internal class CoreModuleImplTest {
     @Test
     fun testApplicationObject() {
         val ctx = RuntimeEnvironment.getApplication().applicationContext
-        val module = CoreModuleImpl(ctx, initModule)
+        val module = CoreModuleImpl(ctx)
         assertSame(ctx, module.context)
         assertSame(ctx, module.application)
         assertNotNull(module.serviceRegistry)
@@ -29,7 +29,7 @@ internal class CoreModuleImplTest {
     fun testContextObject() {
         val application = RuntimeEnvironment.getApplication()
         val ctx = application.applicationContext
-        val module = CoreModuleImpl(ctx, initModule)
+        val module = CoreModuleImpl(ctx)
         assertSame(application, module.application)
     }
 

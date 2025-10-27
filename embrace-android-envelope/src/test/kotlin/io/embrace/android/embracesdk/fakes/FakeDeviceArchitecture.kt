@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.android.embracesdk.internal.DeviceArchitecture
+import io.embrace.android.embracesdk.internal.envelope.DeviceArchitecture
 
 class FakeDeviceArchitecture(
     override var architecture: String = "arm64-v8a",

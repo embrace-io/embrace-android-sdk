@@ -34,7 +34,7 @@ class DeliveryModuleImplTest {
             initModule,
             FakeOpenTelemetryModule(),
             FakeWorkerThreadModule(),
-            CoreModuleImpl(ApplicationProvider.getApplicationContext(), initModule),
+            CoreModuleImpl(ApplicationProvider.getApplicationContext()),
             FakeEssentialServiceModule(),
             FakeAndroidServicesModule(),
             ::FakeRequestExecutionService,

@@ -5,14 +5,12 @@ import android.content.Context
 import android.content.pm.ApplicationInfo
 import io.embrace.android.embracesdk.internal.AndroidResourcesService
 import io.embrace.android.embracesdk.internal.EmbraceAndroidResourcesService
-import io.embrace.android.embracesdk.internal.buildinfo.BuildInfoService
-import io.embrace.android.embracesdk.internal.buildinfo.BuildInfoServiceImpl
 import io.embrace.android.embracesdk.internal.capture.metadata.AppEnvironment
+import io.embrace.android.embracesdk.internal.envelope.PackageVersionInfo
 import io.embrace.android.embracesdk.internal.registry.ServiceRegistry
 
 class CoreModuleImpl(
     ctx: Context,
-    initModule: InitModule,
 ) : CoreModule {
 
     override val context: Context by singleton {
@@ -41,9 +39,5 @@ class CoreModuleImpl(
             flags and ApplicationInfo.FLAG_DEBUGGABLE != 0
         }
         AppEnvironment(isDebug)
-    }
-
-    override val buildInfoService: BuildInfoService by lazy {
-        BuildInfoServiceImpl(initModule.instrumentedConfig)
     }
 }

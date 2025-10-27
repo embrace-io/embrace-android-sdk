@@ -1,24 +1,25 @@
 package io.embrace.android.embracesdk.internal.envelope.resource
 
-import io.embrace.android.embracesdk.core.BuildConfig
-import io.embrace.android.embracesdk.internal.DeviceArchitecture
-import io.embrace.android.embracesdk.internal.buildinfo.BuildInfo
 import io.embrace.android.embracesdk.internal.capture.metadata.AppEnvironment
 import io.embrace.android.embracesdk.internal.capture.metadata.RnBundleIdTracker
+import io.embrace.android.embracesdk.internal.config.instrumented.schema.ProjectConfig
+import io.embrace.android.embracesdk.internal.envelope.DeviceArchitecture
+import io.embrace.android.embracesdk.internal.envelope.PackageVersionInfo
 import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo
-import io.embrace.android.embracesdk.internal.injection.PackageVersionInfo
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
 
-internal class EnvelopeResourceSourceImpl(
+class EnvelopeResourceSourceImpl(
     private val hosted: HostedSdkVersionInfo,
     private val environment: AppEnvironment.Environment,
-    private val buildInfo: BuildInfo,
+    private val projectConfig: ProjectConfig,
     private val packageVersionInfo: PackageVersionInfo,
     private val appFramework: AppFramework,
     private val deviceArchitecture: DeviceArchitecture,
     private val device: Device,
     private val rnBundleIdTracker: RnBundleIdTracker,
+    private val versionName: String,
+    private val versionCode: Int?,
 ) : EnvelopeResourceSource {
 
     override fun getEnvelopeResource(): EnvelopeResource {
@@ -27,12 +28,12 @@ internal class EnvelopeResourceSourceImpl(
             bundleVersion = packageVersionInfo.versionCode,
             appEcosystemId = packageVersionInfo.packageName,
             appFramework = appFramework,
-            buildId = buildInfo.buildId,
-            buildType = buildInfo.buildType,
-            buildFlavor = buildInfo.buildFlavor,
+            buildId = projectConfig.getBuildId(),
+            buildType = projectConfig.getBuildType(),
+            buildFlavor = projectConfig.getBuildFlavor(),
             environment = environment.value,
-            sdkVersion = BuildConfig.VERSION_NAME,
-            sdkSimpleVersion = BuildConfig.VERSION_CODE.toIntOrNull(),
+            sdkVersion = versionName,
+            sdkSimpleVersion = versionCode,
             hostedPlatformVersion = hosted.hostedPlatformVersion,
             hostedSdkVersion = hosted.hostedSdkVersion,
             reactNativeBundleId = rnBundleIdTracker.getReactNativeBundleId(),

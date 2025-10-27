@@ -3,21 +3,29 @@
 package io.embrace.android.embracesdk.internal.injection
 
 import android.preference.PreferenceManager
+import io.embrace.android.embracesdk.internal.arch.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.prefs.EmbracePreferencesService
 import io.embrace.android.embracesdk.internal.prefs.PreferencesService
+import io.embrace.android.embracesdk.internal.prefs.SharedPrefsStore
 
 internal class AndroidServicesModuleImpl(
     initModule: InitModule,
     coreModule: CoreModule,
 ) : AndroidServicesModule {
 
-    override val preferencesService: PreferencesService by singleton {
-        EmbracePreferencesService(
+    override val store: KeyValueStore by singleton {
+        SharedPrefsStore(
             PreferenceManager.getDefaultSharedPreferences(
                 coreModule.context
             ),
-            initModule.clock,
             initModule.jsonSerializer
+        )
+    }
+
+    override val preferencesService: PreferencesService by singleton {
+        EmbracePreferencesService(
+            store,
+            initModule.clock
         )
     }
 }

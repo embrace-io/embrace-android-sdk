@@ -252,7 +252,8 @@ internal class EmbraceImpl(
             clock = bootstrapper.initModule.clock,
             context = bootstrapper.coreModule.context,
             traceWriter = TraceWriterImpl(bootstrapper.openTelemetryModule.spanService),
-            workerThreadModule = bootstrapper.workerThreadModule
+            workerThreadModule = bootstrapper.workerThreadModule,
+            store = bootstrapper.androidServicesModule.store,
         )
         loader.forEach { provider ->
             try {

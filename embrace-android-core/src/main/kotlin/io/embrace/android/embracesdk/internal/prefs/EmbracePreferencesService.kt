@@ -1,123 +1,29 @@
 package io.embrace.android.embracesdk.internal.prefs
 
-import android.content.SharedPreferences
+import io.embrace.android.embracesdk.internal.arch.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.clock.Clock
-import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.utils.Uuid.getEmbUuid
 
 internal class EmbracePreferencesService(
-    private val prefs: SharedPreferences,
+    private val impl: KeyValueStore,
     private val clock: Clock,
-    private val serializer: PlatformSerializer,
 ) : PreferencesService {
 
-    private fun SharedPreferences.getStringPreference(key: String): String? {
-        return getString(key, null)
-    }
-
-    private fun SharedPreferences.setStringPreference(key: String, value: String?) {
-        val editor = edit()
-        editor.putString(key, value)
-        editor.apply()
-    }
-
-    private fun SharedPreferences.getLongPreference(key: String): Long? {
-        val defaultValue: Long = -1L
-        return when (val value = getLong(key, defaultValue)) {
-            defaultValue -> null
-            else -> value
-        }
-    }
-
-    private fun SharedPreferences.setLongPreference(key: String, value: Long?) {
-        if (value != null) {
-            val editor = edit()
-            editor.putLong(key, value)
-            editor.apply()
-        }
-    }
-
-    private fun SharedPreferences.getIntegerPreference(key: String): Int? {
-        val defaultValue: Int = -1
-        return when (val value = getInt(key, defaultValue)) {
-            defaultValue -> null
-            else -> value
-        }
-    }
-
-    private fun SharedPreferences.setIntegerPreference(key: String, value: Int) {
-        val editor = edit()
-        editor.putInt(key, value)
-        editor.apply()
-    }
-
-    private fun SharedPreferences.getBooleanPreference(
-        key: String,
-        defaultValue: Boolean,
-    ): Boolean {
-        return getBoolean(key, defaultValue)
-    }
-
-    private fun SharedPreferences.setBooleanPreference(
-        key: String,
-        value: Boolean?,
-    ) {
-        if (value != null) {
-            val editor = edit()
-            editor.putBoolean(key, value)
-            editor.apply()
-        }
-    }
-
-    private fun SharedPreferences.setArrayPreference(
-        key: String,
-        value: Set<String>?,
-    ) {
-        val editor = edit()
-        editor.putStringSet(key, value)
-        editor.apply()
-    }
-
-    private fun SharedPreferences.getArrayPreference(key: String): Set<String>? {
-        return getStringSet(key, null)
-    }
-
-    private fun SharedPreferences.setMapPreference(
-        key: String,
-        value: Map<String, String>?,
-    ) {
-        val editor = edit()
-        val mapString = when (value) {
-            null -> null
-            else -> serializer.toJson(value, Map::class.java)
-        }
-        editor.putString(key, mapString)
-        editor.apply()
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    private fun SharedPreferences.getMapPreference(
-        key: String,
-    ): Map<String, String>? {
-        val mapString = getString(key, null) ?: return null
-        return serializer.fromJson(mapString, Map::class.java) as Map<String, String>
-    }
-
     override var appVersion: String?
-        get() = prefs.getStringPreference(PREVIOUS_APP_VERSION_KEY)
-        set(value) = prefs.setStringPreference(PREVIOUS_APP_VERSION_KEY, value)
+        get() = impl.getString(PREVIOUS_APP_VERSION_KEY)
+        set(value) = impl.edit { putString(PREVIOUS_APP_VERSION_KEY, value) }
 
     override var osVersion: String?
-        get() = prefs.getStringPreference(PREVIOUS_OS_VERSION_KEY)
-        set(value) = prefs.setStringPreference(PREVIOUS_OS_VERSION_KEY, value)
+        get() = impl.getString(PREVIOUS_OS_VERSION_KEY)
+        set(value) = impl.edit { putString(PREVIOUS_OS_VERSION_KEY, value) }
 
     override var installDate: Long?
-        get() = prefs.getLongPreference(INSTALL_DATE_KEY)
-        set(value) = prefs.setLongPreference(INSTALL_DATE_KEY, value)
+        get() = impl.getLong(INSTALL_DATE_KEY)
+        set(value) = impl.edit { putLong(INSTALL_DATE_KEY, value) }
 
     override var deviceIdentifier: String
         get() {
-            val deviceId = prefs.getStringPreference(DEVICE_IDENTIFIER_KEY)
+            val deviceId = impl.getString(DEVICE_IDENTIFIER_KEY)
             if (deviceId != null) {
                 return deviceId
             }
@@ -125,123 +31,110 @@ internal class EmbracePreferencesService(
             deviceIdentifier = newId
             return newId
         }
-        set(value) = prefs.setStringPreference(DEVICE_IDENTIFIER_KEY, value)
+        set(value) = impl.edit { putString(DEVICE_IDENTIFIER_KEY, value) }
 
     override var userPayer: Boolean
-        get() = prefs.getBooleanPreference(USER_IS_PAYER_KEY, false)
-        set(value) = prefs.setBooleanPreference(USER_IS_PAYER_KEY, value)
+        get() = impl.getBoolean(USER_IS_PAYER_KEY, false)
+        set(value) = impl.edit { putBoolean(USER_IS_PAYER_KEY, value) }
 
     override var userIdentifier: String?
-        get() = prefs.getStringPreference(USER_IDENTIFIER_KEY)
-        set(value) = prefs.setStringPreference(USER_IDENTIFIER_KEY, value)
+        get() = impl.getString(USER_IDENTIFIER_KEY)
+        set(value) = impl.edit { putString(USER_IDENTIFIER_KEY, value) }
 
     override var userEmailAddress: String?
-        get() = prefs.getStringPreference(USER_EMAIL_ADDRESS_KEY)
-        set(value) = prefs.setStringPreference(USER_EMAIL_ADDRESS_KEY, value)
+        get() = impl.getString(USER_EMAIL_ADDRESS_KEY)
+        set(value) = impl.edit { putString(USER_EMAIL_ADDRESS_KEY, value) }
 
     override var userPersonas: Set<String>?
-        get() = prefs.getArrayPreference(USER_PERSONAS_KEY)
-        set(value) = prefs.setArrayPreference(USER_PERSONAS_KEY, value)
+        get() = impl.getStringSet(USER_PERSONAS_KEY)
+        set(value) = impl.edit { putStringSet(USER_PERSONAS_KEY, value) }
 
     override var permanentSessionProperties: Map<String, String>?
-        get() = prefs.getMapPreference(SESSION_PROPERTIES_KEY)
-        set(value) = prefs.setMapPreference(SESSION_PROPERTIES_KEY, value)
+        get() = impl.getStringMap(SESSION_PROPERTIES_KEY)
+        set(value) = impl.edit { putStringMap(SESSION_PROPERTIES_KEY, value) }
 
     override var username: String?
-        get() = prefs.getStringPreference(USER_USERNAME_KEY)
-        set(value) = prefs.setStringPreference(USER_USERNAME_KEY, value)
+        get() = impl.getString(USER_USERNAME_KEY)
+        set(value) = impl.edit { putString(USER_USERNAME_KEY, value) }
 
     override var lastConfigFetchDate: Long?
-        get() = prefs.getLongPreference(SDK_CONFIG_FETCHED_TIMESTAMP)
-        set(value) = prefs.setLongPreference(SDK_CONFIG_FETCHED_TIMESTAMP, value)
+        get() = impl.getLong(SDK_CONFIG_FETCHED_TIMESTAMP)
+        set(value) = impl.edit { putLong(SDK_CONFIG_FETCHED_TIMESTAMP, value) }
 
     override fun incrementAndGetSessionNumber(): Int {
-        return incrementAndGetOrdinal(LAST_SESSION_NUMBER_KEY)
+        return impl.incrementAndGet(LAST_SESSION_NUMBER_KEY)
     }
 
     override fun incrementAndGetBackgroundActivityNumber(): Int {
-        return incrementAndGetOrdinal(LAST_BACKGROUND_ACTIVITY_NUMBER_KEY)
+        return impl.incrementAndGet(LAST_BACKGROUND_ACTIVITY_NUMBER_KEY)
     }
 
     override fun incrementAndGetCrashNumber(): Int {
-        return incrementAndGetOrdinal(LAST_CRASH_NUMBER_KEY)
+        return impl.incrementAndGet(LAST_CRASH_NUMBER_KEY)
     }
 
     override fun incrementAndGetNativeCrashNumber(): Int {
-        return incrementAndGetOrdinal(LAST_NATIVE_CRASH_NUMBER_KEY)
+        return impl.incrementAndGet(LAST_NATIVE_CRASH_NUMBER_KEY)
     }
 
     override fun incrementAndGetAeiCrashNumber(): Int {
-        return incrementAndGetOrdinal(LAST_AEI_CRASH_NUMBER_KEY)
-    }
-
-    private fun incrementAndGetOrdinal(key: String): Int {
-        return try {
-            val ordinal = (prefs.getIntegerPreference(key) ?: 0) + 1
-            prefs.setIntegerPreference(key, ordinal)
-            ordinal
-        } catch (tr: Throwable) {
-            -1
-        }
+        return impl.incrementAndGet(LAST_AEI_CRASH_NUMBER_KEY)
     }
 
     override var javaScriptBundleURL: String?
-        get() = prefs.getStringPreference(JAVA_SCRIPT_BUNDLE_URL_KEY)
-        set(value) = prefs.setStringPreference(JAVA_SCRIPT_BUNDLE_URL_KEY, value)
+        get() = impl.getString(JAVA_SCRIPT_BUNDLE_URL_KEY)
+        set(value) = impl.edit { putString(JAVA_SCRIPT_BUNDLE_URL_KEY, value) }
 
     override var javaScriptBundleId: String?
-        get() = prefs.getStringPreference(JAVA_SCRIPT_BUNDLE_ID_KEY)
-        set(value) = prefs.setStringPreference(JAVA_SCRIPT_BUNDLE_ID_KEY, value)
+        get() = impl.getString(JAVA_SCRIPT_BUNDLE_ID_KEY)
+        set(value) = impl.edit { putString(JAVA_SCRIPT_BUNDLE_ID_KEY, value) }
 
     override var rnSdkVersion: String?
-        get() = prefs.getStringPreference(REACT_NATIVE_SDK_VERSION_KEY)
-        set(value) = prefs.setStringPreference(REACT_NATIVE_SDK_VERSION_KEY, value)
+        get() = impl.getString(REACT_NATIVE_SDK_VERSION_KEY)
+        set(value) = impl.edit { putString(REACT_NATIVE_SDK_VERSION_KEY, value) }
 
     override var javaScriptPatchNumber: String?
-        get() = prefs.getStringPreference(JAVA_SCRIPT_PATCH_NUMBER_KEY)
-        set(value) = prefs.setStringPreference(JAVA_SCRIPT_PATCH_NUMBER_KEY, value)
+        get() = impl.getString(JAVA_SCRIPT_PATCH_NUMBER_KEY)
+        set(value) = impl.edit { putString(JAVA_SCRIPT_PATCH_NUMBER_KEY, value) }
 
     override var reactNativeVersionNumber: String?
-        get() = prefs.getStringPreference(REACT_NATIVE_VERSION_KEY)
-        set(value) = prefs.setStringPreference(REACT_NATIVE_VERSION_KEY, value)
+        get() = impl.getString(REACT_NATIVE_VERSION_KEY)
+        set(value) = impl.edit { putString(REACT_NATIVE_VERSION_KEY, value) }
 
     override var unityVersionNumber: String?
-        get() = prefs.getStringPreference(UNITY_VERSION_NUMBER_KEY)
-        set(value) = prefs.setStringPreference(UNITY_VERSION_NUMBER_KEY, value)
+        get() = impl.getString(UNITY_VERSION_NUMBER_KEY)
+        set(value) = impl.edit { putString(UNITY_VERSION_NUMBER_KEY, value) }
 
     override var unityBuildIdNumber: String?
-        get() = prefs.getStringPreference(UNITY_BUILD_ID_NUMBER_KEY)
-        set(value) = prefs.setStringPreference(UNITY_BUILD_ID_NUMBER_KEY, value)
+        get() = impl.getString(UNITY_BUILD_ID_NUMBER_KEY)
+        set(value) = impl.edit { putString(UNITY_BUILD_ID_NUMBER_KEY, value) }
 
     override var unitySdkVersionNumber: String?
-        get() = prefs.getStringPreference(UNITY_SDK_VERSION_NUMBER_KEY)
-        set(value) = prefs.setStringPreference(UNITY_SDK_VERSION_NUMBER_KEY, value)
+        get() = impl.getString(UNITY_SDK_VERSION_NUMBER_KEY)
+        set(value) = impl.edit { putString(UNITY_SDK_VERSION_NUMBER_KEY, value) }
 
     override var dartSdkVersion: String?
-        get() = prefs.getStringPreference(DART_SDK_VERSION_KEY)
-        set(value) = prefs.setStringPreference(DART_SDK_VERSION_KEY, value)
+        get() = impl.getString(DART_SDK_VERSION_KEY)
+        set(value) = impl.edit { putString(DART_SDK_VERSION_KEY, value) }
 
     override var embraceFlutterSdkVersion: String?
-        get() = prefs.getStringPreference(EMBRACE_FLUTTER_SDK_VERSION_KEY)
-        set(value) = prefs.setStringPreference(EMBRACE_FLUTTER_SDK_VERSION_KEY, value)
+        get() = impl.getString(EMBRACE_FLUTTER_SDK_VERSION_KEY)
+        set(value) = impl.edit { putString(EMBRACE_FLUTTER_SDK_VERSION_KEY, value) }
 
     override var jailbroken: Boolean?
-        get() = when {
-            !prefs.contains(IS_JAILBROKEN_KEY) -> null
-            else -> prefs.getBooleanPreference(
-                IS_JAILBROKEN_KEY,
-                false
-            )
-        }
-        set(value) = prefs.setBooleanPreference(IS_JAILBROKEN_KEY, value)
+        get() = impl.getBoolean(
+            IS_JAILBROKEN_KEY,
+            false
+        )
+        set(value) = impl.edit { putBoolean(IS_JAILBROKEN_KEY, value) }
 
     override var screenResolution: String?
-        get() = prefs.getStringPreference(SCREEN_RESOLUTION_KEY)
-        set(value) = prefs.setStringPreference(SCREEN_RESOLUTION_KEY, value)
+        get() = impl.getString(SCREEN_RESOLUTION_KEY)
+        set(value) = impl.edit { putString(SCREEN_RESOLUTION_KEY, value) }
 
     override var deliveredAeiIds: Set<String>
-        get() = prefs.getStringSet(AEI_HASH_CODES, null) ?: emptySet()
-        set(value) = prefs.setArrayPreference(AEI_HASH_CODES, value)
+        get() = impl.getStringSet(AEI_HASH_CODES) ?: emptySet()
+        set(value) = impl.edit { putStringSet(AEI_HASH_CODES, value) }
 
     override fun isUsersFirstDay(): Boolean {
         val installDate = installDate
@@ -253,10 +146,9 @@ internal class EmbracePreferencesService(
     }
 
     override fun decreaseNetworkCaptureRuleRemainingCount(id: String, maxCount: Int) {
-        prefs.setIntegerPreference(
-            NETWORK_CAPTURE_RULE_PREFIX_KEY + id,
-            getNetworkCaptureRuleRemainingCount(id, maxCount) - 1
-        )
+        impl.edit {
+            putInt(NETWORK_CAPTURE_RULE_PREFIX_KEY + id, getNetworkCaptureRuleRemainingCount(id, maxCount) - 1)
+        }
     }
 
     private fun getNetworkCaptureRuleRemainingCount(id: String): Int {
@@ -264,7 +156,7 @@ internal class EmbracePreferencesService(
     }
 
     private fun getNetworkCaptureRuleRemainingCount(id: String, maxCount: Int): Int {
-        val value = prefs.getIntegerPreference(NETWORK_CAPTURE_RULE_PREFIX_KEY + id)
+        val value = impl.getInt(NETWORK_CAPTURE_RULE_PREFIX_KEY + id)
         return value ?: maxCount
     }
 

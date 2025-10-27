@@ -9,7 +9,7 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeSharedPreferences
-import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
+import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -33,9 +33,8 @@ internal class EmbracePreferencesServiceTest {
         prefs = PreferenceManager.getDefaultSharedPreferences(context)
         fakeClock = FakeClock()
         service = EmbracePreferencesService(
-            prefs,
-            fakeClock,
-            EmbraceSerializer()
+            SharedPrefsStore(prefs, TestPlatformSerializer()),
+            fakeClock
         )
     }
 
@@ -195,9 +194,11 @@ internal class EmbracePreferencesServiceTest {
     @Test
     fun `test incrementAndGet returns -1 on an exception`() {
         service = EmbracePreferencesService(
-            FakeSharedPreferences(throwExceptionOnGet = true),
-            fakeClock,
-            EmbraceSerializer()
+            SharedPrefsStore(
+                FakeSharedPreferences(throwExceptionOnGet = true),
+                TestPlatformSerializer()
+            ),
+            fakeClock
         )
         assertEquals(-1, service.incrementAndGetSessionNumber())
     }
@@ -276,7 +277,7 @@ internal class EmbracePreferencesServiceTest {
 
     @Test
     fun `test is jail broken is saved`() {
-        assertNull(service.jailbroken)
+        assertFalse(checkNotNull(service.jailbroken))
         service.jailbroken = true
         assertTrue(checkNotNull(service.jailbroken))
     }

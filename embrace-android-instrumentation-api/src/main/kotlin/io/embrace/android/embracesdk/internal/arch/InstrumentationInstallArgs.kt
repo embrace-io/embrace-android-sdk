@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.arch
 import android.content.Context
 import io.embrace.android.embracesdk.internal.arch.destination.SessionSpanWriter
 import io.embrace.android.embracesdk.internal.arch.destination.TraceWriter
+import io.embrace.android.embracesdk.internal.arch.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
@@ -43,6 +44,13 @@ interface InstrumentationInstallArgs {
      * The application context
      */
     val context: Context
+
+    /**
+     * A key-value store that is shared by all instrumentation used by this SDK. Individual
+     * instrumentation should write values to this using their own abstractions, and
+     * should make good efforts to use unique keys.
+     */
+    val store: KeyValueStore
 
     /**
      * Retrieves a background worker matching the given name.

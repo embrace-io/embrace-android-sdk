@@ -7,3 +7,9 @@ plugins {
 
 integrationTest.configureAndroidProject(project)
 integrationTest.configureDesugaring(project)
+
+repositories {
+    google()
+    mavenCentral()
+    mavenLocal()
+}

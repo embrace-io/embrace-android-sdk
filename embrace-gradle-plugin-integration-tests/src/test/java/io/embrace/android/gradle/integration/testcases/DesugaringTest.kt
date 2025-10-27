@@ -44,7 +44,7 @@ class DesugaringTest {
         rule.runTest(
             fixture = "android-desugaring",
             task = "assembleRelease",
-            additionalArgs = listOf("-PminSdk=24"),
+            additionalArgs = listOf("-PminSdk=21"),
             projectType = ProjectType.ANDROID,
             assertions = {
                 verifyBuildTelemetryRequestSent(listOf("debug", "release"))

@@ -232,7 +232,6 @@ internal class ModuleInitBootstrapper(
                     featureModule = init(FeatureModule::class) {
                         featureModuleSupplier(
                             dataSourceModule.embraceFeatureRegistry,
-                            coreModule,
                             initModule,
                             openTelemetryModule,
                             workerThreadModule,

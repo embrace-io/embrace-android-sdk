@@ -1,11 +1,11 @@
-package io.embrace.android.embracesdk.internal.capture.thermalstate
+package io.embrace.android.embracesdk.internal.instrumentation.thermalstate
 
 import android.os.PowerManager
 import io.embrace.android.embracesdk.fakes.FakeClock
+import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeTraceWriter
 import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
-import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.mockk.mockk
 import io.mockk.verify
 import org.junit.Assert.assertEquals
@@ -23,7 +23,7 @@ internal class ThermalStateDataSourceTest {
         traceWriter = FakeTraceWriter()
         dataSource = ThermalStateDataSource(
             traceWriter,
-            EmbLoggerImpl(),
+            FakeEmbLogger(),
             fakeBackgroundWorker(),
             FakeClock(100),
         ) { mockPowerManager }

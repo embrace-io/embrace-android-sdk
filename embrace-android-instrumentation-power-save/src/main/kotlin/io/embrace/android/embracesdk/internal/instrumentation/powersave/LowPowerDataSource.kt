@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.internal.capture.powersave
+package io.embrace.android.embracesdk.internal.instrumentation.powersave
 
 import android.content.Context
 import android.os.PowerManager

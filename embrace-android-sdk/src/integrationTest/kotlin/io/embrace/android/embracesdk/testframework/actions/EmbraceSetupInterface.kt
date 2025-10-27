@@ -22,14 +22,18 @@ import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import io.embrace.android.embracesdk.internal.anr.AnrOtelMapper
 import io.embrace.android.embracesdk.internal.anr.detection.BlockedThreadDetector
+import io.embrace.android.embracesdk.internal.arch.DataCaptureOrchestrator
+import io.embrace.android.embracesdk.internal.arch.EmbraceFeatureRegistry
 import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
 import io.embrace.android.embracesdk.internal.injection.AndroidServicesModule
 import io.embrace.android.embracesdk.internal.injection.AnrModule
 import io.embrace.android.embracesdk.internal.injection.CoreModule
+import io.embrace.android.embracesdk.internal.injection.DataSourceModule
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.injection.WorkerThreadModule
 import io.embrace.android.embracesdk.internal.injection.createAndroidServicesModule
 import io.embrace.android.embracesdk.internal.injection.createAnrModule
+import io.embrace.android.embracesdk.internal.injection.createDataSourceModule
 import io.embrace.android.embracesdk.internal.injection.createDeliveryModule
 import io.embrace.android.embracesdk.internal.injection.createEssentialServiceModule
 import io.embrace.android.embracesdk.internal.injection.createNativeCoreModule
@@ -169,6 +173,16 @@ internal class EmbraceSetupInterface(
                 symbolServiceProvider = { fakeSymbolService }
             )
         },
+        dataSourceModuleSupplier = { initModule, workerThreadModule ->
+            val impl = createDataSourceModule(
+                initModule,
+                workerThreadModule
+            )
+            object : DataSourceModule {
+                override val embraceFeatureRegistry: EmbraceFeatureRegistry = FakeEmbraceFeatureRegistry(impl.embraceFeatureRegistry)
+                override val dataCaptureOrchestrator: DataCaptureOrchestrator = impl.dataCaptureOrchestrator
+            }
+        }
     )
 
     /**

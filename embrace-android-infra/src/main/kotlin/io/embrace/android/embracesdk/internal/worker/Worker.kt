@@ -1,9 +1,9 @@
 package io.embrace.android.embracesdk.internal.worker
 
 /**
- * Key used to obtain a shared [BackgroundWorker] or [PriorityWorker] instance.
+ * Key used to obtain a shared [BackgroundWorker] or [io.embrace.android.embracesdk.internal.worker.PriorityWorker] instance.
  */
-sealed class Worker(internal val threadName: String) {
+sealed class Worker(val threadName: String) {
 
     /**
      * Workers that execute tasks by sorting them by priority.

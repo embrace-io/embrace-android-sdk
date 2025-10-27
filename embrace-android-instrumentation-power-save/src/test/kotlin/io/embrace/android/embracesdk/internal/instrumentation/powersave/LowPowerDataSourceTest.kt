@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.internal.capture.powersave
+package io.embrace.android.embracesdk.internal.instrumentation.powersave
 
 import android.content.Context
 import android.content.Intent
@@ -6,11 +6,11 @@ import android.os.PowerManager
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeClock
+import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeTraceWriter
 import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
 import io.embrace.android.embracesdk.internal.arch.attrs.asPair
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
-import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.mockk.mockk
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -30,7 +30,7 @@ internal class LowPowerDataSourceTest {
         dataSource = LowPowerDataSource(
             ApplicationProvider.getApplicationContext(),
             traceWriter,
-            EmbLoggerImpl(),
+            FakeEmbLogger(),
             fakeBackgroundWorker(),
             FakeClock()
         ) { mockk(relaxed = true) }.apply {

@@ -8,7 +8,7 @@ import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState
 var tapDataSource: TapDataSource? = null
 
 class TapInstrumentationProvider : InstrumentationProvider {
-    override fun register(args: InstrumentationInstallArgs): DataSourceState<*> {
+    override fun register(args: InstrumentationInstallArgs): DataSourceState<*>? {
         return DataSourceState(
             factory = {
                 tapDataSource = TapDataSource(

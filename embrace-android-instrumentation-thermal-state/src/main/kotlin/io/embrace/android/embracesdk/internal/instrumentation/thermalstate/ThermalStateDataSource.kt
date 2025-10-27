@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.internal.capture.thermalstate
+package io.embrace.android.embracesdk.internal.instrumentation.thermalstate
 
 import android.os.Build
 import android.os.PowerManager

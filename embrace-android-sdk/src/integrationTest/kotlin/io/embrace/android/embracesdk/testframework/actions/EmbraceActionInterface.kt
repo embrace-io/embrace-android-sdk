@@ -5,8 +5,11 @@ import androidx.lifecycle.Lifecycle
 import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.internal.api.SdkApi
+import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkStatusDataSource
 import io.embrace.android.embracesdk.internal.comms.delivery.NetworkStatus
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
+import io.embrace.android.embracesdk.internal.instrumentation.powersave.LowPowerDataSource
+import io.embrace.android.embracesdk.internal.instrumentation.thermalstate.ThermalStateDataSource
 import org.robolectric.Robolectric
 import org.robolectric.android.controller.ActivityController
 
@@ -186,17 +189,20 @@ internal class EmbraceActionInterface(
     }
 
     fun alterPowerSaveMode(powerSaveMode: Boolean) {
-        val dataSource = checkNotNull(bootstrapper.featureModule.lowPowerDataSource.dataSource)
+        val registry = (bootstrapper.dataSourceModule.embraceFeatureRegistry as FakeEmbraceFeatureRegistry)
+        val dataSource = registry.findByType<LowPowerDataSource>()
         dataSource.onPowerSaveModeChanged(powerSaveMode)
     }
 
     fun alterConnectivityStatus(networkStatus: NetworkStatus) {
-        val dataSource = checkNotNull(bootstrapper.featureModule.networkStatusDataSource.dataSource)
+        val registry = (bootstrapper.dataSourceModule.embraceFeatureRegistry as FakeEmbraceFeatureRegistry)
+        val dataSource = registry.findByType<NetworkStatusDataSource>()
         dataSource.onNetworkConnectivityStatusChanged(networkStatus)
     }
 
     fun alterThermalState(thermalState: Int) {
-        val dataSource = checkNotNull(bootstrapper.featureModule.thermalStateDataSource.dataSource)
+        val registry = (bootstrapper.dataSourceModule.embraceFeatureRegistry as FakeEmbraceFeatureRegistry)
+        val dataSource = registry.findByType<ThermalStateDataSource>()
         dataSource.handleThermalStateChange(thermalState)
     }
 

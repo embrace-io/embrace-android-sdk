@@ -8,7 +8,7 @@ import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeRnBundleIdTracker
 import io.embrace.android.embracesdk.internal.buildinfo.BuildInfo
 import io.embrace.android.embracesdk.internal.capture.metadata.AppEnvironment
-import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo
+import io.embrace.android.embracesdk.internal.envelope.metadata.UnitySdkVersionInfo
 import io.embrace.android.embracesdk.internal.injection.PackageVersionInfo
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.mockk.every
@@ -53,10 +53,7 @@ internal class EnvelopeResourceSourceImplTest {
 
     @Test
     fun getEnvelopeResource() {
-        val hostedSdkVersionInfo = HostedSdkVersionInfo(
-            FakePreferenceService()
-        )
-        hostedSdkVersionInfo.javaScriptPatchNumber = "js"
+        val hostedSdkVersionInfo = UnitySdkVersionInfo(FakePreferenceService())
         hostedSdkVersionInfo.hostedSdkVersion = "1.2.0"
         hostedSdkVersionInfo.hostedPlatformVersion = "19"
         hostedSdkVersionInfo.unityBuildIdNumber = "5092abc"
@@ -82,7 +79,6 @@ internal class EnvelopeResourceSourceImplTest {
         assertEquals("10", envelope.bundleVersion)
         assertEquals(53, envelope.sdkSimpleVersion)
         assertEquals("fakeReactNativeBundleId", envelope.reactNativeBundleId)
-        assertEquals("js", envelope.javascriptPatchNumber)
         assertEquals("1.2.0", envelope.hostedSdkVersion)
         assertEquals("19", envelope.hostedPlatformVersion)
         assertEquals("5092abc", envelope.unityBuildId)

@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
 import io.embrace.android.embracesdk.internal.buildinfo.BuildInfo
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo
+import io.embrace.android.embracesdk.internal.envelope.metadata.ReactNativeSdkVersionInfo
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.prefs.PreferencesService
 import io.mockk.every
@@ -46,9 +47,8 @@ internal class EmbraceRnBundleIdTrackerTest {
         preferencesService.javaScriptBundleURL = null
         preferencesService.javaScriptPatchNumber = "patch-number"
         preferencesService.reactNativeVersionNumber = "rn-version-number"
-        hostedSdkVersionInfo = HostedSdkVersionInfo(
+        hostedSdkVersionInfo = ReactNativeSdkVersionInfo(
             preferencesService,
-            AppFramework.REACT_NATIVE
         )
     }
 

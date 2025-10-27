@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeDeviceArchitecture
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
+import io.embrace.android.embracesdk.fakes.FakeHostedSdkVersionInfo
 import io.embrace.android.embracesdk.fakes.FakeRnBundleIdTracker
 import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
 import io.embrace.android.embracesdk.internal.SystemInfo
@@ -54,9 +55,7 @@ internal class EmbraceMetadataServiceTest {
 
             every { Environment.getDataDirectory() }.returns(File("ANDROID_DATA"))
 
-            hostedSdkVersionInfo = HostedSdkVersionInfo(
-                preferencesService
-            )
+            hostedSdkVersionInfo = FakeHostedSdkVersionInfo()
         }
 
         @After

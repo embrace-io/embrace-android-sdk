@@ -10,13 +10,18 @@ import io.embrace.android.embracesdk.internal.envelope.log.LogEnvelopeSource
 import io.embrace.android.embracesdk.internal.envelope.log.LogEnvelopeSourceImpl
 import io.embrace.android.embracesdk.internal.envelope.log.LogPayloadSourceImpl
 import io.embrace.android.embracesdk.internal.envelope.metadata.EnvelopeMetadataSourceImpl
+import io.embrace.android.embracesdk.internal.envelope.metadata.FlutterSdkVersionInfo
 import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo
+import io.embrace.android.embracesdk.internal.envelope.metadata.NativeSdkVersionInfo
+import io.embrace.android.embracesdk.internal.envelope.metadata.ReactNativeSdkVersionInfo
+import io.embrace.android.embracesdk.internal.envelope.metadata.UnitySdkVersionInfo
 import io.embrace.android.embracesdk.internal.envelope.resource.DeviceImpl
 import io.embrace.android.embracesdk.internal.envelope.resource.EnvelopeResourceSourceImpl
 import io.embrace.android.embracesdk.internal.envelope.session.OtelPayloadMapper
 import io.embrace.android.embracesdk.internal.envelope.session.SessionEnvelopeSource
 import io.embrace.android.embracesdk.internal.envelope.session.SessionEnvelopeSourceImpl
 import io.embrace.android.embracesdk.internal.envelope.session.SessionPayloadSourceImpl
+import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.resurrection.PayloadResurrectionService
 import io.embrace.android.embracesdk.internal.resurrection.PayloadResurrectionServiceImpl
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
@@ -79,10 +84,13 @@ internal class PayloadSourceModuleImpl(
     }
 
     override val hostedSdkVersionInfo: HostedSdkVersionInfo by singleton {
-        HostedSdkVersionInfo(
-            androidServicesModule.preferencesService,
-            configModule.configService.appFramework
-        )
+        val prefs = androidServicesModule.preferencesService
+        when (configModule.configService.appFramework) {
+            AppFramework.REACT_NATIVE -> ReactNativeSdkVersionInfo(prefs)
+            AppFramework.UNITY -> UnitySdkVersionInfo(prefs)
+            AppFramework.FLUTTER -> FlutterSdkVersionInfo(prefs)
+            else -> NativeSdkVersionInfo()
+        }
     }
 
     override val resourceSource by singleton {

@@ -12,6 +12,7 @@ include(
     ":embrace-android-instrumentation-api-fakes",
     ":embrace-android-instrumentation-schema",
     ":embrace-android-instrumentation-huc",
+    ":embrace-android-instrumentation-huc-lite",
     ":embrace-android-instrumentation-taps",
     ":embrace-android-instrumentation-power-save",
     ":embrace-android-instrumentation-thermal-state",

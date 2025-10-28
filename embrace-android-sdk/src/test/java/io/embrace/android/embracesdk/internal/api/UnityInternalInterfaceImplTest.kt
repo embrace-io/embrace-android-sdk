@@ -6,8 +6,8 @@ import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.internal.api.delegate.UnityInternalInterfaceImpl
 import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo
+import io.embrace.android.embracesdk.internal.envelope.metadata.UnitySdkVersionInfo
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
-import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.prefs.PreferencesService
 import io.mockk.every
 import io.mockk.mockk
@@ -29,10 +29,7 @@ internal class UnityInternalInterfaceImplTest {
         embrace = mockk(relaxed = true)
         preferencesService = FakePreferenceService()
         logger = mockk(relaxed = true)
-        hostedSdkVersionInfo = HostedSdkVersionInfo(
-            preferencesService,
-            AppFramework.UNITY
-        )
+        hostedSdkVersionInfo = UnitySdkVersionInfo(preferencesService)
         impl = UnityInternalInterfaceImpl(embrace, mockk(), hostedSdkVersionInfo, logger)
     }
 

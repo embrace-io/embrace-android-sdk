@@ -7,9 +7,9 @@ import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.internal.api.delegate.FlutterInternalInterfaceImpl
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.FlutterException.embFlutterExceptionContext
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.FlutterException.embFlutterExceptionLibrary
+import io.embrace.android.embracesdk.internal.envelope.metadata.FlutterSdkVersionInfo
 import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
-import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -32,10 +32,7 @@ internal class FlutterInternalInterfaceImplTest {
             dartSdkVersion = "fakeDartVersion",
             embraceFlutterSdkVersion = "fakeFlutterSdkVersion"
         )
-        hostedSdkVersionInfo = HostedSdkVersionInfo(
-            fakePreferencesService,
-            AppFramework.FLUTTER
-        )
+        hostedSdkVersionInfo = FlutterSdkVersionInfo(fakePreferencesService)
         impl = FlutterInternalInterfaceImpl(embrace, mockk(), hostedSdkVersionInfo, logger)
     }
 

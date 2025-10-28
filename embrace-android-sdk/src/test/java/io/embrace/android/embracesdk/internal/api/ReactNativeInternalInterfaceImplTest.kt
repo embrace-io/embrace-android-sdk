@@ -8,8 +8,8 @@ import io.embrace.android.embracesdk.fakes.system.mockContext
 import io.embrace.android.embracesdk.internal.api.delegate.ReactNativeInternalInterfaceImpl
 import io.embrace.android.embracesdk.internal.capture.crash.CrashService
 import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo
+import io.embrace.android.embracesdk.internal.envelope.metadata.ReactNativeSdkVersionInfo
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
-import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.payload.JsException
 import io.embrace.android.embracesdk.internal.prefs.PreferencesService
 import io.mockk.every
@@ -37,10 +37,7 @@ internal class ReactNativeInternalInterfaceImplTest {
         preferencesService = FakePreferenceService()
         crashService = mockk(relaxed = true)
         rnBundleIdTracker = FakeRnBundleIdTracker()
-        hostedSdkVersionInfo = HostedSdkVersionInfo(
-            preferencesService,
-            AppFramework.REACT_NATIVE
-        )
+        hostedSdkVersionInfo = ReactNativeSdkVersionInfo(preferencesService)
         logger = mockk(relaxed = true)
         context = mockContext()
         impl = ReactNativeInternalInterfaceImpl(

@@ -35,6 +35,7 @@ import io.embrace.android.embracesdk.internal.api.delegate.SessionApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.UserApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.ViewTrackingApiDelegate
 import io.embrace.android.embracesdk.internal.arch.InstrumentationProvider
+import io.embrace.android.embracesdk.internal.arch.destination.TraceWriterImpl
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.clock.NormalizedIntervalClock
 import io.embrace.android.embracesdk.internal.delivery.storage.StorageLocation
@@ -245,15 +246,19 @@ internal class EmbraceImpl(
     private fun registerInstrumentation() {
         val loader = ServiceLoader.load(InstrumentationProvider::class.java)
         val instrumentationContext = InstrumentationInstallArgsImpl(
-            bootstrapper.configModule.configService,
-            bootstrapper.openTelemetryModule.currentSessionSpan,
-            bootstrapper.initModule.logger,
-            bootstrapper.initModule.clock
+            configService = bootstrapper.configModule.configService,
+            sessionSpanWriter = bootstrapper.openTelemetryModule.currentSessionSpan,
+            logger = bootstrapper.initModule.logger,
+            clock = bootstrapper.initModule.clock,
+            context = bootstrapper.coreModule.context,
+            traceWriter = TraceWriterImpl(bootstrapper.openTelemetryModule.spanService),
+            workerThreadModule = bootstrapper.workerThreadModule
         )
         loader.forEach { provider ->
             try {
-                val dataSourceState = provider.register(instrumentationContext)
-                bootstrapper.dataSourceModule.embraceFeatureRegistry.add(dataSourceState)
+                provider.register(instrumentationContext)?.let { dataSourceState ->
+                    bootstrapper.dataSourceModule.embraceFeatureRegistry.add(dataSourceState)
+                }
             } catch (exc: Throwable) {
                 logger.trackInternalError(InternalErrorType.INSTRUMENTATION_REG_FAIL, exc)
             }

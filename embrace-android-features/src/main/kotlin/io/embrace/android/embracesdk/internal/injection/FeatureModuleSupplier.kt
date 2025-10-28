@@ -9,7 +9,6 @@ import io.embrace.android.embracesdk.internal.config.ConfigService
  */
 typealias FeatureModuleSupplier = (
     featureRegistry: EmbraceFeatureRegistry,
-    coreModule: CoreModule,
     initModule: InitModule,
     otelModule: OpenTelemetryModule,
     workerThreadModule: WorkerThreadModule,
@@ -21,7 +20,6 @@ typealias FeatureModuleSupplier = (
 
 fun createFeatureModule(
     featureRegistry: EmbraceFeatureRegistry,
-    coreModule: CoreModule,
     initModule: InitModule,
     otelModule: OpenTelemetryModule,
     workerThreadModule: WorkerThreadModule,
@@ -31,7 +29,6 @@ fun createFeatureModule(
     configService: ConfigService,
 ): FeatureModule = FeatureModuleImpl(
     featureRegistry = featureRegistry,
-    coreModule = coreModule,
     initModule = initModule,
     otelModule = otelModule,
     workerThreadModule = workerThreadModule,

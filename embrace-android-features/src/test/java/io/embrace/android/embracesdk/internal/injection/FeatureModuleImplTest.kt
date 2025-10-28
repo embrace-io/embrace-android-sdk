@@ -8,7 +8,6 @@ import io.embrace.android.embracesdk.fakes.injection.FakeAndroidServicesModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeSystemServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
-import io.mockk.mockk
 import org.junit.Assert.assertNotNull
 import org.junit.Test
 
@@ -20,7 +19,6 @@ internal class FeatureModuleImplTest {
         val initModule = FakeInitModule()
         val module = FeatureModuleImpl(
             featureRegistry = registry,
-            coreModule = createCoreModule(mockk(relaxed = true), initModule),
             initModule = initModule,
             otelModule = FakeOpenTelemetryModule(),
             workerThreadModule = FakeWorkerThreadModule(),
@@ -33,7 +31,6 @@ internal class FeatureModuleImplTest {
         assertNotNull(module.viewDataSource)
         assertNotNull(module.pushNotificationDataSource)
         assertNotNull(module.rnActionDataSource)
-        assertNotNull(module.lowPowerDataSource)
         assertNotNull(module.applicationExitInfoDataSource)
         assertNotNull(module.internalErrorDataSource)
     }

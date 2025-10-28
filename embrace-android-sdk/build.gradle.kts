@@ -73,7 +73,9 @@ dependencies {
     implementation(project(":embrace-android-instrumentation-api"))
 
     // automatically included instrumentation
+    implementation(project(":embrace-android-instrumentation-power-save"))
     implementation(project(":embrace-android-instrumentation-taps"))
+    implementation(project(":embrace-android-instrumentation-thermal-state"))
 
     implementation(libs.opentelemetry.java.aliases)
 
@@ -107,6 +109,8 @@ dependencies {
     testImplementation(project(":embrace-android-delivery-fakes"))
     testImplementation(project(":embrace-android-otel-fakes"))
     testImplementation(project(":embrace-android-instrumentation-huc"))
+    testImplementation(project(":embrace-android-instrumentation-power-save"))
+    testImplementation(project(":embrace-android-instrumentation-thermal-state"))
     testImplementation(libs.protobuf.java)
     testImplementation(libs.protobuf.java.util)
     testImplementation(platform(libs.okhttp.bom))

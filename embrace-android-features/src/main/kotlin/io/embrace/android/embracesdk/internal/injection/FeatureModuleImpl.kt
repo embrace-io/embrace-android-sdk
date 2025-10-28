@@ -16,10 +16,8 @@ import io.embrace.android.embracesdk.internal.capture.crumbs.PushNotificationDat
 import io.embrace.android.embracesdk.internal.capture.crumbs.RnActionDataSource
 import io.embrace.android.embracesdk.internal.capture.crumbs.ViewDataSource
 import io.embrace.android.embracesdk.internal.capture.crumbs.WebViewUrlDataSource
-import io.embrace.android.embracesdk.internal.capture.powersave.LowPowerDataSource
 import io.embrace.android.embracesdk.internal.capture.telemetry.InternalErrorDataSource
 import io.embrace.android.embracesdk.internal.capture.telemetry.InternalErrorDataSourceImpl
-import io.embrace.android.embracesdk.internal.capture.thermalstate.ThermalStateDataSource
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.Provider
@@ -27,7 +25,6 @@ import io.embrace.android.embracesdk.internal.worker.Worker
 
 internal class FeatureModuleImpl(
     private val featureRegistry: EmbraceFeatureRegistry,
-    coreModule: CoreModule,
     initModule: InitModule,
     otelModule: OpenTelemetryModule,
     workerThreadModule: WorkerThreadModule,
@@ -100,45 +97,6 @@ internal class FeatureModuleImpl(
                     traceWriter,
                     initModule.logger
                 )
-            }
-        )
-    }
-
-    override val lowPowerDataSource: DataSourceState<LowPowerDataSource> by dataSourceState {
-        DataSourceState(
-            factory = {
-                LowPowerDataSource(
-                    context = coreModule.context,
-                    backgroundWorker = workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker),
-                    clock = initModule.clock,
-                    provider = { systemServiceModule.powerManager },
-                    traceWriter = traceWriter,
-                    logger = initModule.logger
-                )
-            },
-            configGate = { configService.autoDataCaptureBehavior.isPowerSaveModeCaptureEnabled() }
-        )
-    }
-
-    private val thermalService: ThermalStateDataSource? by singleton {
-        if (BuildVersionChecker.isAtLeast(Build.VERSION_CODES.Q)) {
-            ThermalStateDataSource(
-                traceWriter = traceWriter,
-                logger = initModule.logger,
-                backgroundWorker = workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker),
-                clock = initModule.clock,
-                powerManagerProvider = { systemServiceModule.powerManager }
-            )
-        } else {
-            null
-        }
-    }
-
-    override val thermalStateDataSource: DataSourceState<ThermalStateDataSource> by dataSourceState {
-        DataSourceState(
-            factory = { thermalService },
-            configGate = {
-                configService.autoDataCaptureBehavior.isThermalStatusCaptureEnabled()
             }
         )
     }

@@ -8,9 +8,7 @@ import io.embrace.android.embracesdk.internal.capture.crumbs.PushNotificationDat
 import io.embrace.android.embracesdk.internal.capture.crumbs.RnActionDataSource
 import io.embrace.android.embracesdk.internal.capture.crumbs.ViewDataSource
 import io.embrace.android.embracesdk.internal.capture.crumbs.WebViewUrlDataSource
-import io.embrace.android.embracesdk.internal.capture.powersave.LowPowerDataSource
 import io.embrace.android.embracesdk.internal.capture.telemetry.InternalErrorDataSource
-import io.embrace.android.embracesdk.internal.capture.thermalstate.ThermalStateDataSource
 import io.embrace.android.embracesdk.internal.injection.FeatureModule
 
 class FakeFeatureModule : FeatureModule {
@@ -19,9 +17,7 @@ class FakeFeatureModule : FeatureModule {
     override val webViewUrlDataSource: DataSourceState<WebViewUrlDataSource> = DataSourceState({ null })
     override val pushNotificationDataSource: DataSourceState<PushNotificationDataSource> = DataSourceState({ null })
     override val applicationExitInfoDataSource: DataSourceState<AeiDataSource> = DataSourceState({ null })
-    override val lowPowerDataSource: DataSourceState<LowPowerDataSource> = DataSourceState({ null })
     override val networkStatusDataSource: DataSourceState<NetworkStatusDataSource> = DataSourceState({ null })
     override val rnActionDataSource: DataSourceState<RnActionDataSource> = DataSourceState({ null })
-    override val thermalStateDataSource: DataSourceState<ThermalStateDataSource> = DataSourceState({ null })
     override val internalErrorDataSource: DataSourceState<InternalErrorDataSource> = DataSourceState({ null })
 }

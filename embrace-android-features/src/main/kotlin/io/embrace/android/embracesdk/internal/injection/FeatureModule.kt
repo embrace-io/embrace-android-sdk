@@ -8,9 +8,7 @@ import io.embrace.android.embracesdk.internal.capture.crumbs.PushNotificationDat
 import io.embrace.android.embracesdk.internal.capture.crumbs.RnActionDataSource
 import io.embrace.android.embracesdk.internal.capture.crumbs.ViewDataSource
 import io.embrace.android.embracesdk.internal.capture.crumbs.WebViewUrlDataSource
-import io.embrace.android.embracesdk.internal.capture.powersave.LowPowerDataSource
 import io.embrace.android.embracesdk.internal.capture.telemetry.InternalErrorDataSource
-import io.embrace.android.embracesdk.internal.capture.thermalstate.ThermalStateDataSource
 
 interface FeatureModule {
     val breadcrumbDataSource: DataSourceState<BreadcrumbDataSource>
@@ -18,8 +16,6 @@ interface FeatureModule {
     val pushNotificationDataSource: DataSourceState<PushNotificationDataSource>
     val webViewUrlDataSource: DataSourceState<WebViewUrlDataSource>
     val rnActionDataSource: DataSourceState<RnActionDataSource>
-    val lowPowerDataSource: DataSourceState<LowPowerDataSource>
-    val thermalStateDataSource: DataSourceState<ThermalStateDataSource>
     val applicationExitInfoDataSource: DataSourceState<AeiDataSource>
     val internalErrorDataSource: DataSourceState<InternalErrorDataSource>
     val networkStatusDataSource: DataSourceState<NetworkStatusDataSource>

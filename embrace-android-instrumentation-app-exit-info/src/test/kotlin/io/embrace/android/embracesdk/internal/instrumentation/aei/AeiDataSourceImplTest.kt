@@ -1,15 +1,14 @@
-package io.embrace.android.embracesdk.internal.capture.aei
+package io.embrace.android.embracesdk.internal.instrumentation.aei
 
 import android.app.ActivityManager
 import android.app.ApplicationExitInfo
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeLogWriter
-import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.behavior.FakeAppExitInfoBehavior
 import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
 import io.embrace.android.embracesdk.internal.arch.destination.LogSeverity
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
-import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.unmockkAll
@@ -40,8 +39,8 @@ internal class AeiDataSourceImplTest {
 
     private val worker = fakeBackgroundWorker()
 
-    private val preferenceService = FakePreferenceService()
-    private val logger = EmbLoggerImpl()
+    private val aeiDataStore = FakeAeiDataStore()
+    private val logger = FakeEmbLogger()
 
     private val mockActivityManager: ActivityManager = mockk {
         every { getHistoricalProcessExitReasons(any(), any(), any()) } returns emptyList()
@@ -74,7 +73,7 @@ internal class AeiDataSourceImplTest {
             worker,
             configService,
             mockActivityManager,
-            preferenceService,
+            aeiDataStore,
             logWriter,
             logger
         ).apply(AeiDataSourceImpl::enableDataCapture)
@@ -174,7 +173,7 @@ internal class AeiDataSourceImplTest {
         every { mockActivityManager.getHistoricalProcessExitReasons(any(), any(), any()) } returns
             listOf(appExitInfo1, appExitInfo2, appExitInfo3)
 
-        preferenceService.deliveredAeiIds = setOf(
+        aeiDataStore.deliveredAeiIds = setOf(
             appExitInfo1Hash,
             appExitInfo2Hash
         )

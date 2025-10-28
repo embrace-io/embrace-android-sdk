@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.internal.capture.aei
+package io.embrace.android.embracesdk.internal.instrumentation.aei
 
 internal sealed class TraceResult(val trace: String?, val errMsg: String?) {
     class Success(result: String?, errMsg: String? = null) : TraceResult(result, errMsg)

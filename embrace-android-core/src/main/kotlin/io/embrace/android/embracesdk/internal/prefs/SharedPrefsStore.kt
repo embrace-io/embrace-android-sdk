@@ -61,4 +61,12 @@ internal class SharedPrefsStore(
             -1
         }
     }
+
+    override fun incrementAndGetCrashNumber(): Int {
+        return incrementAndGet(LAST_CRASH_NUMBER_KEY)
+    }
+
+    private companion object {
+        private const val LAST_CRASH_NUMBER_KEY = "io.embrace.crashnumber"
+    }
 }

@@ -11,6 +11,7 @@ include(
     ":embrace-android-instrumentation-api",
     ":embrace-android-instrumentation-api-fakes",
     ":embrace-android-instrumentation-schema",
+    ":embrace-android-instrumentation-app-exit-info",
     ":embrace-android-instrumentation-huc",
     ":embrace-android-instrumentation-taps",
     ":embrace-android-instrumentation-power-save",

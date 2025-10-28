@@ -1,11 +1,10 @@
-package io.embrace.android.embracesdk.internal.capture.aei
+package io.embrace.android.embracesdk.internal.instrumentation.aei
 
 import android.app.ApplicationExitInfo
 import android.os.Build.VERSION_CODES
 import androidx.annotation.RequiresApi
-import io.embrace.android.embracesdk.internal.capture.aei.TraceResult.Failure
-import io.embrace.android.embracesdk.internal.capture.aei.TraceResult.Success
-import io.embrace.android.embracesdk.internal.payload.AppExitInfoData
+import io.embrace.android.embracesdk.internal.instrumentation.aei.TraceResult.Failure
+import io.embrace.android.embracesdk.internal.instrumentation.aei.TraceResult.Success
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.internal.utils.toUTF8String
 import java.io.IOException
@@ -14,7 +13,7 @@ import java.util.regex.Pattern
 private val SESSION_ID_PATTERN by lazy { Pattern.compile("^[0-9a-fA-F]{32}\$").toRegex() }
 
 /**
- * Constructs an [AppExitInfoData] object from an [ApplicationExitInfo] object. The trace
+ * Constructs an [io.embrace.android.embracesdk.internal.payload.AppExitInfoData] object from an [ApplicationExitInfo] object. The trace
  * will be truncated if it is above a certain character limit. If no trace is present, this function
  * will return null as we don't wish to capture this data right now.
  */

@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.arch
 
 import android.content.Context
+import io.embrace.android.embracesdk.internal.arch.destination.LogWriter
 import io.embrace.android.embracesdk.internal.arch.destination.SessionSpanWriter
 import io.embrace.android.embracesdk.internal.arch.destination.TraceWriter
 import io.embrace.android.embracesdk.internal.arch.store.KeyValueStore
@@ -29,6 +30,11 @@ interface InstrumentationInstallArgs {
      * An interface where tracing events can be written.
      */
     val traceWriter: TraceWriter
+
+    /**
+     * An interface where log events can be written.
+     */
+    val logWriter: LogWriter
 
     /**
      * Embrace SDK's internal logger.

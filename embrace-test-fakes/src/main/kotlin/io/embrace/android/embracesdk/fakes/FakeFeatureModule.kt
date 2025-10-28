@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState
-import io.embrace.android.embracesdk.internal.capture.aei.AeiDataSource
 import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkStatusDataSource
 import io.embrace.android.embracesdk.internal.capture.crumbs.BreadcrumbDataSource
 import io.embrace.android.embracesdk.internal.capture.crumbs.PushNotificationDataSource
@@ -16,7 +15,6 @@ class FakeFeatureModule : FeatureModule {
     override val viewDataSource: DataSourceState<ViewDataSource> = DataSourceState({ null })
     override val webViewUrlDataSource: DataSourceState<WebViewUrlDataSource> = DataSourceState({ null })
     override val pushNotificationDataSource: DataSourceState<PushNotificationDataSource> = DataSourceState({ null })
-    override val applicationExitInfoDataSource: DataSourceState<AeiDataSource> = DataSourceState({ null })
     override val networkStatusDataSource: DataSourceState<NetworkStatusDataSource> = DataSourceState({ null })
     override val rnActionDataSource: DataSourceState<RnActionDataSource> = DataSourceState({ null })
     override val internalErrorDataSource: DataSourceState<InternalErrorDataSource> = DataSourceState({ null })

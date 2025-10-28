@@ -11,9 +11,6 @@ typealias FeatureModuleSupplier = (
     featureRegistry: EmbraceFeatureRegistry,
     initModule: InitModule,
     otelModule: OpenTelemetryModule,
-    workerThreadModule: WorkerThreadModule,
-    systemServiceModule: SystemServiceModule,
-    androidServicesModule: AndroidServicesModule,
     logWriter: LogWriter,
     configService: ConfigService,
 ) -> FeatureModule
@@ -22,18 +19,12 @@ fun createFeatureModule(
     featureRegistry: EmbraceFeatureRegistry,
     initModule: InitModule,
     otelModule: OpenTelemetryModule,
-    workerThreadModule: WorkerThreadModule,
-    systemServiceModule: SystemServiceModule,
-    androidServicesModule: AndroidServicesModule,
     logWriter: LogWriter,
     configService: ConfigService,
 ): FeatureModule = FeatureModuleImpl(
     featureRegistry = featureRegistry,
     initModule = initModule,
     otelModule = otelModule,
-    workerThreadModule = workerThreadModule,
-    systemServiceModule = systemServiceModule,
-    androidServicesModule = androidServicesModule,
     logWriter = logWriter,
     configService = configService,
 )

@@ -26,7 +26,7 @@ internal class ApkDisassembler {
 
         val stringTable = readStringTable(outDir)
         val smaliFiles = readSmaliFiles(outDir)
-        return DecodedApk(smaliFiles)
+        return DecodedApk(stringTable, smaliFiles)
     }
 
     private fun decodeApk(apkFile: File): File {

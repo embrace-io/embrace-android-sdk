@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.api
 import io.embrace.android.embracesdk.EmbraceImpl
 import io.embrace.android.embracesdk.LogExceptionType
 import io.embrace.android.embracesdk.Severity
-import io.embrace.android.embracesdk.fakes.FakePreferenceService
+import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.internal.api.delegate.FlutterInternalInterfaceImpl
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.FlutterException.embFlutterExceptionContext
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.FlutterException.embFlutterExceptionLibrary
@@ -22,17 +22,14 @@ internal class FlutterInternalInterfaceImplTest {
     private lateinit var embrace: EmbraceImpl
     private lateinit var logger: EmbLogger
     private lateinit var hostedSdkVersionInfo: HostedSdkVersionInfo
-    private lateinit var fakePreferencesService: FakePreferenceService
+    private lateinit var store: FakeKeyValueStore
 
     @Before
     fun setUp() {
         embrace = mockk(relaxed = true)
         logger = mockk(relaxed = true)
-        fakePreferencesService = FakePreferenceService(
-            dartSdkVersion = "fakeDartVersion",
-            embraceFlutterSdkVersion = "fakeFlutterSdkVersion"
-        )
-        hostedSdkVersionInfo = FlutterSdkVersionInfo(fakePreferencesService)
+        store = FakeKeyValueStore()
+        hostedSdkVersionInfo = FlutterSdkVersionInfo(store)
         impl = FlutterInternalInterfaceImpl(embrace, mockk(), hostedSdkVersionInfo, logger)
     }
 

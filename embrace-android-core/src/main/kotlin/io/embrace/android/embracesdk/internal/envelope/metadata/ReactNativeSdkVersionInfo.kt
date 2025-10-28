@@ -1,26 +1,26 @@
 package io.embrace.android.embracesdk.internal.envelope.metadata
 
-import io.embrace.android.embracesdk.internal.prefs.PreferencesService
+import io.embrace.android.embracesdk.internal.store.KeyValueStore
 
 class ReactNativeSdkVersionInfo(
-    private val prefs: PreferencesService,
+    private val impl: KeyValueStore
 ) : HostedSdkVersionInfo {
 
     override var hostedSdkVersion: String?
-        get() = prefs.rnSdkVersion
-        set(value) {
-            prefs.rnSdkVersion = value
-        }
-
-    override var hostedPlatformVersion: String?
-        get() = prefs.reactNativeVersionNumber
-        set(value) {
-            prefs.reactNativeVersionNumber = value
-        }
+        get() = impl.getString(REACT_NATIVE_SDK_VERSION_KEY)
+        set(value) = impl.edit { putString(REACT_NATIVE_SDK_VERSION_KEY, value) }
 
     override var javaScriptPatchNumber: String?
-        get() = prefs.javaScriptPatchNumber
-        set(value) {
-            prefs.javaScriptPatchNumber = value
-        }
+        get() = impl.getString(JAVA_SCRIPT_PATCH_NUMBER_KEY)
+        set(value) = impl.edit { putString(JAVA_SCRIPT_PATCH_NUMBER_KEY, value) }
+
+    override var hostedPlatformVersion: String?
+        get() = impl.getString(REACT_NATIVE_VERSION_KEY)
+        set(value) = impl.edit { putString(REACT_NATIVE_VERSION_KEY, value) }
+
+    private companion object {
+        private const val JAVA_SCRIPT_PATCH_NUMBER_KEY = "io.embrace.javascript.patch"
+        private const val REACT_NATIVE_VERSION_KEY = "io.embrace.reactnative.version"
+        private const val REACT_NATIVE_SDK_VERSION_KEY = "io.embrace.reactnative.sdk.version"
+    }
 }

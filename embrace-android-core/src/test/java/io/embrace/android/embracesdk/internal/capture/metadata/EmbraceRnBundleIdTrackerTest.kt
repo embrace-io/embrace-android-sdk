@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.res.AssetManager
 import android.view.WindowManager
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
 import io.embrace.android.embracesdk.internal.buildinfo.BuildInfo
@@ -45,11 +46,8 @@ internal class EmbraceRnBundleIdTrackerTest {
         }
         preferencesService = FakePreferenceService()
         preferencesService.javaScriptBundleURL = null
-        preferencesService.javaScriptPatchNumber = "patch-number"
-        preferencesService.reactNativeVersionNumber = "rn-version-number"
-        hostedSdkVersionInfo = ReactNativeSdkVersionInfo(
-            preferencesService,
-        )
+        val store = FakeKeyValueStore()
+        hostedSdkVersionInfo = ReactNativeSdkVersionInfo(store)
     }
 
     private fun createRnBundleIdTracker(): RnBundleIdTrackerImpl = RnBundleIdTrackerImpl(

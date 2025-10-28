@@ -4,7 +4,7 @@ import android.content.pm.PackageInfo
 import android.os.Environment
 import io.embrace.android.embracesdk.fakes.FakeDevice
 import io.embrace.android.embracesdk.fakes.FakeDeviceArchitecture
-import io.embrace.android.embracesdk.fakes.FakePreferenceService
+import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.fakes.FakeRnBundleIdTracker
 import io.embrace.android.embracesdk.internal.buildinfo.BuildInfo
 import io.embrace.android.embracesdk.internal.capture.metadata.AppEnvironment
@@ -53,7 +53,7 @@ internal class EnvelopeResourceSourceImplTest {
 
     @Test
     fun getEnvelopeResource() {
-        val hostedSdkVersionInfo = UnitySdkVersionInfo(FakePreferenceService())
+        val hostedSdkVersionInfo = UnitySdkVersionInfo(FakeKeyValueStore())
         hostedSdkVersionInfo.hostedSdkVersion = "1.2.0"
         hostedSdkVersionInfo.hostedPlatformVersion = "19"
         hostedSdkVersionInfo.unityBuildIdNumber = "5092abc"

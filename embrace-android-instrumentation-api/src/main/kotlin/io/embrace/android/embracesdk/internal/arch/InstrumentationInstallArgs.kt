@@ -3,10 +3,10 @@ package io.embrace.android.embracesdk.internal.arch
 import android.app.Application
 import android.content.Context
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
-import io.embrace.android.embracesdk.internal.arch.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
+import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.internal.worker.Worker
 

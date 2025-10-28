@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.network.logging
 
-import io.embrace.android.embracesdk.fakes.FakeLogWriter
+import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
 import io.embrace.android.embracesdk.fakes.fakeNetworkCapturedCall
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
@@ -11,16 +11,16 @@ internal class NetworkCaptureDataSourceTest {
 
     @Test
     fun `test network capture is sent as log`() {
-        val logWriter = FakeLogWriter()
+        val destination = FakeTelemetryDestination()
         val dataSource = NetworkCaptureDataSourceImpl(
-            logWriter,
+            destination,
             EmbLoggerImpl()
         )
         val capturedCall = fakeNetworkCapturedCall()
         dataSource.logNetworkCapturedCall(capturedCall)
 
-        assertEquals(1, logWriter.logEvents.size)
-        val log = logWriter.logEvents[0]
+        assertEquals(1, destination.logEvents.size)
+        val log = destination.logEvents[0]
         assertEquals(SchemaType.NetworkCapturedRequest::class.java, log.schemaType.javaClass)
         assertEquals(100L, capturedCall.duration)
         assertEquals(1713453000L, capturedCall.endTime)

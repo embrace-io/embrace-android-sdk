@@ -3,10 +3,9 @@ package io.embrace.android.embracesdk.internal.instrumentation.thermalstate
 import android.os.Build
 import android.os.PowerManager
 import androidx.annotation.RequiresApi
-import io.embrace.android.embracesdk.internal.arch.datasource.NoInputValidation
-import io.embrace.android.embracesdk.internal.arch.datasource.SpanDataSourceImpl
-import io.embrace.android.embracesdk.internal.arch.destination.SpanToken
-import io.embrace.android.embracesdk.internal.arch.destination.TraceWriter
+import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceImpl
+import io.embrace.android.embracesdk.internal.arch.datasource.SpanToken
+import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.clock.Clock
@@ -18,13 +17,13 @@ import java.util.concurrent.Executor
 
 @RequiresApi(Build.VERSION_CODES.Q)
 class ThermalStateDataSource(
-    traceWriter: TraceWriter,
+    destination: TelemetryDestination,
     logger: EmbLogger,
     private val backgroundWorker: BackgroundWorker,
     private val clock: Clock,
     powerManagerProvider: Provider<PowerManager?>,
-) : SpanDataSourceImpl(
-    destination = traceWriter,
+) : DataSourceImpl(
+    destination = destination,
     logger = logger,
     limitStrategy = UpToLimitStrategy { MAX_CAPTURED_THERMAL_STATES }
 ) {
@@ -38,7 +37,7 @@ class ThermalStateDataSource(
 
     private var span: SpanToken? = null
 
-    override fun enableDataCapture() {
+    override fun onDataCaptureEnabled() {
         backgroundWorker.submit {
             EmbTrace.trace("thermal-service-registration") {
                 thermalStatusListener = PowerManager.OnThermalStatusChangedListener {
@@ -60,7 +59,7 @@ class ThermalStateDataSource(
         }
     }
 
-    override fun disableDataCapture() {
+    override fun onDataCaptureDisabled() {
         backgroundWorker.submit {
             thermalStatusListener?.let {
                 powerManager?.removeThermalStatusListener(it)
@@ -78,23 +77,11 @@ class ThermalStateDataSource(
 
         // close previous span
         if (span != null) {
-            captureSpanData(
-                countsTowardsLimits = false,
-                inputValidation = NoInputValidation,
-                captureAction = {
-                    span?.stop(endTimeMs = timestamp)
-                }
-            )
+            span?.stop(endTimeMs = timestamp)
         }
         // start a new span with the new thermal state
-        captureSpanData(
-            countsTowardsLimits = true,
-            inputValidation = NoInputValidation
-        ) {
-            startSpanCapture(SchemaType.ThermalState(status), timestamp)
-                .apply {
-                    span = this
-                }
+        captureTelemetry {
+            span = startSpanCapture(SchemaType.ThermalState(status), timestamp)
         }
     }
 }

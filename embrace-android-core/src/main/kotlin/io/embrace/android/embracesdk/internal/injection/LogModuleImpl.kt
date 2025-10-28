@@ -39,7 +39,7 @@ internal class LogModuleImpl(
 
     override val networkCaptureDataSource: NetworkCaptureDataSource by singleton {
         NetworkCaptureDataSourceImpl(
-            essentialServiceModule.logWriter,
+            essentialServiceModule.telemetryDestination,
             initModule.logger
         )
     }
@@ -60,7 +60,7 @@ internal class LogModuleImpl(
 
     override val logService: LogService by singleton {
         EmbraceLogService(
-            essentialServiceModule.logWriter,
+            essentialServiceModule.telemetryDestination,
             configModule.configService,
             essentialServiceModule.sessionPropertiesService,
             deliveryModule.payloadStore,

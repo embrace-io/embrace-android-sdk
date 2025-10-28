@@ -1,10 +1,8 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.android.embracesdk.internal.arch.destination.SpanAttributeData
 import io.embrace.android.embracesdk.internal.arch.schema.AppTerminationCause
-import io.embrace.android.embracesdk.internal.arch.schema.EmbType
-import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
+import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpan
@@ -26,21 +24,8 @@ class FakeCurrentSessionSpan(
         sessionSpan = newSessionSpan(sdkInitStartTimeMs)
     }
 
-    override fun addSessionEvent(schemaType: SchemaType, startTimeMs: Long): Boolean {
-        addedEvents.add(SpanEventData(schemaType, startTimeMs))
-        return true
-    }
-
-    override fun removeSessionEvents(type: EmbType) {
-        addedEvents.removeAll { it.schemaType.telemetryType.key == type.key }
-    }
-
-    override fun addSessionAttribute(attribute: SpanAttributeData) {
-        attributes[attribute.key] = attribute.value
-    }
-
-    override fun removeSessionAttribute(key: String) {
-        attributes.remove(key)
+    override fun current(): EmbraceSdkSpan? {
+        return sessionSpan
     }
 
     override fun initialized(): Boolean {

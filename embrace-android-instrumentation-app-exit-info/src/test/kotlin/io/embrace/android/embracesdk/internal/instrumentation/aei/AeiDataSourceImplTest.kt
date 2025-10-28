@@ -4,10 +4,10 @@ import android.app.ActivityManager
 import android.app.ApplicationExitInfo
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
-import io.embrace.android.embracesdk.fakes.FakeLogWriter
+import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
 import io.embrace.android.embracesdk.fakes.behavior.FakeAppExitInfoBehavior
 import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
-import io.embrace.android.embracesdk.internal.arch.destination.LogSeverity
+import io.embrace.android.embracesdk.internal.arch.datasource.LogSeverity
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.mockk.every
 import io.mockk.mockk
@@ -34,7 +34,7 @@ private const val SESSION_ID = "1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d"
 internal class AeiDataSourceImplTest {
 
     private lateinit var applicationExitInfoService: AeiDataSourceImpl
-    private lateinit var logWriter: FakeLogWriter
+    private lateinit var destination: FakeTelemetryDestination
     private lateinit var configService: FakeConfigService
 
     private val worker = fakeBackgroundWorker()
@@ -68,15 +68,15 @@ internal class AeiDataSourceImplTest {
     }
 
     private fun startApplicationExitInfoService() {
-        logWriter = FakeLogWriter()
+        destination = FakeTelemetryDestination()
         applicationExitInfoService = AeiDataSourceImpl(
             worker,
             configService,
             mockActivityManager,
             aeiDataStore,
-            logWriter,
+            destination,
             logger
-        ).apply(AeiDataSourceImpl::enableDataCapture)
+        ).apply(AeiDataSourceImpl::onDataCaptureEnabled)
     }
 
     @Before
@@ -110,7 +110,7 @@ internal class AeiDataSourceImplTest {
         assertEquals("", attrs["session_id_error"])
         assertNull(attrs["trace_status"])
 
-        val logEventData = logWriter.logEvents.single()
+        val logEventData = destination.logEvents.single()
         assertEquals(TRACE, logEventData.message)
     }
 
@@ -127,7 +127,7 @@ internal class AeiDataSourceImplTest {
         startApplicationExitInfoService()
 
         // no logs delivered
-        assertTrue(logWriter.logEvents.isEmpty())
+        assertTrue(destination.logEvents.isEmpty())
     }
 
     @Test
@@ -148,7 +148,7 @@ internal class AeiDataSourceImplTest {
         startApplicationExitInfoService()
 
         // then captured data should only have 64 entries
-        assertEquals(64, logWriter.logEvents.size)
+        assertEquals(64, destination.logEvents.size)
     }
 
     @Test
@@ -225,7 +225,7 @@ internal class AeiDataSourceImplTest {
         startApplicationExitInfoService()
 
         // then no logs should be sent
-        assertTrue(logWriter.logEvents.isEmpty())
+        assertTrue(destination.logEvents.isEmpty())
     }
 
     @Test
@@ -310,7 +310,7 @@ internal class AeiDataSourceImplTest {
         startApplicationExitInfoService()
 
         // then a truncated trace should be sent
-        val logEventData = logWriter.logEvents.single()
+        val logEventData = destination.logEvents.single()
         assertEquals("a".repeat(100), logEventData.message)
     }
 
@@ -328,7 +328,7 @@ internal class AeiDataSourceImplTest {
         startApplicationExitInfoService()
 
         // no logs were sent
-        assertTrue(logWriter.logEvents.isEmpty())
+        assertTrue(destination.logEvents.isEmpty())
     }
 
     @Test
@@ -345,11 +345,11 @@ internal class AeiDataSourceImplTest {
         startApplicationExitInfoService()
 
         // each AEI object with a trace should be sent in a separate payload
-        assertEquals(64, logWriter.logEvents.size)
+        assertEquals(64, destination.logEvents.size)
     }
 
     private fun getAeiLogAttrs(): Map<String, String> {
-        val logEventData = logWriter.logEvents.single()
+        val logEventData = destination.logEvents.single()
         assertEquals(LogSeverity.INFO, logEventData.severity)
         assertEquals(EmbType.System.Exit, logEventData.schemaType.telemetryType)
         return logEventData.schemaType.attributes()

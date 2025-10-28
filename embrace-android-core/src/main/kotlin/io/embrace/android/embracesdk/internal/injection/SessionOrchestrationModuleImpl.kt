@@ -57,7 +57,7 @@ internal class SessionOrchestrationModuleImpl(
 
     override val sessionSpanAttrPopulator: SessionSpanAttrPopulator by singleton {
         SessionSpanAttrPopulatorImpl(
-            openTelemetryModule.currentSessionSpan,
+            essentialServiceModule.telemetryDestination,
             startupService,
             logModule.logService,
             payloadSourceModule.metadataService
@@ -75,7 +75,7 @@ internal class SessionOrchestrationModuleImpl(
             deliveryModule.payloadStore,
             deliveryModule.payloadCachingService,
             dataSourceModule.dataCaptureOrchestrator,
-            openTelemetryModule.currentSessionSpan,
+            essentialServiceModule.telemetryDestination,
             sessionSpanAttrPopulator
         )
     }

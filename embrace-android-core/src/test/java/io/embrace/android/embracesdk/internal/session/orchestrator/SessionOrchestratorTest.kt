@@ -15,6 +15,7 @@ import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fakes.FakeSessionPropertiesService
 import io.embrace.android.embracesdk.fakes.FakeStartupService
+import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.FakeV2PayloadCollator
 import io.embrace.android.embracesdk.fakes.behavior.FakeSessionBehavior
@@ -65,6 +66,7 @@ internal class SessionOrchestratorTest {
     private lateinit var fakeDataSource: FakeDataSource
     private lateinit var logger: EmbLogger
     private lateinit var currentSessionSpan: FakeCurrentSessionSpan
+    private lateinit var destination: FakeTelemetryDestination
     private var orchestratorStartTimeMs: Long = 0
 
     @Before
@@ -302,7 +304,7 @@ internal class SessionOrchestratorTest {
     fun `end with crash in background`() {
         createOrchestrator(true)
         orchestrator.handleCrash("crashId")
-        assertEquals("crashId", currentSessionSpan.getAttribute(embCrashId.name))
+        assertEquals("crashId", destination.attributes[embCrashId.name])
         assertTrue(store.cachedEmptyCrashPayloads.isEmpty())
     }
 
@@ -310,7 +312,7 @@ internal class SessionOrchestratorTest {
     fun `end with crash in foreground`() {
         createOrchestrator(false)
         orchestrator.handleCrash("crashId")
-        assertEquals("crashId", currentSessionSpan.getAttribute(embCrashId.name))
+        assertEquals("crashId", destination.attributes[embCrashId.name])
         assertTrue(store.cachedEmptyCrashPayloads.isEmpty())
     }
 
@@ -350,39 +352,39 @@ internal class SessionOrchestratorTest {
         createOrchestrator(true)
         orchestrator.onForeground(true, orchestratorStartTimeMs)
         assertHeartbeatMatchesClock()
-        assertEquals("true", currentSessionSpan.getAttribute("emb.terminated"))
+        assertEquals("true", destination.attributes["emb.terminated"])
 
         // run periodic cache
         clock.tick(2000)
         sessionCacheExecutor.runCurrentlyBlocked()
         assertHeartbeatMatchesClock()
-        assertEquals("true", currentSessionSpan.getAttribute("emb.terminated"))
+        assertEquals("true", destination.attributes["emb.terminated"])
 
         // end with crash
         orchestrator.handleCrash("my-crash-id")
-        assertEquals("false", currentSessionSpan.getAttribute("emb.terminated"))
+        assertEquals("false", destination.attributes["emb.terminated"])
     }
 
     @Test
     fun `test background session span heartbeat`() {
         createOrchestrator(true)
         assertHeartbeatMatchesClock()
-        assertEquals("true", currentSessionSpan.getAttribute("emb.terminated"))
+        assertEquals("true", destination.attributes["emb.terminated"])
 
         // run periodic cache
         clock.tick(6000)
         orchestrator.reportBackgroundActivityStateChange()
         sessionCacheExecutor.runCurrentlyBlocked()
         assertHeartbeatMatchesClock()
-        assertEquals("true", currentSessionSpan.getAttribute("emb.terminated"))
+        assertEquals("true", destination.attributes["emb.terminated"])
 
         // end with crash
         orchestrator.handleCrash("my-crash-id")
-        assertEquals("false", currentSessionSpan.getAttribute("emb.terminated"))
+        assertEquals("false", destination.attributes["emb.terminated"])
     }
 
     private fun assertHeartbeatMatchesClock() {
-        val attr = checkNotNull(currentSessionSpan.getAttribute("emb.heartbeat_time_unix_nano"))
+        val attr = checkNotNull(destination.attributes["emb.heartbeat_time_unix_nano"])
         assertEquals(clock.now(), attr.toLong().nanosToMillis())
     }
 
@@ -390,6 +392,7 @@ internal class SessionOrchestratorTest {
         store = FakePayloadStore()
         processStateService = FakeProcessStateService(background)
         currentSessionSpan = FakeCurrentSessionSpan(clock).apply { initializeService(clock.now()) }
+        destination = FakeTelemetryDestination()
         payloadCollator = FakeV2PayloadCollator(currentSessionSpan = currentSessionSpan)
         val payloadSourceModule = FakePayloadSourceModule()
         logEnvelopeSource = payloadSourceModule.logEnvelopeSource
@@ -440,9 +443,9 @@ internal class SessionOrchestratorTest {
             store,
             payloadCachingService,
             dataCaptureOrchestrator,
-            currentSessionSpan,
+            destination,
             SessionSpanAttrPopulatorImpl(
-                currentSessionSpan,
+                destination,
                 FakeStartupService(),
                 FakeLogService(),
                 FakeMetadataService()

@@ -3,11 +3,17 @@ package io.embrace.android.embracesdk.internal.arch.destination
 import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeClock.Companion.DEFAULT_FAKE_CURRENT_TIME
+import io.embrace.android.embracesdk.fakes.FakeCurrentSessionSpan
+import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryLogger
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
+import io.embrace.android.embracesdk.fakes.FakeSpanService
 import io.embrace.android.embracesdk.internal.arch.attrs.asPair
 import io.embrace.android.embracesdk.internal.arch.attrs.embState
+import io.embrace.android.embracesdk.internal.arch.datasource.LogSeverity
+import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.arch.schema.TelemetryAttributes
@@ -26,12 +32,14 @@ import org.junit.Before
 import org.junit.Test
 
 @OptIn(ExperimentalApi::class, IncubatingApi::class)
-internal class LogWriterImplTest {
+internal class TelemetryDestinationImplTest {
     private lateinit var logger: FakeOpenTelemetryLogger
     private lateinit var sessionIdTracker: FakeSessionIdTracker
-    private lateinit var logWriterImpl: LogWriterImpl
+    private lateinit var impl: TelemetryDestination
     private lateinit var processStateService: FakeProcessStateService
     private lateinit var clock: FakeClock
+    private lateinit var spanService: FakeSpanService
+    private lateinit var currentSessionSpan: FakeCurrentSessionSpan
 
     @Before
     fun setup() {
@@ -39,18 +47,22 @@ internal class LogWriterImplTest {
         logger = FakeOpenTelemetryLogger()
         processStateService = FakeProcessStateService()
         clock = FakeClock()
-        logWriterImpl = LogWriterImpl(
+        spanService = FakeSpanService()
+        currentSessionSpan = FakeCurrentSessionSpan()
+        impl = TelemetryDestinationImpl(
             logger = logger,
             sessionIdTracker = sessionIdTracker,
             processStateService = processStateService,
             clock = clock,
+            spanService = spanService,
+            currentSessionSpan = currentSessionSpan,
         )
     }
 
     @Test
     fun `check expected values added to every OTel log`() {
         sessionIdTracker.setActiveSession("fake-session-id", true)
-        logWriterImpl.addLog(
+        impl.addLog(
             schemaType = SchemaType.Log(
                 TelemetryAttributes(
                     customAttributes = mapOf(PrivateSpan.asPair())
@@ -73,7 +85,7 @@ internal class LogWriterImplTest {
 
     @Test
     fun `check that private value is set`() {
-        logWriterImpl.addLog(
+        impl.addLog(
             schemaType = SchemaType.Log(TelemetryAttributes()),
             severity = LogSeverity.ERROR,
             message = "test",
@@ -82,7 +94,7 @@ internal class LogWriterImplTest {
         with(logger.logs.single()) {
             assertTrue(attributes[PrivateSpan.key.name] != null)
         }
-        logWriterImpl.addLog(
+        impl.addLog(
             schemaType = SchemaType.Log(TelemetryAttributes()),
             severity = LogSeverity.ERROR,
             message = "test",
@@ -97,7 +109,7 @@ internal class LogWriterImplTest {
     fun `foreground state matches the session a log is associated with`() {
         sessionIdTracker.setActiveSession("foreground-session", true)
         processStateService.isInBackground = true
-        logWriterImpl.addLog(
+        impl.addLog(
             schemaType = SchemaType.Log(TelemetryAttributes()),
             severity = LogSeverity.ERROR,
             message = "test"
@@ -116,7 +128,7 @@ internal class LogWriterImplTest {
     fun `use app state for background or foreground if no session exists`() {
         sessionIdTracker.sessionData = null
         processStateService.isInBackground = true
-        logWriterImpl.addLog(
+        impl.addLog(
             schemaType = SchemaType.Log(TelemetryAttributes()),
             severity = LogSeverity.ERROR,
             message = "test"
@@ -131,7 +143,7 @@ internal class LogWriterImplTest {
     @Test
     fun `timestamp can be overridden`() {
         val fakeTimeMs = DEFAULT_FAKE_CURRENT_TIME
-        logWriterImpl.addLog(
+        impl.addLog(
             schemaType = SchemaType.Log(TelemetryAttributes()),
             severity = LogSeverity.ERROR,
             message = "test",
@@ -147,7 +159,7 @@ internal class LogWriterImplTest {
     @Test
     fun `only set current session info on log if instructed to`() {
         sessionIdTracker.setActiveSession("foreground-session", true)
-        logWriterImpl.addLog(
+        impl.addLog(
             schemaType = SchemaType.Log(TelemetryAttributes()),
             severity = LogSeverity.ERROR,
             message = "test",
@@ -163,7 +175,7 @@ internal class LogWriterImplTest {
     @Test
     fun `no activity session will result in log written without sessionId`() {
         sessionIdTracker.sessionData = SessionData("", false)
-        logWriterImpl.addLog(
+        impl.addLog(
             schemaType = SchemaType.Log(TelemetryAttributes()),
             severity = LogSeverity.ERROR,
             message = "test"
@@ -173,5 +185,59 @@ internal class LogWriterImplTest {
             assertNull(attributes[SessionAttributes.SESSION_ID])
             assertEquals("background", attributes[embState.name])
         }
+    }
+
+    @Test
+    fun `test start span capture`() {
+        val span = impl.startSpanCapture(SchemaType.Breadcrumb("Whoops"), 5)
+        assertNotNull(span)
+        span?.stop()
+    }
+
+    @Test
+    fun `test record completed span`() {
+        val name = "name"
+        val startTimeMs = 5L
+        val endTimeMs = 5L
+        val type = EmbType.System.LowPower
+        val attributes = mapOf("foo" to "bar")
+        impl.recordCompletedSpan(
+            name,
+            startTimeMs,
+            endTimeMs,
+            type,
+            attributes
+        )
+        val span = spanService.createdSpans.single()
+        assertEquals(name, span.name)
+        assertEquals(startTimeMs, span.spanStartTimeMs)
+        assertEquals(endTimeMs, span.spanEndTimeMs)
+        assertEquals(type, span.type)
+        assertEquals(attributes + mapOf(type.asPair()), span.attributes)
+    }
+
+    @Test
+    fun `test session span events`() {
+        currentSessionSpan.readySession()
+        val current = checkNotNull(currentSessionSpan.current())
+        val schemaType = SchemaType.Breadcrumb("Hi")
+        impl.addSessionEvent(schemaType, 5)
+
+        val event = (current as FakeEmbraceSdkSpan).events.single()
+        assertEquals("emb-${schemaType.fixedObjectName}", event.name)
+
+        impl.removeSessionEvents(schemaType.telemetryType)
+        assertTrue(currentSessionSpan.addedEvents.isEmpty())
+    }
+
+    @Test
+    fun `test session span attributes`() {
+        currentSessionSpan.readySession()
+        val current = checkNotNull(currentSessionSpan.current())
+        impl.addSessionAttribute("foo", "bar")
+        assertEquals("bar", current.attributes()["foo"])
+
+        impl.removeSessionAttribute("foo")
+        assertNull(current.attributes()["foo"])
     }
 }

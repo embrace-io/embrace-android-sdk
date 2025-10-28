@@ -2,29 +2,13 @@ package io.embrace.android.embracesdk.internal.arch.datasource
 
 /**
  * Defines a 'data source'. This should be responsible for capturing a specific type
- * of data that will be sent to Embrace.
+ * of data that will be sent to Embrace. It attempts to enforce limits and input validation
+ * by default.
  *
- * @param T The type of the destination that the data will be sent to. This could be
- * either a [CurrentSessionSpan], [EmbraceTracer], or [LogWriter].
- *
- * See [EventDataSource], [SpanDataSource], and [LogDataSource] for more information.
+ * [DataSourceState] is closely related. It is responsible for determining when a data source
+ * should be turned on/off, according to the SDK's configuration and the process lifecycle.
  */
-interface DataSource<T> {
-
-    /**
-     * The DataSource should call this function when it wants to capture some form of data.
-     *
-     * The [inputValidation] parameter should return true if the user inputs are valid.
-     * (e.g. an empty string is not valid for a breadcrumb message).
-     *
-     * The [captureAction] parameter is a lambda that captures the data and sends it to the
-     * destination. It will be called only if [inputValidation] returns true & no data capture
-     * limits have been exceeded.
-     *
-     * This function returns true if data was successfully captured & false if not.
-     * This is assumed to be the case if [captureAction] completed without throwing.
-     */
-    fun captureData(inputValidation: () -> Boolean, captureAction: T.() -> Unit): Boolean
+interface DataSource {
 
     /**
      * Enables data capture. This should include registering any listeners, and resetting
@@ -32,7 +16,7 @@ interface DataSource<T> {
      *
      * You should NOT attempt to track state within the [DataSource] with a boolean flag.
      */
-    fun enableDataCapture()
+    fun onDataCaptureEnabled()
 
     /**
      * Disables data capture. This should include unregistering any listeners, and resetting
@@ -40,10 +24,18 @@ interface DataSource<T> {
      *
      * You should NOT attempt to track state within the [DataSource] with a boolean flag.
      */
-    fun disableDataCapture()
+    fun onDataCaptureDisabled()
 
     /**
-     * Resets any data capture limits since the last time [enableDataCapture] was called.
+     * Resets any data capture limits since the last time [onDataCaptureEnabled] was called.
      */
     fun resetDataCaptureLimits()
+
+    /**
+     * Captures telemetry from the given action, if the [DataSourceState] and limits allow it.
+     */
+    fun captureTelemetry(
+        inputValidation: () -> Boolean = { true },
+        action: TelemetryDestination.() -> Unit,
+    )
 }

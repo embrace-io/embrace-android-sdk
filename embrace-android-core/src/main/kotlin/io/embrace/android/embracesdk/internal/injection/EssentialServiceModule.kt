@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.injection
 
-import io.embrace.android.embracesdk.internal.arch.destination.LogWriter
+import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkConnectivityService
 import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
 import io.embrace.android.embracesdk.internal.capture.user.UserService
@@ -19,5 +19,5 @@ interface EssentialServiceModule {
     val networkConnectivityService: NetworkConnectivityService
     val sessionIdTracker: SessionIdTracker
     val sessionPropertiesService: SessionPropertiesService
-    val logWriter: LogWriter
+    val telemetryDestination: TelemetryDestination
 }

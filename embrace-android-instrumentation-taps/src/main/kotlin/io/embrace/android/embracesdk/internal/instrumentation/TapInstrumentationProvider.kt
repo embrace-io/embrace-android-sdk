@@ -13,7 +13,7 @@ class TapInstrumentationProvider : InstrumentationProvider {
             factory = {
                 tapDataSource = TapDataSource(
                     breadcrumbBehavior = args.configService.breadcrumbBehavior,
-                    writer = args.sessionSpanWriter,
+                    destination = args.telemetryDestination,
                     logger = args.logger,
                     clock = args.clock,
                 )

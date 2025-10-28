@@ -43,6 +43,6 @@ internal class EssentialServiceModuleImplTest {
         assertNotNull(module.sessionPropertiesService)
         assertNotNull(module.userService)
         assertNotNull(module.networkConnectivityService)
-        assertNotNull(module.logWriter)
+        assertNotNull(module.telemetryDestination)
     }
 }

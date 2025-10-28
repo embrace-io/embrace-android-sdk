@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.internal.capture.crash
 
 import io.embrace.android.embracesdk.fakes.FakeLogData
-import io.embrace.android.embracesdk.fakes.FakeLogWriter
-import io.embrace.android.embracesdk.internal.arch.destination.LogSeverity
+import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
+import io.embrace.android.embracesdk.internal.arch.datasource.LogSeverity
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.capture.telemetry.InternalErrorDataSourceImpl
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
@@ -17,15 +17,15 @@ import org.junit.Test
 internal class InternalErrorDataSourceImplTest {
 
     private lateinit var dataSource: InternalErrorDataSourceImpl
-    private lateinit var logWriter: FakeLogWriter
+    private lateinit var destination: FakeTelemetryDestination
     private lateinit var logger: EmbLogger
 
     @Before
     fun setUp() {
-        logWriter = FakeLogWriter()
+        destination = FakeTelemetryDestination()
         logger = EmbLoggerImpl()
         dataSource = InternalErrorDataSourceImpl(
-            logWriter,
+            destination,
             logger
         )
     }
@@ -33,7 +33,7 @@ internal class InternalErrorDataSourceImplTest {
     @Test
     fun `handle throwable with no message`() {
         dataSource.trackInternalError(InternalErrorType.DELIVERY_SCHEDULING_FAIL, IllegalStateException())
-        val data = logWriter.logEvents.single()
+        val data = destination.logEvents.single()
         val attrs = assertInternalErrorLogged(data)
         assertEquals("java.lang.IllegalStateException", attrs[ExceptionAttributes.EXCEPTION_TYPE])
         assertEquals("", attrs[ExceptionAttributes.EXCEPTION_MESSAGE])
@@ -43,7 +43,7 @@ internal class InternalErrorDataSourceImplTest {
     @Test
     fun `handle throwable with message`() {
         dataSource.trackInternalError(InternalErrorType.DELIVERY_SCHEDULING_FAIL, IllegalArgumentException("Whoops!"))
-        val data = logWriter.logEvents.single()
+        val data = destination.logEvents.single()
         val attrs = assertInternalErrorLogged(data)
         assertEquals("java.lang.IllegalArgumentException", attrs[ExceptionAttributes.EXCEPTION_TYPE])
         assertEquals("Whoops!", attrs[ExceptionAttributes.EXCEPTION_MESSAGE])
@@ -55,7 +55,7 @@ internal class InternalErrorDataSourceImplTest {
         repeat(15) {
             dataSource.trackInternalError(InternalErrorType.DELIVERY_SCHEDULING_FAIL, IllegalStateException())
         }
-        assertEquals(10, logWriter.logEvents.size)
+        assertEquals(10, destination.logEvents.size)
     }
 
     private fun assertInternalErrorLogged(data: FakeLogData): Map<String, String> {

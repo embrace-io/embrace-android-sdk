@@ -2,9 +2,7 @@ package io.embrace.android.embracesdk.internal
 
 import android.content.Context
 import io.embrace.android.embracesdk.internal.arch.InstrumentationInstallArgs
-import io.embrace.android.embracesdk.internal.arch.destination.LogWriter
-import io.embrace.android.embracesdk.internal.arch.destination.SessionSpanWriter
-import io.embrace.android.embracesdk.internal.arch.destination.TraceWriter
+import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.arch.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.ConfigService
@@ -16,11 +14,9 @@ import java.util.concurrent.ConcurrentHashMap
 
 internal class InstrumentationInstallArgsImpl(
     override val configService: ConfigService,
-    override val sessionSpanWriter: SessionSpanWriter,
+    override val telemetryDestination: TelemetryDestination,
     override val logger: EmbLogger,
     override val clock: Clock,
-    override val traceWriter: TraceWriter,
-    override val logWriter: LogWriter,
     override val context: Context,
     override val store: KeyValueStore,
     private val workerThreadModule: WorkerThreadModule,

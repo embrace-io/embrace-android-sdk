@@ -1,10 +1,10 @@
 package io.embrace.android.embracesdk.internal.session.orchestrator
 
-import io.embrace.android.embracesdk.fakes.FakeCurrentSessionSpan
 import io.embrace.android.embracesdk.fakes.FakeLogService
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakeSessionPropertiesService
 import io.embrace.android.embracesdk.fakes.FakeStartupService
+import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
 import io.embrace.android.embracesdk.internal.payload.ApplicationState
 import io.embrace.android.embracesdk.internal.payload.LifeEventType
 import io.embrace.android.embracesdk.internal.session.SessionZygote
@@ -17,14 +17,14 @@ internal class SessionSpanAttrPopulatorImplTest {
     private val zygote = SessionZygote("id", 1, 5, ApplicationState.FOREGROUND, false, LifeEventType.STATE)
     private lateinit var sessionPropertiesService: FakeSessionPropertiesService
     private lateinit var populator: SessionSpanAttrPopulatorImpl
-    private lateinit var writer: FakeCurrentSessionSpan
+    private lateinit var destination: FakeTelemetryDestination
 
     @Before
     fun setUp() {
         sessionPropertiesService = FakeSessionPropertiesService()
-        writer = FakeCurrentSessionSpan()
+        destination = FakeTelemetryDestination()
         populator = SessionSpanAttrPopulatorImpl(
-            writer,
+            destination,
             FakeStartupService(),
             FakeLogService(),
             FakeMetadataService()
@@ -35,7 +35,7 @@ internal class SessionSpanAttrPopulatorImplTest {
     fun `start attributes populated`() {
         populator.populateSessionSpanStartAttrs(zygote)
 
-        val attrs = writer.attributes
+        val attrs = destination.attributes
         val expected = mapOf(
             "emb.cold_start" to "false",
             "emb.session_number" to "5",
@@ -51,7 +51,7 @@ internal class SessionSpanAttrPopulatorImplTest {
     fun `end attributes populated`() {
         populator.populateSessionSpanEndAttrs(LifeEventType.STATE, "crashId", false)
 
-        val attrs = writer.attributes
+        val attrs = destination.attributes
         val expected = mapOf(
             "emb.clean_exit" to "true",
             "emb.terminated" to "false",

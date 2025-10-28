@@ -7,7 +7,7 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
-import io.embrace.android.embracesdk.fakes.FakeTraceWriter
+import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
 import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
 import io.embrace.android.embracesdk.internal.arch.attrs.asPair
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
@@ -22,20 +22,18 @@ import org.robolectric.RuntimeEnvironment
 internal class LowPowerDataSourceTest {
 
     private lateinit var dataSource: LowPowerDataSource
-    private lateinit var traceWriter: FakeTraceWriter
+    private lateinit var destination: FakeTelemetryDestination
 
     @Before
     fun setUp() {
-        traceWriter = FakeTraceWriter()
+        destination = FakeTelemetryDestination()
         dataSource = LowPowerDataSource(
             ApplicationProvider.getApplicationContext(),
-            traceWriter,
+            destination,
             FakeEmbLogger(),
             fakeBackgroundWorker(),
             FakeClock()
-        ) { mockk(relaxed = true) }.apply {
-            enableDataCapture()
-        }
+        ) { mockk(relaxed = true) }.apply(LowPowerDataSource::onDataCaptureEnabled)
     }
 
     @Test
@@ -57,7 +55,7 @@ internal class LowPowerDataSourceTest {
     @Test
     fun `no span recorded for unbalanced calls`() {
         dataSource.onPowerSaveModeChanged(false)
-        assertEquals(0, traceWriter.createdSpans.size)
+        assertEquals(0, destination.createdSpans.size)
     }
 
     @Test
@@ -66,7 +64,7 @@ internal class LowPowerDataSourceTest {
             dataSource.onPowerSaveModeChanged(true)
             dataSource.onPowerSaveModeChanged(false)
         }
-        assertEquals(100, traceWriter.createdSpans.count { it.type == EmbType.System.LowPower })
+        assertEquals(100, destination.createdSpans.count { it.type == EmbType.System.LowPower })
     }
 
     @Test
@@ -78,7 +76,7 @@ internal class LowPowerDataSourceTest {
     }
 
     private fun assertSpanAdded() {
-        val span = traceWriter.createdSpans.single()
+        val span = destination.createdSpans.single()
         assertEquals(EmbType.System.LowPower, span.type)
         assertEquals("device-low-power", span.name)
         assertEquals(

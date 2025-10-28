@@ -25,7 +25,7 @@ internal class CrashModuleImpl(
         CrashDataSourceImpl(
             essentialServiceModule.sessionPropertiesService,
             androidServicesModule.preferencesService,
-            essentialServiceModule.logWriter,
+            essentialServiceModule.telemetryDestination,
             configModule.configService,
             initModule.jsonSerializer,
             initModule.logger,

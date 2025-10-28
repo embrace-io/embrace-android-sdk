@@ -23,7 +23,7 @@ class AeiInstrumentationProvider : InstrumentationProvider {
                     args.configService,
                     activityManager,
                     AeiDataStoreImpl(args.store),
-                    args.logWriter,
+                    args.telemetryDestination,
                     args.logger
                 )
             },

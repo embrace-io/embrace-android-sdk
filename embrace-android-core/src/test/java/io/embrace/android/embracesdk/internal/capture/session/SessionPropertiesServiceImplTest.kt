@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.internal.capture.session
 
 import io.embrace.android.embracesdk.fakes.FakeConfigService
-import io.embrace.android.embracesdk.fakes.FakeCurrentSessionSpan
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
+import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.config.FakeRedactionConfig
 import io.embrace.android.embracesdk.internal.config.behavior.REDACTED_LABEL
@@ -16,7 +16,7 @@ import org.junit.Test
 internal class SessionPropertiesServiceImplTest {
 
     private lateinit var service: SessionPropertiesService
-    private lateinit var fakeCurrentSessionSpan: FakeCurrentSessionSpan
+    private lateinit var destination: FakeTelemetryDestination
     private lateinit var propState: Map<String, String>
 
     @Before
@@ -27,11 +27,11 @@ internal class SessionPropertiesServiceImplTest {
                     FakeInstrumentedConfig(redaction = FakeRedactionConfig(sensitiveKeys = listOf("password"))),
                 )
             )
-        fakeCurrentSessionSpan = FakeCurrentSessionSpan()
+        destination = FakeTelemetryDestination()
         service = SessionPropertiesServiceImpl(
             FakePreferenceService(),
             fakeConfigService,
-            fakeCurrentSessionSpan
+            destination
         )
         propState = emptyMap()
         service.addChangeListener { propState = it }
@@ -43,11 +43,11 @@ internal class SessionPropertiesServiceImplTest {
         val expected = mapOf("key" to "value")
         assertEquals(expected, propState)
         assertEquals(expected, service.getProperties())
-        assertEquals(1, fakeCurrentSessionSpan.attributeCount())
+        assertEquals(1, destination.attributes.size)
 
         service.removeProperty("key")
         assertEquals(emptyMap<String, String>(), propState)
-        assertEquals(0, fakeCurrentSessionSpan.attributeCount())
+        assertEquals(0, destination.attributes.size)
     }
 
     @Test
@@ -55,18 +55,18 @@ internal class SessionPropertiesServiceImplTest {
         service.addProperty("password", "value", false)
         val expected = mapOf("password" to REDACTED_LABEL)
         assertEquals(expected, service.getProperties())
-        assertEquals(1, fakeCurrentSessionSpan.attributeCount())
+        assertEquals(1, destination.attributes.size)
 
         service.removeProperty("password")
-        assertEquals(0, fakeCurrentSessionSpan.attributeCount())
+        assertEquals(0, destination.attributes.size)
     }
 
     @Test
     fun `populate session span with all set properties`() {
-        assertEquals(0, fakeCurrentSessionSpan.attributeCount())
+        assertEquals(0, destination.attributes.size)
         service.addProperty("temp", "value", false)
         service.addProperty("perm", "value", true)
-        assertEquals(2, fakeCurrentSessionSpan.attributeCount())
+        assertEquals(2, destination.attributes.size)
     }
 
     @Test

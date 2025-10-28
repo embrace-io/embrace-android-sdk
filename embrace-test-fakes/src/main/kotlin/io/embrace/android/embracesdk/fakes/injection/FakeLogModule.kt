@@ -2,12 +2,12 @@ package io.embrace.android.embracesdk.fakes.injection
 
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeLogOrchestrator
-import io.embrace.android.embracesdk.fakes.FakeLogWriter
 import io.embrace.android.embracesdk.fakes.FakeNetworkCaptureDataSource
 import io.embrace.android.embracesdk.fakes.FakeNetworkCaptureService
 import io.embrace.android.embracesdk.fakes.FakeNetworkLoggingService
 import io.embrace.android.embracesdk.fakes.FakePayloadStore
 import io.embrace.android.embracesdk.fakes.FakeSessionPropertiesService
+import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
 import io.embrace.android.embracesdk.internal.injection.LogModule
 import io.embrace.android.embracesdk.internal.logs.EmbraceLogService
 import io.embrace.android.embracesdk.internal.logs.LogOrchestrator
@@ -21,7 +21,7 @@ class FakeLogModule(
     override val networkLoggingService: NetworkLoggingService = FakeNetworkLoggingService(),
 
     override val logService: LogService = EmbraceLogService(
-        FakeLogWriter(),
+        FakeTelemetryDestination(),
         FakeConfigService(),
         FakeSessionPropertiesService(),
         FakePayloadStore(),

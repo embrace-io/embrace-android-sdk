@@ -6,7 +6,7 @@ import com.android.server.os.TombstoneProtos
 import io.embrace.android.embracesdk.ResourceReader
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
-import io.embrace.android.embracesdk.fakes.FakeLogWriter
+import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
 import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
 import io.embrace.android.embracesdk.internal.TypeUtils
@@ -117,7 +117,7 @@ internal class AeiNdkCrashProtobufSendTest {
         assertEquals("SIGSEGV", tombstone.signalInfo.name)
     }
 
-    private fun createAeiService(ndkTraceFile: Boolean): FakeLogWriter {
+    private fun createAeiService(ndkTraceFile: Boolean): FakeTelemetryDestination {
         val resName = when {
             ndkTraceFile -> NDK_FILE_NAME
             else -> ANR_FILE_NAME
@@ -131,7 +131,7 @@ internal class AeiNdkCrashProtobufSendTest {
             stream,
             reason
         )
-        val logWriter = FakeLogWriter()
+        val logWriter = FakeTelemetryDestination()
         AeiDataSourceImpl(
             fakeBackgroundWorker(),
             FakeConfigService(autoDataCaptureBehavior = FakeAutoDataCaptureBehavior(ndkEnabled = true)),
@@ -140,7 +140,7 @@ internal class AeiNdkCrashProtobufSendTest {
             logWriter,
             FakeEmbLogger(),
             VersionChecker { ndkTraceFile }
-        ).enableDataCapture()
+        ).onDataCaptureEnabled()
         return logWriter
     }
 

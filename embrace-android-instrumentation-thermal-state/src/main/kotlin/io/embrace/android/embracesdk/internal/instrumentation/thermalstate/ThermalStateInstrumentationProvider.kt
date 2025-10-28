@@ -16,7 +16,7 @@ class ThermalStateInstrumentationProvider : InstrumentationProvider {
         return DataSourceState(
             factory = {
                 ThermalStateDataSource(
-                    traceWriter = args.traceWriter,
+                    destination = args.telemetryDestination,
                     logger = args.logger,
                     backgroundWorker = args.backgroundWorker(Worker.Background.NonIoRegWorker),
                     clock = args.clock,

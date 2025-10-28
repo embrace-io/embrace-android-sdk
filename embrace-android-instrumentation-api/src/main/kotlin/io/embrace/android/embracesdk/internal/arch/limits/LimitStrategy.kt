@@ -1,7 +1,8 @@
 package io.embrace.android.embracesdk.internal.arch.limits
 
 /**
- * Defines a strategy for limiting the capture of data in a [DataSource].
+ * Defines a strategy for limiting the capture of data in a
+ * [io.embrace.android.embracesdk.internal.arch.datasource.DataSource].
  */
 interface LimitStrategy {
 

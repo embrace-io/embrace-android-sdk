@@ -1,14 +1,9 @@
 package io.embrace.android.embracesdk.internal.spans
 
-import io.embrace.android.embracesdk.internal.arch.attrs.asPair
-import io.embrace.android.embracesdk.internal.arch.destination.SessionSpanWriter
-import io.embrace.android.embracesdk.internal.arch.destination.SpanAttributeData
 import io.embrace.android.embracesdk.internal.arch.schema.AppTerminationCause
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.LinkType
-import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
-import io.embrace.android.embracesdk.internal.otel.sdk.toEmbraceObjectName
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanFactory
@@ -39,7 +34,7 @@ internal class CurrentSessionSpanImpl(
     private val tracerSupplier: Provider<Tracer>,
     private val openTelemetrySupplier: Provider<OpenTelemetry>,
     private val embraceSpanFactorySupplier: Provider<EmbraceSpanFactory>,
-) : CurrentSessionSpan, SessionSpanWriter {
+) : CurrentSessionSpan {
 
     /**
      * Number of traces created in the current session. This value will be reset when a new session is created.
@@ -179,29 +174,7 @@ internal class CurrentSessionSpanImpl(
         }
     }
 
-    override fun addSessionEvent(schemaType: SchemaType, startTimeMs: Long): Boolean {
-        val currentSession = sessionSpan.get() ?: return false
-        return currentSession.addSystemEvent(
-            schemaType.fixedObjectName.toEmbraceObjectName(),
-            startTimeMs,
-            schemaType.attributes() + schemaType.telemetryType.asPair()
-        )
-    }
-
-    override fun removeSessionEvents(type: EmbType) {
-        val currentSession = sessionSpan.get() ?: return
-        currentSession.removeSystemEvents(type)
-    }
-
-    override fun addSessionAttribute(attribute: SpanAttributeData) {
-        val currentSession = sessionSpan.get() ?: return
-        currentSession.addSystemAttribute(attribute.key, attribute.value)
-    }
-
-    override fun removeSessionAttribute(key: String) {
-        val currentSession = sessionSpan.get() ?: return
-        currentSession.removeSystemAttribute(key)
-    }
+    override fun current(): EmbraceSdkSpan? = sessionSpan.get()
 
     /**
      * This method should always be used when starting a new session span

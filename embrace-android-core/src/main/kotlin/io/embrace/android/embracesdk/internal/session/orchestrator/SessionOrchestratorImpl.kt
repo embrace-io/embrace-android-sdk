@@ -4,8 +4,7 @@ import io.embrace.android.embracesdk.internal.arch.DataCaptureOrchestrator
 import io.embrace.android.embracesdk.internal.arch.SessionType
 import io.embrace.android.embracesdk.internal.arch.attrs.embHeartbeatTimeUnixNano
 import io.embrace.android.embracesdk.internal.arch.attrs.embTerminated
-import io.embrace.android.embracesdk.internal.arch.destination.SessionSpanWriter
-import io.embrace.android.embracesdk.internal.arch.destination.SpanAttributeData
+import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.config.ConfigService
@@ -30,7 +29,7 @@ internal class SessionOrchestratorImpl(
     private val payloadStore: PayloadStore?,
     private val payloadCachingService: PayloadCachingService?,
     private val dataCaptureOrchestrator: DataCaptureOrchestrator,
-    private val sessionSpanWriter: SessionSpanWriter,
+    private val destination: TelemetryDestination,
     private val sessionSpanAttrPopulator: SessionSpanAttrPopulator,
 ) : SessionOrchestrator {
 
@@ -136,7 +135,6 @@ internal class SessionOrchestratorImpl(
      * 3. Start the next session or background activity.
      *
      * @param transitionType    The transition type
-     * @param timestamp         The timestamp of the transition.
      * @param oldSessionAction  The action that ends the old session or background activity (if any).
      * The initial session object (if any) is passed as a parameter to allow building a full payload.
      * @param newSessionAction  The action that starts the new session or background activity (if any).
@@ -246,8 +244,7 @@ internal class SessionOrchestratorImpl(
 
     private fun updatePeriodicCacheAttrs() {
         val now = clock.now().millisToNanos()
-        val attr = SpanAttributeData(embHeartbeatTimeUnixNano.name, now.toString())
-        sessionSpanWriter.addSessionAttribute(attr)
-        sessionSpanWriter.addSessionAttribute(SpanAttributeData(embTerminated.name, true.toString()))
+        destination.addSessionAttribute(embHeartbeatTimeUnixNano.name, now.toString())
+        destination.addSessionAttribute(embTerminated.name, true.toString())
     }
 }

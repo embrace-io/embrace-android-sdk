@@ -4,10 +4,10 @@ import io.embrace.android.embracesdk.fakes.FakeAnrService
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeCrashFileMarker
 import io.embrace.android.embracesdk.fakes.FakeLogOrchestrator
-import io.embrace.android.embracesdk.fakes.FakeLogWriter
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeSessionOrchestrator
 import io.embrace.android.embracesdk.fakes.FakeSessionPropertiesService
+import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
 import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
@@ -35,7 +35,7 @@ internal class CrashDataSourceImplTest {
     private lateinit var crashMarker: FakeCrashFileMarker
     private lateinit var configService: FakeConfigService
     private lateinit var serializer: EmbraceSerializer
-    private lateinit var logWriter: FakeLogWriter
+    private lateinit var destination: FakeTelemetryDestination
     private lateinit var logger: EmbLogger
     private lateinit var localJsException: JsException
     private lateinit var testException: Exception
@@ -48,7 +48,7 @@ internal class CrashDataSourceImplTest {
         anrService = FakeAnrService()
         preferencesService = FakePreferenceService()
         crashMarker = FakeCrashFileMarker()
-        logWriter = FakeLogWriter()
+        destination = FakeTelemetryDestination()
         configService = FakeConfigService()
         serializer = EmbraceSerializer()
         logger = EmbLoggerImpl()
@@ -68,7 +68,7 @@ internal class CrashDataSourceImplTest {
         crashDataSource = CrashDataSourceImpl(
             sessionPropertiesService,
             preferencesService,
-            logWriter,
+            destination,
             configService,
             serializer,
             logger
@@ -98,7 +98,7 @@ internal class CrashDataSourceImplTest {
         crashDataSource.handleCrash(testException)
 
         assertEquals(1, anrService.crashCount)
-        assertEquals(1, logWriter.logEvents.size)
+        assertEquals(1, destination.logEvents.size)
         assertTrue(logOrchestrator.flushCalled)
         assertNotNull(sessionOrchestrator.crashId)
     }
@@ -109,10 +109,10 @@ internal class CrashDataSourceImplTest {
         crashDataSource.handleCrash(testException)
 
         assertEquals(1, anrService.crashCount)
-        assertEquals(1, logWriter.logEvents.size)
-        val lastSentCrash = logWriter.logEvents.single()
+        assertEquals(1, destination.logEvents.size)
+        val lastSentCrash = destination.logEvents.single()
         assertEquals(
-            logWriter.logEvents.single().schemaType.attributes()[LogAttributes.LOG_RECORD_UID],
+            destination.logEvents.single().schemaType.attributes()[LogAttributes.LOG_RECORD_UID],
             sessionOrchestrator.crashId
         )
 
@@ -122,8 +122,8 @@ internal class CrashDataSourceImplTest {
          */
         crashDataSource.handleCrash(testException)
         assertEquals(1, anrService.crashCount)
-        assertEquals(1, logWriter.logEvents.size)
-        assertSame(lastSentCrash, logWriter.logEvents.single())
+        assertEquals(1, destination.logEvents.size)
+        assertSame(lastSentCrash, destination.logEvents.single())
     }
 
     @Test
@@ -141,11 +141,11 @@ internal class CrashDataSourceImplTest {
         crashDataSource.logUnhandledJsException(localJsException)
         crashDataSource.handleCrash(testException)
 
-        val logEvent = logWriter.logEvents.single()
+        val logEvent = destination.logEvents.single()
         assertEquals(EmbType.System.ReactNativeCrash, logEvent.schemaType.telemetryType)
         val lastSentCrashAttributes = logEvent.schemaType.attributes()
         assertEquals(1, anrService.crashCount)
-        assertEquals(1, logWriter.logEvents.size)
+        assertEquals(1, destination.logEvents.size)
         assertEquals(lastSentCrashAttributes[LogAttributes.LOG_RECORD_UID], sessionOrchestrator.crashId)
         assertEquals(
             "{\"n\":\"NullPointerException\",\"" +

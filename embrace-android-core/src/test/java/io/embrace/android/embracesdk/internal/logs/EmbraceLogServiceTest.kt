@@ -3,9 +3,9 @@ package io.embrace.android.embracesdk.internal.logs
 import io.embrace.android.embracesdk.LogExceptionType
 import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.fakes.FakeConfigService
-import io.embrace.android.embracesdk.fakes.FakeLogWriter
 import io.embrace.android.embracesdk.fakes.FakePayloadStore
 import io.embrace.android.embracesdk.fakes.FakeSessionPropertiesService
+import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
 import io.embrace.android.embracesdk.fakes.behavior.FakeLogMessageBehavior
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.config.FakeRedactionConfig
@@ -26,7 +26,7 @@ import org.junit.Test
 internal class EmbraceLogServiceTest {
 
     private lateinit var logService: EmbraceLogService
-    private lateinit var fakeLogWriter: FakeLogWriter
+    private lateinit var destination: FakeTelemetryDestination
     private lateinit var fakeSessionPropertiesService: FakeSessionPropertiesService
     private lateinit var fakeConfigService: FakeConfigService
     private lateinit var payloadStore: FakePayloadStore
@@ -39,13 +39,13 @@ internal class EmbraceLogServiceTest {
             )
         )
         fakeSessionPropertiesService = FakeSessionPropertiesService()
-        fakeLogWriter = FakeLogWriter()
+        destination = FakeTelemetryDestination()
         payloadStore = FakePayloadStore()
         logService = createEmbraceLogService()
     }
 
     private fun createEmbraceLogService() = EmbraceLogService(
-        logWriter = fakeLogWriter,
+        destination = destination,
         configService = fakeConfigService,
         sessionPropertiesService = fakeSessionPropertiesService,
         payloadStore = payloadStore,
@@ -60,7 +60,7 @@ internal class EmbraceLogServiceTest {
         logService.log("message", Severity.INFO, LogExceptionType.NONE, properties)
 
         // then the sensitive key is redacted
-        val log = fakeLogWriter.logEvents.single()
+        val log = destination.logEvents.single()
         val attributes = log.schemaType.attributes()
         assertEquals(REDACTED_LABEL, attributes["password"])
         assertEquals("success", attributes["status"])
@@ -76,7 +76,7 @@ internal class EmbraceLogServiceTest {
         logService.log("message", Severity.INFO, LogExceptionType.NONE)
 
         // then the telemetry attributes are set correctly
-        val log = fakeLogWriter.logEvents.single()
+        val log = destination.logEvents.single()
         val attributes = log.schemaType.attributes()
         assertEquals("someValue", attributes["someProperty".toEmbraceAttributeName()])
         assertTrue(attributes.containsKey(LogAttributes.LOG_RECORD_UID))
@@ -92,7 +92,7 @@ internal class EmbraceLogServiceTest {
             properties = props
         )
 
-        val log = fakeLogWriter.logEvents.single()
+        val log = destination.logEvents.single()
         assertNotEquals(
             "fakeUid",
             log.schemaType.attributes()[LogAttributes.LOG_RECORD_UID]
@@ -120,7 +120,7 @@ internal class EmbraceLogServiceTest {
         }
 
         // then the logs are all logged
-        assertEquals(testLogLimit * 3, fakeLogWriter.logEvents.size)
+        assertEquals(testLogLimit * 3, destination.logEvents.size)
 
         // when logging one more of each type
         logService.log("info", Severity.INFO, LogExceptionType.NONE)
@@ -128,7 +128,7 @@ internal class EmbraceLogServiceTest {
         logService.log("error!", Severity.ERROR, LogExceptionType.NONE)
 
         // then the logs are not logged
-        assertEquals(testLogLimit * 3, fakeLogWriter.logEvents.size)
+        assertEquals(testLogLimit * 3, destination.logEvents.size)
     }
 
     @Test
@@ -143,7 +143,7 @@ internal class EmbraceLogServiceTest {
         logService.log("message", Severity.INFO, LogExceptionType.NONE)
 
         // then the message is not ellipsized
-        val log = fakeLogWriter.logEvents.single()
+        val log = destination.logEvents.single()
         assertEquals("me", log.message)
     }
 
@@ -159,7 +159,7 @@ internal class EmbraceLogServiceTest {
         logService.log("abcdef", Severity.INFO, LogExceptionType.NONE)
 
         // then the message is trimmed
-        val log = fakeLogWriter.logEvents.single()
+        val log = destination.logEvents.single()
         assertEquals("ab...", log.message)
     }
 
@@ -176,7 +176,7 @@ internal class EmbraceLogServiceTest {
         logService.log("abcdef", Severity.INFO, LogExceptionType.NONE)
 
         // then the message is not trimmed
-        val log = fakeLogWriter.logEvents.single()
+        val log = destination.logEvents.single()
         assertEquals("abcdef", log.message)
 
         // when logging a message that exceeds the Unity maximum allowed length
@@ -188,7 +188,7 @@ internal class EmbraceLogServiceTest {
         )
 
         // then the message is trimmed
-        val anotherLog = fakeLogWriter.logEvents[1]
+        val anotherLog = destination.logEvents[1]
         assertEquals("a".repeat(unityMaxAllowedLength - 3) + "...", anotherLog.message)
     }
 
@@ -202,7 +202,7 @@ internal class EmbraceLogServiceTest {
         logService.log(message, Severity.INFO, exceptionType)
 
         // then the message is logged
-        val log = fakeLogWriter.logEvents.single()
+        val log = destination.logEvents.single()
         assertEquals(message, log.message)
     }
 
@@ -229,7 +229,7 @@ internal class EmbraceLogServiceTest {
         )
 
         // then the sensitive key is redacted
-        val log = fakeLogWriter.logEvents.single()
+        val log = destination.logEvents.single()
         assertEquals(msg, log.message)
         val attachment = payloadStore.storedAttachments.single()
         assertEquals(bytes, attachment.data.second)
@@ -245,7 +245,7 @@ internal class EmbraceLogServiceTest {
         )
 
         // then the message is not ellipsized
-        val logProps = fakeLogWriter.logEvents.single().schemaType.attributes().filter { it.key.startsWith("test") }
+        val logProps = destination.logEvents.single().schemaType.attributes().filter { it.key.startsWith("test") }
         assertEquals(truncatedProps, logProps)
     }
 
@@ -257,7 +257,7 @@ internal class EmbraceLogServiceTest {
             logExceptionType = LogExceptionType.NONE,
             properties = mapOf("badvalue" to UnSerializableClass())
         )
-        assertEquals("not serializable", fakeLogWriter.logEvents.single().schemaType.attributes()["badvalue"])
+        assertEquals("not serializable", destination.logEvents.single().schemaType.attributes()["badvalue"])
     }
 
     @Test
@@ -272,7 +272,7 @@ internal class EmbraceLogServiceTest {
         )
 
         // then the message is not ellipsized
-        val logProps = fakeLogWriter.logEvents.single().schemaType.attributes().filter { it.key.startsWith("test") }
+        val logProps = destination.logEvents.single().schemaType.attributes().filter { it.key.startsWith("test") }
         assertEquals(tooBigProperties, logProps)
     }
 

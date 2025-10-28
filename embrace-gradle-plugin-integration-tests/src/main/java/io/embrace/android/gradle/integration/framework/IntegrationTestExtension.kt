@@ -17,7 +17,7 @@ import org.gradle.api.provider.Property
  * This effectively just provides default values & logic that makes it much easier to define
  * fixtures.
  */
-@Suppress("UnstableApiUsage")
+@Suppress("UnstableApiUsage", "unused")
 abstract class IntegrationTestExtension(objectFactory: ObjectFactory) {
 
     val variantData: Property<AndroidCompactedVariantData> =

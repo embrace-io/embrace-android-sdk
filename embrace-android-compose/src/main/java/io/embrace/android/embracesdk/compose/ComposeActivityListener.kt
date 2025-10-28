@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.compose.internal.ComposeInternalErrorLogger
 import io.embrace.android.embracesdk.compose.internal.EmbraceGestureListener
 import io.embrace.android.embracesdk.compose.internal.EmbraceWindowCallback
 
+@Suppress("unused")
 class ComposeActivityListener : ActivityLifeCycleCallbacks {
 
     private val composeInternalErrorLogger = ComposeInternalErrorLogger()

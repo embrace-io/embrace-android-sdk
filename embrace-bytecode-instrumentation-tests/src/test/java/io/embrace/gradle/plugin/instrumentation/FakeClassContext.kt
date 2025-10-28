@@ -7,8 +7,6 @@ class FakeClassContext(
     override val currentClassData: ClassData
 ) : ClassContext {
 
-    constructor(clzName: String) : this(FakeClassData(clzName))
-
     override fun loadClassData(className: String): ClassData? {
         error("Unsupported operation")
     }

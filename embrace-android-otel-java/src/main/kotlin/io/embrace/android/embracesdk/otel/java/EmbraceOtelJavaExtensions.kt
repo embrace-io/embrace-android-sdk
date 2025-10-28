@@ -1,3 +1,5 @@
+@file:Suppress("unused")
+
 package io.embrace.android.embracesdk.otel.java
 
 import io.embrace.android.embracesdk.internal.api.SdkApi

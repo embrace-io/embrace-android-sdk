@@ -20,7 +20,7 @@ class FakeOpenTelemetryLogger : Logger {
         severityText: String?,
         attributes: (MutableAttributeContainer.() -> Unit)?,
     ) {
-        processTelemetry(attributes, null, body, timestamp, observedTimestamp, context, severityNumber, severityText)
+        processTelemetry(attributes, body, timestamp, observedTimestamp, context, severityNumber)
     }
 
     override fun logEvent(
@@ -33,18 +33,16 @@ class FakeOpenTelemetryLogger : Logger {
         severityText: String?,
         attributes: (MutableAttributeContainer.() -> Unit)?,
     ) {
-        processTelemetry(attributes, eventName, body, timestamp, observedTimestamp, context, severityNumber, severityText)
+        processTelemetry(attributes, body, timestamp, observedTimestamp, context, severityNumber)
     }
 
     private fun processTelemetry(
         attributes: (MutableAttributeContainer.() -> Unit)?,
-        eventName: String?,
         body: String?,
         timestamp: Long?,
         observedTimestamp: Long?,
         context: Context?,
         severityNumber: SeverityNumber?,
-        severityText: String?,
     ) {
         val container = FakeMutableAttributeContainer()
         if (attributes != null) {
@@ -53,12 +51,10 @@ class FakeOpenTelemetryLogger : Logger {
         logs.add(
             FakeLogRecord(
                 body = body,
-                eventName = eventName,
                 timestamp = timestamp,
                 observedTimestamp = observedTimestamp,
                 context = context,
                 severityNumber = severityNumber,
-                severityText = severityText,
                 attributes = container.attributes
             )
         )

@@ -67,10 +67,6 @@ class FakeCurrentSessionSpan(
         stoppedSpans.add(spanId)
     }
 
-    fun getAttribute(key: String): String? = attributes[key]
-
-    fun attributeCount(): Int = attributes.size
-
     private fun newSessionSpan(startTimeMs: Long) =
         FakeEmbraceSdkSpan.sessionSpan(
             sessionId = "fake-session-span-id",

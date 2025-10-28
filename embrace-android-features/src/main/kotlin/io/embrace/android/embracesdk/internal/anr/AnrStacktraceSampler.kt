@@ -25,10 +25,6 @@ internal class AnrStacktraceSampler(
     private var lastUnblockedMs: Long = 0
     private val threadInfoCollector = ThreadInfoCollector(targetThread)
 
-    fun setConfigService(configService: ConfigService) {
-        this.configService = configService
-    }
-
     fun size(): Int = samples.size
 
     override fun onThreadBlocked(thread: Thread, timestamp: Long) {

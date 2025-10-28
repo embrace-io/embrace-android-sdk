@@ -4,7 +4,6 @@ import io.embrace.android.gradle.plugin.util.capitalizedString
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.provider.Provider
-import org.gradle.api.tasks.TaskContainer
 import org.gradle.api.tasks.TaskProvider
 
 /**
@@ -12,10 +11,6 @@ import org.gradle.api.tasks.TaskProvider
  */
 fun Project.isTaskRegistered(taskName: String, variantName: String): Boolean {
     return tasks.names.contains("$taskName${variantName.capitalizedString()}")
-}
-
-fun TaskContainer.isTaskRegistered(taskName: String, variantName: String): Boolean {
-    return names.contains("$taskName${variantName.capitalizedString()}")
 }
 
 /**

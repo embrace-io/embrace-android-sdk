@@ -32,16 +32,6 @@ fun Span.findEventsOfType(telemetryType: EmbType): List<SpanEvent> {
     }
 }
 
-/**
- * Returns true if an event exists with the given [EmbType]
- */
-fun Span.hasEventOfType(telemetryType: EmbType): Boolean {
-    val sanitizedEvents = checkNotNull(events) {
-        "No events found in span"
-    }
-    return sanitizedEvents.find { checkNotNull(it.attributes).hasEmbraceAttributeKey(telemetryType.key) } != null
-}
-
 fun Span.assertPreviousSession(previousSessionSpan: Span, previousSessionId: String) {
     findLinkOfType(LinkType.PreviousSession).validatePreviousSessionLink(previousSessionSpan, previousSessionId)
 }

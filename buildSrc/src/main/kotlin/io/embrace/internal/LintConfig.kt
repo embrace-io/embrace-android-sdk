@@ -3,6 +3,7 @@ package io.embrace.internal
 import com.android.build.api.dsl.LibraryExtension
 import org.gradle.api.Project
 
+@Suppress("unused")
 fun LibraryExtension.configureLint(project: Project) {
     lint {
         abortOnError = true

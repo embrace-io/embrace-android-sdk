@@ -8,12 +8,14 @@ import org.jetbrains.kotlin.gradle.dsl.KotlinAndroidExtension
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
 import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 
+@Suppress("unused")
 fun Project.configureJvmWarningsAsErrors() {
     project.tasks.withType(JavaCompile::class.java).configureEach {
         options.compilerArgs.addAll(listOf("-Xlint:unchecked", "-Xlint:deprecation"))
     }
 }
 
+@Suppress("unused")
 fun Project.configureCompilers() {
     val target = JvmTarget.JVM_11
     val compatVersion = resolveVersionFromCatalog("jvmTargetCompatibility")

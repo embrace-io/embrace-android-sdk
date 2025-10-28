@@ -25,6 +25,7 @@ object OkHttpBytecodeEntrypoint {
      */
     @Keep
     @JvmStatic
+    @Suppress("unused")
     fun build(thiz: OkHttpClient.Builder) {
         addEmbraceInterceptors(thiz)
     }

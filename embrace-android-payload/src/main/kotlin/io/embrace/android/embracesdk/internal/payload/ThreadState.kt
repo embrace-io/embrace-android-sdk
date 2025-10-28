@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.payload
 
 import com.squareup.moshi.JsonClass
 
+@Suppress("unused")
 @JsonClass(generateAdapter = false)
 enum class ThreadState(val code: Int) {
     NEW(0),

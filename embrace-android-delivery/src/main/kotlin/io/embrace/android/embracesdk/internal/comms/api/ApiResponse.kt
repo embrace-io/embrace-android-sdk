@@ -48,11 +48,6 @@ sealed class ApiResponse {
     data class Incomplete(val exception: Throwable) : ApiResponse()
 
     /**
-     * API call not executed because payload was not found
-     */
-    object NoPayload : ApiResponse()
-
-    /**
      * No response was received
      */
     object None : ApiResponse()

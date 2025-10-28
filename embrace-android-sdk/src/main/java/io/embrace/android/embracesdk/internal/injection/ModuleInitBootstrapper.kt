@@ -383,12 +383,6 @@ internal class ModuleInitBootstrapper(
                         )
                     }
 
-                    postInit(FeatureModule::class) {
-                        essentialServiceModule.networkConnectivityService.addNetworkConnectivityListener {
-                            featureModule.networkStatusDataSource.dataSource?.onNetworkConnectivityStatusChanged(it)
-                        }
-                    }
-
                     crashModule = init(CrashModule::class) {
                         crashModuleSupplier(
                             initModule,

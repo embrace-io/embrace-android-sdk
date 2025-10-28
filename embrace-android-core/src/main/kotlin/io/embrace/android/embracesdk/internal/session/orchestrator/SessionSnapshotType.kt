@@ -8,6 +8,7 @@ enum class SessionSnapshotType(
     /**
      * Whether the session ended cleanly (i.e. not because of a crash).
      */
+    @Suppress("unused")
     val endedCleanly: Boolean,
 
     /**

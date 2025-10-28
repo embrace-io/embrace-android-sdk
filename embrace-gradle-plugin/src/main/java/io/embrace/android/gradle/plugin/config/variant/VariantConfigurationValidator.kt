@@ -4,7 +4,6 @@ import io.embrace.android.gradle.plugin.instrumentation.config.model.EmbraceVari
 
 private const val API_TOKEN_LENGTH = 32
 private const val APP_ID_LENGTH = 5
-const val EMBRACE_API_TOKEN_ENV_KEY = "EMBRACE_API_TOKEN"
 
 /**
  * It is in charge of performing validations on VariantConfiguration.

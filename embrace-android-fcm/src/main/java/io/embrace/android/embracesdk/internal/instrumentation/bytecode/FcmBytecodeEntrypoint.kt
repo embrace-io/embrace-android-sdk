@@ -10,6 +10,7 @@ object FcmBytecodeEntrypoint {
 
     @JvmStatic
     @Keep
+    @Suppress("unused")
     fun onMessageReceived(message: RemoteMessage) {
         if (!Embrace.isStarted) {
             return

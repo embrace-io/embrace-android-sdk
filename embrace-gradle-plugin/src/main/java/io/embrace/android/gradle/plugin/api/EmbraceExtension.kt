@@ -8,6 +8,7 @@ import javax.inject.Inject
 /**
  * An extension that is used to configure the Embrace Gradle Plugin's behavior.
  */
+@Suppress("unused")
 abstract class EmbraceExtension @Inject internal constructor(objectFactory: ObjectFactory) {
 
     /**

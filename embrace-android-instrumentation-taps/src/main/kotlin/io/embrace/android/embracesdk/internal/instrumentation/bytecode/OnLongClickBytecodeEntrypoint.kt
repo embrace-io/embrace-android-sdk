@@ -11,6 +11,7 @@ import io.embrace.android.embracesdk.internal.instrumentation.tapDataSource
 @Keep
 object OnLongClickBytecodeEntrypoint {
 
+    @Suppress("unused")
     @Keep
     @JvmStatic
     fun onLongClick(view: View) {

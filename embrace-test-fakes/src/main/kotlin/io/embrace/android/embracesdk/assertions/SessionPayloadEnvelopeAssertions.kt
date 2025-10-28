@@ -84,13 +84,6 @@ fun Envelope<SessionPayload>.findSpanByName(name: String): Span {
     return findSpansByName(name).single()
 }
 
-/**
- * Returns true if a span exists with the given [EmbType].
- */
-fun Envelope<SessionPayload>.hasSpanOfType(telemetryType: EmbType): Boolean {
-    return findSpansOfType(telemetryType).isNotEmpty()
-}
-
 fun Envelope<SessionPayload>.findSpanSnapshotOfType(telemetryType: EmbType): Span {
     return findSpanSnapshotsOfType(telemetryType).single()
 }

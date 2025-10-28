@@ -4,6 +4,7 @@ import com.android.build.api.dsl.LibraryExtension
 import org.gradle.api.JavaVersion
 import org.gradle.api.Project
 
+@Suppress("unused")
 fun LibraryExtension.configureAndroidCompileOptions(project: Project) {
     compileSdk = project.resolveVersionFromCatalog("compileSdk").toInt()
     defaultConfig.minSdk = project.resolveVersionFromCatalog("minSdk").toInt()

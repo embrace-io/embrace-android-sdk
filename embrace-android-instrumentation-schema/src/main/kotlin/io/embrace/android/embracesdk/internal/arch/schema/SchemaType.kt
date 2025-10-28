@@ -107,13 +107,6 @@ sealed class SchemaType(
         ).toNonNullMap()
     }
 
-    class MemoryWarning : SchemaType(
-        telemetryType = EmbType.Performance.MemoryWarning,
-        fixedObjectName = "memory-warning"
-    ) {
-        override val schemaAttributes: Map<String, String> = emptyMap()
-    }
-
     class AeiLog(
         sessionId: String?,
         sessionIdError: String?,

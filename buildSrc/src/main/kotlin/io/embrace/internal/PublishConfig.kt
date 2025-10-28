@@ -3,6 +3,7 @@ package io.embrace.internal
 import com.vanniktech.maven.publish.MavenPublishBaseExtension
 import org.gradle.api.Project
 
+@Suppress("unused")
 fun Project.configurePublishing() {
     if (disableDefaultPublishConfig()) {
         return

@@ -1,6 +1,6 @@
 package io.embrace.test.fixtures
 
-@Suppress("FunctionOnlyReturningConstant")
+@Suppress("FunctionOnlyReturningConstant", "unused")
 class MethodReturnValueVisitorObj {
     fun getSomeBool(): Boolean = false
     fun getSomeInt(): Int = 100

@@ -2,6 +2,7 @@ package io.embrace.test.fixtures
 
 import kotlin.random.Random
 
+@Suppress("unused")
 class TargetMethodEndVisitorObj {
     fun instrumentAtEndWithReturn() {
         print("Instrumenting at the end of a method with a return statement")

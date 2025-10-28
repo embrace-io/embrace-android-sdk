@@ -5,6 +5,7 @@ import org.gradle.api.Project
 import org.gradle.api.artifacts.VersionCatalogsExtension
 import org.gradle.kotlin.dsl.getByType
 
+@Suppress("unused")
 fun Project.configureAndroidProductionModule(android: LibraryExtension) {
     android.apply {
         useLibrary("android.test.runner")

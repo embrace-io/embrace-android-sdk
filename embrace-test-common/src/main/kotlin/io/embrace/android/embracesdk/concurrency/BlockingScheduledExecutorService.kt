@@ -68,24 +68,6 @@ class BlockingScheduledExecutorService(
     }
 
     /**
-     * Runs all tasks that have been submitted to the ExecutorService, regardless of scheduled time.
-     */
-    fun runAllSubmittedTasks() {
-        rejectIfShutdown()
-        val tasksToRun = LinkedList<Runnable>()
-        var nextTask = scheduledTasks.peek()
-        while (nextTask != null) {
-            nextTask = scheduledTasks.poll()
-            if (nextTask != null) {
-                tasksToRun.add(nextTask)
-            }
-        }
-
-        tasksToRun.forEach { submit(it) }
-        delegateExecutorService.runCurrentlyBlocked()
-    }
-
-    /**
      * Move time forward and run the tasks that are expected to be run by that time.
      */
     fun moveForwardAndRunBlocked(timeIncrementMs: Long) {

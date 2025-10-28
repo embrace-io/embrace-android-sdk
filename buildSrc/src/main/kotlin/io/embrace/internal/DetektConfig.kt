@@ -5,6 +5,7 @@ import io.gitlab.arturbosch.detekt.DetektCreateBaselineTask
 import io.gitlab.arturbosch.detekt.extensions.DetektExtension
 import org.gradle.api.Project
 
+@Suppress("unused")
 fun Project.configureDetekt() {
     val detekt = project.extensions.getByType(DetektExtension::class.java)
     val targetVersion = resolveVersionFromCatalog("jvmTargetCompatibility")

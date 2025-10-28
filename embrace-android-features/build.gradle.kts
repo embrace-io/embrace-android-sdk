@@ -43,7 +43,5 @@ dependencies {
     testImplementation(platform(libs.opentelemetry.bom))
     testImplementation(libs.opentelemetry.api)
     testImplementation(libs.opentelemetry.context)
-    testImplementation(libs.protobuf.java)
-    testImplementation(libs.protobuf.java.util)
     testImplementation(libs.mockk)
 }

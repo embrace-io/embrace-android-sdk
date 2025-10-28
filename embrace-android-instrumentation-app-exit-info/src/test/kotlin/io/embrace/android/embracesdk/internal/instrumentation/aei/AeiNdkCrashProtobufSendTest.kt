@@ -1,16 +1,15 @@
-package io.embrace.android.embracesdk.internal.capture.aei
+package io.embrace.android.embracesdk.internal.instrumentation.aei
 
 import android.app.ActivityManager
 import android.app.ApplicationExitInfo
 import com.android.server.os.TombstoneProtos
 import io.embrace.android.embracesdk.ResourceReader
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeLogWriter
-import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
 import io.embrace.android.embracesdk.internal.TypeUtils
-import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.mockk.every
@@ -137,9 +136,9 @@ internal class AeiNdkCrashProtobufSendTest {
             fakeBackgroundWorker(),
             FakeConfigService(autoDataCaptureBehavior = FakeAutoDataCaptureBehavior(ndkEnabled = true)),
             activityManager,
-            FakePreferenceService(),
+            FakeAeiDataStore(),
             logWriter,
-            EmbLoggerImpl(),
+            FakeEmbLogger(),
             VersionChecker { ndkTraceFile }
         ).enableDataCapture()
         return logWriter

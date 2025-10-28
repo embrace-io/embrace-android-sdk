@@ -27,7 +27,6 @@ class FakePreferenceService(
     override var javaScriptPatchNumber: String? = null,
     override var embraceFlutterSdkVersion: String? = null,
     override var jailbroken: Boolean? = null,
-    override var deliveredAeiIds: Set<String> = emptySet(),
     val sessionNumber: () -> Int = { 0 },
     val bgActivityNumber: () -> Int = { 5 },
 ) : PreferencesService {
@@ -55,10 +54,6 @@ class FakePreferenceService(
     }
 
     override fun incrementAndGetNativeCrashNumber(): Int {
-        return 1
-    }
-
-    override fun incrementAndGetAeiCrashNumber(): Int {
         return 1
     }
 

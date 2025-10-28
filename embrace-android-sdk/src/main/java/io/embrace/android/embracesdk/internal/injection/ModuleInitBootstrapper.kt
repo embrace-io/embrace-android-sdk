@@ -234,9 +234,6 @@ internal class ModuleInitBootstrapper(
                             dataSourceModule.embraceFeatureRegistry,
                             initModule,
                             openTelemetryModule,
-                            workerThreadModule,
-                            systemServiceModule,
-                            androidServicesModule,
                             essentialServiceModule.logWriter,
                             configModule.configService,
                         )

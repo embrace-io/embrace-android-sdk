@@ -70,15 +70,11 @@ internal class EmbracePreferencesService(
     }
 
     override fun incrementAndGetCrashNumber(): Int {
-        return impl.incrementAndGet(LAST_CRASH_NUMBER_KEY)
+        return impl.incrementAndGetCrashNumber()
     }
 
     override fun incrementAndGetNativeCrashNumber(): Int {
         return impl.incrementAndGet(LAST_NATIVE_CRASH_NUMBER_KEY)
-    }
-
-    override fun incrementAndGetAeiCrashNumber(): Int {
-        return impl.incrementAndGet(LAST_AEI_CRASH_NUMBER_KEY)
     }
 
     override var javaScriptBundleURL: String?
@@ -132,10 +128,6 @@ internal class EmbracePreferencesService(
         get() = impl.getString(SCREEN_RESOLUTION_KEY)
         set(value) = impl.edit { putString(SCREEN_RESOLUTION_KEY, value) }
 
-    override var deliveredAeiIds: Set<String>
-        get() = impl.getStringSet(AEI_HASH_CODES) ?: emptySet()
-        set(value) = impl.edit { putStringSet(AEI_HASH_CODES, value) }
-
     override fun isUsersFirstDay(): Boolean {
         val installDate = installDate
         return installDate != null && clock.now() - installDate <= PreferencesService.DAY_IN_MS
@@ -172,9 +164,7 @@ internal class EmbracePreferencesService(
         private const val USER_PERSONAS_KEY = "io.embrace.userpersonas"
         private const val LAST_SESSION_NUMBER_KEY = "io.embrace.sessionnumber"
         private const val LAST_BACKGROUND_ACTIVITY_NUMBER_KEY = "io.embrace.bgactivitynumber"
-        private const val LAST_CRASH_NUMBER_KEY = "io.embrace.crashnumber"
         private const val LAST_NATIVE_CRASH_NUMBER_KEY = "io.embrace.nativecrashnumber"
-        private const val LAST_AEI_CRASH_NUMBER_KEY = "io.embrace.aeicrashnumber"
         private const val JAVA_SCRIPT_BUNDLE_URL_KEY = "io.embrace.jsbundle.url"
         private const val JAVA_SCRIPT_BUNDLE_ID_KEY = "io.embrace.jsbundle.id"
         private const val JAVA_SCRIPT_PATCH_NUMBER_KEY = "io.embrace.javascript.patch"
@@ -190,6 +180,5 @@ internal class EmbracePreferencesService(
         private const val SCREEN_RESOLUTION_KEY = "io.embrace.screen.resolution"
         private const val NETWORK_CAPTURE_RULE_PREFIX_KEY = "io.embrace.networkcapturerule"
         private const val SDK_CONFIG_FETCHED_TIMESTAMP = "io.embrace.sdkfetchedtimestamp"
-        private const val AEI_HASH_CODES = "io.embrace.aeiHashCode"
     }
 }

@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.injection
 
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState
-import io.embrace.android.embracesdk.internal.capture.aei.AeiDataSource
 import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkStatusDataSource
 import io.embrace.android.embracesdk.internal.capture.crumbs.BreadcrumbDataSource
 import io.embrace.android.embracesdk.internal.capture.crumbs.PushNotificationDataSource
@@ -16,7 +15,6 @@ interface FeatureModule {
     val pushNotificationDataSource: DataSourceState<PushNotificationDataSource>
     val webViewUrlDataSource: DataSourceState<WebViewUrlDataSource>
     val rnActionDataSource: DataSourceState<RnActionDataSource>
-    val applicationExitInfoDataSource: DataSourceState<AeiDataSource>
     val internalErrorDataSource: DataSourceState<InternalErrorDataSource>
     val networkStatusDataSource: DataSourceState<NetworkStatusDataSource>
 }

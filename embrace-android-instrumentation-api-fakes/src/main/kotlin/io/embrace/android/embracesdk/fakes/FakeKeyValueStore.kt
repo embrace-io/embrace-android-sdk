@@ -44,6 +44,10 @@ class FakeKeyValueStore : KeyValueStore {
         return newValue
     }
 
+    override fun incrementAndGetCrashNumber(): Int {
+        return incrementAndGet("crash_number")
+    }
+
     private class FakeEditor(private val map: MutableMap<String, Any?>) : KeyValueStoreEditor {
         override fun putString(key: String, value: String?) {
             map[key] = value

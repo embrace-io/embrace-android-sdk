@@ -1,18 +1,15 @@
-@file:Suppress("DEPRECATION")
-
 package io.embrace.android.embracesdk.internal.capture.session
 
 import android.content.Context
-import android.preference.PreferenceManager
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeCurrentSessionSpan
+import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.fakes.behavior.FakeSessionBehavior
 import io.embrace.android.embracesdk.internal.prefs.EmbracePreferencesService
 import io.embrace.android.embracesdk.internal.prefs.PreferencesService
-import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import org.junit.Assert
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -43,9 +40,8 @@ internal class EmbraceSessionPropertiesTest {
     @Before
     fun setUp() {
         context = ApplicationProvider.getApplicationContext()
-        val prefs = PreferenceManager.getDefaultSharedPreferences(context)
         preferencesService =
-            EmbracePreferencesService(prefs, fakeClock, EmbraceSerializer())
+            EmbracePreferencesService(FakeKeyValueStore(), fakeClock)
 
         configService = FakeConfigService(
             sessionBehavior = FakeSessionBehavior(MAX_SESSION_PROPERTIES_DEFAULT)

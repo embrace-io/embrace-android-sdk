@@ -20,7 +20,7 @@ internal class DeviceImpl(
     override val systemInfo: SystemInfo,
     private val logger: EmbLogger,
 ) : Device {
-    override var isJailbroken: Boolean? = null
+    override var isJailbroken: Boolean? = false
     override var screenResolution: String = ""
     private val jailbreakLocations: List<String> = listOf(
         "/sbin/",
@@ -75,18 +75,9 @@ internal class DeviceImpl(
 
     private fun asyncRetrieveIsJailbroken() {
         // if the isJailbroken property exists in memory, don't try to retrieve it
-        if (isJailbroken != null) {
-            return
-        }
         backgroundWorker.submit {
-            val storedIsJailbroken = preferencesService.jailbroken
-            // load value from shared preferences
-            if (storedIsJailbroken != null) {
-                isJailbroken = storedIsJailbroken
-            } else {
-                isJailbroken = checkIfIsJailbroken()
-                preferencesService.jailbroken = isJailbroken
-            }
+            isJailbroken = checkIfIsJailbroken()
+            preferencesService.jailbroken = isJailbroken
         }
     }
 

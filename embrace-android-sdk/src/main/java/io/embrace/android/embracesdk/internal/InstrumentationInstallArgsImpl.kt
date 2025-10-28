@@ -4,6 +4,7 @@ import android.content.Context
 import io.embrace.android.embracesdk.internal.arch.InstrumentationInstallArgs
 import io.embrace.android.embracesdk.internal.arch.destination.SessionSpanWriter
 import io.embrace.android.embracesdk.internal.arch.destination.TraceWriter
+import io.embrace.android.embracesdk.internal.arch.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.injection.WorkerThreadModule
@@ -19,6 +20,7 @@ internal class InstrumentationInstallArgsImpl(
     override val clock: Clock,
     override val traceWriter: TraceWriter,
     override val context: Context,
+    override val store: KeyValueStore,
     private val workerThreadModule: WorkerThreadModule,
 ) : InstrumentationInstallArgs {
 

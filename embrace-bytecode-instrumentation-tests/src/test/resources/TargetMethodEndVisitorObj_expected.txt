@@ -23,13 +23,13 @@ public final class io/embrace/test/fixtures/TargetMethodEndVisitorObj {
   // access flags 0x11
   public final instrumentAtEndWithReturn()V
    L0
-    LINENUMBER 7 L0
+    LINENUMBER 8 L0
     LDC "Instrumenting at the end of a method with a return statement"
     GETSTATIC java/lang/System.out : Ljava/io/PrintStream;
     SWAP
     INVOKEVIRTUAL java/io/PrintStream.print (Ljava/lang/Object;)V
    L1
-    LINENUMBER 8 L1
+    LINENUMBER 9 L1
     INVOKESTATIC io/embrace/gradle/plugin/instrumentation/InjectedClass.injectedMethod ()V
     RETURN
    L2
@@ -40,13 +40,13 @@ public final class io/embrace/test/fixtures/TargetMethodEndVisitorObj {
   // access flags 0x11
   public final instrumentAtEndWithoutReturn()V
    L0
-    LINENUMBER 12 L0
+    LINENUMBER 13 L0
     LDC "Instrumenting at the end of a method without a return statement"
     GETSTATIC java/lang/System.out : Ljava/io/PrintStream;
     SWAP
     INVOKEVIRTUAL java/io/PrintStream.print (Ljava/lang/Object;)V
    L1
-    LINENUMBER 13 L1
+    LINENUMBER 14 L1
     INVOKESTATIC io/embrace/gradle/plugin/instrumentation/InjectedClass.injectedMethod ()V
     RETURN
    L2
@@ -57,13 +57,13 @@ public final class io/embrace/test/fixtures/TargetMethodEndVisitorObj {
   // access flags 0x11
   public final instrumentAtEndWithThrow()V
    L0
-    LINENUMBER 16 L0
+    LINENUMBER 17 L0
     LDC "Instrumenting at the end of a method with a throw statement"
     GETSTATIC java/lang/System.out : Ljava/io/PrintStream;
     SWAP
     INVOKEVIRTUAL java/io/PrintStream.print (Ljava/lang/Object;)V
    L1
-    LINENUMBER 17 L1
+    LINENUMBER 18 L1
     NEW java/lang/Exception
     DUP
     LDC "Exception"
@@ -78,29 +78,29 @@ public final class io/embrace/test/fixtures/TargetMethodEndVisitorObj {
   // access flags 0x11
   public final instrumentAtEndWithMultipleReturns()V
    L0
-    LINENUMBER 21 L0
+    LINENUMBER 22 L0
     GETSTATIC kotlin/random/Random.Default : Lkotlin/random/Random$Default;
     INVOKEVIRTUAL kotlin/random/Random$Default.nextBoolean ()Z
     IFEQ L1
    L2
-    LINENUMBER 22 L2
+    LINENUMBER 23 L2
     LDC "Instrumenting at the end of a method with multiple return statements - first return"
     GETSTATIC java/lang/System.out : Ljava/io/PrintStream;
     SWAP
     INVOKEVIRTUAL java/io/PrintStream.print (Ljava/lang/Object;)V
    L3
-    LINENUMBER 23 L3
+    LINENUMBER 24 L3
     INVOKESTATIC io/embrace/gradle/plugin/instrumentation/InjectedClass.injectedMethod ()V
     RETURN
    L1
-    LINENUMBER 25 L1
+    LINENUMBER 26 L1
    FRAME FULL [io/embrace/test/fixtures/TargetMethodEndVisitorObj] []
     LDC "Instrumenting at the end of a method with multiple return statements - second return"
     GETSTATIC java/lang/System.out : Ljava/io/PrintStream;
     SWAP
     INVOKEVIRTUAL java/io/PrintStream.print (Ljava/lang/Object;)V
    L4
-    LINENUMBER 26 L4
+    LINENUMBER 27 L4
     INVOKESTATIC io/embrace/gradle/plugin/instrumentation/InjectedClass.injectedMethod ()V
     RETURN
    L5

@@ -1,8 +1,7 @@
 package io.embrace.android.embracesdk.internal.capture.session
 
 import io.embrace.android.embracesdk.internal.arch.attrs.toEmbraceAttributeName
-import io.embrace.android.embracesdk.internal.arch.destination.SessionSpanWriter
-import io.embrace.android.embracesdk.internal.arch.destination.SpanAttributeData
+import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.prefs.PreferencesService
 import io.embrace.android.embracesdk.internal.utils.Provider
@@ -11,7 +10,7 @@ import java.util.concurrent.atomic.AtomicReference
 internal class EmbraceSessionProperties(
     private val preferencesService: PreferencesService,
     private val configService: ConfigService,
-    private val writer: SessionSpanWriter,
+    private val destination: TelemetryDestination,
 ) {
     private val temporary: MutableMap<String, String> = HashMap()
     private val permanentPropertiesReference = AtomicReference(NOT_LOADED)
@@ -56,11 +55,9 @@ internal class EmbraceSessionProperties(
                 }
                 temporary[sanitizedKey] = sanitizedValue
             }
-            writer.addSessionAttribute(
-                SpanAttributeData(
-                    sanitizedKey.toEmbraceAttributeName(),
-                    sanitizedValue
-                )
+            destination.addSessionAttribute(
+                sanitizedKey.toEmbraceAttributeName(),
+                sanitizedValue
             )
             return true
         }
@@ -79,7 +76,7 @@ internal class EmbraceSessionProperties(
                 preferencesService.permanentSessionProperties = permanentProperties()
                 existed = true
             }
-            writer.removeSessionAttribute(sanitizedKey.toEmbraceAttributeName())
+            destination.removeSessionAttribute(sanitizedKey.toEmbraceAttributeName())
             return existed
         }
     }
@@ -98,11 +95,9 @@ internal class EmbraceSessionProperties(
 
     fun addPermPropsToSessionSpan() {
         permanentProperties().entries.forEach {
-            writer.addSessionAttribute(
-                SpanAttributeData(
-                    it.key.toEmbraceAttributeName(),
-                    it.value
-                )
+            destination.addSessionAttribute(
+                it.key.toEmbraceAttributeName(),
+                it.value
             )
         }
     }

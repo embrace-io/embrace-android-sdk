@@ -10,6 +10,7 @@ import org.gradle.api.plugins.JavaPluginExtension
  * A plugin that is applied in the integration tests to make it easier to setup fixtures
  * appropriately.
  */
+@Suppress("unused")
 class IntegrationTestPlugin : Plugin<Project> {
 
     private lateinit var extension: IntegrationTestExtension

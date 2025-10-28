@@ -81,16 +81,6 @@ val embSessionEndType: EmbraceAttributeKey = EmbraceAttributeKey.create("session
 val embSessionStartupDuration: EmbraceAttributeKey = EmbraceAttributeKey.create("startup_duration")
 
 /**
- * Attribute name that identifies the startup threshold
- */
-val embSessionStartupThreshold: EmbraceAttributeKey = EmbraceAttributeKey.create("threshold")
-
-/**
- * Attribute name that identifies the SDK duration
- */
-val embSdkStartupDuration: EmbraceAttributeKey = EmbraceAttributeKey.create("sdk_startup_duration")
-
-/**
  * Attribute name that identifies the error log count in a session
  */
 val embErrorLogCount: EmbraceAttributeKey = EmbraceAttributeKey.create("error_log_count")

@@ -4,28 +4,28 @@ import android.content.ComponentCallbacks2
 import android.content.Context
 import android.content.res.Configuration
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSource
-import io.embrace.android.embracesdk.internal.arch.destination.SessionSpanWriter
-import io.embrace.android.embracesdk.internal.arch.destination.SpanAttributeData
+import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 
 class FakeDataSource(
     private val ctx: Context,
-) : DataSource<SessionSpanWriter>, ComponentCallbacks2 {
+) : DataSource, ComponentCallbacks2 {
 
     var enableDataCaptureCount: Int = 0
     var disableDataCaptureCount: Int = 0
     var resetCount: Int = 0
 
-    override fun captureData(
+    override fun captureTelemetry(
         inputValidation: () -> Boolean,
-        captureAction: SessionSpanWriter.() -> Unit,
-    ): Boolean = true
+        action: TelemetryDestination.() -> Unit,
+    ) {
+    }
 
-    override fun enableDataCapture() {
+    override fun onDataCaptureEnabled() {
         ctx.registerComponentCallbacks(this)
         enableDataCaptureCount++
     }
 
-    override fun disableDataCapture() {
+    override fun onDataCaptureDisabled() {
         ctx.unregisterComponentCallbacks(this)
         disableDataCaptureCount++
     }
@@ -35,8 +35,8 @@ class FakeDataSource(
     }
 
     override fun onConfigurationChanged(newConfig: Configuration) {
-        captureData(inputValidation = { true }) {
-            addSessionAttribute(SpanAttributeData("orientation", newConfig.orientation.toString()))
+        captureTelemetry {
+            addSessionAttribute("orientation", newConfig.orientation.toString())
         }
     }
 

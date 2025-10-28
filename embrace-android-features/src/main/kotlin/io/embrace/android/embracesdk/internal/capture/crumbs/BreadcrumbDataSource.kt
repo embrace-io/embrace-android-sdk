@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.capture.crumbs
 
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceImpl
-import io.embrace.android.embracesdk.internal.arch.destination.SessionSpanWriter
+import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.config.behavior.BreadcrumbBehavior
@@ -12,24 +12,19 @@ import io.embrace.android.embracesdk.internal.logging.EmbLogger
  */
 class BreadcrumbDataSource(
     breadcrumbBehavior: BreadcrumbBehavior,
-    writer: SessionSpanWriter,
+    destination: TelemetryDestination,
     logger: EmbLogger,
-) : DataSourceImpl<SessionSpanWriter>(
-    destination = writer,
+) : DataSourceImpl(
+    destination = destination,
     logger = logger,
     limitStrategy = UpToLimitStrategy(breadcrumbBehavior::getCustomBreadcrumbLimit)
 ) {
 
     fun logCustom(message: String, timestamp: Long) {
-        captureData(
-            inputValidation = {
-                message.isNotEmpty()
-            },
-            captureAction = {
-                val sanitizedMessage = ellipsizeBreadcrumbMessage(message)
-                addSessionEvent(SchemaType.Breadcrumb(sanitizedMessage ?: ""), timestamp)
-            }
-        )
+        captureTelemetry(inputValidation = message::isNotEmpty) {
+            val sanitizedMessage = ellipsizeBreadcrumbMessage(message)
+            addSessionEvent(SchemaType.Breadcrumb(sanitizedMessage ?: ""), timestamp)
+        }
     }
 
     private fun ellipsizeBreadcrumbMessage(input: String?): String? {

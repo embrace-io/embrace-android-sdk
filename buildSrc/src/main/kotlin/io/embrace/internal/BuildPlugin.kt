@@ -4,6 +4,7 @@ import com.android.build.api.dsl.LibraryExtension
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 
+@Suppress("unused")
 class BuildPlugin : Plugin<Project> {
 
     override fun apply(project: Project) {

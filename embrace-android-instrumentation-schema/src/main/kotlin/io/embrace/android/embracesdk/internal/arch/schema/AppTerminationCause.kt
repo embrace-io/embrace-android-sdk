@@ -15,5 +15,6 @@ sealed class AppTerminationCause(
 
     object UserTermination : AppTerminationCause("user_termination")
 
+    @Suppress("unused")
     object Unknown : AppTerminationCause("unknown")
 }

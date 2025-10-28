@@ -1,27 +1,26 @@
 package io.embrace.android.embracesdk.internal.arch.datasource
 
 import io.embrace.android.embracesdk.internal.arch.SessionType
-import io.embrace.android.embracesdk.internal.utils.Provider
 
 /**
  * Holds the current state of the service. This class automatically handles changes in config
  * that enable/disable the service, and creates new instances of the service as required.
  * It also is capable of disabling the service if the SessionType is not supported.
  */
-class DataSourceState<T : DataSource<*>>(
+class DataSourceState<T : DataSource>(
 
     /**
      * Provides instances of services. A service must define an interface
      * that extends [DataSource] for orchestration. This helps enforce testability
      * by making it impossible to register data capture without defining a testable interface.
      */
-    factory: Provider<T?>,
+    factory: () -> T?,
 
     /**
      * Predicate that determines if the service should be enabled or not, via a config value.
      * Defaults to true if not provided.
      */
-    private val configGate: Provider<Boolean> = { true },
+    private val configGate: () -> Boolean = { true },
 
     /**
      * A session type where data capture should be disabled. For example,
@@ -34,7 +33,7 @@ class DataSourceState<T : DataSource<*>>(
      * the feature is set to true the feature will be initialized on a background thread.
      *
      * If you enable this behavior please ensure your implementation is thread safe (e.g.
-     * it can handle unbalanced calls to [enableDataCapture] and others).
+     * it can handle unbalanced calls to [DataSource.onDataCaptureEnabled] and others).
      */
     val asyncInit: Boolean = false,
 ) {
@@ -73,10 +72,10 @@ class DataSourceState<T : DataSource<*>>(
 
         if (enabled && dataSource == null) {
             dataSource = factoryRef.value?.apply {
-                enableDataCapture()
+                onDataCaptureEnabled()
             }
         } else if (!enabled && dataSource != null) {
-            dataSource?.disableDataCapture()
+            dataSource?.onDataCaptureDisabled()
             dataSource = null
         }
     }

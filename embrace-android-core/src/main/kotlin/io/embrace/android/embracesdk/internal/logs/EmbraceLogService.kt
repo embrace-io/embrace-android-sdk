@@ -4,8 +4,8 @@ import android.os.Parcelable
 import io.embrace.android.embracesdk.LogExceptionType
 import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.internal.arch.attrs.embExceptionHandling
-import io.embrace.android.embracesdk.internal.arch.destination.LogSeverity
-import io.embrace.android.embracesdk.internal.arch.destination.LogWriter
+import io.embrace.android.embracesdk.internal.arch.datasource.LogSeverity
+import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType.Exception
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType.FlutterException
@@ -29,7 +29,7 @@ import java.io.Serializable
  */
 @OptIn(IncubatingApi::class)
 class EmbraceLogService(
-    private val logWriter: LogWriter,
+    private val destination: TelemetryDestination,
     private val configService: ConfigService,
     private val sessionPropertiesService: SessionPropertiesService,
     private val payloadStore: PayloadStore?,
@@ -117,7 +117,7 @@ class EmbraceLogService(
             Severity.WARNING -> LogSeverity.WARNING
             Severity.ERROR -> LogSeverity.ERROR
         }
-        logWriter.addLog(schemaProvider(attributes), logSeverity, trimToMaxLength(message))
+        destination.addLog(schemaProvider(attributes), logSeverity, trimToMaxLength(message))
     }
 
     private fun trimToMaxLength(message: String): String {

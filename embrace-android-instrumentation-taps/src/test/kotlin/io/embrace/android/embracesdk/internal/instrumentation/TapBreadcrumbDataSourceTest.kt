@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.instrumentation
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
-import io.embrace.android.embracesdk.fakes.FakeSessionSpanWriter
+import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -12,16 +12,16 @@ import org.junit.Test
 internal class TapBreadcrumbDataSourceTest {
 
     private lateinit var source: TapDataSource
-    private lateinit var writer: FakeSessionSpanWriter
+    private lateinit var destination: FakeTelemetryDestination
     private lateinit var clock: FakeClock
 
     @Before
     fun setUp() {
-        writer = FakeSessionSpanWriter()
+        destination = FakeTelemetryDestination()
         clock = FakeClock()
         source = TapDataSource(
             FakeConfigService().breadcrumbBehavior,
-            writer,
+            destination,
             FakeEmbLogger(),
             clock,
         )
@@ -34,7 +34,7 @@ internal class TapBreadcrumbDataSourceTest {
             point,
             "my-button-id",
         )
-        with(writer.addedEvents.single()) {
+        with(destination.addedEvents.single()) {
             assertEquals(EmbType.Ux.Tap, schemaType.telemetryType)
             assertEquals(clock.now(), startTimeMs)
             assertEquals(
@@ -57,6 +57,6 @@ internal class TapBreadcrumbDataSourceTest {
                 "my-button-$k",
             )
         }
-        assertEquals(100, writer.addedEvents.size)
+        assertEquals(100, destination.addedEvents.size)
     }
 }

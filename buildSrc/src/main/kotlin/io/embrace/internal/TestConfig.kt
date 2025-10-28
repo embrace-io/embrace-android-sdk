@@ -3,7 +3,7 @@ package io.embrace.internal
 import com.android.build.api.dsl.LibraryExtension
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 
-@Suppress("UnstableApiUsage")
+@Suppress("UnstableApiUsage", "unused")
 fun configureTestOptions(android: LibraryExtension) {
     android.testOptions {
         // Calling Android logging methods will throw exceptions if this is false

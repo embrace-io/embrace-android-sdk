@@ -4,9 +4,7 @@ import io.embrace.android.embracesdk.internal.arch.DataCaptureOrchestrator
 import io.embrace.android.embracesdk.internal.arch.EmbraceFeatureRegistry
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSource
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState
-import io.embrace.android.embracesdk.internal.arch.destination.LogWriter
-import io.embrace.android.embracesdk.internal.arch.destination.TraceWriter
-import io.embrace.android.embracesdk.internal.arch.destination.TraceWriterImpl
+import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkStatusDataSource
 import io.embrace.android.embracesdk.internal.capture.crumbs.BreadcrumbDataSource
 import io.embrace.android.embracesdk.internal.capture.crumbs.PushNotificationDataSource
@@ -21,21 +19,16 @@ import io.embrace.android.embracesdk.internal.utils.Provider
 internal class FeatureModuleImpl(
     private val featureRegistry: EmbraceFeatureRegistry,
     initModule: InitModule,
-    otelModule: OpenTelemetryModule,
-    logWriter: LogWriter,
+    destination: TelemetryDestination,
     configService: ConfigService,
 ) : FeatureModule {
-
-    private val traceWriter: TraceWriter by singleton {
-        TraceWriterImpl(otelModule.spanService)
-    }
 
     override val breadcrumbDataSource: DataSourceState<BreadcrumbDataSource> by dataSourceState {
         DataSourceState(
             factory = {
                 BreadcrumbDataSource(
                     breadcrumbBehavior = configService.breadcrumbBehavior,
-                    writer = otelModule.currentSessionSpan,
+                    destination = destination,
                     logger = initModule.logger
                 )
             }
@@ -48,7 +41,7 @@ internal class FeatureModuleImpl(
                 ViewDataSource(
                     configService.breadcrumbBehavior,
                     initModule.clock,
-                    traceWriter,
+                    destination,
                     initModule.logger
                 )
             }
@@ -61,7 +54,7 @@ internal class FeatureModuleImpl(
                 PushNotificationDataSource(
                     breadcrumbBehavior = configService.breadcrumbBehavior,
                     initModule.clock,
-                    writer = otelModule.currentSessionSpan,
+                    destination = destination,
                     logger = initModule.logger
                 )
             }
@@ -73,7 +66,7 @@ internal class FeatureModuleImpl(
             factory = {
                 WebViewUrlDataSource(
                     configService.breadcrumbBehavior,
-                    otelModule.currentSessionSpan,
+                    destination,
                     initModule.logger
                 )
             },
@@ -86,7 +79,7 @@ internal class FeatureModuleImpl(
             factory = {
                 RnActionDataSource(
                     breadcrumbBehavior = configService.breadcrumbBehavior,
-                    traceWriter,
+                    destination,
                     initModule.logger
                 )
             }
@@ -97,7 +90,7 @@ internal class FeatureModuleImpl(
         DataSourceState(
             factory = {
                 InternalErrorDataSourceImpl(
-                    logWriter = logWriter,
+                    destination = destination,
                     logger = initModule.logger,
                 )
             },
@@ -110,7 +103,7 @@ internal class FeatureModuleImpl(
             factory = {
                 NetworkStatusDataSource(
                     clock = initModule.clock,
-                    traceWriter = traceWriter,
+                    destination = destination,
                     logger = initModule.logger
                 )
             },
@@ -126,6 +119,6 @@ internal class FeatureModuleImpl(
      * the data sources.
      */
     @Suppress("unused")
-    private fun <T : DataSource<*>> dataSourceState(provider: Provider<DataSourceState<T>>) =
+    private fun <T : DataSource> dataSourceState(provider: Provider<DataSourceState<T>>) =
         DataSourceDelegate(provider, featureRegistry)
 }

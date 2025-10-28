@@ -233,8 +233,7 @@ internal class ModuleInitBootstrapper(
                         featureModuleSupplier(
                             dataSourceModule.embraceFeatureRegistry,
                             initModule,
-                            openTelemetryModule,
-                            essentialServiceModule.logWriter,
+                            essentialServiceModule.telemetryDestination,
                             configModule.configService,
                         )
                     }

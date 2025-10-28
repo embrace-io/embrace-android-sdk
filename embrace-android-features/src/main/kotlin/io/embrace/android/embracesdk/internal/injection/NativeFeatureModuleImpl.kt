@@ -18,7 +18,7 @@ internal class NativeFeatureModuleImpl(
             NativeCrashDataSourceImpl(
                 nativeCrashProcessor = nativeCoreModule.processor,
                 preferencesService = androidServicesModule.preferencesService,
-                logWriter = essentialServiceModule.logWriter,
+                destination = essentialServiceModule.telemetryDestination,
                 serializer = initModule.jsonSerializer,
                 logger = initModule.logger,
             )

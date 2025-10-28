@@ -8,7 +8,7 @@ internal class FakeEmbraceFeatureRegistry(private val impl: EmbraceFeatureRegist
     val states: MutableList<DataSourceState<*>> = mutableListOf()
 
     @Suppress("UNCHECKED_CAST")
-    inline fun <reified T : DataSource<*>> findByType(): T {
+    inline fun <reified T : DataSource> findByType(): T {
         val state = states.firstOrNull { it.dataSource is T } as? DataSourceState<T>
         return state?.dataSource ?: error("Unable to find data source for ${T::class.simpleName}")
     }

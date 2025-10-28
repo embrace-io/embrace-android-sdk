@@ -7,17 +7,17 @@ import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 /**
  * Base class for data sources.
  */
-abstract class DataSourceImpl<T>(
-    private val destination: T,
-    private val logger: EmbLogger,
+abstract class DataSourceImpl(
+    private val destination: TelemetryDestination,
+    val logger: EmbLogger,
     private val limitStrategy: LimitStrategy,
-) : DataSource<T> {
+) : DataSource {
 
-    override fun enableDataCapture() {
+    override fun onDataCaptureEnabled() {
         // no-op
     }
 
-    override fun disableDataCapture() {
+    override fun onDataCaptureDisabled() {
         // no-op
     }
 
@@ -25,28 +25,19 @@ abstract class DataSourceImpl<T>(
         limitStrategy.resetDataCaptureLimits()
     }
 
-    override fun captureData(
+    /**
+     * Convenience function for capturing telemetry.
+     */
+    override fun captureTelemetry(
         inputValidation: () -> Boolean,
-        captureAction: T.() -> Unit,
-    ): Boolean = captureDataImpl(inputValidation, captureAction)
-
-    protected fun captureDataImpl(
-        inputValidation: () -> Boolean,
-        captureAction: T.() -> Unit,
-        enforceLimits: Boolean = true,
-    ): Boolean {
+        action: TelemetryDestination.() -> Unit,
+    ) {
         try {
-            if (enforceLimits && !limitStrategy.shouldCapture()) {
-                return false
+            if (inputValidation() && limitStrategy.shouldCapture()) {
+                destination.action()
             }
-            if (!inputValidation()) {
-                return false
-            }
-            destination.captureAction()
-            return true
         } catch (exc: Throwable) {
             logger.trackInternalError(InternalErrorType.DATA_SOURCE_DATA_CAPTURE_FAIL, exc)
-            return false
         }
     }
 }

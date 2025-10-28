@@ -4,10 +4,9 @@ import android.app.ActivityManager
 import android.app.ApplicationExitInfo
 import android.os.Build.VERSION_CODES
 import androidx.annotation.RequiresApi
-import io.embrace.android.embracesdk.internal.arch.datasource.LogDataSourceImpl
-import io.embrace.android.embracesdk.internal.arch.datasource.NoInputValidation
-import io.embrace.android.embracesdk.internal.arch.destination.LogSeverity
-import io.embrace.android.embracesdk.internal.arch.destination.LogWriter
+import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceImpl
+import io.embrace.android.embracesdk.internal.arch.datasource.LogSeverity
+import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType.AeiLog
 import io.embrace.android.embracesdk.internal.config.ConfigService
@@ -23,11 +22,11 @@ internal class AeiDataSourceImpl(
     private val configService: ConfigService,
     private val activityManager: ActivityManager,
     private val aeiDataStore: AeiDataStore,
-    logWriter: LogWriter,
-    private val logger: EmbLogger,
+    destination: TelemetryDestination,
+    logger: EmbLogger,
     private val versionChecker: VersionChecker = BuildVersionChecker,
-) : LogDataSourceImpl(
-    logWriter,
+) : DataSourceImpl(
+    destination,
     logger,
     limitStrategy = UpToLimitStrategy { SDK_AEI_SEND_LIMIT }
 ) {
@@ -36,7 +35,7 @@ internal class AeiDataSourceImpl(
         private const val SDK_AEI_SEND_LIMIT = 64
     }
 
-    override fun enableDataCapture() {
+    override fun onDataCaptureEnabled() {
         backgroundWorker.submit {
             try {
                 processAeiRecords()
@@ -63,32 +62,29 @@ internal class AeiDataSourceImpl(
             if (obj == null) {
                 return@forEach
             }
-            captureData(
-                inputValidation = NoInputValidation,
-                captureAction = {
-                    val capture = configService.autoDataCaptureBehavior.isNativeCrashCaptureEnabled() || !obj.hasNativeTombstone()
-                    if (capture) {
-                        val schemaType = AeiLog(
-                            sessionId = obj.sessionId,
-                            sessionIdError = obj.sessionIdError,
-                            importance = obj.importance,
-                            pss = obj.pss,
-                            reason = obj.reason,
-                            rss = obj.rss,
-                            status = obj.status,
-                            timestamp = obj.timestamp,
-                            description = obj.description,
-                            traceStatus = obj.traceStatus,
-                            crashNumber = crashNumber,
-                            aeiNumber = aeiNumber
-                        )
-                        addLog(schemaType, LogSeverity.INFO, obj.trace ?: "")
-                    }
-
-                    // always count AEI as delivered once we process it & submit to the OTel logging system, or discard
-                    aeiDataStore.deliveredAeiIds = aeiDataStore.deliveredAeiIds.plus(obj.getAeiId())
+            captureTelemetry {
+                val capture = configService.autoDataCaptureBehavior.isNativeCrashCaptureEnabled() || !obj.hasNativeTombstone()
+                if (capture) {
+                    val schemaType = AeiLog(
+                        sessionId = obj.sessionId,
+                        sessionIdError = obj.sessionIdError,
+                        importance = obj.importance,
+                        pss = obj.pss,
+                        reason = obj.reason,
+                        rss = obj.rss,
+                        status = obj.status,
+                        timestamp = obj.timestamp,
+                        description = obj.description,
+                        traceStatus = obj.traceStatus,
+                        crashNumber = crashNumber,
+                        aeiNumber = aeiNumber
+                    )
+                    addLog(schemaType, LogSeverity.INFO, obj.trace ?: "")
                 }
-            )
+
+                // always count AEI as delivered once we process it & submit to the OTel logging system, or discard
+                aeiDataStore.deliveredAeiIds = aeiDataStore.deliveredAeiIds.plus(obj.getAeiId())
+            }
         }
     }
 

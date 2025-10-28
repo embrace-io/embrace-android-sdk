@@ -4,7 +4,6 @@ import io.embrace.android.embracesdk.assertions.assertEmbraceSpanData
 import io.embrace.android.embracesdk.assertions.assertError
 import io.embrace.android.embracesdk.assertions.assertHasEmbraceAttribute
 import io.embrace.android.embracesdk.assertions.assertIsType
-import io.embrace.android.embracesdk.assertions.findEventOfType
 import io.embrace.android.embracesdk.assertions.validatePreviousSessionLink
 import io.embrace.android.embracesdk.assertions.validateSystemLink
 import io.embrace.android.embracesdk.fakes.FakeClock
@@ -13,14 +12,10 @@ import io.embrace.android.embracesdk.fakes.FakeEmbraceSpanFactory
 import io.embrace.android.embracesdk.fakes.FakeTracer
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.arch.attrs.asPair
-import io.embrace.android.embracesdk.internal.arch.destination.SpanAttributeData
 import io.embrace.android.embracesdk.internal.arch.schema.AppTerminationCause
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.LinkType
-import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
-import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.OtelLimitsConfig
-import io.embrace.android.embracesdk.internal.otel.config.getMaxTotalAttributeCount
 import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
 import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
 import io.embrace.android.embracesdk.internal.otel.spans.OtelSpanStartArgs
@@ -524,62 +519,6 @@ internal class CurrentSessionSpanImplTests {
     }
 
     @Test
-    fun `add event forwarded to span`() {
-        currentSessionSpan.addSessionEvent(SchemaType.Breadcrumb("test-event"), 1000L)
-        val span = currentSessionSpan.endSession(true).single()
-        assertEquals("emb-session", span.name)
-
-        // verify event was added to the span
-        val testEvent = span.toEmbracePayload().findEventOfType(EmbType.System.Breadcrumb)
-        assertEquals(1000L, testEvent.timestampNanos?.nanosToMillis())
-
-        val attrs = checkNotNull(testEvent.attributes)
-        assertEquals("test-event", attrs.single { it.key == "message" }.data)
-        assertEquals("sys.breadcrumb", attrs.single { it.key == "emb.type" }.data)
-    }
-
-    @Test
-    fun `validate maximum events on session span`() {
-        val limit = otelLimitsConfig.getMaxSystemEventCount()
-        repeat(limit + 1) {
-            currentSessionSpan.addSessionEvent(SchemaType.Breadcrumb("test-event"), 1000L + it)
-        }
-
-        val span = currentSessionSpan.endSession(true).single()
-        assertEquals("emb-session", span.name)
-
-        // verify event was added to the span
-        assertEquals(limit, span.toEmbracePayload().events?.size)
-    }
-
-    @Test
-    fun `add and remove attribute forwarded to span`() {
-        currentSessionSpan.addSessionAttribute(SpanAttributeData("my_key", "my_value"))
-        currentSessionSpan.addSessionAttribute(SpanAttributeData("missing", "my_value"))
-        currentSessionSpan.removeSessionAttribute("missing")
-        val span = currentSessionSpan.endSession(true).single()
-        assertEquals("emb-session", span.name)
-
-        // verify attribute was added to the span if it wasn't removed
-        assertEquals("my_value", span.attributes["my_key"])
-        assertNull(span.attributes["missing"])
-    }
-
-    @Test
-    fun `validate maximum attributes on session span`() {
-        val limit = otelLimitsConfig.getMaxTotalAttributeCount()
-        repeat(limit + 1) {
-            currentSessionSpan.addSessionAttribute(SpanAttributeData("attribute-$it", "value"))
-        }
-
-        val span = currentSessionSpan.endSession(true).single()
-        assertEquals("emb-session", span.name)
-
-        // verify event was added to the span
-        assertEquals(limit, span.toEmbracePayload().attributes?.size)
-    }
-
-    @Test
     fun `span stop callback creates the correct span links`() {
         val sessionSpan = checkNotNull(spanRepository.getActiveSpans().single())
         val sessionId = checkNotNull(sessionSpan.getSystemAttribute(SessionAttributes.SESSION_ID))
@@ -630,20 +569,10 @@ internal class CurrentSessionSpanImplTests {
         assertEquals("", getSessionId())
         assertFalse(canStartNewSpan(parent = null, internal = true))
         assertTrue(endSession(true).isEmpty())
-        assertFalse(addSessionEvent(SchemaType.Breadcrumb("test"), clock.now()))
-        // check doesn't throw exception
-        addSessionAttribute(attribute = SpanAttributeData("test", "test"))
-        removeSessionAttribute("test")
-        removeSessionEvents(EmbType.System.Breadcrumb)
     }
 
     private fun CurrentSessionSpan.assertSessionSpan() {
         assertTrue(getSessionId().isNotBlank())
         assertTrue(canStartNewSpan(parent = null, internal = true))
-        assertTrue(addSessionEvent(SchemaType.Breadcrumb("test"), clock.now()))
-        // check doesn't throw exception
-        addSessionAttribute(attribute = SpanAttributeData("test", "test"))
-        removeSessionAttribute("test")
-        removeSessionEvents(EmbType.System.Breadcrumb)
     }
 }

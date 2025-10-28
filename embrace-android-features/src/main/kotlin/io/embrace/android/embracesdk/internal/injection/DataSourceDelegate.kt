@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.internal.utils.Provider
 import kotlin.properties.ReadOnlyProperty
 import kotlin.reflect.KProperty
 
-internal class DataSourceDelegate<S : DataSource<*>>(
+internal class DataSourceDelegate<S : DataSource>(
     provider: Provider<DataSourceState<S>>,
     featureRegistry: EmbraceFeatureRegistry,
 ) : ReadOnlyProperty<Any?, DataSourceState<S>> {

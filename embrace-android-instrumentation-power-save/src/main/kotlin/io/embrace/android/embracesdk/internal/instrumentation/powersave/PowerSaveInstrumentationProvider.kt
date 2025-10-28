@@ -15,7 +15,7 @@ class PowerSaveInstrumentationProvider : InstrumentationProvider {
                     backgroundWorker = args.backgroundWorker(Worker.Background.NonIoRegWorker),
                     clock = args.clock,
                     provider = { args.systemService(Context.POWER_SERVICE) },
-                    traceWriter = args.traceWriter,
+                    destination = args.telemetryDestination,
                     logger = args.logger,
                 )
             },

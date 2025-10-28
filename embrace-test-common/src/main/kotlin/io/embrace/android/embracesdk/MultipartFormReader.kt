@@ -45,11 +45,6 @@ fun FormPart.validateBodyApiToken(expectedApiToken: String) {
     assertEquals(expectedApiToken, data)
 }
 
-fun FormPart.validateBodyVariant(expectedVariantName: String) {
-    assertEquals("form-data; name=\"variant\"", contentDisposition)
-    assertEquals(expectedVariantName, data)
-}
-
 fun FormPart.validateBodyBuildId(expectedBuildId: String? = null) {
     assertEquals("form-data; name=\"id\"", contentDisposition)
     assertTrue(data?.length == BUILD_ID_LENGTH)
@@ -69,4 +64,3 @@ fun FormPart.validateMappingFile(expectedFileName: String) {
 }
 
 private const val BUILD_ID_LENGTH = 32
-const val HEADER_APP_ID = "X-EM-AID"

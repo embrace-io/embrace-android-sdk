@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.capture.crumbs
 
-import io.embrace.android.embracesdk.fakes.FakeCurrentSessionSpan
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
+import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
 import io.embrace.android.embracesdk.fakes.behavior.FakeBreadcrumbBehavior
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import org.junit.Assert.assertEquals
@@ -11,14 +11,14 @@ import org.junit.Test
 internal class BreadcrumbDataSourceTest {
 
     private lateinit var source: BreadcrumbDataSource
-    private lateinit var writer: FakeCurrentSessionSpan
+    private lateinit var destination: FakeTelemetryDestination
 
     @Before
     fun setUp() {
-        writer = FakeCurrentSessionSpan()
+        destination = FakeTelemetryDestination()
         source = BreadcrumbDataSource(
             FakeBreadcrumbBehavior(),
-            writer,
+            destination,
             FakeEmbLogger()
         )
     }
@@ -26,15 +26,15 @@ internal class BreadcrumbDataSourceTest {
     @Test
     fun `add invalid breadcrumb`() {
         source.logCustom("", 0)
-        assertEquals(0, writer.addedEvents.size)
+        assertEquals(0, destination.addedEvents.size)
     }
 
     @Test
     fun `add breadcrumb`() {
         source.logCustom("Hello, world!", 15000000000)
-        with(writer.addedEvents.single()) {
+        with(destination.addedEvents.single()) {
             assertEquals(EmbType.System.Breadcrumb, schemaType.telemetryType)
-            assertEquals(15000000000, spanStartTimeMs)
+            assertEquals(15000000000, startTimeMs)
             assertEquals(
                 mapOf("message" to "Hello, world!"),
                 schemaType.attributes()
@@ -47,6 +47,6 @@ internal class BreadcrumbDataSourceTest {
         repeat(150) { k ->
             source.logCustom("Crumb #$k", 15000000000)
         }
-        assertEquals(100, writer.addedEvents.size)
+        assertEquals(100, destination.addedEvents.size)
     }
 }

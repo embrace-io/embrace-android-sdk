@@ -1,9 +1,9 @@
 package io.embrace.android.embracesdk.internal.ndk
 
 import io.embrace.android.embracesdk.internal.arch.attrs.embCrashNumber
-import io.embrace.android.embracesdk.internal.arch.datasource.LogDataSourceImpl
-import io.embrace.android.embracesdk.internal.arch.destination.LogSeverity
-import io.embrace.android.embracesdk.internal.arch.destination.LogWriter
+import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceImpl
+import io.embrace.android.embracesdk.internal.arch.datasource.LogSeverity
+import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.arch.limits.NoopLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
@@ -18,11 +18,11 @@ import io.embrace.opentelemetry.kotlin.semconv.SessionAttributes
 internal class NativeCrashDataSourceImpl(
     private val nativeCrashProcessor: NativeCrashProcessor,
     private val preferencesService: PreferencesService,
-    private val logWriter: LogWriter,
+    destination: TelemetryDestination,
     private val serializer: PlatformSerializer,
     logger: EmbLogger,
-) : NativeCrashDataSource, LogDataSourceImpl(
-    destination = logWriter,
+) : NativeCrashDataSource, DataSourceImpl(
+    destination = destination,
     logger = logger,
     limitStrategy = NoopLimitStrategy,
 ) {
@@ -40,36 +40,36 @@ internal class NativeCrashDataSourceImpl(
         sessionProperties: Map<String, String>,
         metadata: Map<String, String>,
     ) {
-        val nativeCrashNumber = preferencesService.incrementAndGetNativeCrashNumber()
-        val crashAttributes = TelemetryAttributes(
-            sessionPropertiesProvider = { sessionProperties }
-        )
-        crashAttributes.setAttribute(
-            key = SessionAttributes.SESSION_ID,
-            value = nativeCrash.sessionId,
-            keepBlankishValues = false,
-        )
-
-        metadata.forEach { attribute ->
-            crashAttributes.setAttribute(attribute.key, attribute.value)
-        }
-
-        crashAttributes.setAttribute(
-            key = embCrashNumber,
-            value = nativeCrashNumber.toString(),
-            keepBlankishValues = false,
-        )
-
-        nativeCrash.crash?.let { crashData ->
+        captureTelemetry {
+            val nativeCrashNumber = preferencesService.incrementAndGetNativeCrashNumber()
+            val crashAttributes = TelemetryAttributes(
+                sessionPropertiesProvider = { sessionProperties }
+            )
             crashAttributes.setAttribute(
-                key = EmbType.System.NativeCrash.embNativeCrashException,
-                value = crashData,
+                key = SessionAttributes.SESSION_ID,
+                value = nativeCrash.sessionId,
                 keepBlankishValues = false,
             )
-        }
 
-        if (!nativeCrash.symbols.isNullOrEmpty()) {
-            runCatching {
+            metadata.forEach { attribute ->
+                crashAttributes.setAttribute(attribute.key, attribute.value)
+            }
+
+            crashAttributes.setAttribute(
+                key = embCrashNumber,
+                value = nativeCrashNumber.toString(),
+                keepBlankishValues = false,
+            )
+
+            nativeCrash.crash?.let { crashData ->
+                crashAttributes.setAttribute(
+                    key = EmbType.System.NativeCrash.embNativeCrashException,
+                    value = crashData,
+                    keepBlankishValues = false,
+                )
+            }
+
+            if (!nativeCrash.symbols.isNullOrEmpty()) {
                 serializer.toJson(nativeCrash.symbols, Map::class.java).let { nativeSymbolsJson ->
                     crashAttributes.setAttribute(
                         EmbType.System.NativeCrash.embNativeCrashSymbols,
@@ -78,15 +78,14 @@ internal class NativeCrashDataSourceImpl(
                     )
                 }
             }
+            addLog(
+                schemaType = SchemaType.NativeCrash(crashAttributes),
+                severity = LogSeverity.ERROR,
+                message = "",
+                addCurrentSessionInfo = false,
+                timestampMs = nativeCrash.timestamp
+            )
         }
-
-        logWriter.addLog(
-            schemaType = SchemaType.NativeCrash(crashAttributes),
-            severity = LogSeverity.ERROR,
-            message = "",
-            addCurrentSessionInfo = false,
-            timestampMs = nativeCrash.timestamp
-        )
     }
 
     override fun deleteAllNativeCrashes() {

@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.capture.crumbs
 
-import io.embrace.android.embracesdk.internal.arch.datasource.SpanDataSourceImpl
-import io.embrace.android.embracesdk.internal.arch.destination.TraceWriter
+import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceImpl
+import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.config.behavior.BreadcrumbBehavior
@@ -9,10 +9,10 @@ import io.embrace.android.embracesdk.internal.logging.EmbLogger
 
 class RnActionDataSource(
     breadcrumbBehavior: BreadcrumbBehavior,
-    traceWriter: TraceWriter,
+    destination: TelemetryDestination,
     logger: EmbLogger,
-) : SpanDataSourceImpl(
-    traceWriter,
+) : DataSourceImpl(
+    destination,
     logger,
     UpToLimitStrategy { breadcrumbBehavior.getCustomBreadcrumbLimit() }
 ) {
@@ -23,10 +23,10 @@ class RnActionDataSource(
         properties: Map<String?, Any?>,
         bytesSent: Int,
         output: String?,
-    ): Boolean = captureSpanData(
-        countsTowardsLimits = true,
-        inputValidation = { !name.isNullOrEmpty() },
-        captureAction = {
+    ): Boolean {
+        captureTelemetry(
+            inputValidation = { !name.isNullOrEmpty() }
+        ) {
             val schemaType = SchemaType.ReactNativeAction(
                 checkNotNull(name),
                 checkNotNull(output),
@@ -41,5 +41,6 @@ class RnActionDataSource(
                 attributes = schemaType.attributes(),
             )
         }
-    )
+        return true
+    }
 }

@@ -2,9 +2,9 @@ package io.embrace.android.embracesdk.internal.capture.crash
 
 import io.embrace.android.embracesdk.internal.arch.attrs.embAndroidThreads
 import io.embrace.android.embracesdk.internal.arch.attrs.embCrashNumber
-import io.embrace.android.embracesdk.internal.arch.datasource.LogDataSourceImpl
-import io.embrace.android.embracesdk.internal.arch.destination.LogSeverity
-import io.embrace.android.embracesdk.internal.arch.destination.LogWriter
+import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceImpl
+import io.embrace.android.embracesdk.internal.arch.datasource.LogSeverity
+import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.arch.limits.NoopLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.ReactNativeCrash.embAndroidReactNativeCrashJsException
@@ -31,13 +31,13 @@ import java.util.concurrent.CopyOnWriteArrayList
 internal class CrashDataSourceImpl(
     private val sessionPropertiesService: SessionPropertiesService,
     private val preferencesService: PreferencesService,
-    private val logWriter: LogWriter,
+    destination: TelemetryDestination,
     configService: ConfigService,
     private val serializer: PlatformSerializer,
-    private val logger: EmbLogger,
+    logger: EmbLogger,
 ) : CrashDataSource,
-    LogDataSourceImpl(
-        destination = logWriter,
+    DataSourceImpl(
+        destination = destination,
         logger = logger,
         limitStrategy = NoopLimitStrategy,
     ) {
@@ -64,53 +64,55 @@ internal class CrashDataSourceImpl(
         if (!mainCrashHandled) {
             mainCrashHandled = true
 
-            val crashId = Uuid.getEmbUuid()
-            val crashNumber = preferencesService.incrementAndGetCrashNumber()
-            val crashAttributes = TelemetryAttributes(
-                sessionPropertiesProvider = sessionPropertiesService::getProperties,
-            )
-
-            val crashException = LegacyExceptionInfo.ofThrowable(exception)
-            crashAttributes.setAttribute(ExceptionAttributes.EXCEPTION_TYPE, crashException.name)
-            crashAttributes.setAttribute(
-                ExceptionAttributes.EXCEPTION_MESSAGE,
-                crashException.message
-                    ?: ""
-            )
-            crashAttributes.setAttribute(
-                ExceptionAttributes.EXCEPTION_STACKTRACE,
-                encodeToUTF8String(
-                    serializer.toJson(crashException.lines, List::class.java),
-                ),
-            )
-            crashAttributes.setAttribute(LogAttributes.LOG_RECORD_UID, crashId)
-            crashAttributes.setAttribute(embCrashNumber, crashNumber.toString())
-            crashAttributes.setAttribute(
-                EmbType.System.Crash.embAndroidCrashExceptionCause,
-                encodeToUTF8String(
-                    getExceptionCause(exception),
+            captureTelemetry {
+                val crashId = Uuid.getEmbUuid()
+                val crashNumber = preferencesService.incrementAndGetCrashNumber()
+                val crashAttributes = TelemetryAttributes(
+                    sessionPropertiesProvider = sessionPropertiesService::getProperties,
                 )
-            )
-            crashAttributes.setAttribute(
-                embAndroidThreads,
-                encodeToUTF8String(
-                    getThreadsInfo(),
-                ),
-            )
 
-            jsException?.let { e ->
+                val crashException = LegacyExceptionInfo.ofThrowable(exception)
+                crashAttributes.setAttribute(ExceptionAttributes.EXCEPTION_TYPE, crashException.name)
                 crashAttributes.setAttribute(
-                    embAndroidReactNativeCrashJsException,
+                    ExceptionAttributes.EXCEPTION_MESSAGE,
+                    crashException.message
+                        ?: ""
+                )
+                crashAttributes.setAttribute(
+                    ExceptionAttributes.EXCEPTION_STACKTRACE,
                     encodeToUTF8String(
-                        serializer.toJson(e, JsException::class.java),
+                        serializer.toJson(crashException.lines, List::class.java),
                     ),
                 )
+                crashAttributes.setAttribute(LogAttributes.LOG_RECORD_UID, crashId)
+                crashAttributes.setAttribute(embCrashNumber, crashNumber.toString())
+                crashAttributes.setAttribute(
+                    EmbType.System.Crash.embAndroidCrashExceptionCause,
+                    encodeToUTF8String(
+                        getExceptionCause(exception),
+                    )
+                )
+                crashAttributes.setAttribute(
+                    embAndroidThreads,
+                    encodeToUTF8String(
+                        getThreadsInfo(),
+                    ),
+                )
+
+                jsException?.let { e ->
+                    crashAttributes.setAttribute(
+                        embAndroidReactNativeCrashJsException,
+                        encodeToUTF8String(
+                            serializer.toJson(e, JsException::class.java),
+                        ),
+                    )
+                }
+
+                addLog(getSchemaType(crashAttributes), LogSeverity.ERROR, "")
+
+                // finally, notify other services that need to perform tear down
+                handlers.forEach { it.value?.handleCrash(crashId) }
             }
-
-            logWriter.addLog(getSchemaType(crashAttributes), LogSeverity.ERROR, "")
-
-            // finally, notify other services that need to perform tear down
-            handlers.forEach { it.value?.handleCrash(crashId) }
         }
     }
 

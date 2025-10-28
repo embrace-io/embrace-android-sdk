@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.capture.crumbs
 
 import io.embrace.android.embracesdk.fakes.FakeConfigService
-import io.embrace.android.embracesdk.fakes.FakeCurrentSessionSpan
+import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
 import io.embrace.android.embracesdk.fakes.behavior.FakeBreadcrumbBehavior
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.config.ConfigService
@@ -15,11 +15,11 @@ internal class WebViewUrlDataSourceTest {
 
     private lateinit var configService: ConfigService
     private lateinit var source: WebViewUrlDataSource
-    private lateinit var writer: FakeCurrentSessionSpan
+    private lateinit var destination: FakeTelemetryDestination
 
     @Before
     fun setUp() {
-        writer = FakeCurrentSessionSpan()
+        destination = FakeTelemetryDestination()
     }
 
     @Test
@@ -32,16 +32,16 @@ internal class WebViewUrlDataSourceTest {
         )
         source = WebViewUrlDataSource(
             configService.breadcrumbBehavior,
-            writer,
+            destination,
             EmbLoggerImpl(),
         )
         source.logWebView(
             "http://www.google.com?query=123",
             15000000000
         )
-        with(writer.addedEvents.single()) {
+        with(destination.addedEvents.single()) {
             assertEquals(EmbType.Ux.WebView, schemaType.telemetryType)
-            assertEquals(15000000000, spanStartTimeMs)
+            assertEquals(15000000000, startTimeMs)
             assertEquals(
                 mapOf(
                     UrlAttributes.URL_FULL to "http://www.google.com?query=123"
@@ -61,16 +61,16 @@ internal class WebViewUrlDataSourceTest {
         )
         source = WebViewUrlDataSource(
             configService.breadcrumbBehavior,
-            writer,
+            destination,
             EmbLoggerImpl(),
         )
         source.logWebView(
             "http://www.google.com?query=123",
             15000000000
         )
-        with(writer.addedEvents.single()) {
+        with(destination.addedEvents.single()) {
             assertEquals(EmbType.Ux.WebView, schemaType.telemetryType)
-            assertEquals(15000000000, spanStartTimeMs)
+            assertEquals(15000000000, startTimeMs)
             assertEquals(
                 mapOf(
                     UrlAttributes.URL_FULL to "http://www.google.com"
@@ -90,7 +90,7 @@ internal class WebViewUrlDataSourceTest {
         )
         source = WebViewUrlDataSource(
             configService.breadcrumbBehavior,
-            writer,
+            destination,
             EmbLoggerImpl(),
         )
         repeat(150) { k ->
@@ -99,6 +99,6 @@ internal class WebViewUrlDataSourceTest {
                 15000000000
             )
         }
-        assertEquals(100, writer.addedEvents.size)
+        assertEquals(100, destination.addedEvents.size)
     }
 }

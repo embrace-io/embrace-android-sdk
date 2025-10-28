@@ -1,5 +1,8 @@
-package io.embrace.android.embracesdk.internal.arch.destination
+package io.embrace.android.embracesdk.internal.arch.datasource
 
+/**
+ * The severity of a log message.
+ */
 enum class LogSeverity {
 
     /**

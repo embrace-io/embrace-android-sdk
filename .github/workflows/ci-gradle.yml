@@ -100,4 +100,4 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: false
-          files: embrace-android-sdk/build/reports/kover/reportRelease.xml
+          files: build/reports/kover/reportRelease.xml

@@ -1,12 +1,12 @@
 package io.embrace.android.embracesdk.internal.arch
 
+import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeTraceWriter
 import io.embrace.android.embracesdk.internal.arch.datasource.SpanDataSourceImpl
 import io.embrace.android.embracesdk.internal.arch.limits.LimitStrategy
 import io.embrace.android.embracesdk.internal.arch.limits.NoopLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
-import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -167,5 +167,5 @@ internal class SpanDataSourceImplTest {
     private class FakeDataSourceImpl(
         dst: FakeTraceWriter,
         limitStrategy: LimitStrategy = NoopLimitStrategy,
-    ) : SpanDataSourceImpl(dst, EmbLoggerImpl(), limitStrategy)
+    ) : SpanDataSourceImpl(dst, FakeEmbLogger(throwOnInternalError = false), limitStrategy)
 }

@@ -38,7 +38,7 @@ internal class ViewDataSourceTest {
 
         val span = traceWriter.createdSpans.single()
         assertEquals(EmbType.Ux.View, span.type)
-        assertTrue(span.isRecording)
+        assertTrue(span.isRecording())
         assertEquals(
             mapOf(
                 "view.name" to "my_fragment",
@@ -67,8 +67,8 @@ internal class ViewDataSourceTest {
         val firstSpan = spans.first()
         val secondSpan = spans.last()
 
-        assertFalse(firstSpan.isRecording)
-        assertTrue(secondSpan.isRecording)
+        assertFalse(firstSpan.isRecording())
+        assertTrue(secondSpan.isRecording())
     }
 
     @Test
@@ -83,7 +83,7 @@ internal class ViewDataSourceTest {
             spans.all {
                 it.type == EmbType.Ux.View &&
                     it.attributes["emb.type"] == "ux.view" &&
-                    it.isRecording
+                    it.isRecording()
             }
         )
 
@@ -101,7 +101,7 @@ internal class ViewDataSourceTest {
 
         val span = traceWriter.createdSpans.single()
         assertEquals(EmbType.Ux.View, span.type)
-        assertFalse(span.isRecording)
+        assertFalse(span.isRecording())
         assertEquals(
             mapOf(
                 "view.name" to "my_fragment",
@@ -123,7 +123,7 @@ internal class ViewDataSourceTest {
 
         val span = traceWriter.createdSpans.single()
         assertEquals(EmbType.Ux.View, span.type)
-        assertTrue(span.isRecording)
+        assertTrue(span.isRecording())
         assertEquals(
             mapOf(
                 "view.name" to "some_view",
@@ -151,8 +151,8 @@ internal class ViewDataSourceTest {
         val firstSpan = spans.first()
         val secondSpan = spans.last()
 
-        assertFalse(firstSpan.isRecording)
-        assertTrue(secondSpan.isRecording)
+        assertFalse(firstSpan.isRecording())
+        assertTrue(secondSpan.isRecording())
         assertTrue(firstSpan.attributes["view.name"] == "a_view")
         assertTrue(secondSpan.attributes["view.name"] == "another_view")
     }

@@ -33,6 +33,9 @@ tasks.withType<Test>().configureEach {
             .filter { it.plugins.hasPlugin(MavenPublishPlugin::class.java) }
             .map { it.tasks.named("publishToMavenLocal") }
     )
+    options {
+        maxParallelForks = (Runtime.getRuntime().availableProcessors() / 3) + 1
+    }
 }
 
 group = "io.embrace"

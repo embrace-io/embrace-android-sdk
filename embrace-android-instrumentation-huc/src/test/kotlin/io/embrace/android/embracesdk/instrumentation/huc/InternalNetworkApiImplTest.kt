@@ -46,7 +46,7 @@ internal class InternalNetworkApiImplTest {
             isStarted = false
         )
         fakeInstrumentationApi = FakeInstrumentationApi(
-            sdkCurrentTimeMs = 0L
+            sdkTimeMs = 0L
         )
         fakeNetworkingApi = FakeNetworkRequestApi(
             traceparent = null
@@ -64,7 +64,7 @@ internal class InternalNetworkApiImplTest {
             isStarted = true
         )
         fakeInstrumentationApi = FakeInstrumentationApi(
-            sdkCurrentTimeMs = 1000L
+            sdkTimeMs = 1000L
         )
         fakeNetworkingApi = FakeNetworkRequestApi(
             traceparent = "foo"

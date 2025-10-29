@@ -6,7 +6,7 @@ import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 
 class FakeInstrumentationApi(
-    private val sdkCurrentTimeMs: Long = 1000
+    var sdkTimeMs: Long = 1000
 ) : InstrumentationApi {
     override fun appReady() {
     }
@@ -14,7 +14,7 @@ class FakeInstrumentationApi(
     override fun activityLoaded(activity: Activity) {
     }
 
-    override fun getSdkCurrentTimeMs(): Long = sdkCurrentTimeMs
+    override fun getSdkCurrentTimeMs(): Long = sdkTimeMs
 
     override fun addLoadTraceAttribute(activity: Activity, key: String, value: String) {
     }

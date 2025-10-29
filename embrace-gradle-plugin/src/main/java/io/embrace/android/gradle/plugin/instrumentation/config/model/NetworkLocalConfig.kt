@@ -28,8 +28,11 @@ data class NetworkLocalConfig(
     @Json(name = "enable_native_monitoring")
     val enableNativeMonitoring: Boolean? = null,
 
+    @Json(name = "enable_huc_lite_instrumentation")
+    val enableHucLiteInstrumentation: Boolean? = null,
+
     @Json(name = "enable_network_span_forwarding")
-    val enableNetworkSpanForwarding: Boolean? = null
+    val enableNetworkSpanForwarding: Boolean? = null,
 ) : Serializable {
 
     private companion object {

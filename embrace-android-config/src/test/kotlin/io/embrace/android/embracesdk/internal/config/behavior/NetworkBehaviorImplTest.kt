@@ -35,6 +35,7 @@ internal class NetworkBehaviorImplTest {
         with(createNetworkBehavior(remoteCfg = null)) {
             assertFalse(isRequestContentLengthCaptureEnabled())
             assertFalse(isHttpUrlConnectionCaptureEnabled())
+            assertTrue(isHucLiteInstrumentationEnabled())
             assertEquals(1000, getRequestLimitPerDomain())
             assertEquals(emptyMap<String, Int>(), getLimitsByDomain())
             assertTrue(isUrlEnabled("google.com"))

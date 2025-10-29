@@ -125,6 +125,13 @@ interface EnabledFeatureConfig {
     fun isHttpUrlConnectionCaptureEnabled(): Boolean = false
 
     /**
+     * Gates whether HUC Lite instrumentation should be enabled
+     *
+     * sdk_config.networking.enable_huc_lite_instrumentation
+     */
+    fun isHucLiteInstrumentationEnabled(): Boolean = true
+
+    /**
      * Gates whether network span forwarding should be enabled
      *
      * sdk_config.networking.enable_network_span_forwarding

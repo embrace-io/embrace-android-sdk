@@ -37,6 +37,9 @@ class NetworkBehaviorImpl(
     override fun isHttpUrlConnectionCaptureEnabled(): Boolean =
         local.enabledFeatures.isHttpUrlConnectionCaptureEnabled()
 
+    override fun isHucLiteInstrumentationEnabled(): Boolean =
+        local.enabledFeatures.isHucLiteInstrumentationEnabled()
+
     override fun getLimitsByDomain(): Map<String, Int> {
         val limits = remote?.networkConfig?.domainLimits ?: cfg.getLimitsByDomain()
             .mapValues { it.value.toInt() }

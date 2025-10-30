@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.assertions.assertMatches
+import io.embrace.android.embracesdk.internal.instrumentation.powersave.LowPowerDataSource
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -27,9 +28,10 @@ internal class LowPowerFeatureTest {
             testCaseAction = {
                 startTimeMs = recordSession {
                     // look inside embrace internals as there isn't a good way to trigger this E2E
-                    alterPowerSaveMode(true)
+                    val dataSource = findDataSource<LowPowerDataSource>()
+                    dataSource.onPowerSaveModeChanged(true)
                     clock.tick(tickTimeMs)
-                    alterPowerSaveMode(false)
+                    dataSource.onPowerSaveModeChanged(false)
                 }.actionTimeMs
             },
             assertAction = {

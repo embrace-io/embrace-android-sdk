@@ -58,6 +58,7 @@ get in touch if you do have a use-case that is no longer met.
 | `StartupActivity`                                                       | Obsolete - no alternative provided.                                                                    |
 | `Embrace.getInstance().registerComposeActivityListener()`               | Obsolete - no alternative provided.                                                                    |
 | `Embrace.getInstance().unregisterComposeActivityListener()`             | Obsolete - no alternative provided.                                                                    |
+| `Embrace.getInstance().logWebView(String)`                              | Obsolete - no alternative provided.                                                                    |
 
 ### Embrace Gradle Plugin removed APIs
 

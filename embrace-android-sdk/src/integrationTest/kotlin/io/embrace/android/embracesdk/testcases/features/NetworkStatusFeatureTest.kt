@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.comms.delivery.NetworkStatus
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.assertions.assertMatches
+import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkStatusDataSource
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -32,7 +33,8 @@ internal class NetworkStatusFeatureTest {
                 recordSession {
                     clock.tick(tickTimeMs)
                     statusChangeTimeMs = clock.now()
-                    alterConnectivityStatus(NetworkStatus.WIFI)
+                    val dataSource = findDataSource<NetworkStatusDataSource>()
+                    dataSource.onNetworkConnectivityStatusChanged(NetworkStatus.WIFI)
                 }
             },
             assertAction = {

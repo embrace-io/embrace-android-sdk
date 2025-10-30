@@ -14,7 +14,6 @@ import io.embrace.android.embracesdk.internal.ReactNativeInternalInterface
 import io.embrace.android.embracesdk.internal.UnityInternalInterface
 import io.embrace.android.embracesdk.internal.api.BreadcrumbApi
 import io.embrace.android.embracesdk.internal.api.InstrumentationApi
-import io.embrace.android.embracesdk.internal.api.InternalWebViewApi
 import io.embrace.android.embracesdk.internal.api.LogsApi
 import io.embrace.android.embracesdk.internal.api.NetworkRequestApi
 import io.embrace.android.embracesdk.internal.api.OTelApi
@@ -25,7 +24,6 @@ import io.embrace.android.embracesdk.internal.api.UserApi
 import io.embrace.android.embracesdk.internal.api.ViewTrackingApi
 import io.embrace.android.embracesdk.internal.api.delegate.BreadcrumbApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.InstrumentationApiDelegate
-import io.embrace.android.embracesdk.internal.api.delegate.InternalWebViewApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.LogsApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.NetworkRequestApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.OTelApiDelegate
@@ -80,8 +78,6 @@ internal class EmbraceImpl(
     private val sdkStateApiDelegate: SdkStateApiDelegate = SdkStateApiDelegate(bootstrapper, sdkCallChecker),
     private val otelApiDelegate: OTelApiDelegate = OTelApiDelegate(bootstrapper, sdkCallChecker),
     private val breadcrumbApiDelegate: BreadcrumbApiDelegate = BreadcrumbApiDelegate(bootstrapper, sdkCallChecker),
-    private val webviewApiDelegate: InternalWebViewApiDelegate =
-        InternalWebViewApiDelegate(bootstrapper, sdkCallChecker),
     private val instrumentationApiDelegate: InstrumentationApiDelegate =
         InstrumentationApiDelegate(bootstrapper, sdkCallChecker),
 ) : SdkApi,
@@ -94,7 +90,6 @@ internal class EmbraceImpl(
     OTelApi by otelApiDelegate,
     ViewTrackingApi by viewTrackingApiDelegate,
     BreadcrumbApi by breadcrumbApiDelegate,
-    InternalWebViewApi by webviewApiDelegate,
     InstrumentationApi by instrumentationApiDelegate,
     InternalInterfaceApi {
 

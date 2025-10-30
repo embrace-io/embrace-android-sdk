@@ -17,5 +17,4 @@ public interface SdkApi :
     SdkStateApi,
     OTelApi,
     BreadcrumbApi,
-    InternalWebViewApi,
     InstrumentationApi

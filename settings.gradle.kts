@@ -19,6 +19,7 @@ include(
     ":embrace-android-instrumentation-taps",
     ":embrace-android-instrumentation-power-save",
     ":embrace-android-instrumentation-thermal-state",
+    ":embrace-android-instrumentation-webview",
     ":embrace-android-payload",
     ":embrace-android-delivery",
     ":embrace-android-delivery-fakes",

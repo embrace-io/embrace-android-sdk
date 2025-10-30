@@ -261,7 +261,6 @@ internal class ModuleInitBootstrapper(
                         serviceRegistry.registerServices(
                             lazy { dataCaptureServiceModule.appStartupDataCollector },
                             lazy { dataCaptureServiceModule.activityBreadcrumbTracker },
-                            lazy { dataCaptureServiceModule.pushNotificationService },
                             lazy { dataCaptureServiceModule.uiLoadDataListener },
                         )
                     }

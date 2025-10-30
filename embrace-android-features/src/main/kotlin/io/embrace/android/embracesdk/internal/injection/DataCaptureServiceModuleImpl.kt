@@ -4,7 +4,6 @@ import io.embrace.android.embracesdk.internal.capture.activity.UiLoadDataListene
 import io.embrace.android.embracesdk.internal.capture.activity.UiLoadTraceEmitter
 import io.embrace.android.embracesdk.internal.capture.activity.createActivityLoadEventEmitter
 import io.embrace.android.embracesdk.internal.capture.crumbs.ActivityBreadcrumbTracker
-import io.embrace.android.embracesdk.internal.capture.crumbs.PushNotificationCaptureService
 import io.embrace.android.embracesdk.internal.capture.startup.AppStartupDataCollector
 import io.embrace.android.embracesdk.internal.capture.startup.AppStartupTraceEmitter
 import io.embrace.android.embracesdk.internal.capture.startup.StartupService
@@ -30,10 +29,6 @@ internal class DataCaptureServiceModuleImpl(
         EmbTrace.trace("breadcrumb-service-init") {
             ActivityBreadcrumbTracker(configService) { featureModule.viewDataSource.dataSource }
         }
-    }
-
-    override val pushNotificationService: PushNotificationCaptureService by singleton {
-        PushNotificationCaptureService(featureModule.pushNotificationDataSource.dataSource)
     }
 
     override val startupService: StartupService by singleton {

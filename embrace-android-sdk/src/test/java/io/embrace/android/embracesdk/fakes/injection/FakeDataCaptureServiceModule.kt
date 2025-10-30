@@ -8,7 +8,6 @@ import io.embrace.android.embracesdk.fakes.FakeStartupService
 import io.embrace.android.embracesdk.fakes.FakeUiLoadDataListener
 import io.embrace.android.embracesdk.internal.capture.activity.UiLoadDataListener
 import io.embrace.android.embracesdk.internal.capture.crumbs.ActivityBreadcrumbTracker
-import io.embrace.android.embracesdk.internal.capture.crumbs.PushNotificationCaptureService
 import io.embrace.android.embracesdk.internal.capture.startup.AppStartupDataCollector
 import io.embrace.android.embracesdk.internal.capture.startup.StartupService
 import io.embrace.android.embracesdk.internal.capture.startup.StartupTracker
@@ -20,8 +19,6 @@ internal class FakeDataCaptureServiceModule : DataCaptureServiceModule {
 
     override val activityBreadcrumbTracker: ActivityBreadcrumbTracker =
         ActivityBreadcrumbTracker(FakeConfigService(), FakeFeatureModule().viewDataSource::dataSource)
-
-    override val pushNotificationService: PushNotificationCaptureService = mockk(relaxed = true)
 
     override val startupService: StartupService = FakeStartupService()
 

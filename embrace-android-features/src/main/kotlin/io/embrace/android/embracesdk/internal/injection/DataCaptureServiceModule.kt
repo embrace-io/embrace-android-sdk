@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.internal.injection
 
 import io.embrace.android.embracesdk.internal.capture.activity.UiLoadDataListener
 import io.embrace.android.embracesdk.internal.capture.crumbs.ActivityBreadcrumbTracker
-import io.embrace.android.embracesdk.internal.capture.crumbs.PushNotificationCaptureService
 import io.embrace.android.embracesdk.internal.capture.startup.AppStartupDataCollector
 import io.embrace.android.embracesdk.internal.capture.startup.StartupService
 import io.embrace.android.embracesdk.internal.capture.startup.StartupTracker
@@ -20,11 +19,6 @@ interface DataCaptureServiceModule {
      * Captures breadcrumbs
      */
     val activityBreadcrumbTracker: ActivityBreadcrumbTracker
-
-    /**
-     * Captures push notifications
-     */
-    val pushNotificationService: PushNotificationCaptureService
 
     /**
      * Captures the startup time of the SDK

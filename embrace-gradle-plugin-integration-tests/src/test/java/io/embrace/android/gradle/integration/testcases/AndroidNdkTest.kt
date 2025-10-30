@@ -7,6 +7,7 @@ import io.embrace.android.gradle.integration.framework.smali.SmaliMethod
 import io.embrace.android.gradle.integration.framework.smali.SmaliParser
 import io.embrace.android.gradle.plugin.tasks.ndk.ArchitecturesToHashedSharedObjectFilesMap
 import io.embrace.android.gradle.plugin.util.serialization.MoshiSerializer
+import java.io.File
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -25,8 +26,8 @@ class AndroidNdkTest {
     @Test
     fun buildCMake() {
         rule.runTest(
-            fixture = "android-cmake",
-            task = "build",
+            fixture = "android-cmake-with-code",
+            task = "assembleRelease",
             projectType = ProjectType.ANDROID,
             setup = {
                 setupMockResponses(
@@ -35,10 +36,11 @@ class AndroidNdkTest {
                     defaultExpectedVariants
                 )
             },
-            assertions = {
+            assertions = { projectDir ->
                 verifyBuildTelemetryRequestSent(variantsSentInBuildTelemetry)
                 verifyHandshakes(defaultExpectedLibs, defaultExpectedArchs, defaultExpectedVariants)
                 verifyUploads(defaultExpectedLibs, defaultExpectedArchs, defaultExpectedVariants)
+                assertAsmInjection(projectDir)
             }
         )
     }
@@ -47,7 +49,7 @@ class AndroidNdkTest {
     fun buildNdkBuild() {
         rule.runTest(
             fixture = "android-ndk-build",
-            task = "build",
+            task = "assembleRelease",
             projectType = ProjectType.ANDROID,
             setup = {
                 setupMockResponses(
@@ -60,43 +62,6 @@ class AndroidNdkTest {
                 verifyBuildTelemetryRequestSent(variantsSentInBuildTelemetry)
                 verifyHandshakes(defaultExpectedLibs, defaultExpectedArchs, defaultExpectedVariants)
                 verifyUploads(defaultExpectedLibs, defaultExpectedArchs, defaultExpectedVariants)
-            }
-        )
-    }
-
-    @Test
-    fun `symbols are injected through ASM`() {
-        rule.runTest(
-            fixture = "android-cmake-with-code",
-            task = "assembleRelease",
-            projectType = ProjectType.ANDROID,
-            setup = {
-                setupMockResponses(defaultExpectedLibs, defaultExpectedArchs, defaultExpectedVariants)
-            },
-            assertions = { projectDir ->
-                // Read and parse the smali file containing the injected symbols
-                val smaliFile = SmaliConfigReader().readSmaliFiles(
-                    projectDir,
-                    listOf("/io/embrace/android/embracesdk/internal/config/instrumented/Base64SharedObjectFilesMapImpl")
-                ).first()
-
-                // Get the return value of the getBase64SharedObjectFilesMap method
-                val method = SmaliParser().parse(
-                    smaliFile,
-                    listOf(SmaliMethod("getBase64SharedObjectFilesMap()Ljava/lang/String;"))
-                ).methods.first()
-
-                // Decode the base64 string into a map
-                val json = Base64.getDecoder().decode(method.returnValue).toString(Charsets.UTF_8)
-                val symbols = MoshiSerializer().fromJson(json, ArchitecturesToHashedSharedObjectFilesMap::class.java).symbols
-
-                // Verify all expected architectures and libraries are present
-                defaultExpectedArchs.forEach { arch ->
-                    assertTrue(symbols.containsKey(arch))
-                    defaultExpectedLibs.forEach { lib ->
-                        assertTrue(symbols[arch]?.containsKey(lib) ?: false)
-                    }
-                }
             }
         )
     }
@@ -213,5 +178,31 @@ class AndroidNdkTest {
                 verifyJvmMappingRequestsSent(0)
             }
         )
+    }
+
+    private fun assertAsmInjection(projectDir: File) {
+        // Read and parse the smali file containing the injected symbols
+        val smaliFile = SmaliConfigReader().readSmaliFiles(
+            projectDir,
+            listOf("/io/embrace/android/embracesdk/internal/config/instrumented/Base64SharedObjectFilesMapImpl")
+        ).first()
+
+        // Get the return value of the getBase64SharedObjectFilesMap method
+        val method = SmaliParser().parse(
+            smaliFile,
+            listOf(SmaliMethod("getBase64SharedObjectFilesMap()Ljava/lang/String;"))
+        ).methods.first()
+
+        // Decode the base64 string into a map
+        val json = Base64.getDecoder().decode(method.returnValue).toString(Charsets.UTF_8)
+        val symbols = MoshiSerializer().fromJson(json, ArchitecturesToHashedSharedObjectFilesMap::class.java).symbols
+
+        // Verify all expected architectures and libraries are present
+        defaultExpectedArchs.forEach { arch ->
+            assertTrue(symbols.containsKey(arch))
+            defaultExpectedLibs.forEach { lib ->
+                assertTrue(symbols[arch]?.containsKey(lib) ?: false)
+            }
+        }
     }
 }

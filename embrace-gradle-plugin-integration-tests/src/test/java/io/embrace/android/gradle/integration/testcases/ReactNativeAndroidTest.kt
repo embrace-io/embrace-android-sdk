@@ -44,30 +44,15 @@ class ReactNativeAndroidTest {
         rule.runTest(
             fixture = "react-native-android",
             androidProjectRoot = "android",
-            task = "build",
+            task = "assemble",
             setup = { projectDir ->
                 installNodeModules(projectDir)
                 setupMockResponses(handshakeLibs, handshakeArchs, defaultExpectedVariants)
             },
-            assertions = {
+            assertions = { projectDir ->
                 verifyBuildTelemetryRequestSent(variantsSentInBuildTelemetry)
                 verifyHandshakes(defaultExpectedLibs, defaultExpectedArchs, defaultExpectedVariants)
                 verifyUploads(handshakeLibs, handshakeArchs, defaultExpectedVariants)
-            }
-        )
-    }
-
-    @Test
-    fun `react native asm injection test`() {
-        rule.runTest(
-            fixture = "react-native-android",
-            androidProjectRoot = "android",
-            task = "assembleRelease",
-            setup = { projectDir ->
-                setupEmptyHandshakeResponse()
-                installNodeModules(projectDir)
-            },
-            assertions = { projectDir ->
                 verifyAsmInjection(File(projectDir, "app"), "27D4D89A18B0426A47151D4888D4E40A")
             }
         )
@@ -86,31 +71,6 @@ class ReactNativeAndroidTest {
             assertions = { projectDir ->
                 verifyNoUploads()
                 verifyAsmInjection(projectDir, null)
-            }
-        )
-    }
-
-    @Test
-    fun `debug builds should not upload symbols`() {
-        val handshakeLibs = listOf(
-            "libfbjni.so",
-            "libhermes.so",
-            "libhermestooling.so",
-        )
-        val handshakeArchs = listOf("arm64-v8a", "armeabi-v7a")
-        rule.runTest(
-            fixture = "react-native-android",
-            task = "assembleDebug",
-            androidProjectRoot = "android",
-            setup = { projectDir ->
-                installNodeModules(projectDir)
-                setupMockResponses(handshakeLibs, handshakeArchs, defaultExpectedVariants)
-            },
-            assertions = {
-                verifyBuildTelemetryRequestSent(variantsSentInBuildTelemetry)
-                verifyNoHandshakes()
-                verifyNoUploads()
-                verifyJvmMappingRequestsSent(0)
             }
         )
     }

@@ -1,14 +1,22 @@
 package io.embrace.android.embracesdk.instrumentation.huclite
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.fakes.FakeEmbraceInternalInterface
+import io.embrace.android.embracesdk.fakes.FakeInstrumentationApi
+import io.embrace.android.embracesdk.fakes.FakeNetworkRequestApi
+import io.embrace.android.embracesdk.fakes.FakeSdkStateApi
 import io.embrace.android.embracesdk.fakes.FakeURLStreamHandlerFactory
+import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
+import io.embrace.android.embracesdk.internal.api.InstrumentationApi
+import io.embrace.android.embracesdk.internal.api.NetworkRequestApi
+import io.embrace.android.embracesdk.internal.api.SdkStateApi
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.lang.reflect.Field
-import java.lang.reflect.InvocationTargetException
 import java.net.URL
 import java.net.URLStreamHandlerFactory
 
@@ -16,12 +24,20 @@ import java.net.URLStreamHandlerFactory
 internal class InstrumentationInitializerTest {
     private lateinit var fieldRef: Field
     private lateinit var instrumentationInitializer: InstrumentationInitializer
+    private lateinit var fakeSdkStateApi: SdkStateApi
+    private lateinit var fakeInstrumentationApi: InstrumentationApi
+    private lateinit var fakeNetworkingApi: NetworkRequestApi
+    private lateinit var fakeInternalInterface: FakeEmbraceInternalInterface
 
     @Before
     fun setup() {
         factoryField = null
         fieldRef = checkNotNull(this::class.java.declaredFields.find { it.name == "factoryField" })
         fieldRef.isAccessible = true
+        fakeSdkStateApi = FakeSdkStateApi()
+        fakeInstrumentationApi = FakeInstrumentationApi()
+        fakeNetworkingApi = FakeNetworkRequestApi()
+        fakeInternalInterface = FakeEmbraceInternalInterface()
     }
 
     @Test
@@ -33,7 +49,12 @@ internal class InstrumentationInitializerTest {
                 URL.setURLStreamHandlerFactory(it)
             }
         )
-        instrumentationInitializer.installURLStreamHandlerFactory { t: Throwable -> throw t }
+        instrumentationInitializer.installURLStreamHandlerFactory(
+            sdkStateApi = fakeSdkStateApi,
+            instrumentationApi = fakeInstrumentationApi,
+            networkRequestApi = fakeNetworkingApi,
+            internalInterface = fakeInternalInterface
+        )
         assertTrue(factoryField is InstrumentedUrlStreamHandlerFactory)
 
         assertThrows(Error::class.java) {
@@ -48,7 +69,12 @@ internal class InstrumentationInitializerTest {
             streamHandlerFactoryFieldProvider = { fieldRef },
             factoryInstaller = { factoryField = it }
         )
-        instrumentationInitializer.installURLStreamHandlerFactory { t: Throwable -> throw t }
+        instrumentationInitializer.installURLStreamHandlerFactory(
+            sdkStateApi = fakeSdkStateApi,
+            instrumentationApi = fakeInstrumentationApi,
+            networkRequestApi = fakeNetworkingApi,
+            internalInterface = fakeInternalInterface
+        )
         assertTrue(factoryField is DelegatingInstrumentedURLStreamHandlerFactory)
     }
 
@@ -58,14 +84,22 @@ internal class InstrumentationInitializerTest {
         val instrumentationObject = instrumentationClass.getDeclaredConstructor().newInstance()
         val initMethod = instrumentationObject::class.java.getDeclaredMethod(
             "installURLStreamHandlerFactory",
-            Function1::class.java
+            SdkStateApi::class.java,
+            InstrumentationApi::class.java,
+            NetworkRequestApi::class.java,
+            EmbraceInternalInterface::class.java,
         )
-        assertThrows(InvocationTargetException::class.java) {
-            initMethod.invoke(
-                instrumentationObject,
-                fun(t: Throwable) { throw t }
-            )
-        }
+
+        initMethod.invoke(
+            instrumentationObject,
+            fakeSdkStateApi,
+            fakeInstrumentationApi,
+            fakeNetworkingApi,
+            fakeInternalInterface,
+        )
+
+        val errorMessage = checkNotNull(fakeInternalInterface.internalErrors.single().message)
+        assertEquals(true, errorMessage.startsWith("Unable to make field private static volatile java.net.URLStreamHandlerFactory"))
     }
 
     companion object {

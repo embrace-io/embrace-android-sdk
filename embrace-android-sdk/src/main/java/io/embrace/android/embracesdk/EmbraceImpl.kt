@@ -265,13 +265,17 @@ internal class EmbraceImpl(
                     val instrumentationObject = instrumentationClass.getDeclaredConstructor().newInstance()
                     val initMethod = instrumentationObject::class.java.getDeclaredMethod(
                         "installURLStreamHandlerFactory",
-                        Function1::class.java
+                        SdkStateApi::class.java,
+                        InstrumentationApi::class.java,
+                        NetworkRequestApi::class.java,
+                        EmbraceInternalInterface::class.java,
                     )
                     initMethod.invoke(
                         instrumentationObject,
-                        fun(t: Throwable) {
-                            internalInterface.logInternalError(t)
-                        }
+                        sdkStateApiDelegate,
+                        instrumentationApiDelegate,
+                        networkRequestApiDelegate,
+                        internalInterface,
                     )
                 }
             }

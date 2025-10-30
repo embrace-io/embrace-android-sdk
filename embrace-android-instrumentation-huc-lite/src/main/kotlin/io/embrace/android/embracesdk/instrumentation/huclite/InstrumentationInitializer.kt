@@ -1,6 +1,10 @@
 package io.embrace.android.embracesdk.instrumentation.huclite
 
 import android.annotation.SuppressLint
+import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
+import io.embrace.android.embracesdk.internal.api.InstrumentationApi
+import io.embrace.android.embracesdk.internal.api.NetworkRequestApi
+import io.embrace.android.embracesdk.internal.api.SdkStateApi
 import java.lang.reflect.Field
 import java.lang.reflect.Modifier
 import java.net.URL
@@ -26,16 +30,24 @@ class InstrumentationInitializer(
     /**
      * Replace existing [URLStreamHandlerFactory] with one where HTTPS connections are instrumented.
      */
-    fun installURLStreamHandlerFactory(errorHandler: (Throwable) -> Unit) {
+    fun installURLStreamHandlerFactory(
+        sdkStateApi: SdkStateApi,
+        instrumentationApi: InstrumentationApi,
+        networkRequestApi: NetworkRequestApi,
+        internalInterface: EmbraceInternalInterface,
+    ) {
         @SuppressLint("PrivateApi")
         val httpsHandlerClass = runCatching {
             Class.forName("com.android.okhttp.HttpsHandler")
-        }.onFailure(errorHandler).getOrNull() ?: return
+        }.onFailure(internalInterface::logInternalError).getOrNull() ?: return
 
         val instrumentedUrlStreamHandlerFactoryProvider = {
             InstrumentedUrlStreamHandlerFactory(
                 httpsHandler = httpsHandlerClass.getDeclaredConstructor().newInstance() as URLStreamHandler,
-                errorHandler = errorHandler
+                sdkStateApi = sdkStateApi,
+                instrumentationApi = instrumentationApi,
+                networkRequestApi = networkRequestApi,
+                internalInterface = internalInterface
             )
         }
 
@@ -47,18 +59,21 @@ class InstrumentationInitializer(
                     DelegatingInstrumentedURLStreamHandlerFactory(
                         delegateHandlerFactory = existingFactory,
                         instrumentedHandlerFactory = instrumentedUrlStreamHandlerFactoryProvider,
-                        errorHandler = errorHandler
+                        sdkStateApi = sdkStateApi,
+                        instrumentationApi = instrumentationApi,
+                        networkRequestApi = networkRequestApi,
+                        internalInterface = internalInterface
                     )
                 } else {
                     null
                 }
             }
-        }.onFailure(errorHandler).getOrNull()
+        }.onFailure(internalInterface::logInternalError).getOrNull()
 
         try {
             factoryInstaller(newFactory ?: instrumentedUrlStreamHandlerFactoryProvider())
         } catch (t: Throwable) {
-            errorHandler(t)
+            internalInterface.logInternalError(t)
         }
     }
 }

@@ -1,6 +1,10 @@
 package io.embrace.android.embracesdk.instrumentation.huclite
 
 import android.annotation.SuppressLint
+import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
+import io.embrace.android.embracesdk.internal.api.InstrumentationApi
+import io.embrace.android.embracesdk.internal.api.NetworkRequestApi
+import io.embrace.android.embracesdk.internal.api.SdkStateApi
 import java.io.IOException
 import java.net.Proxy
 import java.net.URL
@@ -14,7 +18,10 @@ import javax.net.ssl.HttpsURLConnection
  */
 internal class InstrumentedHttpsURLStreamHandler(
     private val delegatedHandler: URLStreamHandler,
-    private val errorHandler: (Throwable) -> Unit,
+    private val sdkStateApi: SdkStateApi,
+    private val instrumentationApi: InstrumentationApi,
+    private val networkRequestApi: NetworkRequestApi,
+    private val internalInterface: EmbraceInternalInterface,
 ) : URLStreamHandler() {
 
     @SuppressLint("PrivateApi")
@@ -30,7 +37,7 @@ internal class InstrumentedHttpsURLStreamHandler(
                 )
             method.isAccessible = true
             val httpsConnection = method.invoke(delegatedHandler, url, proxy) as HttpsURLConnection
-            return InstrumentedHttpsURLConnection(httpsConnection)
+            return httpsConnection.toWrappedConnection()
         } catch (t: Throwable) {
             throw (t.toInstrumentedConnectionException())
         }
@@ -47,14 +54,22 @@ internal class InstrumentedHttpsURLStreamHandler(
                 )
             method.isAccessible = true
             val httpsConnection = method.invoke(delegatedHandler, url) as HttpsURLConnection
-            return InstrumentedHttpsURLConnection(httpsConnection)
+            return httpsConnection.toWrappedConnection()
         } catch (t: Throwable) {
             throw (t.toInstrumentedConnectionException())
         }
     }
 
+    private fun HttpsURLConnection.toWrappedConnection(): InstrumentedHttpsURLConnection = InstrumentedHttpsURLConnection(
+        wrappedConnection = this,
+        sdkStateApi = sdkStateApi,
+        instrumentationApi = instrumentationApi,
+        networkRequestApi = networkRequestApi,
+        internalInterface = internalInterface
+    )
+
     private fun Throwable.toInstrumentedConnectionException(): IOException {
-        errorHandler(this)
+        internalInterface.logInternalError(this)
         return InstrumentedConnectionException("Failed to instrumented HTTPS connection", this)
     }
 

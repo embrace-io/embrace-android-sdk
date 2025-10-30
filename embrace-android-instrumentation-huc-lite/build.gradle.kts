@@ -19,6 +19,8 @@ dependencies {
     testImplementation(project(":embrace-android-sdk"))
     testImplementation(project(":embrace-internal-api"))
     testImplementation(project(":embrace-test-fakes"))
+    testImplementation(project(":embrace-test-common"))
     testImplementation(libs.robolectric)
+    testImplementation(libs.mockk)
     implementation(libs.androidx.annotation)
 }

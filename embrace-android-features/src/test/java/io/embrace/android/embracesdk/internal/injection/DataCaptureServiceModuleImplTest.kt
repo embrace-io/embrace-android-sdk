@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.injection
 
 import io.embrace.android.embracesdk.fakes.FakeConfigService
-import io.embrace.android.embracesdk.fakes.FakeFeatureModule
 import io.embrace.android.embracesdk.fakes.FakeVersionChecker
 import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
@@ -20,11 +19,9 @@ internal class DataCaptureServiceModuleImplTest {
             initModule,
             openTelemetryModule,
             FakeConfigService(),
-            FakeVersionChecker(false),
-            FakeFeatureModule()
+            FakeVersionChecker(false)
         )
 
-        assertNotNull(module.activityBreadcrumbTracker)
         assertNotNull(module.appStartupDataCollector)
         assertNotNull(module.startupService)
         assertNotNull(module.activityLoadEventEmitter)
@@ -39,8 +36,7 @@ internal class DataCaptureServiceModuleImplTest {
             FakeConfigService(
                 autoDataCaptureBehavior = FakeAutoDataCaptureBehavior(uiLoadTracingEnabled = false)
             ),
-            FakeVersionChecker(false),
-            FakeFeatureModule()
+            FakeVersionChecker(false)
         )
 
         assertNull(module.uiLoadDataListener)
@@ -55,8 +51,7 @@ internal class DataCaptureServiceModuleImplTest {
             FakeConfigService(
                 autoDataCaptureBehavior = FakeAutoDataCaptureBehavior(uiLoadTracingTraceAll = false)
             ),
-            FakeVersionChecker(false),
-            FakeFeatureModule()
+            FakeVersionChecker(false)
         )
 
         assertNotNull(module.uiLoadDataListener)

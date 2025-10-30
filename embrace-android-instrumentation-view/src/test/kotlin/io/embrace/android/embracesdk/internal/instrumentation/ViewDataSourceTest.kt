@@ -1,11 +1,13 @@
-package io.embrace.android.embracesdk.internal.capture.crumbs
+package io.embrace.android.embracesdk.internal.instrumentation
 
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
 import io.embrace.android.embracesdk.internal.arch.attrs.asPair
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
-import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
+import io.embrace.android.embracesdk.internal.instrumentation.view.ViewDataSource
+import io.mockk.mockk
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -25,10 +27,11 @@ internal class ViewDataSourceTest {
         clock = FakeClock()
         destination = FakeTelemetryDestination()
         dataSource = ViewDataSource(
+            mockk(),
             configService.breadcrumbBehavior,
             clock,
             destination,
-            EmbLoggerImpl(),
+            FakeEmbLogger(),
         )
     }
 

@@ -1,10 +1,12 @@
 package io.embrace.android.embracesdk.internal.arch
 
+import io.embrace.android.embracesdk.internal.arch.datasource.DataSource
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import java.util.concurrent.CopyOnWriteArrayList
+import kotlin.reflect.KClass
 
 /**
  * Orchestrates all data sources that could potentially be used in the SDK. This is a convenient
@@ -28,6 +30,16 @@ class DataCaptureOrchestrator(
         state.dispatchStateChange {
             state.currentSessionType = currentSessionType
         }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    override fun <T : DataSource> findByType(clazz: KClass<T>): T? {
+        val element = dataSourceStates.firstOrNull {
+            val obj = it.dataSource
+            obj != null && obj::class == clazz
+        }
+        val state = element as? DataSourceState<T>
+        return state?.dataSource
     }
 
     /**

@@ -192,7 +192,7 @@ internal class EmbraceActionInterface(
      */
     inline fun <reified T : DataSource> findDataSource(): T {
         val registry = (bootstrapper.dataSourceModule.embraceFeatureRegistry as FakeEmbraceFeatureRegistry)
-        return registry.findByType<T>()
+        return checkNotNull(registry.findByType(T::class))
     }
 
     companion object {

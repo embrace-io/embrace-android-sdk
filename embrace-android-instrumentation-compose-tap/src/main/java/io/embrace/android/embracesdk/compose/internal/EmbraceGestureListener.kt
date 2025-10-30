@@ -4,6 +4,8 @@ import android.app.Activity
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.View
+import io.embrace.android.embracesdk.compose.internal.instrumentation.ComposeTapDataSource
+import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import java.lang.ref.WeakReference
 
 /**
@@ -12,11 +14,12 @@ import java.lang.ref.WeakReference
  */
 internal class EmbraceGestureListener(
     activity: Activity,
+    private val logger: EmbLogger,
+    dataSource: ComposeTapDataSource,
 ) : GestureDetector.SimpleOnGestureListener() {
 
-    private val singleTapUpError: ComposeInternalErrorLogger = ComposeInternalErrorLogger()
     private val activityRef: WeakReference<Activity> = WeakReference(activity)
-    private val composeClickedTargetIterator = ComposeClickedTargetIterator()
+    private val composeClickedTargetIterator = ComposeClickedTargetIterator(logger, dataSource)
 
     override fun onSingleTapUp(event: MotionEvent): Boolean {
         try {
@@ -28,9 +31,8 @@ internal class EmbraceGestureListener(
                 }
             }
         } catch (e: Throwable) {
-            singleTapUpError.logError(e)
+            logger.logError("Failed to process singleTapUp", e)
         }
-
         return false
     }
 

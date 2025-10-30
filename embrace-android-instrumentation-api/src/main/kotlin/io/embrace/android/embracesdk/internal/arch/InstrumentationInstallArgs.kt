@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.arch
 
+import android.app.Application
 import android.content.Context
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.arch.store.KeyValueStore
@@ -38,6 +39,11 @@ interface InstrumentationInstallArgs {
      * The application context
      */
     val context: Context
+
+    /**
+     * The application context
+     */
+    val application: Application
 
     /**
      * A key-value store that is shared by all instrumentation used by this SDK. Individual

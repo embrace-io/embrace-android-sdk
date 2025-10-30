@@ -3,13 +3,17 @@ package io.embrace.android.embracesdk.compose.internal
 import android.view.View
 import android.view.ViewGroup
 import androidx.compose.ui.platform.ComposeView
+import io.embrace.android.embracesdk.compose.internal.instrumentation.ComposeTapDataSource
+import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import java.util.LinkedList
 import java.util.Queue
 
-internal class ComposeClickedTargetIterator : EmbraceClickedTargetIterator {
+internal class ComposeClickedTargetIterator(
+    private val logger: EmbLogger,
+    dataSource: ComposeTapDataSource,
+) : EmbraceClickedTargetIterator {
 
-    private val composeInternalErrorLogger = ComposeInternalErrorLogger()
-    private val nodeLocator = EmbraceNodeIterator()
+    private val nodeLocator = EmbraceNodeIterator(dataSource)
 
     override fun findTarget(
         decorView: View,
@@ -19,7 +23,7 @@ internal class ComposeClickedTargetIterator : EmbraceClickedTargetIterator {
         try {
             val queue: Queue<View> = LinkedList()
             queue.add(decorView)
-            while (queue.size > 0) {
+            while (queue.isNotEmpty()) {
                 val view = queue.poll()
                 view?.let {
                     if (it is ViewGroup) {
@@ -35,7 +39,7 @@ internal class ComposeClickedTargetIterator : EmbraceClickedTargetIterator {
                 }
             }
         } catch (e: Throwable) {
-            composeInternalErrorLogger.logError(e)
+            logger.logError("Failed to find target", e)
         }
     }
 }

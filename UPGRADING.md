@@ -27,6 +27,13 @@ such as adding exporters.
 `Embrace.getInstance()` is deprecated in favour of `Embrace`. For example, you can now call `Embrace.start(Context)` instead
 of `Embrace.getInstance().start(Context)`.
 
+## Internal modularisation
+
+The Embrace SDK is going through a process of modularisation. If you rely on `embrace-android-sdk` then you should notice
+very little change as most alterations are internal. However, you should be aware that:
+
+- `embrace-android-compose` has been renamed as `embrace-android-instrumentation-compose-tap`
+
 ## Altered APIs
 
 Various deprecated APIs have been removed. Please migrate to the documented new APIs where applicable, or
@@ -48,6 +55,8 @@ get in touch if you do have a use-case that is no longer met.
 | `Embrace.getInstance().trackWebViewPerformance(String, String)`         | Obsolete - no alternative provided.                                                                    |
 | `AppFramework`                                                          | Obsolete - no alternative provided.                                                                    |
 | `StartupActivity`                                                       | Obsolete - no alternative provided.                                                                    |
+| `Embrace.getInstance().registerComposeActivityListener()`               | Obsolete - no alternative provided.                                                                    |
+| `Embrace.getInstance().unregisterComposeActivityListener()`             | Obsolete - no alternative provided.                                                                    |
 
 ### Embrace Gradle Plugin removed APIs
 

@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.api.delegate
 
-import android.app.Application
 import io.embrace.android.embracesdk.internal.api.ViewTrackingApi
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.injection.embraceImplInject
@@ -19,27 +18,6 @@ internal class ViewTrackingApiDelegate(
     }
     private val appFramework by embraceImplInject(sdkCallChecker) {
         bootstrapper.configModule.configService.appFramework
-    }
-
-    /**
-     * Variable pointing to the composeActivityListener instance obtained using reflection
-     */
-    private var composeActivityListenerInstance: Any? = null
-
-    override fun registerComposeActivityListener(app: Application) {
-        runCatching {
-            val composeActivityListener = Class.forName("io.embrace.android.embracesdk.compose.ComposeActivityListener")
-            composeActivityListenerInstance = composeActivityListener.getDeclaredConstructor().newInstance()
-            app.registerActivityLifecycleCallbacks(composeActivityListenerInstance as Application.ActivityLifecycleCallbacks?)
-        }
-    }
-
-    override fun unregisterComposeActivityListener(app: Application) {
-        runCatching {
-            composeActivityListenerInstance?.let {
-                app.unregisterActivityLifecycleCallbacks(it as Application.ActivityLifecycleCallbacks?)
-            }
-        }
     }
 
     override fun startView(name: String): Boolean {

@@ -1,22 +1,6 @@
 package io.embrace.android.embracesdk.internal.api
 
-import android.app.Application
-
 internal interface ViewTrackingApi {
-
-    /**
-     * Register ComposeActivityListener as Activity Lifecycle Callbacks into the Application
-     *
-     * @param app Global application class
-     */
-    fun registerComposeActivityListener(app: Application)
-
-    /**
-     * Register ComposeActivityListener as Activity Lifecycle Callbacks into the Application
-     *
-     * @param app Global application class
-     */
-    fun unregisterComposeActivityListener(app: Application)
 
     /**
      * Log the start of a view.

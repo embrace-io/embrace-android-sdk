@@ -13,6 +13,7 @@ class FakeTelemetryDestination : TelemetryDestination {
     val addedEvents = mutableListOf<FakeSessionEvent>()
     val attributes = mutableMapOf<String, String>()
     val createdSpans: MutableList<FakeSpanToken> = mutableListOf()
+    val networkRequests: MutableList<FakeNetworkRequest> = mutableListOf()
 
     override fun addLog(
         schemaType: SchemaType,
@@ -74,5 +75,55 @@ class FakeTelemetryDestination : TelemetryDestination {
             mapOf(type.asPair()),
         )
         createdSpans.add(token)
+    }
+
+    override fun recordCompletedNetworkRequest(
+        url: String,
+        httpMethod: String,
+        startTime: Long,
+        endTime: Long,
+        bytesSent: Long,
+        bytesReceived: Long,
+        statusCode: Int,
+        traceId: String?,
+        w3cTraceparent: String?,
+    ) {
+        networkRequests.add(
+            FakeNetworkRequest(
+                url = url,
+                httpMethod = httpMethod,
+                startTime = startTime,
+                endTime = endTime,
+                bytesSent = bytesSent,
+                bytesReceived = bytesReceived,
+                statusCode = statusCode,
+                traceId = traceId,
+                w3cTraceparent = w3cTraceparent
+            )
+        )
+    }
+
+    override fun recordIncompletedNetworkRequest(
+        url: String,
+        httpMethod: String,
+        startTime: Long,
+        endTime: Long,
+        errorType: String,
+        errorMessage: String,
+        traceId: String?,
+        w3cTraceparent: String?,
+    ) {
+        networkRequests.add(
+            FakeNetworkRequest(
+                url = url,
+                httpMethod = httpMethod,
+                startTime = startTime,
+                endTime = endTime,
+                errorType = errorType,
+                errorMessage = errorMessage,
+                traceId = traceId,
+                w3cTraceparent = w3cTraceparent
+            )
+        )
     }
 }

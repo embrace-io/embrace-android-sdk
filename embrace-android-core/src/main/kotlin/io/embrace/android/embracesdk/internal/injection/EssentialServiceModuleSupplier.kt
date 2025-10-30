@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.injection
 
 import androidx.lifecycle.LifecycleOwner
 import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkConnectivityService
+import io.embrace.android.embracesdk.internal.network.logging.NetworkLoggingService
 import io.embrace.android.embracesdk.internal.utils.Provider
 
 /**
@@ -17,6 +18,7 @@ typealias EssentialServiceModuleSupplier = (
     androidServicesModule: AndroidServicesModule,
     lifecycleOwnerProvider: Provider<LifecycleOwner?>,
     networkConnectivityServiceProvider: Provider<NetworkConnectivityService?>,
+    networkLoggingServiceProvider: Provider<NetworkLoggingService?>,
 ) -> EssentialServiceModule
 
 fun createEssentialServiceModule(
@@ -29,6 +31,7 @@ fun createEssentialServiceModule(
     androidServicesModule: AndroidServicesModule,
     lifecycleOwnerProvider: Provider<LifecycleOwner?>,
     networkConnectivityServiceProvider: Provider<NetworkConnectivityService?>,
+    networkLoggingServiceProvider: Provider<NetworkLoggingService?>,
 ): EssentialServiceModule = EssentialServiceModuleImpl(
     initModule,
     configModule,
@@ -38,5 +41,6 @@ fun createEssentialServiceModule(
     systemServiceModule,
     androidServicesModule,
     lifecycleOwnerProvider,
-    networkConnectivityServiceProvider
+    networkConnectivityServiceProvider,
+    networkLoggingServiceProvider,
 )

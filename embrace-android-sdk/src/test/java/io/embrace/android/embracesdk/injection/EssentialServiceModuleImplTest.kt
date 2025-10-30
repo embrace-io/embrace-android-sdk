@@ -34,7 +34,8 @@ internal class EssentialServiceModuleImplTest {
             systemServiceModule = FakeSystemServiceModule(),
             androidServicesModule = FakeAndroidServicesModule(),
             lifecycleOwnerProvider = { TestLifecycleOwner() },
-            networkConnectivityServiceProvider = { null }
+            networkConnectivityServiceProvider = { null },
+            networkLoggingServiceProvider = { null }
         )
 
         assertNotNull(module.processStateService)

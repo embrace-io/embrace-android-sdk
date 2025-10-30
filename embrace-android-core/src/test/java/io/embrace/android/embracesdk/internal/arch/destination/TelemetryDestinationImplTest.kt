@@ -5,10 +5,13 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeClock.Companion.DEFAULT_FAKE_CURRENT_TIME
 import io.embrace.android.embracesdk.fakes.FakeCurrentSessionSpan
 import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
+import io.embrace.android.embracesdk.fakes.FakeNetworkLoggingService
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryLogger
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fakes.FakeSpanService
+import io.embrace.android.embracesdk.fakes.fakeCompleteRequest
+import io.embrace.android.embracesdk.fakes.fakeIncompleteRequest
 import io.embrace.android.embracesdk.internal.arch.attrs.asPair
 import io.embrace.android.embracesdk.internal.arch.attrs.embState
 import io.embrace.android.embracesdk.internal.arch.datasource.LogSeverity
@@ -40,6 +43,7 @@ internal class TelemetryDestinationImplTest {
     private lateinit var clock: FakeClock
     private lateinit var spanService: FakeSpanService
     private lateinit var currentSessionSpan: FakeCurrentSessionSpan
+    private lateinit var networkLoggingService: FakeNetworkLoggingService
 
     @Before
     fun setup() {
@@ -49,6 +53,7 @@ internal class TelemetryDestinationImplTest {
         clock = FakeClock()
         spanService = FakeSpanService()
         currentSessionSpan = FakeCurrentSessionSpan()
+        networkLoggingService = FakeNetworkLoggingService()
         impl = TelemetryDestinationImpl(
             logger = logger,
             sessionIdTracker = sessionIdTracker,
@@ -56,6 +61,7 @@ internal class TelemetryDestinationImplTest {
             clock = clock,
             spanService = spanService,
             currentSessionSpan = currentSessionSpan,
+            networkLoggingServiceProvider = { networkLoggingService }
         )
     }
 
@@ -239,5 +245,59 @@ internal class TelemetryDestinationImplTest {
 
         impl.removeSessionAttribute("foo")
         assertNull(current.attributes()["foo"])
+    }
+
+    @Test
+    fun `test record completed network request`() {
+        with(fakeCompleteRequest) {
+            impl.recordCompletedNetworkRequest(
+                url = url,
+                httpMethod = httpMethod,
+                startTime = startTime,
+                endTime = endTime,
+                bytesSent = checkNotNull(bytesSent),
+                bytesReceived = checkNotNull(bytesReceived),
+                statusCode = checkNotNull(statusCode),
+                traceId = traceId,
+                w3cTraceparent = w3cTraceparent
+            )
+
+            val request = networkLoggingService.requests.single()
+            assertEquals(url, request.url)
+            assertEquals(httpMethod, request.httpMethod)
+            assertEquals(startTime, request.startTime)
+            assertEquals(endTime, request.endTime)
+            assertEquals(bytesSent, request.bytesSent)
+            assertEquals(bytesReceived, request.bytesReceived)
+            assertEquals(statusCode, request.responseCode)
+            assertEquals(traceId, request.traceId)
+            assertEquals(w3cTraceparent, request.w3cTraceparent)
+        }
+    }
+
+    @Test
+    fun `test record incomplete network request`() {
+        with(fakeIncompleteRequest) {
+            impl.recordIncompletedNetworkRequest(
+                url,
+                httpMethod,
+                startTime,
+                endTime,
+                checkNotNull(errorType),
+                checkNotNull(errorMessage),
+                traceId,
+                w3cTraceparent
+            )
+
+            val request = networkLoggingService.requests.single()
+            assertEquals(url, request.url)
+            assertEquals(httpMethod, request.httpMethod)
+            assertEquals(startTime, request.startTime)
+            assertEquals(endTime, request.endTime)
+            assertEquals(errorType, request.errorType)
+            assertEquals(errorMessage, request.errorMessage)
+            assertEquals(traceId, request.traceId)
+            assertEquals(w3cTraceparent, request.w3cTraceparent)
+        }
     }
 }

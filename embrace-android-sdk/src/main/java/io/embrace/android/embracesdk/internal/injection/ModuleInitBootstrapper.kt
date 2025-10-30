@@ -193,7 +193,8 @@ internal class ModuleInitBootstrapper(
                             systemServiceModule,
                             androidServicesModule,
                             { null },
-                            { null }
+                            { null },
+                            { logModule.networkLoggingService }
                         )
                     }
                     postInit(EssentialServiceModule::class) {

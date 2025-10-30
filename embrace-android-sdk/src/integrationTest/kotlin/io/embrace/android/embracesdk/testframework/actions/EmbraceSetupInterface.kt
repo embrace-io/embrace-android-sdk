@@ -129,7 +129,7 @@ internal class EmbraceSetupInterface(
         coreModuleSupplier = { _, _ -> coreModule },
         workerThreadModuleSupplier = { workerThreadModule },
         androidServicesModuleSupplier = { _, _ -> androidServicesModule },
-        essentialServiceModuleSupplier = { initModule, configModule, openTelemetryModule, coreModule, workerThreadModule, systemServiceModule, androidServicesModule, _, _ ->
+        essentialServiceModuleSupplier = { initModule, configModule, openTelemetryModule, coreModule, workerThreadModule, systemServiceModule, androidServicesModule, _, _, networkLoggingServiceProvider ->
             createEssentialServiceModule(
                 initModule = initModule,
                 configModule = configModule,
@@ -139,7 +139,8 @@ internal class EmbraceSetupInterface(
                 systemServiceModule = systemServiceModule,
                 androidServicesModule = androidServicesModule,
                 lifecycleOwnerProvider = { fakeLifecycleOwner },
-                networkConnectivityServiceProvider = { fakeNetworkConnectivityService }
+                networkConnectivityServiceProvider = { fakeNetworkConnectivityService },
+                networkLoggingServiceProvider = networkLoggingServiceProvider
             )
         },
         deliveryModuleSupplier = { configModule, initModule, otelModule, workerThreadModule, coreModule, essentialServiceModule, androidServicesModule, _, _, _, _ ->

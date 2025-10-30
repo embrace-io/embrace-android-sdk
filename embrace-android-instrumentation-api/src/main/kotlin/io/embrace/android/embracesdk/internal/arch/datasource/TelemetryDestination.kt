@@ -60,4 +60,27 @@ interface TelemetryDestination {
         type: EmbType = EmbType.Performance.Default,
         attributes: Map<String, String> = emptyMap(),
     )
+
+    fun recordCompletedNetworkRequest(
+        url: String,
+        httpMethod: String,
+        startTime: Long,
+        endTime: Long,
+        bytesSent: Long,
+        bytesReceived: Long,
+        statusCode: Int,
+        traceId: String? = null,
+        w3cTraceparent: String? = null,
+    )
+
+    fun recordIncompletedNetworkRequest(
+        url: String,
+        httpMethod: String,
+        startTime: Long,
+        endTime: Long,
+        errorType: String,
+        errorMessage: String,
+        traceId: String? = null,
+        w3cTraceparent: String? = null,
+    )
 }

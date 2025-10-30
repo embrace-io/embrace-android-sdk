@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.clock.Clock
+import io.embrace.android.embracesdk.internal.network.logging.NetworkLoggingService
 import io.embrace.android.embracesdk.internal.otel.sdk.toEmbraceObjectName
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.session.id.SessionIdTracker
@@ -16,7 +17,10 @@ import io.embrace.android.embracesdk.internal.session.lifecycle.EmbraceProcessSt
 import io.embrace.android.embracesdk.internal.session.lifecycle.EmbraceProcessStateService.Companion.FOREGROUND_STATE
 import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateService
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
+import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.utils.Uuid
+import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
+import io.embrace.android.embracesdk.network.http.HttpMethod
 import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
@@ -35,6 +39,7 @@ internal class TelemetryDestinationImpl(
     private val clock: Clock,
     private val spanService: SpanService,
     private val currentSessionSpan: CurrentSessionSpan,
+    private val networkLoggingServiceProvider: Provider<NetworkLoggingService?>
 ) : TelemetryDestination {
 
     @OptIn(IncubatingApi::class)
@@ -148,6 +153,56 @@ internal class TelemetryDestinationImpl(
     override fun removeSessionAttribute(key: String) {
         val currentSession = currentSessionSpan.current() ?: return
         currentSession.removeSystemAttribute(key)
+    }
+
+    override fun recordCompletedNetworkRequest(
+        url: String,
+        httpMethod: String,
+        startTime: Long,
+        endTime: Long,
+        bytesSent: Long,
+        bytesReceived: Long,
+        statusCode: Int,
+        traceId: String?,
+        w3cTraceparent: String?,
+    ) {
+        networkLoggingServiceProvider()?.logNetworkRequest(
+            EmbraceNetworkRequest.fromCompletedRequest(
+                url = url,
+                httpMethod = HttpMethod.fromString(httpMethod),
+                startTime = startTime,
+                endTime = endTime,
+                bytesSent = bytesSent,
+                bytesReceived = bytesReceived,
+                statusCode = statusCode,
+                traceId = traceId,
+                w3cTraceparent = w3cTraceparent
+            )
+        )
+    }
+
+    override fun recordIncompletedNetworkRequest(
+        url: String,
+        httpMethod: String,
+        startTime: Long,
+        endTime: Long,
+        errorType: String,
+        errorMessage: String,
+        traceId: String?,
+        w3cTraceparent: String?,
+    ) {
+        networkLoggingServiceProvider()?.logNetworkRequest(
+            EmbraceNetworkRequest.fromIncompleteRequest(
+                url = url,
+                httpMethod = HttpMethod.fromString(httpMethod),
+                startTime = startTime,
+                endTime = endTime,
+                errorType = errorType,
+                errorMessage = errorMessage,
+                traceId = traceId,
+                w3cTraceparent = w3cTraceparent
+            )
+        )
     }
 
     private fun getSeverityText(severity: SeverityNumber) = when (severity) {

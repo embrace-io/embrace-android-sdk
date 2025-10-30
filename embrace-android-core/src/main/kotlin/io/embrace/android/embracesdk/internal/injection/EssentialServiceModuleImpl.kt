@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesS
 import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesServiceImpl
 import io.embrace.android.embracesdk.internal.capture.user.EmbraceUserService
 import io.embrace.android.embracesdk.internal.capture.user.UserService
+import io.embrace.android.embracesdk.internal.network.logging.NetworkLoggingService
 import io.embrace.android.embracesdk.internal.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.internal.session.id.SessionIdTrackerImpl
 import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityLifecycleTracker
@@ -31,6 +32,7 @@ class EssentialServiceModuleImpl(
     androidServicesModule: AndroidServicesModule,
     lifecycleOwnerProvider: Provider<LifecycleOwner?>,
     networkConnectivityServiceProvider: Provider<NetworkConnectivityService?>,
+    networkLoggingServiceProvider: Provider<NetworkLoggingService?>,
 ) : EssentialServiceModule {
 
     private val configService by lazy { configModule.configService }
@@ -88,6 +90,7 @@ class EssentialServiceModuleImpl(
             clock = initModule.clock,
             spanService = openTelemetryModule.spanService,
             currentSessionSpan = openTelemetryModule.currentSessionSpan,
+            networkLoggingServiceProvider = networkLoggingServiceProvider,
         )
     }
 }

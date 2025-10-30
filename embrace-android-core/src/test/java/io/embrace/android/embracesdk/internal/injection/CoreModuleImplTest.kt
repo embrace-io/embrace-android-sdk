@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.injection
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.capture.metadata.AppEnvironment
 import io.embrace.android.embracesdk.internal.capture.metadata.AppEnvironment.Environment
 import org.junit.Assert.assertEquals
@@ -13,8 +12,6 @@ import org.robolectric.RuntimeEnvironment
 
 @RunWith(AndroidJUnit4::class)
 internal class CoreModuleImplTest {
-
-    private val initModule = FakeInitModule()
 
     @Test
     fun testApplicationObject() {

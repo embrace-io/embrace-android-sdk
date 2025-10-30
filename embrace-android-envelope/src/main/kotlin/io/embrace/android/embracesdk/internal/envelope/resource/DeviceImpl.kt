@@ -14,7 +14,7 @@ import java.io.File
 import java.util.Locale
 
 internal class DeviceImpl(
-    private val windowManager: WindowManager?,
+    windowManager: WindowManager?,
     private val store: KeyValueStore,
     private val backgroundWorker: BackgroundWorker,
     override val systemInfo: SystemInfo,
@@ -92,7 +92,6 @@ internal class DeviceImpl(
     /**
      * Gets the free capacity of the internal storage of the device.
      *
-     * @param statFs the {@link StatFs} service for the device
      * @return the total free capacity of the internal storage of the device in bytes
      */
     override val internalStorageTotalCapacity: Lazy<Long> =
@@ -105,12 +104,7 @@ internal class DeviceImpl(
         )
         set(value) = store.edit { putBoolean(IS_JAILBROKEN_KEY, value) }
 
-    private var persistedScreenResolution: String?
-        get() = store.getString(SCREEN_RESOLUTION_KEY)
-        set(value) = store.edit { putString(SCREEN_RESOLUTION_KEY, value) }
-
     private companion object {
         private const val IS_JAILBROKEN_KEY = "io.embrace.is_jailbroken"
-        private const val SCREEN_RESOLUTION_KEY = "io.embrace.screen.resolution"
     }
 }

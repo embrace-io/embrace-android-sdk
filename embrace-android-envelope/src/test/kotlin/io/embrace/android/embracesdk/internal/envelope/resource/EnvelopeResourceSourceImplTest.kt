@@ -6,10 +6,10 @@ import io.embrace.android.embracesdk.fakes.FakeDevice
 import io.embrace.android.embracesdk.fakes.FakeDeviceArchitecture
 import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.fakes.FakeRnBundleIdTracker
-import io.embrace.android.embracesdk.internal.buildinfo.BuildInfo
+import io.embrace.android.embracesdk.fakes.config.FakeProjectConfig
 import io.embrace.android.embracesdk.internal.capture.metadata.AppEnvironment
+import io.embrace.android.embracesdk.internal.envelope.PackageVersionInfo
 import io.embrace.android.embracesdk.internal.envelope.metadata.UnitySdkVersionInfo
-import io.embrace.android.embracesdk.internal.injection.PackageVersionInfo
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.mockk.every
 import io.mockk.mockkStatic
@@ -60,12 +60,14 @@ internal class EnvelopeResourceSourceImplTest {
         val source = EnvelopeResourceSourceImpl(
             hostedSdkVersionInfo,
             AppEnvironment.Environment.PROD,
-            BuildInfo("100", "release", "oem", "bundle-id"),
+            FakeProjectConfig(),
             packageVersionInfo,
             AppFramework.NATIVE,
             fakeArchitecture,
             FakeDevice(),
-            FakeRnBundleIdTracker()
+            FakeRnBundleIdTracker(),
+            "0.1.0",
+            1
         )
         val envelope = source.getEnvelopeResource()
 

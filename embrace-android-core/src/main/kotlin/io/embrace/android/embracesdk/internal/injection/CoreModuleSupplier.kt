@@ -5,12 +5,6 @@ import android.content.Context
 /**
  * Function that returns an instance of [CoreModule]. Matches the signature of the constructor for [CoreModuleImpl]
  */
-typealias CoreModuleSupplier = (
-    context: Context,
-    initModule: InitModule,
-) -> CoreModule
+typealias CoreModuleSupplier = (context: Context,) -> CoreModule
 
-fun createCoreModule(
-    context: Context,
-    initModule: InitModule
-): CoreModule = CoreModuleImpl(context)
+fun createCoreModule(context: Context,): CoreModule = CoreModuleImpl(context)

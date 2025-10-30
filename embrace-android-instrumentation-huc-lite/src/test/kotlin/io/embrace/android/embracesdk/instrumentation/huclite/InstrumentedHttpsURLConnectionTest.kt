@@ -40,7 +40,7 @@ internal class InstrumentedHttpsURLConnectionTest {
             disconnect()
         }
 
-        assertSingleSuccessfulRequest(expectedEndTime = fakeInstrumentationApi.getSdkCurrentTimeMs())
+        assertSingleSuccessfulRequest(expectedEndTime = getCurrentTimeMs())
     }
 
     @Test
@@ -48,12 +48,12 @@ internal class InstrumentedHttpsURLConnectionTest {
         var startTime = 0L
         every { mockWrappedConnection.responseCode } throws FakeIOException()
         with(instrumentedConnection) {
-            fakeInstrumentationApi.sdkTimeMs++
-            startTime = fakeInstrumentationApi.getSdkCurrentTimeMs()
+            moveTimeForward()
+            startTime = getCurrentTimeMs()
             connect()
-            fakeInstrumentationApi.sdkTimeMs++
+            moveTimeForward()
             assertThrows(FakeIOException::class.java) {
-                fakeInstrumentationApi.sdkTimeMs++
+                moveTimeForward()
                 responseCode
             }
             disconnect()
@@ -61,7 +61,7 @@ internal class InstrumentedHttpsURLConnectionTest {
 
         assertSingleClientError(
             expectedStartTime = startTime,
-            expectedEndTime = fakeInstrumentationApi.getSdkCurrentTimeMs()
+            expectedEndTime = getCurrentTimeMs()
         )
     }
 
@@ -74,17 +74,17 @@ internal class InstrumentedHttpsURLConnectionTest {
         var startTime = 0L
         var endTime = 0L
         with(instrumentedConnection) {
-            fakeInstrumentationApi.sdkTimeMs++
+            moveTimeForward()
             requestMethod = "POST"
-            fakeInstrumentationApi.sdkTimeMs++
-            startTime = fakeInstrumentationApi.getSdkCurrentTimeMs()
+            moveTimeForward()
+            startTime = getCurrentTimeMs()
             connect()
-            fakeInstrumentationApi.sdkTimeMs++
+            moveTimeForward()
             outputStream.write("derp".toByteArray())
-            fakeInstrumentationApi.sdkTimeMs++
+            moveTimeForward()
             inputStream.read()
-            endTime = fakeInstrumentationApi.getSdkCurrentTimeMs()
-            fakeInstrumentationApi.sdkTimeMs++
+            endTime = getCurrentTimeMs()
+            moveTimeForward()
             responseCode
         }
 
@@ -106,14 +106,13 @@ internal class InstrumentedHttpsURLConnectionTest {
 
     @Test
     fun `connect records error when the wrapped call throws an exception`() = harness.runTest {
-        val connectionTime = fakeInstrumentationApi.getSdkCurrentTimeMs() + 1000L
+        var connectionTime = 0L
         every { mockWrappedConnection.connect() } answers {
-            fakeInstrumentationApi.sdkTimeMs = connectionTime
+            connectionTime = moveTimeForward()
             throw FakeIOException()
         }
 
-        val startConnectionTime = fakeInstrumentationApi.getSdkCurrentTimeMs() + 1L
-        fakeInstrumentationApi.sdkTimeMs = startConnectionTime
+        val startConnectionTime = moveTimeForward()
         assertThrows(IOException::class.java) {
             instrumentedConnection.connect()
         }
@@ -155,11 +154,10 @@ internal class InstrumentedHttpsURLConnectionTest {
 
     @Test
     fun `getResponseCode only records network request the first time even if it is accessed multiple times`() = harness.runTest {
-        fakeInstrumentationApi.sdkTimeMs = fakeInstrumentationApi.getSdkCurrentTimeMs() + 1000L
-        val startTime = fakeInstrumentationApi.getSdkCurrentTimeMs()
+        val startTime = moveTimeForward()
         instrumentedConnection.responseCode
-        val endTime = fakeInstrumentationApi.getSdkCurrentTimeMs()
-        fakeInstrumentationApi.sdkTimeMs = startTime + 5000L
+        val endTime = getCurrentTimeMs()
+        moveTimeForward()
         instrumentedConnection.responseCode
         assertSingleSuccessfulRequest(expectedStartTime = startTime, expectedEndTime = endTime)
     }
@@ -176,12 +174,12 @@ internal class InstrumentedHttpsURLConnectionTest {
     @Test
     fun `getResponseCode logs a request with the path override URL is provided`() = harness.runTest {
         every { mockWrappedConnection.getRequestProperty("x-emb-path") } returns "/override/path"
-        val startTime = fakeInstrumentationApi.getSdkCurrentTimeMs()
+        val startTime = getCurrentTimeMs()
         instrumentedConnection.responseCode
 
         assertSingleSuccessfulRequest(
             expectedStartTime = startTime,
-            expectedEndTime = fakeInstrumentationApi.getSdkCurrentTimeMs(),
+            expectedEndTime = getCurrentTimeMs(),
             expectedUrl = "https://fakeurl.pizza/override/path?doStuff=true"
         )
     }
@@ -189,12 +187,12 @@ internal class InstrumentedHttpsURLConnectionTest {
     @Test
     fun `getResponseCode logs a request with the original URL if overridden path is malformed`() = harness.runTest {
         every { mockWrappedConnection.getRequestProperty("x-emb-path") } returns "\\\\\\     /override/path"
-        val startTime = fakeInstrumentationApi.getSdkCurrentTimeMs()
+        val startTime = getCurrentTimeMs()
         instrumentedConnection.responseCode
 
         assertSingleSuccessfulRequest(
             expectedStartTime = startTime,
-            expectedEndTime = fakeInstrumentationApi.getSdkCurrentTimeMs()
+            expectedEndTime = getCurrentTimeMs()
         )
     }
 
@@ -213,7 +211,7 @@ internal class InstrumentedHttpsURLConnectionTest {
     }
 
     @Test
-    fun `getResponseMessage delegates to wrapped connection and records instrumentation`() = harness.runTest {
+    fun `getResponseMessage delegates to wrapped connection and records telemetry`() = harness.runTest {
         every { mockWrappedConnection.responseMessage } returns FAKE_VALUE
         val result = instrumentedConnection.responseMessage
         assertEquals(FAKE_VALUE, result)
@@ -222,7 +220,7 @@ internal class InstrumentedHttpsURLConnectionTest {
     }
 
     @Test
-    fun `getHeaderField with int delegates to wrapped connection and records instrumentation`() = harness.runTest {
+    fun `getHeaderField with int delegates to wrapped connection and records telemetry`() = harness.runTest {
         every { mockWrappedConnection.getHeaderField(0) } returns FAKE_VALUE
         val result = instrumentedConnection.getHeaderField(0)
         assertEquals(FAKE_VALUE, result)
@@ -231,7 +229,7 @@ internal class InstrumentedHttpsURLConnectionTest {
     }
 
     @Test
-    fun `getHeaderFieldKey delegates to wrapped connection and records instrumentation`() = harness.runTest {
+    fun `getHeaderFieldKey delegates to wrapped connection and records telemetry`() = harness.runTest {
         every { mockWrappedConnection.getHeaderFieldKey(0) } returns FAKE_VALUE
         val result = instrumentedConnection.getHeaderFieldKey(0)
         assertEquals(FAKE_VALUE, result)
@@ -240,7 +238,7 @@ internal class InstrumentedHttpsURLConnectionTest {
     }
 
     @Test
-    fun `getErrorStream delegates to wrapped connection and records instrumentation`() = harness.runTest {
+    fun `getErrorStream delegates to wrapped connection and records telemetry`() = harness.runTest {
         val mockErrorStream = mockk<InputStream>()
         every { mockWrappedConnection.errorStream } returns mockErrorStream
         val result = instrumentedConnection.errorStream
@@ -250,7 +248,7 @@ internal class InstrumentedHttpsURLConnectionTest {
     }
 
     @Test
-    fun `getHeaderField with string delegates to wrapped connection and records instrumentation`() = harness.runTest {
+    fun `getHeaderField with string delegates to wrapped connection and records telemetry`() = harness.runTest {
         every { mockWrappedConnection.getHeaderField(FAKE_FIELD_NAME) } returns FAKE_VALUE
         val result = instrumentedConnection.getHeaderField(FAKE_FIELD_NAME)
         assertEquals(FAKE_VALUE, result)
@@ -259,7 +257,7 @@ internal class InstrumentedHttpsURLConnectionTest {
     }
 
     @Test
-    fun `getHeaderFields delegates to wrapped connection and records instrumentation`() = harness.runTest {
+    fun `getHeaderFields delegates to wrapped connection and records telemetry`() = harness.runTest {
         val mockHeaders = mutableMapOf(FAKE_VALUE to mutableListOf(FAKE_VALUE))
         every { mockWrappedConnection.headerFields } returns mockHeaders
         val result = instrumentedConnection.headerFields
@@ -269,7 +267,7 @@ internal class InstrumentedHttpsURLConnectionTest {
     }
 
     @Test
-    fun `getInputStream delegates to wrapped connection and records instrumentation`() = harness.runTest {
+    fun `getInputStream delegates to wrapped connection and records telemetry`() = harness.runTest {
         val mockInputStream = mockk<InputStream>()
         every { mockWrappedConnection.inputStream } returns mockInputStream
         val result = instrumentedConnection.inputStream
@@ -279,7 +277,7 @@ internal class InstrumentedHttpsURLConnectionTest {
     }
 
     @Test
-    fun `getContent delegates to wrapped connection and records instrumentation`() = harness.runTest {
+    fun `getContent delegates to wrapped connection and records telemetry`() = harness.runTest {
         every { mockWrappedConnection.content } returns FAKE_VALUE
         val result = instrumentedConnection.content
         assertEquals(FAKE_VALUE, result)
@@ -288,7 +286,7 @@ internal class InstrumentedHttpsURLConnectionTest {
     }
 
     @Test
-    fun `getContent with classes delegates to wrapped connection and records instrumentation`() = harness.runTest {
+    fun `getContent with classes delegates to wrapped connection and records telemetry`() = harness.runTest {
         val classes = arrayOf(String::class.java)
         every { mockWrappedConnection.getContent(classes) } returns FAKE_VALUE
         val result = instrumentedConnection.getContent(classes)
@@ -298,7 +296,7 @@ internal class InstrumentedHttpsURLConnectionTest {
     }
 
     @Test
-    fun `getHeaderFieldInt delegates to wrapped connection`() = harness.runTest {
+    fun `getHeaderFieldInt delegates to wrapped connection and records telemetry`() = harness.runTest {
         every { mockWrappedConnection.getHeaderFieldInt(FAKE_FIELD_NAME, 0) } returns 1024
         val result = instrumentedConnection.getHeaderFieldInt(FAKE_FIELD_NAME, 0)
         assertEquals(1024, result)
@@ -308,7 +306,7 @@ internal class InstrumentedHttpsURLConnectionTest {
 
     @Config(sdk = [VERSION_CODES.UPSIDE_DOWN_CAKE])
     @Test
-    fun `getHeaderFieldLong delegates to wrapped connection exactly once for Android 24+`() = harness.runTest {
+    fun `getHeaderFieldLong delegates to wrapped connection for Android 24+ and records telemetry`() = harness.runTest {
         every { mockWrappedConnection.getHeaderFieldLong(FAKE_FIELD_NAME, 0L) } returns 1024L
         val result = instrumentedConnection.getHeaderFieldLong(FAKE_FIELD_NAME, 0L)
         assertEquals(1024L, result)
@@ -317,7 +315,7 @@ internal class InstrumentedHttpsURLConnectionTest {
     }
 
     @Test
-    fun `getHeaderFieldLong delegates to wrapped connection`() = harness.runTest {
+    fun `getHeaderFieldLong delegates to wrapped connection and records telemetry`() = harness.runTest {
         every { mockWrappedConnection.getHeaderFieldInt(FAKE_FIELD_NAME, 0) } returns 1024
         val result = instrumentedConnection.getHeaderFieldLong(FAKE_FIELD_NAME, 0L)
         assertEquals(1024L, result)
@@ -326,7 +324,7 @@ internal class InstrumentedHttpsURLConnectionTest {
     }
 
     @Test
-    fun `getHeaderFieldDate delegates to wrapped connection`() = harness.runTest {
+    fun `getHeaderFieldDate delegates to wrapped connection and records telemetry`() = harness.runTest {
         every { mockWrappedConnection.getHeaderFieldDate(FAKE_FIELD_NAME, 0L) } returns FAKE_TIME_MS
         val result = instrumentedConnection.getHeaderFieldDate(FAKE_FIELD_NAME, 0L)
         assertEquals(FAKE_TIME_MS, result)
@@ -335,7 +333,7 @@ internal class InstrumentedHttpsURLConnectionTest {
     }
 
     @Test
-    fun `getContentEncoding delegates to wrapped connection`() = harness.runTest {
+    fun `getContentEncoding delegates to wrapped connection and records telemetry`() = harness.runTest {
         every { mockWrappedConnection.contentEncoding } returns "gzip"
         val result = instrumentedConnection.contentEncoding
         assertEquals("gzip", result)
@@ -344,7 +342,7 @@ internal class InstrumentedHttpsURLConnectionTest {
     }
 
     @Test
-    fun `getContentLength delegates to wrapped connection`() = harness.runTest {
+    fun `getContentLength delegates to wrapped connection and records telemetry`() = harness.runTest {
         every { mockWrappedConnection.contentLength } returns 512
         val result = instrumentedConnection.contentLength
         assertEquals(512, result)
@@ -354,7 +352,7 @@ internal class InstrumentedHttpsURLConnectionTest {
 
     @Config(sdk = [VERSION_CODES.UPSIDE_DOWN_CAKE])
     @Test
-    fun `getContentLengthLong delegates to wrapped connection exactly once on Android 24+`() = harness.runTest {
+    fun `getContentLengthLong delegates to wrapped connection on Android 24+ and records telemetry`() = harness.runTest {
         every { mockWrappedConnection.contentLengthLong } returns 512L
         val result = instrumentedConnection.contentLengthLong
         assertEquals(512L, result)
@@ -363,7 +361,7 @@ internal class InstrumentedHttpsURLConnectionTest {
     }
 
     @Test
-    fun `getContentLengthLong delegates to wrapped connection exactly once`() = harness.runTest {
+    fun `getContentLengthLong delegates to wrapped connection and records telemetry`() = harness.runTest {
         every { mockWrappedConnection.contentLength } returns 512
         val result = instrumentedConnection.contentLengthLong
         assertEquals(512L, result)
@@ -372,7 +370,7 @@ internal class InstrumentedHttpsURLConnectionTest {
     }
 
     @Test
-    fun `getContentType delegates to wrapped connection`() = harness.runTest {
+    fun `getContentType delegates to wrapped connection and records telemetry`() = harness.runTest {
         every { mockWrappedConnection.contentType } returns FAKE_VALUE
         val result = instrumentedConnection.contentType
         assertEquals(FAKE_VALUE, result)
@@ -381,7 +379,7 @@ internal class InstrumentedHttpsURLConnectionTest {
     }
 
     @Test
-    fun `getDate delegates to wrapped connection`() = harness.runTest {
+    fun `getDate delegates to wrapped connection and records telemetry`() = harness.runTest {
         every { mockWrappedConnection.date } returns FAKE_TIME_MS
         val result = instrumentedConnection.date
         assertEquals(FAKE_TIME_MS, result)
@@ -390,7 +388,7 @@ internal class InstrumentedHttpsURLConnectionTest {
     }
 
     @Test
-    fun `getExpiration delegates to wrapped connection`() = harness.runTest {
+    fun `getExpiration delegates to wrapped connection and records telemetry`() = harness.runTest {
         every { mockWrappedConnection.expiration } returns FAKE_TIME_MS
         val result = instrumentedConnection.expiration
         assertEquals(FAKE_TIME_MS, result)
@@ -399,12 +397,20 @@ internal class InstrumentedHttpsURLConnectionTest {
     }
 
     @Test
-    fun `getLastModified delegates to wrapped connection`() = harness.runTest {
+    fun `getLastModified delegates to wrapped connection and records telemetry`() = harness.runTest {
         every { mockWrappedConnection.lastModified } returns FAKE_TIME_MS
         val result = instrumentedConnection.lastModified
         assertEquals(FAKE_TIME_MS, result)
         verify(exactly = 1) { mockWrappedConnection.lastModified }
         assertSingleSuccessfulRequest()
+    }
+
+    @Test
+    fun `exception during instrumentation should not throw`() = harness.runTest {
+        every { mockWrappedConnection.url } throws FakeIOException()
+        instrumentedConnection.responseCode
+        assertNoRequestRecorded()
+        assertTrue(harness.fakeInternalInterface.internalErrors.single() is FakeIOException)
     }
 
     @Test

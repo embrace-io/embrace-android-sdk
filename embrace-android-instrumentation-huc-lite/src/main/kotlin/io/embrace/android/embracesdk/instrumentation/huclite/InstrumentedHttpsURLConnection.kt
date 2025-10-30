@@ -36,13 +36,17 @@ internal class InstrumentedHttpsURLConnection(
     private val cachedResponseStatusCode: AtomicInteger = AtomicInteger(0)
     private val requestData: RequestData? =
         if (sdkStateApi.isStarted) {
-            RequestData(
-                connection = wrappedConnection,
-                now = instrumentationApi::getSdkCurrentTimeMs,
-                trackRequest = sdkStateApi::isStarted,
-                networkRequestApi = networkRequestApi,
-                errorHandler = internalInterface::logInternalError
-            )
+            runCatching {
+                RequestData(
+                    connection = wrappedConnection,
+                    now = instrumentationApi::getSdkCurrentTimeMs,
+                    trackRequest = sdkStateApi::isStarted,
+                    networkRequestApi = networkRequestApi,
+                    errorHandler = internalInterface::logInternalError
+                )
+            }.onFailure {
+                internalInterface.logInternalError(InstrumentationException(it))
+            }.getOrNull()
         } else {
             null
         }
@@ -347,9 +351,12 @@ internal class InstrumentedHttpsURLConnection(
         private val startTimeMs = AtomicLong(INVALID_START_TIME)
         private val requestRecorded = AtomicBoolean(false)
 
-        fun startRequest(timestampMs: Long = now()) {
-            startTimeMs.compareAndSet(INVALID_START_TIME, timestampMs)
-        }
+        fun startRequest(timestampMs: Long = now()) =
+            runCatching {
+                startTimeMs.compareAndSet(INVALID_START_TIME, timestampMs)
+            }.onFailure {
+                errorHandler(InstrumentationException(it))
+            }
 
         fun completeRequest(responseCode: Int) {
             recordRequest {
@@ -368,23 +375,17 @@ internal class InstrumentedHttpsURLConnection(
             }
         }
 
-        fun clientError(t: Throwable) =
-            clientError(
-                errorType = t::class.java.canonicalName ?: t::class.java.simpleName,
-                errorMessage = t.message ?: "Unexpected error"
-            )
-
-        fun clientError(errorType: String, errorMessage: String) {
-            val errorTimeMs = now()
+        fun clientError(t: Throwable) {
             recordRequest {
+                val errorTimeMs = now()
                 networkRequestApi.recordNetworkRequest(
                     networkRequest = EmbraceNetworkRequest.fromIncompleteRequest(
                         url = telemetryUrlProvider(),
                         httpMethod = methodProvider(),
                         startTime = getValidStartTime(),
                         endTime = errorTimeMs,
-                        errorType = errorType,
-                        errorMessage = errorMessage
+                        errorType = t::class.java.canonicalName ?: t::class.java.simpleName,
+                        errorMessage = t.message ?: "Unexpected error"
                     )
                 )
             }
@@ -411,4 +412,8 @@ internal class InstrumentedHttpsURLConnection(
             const val INVALID_START_TIME = -1L
         }
     }
+
+    private class InstrumentationException(
+        cause: Throwable,
+    ) : RuntimeException("Unexpected error during HUC instrumentation", cause)
 }

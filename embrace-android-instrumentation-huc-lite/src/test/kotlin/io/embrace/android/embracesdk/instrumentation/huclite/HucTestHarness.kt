@@ -25,7 +25,7 @@ internal class HucTestHarness(
             every { url } returns testUrl
             every { requestMethod } returns "GET"
             every { responseCode } answers {
-                fakeInstrumentationApi.sdkTimeMs++
+                moveTimeForward()
                 200
             }
             every { getRequestProperty(any()) } returns null
@@ -39,6 +39,14 @@ internal class HucTestHarness(
     )
 
     fun runTest(test: HucTestHarness.() -> Unit) = test()
+
+    fun getCurrentTimeMs(): Long = fakeInstrumentationApi.getSdkCurrentTimeMs()
+
+    fun moveTimeForward(increment: Long = 1L): Long =
+        fakeInstrumentationApi.run {
+            sdkTimeMs += increment
+            getSdkCurrentTimeMs()
+        }
 
     fun assertSingleClientError(
         expectedStartTime: Long = FAKE_TIME_MS,

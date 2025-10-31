@@ -206,11 +206,11 @@ internal class EmbraceImpl(
      */
     private fun registerInstrumentation() {
         val loader = ServiceLoader.load(InstrumentationProvider::class.java)
-        val instrumentationContext = bootstrapper.dataSourceModule.instrumentationContext
+        val instrumentationContext = bootstrapper.instrumentationModule.instrumentationArgs
         loader.forEach { provider ->
             try {
                 provider.register(instrumentationContext)?.let { dataSourceState ->
-                    bootstrapper.dataSourceModule.embraceFeatureRegistry.add(dataSourceState)
+                    bootstrapper.instrumentationModule.instrumentationRegistry.add(dataSourceState)
                 }
             } catch (exc: Throwable) {
                 logger.trackInternalError(InternalErrorType.INSTRUMENTATION_REG_FAIL, exc)

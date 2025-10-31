@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.session.orchestrator
 
-import io.embrace.android.embracesdk.internal.arch.DataCaptureOrchestrator
+import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistry
 import io.embrace.android.embracesdk.internal.arch.SessionType
 import io.embrace.android.embracesdk.internal.arch.attrs.embHeartbeatTimeUnixNano
 import io.embrace.android.embracesdk.internal.arch.attrs.embTerminated
@@ -28,7 +28,7 @@ internal class SessionOrchestratorImpl(
     private val boundaryDelegate: OrchestratorBoundaryDelegate,
     private val payloadStore: PayloadStore?,
     private val payloadCachingService: PayloadCachingService?,
-    private val dataCaptureOrchestrator: DataCaptureOrchestrator,
+    private val instrumentationRegistry: InstrumentationRegistry,
     private val destination: TelemetryDestination,
     private val sessionSpanAttrPopulator: SessionSpanAttrPopulator,
 ) : SessionOrchestrator {
@@ -228,7 +228,7 @@ internal class SessionOrchestratorImpl(
                 ProcessState.FOREGROUND -> SessionType.FOREGROUND
                 ProcessState.BACKGROUND -> SessionType.BACKGROUND
             }
-            dataCaptureOrchestrator.currentSessionType = sessionType
+            instrumentationRegistry.currentSessionType = sessionType
             EmbTrace.end()
 
             // et voila! a new session is born

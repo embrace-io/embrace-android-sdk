@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.network.logging
 
-import io.embrace.android.embracesdk.internal.arch.InstrumentationInstallArgs
+import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceImpl
 import io.embrace.android.embracesdk.internal.arch.datasource.LogSeverity
 import io.embrace.android.embracesdk.internal.arch.limits.NoopLimitStrategy
@@ -8,7 +8,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.payload.NetworkCapturedCall
 
 internal class NetworkCaptureDataSourceImpl(
-    args: InstrumentationInstallArgs,
+    args: InstrumentationArgs,
 ) : NetworkCaptureDataSource, DataSourceImpl(
     args = args,
     limitStrategy = NoopLimitStrategy,

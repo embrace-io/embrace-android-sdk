@@ -11,7 +11,7 @@ internal class CrashModuleImpl(
     storageModule: StorageModule,
     essentialServiceModule: EssentialServiceModule,
     androidServicesModule: AndroidServicesModule,
-    dataSourceModule: DataSourceModule,
+    instrumentationModule: InstrumentationModule,
 ) : CrashModule {
 
     private val crashMarker: CrashFileMarker by singleton {
@@ -25,7 +25,7 @@ internal class CrashModuleImpl(
         CrashDataSourceImpl(
             essentialServiceModule.sessionPropertiesService,
             androidServicesModule.preferencesService,
-            dataSourceModule.instrumentationContext,
+            instrumentationModule.instrumentationArgs,
             initModule.jsonSerializer,
         ).apply {
             addCrashTeardownHandler(lazy { crashMarker })

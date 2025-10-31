@@ -43,7 +43,6 @@ class BuildTelemetryCollector {
                 metadataRequestId = UUID.randomUUID().toString(),
                 pluginVersion = BuildConfig.VERSION,
                 operatingSystem = getOperatingSystem(),
-                jreVersion = getJreVersion(),
                 jdkVersion = getJdkVersion(),
             )
         }
@@ -71,7 +70,6 @@ class BuildTelemetryCollector {
         return "$osName $osVersion $osArch"
     }
 
-    private fun getJreVersion() = getSystemProperty(SYS_PROP_JRE_VERSION)
     private fun getJdkVersion() = getSystemProperty(SYS_PROP_JDK_VERSION)
     private fun getSystemProperty(key: String) = systemWrapper.getProperty(key) ?: ""
 
@@ -107,7 +105,6 @@ class BuildTelemetryCollector {
     private fun Project.getEdmVersion() = getProperty(EMBRACE_UNITY_EDM_VERSION) ?: ""
 }
 
-private const val SYS_PROP_JRE_VERSION = "java.runtime.version"
 private const val SYS_PROP_JDK_VERSION = "java.version"
 private const val SYS_PROP_OS_NAME = "os.name"
 private const val SYS_PROP_OS_VERSION = "os.version"

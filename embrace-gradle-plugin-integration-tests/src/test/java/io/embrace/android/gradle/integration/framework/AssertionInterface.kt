@@ -96,7 +96,6 @@ class AssertionInterface(
             assertFalse(checkNotNull(isConfigCacheEnabled))
             assertTrue(checkNotNull(isGradleParallelExecutionEnabled))
             assertNotNull(operatingSystem)
-            assertNotNull(jreVersion)
             assertNotNull(jdkVersion)
             assertFalse(checkNotNull(isEdmEnabled))
 

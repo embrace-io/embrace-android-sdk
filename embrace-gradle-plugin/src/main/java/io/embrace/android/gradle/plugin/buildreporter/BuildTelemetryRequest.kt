@@ -17,7 +17,6 @@ data class BuildTelemetryRequest(
     @Json(name = "ip") val isIsolatedProjectsEnabled: Boolean? = null,
     @Json(name = "jvma") val jvmArgs: String? = null,
     @Json(name = "os") val operatingSystem: String? = null,
-    @Json(name = "jre") val jreVersion: String? = null,
     @Json(name = "jdk") val jdkVersion: String? = null,
     @Json(name = "edm") val isEdmEnabled: Boolean? = null,
     @Json(name = "edmv") val edmVersion: String? = null,

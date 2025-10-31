@@ -14,11 +14,15 @@ import io.embrace.android.embracesdk.internal.arch.attrs.embState
 import io.embrace.android.embracesdk.internal.arch.datasource.LogSeverity
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.arch.schema.TelemetryAttributes
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
+import io.embrace.android.embracesdk.internal.otel.toEmbracePayload
+import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.session.id.SessionData
+import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
 import io.embrace.opentelemetry.kotlin.semconv.LogAttributes
@@ -199,12 +203,14 @@ internal class TelemetryDestinationImplTest {
         val name = "name"
         val startTimeMs = 5L
         val endTimeMs = 5L
-        val type = EmbType.System.LowPower
+        val errorCode = ErrorCode.FAILURE.name
+        val type = EmbType.Performance.Network
         val attributes = mapOf("foo" to "bar")
         impl.recordCompletedSpan(
             name,
             startTimeMs,
             endTimeMs,
+            errorCode,
             type,
             attributes
         )
@@ -212,8 +218,11 @@ internal class TelemetryDestinationImplTest {
         assertEquals(name, span.name)
         assertEquals(startTimeMs, span.spanStartTimeMs)
         assertEquals(endTimeMs, span.spanEndTimeMs)
+        assertEquals(Span.Status.ERROR, span.status.statusCode.toEmbracePayload())
+        assertTrue(span.hasEmbraceAttribute(type))
+        assertTrue(span.hasEmbraceAttribute(ErrorCodeAttribute.Failure))
         assertEquals(type, span.type)
-        assertEquals(attributes + mapOf(type.asPair()), span.attributes)
+        assertEquals(attributes + mapOf(type.asPair(), ErrorCodeAttribute.Failure.asPair()), span.attributes)
     }
 
     @Test

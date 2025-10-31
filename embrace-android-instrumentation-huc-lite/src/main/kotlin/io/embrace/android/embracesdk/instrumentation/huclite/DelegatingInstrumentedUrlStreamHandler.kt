@@ -1,9 +1,6 @@
 package io.embrace.android.embracesdk.instrumentation.huclite
 
-import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
-import io.embrace.android.embracesdk.internal.api.InstrumentationApi
-import io.embrace.android.embracesdk.internal.api.NetworkRequestApi
-import io.embrace.android.embracesdk.internal.api.SdkStateApi
+import io.embrace.android.embracesdk.internal.instrumentation.HucLiteDataSource
 import java.net.Proxy
 import java.net.URL
 import java.net.URLConnection
@@ -16,10 +13,10 @@ import javax.net.ssl.HttpsURLConnection
  */
 internal class DelegatingInstrumentedUrlStreamHandler(
     private val delegateHandler: URLStreamHandler,
-    private val sdkStateApi: SdkStateApi,
-    private val instrumentationApi: InstrumentationApi,
-    private val networkRequestApi: NetworkRequestApi,
-    private val internalInterface: EmbraceInternalInterface,
+    private val sdkStarted: () -> Boolean,
+    private val currentTimeMs: () -> Long,
+    private val hucLiteDataSource: HucLiteDataSource,
+    private val errorHandler: (Throwable) -> Unit,
 ) : URLStreamHandler() {
     override fun openConnection(url: URL?, proxy: Proxy?): URLConnection? {
         try {
@@ -34,7 +31,7 @@ internal class DelegatingInstrumentedUrlStreamHandler(
             method.isAccessible = true
             return wrapInstrumentedConnection(method.invoke(delegateHandler, url, proxy) as URLConnection?)
         } catch (t: Throwable) {
-            internalInterface.logInternalError(t)
+            errorHandler(t)
             throw (t)
         }
     }
@@ -51,7 +48,7 @@ internal class DelegatingInstrumentedUrlStreamHandler(
             method.isAccessible = true
             return wrapInstrumentedConnection(method.invoke(delegateHandler, url) as URLConnection?)
         } catch (t: Throwable) {
-            internalInterface.logInternalError(t)
+            errorHandler(t)
             throw (t)
         }
     }
@@ -63,10 +60,10 @@ internal class DelegatingInstrumentedUrlStreamHandler(
         return if (wrappedConnection is HttpsURLConnection) {
             InstrumentedHttpsURLConnection(
                 wrappedConnection = wrappedConnection,
-                sdkStateApi = sdkStateApi,
-                instrumentationApi = instrumentationApi,
-                networkRequestApi = networkRequestApi,
-                internalInterface = internalInterface
+                sdkStarted = sdkStarted,
+                currentTimeMs = currentTimeMs,
+                hucLiteDataSource = hucLiteDataSource,
+                errorHandler = errorHandler,
             )
         } else {
             wrappedConnection

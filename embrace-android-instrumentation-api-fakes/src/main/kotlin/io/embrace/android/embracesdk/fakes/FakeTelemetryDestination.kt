@@ -71,10 +71,10 @@ class FakeTelemetryDestination : TelemetryDestination {
         val token = FakeSpanToken(
             name,
             startTimeMs,
-            null,
+            endTimeMs,
             errorCode,
             type,
-            mapOf(type.asPair()),
+            attributes,
         )
         createdSpans.add(token)
     }

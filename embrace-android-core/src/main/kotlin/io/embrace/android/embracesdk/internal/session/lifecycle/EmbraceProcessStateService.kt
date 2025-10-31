@@ -125,6 +125,12 @@ internal class EmbraceProcessStateService(
         return sessionOrchestrator != null
     }
 
+    override fun sessionUpdated() {
+        if (isInBackground) {
+            sessionOrchestrator?.reportBackgroundActivityStateChange()
+        }
+    }
+
     companion object {
         const val FOREGROUND_STATE: String = "foreground"
         const val BACKGROUND_STATE: String = "background"

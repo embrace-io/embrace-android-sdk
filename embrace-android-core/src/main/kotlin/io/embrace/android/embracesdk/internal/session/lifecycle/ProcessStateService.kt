@@ -46,4 +46,9 @@ interface ProcessStateService : LifecycleEventObserver, Closeable {
      * Returns true if this is fully initialized
      */
     fun isInitialized(): Boolean
+
+    /**
+     * Notify the SDK that the current session has updated telemetry or metadata
+     */
+    fun sessionUpdated()
 }

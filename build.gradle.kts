@@ -6,7 +6,7 @@ plugins {
     alias(libs.plugins.google.ksp) apply false
     id("com.android.library") apply false
     alias(libs.plugins.dokka)
-    alias(libs.plugins.kover)
+    id("org.jetbrains.kotlinx.kover")
 }
 
 group = "io.embrace"

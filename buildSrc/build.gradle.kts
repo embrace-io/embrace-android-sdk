@@ -1,11 +1,7 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
-group = "io.embrace.internal"
-version = "1.0.0"
-
 plugins {
     `kotlin-dsl`
-    `java-gradle-plugin`
 }
 
 repositories {
@@ -20,15 +16,7 @@ dependencies {
     implementation(libs.detekt.gradle.plugin)
     implementation(libs.binary.compatibility.validator)
     implementation(libs.vanniktech.maven.publish)
-}
-
-gradlePlugin {
-    plugins {
-        create("embracePlugin") {
-            id = "io.embrace.internal.build-logic"
-            implementationClass = "io.embrace.internal.BuildPlugin"
-        }
-    }
+    implementation(libs.kover)
 }
 
 // ensure the Kotlin + Java compilers both use the same language level.

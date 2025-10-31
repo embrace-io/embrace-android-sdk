@@ -1,9 +1,6 @@
 plugins {
-    id("com.android.library")
-    kotlin("android")
-    id("io.embrace.internal.build-logic")
+    id("embrace-public-api-conventions")
     id("com.google.devtools.ksp")
-    id("com.vanniktech.maven.publish")
 }
 
 description = "Embrace Android SDK: Core"

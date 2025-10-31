@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.injection
 
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState
-import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkStatusDataSource
 import io.embrace.android.embracesdk.internal.capture.crumbs.BreadcrumbDataSource
 import io.embrace.android.embracesdk.internal.capture.crumbs.RnActionDataSource
 import io.embrace.android.embracesdk.internal.capture.telemetry.InternalErrorDataSource
@@ -39,19 +38,6 @@ internal class FeatureModuleImpl(
                 InternalErrorDataSourceImpl(instrumentationModule.instrumentationArgs)
             },
             configGate = { configService.dataCaptureEventBehavior.isInternalExceptionCaptureEnabled() }
-        ).apply {
-            instrumentationModule.instrumentationRegistry.add(this)
-        }
-    }
-
-    override val networkStatusDataSource: DataSourceState<NetworkStatusDataSource> by singleton {
-        DataSourceState(
-            factory = {
-                NetworkStatusDataSource(instrumentationModule.instrumentationArgs)
-            },
-            configGate = {
-                configService.autoDataCaptureBehavior.isNetworkConnectivityCaptureEnabled()
-            }
         ).apply {
             instrumentationModule.instrumentationRegistry.add(this)
         }

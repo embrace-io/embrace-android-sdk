@@ -1,20 +1,15 @@
 package io.embrace.android.embracesdk.internal.capture.crumbs
 
+import io.embrace.android.embracesdk.internal.arch.InstrumentationInstallArgs
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceImpl
-import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
-import io.embrace.android.embracesdk.internal.config.behavior.BreadcrumbBehavior
-import io.embrace.android.embracesdk.internal.logging.EmbLogger
 
 class RnActionDataSource(
-    breadcrumbBehavior: BreadcrumbBehavior,
-    destination: TelemetryDestination,
-    logger: EmbLogger,
+    args: InstrumentationInstallArgs
 ) : DataSourceImpl(
-    destination,
-    logger,
-    UpToLimitStrategy { breadcrumbBehavior.getCustomBreadcrumbLimit() }
+    args,
+    UpToLimitStrategy { args.configService.breadcrumbBehavior.getCustomBreadcrumbLimit() }
 ) {
     fun logRnAction(
         name: String?,

@@ -5,10 +5,10 @@ import io.embrace.android.embracesdk.internal.ndk.NativeCrashService
 
 internal class NativeFeatureModuleImpl(
     initModule: InitModule,
-    essentialServiceModule: EssentialServiceModule,
     configModule: ConfigModule,
     androidServicesModule: AndroidServicesModule,
     nativeCoreModule: NativeCoreModule,
+    dataSourceModule: DataSourceModule,
 ) : NativeFeatureModule {
 
     override val nativeCrashService: NativeCrashService? by singleton {
@@ -18,9 +18,8 @@ internal class NativeFeatureModuleImpl(
             NativeCrashDataSourceImpl(
                 nativeCrashProcessor = nativeCoreModule.processor,
                 preferencesService = androidServicesModule.preferencesService,
-                destination = essentialServiceModule.telemetryDestination,
+                args = dataSourceModule.instrumentationContext,
                 serializer = initModule.jsonSerializer,
-                logger = initModule.logger,
             )
         }
     }

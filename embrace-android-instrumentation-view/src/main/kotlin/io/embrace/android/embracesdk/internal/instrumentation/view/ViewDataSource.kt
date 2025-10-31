@@ -3,30 +3,24 @@ package io.embrace.android.embracesdk.internal.instrumentation.view
 import android.app.Activity
 import android.app.Application
 import android.os.Bundle
+import io.embrace.android.embracesdk.internal.arch.InstrumentationInstallArgs
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceImpl
 import io.embrace.android.embracesdk.internal.arch.datasource.SpanToken
-import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
-import io.embrace.android.embracesdk.internal.clock.Clock
-import io.embrace.android.embracesdk.internal.config.behavior.BreadcrumbBehavior
-import io.embrace.android.embracesdk.internal.logging.EmbLogger
 
 /**
  * Captures fragment views.
  */
 class ViewDataSource(
-    private val application: Application,
-    breadcrumbBehavior: BreadcrumbBehavior,
-    private val clock: Clock,
-    destination: TelemetryDestination,
-    logger: EmbLogger,
+    private val args: InstrumentationInstallArgs,
 ) : DataSourceImpl(
-    destination,
-    logger,
-    UpToLimitStrategy { breadcrumbBehavior.getFragmentBreadcrumbLimit() }
+    args,
+    UpToLimitStrategy { args.configService.breadcrumbBehavior.getFragmentBreadcrumbLimit() }
 ),
     Application.ActivityLifecycleCallbacks {
+
+    private val application: Application = args.application
 
     private val viewSpans: LinkedHashMap<String, SpanToken> = LinkedHashMap()
 

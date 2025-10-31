@@ -1,14 +1,13 @@
 package io.embrace.android.embracesdk.internal.ndk
 
+import io.embrace.android.embracesdk.internal.arch.InstrumentationInstallArgs
 import io.embrace.android.embracesdk.internal.arch.attrs.embCrashNumber
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceImpl
 import io.embrace.android.embracesdk.internal.arch.datasource.LogSeverity
-import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.arch.limits.NoopLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.arch.schema.TelemetryAttributes
-import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
 import io.embrace.android.embracesdk.internal.prefs.PreferencesService
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
@@ -18,12 +17,10 @@ import io.embrace.opentelemetry.kotlin.semconv.SessionAttributes
 internal class NativeCrashDataSourceImpl(
     private val nativeCrashProcessor: NativeCrashProcessor,
     private val preferencesService: PreferencesService,
-    destination: TelemetryDestination,
+    args: InstrumentationInstallArgs,
     private val serializer: PlatformSerializer,
-    logger: EmbLogger,
 ) : NativeCrashDataSource, DataSourceImpl(
-    destination = destination,
-    logger = logger,
+    args = args,
     limitStrategy = NoopLimitStrategy,
 ) {
     override fun getAndSendNativeCrash(): NativeCrashData? {

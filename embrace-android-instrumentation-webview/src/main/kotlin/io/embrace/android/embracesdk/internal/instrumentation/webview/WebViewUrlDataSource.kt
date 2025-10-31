@@ -1,26 +1,22 @@
 package io.embrace.android.embracesdk.internal.instrumentation.webview
 
+import io.embrace.android.embracesdk.internal.arch.InstrumentationInstallArgs
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceImpl
-import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
-import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.behavior.BreadcrumbBehavior
-import io.embrace.android.embracesdk.internal.logging.EmbLogger
 
 /**
  * Captures custom breadcrumbs.
  */
 class WebViewUrlDataSource(
-    private val breadcrumbBehavior: BreadcrumbBehavior,
-    destination: TelemetryDestination,
-    logger: EmbLogger,
-    private val clock: Clock,
+    args: InstrumentationInstallArgs,
 ) : DataSourceImpl(
-    destination = destination,
-    logger = logger,
-    limitStrategy = UpToLimitStrategy(breadcrumbBehavior::getWebViewBreadcrumbLimit)
+    args = args,
+    limitStrategy = UpToLimitStrategy(args.configService.breadcrumbBehavior::getWebViewBreadcrumbLimit)
 ) {
+
+    private val breadcrumbBehavior: BreadcrumbBehavior = args.configService.breadcrumbBehavior
 
     private companion object {
         private const val QUERY_PARAMETER_DELIMITER = "?"

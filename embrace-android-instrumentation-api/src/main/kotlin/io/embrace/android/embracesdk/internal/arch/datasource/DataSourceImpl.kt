@@ -1,6 +1,9 @@
 package io.embrace.android.embracesdk.internal.arch.datasource
 
+import io.embrace.android.embracesdk.internal.arch.InstrumentationInstallArgs
 import io.embrace.android.embracesdk.internal.arch.limits.LimitStrategy
+import io.embrace.android.embracesdk.internal.clock.Clock
+import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 
@@ -8,10 +11,14 @@ import io.embrace.android.embracesdk.internal.logging.InternalErrorType
  * Base class for data sources.
  */
 abstract class DataSourceImpl(
-    private val destination: TelemetryDestination,
-    val logger: EmbLogger,
+    args: InstrumentationInstallArgs,
     private val limitStrategy: LimitStrategy,
 ) : DataSource {
+
+    protected val clock: Clock = args.clock
+    protected val logger: EmbLogger = args.logger
+    protected val configService: ConfigService = args.configService
+    protected val destination: TelemetryDestination = args.destination
 
     override fun onDataCaptureEnabled() {
         // no-op

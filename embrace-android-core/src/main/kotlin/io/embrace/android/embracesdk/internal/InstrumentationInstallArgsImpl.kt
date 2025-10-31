@@ -15,7 +15,7 @@ import java.util.concurrent.ConcurrentHashMap
 
 internal class InstrumentationInstallArgsImpl(
     override val configService: ConfigService,
-    override val telemetryDestination: TelemetryDestination,
+    override val destination: TelemetryDestination,
     override val logger: EmbLogger,
     override val clock: Clock,
     override val context: Context,

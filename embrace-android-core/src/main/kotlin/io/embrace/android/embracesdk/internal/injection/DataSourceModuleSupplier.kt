@@ -6,12 +6,24 @@ package io.embrace.android.embracesdk.internal.injection
 typealias DataSourceModuleSupplier = (
     initModule: InitModule,
     workerThreadModule: WorkerThreadModule,
+    configModule: ConfigModule,
+    essentialServiceModule: EssentialServiceModule,
+    androidServicesModule: AndroidServicesModule,
+    coreModule: CoreModule,
 ) -> DataSourceModule
 
 fun createDataSourceModule(
     initModule: InitModule,
     workerThreadModule: WorkerThreadModule,
+    configModule: ConfigModule,
+    essentialServiceModule: EssentialServiceModule,
+    androidServicesModule: AndroidServicesModule,
+    coreModule: CoreModule,
 ): DataSourceModule = DataSourceModuleImpl(
     initModule,
-    workerThreadModule
+    workerThreadModule,
+    configModule,
+    essentialServiceModule,
+    androidServicesModule,
+    coreModule,
 )

@@ -3,13 +3,11 @@ package io.embrace.android.embracesdk.internal.instrumentation.thermalstate
 import android.os.Build
 import android.os.PowerManager
 import androidx.annotation.RequiresApi
+import io.embrace.android.embracesdk.internal.arch.InstrumentationInstallArgs
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceImpl
 import io.embrace.android.embracesdk.internal.arch.datasource.SpanToken
-import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
-import io.embrace.android.embracesdk.internal.clock.Clock
-import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
@@ -17,14 +15,11 @@ import java.util.concurrent.Executor
 
 @RequiresApi(Build.VERSION_CODES.Q)
 class ThermalStateDataSource(
-    destination: TelemetryDestination,
-    logger: EmbLogger,
+    args: InstrumentationInstallArgs,
     private val backgroundWorker: BackgroundWorker,
-    private val clock: Clock,
     powerManagerProvider: Provider<PowerManager?>,
 ) : DataSourceImpl(
-    destination = destination,
-    logger = logger,
+    args,
     limitStrategy = UpToLimitStrategy { MAX_CAPTURED_THERMAL_STATES }
 ) {
     private companion object {

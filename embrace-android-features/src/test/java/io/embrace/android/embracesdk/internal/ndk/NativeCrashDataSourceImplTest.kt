@@ -1,9 +1,8 @@
 package io.embrace.android.embracesdk.internal.ndk
 
-import io.embrace.android.embracesdk.fakes.FakeEmbLogger
+import io.embrace.android.embracesdk.fakes.FakeInstrumentationInstallArgs
 import io.embrace.android.embracesdk.fakes.FakeNativeCrashProcessor
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
-import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
 import io.embrace.android.embracesdk.fixtures.testNativeCrashData
 import io.embrace.android.embracesdk.internal.arch.attrs.embCrashNumber
 import io.embrace.android.embracesdk.internal.arch.attrs.embState
@@ -17,6 +16,7 @@ import io.embrace.android.embracesdk.internal.utils.toUTF8String
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
 import io.embrace.opentelemetry.kotlin.semconv.SessionAttributes
+import io.mockk.mockk
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -28,21 +28,20 @@ internal class NativeCrashDataSourceImplTest {
 
     private lateinit var crashProcessor: FakeNativeCrashProcessor
     private lateinit var serializer: EmbraceSerializer
-    private lateinit var destination: FakeTelemetryDestination
+    private lateinit var args: FakeInstrumentationInstallArgs
     private lateinit var nativeCrashDataSource: NativeCrashDataSourceImpl
 
     @Before
     fun setUp() {
         crashProcessor = FakeNativeCrashProcessor()
         val preferencesService = FakePreferenceService()
-        destination = FakeTelemetryDestination()
+        args = FakeInstrumentationInstallArgs(mockk())
         serializer = EmbraceSerializer()
         nativeCrashDataSource = NativeCrashDataSourceImpl(
             nativeCrashProcessor = crashProcessor,
             preferencesService = preferencesService,
-            destination = destination,
+            args = args,
             serializer = serializer,
-            logger = FakeEmbLogger()
         )
     }
 
@@ -50,7 +49,7 @@ internal class NativeCrashDataSourceImplTest {
     fun `native crash sent when there is one to be found`() {
         crashProcessor.addNativeCrashData(testNativeCrashData)
         assertNotNull(nativeCrashDataSource.getAndSendNativeCrash())
-        assertEquals(1, destination.logEvents.size)
+        assertEquals(1, args.destination.logEvents.size)
     }
 
     @Test
@@ -61,7 +60,7 @@ internal class NativeCrashDataSourceImplTest {
             metadata = mapOf(embState.name to "background")
         )
 
-        with(destination.logEvents.single()) {
+        with(args.destination.logEvents.single()) {
             val attributes = schemaType.attributes()
             assertEquals(EmbType.System.NativeCrash, schemaType.telemetryType)
             assertEquals("value", attributes["prop".toEmbraceAttributeName()])
@@ -93,7 +92,7 @@ internal class NativeCrashDataSourceImplTest {
             metadata = emptyMap(),
         )
 
-        with(destination.logEvents.single()) {
+        with(args.destination.logEvents.single()) {
             val attributes = schemaType.attributes()
             assertEquals(EmbType.System.NativeCrash, schemaType.telemetryType)
             assertEquals("1", attributes[embCrashNumber.name])
@@ -116,7 +115,7 @@ internal class NativeCrashDataSourceImplTest {
             metadata = emptyMap(),
         )
 
-        with(destination.logEvents.single()) {
+        with(args.destination.logEvents.single()) {
             val attributes = schemaType.attributes()
             assertEquals(EmbType.System.NativeCrash, schemaType.telemetryType)
             assertEquals("1", attributes[embCrashNumber.name])

@@ -17,10 +17,8 @@ dependencies {
     implementation(libs.androidx.annotation)
 
     testImplementation(project(":embrace-android-instrumentation-api-fakes"))
-    testImplementation(project(":embrace-android-config-fakes"))
     testImplementation(project(":embrace-android-payload"))
-    testImplementation(project(":embrace-test-common"))
-    testImplementation(libs.mockk)
     testImplementation(libs.protobuf.java)
     testImplementation(libs.protobuf.java.util)
+    testImplementation(libs.mockk)
 }

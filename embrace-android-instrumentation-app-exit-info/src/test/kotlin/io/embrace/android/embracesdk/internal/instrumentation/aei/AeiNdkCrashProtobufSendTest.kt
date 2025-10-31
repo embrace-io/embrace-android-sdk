@@ -5,13 +5,12 @@ import android.app.ApplicationExitInfo
 import com.android.server.os.TombstoneProtos
 import io.embrace.android.embracesdk.ResourceReader
 import io.embrace.android.embracesdk.fakes.FakeConfigService
-import io.embrace.android.embracesdk.fakes.FakeEmbLogger
+import io.embrace.android.embracesdk.fakes.FakeInstrumentationInstallArgs
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
 import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
 import io.embrace.android.embracesdk.internal.TypeUtils
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
-import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.mockk.every
 import io.mockk.mockk
 import org.junit.Assert.assertEquals
@@ -131,17 +130,17 @@ internal class AeiNdkCrashProtobufSendTest {
             stream,
             reason
         )
-        val logWriter = FakeTelemetryDestination()
+        val args = FakeInstrumentationInstallArgs(
+            mockk(),
+            configService = FakeConfigService(autoDataCaptureBehavior = FakeAutoDataCaptureBehavior(ndkEnabled = true)),
+        )
         AeiDataSourceImpl(
+            args,
             fakeBackgroundWorker(),
-            FakeConfigService(autoDataCaptureBehavior = FakeAutoDataCaptureBehavior(ndkEnabled = true)),
             activityManager,
-            FakeAeiDataStore(),
-            logWriter,
-            FakeEmbLogger(),
-            VersionChecker { ndkTraceFile }
-        ).onDataCaptureEnabled()
-        return logWriter
+            FakeAeiDataStore()
+        ) { ndkTraceFile }.onDataCaptureEnabled()
+        return args.destination
     }
 
     private fun createMockActivityManager(stream: InputStream, code: Int): ActivityManager {

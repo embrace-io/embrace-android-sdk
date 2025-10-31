@@ -13,9 +13,11 @@ import io.embrace.android.embracesdk.fakes.injection.FakePayloadSourceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.internal.injection.CoreModuleImpl
 import io.embrace.android.embracesdk.internal.injection.SessionOrchestrationModuleImpl
 import io.embrace.android.embracesdk.internal.injection.createDataSourceModule
 import io.embrace.android.embracesdk.internal.worker.Worker
+import io.mockk.mockk
 import org.junit.Assert.assertNotNull
 import org.junit.Test
 
@@ -32,7 +34,11 @@ internal class SessionOrchestrationModuleImplTest {
     fun testDefaultImplementations() {
         val dataSourceModule = createDataSourceModule(
             initModule,
-            workerThreadModule
+            workerThreadModule,
+            FakeConfigModule(),
+            FakeEssentialServiceModule(),
+            FakeAndroidServicesModule(),
+            CoreModuleImpl(mockk(), initModule)
         )
         val module = SessionOrchestrationModuleImpl(
             initModule,
@@ -56,7 +62,11 @@ internal class SessionOrchestrationModuleImplTest {
         val configModule = createEnabledBehavior()
         val dataSourceModule = createDataSourceModule(
             initModule,
-            workerThreadModule
+            workerThreadModule,
+            FakeConfigModule(),
+            FakeEssentialServiceModule(),
+            FakeAndroidServicesModule(),
+            CoreModuleImpl(mockk(), initModule)
         )
 
         val module = SessionOrchestrationModuleImpl(

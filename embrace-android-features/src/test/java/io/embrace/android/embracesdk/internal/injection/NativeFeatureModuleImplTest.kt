@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.injection
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeConfigModule
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeDataSourceModule
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fakes.FakeStorageService
 import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
@@ -10,6 +11,7 @@ import io.embrace.android.embracesdk.fakes.injection.FakeAndroidServicesModule
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeNativeCoreModule
+import io.mockk.mockk
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Before
@@ -103,10 +105,10 @@ internal class NativeFeatureModuleImplTest {
         val initModule = FakeInitModule()
         return NativeFeatureModuleImpl(
             initModule,
-            fakeEssentialServiceModule,
             fakeConfigModule,
             FakeAndroidServicesModule(),
-            FakeNativeCoreModule()
+            FakeNativeCoreModule(),
+            FakeDataSourceModule(mockk())
         )
     }
 }

@@ -3,8 +3,7 @@ package io.embrace.android.embracesdk.internal.instrumentation.aei
 import android.app.ActivityManager
 import android.app.ApplicationExitInfo
 import io.embrace.android.embracesdk.fakes.FakeConfigService
-import io.embrace.android.embracesdk.fakes.FakeEmbLogger
-import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
+import io.embrace.android.embracesdk.fakes.FakeInstrumentationInstallArgs
 import io.embrace.android.embracesdk.fakes.behavior.FakeAppExitInfoBehavior
 import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
 import io.embrace.android.embracesdk.internal.arch.datasource.LogSeverity
@@ -34,13 +33,12 @@ private const val SESSION_ID = "1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d"
 internal class AeiDataSourceImplTest {
 
     private lateinit var applicationExitInfoService: AeiDataSourceImpl
-    private lateinit var destination: FakeTelemetryDestination
+    private lateinit var args: FakeInstrumentationInstallArgs
     private lateinit var configService: FakeConfigService
 
     private val worker = fakeBackgroundWorker()
 
     private val aeiDataStore = FakeAeiDataStore()
-    private val logger = FakeEmbLogger()
 
     private val mockActivityManager: ActivityManager = mockk {
         every { getHistoricalProcessExitReasons(any(), any(), any()) } returns emptyList()
@@ -68,14 +66,12 @@ internal class AeiDataSourceImplTest {
     }
 
     private fun startApplicationExitInfoService() {
-        destination = FakeTelemetryDestination()
+        args = FakeInstrumentationInstallArgs(mockk(), configService = configService)
         applicationExitInfoService = AeiDataSourceImpl(
+            args,
             worker,
-            configService,
             mockActivityManager,
             aeiDataStore,
-            destination,
-            logger
         ).apply(AeiDataSourceImpl::onDataCaptureEnabled)
     }
 
@@ -110,7 +106,7 @@ internal class AeiDataSourceImplTest {
         assertEquals("", attrs["session_id_error"])
         assertNull(attrs["trace_status"])
 
-        val logEventData = destination.logEvents.single()
+        val logEventData = args.destination.logEvents.single()
         assertEquals(TRACE, logEventData.message)
     }
 
@@ -127,7 +123,7 @@ internal class AeiDataSourceImplTest {
         startApplicationExitInfoService()
 
         // no logs delivered
-        assertTrue(destination.logEvents.isEmpty())
+        assertTrue(args.destination.logEvents.isEmpty())
     }
 
     @Test
@@ -148,7 +144,7 @@ internal class AeiDataSourceImplTest {
         startApplicationExitInfoService()
 
         // then captured data should only have 64 entries
-        assertEquals(64, destination.logEvents.size)
+        assertEquals(64, args.destination.logEvents.size)
     }
 
     @Test
@@ -225,7 +221,7 @@ internal class AeiDataSourceImplTest {
         startApplicationExitInfoService()
 
         // then no logs should be sent
-        assertTrue(destination.logEvents.isEmpty())
+        assertTrue(args.destination.logEvents.isEmpty())
     }
 
     @Test
@@ -310,7 +306,7 @@ internal class AeiDataSourceImplTest {
         startApplicationExitInfoService()
 
         // then a truncated trace should be sent
-        val logEventData = destination.logEvents.single()
+        val logEventData = args.destination.logEvents.single()
         assertEquals("a".repeat(100), logEventData.message)
     }
 
@@ -328,7 +324,7 @@ internal class AeiDataSourceImplTest {
         startApplicationExitInfoService()
 
         // no logs were sent
-        assertTrue(destination.logEvents.isEmpty())
+        assertTrue(args.destination.logEvents.isEmpty())
     }
 
     @Test
@@ -345,11 +341,11 @@ internal class AeiDataSourceImplTest {
         startApplicationExitInfoService()
 
         // each AEI object with a trace should be sent in a separate payload
-        assertEquals(64, destination.logEvents.size)
+        assertEquals(64, args.destination.logEvents.size)
     }
 
     private fun getAeiLogAttrs(): Map<String, String> {
-        val logEventData = destination.logEvents.single()
+        val logEventData = args.destination.logEvents.single()
         assertEquals(LogSeverity.INFO, logEventData.severity)
         assertEquals(EmbType.System.Exit, logEventData.schemaType.telemetryType)
         return logEventData.schemaType.attributes()

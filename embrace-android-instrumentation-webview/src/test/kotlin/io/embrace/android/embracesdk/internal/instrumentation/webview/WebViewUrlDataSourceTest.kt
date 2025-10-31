@@ -2,46 +2,32 @@ package io.embrace.android.embracesdk.internal.instrumentation.webview
 
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
-import io.embrace.android.embracesdk.fakes.FakeEmbLogger
-import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
+import io.embrace.android.embracesdk.fakes.FakeInstrumentationInstallArgs
 import io.embrace.android.embracesdk.fakes.behavior.FakeBreadcrumbBehavior
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
-import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.opentelemetry.kotlin.semconv.UrlAttributes
+import io.mockk.mockk
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 
 internal class WebViewUrlDataSourceTest {
 
-    private lateinit var configService: ConfigService
     private lateinit var source: WebViewUrlDataSource
-    private lateinit var destination: FakeTelemetryDestination
+    private lateinit var args: FakeInstrumentationInstallArgs
 
     @Before
     fun setUp() {
-        destination = FakeTelemetryDestination()
+        args = FakeInstrumentationInstallArgs(mockk())
     }
 
     @Test
     fun `add breadcrumb`() {
-        configService = FakeConfigService(
-            breadcrumbBehavior = FakeBreadcrumbBehavior(
-                queryParamCaptureEnabled = true,
-                webViewBreadcrumbCaptureEnabled = true
-            )
-        )
-        val clock = FakeClock()
-        source = WebViewUrlDataSource(
-            configService.breadcrumbBehavior,
-            destination,
-            FakeEmbLogger(),
-            clock
-        )
-        source.logWebView("http://www.google.com?query=123",)
-        with(destination.addedEvents.single()) {
+        source = WebViewUrlDataSource(args)
+        source.logWebView("http://www.google.com?query=123")
+        with(args.destination.addedEvents.single()) {
             assertEquals(EmbType.Ux.WebView, schemaType.telemetryType)
-            assertEquals(clock.now(), startTimeMs)
+            assertEquals(args.clock.now(), startTimeMs)
             assertEquals(
                 mapOf(
                     UrlAttributes.URL_FULL to "http://www.google.com?query=123"
@@ -53,23 +39,20 @@ internal class WebViewUrlDataSourceTest {
 
     @Test
     fun `query param capture disabled`() {
-        configService = FakeConfigService(
-            breadcrumbBehavior = FakeBreadcrumbBehavior(
-                queryParamCaptureEnabled = false,
-                webViewBreadcrumbCaptureEnabled = true
+        args = FakeInstrumentationInstallArgs(
+            mockk(),
+            configService = FakeConfigService(
+                breadcrumbBehavior = FakeBreadcrumbBehavior(
+                    queryParamCaptureEnabled = false,
+                    webViewBreadcrumbCaptureEnabled = true
+                )
             )
         )
+
         val clock = FakeClock()
-        source = WebViewUrlDataSource(
-            configService.breadcrumbBehavior,
-            destination,
-            FakeEmbLogger(),
-            clock
-        )
-        source.logWebView(
-            "http://www.google.com?query=123",
-        )
-        with(destination.addedEvents.single()) {
+        source = WebViewUrlDataSource(args)
+        source.logWebView("http://www.google.com?query=123")
+        with(args.destination.addedEvents.single()) {
             assertEquals(EmbType.Ux.WebView, schemaType.telemetryType)
             assertEquals(clock.now(), startTimeMs)
             assertEquals(
@@ -83,23 +66,22 @@ internal class WebViewUrlDataSourceTest {
 
     @Test
     fun `limit not exceeded`() {
-        configService = FakeConfigService(
-            breadcrumbBehavior = FakeBreadcrumbBehavior(
-                queryParamCaptureEnabled = false,
-                webViewBreadcrumbCaptureEnabled = true
+        args = FakeInstrumentationInstallArgs(
+            mockk(),
+            configService = FakeConfigService(
+                breadcrumbBehavior = FakeBreadcrumbBehavior(
+                    queryParamCaptureEnabled = false,
+                    webViewBreadcrumbCaptureEnabled = true
+                )
             )
         )
-        source = WebViewUrlDataSource(
-            configService.breadcrumbBehavior,
-            destination,
-            FakeEmbLogger(),
-            FakeClock()
-        )
+
+        source = WebViewUrlDataSource(args)
         repeat(150) { k ->
             source.logWebView(
                 "http://www.google.com?query=$k",
             )
         }
-        assertEquals(100, destination.addedEvents.size)
+        assertEquals(100, args.destination.addedEvents.size)
     }
 }

@@ -1,14 +1,13 @@
 package io.embrace.android.embracesdk.internal.capture.crash
 
+import io.embrace.android.embracesdk.fakes.FakeInstrumentationInstallArgs
 import io.embrace.android.embracesdk.fakes.FakeLogData
-import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
 import io.embrace.android.embracesdk.internal.arch.datasource.LogSeverity
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.capture.telemetry.InternalErrorDataSourceImpl
-import io.embrace.android.embracesdk.internal.logging.EmbLogger
-import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.opentelemetry.kotlin.semconv.ExceptionAttributes
+import io.mockk.mockk
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Before
@@ -17,23 +16,20 @@ import org.junit.Test
 internal class InternalErrorDataSourceImplTest {
 
     private lateinit var dataSource: InternalErrorDataSourceImpl
-    private lateinit var destination: FakeTelemetryDestination
-    private lateinit var logger: EmbLogger
+    private lateinit var args: FakeInstrumentationInstallArgs
 
     @Before
     fun setUp() {
-        destination = FakeTelemetryDestination()
-        logger = EmbLoggerImpl()
+        args = FakeInstrumentationInstallArgs(mockk())
         dataSource = InternalErrorDataSourceImpl(
-            destination,
-            logger
+            args
         )
     }
 
     @Test
     fun `handle throwable with no message`() {
         dataSource.trackInternalError(InternalErrorType.DELIVERY_SCHEDULING_FAIL, IllegalStateException())
-        val data = destination.logEvents.single()
+        val data = args.destination.logEvents.single()
         val attrs = assertInternalErrorLogged(data)
         assertEquals("java.lang.IllegalStateException", attrs[ExceptionAttributes.EXCEPTION_TYPE])
         assertEquals("", attrs[ExceptionAttributes.EXCEPTION_MESSAGE])
@@ -43,7 +39,7 @@ internal class InternalErrorDataSourceImplTest {
     @Test
     fun `handle throwable with message`() {
         dataSource.trackInternalError(InternalErrorType.DELIVERY_SCHEDULING_FAIL, IllegalArgumentException("Whoops!"))
-        val data = destination.logEvents.single()
+        val data = args.destination.logEvents.single()
         val attrs = assertInternalErrorLogged(data)
         assertEquals("java.lang.IllegalArgumentException", attrs[ExceptionAttributes.EXCEPTION_TYPE])
         assertEquals("Whoops!", attrs[ExceptionAttributes.EXCEPTION_MESSAGE])
@@ -55,7 +51,7 @@ internal class InternalErrorDataSourceImplTest {
         repeat(15) {
             dataSource.trackInternalError(InternalErrorType.DELIVERY_SCHEDULING_FAIL, IllegalStateException())
         }
-        assertEquals(10, destination.logEvents.size)
+        assertEquals(10, args.destination.logEvents.size)
     }
 
     private fun assertInternalErrorLogged(data: FakeLogData): Map<String, String> {

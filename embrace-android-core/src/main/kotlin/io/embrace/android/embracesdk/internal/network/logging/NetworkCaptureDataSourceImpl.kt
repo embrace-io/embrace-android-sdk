@@ -1,22 +1,18 @@
 package io.embrace.android.embracesdk.internal.network.logging
 
+import io.embrace.android.embracesdk.internal.arch.InstrumentationInstallArgs
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceImpl
 import io.embrace.android.embracesdk.internal.arch.datasource.LogSeverity
-import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.arch.limits.NoopLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
-import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.payload.NetworkCapturedCall
 
 internal class NetworkCaptureDataSourceImpl(
-    destination: TelemetryDestination,
-    logger: EmbLogger,
-) : NetworkCaptureDataSource,
-    DataSourceImpl(
-        destination = destination,
-        logger = logger,
-        limitStrategy = NoopLimitStrategy,
-    ) {
+    args: InstrumentationInstallArgs,
+) : NetworkCaptureDataSource, DataSourceImpl(
+    args = args,
+    limitStrategy = NoopLimitStrategy,
+) {
 
     /**
      * Creates a log with data from a captured network request.

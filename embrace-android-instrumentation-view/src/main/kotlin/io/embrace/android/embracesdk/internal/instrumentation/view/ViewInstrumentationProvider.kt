@@ -8,13 +8,7 @@ class ViewInstrumentationProvider : InstrumentationProvider {
     override fun register(args: InstrumentationInstallArgs): DataSourceState<*>? {
         return DataSourceState(
             factory = {
-                ViewDataSource(
-                    args.application,
-                    args.configService.breadcrumbBehavior,
-                    args.clock,
-                    args.telemetryDestination,
-                    args.logger
-                )
+                ViewDataSource(args)
             },
             configGate = { args.configService.breadcrumbBehavior.isActivityBreadcrumbCaptureEnabled() }
         )

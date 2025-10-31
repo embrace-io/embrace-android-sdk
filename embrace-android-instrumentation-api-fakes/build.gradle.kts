@@ -12,5 +12,7 @@ android {
 }
 
 dependencies {
-    implementation(project(":embrace-android-instrumentation-api"))
+    api(project(":embrace-android-instrumentation-api"))
+    api(project(":embrace-android-config-fakes"))
+    api(project(":embrace-test-common"))
 }

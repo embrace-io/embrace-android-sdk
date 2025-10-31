@@ -7,7 +7,6 @@ import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkStatusDataSource
 import io.embrace.android.embracesdk.internal.capture.crumbs.BreadcrumbDataSource
-import io.embrace.android.embracesdk.internal.capture.crumbs.PushNotificationDataSource
 import io.embrace.android.embracesdk.internal.capture.crumbs.RnActionDataSource
 import io.embrace.android.embracesdk.internal.capture.crumbs.ViewDataSource
 import io.embrace.android.embracesdk.internal.capture.crumbs.WebViewUrlDataSource
@@ -43,19 +42,6 @@ internal class FeatureModuleImpl(
                     initModule.clock,
                     destination,
                     initModule.logger
-                )
-            }
-        )
-    }
-
-    override val pushNotificationDataSource: DataSourceState<PushNotificationDataSource> by dataSourceState {
-        DataSourceState(
-            factory = {
-                PushNotificationDataSource(
-                    breadcrumbBehavior = configService.breadcrumbBehavior,
-                    initModule.clock,
-                    destination = destination,
-                    logger = initModule.logger
                 )
             }
         )

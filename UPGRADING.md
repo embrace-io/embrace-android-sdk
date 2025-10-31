@@ -33,6 +33,7 @@ The Embrace SDK is going through a process of modularisation. If you rely on `em
 very little change as most alterations are internal. However, you should be aware that:
 
 - `embrace-android-compose` has been renamed as `embrace-android-instrumentation-compose-tap`
+- `embrace-android-fcm` has been renamed as `embrace-android-instrumentation-fcm`
 
 ## Altered APIs
 

@@ -12,7 +12,9 @@ android {
 }
 
 dependencies {
+    implementation(project(":embrace-android-instrumentation-api"))
     compileOnly(libs.firebase.messaging)
-    compileOnly(project(":embrace-android-sdk"))
-    compileOnly(project(":embrace-internal-api"))
+
+    testImplementation(project(":embrace-test-common"))
+    testImplementation(libs.mockk)
 }

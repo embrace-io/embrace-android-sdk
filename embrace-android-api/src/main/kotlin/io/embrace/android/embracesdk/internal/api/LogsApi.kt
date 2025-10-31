@@ -130,6 +130,10 @@ public interface LogsApi {
      * @param hasData                  if the message contains payload data.
      * @suppress
      */
+    @Deprecated(
+        "This API is deprecated and will be removed in a future release." +
+            "Use logMessage() instead."
+    )
     public fun logPushNotification(
         title: String?,
         body: String?,

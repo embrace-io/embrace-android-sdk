@@ -44,6 +44,7 @@ dependencies {
     implementation(project(":embrace-android-instrumentation-taps"))
     implementation(project(":embrace-android-instrumentation-thermal-state"))
     implementation(project(":embrace-android-instrumentation-app-exit-info"))
+    implementation(project(":embrace-android-instrumentation-fcm"))
 
     implementation(libs.opentelemetry.java.aliases)
 

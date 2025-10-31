@@ -1,13 +1,15 @@
-package io.embrace.android.embracesdk.internal.capture.crumbs
+package io.embrace.android.embracesdk.internal.instrumentation.fcm
 
+import com.google.firebase.messaging.RemoteMessage
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceImpl
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.behavior.BreadcrumbBehavior
+import io.embrace.android.embracesdk.internal.instrumentation.fcm.PushNotificationBreadcrumb.NotificationType.Builder.notificationTypeFor
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
-import io.embrace.android.embracesdk.internal.payload.PushNotificationBreadcrumb
+import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 
 /**
  * Captures custom breadcrumbs.
@@ -22,6 +24,26 @@ class PushNotificationDataSource(
     logger = logger,
     limitStrategy = UpToLimitStrategy(breadcrumbBehavior::getCustomBreadcrumbLimit)
 ) {
+
+    fun logPushNotification(
+        message: RemoteMessage,
+    ) {
+        try {
+            val notification: RemoteMessage.Notification? = message.notification
+            val type = notificationTypeFor(message.data.isNotEmpty(), notification != null)
+
+            logPushNotification(
+                title = notification?.title,
+                body = notification?.body,
+                from = message.from,
+                id = message.messageId,
+                type = type,
+                notificationPriority = notification?.notificationPriority,
+            )
+        } catch (e: Exception) {
+            logger.trackInternalError(InternalErrorType.DATA_SOURCE_DATA_CAPTURE_FAIL, e)
+        }
+    }
 
     fun logPushNotification(
         title: String?,

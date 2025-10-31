@@ -1,0 +1,24 @@
+package io.embrace.android.embracesdk.internal.instrumentation.fcm
+
+import io.embrace.android.embracesdk.internal.arch.InstrumentationInstallArgs
+import io.embrace.android.embracesdk.internal.arch.InstrumentationProvider
+import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState
+
+// retain a reference for use in bytecode instrumentation
+var fcmDataSource: PushNotificationDataSource? = null
+
+class PushNotificationInstrumentationProvider : InstrumentationProvider {
+    override fun register(args: InstrumentationInstallArgs): DataSourceState<*>? {
+        return DataSourceState(
+            factory = {
+                fcmDataSource = PushNotificationDataSource(
+                    breadcrumbBehavior = args.configService.breadcrumbBehavior,
+                    args.clock,
+                    destination = args.telemetryDestination,
+                    logger = args.logger
+                )
+                fcmDataSource
+            }
+        )
+    }
+}

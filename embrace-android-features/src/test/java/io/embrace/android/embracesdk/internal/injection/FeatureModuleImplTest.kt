@@ -21,7 +21,6 @@ internal class FeatureModuleImplTest {
         )
         assertNotNull(module.breadcrumbDataSource)
         assertNotNull(module.viewDataSource)
-        assertNotNull(module.pushNotificationDataSource)
         assertNotNull(module.rnActionDataSource)
         assertNotNull(module.internalErrorDataSource)
     }

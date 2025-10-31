@@ -5,12 +5,13 @@ import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.internal.api.LogsApi
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.injection.embraceImplInject
+import io.embrace.android.embracesdk.internal.instrumentation.fcm.PushNotificationBreadcrumb
+import io.embrace.android.embracesdk.internal.instrumentation.fcm.fcmDataSource
 import io.embrace.android.embracesdk.internal.logs.attachments.Attachment
 import io.embrace.android.embracesdk.internal.logs.attachments.Attachment.EmbraceHosted
 import io.embrace.android.embracesdk.internal.logs.attachments.AttachmentErrorCode.ATTACHMENT_TOO_LARGE
 import io.embrace.android.embracesdk.internal.logs.attachments.AttachmentErrorCode.OVER_MAX_ATTACHMENTS
 import io.embrace.android.embracesdk.internal.logs.attachments.AttachmentErrorCode.UNKNOWN
-import io.embrace.android.embracesdk.internal.payload.PushNotificationBreadcrumb
 import io.embrace.android.embracesdk.internal.serialization.truncatedStacktrace
 import io.embrace.android.embracesdk.internal.utils.getSafeStackTrace
 import io.embrace.opentelemetry.kotlin.semconv.ExceptionAttributes
@@ -23,9 +24,6 @@ internal class LogsApiDelegate(
     private val logService by embraceImplInject(sdkCallChecker) { bootstrapper.logModule.logService }
     private val sessionOrchestrator by embraceImplInject(sdkCallChecker) {
         bootstrapper.sessionOrchestrationModule.sessionOrchestrator
-    }
-    private val pushNotificationDataSource by embraceImplInject(sdkCallChecker) {
-        bootstrapper.featureModule.pushNotificationDataSource.dataSource
     }
     private val serializer by embraceImplInject(sdkCallChecker) {
         bootstrapper.initModule.jsonSerializer
@@ -173,6 +171,7 @@ internal class LogsApiDelegate(
         }
     }
 
+    @Deprecated("This API is deprecated and will be removed in a future release.Use logMessage() instead.")
     override fun logPushNotification(
         title: String?,
         body: String?,
@@ -188,7 +187,7 @@ internal class LogsApiDelegate(
                 return
             }
             val type = PushNotificationBreadcrumb.NotificationType.notificationTypeFor(hasData, isNotification)
-            pushNotificationDataSource?.logPushNotification(title, body, topic, id, notificationPriority, type)
+            fcmDataSource?.logPushNotification(title, body, topic, id, notificationPriority, type)
             sessionOrchestrator?.reportBackgroundActivityStateChange()
         }
     }

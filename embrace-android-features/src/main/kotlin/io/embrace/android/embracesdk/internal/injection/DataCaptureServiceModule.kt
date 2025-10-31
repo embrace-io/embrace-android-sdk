@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.injection
 
 import io.embrace.android.embracesdk.internal.capture.activity.UiLoadDataListener
-import io.embrace.android.embracesdk.internal.capture.crumbs.ActivityBreadcrumbTracker
 import io.embrace.android.embracesdk.internal.capture.startup.AppStartupDataCollector
 import io.embrace.android.embracesdk.internal.capture.startup.StartupService
 import io.embrace.android.embracesdk.internal.capture.startup.StartupTracker
@@ -14,11 +13,6 @@ import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityLifecycl
  * worth reassessing the grouping once this module grows larger.
  */
 interface DataCaptureServiceModule {
-
-    /**
-     * Captures breadcrumbs
-     */
-    val activityBreadcrumbTracker: ActivityBreadcrumbTracker
 
     /**
      * Captures the startup time of the SDK

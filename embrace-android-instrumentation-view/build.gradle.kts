@@ -1,0 +1,21 @@
+plugins {
+    id("com.android.library")
+    kotlin("android")
+    id("io.embrace.internal.build-logic")
+    id("com.vanniktech.maven.publish")
+}
+
+description = "Embrace Android SDK: View Instrumentation"
+
+android {
+    namespace = "io.embrace.android.embracesdk.instrumentation.view"
+}
+
+dependencies {
+    implementation(project(":embrace-android-instrumentation-api"))
+
+    testImplementation(project(":embrace-android-instrumentation-api-fakes"))
+    testImplementation(project(":embrace-android-config-fakes"))
+    testImplementation(project(":embrace-test-common"))
+    testImplementation(libs.mockk)
+}

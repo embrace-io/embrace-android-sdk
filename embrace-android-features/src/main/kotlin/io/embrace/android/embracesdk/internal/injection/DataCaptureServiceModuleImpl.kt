@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.internal.injection
 import io.embrace.android.embracesdk.internal.capture.activity.UiLoadDataListener
 import io.embrace.android.embracesdk.internal.capture.activity.UiLoadTraceEmitter
 import io.embrace.android.embracesdk.internal.capture.activity.createActivityLoadEventEmitter
-import io.embrace.android.embracesdk.internal.capture.crumbs.ActivityBreadcrumbTracker
 import io.embrace.android.embracesdk.internal.capture.startup.AppStartupDataCollector
 import io.embrace.android.embracesdk.internal.capture.startup.AppStartupTraceEmitter
 import io.embrace.android.embracesdk.internal.capture.startup.StartupService
@@ -14,7 +13,6 @@ import io.embrace.android.embracesdk.internal.process.ProcessInfoImpl
 import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityLifecycleListener
 import io.embrace.android.embracesdk.internal.ui.createDrawEventEmitter
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
-import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
 
 internal class DataCaptureServiceModuleImpl(
@@ -22,14 +20,7 @@ internal class DataCaptureServiceModuleImpl(
     openTelemetryModule: OpenTelemetryModule,
     configService: ConfigService,
     versionChecker: VersionChecker = BuildVersionChecker,
-    featureModule: FeatureModule,
 ) : DataCaptureServiceModule {
-
-    override val activityBreadcrumbTracker: ActivityBreadcrumbTracker by singleton {
-        EmbTrace.trace("breadcrumb-service-init") {
-            ActivityBreadcrumbTracker(configService) { featureModule.viewDataSource.dataSource }
-        }
-    }
 
     override val startupService: StartupService by singleton {
         StartupServiceImpl(

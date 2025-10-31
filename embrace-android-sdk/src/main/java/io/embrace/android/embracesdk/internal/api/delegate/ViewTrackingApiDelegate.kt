@@ -3,10 +3,11 @@ package io.embrace.android.embracesdk.internal.api.delegate
 import io.embrace.android.embracesdk.internal.api.ViewTrackingApi
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.injection.embraceImplInject
+import io.embrace.android.embracesdk.internal.instrumentation.view.ViewDataSource
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 
 internal class ViewTrackingApiDelegate(
-    bootstrapper: ModuleInitBootstrapper,
+    private val bootstrapper: ModuleInitBootstrapper,
     private val sdkCallChecker: SdkCallChecker,
 ) : ViewTrackingApi {
 
@@ -22,14 +23,16 @@ internal class ViewTrackingApiDelegate(
 
     override fun startView(name: String): Boolean {
         if (sdkCallChecker.check("start_view")) {
-            return featureModule?.viewDataSource?.dataSource?.startView(name) ?: false
+            val dataSource = bootstrapper.dataSourceModule.embraceFeatureRegistry.findByType(ViewDataSource::class)
+            return dataSource?.startView(name) ?: false
         }
         return false
     }
 
     override fun endView(name: String): Boolean {
         if (sdkCallChecker.check("end_view")) {
-            return featureModule?.viewDataSource?.dataSource?.endView(name) ?: false
+            val dataSource = bootstrapper.dataSourceModule.embraceFeatureRegistry.findByType(ViewDataSource::class)
+            return dataSource?.endView(name) ?: false
         }
         return false
     }
@@ -60,7 +63,8 @@ internal class ViewTrackingApiDelegate(
         }
 
         if (sdkCallChecker.check("log RN view")) {
-            featureModule?.viewDataSource?.dataSource?.changeView(screen)
+            val dataSource = bootstrapper.dataSourceModule.embraceFeatureRegistry.findByType(ViewDataSource::class)
+            dataSource?.changeView(screen)
             sessionOrchestrator?.reportBackgroundActivityStateChange()
         }
     }

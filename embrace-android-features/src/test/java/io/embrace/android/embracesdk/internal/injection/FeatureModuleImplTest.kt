@@ -20,7 +20,6 @@ internal class FeatureModuleImplTest {
             configService = FakeConfigService()
         )
         assertNotNull(module.breadcrumbDataSource)
-        assertNotNull(module.viewDataSource)
         assertNotNull(module.rnActionDataSource)
         assertNotNull(module.internalErrorDataSource)
     }

@@ -1,5 +1,8 @@
-package io.embrace.android.embracesdk.internal.capture.crumbs
+package io.embrace.android.embracesdk.internal.instrumentation.view
 
+import android.app.Activity
+import android.app.Application
+import android.os.Bundle
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceImpl
 import io.embrace.android.embracesdk.internal.arch.datasource.SpanToken
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
@@ -13,6 +16,7 @@ import io.embrace.android.embracesdk.internal.logging.EmbLogger
  * Captures fragment views.
  */
 class ViewDataSource(
+    private val application: Application,
     breadcrumbBehavior: BreadcrumbBehavior,
     private val clock: Clock,
     destination: TelemetryDestination,
@@ -21,9 +25,18 @@ class ViewDataSource(
     destination,
     logger,
     UpToLimitStrategy { breadcrumbBehavior.getFragmentBreadcrumbLimit() }
-) {
+),
+    Application.ActivityLifecycleCallbacks {
 
     private val viewSpans: LinkedHashMap<String, SpanToken> = LinkedHashMap()
+
+    override fun onDataCaptureEnabled() {
+        application.registerActivityLifecycleCallbacks(this)
+    }
+
+    override fun onDataCaptureDisabled() {
+        application.unregisterActivityLifecycleCallbacks(this)
+    }
 
     /**
      * Called when a view is started. If a view with the same name is already running, it will be ended.
@@ -66,5 +79,31 @@ class ViewDataSource(
         viewSpans.forEach { (_, span) ->
             span.stop()
         }
+    }
+
+    override fun onActivityStarted(activity: Activity) {
+        changeView(activity.javaClass.name)
+    }
+
+    /**
+     * Close all open fragments when the activity closes
+     */
+    override fun onActivityStopped(activity: Activity) {
+        onViewClose()
+    }
+
+    override fun onActivityCreated(p0: Activity, p1: Bundle?) {
+    }
+
+    override fun onActivityDestroyed(p0: Activity) {
+    }
+
+    override fun onActivityPaused(p0: Activity) {
+    }
+
+    override fun onActivityResumed(p0: Activity) {
+    }
+
+    override fun onActivitySaveInstanceState(p0: Activity, p1: Bundle) {
     }
 }

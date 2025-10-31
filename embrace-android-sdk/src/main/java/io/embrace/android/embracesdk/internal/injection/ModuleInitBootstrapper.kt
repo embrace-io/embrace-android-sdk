@@ -247,7 +247,6 @@ internal class ModuleInitBootstrapper(
                             openTelemetryModule,
                             configModule.configService,
                             versionChecker,
-                            featureModule
                         )
                     }
 
@@ -260,7 +259,6 @@ internal class ModuleInitBootstrapper(
                     postInit(DataCaptureServiceModule::class) {
                         serviceRegistry.registerServices(
                             lazy { dataCaptureServiceModule.appStartupDataCollector },
-                            lazy { dataCaptureServiceModule.activityBreadcrumbTracker },
                             lazy { dataCaptureServiceModule.uiLoadDataListener },
                         )
                     }

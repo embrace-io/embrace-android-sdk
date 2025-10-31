@@ -36,6 +36,7 @@ class BuildTelemetryCollector {
                 isBuildCacheEnabled = isBuildCacheEnabled(),
                 isConfigCacheEnabled = isConfigurationCacheEnabled(),
                 isGradleParallelExecutionEnabled = isParallelExecutionEnabled(),
+                isIsolatedProjectsEnabled = isIsolatedProjectsEnabled(),
                 jvmArgs = getJvmArgs(),
                 isEdmEnabled = behavior.isUnityEdmEnabled,
                 edmVersion = getEdmVersion(),
@@ -92,6 +93,15 @@ class BuildTelemetryCollector {
 
     private fun Project.isParallelExecutionEnabled() =
         this.gradle.startParameter.isParallelProjectExecutionEnabled
+
+    private fun Project.isIsolatedProjectsEnabled(): Boolean {
+        return try {
+            getSystemProperty("org.gradle.unsafe.isolated-projects") == "true" ||
+                getProperty("org.gradle.unsafe.isolated-projects") == "true"
+        } catch (e: Throwable) {
+            false
+        }
+    }
 
     private fun Project.getJvmArgs() = getProperty(GRADLE_JVM_ARGS) ?: ""
     private fun Project.getEdmVersion() = getProperty(EMBRACE_UNITY_EDM_VERSION) ?: ""

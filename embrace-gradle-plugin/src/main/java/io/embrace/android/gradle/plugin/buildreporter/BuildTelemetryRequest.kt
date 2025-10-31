@@ -14,6 +14,7 @@ data class BuildTelemetryRequest(
     @Json(name = "bc") val isBuildCacheEnabled: Boolean? = null,
     @Json(name = "cc") val isConfigCacheEnabled: Boolean? = null,
     @Json(name = "gpe") val isGradleParallelExecutionEnabled: Boolean? = null,
+    @Json(name = "ip") val isIsolatedProjectsEnabled: Boolean? = null,
     @Json(name = "jvma") val jvmArgs: String? = null,
     @Json(name = "os") val operatingSystem: String? = null,
     @Json(name = "jre") val jreVersion: String? = null,

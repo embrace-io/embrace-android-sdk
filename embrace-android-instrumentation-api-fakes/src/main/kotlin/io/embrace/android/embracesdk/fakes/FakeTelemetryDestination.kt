@@ -46,10 +46,11 @@ class FakeTelemetryDestination : TelemetryDestination {
         schemaType: SchemaType,
         startTimeMs: Long,
         autoTerminate: Boolean,
-    ): SpanToken? {
+    ): SpanToken {
         val token = FakeSpanToken(
             schemaType.fixedObjectName,
             startTimeMs,
+            null,
             null,
             schemaType.telemetryType,
             schemaType.attributes() + mapOf(schemaType.telemetryType.asPair()),
@@ -63,6 +64,7 @@ class FakeTelemetryDestination : TelemetryDestination {
         name: String,
         startTimeMs: Long,
         endTimeMs: Long,
+        errorCode: String?,
         type: EmbType,
         attributes: Map<String, String>,
     ) {
@@ -70,6 +72,7 @@ class FakeTelemetryDestination : TelemetryDestination {
             name,
             startTimeMs,
             null,
+            errorCode,
             type,
             mapOf(type.asPair()),
         )

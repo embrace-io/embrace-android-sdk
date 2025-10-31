@@ -19,6 +19,7 @@ import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
+import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.logging.Logger
 import io.embrace.opentelemetry.kotlin.logging.model.SeverityNumber
@@ -114,6 +115,7 @@ internal class TelemetryDestinationImpl(
         name: String,
         startTimeMs: Long,
         endTimeMs: Long,
+        errorCode: String?,
         type: EmbType,
         attributes: Map<String, String>,
     ) {
@@ -121,6 +123,9 @@ internal class TelemetryDestinationImpl(
             name = name,
             startTimeMs = startTimeMs,
             endTimeMs = endTimeMs,
+            errorCode = errorCode?.let {
+                ErrorCode.valueOf(it)
+            },
             type = type,
             attributes = attributes,
         )

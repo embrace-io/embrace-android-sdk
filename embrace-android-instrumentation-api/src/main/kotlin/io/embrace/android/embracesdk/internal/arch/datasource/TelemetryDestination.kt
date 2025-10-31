@@ -57,6 +57,7 @@ interface TelemetryDestination {
         name: String,
         startTimeMs: Long,
         endTimeMs: Long,
+        errorCode: String? = null,
         type: EmbType = EmbType.Performance.Default,
         attributes: Map<String, String> = emptyMap(),
     )

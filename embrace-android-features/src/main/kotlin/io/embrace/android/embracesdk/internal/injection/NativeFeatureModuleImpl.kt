@@ -8,7 +8,7 @@ internal class NativeFeatureModuleImpl(
     configModule: ConfigModule,
     androidServicesModule: AndroidServicesModule,
     nativeCoreModule: NativeCoreModule,
-    dataSourceModule: DataSourceModule,
+    instrumentationModule: InstrumentationModule,
 ) : NativeFeatureModule {
 
     override val nativeCrashService: NativeCrashService? by singleton {
@@ -18,7 +18,7 @@ internal class NativeFeatureModuleImpl(
             NativeCrashDataSourceImpl(
                 nativeCrashProcessor = nativeCoreModule.processor,
                 preferencesService = androidServicesModule.preferencesService,
-                args = dataSourceModule.instrumentationContext,
+                args = instrumentationModule.instrumentationArgs,
                 serializer = initModule.jsonSerializer,
             )
         }

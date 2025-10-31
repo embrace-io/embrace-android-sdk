@@ -5,7 +5,7 @@ import android.content.Intent
 import android.os.PowerManager
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.fakes.FakeInstrumentationInstallArgs
+import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
 import io.embrace.android.embracesdk.internal.arch.attrs.asPair
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
@@ -20,11 +20,11 @@ import org.robolectric.RuntimeEnvironment
 internal class LowPowerDataSourceTest {
 
     private lateinit var dataSource: LowPowerDataSource
-    private lateinit var args: FakeInstrumentationInstallArgs
+    private lateinit var args: FakeInstrumentationArgs
 
     @Before
     fun setUp() {
-        args = FakeInstrumentationInstallArgs(
+        args = FakeInstrumentationArgs(
             application = ApplicationProvider.getApplicationContext()
         )
         dataSource = LowPowerDataSource(

@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.instrumentation.webview
 
-import io.embrace.android.embracesdk.internal.arch.InstrumentationInstallArgs
+import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceImpl
 import io.embrace.android.embracesdk.internal.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
@@ -10,7 +10,7 @@ import io.embrace.android.embracesdk.internal.config.behavior.BreadcrumbBehavior
  * Captures custom breadcrumbs.
  */
 class WebViewUrlDataSource(
-    args: InstrumentationInstallArgs,
+    args: InstrumentationArgs,
 ) : DataSourceImpl(
     args = args,
     limitStrategy = UpToLimitStrategy(args.configService.breadcrumbBehavior::getWebViewBreadcrumbLimit)

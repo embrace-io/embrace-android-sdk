@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.internal
 
 import android.app.Application
 import android.content.Context
-import io.embrace.android.embracesdk.internal.arch.InstrumentationInstallArgs
+import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.ConfigService
@@ -13,7 +13,7 @@ import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.internal.worker.Worker
 import java.util.concurrent.ConcurrentHashMap
 
-internal class InstrumentationInstallArgsImpl(
+internal class InstrumentationArgsImpl(
     override val configService: ConfigService,
     override val destination: TelemetryDestination,
     override val logger: EmbLogger,
@@ -22,7 +22,7 @@ internal class InstrumentationInstallArgsImpl(
     override val application: Application,
     override val store: KeyValueStore,
     private val workerThreadModule: WorkerThreadModule,
-) : InstrumentationInstallArgs {
+) : InstrumentationArgs {
 
     override fun backgroundWorker(worker: Worker.Background): BackgroundWorker = workerThreadModule.backgroundWorker(worker)
 

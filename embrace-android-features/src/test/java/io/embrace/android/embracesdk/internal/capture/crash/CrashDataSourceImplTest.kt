@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.capture.crash
 import io.embrace.android.embracesdk.fakes.FakeAnrService
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeCrashFileMarker
-import io.embrace.android.embracesdk.fakes.FakeInstrumentationInstallArgs
+import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.fakes.FakeLogOrchestrator
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeSessionOrchestrator
@@ -35,7 +35,7 @@ internal class CrashDataSourceImplTest {
     private lateinit var preferencesService: FakePreferenceService
     private lateinit var crashMarker: FakeCrashFileMarker
     private lateinit var serializer: EmbraceSerializer
-    private lateinit var args: FakeInstrumentationInstallArgs
+    private lateinit var args: FakeInstrumentationArgs
     private lateinit var logger: EmbLogger
     private lateinit var localJsException: JsException
     private lateinit var testException: Exception
@@ -48,7 +48,7 @@ internal class CrashDataSourceImplTest {
         anrService = FakeAnrService()
         preferencesService = FakePreferenceService()
         crashMarker = FakeCrashFileMarker()
-        args = FakeInstrumentationInstallArgs(mockk())
+        args = FakeInstrumentationArgs(mockk())
         serializer = EmbraceSerializer()
         logger = EmbLoggerImpl()
         localJsException = JsException(
@@ -61,7 +61,7 @@ internal class CrashDataSourceImplTest {
     }
 
     private fun setupForHandleCrash(crashHandlerEnabled: Boolean = false) {
-        args = FakeInstrumentationInstallArgs(
+        args = FakeInstrumentationArgs(
             mockk(),
             configService = FakeConfigService(
                 autoDataCaptureBehavior = FakeAutoDataCaptureBehavior(uncaughtExceptionHandlerEnabled = crashHandlerEnabled)

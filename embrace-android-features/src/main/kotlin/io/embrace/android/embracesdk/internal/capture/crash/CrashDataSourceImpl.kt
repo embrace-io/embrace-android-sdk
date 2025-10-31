@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.capture.crash
 
-import io.embrace.android.embracesdk.internal.arch.InstrumentationInstallArgs
+import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.attrs.embAndroidThreads
 import io.embrace.android.embracesdk.internal.arch.attrs.embCrashNumber
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceImpl
@@ -29,7 +29,7 @@ import java.util.concurrent.CopyOnWriteArrayList
 internal class CrashDataSourceImpl(
     private val sessionPropertiesService: SessionPropertiesService,
     private val preferencesService: PreferencesService,
-    args: InstrumentationInstallArgs,
+    args: InstrumentationArgs,
     private val serializer: PlatformSerializer,
 ) : CrashDataSource,
     DataSourceImpl(

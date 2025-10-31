@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.internal.instrumentation.webview
 
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
-import io.embrace.android.embracesdk.fakes.FakeInstrumentationInstallArgs
+import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.fakes.behavior.FakeBreadcrumbBehavior
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.opentelemetry.kotlin.semconv.UrlAttributes
@@ -14,11 +14,11 @@ import org.junit.Test
 internal class WebViewUrlDataSourceTest {
 
     private lateinit var source: WebViewUrlDataSource
-    private lateinit var args: FakeInstrumentationInstallArgs
+    private lateinit var args: FakeInstrumentationArgs
 
     @Before
     fun setUp() {
-        args = FakeInstrumentationInstallArgs(mockk())
+        args = FakeInstrumentationArgs(mockk())
     }
 
     @Test
@@ -39,7 +39,7 @@ internal class WebViewUrlDataSourceTest {
 
     @Test
     fun `query param capture disabled`() {
-        args = FakeInstrumentationInstallArgs(
+        args = FakeInstrumentationArgs(
             mockk(),
             configService = FakeConfigService(
                 breadcrumbBehavior = FakeBreadcrumbBehavior(
@@ -66,7 +66,7 @@ internal class WebViewUrlDataSourceTest {
 
     @Test
     fun `limit not exceeded`() {
-        args = FakeInstrumentationInstallArgs(
+        args = FakeInstrumentationArgs(
             mockk(),
             configService = FakeConfigService(
                 breadcrumbBehavior = FakeBreadcrumbBehavior(

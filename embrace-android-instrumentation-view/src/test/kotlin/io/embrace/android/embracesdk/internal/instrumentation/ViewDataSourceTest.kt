@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.instrumentation
 
-import io.embrace.android.embracesdk.fakes.FakeInstrumentationInstallArgs
+import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.attrs.asPair
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.instrumentation.view.ViewDataSource
@@ -14,11 +14,11 @@ import org.junit.Test
 internal class ViewDataSourceTest {
 
     private lateinit var dataSource: ViewDataSource
-    private lateinit var args: FakeInstrumentationInstallArgs
+    private lateinit var args: FakeInstrumentationArgs
 
     @Before
     fun setUp() {
-        args = FakeInstrumentationInstallArgs(mockk())
+        args = FakeInstrumentationArgs(mockk())
         dataSource = ViewDataSource(args)
     }
 

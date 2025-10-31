@@ -20,7 +20,7 @@ internal class SessionOrchestrationModuleImpl(
     essentialServiceModule: EssentialServiceModule,
     configModule: ConfigModule,
     deliveryModule: DeliveryModule,
-    dataSourceModule: DataSourceModule,
+    instrumentationModule: InstrumentationModule,
     payloadSourceModule: PayloadSourceModule,
     startupService: StartupService,
     logModule: LogModule,
@@ -74,7 +74,7 @@ internal class SessionOrchestrationModuleImpl(
             boundaryDelegate,
             deliveryModule.payloadStore,
             deliveryModule.payloadCachingService,
-            dataSourceModule.dataCaptureOrchestrator,
+            instrumentationModule.instrumentationRegistry,
             essentialServiceModule.telemetryDestination,
             sessionSpanAttrPopulator
         )

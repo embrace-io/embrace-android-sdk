@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.instrumentation.thermalstate
 import android.os.Build
 import android.os.PowerManager
 import androidx.annotation.RequiresApi
-import io.embrace.android.embracesdk.internal.arch.InstrumentationInstallArgs
+import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceImpl
 import io.embrace.android.embracesdk.internal.arch.datasource.SpanToken
 import io.embrace.android.embracesdk.internal.arch.limits.UpToLimitStrategy
@@ -15,7 +15,7 @@ import java.util.concurrent.Executor
 
 @RequiresApi(Build.VERSION_CODES.Q)
 class ThermalStateDataSource(
-    args: InstrumentationInstallArgs,
+    args: InstrumentationArgs,
     private val backgroundWorker: BackgroundWorker,
     powerManagerProvider: Provider<PowerManager?>,
 ) : DataSourceImpl(

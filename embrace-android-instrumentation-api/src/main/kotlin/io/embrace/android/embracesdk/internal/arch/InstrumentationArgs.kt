@@ -13,7 +13,7 @@ import io.embrace.android.embracesdk.internal.worker.Worker
 /**
  * Provides references to essential functionality that can be used when registering instrumentation via SPI.
  */
-interface InstrumentationInstallArgs {
+interface InstrumentationArgs {
 
     /**
      * Declares how instrumentation should behave.

@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.instrumentation.fcm
 
-import io.embrace.android.embracesdk.internal.arch.InstrumentationInstallArgs
+import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.InstrumentationProvider
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState
 
@@ -8,7 +8,7 @@ import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState
 var fcmDataSource: PushNotificationDataSource? = null
 
 class PushNotificationInstrumentationProvider : InstrumentationProvider {
-    override fun register(args: InstrumentationInstallArgs): DataSourceState<*>? {
+    override fun register(args: InstrumentationArgs): DataSourceState<*>? {
         return DataSourceState(
             factory = {
                 fcmDataSource = PushNotificationDataSource(args)

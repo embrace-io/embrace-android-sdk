@@ -23,7 +23,7 @@ internal class ViewTrackingApiDelegate(
 
     override fun startView(name: String): Boolean {
         if (sdkCallChecker.check("start_view")) {
-            val dataSource = bootstrapper.dataSourceModule.embraceFeatureRegistry.findByType(ViewDataSource::class)
+            val dataSource = bootstrapper.instrumentationModule.instrumentationRegistry.findByType(ViewDataSource::class)
             return dataSource?.startView(name) ?: false
         }
         return false
@@ -31,7 +31,7 @@ internal class ViewTrackingApiDelegate(
 
     override fun endView(name: String): Boolean {
         if (sdkCallChecker.check("end_view")) {
-            val dataSource = bootstrapper.dataSourceModule.embraceFeatureRegistry.findByType(ViewDataSource::class)
+            val dataSource = bootstrapper.instrumentationModule.instrumentationRegistry.findByType(ViewDataSource::class)
             return dataSource?.endView(name) ?: false
         }
         return false
@@ -63,7 +63,7 @@ internal class ViewTrackingApiDelegate(
         }
 
         if (sdkCallChecker.check("log RN view")) {
-            val dataSource = bootstrapper.dataSourceModule.embraceFeatureRegistry.findByType(ViewDataSource::class)
+            val dataSource = bootstrapper.instrumentationModule.instrumentationRegistry.findByType(ViewDataSource::class)
             dataSource?.changeView(screen)
             sessionOrchestrator?.reportBackgroundActivityStateChange()
         }

@@ -4,7 +4,7 @@ import android.app.ActivityManager
 import android.app.ApplicationExitInfo
 import android.os.Build.VERSION_CODES
 import androidx.annotation.RequiresApi
-import io.embrace.android.embracesdk.internal.arch.InstrumentationInstallArgs
+import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceImpl
 import io.embrace.android.embracesdk.internal.arch.datasource.LogSeverity
 import io.embrace.android.embracesdk.internal.arch.limits.UpToLimitStrategy
@@ -16,7 +16,7 @@ import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 
 @RequiresApi(VERSION_CODES.R)
 internal class AeiDataSourceImpl(
-    args: InstrumentationInstallArgs,
+    args: InstrumentationArgs,
     private val backgroundWorker: BackgroundWorker,
     private val activityManager: ActivityManager,
     private val aeiDataStore: AeiDataStore,

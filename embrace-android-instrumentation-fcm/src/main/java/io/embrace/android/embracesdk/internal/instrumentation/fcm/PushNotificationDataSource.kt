@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.instrumentation.fcm
 
 import com.google.firebase.messaging.RemoteMessage
-import io.embrace.android.embracesdk.internal.arch.InstrumentationInstallArgs
+import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceImpl
 import io.embrace.android.embracesdk.internal.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
@@ -12,7 +12,7 @@ import io.embrace.android.embracesdk.internal.logging.InternalErrorType
  * Captures custom breadcrumbs.
  */
 class PushNotificationDataSource(
-    args: InstrumentationInstallArgs,
+    args: InstrumentationArgs,
 ) : DataSourceImpl(
     args = args,
     limitStrategy = UpToLimitStrategy(args.configService.breadcrumbBehavior::getCustomBreadcrumbLimit)

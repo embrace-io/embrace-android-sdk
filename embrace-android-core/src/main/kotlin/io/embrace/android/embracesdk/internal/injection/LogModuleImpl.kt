@@ -23,7 +23,7 @@ internal class LogModuleImpl(
     deliveryModule: DeliveryModule,
     workerThreadModule: WorkerThreadModule,
     payloadSourceModule: PayloadSourceModule,
-    dataSourceModule: DataSourceModule,
+    instrumentationModule: InstrumentationModule,
 ) : LogModule {
 
     override val networkCaptureService: NetworkCaptureService by singleton {
@@ -39,7 +39,7 @@ internal class LogModuleImpl(
     }
 
     override val networkCaptureDataSource: NetworkCaptureDataSource by singleton {
-        NetworkCaptureDataSourceImpl(dataSourceModule.instrumentationContext)
+        NetworkCaptureDataSourceImpl(instrumentationModule.instrumentationArgs)
     }
 
     private val embraceDomainCountLimiter: EmbraceDomainCountLimiter by singleton {

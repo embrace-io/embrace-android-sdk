@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.ndk
 
-import io.embrace.android.embracesdk.fakes.FakeInstrumentationInstallArgs
+import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.fakes.FakeNativeCrashProcessor
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fixtures.testNativeCrashData
@@ -28,14 +28,14 @@ internal class NativeCrashDataSourceImplTest {
 
     private lateinit var crashProcessor: FakeNativeCrashProcessor
     private lateinit var serializer: EmbraceSerializer
-    private lateinit var args: FakeInstrumentationInstallArgs
+    private lateinit var args: FakeInstrumentationArgs
     private lateinit var nativeCrashDataSource: NativeCrashDataSourceImpl
 
     @Before
     fun setUp() {
         crashProcessor = FakeNativeCrashProcessor()
         val preferencesService = FakePreferenceService()
-        args = FakeInstrumentationInstallArgs(mockk())
+        args = FakeInstrumentationArgs(mockk())
         serializer = EmbraceSerializer()
         nativeCrashDataSource = NativeCrashDataSourceImpl(
             nativeCrashProcessor = crashProcessor,

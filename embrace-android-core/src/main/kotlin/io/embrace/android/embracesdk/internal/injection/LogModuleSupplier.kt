@@ -12,7 +12,7 @@ typealias LogModuleSupplier = (
     deliveryModule: DeliveryModule,
     workerThreadModule: WorkerThreadModule,
     payloadSourceModule: PayloadSourceModule,
-    dataSourceModule: DataSourceModule,
+    instrumentationModule: InstrumentationModule,
 ) -> LogModule
 
 fun createLogModule(
@@ -24,7 +24,7 @@ fun createLogModule(
     deliveryModule: DeliveryModule,
     workerThreadModule: WorkerThreadModule,
     payloadSourceModule: PayloadSourceModule,
-    dataSourceModule: DataSourceModule,
+    instrumentationModule: InstrumentationModule,
 ): LogModule = LogModuleImpl(
     initModule,
     openTelemetryModule,
@@ -34,5 +34,5 @@ fun createLogModule(
     deliveryModule,
     workerThreadModule,
     payloadSourceModule,
-    dataSourceModule,
+    instrumentationModule,
 )

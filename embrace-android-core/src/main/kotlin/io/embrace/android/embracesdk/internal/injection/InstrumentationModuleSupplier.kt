@@ -1,25 +1,25 @@
 package io.embrace.android.embracesdk.internal.injection
 
 /**
- * Function that returns an instance of [DataSourceModule]. Matches the signature of the constructor for [DataSourceModuleImpl]
+ * Function that returns an instance of [InstrumentationModule]. Matches the signature of the constructor for [InstrumentationModuleImpl]
  */
-typealias DataSourceModuleSupplier = (
+typealias InstrumentationModuleSupplier = (
     initModule: InitModule,
     workerThreadModule: WorkerThreadModule,
     configModule: ConfigModule,
     essentialServiceModule: EssentialServiceModule,
     androidServicesModule: AndroidServicesModule,
     coreModule: CoreModule,
-) -> DataSourceModule
+) -> InstrumentationModule
 
-fun createDataSourceModule(
+fun createInstrumentationModule(
     initModule: InitModule,
     workerThreadModule: WorkerThreadModule,
     configModule: ConfigModule,
     essentialServiceModule: EssentialServiceModule,
     androidServicesModule: AndroidServicesModule,
     coreModule: CoreModule,
-): DataSourceModule = DataSourceModuleImpl(
+): InstrumentationModule = InstrumentationModuleImpl(
     initModule,
     workerThreadModule,
     configModule,

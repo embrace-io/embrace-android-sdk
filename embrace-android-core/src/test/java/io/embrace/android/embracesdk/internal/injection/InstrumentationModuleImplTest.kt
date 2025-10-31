@@ -12,12 +12,12 @@ import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertSame
 import org.junit.Test
 
-internal class DataSourceModuleImplTest {
+internal class InstrumentationModuleImplTest {
 
     @Test
     fun `test default behavior`() {
         val fakeInitModule = FakeInitModule()
-        val module = DataSourceModuleImpl(
+        val module = InstrumentationModuleImpl(
             fakeInitModule,
             FakeWorkerThreadModule(
                 fakeInitModule = fakeInitModule,
@@ -28,8 +28,8 @@ internal class DataSourceModuleImplTest {
             FakeAndroidServicesModule(),
             CoreModuleImpl(mockk<Application>(relaxed = true), fakeInitModule),
         )
-        assertSame(module.dataCaptureOrchestrator, module.embraceFeatureRegistry)
-        assertNotNull(module.dataCaptureOrchestrator)
-        assertNotNull(module.instrumentationContext)
+        assertSame(module.instrumentationRegistry, module.instrumentationRegistry)
+        assertNotNull(module.instrumentationRegistry)
+        assertNotNull(module.instrumentationArgs)
     }
 }

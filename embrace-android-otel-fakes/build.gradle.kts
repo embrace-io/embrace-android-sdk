@@ -1,7 +1,5 @@
 plugins {
-    id("com.android.library")
-    kotlin("android")
-    id("io.embrace.internal.build-logic")
+    id("embrace-android-conventions")
 }
 
 description = "Embrace Android SDK: OTel fakes"

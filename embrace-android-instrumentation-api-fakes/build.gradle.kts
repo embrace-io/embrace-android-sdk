@@ -1,8 +1,5 @@
 plugins {
-    id("com.android.library")
-    kotlin("android")
-    id("io.embrace.internal.build-logic")
-    id("com.vanniktech.maven.publish")
+    id("embrace-android-conventions")
 }
 
 description = "Embrace Android SDK: Instrumentation API Fakes"

@@ -1,11 +1,10 @@
 plugins {
-    kotlin("jvm")
+    id("embrace-jvm-conventions")
     id("java-gradle-plugin")
     id("groovy")
     id("com.vanniktech.maven.publish")
     alias(libs.plugins.google.ksp)
     alias(libs.plugins.buildconfig)
-    id("io.embrace.internal.build-logic")
 }
 
 dependencies {

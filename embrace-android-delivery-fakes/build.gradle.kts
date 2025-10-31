@@ -1,6 +1,5 @@
 plugins {
-    kotlin("jvm")
-    id("io.embrace.internal.build-logic")
+    id("embrace-jvm-conventions")
 }
 
 dependencies {

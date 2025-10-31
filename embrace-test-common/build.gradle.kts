@@ -1,7 +1,6 @@
 plugins {
-    kotlin("jvm")
+    id("embrace-jvm-conventions")
     alias(libs.plugins.google.ksp)
-    id("io.embrace.internal.build-logic")
 }
 
 dependencies {

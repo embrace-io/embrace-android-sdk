@@ -1,8 +1,7 @@
 plugins {
+    id("embrace-jvm-conventions")
     id("java-library")
-    id("kotlin")
     id("com.android.lint")
-    id("io.embrace.internal.build-logic")
 }
 
 dependencies {

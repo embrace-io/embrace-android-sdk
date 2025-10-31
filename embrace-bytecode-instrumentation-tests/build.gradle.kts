@@ -1,9 +1,7 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
-    id("com.android.library")
-    kotlin("android")
-    id("io.embrace.internal.build-logic")
+    id("embrace-android-conventions")
 }
 
 android {

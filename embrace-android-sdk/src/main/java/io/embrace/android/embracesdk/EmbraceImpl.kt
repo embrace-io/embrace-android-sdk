@@ -224,6 +224,7 @@ internal class EmbraceImpl(
             telemetryDestination = bootstrapper.essentialServiceModule.telemetryDestination,
             workerThreadModule = bootstrapper.workerThreadModule,
             store = bootstrapper.androidServicesModule.store,
+            backgroundUpdateNotifier = bootstrapper.sessionOrchestrationModule.sessionOrchestrator::reportBackgroundActivityStateChange
         )
         loader.forEach { provider ->
             try {

@@ -123,7 +123,9 @@ internal class SessionOrchestratorImpl(
     }
 
     override fun reportBackgroundActivityStateChange() {
-        payloadCachingService?.reportBackgroundActivityStateChange()
+        if (state == ProcessState.BACKGROUND) {
+            payloadCachingService?.reportBackgroundActivityStateChange()
+        }
     }
 
     /**

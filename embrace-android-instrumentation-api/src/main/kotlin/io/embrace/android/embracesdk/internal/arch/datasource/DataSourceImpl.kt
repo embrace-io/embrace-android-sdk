@@ -11,6 +11,7 @@ abstract class DataSourceImpl(
     private val destination: TelemetryDestination,
     val logger: EmbLogger,
     private val limitStrategy: LimitStrategy,
+    private val backgroundUpdateNotifier: () -> Unit = { },
 ) : DataSource {
 
     override fun onDataCaptureEnabled() {
@@ -35,6 +36,7 @@ abstract class DataSourceImpl(
         try {
             if (inputValidation() && limitStrategy.shouldCapture()) {
                 destination.action()
+                backgroundUpdateNotifier()
             }
         } catch (exc: Throwable) {
             logger.trackInternalError(InternalErrorType.DATA_SOURCE_DATA_CAPTURE_FAIL, exc)

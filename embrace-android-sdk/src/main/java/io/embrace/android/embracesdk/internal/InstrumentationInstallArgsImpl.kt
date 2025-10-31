@@ -19,6 +19,7 @@ internal class InstrumentationInstallArgsImpl(
     override val clock: Clock,
     override val context: Context,
     override val store: KeyValueStore,
+    override val backgroundUpdateNotifier: () -> Unit,
     private val workerThreadModule: WorkerThreadModule,
 ) : InstrumentationInstallArgs {
 

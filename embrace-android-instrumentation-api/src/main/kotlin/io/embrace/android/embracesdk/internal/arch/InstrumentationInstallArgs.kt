@@ -47,6 +47,11 @@ interface InstrumentationInstallArgs {
     val store: KeyValueStore
 
     /**
+     * Method that when invoked informs the SDK that a update had been made to the data of a session while the app is in the background
+     */
+    val backgroundUpdateNotifier: () -> Unit
+
+    /**
      * Retrieves a background worker matching the given name.
      */
     fun backgroundWorker(worker: Worker.Background): BackgroundWorker

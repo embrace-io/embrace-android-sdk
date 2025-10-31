@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.internal.arch.limits.NoopLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.limits.UpToLimitStrategy
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 internal class DataSourceImplTest {
@@ -63,12 +64,25 @@ internal class DataSourceImplTest {
         assertEquals(0, count)
     }
 
+    @Test
+    fun `capture data respects background update notification`() {
+        var updated = false
+        val source = FakeDataSourceImpl(FakeTelemetryDestination()) {
+            updated = true
+        }
+
+        source.captureTelemetry { }
+        assertTrue(updated)
+    }
+
     private class FakeDataSourceImpl(
         dst: TelemetryDestination,
         limitStrategy: LimitStrategy = NoopLimitStrategy,
+        backgroundUpdateNotifier: () -> Unit = { },
     ) : DataSourceImpl(
-        dst,
-        FakeEmbLogger(throwOnInternalError = false),
-        limitStrategy
+        destination = dst,
+        logger = FakeEmbLogger(throwOnInternalError = false),
+        limitStrategy = limitStrategy,
+        backgroundUpdateNotifier = backgroundUpdateNotifier
     )
 }

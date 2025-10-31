@@ -1,28 +1,21 @@
 package io.embrace.android.embracesdk.internal.instrumentation.fcm
 
 import com.google.firebase.messaging.RemoteMessage
+import io.embrace.android.embracesdk.internal.arch.InstrumentationInstallArgs
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceImpl
-import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
-import io.embrace.android.embracesdk.internal.clock.Clock
-import io.embrace.android.embracesdk.internal.config.behavior.BreadcrumbBehavior
 import io.embrace.android.embracesdk.internal.instrumentation.fcm.PushNotificationBreadcrumb.NotificationType.Builder.notificationTypeFor
-import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 
 /**
  * Captures custom breadcrumbs.
  */
 class PushNotificationDataSource(
-    private val breadcrumbBehavior: BreadcrumbBehavior,
-    private val clock: Clock,
-    destination: TelemetryDestination,
-    logger: EmbLogger,
+    args: InstrumentationInstallArgs,
 ) : DataSourceImpl(
-    destination = destination,
-    logger = logger,
-    limitStrategy = UpToLimitStrategy(breadcrumbBehavior::getCustomBreadcrumbLimit)
+    args = args,
+    limitStrategy = UpToLimitStrategy(args.configService.breadcrumbBehavior::getCustomBreadcrumbLimit)
 ) {
 
     fun logPushNotification(
@@ -54,7 +47,7 @@ class PushNotificationDataSource(
         type: PushNotificationBreadcrumb.NotificationType,
     ) {
         captureTelemetry {
-            val captureFcmPiiData = breadcrumbBehavior.isFcmPiiDataCaptureEnabled()
+            val captureFcmPiiData = configService.breadcrumbBehavior.isFcmPiiDataCaptureEnabled()
             addSessionEvent(
                 SchemaType.PushNotification(
                     title = if (captureFcmPiiData) title else null,

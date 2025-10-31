@@ -1,26 +1,20 @@
 package io.embrace.android.embracesdk.internal.instrumentation
 
 import android.view.View
+import io.embrace.android.embracesdk.internal.arch.InstrumentationInstallArgs
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceImpl
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
-import io.embrace.android.embracesdk.internal.clock.Clock
-import io.embrace.android.embracesdk.internal.config.behavior.BreadcrumbBehavior
-import io.embrace.android.embracesdk.internal.logging.EmbLogger
 
 /**
  * Captures custom breadcrumbs.
  */
 class TapDataSource(
-    private val breadcrumbBehavior: BreadcrumbBehavior,
-    destination: TelemetryDestination,
-    logger: EmbLogger,
-    private val clock: Clock,
+    args: InstrumentationInstallArgs
 ) : DataSourceImpl(
-    destination = destination,
-    logger = logger,
-    limitStrategy = UpToLimitStrategy(breadcrumbBehavior::getTapBreadcrumbLimit)
+    args = args,
+    limitStrategy = UpToLimitStrategy(args.configService.breadcrumbBehavior::getTapBreadcrumbLimit)
 ) {
 
     companion object {
@@ -55,7 +49,7 @@ class TapDataSource(
         breadcrumbType: TapBreadcrumbType,
     ) {
         val finalPoint = when {
-            breadcrumbBehavior.isViewClickCoordinateCaptureEnabled() -> coords
+            configService.breadcrumbBehavior.isViewClickCoordinateCaptureEnabled() -> coords
             else -> Pair(0.0f, 0.0f)
         }
         val coords = this.run {

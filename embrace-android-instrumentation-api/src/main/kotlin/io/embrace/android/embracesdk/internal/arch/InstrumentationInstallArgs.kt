@@ -23,7 +23,7 @@ interface InstrumentationInstallArgs {
     /**
      * An interface where telemetry can be written.
      */
-    val telemetryDestination: TelemetryDestination
+    val destination: TelemetryDestination
 
     /**
      * Embrace SDK's internal logger.

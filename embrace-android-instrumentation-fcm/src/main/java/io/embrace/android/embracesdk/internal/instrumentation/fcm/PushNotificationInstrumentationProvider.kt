@@ -11,12 +11,7 @@ class PushNotificationInstrumentationProvider : InstrumentationProvider {
     override fun register(args: InstrumentationInstallArgs): DataSourceState<*>? {
         return DataSourceState(
             factory = {
-                fcmDataSource = PushNotificationDataSource(
-                    breadcrumbBehavior = args.configService.breadcrumbBehavior,
-                    args.clock,
-                    destination = args.telemetryDestination,
-                    logger = args.logger
-                )
+                fcmDataSource = PushNotificationDataSource(args)
                 fcmDataSource
             }
         )

@@ -1,9 +1,6 @@
 package io.embrace.android.embracesdk.internal.instrumentation
 
-import io.embrace.android.embracesdk.fakes.FakeClock
-import io.embrace.android.embracesdk.fakes.FakeConfigService
-import io.embrace.android.embracesdk.fakes.FakeEmbLogger
-import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
+import io.embrace.android.embracesdk.fakes.FakeInstrumentationInstallArgs
 import io.embrace.android.embracesdk.internal.arch.attrs.asPair
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.instrumentation.view.ViewDataSource
@@ -16,30 +13,20 @@ import org.junit.Test
 
 internal class ViewDataSourceTest {
 
-    private lateinit var configService: FakeConfigService
-    private lateinit var clock: FakeClock
-    private lateinit var destination: FakeTelemetryDestination
     private lateinit var dataSource: ViewDataSource
+    private lateinit var args: FakeInstrumentationInstallArgs
 
     @Before
     fun setUp() {
-        configService = FakeConfigService()
-        clock = FakeClock()
-        destination = FakeTelemetryDestination()
-        dataSource = ViewDataSource(
-            mockk(),
-            configService.breadcrumbBehavior,
-            clock,
-            destination,
-            FakeEmbLogger(),
-        )
+        args = FakeInstrumentationInstallArgs(mockk())
+        dataSource = ViewDataSource(args)
     }
 
     @Test
     fun `start view creates a span correctly`() {
         dataSource.startView("my_fragment")
 
-        val span = destination.createdSpans.single()
+        val span = args.destination.createdSpans.single()
         assertEquals(EmbType.Ux.View, span.type)
         assertTrue(span.isRecording())
         assertEquals(
@@ -56,7 +43,7 @@ internal class ViewDataSourceTest {
         dataSource.startView("my_fragment")
         dataSource.startView("my_fragment")
 
-        val spans = destination.createdSpans
+        val spans = args.destination.createdSpans
 
         assertEquals(2, spans.size)
         assertTrue(
@@ -79,7 +66,7 @@ internal class ViewDataSourceTest {
         dataSource.startView("my_fragment")
         dataSource.startView("another_fragment")
 
-        val spans = destination.createdSpans
+        val spans = args.destination.createdSpans
 
         assertEquals(2, spans.size)
         assertTrue(
@@ -102,7 +89,7 @@ internal class ViewDataSourceTest {
         dataSource.startView("my_fragment")
         dataSource.endView("my_fragment")
 
-        val span = destination.createdSpans.single()
+        val span = args.destination.createdSpans.single()
         assertEquals(EmbType.Ux.View, span.type)
         assertFalse(span.isRecording())
         assertEquals(
@@ -117,14 +104,14 @@ internal class ViewDataSourceTest {
     @Test
     fun `end an unknown fragment`() {
         assertTrue(dataSource.endView("my_fragment"))
-        assertTrue(destination.createdSpans.isEmpty())
+        assertTrue(args.destination.createdSpans.isEmpty())
     }
 
     @Test
     fun `change view starts a new span`() {
         dataSource.changeView("some_view")
 
-        val span = destination.createdSpans.single()
+        val span = args.destination.createdSpans.single()
         assertEquals(EmbType.Ux.View, span.type)
         assertTrue(span.isRecording())
         assertEquals(
@@ -141,7 +128,7 @@ internal class ViewDataSourceTest {
         dataSource.changeView("a_view")
         dataSource.changeView("another_view")
 
-        val spans = destination.createdSpans
+        val spans = args.destination.createdSpans
 
         assertEquals(2, spans.size)
         assertTrue(

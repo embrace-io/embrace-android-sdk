@@ -1,9 +1,7 @@
 package io.embrace.android.embracesdk.internal.instrumentation.thermalstate
 
 import android.os.PowerManager
-import io.embrace.android.embracesdk.fakes.FakeClock
-import io.embrace.android.embracesdk.fakes.FakeEmbLogger
-import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
+import io.embrace.android.embracesdk.fakes.FakeInstrumentationInstallArgs
 import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.mockk.mockk
@@ -15,17 +13,15 @@ import org.junit.Test
 internal class ThermalStateDataSourceTest {
 
     private lateinit var dataSource: ThermalStateDataSource
-    private lateinit var destination: FakeTelemetryDestination
+    private lateinit var args: FakeInstrumentationInstallArgs
     private val mockPowerManager = mockk<PowerManager>(relaxed = true)
 
     @Before
     fun setUp() {
-        destination = FakeTelemetryDestination()
+        args = FakeInstrumentationInstallArgs(mockk())
         dataSource = ThermalStateDataSource(
-            destination,
-            FakeEmbLogger(),
+            args,
             fakeBackgroundWorker(),
-            FakeClock(100),
         ) { mockPowerManager }
     }
 
@@ -36,6 +32,7 @@ internal class ThermalStateDataSourceTest {
             handleThermalStateChange(PowerManager.THERMAL_STATUS_SEVERE)
             handleThermalStateChange(PowerManager.THERMAL_STATUS_CRITICAL)
         }
+        val destination = args.destination
         assertEquals(3, destination.createdSpans.size)
         destination.createdSpans.forEach {
             assertEquals(EmbType.Performance.ThermalState, it.type)
@@ -51,7 +48,7 @@ internal class ThermalStateDataSourceTest {
             dataSource.handleThermalStateChange(PowerManager.THERMAL_STATUS_SEVERE)
         }
 
-        assertEquals(100, destination.createdSpans.size)
+        assertEquals(100, args.destination.createdSpans.size)
     }
 
     @Test

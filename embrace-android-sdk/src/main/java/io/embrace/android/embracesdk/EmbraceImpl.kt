@@ -8,7 +8,6 @@ import io.embrace.android.embracesdk.core.BuildConfig
 import io.embrace.android.embracesdk.internal.EmbraceInternalApi
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
 import io.embrace.android.embracesdk.internal.FlutterInternalInterface
-import io.embrace.android.embracesdk.internal.InstrumentationInstallArgsImpl
 import io.embrace.android.embracesdk.internal.InternalInterfaceApi
 import io.embrace.android.embracesdk.internal.ReactNativeInternalInterface
 import io.embrace.android.embracesdk.internal.UnityInternalInterface
@@ -207,16 +206,7 @@ internal class EmbraceImpl(
      */
     private fun registerInstrumentation() {
         val loader = ServiceLoader.load(InstrumentationProvider::class.java)
-        val instrumentationContext = InstrumentationInstallArgsImpl(
-            configService = bootstrapper.configModule.configService,
-            logger = bootstrapper.initModule.logger,
-            clock = bootstrapper.initModule.clock,
-            context = bootstrapper.coreModule.context,
-            application = bootstrapper.coreModule.application,
-            telemetryDestination = bootstrapper.essentialServiceModule.telemetryDestination,
-            workerThreadModule = bootstrapper.workerThreadModule,
-            store = bootstrapper.androidServicesModule.store,
-        )
+        val instrumentationContext = bootstrapper.dataSourceModule.instrumentationContext
         loader.forEach { provider ->
             try {
                 provider.register(instrumentationContext)?.let { dataSourceState ->

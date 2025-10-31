@@ -1,18 +1,16 @@
 package io.embrace.android.embracesdk.internal.capture.crash
 
+import io.embrace.android.embracesdk.internal.arch.InstrumentationInstallArgs
 import io.embrace.android.embracesdk.internal.arch.attrs.embAndroidThreads
 import io.embrace.android.embracesdk.internal.arch.attrs.embCrashNumber
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceImpl
 import io.embrace.android.embracesdk.internal.arch.datasource.LogSeverity
-import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.arch.limits.NoopLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.ReactNativeCrash.embAndroidReactNativeCrashJsException
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.arch.schema.TelemetryAttributes
 import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
-import io.embrace.android.embracesdk.internal.config.ConfigService
-import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.payload.JsException
 import io.embrace.android.embracesdk.internal.payload.LegacyExceptionInfo
 import io.embrace.android.embracesdk.internal.prefs.PreferencesService
@@ -31,14 +29,11 @@ import java.util.concurrent.CopyOnWriteArrayList
 internal class CrashDataSourceImpl(
     private val sessionPropertiesService: SessionPropertiesService,
     private val preferencesService: PreferencesService,
-    destination: TelemetryDestination,
-    configService: ConfigService,
+    args: InstrumentationInstallArgs,
     private val serializer: PlatformSerializer,
-    logger: EmbLogger,
 ) : CrashDataSource,
     DataSourceImpl(
-        destination = destination,
-        logger = logger,
+        args = args,
         limitStrategy = NoopLimitStrategy,
     ) {
 

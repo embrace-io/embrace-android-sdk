@@ -11,12 +11,7 @@ class WebviewInstrumentationProvider : InstrumentationProvider {
     override fun register(args: InstrumentationInstallArgs): DataSourceState<*>? {
         return DataSourceState(
             factory = {
-                webViewUrlDataSource = WebViewUrlDataSource(
-                    args.configService.breadcrumbBehavior,
-                    args.telemetryDestination,
-                    args.logger,
-                    args.clock,
-                )
+                webViewUrlDataSource = WebViewUrlDataSource(args)
                 webViewUrlDataSource
             },
             configGate = { args.configService.breadcrumbBehavior.isWebViewBreadcrumbCaptureEnabled() }

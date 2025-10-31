@@ -1,12 +1,12 @@
 package io.embrace.android.embracesdk.internal.arch
 
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
-import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
+import io.embrace.android.embracesdk.fakes.FakeInstrumentationInstallArgs
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceImpl
-import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.arch.limits.LimitStrategy
 import io.embrace.android.embracesdk.internal.arch.limits.NoopLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.limits.UpToLimitStrategy
+import io.mockk.mockk
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Test
@@ -15,8 +15,7 @@ internal class DataSourceImplTest {
 
     @Test
     fun `capture data successfully`() {
-        val dst = FakeTelemetryDestination()
-        val source = FakeDataSourceImpl(dst)
+        val source = FakeDataSourceImpl()
         var b = true
         source.captureTelemetry(inputValidation = { true }) {
             b = false
@@ -26,8 +25,7 @@ internal class DataSourceImplTest {
 
     @Test
     fun `capture data threw exception`() {
-        val dst = FakeTelemetryDestination()
-        val source = FakeDataSourceImpl(dst)
+        val source = FakeDataSourceImpl()
 
         // no exception thrown
         source.captureTelemetry(inputValidation = { true }) {
@@ -37,8 +35,7 @@ internal class DataSourceImplTest {
 
     @Test
     fun `capture data respects limits`() {
-        val dst = FakeTelemetryDestination()
-        val source = FakeDataSourceImpl(dst, UpToLimitStrategy { 2 })
+        val source = FakeDataSourceImpl(UpToLimitStrategy { 2 })
 
         var count = 0
         repeat(4) {
@@ -51,8 +48,7 @@ internal class DataSourceImplTest {
 
     @Test
     fun `capture data respects validation`() {
-        val dst = FakeTelemetryDestination()
-        val source = FakeDataSourceImpl(dst, UpToLimitStrategy { 2 })
+        val source = FakeDataSourceImpl(UpToLimitStrategy { 2 })
 
         var count = 0
         repeat(4) {
@@ -64,11 +60,11 @@ internal class DataSourceImplTest {
     }
 
     private class FakeDataSourceImpl(
-        dst: TelemetryDestination,
         limitStrategy: LimitStrategy = NoopLimitStrategy,
+        args: FakeInstrumentationInstallArgs =
+            FakeInstrumentationInstallArgs(mockk(), logger = FakeEmbLogger(throwOnInternalError = false)),
     ) : DataSourceImpl(
-        dst,
-        FakeEmbLogger(throwOnInternalError = false),
+        args,
         limitStrategy
     )
 }

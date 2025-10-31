@@ -225,15 +225,17 @@ internal class ModuleInitBootstrapper(
                     dataSourceModule = init(DataSourceModule::class) {
                         dataSourceModuleSupplier(
                             initModule,
-                            workerThreadModule
+                            workerThreadModule,
+                            configModule,
+                            essentialServiceModule,
+                            androidServicesModule,
+                            coreModule,
                         )
                     }
 
                     featureModule = init(FeatureModule::class) {
                         featureModuleSupplier(
-                            dataSourceModule.embraceFeatureRegistry,
-                            initModule,
-                            essentialServiceModule.telemetryDestination,
+                            dataSourceModule,
                             configModule.configService,
                         )
                     }
@@ -331,10 +333,10 @@ internal class ModuleInitBootstrapper(
                     nativeFeatureModule = init(NativeFeatureModule::class) {
                         nativeFeatureModuleSupplier(
                             initModule,
-                            essentialServiceModule,
                             configModule,
                             androidServicesModule,
-                            nativeCoreModule
+                            nativeCoreModule,
+                            dataSourceModule,
                         )
                     }
 
@@ -352,7 +354,8 @@ internal class ModuleInitBootstrapper(
                             configModule,
                             deliveryModule,
                             workerThreadModule,
-                            payloadSourceModule
+                            payloadSourceModule,
+                            dataSourceModule,
                         )
                     }
 
@@ -391,8 +394,8 @@ internal class ModuleInitBootstrapper(
                             initModule,
                             storageModule,
                             essentialServiceModule,
-                            configModule,
                             androidServicesModule,
+                            dataSourceModule,
                         )
                     }
 

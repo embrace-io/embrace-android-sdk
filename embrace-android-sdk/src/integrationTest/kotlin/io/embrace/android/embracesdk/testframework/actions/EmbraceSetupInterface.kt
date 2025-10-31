@@ -24,6 +24,7 @@ import io.embrace.android.embracesdk.internal.anr.AnrOtelMapper
 import io.embrace.android.embracesdk.internal.anr.detection.BlockedThreadDetector
 import io.embrace.android.embracesdk.internal.arch.DataCaptureOrchestrator
 import io.embrace.android.embracesdk.internal.arch.EmbraceFeatureRegistry
+import io.embrace.android.embracesdk.internal.arch.InstrumentationInstallArgs
 import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
 import io.embrace.android.embracesdk.internal.injection.AndroidServicesModule
 import io.embrace.android.embracesdk.internal.injection.AnrModule
@@ -173,14 +174,26 @@ internal class EmbraceSetupInterface(
                 symbolServiceProvider = { fakeSymbolService }
             )
         },
-        dataSourceModuleSupplier = { initModule, workerThreadModule ->
+        dataSourceModuleSupplier = {
+                initModule,
+                workerThreadModule,
+                configModule,
+                essentialServiceModule,
+                androidServicesModule,
+                coreModule,
+            ->
             val impl = createDataSourceModule(
                 initModule,
-                workerThreadModule
+                workerThreadModule,
+                configModule,
+                essentialServiceModule,
+                androidServicesModule,
+                coreModule
             )
             object : DataSourceModule {
                 override val embraceFeatureRegistry: EmbraceFeatureRegistry = FakeEmbraceFeatureRegistry(impl.embraceFeatureRegistry)
                 override val dataCaptureOrchestrator: DataCaptureOrchestrator = impl.dataCaptureOrchestrator
+                override val instrumentationContext: InstrumentationInstallArgs = impl.instrumentationContext
             }
         }
     )

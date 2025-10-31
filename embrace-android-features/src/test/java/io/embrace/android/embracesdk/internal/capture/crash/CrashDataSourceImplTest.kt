@@ -3,11 +3,11 @@ package io.embrace.android.embracesdk.internal.capture.crash
 import io.embrace.android.embracesdk.fakes.FakeAnrService
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeCrashFileMarker
+import io.embrace.android.embracesdk.fakes.FakeInstrumentationInstallArgs
 import io.embrace.android.embracesdk.fakes.FakeLogOrchestrator
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeSessionOrchestrator
 import io.embrace.android.embracesdk.fakes.FakeSessionPropertiesService
-import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
 import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
@@ -16,6 +16,7 @@ import io.embrace.android.embracesdk.internal.payload.JsException
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
 import io.embrace.opentelemetry.kotlin.semconv.LogAttributes
+import io.mockk.mockk
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertSame
@@ -33,9 +34,8 @@ internal class CrashDataSourceImplTest {
     private lateinit var anrService: FakeAnrService
     private lateinit var preferencesService: FakePreferenceService
     private lateinit var crashMarker: FakeCrashFileMarker
-    private lateinit var configService: FakeConfigService
     private lateinit var serializer: EmbraceSerializer
-    private lateinit var destination: FakeTelemetryDestination
+    private lateinit var args: FakeInstrumentationInstallArgs
     private lateinit var logger: EmbLogger
     private lateinit var localJsException: JsException
     private lateinit var testException: Exception
@@ -48,8 +48,7 @@ internal class CrashDataSourceImplTest {
         anrService = FakeAnrService()
         preferencesService = FakePreferenceService()
         crashMarker = FakeCrashFileMarker()
-        destination = FakeTelemetryDestination()
-        configService = FakeConfigService()
+        args = FakeInstrumentationInstallArgs(mockk())
         serializer = EmbraceSerializer()
         logger = EmbLoggerImpl()
         localJsException = JsException(
@@ -62,16 +61,17 @@ internal class CrashDataSourceImplTest {
     }
 
     private fun setupForHandleCrash(crashHandlerEnabled: Boolean = false) {
-        configService = FakeConfigService(
-            autoDataCaptureBehavior = FakeAutoDataCaptureBehavior(uncaughtExceptionHandlerEnabled = crashHandlerEnabled)
+        args = FakeInstrumentationInstallArgs(
+            mockk(),
+            configService = FakeConfigService(
+                autoDataCaptureBehavior = FakeAutoDataCaptureBehavior(uncaughtExceptionHandlerEnabled = crashHandlerEnabled)
+            )
         )
         crashDataSource = CrashDataSourceImpl(
             sessionPropertiesService,
             preferencesService,
-            destination,
-            configService,
+            args,
             serializer,
-            logger
         ).apply {
             addCrashTeardownHandler(lazy { logOrchestrator })
             addCrashTeardownHandler(lazy { sessionOrchestrator })
@@ -98,7 +98,7 @@ internal class CrashDataSourceImplTest {
         crashDataSource.handleCrash(testException)
 
         assertEquals(1, anrService.crashCount)
-        assertEquals(1, destination.logEvents.size)
+        assertEquals(1, args.destination.logEvents.size)
         assertTrue(logOrchestrator.flushCalled)
         assertNotNull(sessionOrchestrator.crashId)
     }
@@ -109,6 +109,7 @@ internal class CrashDataSourceImplTest {
         crashDataSource.handleCrash(testException)
 
         assertEquals(1, anrService.crashCount)
+        val destination = args.destination
         assertEquals(1, destination.logEvents.size)
         val lastSentCrash = destination.logEvents.single()
         assertEquals(
@@ -141,6 +142,7 @@ internal class CrashDataSourceImplTest {
         crashDataSource.logUnhandledJsException(localJsException)
         crashDataSource.handleCrash(testException)
 
+        val destination = args.destination
         val logEvent = destination.logEvents.single()
         assertEquals(EmbType.System.ReactNativeCrash, logEvent.schemaType.telemetryType)
         val lastSentCrashAttributes = logEvent.schemaType.attributes()

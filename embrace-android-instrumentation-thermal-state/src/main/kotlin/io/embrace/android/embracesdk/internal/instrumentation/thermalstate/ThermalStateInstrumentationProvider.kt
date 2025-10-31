@@ -15,11 +15,9 @@ class ThermalStateInstrumentationProvider : InstrumentationProvider {
         }
         return DataSourceState(
             factory = {
-                ThermalStateDataSource(
-                    destination = args.telemetryDestination,
-                    logger = args.logger,
+                ThermalStateDataSource( // FIXME: supply only args.
+                    args = args,
                     backgroundWorker = args.backgroundWorker(Worker.Background.NonIoRegWorker),
-                    clock = args.clock,
                     powerManagerProvider = { args.systemService(Context.POWER_SERVICE) },
                 )
             },

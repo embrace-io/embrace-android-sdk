@@ -4,13 +4,11 @@ import android.app.ActivityManager
 import android.app.ApplicationExitInfo
 import android.os.Build.VERSION_CODES
 import androidx.annotation.RequiresApi
+import io.embrace.android.embracesdk.internal.arch.InstrumentationInstallArgs
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceImpl
 import io.embrace.android.embracesdk.internal.arch.datasource.LogSeverity
-import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType.AeiLog
-import io.embrace.android.embracesdk.internal.config.ConfigService
-import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
@@ -18,16 +16,13 @@ import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 
 @RequiresApi(VERSION_CODES.R)
 internal class AeiDataSourceImpl(
+    args: InstrumentationInstallArgs,
     private val backgroundWorker: BackgroundWorker,
-    private val configService: ConfigService,
     private val activityManager: ActivityManager,
     private val aeiDataStore: AeiDataStore,
-    destination: TelemetryDestination,
-    logger: EmbLogger,
     private val versionChecker: VersionChecker = BuildVersionChecker,
 ) : DataSourceImpl(
-    destination,
-    logger,
+    args = args,
     limitStrategy = UpToLimitStrategy { SDK_AEI_SEND_LIMIT }
 ) {
 

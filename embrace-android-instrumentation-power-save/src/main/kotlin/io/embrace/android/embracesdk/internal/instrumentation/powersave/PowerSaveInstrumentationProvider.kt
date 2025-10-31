@@ -10,13 +10,10 @@ class PowerSaveInstrumentationProvider : InstrumentationProvider {
     override fun register(args: InstrumentationInstallArgs): DataSourceState<*>? {
         return DataSourceState(
             factory = {
-                LowPowerDataSource(
-                    context = args.context,
+                LowPowerDataSource( // FIXME: supply via args
+                    args = args,
                     backgroundWorker = args.backgroundWorker(Worker.Background.NonIoRegWorker),
-                    clock = args.clock,
                     provider = { args.systemService(Context.POWER_SERVICE) },
-                    destination = args.telemetryDestination,
-                    logger = args.logger,
                 )
             },
             configGate = { args.configService.autoDataCaptureBehavior.isPowerSaveModeCaptureEnabled() }

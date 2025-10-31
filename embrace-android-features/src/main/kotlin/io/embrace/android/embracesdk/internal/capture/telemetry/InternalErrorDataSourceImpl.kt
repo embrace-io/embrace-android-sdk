@@ -1,23 +1,20 @@
 package io.embrace.android.embracesdk.internal.capture.telemetry
 
+import io.embrace.android.embracesdk.internal.arch.InstrumentationInstallArgs
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceImpl
 import io.embrace.android.embracesdk.internal.arch.datasource.LogSeverity
-import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
-import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 
 /**
  * Tracks internal errors & sends them as OTel logs.
  */
 internal class InternalErrorDataSourceImpl(
-    destination: TelemetryDestination,
-    logger: EmbLogger,
+    args: InstrumentationInstallArgs,
 ) : InternalErrorDataSource,
     DataSourceImpl(
-        destination = destination,
-        logger = logger,
+        args,
         limitStrategy = UpToLimitStrategy { 10 },
     ) {
 

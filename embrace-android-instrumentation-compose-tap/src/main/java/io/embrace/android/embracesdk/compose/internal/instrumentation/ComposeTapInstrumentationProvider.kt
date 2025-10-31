@@ -10,11 +10,8 @@ class ComposeTapInstrumentationProvider : InstrumentationProvider {
         return DataSourceState(
             factory = {
                 ComposeTapDataSource(
-                    breadcrumbBehavior = args.configService.breadcrumbBehavior,
-                    destination = args.telemetryDestination,
-                    logger = args.logger,
+                    args = args,
                     tapDataSourceProvider = { tapDataSource },
-                    app = args.application,
                 )
             },
             configGate = args.configService.autoDataCaptureBehavior::isComposeClickCaptureEnabled

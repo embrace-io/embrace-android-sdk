@@ -5,22 +5,22 @@ package io.embrace.android.embracesdk.internal.injection
  */
 typealias NativeFeatureModuleSupplier = (
     initModule: InitModule,
-    essentialServiceModule: EssentialServiceModule,
     configModule: ConfigModule,
     androidServicesModule: AndroidServicesModule,
     nativeCoreModule: NativeCoreModule,
+    dataSourceModule: DataSourceModule,
 ) -> NativeFeatureModule
 
 fun createNativeFeatureModule(
     initModule: InitModule,
-    essentialServiceModule: EssentialServiceModule,
     configModule: ConfigModule,
     androidServicesModule: AndroidServicesModule,
     nativeCoreModule: NativeCoreModule,
+    dataSourceModule: DataSourceModule,
 ): NativeFeatureModule = NativeFeatureModuleImpl(
     initModule,
-    essentialServiceModule,
     configModule,
     androidServicesModule,
-    nativeCoreModule
+    nativeCoreModule,
+    dataSourceModule,
 )

@@ -145,10 +145,6 @@ internal class EmbraceImpl(
 
         val configModule = bootstrapper.configModule
 
-        if (configModule.configService.autoDataCaptureBehavior.isComposeClickCaptureEnabled()) {
-            registerComposeActivityListener(coreModule.application)
-        }
-
         val crashModule = bootstrapper.crashModule
 
         crashModule.lastRunCrashVerifier.readAndCleanMarkerAsync(
@@ -221,6 +217,7 @@ internal class EmbraceImpl(
             logger = bootstrapper.initModule.logger,
             clock = bootstrapper.initModule.clock,
             context = bootstrapper.coreModule.context,
+            application = bootstrapper.coreModule.application,
             telemetryDestination = bootstrapper.essentialServiceModule.telemetryDestination,
             workerThreadModule = bootstrapper.workerThreadModule,
             store = bootstrapper.androidServicesModule.store,
@@ -297,9 +294,6 @@ internal class EmbraceImpl(
         synchronized(sdkCallChecker) {
             if (sdkShuttingDown.compareAndSet(false, true)) {
                 runCatching {
-                    application?.let {
-                        unregisterComposeActivityListener(it)
-                    }
                     application = null
                     bootstrapper.stopServices()
                 }

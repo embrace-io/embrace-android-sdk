@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal
 
+import android.app.Application
 import android.content.Context
 import io.embrace.android.embracesdk.internal.arch.InstrumentationInstallArgs
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
@@ -18,6 +19,7 @@ internal class InstrumentationInstallArgsImpl(
     override val logger: EmbLogger,
     override val clock: Clock,
     override val context: Context,
+    override val application: Application,
     override val store: KeyValueStore,
     private val workerThreadModule: WorkerThreadModule,
 ) : InstrumentationInstallArgs {

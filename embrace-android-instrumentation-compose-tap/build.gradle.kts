@@ -12,9 +12,7 @@ android {
 }
 
 dependencies {
-    implementation(libs.lifecycle.process)
+    implementation(project(":embrace-android-instrumentation-api"))
+    implementation(project(":embrace-android-instrumentation-taps"))
     compileOnly(libs.compose)
-    compileOnly(project(":embrace-internal-api"))
-    compileOnly(project(":embrace-android-instrumentation-api"))
-    compileOnly(project(":embrace-android-instrumentation-taps"))
 }

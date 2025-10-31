@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.internal.capture.crash
+package io.embrace.android.embracesdk.internal.capture
 
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.fakes.FakeLogData

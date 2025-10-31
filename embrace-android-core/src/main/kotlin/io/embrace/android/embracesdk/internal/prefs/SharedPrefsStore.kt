@@ -1,9 +1,9 @@
 package io.embrace.android.embracesdk.internal.prefs
 
 import android.content.SharedPreferences
-import io.embrace.android.embracesdk.internal.arch.store.KeyValueStore
-import io.embrace.android.embracesdk.internal.arch.store.KeyValueStoreEditor
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
+import io.embrace.android.embracesdk.internal.store.KeyValueStore
+import io.embrace.android.embracesdk.internal.store.KeyValueStoreEditor
 
 internal class SharedPrefsStore(
     private val impl: SharedPreferences,

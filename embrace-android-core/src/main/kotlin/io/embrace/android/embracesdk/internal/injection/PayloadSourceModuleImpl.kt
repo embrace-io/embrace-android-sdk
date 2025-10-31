@@ -84,11 +84,11 @@ internal class PayloadSourceModuleImpl(
     }
 
     override val hostedSdkVersionInfo: HostedSdkVersionInfo by singleton {
-        val prefs = androidServicesModule.preferencesService
+        val store = androidServicesModule.store
         when (configModule.configService.appFramework) {
-            AppFramework.REACT_NATIVE -> ReactNativeSdkVersionInfo(prefs)
-            AppFramework.UNITY -> UnitySdkVersionInfo(prefs)
-            AppFramework.FLUTTER -> FlutterSdkVersionInfo(prefs)
+            AppFramework.REACT_NATIVE -> ReactNativeSdkVersionInfo(store)
+            AppFramework.UNITY -> UnitySdkVersionInfo(store)
+            AppFramework.FLUTTER -> FlutterSdkVersionInfo(store)
             else -> NativeSdkVersionInfo()
         }
     }
@@ -105,7 +105,7 @@ internal class PayloadSourceModuleImpl(
                 EmbTrace.trace("deviceImpl") {
                     DeviceImpl(
                         systemServiceModule.windowManager,
-                        androidServicesModule.preferencesService,
+                        androidServicesModule.store,
                         workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker),
                         initModule.systemInfo,
                         initModule.logger

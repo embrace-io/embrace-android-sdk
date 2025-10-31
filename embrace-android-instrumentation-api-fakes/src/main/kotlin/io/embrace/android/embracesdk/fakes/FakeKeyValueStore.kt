@@ -1,12 +1,14 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.android.embracesdk.internal.arch.store.KeyValueStore
-import io.embrace.android.embracesdk.internal.arch.store.KeyValueStoreEditor
+import io.embrace.android.embracesdk.internal.store.KeyValueStore
+import io.embrace.android.embracesdk.internal.store.KeyValueStoreEditor
 import java.util.concurrent.ConcurrentHashMap
 
 class FakeKeyValueStore : KeyValueStore {
 
     private val map = ConcurrentHashMap<String, Any?>()
+
+    fun values(): Map<String, Any?> = map.toMap()
 
     override fun getString(key: String): String? {
         return map[key] as? String

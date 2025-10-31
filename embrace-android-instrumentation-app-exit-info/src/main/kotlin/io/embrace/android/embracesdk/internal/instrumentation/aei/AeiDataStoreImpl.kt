@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.instrumentation.aei
 
-import io.embrace.android.embracesdk.internal.arch.store.KeyValueStore
+import io.embrace.android.embracesdk.internal.store.KeyValueStore
 
 class AeiDataStoreImpl(private val store: KeyValueStore) : AeiDataStore {
 

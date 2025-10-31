@@ -96,56 +96,6 @@ interface PreferencesService {
     var javaScriptBundleId: String?
 
     /**
-     * Embrace sdk version.
-     */
-    var rnSdkVersion: String?
-
-    /**
-     * Last javaScript patch string number.
-     */
-    var javaScriptPatchNumber: String?
-
-    /**
-     * Last react native version.
-     */
-    var reactNativeVersionNumber: String?
-
-    /**
-     * Last Unity version.
-     */
-    var unityVersionNumber: String?
-
-    /**
-     * Last Unity Build ID
-     */
-    var unityBuildIdNumber: String?
-
-    /**
-     * Last Unity SDK version
-     */
-    var unitySdkVersionNumber: String?
-
-    /**
-     * Last Flutter SDK version
-     */
-    var embraceFlutterSdkVersion: String?
-
-    /**
-     * Last Dart SDK version
-     */
-    var dartSdkVersion: String?
-
-    /**
-     * If the device is a rooted device.
-     */
-    var jailbroken: Boolean?
-
-    /**
-     * The device's screen resolution.
-     */
-    var screenResolution: String?
-
-    /**
      * Whether or not the app was installed within the last 24 hours.
      *
      * @return true if it is the user's first day, false otherwise

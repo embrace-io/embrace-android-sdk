@@ -8,14 +8,14 @@ import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.isEmulator
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
-import io.embrace.android.embracesdk.internal.prefs.PreferencesService
+import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import java.io.File
 import java.util.Locale
 
 internal class DeviceImpl(
     private val windowManager: WindowManager?,
-    private val preferencesService: PreferencesService,
+    private val store: KeyValueStore,
     private val backgroundWorker: BackgroundWorker,
     override val systemInfo: SystemInfo,
     private val logger: EmbLogger,
@@ -44,13 +44,13 @@ internal class DeviceImpl(
             return
         }
         backgroundWorker.submit {
-            val storedScreenResolution = preferencesService.screenResolution
+            val storedScreenResolution = persistedScreenResolution
             // get from shared preferences
             if (storedScreenResolution != null) {
                 screenResolution = storedScreenResolution
             } else {
                 screenResolution = getScreenResolution(windowManager)
-                preferencesService.screenResolution = screenResolution
+                persistedScreenResolution = screenResolution
             }
         }
     }
@@ -76,8 +76,9 @@ internal class DeviceImpl(
     private fun asyncRetrieveIsJailbroken() {
         // if the isJailbroken property exists in memory, don't try to retrieve it
         backgroundWorker.submit {
+            isJailbroken = persistedJailbroken
             isJailbroken = checkIfIsJailbroken()
-            preferencesService.jailbroken = isJailbroken
+            persistedJailbroken = isJailbroken
         }
     }
 
@@ -114,4 +115,20 @@ internal class DeviceImpl(
      */
     override val internalStorageTotalCapacity: Lazy<Long> =
         lazy { StatFs(Environment.getDataDirectory().path).totalBytes }
+
+    private var persistedJailbroken: Boolean?
+        get() = store.getBoolean(
+            IS_JAILBROKEN_KEY,
+            false
+        )
+        set(value) = store.edit { putBoolean(IS_JAILBROKEN_KEY, value) }
+
+    private var persistedScreenResolution: String?
+        get() = store.getString(SCREEN_RESOLUTION_KEY)
+        set(value) = store.edit { putString(SCREEN_RESOLUTION_KEY, value) }
+
+    private companion object {
+        private const val IS_JAILBROKEN_KEY = "io.embrace.is_jailbroken"
+        private const val SCREEN_RESOLUTION_KEY = "io.embrace.screen.resolution"
+    }
 }

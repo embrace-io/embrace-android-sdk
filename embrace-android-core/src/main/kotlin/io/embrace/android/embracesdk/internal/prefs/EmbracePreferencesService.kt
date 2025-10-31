@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.prefs
 
-import io.embrace.android.embracesdk.internal.arch.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.clock.Clock
+import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.utils.Uuid.getEmbUuid
 
 internal class EmbracePreferencesService(
@@ -85,49 +85,6 @@ internal class EmbracePreferencesService(
         get() = impl.getString(JAVA_SCRIPT_BUNDLE_ID_KEY)
         set(value) = impl.edit { putString(JAVA_SCRIPT_BUNDLE_ID_KEY, value) }
 
-    override var rnSdkVersion: String?
-        get() = impl.getString(REACT_NATIVE_SDK_VERSION_KEY)
-        set(value) = impl.edit { putString(REACT_NATIVE_SDK_VERSION_KEY, value) }
-
-    override var javaScriptPatchNumber: String?
-        get() = impl.getString(JAVA_SCRIPT_PATCH_NUMBER_KEY)
-        set(value) = impl.edit { putString(JAVA_SCRIPT_PATCH_NUMBER_KEY, value) }
-
-    override var reactNativeVersionNumber: String?
-        get() = impl.getString(REACT_NATIVE_VERSION_KEY)
-        set(value) = impl.edit { putString(REACT_NATIVE_VERSION_KEY, value) }
-
-    override var unityVersionNumber: String?
-        get() = impl.getString(UNITY_VERSION_NUMBER_KEY)
-        set(value) = impl.edit { putString(UNITY_VERSION_NUMBER_KEY, value) }
-
-    override var unityBuildIdNumber: String?
-        get() = impl.getString(UNITY_BUILD_ID_NUMBER_KEY)
-        set(value) = impl.edit { putString(UNITY_BUILD_ID_NUMBER_KEY, value) }
-
-    override var unitySdkVersionNumber: String?
-        get() = impl.getString(UNITY_SDK_VERSION_NUMBER_KEY)
-        set(value) = impl.edit { putString(UNITY_SDK_VERSION_NUMBER_KEY, value) }
-
-    override var dartSdkVersion: String?
-        get() = impl.getString(DART_SDK_VERSION_KEY)
-        set(value) = impl.edit { putString(DART_SDK_VERSION_KEY, value) }
-
-    override var embraceFlutterSdkVersion: String?
-        get() = impl.getString(EMBRACE_FLUTTER_SDK_VERSION_KEY)
-        set(value) = impl.edit { putString(EMBRACE_FLUTTER_SDK_VERSION_KEY, value) }
-
-    override var jailbroken: Boolean?
-        get() = impl.getBoolean(
-            IS_JAILBROKEN_KEY,
-            false
-        )
-        set(value) = impl.edit { putBoolean(IS_JAILBROKEN_KEY, value) }
-
-    override var screenResolution: String?
-        get() = impl.getString(SCREEN_RESOLUTION_KEY)
-        set(value) = impl.edit { putString(SCREEN_RESOLUTION_KEY, value) }
-
     override fun isUsersFirstDay(): Boolean {
         val installDate = installDate
         return installDate != null && clock.now() - installDate <= PreferencesService.DAY_IN_MS
@@ -167,17 +124,7 @@ internal class EmbracePreferencesService(
         private const val LAST_NATIVE_CRASH_NUMBER_KEY = "io.embrace.nativecrashnumber"
         private const val JAVA_SCRIPT_BUNDLE_URL_KEY = "io.embrace.jsbundle.url"
         private const val JAVA_SCRIPT_BUNDLE_ID_KEY = "io.embrace.jsbundle.id"
-        private const val JAVA_SCRIPT_PATCH_NUMBER_KEY = "io.embrace.javascript.patch"
-        private const val REACT_NATIVE_VERSION_KEY = "io.embrace.reactnative.version"
-        private const val REACT_NATIVE_SDK_VERSION_KEY = "io.embrace.reactnative.sdk.version"
         private const val SESSION_PROPERTIES_KEY = "io.embrace.session.properties"
-        private const val UNITY_VERSION_NUMBER_KEY = "io.embrace.unity.version"
-        private const val UNITY_BUILD_ID_NUMBER_KEY = "io.embrace.unity.build.id"
-        private const val UNITY_SDK_VERSION_NUMBER_KEY = "io.embrace.unity.sdk.version"
-        private const val DART_SDK_VERSION_KEY = "io.embrace.dart.sdk.version"
-        private const val EMBRACE_FLUTTER_SDK_VERSION_KEY = "io.embrace.flutter.sdk.version"
-        private const val IS_JAILBROKEN_KEY = "io.embrace.is_jailbroken"
-        private const val SCREEN_RESOLUTION_KEY = "io.embrace.screen.resolution"
         private const val NETWORK_CAPTURE_RULE_PREFIX_KEY = "io.embrace.networkcapturerule"
         private const val SDK_CONFIG_FETCHED_TIMESTAMP = "io.embrace.sdkfetchedtimestamp"
     }

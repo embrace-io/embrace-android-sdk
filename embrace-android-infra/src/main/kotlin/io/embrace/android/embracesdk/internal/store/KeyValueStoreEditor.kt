@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.internal.arch.store
+package io.embrace.android.embracesdk.internal.store
 
 /**
  * Edits values in a key-value store.

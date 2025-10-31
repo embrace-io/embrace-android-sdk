@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.internal.api
 
 import android.content.Context
 import io.embrace.android.embracesdk.EmbraceImpl
-import io.embrace.android.embracesdk.fakes.FakePreferenceService
+import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.fakes.FakeRnBundleIdTracker
 import io.embrace.android.embracesdk.fakes.system.mockContext
 import io.embrace.android.embracesdk.internal.api.delegate.ReactNativeInternalInterfaceImpl
@@ -11,7 +11,6 @@ import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersion
 import io.embrace.android.embracesdk.internal.envelope.metadata.ReactNativeSdkVersionInfo
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.payload.JsException
-import io.embrace.android.embracesdk.internal.prefs.PreferencesService
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
@@ -24,7 +23,7 @@ internal class ReactNativeInternalInterfaceImplTest {
 
     private lateinit var impl: ReactNativeInternalInterfaceImpl
     private lateinit var embrace: EmbraceImpl
-    private lateinit var preferencesService: PreferencesService
+    private lateinit var store: FakeKeyValueStore
     private lateinit var crashService: CrashService
     private lateinit var rnBundleIdTracker: FakeRnBundleIdTracker
     private lateinit var logger: EmbLogger
@@ -34,10 +33,10 @@ internal class ReactNativeInternalInterfaceImplTest {
     @Before
     fun setUp() {
         embrace = mockk(relaxed = true)
-        preferencesService = FakePreferenceService()
+        store = FakeKeyValueStore()
         crashService = mockk(relaxed = true)
         rnBundleIdTracker = FakeRnBundleIdTracker()
-        hostedSdkVersionInfo = ReactNativeSdkVersionInfo(preferencesService)
+        hostedSdkVersionInfo = ReactNativeSdkVersionInfo(store)
         logger = mockk(relaxed = true)
         context = mockContext()
         impl = ReactNativeInternalInterfaceImpl(
@@ -62,17 +61,17 @@ internal class ReactNativeInternalInterfaceImplTest {
     @Test
     fun testSetJavaScriptPatchNumberNull() {
         every { embrace.isStarted } returns true
-        preferencesService.javaScriptPatchNumber = "123"
+        impl.setJavaScriptPatchNumber("123")
         impl.setJavaScriptPatchNumber(null)
-        assertEquals("123", preferencesService.javaScriptPatchNumber)
+        assertEquals("123", store.values().values.single())
     }
 
     @Test
     fun testSetJavaScriptPatchNumberEmpty() {
         every { embrace.isStarted } returns true
-        preferencesService.javaScriptPatchNumber = "123"
+        impl.setJavaScriptPatchNumber("123")
         impl.setJavaScriptPatchNumber("")
-        assertEquals("123", preferencesService.javaScriptPatchNumber)
+        assertEquals("123", store.values().values.single())
     }
 
     @Test
@@ -87,17 +86,17 @@ internal class ReactNativeInternalInterfaceImplTest {
     @Test
     fun testSetReactNativeVersionNumberNull() {
         every { embrace.isStarted } returns true
-        preferencesService.reactNativeVersionNumber = "0.1"
+        impl.setReactNativeVersionNumber("0.1")
         impl.setReactNativeVersionNumber(null)
-        assertEquals("0.1", preferencesService.reactNativeVersionNumber)
+        assertEquals("0.1", store.values().values.single())
     }
 
     @Test
     fun testSetReactNativeVersionNumberEmpty() {
         every { embrace.isStarted } returns true
-        preferencesService.reactNativeVersionNumber = "0.1"
+        impl.setReactNativeVersionNumber("0.1")
         impl.setReactNativeVersionNumber("")
-        assertEquals("0.1", preferencesService.reactNativeVersionNumber)
+        assertEquals("0.1", store.values().values.single())
     }
 
     @Test

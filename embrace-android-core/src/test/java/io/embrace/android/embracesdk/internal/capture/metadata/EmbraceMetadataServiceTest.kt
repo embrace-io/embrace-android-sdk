@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeDeviceArchitecture
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeHostedSdkVersionInfo
+import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.fakes.FakeRnBundleIdTracker
 import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
 import io.embrace.android.embracesdk.internal.SystemInfo
@@ -78,10 +79,6 @@ internal class EmbraceMetadataServiceTest {
         private fun initPreferences() {
             every { preferencesService.appVersion }.returns("app-version")
             every { preferencesService.osVersion }.returns("os-version")
-
-            // to test Device Info:
-            every { preferencesService.jailbroken }.returns(true)
-            every { preferencesService.screenResolution }.returns("200x300")
         }
     }
 
@@ -113,7 +110,7 @@ internal class EmbraceMetadataServiceTest {
                     fakeArchitecture,
                     DeviceImpl(
                         mockk(relaxed = true),
-                        preferencesService,
+                        FakeKeyValueStore(),
                         fakeBackgroundWorker(),
                         SystemInfo(),
                         FakeEmbLogger()

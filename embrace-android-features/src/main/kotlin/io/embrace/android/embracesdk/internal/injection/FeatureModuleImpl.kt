@@ -9,7 +9,6 @@ import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkStatus
 import io.embrace.android.embracesdk.internal.capture.crumbs.BreadcrumbDataSource
 import io.embrace.android.embracesdk.internal.capture.crumbs.RnActionDataSource
 import io.embrace.android.embracesdk.internal.capture.crumbs.ViewDataSource
-import io.embrace.android.embracesdk.internal.capture.crumbs.WebViewUrlDataSource
 import io.embrace.android.embracesdk.internal.capture.telemetry.InternalErrorDataSource
 import io.embrace.android.embracesdk.internal.capture.telemetry.InternalErrorDataSourceImpl
 import io.embrace.android.embracesdk.internal.config.ConfigService
@@ -44,19 +43,6 @@ internal class FeatureModuleImpl(
                     initModule.logger
                 )
             }
-        )
-    }
-
-    override val webViewUrlDataSource: DataSourceState<WebViewUrlDataSource> by dataSourceState {
-        DataSourceState(
-            factory = {
-                WebViewUrlDataSource(
-                    configService.breadcrumbBehavior,
-                    destination,
-                    initModule.logger
-                )
-            },
-            configGate = { configService.breadcrumbBehavior.isWebViewBreadcrumbCaptureEnabled() }
         )
     }
 

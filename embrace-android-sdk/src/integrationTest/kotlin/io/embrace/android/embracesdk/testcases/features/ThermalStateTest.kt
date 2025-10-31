@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.assertions.assertMatches
+import io.embrace.android.embracesdk.internal.instrumentation.thermalstate.ThermalStateDataSource
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -33,7 +34,8 @@ internal class ThermalStateFeatureTest {
             testCaseAction = {
                 recordSession {
                     startTimeMs = clock.now()
-                    alterThermalState(PowerManager.THERMAL_STATUS_NONE)
+                    val dataSource = findDataSource<ThermalStateDataSource>()
+                    dataSource.handleThermalStateChange(PowerManager.THERMAL_STATUS_NONE)
                 }
             },
             assertAction = {
@@ -62,11 +64,12 @@ internal class ThermalStateFeatureTest {
                 recordSession {
                     startTimeMs = clock.now()
 
-                    alterThermalState(PowerManager.THERMAL_STATUS_CRITICAL)
+                    val dataSource = findDataSource<ThermalStateDataSource>()
+                    dataSource.handleThermalStateChange(PowerManager.THERMAL_STATUS_CRITICAL)
                     clock.tick(tickTimeMs)
-                    alterThermalState(PowerManager.THERMAL_STATUS_MODERATE)
+                    dataSource.handleThermalStateChange(PowerManager.THERMAL_STATUS_MODERATE)
                     clock.tick(tickTimeMs)
-                    alterThermalState(PowerManager.THERMAL_STATUS_NONE)
+                    dataSource.handleThermalStateChange(PowerManager.THERMAL_STATUS_NONE)
                 }
             },
             assertAction = {

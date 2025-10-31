@@ -1,11 +1,12 @@
-package io.embrace.android.embracesdk.internal.capture.crumbs
+package io.embrace.android.embracesdk.internal.instrumentation.webview
 
+import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
 import io.embrace.android.embracesdk.fakes.behavior.FakeBreadcrumbBehavior
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.config.ConfigService
-import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.opentelemetry.kotlin.semconv.UrlAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -30,18 +31,17 @@ internal class WebViewUrlDataSourceTest {
                 webViewBreadcrumbCaptureEnabled = true
             )
         )
+        val clock = FakeClock()
         source = WebViewUrlDataSource(
             configService.breadcrumbBehavior,
             destination,
-            EmbLoggerImpl(),
+            FakeEmbLogger(),
+            clock
         )
-        source.logWebView(
-            "http://www.google.com?query=123",
-            15000000000
-        )
+        source.logWebView("http://www.google.com?query=123",)
         with(destination.addedEvents.single()) {
             assertEquals(EmbType.Ux.WebView, schemaType.telemetryType)
-            assertEquals(15000000000, startTimeMs)
+            assertEquals(clock.now(), startTimeMs)
             assertEquals(
                 mapOf(
                     UrlAttributes.URL_FULL to "http://www.google.com?query=123"
@@ -59,18 +59,19 @@ internal class WebViewUrlDataSourceTest {
                 webViewBreadcrumbCaptureEnabled = true
             )
         )
+        val clock = FakeClock()
         source = WebViewUrlDataSource(
             configService.breadcrumbBehavior,
             destination,
-            EmbLoggerImpl(),
+            FakeEmbLogger(),
+            clock
         )
         source.logWebView(
             "http://www.google.com?query=123",
-            15000000000
         )
         with(destination.addedEvents.single()) {
             assertEquals(EmbType.Ux.WebView, schemaType.telemetryType)
-            assertEquals(15000000000, startTimeMs)
+            assertEquals(clock.now(), startTimeMs)
             assertEquals(
                 mapOf(
                     UrlAttributes.URL_FULL to "http://www.google.com"
@@ -91,12 +92,12 @@ internal class WebViewUrlDataSourceTest {
         source = WebViewUrlDataSource(
             configService.breadcrumbBehavior,
             destination,
-            EmbLoggerImpl(),
+            FakeEmbLogger(),
+            FakeClock()
         )
         repeat(150) { k ->
             source.logWebView(
                 "http://www.google.com?query=$k",
-                15000000000
             )
         }
         assertEquals(100, destination.addedEvents.size)

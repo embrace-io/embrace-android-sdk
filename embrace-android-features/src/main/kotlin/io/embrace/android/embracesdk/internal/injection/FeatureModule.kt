@@ -5,13 +5,11 @@ import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkStatus
 import io.embrace.android.embracesdk.internal.capture.crumbs.BreadcrumbDataSource
 import io.embrace.android.embracesdk.internal.capture.crumbs.RnActionDataSource
 import io.embrace.android.embracesdk.internal.capture.crumbs.ViewDataSource
-import io.embrace.android.embracesdk.internal.capture.crumbs.WebViewUrlDataSource
 import io.embrace.android.embracesdk.internal.capture.telemetry.InternalErrorDataSource
 
 interface FeatureModule {
     val breadcrumbDataSource: DataSourceState<BreadcrumbDataSource>
     val viewDataSource: DataSourceState<ViewDataSource>
-    val webViewUrlDataSource: DataSourceState<WebViewUrlDataSource>
     val rnActionDataSource: DataSourceState<RnActionDataSource>
     val internalErrorDataSource: DataSourceState<InternalErrorDataSource>
     val networkStatusDataSource: DataSourceState<NetworkStatusDataSource>

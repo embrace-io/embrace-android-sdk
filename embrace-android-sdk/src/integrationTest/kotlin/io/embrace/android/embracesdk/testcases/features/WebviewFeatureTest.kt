@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.assertions.assertMatches
 import io.embrace.android.embracesdk.assertions.findEventsOfType
 import io.embrace.android.embracesdk.assertions.findSessionSpan
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.instrumentation.webview.WebViewUrlDataSource
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.opentelemetry.kotlin.semconv.UrlAttributes.URL_FULL
 import org.junit.Assert.assertEquals
@@ -24,7 +25,7 @@ internal class WebviewFeatureTest {
         testRule.runTest(
             testCaseAction = {
                 recordSession {
-                    embrace.logWebView("myWebView")
+                    findDataSource<WebViewUrlDataSource>().logWebView("myWebView")
                 }
             },
             assertAction = {

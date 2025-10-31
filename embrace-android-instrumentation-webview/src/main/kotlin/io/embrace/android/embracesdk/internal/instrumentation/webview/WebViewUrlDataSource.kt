@@ -1,9 +1,10 @@
-package io.embrace.android.embracesdk.internal.capture.crumbs
+package io.embrace.android.embracesdk.internal.instrumentation.webview
 
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceImpl
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
+import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.behavior.BreadcrumbBehavior
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 
@@ -14,6 +15,7 @@ class WebViewUrlDataSource(
     private val breadcrumbBehavior: BreadcrumbBehavior,
     destination: TelemetryDestination,
     logger: EmbLogger,
+    private val clock: Clock,
 ) : DataSourceImpl(
     destination = destination,
     logger = logger,
@@ -24,7 +26,7 @@ class WebViewUrlDataSource(
         private const val QUERY_PARAMETER_DELIMITER = "?"
     }
 
-    fun logWebView(url: String?, startTime: Long) {
+    fun logWebView(url: String?) {
         captureTelemetry(inputValidation = { url != null }) {
             // Check if web view query params should be captured.
             var parsedUrl: String = url ?: ""
@@ -34,7 +36,7 @@ class WebViewUrlDataSource(
                     parsedUrl = url?.substring(0, queryOffset) ?: ""
                 }
             }
-            addSessionEvent(SchemaType.WebViewUrl(parsedUrl), startTime)
+            addSessionEvent(SchemaType.WebViewUrl(parsedUrl), clock.now())
         }
     }
 }

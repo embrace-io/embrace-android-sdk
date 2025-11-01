@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.internal.config.remote.NetworkRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -44,6 +45,7 @@ internal class NetworkBehaviorImplTest {
             assertFalse(isCaptureBodyEncryptionEnabled())
             assertNull(getNetworkBodyCapturePublicKey())
             assertEquals(emptySet<NetworkCaptureRuleRemoteConfig>(), getNetworkCaptureRules())
+            assertNotNull(domainCountLimiter)
         }
     }
 

@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.config.behavior
 
 import io.embrace.android.embracesdk.internal.config.remote.NetworkCaptureRuleRemoteConfig
+import io.embrace.android.embracesdk.internal.network.logging.DomainCountLimiter
 
 interface NetworkBehavior {
 
@@ -57,4 +58,9 @@ interface NetworkBehavior {
      * Gets the rules for capturing network call bodies
      */
     fun getNetworkCaptureRules(): Set<NetworkCaptureRuleRemoteConfig>
+
+    /**
+     * Domain count limiter for network requests
+     */
+    val domainCountLimiter: DomainCountLimiter
 }

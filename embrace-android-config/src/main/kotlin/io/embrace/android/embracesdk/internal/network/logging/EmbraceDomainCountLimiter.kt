@@ -1,21 +1,21 @@
 package io.embrace.android.embracesdk.internal.network.logging
 
-import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.session.MemoryCleanerListener
 import io.embrace.android.embracesdk.internal.utils.NetworkUtils
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 
-internal class EmbraceDomainCountLimiter(
-    private val configService: ConfigService,
+class EmbraceDomainCountLimiter(
+    private val defaultLimitSupplier: () -> Int,
+    private val domainLimitsSupplier: () -> Map<String, Int>,
 ) : MemoryCleanerListener, DomainCountLimiter {
 
     private val domainSetting = ConcurrentHashMap<String, DomainSettings>()
     private val callsPerDomainSuffix = ConcurrentHashMap<String, DomainCount>()
     private val ipAddressNetworkCallCount = AtomicInteger(0)
     private val untrackedNetworkCallCount = AtomicInteger(0)
-    private var defaultPerDomainSuffixCallLimit = configService.networkBehavior.getRequestLimitPerDomain()
-    private var domainSuffixCallLimits = configService.networkBehavior.getLimitsByDomain()
+    private var defaultPerDomainSuffixCallLimit = defaultLimitSupplier()
+    private var domainSuffixCallLimits = domainLimitsSupplier()
 
     private val lock = Any()
 
@@ -75,8 +75,8 @@ internal class EmbraceDomainCountLimiter(
         synchronized(lock) {
             clearNetworkCalls()
             // re-fetch limits in case they changed since they last time they were fetched
-            defaultPerDomainSuffixCallLimit = configService.networkBehavior.getRequestLimitPerDomain()
-            domainSuffixCallLimits = configService.networkBehavior.getLimitsByDomain()
+            defaultPerDomainSuffixCallLimit = defaultLimitSupplier()
+            domainSuffixCallLimits = domainLimitsSupplier()
         }
     }
 

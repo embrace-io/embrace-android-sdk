@@ -1,13 +1,16 @@
 package io.embrace.android.embracesdk.fakes.behavior
 
+import io.embrace.android.embracesdk.fakes.FakeDomainCountLimiter
 import io.embrace.android.embracesdk.internal.config.behavior.NetworkBehavior
 import io.embrace.android.embracesdk.internal.config.remote.NetworkCaptureRuleRemoteConfig
+import io.embrace.android.embracesdk.internal.network.logging.DomainCountLimiter
 
 class FakeNetworkBehavior(
     private val captureLimit: Int = 1000,
     private val domains: Map<String, Int> = emptyMap(),
     private val captureHttpUrlConnectionRequests: Boolean = false,
     private val hucLiteInstrumentationEnabled: Boolean = true,
+    override val domainCountLimiter: DomainCountLimiter = FakeDomainCountLimiter(),
 ) : NetworkBehavior {
 
     override fun isRequestContentLengthCaptureEnabled(): Boolean = false

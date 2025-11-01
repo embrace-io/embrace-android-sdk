@@ -6,4 +6,5 @@ plugins {
 dependencies {
     implementation(project(":embrace-android-config"))
     implementation(project(":embrace-android-payload"))
+    implementation(project(":embrace-android-infra"))
 }

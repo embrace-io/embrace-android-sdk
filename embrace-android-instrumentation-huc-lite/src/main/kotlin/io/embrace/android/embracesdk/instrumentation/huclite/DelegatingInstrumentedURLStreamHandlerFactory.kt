@@ -1,9 +1,6 @@
 package io.embrace.android.embracesdk.instrumentation.huclite
 
-import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
-import io.embrace.android.embracesdk.internal.api.InstrumentationApi
-import io.embrace.android.embracesdk.internal.api.NetworkRequestApi
-import io.embrace.android.embracesdk.internal.api.SdkStateApi
+import io.embrace.android.embracesdk.internal.instrumentation.HucLiteDataSource
 import java.net.URLStreamHandler
 import java.net.URLStreamHandlerFactory
 
@@ -16,26 +13,26 @@ import java.net.URLStreamHandlerFactory
 internal class DelegatingInstrumentedURLStreamHandlerFactory(
     private val delegateHandlerFactory: URLStreamHandlerFactory,
     private val instrumentedHandlerFactory: () -> InstrumentedUrlStreamHandlerFactory,
-    private val sdkStateApi: SdkStateApi,
-    private val instrumentationApi: InstrumentationApi,
-    private val networkRequestApi: NetworkRequestApi,
-    private val internalInterface: EmbraceInternalInterface,
+    private val sdkStarted: () -> Boolean,
+    private val currentTimeMs: () -> Long,
+    private val hucLiteDataSource: HucLiteDataSource,
+    private val errorHandler: (Throwable) -> Unit,
 ) : URLStreamHandlerFactory {
     override fun createURLStreamHandler(protocol: String?): URLStreamHandler? {
         val delegateHandler: URLStreamHandler? = try {
             delegateHandlerFactory.createURLStreamHandler(protocol)
         } catch (t: Throwable) {
-            internalInterface.logInternalError(t)
+            errorHandler(t)
             null
         }
 
         return if (delegateHandler != null) {
             DelegatingInstrumentedUrlStreamHandler(
                 delegateHandler = delegateHandler,
-                sdkStateApi = sdkStateApi,
-                instrumentationApi = instrumentationApi,
-                networkRequestApi = networkRequestApi,
-                internalInterface = internalInterface
+                sdkStarted = sdkStarted,
+                currentTimeMs = currentTimeMs,
+                hucLiteDataSource = hucLiteDataSource,
+                errorHandler = errorHandler,
             )
         } else {
             instrumentedHandlerFactory().createURLStreamHandler(protocol)

@@ -129,6 +129,7 @@ internal class TelemetryDestinationImpl(
             type = type,
             attributes = attributes,
         )
+        processStateService.sessionUpdated()
     }
 
     override fun addSessionEvent(schemaType: SchemaType, startTimeMs: Long): Boolean {

@@ -223,6 +223,7 @@ internal class TelemetryDestinationImplTest {
         assertTrue(span.hasEmbraceAttribute(ErrorCodeAttribute.Failure))
         assertEquals(type, span.type)
         assertEquals(attributes + mapOf(type.asPair(), ErrorCodeAttribute.Failure.asPair()), span.attributes)
+        assertTrue(processStateService.sessionDataUpdated)
     }
 
     @Test

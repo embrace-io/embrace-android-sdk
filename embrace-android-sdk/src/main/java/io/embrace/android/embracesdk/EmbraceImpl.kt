@@ -32,6 +32,7 @@ import io.embrace.android.embracesdk.internal.api.delegate.SessionApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.UserApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.ViewTrackingApiDelegate
 import io.embrace.android.embracesdk.internal.arch.InstrumentationProvider
+import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkStatusDataSource
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.clock.NormalizedIntervalClock
 import io.embrace.android.embracesdk.internal.config.behavior.NetworkBehavior
@@ -169,6 +170,10 @@ internal class EmbraceImpl(
         logger.logInfo(startMsg)
 
         registerInstrumentation()
+
+        bootstrapper.instrumentationModule.instrumentationRegistry.findByType(NetworkStatusDataSource::class)?.let {
+            bootstrapper.essentialServiceModule.networkConnectivityService.addNetworkConnectivityListener(it)
+        }
 
         val endTimeMs = clock.now()
         sdkCallChecker.started.set(true)

@@ -42,6 +42,7 @@ dependencies {
     // automatically included instrumentation
     implementation(project(":embrace-android-instrumentation-app-exit-info"))
     implementation(project(":embrace-android-instrumentation-fcm"))
+    implementation(project(":embrace-android-instrumentation-network-status"))
     implementation(project(":embrace-android-instrumentation-power-save"))
     implementation(project(":embrace-android-instrumentation-taps"))
     implementation(project(":embrace-android-instrumentation-thermal-state"))

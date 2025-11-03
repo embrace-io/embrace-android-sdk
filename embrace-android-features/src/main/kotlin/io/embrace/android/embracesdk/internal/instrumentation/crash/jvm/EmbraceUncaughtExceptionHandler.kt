@@ -23,7 +23,7 @@ internal class EmbraceUncaughtExceptionHandler(
 
     override fun uncaughtException(thread: Thread, exception: Throwable) {
         try {
-            crashService.handleCrash(exception)
+            crashService.logUnhandledJvmException(exception)
         } catch (ex: Exception) {
             logger.trackInternalError(InternalErrorType.UNCAUGHT_EXC_HANDLER, ex)
         } finally {

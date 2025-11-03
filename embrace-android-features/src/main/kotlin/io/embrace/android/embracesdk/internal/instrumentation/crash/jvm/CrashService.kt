@@ -1,7 +1,5 @@
 package io.embrace.android.embracesdk.internal.instrumentation.crash.jvm
 
-import io.embrace.android.embracesdk.internal.payload.JsException
-
 /**
  * Service for handling crashes intercepted by the [EmbraceUncaughtExceptionHandler] and
  * forwarding them on for processing.
@@ -9,16 +7,17 @@ import io.embrace.android.embracesdk.internal.payload.JsException
 interface CrashService {
 
     /**
-     * Handles crashes from the [EmbraceUncaughtExceptionHandler].
-     *
-     * @param exception the exception thrown by the thread
+     * Logs an unhandled JVM exception
      */
-    fun handleCrash(exception: Throwable)
+    fun logUnhandledJvmException(exception: Throwable)
 
     /**
-     * Associates an unhandled JS exception with a crash
-     *
-     * @param exception the [JsException] to associate with the crash
+     * Logs an unhandled JS exception
      */
-    fun logUnhandledJsException(exception: JsException)
+    fun logUnhandledJsException(
+        name: String,
+        message: String,
+        type: String?,
+        stacktrace: String?,
+    )
 }

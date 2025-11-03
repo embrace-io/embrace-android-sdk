@@ -10,7 +10,6 @@ import io.embrace.android.embracesdk.internal.capture.metadata.RnBundleIdTracker
 import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.internal.instrumentation.crash.jvm.CrashService
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
-import io.embrace.android.embracesdk.internal.payload.JsException
 
 internal class ReactNativeInternalInterfaceImpl(
     private val embrace: EmbraceImpl,
@@ -28,8 +27,7 @@ internal class ReactNativeInternalInterfaceImpl(
         stacktrace: String?,
     ) {
         if (embrace.isStarted) {
-            val exception = JsException(name, message, type, stacktrace)
-            crashService.logUnhandledJsException(exception)
+            crashService.logUnhandledJsException(name, message, type, stacktrace)
         } else {
             logger.logSdkNotInitialized("log JS exception")
         }

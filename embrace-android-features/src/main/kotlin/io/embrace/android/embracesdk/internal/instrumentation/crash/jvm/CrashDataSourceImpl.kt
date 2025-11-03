@@ -14,8 +14,8 @@ import io.embrace.android.embracesdk.internal.capture.crash.CrashTeardownHandler
 import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
 import io.embrace.android.embracesdk.internal.payload.JsException
 import io.embrace.android.embracesdk.internal.payload.LegacyExceptionInfo
-import io.embrace.android.embracesdk.internal.prefs.PreferencesService
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
+import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.internal.utils.getThreadInfo
 import io.embrace.android.embracesdk.internal.utils.toUTF8String
@@ -23,13 +23,14 @@ import io.embrace.opentelemetry.kotlin.semconv.ExceptionAttributes
 import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
 import io.embrace.opentelemetry.kotlin.semconv.LogAttributes
 import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * Intercept and track uncaught Android Runtime exceptions
  */
 internal class CrashDataSourceImpl(
     private val sessionPropertiesService: SessionPropertiesService,
-    private val preferencesService: PreferencesService,
+    private val keyValueStore: KeyValueStore,
     args: InstrumentationArgs,
     private val serializer: PlatformSerializer,
 ) : CrashDataSource,
@@ -38,8 +39,8 @@ internal class CrashDataSourceImpl(
         limitStrategy = NoopLimitStrategy,
     ) {
 
-    private val handlers: CopyOnWriteArrayList<Lazy<CrashTeardownHandler?>> = CopyOnWriteArrayList()
-    private var mainCrashHandled = false
+    private val mainCrashHandled = AtomicBoolean(false)
+    private val handlers: CopyOnWriteArrayList<CrashTeardownHandler> = CopyOnWriteArrayList()
     private var jsException: JsException? = null
 
     init {
@@ -56,19 +57,20 @@ internal class CrashDataSourceImpl(
      * @param exception the exception thrown by the thread
      */
     @OptIn(IncubatingApi::class)
-    override fun handleCrash(exception: Throwable) {
-        if (!mainCrashHandled) {
-            mainCrashHandled = true
-
+    override fun logUnhandledJvmException(exception: Throwable) {
+        if (!mainCrashHandled.getAndSet(true)) {
             captureTelemetry {
                 val crashId = Uuid.getEmbUuid()
-                val crashNumber = preferencesService.incrementAndGetCrashNumber()
+                val crashNumber = keyValueStore.incrementAndGetCrashNumber()
                 val crashAttributes = TelemetryAttributes(
                     sessionPropertiesProvider = sessionPropertiesService::getProperties,
                 )
 
                 val crashException = LegacyExceptionInfo.ofThrowable(exception)
-                crashAttributes.setAttribute(ExceptionAttributes.EXCEPTION_TYPE, crashException.name)
+                crashAttributes.setAttribute(
+                    ExceptionAttributes.EXCEPTION_TYPE,
+                    crashException.name
+                )
                 crashAttributes.setAttribute(
                     ExceptionAttributes.EXCEPTION_MESSAGE,
                     crashException.message
@@ -107,17 +109,22 @@ internal class CrashDataSourceImpl(
                 addLog(getSchemaType(crashAttributes), LogSeverity.ERROR, "")
 
                 // finally, notify other services that need to perform tear down
-                handlers.forEach { it.value?.handleCrash(crashId) }
+                handlers.forEach { it.handleCrash(crashId) }
             }
         }
     }
 
-    override fun logUnhandledJsException(exception: JsException) {
-        this.jsException = exception
+    override fun logUnhandledJsException(
+        name: String,
+        message: String,
+        type: String?,
+        stacktrace: String?
+    ) {
+        jsException = JsException(name, message, type, stacktrace)
     }
 
-    override fun addCrashTeardownHandler(handler: Lazy<CrashTeardownHandler?>) {
-        handler.let { handlers.add(it) }
+    override fun addCrashTeardownHandler(handler: CrashTeardownHandler) {
+        handler.let(handlers::add)
     }
 
     private fun getSchemaType(attributes: TelemetryAttributes): SchemaType =

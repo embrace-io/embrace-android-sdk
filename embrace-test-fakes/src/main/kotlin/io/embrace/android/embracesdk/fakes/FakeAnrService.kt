@@ -7,23 +7,15 @@ import io.embrace.android.embracesdk.internal.instrumentation.anr.payload.AnrInt
 class FakeAnrService : AnrService {
 
     var data: List<AnrInterval> = mutableListOf()
-    var crashCount: Int = 0
 
     override fun cleanCollections() {
     }
 
     override fun getCapturedData(): List<AnrInterval> = data
 
-    override fun handleCrash(crashId: String) {
-        crashCount++
-    }
-
     override fun startAnrCapture() {
     }
 
     override fun addBlockedThreadListener(listener: BlockedThreadListener) {
-    }
-
-    override fun close() {
     }
 }

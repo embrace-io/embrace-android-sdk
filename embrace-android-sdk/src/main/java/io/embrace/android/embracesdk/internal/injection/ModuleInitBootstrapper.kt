@@ -405,7 +405,6 @@ internal class ModuleInitBootstrapper(
                     postInit(CrashModule::class) {
                         serviceRegistry.registerService(lazy { crashModule.crashDataSource })
                         with(crashModule.crashDataSource) {
-                            anrModule.anrService?.let(::addCrashTeardownHandler)
                             addCrashTeardownHandler(logModule.logOrchestrator)
                             addCrashTeardownHandler(sessionOrchestrationModule.sessionOrchestrator)
                             deliveryModule.payloadStore?.let(::addCrashTeardownHandler)

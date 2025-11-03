@@ -78,15 +78,6 @@ internal class EmbraceAnrService(
         }
     }
 
-    override fun handleCrash(crashId: String) {
-        this.anrMonitorWorker.submit {
-            livenessCheckScheduler.stopMonitoringThread()
-        }
-    }
-
-    override fun close() {
-    }
-
     override fun cleanCollections() {
         stacktraceSampler.cleanCollections()
     }

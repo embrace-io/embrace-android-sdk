@@ -395,23 +395,6 @@ internal class EmbraceAnrServiceTest {
         }
     }
 
-    @Test
-    fun `test handleCrash stops ANR tracking but samples can still be retrieved`() {
-        with(rule) {
-            clock.setCurrentTime(14000000L)
-            rule.anrBehavior.bgAnrCaptureEnabled = true
-            anrService.onForeground(true, clock.now())
-            anrExecutorService.submit {
-                assertTrue(state.started.get())
-            }
-            populateAnrIntervals()
-            anrService.handleCrash("")
-            val anrIntervals = anrService.getCapturedData()
-            assertEquals(5, anrIntervals.size)
-            assertFalse(state.started.get())
-        }
-    }
-
     private fun populateAnrIntervals() {
         with(rule) {
             val state = stacktraceSampler

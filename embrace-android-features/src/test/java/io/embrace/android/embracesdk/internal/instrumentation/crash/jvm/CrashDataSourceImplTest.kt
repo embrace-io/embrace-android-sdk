@@ -68,7 +68,6 @@ internal class CrashDataSourceImplTest {
             addCrashTeardownHandler(logOrchestrator)
             addCrashTeardownHandler(sessionOrchestrator)
             addCrashTeardownHandler(crashMarker)
-            addCrashTeardownHandler(anrService)
         }
     }
 
@@ -89,7 +88,6 @@ internal class CrashDataSourceImplTest {
 
         crashDataSource.logUnhandledJvmException(testException)
 
-        assertEquals(1, anrService.crashCount)
         assertEquals(1, args.destination.logEvents.size)
         assertTrue(logOrchestrator.flushCalled)
         assertNotNull(sessionOrchestrator.crashId)
@@ -100,7 +98,6 @@ internal class CrashDataSourceImplTest {
         setupForHandleCrash()
         crashDataSource.logUnhandledJvmException(testException)
 
-        assertEquals(1, anrService.crashCount)
         val destination = args.destination
         assertEquals(1, destination.logEvents.size)
         val lastSentCrash = destination.logEvents.single()
@@ -114,7 +111,6 @@ internal class CrashDataSourceImplTest {
          * by testing that a second execution of handleCrash wont run anything
          */
         crashDataSource.logUnhandledJvmException(testException)
-        assertEquals(1, anrService.crashCount)
         assertEquals(1, destination.logEvents.size)
         assertSame(lastSentCrash, destination.logEvents.single())
     }
@@ -143,7 +139,6 @@ internal class CrashDataSourceImplTest {
         val logEvent = destination.logEvents.single()
         assertEquals(EmbType.System.ReactNativeCrash, logEvent.schemaType.telemetryType)
         val lastSentCrashAttributes = logEvent.schemaType.attributes()
-        assertEquals(1, anrService.crashCount)
         assertEquals(1, destination.logEvents.size)
         assertEquals(lastSentCrashAttributes[LogAttributes.LOG_RECORD_UID], sessionOrchestrator.crashId)
         assertEquals(

@@ -5,7 +5,7 @@ import android.app.ApplicationExitInfo
 import com.android.server.os.TombstoneProtos
 import io.embrace.android.embracesdk.ResourceReader
 import io.embrace.android.embracesdk.fakes.FakeConfigService
-import io.embrace.android.embracesdk.fakes.FakeInstrumentationInstallArgs
+import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
 import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
@@ -130,7 +130,7 @@ internal class AeiNdkCrashProtobufSendTest {
             stream,
             reason
         )
-        val args = FakeInstrumentationInstallArgs(
+        val args = FakeInstrumentationArgs(
             mockk(),
             configService = FakeConfigService(autoDataCaptureBehavior = FakeAutoDataCaptureBehavior(ndkEnabled = true)),
         )

@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.network.logging
 
-import io.embrace.android.embracesdk.fakes.FakeInstrumentationInstallArgs
+import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.fakes.fakeNetworkCapturedCall
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.mockk.mockk
@@ -11,7 +11,7 @@ internal class NetworkCaptureDataSourceTest {
 
     @Test
     fun `test network capture is sent as log`() {
-        val args = FakeInstrumentationInstallArgs(mockk())
+        val args = FakeInstrumentationArgs(mockk())
         val dataSource = NetworkCaptureDataSourceImpl(args)
         val capturedCall = fakeNetworkCapturedCall()
         dataSource.logNetworkCapturedCall(capturedCall)

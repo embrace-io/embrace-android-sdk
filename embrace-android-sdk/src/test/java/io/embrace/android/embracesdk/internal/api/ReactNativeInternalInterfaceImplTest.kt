@@ -6,14 +6,12 @@ import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.fakes.FakeRnBundleIdTracker
 import io.embrace.android.embracesdk.fakes.system.mockContext
 import io.embrace.android.embracesdk.internal.api.delegate.ReactNativeInternalInterfaceImpl
-import io.embrace.android.embracesdk.internal.capture.crash.CrashService
 import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.internal.envelope.metadata.ReactNativeSdkVersionInfo
+import io.embrace.android.embracesdk.internal.instrumentation.crash.jvm.CrashService
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
-import io.embrace.android.embracesdk.internal.payload.JsException
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.slot
 import io.mockk.verify
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -156,15 +154,8 @@ internal class ReactNativeInternalInterfaceImplTest {
         every { embrace.isStarted } returns true
         impl.logUnhandledJsException("name", "message", "type", "stack")
 
-        val captor = slot<JsException>()
         verify(exactly = 1) {
-            crashService.logUnhandledJsException(capture(captor))
-        }
-        with(captor.captured) {
-            assertEquals("name", name)
-            assertEquals("message", message)
-            assertEquals("type", type)
-            assertEquals("stack", stacktrace)
+            crashService.logUnhandledJsException("name", "message", "type", "stack")
         }
     }
 

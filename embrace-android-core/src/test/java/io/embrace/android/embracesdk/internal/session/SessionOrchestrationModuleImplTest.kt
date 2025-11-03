@@ -15,7 +15,7 @@ import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRe
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.injection.CoreModuleImpl
 import io.embrace.android.embracesdk.internal.injection.SessionOrchestrationModuleImpl
-import io.embrace.android.embracesdk.internal.injection.createDataSourceModule
+import io.embrace.android.embracesdk.internal.injection.createInstrumentationModule
 import io.embrace.android.embracesdk.internal.worker.Worker
 import io.mockk.mockk
 import org.junit.Assert.assertNotNull
@@ -32,7 +32,7 @@ internal class SessionOrchestrationModuleImplTest {
 
     @Test
     fun testDefaultImplementations() {
-        val dataSourceModule = createDataSourceModule(
+        val dataSourceModule = createInstrumentationModule(
             initModule,
             workerThreadModule,
             FakeConfigModule(),
@@ -60,7 +60,7 @@ internal class SessionOrchestrationModuleImplTest {
     @Test
     fun testEnabledBehaviors() {
         val configModule = createEnabledBehavior()
-        val dataSourceModule = createDataSourceModule(
+        val dataSourceModule = createInstrumentationModule(
             initModule,
             workerThreadModule,
             FakeConfigModule(),

@@ -1,13 +1,11 @@
 package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
-import io.embrace.android.embracesdk.internal.capture.crash.CrashDataSource
 import io.embrace.android.embracesdk.internal.capture.crash.CrashTeardownHandler
-import io.embrace.android.embracesdk.internal.payload.JsException
+import io.embrace.android.embracesdk.internal.instrumentation.crash.jvm.CrashDataSource
 
 class FakeCrashDataSource : CrashDataSource {
     internal var exception: Throwable? = null
-    internal var jsException: JsException? = null
 
     override fun onDataCaptureEnabled() {
         TODO("Not yet implemented")
@@ -28,14 +26,18 @@ class FakeCrashDataSource : CrashDataSource {
         TODO("Not yet implemented")
     }
 
-    override fun addCrashTeardownHandler(handler: Lazy<CrashTeardownHandler?>) {
+    override fun addCrashTeardownHandler(handler: CrashTeardownHandler) {
     }
 
-    override fun handleCrash(exception: Throwable) {
+    override fun logUnhandledJvmException(exception: Throwable) {
         this.exception = exception
     }
 
-    override fun logUnhandledJsException(exception: JsException) {
-        jsException = exception
+    override fun logUnhandledJsException(
+        name: String,
+        message: String,
+        type: String?,
+        stacktrace: String?,
+    ) {
     }
 }

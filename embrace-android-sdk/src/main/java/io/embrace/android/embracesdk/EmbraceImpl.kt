@@ -32,6 +32,7 @@ import io.embrace.android.embracesdk.internal.api.delegate.SessionApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.UserApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.ViewTrackingApiDelegate
 import io.embrace.android.embracesdk.internal.arch.InstrumentationProvider
+import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkStatusDataSource
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.clock.NormalizedIntervalClock
 import io.embrace.android.embracesdk.internal.config.behavior.NetworkBehavior
@@ -168,7 +169,12 @@ internal class EmbraceImpl(
         val startMsg = "Embrace SDK version ${BuildConfig.VERSION_NAME} started" + appId?.run { " for appId =  $this" }
         logger.logInfo(startMsg)
 
-        registerInstrumentation()
+        val registry = bootstrapper.instrumentationModule.instrumentationRegistry
+        val instrumentationProviders = ServiceLoader.load(InstrumentationProvider::class.java)
+        registry.loadInstrumentations(instrumentationProviders, bootstrapper.instrumentationModule.instrumentationArgs)
+        registry.findByType(NetworkStatusDataSource::class)?.let {
+            bootstrapper.essentialServiceModule.networkConnectivityService.addNetworkConnectivityListener(it)
+        }
 
         val endTimeMs = clock.now()
         sdkCallChecker.started.set(true)
@@ -198,23 +204,6 @@ internal class EmbraceImpl(
         worker.submit { // potentially trigger first delivery attempt by firing network status callback
             registerDeliveryNetworkListener()
             bootstrapper.deliveryModule.schedulingService?.onPayloadIntake()
-        }
-    }
-
-    /**
-     * Loads instrumentation via SPI and registers it with the SDK.
-     */
-    private fun registerInstrumentation() {
-        val loader = ServiceLoader.load(InstrumentationProvider::class.java)
-        val instrumentationContext = bootstrapper.dataSourceModule.instrumentationContext
-        loader.forEach { provider ->
-            try {
-                provider.register(instrumentationContext)?.let { dataSourceState ->
-                    bootstrapper.dataSourceModule.embraceFeatureRegistry.add(dataSourceState)
-                }
-            } catch (exc: Throwable) {
-                logger.trackInternalError(InternalErrorType.INSTRUMENTATION_REG_FAIL, exc)
-            }
         }
     }
 

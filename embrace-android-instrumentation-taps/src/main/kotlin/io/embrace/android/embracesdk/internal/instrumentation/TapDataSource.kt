@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.instrumentation
 
 import android.view.View
-import io.embrace.android.embracesdk.internal.arch.InstrumentationInstallArgs
+import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceImpl
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.arch.limits.UpToLimitStrategy
@@ -11,7 +11,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
  * Captures custom breadcrumbs.
  */
 class TapDataSource(
-    args: InstrumentationInstallArgs
+    args: InstrumentationArgs
 ) : DataSourceImpl(
     args = args,
     limitStrategy = UpToLimitStrategy(args.configService.breadcrumbBehavior::getTapBreadcrumbLimit)

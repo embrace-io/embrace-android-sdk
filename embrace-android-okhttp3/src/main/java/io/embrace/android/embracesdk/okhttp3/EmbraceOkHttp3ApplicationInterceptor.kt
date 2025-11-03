@@ -38,55 +38,45 @@ class EmbraceOkHttp3ApplicationInterceptor(
             if (embrace.isStarted) {
                 val urlString =
                     getOverriddenURLString(EmbraceOkHttp3PathOverrideRequest(request), e.customPath)
-                embrace.recordNetworkRequest(
-                    EmbraceNetworkRequest.fromIncompleteRequest(
-                        urlString,
-                        HttpMethod.fromString(request.method),
-                        startTime,
-                        embrace.getSdkCurrentTimeMs(),
-                        causeName(e, UNKNOWN_EXCEPTION),
-                        causeMessage(e, UNKNOWN_MESSAGE),
-                        request.header(CUSTOM_TRACE_ID_HEADER_NAME),
-                        if (embraceInternalApi.internalInterface.isNetworkSpanForwardingEnabled()) {
-                            request.header(
-                                TRACEPARENT_HEADER_NAME
-                            )
-                        } else {
-                            null
-                        },
-                        null
-                    )
-                )
+                val cause = e.cause
+                recordNetworkError(urlString, request, startTime, cause)
             }
             throw e
         } catch (e: Exception) {
             // we are interested in errors.
             if (embrace.isStarted) {
                 val urlString = getOverriddenURLString(EmbraceOkHttp3PathOverrideRequest(request))
-                val errorType = e.javaClass.canonicalName
-                val errorMessage = e.message
-                embrace.recordNetworkRequest(
-                    EmbraceNetworkRequest.fromIncompleteRequest(
-                        urlString,
-                        HttpMethod.fromString(request.method),
-                        startTime,
-                        embrace.getSdkCurrentTimeMs(),
-                        errorType ?: UNKNOWN_EXCEPTION,
-                        errorMessage ?: UNKNOWN_MESSAGE,
-                        request.header(CUSTOM_TRACE_ID_HEADER_NAME),
-                        if (embraceInternalApi.internalInterface.isNetworkSpanForwardingEnabled()) {
-                            request.header(
-                                TRACEPARENT_HEADER_NAME
-                            )
-                        } else {
-                            null
-                        },
-                        null
-                    )
-                )
+                val cause = e
+                recordNetworkError(urlString, request, startTime, cause)
             }
             throw e
         }
+    }
+
+    private fun recordNetworkError(
+        urlString: String,
+        request: Request,
+        startTime: Long,
+        cause: Throwable?,
+    ) {
+        embrace.recordNetworkRequest(
+            EmbraceNetworkRequest.fromIncompleteRequest(
+                urlString,
+                HttpMethod.fromString(request.method),
+                startTime,
+                embrace.getSdkCurrentTimeMs(),
+                cause?.javaClass?.canonicalName ?: UNKNOWN_EXCEPTION,
+                cause?.message ?: UNKNOWN_MESSAGE,
+                request.header(CUSTOM_TRACE_ID_HEADER_NAME),
+                if (embraceInternalApi.internalInterface.isNetworkSpanForwardingEnabled()) {
+                    request.header(
+                        TRACEPARENT_HEADER_NAME
+                    )
+                } else {
+                    null
+                },
+            )
+        )
     }
 
     internal companion object {

@@ -20,23 +20,22 @@ import io.embrace.android.embracesdk.fakes.injection.FakeAnrModule
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
-import io.embrace.android.embracesdk.internal.anr.AnrOtelMapper
-import io.embrace.android.embracesdk.internal.anr.detection.BlockedThreadDetector
-import io.embrace.android.embracesdk.internal.arch.DataCaptureOrchestrator
-import io.embrace.android.embracesdk.internal.arch.EmbraceFeatureRegistry
-import io.embrace.android.embracesdk.internal.arch.InstrumentationInstallArgs
+import io.embrace.android.embracesdk.internal.instrumentation.anr.AnrOtelMapper
+import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.BlockedThreadDetector
+import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
+import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistry
 import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
 import io.embrace.android.embracesdk.internal.injection.AndroidServicesModule
-import io.embrace.android.embracesdk.internal.injection.AnrModule
+import io.embrace.android.embracesdk.internal.instrumentation.anr.AnrModule
 import io.embrace.android.embracesdk.internal.injection.CoreModule
-import io.embrace.android.embracesdk.internal.injection.DataSourceModule
+import io.embrace.android.embracesdk.internal.injection.InstrumentationModule
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.injection.WorkerThreadModule
 import io.embrace.android.embracesdk.internal.injection.createAndroidServicesModule
-import io.embrace.android.embracesdk.internal.injection.createAnrModule
-import io.embrace.android.embracesdk.internal.injection.createDataSourceModule
+import io.embrace.android.embracesdk.internal.instrumentation.anr.createAnrModule
 import io.embrace.android.embracesdk.internal.injection.createDeliveryModule
 import io.embrace.android.embracesdk.internal.injection.createEssentialServiceModule
+import io.embrace.android.embracesdk.internal.injection.createInstrumentationModule
 import io.embrace.android.embracesdk.internal.injection.createNativeCoreModule
 import io.embrace.android.embracesdk.internal.injection.createWorkerThreadModule
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
@@ -174,7 +173,7 @@ internal class EmbraceSetupInterface(
                 symbolServiceProvider = { fakeSymbolService }
             )
         },
-        dataSourceModuleSupplier = {
+        instrumentationModuleSupplier = {
                 initModule,
                 workerThreadModule,
                 configModule,
@@ -182,7 +181,7 @@ internal class EmbraceSetupInterface(
                 androidServicesModule,
                 coreModule,
             ->
-            val impl = createDataSourceModule(
+            val impl = createInstrumentationModule(
                 initModule,
                 workerThreadModule,
                 configModule,
@@ -190,10 +189,9 @@ internal class EmbraceSetupInterface(
                 androidServicesModule,
                 coreModule
             )
-            object : DataSourceModule {
-                override val embraceFeatureRegistry: EmbraceFeatureRegistry = FakeEmbraceFeatureRegistry(impl.embraceFeatureRegistry)
-                override val dataCaptureOrchestrator: DataCaptureOrchestrator = impl.dataCaptureOrchestrator
-                override val instrumentationContext: InstrumentationInstallArgs = impl.instrumentationContext
+            object : InstrumentationModule {
+                override val instrumentationRegistry: InstrumentationRegistry = FakeInstrumentationRegistry(impl.instrumentationRegistry)
+                override val instrumentationArgs: InstrumentationArgs = impl.instrumentationArgs
             }
         }
     )

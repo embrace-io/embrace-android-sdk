@@ -1,9 +1,18 @@
 package io.embrace.android.embracesdk.internal.injection
 
 import android.content.Context
-import io.embrace.android.embracesdk.internal.capture.envelope.session.OtelPayloadMapperImpl
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.clock.NormalizedIntervalClock
+import io.embrace.android.embracesdk.internal.instrumentation.anr.AnrModule
+import io.embrace.android.embracesdk.internal.instrumentation.anr.AnrModuleSupplier
+import io.embrace.android.embracesdk.internal.instrumentation.anr.OtelPayloadMapperImpl
+import io.embrace.android.embracesdk.internal.instrumentation.anr.createAnrModule
+import io.embrace.android.embracesdk.internal.instrumentation.crash.CrashModule
+import io.embrace.android.embracesdk.internal.instrumentation.crash.CrashModuleSupplier
+import io.embrace.android.embracesdk.internal.instrumentation.crash.createCrashModule
+import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeFeatureModule
+import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeFeatureModuleSupplier
+import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.createNativeFeatureModule
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
@@ -39,7 +48,7 @@ internal class ModuleInitBootstrapper(
     private val storageModuleSupplier: StorageModuleSupplier = ::createStorageModuleSupplier,
     private val essentialServiceModuleSupplier: EssentialServiceModuleSupplier = ::createEssentialServiceModule,
     private val featureModuleSupplier: FeatureModuleSupplier = ::createFeatureModule,
-    private val dataSourceModuleSupplier: DataSourceModuleSupplier = ::createDataSourceModule,
+    private val instrumentationModuleSupplier: InstrumentationModuleSupplier = ::createInstrumentationModule,
     private val dataCaptureServiceModuleSupplier: DataCaptureServiceModuleSupplier = ::createDataCaptureServiceModule,
     private val deliveryModuleSupplier: DeliveryModuleSupplier = ::createDeliveryModule,
     private val anrModuleSupplier: AnrModuleSupplier = ::createAnrModule,
@@ -89,7 +98,7 @@ internal class ModuleInitBootstrapper(
     lateinit var nativeFeatureModule: NativeFeatureModule
         private set
 
-    lateinit var dataSourceModule: DataSourceModule
+    lateinit var instrumentationModule: InstrumentationModule
         private set
 
     lateinit var featureModule: FeatureModule
@@ -222,8 +231,8 @@ internal class ModuleInitBootstrapper(
                         )
                     }
 
-                    dataSourceModule = init(DataSourceModule::class) {
-                        dataSourceModuleSupplier(
+                    instrumentationModule = init(InstrumentationModule::class) {
+                        instrumentationModuleSupplier(
                             initModule,
                             workerThreadModule,
                             configModule,
@@ -235,7 +244,7 @@ internal class ModuleInitBootstrapper(
 
                     featureModule = init(FeatureModule::class) {
                         featureModuleSupplier(
-                            dataSourceModule,
+                            instrumentationModule,
                             configModule.configService,
                         )
                     }
@@ -336,7 +345,7 @@ internal class ModuleInitBootstrapper(
                             configModule,
                             androidServicesModule,
                             nativeCoreModule,
-                            dataSourceModule,
+                            instrumentationModule,
                         )
                     }
 
@@ -355,7 +364,7 @@ internal class ModuleInitBootstrapper(
                             deliveryModule,
                             workerThreadModule,
                             payloadSourceModule,
-                            dataSourceModule,
+                            instrumentationModule,
                         )
                     }
 
@@ -376,17 +385,11 @@ internal class ModuleInitBootstrapper(
                             essentialServiceModule,
                             configModule,
                             deliveryModule,
-                            dataSourceModule,
+                            instrumentationModule,
                             payloadSourceModule,
                             dataCaptureServiceModule.startupService,
                             logModule
                         )
-                    }
-
-                    postInit(FeatureModule::class) {
-                        essentialServiceModule.networkConnectivityService.addNetworkConnectivityListener {
-                            featureModule.networkStatusDataSource.dataSource?.onNetworkConnectivityStatusChanged(it)
-                        }
                     }
 
                     crashModule = init(CrashModule::class) {
@@ -395,17 +398,17 @@ internal class ModuleInitBootstrapper(
                             storageModule,
                             essentialServiceModule,
                             androidServicesModule,
-                            dataSourceModule,
+                            instrumentationModule,
                         )
                     }
 
                     postInit(CrashModule::class) {
                         serviceRegistry.registerService(lazy { crashModule.crashDataSource })
                         with(crashModule.crashDataSource) {
-                            addCrashTeardownHandler(lazy { anrModule.anrService })
-                            addCrashTeardownHandler(lazy { logModule.logOrchestrator })
-                            addCrashTeardownHandler(lazy { sessionOrchestrationModule.sessionOrchestrator })
-                            addCrashTeardownHandler(lazy { deliveryModule.payloadStore })
+                            anrModule.anrService?.let(::addCrashTeardownHandler)
+                            addCrashTeardownHandler(logModule.logOrchestrator)
+                            addCrashTeardownHandler(sessionOrchestrationModule.sessionOrchestrator)
+                            deliveryModule.payloadStore?.let(::addCrashTeardownHandler)
                         }
                     }
 

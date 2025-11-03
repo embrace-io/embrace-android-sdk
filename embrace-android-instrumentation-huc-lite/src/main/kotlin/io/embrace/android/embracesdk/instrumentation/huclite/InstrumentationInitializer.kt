@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.instrumentation.huclite
 import android.annotation.SuppressLint
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.instrumentation.HucLiteDataSource
+import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import java.lang.reflect.Field
 import java.lang.reflect.Modifier
 import java.net.URL
@@ -30,24 +31,20 @@ class InstrumentationInitializer(
      */
     fun installURLStreamHandlerFactory(
         clock: Clock,
+        logger: EmbLogger,
         hucLiteDataSource: HucLiteDataSource,
-        errorHandler: (Throwable) -> Unit,
     ) {
         @SuppressLint("PrivateApi")
-        val httpsHandlerClass = runCatching {
-            Class.forName("com.android.okhttp.HttpsHandler")
-        }.onFailure(errorHandler).getOrNull() ?: return
-
+        val httpsHandlerClass = Class.forName("com.android.okhttp.HttpsHandler")
         val instrumentedUrlStreamHandlerFactoryProvider = {
             InstrumentedUrlStreamHandlerFactory(
                 httpsHandler = httpsHandlerClass.getDeclaredConstructor().newInstance() as URLStreamHandler,
                 clock = clock,
                 hucLiteDataSource = hucLiteDataSource,
-                errorHandler = errorHandler,
             )
         }
 
-        val newFactory = runCatching {
+        val newFactory =
             streamHandlerFactoryFieldProvider()?.let { field ->
                 val existingFactory: Any? = field.get(null)
                 if (existingFactory is URLStreamHandlerFactory) {
@@ -56,19 +53,14 @@ class InstrumentationInitializer(
                         delegateHandlerFactory = existingFactory,
                         instrumentedHandlerFactory = instrumentedUrlStreamHandlerFactoryProvider,
                         clock = clock,
+                        logger = logger,
                         hucLiteDataSource = hucLiteDataSource,
-                        errorHandler = errorHandler,
                     )
                 } else {
                     null
                 }
             }
-        }.onFailure(errorHandler).getOrNull()
 
-        try {
-            factoryInstaller(newFactory ?: instrumentedUrlStreamHandlerFactoryProvider())
-        } catch (t: Throwable) {
-            errorHandler(t)
-        }
+        factoryInstaller(newFactory ?: instrumentedUrlStreamHandlerFactoryProvider())
     }
 }

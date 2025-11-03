@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.clock.Clock
+import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.network.logging.getOverriddenURLString
 import io.embrace.android.embracesdk.internal.utils.toNonNullMap
 import io.embrace.opentelemetry.kotlin.semconv.ErrorAttributes
@@ -33,8 +34,9 @@ class HucLiteDataSource(
             try {
                 InstrumentationInitializer().installURLStreamHandlerFactory(
                     clock = args.clock,
+                    logger = args.logger,
                     hucLiteDataSource = this
-                ) { t -> throw t }
+                )
             } finally {
                 initializationAttempted = true
             }
@@ -47,18 +49,21 @@ class HucLiteDataSource(
     fun createRequestData(
         wrappedConnection: HttpsURLConnection,
         clock: Clock,
-        errorHandler: (t: Throwable) -> Unit,
     ): RequestData? =
         runCatching {
             RequestData(
                 connection = wrappedConnection,
                 clock = clock,
                 telemetryDestination = telemetryDestination,
-                errorHandler = errorHandler
+                errorHandler = ::errorHandler
             )
         }.onFailure {
-            errorHandler(InstrumentationException(it))
+            errorHandler(it)
         }.getOrNull()
+
+    private fun errorHandler(t: Throwable) {
+        logger.trackInternalError(InternalErrorType.DATA_SOURCE_DATA_CAPTURE_FAIL, InstrumentationException(t))
+    }
 
     class RequestData(
         connection: HttpsURLConnection,
@@ -85,7 +90,7 @@ class HucLiteDataSource(
             runCatching {
                 startTimeMs.compareAndSet(INVALID_START_TIME, clock.now())
             }.onFailure {
-                errorHandler(InstrumentationException(it))
+                errorHandler(it)
             }
 
         fun completeRequest(responseCode: Int) {

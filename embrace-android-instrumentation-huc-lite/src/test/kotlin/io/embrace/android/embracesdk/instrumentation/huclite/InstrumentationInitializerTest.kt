@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.instrumentation.huclite
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeClock
+import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationInstallArgs
 import io.embrace.android.embracesdk.fakes.FakeURLStreamHandlerFactory
 import io.embrace.android.embracesdk.internal.instrumentation.HucLiteDataSource
@@ -58,8 +59,9 @@ internal class InstrumentationInitializerTest {
     private fun InstrumentationInitializer.install() {
         installURLStreamHandlerFactory(
             clock = FakeClock(),
+            logger = FakeEmbLogger(),
             hucLiteDataSource = hucLiteDataSource
-        ) { throw it }
+        )
     }
 
     private fun attemptToSetURLStreamHandlerFactory(

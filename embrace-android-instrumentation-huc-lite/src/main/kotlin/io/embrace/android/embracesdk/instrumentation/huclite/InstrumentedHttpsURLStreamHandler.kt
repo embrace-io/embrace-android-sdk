@@ -18,7 +18,6 @@ internal class InstrumentedHttpsURLStreamHandler(
     private val delegatedHandler: URLStreamHandler,
     private val clock: Clock,
     private val hucLiteDataSource: HucLiteDataSource,
-    private val errorHandler: (Throwable) -> Unit,
 ) : URLStreamHandler() {
 
     @SuppressLint("PrivateApi")
@@ -61,13 +60,10 @@ internal class InstrumentedHttpsURLStreamHandler(
         wrappedConnection = this,
         clock = clock,
         hucLiteDataSource = hucLiteDataSource,
-        errorHandler = errorHandler,
     )
 
-    private fun Throwable.toInstrumentedConnectionException(): IOException {
-        errorHandler(this)
-        return InstrumentedConnectionException("Failed to instrumented HTTPS connection", this)
-    }
+    private fun Throwable.toInstrumentedConnectionException(): IOException =
+        InstrumentedConnectionException("Failed to instrumented HTTPS connection", this)
 
     private class InstrumentedConnectionException(
         override val message: String?,

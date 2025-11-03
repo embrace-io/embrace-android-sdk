@@ -16,7 +16,6 @@ internal class DelegatingInstrumentedUrlStreamHandler(
     private val delegateHandler: URLStreamHandler,
     private val clock: Clock,
     private val hucLiteDataSource: HucLiteDataSource,
-    private val errorHandler: (Throwable) -> Unit,
 ) : URLStreamHandler() {
     override fun openConnection(url: URL?, proxy: Proxy?): URLConnection? {
         try {
@@ -31,7 +30,6 @@ internal class DelegatingInstrumentedUrlStreamHandler(
             method.isAccessible = true
             return wrapInstrumentedConnection(method.invoke(delegateHandler, url, proxy) as URLConnection?)
         } catch (t: Throwable) {
-            errorHandler(t)
             throw (t)
         }
     }
@@ -48,7 +46,6 @@ internal class DelegatingInstrumentedUrlStreamHandler(
             method.isAccessible = true
             return wrapInstrumentedConnection(method.invoke(delegateHandler, url) as URLConnection?)
         } catch (t: Throwable) {
-            errorHandler(t)
             throw (t)
         }
     }
@@ -62,7 +59,6 @@ internal class DelegatingInstrumentedUrlStreamHandler(
                 wrappedConnection = wrappedConnection,
                 clock = clock,
                 hucLiteDataSource = hucLiteDataSource,
-                errorHandler = errorHandler,
             )
         } else {
             wrappedConnection

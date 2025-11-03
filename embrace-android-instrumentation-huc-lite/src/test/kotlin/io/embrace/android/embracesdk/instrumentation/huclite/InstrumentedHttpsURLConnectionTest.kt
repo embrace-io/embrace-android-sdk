@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.instrumentation.huclite
 
 import android.os.Build.VERSION_CODES
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -422,7 +423,7 @@ internal class InstrumentedHttpsURLConnectionTest {
         every { mockWrappedConnection.url } throws FakeIOException()
         instrumentedConnection.responseCode
         assertNoRequestRecorded()
-        assertTrue(getInternalErrors().single().throwable is FakeIOException)
+        assertEquals(InternalErrorType.DATA_SOURCE_DATA_CAPTURE_FAIL.name, getInternalErrors().single().msg)
     }
 
     @Test

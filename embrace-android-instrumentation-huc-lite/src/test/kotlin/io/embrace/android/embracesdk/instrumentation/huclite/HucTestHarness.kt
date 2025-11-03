@@ -7,7 +7,6 @@ import io.embrace.android.embracesdk.fakes.FakeInstrumentationInstallArgs
 import io.embrace.android.embracesdk.fakes.FakeSpanToken
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
 import io.embrace.android.embracesdk.internal.instrumentation.HucLiteDataSource
-import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.opentelemetry.kotlin.semconv.ErrorAttributes
 import io.embrace.opentelemetry.kotlin.semconv.ExceptionAttributes
 import io.embrace.opentelemetry.kotlin.semconv.HttpAttributes
@@ -47,7 +46,6 @@ internal class HucTestHarness {
         wrappedConnection = mockWrappedConnection,
         clock = fakeClock,
         hucLiteDataSource = hucLiteDataSource,
-        errorHandler = this::errorHandler,
     )
 
     fun runTest(test: HucTestHarness.() -> Unit) = test()
@@ -91,10 +89,6 @@ internal class HucTestHarness {
     }
 
     fun getInternalErrors() = fakeEmbLogger.internalErrorMessages
-
-    private fun errorHandler(t: Throwable) {
-        fakeEmbLogger.trackInternalError(InternalErrorType.INSTRUMENTATION_REG_FAIL, t)
-    }
 
     private fun FakeSpanToken.assertSuccessfulRequest(
         expectedStartTime: Long,

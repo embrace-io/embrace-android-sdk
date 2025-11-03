@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.instrumentation.huclite
 
 import android.os.Build
+import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.instrumentation.HucLiteDataSource
 import io.embrace.android.embracesdk.internal.instrumentation.HucLiteDataSource.RequestData
 import java.io.InputStream
@@ -20,8 +21,7 @@ import javax.net.ssl.SSLSocketFactory
  */
 internal class InstrumentedHttpsURLConnection(
     private val wrappedConnection: HttpsURLConnection,
-    private val sdkStarted: () -> Boolean,
-    private val currentTimeMs: () -> Long,
+    private val clock: Clock,
     hucLiteDataSource: HucLiteDataSource,
     private val errorHandler: (Throwable) -> Unit,
 ) : HttpsURLConnection(wrappedConnection.url) {
@@ -29,16 +29,11 @@ internal class InstrumentedHttpsURLConnection(
     private val requestTriggered = AtomicBoolean(false)
     private val cachedResponseStatusCode: AtomicInteger = AtomicInteger(0)
     private val requestData: RequestData? =
-        if (sdkStarted()) {
-            hucLiteDataSource.createRequestData(
-                wrappedConnection = wrappedConnection,
-                sdkStarted = sdkStarted,
-                currentTimeMs = currentTimeMs,
-                errorHandler = errorHandler
-            )
-        } else {
-            null
-        }
+        hucLiteDataSource.createRequestData(
+            wrappedConnection = wrappedConnection,
+            clock = clock,
+            errorHandler = errorHandler
+        )
 
     // Overridden methods that will return when a TCP connection has been established without sending the request
 
@@ -292,10 +287,6 @@ internal class InstrumentedHttpsURLConnection(
     override fun getReadTimeout(): Int = wrappedConnection.readTimeout
 
     private fun <T> invokeRequestTriggeringMethod(wrappedMethod: () -> T): T {
-        if (!sdkStarted()) {
-            return wrappedMethod()
-        }
-
         val instrument = requestTriggered.compareAndSet(false, true)
         if (instrument) {
             requestData?.startRequest()

@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.instrumentation.huclite
 
 import android.annotation.SuppressLint
+import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.instrumentation.HucLiteDataSource
 import java.lang.reflect.Field
 import java.lang.reflect.Modifier
@@ -28,8 +29,7 @@ class InstrumentationInitializer(
      * Replace existing [URLStreamHandlerFactory] with one where HTTPS connections are instrumented.
      */
     fun installURLStreamHandlerFactory(
-        sdkStarted: () -> Boolean,
-        currentTimeMs: () -> Long,
+        clock: Clock,
         hucLiteDataSource: HucLiteDataSource,
         errorHandler: (Throwable) -> Unit,
     ) {
@@ -41,8 +41,7 @@ class InstrumentationInitializer(
         val instrumentedUrlStreamHandlerFactoryProvider = {
             InstrumentedUrlStreamHandlerFactory(
                 httpsHandler = httpsHandlerClass.getDeclaredConstructor().newInstance() as URLStreamHandler,
-                sdkStarted = sdkStarted,
-                currentTimeMs = currentTimeMs,
+                clock = clock,
                 hucLiteDataSource = hucLiteDataSource,
                 errorHandler = errorHandler,
             )
@@ -56,8 +55,7 @@ class InstrumentationInitializer(
                     DelegatingInstrumentedURLStreamHandlerFactory(
                         delegateHandlerFactory = existingFactory,
                         instrumentedHandlerFactory = instrumentedUrlStreamHandlerFactoryProvider,
-                        sdkStarted = sdkStarted,
-                        currentTimeMs = currentTimeMs,
+                        clock = clock,
                         hucLiteDataSource = hucLiteDataSource,
                         errorHandler = errorHandler,
                     )

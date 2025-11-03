@@ -20,9 +20,7 @@ import java.io.IOException
 import java.net.URL
 import javax.net.ssl.HttpsURLConnection
 
-internal class HucTestHarness(
-    sdkEnabled: Boolean = true,
-) {
+internal class HucTestHarness {
     val fakeTelemetryDestination: FakeTelemetryDestination = FakeTelemetryDestination()
     val fakeClock = FakeClock(FAKE_TIME_MS)
     val fakeEmbLogger = FakeEmbLogger(throwOnInternalError = false)
@@ -47,8 +45,7 @@ internal class HucTestHarness(
         }
     var instrumentedConnection: InstrumentedHttpsURLConnection = InstrumentedHttpsURLConnection(
         wrappedConnection = mockWrappedConnection,
-        sdkStarted = { sdkEnabled },
-        currentTimeMs = this::getCurrentTimeMs,
+        clock = fakeClock,
         hucLiteDataSource = hucLiteDataSource,
         errorHandler = this::errorHandler,
     )

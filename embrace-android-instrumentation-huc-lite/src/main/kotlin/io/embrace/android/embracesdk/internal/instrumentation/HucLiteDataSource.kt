@@ -9,7 +9,7 @@ import io.embrace.android.embracesdk.internal.arch.limits.NoopLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
-import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.network.logging.getOverriddenURLString
 import io.embrace.android.embracesdk.internal.utils.toNonNullMap
 import io.embrace.opentelemetry.kotlin.semconv.ErrorAttributes
@@ -25,38 +25,34 @@ class HucLiteDataSource(
     args = args,
     limitStrategy = NoopLimitStrategy
 ) {
-    val telemetryDestination = args.destination
-
-    @Volatile
-    var enabled = false
+    private val telemetryDestination = args.destination
+    private var initializationAttempted = false
 
     override fun onDataCaptureEnabled() {
-        InstrumentationInitializer().installURLStreamHandlerFactory(
-            sdkStarted = { enabled },
-            currentTimeMs = args.clock::now,
-            hucLiteDataSource = this,
-            errorHandler = fun(t: Throwable) {
-                args.logger.trackInternalError(InternalErrorType.DATA_SOURCE_DATA_CAPTURE_FAIL, t)
+        if (!initializationAttempted) {
+            try {
+                InstrumentationInitializer().installURLStreamHandlerFactory(
+                    clock = args.clock,
+                    hucLiteDataSource = this
+                ) { t -> throw t }
+            } finally {
+                initializationAttempted = true
             }
-        )
-        enabled = true
+        }
     }
 
     override fun onDataCaptureDisabled() {
-        enabled = false
     }
 
     fun createRequestData(
         wrappedConnection: HttpsURLConnection,
-        sdkStarted: () -> Boolean,
-        currentTimeMs: () -> Long,
+        clock: Clock,
         errorHandler: (t: Throwable) -> Unit,
     ): RequestData? =
         runCatching {
             RequestData(
                 connection = wrappedConnection,
-                sdkStarted = sdkStarted,
-                currentTimeMs = currentTimeMs,
+                clock = clock,
                 telemetryDestination = telemetryDestination,
                 errorHandler = errorHandler
             )
@@ -66,12 +62,11 @@ class HucLiteDataSource(
 
     class RequestData(
         connection: HttpsURLConnection,
-        val sdkStarted: () -> Boolean,
-        val currentTimeMs: () -> Long,
+        val clock: Clock,
         val telemetryDestination: TelemetryDestination,
         val errorHandler: (t: Throwable) -> Unit,
     ) {
-        private val creationTimeMs = currentTimeMs()
+        private val creationTimeMs = clock.now()
         private val telemetryUrlProvider = {
             getOverriddenURLString(
                 request = HucLitePathOverrideRequest(
@@ -86,16 +81,16 @@ class HucLiteDataSource(
         private val startTimeMs = AtomicLong(INVALID_START_TIME)
         private val requestRecorded = AtomicBoolean(false)
 
-        fun startRequest(timestampMs: Long = currentTimeMs()) =
+        fun startRequest() =
             runCatching {
-                startTimeMs.compareAndSet(INVALID_START_TIME, timestampMs)
+                startTimeMs.compareAndSet(INVALID_START_TIME, clock.now())
             }.onFailure {
                 errorHandler(InstrumentationException(it))
             }
 
         fun completeRequest(responseCode: Int) {
             recordRequest {
-                val endTimeMs = currentTimeMs()
+                val endTimeMs = clock.now()
                 val errorCode = if (responseCode !in 1..<400) {
                     "failure"
                 } else {
@@ -122,7 +117,7 @@ class HucLiteDataSource(
 
         fun clientError(t: Throwable) {
             recordRequest {
-                val errorTimeMs = currentTimeMs()
+                val errorTimeMs = clock.now()
                 val method = methodProvider()
                 val networkRequestSchemaType = SchemaType.NetworkRequest(
                     incompleteRequestAttributes(
@@ -174,7 +169,7 @@ class HucLiteDataSource(
 
         private fun recordRequest(recordingFunction: () -> Unit) {
             runCatching {
-                if (sdkStarted() && requestRecorded.compareAndSet(false, true)) {
+                if (requestRecorded.compareAndSet(false, true)) {
                     recordingFunction()
                 }
             }.onFailure {

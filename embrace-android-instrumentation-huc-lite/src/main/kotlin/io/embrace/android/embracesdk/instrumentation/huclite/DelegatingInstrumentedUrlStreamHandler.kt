@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.instrumentation.huclite
 
+import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.instrumentation.HucLiteDataSource
 import java.net.Proxy
 import java.net.URL
@@ -13,8 +14,7 @@ import javax.net.ssl.HttpsURLConnection
  */
 internal class DelegatingInstrumentedUrlStreamHandler(
     private val delegateHandler: URLStreamHandler,
-    private val sdkStarted: () -> Boolean,
-    private val currentTimeMs: () -> Long,
+    private val clock: Clock,
     private val hucLiteDataSource: HucLiteDataSource,
     private val errorHandler: (Throwable) -> Unit,
 ) : URLStreamHandler() {
@@ -60,8 +60,7 @@ internal class DelegatingInstrumentedUrlStreamHandler(
         return if (wrappedConnection is HttpsURLConnection) {
             InstrumentedHttpsURLConnection(
                 wrappedConnection = wrappedConnection,
-                sdkStarted = sdkStarted,
-                currentTimeMs = currentTimeMs,
+                clock = clock,
                 hucLiteDataSource = hucLiteDataSource,
                 errorHandler = errorHandler,
             )

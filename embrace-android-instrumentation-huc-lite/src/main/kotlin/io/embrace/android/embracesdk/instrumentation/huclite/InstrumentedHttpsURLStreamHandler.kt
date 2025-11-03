@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.instrumentation.huclite
 
 import android.annotation.SuppressLint
+import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.instrumentation.HucLiteDataSource
 import java.io.IOException
 import java.net.Proxy
@@ -15,8 +16,7 @@ import javax.net.ssl.HttpsURLConnection
  */
 internal class InstrumentedHttpsURLStreamHandler(
     private val delegatedHandler: URLStreamHandler,
-    private val sdkStarted: () -> Boolean,
-    private val currentTimeMs: () -> Long,
+    private val clock: Clock,
     private val hucLiteDataSource: HucLiteDataSource,
     private val errorHandler: (Throwable) -> Unit,
 ) : URLStreamHandler() {
@@ -59,8 +59,7 @@ internal class InstrumentedHttpsURLStreamHandler(
 
     private fun HttpsURLConnection.toWrappedConnection(): InstrumentedHttpsURLConnection = InstrumentedHttpsURLConnection(
         wrappedConnection = this,
-        sdkStarted = sdkStarted,
-        currentTimeMs = currentTimeMs,
+        clock = clock,
         hucLiteDataSource = hucLiteDataSource,
         errorHandler = errorHandler,
     )

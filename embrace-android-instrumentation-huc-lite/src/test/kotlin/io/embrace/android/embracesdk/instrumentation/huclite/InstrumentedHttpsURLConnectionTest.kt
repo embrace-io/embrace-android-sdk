@@ -29,7 +29,7 @@ internal class InstrumentedHttpsURLConnectionTest {
 
     @Before
     fun setup() {
-        harness = HucTestHarness(sdkEnabled = true)
+        harness = HucTestHarness()
     }
 
     @Test

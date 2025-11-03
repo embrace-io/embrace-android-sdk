@@ -4,16 +4,14 @@ import io.embrace.android.embracesdk.fakes.FakeAnrService
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeCrashFileMarker
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
+import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.fakes.FakeLogOrchestrator
-import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeSessionOrchestrator
 import io.embrace.android.embracesdk.fakes.FakeSessionPropertiesService
 import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
-import io.embrace.android.embracesdk.internal.capture.crash.CrashTeardownHandler
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
-import io.embrace.android.embracesdk.internal.payload.JsException
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
 import io.embrace.opentelemetry.kotlin.semconv.LogAttributes
@@ -33,12 +31,11 @@ internal class CrashDataSourceImplTest {
     private lateinit var sessionOrchestrator: FakeSessionOrchestrator
     private lateinit var sessionPropertiesService: FakeSessionPropertiesService
     private lateinit var anrService: FakeAnrService
-    private lateinit var preferencesService: FakePreferenceService
+    private lateinit var keyValueStore: FakeKeyValueStore
     private lateinit var crashMarker: FakeCrashFileMarker
     private lateinit var serializer: EmbraceSerializer
     private lateinit var args: FakeInstrumentationArgs
     private lateinit var logger: EmbLogger
-    private lateinit var localJsException: JsException
     private lateinit var testException: Exception
 
     @Before
@@ -47,17 +44,11 @@ internal class CrashDataSourceImplTest {
         sessionOrchestrator = FakeSessionOrchestrator()
         sessionPropertiesService = FakeSessionPropertiesService()
         anrService = FakeAnrService()
-        preferencesService = FakePreferenceService()
+        keyValueStore = FakeKeyValueStore()
         crashMarker = FakeCrashFileMarker()
         args = FakeInstrumentationArgs(mockk())
         serializer = EmbraceSerializer()
         logger = EmbLoggerImpl()
-        localJsException = JsException(
-            "NullPointerException",
-            "Null pointer exception occurred",
-            "RuntimeException",
-            "at com.example.MyClass.method(MyClass.kt:10)"
-        )
         testException = RuntimeException("Test exception")
     }
 
@@ -70,14 +61,20 @@ internal class CrashDataSourceImplTest {
         )
         crashDataSource = CrashDataSourceImpl(
             sessionPropertiesService,
-            preferencesService,
+            keyValueStore,
             args,
             serializer,
         ).apply {
+<<<<<<< Updated upstream
             addCrashTeardownHandler(lazy { logOrchestrator })
             addCrashTeardownHandler(lazy { sessionOrchestrator })
             addCrashTeardownHandler(lazy { crashMarker })
             addCrashTeardownHandler(lazy { anrService })
+=======
+            addCrashTeardownHandler(logOrchestrator)
+            addCrashTeardownHandler(sessionOrchestrator)
+            addCrashTeardownHandler(crashMarker)
+>>>>>>> Stashed changes
         }
     }
 
@@ -85,10 +82,10 @@ internal class CrashDataSourceImplTest {
     fun `test crash handler order`() {
         setupForHandleCrash()
         val observedOrder = mutableListOf<Int>()
-        crashDataSource.addCrashTeardownHandler(lazy { CrashTeardownHandler { observedOrder.add(1) } })
-        crashDataSource.addCrashTeardownHandler(lazy { CrashTeardownHandler { observedOrder.add(2) } })
-        crashDataSource.addCrashTeardownHandler(lazy { CrashTeardownHandler { observedOrder.add(3) } })
-        crashDataSource.handleCrash(testException)
+        crashDataSource.addCrashTeardownHandler { observedOrder.add(1) }
+        crashDataSource.addCrashTeardownHandler { observedOrder.add(2) }
+        crashDataSource.addCrashTeardownHandler { observedOrder.add(3) }
+        crashDataSource.logUnhandledJvmException(testException)
         assertEquals(listOf(1, 2, 3), observedOrder)
     }
 
@@ -96,7 +93,7 @@ internal class CrashDataSourceImplTest {
     fun `test SessionOrchestrator and LogOrchestrator are called when handleCrash is called`() {
         setupForHandleCrash()
 
-        crashDataSource.handleCrash(testException)
+        crashDataSource.logUnhandledJvmException(testException)
 
         assertEquals(1, anrService.crashCount)
         assertEquals(1, args.destination.logEvents.size)
@@ -107,7 +104,7 @@ internal class CrashDataSourceImplTest {
     @Test
     fun `test LogWriter and SessionOrchestrator are called when handleCrash is called with JSException`() {
         setupForHandleCrash()
-        crashDataSource.handleCrash(testException)
+        crashDataSource.logUnhandledJvmException(testException)
 
         assertEquals(1, anrService.crashCount)
         val destination = args.destination
@@ -122,8 +119,12 @@ internal class CrashDataSourceImplTest {
          * Verify mainCrashHandled is true after the first execution
          * by testing that a second execution of handleCrash wont run anything
          */
+<<<<<<< Updated upstream
         crashDataSource.handleCrash(testException)
         assertEquals(1, anrService.crashCount)
+=======
+        crashDataSource.logUnhandledJvmException(testException)
+>>>>>>> Stashed changes
         assertEquals(1, destination.logEvents.size)
         assertSame(lastSentCrash, destination.logEvents.single())
     }
@@ -132,7 +133,7 @@ internal class CrashDataSourceImplTest {
     fun `test handleCrash calls mark() method when capture_last_run config is enabled`() {
         setupForHandleCrash()
 
-        crashDataSource.handleCrash(testException)
+        crashDataSource.logUnhandledJvmException(testException)
 
         assertTrue(crashMarker.isMarked())
     }
@@ -140,8 +141,13 @@ internal class CrashDataSourceImplTest {
     @Test
     fun `test RN crash by calling logUnhandledJsException() before handleCrash()`() {
         setupForHandleCrash()
-        crashDataSource.logUnhandledJsException(localJsException)
-        crashDataSource.handleCrash(testException)
+        crashDataSource.logUnhandledJsException(
+            "NullPointerException",
+            "Null pointer exception occurred",
+            "RuntimeException",
+            "at com.example.MyClass.method(MyClass.kt:10)"
+        )
+        crashDataSource.logUnhandledJvmException(testException)
 
         val destination = args.destination
         val logEvent = destination.logEvents.single()

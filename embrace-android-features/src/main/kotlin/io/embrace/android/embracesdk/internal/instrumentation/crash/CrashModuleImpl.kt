@@ -27,11 +27,11 @@ internal class CrashModuleImpl(
     override val crashDataSource: CrashDataSource by singleton {
         CrashDataSourceImpl(
             essentialServiceModule.sessionPropertiesService,
-            androidServicesModule.preferencesService,
+            androidServicesModule.store,
             instrumentationModule.instrumentationArgs,
             initModule.jsonSerializer,
         ).apply {
-            addCrashTeardownHandler(lazy { crashMarker })
+            addCrashTeardownHandler(crashMarker)
         }
     }
 

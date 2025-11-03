@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.internal.instrumentation.crash.jvm
 
 import io.embrace.android.embracesdk.fakes.FakeCrashService
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
-import io.embrace.android.embracesdk.internal.payload.JsException
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -66,11 +65,17 @@ internal class EmbraceUncaughtExceptionHandlerTest {
     }
 
     internal class CrashingCrashService : CrashService {
-        override fun handleCrash(exception: Throwable) {
+        override fun logUnhandledJvmException(exception: Throwable) {
             throw RuntimeException("Test crash")
         }
 
-        override fun logUnhandledJsException(exception: JsException) {}
+        override fun logUnhandledJsException(
+            name: String,
+            message: String,
+            type: String?,
+            stacktrace: String?,
+        ) {
+        }
     }
 
     internal class TestUncaughtExceptionHandler : Thread.UncaughtExceptionHandler {

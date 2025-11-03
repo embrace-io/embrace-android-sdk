@@ -93,7 +93,7 @@ jobs:
 
       - name: Archive Test Results
         if: ${{ always() && matrix.working-directory == '.' }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: android-emulator-${{ matrix.working-directory }}-test-results
           path: |

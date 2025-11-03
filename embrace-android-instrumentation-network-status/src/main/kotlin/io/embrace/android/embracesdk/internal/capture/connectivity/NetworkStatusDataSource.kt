@@ -22,9 +22,7 @@ class NetworkStatusDataSource(
     override fun onNetworkConnectivityStatusChanged(status: NetworkStatus) {
         // close previous span
         val timestamp = clock.now()
-        if (span != null) {
-            span?.stop(endTimeMs = timestamp)
-        }
+        span?.stop(endTimeMs = timestamp)
         // start a new span with the new network status
         captureTelemetry {
             span = startSpanCapture(SchemaType.NetworkStatus(status.value), timestamp)

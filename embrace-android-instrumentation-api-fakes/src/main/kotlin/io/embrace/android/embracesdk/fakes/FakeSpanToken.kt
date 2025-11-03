@@ -7,6 +7,7 @@ class FakeSpanToken(
     val name: String,
     val startTimeMs: Long,
     var endTimeMs: Long?,
+    var errorCode: String?,
     val type: EmbType,
     val attributes: Map<String, String>,
 ) : SpanToken {

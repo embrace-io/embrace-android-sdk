@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.internal.api.delegate.EmbraceInternalInterf
 import io.embrace.android.embracesdk.internal.api.delegate.FlutterInternalInterfaceImpl
 import io.embrace.android.embracesdk.internal.api.delegate.ReactNativeInternalInterfaceImpl
 import io.embrace.android.embracesdk.internal.api.delegate.UnityInternalInterfaceImpl
+import io.embrace.android.embracesdk.internal.instrumentation.crash.CrashModule
 
 internal class InternalInterfaceModuleImpl(
     initModule: InitModule,

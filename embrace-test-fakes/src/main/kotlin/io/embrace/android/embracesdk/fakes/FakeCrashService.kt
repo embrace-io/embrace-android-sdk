@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.android.embracesdk.internal.capture.crash.CrashService
+import io.embrace.android.embracesdk.internal.instrumentation.crash.jvm.CrashService
 import io.embrace.android.embracesdk.internal.payload.JsException
 
 class FakeCrashService : CrashService {

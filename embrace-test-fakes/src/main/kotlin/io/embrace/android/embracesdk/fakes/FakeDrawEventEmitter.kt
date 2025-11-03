@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.fakes
 
 import android.app.Activity
-import io.embrace.android.embracesdk.internal.capture.activity.traceInstanceId
-import io.embrace.android.embracesdk.internal.ui.DrawEventEmitter
+import io.embrace.android.embracesdk.internal.instrumentation.startup.activity.traceInstanceId
+import io.embrace.android.embracesdk.internal.instrumentation.startup.ui.DrawEventEmitter
 import java.util.concurrent.ConcurrentHashMap
 
 class FakeDrawEventEmitter : DrawEventEmitter {

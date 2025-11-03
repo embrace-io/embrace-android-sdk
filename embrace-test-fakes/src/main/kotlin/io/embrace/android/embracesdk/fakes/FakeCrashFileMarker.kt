@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.android.embracesdk.internal.crash.CrashFileMarker
+import io.embrace.android.embracesdk.internal.instrumentation.crash.CrashFileMarker
 
 class FakeCrashFileMarker : CrashFileMarker {
 

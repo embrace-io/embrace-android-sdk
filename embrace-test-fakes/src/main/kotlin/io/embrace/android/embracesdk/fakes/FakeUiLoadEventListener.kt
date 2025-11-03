@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.android.embracesdk.internal.capture.activity.UiLoadEventListener
+import io.embrace.android.embracesdk.internal.instrumentation.startup.activity.UiLoadEventListener
 
 class FakeUiLoadEventListener : UiLoadEventListener {
     val events = mutableListOf<EventData>()

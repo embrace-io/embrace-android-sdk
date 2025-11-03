@@ -22,7 +22,8 @@ import io.embrace.android.embracesdk.fakes.behavior.FakeSessionBehavior
 import io.embrace.android.embracesdk.fakes.createBackgroundActivityBehavior
 import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
 import io.embrace.android.embracesdk.fakes.injection.FakePayloadSourceModule
-import io.embrace.android.embracesdk.internal.arch.DataCaptureOrchestrator
+import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistry
+import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistryImpl
 import io.embrace.android.embracesdk.internal.arch.attrs.embCrashId
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState
 import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
@@ -62,7 +63,7 @@ internal class SessionOrchestratorTest {
     private lateinit var sessionIdTracker: FakeSessionIdTracker
     private lateinit var payloadCachingService: PayloadCachingService
     private lateinit var sessionCacheExecutor: BlockingScheduledExecutorService
-    private lateinit var dataCaptureOrchestrator: DataCaptureOrchestrator
+    private lateinit var instrumentationRegistry: InstrumentationRegistry
     private lateinit var fakeDataSource: FakeDataSource
     private lateinit var logger: EmbLogger
     private lateinit var currentSessionSpan: FakeCurrentSessionSpan
@@ -417,7 +418,7 @@ internal class SessionOrchestratorTest {
             store
         )
         fakeDataSource = FakeDataSource(RuntimeEnvironment.getApplication())
-        dataCaptureOrchestrator = DataCaptureOrchestrator(
+        instrumentationRegistry = InstrumentationRegistryImpl(
             fakeBackgroundWorker(),
             logger
         ).apply {
@@ -442,7 +443,7 @@ internal class SessionOrchestratorTest {
             ),
             store,
             payloadCachingService,
-            dataCaptureOrchestrator,
+            instrumentationRegistry,
             destination,
             SessionSpanAttrPopulatorImpl(
                 destination,

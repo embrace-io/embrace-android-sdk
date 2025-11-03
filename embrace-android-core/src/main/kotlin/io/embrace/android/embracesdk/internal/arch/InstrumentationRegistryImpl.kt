@@ -12,7 +12,7 @@ import kotlin.reflect.KClass
  * Orchestrates all data sources that could potentially be used in the SDK. This is a convenient
  * place to coordinate everything in one place.
  */
-class DataCaptureOrchestrator(
+class InstrumentationRegistryImpl(
     private val worker: BackgroundWorker,
     private val logger: EmbLogger,
 ) : InstrumentationRegistry {
@@ -40,6 +40,10 @@ class DataCaptureOrchestrator(
         }
         val state = element as? DataSourceState<T>
         return state?.dataSource
+    }
+
+    override fun handleCrash(crashId: String) {
+        dataSourceStates.forEach { it.handleCrash(crashId) }
     }
 
     /**

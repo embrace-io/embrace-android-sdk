@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.session.orchestrator
 
-import io.embrace.android.embracesdk.internal.capture.crash.CrashTeardownHandler
+import io.embrace.android.embracesdk.internal.arch.datasource.CrashTeardownHandler
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
@@ -37,10 +37,4 @@ interface PayloadStore : CrashTeardownHandler {
      * exist at one time.
      */
     fun cacheEmptyCrashEnvelope(envelope: Envelope<LogPayload>)
-
-    /**
-     * Handles graceful shutdown on a crash. This should be called _after_ any payloads for the
-     * crash have been added.
-     */
-    override fun handleCrash(crashId: String)
 }

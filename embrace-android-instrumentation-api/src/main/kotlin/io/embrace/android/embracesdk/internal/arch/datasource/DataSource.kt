@@ -8,7 +8,7 @@ package io.embrace.android.embracesdk.internal.arch.datasource
  * [DataSourceState] is closely related. It is responsible for determining when a data source
  * should be turned on/off, according to the SDK's configuration and the process lifecycle.
  */
-interface DataSource {
+interface DataSource : CrashTeardownHandler {
 
     /**
      * Enables data capture. This should include registering any listeners, and resetting

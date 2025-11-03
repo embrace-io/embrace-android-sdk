@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.internal.injection
 
 import io.embrace.android.embracesdk.internal.InstrumentationArgsImpl
-import io.embrace.android.embracesdk.internal.arch.DataCaptureOrchestrator
 import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistry
+import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistryImpl
 import io.embrace.android.embracesdk.internal.worker.Worker
 
 internal class InstrumentationModuleImpl(
@@ -15,7 +15,7 @@ internal class InstrumentationModuleImpl(
 ) : InstrumentationModule {
 
     override val instrumentationRegistry: InstrumentationRegistry by singleton {
-        DataCaptureOrchestrator(
+        InstrumentationRegistryImpl(
             workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker),
             initModule.logger
         )

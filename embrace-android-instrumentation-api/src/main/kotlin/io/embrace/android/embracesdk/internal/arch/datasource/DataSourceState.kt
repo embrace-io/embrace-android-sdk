@@ -36,7 +36,7 @@ class DataSourceState<T : DataSource>(
      * it can handle unbalanced calls to [DataSource.onDataCaptureEnabled] and others).
      */
     val asyncInit: Boolean = false,
-) {
+) : CrashTeardownHandler {
 
     /**
      * The type of session that contains the data.
@@ -54,6 +54,10 @@ class DataSourceState<T : DataSource>(
 
     init {
         updateDataSource()
+    }
+
+    override fun handleCrash(crashId: String) {
+        dataSource?.handleCrash(crashId)
     }
 
     /**

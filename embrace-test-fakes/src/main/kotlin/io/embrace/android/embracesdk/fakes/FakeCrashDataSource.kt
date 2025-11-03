@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.instrumentation.crash.jvm.CrashDataSource
-import io.embrace.android.embracesdk.internal.capture.crash.CrashTeardownHandler
+import io.embrace.android.embracesdk.internal.arch.datasource.CrashTeardownHandler
 import io.embrace.android.embracesdk.internal.payload.JsException
 
 class FakeCrashDataSource : CrashDataSource {
@@ -26,6 +26,10 @@ class FakeCrashDataSource : CrashDataSource {
 
     override fun resetDataCaptureLimits() {
         TODO("Not yet implemented")
+    }
+
+    override fun handleCrash(crashId: String) {
+        throw UnsupportedOperationException()
     }
 
     override fun addCrashTeardownHandler(handler: Lazy<CrashTeardownHandler?>) {

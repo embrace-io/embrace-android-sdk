@@ -13,6 +13,7 @@ class FakeDataSource(
     var enableDataCaptureCount: Int = 0
     var disableDataCaptureCount: Int = 0
     var resetCount: Int = 0
+    var crashCount: Int = 0
 
     override fun captureTelemetry(
         inputValidation: () -> Boolean,
@@ -32,6 +33,10 @@ class FakeDataSource(
 
     override fun resetDataCaptureLimits() {
         resetCount++
+    }
+
+    override fun handleCrash(crashId: String) {
+        crashCount++
     }
 
     override fun onConfigurationChanged(newConfig: Configuration) {

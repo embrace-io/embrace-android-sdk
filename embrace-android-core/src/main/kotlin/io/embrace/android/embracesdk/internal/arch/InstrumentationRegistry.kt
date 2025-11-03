@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.arch
 
+import io.embrace.android.embracesdk.internal.arch.datasource.CrashTeardownHandler
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSource
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState
 import kotlin.reflect.KClass
@@ -7,7 +8,7 @@ import kotlin.reflect.KClass
 /**
  * Registry for all features whose instrumentation should be orchestrated by the Embrace SDK.
  */
-interface InstrumentationRegistry {
+interface InstrumentationRegistry : CrashTeardownHandler {
 
     /**
      * Adds a feature to the registry. The SDK will control when a feature is enabled/disabled

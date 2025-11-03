@@ -24,6 +24,10 @@ class FakeNetworkCaptureDataSource : NetworkCaptureDataSource {
         TODO("Not yet implemented")
     }
 
+    override fun handleCrash(crashId: String) {
+        throw UnsupportedOperationException()
+    }
+
     override fun captureTelemetry(
         inputValidation: () -> Boolean,
         action: TelemetryDestination.() -> Unit,

@@ -14,9 +14,9 @@ import org.junit.runner.RunWith
 import org.robolectric.RuntimeEnvironment
 
 @RunWith(AndroidJUnit4::class)
-internal class DataCaptureOrchestratorTest {
+internal class InstrumentationRegistryTest {
 
-    private lateinit var orchestrator: DataCaptureOrchestrator
+    private lateinit var orchestrator: InstrumentationRegistry
     private lateinit var dataSource: FakeDataSource
     private lateinit var configService: FakeConfigService
     private lateinit var executorService: BlockingScheduledExecutorService
@@ -38,7 +38,7 @@ internal class DataCaptureOrchestratorTest {
         dataSource = FakeDataSource(RuntimeEnvironment.getApplication())
         configService = FakeConfigService()
         executorService = BlockingScheduledExecutorService(blockingMode = false)
-        orchestrator = DataCaptureOrchestrator(
+        orchestrator = InstrumentationRegistryImpl(
             BackgroundWorker(executorService),
             EmbLoggerImpl(),
         )
@@ -62,5 +62,24 @@ internal class DataCaptureOrchestratorTest {
         assertEquals(0, dataSource.enableDataCaptureCount)
         executorService.runCurrentlyBlocked()
         assertEquals(1, dataSource.enableDataCaptureCount)
+    }
+
+    @Test
+    fun `test crash handling`() {
+        orchestrator.currentSessionType = SessionType.FOREGROUND
+
+        orchestrator.add(syncDataSource)
+        orchestrator.handleCrash("")
+        assertEquals(1, dataSource.crashCount)
+    }
+
+    @Test
+    fun `test crash handling disabled data source`() {
+        enabled = false
+        orchestrator.currentSessionType = SessionType.FOREGROUND
+
+        orchestrator.add(syncDataSource)
+        orchestrator.handleCrash("")
+        assertEquals(0, dataSource.crashCount)
     }
 }

@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.session.orchestrator
 
-import io.embrace.android.embracesdk.internal.capture.crash.CrashTeardownHandler
+import io.embrace.android.embracesdk.internal.arch.datasource.CrashTeardownHandler
 import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateListener
 
 /**

@@ -28,6 +28,10 @@ abstract class DataSourceImpl(
         // no-op
     }
 
+    override fun handleCrash(crashId: String) {
+        // no-op
+    }
+
     override fun resetDataCaptureLimits() {
         limitStrategy.resetDataCaptureLimits()
     }

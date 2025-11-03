@@ -8,7 +8,7 @@ typealias NativeFeatureModuleSupplier = (
     configModule: ConfigModule,
     androidServicesModule: AndroidServicesModule,
     nativeCoreModule: NativeCoreModule,
-    dataSourceModule: DataSourceModule,
+    instrumentationModule: InstrumentationModule,
 ) -> NativeFeatureModule
 
 fun createNativeFeatureModule(
@@ -16,11 +16,11 @@ fun createNativeFeatureModule(
     configModule: ConfigModule,
     androidServicesModule: AndroidServicesModule,
     nativeCoreModule: NativeCoreModule,
-    dataSourceModule: DataSourceModule,
+    instrumentationModule: InstrumentationModule,
 ): NativeFeatureModule = NativeFeatureModuleImpl(
     initModule,
     configModule,
     androidServicesModule,
     nativeCoreModule,
-    dataSourceModule,
+    instrumentationModule,
 )

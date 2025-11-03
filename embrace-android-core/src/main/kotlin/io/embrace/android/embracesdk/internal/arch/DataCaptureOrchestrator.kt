@@ -15,11 +15,11 @@ import kotlin.reflect.KClass
 class DataCaptureOrchestrator(
     private val worker: BackgroundWorker,
     private val logger: EmbLogger,
-) : EmbraceFeatureRegistry {
+) : InstrumentationRegistry {
 
     private val dataSourceStates = CopyOnWriteArrayList<DataSourceState<*>>()
 
-    var currentSessionType: SessionType? = null
+    override var currentSessionType: SessionType? = null
         set(value) {
             field = value
             onSessionTypeChange()

@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.instrumentation
 
-import io.embrace.android.embracesdk.fakes.FakeInstrumentationInstallArgs
+import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.mockk.mockk
 import org.junit.Assert.assertEquals
@@ -10,11 +10,11 @@ import org.junit.Test
 internal class TapBreadcrumbDataSourceTest {
 
     private lateinit var source: TapDataSource
-    private lateinit var args: FakeInstrumentationInstallArgs
+    private lateinit var args: FakeInstrumentationArgs
 
     @Before
     fun setUp() {
-        args = FakeInstrumentationInstallArgs(mockk())
+        args = FakeInstrumentationArgs(mockk())
         source = TapDataSource(args)
     }
 

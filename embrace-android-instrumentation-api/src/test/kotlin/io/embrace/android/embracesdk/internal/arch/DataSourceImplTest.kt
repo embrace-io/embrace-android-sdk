@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.arch
 
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
-import io.embrace.android.embracesdk.fakes.FakeInstrumentationInstallArgs
+import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceImpl
 import io.embrace.android.embracesdk.internal.arch.limits.LimitStrategy
 import io.embrace.android.embracesdk.internal.arch.limits.NoopLimitStrategy
@@ -61,8 +61,8 @@ internal class DataSourceImplTest {
 
     private class FakeDataSourceImpl(
         limitStrategy: LimitStrategy = NoopLimitStrategy,
-        args: FakeInstrumentationInstallArgs =
-            FakeInstrumentationInstallArgs(mockk(), logger = FakeEmbLogger(throwOnInternalError = false)),
+        args: FakeInstrumentationArgs =
+            FakeInstrumentationArgs(mockk(), logger = FakeEmbLogger(throwOnInternalError = false)),
     ) : DataSourceImpl(
         args,
         limitStrategy

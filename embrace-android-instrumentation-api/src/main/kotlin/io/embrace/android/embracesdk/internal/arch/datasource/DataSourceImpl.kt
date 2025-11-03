@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.arch.datasource
 
-import io.embrace.android.embracesdk.internal.arch.InstrumentationInstallArgs
+import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.limits.LimitStrategy
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.ConfigService
@@ -11,7 +11,7 @@ import io.embrace.android.embracesdk.internal.logging.InternalErrorType
  * Base class for data sources.
  */
 abstract class DataSourceImpl(
-    args: InstrumentationInstallArgs,
+    args: InstrumentationArgs,
     private val limitStrategy: LimitStrategy,
 ) : DataSource {
 

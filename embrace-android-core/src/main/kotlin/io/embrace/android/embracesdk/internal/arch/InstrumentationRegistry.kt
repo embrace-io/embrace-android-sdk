@@ -7,7 +7,7 @@ import kotlin.reflect.KClass
 /**
  * Registry for all features whose instrumentation should be orchestrated by the Embrace SDK.
  */
-interface EmbraceFeatureRegistry {
+interface InstrumentationRegistry {
 
     /**
      * Adds a feature to the registry. The SDK will control when a feature is enabled/disabled
@@ -20,4 +20,10 @@ interface EmbraceFeatureRegistry {
      * required in some cases (e.g. when a manual API call by a library consumer also adds data).
      */
     fun <T : DataSource> findByType(clazz: KClass<T>): T?
+
+    /**
+     * Alters the current session type so that instrumentation can be disabled
+     * if necessary.
+     */
+    var currentSessionType: SessionType?
 }

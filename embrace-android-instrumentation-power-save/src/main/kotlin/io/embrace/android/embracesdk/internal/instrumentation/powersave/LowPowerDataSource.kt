@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.instrumentation.powersave
 
 import android.os.PowerManager
-import io.embrace.android.embracesdk.internal.arch.InstrumentationInstallArgs
+import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceImpl
 import io.embrace.android.embracesdk.internal.arch.datasource.SpanToken
 import io.embrace.android.embracesdk.internal.arch.limits.UpToLimitStrategy
@@ -10,7 +10,7 @@ import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 
 class LowPowerDataSource(
-    private val args: InstrumentationInstallArgs,
+    private val args: InstrumentationArgs,
     private val backgroundWorker: BackgroundWorker,
     provider: Provider<PowerManager?>,
 ) : DataSourceImpl(

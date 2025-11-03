@@ -8,7 +8,7 @@ typealias CrashModuleSupplier = (
     storageModule: StorageModule,
     essentialServiceModule: EssentialServiceModule,
     androidServicesModule: AndroidServicesModule,
-    dataSourceModule: DataSourceModule,
+    instrumentationModule: InstrumentationModule,
 ) -> CrashModule
 
 fun createCrashModule(
@@ -16,13 +16,13 @@ fun createCrashModule(
     storageModule: StorageModule,
     essentialServiceModule: EssentialServiceModule,
     androidServicesModule: AndroidServicesModule,
-    dataSourceModule: DataSourceModule,
+    instrumentationModule: InstrumentationModule,
 ): CrashModule {
     return CrashModuleImpl(
         initModule,
         storageModule,
         essentialServiceModule,
         androidServicesModule,
-        dataSourceModule,
+        instrumentationModule,
     )
 }

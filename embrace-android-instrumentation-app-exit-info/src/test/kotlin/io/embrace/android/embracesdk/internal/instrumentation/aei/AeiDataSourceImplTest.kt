@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.instrumentation.aei
 import android.app.ActivityManager
 import android.app.ApplicationExitInfo
 import io.embrace.android.embracesdk.fakes.FakeConfigService
-import io.embrace.android.embracesdk.fakes.FakeInstrumentationInstallArgs
+import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.fakes.behavior.FakeAppExitInfoBehavior
 import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
 import io.embrace.android.embracesdk.internal.arch.datasource.LogSeverity
@@ -33,7 +33,7 @@ private const val SESSION_ID = "1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d"
 internal class AeiDataSourceImplTest {
 
     private lateinit var applicationExitInfoService: AeiDataSourceImpl
-    private lateinit var args: FakeInstrumentationInstallArgs
+    private lateinit var args: FakeInstrumentationArgs
     private lateinit var configService: FakeConfigService
 
     private val worker = fakeBackgroundWorker()
@@ -66,7 +66,7 @@ internal class AeiDataSourceImplTest {
     }
 
     private fun startApplicationExitInfoService() {
-        args = FakeInstrumentationInstallArgs(mockk(), configService = configService)
+        args = FakeInstrumentationArgs(mockk(), configService = configService)
         applicationExitInfoService = AeiDataSourceImpl(
             args,
             worker,

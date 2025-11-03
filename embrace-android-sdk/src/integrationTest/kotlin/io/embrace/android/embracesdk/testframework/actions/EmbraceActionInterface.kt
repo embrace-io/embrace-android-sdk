@@ -191,7 +191,7 @@ internal class EmbraceActionInterface(
      * non-trivial to invoke the platform API - e.g. when network connectivity changes.
      */
     inline fun <reified T : DataSource> findDataSource(): T {
-        val registry = (bootstrapper.dataSourceModule.embraceFeatureRegistry as FakeEmbraceFeatureRegistry)
+        val registry = (bootstrapper.instrumentationModule.instrumentationRegistry as FakeInstrumentationRegistry)
         return checkNotNull(registry.findByType(T::class))
     }
 

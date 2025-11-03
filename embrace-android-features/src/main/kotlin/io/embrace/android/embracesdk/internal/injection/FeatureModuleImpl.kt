@@ -9,51 +9,51 @@ import io.embrace.android.embracesdk.internal.capture.telemetry.InternalErrorDat
 import io.embrace.android.embracesdk.internal.config.ConfigService
 
 internal class FeatureModuleImpl(
-    dataSourceModule: DataSourceModule,
+    instrumentationModule: InstrumentationModule,
     configService: ConfigService,
 ) : FeatureModule {
 
     override val breadcrumbDataSource: DataSourceState<BreadcrumbDataSource> by singleton {
         DataSourceState(
             factory = {
-                BreadcrumbDataSource(dataSourceModule.instrumentationContext)
+                BreadcrumbDataSource(instrumentationModule.instrumentationArgs)
             }
         ).apply {
-            dataSourceModule.embraceFeatureRegistry.add(this)
+            instrumentationModule.instrumentationRegistry.add(this)
         }
     }
 
     override val rnActionDataSource: DataSourceState<RnActionDataSource> by singleton {
         DataSourceState(
             factory = {
-                RnActionDataSource(dataSourceModule.instrumentationContext)
+                RnActionDataSource(instrumentationModule.instrumentationArgs)
             }
         ).apply {
-            dataSourceModule.embraceFeatureRegistry.add(this)
+            instrumentationModule.instrumentationRegistry.add(this)
         }
     }
 
     override val internalErrorDataSource: DataSourceState<InternalErrorDataSource> by singleton {
         DataSourceState<InternalErrorDataSource>(
             factory = {
-                InternalErrorDataSourceImpl(dataSourceModule.instrumentationContext)
+                InternalErrorDataSourceImpl(instrumentationModule.instrumentationArgs)
             },
             configGate = { configService.dataCaptureEventBehavior.isInternalExceptionCaptureEnabled() }
         ).apply {
-            dataSourceModule.embraceFeatureRegistry.add(this)
+            instrumentationModule.instrumentationRegistry.add(this)
         }
     }
 
     override val networkStatusDataSource: DataSourceState<NetworkStatusDataSource> by singleton {
         DataSourceState(
             factory = {
-                NetworkStatusDataSource(dataSourceModule.instrumentationContext)
+                NetworkStatusDataSource(instrumentationModule.instrumentationArgs)
             },
             configGate = {
                 configService.autoDataCaptureBehavior.isNetworkConnectivityCaptureEnabled()
             }
         ).apply {
-            dataSourceModule.embraceFeatureRegistry.add(this)
+            instrumentationModule.instrumentationRegistry.add(this)
         }
     }
 }

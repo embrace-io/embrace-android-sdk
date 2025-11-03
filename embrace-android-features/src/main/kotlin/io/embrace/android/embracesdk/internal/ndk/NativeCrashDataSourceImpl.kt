@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.ndk
 
-import io.embrace.android.embracesdk.internal.arch.InstrumentationInstallArgs
+import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.attrs.embCrashNumber
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceImpl
 import io.embrace.android.embracesdk.internal.arch.datasource.LogSeverity
@@ -17,7 +17,7 @@ import io.embrace.opentelemetry.kotlin.semconv.SessionAttributes
 internal class NativeCrashDataSourceImpl(
     private val nativeCrashProcessor: NativeCrashProcessor,
     private val preferencesService: PreferencesService,
-    args: InstrumentationInstallArgs,
+    args: InstrumentationArgs,
     private val serializer: PlatformSerializer,
 ) : NativeCrashDataSource, DataSourceImpl(
     args = args,

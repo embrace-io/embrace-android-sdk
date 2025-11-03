@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.capture.crash
 
-import io.embrace.android.embracesdk.fakes.FakeInstrumentationInstallArgs
+import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.fakes.FakeLogData
 import io.embrace.android.embracesdk.internal.arch.datasource.LogSeverity
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
@@ -16,11 +16,11 @@ import org.junit.Test
 internal class InternalErrorDataSourceImplTest {
 
     private lateinit var dataSource: InternalErrorDataSourceImpl
-    private lateinit var args: FakeInstrumentationInstallArgs
+    private lateinit var args: FakeInstrumentationArgs
 
     @Before
     fun setUp() {
-        args = FakeInstrumentationInstallArgs(mockk())
+        args = FakeInstrumentationArgs(mockk())
         dataSource = InternalErrorDataSourceImpl(
             args
         )

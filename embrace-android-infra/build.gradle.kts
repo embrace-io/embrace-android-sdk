@@ -1,7 +1,5 @@
 plugins {
-    kotlin("jvm")
-    id("io.embrace.internal.build-logic")
-    id("com.vanniktech.maven.publish")
+    id("embrace-prod-jvm-conventions")
 }
 
 description = "Embrace Android SDK: Infra"

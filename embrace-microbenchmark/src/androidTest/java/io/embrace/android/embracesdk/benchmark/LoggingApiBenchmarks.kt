@@ -143,6 +143,9 @@ class LoggingApiBenchmarks {
 
         override fun isInitialized(): Boolean = true
 
+        override fun sessionUpdated() {
+        }
+
         override fun close() {
         }
     }

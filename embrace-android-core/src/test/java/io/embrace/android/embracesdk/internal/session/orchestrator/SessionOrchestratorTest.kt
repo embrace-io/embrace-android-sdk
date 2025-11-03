@@ -143,7 +143,7 @@ internal class SessionOrchestratorTest {
     fun `saved background activity save overridden after is sent`() {
         createOrchestrator(true)
         clock.tick()
-        orchestrator.reportBackgroundActivityStateChange()
+        orchestrator.onSessionDataUpdate()
         sessionCacheExecutor.runCurrentlyBlocked()
         assertEquals(1, store.cachedSessionPayloads.size)
         orchestrator.onForeground(true, clock.now())
@@ -373,7 +373,7 @@ internal class SessionOrchestratorTest {
 
         // run periodic cache
         clock.tick(6000)
-        orchestrator.reportBackgroundActivityStateChange()
+        orchestrator.onSessionDataUpdate()
         sessionCacheExecutor.runCurrentlyBlocked()
         assertHeartbeatMatchesClock()
         assertEquals("true", destination.attributes["emb.terminated"])

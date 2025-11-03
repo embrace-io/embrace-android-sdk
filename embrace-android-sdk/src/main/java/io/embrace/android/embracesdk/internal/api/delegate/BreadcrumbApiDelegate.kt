@@ -20,7 +20,7 @@ internal class BreadcrumbApiDelegate(
     override fun addBreadcrumb(message: String) {
         if (sdkCallChecker.check("add_breadcrumb")) {
             breadcrumbDataSource?.dataSource?.logCustom(message, sdkClock.now())
-            sessionOrchestrator?.reportBackgroundActivityStateChange()
+            sessionOrchestrator?.onSessionDataUpdate()
         }
     }
 }

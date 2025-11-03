@@ -86,6 +86,7 @@ internal class TelemetryDestinationImpl(
                     setStringAttribute(it.key, it.value)
                 }
             }
+            processStateService.sessionUpdated()
         }
     }
 
@@ -107,8 +108,9 @@ internal class TelemetryDestinationImpl(
             schemaType.attributes().forEach {
                 addAttribute(it.key, it.value)
             }
+            processStateService.sessionUpdated()
         } ?: return null
-        return SpanTokenImpl(span)
+        return SpanTokenImpl(span, processStateService)
     }
 
     override fun recordCompletedSpan(
@@ -129,6 +131,7 @@ internal class TelemetryDestinationImpl(
             type = type,
             attributes = attributes,
         )
+        processStateService.sessionUpdated()
     }
 
     override fun addSessionEvent(schemaType: SchemaType, startTimeMs: Long): Boolean {
@@ -137,22 +140,27 @@ internal class TelemetryDestinationImpl(
             schemaType.fixedObjectName.toEmbraceObjectName(),
             startTimeMs,
             schemaType.attributes() + schemaType.telemetryType.asPair()
-        )
+        ).also {
+            processStateService.sessionUpdated()
+        }
     }
 
     override fun removeSessionEvents(type: EmbType) {
         val currentSession = currentSessionSpan.current() ?: return
         currentSession.removeSystemEvents(type)
+        processStateService.sessionUpdated()
     }
 
     override fun addSessionAttribute(key: String, value: String) {
         val currentSession = currentSessionSpan.current() ?: return
         currentSession.addSystemAttribute(key, value)
+        processStateService.sessionUpdated()
     }
 
     override fun removeSessionAttribute(key: String) {
         val currentSession = currentSessionSpan.current() ?: return
         currentSession.removeSystemAttribute(key)
+        processStateService.sessionUpdated()
     }
 
     private fun getSeverityText(severity: SeverityNumber) = when (severity) {
@@ -160,9 +168,13 @@ internal class TelemetryDestinationImpl(
         else -> severity.name
     }
 
-    private class SpanTokenImpl(private val span: EmbraceSpan) : SpanToken {
+    private class SpanTokenImpl(
+        private val span: EmbraceSpan,
+        private val processStateService: ProcessStateService
+    ) : SpanToken {
         override fun stop(endTimeMs: Long?) {
             span.stop(endTimeMs = endTimeMs)
+            processStateService.sessionUpdated()
         }
     }
 }

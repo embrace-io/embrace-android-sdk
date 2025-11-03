@@ -35,7 +35,7 @@ internal class NetworkRequestApiDelegate(
     private fun logNetworkRequest(request: EmbraceNetworkRequest) {
         if (configService?.networkBehavior?.isUrlEnabled(request.url) == true) {
             networkLoggingService?.logNetworkRequest(request)
-            sessionOrchestrator?.reportBackgroundActivityStateChange()
+            sessionOrchestrator?.onSessionDataUpdate()
         }
     }
 }

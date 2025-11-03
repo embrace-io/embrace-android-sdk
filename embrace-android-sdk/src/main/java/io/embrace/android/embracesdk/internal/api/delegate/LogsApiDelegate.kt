@@ -166,7 +166,7 @@ internal class LogsApiDelegate(
                     attrs.plus(customLogAttrs),
                     logAttachment
                 )
-                sessionOrchestrator?.reportBackgroundActivityStateChange()
+                sessionOrchestrator?.onSessionDataUpdate()
             }
         }
     }
@@ -188,7 +188,7 @@ internal class LogsApiDelegate(
             }
             val type = PushNotificationBreadcrumb.NotificationType.notificationTypeFor(hasData, isNotification)
             fcmDataSource?.logPushNotification(title, body, topic, id, notificationPriority, type)
-            sessionOrchestrator?.reportBackgroundActivityStateChange()
+            sessionOrchestrator?.onSessionDataUpdate()
         }
     }
 }

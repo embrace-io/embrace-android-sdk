@@ -15,6 +15,7 @@ class FakeProcessStateService(
 
     val listeners: MutableList<ProcessStateListener> = mutableListOf()
     var config: Configuration? = null
+    var sessionDataUpdated = false
 
     override fun addListener(listener: ProcessStateListener) {
         listeners.add(listener)
@@ -35,4 +36,8 @@ class FakeProcessStateService(
     }
 
     override fun isInitialized(): Boolean = true
+
+    override fun sessionUpdated() {
+        sessionDataUpdated = true
+    }
 }

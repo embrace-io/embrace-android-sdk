@@ -44,6 +44,18 @@ internal class InstrumentedHttpsURLConnectionTest {
     }
 
     @Test
+    fun `standard GET request lifecycle records an error if response code indicates one`() = harness.runTest {
+        every { mockWrappedConnection.responseCode } returns 404
+        with(instrumentedConnection) {
+            connect()
+            responseCode
+            disconnect()
+        }
+
+        assertSingleSuccessfulRequest(expectedResponseCode = 404, expectedEndTime = getCurrentTimeMs())
+    }
+
+    @Test
     fun `exception during request lifecycle records a error`() = harness.runTest {
         var startTime = 0L
         every { mockWrappedConnection.responseCode } throws FakeIOException()
@@ -410,7 +422,7 @@ internal class InstrumentedHttpsURLConnectionTest {
         every { mockWrappedConnection.url } throws FakeIOException()
         instrumentedConnection.responseCode
         assertNoRequestRecorded()
-        assertTrue(harness.fakeInternalInterface.internalErrors.single() is FakeIOException)
+        assertTrue(getInternalErrors().single().throwable is FakeIOException)
     }
 
     @Test

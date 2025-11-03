@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.network.logging
 
-import io.embrace.android.embracesdk.annotation.InternalApi
 import java.nio.charset.StandardCharsets
 import java.util.regex.Pattern
 
@@ -22,7 +21,6 @@ private const val RELATIVE_PATH_MAX_LENGTH = 1024
 private val RELATIVE_PATH_PATTERN: Pattern = Pattern.compile("[A-Za-z0-9-._~:/\\[\\]@!$&'()*+,;=]+")
 
 @JvmOverloads
-@InternalApi
 fun getOverriddenURLString(
     request: HttpPathOverrideRequest,
     pathOverride: String? = request.getHeaderByName(PATH_OVERRIDE)

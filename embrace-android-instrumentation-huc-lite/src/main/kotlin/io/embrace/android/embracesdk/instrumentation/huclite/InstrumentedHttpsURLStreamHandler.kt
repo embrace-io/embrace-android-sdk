@@ -1,10 +1,7 @@
 package io.embrace.android.embracesdk.instrumentation.huclite
 
 import android.annotation.SuppressLint
-import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
-import io.embrace.android.embracesdk.internal.api.InstrumentationApi
-import io.embrace.android.embracesdk.internal.api.NetworkRequestApi
-import io.embrace.android.embracesdk.internal.api.SdkStateApi
+import io.embrace.android.embracesdk.internal.instrumentation.HucLiteDataSource
 import java.io.IOException
 import java.net.Proxy
 import java.net.URL
@@ -18,10 +15,10 @@ import javax.net.ssl.HttpsURLConnection
  */
 internal class InstrumentedHttpsURLStreamHandler(
     private val delegatedHandler: URLStreamHandler,
-    private val sdkStateApi: SdkStateApi,
-    private val instrumentationApi: InstrumentationApi,
-    private val networkRequestApi: NetworkRequestApi,
-    private val internalInterface: EmbraceInternalInterface,
+    private val sdkStarted: () -> Boolean,
+    private val currentTimeMs: () -> Long,
+    private val hucLiteDataSource: HucLiteDataSource,
+    private val errorHandler: (Throwable) -> Unit,
 ) : URLStreamHandler() {
 
     @SuppressLint("PrivateApi")
@@ -62,14 +59,14 @@ internal class InstrumentedHttpsURLStreamHandler(
 
     private fun HttpsURLConnection.toWrappedConnection(): InstrumentedHttpsURLConnection = InstrumentedHttpsURLConnection(
         wrappedConnection = this,
-        sdkStateApi = sdkStateApi,
-        instrumentationApi = instrumentationApi,
-        networkRequestApi = networkRequestApi,
-        internalInterface = internalInterface
+        sdkStarted = sdkStarted,
+        currentTimeMs = currentTimeMs,
+        hucLiteDataSource = hucLiteDataSource,
+        errorHandler = errorHandler,
     )
 
     private fun Throwable.toInstrumentedConnectionException(): IOException {
-        internalInterface.logInternalError(this)
+        errorHandler(this)
         return InstrumentedConnectionException("Failed to instrumented HTTPS connection", this)
     }
 

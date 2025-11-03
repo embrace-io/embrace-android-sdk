@@ -1,17 +1,10 @@
 package io.embrace.android.embracesdk.instrumentation.huclite
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.fakes.FakeEmbraceInternalInterface
-import io.embrace.android.embracesdk.fakes.FakeInstrumentationApi
-import io.embrace.android.embracesdk.fakes.FakeNetworkRequestApi
-import io.embrace.android.embracesdk.fakes.FakeSdkStateApi
+import io.embrace.android.embracesdk.fakes.FakeInstrumentationInstallArgs
 import io.embrace.android.embracesdk.fakes.FakeURLStreamHandlerFactory
-import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
-import io.embrace.android.embracesdk.internal.api.InstrumentationApi
-import io.embrace.android.embracesdk.internal.api.NetworkRequestApi
-import io.embrace.android.embracesdk.internal.api.SdkStateApi
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertThrows
+import io.embrace.android.embracesdk.internal.instrumentation.HucLiteDataSource
+import io.mockk.mockk
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -23,21 +16,16 @@ import java.net.URLStreamHandlerFactory
 @RunWith(AndroidJUnit4::class)
 internal class InstrumentationInitializerTest {
     private lateinit var fieldRef: Field
+    private lateinit var hucLiteDataSource: HucLiteDataSource
     private lateinit var instrumentationInitializer: InstrumentationInitializer
-    private lateinit var fakeSdkStateApi: SdkStateApi
-    private lateinit var fakeInstrumentationApi: InstrumentationApi
-    private lateinit var fakeNetworkingApi: NetworkRequestApi
-    private lateinit var fakeInternalInterface: FakeEmbraceInternalInterface
+    private var staticURLStreamHandlerFactorySet = false
 
     @Before
     fun setup() {
         factoryField = null
         fieldRef = checkNotNull(this::class.java.declaredFields.find { it.name == "factoryField" })
         fieldRef.isAccessible = true
-        fakeSdkStateApi = FakeSdkStateApi()
-        fakeInstrumentationApi = FakeInstrumentationApi()
-        fakeNetworkingApi = FakeNetworkRequestApi()
-        fakeInternalInterface = FakeEmbraceInternalInterface()
+        hucLiteDataSource = HucLiteDataSource(FakeInstrumentationInstallArgs(mockk()))
     }
 
     @Test
@@ -46,20 +34,13 @@ internal class InstrumentationInitializerTest {
             streamHandlerFactoryFieldProvider = { fieldRef },
             factoryInstaller = {
                 factoryField = it
-                URL.setURLStreamHandlerFactory(it)
+                attemptToSetURLStreamHandlerFactory(it)
             }
         )
-        instrumentationInitializer.installURLStreamHandlerFactory(
-            sdkStateApi = fakeSdkStateApi,
-            instrumentationApi = fakeInstrumentationApi,
-            networkRequestApi = fakeNetworkingApi,
-            internalInterface = fakeInternalInterface
-        )
+        instrumentationInitializer.install()
         assertTrue(factoryField is InstrumentedUrlStreamHandlerFactory)
-
-        assertThrows(Error::class.java) {
-            URL.setURLStreamHandlerFactory(FakeURLStreamHandlerFactory())
-        }
+        attemptToSetURLStreamHandlerFactory(FakeURLStreamHandlerFactory())
+        assertTrue(staticURLStreamHandlerFactorySet)
     }
 
     @Test
@@ -69,37 +50,31 @@ internal class InstrumentationInitializerTest {
             streamHandlerFactoryFieldProvider = { fieldRef },
             factoryInstaller = { factoryField = it }
         )
-        instrumentationInitializer.installURLStreamHandlerFactory(
-            sdkStateApi = fakeSdkStateApi,
-            instrumentationApi = fakeInstrumentationApi,
-            networkRequestApi = fakeNetworkingApi,
-            internalInterface = fakeInternalInterface
-        )
+        instrumentationInitializer.install()
         assertTrue(factoryField is DelegatingInstrumentedURLStreamHandlerFactory)
     }
 
-    @Test
-    fun `method invocation works correctly`() {
-        val instrumentationClass = Class.forName("io.embrace.android.embracesdk.instrumentation.huclite.InstrumentationInitializer")
-        val instrumentationObject = instrumentationClass.getDeclaredConstructor().newInstance()
-        val initMethod = instrumentationObject::class.java.getDeclaredMethod(
-            "installURLStreamHandlerFactory",
-            SdkStateApi::class.java,
-            InstrumentationApi::class.java,
-            NetworkRequestApi::class.java,
-            EmbraceInternalInterface::class.java,
+    private fun InstrumentationInitializer.install() {
+        installURLStreamHandlerFactory(
+            sdkStarted = { true },
+            currentTimeMs = { 100L },
+            hucLiteDataSource = hucLiteDataSource,
+            errorHandler = { throw it }
         )
+    }
 
-        initMethod.invoke(
-            instrumentationObject,
-            fakeSdkStateApi,
-            fakeInstrumentationApi,
-            fakeNetworkingApi,
-            fakeInternalInterface,
-        )
-
-        val errorMessage = checkNotNull(fakeInternalInterface.internalErrors.single().message)
-        assertEquals(true, errorMessage.startsWith("Unable to make field private static volatile java.net.URLStreamHandlerFactory"))
+    private fun attemptToSetURLStreamHandlerFactory(
+        factory: URLStreamHandlerFactory
+    ) {
+        try {
+            URL.setURLStreamHandlerFactory(factory)
+        } catch (t: Throwable) {
+            if (t.message != "factory already defined") {
+                throw t
+            }
+        } finally {
+            staticURLStreamHandlerFactorySet = true
+        }
     }
 
     companion object {

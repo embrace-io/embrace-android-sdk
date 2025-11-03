@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.instrumentation.crash
 
+import io.embrace.android.embracesdk.internal.instrumentation.crash.jvm.CrashFileMarker
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit

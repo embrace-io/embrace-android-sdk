@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.instrumentation.anr
 
 import io.embrace.android.embracesdk.internal.arch.DataCaptureService
-import io.embrace.android.embracesdk.internal.capture.crash.CrashTeardownHandler
 import io.embrace.android.embracesdk.internal.instrumentation.anr.payload.AnrInterval
 import java.io.Closeable
 
@@ -10,7 +9,6 @@ import java.io.Closeable
  */
 interface AnrService :
     DataCaptureService<List<AnrInterval>>,
-    CrashTeardownHandler,
     Closeable {
 
     /**

@@ -1,14 +1,5 @@
 package io.embrace.android.embracesdk.internal.instrumentation.crash
 
-import io.embrace.android.embracesdk.internal.injection.AndroidServicesModule
-import io.embrace.android.embracesdk.internal.injection.EssentialServiceModule
-import io.embrace.android.embracesdk.internal.injection.InitModule
-import io.embrace.android.embracesdk.internal.injection.InstrumentationModule
-import io.embrace.android.embracesdk.internal.injection.StorageModule
-import io.embrace.android.embracesdk.internal.injection.singleton
-import io.embrace.android.embracesdk.internal.instrumentation.crash.jvm.CrashDataSource
-import io.embrace.android.embracesdk.internal.instrumentation.crash.jvm.CrashDataSourceImpl
-
 internal class CrashModuleImpl(
     initModule: InitModule,
     storageModule: StorageModule,

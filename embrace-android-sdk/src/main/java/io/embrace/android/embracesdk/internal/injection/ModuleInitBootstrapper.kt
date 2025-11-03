@@ -1,18 +1,12 @@
 package io.embrace.android.embracesdk.internal.injection
 
 import android.content.Context
+import io.embrace.android.embracesdk.internal.capture.envelope.session.OtelPayloadMapperImpl
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.clock.NormalizedIntervalClock
-import io.embrace.android.embracesdk.internal.instrumentation.anr.AnrModule
-import io.embrace.android.embracesdk.internal.instrumentation.anr.AnrModuleSupplier
-import io.embrace.android.embracesdk.internal.instrumentation.anr.OtelPayloadMapperImpl
-import io.embrace.android.embracesdk.internal.instrumentation.anr.createAnrModule
-import io.embrace.android.embracesdk.internal.instrumentation.crash.CrashModule
+import io.embrace.android.embracesdk.internal.instrumentation.crash.jvm.CrashModule
 import io.embrace.android.embracesdk.internal.instrumentation.crash.CrashModuleSupplier
 import io.embrace.android.embracesdk.internal.instrumentation.crash.createCrashModule
-import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeFeatureModule
-import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeFeatureModuleSupplier
-import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.createNativeFeatureModule
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
@@ -405,7 +399,6 @@ internal class ModuleInitBootstrapper(
                     postInit(CrashModule::class) {
                         serviceRegistry.registerService(lazy { crashModule.crashDataSource })
                         with(crashModule.crashDataSource) {
-                            addCrashTeardownHandler(lazy { anrModule.anrService })
                             addCrashTeardownHandler(lazy { logModule.logOrchestrator })
                             addCrashTeardownHandler(lazy { sessionOrchestrationModule.sessionOrchestrator })
                             addCrashTeardownHandler(lazy { deliveryModule.payloadStore })

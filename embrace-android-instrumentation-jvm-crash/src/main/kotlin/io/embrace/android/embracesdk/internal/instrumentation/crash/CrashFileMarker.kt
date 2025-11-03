@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.internal.instrumentation.crash
+package io.embrace.android.embracesdk.internal.instrumentation.crash.jvm
 
 import io.embrace.android.embracesdk.internal.capture.crash.CrashTeardownHandler
 

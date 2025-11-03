@@ -14,6 +14,7 @@ include(
     ":embrace-android-instrumentation-app-exit-info",
     ":embrace-android-instrumentation-compose-tap",
     ":embrace-android-instrumentation-fcm",
+    ":embrace-android-instrumentation-jvm-crash",
     ":embrace-android-instrumentation-huc",
     ":embrace-android-instrumentation-huc-lite",
     ":embrace-android-instrumentation-network-status",

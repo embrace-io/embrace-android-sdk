@@ -10,6 +10,8 @@ jobs:
   clear-cache:
     name: Clear CI cache
     runs-on: ubuntu-latest
+    permissions:
+      actions: write
     steps:
       - name: Run GH CLI
         env:

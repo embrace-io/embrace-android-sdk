@@ -26,4 +26,12 @@ interface InstrumentationRegistry {
      * if necessary.
      */
     var currentSessionType: SessionType?
+
+    /**
+     * Loads instrumentation via SPI and registers it with the SDK.
+     */
+    fun loadInstrumentations(
+        instrumentationProviders: Iterable<InstrumentationProvider>,
+        args: InstrumentationArgs,
+    )
 }

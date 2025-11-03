@@ -37,7 +37,7 @@ internal class FeatureModuleImpl(
             factory = {
                 InternalErrorDataSourceImpl(instrumentationModule.instrumentationArgs)
             },
-            configGate = { configService.dataCaptureEventBehavior.isInternalExceptionCaptureEnabled() }
+            configGate = { configService.dataCaptureEventBehavior.isInternalExceptionCaptureEnabled() },
         ).apply {
             instrumentationModule.instrumentationRegistry.add(this)
         }

@@ -1,5 +1,7 @@
 package io.embrace.android.embracesdk.testframework.actions
 
+import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
+import io.embrace.android.embracesdk.internal.arch.InstrumentationProvider
 import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistry
 import io.embrace.android.embracesdk.internal.arch.SessionType
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSource
@@ -19,6 +21,13 @@ internal class FakeInstrumentationRegistry(private val impl: InstrumentationRegi
         set(value) {
             impl.currentSessionType = value
         }
+
+    override fun loadInstrumentations(
+        instrumentationProviders: Iterable<InstrumentationProvider>,
+        args: InstrumentationArgs,
+    ) {
+        impl.loadInstrumentations(instrumentationProviders, args)
+    }
 
     override fun <T : DataSource> findByType(clazz: KClass<T>): T? = impl.findByType(clazz)
 }

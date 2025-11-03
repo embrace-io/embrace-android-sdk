@@ -169,9 +169,10 @@ internal class EmbraceImpl(
         val startMsg = "Embrace SDK version ${BuildConfig.VERSION_NAME} started" + appId?.run { " for appId =  $this" }
         logger.logInfo(startMsg)
 
-        registerInstrumentation()
-
-        bootstrapper.instrumentationModule.instrumentationRegistry.findByType(NetworkStatusDataSource::class)?.let {
+        val registry = bootstrapper.instrumentationModule.instrumentationRegistry
+        val instrumentationProviders = ServiceLoader.load(InstrumentationProvider::class.java)
+        registry.loadInstrumentations(instrumentationProviders, bootstrapper.instrumentationModule.instrumentationArgs)
+        registry.findByType(NetworkStatusDataSource::class)?.let {
             bootstrapper.essentialServiceModule.networkConnectivityService.addNetworkConnectivityListener(it)
         }
 
@@ -203,23 +204,6 @@ internal class EmbraceImpl(
         worker.submit { // potentially trigger first delivery attempt by firing network status callback
             registerDeliveryNetworkListener()
             bootstrapper.deliveryModule.schedulingService?.onPayloadIntake()
-        }
-    }
-
-    /**
-     * Loads instrumentation via SPI and registers it with the SDK.
-     */
-    private fun registerInstrumentation() {
-        val loader = ServiceLoader.load(InstrumentationProvider::class.java)
-        val instrumentationContext = bootstrapper.instrumentationModule.instrumentationArgs
-        loader.forEach { provider ->
-            try {
-                provider.register(instrumentationContext)?.let { dataSourceState ->
-                    bootstrapper.instrumentationModule.instrumentationRegistry.add(dataSourceState)
-                }
-            } catch (exc: Throwable) {
-                logger.trackInternalError(InternalErrorType.INSTRUMENTATION_REG_FAIL, exc)
-            }
         }
     }
 

@@ -12,7 +12,7 @@ import kotlin.reflect.KClass
  * Orchestrates all data sources that could potentially be used in the SDK. This is a convenient
  * place to coordinate everything in one place.
  */
-class DataCaptureOrchestrator(
+class InstrumentationRegistryImpl(
     private val worker: BackgroundWorker,
     private val logger: EmbLogger,
 ) : InstrumentationRegistry {
@@ -40,6 +40,25 @@ class DataCaptureOrchestrator(
         }
         val state = element as? DataSourceState<T>
         return state?.dataSource
+    }
+
+    /**
+     * Loads instrumentation via SPI and registers it with the SDK.
+     */
+    override fun loadInstrumentations(
+        instrumentationProviders: Iterable<InstrumentationProvider>,
+        args: InstrumentationArgs
+    ) {
+        val loader = instrumentationProviders.sortedBy { it.priority }
+        loader.forEach { provider ->
+            try {
+                provider.register(args)?.let { dataSourceState ->
+                    add(dataSourceState)
+                }
+            } catch (exc: Throwable) {
+                logger.trackInternalError(InternalErrorType.INSTRUMENTATION_REG_FAIL, exc)
+            }
+        }
     }
 
     /**

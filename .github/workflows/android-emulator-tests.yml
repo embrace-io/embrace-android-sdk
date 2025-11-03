@@ -91,7 +91,6 @@ jobs:
           # Grab the failures from the device so we can include them in results. Exit with non-zero so GH checks still fail.
           script: ./gradlew connectedCheck -x :embrace-microbenchmark:connectedCheck --stacktrace || (adb logcat '[Embrace]:d' '*:S' -t 100000 > emulator_logcat.log && adb pull /storage/emulated/0/Android/data/io.embrace.android.embracesdk.test/cache/test_failure/ && exit 127)
 
-    if: matrix.variant == 'with-docs'
       - name: Archive Test Results
         if: ${{ always() && matrix.working-directory == '.' }}
         uses: actions/upload-artifact@v4

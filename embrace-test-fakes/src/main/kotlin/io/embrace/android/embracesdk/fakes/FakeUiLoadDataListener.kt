@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.android.embracesdk.internal.capture.activity.UiLoadDataListener
+import io.embrace.android.embracesdk.internal.instrumentation.startup.activity.UiLoadDataListener
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 

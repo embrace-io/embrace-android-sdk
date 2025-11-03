@@ -1,17 +1,17 @@
 package io.embrace.android.embracesdk.internal.injection
 
-import io.embrace.android.embracesdk.internal.capture.activity.UiLoadDataListener
-import io.embrace.android.embracesdk.internal.capture.activity.UiLoadTraceEmitter
-import io.embrace.android.embracesdk.internal.capture.activity.createActivityLoadEventEmitter
-import io.embrace.android.embracesdk.internal.capture.startup.AppStartupDataCollector
-import io.embrace.android.embracesdk.internal.capture.startup.AppStartupTraceEmitter
 import io.embrace.android.embracesdk.internal.capture.startup.StartupService
 import io.embrace.android.embracesdk.internal.capture.startup.StartupServiceImpl
-import io.embrace.android.embracesdk.internal.capture.startup.StartupTracker
 import io.embrace.android.embracesdk.internal.config.ConfigService
+import io.embrace.android.embracesdk.internal.instrumentation.startup.AppStartupDataCollector
+import io.embrace.android.embracesdk.internal.instrumentation.startup.AppStartupTraceEmitter
+import io.embrace.android.embracesdk.internal.instrumentation.startup.StartupTracker
+import io.embrace.android.embracesdk.internal.instrumentation.startup.activity.UiLoadDataListener
+import io.embrace.android.embracesdk.internal.instrumentation.startup.activity.UiLoadTraceEmitter
+import io.embrace.android.embracesdk.internal.instrumentation.startup.activity.createActivityLoadEventEmitter
+import io.embrace.android.embracesdk.internal.instrumentation.startup.ui.createDrawEventEmitter
 import io.embrace.android.embracesdk.internal.process.ProcessInfoImpl
 import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityLifecycleListener
-import io.embrace.android.embracesdk.internal.ui.createDrawEventEmitter
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
 

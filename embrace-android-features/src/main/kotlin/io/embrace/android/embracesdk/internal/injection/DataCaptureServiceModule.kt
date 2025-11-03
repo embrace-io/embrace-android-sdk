@@ -1,9 +1,9 @@
 package io.embrace.android.embracesdk.internal.injection
 
-import io.embrace.android.embracesdk.internal.capture.activity.UiLoadDataListener
-import io.embrace.android.embracesdk.internal.capture.startup.AppStartupDataCollector
 import io.embrace.android.embracesdk.internal.capture.startup.StartupService
-import io.embrace.android.embracesdk.internal.capture.startup.StartupTracker
+import io.embrace.android.embracesdk.internal.instrumentation.startup.AppStartupDataCollector
+import io.embrace.android.embracesdk.internal.instrumentation.startup.StartupTracker
+import io.embrace.android.embracesdk.internal.instrumentation.startup.activity.UiLoadDataListener
 import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityLifecycleListener
 
 /**

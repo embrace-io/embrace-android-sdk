@@ -4,11 +4,11 @@ import io.embrace.android.embracesdk.fakes.FakeAnrService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.fakeAnrOtelMapper
-import io.embrace.android.embracesdk.internal.anr.AnrOtelMapper
-import io.embrace.android.embracesdk.internal.anr.AnrService
-import io.embrace.android.embracesdk.internal.anr.detection.BlockedThreadDetector
-import io.embrace.android.embracesdk.internal.anr.detection.ThreadMonitoringState
-import io.embrace.android.embracesdk.internal.injection.AnrModule
+import io.embrace.android.embracesdk.internal.instrumentation.anr.AnrOtelMapper
+import io.embrace.android.embracesdk.internal.instrumentation.anr.AnrService
+import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.BlockedThreadDetector
+import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.ThreadMonitoringState
+import io.embrace.android.embracesdk.internal.instrumentation.anr.AnrModule
 
 class FakeAnrModule(
     override val anrService: AnrService = FakeAnrService(),

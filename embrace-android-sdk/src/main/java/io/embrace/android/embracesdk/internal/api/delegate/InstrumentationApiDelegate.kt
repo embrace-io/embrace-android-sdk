@@ -2,10 +2,10 @@ package io.embrace.android.embracesdk.internal.api.delegate
 
 import android.app.Activity
 import io.embrace.android.embracesdk.internal.api.InstrumentationApi
-import io.embrace.android.embracesdk.internal.capture.activity.traceInstanceId
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.injection.embraceImplInject
+import io.embrace.android.embracesdk.internal.instrumentation.startup.activity.traceInstanceId
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 

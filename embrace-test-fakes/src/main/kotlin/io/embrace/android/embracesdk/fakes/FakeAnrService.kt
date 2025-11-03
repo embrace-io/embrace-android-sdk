@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.android.embracesdk.internal.anr.AnrService
-import io.embrace.android.embracesdk.internal.anr.BlockedThreadListener
-import io.embrace.android.embracesdk.internal.payload.AnrInterval
+import io.embrace.android.embracesdk.internal.instrumentation.anr.AnrService
+import io.embrace.android.embracesdk.internal.instrumentation.anr.BlockedThreadListener
+import io.embrace.android.embracesdk.internal.instrumentation.anr.payload.AnrInterval
 
 class FakeAnrService : AnrService {
 

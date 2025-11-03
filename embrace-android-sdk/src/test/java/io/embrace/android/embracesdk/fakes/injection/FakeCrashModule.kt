@@ -1,9 +1,9 @@
 package io.embrace.android.embracesdk.fakes.injection
 
 import io.embrace.android.embracesdk.fakes.FakeCrashDataSource
-import io.embrace.android.embracesdk.internal.crash.CrashFileMarkerImpl
-import io.embrace.android.embracesdk.internal.crash.LastRunCrashVerifier
-import io.embrace.android.embracesdk.internal.injection.CrashModule
+import io.embrace.android.embracesdk.internal.instrumentation.crash.CrashFileMarkerImpl
+import io.embrace.android.embracesdk.internal.instrumentation.crash.CrashModule
+import io.embrace.android.embracesdk.internal.instrumentation.crash.LastRunCrashVerifier
 import java.io.File
 
 internal class FakeCrashModule : CrashModule {

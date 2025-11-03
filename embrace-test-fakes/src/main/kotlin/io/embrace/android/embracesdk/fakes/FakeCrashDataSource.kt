@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
-import io.embrace.android.embracesdk.internal.capture.crash.CrashDataSource
+import io.embrace.android.embracesdk.internal.instrumentation.crash.jvm.CrashDataSource
 import io.embrace.android.embracesdk.internal.capture.crash.CrashTeardownHandler
 import io.embrace.android.embracesdk.internal.payload.JsException
 

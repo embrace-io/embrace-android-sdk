@@ -15,10 +15,8 @@ import io.embrace.android.embracesdk.fakes.injection.FakeStorageModule
 import io.embrace.android.embracesdk.fakes.injection.FakeSystemServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import io.embrace.android.embracesdk.internal.injection.AndroidServicesModuleSupplier
-import io.embrace.android.embracesdk.internal.injection.AnrModuleSupplier
 import io.embrace.android.embracesdk.internal.injection.ConfigModuleSupplier
 import io.embrace.android.embracesdk.internal.injection.CoreModuleSupplier
-import io.embrace.android.embracesdk.internal.injection.CrashModuleSupplier
 import io.embrace.android.embracesdk.internal.injection.DataCaptureServiceModuleSupplier
 import io.embrace.android.embracesdk.internal.injection.DeliveryModuleSupplier
 import io.embrace.android.embracesdk.internal.injection.EssentialServiceModuleSupplier
@@ -31,6 +29,8 @@ import io.embrace.android.embracesdk.internal.injection.SessionOrchestrationModu
 import io.embrace.android.embracesdk.internal.injection.StorageModuleSupplier
 import io.embrace.android.embracesdk.internal.injection.SystemServiceModuleSupplier
 import io.embrace.android.embracesdk.internal.injection.WorkerThreadModuleSupplier
+import io.embrace.android.embracesdk.internal.instrumentation.anr.AnrModuleSupplier
+import io.embrace.android.embracesdk.internal.instrumentation.crash.CrashModuleSupplier
 
 @Suppress("LongParameterList")
 internal fun fakeModuleInitBootstrapper(

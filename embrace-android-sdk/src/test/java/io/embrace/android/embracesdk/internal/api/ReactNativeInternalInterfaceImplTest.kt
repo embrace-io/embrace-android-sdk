@@ -6,9 +6,9 @@ import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.fakes.FakeRnBundleIdTracker
 import io.embrace.android.embracesdk.fakes.system.mockContext
 import io.embrace.android.embracesdk.internal.api.delegate.ReactNativeInternalInterfaceImpl
-import io.embrace.android.embracesdk.internal.capture.crash.CrashService
 import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.internal.envelope.metadata.ReactNativeSdkVersionInfo
+import io.embrace.android.embracesdk.internal.instrumentation.crash.jvm.CrashService
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.payload.JsException
 import io.mockk.every

@@ -65,7 +65,6 @@ internal class ViewTrackingApiDelegate(
         if (sdkCallChecker.check("log RN view")) {
             val dataSource = bootstrapper.dataSourceModule.embraceFeatureRegistry.findByType(ViewDataSource::class)
             dataSource?.changeView(screen)
-            sessionOrchestrator?.onSessionDataUpdate()
         }
     }
 }

@@ -126,9 +126,7 @@ internal class EmbraceProcessStateService(
     }
 
     override fun sessionUpdated() {
-        if (isInBackground) {
-            sessionOrchestrator?.onSessionDataUpdate()
-        }
+        sessionOrchestrator?.onSessionDataUpdate()
     }
 
     companion object {

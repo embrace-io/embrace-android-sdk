@@ -65,16 +65,10 @@ internal class CrashDataSourceImplTest {
             args,
             serializer,
         ).apply {
-<<<<<<< Updated upstream
-            addCrashTeardownHandler(lazy { logOrchestrator })
-            addCrashTeardownHandler(lazy { sessionOrchestrator })
-            addCrashTeardownHandler(lazy { crashMarker })
-            addCrashTeardownHandler(lazy { anrService })
-=======
             addCrashTeardownHandler(logOrchestrator)
             addCrashTeardownHandler(sessionOrchestrator)
             addCrashTeardownHandler(crashMarker)
->>>>>>> Stashed changes
+            addCrashTeardownHandler(anrService)
         }
     }
 
@@ -119,12 +113,8 @@ internal class CrashDataSourceImplTest {
          * Verify mainCrashHandled is true after the first execution
          * by testing that a second execution of handleCrash wont run anything
          */
-<<<<<<< Updated upstream
-        crashDataSource.handleCrash(testException)
-        assertEquals(1, anrService.crashCount)
-=======
         crashDataSource.logUnhandledJvmException(testException)
->>>>>>> Stashed changes
+        assertEquals(1, anrService.crashCount)
         assertEquals(1, destination.logEvents.size)
         assertSame(lastSentCrash, destination.logEvents.single())
     }

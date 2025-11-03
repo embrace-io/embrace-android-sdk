@@ -405,18 +405,10 @@ internal class ModuleInitBootstrapper(
                     postInit(CrashModule::class) {
                         serviceRegistry.registerService(lazy { crashModule.crashDataSource })
                         with(crashModule.crashDataSource) {
-<<<<<<< Updated upstream
-                            addCrashTeardownHandler(lazy { anrModule.anrService })
-                            addCrashTeardownHandler(lazy { logModule.logOrchestrator })
-                            addCrashTeardownHandler(lazy { sessionOrchestrationModule.sessionOrchestrator })
-                            addCrashTeardownHandler(lazy { deliveryModule.payloadStore })
-=======
+                            anrModule.anrService?.let(::addCrashTeardownHandler)
                             addCrashTeardownHandler(logModule.logOrchestrator)
                             addCrashTeardownHandler(sessionOrchestrationModule.sessionOrchestrator)
-                            deliveryModule.payloadStore?.let {
-                                addCrashTeardownHandler(it)
-                            }
->>>>>>> Stashed changes
+                            deliveryModule.payloadStore?.let(::addCrashTeardownHandler)
                         }
                     }
 

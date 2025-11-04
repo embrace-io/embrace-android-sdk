@@ -3,9 +3,9 @@ package io.embrace.android.embracesdk.internal.envelope.resource
 import android.content.pm.PackageInfo
 import android.os.Environment
 import io.embrace.android.embracesdk.fakes.FakeDevice
-import io.embrace.android.embracesdk.fakes.FakeDeviceArchitecture
 import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.fakes.FakeRnBundleIdTracker
+import io.embrace.android.embracesdk.fakes.fakeDeviceArchitecture
 import io.embrace.android.embracesdk.internal.buildinfo.BuildInfo
 import io.embrace.android.embracesdk.internal.capture.metadata.AppEnvironment
 import io.embrace.android.embracesdk.internal.envelope.metadata.UnitySdkVersionInfo
@@ -25,7 +25,7 @@ internal class EnvelopeResourceSourceImplTest {
     companion object {
         private val packageInfo = PackageInfo()
         private lateinit var packageVersionInfo: PackageVersionInfo
-        private val fakeArchitecture = FakeDeviceArchitecture()
+        private val fakeArchitecture = fakeDeviceArchitecture()
 
         @BeforeClass
         @JvmStatic

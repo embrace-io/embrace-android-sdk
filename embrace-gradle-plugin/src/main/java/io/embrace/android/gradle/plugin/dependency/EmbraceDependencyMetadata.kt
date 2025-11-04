@@ -5,7 +5,7 @@ import io.embrace.embrace_gradle_plugin.BuildConfig
 // Neither group nor name will likely ever change, so it is good to be here.
 private const val EMBRACE_SDK_GROUP = "io.embrace"
 private const val EMBRACE_CORE_SDK_NAME = "embrace-android-sdk"
-private const val EMBRACE_OKHTTP_NAME = "embrace-android-okhttp3"
+private const val EMBRACE_OKHTTP_NAME = "embrace-android-instrumentation-okhttp"
 
 internal sealed class EmbraceDependencyMetadata(
     val group: String,

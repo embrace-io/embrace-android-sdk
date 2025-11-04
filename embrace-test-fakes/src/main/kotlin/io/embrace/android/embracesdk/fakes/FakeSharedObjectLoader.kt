@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.android.embracesdk.internal.SharedObjectLoader
+import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.SharedObjectLoader
 import java.util.concurrent.atomic.AtomicBoolean
 
 class FakeSharedObjectLoader(

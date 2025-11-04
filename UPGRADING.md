@@ -34,6 +34,7 @@ very little change as most alterations are internal. However, you should be awar
 
 - `embrace-android-compose` has been renamed as `embrace-android-instrumentation-compose-tap`
 - `embrace-android-fcm` has been renamed as `embrace-android-instrumentation-fcm`
+- `embrace-android-okhttp3` has been renamed as `embrace-android-instrumentation-okhttp`
 
 ## Altered APIs
 

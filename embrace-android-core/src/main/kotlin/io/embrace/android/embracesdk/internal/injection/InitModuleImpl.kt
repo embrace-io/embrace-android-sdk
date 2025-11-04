@@ -8,7 +8,6 @@ import io.embrace.android.embracesdk.internal.config.instrumented.schema.Instrum
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.otel.sdk.IdGenerator
-import io.embrace.android.embracesdk.internal.serialization.DecoratedSerializer
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.telemetry.EmbraceTelemetryService
@@ -28,7 +27,7 @@ internal class InitModuleImpl(
     }
 
     override val jsonSerializer: PlatformSerializer by singleton {
-        DecoratedSerializer(EmbraceSerializer())
+        EmbraceSerializer()
     }
 
     override val instrumentedConfig: InstrumentedConfig = InstrumentedConfigImpl

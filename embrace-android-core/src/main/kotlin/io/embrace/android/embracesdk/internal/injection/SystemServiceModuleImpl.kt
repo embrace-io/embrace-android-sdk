@@ -5,7 +5,6 @@ import android.app.usage.StorageStatsManager
 import android.content.Context
 import android.net.ConnectivityManager
 import android.os.Build
-import android.os.PowerManager
 import android.view.WindowManager
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
@@ -19,10 +18,6 @@ internal class SystemServiceModuleImpl(
 
     override val activityManager: ActivityManager? by singleton {
         getSystemServiceSafe(Context.ACTIVITY_SERVICE)
-    }
-
-    override val powerManager: PowerManager? by singleton {
-        getSystemServiceSafe(Context.POWER_SERVICE)
     }
 
     override val connectivityManager: ConnectivityManager? by singleton {

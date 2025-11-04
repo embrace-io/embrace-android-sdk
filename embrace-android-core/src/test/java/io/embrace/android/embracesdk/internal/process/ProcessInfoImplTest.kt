@@ -3,6 +3,8 @@ package io.embrace.android.embracesdk.internal.process
 import android.os.Build.VERSION_CODES
 import android.os.Process
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.internal.instrumentation.startup.ProcessInfo
+import io.embrace.android.embracesdk.internal.instrumentation.startup.ProcessInfoImpl
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull

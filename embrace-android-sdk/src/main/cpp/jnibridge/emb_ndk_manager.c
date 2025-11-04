@@ -30,14 +30,14 @@ static emb_env __impl_emb_env = {0};
 static emb_env *__emb_env = &__impl_emb_env;
 
 JNIEXPORT void JNICALL
-Java_io_embrace_android_embracesdk_internal_ndk_jni_JniDelegateImpl_installSignalHandlers(JNIEnv *env,
-                                                                                      jobject thiz,
-                                                                                      jstring _crash_marker_path,
-                                                                                      jstring _app_state,
-                                                                                      jstring _report_id,
-                                                                                      jint api_level,
-                                                                                      jboolean is_32bit,
-                                                                                      jboolean dev_logging) {
+Java_io_embrace_android_embracesdk_internal_instrumentation_crash_ndk_jni_JniDelegateImpl_installSignalHandlers(JNIEnv *env,
+                                                                                                                jobject thiz,
+                                                                                                                jstring _crash_marker_path,
+                                                                                                                jstring _app_state,
+                                                                                                                jstring _report_id,
+                                                                                                                jint api_level,
+                                                                                                                jboolean is_32bit,
+                                                                                                                jboolean dev_logging) {
     if (dev_logging) {
         emb_enable_dev_logging();
     }
@@ -80,10 +80,10 @@ Java_io_embrace_android_embracesdk_internal_ndk_jni_JniDelegateImpl_installSigna
 }
 
 JNIEXPORT void JNICALL
-Java_io_embrace_android_embracesdk_internal_ndk_jni_JniDelegateImpl_onSessionChange(JNIEnv *env,
-                                                                                   jobject thiz,
-                                                                                   jstring _session_id,
-                                                                                   jstring _report_path) {
+Java_io_embrace_android_embracesdk_internal_instrumentation_crash_ndk_jni_JniDelegateImpl_onSessionChange(JNIEnv *env,
+                                                                                                          jobject thiz,
+                                                                                                          jstring _session_id,
+                                                                                                          jstring _report_path) {
     const char *session_id = (*env)->GetStringUTFChars(env, _session_id, 0);
     snprintf(__emb_env->crash.session_id, EMB_SESSION_ID_SIZE, "%s", session_id);
     const char *report_path = (*env)->GetStringUTFChars(env, _report_path, 0);
@@ -91,7 +91,7 @@ Java_io_embrace_android_embracesdk_internal_ndk_jni_JniDelegateImpl_onSessionCha
 }
 
 JNIEXPORT jstring JNICALL
-Java_io_embrace_android_embracesdk_internal_ndk_jni_JniDelegateImpl_getCrashReport(
+Java_io_embrace_android_embracesdk_internal_instrumentation_crash_ndk_jni_JniDelegateImpl_getCrashReport(
         JNIEnv *env, jobject _this, jstring _report_path) {
     EMB_LOGDEV("Called getCrashReport().");
     static pthread_mutex_t crash_reader_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -145,8 +145,8 @@ Java_io_embrace_android_embracesdk_internal_ndk_jni_JniDelegateImpl_getCrashRepo
 }
 
 JNIEXPORT jstring JNICALL
-Java_io_embrace_android_embracesdk_internal_ndk_jni_JniDelegateImpl_checkForOverwrittenHandlers(JNIEnv *env,
-                                                                                            jobject thiz) {
+Java_io_embrace_android_embracesdk_internal_instrumentation_crash_ndk_jni_JniDelegateImpl_checkForOverwrittenHandlers(JNIEnv *env,
+                                                                                                                      jobject thiz) {
     char buffer[WARNING_LOG_BUFFER_SIZE];
     EMB_LOGINFO("Checking for Overwritten handlers");
     if (emb_check_for_overwritten_handlers(buffer, WARNING_LOG_BUFFER_SIZE)) {
@@ -157,8 +157,8 @@ Java_io_embrace_android_embracesdk_internal_ndk_jni_JniDelegateImpl_checkForOver
 }
 
 JNIEXPORT jboolean JNICALL
-Java_io_embrace_android_embracesdk_internal_ndk_jni_JniDelegateImpl_reinstallSignalHandlers(JNIEnv *env,
-                                                                                        jobject thiz) {
+Java_io_embrace_android_embracesdk_internal_instrumentation_crash_ndk_jni_JniDelegateImpl_reinstallSignalHandlers(JNIEnv *env,
+                                                                                                                  jobject thiz) {
     EMB_LOGINFO("About to reinstall 3rd party handlers");
 
     // install signal handlers

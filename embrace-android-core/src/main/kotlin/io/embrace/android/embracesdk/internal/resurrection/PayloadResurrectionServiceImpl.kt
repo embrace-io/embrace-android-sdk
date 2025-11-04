@@ -12,9 +12,9 @@ import io.embrace.android.embracesdk.internal.delivery.intake.IntakeService
 import io.embrace.android.embracesdk.internal.delivery.storage.CachedLogEnvelopeStore
 import io.embrace.android.embracesdk.internal.delivery.storage.CachedLogEnvelopeStore.Companion.createNativeCrashEnvelopeMetadata
 import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageService
+import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeCrashService
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
-import io.embrace.android.embracesdk.internal.ndk.NativeCrashService
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.otel.spans.hasEmbraceAttribute
 import io.embrace.android.embracesdk.internal.otel.spans.toFailedSpan

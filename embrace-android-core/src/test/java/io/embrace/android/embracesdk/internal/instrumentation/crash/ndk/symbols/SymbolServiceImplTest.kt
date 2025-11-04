@@ -2,11 +2,11 @@ package io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.symbols
 
 import android.util.Base64
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.fakes.FakeDeviceArchitecture
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.fakes.config.FakeBase64SharedObjectFilesMap
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
+import io.embrace.android.embracesdk.fakes.fakeDeviceArchitecture
 import io.embrace.android.embracesdk.internal.payload.NativeSymbols
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -66,7 +66,7 @@ class SymbolServiceImplTest {
         val encodedSymbols = Base64.encodeToString(json.toByteArray(), Base64.DEFAULT)
 
         return SymbolServiceImpl(
-            FakeDeviceArchitecture(arch),
+            fakeDeviceArchitecture(arch),
             serializer,
             FakeEmbLogger(),
             FakeInstrumentedConfig(symbols = FakeBase64SharedObjectFilesMap(encodedSymbols)),
@@ -75,7 +75,7 @@ class SymbolServiceImplTest {
 
     private fun createServiceWithNullSymbols(): SymbolService {
         return SymbolServiceImpl(
-            FakeDeviceArchitecture("arm64-v8a"),
+            fakeDeviceArchitecture("arm64-v8a"),
             serializer,
             FakeEmbLogger(),
             FakeInstrumentedConfig(symbols = FakeBase64SharedObjectFilesMap(null)),

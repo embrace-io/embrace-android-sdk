@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.injection
 
 import io.embrace.android.embracesdk.internal.DeviceArchitecture
-import io.embrace.android.embracesdk.internal.DeviceArchitectureImpl
 import io.embrace.android.embracesdk.internal.capture.metadata.EmbraceMetadataService
 import io.embrace.android.embracesdk.internal.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.internal.capture.metadata.RnBundleIdTracker
@@ -80,7 +79,7 @@ internal class PayloadSourceModuleImpl(
     }
 
     override val deviceArchitecture: DeviceArchitecture by singleton {
-        DeviceArchitectureImpl()
+        DeviceArchitecture()
     }
 
     override val hostedSdkVersionInfo: HostedSdkVersionInfo by singleton {

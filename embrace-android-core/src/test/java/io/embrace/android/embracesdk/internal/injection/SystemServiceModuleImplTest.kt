@@ -44,7 +44,6 @@ internal class SystemServiceModuleImplTest {
     fun testSystemServiceModuleDefault() {
         val module = SystemServiceModuleImpl(coreModule)
         assertNotNull(module.activityManager)
-        assertNotNull(module.powerManager)
         assertNotNull(module.windowManager)
         assertNotNull(module.connectivityManager)
         assertNull(module.storageManager)

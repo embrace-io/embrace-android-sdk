@@ -12,6 +12,7 @@ import org.gradle.api.Project
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Provider
 import org.gradle.api.provider.ProviderFactory
+import org.jetbrains.kotlin.gradle.plugin.kotlinToolingVersion
 import java.util.UUID
 
 /**
@@ -57,6 +58,7 @@ class BuildTelemetryCollector {
                         buildId = config.buildId,
                     )
                 },
+                kotlinVersion = getKotlinVersion(project),
             )
         }
     }
@@ -103,6 +105,14 @@ class BuildTelemetryCollector {
 
     private fun Project.getJvmArgs() = getProperty(GRADLE_JVM_ARGS) ?: ""
     private fun Project.getEdmVersion() = getProperty(EMBRACE_UNITY_EDM_VERSION) ?: ""
+
+    private fun getKotlinVersion(project: Project): String? {
+        return if (project.pluginManager.hasPlugin("org.jetbrains.kotlin.android")) {
+            project.kotlinToolingVersion.toString()
+        } else {
+            null
+        }
+    }
 }
 
 private const val SYS_PROP_JDK_VERSION = "java.version"

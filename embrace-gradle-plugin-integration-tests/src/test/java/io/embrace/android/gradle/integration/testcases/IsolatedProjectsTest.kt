@@ -2,6 +2,7 @@ package io.embrace.android.gradle.integration.testcases
 
 import io.embrace.android.gradle.integration.framework.PluginIntegrationTestRule
 import io.embrace.android.gradle.integration.framework.ProjectType
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 
@@ -24,7 +25,12 @@ class IsolatedProjectsTest {
             ),
             projectType = ProjectType.ANDROID,
             assertions = {
-                // build is successful
+                verifyBuildTelemetryRequestSent(
+                    listOf("debug", "release"),
+                    additionalAssertions = {
+                        assertTrue(checkNotNull(isIsolatedProjectsEnabled))
+                    }
+                )
             }
         )
     }

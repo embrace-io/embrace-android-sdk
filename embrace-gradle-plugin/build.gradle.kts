@@ -10,6 +10,7 @@ plugins {
 dependencies {
     compileOnly(libs.agp.api)
     compileOnly(gradleApi())
+    compileOnly(kotlin("gradle-plugin"))
 
     implementation(platform(libs.okhttp.bom))
     implementation(libs.okhttp)

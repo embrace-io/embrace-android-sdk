@@ -9,6 +9,7 @@ import io.embrace.android.gradle.config.TestMatrix.OlderVersion
 import io.embrace.android.gradle.integration.framework.PluginIntegrationTestRule
 import io.embrace.android.gradle.integration.framework.ProjectType
 import io.embrace.android.gradle.plugin.gradle.GradleVersion
+import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 
@@ -55,7 +56,13 @@ class AgpSupportTest {
             testMatrix = testMatrix,
             projectType = ProjectType.ANDROID,
             assertions = {
-                verifyBuildTelemetryRequestSent(listOf("debug", "release"), testMatrix = testMatrix)
+                verifyBuildTelemetryRequestSent(
+                    listOf("debug", "release"),
+                    testMatrix = testMatrix,
+                    additionalAssertions = {
+                        assertEquals(testMatrix.kotlin, kotlinVersion)
+                    }
+                )
                 verifyJvmMappingRequestsSent(1)
             }
         )

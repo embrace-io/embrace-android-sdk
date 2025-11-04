@@ -1,8 +1,6 @@
 package io.embrace.android.embracesdk.internal.comms.api
 
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
 import org.junit.Test
 
 internal class ApiRequestTest {
@@ -48,13 +46,5 @@ internal class ApiRequestTest {
             ),
             minimal.getHeaders()
         )
-    }
-
-    @Test
-    fun testSessionRequest() {
-        assertFalse(request.isSessionRequest())
-
-        val copy = request.copy(url = ApiRequestUrl("https://example.com/v2/spans"))
-        assertTrue(copy.isSessionRequest())
     }
 }

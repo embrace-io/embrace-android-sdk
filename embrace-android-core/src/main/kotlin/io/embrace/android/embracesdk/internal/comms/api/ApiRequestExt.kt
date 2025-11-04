@@ -13,9 +13,3 @@ internal fun ApiRequest.getHeaders(): Map<String, String> {
     eTag?.let { headers["If-None-Match"] = it }
     return headers
 }
-
-/**
- * Returns true if the request is a session request. This heuristic should not be widely used
- * - it is only used to prioritise session requests over other requests.
- */
-internal fun ApiRequest.isSessionRequest(): Boolean = url.url.endsWith("spans")

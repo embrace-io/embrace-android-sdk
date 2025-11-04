@@ -22,14 +22,6 @@ class AgpWrapperImpl(project: Project) : AgpWrapper {
         extension.compileOptions.isCoreLibraryDesugaringEnabled
     }
 
-    override val usesCMake: Boolean by lazy {
-        extension.externalNativeBuild.cmake.path != null
-    }
-
-    override val usesNdkBuild: Boolean by lazy {
-        extension.externalNativeBuild.ndkBuild.path != null
-    }
-
     override val minSdk: Int? by lazy {
         extension.defaultConfig.minSdk
     }

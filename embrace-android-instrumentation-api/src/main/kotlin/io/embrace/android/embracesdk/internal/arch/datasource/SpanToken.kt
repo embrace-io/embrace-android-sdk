@@ -9,4 +9,6 @@ interface SpanToken {
      * Stops the span with an optional explicit end time
      */
     fun stop(endTimeMs: Long? = null)
+
+    fun addEvent(name: String, eventTimeMs: Long, attributes: Map<String, String>)
 }

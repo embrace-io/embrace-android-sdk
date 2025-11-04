@@ -1,14 +1,14 @@
 package io.embrace.android.embracesdk.testcases.features
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.assertions.assertMatches
 import io.embrace.android.embracesdk.assertions.findSpanOfType
 import io.embrace.android.embracesdk.assertions.findSpanSnapshotOfType
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkStatusDataSource
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.comms.delivery.NetworkStatus
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
-import io.embrace.android.embracesdk.assertions.assertMatches
-import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkStatusDataSource
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -26,6 +26,7 @@ internal class NetworkStatusFeatureTest {
         val tickTimeMs = 3000L
         var sdkStartTimeMs: Long = 0
         var statusChangeTimeMs: Long = 0
+        var sessionEndTimeMs: Long = 0
 
         testRule.runTest(
             testCaseAction = {
@@ -36,6 +37,7 @@ internal class NetworkStatusFeatureTest {
                     val dataSource = findDataSource<NetworkStatusDataSource>()
                     dataSource.onNetworkConnectivityStatusChanged(NetworkStatus.WIFI)
                 }
+                sessionEndTimeMs = clock.now()
             },
             assertAction = {
                 val message = getSingleSessionEnvelope()
@@ -60,6 +62,11 @@ internal class NetworkStatusFeatureTest {
                         "network" to "wifi"
                     )
                 )
+
+                val stateSpan = message.findSpanOfType(EmbType.Performance.State)
+                assertEquals("emb-state-network-connectivity", stateSpan.name)
+                assertEquals(sdkStartTimeMs, stateSpan.startTimeNanos?.nanosToMillis())
+                assertEquals(sessionEndTimeMs, stateSpan.endTimeNanos?.nanosToMillis())
             }
         )
     }

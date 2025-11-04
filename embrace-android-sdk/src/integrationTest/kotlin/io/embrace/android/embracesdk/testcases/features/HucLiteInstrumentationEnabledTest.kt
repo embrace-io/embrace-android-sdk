@@ -4,8 +4,8 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.getLogOfType
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
-import io.embrace.android.embracesdk.instrumentation.huclite.InstrumentationInitializer
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.instrumentation.HucLiteDataSource
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
@@ -94,7 +94,7 @@ internal class HucLiteInstrumentationEnabledTest {
         )
         assertEquals(
             attempted,
-            attrs.findAttributeValue("exception.stacktrace")?.contains(InstrumentationInitializer::class.java.name)
+            attrs.findAttributeValue("exception.stacktrace")?.contains(HucLiteDataSource::class.java.name)
         )
     }
 }

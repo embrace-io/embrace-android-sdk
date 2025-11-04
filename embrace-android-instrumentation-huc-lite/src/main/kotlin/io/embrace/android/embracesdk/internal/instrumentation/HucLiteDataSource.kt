@@ -153,7 +153,7 @@ class HucLiteDataSource(
             recordRequest(telemetryUrlProvider) {
                 val endTimeMs = clock.now()
                 val errorCode = if (responseCode !in 1..<400) {
-                    "failure"
+                    ErrorCodeAttribute.Failure
                 } else {
                     null
                 }
@@ -192,7 +192,7 @@ class HucLiteDataSource(
                     name = "$method ${pathProvider()}",
                     startTimeMs = getValidStartTime(),
                     endTimeMs = errorTimeMs,
-                    errorCode = ErrorCodeAttribute.Failure.value,
+                    errorCode = ErrorCodeAttribute.Failure,
                     type = EmbType.Performance.Network,
                     attributes = networkRequestSchemaType.attributes()
                 )

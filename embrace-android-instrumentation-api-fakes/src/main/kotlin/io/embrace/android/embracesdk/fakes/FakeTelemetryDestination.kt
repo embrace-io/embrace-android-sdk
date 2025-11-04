@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.internal.arch.datasource.LogSeverity
 import io.embrace.android.embracesdk.internal.arch.datasource.SpanToken
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 
 class FakeTelemetryDestination : TelemetryDestination {
@@ -64,7 +65,7 @@ class FakeTelemetryDestination : TelemetryDestination {
         name: String,
         startTimeMs: Long,
         endTimeMs: Long,
-        errorCode: String?,
+        errorCode: ErrorCodeAttribute?,
         type: EmbType,
         attributes: Map<String, String>,
     ) {

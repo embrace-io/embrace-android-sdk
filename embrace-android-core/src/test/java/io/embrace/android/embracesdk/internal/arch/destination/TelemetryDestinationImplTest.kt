@@ -22,11 +22,11 @@ import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.otel.toEmbracePayload
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.session.id.SessionData
-import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
 import io.embrace.opentelemetry.kotlin.semconv.LogAttributes
 import io.embrace.opentelemetry.kotlin.semconv.SessionAttributes
+import io.embrace.opentelemetry.kotlin.tracing.StatusCode
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -202,11 +202,31 @@ internal class TelemetryDestinationImplTest {
     }
 
     @Test
-    fun `test record completed span`() {
-        val name = "name"
+    fun `test record successful span`() {
+        val name = "success-span"
         val startTimeMs = 5L
-        val endTimeMs = 5L
-        val errorCode = ErrorCode.FAILURE.name
+        val endTimeMs = 15L
+        impl.recordCompletedSpan(
+            name,
+            startTimeMs,
+            endTimeMs,
+        )
+        val span = spanService.createdSpans.single()
+        assertEquals(name, span.name)
+        assertEquals(startTimeMs, span.spanStartTimeMs)
+        assertEquals(endTimeMs, span.spanEndTimeMs)
+        assertEquals(StatusCode.UNSET, span.status.statusCode)
+        assertTrue(span.hasEmbraceAttribute(EmbType.Performance.Default))
+        assertFalse(span.attributes.containsKey("emb.error_code"))
+        verifyAndResetSessionUpdate()
+    }
+
+    @Test
+    fun `test record failed span with attributes`() {
+        val name = "failed-span"
+        val startTimeMs = 5L
+        val endTimeMs = 15L
+        val errorCode = ErrorCodeAttribute.Failure
         val type = EmbType.Performance.Network
         val attributes = mapOf("foo" to "bar")
         impl.recordCompletedSpan(
@@ -223,9 +243,9 @@ internal class TelemetryDestinationImplTest {
         assertEquals(endTimeMs, span.spanEndTimeMs)
         assertEquals(Span.Status.ERROR, span.status.statusCode.toEmbracePayload())
         assertTrue(span.hasEmbraceAttribute(type))
-        assertTrue(span.hasEmbraceAttribute(ErrorCodeAttribute.Failure))
+        assertTrue(span.hasEmbraceAttribute(errorCode))
         assertEquals(type, span.type)
-        assertEquals(attributes + mapOf(type.asPair(), ErrorCodeAttribute.Failure.asPair()), span.attributes)
+        assertEquals(attributes + mapOf(type.asPair(), errorCode.asPair()), span.attributes)
         verifyAndResetSessionUpdate()
     }
 

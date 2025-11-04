@@ -10,6 +10,7 @@ class FakeNetworkBehavior(
     private val domains: Map<String, Int> = emptyMap(),
     private val captureHttpUrlConnectionRequests: Boolean = false,
     private val hucLiteInstrumentationEnabled: Boolean = true,
+    private val urlEnabled: Boolean = true,
     override val domainCountLimiter: DomainCountLimiter = FakeDomainCountLimiter(),
 ) : NetworkBehavior {
 
@@ -18,7 +19,7 @@ class FakeNetworkBehavior(
     override fun isHucLiteInstrumentationEnabled(): Boolean = hucLiteInstrumentationEnabled
     override fun getLimitsByDomain(): Map<String, Int> = domains
     override fun getRequestLimitPerDomain(): Int = captureLimit
-    override fun isUrlEnabled(url: String): Boolean = true
+    override fun isUrlEnabled(url: String): Boolean = urlEnabled
     override fun isCaptureBodyEncryptionEnabled(): Boolean = false
     override fun getNetworkBodyCapturePublicKey(): String? = null
     override fun getNetworkCaptureRules(): Set<NetworkCaptureRuleRemoteConfig> = emptySet()

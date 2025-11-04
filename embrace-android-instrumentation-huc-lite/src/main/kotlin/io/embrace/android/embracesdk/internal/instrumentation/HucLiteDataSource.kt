@@ -1,7 +1,9 @@
 package io.embrace.android.embracesdk.internal.instrumentation
 
+import android.annotation.SuppressLint
+import io.embrace.android.embracesdk.instrumentation.huclite.DelegatingInstrumentedURLStreamHandlerFactory
 import io.embrace.android.embracesdk.instrumentation.huclite.HucLitePathOverrideRequest
-import io.embrace.android.embracesdk.instrumentation.huclite.InstrumentationInitializer
+import io.embrace.android.embracesdk.instrumentation.huclite.InstrumentedUrlStreamHandlerFactory
 import io.embrace.android.embracesdk.internal.arch.InstrumentationInstallArgs
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceImpl
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
@@ -10,32 +12,42 @@ import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.clock.Clock
+import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.network.logging.getOverriddenURLString
+import io.embrace.android.embracesdk.internal.utils.NetworkUtils
 import io.embrace.android.embracesdk.internal.utils.toNonNullMap
 import io.embrace.opentelemetry.kotlin.semconv.ErrorAttributes
 import io.embrace.opentelemetry.kotlin.semconv.ExceptionAttributes
 import io.embrace.opentelemetry.kotlin.semconv.HttpAttributes
+import java.lang.reflect.Field
+import java.lang.reflect.Modifier
+import java.net.URL
+import java.net.URLStreamHandler
+import java.net.URLStreamHandlerFactory
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 import javax.net.ssl.HttpsURLConnection
 
 class HucLiteDataSource(
     private val args: InstrumentationInstallArgs,
+    private val streamHandlerFactoryFieldProvider: () -> Field? = ::defaultFactoryFieldProvider,
+    private val factoryInstaller: (URLStreamHandlerFactory) -> Unit = URL::setURLStreamHandlerFactory,
 ) : DataSourceImpl(
     args = args,
     limitStrategy = NoopLimitStrategy
 ) {
     private val telemetryDestination = args.destination
+    private val domainCountLimiter = args.configService.networkBehavior.domainCountLimiter
+    private val recordForUrl = args.configService.networkBehavior::isUrlEnabled
     private var initializationAttempted = false
 
     override fun onDataCaptureEnabled() {
         if (!initializationAttempted) {
             try {
-                InstrumentationInitializer().installURLStreamHandlerFactory(
+                installURLStreamHandlerFactory(
                     clock = args.clock,
                     logger = args.logger,
-                    hucLiteDataSource = this
                 )
             } finally {
                 initializationAttempted = true
@@ -49,17 +61,60 @@ class HucLiteDataSource(
     fun createRequestData(
         wrappedConnection: HttpsURLConnection,
         clock: Clock,
-    ): RequestData? =
+    ): RequestData? {
+        return if (recordForUrl(wrappedConnection.url.toString())) {
+            runCatching {
+                RequestData(
+                    connection = wrappedConnection,
+                    shouldRecord = domainCountLimiter::canLogNetworkRequest,
+                    clock = clock,
+                    telemetryDestination = telemetryDestination,
+                    errorHandler = ::errorHandler
+                )
+            }.onFailure {
+                errorHandler(it)
+            }.getOrNull()
+        } else {
+            null
+        }
+    }
+
+    private fun installURLStreamHandlerFactory(
+        clock: Clock,
+        logger: EmbLogger,
+    ) {
         runCatching {
-            RequestData(
-                connection = wrappedConnection,
-                clock = clock,
-                telemetryDestination = telemetryDestination,
-                errorHandler = ::errorHandler
-            )
+            @SuppressLint("PrivateApi")
+            val httpsHandlerClass = Class.forName("com.android.okhttp.HttpsHandler")
+            val instrumentedUrlStreamHandlerFactoryProvider = {
+                InstrumentedUrlStreamHandlerFactory(
+                    httpsHandler = httpsHandlerClass.getDeclaredConstructor().newInstance() as URLStreamHandler,
+                    clock = clock,
+                    hucLiteDataSource = this,
+                )
+            }
+
+            val newFactory =
+                streamHandlerFactoryFieldProvider()?.let { field ->
+                    val existingFactory: Any? = field.get(null)
+                    if (existingFactory is URLStreamHandlerFactory) {
+                        field.set(null, null)
+                        DelegatingInstrumentedURLStreamHandlerFactory(
+                            delegateHandlerFactory = existingFactory,
+                            instrumentedHandlerFactory = instrumentedUrlStreamHandlerFactoryProvider,
+                            clock = clock,
+                            hucLiteDataSource = this,
+                        )
+                    } else {
+                        null
+                    }
+                }
+
+            factoryInstaller(newFactory ?: instrumentedUrlStreamHandlerFactoryProvider())
         }.onFailure {
-            errorHandler(it)
-        }.getOrNull()
+            logger.trackInternalError(InternalErrorType.URL_STREAM_HANDLER_FACTORY_INSTALL_FAIL, it)
+        }
+    }
 
     private fun errorHandler(t: Throwable) {
         logger.trackInternalError(InternalErrorType.DATA_SOURCE_DATA_CAPTURE_FAIL, InstrumentationException(t))
@@ -67,6 +122,7 @@ class HucLiteDataSource(
 
     class RequestData(
         connection: HttpsURLConnection,
+        val shouldRecord: (domain: String) -> Boolean,
         val clock: Clock,
         val telemetryDestination: TelemetryDestination,
         val errorHandler: (t: Throwable) -> Unit,
@@ -80,8 +136,8 @@ class HucLiteDataSource(
                 )
             )
         }
-        private val methodProvider = { connection.requestMethod }
 
+        private val methodProvider = { connection.requestMethod }
         private val pathProvider = { connection.url.path }
         private val startTimeMs = AtomicLong(INVALID_START_TIME)
         private val requestRecorded = AtomicBoolean(false)
@@ -94,7 +150,7 @@ class HucLiteDataSource(
             }
 
         fun completeRequest(responseCode: Int) {
-            recordRequest {
+            recordRequest(telemetryUrlProvider) {
                 val endTimeMs = clock.now()
                 val errorCode = if (responseCode !in 1..<400) {
                     "failure"
@@ -121,7 +177,7 @@ class HucLiteDataSource(
         }
 
         fun clientError(t: Throwable) {
-            recordRequest {
+            recordRequest(telemetryUrlProvider) {
                 val errorTimeMs = clock.now()
                 val method = methodProvider()
                 val networkRequestSchemaType = SchemaType.NetworkRequest(
@@ -172,10 +228,17 @@ class HucLiteDataSource(
                 startTimeMs.get()
             }
 
-        private fun recordRequest(recordingFunction: () -> Unit) {
+        private fun recordRequest(
+            urlProvider: () -> String,
+            recordingFunction: () -> Unit
+        ) {
             runCatching {
                 if (requestRecorded.compareAndSet(false, true)) {
-                    recordingFunction()
+                    NetworkUtils.getDomain(urlProvider())?.let { domain ->
+                        if (shouldRecord(domain)) {
+                            recordingFunction()
+                        }
+                    }
                 }
             }.onFailure {
                 errorHandler(it)
@@ -190,4 +253,15 @@ class HucLiteDataSource(
     private class InstrumentationException(
         cause: Throwable,
     ) : RuntimeException("Unexpected error during HUC instrumentation", cause)
+}
+
+private fun defaultFactoryFieldProvider(): Field? {
+    val fields = URL::class.java.declaredFields
+    for (current in fields) {
+        if (Modifier.isStatic(current.modifiers) && current.type == URLStreamHandlerFactory::class.java) {
+            current.isAccessible = true
+            return current
+        }
+    }
+    return null
 }

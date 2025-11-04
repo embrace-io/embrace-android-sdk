@@ -7,12 +7,12 @@ import android.os.Environment
 import android.view.WindowManager
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
-import io.embrace.android.embracesdk.fakes.FakeDeviceArchitecture
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeHostedSdkVersionInfo
 import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.fakes.FakeRnBundleIdTracker
 import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
+import io.embrace.android.embracesdk.fakes.fakeDeviceArchitecture
 import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.buildinfo.BuildInfo
 import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo
@@ -43,7 +43,7 @@ internal class EmbraceMetadataServiceTest {
         private lateinit var ref: EmbraceMetadataService
         private val preferencesService: EmbracePreferencesService = mockk(relaxed = true)
         private val fakeClock = FakeClock()
-        private val fakeArchitecture = FakeDeviceArchitecture()
+        private val fakeArchitecture = fakeDeviceArchitecture()
         private val storageStatsManager = mockk<StorageStatsManager>()
 
         @BeforeClass

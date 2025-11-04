@@ -3,8 +3,6 @@ package io.embrace.android.embracesdk.internal.injection
 import android.app.Application
 import android.content.Context
 import android.content.pm.ApplicationInfo
-import io.embrace.android.embracesdk.internal.AndroidResourcesService
-import io.embrace.android.embracesdk.internal.EmbraceAndroidResourcesService
 import io.embrace.android.embracesdk.internal.buildinfo.BuildInfoService
 import io.embrace.android.embracesdk.internal.buildinfo.BuildInfoServiceImpl
 import io.embrace.android.embracesdk.internal.capture.metadata.AppEnvironment
@@ -30,10 +28,6 @@ class CoreModuleImpl(
 
     override val serviceRegistry: ServiceRegistry by singleton {
         ServiceRegistry()
-    }
-
-    override val resources: AndroidResourcesService by singleton {
-        EmbraceAndroidResourcesService(context)
     }
 
     override val appEnvironment: AppEnvironment by lazy {

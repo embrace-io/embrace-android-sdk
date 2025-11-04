@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.internal.process
+package io.embrace.android.embracesdk.internal.instrumentation.startup
 
 import android.os.Build.VERSION_CODES
 import android.os.Process

@@ -24,6 +24,12 @@ class FakeAnrService : AnrService {
     override fun addBlockedThreadListener(listener: BlockedThreadListener) {
     }
 
-    override fun close() {
+    override fun onThreadBlocked(thread: Thread, timestamp: Long) {
+    }
+
+    override fun onThreadBlockedInterval(thread: Thread, timestamp: Long) {
+    }
+
+    override fun onThreadUnblocked(thread: Thread, timestamp: Long) {
     }
 }

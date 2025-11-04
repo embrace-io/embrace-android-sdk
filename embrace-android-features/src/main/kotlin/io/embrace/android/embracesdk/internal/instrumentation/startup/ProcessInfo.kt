@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.internal.process
+package io.embrace.android.embracesdk.internal.instrumentation.startup
 
 /**
  * Runtime-agnostic interface for getting information from the Android Process API

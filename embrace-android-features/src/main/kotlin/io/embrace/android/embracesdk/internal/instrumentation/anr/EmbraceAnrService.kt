@@ -8,8 +8,6 @@ import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.Thre
 import io.embrace.android.embracesdk.internal.instrumentation.anr.payload.AnrInterval
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
-import io.embrace.android.embracesdk.internal.session.MemoryCleanerListener
-import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateListener
 import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateService
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import java.util.concurrent.Callable
@@ -34,7 +32,7 @@ internal class EmbraceAnrService(
     private val clock: Clock,
     private val stacktraceSampler: AnrStacktraceSampler,
     private val processStateService: ProcessStateService,
-) : AnrService, MemoryCleanerListener, ProcessStateListener, BlockedThreadListener {
+) : AnrService {
 
     private val listeners: CopyOnWriteArrayList<BlockedThreadListener> = CopyOnWriteArrayList<BlockedThreadListener>()
     private var delayedBackgroundCheckTask: ScheduledFuture<*>? = null
@@ -82,9 +80,6 @@ internal class EmbraceAnrService(
         this.anrMonitorWorker.submit {
             livenessCheckScheduler.stopMonitoringThread()
         }
-    }
-
-    override fun close() {
     }
 
     override fun cleanCollections() {

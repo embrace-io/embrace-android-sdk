@@ -44,11 +44,4 @@ interface KeyValueStore {
      * Increments an int from the key-value store then returns it.
      */
     fun incrementAndGet(key: String): Int
-
-    /**
-     * Increments and returns the crash number ordinal. This is an integer that
-     * increments on every crash. It allows us to check the % of crashes that
-     * didn't get delivered to the backend.
-     */
-    fun incrementAndGetCrashNumber(): Int
 }

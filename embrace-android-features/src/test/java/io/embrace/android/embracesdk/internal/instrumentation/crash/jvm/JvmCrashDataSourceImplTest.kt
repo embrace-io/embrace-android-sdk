@@ -4,8 +4,8 @@ import io.embrace.android.embracesdk.fakes.FakeAnrService
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeCrashFileMarker
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
-import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.fakes.FakeLogOrchestrator
+import io.embrace.android.embracesdk.fakes.FakeOrdinalStore
 import io.embrace.android.embracesdk.fakes.FakeSessionOrchestrator
 import io.embrace.android.embracesdk.fakes.FakeSessionPropertiesService
 import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
@@ -33,7 +33,7 @@ internal class JvmCrashDataSourceImplTest {
     private lateinit var sessionOrchestrator: FakeSessionOrchestrator
     private lateinit var sessionPropertiesService: FakeSessionPropertiesService
     private lateinit var anrService: FakeAnrService
-    private lateinit var keyValueStore: FakeKeyValueStore
+    private lateinit var ordinalStore: FakeOrdinalStore
     private lateinit var crashMarker: FakeCrashFileMarker
     private lateinit var serializer: EmbraceSerializer
     private lateinit var args: FakeInstrumentationArgs
@@ -47,7 +47,7 @@ internal class JvmCrashDataSourceImplTest {
         sessionOrchestrator = FakeSessionOrchestrator()
         sessionPropertiesService = FakeSessionPropertiesService()
         anrService = FakeAnrService()
-        keyValueStore = FakeKeyValueStore()
+        ordinalStore = FakeOrdinalStore()
         crashMarker = FakeCrashFileMarker()
         args = FakeInstrumentationArgs(mockk())
         serializer = EmbraceSerializer()
@@ -66,7 +66,7 @@ internal class JvmCrashDataSourceImplTest {
         )
         crashDataSource = JvmCrashDataSourceImpl(
             sessionPropertiesService,
-            keyValueStore,
+            ordinalStore,
             args,
             serializer,
             telemetryModifier,

@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.session.message
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeMetadataSource
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeResourceSource
-import io.embrace.android.embracesdk.fakes.FakePreferenceService
+import io.embrace.android.embracesdk.fakes.FakeOrdinalStore
 import io.embrace.android.embracesdk.fakes.FakeSessionPayloadSource
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.envelope.session.SessionEnvelopeSourceImpl
@@ -43,7 +43,7 @@ internal class PayloadMessageCollatorImplTest {
         )
         currentSessionSpan = initModule.openTelemetryModule.currentSessionSpan
         collator = PayloadMessageCollatorImpl(
-            preferencesService = FakePreferenceService(),
+            store = FakeOrdinalStore(),
             currentSessionSpan = currentSessionSpan,
             sessionEnvelopeSource = sessionEnvelopeSource
         )

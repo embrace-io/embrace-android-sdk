@@ -11,6 +11,7 @@ import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
+import io.embrace.android.embracesdk.internal.store.OrdinalStore
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.internal.worker.Worker
 import java.util.concurrent.ConcurrentHashMap
@@ -24,6 +25,7 @@ internal class InstrumentationArgsImpl(
     override val application: Application,
     override val store: KeyValueStore,
     override val serializer: PlatformSerializer,
+    override val ordinalStore: OrdinalStore,
     private val workerThreadModule: WorkerThreadModule,
     private val sessionIdTracker: SessionIdTracker,
 ) : InstrumentationArgs {

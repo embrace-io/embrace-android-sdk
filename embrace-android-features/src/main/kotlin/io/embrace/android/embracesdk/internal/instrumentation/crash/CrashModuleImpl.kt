@@ -32,7 +32,7 @@ internal class CrashModuleImpl(
     override val jvmCrashDataSource: JvmCrashDataSource by singleton {
         JvmCrashDataSourceImpl(
             essentialServiceModule.sessionPropertiesService,
-            androidServicesModule.store,
+            androidServicesModule.ordinalStore,
             instrumentationModule.instrumentationArgs,
             initModule.jsonSerializer,
             jsCrashService?.let { it::appendCrashTelemetryAttributes }

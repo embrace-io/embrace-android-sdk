@@ -33,7 +33,7 @@ internal class SessionOrchestrationModuleImpl(
     override val payloadMessageCollator: PayloadMessageCollatorImpl by singleton {
         PayloadMessageCollatorImpl(
             EmbTrace.trace("sessionEnvelopeSource") { payloadSourceModule.sessionEnvelopeSource },
-            androidServicesModule.preferencesService,
+            androidServicesModule.ordinalStore,
             openTelemetryModule.currentSessionSpan,
         )
     }

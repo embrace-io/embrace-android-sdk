@@ -13,7 +13,8 @@ import io.embrace.android.embracesdk.internal.capture.crash.CrashTeardownHandler
 import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
 import io.embrace.android.embracesdk.internal.payload.LegacyExceptionInfo
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
-import io.embrace.android.embracesdk.internal.store.KeyValueStore
+import io.embrace.android.embracesdk.internal.store.Ordinal
+import io.embrace.android.embracesdk.internal.store.OrdinalStore
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.internal.utils.getThreadInfo
 import io.embrace.android.embracesdk.internal.utils.toUTF8String
@@ -28,7 +29,7 @@ import java.util.concurrent.atomic.AtomicBoolean
  */
 internal class JvmCrashDataSourceImpl(
     private val sessionPropertiesService: SessionPropertiesService,
-    private val keyValueStore: KeyValueStore,
+    private val ordinalStore: OrdinalStore,
     args: InstrumentationArgs,
     private val serializer: PlatformSerializer,
 
@@ -61,7 +62,7 @@ internal class JvmCrashDataSourceImpl(
         if (!mainCrashHandled.getAndSet(true)) {
             captureTelemetry {
                 val crashId = Uuid.getEmbUuid()
-                val crashNumber = keyValueStore.incrementAndGetCrashNumber()
+                val crashNumber = ordinalStore.incrementAndGet(Ordinal.CRASH)
                 val attrs = TelemetryAttributes(
                     sessionPropertiesProvider = sessionPropertiesService::getProperties,
                 )

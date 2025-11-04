@@ -8,7 +8,6 @@ import android.preference.PreferenceManager
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeClock
-import io.embrace.android.embracesdk.fakes.FakeSharedPreferences
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -143,56 +142,6 @@ internal class EmbracePreferencesServiceTest {
         assertNull(service.lastConfigFetchDate)
         service.lastConfigFetchDate = 1234L
         assertEquals(1234L, service.lastConfigFetchDate)
-    }
-
-    @Test
-    fun `test session number is saved`() {
-        assertEquals(1, service.incrementAndGetSessionNumber())
-        assertEquals(2, service.incrementAndGetSessionNumber())
-        assertEquals(3, service.incrementAndGetSessionNumber())
-        assertEquals(4, service.incrementAndGetSessionNumber())
-
-        // bg activity uses independent key
-        assertEquals(1, service.incrementAndGetBackgroundActivityNumber())
-    }
-
-    @Test
-    fun `test bg activity number is saved`() {
-        assertEquals(1, service.incrementAndGetBackgroundActivityNumber())
-        assertEquals(2, service.incrementAndGetBackgroundActivityNumber())
-        assertEquals(3, service.incrementAndGetBackgroundActivityNumber())
-        assertEquals(4, service.incrementAndGetBackgroundActivityNumber())
-
-        // session uses independent key
-        assertEquals(1, service.incrementAndGetSessionNumber())
-    }
-
-    @Test
-    fun `test crash number is saved`() {
-        assertEquals(1, service.incrementAndGetCrashNumber())
-        assertEquals(2, service.incrementAndGetCrashNumber())
-        assertEquals(3, service.incrementAndGetCrashNumber())
-        assertEquals(4, service.incrementAndGetCrashNumber())
-    }
-
-    @Test
-    fun `test native crash number is saved`() {
-        assertEquals(1, service.incrementAndGetNativeCrashNumber())
-        assertEquals(2, service.incrementAndGetNativeCrashNumber())
-        assertEquals(3, service.incrementAndGetNativeCrashNumber())
-        assertEquals(4, service.incrementAndGetNativeCrashNumber())
-    }
-
-    @Test
-    fun `test incrementAndGet returns -1 on an exception`() {
-        service = EmbracePreferencesService(
-            SharedPrefsStore(
-                FakeSharedPreferences(throwExceptionOnGet = true),
-                TestPlatformSerializer()
-            ),
-            fakeClock
-        )
-        assertEquals(-1, service.incrementAndGetSessionNumber())
     }
 
     @Test

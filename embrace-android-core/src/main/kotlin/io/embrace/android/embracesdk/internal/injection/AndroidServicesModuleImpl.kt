@@ -7,6 +7,8 @@ import io.embrace.android.embracesdk.internal.prefs.EmbracePreferencesService
 import io.embrace.android.embracesdk.internal.prefs.PreferencesService
 import io.embrace.android.embracesdk.internal.prefs.SharedPrefsStore
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
+import io.embrace.android.embracesdk.internal.store.OrdinalStore
+import io.embrace.android.embracesdk.internal.store.OrdinalStoreImpl
 
 internal class AndroidServicesModuleImpl(
     initModule: InitModule,
@@ -20,6 +22,10 @@ internal class AndroidServicesModuleImpl(
             ),
             initModule.jsonSerializer
         )
+    }
+
+    override val ordinalStore: OrdinalStore by singleton {
+        OrdinalStoreImpl(store)
     }
 
     override val preferencesService: PreferencesService by singleton {

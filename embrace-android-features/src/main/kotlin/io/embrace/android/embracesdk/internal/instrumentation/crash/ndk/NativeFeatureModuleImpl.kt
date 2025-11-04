@@ -20,7 +20,7 @@ internal class NativeFeatureModuleImpl(
         } else {
             NativeCrashDataSourceImpl(
                 nativeCrashProcessor = nativeCoreModule.processor,
-                preferencesService = androidServicesModule.preferencesService,
+                ordinalStore = androidServicesModule.ordinalStore,
                 args = instrumentationModule.instrumentationArgs,
                 serializer = initModule.jsonSerializer,
             )

@@ -19,11 +19,11 @@ class AeiInstrumentationProvider : InstrumentationProvider {
         return DataSourceState(
             factory = {
                 AeiDataSourceImpl(
-                    // FIXME: supply via args
                     args = args,
                     backgroundWorker = args.backgroundWorker(worker = Worker.Background.NonIoRegWorker),
                     activityManager = activityManager,
-                    aeiDataStore = AeiDataStoreImpl(args.store),
+                    store = args.store,
+                    ordinalStore = args.ordinalStore
                 )
             },
             configGate = { args.configService.appExitInfoBehavior.isAeiCaptureEnabled() }

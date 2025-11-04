@@ -4,6 +4,8 @@ import android.app.ActivityManager
 import android.app.ApplicationExitInfo
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
+import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
+import io.embrace.android.embracesdk.fakes.FakeOrdinalStore
 import io.embrace.android.embracesdk.fakes.behavior.FakeAppExitInfoBehavior
 import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
 import io.embrace.android.embracesdk.internal.arch.datasource.LogSeverity
@@ -38,7 +40,7 @@ internal class AeiDataSourceImplTest {
 
     private val worker = fakeBackgroundWorker()
 
-    private val aeiDataStore = FakeAeiDataStore()
+    private val store = FakeKeyValueStore()
 
     private val mockActivityManager: ActivityManager = mockk {
         every { getHistoricalProcessExitReasons(any(), any(), any()) } returns emptyList()
@@ -71,7 +73,8 @@ internal class AeiDataSourceImplTest {
             args,
             worker,
             mockActivityManager,
-            aeiDataStore,
+            store,
+            FakeOrdinalStore()
         ).apply(AeiDataSourceImpl::onDataCaptureEnabled)
     }
 
@@ -169,10 +172,9 @@ internal class AeiDataSourceImplTest {
         every { mockActivityManager.getHistoricalProcessExitReasons(any(), any(), any()) } returns
             listOf(appExitInfo1, appExitInfo2, appExitInfo3)
 
-        aeiDataStore.deliveredAeiIds = setOf(
-            appExitInfo1Hash,
-            appExitInfo2Hash
-        )
+        store.edit {
+            putStringSet("io.embrace.aeiHashCode", setOf(appExitInfo1Hash, appExitInfo2Hash))
+        }
 
         startApplicationExitInfoService()
 

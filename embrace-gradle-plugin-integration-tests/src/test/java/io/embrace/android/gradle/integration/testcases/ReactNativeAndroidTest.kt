@@ -1,5 +1,6 @@
 package io.embrace.android.gradle.integration.testcases
 
+import io.embrace.android.gradle.config.TestMatrix
 import io.embrace.android.gradle.integration.framework.PluginIntegrationTestRule
 import io.embrace.android.gradle.integration.framework.smali.SmaliConfigReader
 import io.embrace.android.gradle.integration.framework.smali.SmaliMethod
@@ -43,6 +44,7 @@ class ReactNativeAndroidTest {
         val handshakeArchs = listOf("arm64-v8a", "armeabi-v7a")
         rule.runTest(
             fixture = "react-native-android",
+            testMatrix = TestMatrix.NewerVersion,
             androidProjectRoot = "android",
             task = "build",
             setup = { projectDir ->
@@ -50,7 +52,7 @@ class ReactNativeAndroidTest {
                 setupMockResponses(handshakeLibs, handshakeArchs, defaultExpectedVariants)
             },
             assertions = {
-                verifyBuildTelemetryRequestSent(variantsSentInBuildTelemetry)
+                verifyBuildTelemetryRequestSent(variantsSentInBuildTelemetry, testMatrix = TestMatrix.NewerVersion)
                 verifyHandshakes(defaultExpectedLibs, defaultExpectedArchs, defaultExpectedVariants)
                 verifyUploads(handshakeLibs, handshakeArchs, defaultExpectedVariants)
             }
@@ -61,6 +63,7 @@ class ReactNativeAndroidTest {
     fun `react native asm injection test`() {
         rule.runTest(
             fixture = "react-native-android",
+            testMatrix = TestMatrix.NewerVersion,
             androidProjectRoot = "android",
             task = "assembleRelease",
             setup = { projectDir ->
@@ -100,6 +103,7 @@ class ReactNativeAndroidTest {
         val handshakeArchs = listOf("arm64-v8a", "armeabi-v7a")
         rule.runTest(
             fixture = "react-native-android",
+            testMatrix = TestMatrix.NewerVersion,
             task = "assembleDebug",
             androidProjectRoot = "android",
             setup = { projectDir ->
@@ -107,7 +111,7 @@ class ReactNativeAndroidTest {
                 setupMockResponses(handshakeLibs, handshakeArchs, defaultExpectedVariants)
             },
             assertions = {
-                verifyBuildTelemetryRequestSent(variantsSentInBuildTelemetry)
+                verifyBuildTelemetryRequestSent(variantsSentInBuildTelemetry, testMatrix = TestMatrix.NewerVersion)
                 verifyNoHandshakes()
                 verifyNoUploads()
                 verifyJvmMappingRequestsSent(0)

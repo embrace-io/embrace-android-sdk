@@ -9,12 +9,11 @@ android {
 }
 
 dependencies {
-    compileOnly(project(":embrace-android-core"))
-    compileOnly(project(":embrace-android-sdk"))
-    compileOnly(project(":embrace-internal-api"))
-    testImplementation(project(":embrace-android-core"))
-    testImplementation(project(":embrace-android-sdk"))
-    testImplementation(project(":embrace-internal-api"))
+    implementation(project(":embrace-android-instrumentation-api"))
+    implementation(libs.opentelemetry.kotlin.semconv)
+
+    testImplementation(project(":embrace-android-instrumentation-api-fakes"))
+    testImplementation(project(":embrace-android-config-fakes"))
     testImplementation(project(":embrace-test-fakes"))
     testImplementation(project(":embrace-test-common"))
     testImplementation(libs.robolectric)

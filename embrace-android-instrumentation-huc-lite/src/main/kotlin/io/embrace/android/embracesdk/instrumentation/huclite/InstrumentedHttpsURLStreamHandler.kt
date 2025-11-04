@@ -1,10 +1,8 @@
 package io.embrace.android.embracesdk.instrumentation.huclite
 
 import android.annotation.SuppressLint
-import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
-import io.embrace.android.embracesdk.internal.api.InstrumentationApi
-import io.embrace.android.embracesdk.internal.api.NetworkRequestApi
-import io.embrace.android.embracesdk.internal.api.SdkStateApi
+import io.embrace.android.embracesdk.internal.clock.Clock
+import io.embrace.android.embracesdk.internal.instrumentation.HucLiteDataSource
 import java.io.IOException
 import java.net.Proxy
 import java.net.URL
@@ -18,10 +16,8 @@ import javax.net.ssl.HttpsURLConnection
  */
 internal class InstrumentedHttpsURLStreamHandler(
     private val delegatedHandler: URLStreamHandler,
-    private val sdkStateApi: SdkStateApi,
-    private val instrumentationApi: InstrumentationApi,
-    private val networkRequestApi: NetworkRequestApi,
-    private val internalInterface: EmbraceInternalInterface,
+    private val clock: Clock,
+    private val hucLiteDataSource: HucLiteDataSource,
 ) : URLStreamHandler() {
 
     @SuppressLint("PrivateApi")
@@ -62,16 +58,12 @@ internal class InstrumentedHttpsURLStreamHandler(
 
     private fun HttpsURLConnection.toWrappedConnection(): InstrumentedHttpsURLConnection = InstrumentedHttpsURLConnection(
         wrappedConnection = this,
-        sdkStateApi = sdkStateApi,
-        instrumentationApi = instrumentationApi,
-        networkRequestApi = networkRequestApi,
-        internalInterface = internalInterface
+        clock = clock,
+        hucLiteDataSource = hucLiteDataSource,
     )
 
-    private fun Throwable.toInstrumentedConnectionException(): IOException {
-        internalInterface.logInternalError(this)
-        return InstrumentedConnectionException("Failed to instrumented HTTPS connection", this)
-    }
+    private fun Throwable.toInstrumentedConnectionException(): IOException =
+        InstrumentedConnectionException("Failed to instrumented HTTPS connection", this)
 
     private class InstrumentedConnectionException(
         override val message: String?,

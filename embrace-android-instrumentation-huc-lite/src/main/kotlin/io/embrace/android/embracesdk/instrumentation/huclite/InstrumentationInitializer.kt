@@ -1,10 +1,9 @@
 package io.embrace.android.embracesdk.instrumentation.huclite
 
 import android.annotation.SuppressLint
-import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
-import io.embrace.android.embracesdk.internal.api.InstrumentationApi
-import io.embrace.android.embracesdk.internal.api.NetworkRequestApi
-import io.embrace.android.embracesdk.internal.api.SdkStateApi
+import io.embrace.android.embracesdk.internal.clock.Clock
+import io.embrace.android.embracesdk.internal.instrumentation.HucLiteDataSource
+import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import java.lang.reflect.Field
 import java.lang.reflect.Modifier
 import java.net.URL
@@ -31,27 +30,21 @@ class InstrumentationInitializer(
      * Replace existing [URLStreamHandlerFactory] with one where HTTPS connections are instrumented.
      */
     fun installURLStreamHandlerFactory(
-        sdkStateApi: SdkStateApi,
-        instrumentationApi: InstrumentationApi,
-        networkRequestApi: NetworkRequestApi,
-        internalInterface: EmbraceInternalInterface,
+        clock: Clock,
+        logger: EmbLogger,
+        hucLiteDataSource: HucLiteDataSource,
     ) {
         @SuppressLint("PrivateApi")
-        val httpsHandlerClass = runCatching {
-            Class.forName("com.android.okhttp.HttpsHandler")
-        }.onFailure(internalInterface::logInternalError).getOrNull() ?: return
-
+        val httpsHandlerClass = Class.forName("com.android.okhttp.HttpsHandler")
         val instrumentedUrlStreamHandlerFactoryProvider = {
             InstrumentedUrlStreamHandlerFactory(
                 httpsHandler = httpsHandlerClass.getDeclaredConstructor().newInstance() as URLStreamHandler,
-                sdkStateApi = sdkStateApi,
-                instrumentationApi = instrumentationApi,
-                networkRequestApi = networkRequestApi,
-                internalInterface = internalInterface
+                clock = clock,
+                hucLiteDataSource = hucLiteDataSource,
             )
         }
 
-        val newFactory = runCatching {
+        val newFactory =
             streamHandlerFactoryFieldProvider()?.let { field ->
                 val existingFactory: Any? = field.get(null)
                 if (existingFactory is URLStreamHandlerFactory) {
@@ -59,21 +52,15 @@ class InstrumentationInitializer(
                     DelegatingInstrumentedURLStreamHandlerFactory(
                         delegateHandlerFactory = existingFactory,
                         instrumentedHandlerFactory = instrumentedUrlStreamHandlerFactoryProvider,
-                        sdkStateApi = sdkStateApi,
-                        instrumentationApi = instrumentationApi,
-                        networkRequestApi = networkRequestApi,
-                        internalInterface = internalInterface
+                        clock = clock,
+                        logger = logger,
+                        hucLiteDataSource = hucLiteDataSource,
                     )
                 } else {
                     null
                 }
             }
-        }.onFailure(internalInterface::logInternalError).getOrNull()
 
-        try {
-            factoryInstaller(newFactory ?: instrumentedUrlStreamHandlerFactoryProvider())
-        } catch (t: Throwable) {
-            internalInterface.logInternalError(t)
-        }
+        factoryInstaller(newFactory ?: instrumentedUrlStreamHandlerFactoryProvider())
     }
 }

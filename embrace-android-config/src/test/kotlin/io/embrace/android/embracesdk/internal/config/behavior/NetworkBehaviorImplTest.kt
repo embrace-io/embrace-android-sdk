@@ -1,5 +1,7 @@
 package io.embrace.android.embracesdk.internal.config.behavior
 
+import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
+import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.createNetworkBehavior
 import io.embrace.android.embracesdk.internal.config.remote.NetworkCaptureRuleRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.NetworkRemoteConfig
@@ -69,5 +71,21 @@ internal class NetworkBehaviorImplTest {
         with(createNetworkBehavior(disabledUrlPatterns = listOf("a.b.c", "invalid[}regex"))) {
             assertTrue(isUrlEnabled("invalid[}regex"))
         }
+    }
+
+    @Test
+    fun `only HUC Lite disabled when HUC is enabled`() {
+        val networkBehavior = NetworkBehaviorImpl(
+            local = FakeInstrumentedConfig(
+                enabledFeatures = FakeEnabledFeatureConfig(
+                    httpUrlConnectionCapture = true,
+                    hucLiteInstrumentation = true,
+                ),
+            ),
+            remote = null,
+            disabledUrlPatterns = null,
+        )
+        assertTrue(networkBehavior.isHttpUrlConnectionCaptureEnabled())
+        assertFalse(networkBehavior.isHucLiteInstrumentationEnabled())
     }
 }

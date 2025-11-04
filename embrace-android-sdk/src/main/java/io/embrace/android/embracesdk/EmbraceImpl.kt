@@ -229,26 +229,6 @@ internal class EmbraceImpl(
                     networkRequestApiDelegate,
                     internalInterface,
                 )
-            } else if (networkBehavior.isHucLiteInstrumentationEnabled()) {
-                EmbTrace.trace("huc-lite-installation") {
-                    val instrumentationClass =
-                        Class.forName("io.embrace.android.embracesdk.instrumentation.huclite.InstrumentationInitializer")
-                    val instrumentationObject = instrumentationClass.getDeclaredConstructor().newInstance()
-                    val initMethod = instrumentationObject::class.java.getDeclaredMethod(
-                        "installURLStreamHandlerFactory",
-                        SdkStateApi::class.java,
-                        InstrumentationApi::class.java,
-                        NetworkRequestApi::class.java,
-                        EmbraceInternalInterface::class.java,
-                    )
-                    initMethod.invoke(
-                        instrumentationObject,
-                        sdkStateApiDelegate,
-                        instrumentationApiDelegate,
-                        networkRequestApiDelegate,
-                        internalInterface,
-                    )
-                }
             }
         } catch (t: Throwable) {
             logger.trackInternalError(InternalErrorType.INSTRUMENTATION_REG_FAIL, t)

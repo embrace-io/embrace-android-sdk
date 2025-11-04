@@ -1,9 +1,9 @@
 package io.embrace.android.embracesdk.instrumentation.huclite
 
-import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
-import io.embrace.android.embracesdk.internal.api.InstrumentationApi
-import io.embrace.android.embracesdk.internal.api.NetworkRequestApi
-import io.embrace.android.embracesdk.internal.api.SdkStateApi
+import io.embrace.android.embracesdk.internal.clock.Clock
+import io.embrace.android.embracesdk.internal.instrumentation.HucLiteDataSource
+import io.embrace.android.embracesdk.internal.logging.EmbLogger
+import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import java.net.URLStreamHandler
 import java.net.URLStreamHandlerFactory
 
@@ -16,26 +16,23 @@ import java.net.URLStreamHandlerFactory
 internal class DelegatingInstrumentedURLStreamHandlerFactory(
     private val delegateHandlerFactory: URLStreamHandlerFactory,
     private val instrumentedHandlerFactory: () -> InstrumentedUrlStreamHandlerFactory,
-    private val sdkStateApi: SdkStateApi,
-    private val instrumentationApi: InstrumentationApi,
-    private val networkRequestApi: NetworkRequestApi,
-    private val internalInterface: EmbraceInternalInterface,
+    private val clock: Clock,
+    private val logger: EmbLogger,
+    private val hucLiteDataSource: HucLiteDataSource,
 ) : URLStreamHandlerFactory {
     override fun createURLStreamHandler(protocol: String?): URLStreamHandler? {
         val delegateHandler: URLStreamHandler? = try {
             delegateHandlerFactory.createURLStreamHandler(protocol)
         } catch (t: Throwable) {
-            internalInterface.logInternalError(t)
+            logger.trackInternalError(InternalErrorType.DELEGATING_URL_STREAM_HANDLER_FACTORY_FAIL, t)
             null
         }
 
         return if (delegateHandler != null) {
             DelegatingInstrumentedUrlStreamHandler(
                 delegateHandler = delegateHandler,
-                sdkStateApi = sdkStateApi,
-                instrumentationApi = instrumentationApi,
-                networkRequestApi = networkRequestApi,
-                internalInterface = internalInterface
+                clock = clock,
+                hucLiteDataSource = hucLiteDataSource,
             )
         } else {
             instrumentedHandlerFactory().createURLStreamHandler(protocol)

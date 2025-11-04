@@ -21,6 +21,7 @@ import javax.net.ssl.HttpsURLConnection
 
 private enum class RequestType {
     GET_REQUEST,
+    REDIRECTED_GET_REQUEST,
     POST_REQUEST,
     NOT_FOUND_REQUEST,
     INVALID_REQUEST
@@ -94,7 +95,8 @@ fun NetworkRequestExample() {
 }
 
 private fun getUrl(requestValue: RequestType): String = when (requestValue) {
-    RequestType.GET_REQUEST -> "https://httpbin.org/get"
+    RequestType.GET_REQUEST -> "https://www.google.com"
+    RequestType.REDIRECTED_GET_REQUEST -> "https://google.com"
     RequestType.POST_REQUEST -> "https://httpbin.org/post"
     RequestType.NOT_FOUND_REQUEST -> "https://httpbin.org/status/404"
     RequestType.INVALID_REQUEST -> "https://some-invalid-url.path"

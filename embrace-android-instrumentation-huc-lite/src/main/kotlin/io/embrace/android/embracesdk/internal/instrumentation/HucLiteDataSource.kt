@@ -4,7 +4,7 @@ import android.annotation.SuppressLint
 import io.embrace.android.embracesdk.instrumentation.huclite.DelegatingInstrumentedURLStreamHandlerFactory
 import io.embrace.android.embracesdk.instrumentation.huclite.HucLitePathOverrideRequest
 import io.embrace.android.embracesdk.instrumentation.huclite.InstrumentedUrlStreamHandlerFactory
-import io.embrace.android.embracesdk.internal.arch.InstrumentationInstallArgs
+import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceImpl
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.arch.limits.NoopLimitStrategy
@@ -30,7 +30,7 @@ import java.util.concurrent.atomic.AtomicLong
 import javax.net.ssl.HttpsURLConnection
 
 class HucLiteDataSource(
-    private val args: InstrumentationInstallArgs,
+    private val args: InstrumentationArgs,
     private val streamHandlerFactoryFieldProvider: () -> Field? = ::defaultFactoryFieldProvider,
     private val factoryInstaller: (URLStreamHandlerFactory) -> Unit = URL::setURLStreamHandlerFactory,
 ) : DataSourceImpl(

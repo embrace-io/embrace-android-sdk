@@ -23,7 +23,6 @@ import io.embrace.android.embracesdk.internal.injection.EssentialServiceModuleSu
 import io.embrace.android.embracesdk.internal.injection.InstrumentationModuleSupplier
 import io.embrace.android.embracesdk.internal.injection.LogModuleSupplier
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
-import io.embrace.android.embracesdk.internal.injection.NativeCoreModuleSupplier
 import io.embrace.android.embracesdk.internal.injection.PayloadSourceModuleSupplier
 import io.embrace.android.embracesdk.internal.injection.SessionOrchestrationModuleSupplier
 import io.embrace.android.embracesdk.internal.injection.StorageModuleSupplier
@@ -31,6 +30,7 @@ import io.embrace.android.embracesdk.internal.injection.SystemServiceModuleSuppl
 import io.embrace.android.embracesdk.internal.injection.WorkerThreadModuleSupplier
 import io.embrace.android.embracesdk.internal.instrumentation.anr.AnrModuleSupplier
 import io.embrace.android.embracesdk.internal.instrumentation.crash.CrashModuleSupplier
+import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeCoreModuleSupplier
 
 @Suppress("LongParameterList")
 internal fun fakeModuleInitBootstrapper(

@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.internal.ndk.symbols
+package io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.symbols
 
 /**
  * Service that retrieves native symbols for the current architecture so they can be attached to payloads

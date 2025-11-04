@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.internal.ndk
+package io.embrace.android.embracesdk.internal.instrumentation.crash.ndk
 
 import io.embrace.android.embracesdk.ResourceReader
 import io.embrace.android.embracesdk.concurrency.BlockableExecutorService

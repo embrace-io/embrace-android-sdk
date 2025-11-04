@@ -4,9 +4,7 @@ import io.embrace.android.embracesdk.internal.injection.AndroidServicesModule
 import io.embrace.android.embracesdk.internal.injection.ConfigModule
 import io.embrace.android.embracesdk.internal.injection.InitModule
 import io.embrace.android.embracesdk.internal.injection.InstrumentationModule
-import io.embrace.android.embracesdk.internal.injection.NativeCoreModule
 import io.embrace.android.embracesdk.internal.injection.singleton
-import io.embrace.android.embracesdk.internal.ndk.NativeCrashService
 
 internal class NativeFeatureModuleImpl(
     initModule: InitModule,

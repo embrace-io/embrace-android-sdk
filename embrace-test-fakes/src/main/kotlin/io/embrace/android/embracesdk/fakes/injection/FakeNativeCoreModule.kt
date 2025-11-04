@@ -5,11 +5,11 @@ import io.embrace.android.embracesdk.fakes.FakeNativeCrashProcessor
 import io.embrace.android.embracesdk.fakes.FakeSharedObjectLoader
 import io.embrace.android.embracesdk.fakes.FakeSymbolService
 import io.embrace.android.embracesdk.internal.SharedObjectLoader
-import io.embrace.android.embracesdk.internal.injection.NativeCoreModule
-import io.embrace.android.embracesdk.internal.ndk.NativeCrashHandlerInstaller
-import io.embrace.android.embracesdk.internal.ndk.NativeCrashProcessor
-import io.embrace.android.embracesdk.internal.ndk.jni.JniDelegate
-import io.embrace.android.embracesdk.internal.ndk.symbols.SymbolService
+import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeCoreModule
+import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeCrashHandlerInstaller
+import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeCrashProcessor
+import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.jni.JniDelegate
+import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.symbols.SymbolService
 
 class FakeNativeCoreModule(
     override val sharedObjectLoader: SharedObjectLoader = FakeSharedObjectLoader(),

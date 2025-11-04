@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.internal.ndk.jni
+package io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.jni
 
 interface JniDelegate {
     fun installSignalHandlers(

@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.ndk.jni
 
-import io.embrace.android.embracesdk.internal.ndk.jni.JniDelegateImpl
+import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.jni.JniDelegateImpl
 import io.embrace.android.embracesdk.ndk.NativeTestSuite
 import org.junit.Assert.assertEquals
 import org.junit.Before

@@ -36,7 +36,7 @@ import io.embrace.android.embracesdk.internal.instrumentation.anr.createAnrModul
 import io.embrace.android.embracesdk.internal.injection.createDeliveryModule
 import io.embrace.android.embracesdk.internal.injection.createEssentialServiceModule
 import io.embrace.android.embracesdk.internal.injection.createInstrumentationModule
-import io.embrace.android.embracesdk.internal.injection.createNativeCoreModule
+import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.createNativeCoreModule
 import io.embrace.android.embracesdk.internal.injection.createWorkerThreadModule
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.otel.spans.SpanSink

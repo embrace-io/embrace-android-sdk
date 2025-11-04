@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.android.embracesdk.internal.ndk.NativeCrashService
+import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeCrashService
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
 import java.util.concurrent.ConcurrentLinkedQueue
 

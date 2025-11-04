@@ -85,6 +85,7 @@ internal class TelemetryDestinationImplTest {
             assertEquals(clock.now().millisToNanos(), timestamp)
             assertNull(observedTimestamp)
         }
+        verifyAndResetSessionUpdate()
     }
 
     @Test
@@ -195,7 +196,9 @@ internal class TelemetryDestinationImplTest {
     fun `test start span capture`() {
         val span = impl.startSpanCapture(SchemaType.Breadcrumb("Whoops"), 5)
         assertNotNull(span)
+        verifyAndResetSessionUpdate()
         span?.stop()
+        verifyAndResetSessionUpdate()
     }
 
     @Test
@@ -223,6 +226,7 @@ internal class TelemetryDestinationImplTest {
         assertTrue(span.hasEmbraceAttribute(ErrorCodeAttribute.Failure))
         assertEquals(type, span.type)
         assertEquals(attributes + mapOf(type.asPair(), ErrorCodeAttribute.Failure.asPair()), span.attributes)
+        verifyAndResetSessionUpdate()
     }
 
     @Test
@@ -231,12 +235,14 @@ internal class TelemetryDestinationImplTest {
         val current = checkNotNull(currentSessionSpan.current())
         val schemaType = SchemaType.Breadcrumb("Hi")
         impl.addSessionEvent(schemaType, 5)
+        verifyAndResetSessionUpdate()
 
         val event = (current as FakeEmbraceSdkSpan).events.single()
         assertEquals("emb-${schemaType.fixedObjectName}", event.name)
 
         impl.removeSessionEvents(schemaType.telemetryType)
         assertTrue(currentSessionSpan.addedEvents.isEmpty())
+        verifyAndResetSessionUpdate()
     }
 
     @Test
@@ -245,8 +251,15 @@ internal class TelemetryDestinationImplTest {
         val current = checkNotNull(currentSessionSpan.current())
         impl.addSessionAttribute("foo", "bar")
         assertEquals("bar", current.attributes()["foo"])
+        verifyAndResetSessionUpdate()
 
         impl.removeSessionAttribute("foo")
         assertNull(current.attributes()["foo"])
+        verifyAndResetSessionUpdate()
+    }
+
+    private fun verifyAndResetSessionUpdate() {
+        assertTrue(processStateService.sessionDataUpdated)
+        processStateService.sessionDataUpdated = false
     }
 }

@@ -16,8 +16,8 @@ interface SessionOrchestrator : ProcessStateListener, CrashTeardownHandler {
     fun endSessionWithManual(clearUserInfo: Boolean)
 
     /**
-     * Reports a change that means we should schedule snapshotting & writing to disk of the
-     * current snapshot. This function is kept for legacy reasons and will eventually be removed.
+     * Reports a change to the underlying data or metadata of the current session. This means cached data for the session is stale and
+     * should be updated if necessary.
      */
-    fun reportBackgroundActivityStateChange()
+    fun onSessionDataUpdate()
 }

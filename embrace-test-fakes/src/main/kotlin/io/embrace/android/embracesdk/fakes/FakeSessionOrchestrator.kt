@@ -16,7 +16,7 @@ class FakeSessionOrchestrator : SessionOrchestrator {
         this.crashId = crashId
     }
 
-    override fun reportBackgroundActivityStateChange() {
+    override fun onSessionDataUpdate() {
         stateChangeCount++
     }
 }

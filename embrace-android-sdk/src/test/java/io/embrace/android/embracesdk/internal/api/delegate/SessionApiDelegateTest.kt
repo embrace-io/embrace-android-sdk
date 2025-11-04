@@ -51,7 +51,6 @@ internal class SessionApiDelegateTest {
     fun `add session property`() {
         delegate.addSessionProperty("test", "value", false)
         assertEquals("value", sessionPropertiesService.props["test"])
-        assertEquals(1, orchestrator.stateChangeCount)
     }
 
     @Test
@@ -59,7 +58,6 @@ internal class SessionApiDelegateTest {
         delegate.addSessionProperty("test", "value", false)
         delegate.removeSessionProperty("test")
         assertNull(sessionPropertiesService.props["test"])
-        assertEquals(2, orchestrator.stateChangeCount)
     }
 
     @Test

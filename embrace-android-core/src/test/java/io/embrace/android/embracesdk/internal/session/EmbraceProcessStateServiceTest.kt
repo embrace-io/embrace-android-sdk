@@ -254,6 +254,21 @@ internal class EmbraceProcessStateServiceTest {
         assertEquals("foreground", stateService.getAppState())
     }
 
+    @Test
+    fun `notify session with telemetry update`() {
+        val fakeSessionOrchestrator = FakeSessionOrchestrator()
+        stateService.addListener(fakeSessionOrchestrator)
+        assertEquals(0, fakeSessionOrchestrator.stateChangeCount)
+        stateService.sessionUpdated()
+        assertEquals(1, fakeSessionOrchestrator.stateChangeCount)
+        stateService.onForeground()
+        stateService.sessionUpdated()
+        assertEquals(2, fakeSessionOrchestrator.stateChangeCount)
+        stateService.onBackground()
+        stateService.sessionUpdated()
+        assertEquals(3, fakeSessionOrchestrator.stateChangeCount)
+    }
+
     private class DecoratedListener(
         private val invocations: MutableList<String>,
     ) : ProcessStateListener {

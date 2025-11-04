@@ -4,7 +4,7 @@ import io.embrace.android.embracesdk.fakes.FakeJniDelegate
 import io.embrace.android.embracesdk.fakes.FakeNativeCrashProcessor
 import io.embrace.android.embracesdk.fakes.FakeSharedObjectLoader
 import io.embrace.android.embracesdk.fakes.FakeSymbolService
-import io.embrace.android.embracesdk.internal.SharedObjectLoader
+import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.SharedObjectLoader
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeCoreModule
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeCrashHandlerInstaller
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeCrashProcessor

@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.instrumentation.crash.ndk
 
-import io.embrace.android.embracesdk.internal.SharedObjectLoader
 import io.embrace.android.embracesdk.internal.injection.ConfigModule
 import io.embrace.android.embracesdk.internal.injection.CoreModule
 import io.embrace.android.embracesdk.internal.injection.EssentialServiceModule

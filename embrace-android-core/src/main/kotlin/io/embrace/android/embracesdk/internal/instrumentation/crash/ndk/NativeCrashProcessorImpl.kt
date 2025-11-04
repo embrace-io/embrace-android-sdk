@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.instrumentation.crash.ndk
 
-import io.embrace.android.embracesdk.internal.SharedObjectLoader
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.storage.FileStorageService
 import io.embrace.android.embracesdk.internal.delivery.storage.FileStorageServiceImpl

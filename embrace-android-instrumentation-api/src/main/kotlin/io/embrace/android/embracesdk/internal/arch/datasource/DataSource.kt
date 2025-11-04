@@ -34,8 +34,8 @@ interface DataSource {
     /**
      * Captures telemetry from the given action, if the [DataSourceState] and limits allow it.
      */
-    fun captureTelemetry(
+    fun <T> captureTelemetry(
         inputValidation: () -> Boolean = { true },
-        action: TelemetryDestination.() -> Unit,
-    )
+        action: TelemetryDestination.() -> T?,
+    ): T?
 }

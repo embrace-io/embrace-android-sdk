@@ -24,10 +24,8 @@ class FakeNetworkCaptureDataSource : NetworkCaptureDataSource {
         TODO("Not yet implemented")
     }
 
-    override fun captureTelemetry(
+    override fun <T> captureTelemetry(
         inputValidation: () -> Boolean,
-        action: TelemetryDestination.() -> Unit,
-    ) {
-        TODO("Not yet implemented")
-    }
+        action: TelemetryDestination.() -> T?,
+    ): T? = null
 }

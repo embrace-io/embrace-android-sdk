@@ -1,19 +1,20 @@
 package io.embrace.android.embracesdk.internal.injection
 
 import io.embrace.android.embracesdk.internal.SystemInfo
+import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.InstrumentedConfig
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
 
 /**
- * A module of components and services required at [EmbraceImpl] instantiation time, i.e. before the SDK evens starts
+ * A module of components and services required at SDK instantiation time, i.e. before the SDK has fully started
  */
 interface InitModule {
     /**
      * Clock instance locked to the time of creation used by the SDK throughout its lifetime
      */
-    val clock: io.embrace.android.embracesdk.internal.clock.Clock
+    val clock: Clock
 
     /**
      * Service to track usage of public APIs and other internal metrics

@@ -85,7 +85,8 @@ class AssertionInterface(
         request: RecordedRequest,
         expectedVariants: List<String>,
         expectedAppIds: List<String>,
-        testMatrix: TestMatrix
+        testMatrix: TestMatrix,
+        additionalAssertions: (BuildTelemetryRequest.() -> Unit)?,
     ) {
         with(deserializeRequestBody<BuildTelemetryRequest>(request)) {
             assertNotNull(metadataRequestId)
@@ -109,6 +110,9 @@ class AssertionInterface(
                 }
             }
             assertEquals(variants.size, variants.map { it.buildId }.distinct().count())
+            if (additionalAssertions != null) {
+                additionalAssertions(this)
+            }
         }
     }
 
@@ -120,6 +124,7 @@ class AssertionInterface(
         expectedVariants: List<String>,
         expectedAppIds: List<String>? = null,
         testMatrix: TestMatrix = TestMatrix.MaxVersion,
+        additionalAssertions: (BuildTelemetryRequest.() -> Unit)? = null,
     ) {
         val request = fetchRequest(EmbraceEndpoint.BUILD_DATA)
         assertHeaders(request, "application/json", null)
@@ -127,7 +132,7 @@ class AssertionInterface(
         val appIds = expectedAppIds ?: defaultAppIds(expectedVariants.size)
 
         // assert plugin telemetry was sent
-        verifyBuildTelemetryRequestContents(request, expectedVariants, appIds, testMatrix)
+        verifyBuildTelemetryRequestContents(request, expectedVariants, appIds, testMatrix, additionalAssertions)
     }
 
     /**

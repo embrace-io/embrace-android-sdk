@@ -9,4 +9,5 @@ interface AgpWrapper {
     val usesNdkBuild: Boolean
     val minSdk: Int?
     val version: AgpVersion
+    val sourceCompatibility: String?
 }

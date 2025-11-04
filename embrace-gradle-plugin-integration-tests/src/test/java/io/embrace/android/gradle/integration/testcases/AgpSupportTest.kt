@@ -61,6 +61,7 @@ class AgpSupportTest {
                     testMatrix = testMatrix,
                     additionalAssertions = {
                         assertEquals(testMatrix.kotlin, kotlinVersion)
+                        assertEquals(testMatrix.jdk.name.removePrefix("JAVA_"), sourceCompatibility)
                     }
                 )
                 verifyJvmMappingRequestsSent(1)

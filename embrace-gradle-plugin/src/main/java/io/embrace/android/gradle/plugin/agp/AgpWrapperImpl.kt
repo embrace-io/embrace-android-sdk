@@ -33,4 +33,8 @@ class AgpWrapperImpl(project: Project) : AgpWrapper {
     override val minSdk: Int? by lazy {
         extension.defaultConfig.minSdk
     }
+
+    override val sourceCompatibility: String? by lazy {
+        extension.compileOptions.sourceCompatibility.toString()
+    }
 }

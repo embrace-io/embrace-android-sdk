@@ -35,16 +35,17 @@ abstract class DataSourceImpl(
     /**
      * Convenience function for capturing telemetry.
      */
-    override fun captureTelemetry(
+    override fun <T> captureTelemetry(
         inputValidation: () -> Boolean,
-        action: TelemetryDestination.() -> Unit,
-    ) {
+        action: TelemetryDestination.() -> T?,
+    ): T? {
         try {
             if (inputValidation() && limitStrategy.shouldCapture()) {
-                destination.action()
+                return destination.action()
             }
         } catch (exc: Throwable) {
             logger.trackInternalError(InternalErrorType.DATA_SOURCE_DATA_CAPTURE_FAIL, exc)
         }
+        return null
     }
 }

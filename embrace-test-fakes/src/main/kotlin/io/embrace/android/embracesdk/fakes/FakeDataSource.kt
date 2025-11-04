@@ -14,11 +14,10 @@ class FakeDataSource(
     var disableDataCaptureCount: Int = 0
     var resetCount: Int = 0
 
-    override fun captureTelemetry(
+    override fun <T> captureTelemetry(
         inputValidation: () -> Boolean,
-        action: TelemetryDestination.() -> Unit,
-    ) {
-    }
+        action: TelemetryDestination.() -> T?,
+    ): T? = null
 
     override fun onDataCaptureEnabled() {
         ctx.registerComponentCallbacks(this)

@@ -46,6 +46,8 @@ class BuildTelemetryCollector {
                 operatingSystem = getOperatingSystem(),
                 jdkVersion = getJdkVersion(),
                 sourceCompatibility = agpWrapper.sourceCompatibility,
+                minSdk = agpWrapper.minSdk,
+                compileSdk = agpWrapper.compileSdk,
             )
         }
         // then return a provider that is invoked in the execution phase to avoid

@@ -22,6 +22,8 @@ data class BuildTelemetryRequest(
     @Json(name = "edmv") val edmVersion: String? = null,
     @Json(name = "kgpv") val kotlinVersion: String? = null,
     @Json(name = "sc") val sourceCompatibility: String? = null,
+    @Json(name = "msdk") val minSdk: Int? = null,
+    @Json(name = "csdk") val compileSdk: Int? = null,
 ) : Serializable {
 
     private companion object {

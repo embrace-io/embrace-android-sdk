@@ -60,6 +60,8 @@ class AgpSupportTest {
                     listOf("debug", "release"),
                     testMatrix = testMatrix,
                     additionalAssertions = {
+                        assertEquals(26, minSdk)
+                        assertEquals(testMatrix.compileAndTargetSdk.toInt(), compileSdk)
                         assertEquals(testMatrix.kotlin, kotlinVersion)
                         assertEquals(testMatrix.jdk.name.removePrefix("JAVA_"), sourceCompatibility)
                     }

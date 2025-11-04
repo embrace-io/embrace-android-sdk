@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.okhttp3
+package io.embrace.android.embracesdk.internal.instrumentation.okhttp
 
 import java.io.IOException
 

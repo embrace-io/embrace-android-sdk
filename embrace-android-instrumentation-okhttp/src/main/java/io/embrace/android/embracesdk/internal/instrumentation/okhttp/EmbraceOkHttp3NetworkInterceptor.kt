@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.okhttp3
+package io.embrace.android.embracesdk.internal.instrumentation.okhttp
 
 import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.internal.EmbraceInternalApi
@@ -17,6 +17,7 @@ import okio.Buffer
 import okio.GzipSource
 import okio.buffer
 import java.io.IOException
+import kotlin.collections.iterator
 import kotlin.math.abs
 
 /**

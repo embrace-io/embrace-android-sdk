@@ -3,8 +3,8 @@ package io.embrace.android.embracesdk.internal.instrumentation.bytecode
 import androidx.annotation.Keep
 import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.internal.EmbraceInternalApi
-import io.embrace.android.embracesdk.okhttp3.EmbraceOkHttp3ApplicationInterceptor
-import io.embrace.android.embracesdk.okhttp3.EmbraceOkHttp3NetworkInterceptor
+import io.embrace.android.embracesdk.internal.instrumentation.okhttp.EmbraceOkHttp3ApplicationInterceptor
+import io.embrace.android.embracesdk.internal.instrumentation.okhttp.EmbraceOkHttp3NetworkInterceptor
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 

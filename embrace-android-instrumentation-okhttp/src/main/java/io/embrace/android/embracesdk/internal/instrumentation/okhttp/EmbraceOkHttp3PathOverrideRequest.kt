@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.okhttp3
+package io.embrace.android.embracesdk.internal.instrumentation.okhttp
 
 import io.embrace.android.embracesdk.internal.network.logging.HttpPathOverrideRequest
 import okhttp3.Request

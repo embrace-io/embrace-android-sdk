@@ -1,8 +1,16 @@
-package io.embrace.android.embracesdk.internal.injection
+package io.embrace.android.embracesdk.internal.instrumentation.crash.ndk
 
 import io.embrace.android.embracesdk.internal.SharedObjectLoader
-import io.embrace.android.embracesdk.internal.ndk.jni.JniDelegate
-import io.embrace.android.embracesdk.internal.ndk.symbols.SymbolService
+import io.embrace.android.embracesdk.internal.injection.ConfigModule
+import io.embrace.android.embracesdk.internal.injection.CoreModule
+import io.embrace.android.embracesdk.internal.injection.EssentialServiceModule
+import io.embrace.android.embracesdk.internal.injection.InitModule
+import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModule
+import io.embrace.android.embracesdk.internal.injection.PayloadSourceModule
+import io.embrace.android.embracesdk.internal.injection.StorageModule
+import io.embrace.android.embracesdk.internal.injection.WorkerThreadModule
+import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.jni.JniDelegate
+import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.symbols.SymbolService
 import io.embrace.android.embracesdk.internal.utils.Provider
 
 /**

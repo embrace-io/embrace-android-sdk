@@ -10,8 +10,11 @@ import io.embrace.android.embracesdk.internal.instrumentation.anr.createAnrModul
 import io.embrace.android.embracesdk.internal.instrumentation.crash.CrashModule
 import io.embrace.android.embracesdk.internal.instrumentation.crash.CrashModuleSupplier
 import io.embrace.android.embracesdk.internal.instrumentation.crash.createCrashModule
+import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeCoreModule
+import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeCoreModuleSupplier
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeFeatureModule
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeFeatureModuleSupplier
+import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.createNativeCoreModule
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.createNativeFeatureModule
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl

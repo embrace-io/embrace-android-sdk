@@ -1,13 +1,13 @@
-package io.embrace.android.embracesdk.internal.ndk
+package io.embrace.android.embracesdk.internal.instrumentation.crash.ndk
 
 import io.embrace.android.embracesdk.internal.SharedObjectLoader
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.storage.FileStorageService
 import io.embrace.android.embracesdk.internal.delivery.storage.FileStorageServiceImpl
+import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.jni.JniDelegate
+import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.symbols.SymbolService
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
-import io.embrace.android.embracesdk.internal.ndk.jni.JniDelegate
-import io.embrace.android.embracesdk.internal.ndk.symbols.SymbolService
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.worker.PriorityWorker

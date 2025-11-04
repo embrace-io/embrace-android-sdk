@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.android.embracesdk.internal.ndk.jni.JniDelegate
+import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.jni.JniDelegate
 
 class FakeJniDelegate : JniDelegate {
 

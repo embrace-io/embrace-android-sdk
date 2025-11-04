@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.android.embracesdk.internal.ndk.NativeCrashProcessor
+import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeCrashProcessor
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
 
 class FakeNativeCrashProcessor : NativeCrashProcessor {

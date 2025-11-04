@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.internal.ndk.jni
+package io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.jni
 
 class JniDelegateImpl : JniDelegate {
     external override fun installSignalHandlers(

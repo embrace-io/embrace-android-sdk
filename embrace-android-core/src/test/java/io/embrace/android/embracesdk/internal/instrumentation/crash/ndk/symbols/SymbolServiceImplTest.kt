@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.internal.ndk.symbols
+package io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.symbols
 
 import android.util.Base64
 import androidx.test.ext.junit.runners.AndroidJUnit4

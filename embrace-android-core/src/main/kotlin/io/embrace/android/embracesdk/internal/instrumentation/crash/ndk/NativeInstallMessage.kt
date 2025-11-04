@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.internal.ndk
+package io.embrace.android.embracesdk.internal.instrumentation.crash.ndk
 
 data class NativeInstallMessage(
     val markerFilePath: String,

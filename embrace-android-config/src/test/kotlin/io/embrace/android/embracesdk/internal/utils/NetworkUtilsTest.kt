@@ -107,7 +107,7 @@ internal class NetworkUtilsTest {
 
             if (domain != null) {
                 assertEquals(
-                    "Domain for " + url + " should be " + expected + " not " + domain,
+                    "Domain for $url should be $expected not $domain",
                     domain,
                     expected
                 )

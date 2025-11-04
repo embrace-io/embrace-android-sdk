@@ -3,6 +3,8 @@ package io.embrace.android.embracesdk.internal.config.behavior
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.InstrumentedConfig
 import io.embrace.android.embracesdk.internal.config.remote.NetworkCaptureRuleRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.internal.network.logging.DomainCountLimiter
+import io.embrace.android.embracesdk.internal.network.logging.EmbraceDomainCountLimiter
 import java.util.regex.Pattern
 import kotlin.math.min
 
@@ -39,6 +41,13 @@ class NetworkBehaviorImpl(
 
     override fun isHucLiteInstrumentationEnabled(): Boolean =
         local.enabledFeatures.isHucLiteInstrumentationEnabled() && !local.enabledFeatures.isHttpUrlConnectionCaptureEnabled()
+
+    override val domainCountLimiter: DomainCountLimiter by lazy {
+        EmbraceDomainCountLimiter(
+            defaultLimitSupplier = ::getRequestLimitPerDomain,
+            domainLimitsSupplier = ::getLimitsByDomain
+        )
+    }
 
     override fun getLimitsByDomain(): Map<String, Int> {
         val limits = remote?.networkConfig?.domainLimits ?: cfg.getLimitsByDomain()

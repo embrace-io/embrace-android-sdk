@@ -5,7 +5,6 @@ import io.embrace.android.embracesdk.internal.logs.LogOrchestrator
 import io.embrace.android.embracesdk.internal.logs.LogOrchestratorImpl
 import io.embrace.android.embracesdk.internal.logs.LogService
 import io.embrace.android.embracesdk.internal.logs.attachments.AttachmentService
-import io.embrace.android.embracesdk.internal.network.logging.EmbraceDomainCountLimiter
 import io.embrace.android.embracesdk.internal.network.logging.EmbraceNetworkCaptureService
 import io.embrace.android.embracesdk.internal.network.logging.EmbraceNetworkLoggingService
 import io.embrace.android.embracesdk.internal.network.logging.NetworkCaptureDataSource
@@ -42,15 +41,9 @@ internal class LogModuleImpl(
         NetworkCaptureDataSourceImpl(instrumentationModule.instrumentationArgs)
     }
 
-    private val embraceDomainCountLimiter: EmbraceDomainCountLimiter by singleton {
-        EmbraceDomainCountLimiter(
-            configModule.configService
-        )
-    }
-
     override val networkLoggingService: NetworkLoggingService by singleton {
         EmbraceNetworkLoggingService(
-            embraceDomainCountLimiter,
+            configModule.configService.networkBehavior.domainCountLimiter,
             networkCaptureService,
             openTelemetryModule.spanService
         )

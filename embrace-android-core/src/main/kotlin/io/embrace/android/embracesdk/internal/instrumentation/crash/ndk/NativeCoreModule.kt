@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.instrumentation.crash.ndk
 
-import io.embrace.android.embracesdk.internal.SharedObjectLoader
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.jni.JniDelegate
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.symbols.SymbolService
 

@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.internal
+package io.embrace.android.embracesdk.internal.instrumentation.crash.ndk
 
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType

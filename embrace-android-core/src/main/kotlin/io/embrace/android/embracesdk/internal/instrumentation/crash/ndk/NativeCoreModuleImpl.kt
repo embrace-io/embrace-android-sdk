@@ -1,8 +1,6 @@
 package io.embrace.android.embracesdk.internal.instrumentation.crash.ndk
 
 import android.os.Build
-import io.embrace.android.embracesdk.internal.SharedObjectLoader
-import io.embrace.android.embracesdk.internal.SharedObjectLoaderImpl
 import io.embrace.android.embracesdk.internal.delivery.storage.StorageLocation
 import io.embrace.android.embracesdk.internal.handler.AndroidMainThreadHandler
 import io.embrace.android.embracesdk.internal.injection.ConfigModule

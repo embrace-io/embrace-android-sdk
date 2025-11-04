@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.internal
+package io.embrace.android.embracesdk.internal.instrumentation.crash.ndk
 
 import java.util.concurrent.atomic.AtomicBoolean
 

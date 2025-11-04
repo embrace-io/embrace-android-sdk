@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.fakes.FakeSpanToken
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
+import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.instrumentation.HucLiteDataSource
 import io.embrace.opentelemetry.kotlin.semconv.ErrorAttributes
 import io.embrace.opentelemetry.kotlin.semconv.ExceptionAttributes
@@ -99,7 +100,7 @@ internal class HucTestHarness {
     ) {
         assertEquals(expectedResponseCode.toString(), attributes[HttpAttributes.HTTP_RESPONSE_STATUS_CODE])
         if (expectedResponseCode !in 1..400) {
-            assertEquals("failure", errorCode)
+            assertEquals(ErrorCodeAttribute.Failure, errorCode)
         } else {
             assertNull(errorCode)
         }
@@ -127,6 +128,7 @@ internal class HucTestHarness {
         assertEquals("Nope", attributes[ExceptionAttributes.EXCEPTION_MESSAGE])
         assertEquals(expectedStartTime, startTimeMs)
         assertEquals(expectedEndTime, endTimeMs)
+        assertEquals(ErrorCodeAttribute.Failure, errorCode)
     }
 }
 

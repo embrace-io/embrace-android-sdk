@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.internal.arch.datasource.LogSeverity
 import io.embrace.android.embracesdk.internal.arch.datasource.SpanToken
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.clock.Clock
@@ -117,7 +118,7 @@ internal class TelemetryDestinationImpl(
         name: String,
         startTimeMs: Long,
         endTimeMs: Long,
-        errorCode: String?,
+        errorCode: ErrorCodeAttribute?,
         type: EmbType,
         attributes: Map<String, String>,
     ) {
@@ -125,9 +126,7 @@ internal class TelemetryDestinationImpl(
             name = name,
             startTimeMs = startTimeMs,
             endTimeMs = endTimeMs,
-            errorCode = errorCode?.let {
-                ErrorCode.valueOf(it)
-            },
+            errorCode = errorCode.toErrorCode(),
             type = type,
             attributes = attributes,
         )
@@ -168,9 +167,18 @@ internal class TelemetryDestinationImpl(
         else -> severity.name
     }
 
+    private fun ErrorCodeAttribute?.toErrorCode(): ErrorCode? {
+        return when (this) {
+            ErrorCodeAttribute.Failure -> ErrorCode.FAILURE
+            ErrorCodeAttribute.Unknown -> ErrorCode.UNKNOWN
+            ErrorCodeAttribute.UserAbandon -> ErrorCode.USER_ABANDON
+            else -> null
+        }
+    }
+
     private class SpanTokenImpl(
         private val span: EmbraceSpan,
-        private val processStateService: ProcessStateService
+        private val processStateService: ProcessStateService,
     ) : SpanToken {
         override fun stop(endTimeMs: Long?) {
             span.stop(endTimeMs = endTimeMs)

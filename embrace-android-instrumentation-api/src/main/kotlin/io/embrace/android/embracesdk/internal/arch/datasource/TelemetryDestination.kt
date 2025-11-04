@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.arch.datasource
 
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 
 /**
@@ -57,7 +58,7 @@ interface TelemetryDestination {
         name: String,
         startTimeMs: Long,
         endTimeMs: Long,
-        errorCode: String? = null,
+        errorCode: ErrorCodeAttribute? = null,
         type: EmbType = EmbType.Performance.Default,
         attributes: Map<String, String> = emptyMap(),
     )

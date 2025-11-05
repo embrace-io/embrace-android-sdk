@@ -24,6 +24,12 @@ class EmbraceGradlePlugin : Plugin<Project> {
     }
 
     override fun apply(project: Project) {
+        logger.warn(
+            "Deprecation warning: in the next major release (8.0.0), the Embrace Gradle plugin ID will be renamed from " +
+                "'io.embrace.swazzler' to 'io.embrace.gradle'. When upgrading to the next major release, you will need to " +
+                "reference the new plugin ID: io.embrace.gradle"
+        )
+
         validateMinGradleVersion()
 
         val extension = project.extensions.create(

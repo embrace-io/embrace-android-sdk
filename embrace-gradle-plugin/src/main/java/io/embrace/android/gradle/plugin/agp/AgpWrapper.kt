@@ -5,8 +5,6 @@ package io.embrace.android.gradle.plugin.agp
  */
 interface AgpWrapper {
     val isCoreLibraryDesugaringEnabled: Boolean
-    val usesCMake: Boolean
-    val usesNdkBuild: Boolean
     val minSdk: Int?
     val version: AgpVersion
     val sourceCompatibility: String?

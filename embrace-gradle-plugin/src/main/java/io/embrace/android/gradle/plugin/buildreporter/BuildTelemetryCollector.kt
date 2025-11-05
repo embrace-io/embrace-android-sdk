@@ -45,6 +45,7 @@ class BuildTelemetryCollector {
                 pluginVersion = BuildConfig.VERSION,
                 operatingSystem = getOperatingSystem(),
                 jdkVersion = getJdkVersion(),
+                sourceCompatibility = agpWrapper.sourceCompatibility,
             )
         }
         // then return a provider that is invoked in the execution phase to avoid

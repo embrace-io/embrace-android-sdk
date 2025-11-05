@@ -142,17 +142,27 @@ class AssertionInterface(
         verifyJvmMappingRequestsSent(appIds = defaultAppIds(expectedCount))
 
     /**
-     * Verifies expected JVM mapping requests were sent with the specific appIds in the given order
+     * Verifies expected JVM mapping requests were sent with the specific appIds.
+     * Requests are sorted by app ID to handle non-deterministic ordering when building variants in parallel.
      */
     fun AssertionInterface.verifyJvmMappingRequestsSent(appIds: List<String>, buildIds: List<String>? = null) {
+        if (buildIds != null) assertEquals(appIds.size, buildIds.size)
         val requests = fetchRequests(EmbraceEndpoint.PROGUARD)
         assertEquals(appIds.size, requests.size)
 
-        requests.forEachIndexed { i, request ->
-            val parts = readMultipartRequest(request)
-            parts[0].validateBodyAppId(appIds[i])
+        // Read all requests once and sort by app ID to handle parallel build ordering
+        val sortedParts = requests.map { readMultipartRequest(it) }.sortedBy { it[0].data }
+
+        // Sort expected values by app ID
+        val sortedAppIds = appIds.sorted()
+        val sortedBuildIds = buildIds?.let { ids ->
+            appIds.zip(ids).sortedBy { it.first }.map { it.second }
+        }
+
+        sortedParts.forEachIndexed { i, parts ->
+            parts[0].validateBodyAppId(sortedAppIds[i])
             parts[1].validateBodyApiToken(IntegrationTestDefaults.API_TOKEN)
-            parts[2].validateBodyBuildId(buildIds?.get(i))
+            parts[2].validateBodyBuildId(sortedBuildIds?.get(i))
             parts[3].validateMappingFile("mapping.txt")
         }
     }

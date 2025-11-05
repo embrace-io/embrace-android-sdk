@@ -167,7 +167,7 @@ class StreamHandlerFactoryInstaller {
                 protected URLConnection openConnection(URL url) {
                     try {
                         Method method =
-                            findDeclaredMethod(parentHandler, parentHandler.getClass(), METHOD_NAME_OPEN_CONNECTION, URL.class,  Proxy.class);
+                            findDeclaredMethod(parentHandler, parentHandler.getClass(), METHOD_NAME_OPEN_CONNECTION, URL.class);
                         method.setAccessible(true);
                         URLConnection parentConnection = (URLConnection) method.invoke(parentHandler, url);
                         return wrapConnection(parentConnection);

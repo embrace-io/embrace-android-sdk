@@ -19,33 +19,76 @@ import okio.Buffer
 import okio.GzipSource
 import okio.buffer
 import java.io.IOException
-import kotlin.collections.iterator
 import kotlin.math.abs
 
 /**
- * Custom OkHttp Interceptor implementation that will log the results of the network call
- * to Embrace.io.
- *
- * This interceptor will only intercept network request and responses from client app.
- * OkHttp network interceptors are added almost at the end of stack, they are closer to "Wire"
- * so they are able to see catch "real requests".
- *
- * Network Interceptors
- * - Able to operate on intermediate responses like redirects and retries.
- * - Not invoked for cached responses that short-circuit the network.
- * - Observe the data just as it will be transmitted over the network.
- * - Access to the Connection that carries the request.
+ * Captures OkHttp requests as telemetry.
  */
-class EmbraceOkHttp3NetworkInterceptor(
-    private val embrace: Embrace,
-    private val embraceInternalApi: EmbraceInternalApi,
+internal class OkHttpDataSource(
+    private val embrace: Embrace = Embrace,
+    private val embraceInternalApi: EmbraceInternalApi = EmbraceInternalApi,
     // A clock that mirrors the one used by OkHttp to get timestamps
     private val systemClock: Clock = Clock { System.currentTimeMillis() },
     private val traceparentGenerator: TraceparentGenerator = DefaultTraceparentGenerator,
-) : Interceptor {
+) {
 
-    @Throws(IOException::class)
-    override fun intercept(chain: Interceptor.Chain): Response {
+    fun interceptRequest(chain: Interceptor.Chain, type: InterceptorType): Response? = when (type) {
+        InterceptorType.APPLICATION -> interceptApplicationRequest(chain)
+        InterceptorType.NETWORK -> interceptNetworkRequest(chain)
+    }
+
+    private fun interceptApplicationRequest(chain: Interceptor.Chain): Response {
+        val startTime = embrace.getSdkCurrentTimeMs()
+        val request: Request = chain.request()
+        return try {
+            // we are not interested in response, just proceed
+            chain.proceed(request)
+        } catch (e: EmbraceCustomPathException) {
+            if (embrace.isStarted) {
+                val urlString =
+                    getOverriddenURLString(EmbraceOkHttpPathOverrideRequest(request), e.customPath)
+                val cause = e.cause
+                recordNetworkError(urlString, request, startTime, cause)
+            }
+            throw e
+        } catch (e: Exception) {
+            // we are interested in errors.
+            if (embrace.isStarted) {
+                val urlString = getOverriddenURLString(EmbraceOkHttpPathOverrideRequest(request))
+                val cause = e
+                recordNetworkError(urlString, request, startTime, cause)
+            }
+            throw e
+        }
+    }
+
+    private fun recordNetworkError(
+        urlString: String,
+        request: Request,
+        startTime: Long,
+        cause: Throwable?,
+    ) {
+        embrace.recordNetworkRequest(
+            EmbraceNetworkRequest.fromIncompleteRequest(
+                urlString,
+                HttpMethod.fromString(request.method),
+                startTime,
+                embrace.getSdkCurrentTimeMs(),
+                cause?.javaClass?.canonicalName ?: UNKNOWN_EXCEPTION,
+                cause?.message ?: UNKNOWN_MESSAGE,
+                request.header(CUSTOM_TRACE_ID_HEADER_NAME),
+                if (embraceInternalApi.internalInterface.isNetworkSpanForwardingEnabled()) {
+                    request.header(
+                        TRACEPARENT_HEADER_NAME
+                    )
+                } else {
+                    null
+                },
+            )
+        )
+    }
+
+    private fun interceptNetworkRequest(chain: Interceptor.Chain): Response {
         // If the SDK has not started, don't do anything
         val originalRequest: Request = chain.request()
         if (!embrace.isStarted) {
@@ -116,7 +159,7 @@ class EmbraceOkHttp3NetworkInterceptor(
 
         embrace.recordNetworkRequest(
             EmbraceNetworkRequest.fromCompletedRequest(
-                getOverriddenURLString(EmbraceOkHttp3PathOverrideRequest(request)),
+                getOverriddenURLString(EmbraceOkHttpPathOverrideRequest(request)),
                 HttpMethod.fromString(request.method),
                 response.sentRequestAtMillis + offset,
                 response.receivedResponseAtMillis + offset,
@@ -137,7 +180,7 @@ class EmbraceOkHttp3NetworkInterceptor(
         if (contentLengthHeaderValue != null) {
             try {
                 contentLength = contentLengthHeaderValue.toLong()
-            } catch (ex: Exception) {
+            } catch (ignored: Exception) {
                 // Ignore
             }
         }
@@ -157,7 +200,7 @@ class EmbraceOkHttp3NetworkInterceptor(
                     source.request(Long.MAX_VALUE)
                     contentLength = source.buffer.size
                 }
-            } catch (ex: Exception) {
+            } catch (ignored: Exception) {
                 // Ignore
             }
         }
@@ -274,12 +317,14 @@ class EmbraceOkHttp3NetworkInterceptor(
     }
 
     internal companion object {
-        internal const val ENCODING_GZIP = "gzip"
-        internal const val CONTENT_LENGTH_HEADER_NAME = "Content-Length"
-        internal const val CONTENT_ENCODING_HEADER_NAME = "Content-Encoding"
-        internal const val CONTENT_TYPE_HEADER_NAME = "Content-Type"
-        internal const val CONTENT_TYPE_EVENT_STREAM = "text/event-stream"
-        internal const val TRACEPARENT_HEADER_NAME = "traceparent"
+        private const val TRACEPARENT_HEADER_NAME = "traceparent"
+        private const val UNKNOWN_EXCEPTION = "Unknown"
+        private const val UNKNOWN_MESSAGE = "An error occurred during the execution of this network request"
+        private const val ENCODING_GZIP = "gzip"
+        private const val CONTENT_LENGTH_HEADER_NAME = "Content-Length"
+        private const val CONTENT_ENCODING_HEADER_NAME = "Content-Encoding"
+        private const val CONTENT_TYPE_HEADER_NAME = "Content-Type"
+        private const val CONTENT_TYPE_EVENT_STREAM = "text/event-stream"
         private val networkCallDataParts = arrayOf(
             "Response Headers",
             "Request Headers",

@@ -26,6 +26,7 @@ private val embraceLogger = EmbraceLogger("DependenciesInstaller")
  * plugin) and change its behavior.
  * It is not suggested, and it is considered wrong to resolve dependencies at configuration time.
  */
+@Suppress("DEPRECATION")
 fun Project.installDependenciesForVariant(
     variantName: String,
     behavior: PluginBehavior,
@@ -66,7 +67,7 @@ fun Project.installDependenciesForVariant(
                     "true"
                 }
 
-                // set through this consumer configuration 's attribute if we want (or not) to install dependencies
+                // set through this consumer configuration's attribute if we want (or not) to install dependencies
                 configuration.attributes {
                     it.attribute(
                         Attribute.of(

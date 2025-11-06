@@ -36,7 +36,7 @@ class InstrumentationRegistryImpl(
     override fun <T : DataSource> findByType(clazz: KClass<T>): T? {
         val element = dataSourceStates.firstOrNull {
             val obj = it.dataSource
-            obj != null && obj::class == clazz
+            obj != null && clazz.isInstance(obj)
         }
         val state = element as? DataSourceState<T>
         return state?.dataSource
@@ -47,7 +47,7 @@ class InstrumentationRegistryImpl(
      */
     override fun loadInstrumentations(
         instrumentationProviders: Iterable<InstrumentationProvider>,
-        args: InstrumentationArgs
+        args: InstrumentationArgs,
     ) {
         val loader = instrumentationProviders.sortedBy { it.priority }
         loader.forEach { provider ->

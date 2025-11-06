@@ -1,30 +1,37 @@
-package io.embrace.android.embracesdk.internal.network.logging
+package io.embrace.android.embracesdk.internal.instrumentation.network
 
+import androidx.test.core.app.ApplicationProvider
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeDomainCountLimiter
-import io.embrace.android.embracesdk.fakes.FakeSpanService
+import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
+import io.embrace.android.embracesdk.fakes.FakeSpanToken
+import io.embrace.android.embracesdk.fakes.behavior.FakeNetworkBehavior
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
-import io.embrace.android.embracesdk.internal.clock.nanosToMillis
-import io.embrace.android.embracesdk.internal.instrumentation.network.HttpNetworkRequest
-import io.embrace.android.embracesdk.internal.payload.Span
-import io.embrace.android.embracesdk.internal.utils.NetworkUtils.stripUrl
+import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
+import io.embrace.android.embracesdk.internal.utils.NetworkUtils
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import org.junit.runner.RunWith
 
-internal class EmbraceNetworkLoggingServiceTest {
+@RunWith(AndroidJUnit4::class)
+internal class NetworkRequestDataSourceTest {
+
     private lateinit var domainCountLimiter: FakeDomainCountLimiter
-    private lateinit var spanService: FakeSpanService
-    private lateinit var networkLoggingService: EmbraceNetworkLoggingService
+    private lateinit var args: FakeInstrumentationArgs
+    private lateinit var dataSource: NetworkRequestDataSource
 
     @Before
     fun setUp() {
         domainCountLimiter = FakeDomainCountLimiter()
-        spanService = FakeSpanService()
-        networkLoggingService = EmbraceNetworkLoggingService(
-            domainCountLimiter,
-            spanService
+
+        args = FakeInstrumentationArgs(
+            application = ApplicationProvider.getApplicationContext(),
+            configService = FakeConfigService(networkBehavior = FakeNetworkBehavior(domainCountLimiter = domainCountLimiter)),
         )
+        dataSource = NetworkRequestDataSourceImpl(args)
     }
 
     @Test
@@ -48,7 +55,7 @@ internal class EmbraceNetworkLoggingServiceTest {
             endTime = 500,
             statusCode = 203,
         )
-        networkLoggingService.logNetworkRequest(
+        dataSource.recordNetworkRequest(
             HttpNetworkRequest(
                 url = "www.example5.com",
                 httpMethod = "GET",
@@ -59,10 +66,12 @@ internal class EmbraceNetworkLoggingServiceTest {
             )
         )
 
+        args.destination.createdSpans
+
         val spans = getNetworkSpans()
         assertEquals(5, spans.size)
 
-        val requestSpans = spans.associateBy { it.attributes?.single { attr -> attr.key == "url.full" }?.data }
+        val requestSpans = spans.associateBy { it.attributes["url.full"] }
         checkNotNull(requestSpans["www.example1.com"]).assertNetworkRequest(
             expectedStartTimeMs = 100L,
             expectedEndTimeMs = 200L,
@@ -70,12 +79,12 @@ internal class EmbraceNetworkLoggingServiceTest {
         checkNotNull(requestSpans["www.example2.com"]).assertNetworkRequest(
             expectedStartTimeMs = 200L,
             expectedEndTimeMs = 300L,
-            expectedStatus = Span.Status.ERROR
+            expectedErrorCode = ErrorCodeAttribute.Failure
         )
         checkNotNull(requestSpans["www.example3.com"]).assertNetworkRequest(
             expectedStartTimeMs = 300L,
             expectedEndTimeMs = 400L,
-            expectedStatus = Span.Status.ERROR
+            expectedErrorCode = ErrorCodeAttribute.Failure
         )
         checkNotNull(requestSpans["www.example4.com"]).assertNetworkRequest(
             expectedStartTimeMs = 400L,
@@ -84,7 +93,7 @@ internal class EmbraceNetworkLoggingServiceTest {
         checkNotNull(requestSpans["www.example5.com"]).assertNetworkRequest(
             expectedStartTimeMs = 600L,
             expectedEndTimeMs = 650L,
-            expectedStatus = Span.Status.ERROR
+            expectedErrorCode = ErrorCodeAttribute.Failure
         )
     }
 
@@ -119,7 +128,10 @@ internal class EmbraceNetworkLoggingServiceTest {
         logNetworkRequest(url = url)
 
         with(checkNotNull(getNetworkSpans().single())) {
-            assertEquals(stripUrl(url), attributes?.single { it.key == "url.full" }?.data)
+            assertEquals(
+                NetworkUtils.stripUrl(url),
+                attributes["url.full"]
+            )
         }
     }
 
@@ -130,7 +142,7 @@ internal class EmbraceNetworkLoggingServiceTest {
         statusCode: Int = 200,
         body: HttpNetworkRequest.HttpRequestBody? = null,
     ) {
-        networkLoggingService.logNetworkRequest(
+        dataSource.recordNetworkRequest(
             HttpNetworkRequest(
                 url = url,
                 httpMethod = "GET",
@@ -144,18 +156,18 @@ internal class EmbraceNetworkLoggingServiceTest {
         )
     }
 
-    private fun getNetworkSpans() = spanService
-        .createdSpans
-        .filter { it.type == EmbType.Performance.Network }
-        .mapNotNull { it.snapshot() }
+    private fun getNetworkSpans(): List<FakeSpanToken> {
+        return args.destination.createdSpans
+            .filter { it.type == EmbType.Performance.Network }
+    }
 
-    private fun Span.assertNetworkRequest(
+    private fun FakeSpanToken.assertNetworkRequest(
         expectedStartTimeMs: Long,
         expectedEndTimeMs: Long,
-        expectedStatus: Span.Status = Span.Status.UNSET,
+        expectedErrorCode: ErrorCodeAttribute? = null,
     ) {
-        assertEquals(expectedStartTimeMs, startTimeNanos?.nanosToMillis())
-        assertEquals(expectedEndTimeMs, endTimeNanos?.nanosToMillis())
-        assertEquals(expectedStatus, status)
+        assertEquals(expectedStartTimeMs, startTimeMs)
+        assertEquals(expectedEndTimeMs, endTimeMs)
+        assertEquals(expectedErrorCode, errorCode)
     }
 }

@@ -31,7 +31,6 @@ internal class LogModuleImplTest {
         )
 
         assertNotNull(module.networkCaptureService)
-        assertNotNull(module.networkLoggingService)
         assertNotNull(module.logService)
         assertNotNull(module.attachmentService)
     }

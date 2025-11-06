@@ -49,6 +49,10 @@ class PluginBehaviorImpl(
         }
     }
 
+    @Deprecated(
+        "This will be removed in a future release." +
+            " Add embrace dependencies to the classpath manually instead."
+    )
     override val autoAddEmbraceDependencies: Boolean by lazy {
         val userValue = embrace.autoAddEmbraceDependencies.orNull ?: true
         userValue && !isUnityEdmEnabled

@@ -36,6 +36,9 @@ very little change as most alterations are internal. However, you should be awar
 - `embrace-android-fcm` has been renamed as `embrace-android-instrumentation-fcm`
 - `embrace-android-okhttp3` has been renamed as `embrace-android-instrumentation-okhttp`
 
+`embrace.autoAddDependencies` is deprecated and will be removed in a future release. You should add
+the `io.embrace:embrace-android-sdk` dependency to your classpath manually.
+
 ## Altered APIs
 
 Various deprecated APIs have been removed. Please migrate to the documented new APIs where applicable, or

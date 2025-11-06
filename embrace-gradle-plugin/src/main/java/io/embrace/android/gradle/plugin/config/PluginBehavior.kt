@@ -43,6 +43,7 @@ interface PluginBehavior {
      * Whether the project should automatically add embrace dependencies to the classpath,
      * set via `swazzler.disableDependencyInjection`
      */
+    @Deprecated("This will be removed in a future release. Add embrace dependencies to the classpath manually instead.")
     val autoAddEmbraceDependencies: Boolean
 
     /**

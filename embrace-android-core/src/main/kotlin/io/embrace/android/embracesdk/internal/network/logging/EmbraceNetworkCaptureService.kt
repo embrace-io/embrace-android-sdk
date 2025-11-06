@@ -33,7 +33,10 @@ internal class EmbraceNetworkCaptureService(
     private val networkCaptureEncryptionManager = lazy { NetworkCaptureEncryptionManager(logger) }
 
     override fun logNetworkRequest(request: HttpNetworkRequest) {
-        val body = request.body ?: return
+        val body = request.body
+        if (body == null || !configService.networkBehavior.isUrlEnabled(request.url)) {
+            return
+        }
         logNetworkCapturedData(
             request.url, // TODO: This used the non-stripped URL, is that correct?
             request.httpMethod,

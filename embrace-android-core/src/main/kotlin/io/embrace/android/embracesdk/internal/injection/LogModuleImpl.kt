@@ -28,7 +28,7 @@ internal class LogModuleImpl(
     override val networkCaptureService: NetworkCaptureService by singleton {
         EmbraceNetworkCaptureService(
             essentialServiceModule.sessionIdTracker,
-            androidServicesModule.preferencesService,
+            androidServicesModule.store,
             { networkCaptureDataSource },
             configModule.configService,
             configModule.urlBuilder,

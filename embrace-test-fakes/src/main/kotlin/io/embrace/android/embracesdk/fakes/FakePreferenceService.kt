@@ -21,16 +21,8 @@ class FakePreferenceService(
     val bgActivityNumber: () -> Int = { 5 },
 ) : PreferencesService {
 
-    var networkCaptureRuleOver: Boolean = false
     var firstDay: Boolean = false
     var incrementAndGetSessionNumberCount: Int = 0
-
-    override fun isNetworkCaptureRuleOver(id: String): Boolean {
-        return networkCaptureRuleOver
-    }
-
-    override fun decreaseNetworkCaptureRuleRemainingCount(id: String, maxCount: Int) {
-    }
 
     override fun incrementAndGetSessionNumber(): Int {
         incrementAndGetSessionNumberCount++

@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.internal.network.logging
 
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.fakes.FakeNetworkCaptureDataSource
-import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.createNetworkBehavior
@@ -19,7 +19,7 @@ import org.junit.Test
 
 internal class EmbraceNetworkCaptureServiceTest {
 
-    private lateinit var preferenceService: FakePreferenceService
+    private lateinit var store: FakeKeyValueStore
     private lateinit var networkCaptureDataSource: FakeNetworkCaptureDataSource
     private lateinit var cfg: RemoteConfig
     private val sessionIdTracker: FakeSessionIdTracker = FakeSessionIdTracker()
@@ -39,7 +39,7 @@ internal class EmbraceNetworkCaptureServiceTest {
         configService = FakeConfigService(
             networkBehavior = createNetworkBehavior(remoteCfg = cfg)
         )
-        preferenceService = FakePreferenceService()
+        store = FakeKeyValueStore()
         networkCaptureDataSource = FakeNetworkCaptureDataSource()
         sessionIdTracker.setActiveSession("session-123", true)
     }
@@ -85,10 +85,11 @@ internal class EmbraceNetworkCaptureServiceTest {
     fun `test capture rule maxCount discount 1`() {
         val rule = getDefaultRule()
         cfg = RemoteConfig(networkCaptureRules = setOf(rule))
-        preferenceService.networkCaptureRuleOver = false
         val result = getService().getNetworkCaptureRules("https://embrace.io/changelog", "GET")
         assertEquals(1, result.size)
-        preferenceService.networkCaptureRuleOver = true
+        store.edit {
+            putInt(EmbraceNetworkCaptureService.NETWORK_CAPTURE_RULE_PREFIX_KEY + rule.id, 0)
+        }
         val emptyRule = getService().getNetworkCaptureRules("https://embrace.io/changelog", "GET")
         assertEquals(0, emptyRule.size)
     }
@@ -97,7 +98,9 @@ internal class EmbraceNetworkCaptureServiceTest {
     fun `test capture rule maxCount is over`() {
         val rule = getDefaultRule()
         cfg = RemoteConfig(networkCaptureRules = setOf(rule))
-        preferenceService.networkCaptureRuleOver = true
+        store.edit {
+            putInt(EmbraceNetworkCaptureService.NETWORK_CAPTURE_RULE_PREFIX_KEY + rule.id, 0)
+        }
         val emptyRule = getService().getNetworkCaptureRules("https://embrace.io/changelog", "GET")
         assertEquals(0, emptyRule.size)
     }
@@ -197,7 +200,7 @@ internal class EmbraceNetworkCaptureServiceTest {
         )
         return EmbraceNetworkCaptureService(
             sessionIdTracker,
-            preferenceService,
+            store,
             { networkCaptureDataSource },
             configService,
             EmbraceApiUrlBuilder(

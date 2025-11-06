@@ -6,9 +6,9 @@ import io.embrace.android.embracesdk.internal.config.remote.NetworkCaptureRuleRe
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData
 import io.embrace.android.embracesdk.internal.payload.NetworkCapturedCall
-import io.embrace.android.embracesdk.internal.prefs.PreferencesService
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.session.id.SessionIdTracker
+import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.utils.Provider
 import kotlin.math.max
 
@@ -17,7 +17,7 @@ import kotlin.math.max
  */
 internal class EmbraceNetworkCaptureService(
     private val sessionIdTracker: SessionIdTracker,
-    private val preferencesService: PreferencesService,
+    private val keyValueStore: KeyValueStore,
     private val networkCaptureDataSource: Provider<NetworkCaptureDataSource>,
     private val configService: ConfigService,
     private val urlBuilder: ApiUrlBuilder?,
@@ -27,6 +27,7 @@ internal class EmbraceNetworkCaptureService(
 
     companion object {
         const val NETWORK_ERROR_CODE = -1
+        internal const val NETWORK_CAPTURE_RULE_PREFIX_KEY = "io.embrace.networkcapturerule"
     }
 
     private val networkCaptureEncryptionManager = lazy { NetworkCaptureEncryptionManager(logger) }
@@ -55,7 +56,7 @@ internal class EmbraceNetworkCaptureService(
 
         val rulesToRemove = mutableSetOf<NetworkCaptureRuleRemoteConfig>()
         applicableRules.forEach { rule ->
-            if (preferencesService.isNetworkCaptureRuleOver(rule.id)) {
+            if (isNetworkCaptureRuleOver(rule.id)) {
                 rulesToRemove.add(rule)
             }
         }
@@ -89,7 +90,7 @@ internal class EmbraceNetworkCaptureService(
                         networkCaptureData?.capturedResponseBody,
                         rule.maxSize
                     )
-                preferencesService.decreaseNetworkCaptureRuleRemainingCount(rule.id, rule.maxCount)
+                decreaseNetworkCaptureRuleRemainingCount(rule.id, rule.maxCount)
 
                 val capturedNetworkCall = NetworkCapturedCall(
                     duration = duration,
@@ -123,6 +124,20 @@ internal class EmbraceNetworkCaptureService(
                 return
             }
         }
+    }
+
+    private fun isNetworkCaptureRuleOver(id: String): Boolean {
+        return getNetworkCaptureRuleRemainingCount(id, 1) <= 0
+    }
+
+    private fun decreaseNetworkCaptureRuleRemainingCount(id: String, maxCount: Int) {
+        keyValueStore.edit {
+            putInt(NETWORK_CAPTURE_RULE_PREFIX_KEY + id, getNetworkCaptureRuleRemainingCount(id, maxCount) - 1)
+        }
+    }
+
+    private fun getNetworkCaptureRuleRemainingCount(id: String, maxCount: Int): Int {
+        return keyValueStore.getInt(NETWORK_CAPTURE_RULE_PREFIX_KEY + id) ?: maxCount
     }
 
     private fun getNetworkPayload(capturedNetworkCall: NetworkCapturedCall): NetworkCapturedCall {

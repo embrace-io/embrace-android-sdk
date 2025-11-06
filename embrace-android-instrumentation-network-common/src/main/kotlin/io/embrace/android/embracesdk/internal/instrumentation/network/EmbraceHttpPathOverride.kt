@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.internal.network.logging
+package io.embrace.android.embracesdk.internal.instrumentation.network
 
 import java.nio.charset.StandardCharsets
 import java.util.regex.Pattern

@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.internal.network.logging
+package io.embrace.android.embracesdk.internal.instrumentation.network
 
 import org.junit.Assert.assertEquals
 import org.junit.Test

@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.instrumentation.huclite
 
-import io.embrace.android.embracesdk.internal.network.logging.HttpPathOverrideRequest
+import io.embrace.android.embracesdk.internal.instrumentation.network.HttpPathOverrideRequest
 import java.net.MalformedURLException
 import java.net.URL
 

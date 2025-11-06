@@ -25,7 +25,7 @@ internal class InternalInterfaceModuleImpl(
         EmbraceInternalInterfaceImpl(
             embrace,
             initModule,
-            logModule.networkCaptureService,
+            logModule.networkCaptureDataSource,
             configModule.configService,
             openTelemetryModule.internalTracer
         )

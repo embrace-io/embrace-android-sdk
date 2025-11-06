@@ -9,7 +9,7 @@ import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.injection.InitModule
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData
-import io.embrace.android.embracesdk.internal.network.logging.NetworkCaptureService
+import io.embrace.android.embracesdk.internal.network.logging.NetworkCaptureDataSource
 import io.embrace.android.embracesdk.internal.spans.InternalTracer
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.http.HttpMethod
@@ -18,7 +18,7 @@ import io.embrace.android.embracesdk.network.http.HttpMethod
 internal class EmbraceInternalInterfaceImpl(
     private val embraceImpl: EmbraceImpl,
     private val initModule: InitModule,
-    private val networkCaptureService: NetworkCaptureService,
+    private val networkCaptureDataSource: NetworkCaptureDataSource,
     private val configService: ConfigService,
     internalTracer: InternalTracer,
 ) : EmbraceInternalInterface, InternalTracingApi by internalTracer {
@@ -125,7 +125,7 @@ internal class EmbraceInternalInterfaceImpl(
     }
 
     override fun shouldCaptureNetworkBody(url: String, method: String): Boolean {
-        return networkCaptureService.getNetworkCaptureRules(url, method).isNotEmpty()
+        return networkCaptureDataSource.shouldCaptureNetworkBody(url, method)
     }
 
     override fun isNetworkSpanForwardingEnabled(): Boolean =

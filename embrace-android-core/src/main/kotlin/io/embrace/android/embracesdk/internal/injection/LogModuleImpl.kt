@@ -5,10 +5,8 @@ import io.embrace.android.embracesdk.internal.logs.LogOrchestrator
 import io.embrace.android.embracesdk.internal.logs.LogOrchestratorImpl
 import io.embrace.android.embracesdk.internal.logs.LogService
 import io.embrace.android.embracesdk.internal.logs.attachments.AttachmentService
-import io.embrace.android.embracesdk.internal.network.logging.EmbraceNetworkCaptureService
 import io.embrace.android.embracesdk.internal.network.logging.NetworkCaptureDataSource
 import io.embrace.android.embracesdk.internal.network.logging.NetworkCaptureDataSourceImpl
-import io.embrace.android.embracesdk.internal.network.logging.NetworkCaptureService
 import io.embrace.android.embracesdk.internal.worker.Worker
 
 internal class LogModuleImpl(
@@ -23,20 +21,14 @@ internal class LogModuleImpl(
     instrumentationModule: InstrumentationModule,
 ) : LogModule {
 
-    override val networkCaptureService: NetworkCaptureService by singleton {
-        EmbraceNetworkCaptureService(
+    override val networkCaptureDataSource: NetworkCaptureDataSource by singleton {
+        NetworkCaptureDataSourceImpl(
+            instrumentationModule.instrumentationArgs,
             essentialServiceModule.sessionIdTracker,
             androidServicesModule.store,
-            { networkCaptureDataSource },
-            configModule.configService,
             configModule.urlBuilder,
             initModule.jsonSerializer,
-            initModule.logger
         )
-    }
-
-    override val networkCaptureDataSource: NetworkCaptureDataSource by singleton {
-        NetworkCaptureDataSourceImpl(instrumentationModule.instrumentationArgs)
     }
 
     override val logService: LogService by singleton {

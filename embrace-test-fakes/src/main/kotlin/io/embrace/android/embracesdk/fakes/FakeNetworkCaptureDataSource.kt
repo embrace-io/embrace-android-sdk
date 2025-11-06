@@ -1,16 +1,18 @@
 package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
+import io.embrace.android.embracesdk.internal.instrumentation.network.HttpNetworkRequest
 import io.embrace.android.embracesdk.internal.network.logging.NetworkCaptureDataSource
-import io.embrace.android.embracesdk.internal.payload.NetworkCapturedCall
 
 class FakeNetworkCaptureDataSource : NetworkCaptureDataSource {
 
-    val loggedCalls: MutableList<NetworkCapturedCall> = mutableListOf()
+    val requests: MutableList<HttpNetworkRequest> = mutableListOf()
 
-    override fun logNetworkCapturedCall(call: NetworkCapturedCall) {
-        loggedCalls.add(call)
+    override fun recordNetworkRequest(request: HttpNetworkRequest) {
+        requests.add(request)
     }
+
+    override fun shouldCaptureNetworkBody(url: String, method: String): Boolean = true
 
     override fun onDataCaptureEnabled() {
         TODO("Not yet implemented")

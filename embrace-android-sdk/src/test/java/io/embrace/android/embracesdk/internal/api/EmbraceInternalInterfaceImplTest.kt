@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
-import io.embrace.android.embracesdk.fakes.FakeNetworkCaptureService
+import io.embrace.android.embracesdk.fakes.FakeNetworkCaptureDataSource
 import io.embrace.android.embracesdk.fakes.behavior.FakeAnrBehavior
 import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.fakes.behavior.FakeNetworkSpanForwardingBehavior
@@ -35,7 +35,6 @@ internal class EmbraceInternalInterfaceImplTest {
     private lateinit var fakeClock: FakeClock
     private lateinit var initModule: FakeInitModule
     private lateinit var fakeConfigService: FakeConfigService
-    private lateinit var fakeNetworkCaptureService: FakeNetworkCaptureService
 
     @Before
     fun setUp() {
@@ -43,11 +42,10 @@ internal class EmbraceInternalInterfaceImplTest {
         fakeClock = FakeClock(currentTime = beforeObjectInitTime)
         initModule = FakeInitModule(clock = fakeClock, logger = FakeEmbLogger(false))
         fakeConfigService = FakeConfigService()
-        fakeNetworkCaptureService = FakeNetworkCaptureService()
         internalImpl = EmbraceInternalInterfaceImpl(
             embraceImpl,
             initModule,
-            fakeNetworkCaptureService,
+            FakeNetworkCaptureDataSource(),
             fakeConfigService,
             initModule.openTelemetryModule.internalTracer
         )

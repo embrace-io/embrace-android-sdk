@@ -90,25 +90,6 @@ internal class EmbracePreferencesService(
         return installDate != null && clock.now() - installDate <= PreferencesService.DAY_IN_MS
     }
 
-    override fun isNetworkCaptureRuleOver(id: String): Boolean {
-        return getNetworkCaptureRuleRemainingCount(id) <= 0
-    }
-
-    override fun decreaseNetworkCaptureRuleRemainingCount(id: String, maxCount: Int) {
-        impl.edit {
-            putInt(NETWORK_CAPTURE_RULE_PREFIX_KEY + id, getNetworkCaptureRuleRemainingCount(id, maxCount) - 1)
-        }
-    }
-
-    private fun getNetworkCaptureRuleRemainingCount(id: String): Int {
-        return getNetworkCaptureRuleRemainingCount(id, 1)
-    }
-
-    private fun getNetworkCaptureRuleRemainingCount(id: String, maxCount: Int): Int {
-        val value = impl.getInt(NETWORK_CAPTURE_RULE_PREFIX_KEY + id)
-        return value ?: maxCount
-    }
-
     companion object {
         private const val DEVICE_IDENTIFIER_KEY = "io.embrace.deviceid"
         private const val PREVIOUS_APP_VERSION_KEY = "io.embrace.lastappversion"
@@ -125,7 +106,6 @@ internal class EmbracePreferencesService(
         private const val JAVA_SCRIPT_BUNDLE_URL_KEY = "io.embrace.jsbundle.url"
         private const val JAVA_SCRIPT_BUNDLE_ID_KEY = "io.embrace.jsbundle.id"
         private const val SESSION_PROPERTIES_KEY = "io.embrace.session.properties"
-        private const val NETWORK_CAPTURE_RULE_PREFIX_KEY = "io.embrace.networkcapturerule"
         private const val SDK_CONFIG_FETCHED_TIMESTAMP = "io.embrace.sdkfetchedtimestamp"
     }
 }

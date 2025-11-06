@@ -102,16 +102,6 @@ interface PreferencesService {
      */
     fun isUsersFirstDay(): Boolean
 
-    /**
-     * Ssuffix to compose the key to get the stored value
-     */
-    fun isNetworkCaptureRuleOver(id: String): Boolean
-
-    /**
-     * Suffix to compose the key to get the stored value
-     */
-    fun decreaseNetworkCaptureRuleRemainingCount(id: String, maxCount: Int)
-
     companion object {
         const val DAY_IN_MS: Long = 60 * 60 * 24 * 1000L
     }

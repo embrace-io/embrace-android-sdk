@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.instrumentation.huc
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeEmbraceInternalInterface
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationApi
-import io.embrace.android.embracesdk.fakes.FakeNetworkRequestApi
 import io.embrace.android.embracesdk.fakes.FakeSdkStateApi
 import io.embrace.android.embracesdk.fixtures.fakeCompleteEmbraceNetworkRequest
 import io.embrace.android.embracesdk.internal.api.InstrumentationApi

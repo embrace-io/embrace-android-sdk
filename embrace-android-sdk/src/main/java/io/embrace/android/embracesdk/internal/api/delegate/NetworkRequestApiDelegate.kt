@@ -17,8 +17,8 @@ internal class NetworkRequestApiDelegate(
     private val registry by embraceImplInject(sdkCallChecker) {
         bootstrapper.instrumentationModule.instrumentationRegistry
     }
-    private val networkCaptureService by embraceImplInject(sdkCallChecker) {
-        bootstrapper.logModule.networkCaptureService
+    private val networkCaptureDataSource by embraceImplInject(sdkCallChecker) {
+        bootstrapper.logModule.networkCaptureDataSource
     }
     private val sessionOrchestrator by embraceImplInject(sdkCallChecker) {
         bootstrapper.sessionOrchestrationModule.sessionOrchestrator
@@ -41,7 +41,7 @@ internal class NetworkRequestApiDelegate(
         val req = request.toHttpNetworkRequest()
         val dataSource = registry?.findByType(NetworkRequestDataSource::class)
         dataSource?.recordNetworkRequest(req)
-        networkCaptureService?.logNetworkRequest(req)
+        networkCaptureDataSource?.recordNetworkRequest(req)
         sessionOrchestrator?.onSessionDataUpdate()
     }
 

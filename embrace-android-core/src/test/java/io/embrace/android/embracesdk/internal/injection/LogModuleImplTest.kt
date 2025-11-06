@@ -30,7 +30,6 @@ internal class LogModuleImplTest {
             FakeInstrumentationModule(mockk())
         )
 
-        assertNotNull(module.networkCaptureService)
         assertNotNull(module.logService)
         assertNotNull(module.attachmentService)
     }

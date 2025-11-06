@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.fakes
+package io.embrace.android.embracesdk.instrumentation.huc
 
 import io.embrace.android.embracesdk.internal.api.NetworkRequestApi
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest

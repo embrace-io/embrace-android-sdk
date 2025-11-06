@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.fakes
+package io.embrace.android.embracesdk.internal.network
 
 import io.embrace.android.embracesdk.internal.payload.NetworkCapturedCall
 

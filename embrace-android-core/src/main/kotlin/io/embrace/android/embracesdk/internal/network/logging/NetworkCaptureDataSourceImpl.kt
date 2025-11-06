@@ -16,36 +16,34 @@ internal class NetworkCaptureDataSourceImpl(
 
     /**
      * Creates a log with data from a captured network request.
-     *
-     * @param networkCapturedCall the captured network information
      */
-    override fun logNetworkCapturedCall(networkCapturedCall: NetworkCapturedCall) {
+    override fun logNetworkCapturedCall(call: NetworkCapturedCall) {
         captureTelemetry {
             addLog(
                 SchemaType.NetworkCapturedRequest(
-                    duration = networkCapturedCall.duration,
-                    endTime = networkCapturedCall.endTime,
-                    httpMethod = networkCapturedCall.httpMethod,
-                    matchedUrl = networkCapturedCall.matchedUrl,
-                    networkId = networkCapturedCall.networkId,
-                    requestBody = networkCapturedCall.requestBody,
-                    requestBodySize = networkCapturedCall.requestBodySize,
-                    requestQuery = networkCapturedCall.requestQuery,
-                    requestQueryHeaders = networkCapturedCall.requestQueryHeaders,
-                    requestSize = networkCapturedCall.requestSize,
-                    responseBody = networkCapturedCall.responseBody,
-                    responseBodySize = networkCapturedCall.responseBodySize,
-                    responseHeaders = networkCapturedCall.responseHeaders,
-                    responseSize = networkCapturedCall.responseSize,
-                    responseStatus = networkCapturedCall.responseStatus,
-                    sessionId = networkCapturedCall.sessionId,
-                    startTime = networkCapturedCall.startTime,
-                    url = networkCapturedCall.url,
-                    errorMessage = networkCapturedCall.errorMessage,
-                    encryptedPayload = networkCapturedCall.encryptedPayload
+                    duration = call.duration,
+                    endTime = call.endTime,
+                    httpMethod = call.httpMethod,
+                    matchedUrl = call.matchedUrl,
+                    networkId = call.networkId,
+                    requestBody = call.requestBody,
+                    requestBodySize = call.requestBodySize,
+                    requestQuery = call.requestQuery,
+                    requestQueryHeaders = call.requestQueryHeaders,
+                    requestSize = call.requestSize,
+                    responseBody = call.responseBody,
+                    responseBodySize = call.responseBodySize,
+                    responseHeaders = call.responseHeaders,
+                    responseSize = call.responseSize,
+                    responseStatus = call.responseStatus,
+                    sessionId = call.sessionId,
+                    startTime = call.startTime,
+                    url = call.url,
+                    errorMessage = call.errorMessage,
+                    encryptedPayload = call.encryptedPayload
                 ),
                 LogSeverity.INFO,
-                networkCapturedCall.networkId
+                call.networkId
             )
         }
     }

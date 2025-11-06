@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.internal.api.NetworkRequestApi
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.injection.embraceImplInject
 import io.embrace.android.embracesdk.internal.instrumentation.network.DefaultTraceparentGenerator
+import io.embrace.android.embracesdk.internal.instrumentation.network.HttpNetworkRequest
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 
 internal class NetworkRequestApiDelegate(
@@ -14,6 +15,9 @@ internal class NetworkRequestApiDelegate(
     private val configService by embraceImplInject(sdkCallChecker) { bootstrapper.configModule.configService }
     private val networkLoggingService by embraceImplInject(sdkCallChecker) {
         bootstrapper.logModule.networkLoggingService
+    }
+    private val networkCaptureService by embraceImplInject(sdkCallChecker) {
+        bootstrapper.logModule.networkCaptureService
     }
     private val sessionOrchestrator by embraceImplInject(sdkCallChecker) {
         bootstrapper.sessionOrchestrationModule.sessionOrchestrator
@@ -34,8 +38,36 @@ internal class NetworkRequestApiDelegate(
 
     private fun logNetworkRequest(request: EmbraceNetworkRequest) {
         if (configService?.networkBehavior?.isUrlEnabled(request.url) == true) {
-            networkLoggingService?.logNetworkRequest(request)
+            val req = request.toHttpNetworkRequest()
+            networkLoggingService?.logNetworkRequest(req)
+            networkCaptureService?.logNetworkRequest(req)
             sessionOrchestrator?.onSessionDataUpdate()
         }
+    }
+
+    private fun EmbraceNetworkRequest.toHttpNetworkRequest(): HttpNetworkRequest {
+        return HttpNetworkRequest(
+            url = url,
+            httpMethod = httpMethod,
+            startTime = startTime,
+            endTime = endTime,
+            bytesSent = bytesSent,
+            bytesReceived = bytesReceived,
+            statusCode = responseCode,
+            errorType = errorType,
+            errorMessage = errorMessage,
+            traceId = traceId,
+            w3cTraceparent = w3cTraceparent,
+            body = networkCaptureData?.let { data ->
+                HttpNetworkRequest.HttpRequestBody(
+                    requestHeaders = data.requestHeaders,
+                    requestQueryParams = data.requestQueryParams,
+                    capturedRequestBody = data.capturedRequestBody,
+                    responseHeaders = data.responseHeaders,
+                    capturedResponseBody = data.capturedResponseBody,
+                    dataCaptureErrorMessage = data.dataCaptureErrorMessage
+                )
+            }
+        )
     }
 }

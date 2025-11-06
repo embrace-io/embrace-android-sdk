@@ -52,7 +52,7 @@ internal class NetworkRequestApiDelegateTest {
         )
         delegate.recordNetworkRequest(request)
         assertEquals(1, orchestrator.stateChangeCount)
-        assertEquals(request, networkLoggingService.requests.single())
+        assertEquals(request.url, networkLoggingService.requests.single().url)
     }
 
     @Test

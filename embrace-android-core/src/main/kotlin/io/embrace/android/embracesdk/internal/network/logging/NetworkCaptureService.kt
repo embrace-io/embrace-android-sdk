@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.network.logging
 
 import io.embrace.android.embracesdk.internal.config.remote.NetworkCaptureRuleRemoteConfig
-import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData
+import io.embrace.android.embracesdk.internal.instrumentation.network.HttpNetworkRequest
 
 interface NetworkCaptureService {
 
@@ -17,13 +17,5 @@ interface NetworkCaptureService {
     /**
      * Logs the network captured data if this match the rule criteria.
      */
-    fun logNetworkCapturedData(
-        url: String,
-        httpMethod: String,
-        statusCode: Int,
-        startTime: Long,
-        endTime: Long,
-        networkCaptureData: NetworkCaptureData?,
-        errorMessage: String? = null,
-    )
+    fun logNetworkRequest(request: HttpNetworkRequest)
 }

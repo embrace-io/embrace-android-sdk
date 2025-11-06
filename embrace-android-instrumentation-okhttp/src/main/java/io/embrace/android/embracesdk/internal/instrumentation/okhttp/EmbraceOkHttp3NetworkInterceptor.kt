@@ -4,6 +4,8 @@ import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.internal.EmbraceInternalApi
 import io.embrace.android.embracesdk.internal.EmbraceInternalApi.CUSTOM_TRACE_ID_HEADER_NAME
 import io.embrace.android.embracesdk.internal.clock.Clock
+import io.embrace.android.embracesdk.internal.instrumentation.network.DefaultTraceparentGenerator
+import io.embrace.android.embracesdk.internal.instrumentation.network.TraceparentGenerator
 import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData
 import io.embrace.android.embracesdk.internal.network.logging.getOverriddenURLString
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
@@ -39,6 +41,7 @@ class EmbraceOkHttp3NetworkInterceptor(
     private val embraceInternalApi: EmbraceInternalApi,
     // A clock that mirrors the one used by OkHttp to get timestamps
     private val systemClock: Clock = Clock { System.currentTimeMillis() },
+    private val traceparentGenerator: TraceparentGenerator = DefaultTraceparentGenerator,
 ) : Interceptor {
 
     @Throws(IOException::class)
@@ -52,7 +55,7 @@ class EmbraceOkHttp3NetworkInterceptor(
         val networkSpanForwardingEnabled = embraceInternalApi.internalInterface.isNetworkSpanForwardingEnabled()
         var traceparent: String? = null
         if (networkSpanForwardingEnabled && originalRequest.header(TRACEPARENT_HEADER_NAME) == null) {
-            traceparent = embrace.generateW3cTraceparent()
+            traceparent = traceparentGenerator.generateW3cTraceparent()
         }
         val request =
             if (traceparent == null) {

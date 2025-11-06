@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.api.delegate
 import io.embrace.android.embracesdk.internal.api.NetworkRequestApi
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.injection.embraceImplInject
-import io.embrace.android.embracesdk.internal.otel.sdk.IdGenerator
+import io.embrace.android.embracesdk.internal.instrumentation.network.DefaultTraceparentGenerator
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 
 internal class NetworkRequestApiDelegate(
@@ -27,7 +27,7 @@ internal class NetworkRequestApiDelegate(
 
     override fun generateW3cTraceparent(): String? =
         if (configService?.networkSpanForwardingBehavior?.isNetworkSpanForwardingEnabled() == true) {
-            IdGenerator.generateW3CTraceparent()
+            DefaultTraceparentGenerator.generateW3cTraceparent()
         } else {
             null
         }

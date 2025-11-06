@@ -11,6 +11,8 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLStreamHandler;
 
+import io.embrace.android.embracesdk.internal.instrumentation.network.DefaultTraceparentGenerator;
+
 /**
  * Custom implementation of URLStreamHandler that wraps a base URLStreamHandler and provides a context for executing
  * Embrace-specific logic.
@@ -113,7 +115,7 @@ abstract class EmbraceUrlStreamHandler extends URLStreamHandler {
     protected void injectTraceparent(@NonNull URLConnection connection) {
         boolean networkSpanForwardingEnabled = internalNetworkApi.isNetworkSpanForwardingEnabled();
         if (networkSpanForwardingEnabled && !connection.getRequestProperties().containsKey(TRACEPARENT_HEADER_NAME)) {
-            connection.addRequestProperty(TRACEPARENT_HEADER_NAME, internalNetworkApi.generateW3cTraceparent());
+            connection.addRequestProperty(TRACEPARENT_HEADER_NAME, DefaultTraceparentGenerator.INSTANCE.generateW3cTraceparent());
         }
     }
 

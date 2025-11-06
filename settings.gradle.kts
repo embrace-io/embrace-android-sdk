@@ -16,6 +16,7 @@ include(
     ":embrace-android-instrumentation-fcm",
     ":embrace-android-instrumentation-huc",
     ":embrace-android-instrumentation-huc-lite",
+    ":embrace-android-instrumentation-network-common",
     ":embrace-android-instrumentation-network-status",
     ":embrace-android-instrumentation-okhttp",
     ":embrace-android-instrumentation-power-save",

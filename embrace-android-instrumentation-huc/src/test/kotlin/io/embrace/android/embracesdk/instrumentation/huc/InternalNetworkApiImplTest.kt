@@ -86,7 +86,6 @@ internal class InternalNetworkApiImplTest {
     private fun InternalNetworkApi.verifyDelegation() {
         assertEquals(fakeSdkStateApi.isStarted, isStarted())
         assertEquals(fakeInstrumentationApi.getSdkCurrentTimeMs(), getSdkCurrentTimeMs())
-        assertEquals(fakeNetworkingApi.generateW3cTraceparent(), generateW3cTraceparent())
         assertEquals(fakeInternalInterface.isNetworkSpanForwardingEnabled(), isNetworkSpanForwardingEnabled())
         assertEquals(fakeInternalInterface.shouldCaptureNetworkBody("foo", "GET"), shouldCaptureNetworkBody("foo", "GET"))
     }

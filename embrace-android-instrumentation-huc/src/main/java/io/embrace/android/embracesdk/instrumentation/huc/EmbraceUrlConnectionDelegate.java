@@ -31,8 +31,8 @@ import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLSocketFactory;
 
 import io.embrace.android.embracesdk.annotation.InternalApi;
+import io.embrace.android.embracesdk.internal.instrumentation.network.EmbraceHttpPathOverrideKt;
 import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData;
-import io.embrace.android.embracesdk.internal.network.logging.EmbraceHttpPathOverrideKt;
 import io.embrace.android.embracesdk.internal.utils.exceptions.function.CheckedSupplier;
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest;
 import io.embrace.android.embracesdk.network.http.HttpMethod;

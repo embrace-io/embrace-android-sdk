@@ -7,7 +7,7 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 
-import io.embrace.android.embracesdk.internal.network.logging.HttpPathOverrideRequest;
+import io.embrace.android.embracesdk.internal.instrumentation.network.HttpPathOverrideRequest;
 
 class EmbraceHttpUrlConnectionOverride implements HttpPathOverrideRequest {
 

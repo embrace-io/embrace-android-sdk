@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.instrumentation.okhttp
 import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.internal.EmbraceInternalApi
 import io.embrace.android.embracesdk.internal.EmbraceInternalApi.CUSTOM_TRACE_ID_HEADER_NAME
-import io.embrace.android.embracesdk.internal.network.logging.getOverriddenURLString
+import io.embrace.android.embracesdk.internal.instrumentation.network.getOverriddenURLString
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.http.HttpMethod
 import okhttp3.Interceptor

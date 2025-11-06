@@ -10,6 +10,7 @@ android {
 
 dependencies {
     implementation(project(":embrace-android-instrumentation-api"))
+    implementation(project(":embrace-android-instrumentation-network-common"))
     implementation(libs.opentelemetry.kotlin.semconv)
 
     testImplementation(project(":embrace-android-instrumentation-api-fakes"))

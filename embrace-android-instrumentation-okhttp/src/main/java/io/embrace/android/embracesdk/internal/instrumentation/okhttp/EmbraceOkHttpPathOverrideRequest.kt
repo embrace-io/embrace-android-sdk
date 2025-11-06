@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.instrumentation.okhttp
 import io.embrace.android.embracesdk.internal.instrumentation.network.HttpPathOverrideRequest
 import okhttp3.Request
 
-internal class EmbraceOkHttp3PathOverrideRequest(private val request: Request) : HttpPathOverrideRequest {
+internal class EmbraceOkHttpPathOverrideRequest(private val request: Request) : HttpPathOverrideRequest {
     override fun getHeaderByName(name: String): String? {
         return request.header(name)
     }

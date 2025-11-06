@@ -1,10 +1,10 @@
 package io.embrace.android.embracesdk.internal.instrumentation.bytecode
 
 import androidx.annotation.Keep
-import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.internal.EmbraceInternalApi
-import io.embrace.android.embracesdk.internal.instrumentation.okhttp.EmbraceOkHttp3ApplicationInterceptor
-import io.embrace.android.embracesdk.internal.instrumentation.okhttp.EmbraceOkHttp3NetworkInterceptor
+import io.embrace.android.embracesdk.internal.instrumentation.okhttp.EmbraceOkHttpInterceptor
+import io.embrace.android.embracesdk.internal.instrumentation.okhttp.InterceptorType
+import io.embrace.android.embracesdk.internal.instrumentation.okhttp.OkHttpDataSource
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 
@@ -36,19 +36,18 @@ object OkHttpBytecodeEntrypoint {
      * @param thiz the OkHttpClient builder in matter.
      */
     private fun addEmbraceInterceptors(thiz: OkHttpClient.Builder) {
-        val internalApi = EmbraceInternalApi
         try {
-            val embrace = Embrace
+            val dataSource = OkHttpDataSource()
             addInterceptor(
                 thiz.interceptors(),
-                EmbraceOkHttp3ApplicationInterceptor(embrace, internalApi)
+                EmbraceOkHttpInterceptor(InterceptorType.APPLICATION, dataSource)
             )
             addInterceptor(
                 thiz.networkInterceptors(),
-                EmbraceOkHttp3NetworkInterceptor(embrace, internalApi)
+                EmbraceOkHttpInterceptor(InterceptorType.NETWORK, dataSource)
             )
         } catch (error: Throwable) {
-            internalApi.internalInterface.logInternalError(error)
+            EmbraceInternalApi.internalInterface.logInternalError(error)
         }
     }
 

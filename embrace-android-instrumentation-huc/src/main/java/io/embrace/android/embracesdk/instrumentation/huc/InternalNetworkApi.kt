@@ -9,7 +9,6 @@ internal interface InternalNetworkApi {
     fun logInternalError(error: Throwable)
     fun getSdkCurrentTimeMs(): Long
     fun isStarted(): Boolean
-    fun generateW3cTraceparent(): String?
 }
 
 internal object NoopInternalNetworkApi : InternalNetworkApi {
@@ -19,5 +18,4 @@ internal object NoopInternalNetworkApi : InternalNetworkApi {
     override fun logInternalError(error: Throwable) {}
     override fun getSdkCurrentTimeMs(): Long = 0
     override fun isStarted(): Boolean = false
-    override fun generateW3cTraceparent(): String? = null
 }

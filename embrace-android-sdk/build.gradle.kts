@@ -35,6 +35,7 @@ dependencies {
     implementation(project(":embrace-android-otel"))
     implementation(project(":embrace-android-instrumentation-schema"))
     implementation(project(":embrace-android-instrumentation-api"))
+    implementation(project(":embrace-android-instrumentation-network-common"))
 
     // automatically included instrumentation
     implementation(project(":embrace-android-instrumentation-app-exit-info"))

@@ -14,6 +14,7 @@ dependencies {
     compileOnly(project(":embrace-android-sdk"))
     compileOnly(project(":embrace-internal-api"))
     implementation(project(":embrace-android-instrumentation-api"))
+    implementation(project(":embrace-android-instrumentation-network-common"))
     implementation(libs.androidx.annotation)
 
     testImplementation(project(":embrace-android-core"))

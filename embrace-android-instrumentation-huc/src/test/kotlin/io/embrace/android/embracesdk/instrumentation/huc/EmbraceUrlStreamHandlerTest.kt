@@ -3,8 +3,8 @@ package io.embrace.android.embracesdk.instrumentation.huc
 import android.os.Build.VERSION_CODES.UPSIDE_DOWN_CAKE
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.internal.config.behavior.NetworkSpanForwardingBehaviorImpl.Companion.TRACEPARENT_HEADER_NAME
-import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -33,7 +33,7 @@ internal class EmbraceUrlStreamHandlerTest {
             "insecure.txt",
             EmbraceHttpUrlStreamHandler(
                 httpUrlStreamHandler,
-                internalApi
+                internalApi,
             )
         )
         val connection = checkNotNull(url.openConnection())
@@ -70,7 +70,7 @@ internal class EmbraceUrlStreamHandlerTest {
             )
         )
         val connection = checkNotNull(url.openConnection())
-        assertEquals(TRACEPARENT, connection.getRequestProperty(TRACEPARENT_HEADER_NAME))
+        assertNotNull(connection.getRequestProperty(TRACEPARENT_HEADER_NAME))
     }
 
     @Test
@@ -87,7 +87,7 @@ internal class EmbraceUrlStreamHandlerTest {
             )
         )
         val connection = checkNotNull(url.openConnection())
-        assertEquals(TRACEPARENT, connection.getRequestProperty(TRACEPARENT_HEADER_NAME))
+        assertNotNull(connection.getRequestProperty(TRACEPARENT_HEADER_NAME))
     }
 
     @Test
@@ -157,7 +157,6 @@ internal class EmbraceUrlStreamHandlerTest {
     }
 
     companion object {
-        private const val TRACEPARENT = "00-3c72a77a7b51af6fb3778c06d4c165ce-4c1d710fffc88e35-01"
         private val httpUrlStreamHandler =
             HttpUrlConnectionTracker.EmbraceUrlStreamHandlerFactory.newUrlStreamHandler("com.android.okhttp.HttpHandler")
         private val httpsUrlStreamHandler =

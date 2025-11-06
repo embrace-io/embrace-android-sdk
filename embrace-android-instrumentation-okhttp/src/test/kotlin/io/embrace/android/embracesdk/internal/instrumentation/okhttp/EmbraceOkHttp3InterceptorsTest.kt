@@ -46,19 +46,19 @@ import java.util.zip.GZIPOutputStream
 internal class EmbraceOkHttp3InterceptorsTest {
 
     companion object {
-        private const val requestHeaderName = "requestHeader"
-        private const val requestHeaderValue = "requestHeaderVal"
-        private const val defaultQueryString = "param=yesPlease"
-        private const val defaultPath = "/test/default-path"
-        private const val customPath = "/test/custom-path"
-        private const val requestBodyString = "hey body"
-        private const val requestBodySize = 8
-        private const val responseHeaderName = "responseHeader"
-        private const val responseBody =
+        private const val REQUEST_HEADER_NAME = "requestHeader"
+        private const val REQUEST_HEADER_VALUE = "requestHeaderVal"
+        private const val DEFAULT_QUERY_STRING = "param=yesPlease"
+        private const val DEFAULT_PATH = "/test/default-path"
+        private const val CUSTOM_PATH = "/test/custom-path"
+        private const val REQUEST_BODY_STRING = "hey body"
+        private const val REQUEST_BODY_SIZE = 8
+        private const val RESPONSE_HEADER_NAME = "responseHeader"
+        private const val RESPONSE_BODY =
             "{\"bodyString\" = \"stringstringstringstringstringstringstringstringstringstringstringstring\"}"
-        private const val responseBodySize = 91
-        private const val responseBodyGzippedSize = 43
-        private const val responseHeaderValue = "responseHeaderVal"
+        private const val RESPONSE_BODY_SIZE = 91
+        private const val RESPONSE_BODY_GZIPPED_SIZE = 43
+        private const val RESPONSE_HEADER_VALUE = "responseHeaderVal"
         private const val TRACEPARENT_HEADER = "traceparent"
         private const val CUSTOM_TRACEPARENT = "00-b583a45b2c7c813e0ebc6aa0835b9d98-b5475c618bb98e67-01"
         private const val GENERATED_TRACEPARENT = "00-3c72a77a7b51af6fb3778c06d4c165ce-4c1d710fffc88e35-01"
@@ -97,14 +97,22 @@ internal class EmbraceOkHttp3InterceptorsTest {
         every { mockInternalInterface.shouldCaptureNetworkBody(any(), "GET") } answers { false }
         every { mockInternalInterface.isNetworkSpanForwardingEnabled() } answers { isNetworkSpanForwardingEnabled }
         every { mockEmbrace.getSdkCurrentTimeMs() } answers { FAKE_SDK_TIME }
-        applicationInterceptor = EmbraceOkHttp3ApplicationInterceptor(mockEmbrace, mockEmbraceInternalApi)
+        applicationInterceptor = EmbraceOkHttp3ApplicationInterceptor(
+            mockEmbrace,
+            mockEmbraceInternalApi
+        )
         preNetworkInterceptorTestInterceptor = TestInspectionInterceptor(
             beforeRequestSent = { request -> preNetworkInterceptorBeforeRequestSupplier.invoke(request) },
             afterResponseReceived = { response -> preNetworkInterceptorAfterResponseSupplier.invoke(response) }
         )
         mockSystemClock = mockk(relaxed = true)
         every { mockSystemClock.now() } answers { FAKE_SYSTEM_TIME }
-        networkInterceptor = EmbraceOkHttp3NetworkInterceptor(mockEmbrace, mockEmbraceInternalApi, mockSystemClock)
+        networkInterceptor = EmbraceOkHttp3NetworkInterceptor(
+            mockEmbrace,
+            mockEmbraceInternalApi,
+            mockSystemClock,
+            FakeTraceparentGenerator(GENERATED_TRACEPARENT)
+        )
         postNetworkInterceptorTestInterceptor = TestInspectionInterceptor(
             beforeRequestSent = { request -> postNetworkInterceptorBeforeRequestSupplier.invoke(request) },
             afterResponseReceived = { response -> postNetworkInterceptorAfterResponseSupplier.invoke(response) }
@@ -116,17 +124,16 @@ internal class EmbraceOkHttp3InterceptorsTest {
             .addNetworkInterceptor(postNetworkInterceptorTestInterceptor)
             .build()
         getRequestBuilder = Request.Builder()
-            .url(server.url("$defaultPath?$defaultQueryString"))
+            .url(server.url("$DEFAULT_PATH?$DEFAULT_QUERY_STRING"))
             .get()
-            .header(requestHeaderName, requestHeaderValue)
+            .header(REQUEST_HEADER_NAME, REQUEST_HEADER_VALUE)
         postRequestBuilder = Request.Builder()
-            .url(server.url("$defaultPath?$defaultQueryString"))
-            .post(requestBodyString.toRequestBody())
-            .header(requestHeaderName, requestHeaderValue)
+            .url(server.url("$DEFAULT_PATH?$DEFAULT_QUERY_STRING"))
+            .post(REQUEST_BODY_STRING.toRequestBody())
+            .header(REQUEST_HEADER_NAME, REQUEST_HEADER_VALUE)
         capturedEmbraceNetworkRequest = slot()
         every { mockEmbrace.isStarted } answers { isSDKStarted }
         every { mockEmbrace.recordNetworkRequest(capture(capturedEmbraceNetworkRequest)) } answers { }
-        every { mockEmbrace.generateW3cTraceparent() } answers { GENERATED_TRACEPARENT }
         every { mockEmbraceInternalApi.internalInterface } answers { mockInternalInterface }
         isSDKStarted = true
         isNetworkSpanForwardingEnabled = false
@@ -140,41 +147,41 @@ internal class EmbraceOkHttp3InterceptorsTest {
     @Test
     fun `completed successful requests with uncompressed responses are recorded properly`() {
         preNetworkInterceptorAfterResponseSupplier = ::consumeBody
-        server.enqueue(createBaseMockResponse().setBody(responseBody))
-        runAndValidatePostRequest(responseBodySize)
+        server.enqueue(createBaseMockResponse().setBody(RESPONSE_BODY))
+        runAndValidatePostRequest(RESPONSE_BODY_SIZE)
 
-        server.enqueue(createBaseMockResponse().setBody(responseBody))
-        runAndValidateGetRequest(responseBodySize)
+        server.enqueue(createBaseMockResponse().setBody(RESPONSE_BODY))
+        runAndValidateGetRequest(RESPONSE_BODY_SIZE)
     }
 
     @Test
     fun `completed successful requests with gzipped responses are recorded properly`() {
         preNetworkInterceptorAfterResponseSupplier = ::consumeBody
-        server.enqueue(createBaseMockResponse().setGzipBody(responseBody))
-        runAndValidatePostRequest(responseBodyGzippedSize)
+        server.enqueue(createBaseMockResponse().setGzipBody(RESPONSE_BODY))
+        runAndValidatePostRequest(RESPONSE_BODY_GZIPPED_SIZE)
 
-        server.enqueue(createBaseMockResponse().setGzipBody(responseBody))
-        runAndValidateGetRequest(responseBodyGzippedSize)
+        server.enqueue(createBaseMockResponse().setGzipBody(RESPONSE_BODY))
+        runAndValidateGetRequest(RESPONSE_BODY_GZIPPED_SIZE)
     }
 
     @Test
     fun `completed unsuccessful requests are recorded properly`() {
-        server.enqueue(createBaseMockResponse(500).setGzipBody(responseBody))
-        runAndValidatePostRequest(expectedResponseBodySize = responseBodyGzippedSize, expectedHttpStatus = 500)
+        server.enqueue(createBaseMockResponse(500).setGzipBody(RESPONSE_BODY))
+        runAndValidatePostRequest(expectedResponseBodySize = RESPONSE_BODY_GZIPPED_SIZE, expectedHttpStatus = 500)
     }
 
     @Test
     fun `completed requests with custom paths are recorded properly`() {
-        server.enqueue(createBaseMockResponse().setGzipBody(responseBody))
-        postRequestBuilder.header("x-emb-path", customPath)
-        runAndValidatePostRequest(expectedResponseBodySize = responseBodyGzippedSize, expectedPath = customPath)
+        server.enqueue(createBaseMockResponse().setGzipBody(RESPONSE_BODY))
+        postRequestBuilder.header("x-emb-path", CUSTOM_PATH)
+        runAndValidatePostRequest(expectedResponseBodySize = RESPONSE_BODY_GZIPPED_SIZE, expectedPath = CUSTOM_PATH)
     }
 
     @Test
     fun `incomplete requests with custom paths are recorded properly`() {
-        server.enqueue(createBaseMockResponse().setGzipBody(responseBody))
-        postRequestBuilder.header("x-emb-path", customPath)
-        runAndValidatePostRequest(expectedResponseBodySize = responseBodyGzippedSize, expectedPath = customPath)
+        server.enqueue(createBaseMockResponse().setGzipBody(RESPONSE_BODY))
+        postRequestBuilder.header("x-emb-path", CUSTOM_PATH)
+        runAndValidatePostRequest(expectedResponseBodySize = RESPONSE_BODY_GZIPPED_SIZE, expectedPath = CUSTOM_PATH)
     }
 
     @Test
@@ -192,8 +199,8 @@ internal class EmbraceOkHttp3InterceptorsTest {
         isSDKStarted = false
         preNetworkInterceptorBeforeRequestSupplier = { throw SocketException() }
         assertThrows(SocketException::class.java) { runGetRequest() }
-        postRequestBuilder.header("x-emb-path", customPath)
-        preNetworkInterceptorBeforeRequestSupplier = { throw EmbraceCustomPathException(customPath, SocketException()) }
+        postRequestBuilder.header("x-emb-path", CUSTOM_PATH)
+        preNetworkInterceptorBeforeRequestSupplier = { throw EmbraceCustomPathException(CUSTOM_PATH, SocketException()) }
         assertThrows(EmbraceCustomPathException::class.java) { runPostRequest() }
         verify(exactly = 0) { mockEmbrace.recordNetworkRequest(any()) }
     }
@@ -210,7 +217,7 @@ internal class EmbraceOkHttp3InterceptorsTest {
     @Test
     fun `check content length header intact with not-gzipped response body if network capture not enabled`() {
         preNetworkInterceptorAfterResponseSupplier = ::checkUncompressedBodySize
-        server.enqueue(createBaseMockResponse().setBody(responseBody))
+        server.enqueue(createBaseMockResponse().setBody(RESPONSE_BODY))
         runGetRequest()
         assertNull(capturedEmbraceNetworkRequest.captured.networkCaptureData)
     }
@@ -218,7 +225,7 @@ internal class EmbraceOkHttp3InterceptorsTest {
     @Test
     fun `check content length header intact with gzipped response body if network capture not enabled`() {
         preNetworkInterceptorAfterResponseSupplier = ::checkCompressedBodySize
-        server.enqueue(createBaseMockResponse().setGzipBody(responseBody))
+        server.enqueue(createBaseMockResponse().setGzipBody(RESPONSE_BODY))
         runGetRequest()
         assertNull(capturedEmbraceNetworkRequest.captured.networkCaptureData)
     }
@@ -226,8 +233,8 @@ internal class EmbraceOkHttp3InterceptorsTest {
     @Test
     fun `check response body is not gzipped and no errors in capturing response body data when body is not gzipped`() {
         preNetworkInterceptorAfterResponseSupplier = ::checkUncompressedBodySize
-        server.enqueue(createBaseMockResponse().setBody(responseBody))
-        runAndValidatePostRequest(responseBodySize)
+        server.enqueue(createBaseMockResponse().setBody(RESPONSE_BODY))
+        runAndValidatePostRequest(RESPONSE_BODY_SIZE)
     }
 
     @Test
@@ -236,13 +243,13 @@ internal class EmbraceOkHttp3InterceptorsTest {
             val responseBuilder: Response.Builder = response.newBuilder().request(response.request)
             assertNull(response.header(CONTENT_ENCODING_HEADER_NAME))
             val bodySize = response.body?.bytes()?.size
-            assertEquals(responseBodySize, bodySize)
+            assertEquals(RESPONSE_BODY_SIZE, bodySize)
             assertEquals(-1L, response.body?.contentLength())
             assertNull(response.header(CONTENT_LENGTH_HEADER_NAME))
             return responseBuilder.build()
         }
-        server.enqueue(createBaseMockResponse().setGzipBody(responseBody))
-        runAndValidatePostRequest(responseBodyGzippedSize)
+        server.enqueue(createBaseMockResponse().setGzipBody(RESPONSE_BODY))
+        runAndValidatePostRequest(RESPONSE_BODY_GZIPPED_SIZE)
     }
 
     @Test
@@ -262,32 +269,32 @@ internal class EmbraceOkHttp3InterceptorsTest {
     fun `check EmbraceOkHttp3ApplicationInterceptor can handle compressed response without content-length parameter`() {
         preNetworkInterceptorAfterResponseSupplier = ::removeContentLengthFromResponse
         preNetworkInterceptorAfterResponseSupplier = ::consumeBody
-        server.enqueue(createBaseMockResponse().setGzipBody(responseBody))
-        runAndValidatePostRequest(responseBodyGzippedSize)
+        server.enqueue(createBaseMockResponse().setGzipBody(RESPONSE_BODY))
+        runAndValidatePostRequest(RESPONSE_BODY_GZIPPED_SIZE)
     }
 
     @Test
     fun `check EmbraceOkHttp3ApplicationInterceptor can handle uncompressed response without content-length parameter`() {
         preNetworkInterceptorAfterResponseSupplier = ::removeContentLengthFromResponse
         preNetworkInterceptorAfterResponseSupplier = ::consumeBody
-        server.enqueue(createBaseMockResponse().setBody(responseBody))
-        runAndValidatePostRequest(responseBodySize)
+        server.enqueue(createBaseMockResponse().setBody(RESPONSE_BODY))
+        runAndValidatePostRequest(RESPONSE_BODY_SIZE)
     }
 
     @Test
     fun `check EmbraceOkHttp3NetworkInterceptor can handle compressed response without content-length parameter`() {
         postNetworkInterceptorAfterResponseSupplier = ::removeContentLengthFromResponse
         preNetworkInterceptorAfterResponseSupplier = ::consumeBody
-        server.enqueue(createBaseMockResponse().setGzipBody(responseBody))
-        runAndValidatePostRequest(responseBodyGzippedSize)
+        server.enqueue(createBaseMockResponse().setGzipBody(RESPONSE_BODY))
+        runAndValidatePostRequest(RESPONSE_BODY_GZIPPED_SIZE)
     }
 
     @Test
     fun `check EmbraceOkHttp3NetworkInterceptor can handle uncompressed response without content-length parameter`() {
         postNetworkInterceptorAfterResponseSupplier = ::removeContentLengthFromResponse
         preNetworkInterceptorAfterResponseSupplier = ::consumeBody
-        server.enqueue(createBaseMockResponse().setBody(responseBody))
-        runAndValidatePostRequest(responseBodySize)
+        server.enqueue(createBaseMockResponse().setBody(RESPONSE_BODY))
+        runAndValidatePostRequest(RESPONSE_BODY_SIZE)
     }
 
     @Test
@@ -295,7 +302,7 @@ internal class EmbraceOkHttp3InterceptorsTest {
         postNetworkInterceptorAfterResponseSupplier = ::removeContentLengthFromResponse
         server.enqueue(
             createBaseMockResponse().addHeader(CONTENT_TYPE_HEADER_NAME, CONTENT_TYPE_EVENT_STREAM)
-                .setBody(responseBody)
+                .setBody(RESPONSE_BODY)
         )
         runAndValidatePostRequest(0)
     }
@@ -322,28 +329,28 @@ internal class EmbraceOkHttp3InterceptorsTest {
 
     @Test
     fun `EmbraceCustomPathException records incomplete network request with custom path and the correct error type and message`() {
-        postRequestBuilder.header("x-emb-path", customPath)
+        postRequestBuilder.header("x-emb-path", CUSTOM_PATH)
         preNetworkInterceptorBeforeRequestSupplier = {
-            throw EmbraceCustomPathException(customPath, IllegalStateException("Burned"))
+            throw EmbraceCustomPathException(CUSTOM_PATH, IllegalStateException("Burned"))
         }
         assertThrows(EmbraceCustomPathException::class.java) { runPostRequest() }
         with(capturedEmbraceNetworkRequest.captured) {
             assertEquals(IllegalStateException::class.java.canonicalName, errorType)
             assertEquals("Burned", errorMessage)
-            assertTrue(url.endsWith("$customPath?$defaultQueryString"))
+            assertTrue(url.endsWith("$CUSTOM_PATH?$DEFAULT_QUERY_STRING"))
         }
     }
 
     @Test
     fun `EmbraceCustomPathException with anonymous cause records request with custom path and empty error type and message`() {
-        postRequestBuilder.header("x-emb-path", customPath)
+        postRequestBuilder.header("x-emb-path", CUSTOM_PATH)
         preNetworkInterceptorBeforeRequestSupplier =
-            { throw EmbraceCustomPathException(customPath, object : Exception() {}) }
+            { throw EmbraceCustomPathException(CUSTOM_PATH, object : Exception() {}) }
         assertThrows(EmbraceCustomPathException::class.java) { runPostRequest() }
         with(capturedEmbraceNetworkRequest.captured) {
             assertEquals(UNKNOWN_EXCEPTION, errorType)
             assertEquals(UNKNOWN_MESSAGE, errorMessage)
-            assertTrue(url.endsWith("$customPath?$defaultQueryString"))
+            assertTrue(url.endsWith("$CUSTOM_PATH?$DEFAULT_QUERY_STRING"))
         }
     }
 
@@ -386,9 +393,9 @@ internal class EmbraceOkHttp3InterceptorsTest {
     @Test
     fun `check traceparent not injected and forwarded for requests that don't complete because of EmbraceCustomPathException`() {
         isNetworkSpanForwardingEnabled = true
-        postRequestBuilder.header("x-emb-path", customPath)
+        postRequestBuilder.header("x-emb-path", CUSTOM_PATH)
         preNetworkInterceptorBeforeRequestSupplier =
-            { throw EmbraceCustomPathException(customPath, IllegalStateException()) }
+            { throw EmbraceCustomPathException(CUSTOM_PATH, IllegalStateException()) }
         assertThrows(EmbraceCustomPathException::class.java) { runPostRequest() }
         assertNull(capturedEmbraceNetworkRequest.captured.responseCode)
         assertNull(capturedEmbraceNetworkRequest.captured.w3cTraceparent)
@@ -406,9 +413,9 @@ internal class EmbraceOkHttp3InterceptorsTest {
     @Test
     fun `check existing traceparent forwarded for requests that don't complete because of EmbraceCustomPathException`() {
         isNetworkSpanForwardingEnabled = true
-        postRequestBuilder.header("x-emb-path", customPath).header(TRACEPARENT_HEADER, CUSTOM_TRACEPARENT)
+        postRequestBuilder.header("x-emb-path", CUSTOM_PATH).header(TRACEPARENT_HEADER, CUSTOM_TRACEPARENT)
         preNetworkInterceptorBeforeRequestSupplier =
-            { throw EmbraceCustomPathException(customPath, IllegalStateException()) }
+            { throw EmbraceCustomPathException(CUSTOM_PATH, IllegalStateException()) }
         assertThrows(EmbraceCustomPathException::class.java) { runPostRequest() }
         assertNull(capturedEmbraceNetworkRequest.captured.responseCode)
         assertEquals(CUSTOM_TRACEPARENT, capturedEmbraceNetworkRequest.captured.w3cTraceparent)
@@ -509,7 +516,7 @@ internal class EmbraceOkHttp3InterceptorsTest {
     private fun createBaseMockResponse(httpStatus: Int = 200) =
         MockResponse()
             .setResponseCode(httpStatus)
-            .addHeader(responseHeaderName, responseHeaderValue)
+            .addHeader(RESPONSE_HEADER_NAME, RESPONSE_HEADER_VALUE)
 
     private fun MockResponse.setGzipBody(stringBody: String): MockResponse =
         setBody(
@@ -526,7 +533,7 @@ internal class EmbraceOkHttp3InterceptorsTest {
 
     private fun runAndValidatePostRequest(
         expectedResponseBodySize: Int,
-        expectedPath: String = defaultPath,
+        expectedPath: String = DEFAULT_PATH,
         expectedHttpStatus: Int = 200,
     ) {
         val realSystemClockStartTime = System.currentTimeMillis()
@@ -537,8 +544,8 @@ internal class EmbraceOkHttp3InterceptorsTest {
             httpStatus = expectedHttpStatus,
             responseBodySize = expectedResponseBodySize,
             httpMethod = "POST",
-            requestSize = requestBodySize,
-            responseBody = responseBody,
+            requestSize = REQUEST_BODY_SIZE,
+            responseBody = RESPONSE_BODY,
             realSystemClockStartTime = realSystemClockStartTime,
             realSystemClockEndTime = realSystemClockEndTime
         )
@@ -551,7 +558,7 @@ internal class EmbraceOkHttp3InterceptorsTest {
         runGetRequest()
         val realSystemClockEndTime = System.currentTimeMillis()
         validateWholeRequest(
-            path = defaultPath,
+            path = DEFAULT_PATH,
             httpStatus = 200,
             httpMethod = "GET",
             requestSize = 0,
@@ -569,7 +576,7 @@ internal class EmbraceOkHttp3InterceptorsTest {
     ) {
         val realDrift = AtomicLong(clockDrift)
         every { mockSystemClock.now() } answers { FAKE_SDK_TIME + realDrift.getAndAdd(extraDrift) }
-        server.enqueue(createBaseMockResponse().setBody(responseBody))
+        server.enqueue(createBaseMockResponse().setBody(RESPONSE_BODY))
         val response = runGetRequest()
         val realSystemClockStartTime = response.sentRequestAtMillis
         val realSystemClockEndTime = response.receivedResponseAtMillis
@@ -613,7 +620,7 @@ internal class EmbraceOkHttp3InterceptorsTest {
         realSystemClockEndTime: Long,
     ) {
         with(capturedEmbraceNetworkRequest) {
-            assertTrue(captured.url.endsWith("$path?$defaultQueryString"))
+            assertTrue(captured.url.endsWith("$path?$DEFAULT_QUERY_STRING"))
             assertEquals(httpMethod, captured.httpMethod)
             assertTrue(realSystemClockStartTime - CLOCK_DRIFT <= captured.startTime)
             assertTrue(realSystemClockStartTime > captured.startTime)
@@ -642,18 +649,18 @@ internal class EmbraceOkHttp3InterceptorsTest {
 
     private fun validateDefaultNonBodyNetworkCaptureData(networkCaptureData: NetworkCaptureData?) {
         with(checkNotNull(networkCaptureData)) {
-            assertEquals(requestHeaderValue, requestHeaders?.get(requestHeaderName.lowercase(Locale.ENGLISH)))
-            assertEquals(responseHeaderValue, responseHeaders?.get(responseHeaderName.lowercase(Locale.ENGLISH)))
-            assertEquals(defaultQueryString, requestQueryParams)
+            assertEquals(REQUEST_HEADER_VALUE, requestHeaders?.get(REQUEST_HEADER_NAME.lowercase(Locale.ENGLISH)))
+            assertEquals(RESPONSE_HEADER_VALUE, responseHeaders?.get(RESPONSE_HEADER_NAME.lowercase(Locale.ENGLISH)))
+            assertEquals(DEFAULT_QUERY_STRING, requestQueryParams)
             val buffer = Buffer()
             capturedRequestBody?.toRequestBody()?.writeTo(buffer)
-            assertEquals(requestBodyString, buffer.readUtf8())
+            assertEquals(REQUEST_BODY_STRING, buffer.readUtf8())
         }
     }
 
-    private fun checkUncompressedBodySize(response: Response) = checkBodySize(response, responseBodySize, false)
+    private fun checkUncompressedBodySize(response: Response) = checkBodySize(response, RESPONSE_BODY_SIZE, false)
 
-    private fun checkCompressedBodySize(response: Response) = checkBodySize(response, responseBodyGzippedSize, true)
+    private fun checkCompressedBodySize(response: Response) = checkBodySize(response, RESPONSE_BODY_GZIPPED_SIZE, true)
 
     private fun checkBodySize(response: Response, expectedSize: Int, compressed: Boolean): Response {
         val responseBuilder: Response.Builder = response.newBuilder().request(response.request)

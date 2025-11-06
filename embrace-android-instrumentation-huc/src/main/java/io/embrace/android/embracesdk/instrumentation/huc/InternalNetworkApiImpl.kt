@@ -16,8 +16,6 @@ internal class InternalNetworkApiImpl(
 
     override fun isStarted(): Boolean = sdkStateApi.isStarted
 
-    override fun generateW3cTraceparent(): String? = networkRequestApi.generateW3cTraceparent()
-
     override fun isNetworkSpanForwardingEnabled(): Boolean = internalInterface.isNetworkSpanForwardingEnabled()
 
     override fun recordNetworkRequest(embraceNetworkRequest: EmbraceNetworkRequest) =

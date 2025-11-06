@@ -2,14 +2,13 @@ package io.embrace.android.embracesdk.internal.network.logging
 
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
-import io.embrace.android.embracesdk.internal.network.logging.EmbraceNetworkCaptureService.Companion.NETWORK_ERROR_CODE
+import io.embrace.android.embracesdk.internal.instrumentation.network.HttpNetworkRequest
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.utils.NetworkUtils.getDomain
 import io.embrace.android.embracesdk.internal.utils.NetworkUtils.getUrlPath
 import io.embrace.android.embracesdk.internal.utils.NetworkUtils.getValidTraceId
 import io.embrace.android.embracesdk.internal.utils.NetworkUtils.stripUrl
 import io.embrace.android.embracesdk.internal.utils.toNonNullMap
-import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.opentelemetry.kotlin.semconv.ErrorAttributes
 import io.embrace.opentelemetry.kotlin.semconv.ExceptionAttributes
@@ -25,58 +24,30 @@ import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
  * and the number of calls is also captured if the limit is exceeded.
  */
 internal class EmbraceNetworkLoggingService(
-    private val embraceDomainCountLimiter: DomainCountLimiter,
-    private val networkCaptureService: NetworkCaptureService,
+    private val domainCountLimiter: DomainCountLimiter,
     private val spanService: SpanService,
 ) : NetworkLoggingService {
 
-    override fun logNetworkRequest(networkRequest: EmbraceNetworkRequest) {
-        logNetworkCaptureData(networkRequest)
-        recordNetworkRequest(networkRequest)
-    }
-
-    private fun logNetworkCaptureData(networkRequest: EmbraceNetworkRequest) {
-        if (networkRequest.networkCaptureData != null) {
-            networkCaptureService.logNetworkCapturedData(
-                networkRequest.url, // TODO: This used the non-stripped URL, is that correct?
-                networkRequest.httpMethod,
-                networkRequest.responseCode ?: NETWORK_ERROR_CODE,
-                networkRequest.startTime,
-                networkRequest.endTime,
-                networkRequest.networkCaptureData,
-                networkRequest.errorMessage
-            )
-        }
-    }
-
-    /**
-     * Records network calls as spans if their domain can be parsed and is within the limits.
-     *
-     * @param networkRequest the network request to record
-     */
-    private fun recordNetworkRequest(networkRequest: EmbraceNetworkRequest) {
-        // TODO: Shouldn't we ignore domains that can't be parsed for networkCapturedData too?
-        // Shouldn't we also track limits for networkCapturedData?
-
+    override fun logNetworkRequest(request: HttpNetworkRequest) {
         // Get the domain, if it can be successfully parsed. If not, don't log this call.
         val domain = getDomain(
-            stripUrl(networkRequest.url)
+            stripUrl(request.url)
         ) ?: return
 
-        if (embraceDomainCountLimiter.canLogNetworkRequest(domain)) {
-            val strippedUrl = stripUrl(networkRequest.url)
+        if (domainCountLimiter.canLogNetworkRequest(domain)) {
+            val strippedUrl = stripUrl(request.url)
 
-            val networkRequestSchemaType = SchemaType.NetworkRequest(generateSchemaAttributes(networkRequest))
-            val statusCode = networkRequest.responseCode
+            val networkRequestSchemaType = SchemaType.NetworkRequest(generateSchemaAttributes(request))
+            val statusCode = request.statusCode
             val errorCode = if (statusCode == null || statusCode <= 0 || statusCode >= 400) {
                 ErrorCode.FAILURE
             } else {
                 null
             }
             spanService.recordCompletedSpan(
-                name = "${networkRequest.httpMethod} ${getUrlPath(strippedUrl)}",
-                startTimeMs = networkRequest.startTime,
-                endTimeMs = networkRequest.endTime,
+                name = "${request.httpMethod} ${getUrlPath(strippedUrl)}",
+                startTimeMs = request.startTime,
+                endTimeMs = request.endTime,
                 type = EmbType.Performance.Network,
                 attributes = networkRequestSchemaType.attributes(),
                 errorCode = errorCode,
@@ -85,15 +56,15 @@ internal class EmbraceNetworkLoggingService(
     }
 
     @OptIn(IncubatingApi::class)
-    private fun generateSchemaAttributes(networkRequest: EmbraceNetworkRequest): Map<String, String> = mapOf(
-        "url.full" to stripUrl(networkRequest.url),
-        HttpAttributes.HTTP_REQUEST_METHOD to networkRequest.httpMethod,
-        HttpAttributes.HTTP_RESPONSE_STATUS_CODE to networkRequest.responseCode,
-        HttpAttributes.HTTP_REQUEST_BODY_SIZE to networkRequest.bytesSent,
-        HttpAttributes.HTTP_RESPONSE_BODY_SIZE to networkRequest.bytesReceived,
-        ErrorAttributes.ERROR_TYPE to networkRequest.errorType,
-        ExceptionAttributes.EXCEPTION_MESSAGE to networkRequest.errorMessage,
-        "emb.w3c_traceparent" to networkRequest.w3cTraceparent,
-        "emb.trace_id" to getValidTraceId(networkRequest.traceId),
+    private fun generateSchemaAttributes(request: HttpNetworkRequest): Map<String, String> = mapOf(
+        "url.full" to stripUrl(request.url),
+        HttpAttributes.HTTP_REQUEST_METHOD to request.httpMethod,
+        HttpAttributes.HTTP_RESPONSE_STATUS_CODE to request.statusCode,
+        HttpAttributes.HTTP_REQUEST_BODY_SIZE to request.bytesSent,
+        HttpAttributes.HTTP_RESPONSE_BODY_SIZE to request.bytesReceived,
+        ErrorAttributes.ERROR_TYPE to request.errorType,
+        ExceptionAttributes.EXCEPTION_MESSAGE to request.errorMessage,
+        "emb.w3c_traceparent" to request.w3cTraceparent,
+        "emb.trace_id" to getValidTraceId(request.traceId),
     ).toNonNullMap().mapValues { it.value.toString() }
 }

@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.internal.config.remote.NetworkCaptureRuleRemoteConfig
-import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData
+import io.embrace.android.embracesdk.internal.instrumentation.network.HttpNetworkRequest
 import io.embrace.android.embracesdk.internal.network.logging.NetworkCaptureService
 
 class FakeNetworkCaptureService : NetworkCaptureService {
@@ -15,15 +15,9 @@ class FakeNetworkCaptureService : NetworkCaptureService {
         return emptySet()
     }
 
-    override fun logNetworkCapturedData(
-        url: String,
-        httpMethod: String,
-        statusCode: Int,
-        startTime: Long,
-        endTime: Long,
-        networkCaptureData: NetworkCaptureData?,
-        errorMessage: String?,
+    override fun logNetworkRequest(
+        request: HttpNetworkRequest
     ) {
-        urls.add(url)
+        urls.add(request.url)
     }
 }

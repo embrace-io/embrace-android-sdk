@@ -8,8 +8,8 @@ class FakeNetworkCaptureDataSource : NetworkCaptureDataSource {
 
     val loggedCalls: MutableList<NetworkCapturedCall> = mutableListOf()
 
-    override fun logNetworkCapturedCall(networkCapturedCall: NetworkCapturedCall) {
-        loggedCalls.add(networkCapturedCall)
+    override fun logNetworkCapturedCall(call: NetworkCapturedCall) {
+        loggedCalls.add(call)
     }
 
     override fun onDataCaptureEnabled() {

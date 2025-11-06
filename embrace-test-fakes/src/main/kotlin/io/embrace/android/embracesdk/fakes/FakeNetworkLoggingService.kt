@@ -1,13 +1,13 @@
 package io.embrace.android.embracesdk.fakes
 
+import io.embrace.android.embracesdk.internal.instrumentation.network.HttpNetworkRequest
 import io.embrace.android.embracesdk.internal.network.logging.NetworkLoggingService
-import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 
 class FakeNetworkLoggingService : NetworkLoggingService {
 
-    var requests: MutableList<EmbraceNetworkRequest> = mutableListOf()
+    var requests: MutableList<HttpNetworkRequest> = mutableListOf()
 
-    override fun logNetworkRequest(networkRequest: EmbraceNetworkRequest) {
-        requests.add(networkRequest)
+    override fun logNetworkRequest(request: HttpNetworkRequest) {
+        requests.add(request)
     }
 }

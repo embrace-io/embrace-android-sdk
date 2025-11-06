@@ -3,8 +3,8 @@ package io.embrace.android.embracesdk.internal.network.logging
 import io.embrace.android.embracesdk.internal.comms.api.ApiUrlBuilder
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.config.remote.NetworkCaptureRuleRemoteConfig
+import io.embrace.android.embracesdk.internal.instrumentation.network.HttpNetworkRequest
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
-import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData
 import io.embrace.android.embracesdk.internal.payload.NetworkCapturedCall
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.session.id.SessionIdTracker
@@ -31,6 +31,19 @@ internal class EmbraceNetworkCaptureService(
     }
 
     private val networkCaptureEncryptionManager = lazy { NetworkCaptureEncryptionManager(logger) }
+
+    override fun logNetworkRequest(request: HttpNetworkRequest) {
+        val body = request.body ?: return
+        logNetworkCapturedData(
+            request.url, // TODO: This used the non-stripped URL, is that correct?
+            request.httpMethod,
+            request.statusCode ?: NETWORK_ERROR_CODE,
+            request.startTime,
+            request.endTime,
+            body,
+            request.errorMessage
+        )
+    }
 
     /**
      * Returns the network capture rule that matches the URL and method of the network call.
@@ -70,13 +83,13 @@ internal class EmbraceNetworkCaptureService(
     /**
      * Logs the network captured data only if it matches the duration and status code set on the Network Rule.
      */
-    override fun logNetworkCapturedData(
+    private fun logNetworkCapturedData(
         url: String,
         httpMethod: String,
         statusCode: Int,
         startTime: Long,
         endTime: Long,
-        networkCaptureData: NetworkCaptureData?,
+        requestBody: HttpNetworkRequest.HttpRequestBody,
         errorMessage: String?,
     ) {
         val duration = max(endTime - startTime, 0)
@@ -84,10 +97,9 @@ internal class EmbraceNetworkCaptureService(
         getNetworkCaptureRules(url, httpMethod).forEach { rule ->
 
             if (shouldApplyRule(rule, duration, statusCode)) {
-                val requestBody = parseBody(networkCaptureData?.capturedRequestBody, rule.maxSize)
                 val responseBody =
-                    networkCaptureData?.dataCaptureErrorMessage ?: parseBody(
-                        networkCaptureData?.capturedResponseBody,
+                    requestBody.dataCaptureErrorMessage ?: parseBody(
+                        requestBody.capturedResponseBody,
                         rule.maxSize
                     )
                 decreaseNetworkCaptureRuleRemainingCount(rule.id, rule.maxCount)
@@ -97,15 +109,15 @@ internal class EmbraceNetworkCaptureService(
                     endTime = endTime,
                     httpMethod = httpMethod,
                     matchedUrl = rule.urlRegex,
-                    requestBody = requestBody,
-                    requestBodySize = networkCaptureData?.requestBodySize,
-                    requestQuery = networkCaptureData?.requestQueryParams,
-                    requestQueryHeaders = networkCaptureData?.requestHeaders,
-                    requestSize = networkCaptureData?.requestBodySize,
+                    requestBody = parseBody(requestBody.capturedRequestBody, rule.maxSize),
+                    requestBodySize = requestBody.requestBodySize,
+                    requestQuery = requestBody.requestQueryParams,
+                    requestQueryHeaders = requestBody.requestHeaders,
+                    requestSize = requestBody.requestBodySize,
                     responseBody = responseBody,
-                    responseBodySize = networkCaptureData?.responseBodySize,
-                    responseHeaders = networkCaptureData?.responseHeaders,
-                    responseSize = networkCaptureData?.responseBodySize,
+                    responseBodySize = requestBody.responseBodySize,
+                    responseHeaders = requestBody.responseHeaders,
+                    responseSize = requestBody.responseBodySize,
                     responseStatus = statusCode,
                     sessionId = sessionIdTracker.getActiveSessionId(),
                     startTime = startTime,

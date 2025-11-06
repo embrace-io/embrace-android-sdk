@@ -9,8 +9,8 @@ import io.embrace.android.embracesdk.fakes.createNetworkBehavior
 import io.embrace.android.embracesdk.internal.comms.api.EmbraceApiUrlBuilder
 import io.embrace.android.embracesdk.internal.config.remote.NetworkCaptureRuleRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.internal.instrumentation.network.HttpNetworkRequest
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
-import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -24,14 +24,7 @@ internal class EmbraceNetworkCaptureServiceTest {
     private lateinit var cfg: RemoteConfig
     private val sessionIdTracker: FakeSessionIdTracker = FakeSessionIdTracker()
     private lateinit var configService: FakeConfigService
-    private val networkCaptureData: NetworkCaptureData = NetworkCaptureData(
-        null,
-        null,
-        null,
-        null,
-        null,
-        null
-    )
+    private val networkCaptureData = HttpNetworkRequest.HttpRequestBody(null, null, null, null, null, null)
 
     @Before
     fun setUp() {
@@ -135,24 +128,28 @@ internal class EmbraceNetworkCaptureServiceTest {
 
         val service = getService()
         // duration = 2000ms shouldn't be captured
-        service.logNetworkCapturedData(
-            "https://embrace.io/changelog",
-            "GET",
-            200,
-            0,
-            2000,
-            networkCaptureData
+        service.logNetworkRequest(
+            HttpNetworkRequest(
+                url = "https://embrace.io/changelog",
+                httpMethod = "GET",
+                statusCode = 200,
+                startTime = 0,
+                endTime = 2000,
+                body = networkCaptureData,
+            )
         )
         assertEquals(0, networkCaptureDataSource.loggedCalls.size)
 
         // duration = 6000ms should be captured
-        service.logNetworkCapturedData(
-            "https://embrace.io/changelog",
-            "GET",
-            200,
-            0,
-            6000,
-            networkCaptureData
+        service.logNetworkRequest(
+            HttpNetworkRequest(
+                url = "https://embrace.io/changelog",
+                httpMethod = "GET",
+                statusCode = 200,
+                startTime = 0,
+                endTime = 6000,
+                body = networkCaptureData
+            )
         )
         assertEquals(1, networkCaptureDataSource.loggedCalls.size)
     }
@@ -163,33 +160,40 @@ internal class EmbraceNetworkCaptureServiceTest {
         cfg = RemoteConfig(networkCaptureRules = setOf(rule))
 
         val service = getService()
-        service.logNetworkCapturedData(
-            "https://embrace.io/changelog",
-            "GET",
-            200,
-            0,
-            2000,
-            networkCaptureData
+        service.logNetworkRequest(
+            HttpNetworkRequest(
+
+                url = "https://embrace.io/changelog",
+                httpMethod = "GET",
+                statusCode = 200,
+                startTime = 0,
+                endTime = 2000,
+                body = networkCaptureData
+            )
         )
         assertEquals(1, networkCaptureDataSource.loggedCalls.size)
 
-        service.logNetworkCapturedData(
-            "https://embrace.io/changelog",
-            "GET",
-            404,
-            0,
-            2000,
-            networkCaptureData
+        service.logNetworkRequest(
+            HttpNetworkRequest(
+                url = "https://embrace.io/changelog",
+                httpMethod = "GET",
+                statusCode = 404,
+                startTime = 0,
+                endTime = 2000,
+                body = networkCaptureData
+            )
         )
         assertEquals(2, networkCaptureDataSource.loggedCalls.size)
 
-        service.logNetworkCapturedData(
-            "https://embrace.io/changelog",
-            "GET",
-            500,
-            0,
-            2000,
-            networkCaptureData
+        service.logNetworkRequest(
+            HttpNetworkRequest(
+                url = "https://embrace.io/changelog",
+                httpMethod = "GET",
+                statusCode = 500,
+                startTime = 0,
+                endTime = 2000,
+                body = networkCaptureData
+            )
         )
         assertEquals(2, networkCaptureDataSource.loggedCalls.size)
     }

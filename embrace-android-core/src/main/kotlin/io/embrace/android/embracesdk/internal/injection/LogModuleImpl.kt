@@ -44,7 +44,6 @@ internal class LogModuleImpl(
     override val networkLoggingService: NetworkLoggingService by singleton {
         EmbraceNetworkLoggingService(
             configModule.configService.networkBehavior.domainCountLimiter,
-            networkCaptureService,
             openTelemetryModule.spanService
         )
     }

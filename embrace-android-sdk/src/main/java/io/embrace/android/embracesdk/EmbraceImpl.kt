@@ -169,16 +169,16 @@ internal class EmbraceImpl(
         val startMsg = "Embrace SDK version ${BuildConfig.VERSION_NAME} started" + appId?.run { " for appId =  $this" }
         logger.logInfo(startMsg)
 
+        val endTimeMs = clock.now()
+        sdkCallChecker.started.set(true)
+        end()
+
         val registry = bootstrapper.instrumentationModule.instrumentationRegistry
         val instrumentationProviders = ServiceLoader.load(InstrumentationProvider::class.java)
         registry.loadInstrumentations(instrumentationProviders, bootstrapper.instrumentationModule.instrumentationArgs)
         registry.findByType(NetworkStatusDataSource::class)?.let {
             bootstrapper.essentialServiceModule.networkConnectivityService.addNetworkConnectivityListener(it)
         }
-
-        val endTimeMs = clock.now()
-        sdkCallChecker.started.set(true)
-        end()
 
         initializeHucInstrumentation(configModule.configService.networkBehavior)
 

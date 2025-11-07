@@ -55,15 +55,7 @@ fun Project.installDependenciesForVariant(
                         }
                     )
 
-                    // add embrace core dependency
-                    configuration.dependencies.addLater(
-                        provider {
-                            val embraceOkhttpMetadata = EmbraceDependencyMetadata.OkHttp(BuildConfig.VERSION)
-                            project.dependencies.create(embraceOkhttpMetadata.gradleShortNomenclature())
-                        }
-                    )
-
-                    // true so to tell Gradle to install Embrace dependencies (okhttp, jetpack, etc) through ComponentMetadataRule
+                    // true so to tell Gradle to install Embrace dependencies through ComponentMetadataRule
                     "true"
                 }
 

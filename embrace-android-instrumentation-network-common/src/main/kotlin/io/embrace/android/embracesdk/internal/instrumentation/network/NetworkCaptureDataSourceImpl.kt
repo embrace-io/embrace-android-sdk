@@ -11,7 +11,7 @@ import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import kotlin.math.max
 
-internal class NetworkCaptureDataSourceImpl(
+class NetworkCaptureDataSourceImpl(
     private val args: InstrumentationArgs,
 ) : NetworkCaptureDataSource, DataSourceImpl(
     args = args,

@@ -24,7 +24,7 @@ import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
  * A limit of 0 disables logging for the domain. All network calls are captured up to the limit,
  * and the number of calls is also captured if the limit is exceeded.
  */
-internal class NetworkRequestDataSourceImpl(
+class NetworkRequestDataSourceImpl(
     args: InstrumentationArgs,
 ) : NetworkRequestDataSource, DataSourceImpl(
     args,

@@ -116,8 +116,8 @@ class HucLiteDataSourceTest {
                 application = mockk(),
                 configService = FakeConfigService(
                     networkBehavior = FakeNetworkBehavior(
+                        urlEnabled = false,
                         domainCountLimiter = domainCountLimiter,
-                        urlEnabled = false
                     ),
                 ),
                 destination = fakeTelemetryDestination,

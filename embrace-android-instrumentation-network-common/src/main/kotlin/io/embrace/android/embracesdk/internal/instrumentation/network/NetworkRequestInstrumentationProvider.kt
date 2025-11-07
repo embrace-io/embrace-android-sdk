@@ -4,11 +4,18 @@ import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.InstrumentationProvider
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState
 
+private var networkRequestDataSource: NetworkRequestDataSource? = null
+
+fun retrieveNetworkRequestDataSource(): NetworkRequestDataSource? {
+    return networkRequestDataSource
+}
+
 class NetworkRequestInstrumentationProvider : InstrumentationProvider {
     override fun register(args: InstrumentationArgs): DataSourceState<*>? {
         return DataSourceState(
             factory = {
-                NetworkRequestDataSourceImpl(args)
+                networkRequestDataSource = NetworkRequestDataSourceImpl(args)
+                networkRequestDataSource
             }
         )
     }

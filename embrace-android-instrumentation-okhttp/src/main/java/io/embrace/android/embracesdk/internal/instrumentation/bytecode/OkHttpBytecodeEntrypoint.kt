@@ -1,10 +1,9 @@
 package io.embrace.android.embracesdk.internal.instrumentation.bytecode
 
 import androidx.annotation.Keep
-import io.embrace.android.embracesdk.internal.EmbraceInternalApi
 import io.embrace.android.embracesdk.internal.instrumentation.okhttp.EmbraceOkHttpInterceptor
 import io.embrace.android.embracesdk.internal.instrumentation.okhttp.InterceptorType
-import io.embrace.android.embracesdk.internal.instrumentation.okhttp.OkHttpDataSource
+import io.embrace.android.embracesdk.internal.instrumentation.okhttp.okhttpDataSource
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 
@@ -36,18 +35,17 @@ object OkHttpBytecodeEntrypoint {
      * @param thiz the OkHttpClient builder in matter.
      */
     private fun addEmbraceInterceptors(thiz: OkHttpClient.Builder) {
+        val provider = { okhttpDataSource }
         try {
-            val dataSource = OkHttpDataSource()
             addInterceptor(
                 thiz.interceptors(),
-                EmbraceOkHttpInterceptor(InterceptorType.APPLICATION, dataSource)
+                EmbraceOkHttpInterceptor(InterceptorType.APPLICATION, provider)
             )
             addInterceptor(
                 thiz.networkInterceptors(),
-                EmbraceOkHttpInterceptor(InterceptorType.NETWORK, dataSource)
+                EmbraceOkHttpInterceptor(InterceptorType.NETWORK, provider)
             )
-        } catch (error: Throwable) {
-            EmbraceInternalApi.internalInterface.logInternalError(error)
+        } catch (ignored: Throwable) {
         }
     }
 

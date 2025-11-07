@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.instrumentation.huc;
 
-import static io.embrace.android.embracesdk.internal.EmbraceInternalApi.CUSTOM_TRACE_ID_HEADER_NAME;
 import static io.embrace.android.embracesdk.internal.config.behavior.NetworkSpanForwardingBehaviorImpl.TRACEPARENT_HEADER_NAME;
+import static io.embrace.android.embracesdk.internal.instrumentation.network.TraceIdConstantsKt.CUSTOM_TRACE_ID_HEADER_NAME;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;

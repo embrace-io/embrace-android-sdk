@@ -1,23 +1,29 @@
 package io.embrace.android.embracesdk.internal.instrumentation.okhttp
 
-import io.embrace.android.embracesdk.Embrace
-import io.embrace.android.embracesdk.internal.EmbraceInternalApi
-import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
+import androidx.test.core.app.ApplicationProvider
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
+import io.embrace.android.embracesdk.fakes.FakeLogData
+import io.embrace.android.embracesdk.fakes.FakeSpanToken
+import io.embrace.android.embracesdk.fakes.behavior.FakeNetworkBehavior
+import io.embrace.android.embracesdk.fakes.behavior.FakeNetworkSpanForwardingBehavior
+import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.clock.Clock
-import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData
-import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
-import io.mockk.CapturingSlot
-import io.mockk.every
-import io.mockk.mockk
-import io.mockk.slot
-import io.mockk.verify
+import io.embrace.android.embracesdk.internal.config.remote.NetworkCaptureRuleRemoteConfig
+import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkCaptureDataSourceImpl
+import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkRequestDataSourceImpl
+import io.embrace.android.embracesdk.internal.utils.NetworkUtils.getValidTraceId
+import io.embrace.opentelemetry.kotlin.semconv.ErrorAttributes
+import io.embrace.opentelemetry.kotlin.semconv.ExceptionAttributes
+import io.embrace.opentelemetry.kotlin.semconv.HttpAttributes
+import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
+import io.embrace.opentelemetry.kotlin.semconv.UrlAttributes
 import okhttp3.Headers
-import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
-import okhttp3.ResponseBody.Companion.toResponseBody
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import okio.Buffer
@@ -28,13 +34,15 @@ import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import org.junit.runner.RunWith
 import java.io.ByteArrayOutputStream
 import java.net.SocketException
-import java.util.Locale
 import java.util.concurrent.atomic.AtomicLong
 import java.util.zip.GZIPOutputStream
 
-internal class EmbraceOkHttpInterceptorsTest {
+@OptIn(IncubatingApi::class)
+@RunWith(AndroidJUnit4::class)
+internal class OkHttpDataSourceTest {
 
     companion object {
         private const val REQUEST_HEADER_NAME = "requestHeader"
@@ -69,18 +77,12 @@ internal class EmbraceOkHttpInterceptorsTest {
     }
 
     private lateinit var server: MockWebServer
-    private lateinit var applicationInterceptor: EmbraceOkHttpInterceptor
-    private lateinit var networkInterceptor: EmbraceOkHttpInterceptor
-    private lateinit var preNetworkInterceptorTestInterceptor: Interceptor
-    private lateinit var postNetworkInterceptorTestInterceptor: Interceptor
+    private lateinit var args: FakeInstrumentationArgs
+    private lateinit var configService: FakeConfigService
     private lateinit var okHttpClient: OkHttpClient
-    private lateinit var mockEmbrace: Embrace
-    private lateinit var mockEmbraceInternalApi: EmbraceInternalApi
-    private lateinit var mockInternalInterface: EmbraceInternalInterface
     private lateinit var getRequestBuilder: Request.Builder
     private lateinit var postRequestBuilder: Request.Builder
-    private lateinit var capturedEmbraceNetworkRequest: CapturingSlot<EmbraceNetworkRequest>
-    private lateinit var mockSystemClock: Clock
+    private lateinit var fakeSystemClock: DriftClock
     private var preNetworkInterceptorBeforeRequestSupplier: (Request) -> Request =
         { request -> request }
     private var preNetworkInterceptorAfterResponseSupplier: (Response) -> Response =
@@ -89,31 +91,50 @@ internal class EmbraceOkHttpInterceptorsTest {
         { request -> request }
     private var postNetworkInterceptorAfterResponseSupplier: (Response) -> Response =
         { response -> response }
-    private var isSDKStarted = true
     private var isNetworkSpanForwardingEnabled = false
+        set(value) {
+            field = value
+            configService.networkSpanForwardingBehavior = FakeNetworkSpanForwardingBehavior(value)
+        }
 
     @Before
     fun setup() {
         server = MockWebServer()
-        mockEmbrace = mockk(relaxed = true)
-        mockEmbraceInternalApi = mockk(relaxed = true)
-        mockInternalInterface = mockk(relaxed = true)
-        every { mockInternalInterface.shouldCaptureNetworkBody(any(), "POST") } answers { true }
-        every { mockInternalInterface.shouldCaptureNetworkBody(any(), "GET") } answers { false }
-        every { mockInternalInterface.isNetworkSpanForwardingEnabled() } answers { isNetworkSpanForwardingEnabled }
-        every { mockEmbrace.getSdkCurrentTimeMs() } answers { FAKE_SDK_TIME }
+        configService = FakeConfigService()
+        args = FakeInstrumentationArgs(
+            application = ApplicationProvider.getApplicationContext(),
+            configService = configService
+        )
+        val networkRequestDataSource = NetworkRequestDataSourceImpl(args)
+        val networkCaptureDataSource = NetworkCaptureDataSourceImpl(args)
 
-        mockSystemClock = mockk(relaxed = true)
-        every { mockSystemClock.now() } answers { FAKE_SYSTEM_TIME }
+        configService.apply {
+            networkBehavior = FakeNetworkBehavior(
+                rules = setOf(
+                    NetworkCaptureRuleRemoteConfig(
+                        id = "1",
+                        method = "POST",
+                        duration = 0,
+                        urlRegex = "^.*$",
+                        expiresIn = 60000,
+                        statusCodes = setOf(200, 500)
+                    ),
+                )
+            )
+            networkSpanForwardingBehavior = FakeNetworkSpanForwardingBehavior()
+        }
+
+        fakeSystemClock = DriftClock(::FAKE_SYSTEM_TIME)
 
         val dataSource = OkHttpDataSource(
-            mockEmbrace,
-            mockEmbraceInternalApi,
-            mockSystemClock,
+            args,
+            { networkRequestDataSource },
+            { networkCaptureDataSource },
+            fakeSystemClock,
             FakeTraceparentGenerator(GENERATED_TRACEPARENT)
         )
-        applicationInterceptor = EmbraceOkHttpInterceptor(InterceptorType.APPLICATION, dataSource)
-        preNetworkInterceptorTestInterceptor = TestInspectionInterceptor(
+        val applicationInterceptor = EmbraceOkHttpInterceptor(InterceptorType.APPLICATION) { dataSource }
+        val preNetworkInterceptorTestInterceptor = TestInspectionInterceptor(
             beforeRequestSent = { request ->
                 preNetworkInterceptorBeforeRequestSupplier.invoke(
                     request
@@ -125,8 +146,8 @@ internal class EmbraceOkHttpInterceptorsTest {
                 )
             }
         )
-        networkInterceptor = EmbraceOkHttpInterceptor(InterceptorType.NETWORK, dataSource)
-        postNetworkInterceptorTestInterceptor = TestInspectionInterceptor(
+        val networkInterceptor = EmbraceOkHttpInterceptor(InterceptorType.NETWORK) { dataSource }
+        val postNetworkInterceptorTestInterceptor = TestInspectionInterceptor(
             beforeRequestSent = { request ->
                 postNetworkInterceptorBeforeRequestSupplier.invoke(
                     request
@@ -152,11 +173,6 @@ internal class EmbraceOkHttpInterceptorsTest {
             .url(server.url("$DEFAULT_PATH?$DEFAULT_QUERY_STRING"))
             .post(REQUEST_BODY_STRING.toRequestBody())
             .header(REQUEST_HEADER_NAME, REQUEST_HEADER_VALUE)
-        capturedEmbraceNetworkRequest = slot()
-        every { mockEmbrace.isStarted } answers { isSDKStarted }
-        every { mockEmbrace.recordNetworkRequest(capture(capturedEmbraceNetworkRequest)) } answers { }
-        every { mockEmbraceInternalApi.internalInterface } answers { mockInternalInterface }
-        isSDKStarted = true
         isNetworkSpanForwardingEnabled = false
     }
 
@@ -215,42 +231,11 @@ internal class EmbraceOkHttpInterceptorsTest {
     }
 
     @Test
-    fun `completed requests are not recorded if the SDK has not started`() {
-        isSDKStarted = false
-        server.enqueue(createBaseMockResponse())
-        runGetRequest()
-        server.enqueue(createBaseMockResponse())
-        runPostRequest()
-        verify(exactly = 0) { mockEmbrace.recordNetworkRequest(any()) }
-    }
-
-    @Test
-    fun `incomplete requests are not recorded if the SDK has not started`() {
-        isSDKStarted = false
-        preNetworkInterceptorBeforeRequestSupplier = { throw SocketException() }
-        assertThrows(SocketException::class.java) { runGetRequest() }
-        postRequestBuilder.header("x-emb-path", CUSTOM_PATH)
-        preNetworkInterceptorBeforeRequestSupplier =
-            { throw EmbraceCustomPathException(CUSTOM_PATH, SocketException()) }
-        assertThrows(EmbraceCustomPathException::class.java) { runPostRequest() }
-        verify(exactly = 0) { mockEmbrace.recordNetworkRequest(any()) }
-    }
-
-    @Test
-    fun `EmbraceOkHttp3NetworkInterceptor does nothing if SDK not started`() {
-        isSDKStarted = false
-        server.enqueue(createBaseMockResponse())
-        runGetRequest()
-        verify(exactly = 0) { mockInternalInterface.isNetworkSpanForwardingEnabled() }
-        verify(exactly = 0) { mockInternalInterface.shouldCaptureNetworkBody(any(), any()) }
-    }
-
-    @Test
     fun `check content length header intact with not-gzipped response body if network capture not enabled`() {
         preNetworkInterceptorAfterResponseSupplier = ::checkUncompressedBodySize
         server.enqueue(createBaseMockResponse().setBody(RESPONSE_BODY))
         runGetRequest()
-        assertNull(capturedEmbraceNetworkRequest.captured.networkCaptureData)
+        assertNetworkBodyNotCaptured()
     }
 
     @Test
@@ -258,7 +243,7 @@ internal class EmbraceOkHttpInterceptorsTest {
         preNetworkInterceptorAfterResponseSupplier = ::checkCompressedBodySize
         server.enqueue(createBaseMockResponse().setGzipBody(RESPONSE_BODY))
         runGetRequest()
-        assertNull(capturedEmbraceNetworkRequest.captured.networkCaptureData)
+        assertNetworkBodyNotCaptured()
     }
 
     @Test
@@ -284,21 +269,7 @@ internal class EmbraceOkHttpInterceptorsTest {
     }
 
     @Test
-    fun `check error when getting response body in network capture`() {
-        val bodyThatKills: Buffer = mockk(relaxed = true)
-        every { bodyThatKills.size } answers { 10 }
-        server.enqueue(createBaseMockResponse().setBody(bodyThatKills))
-        runPostRequest()
-        val networkCaptureData =
-            checkNotNull(capturedEmbraceNetworkRequest.captured.networkCaptureData)
-        with(networkCaptureData) {
-            validateDefaultNonBodyNetworkCaptureData(this)
-            assertTrue(checkNotNull(dataCaptureErrorMessage).contains("Response Body"))
-        }
-    }
-
-    @Test
-    fun `check EmbraceOkHttp3ApplicationInterceptor can handle compressed response without content-length parameter`() {
+    fun `check application interceptor can handle compressed response without content-length parameter`() {
         preNetworkInterceptorAfterResponseSupplier = ::removeContentLengthFromResponse
         preNetworkInterceptorAfterResponseSupplier = ::consumeBody
         server.enqueue(createBaseMockResponse().setGzipBody(RESPONSE_BODY))
@@ -306,7 +277,7 @@ internal class EmbraceOkHttpInterceptorsTest {
     }
 
     @Test
-    fun `check EmbraceOkHttp3ApplicationInterceptor can handle uncompressed response without content-length parameter`() {
+    fun `check application interceptor can handle uncompressed response without content-length parameter`() {
         preNetworkInterceptorAfterResponseSupplier = ::removeContentLengthFromResponse
         preNetworkInterceptorAfterResponseSupplier = ::consumeBody
         server.enqueue(createBaseMockResponse().setBody(RESPONSE_BODY))
@@ -314,7 +285,7 @@ internal class EmbraceOkHttpInterceptorsTest {
     }
 
     @Test
-    fun `check EmbraceOkHttp3NetworkInterceptor can handle compressed response without content-length parameter`() {
+    fun `check network interceptor can handle compressed response without content-length parameter`() {
         postNetworkInterceptorAfterResponseSupplier = ::removeContentLengthFromResponse
         preNetworkInterceptorAfterResponseSupplier = ::consumeBody
         server.enqueue(createBaseMockResponse().setGzipBody(RESPONSE_BODY))
@@ -322,7 +293,7 @@ internal class EmbraceOkHttpInterceptorsTest {
     }
 
     @Test
-    fun `check EmbraceOkHttp3NetworkInterceptor can handle uncompressed response without content-length parameter`() {
+    fun `check network interceptor can handle uncompressed response without content-length parameter`() {
         postNetworkInterceptorAfterResponseSupplier = ::removeContentLengthFromResponse
         preNetworkInterceptorAfterResponseSupplier = ::consumeBody
         server.enqueue(createBaseMockResponse().setBody(RESPONSE_BODY))
@@ -343,9 +314,10 @@ internal class EmbraceOkHttpInterceptorsTest {
     fun `exceptions with canonical name and message cause incomplete network request to be recorded with those values`() {
         preNetworkInterceptorBeforeRequestSupplier = { throw SocketException("bad bad socket") }
         assertThrows(SocketException::class.java) { runPostRequest() }
-        with(capturedEmbraceNetworkRequest.captured) {
-            assertEquals(SocketException::class.java.canonicalName, errorType)
-            assertEquals("bad bad socket", errorMessage)
+        assertNetworkRequestReceived { span ->
+            val attrs = span.attributes
+            assertEquals(SocketException::class.java.canonicalName, attrs[ErrorAttributes.ERROR_TYPE])
+            assertEquals("bad bad socket", attrs[ExceptionAttributes.EXCEPTION_MESSAGE])
         }
     }
 
@@ -353,23 +325,27 @@ internal class EmbraceOkHttpInterceptorsTest {
     fun `anonymous exception with no message causes incomplete network request to be recorded with empty error type and message values`() {
         preNetworkInterceptorBeforeRequestSupplier = { throw object : Exception() {} }
         assertThrows(Exception::class.java) { runPostRequest() }
-        with(capturedEmbraceNetworkRequest.captured) {
-            assertEquals(UNKNOWN_EXCEPTION, errorType)
-            assertEquals(UNKNOWN_MESSAGE, errorMessage)
+        assertNetworkRequestReceived { span ->
+            val attrs = span.attributes
+            assertEquals(UNKNOWN_EXCEPTION, attrs[ErrorAttributes.ERROR_TYPE])
+            assertEquals(UNKNOWN_MESSAGE, attrs[ExceptionAttributes.EXCEPTION_MESSAGE])
         }
     }
 
     @Test
     fun `EmbraceCustomPathException records incomplete network request with custom path and the correct error type and message`() {
         postRequestBuilder.header("x-emb-path", CUSTOM_PATH)
+        val exc = IllegalStateException("Burned")
         preNetworkInterceptorBeforeRequestSupplier = {
-            throw EmbraceCustomPathException(CUSTOM_PATH, IllegalStateException("Burned"))
+            throw EmbraceCustomPathException(CUSTOM_PATH, exc)
         }
         assertThrows(EmbraceCustomPathException::class.java) { runPostRequest() }
-        with(capturedEmbraceNetworkRequest.captured) {
-            assertEquals(IllegalStateException::class.java.canonicalName, errorType)
-            assertEquals("Burned", errorMessage)
-            assertTrue(url.endsWith("$CUSTOM_PATH?$DEFAULT_QUERY_STRING"))
+        assertNetworkRequestReceived { span ->
+            val attrs = span.attributes
+            assertEquals(exc::class.java.canonicalName, attrs[ErrorAttributes.ERROR_TYPE])
+            assertEquals(exc.message, attrs[ExceptionAttributes.EXCEPTION_MESSAGE])
+            val url = checkNotNull(attrs[UrlAttributes.URL_FULL])
+            assertTrue(url.endsWith(CUSTOM_PATH))
         }
     }
 
@@ -379,10 +355,12 @@ internal class EmbraceOkHttpInterceptorsTest {
         preNetworkInterceptorBeforeRequestSupplier =
             { throw EmbraceCustomPathException(CUSTOM_PATH, object : Exception() {}) }
         assertThrows(EmbraceCustomPathException::class.java) { runPostRequest() }
-        with(capturedEmbraceNetworkRequest.captured) {
-            assertEquals(UNKNOWN_EXCEPTION, errorType)
-            assertEquals(UNKNOWN_MESSAGE, errorMessage)
-            assertTrue(url.endsWith("$CUSTOM_PATH?$DEFAULT_QUERY_STRING"))
+        assertNetworkRequestReceived { span ->
+            val attrs = span.attributes
+            assertEquals(UNKNOWN_EXCEPTION, attrs[ErrorAttributes.ERROR_TYPE])
+            assertEquals(UNKNOWN_MESSAGE, attrs[ExceptionAttributes.EXCEPTION_MESSAGE])
+            val url = checkNotNull(attrs[UrlAttributes.URL_FULL])
+            assertTrue(url.endsWith(CUSTOM_PATH))
         }
     }
 
@@ -390,8 +368,11 @@ internal class EmbraceOkHttpInterceptorsTest {
     fun `check traceparent not injected or forwarded by default for a complete request `() {
         server.enqueue(createBaseMockResponse())
         runPostRequest()
-        assertEquals(200, capturedEmbraceNetworkRequest.captured.responseCode)
-        assertNull(capturedEmbraceNetworkRequest.captured.w3cTraceparent)
+        assertNetworkRequestReceived { span ->
+            val attrs = span.attributes
+            assertEquals("200", attrs[HttpAttributes.HTTP_RESPONSE_STATUS_CODE])
+            assertNull(attrs["emb.w3c_traceparent"])
+        }
     }
 
     @Test
@@ -399,8 +380,11 @@ internal class EmbraceOkHttpInterceptorsTest {
         server.enqueue(createBaseMockResponse())
         postRequestBuilder.header(TRACEPARENT_HEADER, CUSTOM_TRACEPARENT)
         runPostRequest()
-        assertEquals(200, capturedEmbraceNetworkRequest.captured.responseCode)
-        assertNull(capturedEmbraceNetworkRequest.captured.w3cTraceparent)
+        assertNetworkRequestReceived { span ->
+            val attrs = span.attributes
+            assertEquals("200", attrs[HttpAttributes.HTTP_RESPONSE_STATUS_CODE])
+            assertNull(attrs["emb.w3c_traceparent"])
+        }
     }
 
     @Test
@@ -408,8 +392,11 @@ internal class EmbraceOkHttpInterceptorsTest {
         isNetworkSpanForwardingEnabled = true
         server.enqueue(createBaseMockResponse())
         runPostRequest()
-        assertEquals(200, capturedEmbraceNetworkRequest.captured.responseCode)
-        assertEquals(GENERATED_TRACEPARENT, capturedEmbraceNetworkRequest.captured.w3cTraceparent)
+        assertNetworkRequestReceived { span ->
+            val attrs = span.attributes
+            assertEquals("200", attrs[HttpAttributes.HTTP_RESPONSE_STATUS_CODE])
+            assertEquals(GENERATED_TRACEPARENT, attrs["emb.w3c_traceparent"])
+        }
     }
 
     @Test
@@ -418,8 +405,11 @@ internal class EmbraceOkHttpInterceptorsTest {
         server.enqueue(createBaseMockResponse())
         postRequestBuilder.header(TRACEPARENT_HEADER, CUSTOM_TRACEPARENT)
         runPostRequest()
-        assertEquals(200, capturedEmbraceNetworkRequest.captured.responseCode)
-        assertEquals(CUSTOM_TRACEPARENT, capturedEmbraceNetworkRequest.captured.w3cTraceparent)
+        assertNetworkRequestReceived { span ->
+            val attrs = span.attributes
+            assertEquals("200", attrs[HttpAttributes.HTTP_RESPONSE_STATUS_CODE])
+            assertEquals(CUSTOM_TRACEPARENT, attrs["emb.w3c_traceparent"])
+        }
     }
 
     @Test
@@ -429,8 +419,11 @@ internal class EmbraceOkHttpInterceptorsTest {
         preNetworkInterceptorBeforeRequestSupplier =
             { throw EmbraceCustomPathException(CUSTOM_PATH, IllegalStateException()) }
         assertThrows(EmbraceCustomPathException::class.java) { runPostRequest() }
-        assertNull(capturedEmbraceNetworkRequest.captured.responseCode)
-        assertNull(capturedEmbraceNetworkRequest.captured.w3cTraceparent)
+        assertNetworkRequestReceived { span ->
+            val attrs = span.attributes
+            assertNull(attrs[HttpAttributes.HTTP_RESPONSE_STATUS_CODE])
+            assertNull(attrs["emb.w3c_traceparent"])
+        }
     }
 
     @Test
@@ -438,8 +431,11 @@ internal class EmbraceOkHttpInterceptorsTest {
         isNetworkSpanForwardingEnabled = true
         preNetworkInterceptorBeforeRequestSupplier = { throw NullPointerException("hell nah") }
         assertThrows(NullPointerException::class.java) { runPostRequest() }
-        assertNull(capturedEmbraceNetworkRequest.captured.responseCode)
-        assertNull(capturedEmbraceNetworkRequest.captured.w3cTraceparent)
+        assertNetworkRequestReceived { span ->
+            val attrs = span.attributes
+            assertNull(attrs[HttpAttributes.HTTP_RESPONSE_STATUS_CODE])
+            assertNull(attrs["emb.w3c_traceparent"])
+        }
     }
 
     @Test
@@ -450,8 +446,11 @@ internal class EmbraceOkHttpInterceptorsTest {
         preNetworkInterceptorBeforeRequestSupplier =
             { throw EmbraceCustomPathException(CUSTOM_PATH, IllegalStateException()) }
         assertThrows(EmbraceCustomPathException::class.java) { runPostRequest() }
-        assertNull(capturedEmbraceNetworkRequest.captured.responseCode)
-        assertEquals(CUSTOM_TRACEPARENT, capturedEmbraceNetworkRequest.captured.w3cTraceparent)
+        assertNetworkRequestReceived { span ->
+            val attrs = span.attributes
+            assertNull(attrs[HttpAttributes.HTTP_RESPONSE_STATUS_CODE])
+            assertEquals(CUSTOM_TRACEPARENT, attrs["emb.w3c_traceparent"])
+        }
     }
 
     @Test
@@ -460,14 +459,18 @@ internal class EmbraceOkHttpInterceptorsTest {
         postRequestBuilder.header(TRACEPARENT_HEADER, CUSTOM_TRACEPARENT)
         preNetworkInterceptorBeforeRequestSupplier = { throw SocketException("hell nah") }
         assertThrows(SocketException::class.java) { runPostRequest() }
-        assertNull(capturedEmbraceNetworkRequest.captured.responseCode)
-        assertEquals(CUSTOM_TRACEPARENT, capturedEmbraceNetworkRequest.captured.w3cTraceparent)
+        assertNetworkRequestReceived { span ->
+            val attrs = span.attributes
+            assertNull(attrs[HttpAttributes.HTTP_RESPONSE_STATUS_CODE])
+            assertEquals(CUSTOM_TRACEPARENT, attrs["emb.w3c_traceparent"])
+        }
     }
 
     @Test
     fun `check consistent offsets produce expected start and end times`() {
         val clockDrifts = listOf(-500L, -1L, 0L, 1L, 500L)
         clockDrifts.forEach { clockDrift ->
+            args.destination.createdSpans.clear()
             runAndValidateTimestamps(
                 clockDrift = clockDrift,
                 extraDrift = 0L
@@ -481,6 +484,7 @@ internal class EmbraceOkHttpInterceptorsTest {
         val extraDrifts = listOf(-1L, 1L)
         clockDrifts.forEach { clockDrift ->
             extraDrifts.forEach { extraDrift ->
+                args.destination.createdSpans.clear()
                 runAndValidateTimestamps(
                     clockDrift = clockDrift,
                     extraDrift = extraDrift,
@@ -502,6 +506,14 @@ internal class EmbraceOkHttpInterceptorsTest {
                 )
             }
         }
+    }
+
+    private fun assertNetworkBodyNotCaptured() {
+        assertTrue(args.destination.logEvents.isEmpty())
+    }
+
+    private fun assertNetworkRequestReceived(assertions: (FakeSpanToken) -> Unit) {
+        assertions(args.destination.createdSpans.single())
     }
 
     private fun createBaseMockResponse(httpStatus: Int = 200) =
@@ -527,6 +539,7 @@ internal class EmbraceOkHttpInterceptorsTest {
         expectedPath: String = DEFAULT_PATH,
         expectedHttpStatus: Int = 200,
     ) {
+        args.destination.createdSpans.clear()
         val realSystemClockStartTime = System.currentTimeMillis()
         runPostRequest()
         val realSystemClockEndTime = System.currentTimeMillis()
@@ -545,6 +558,7 @@ internal class EmbraceOkHttpInterceptorsTest {
     private fun runAndValidateGetRequest(
         expectedResponseBodySize: Int,
     ) {
+        args.destination.createdSpans.clear()
         val realSystemClockStartTime = System.currentTimeMillis()
         runGetRequest()
         val realSystemClockEndTime = System.currentTimeMillis()
@@ -565,28 +579,30 @@ internal class EmbraceOkHttpInterceptorsTest {
         extraDrift: Long = 0L,
         expectedOffset: Long = ((clockDrift * 2) + extraDrift) / 2L,
     ) {
+        args.destination.createdSpans.clear()
         val realDrift = AtomicLong(clockDrift)
-        every { mockSystemClock.now() } answers { FAKE_SDK_TIME + realDrift.getAndAdd(extraDrift) }
+        fakeSystemClock.action = { FAKE_SDK_TIME + realDrift.getAndAdd(extraDrift) }
+
         server.enqueue(createBaseMockResponse().setBody(RESPONSE_BODY))
         val response = runGetRequest()
         val realSystemClockStartTime = response.sentRequestAtMillis
         val realSystemClockEndTime = response.receivedResponseAtMillis
-        with(capturedEmbraceNetworkRequest) {
+        assertNetworkRequestReceived { span ->
             assertEquals(
                 "Unexpected start time when clock drifts are $clockDrift and ${clockDrift + extraDrift}:\n" +
                     "Unadjusted time: $realSystemClockStartTime with expected offset $expectedOffset\n" +
                     "Expected time: ${realSystemClockStartTime - expectedOffset}\n" +
-                    "Captured time: ${captured.startTime}",
+                    "Captured time: ${span.startTimeMs}",
                 realSystemClockStartTime - expectedOffset,
-                captured.startTime
+                span.startTimeMs
             )
             assertEquals(
                 "Unexpected end time when clock drifts are $clockDrift and ${clockDrift + extraDrift}\n" +
                     "Unadjusted time: $realSystemClockEndTime with expected offset $expectedOffset\n" +
                     "Expected time: ${realSystemClockEndTime - expectedOffset}\n" +
-                    "Captured time: ${captured.endTime}",
+                    "Captured time: ${span.endTimeMs}",
                 realSystemClockEndTime - expectedOffset,
-                captured.endTime
+                span.endTimeMs
             )
         }
     }
@@ -612,20 +628,24 @@ internal class EmbraceOkHttpInterceptorsTest {
         realSystemClockStartTime: Long,
         realSystemClockEndTime: Long,
     ) {
-        with(capturedEmbraceNetworkRequest) {
-            assertTrue(captured.url.endsWith("$path?$DEFAULT_QUERY_STRING"))
-            assertEquals(httpMethod, captured.httpMethod)
-            assertTrue(realSystemClockStartTime - CLOCK_DRIFT <= captured.startTime)
-            assertTrue(realSystemClockStartTime > captured.startTime)
-            assertTrue(realSystemClockEndTime - CLOCK_DRIFT >= captured.endTime)
-            assertTrue(realSystemClockEndTime > captured.endTime)
-            assertEquals(httpStatus, captured.responseCode)
-            assertEquals(requestSize.toLong(), captured.bytesOut)
-            assertEquals(responseBodySize.toLong(), captured.bytesIn)
-            assertEquals(errorType, captured.errorType)
-            assertEquals(errorMessage, captured.errorMessage)
-            assertEquals(traceId, captured.traceId)
-            assertEquals(w3cTraceparent, captured.w3cTraceparent)
+        assertNetworkRequestReceived { span ->
+            assertTrue(realSystemClockStartTime - CLOCK_DRIFT <= span.startTimeMs)
+            assertTrue(realSystemClockStartTime > span.startTimeMs)
+            val endTime = checkNotNull(span.endTimeMs)
+            assertTrue(realSystemClockEndTime - CLOCK_DRIFT >= endTime)
+            assertTrue(realSystemClockEndTime > endTime)
+
+            val attrs = span.attributes
+            assertEquals(server.url(path).toString(), attrs[UrlAttributes.URL_FULL])
+            assertEquals(httpMethod, attrs[HttpAttributes.HTTP_REQUEST_METHOD])
+            assertEquals(httpStatus.toString(), attrs[HttpAttributes.HTTP_RESPONSE_STATUS_CODE])
+            assertEquals(requestSize.toString(), attrs[HttpAttributes.HTTP_REQUEST_BODY_SIZE])
+            assertEquals(responseBodySize.toString(), attrs[HttpAttributes.HTTP_RESPONSE_BODY_SIZE])
+            assertEquals(errorType, attrs[ErrorAttributes.ERROR_TYPE])
+            assertEquals(errorMessage, attrs[ExceptionAttributes.EXCEPTION_MESSAGE])
+            assertEquals(w3cTraceparent, attrs["emb.w3c_traceparent"])
+            assertEquals(getValidTraceId(traceId), attrs["emb.trace_id"])
+
             if (responseBody != null) {
                 validateNetworkCaptureData(responseBody)
             }
@@ -633,28 +653,25 @@ internal class EmbraceOkHttpInterceptorsTest {
     }
 
     private fun validateNetworkCaptureData(responseBody: String) {
-        with(checkNotNull(capturedEmbraceNetworkRequest.captured.networkCaptureData)) {
-            validateDefaultNonBodyNetworkCaptureData(this)
-            assertEquals(responseBody, capturedResponseBody?.toResponseBody()?.string())
-            assertNull(dataCaptureErrorMessage)
-        }
+        val log = args.destination.logEvents.single()
+        assertTrue(log.schemaType is SchemaType.NetworkCapturedRequest)
+        val attrs = log.schemaType.attributes()
+        validateDefaultNonBodyNetworkCaptureData(log)
+        assertEquals(responseBody, attrs["response-body"])
+        assertNull(attrs[ExceptionAttributes.EXCEPTION_MESSAGE])
     }
 
-    private fun validateDefaultNonBodyNetworkCaptureData(networkCaptureData: NetworkCaptureData?) {
-        with(checkNotNull(networkCaptureData)) {
-            assertEquals(
-                REQUEST_HEADER_VALUE,
-                requestHeaders?.get(REQUEST_HEADER_NAME.lowercase(Locale.ENGLISH))
-            )
-            assertEquals(
-                RESPONSE_HEADER_VALUE,
-                responseHeaders?.get(RESPONSE_HEADER_NAME.lowercase(Locale.ENGLISH))
-            )
-            assertEquals(DEFAULT_QUERY_STRING, requestQueryParams)
-            val buffer = Buffer()
-            capturedRequestBody?.toRequestBody()?.writeTo(buffer)
-            assertEquals(REQUEST_BODY_STRING, buffer.readUtf8())
-        }
+    private fun validateDefaultNonBodyNetworkCaptureData(log: FakeLogData) {
+        val attrs = log.schemaType.attributes()
+        val reqHeader = checkNotNull(attrs[HttpAttributes.HTTP_REQUEST_HEADER])
+        assertTrue(reqHeader.contains("requestheader=requestHeaderVal"))
+
+        val responseHeader = checkNotNull(attrs[HttpAttributes.HTTP_RESPONSE_HEADER])
+        assertTrue(responseHeader.contains("responseheader=responseHeaderVal"))
+        assertEquals(DEFAULT_QUERY_STRING, attrs["request-query"])
+
+        val body = checkNotNull(attrs["request-body"])
+        assertEquals(REQUEST_BODY_STRING, body)
     }
 
     private fun checkUncompressedBodySize(response: Response) =
@@ -666,7 +683,7 @@ internal class EmbraceOkHttpInterceptorsTest {
     private fun checkBodySize(
         response: Response,
         expectedSize: Int,
-        compressed: Boolean
+        compressed: Boolean,
     ): Response {
         val responseBuilder: Response.Builder = response.newBuilder().request(response.request)
         if (compressed) {
@@ -693,5 +710,9 @@ internal class EmbraceOkHttpInterceptorsTest {
     private fun consumeBody(response: Response): Response {
         checkNotNull(response.body).bytes()
         return response
+    }
+
+    private class DriftClock(var action: () -> Long) : Clock {
+        override fun now(): Long = action()
     }
 }

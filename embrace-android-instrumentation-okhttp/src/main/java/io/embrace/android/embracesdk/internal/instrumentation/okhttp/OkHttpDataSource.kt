@@ -1,15 +1,17 @@
 package io.embrace.android.embracesdk.internal.instrumentation.okhttp
 
-import io.embrace.android.embracesdk.Embrace
-import io.embrace.android.embracesdk.internal.EmbraceInternalApi
-import io.embrace.android.embracesdk.internal.EmbraceInternalApi.CUSTOM_TRACE_ID_HEADER_NAME
+import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
+import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceImpl
+import io.embrace.android.embracesdk.internal.arch.limits.NoopLimitStrategy
 import io.embrace.android.embracesdk.internal.clock.Clock
+import io.embrace.android.embracesdk.internal.instrumentation.network.CUSTOM_TRACE_ID_HEADER_NAME
 import io.embrace.android.embracesdk.internal.instrumentation.network.DefaultTraceparentGenerator
+import io.embrace.android.embracesdk.internal.instrumentation.network.HttpNetworkRequest
+import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkCaptureDataSource
+import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkRequestDataSource
 import io.embrace.android.embracesdk.internal.instrumentation.network.TraceparentGenerator
 import io.embrace.android.embracesdk.internal.instrumentation.network.getOverriddenURLString
-import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData
-import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
-import io.embrace.android.embracesdk.network.http.HttpMethod
+import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import okhttp3.Interceptor
 import okhttp3.Request
 import okhttp3.Response
@@ -25,39 +27,46 @@ import kotlin.math.abs
  * Captures OkHttp requests as telemetry.
  */
 internal class OkHttpDataSource(
-    private val embrace: Embrace = Embrace,
-    private val embraceInternalApi: EmbraceInternalApi = EmbraceInternalApi,
+    args: InstrumentationArgs,
+    private val networkRequestDataSourceProvider: () -> NetworkRequestDataSource?,
+    private val networkCaptureDataSourceProvider: () -> NetworkCaptureDataSource?,
     // A clock that mirrors the one used by OkHttp to get timestamps
     private val systemClock: Clock = Clock { System.currentTimeMillis() },
     private val traceparentGenerator: TraceparentGenerator = DefaultTraceparentGenerator,
+) : DataSourceImpl(
+    args = args,
+    limitStrategy = NoopLimitStrategy, // always allow the OkHttp request chain to proceed
 ) {
 
-    fun interceptRequest(chain: Interceptor.Chain, type: InterceptorType): Response? = when (type) {
-        InterceptorType.APPLICATION -> interceptApplicationRequest(chain)
-        InterceptorType.NETWORK -> interceptNetworkRequest(chain)
-    }
+    private val networkRequestDataSource: NetworkRequestDataSource?
+        get() = networkRequestDataSourceProvider()
 
-    private fun interceptApplicationRequest(chain: Interceptor.Chain): Response {
-        val startTime = embrace.getSdkCurrentTimeMs()
+    private val networkCaptureDataSource: NetworkCaptureDataSource?
+        get() = networkCaptureDataSourceProvider()
+
+    internal fun interceptRequest(chain: Interceptor.Chain, type: InterceptorType): Response? =
+        when (type) {
+            InterceptorType.APPLICATION -> interceptApplicationRequest(chain)
+            InterceptorType.NETWORK -> interceptNetworkRequest(chain)
+        }
+
+    private fun interceptApplicationRequest(chain: Interceptor.Chain): Response? {
+        val startTime = clock.now()
         val request: Request = chain.request()
         return try {
             // we are not interested in response, just proceed
             chain.proceed(request)
         } catch (e: EmbraceCustomPathException) {
-            if (embrace.isStarted) {
-                val urlString =
-                    getOverriddenURLString(EmbraceOkHttpPathOverrideRequest(request), e.customPath)
-                val cause = e.cause
-                recordNetworkError(urlString, request, startTime, cause)
-            }
+            val urlString =
+                getOverriddenURLString(EmbraceOkHttpPathOverrideRequest(request), e.customPath)
+            val cause = e.cause
+            recordNetworkError(urlString, request, startTime, cause)
             throw e
         } catch (e: Exception) {
             // we are interested in errors.
-            if (embrace.isStarted) {
-                val urlString = getOverriddenURLString(EmbraceOkHttpPathOverrideRequest(request))
-                val cause = e
-                recordNetworkError(urlString, request, startTime, cause)
-            }
+            val urlString = getOverriddenURLString(EmbraceOkHttpPathOverrideRequest(request))
+            val cause = e
+            recordNetworkError(urlString, request, startTime, cause)
             throw e
         }
     }
@@ -68,34 +77,32 @@ internal class OkHttpDataSource(
         startTime: Long,
         cause: Throwable?,
     ) {
-        embrace.recordNetworkRequest(
-            EmbraceNetworkRequest.fromIncompleteRequest(
-                urlString,
-                HttpMethod.fromString(request.method),
-                startTime,
-                embrace.getSdkCurrentTimeMs(),
-                cause?.javaClass?.canonicalName ?: UNKNOWN_EXCEPTION,
-                cause?.message ?: UNKNOWN_MESSAGE,
-                request.header(CUSTOM_TRACE_ID_HEADER_NAME),
-                if (embraceInternalApi.internalInterface.isNetworkSpanForwardingEnabled()) {
+        networkRequestDataSource?.recordNetworkRequest(
+            HttpNetworkRequest(
+                url = urlString,
+                httpMethod = request.method,
+                startTime = startTime,
+                endTime = clock.now(),
+                errorType = cause?.javaClass?.canonicalName ?: UNKNOWN_EXCEPTION,
+                errorMessage = cause?.message ?: UNKNOWN_MESSAGE,
+                traceId = request.header(CUSTOM_TRACE_ID_HEADER_NAME),
+                w3cTraceparent = if (configService.networkSpanForwardingBehavior.isNetworkSpanForwardingEnabled()) {
                     request.header(
                         TRACEPARENT_HEADER_NAME
                     )
                 } else {
                     null
-                },
+                }
             )
         )
     }
 
-    private fun interceptNetworkRequest(chain: Interceptor.Chain): Response {
+    private fun interceptNetworkRequest(chain: Interceptor.Chain): Response? {
         // If the SDK has not started, don't do anything
         val originalRequest: Request = chain.request()
-        if (!embrace.isStarted) {
-            return chain.proceed(originalRequest)
-        }
 
-        val networkSpanForwardingEnabled = embraceInternalApi.internalInterface.isNetworkSpanForwardingEnabled()
+        val networkSpanForwardingEnabled =
+            configService.networkSpanForwardingBehavior.isNetworkSpanForwardingEnabled()
         var traceparent: String? = null
         if (networkSpanForwardingEnabled && originalRequest.header(TRACEPARENT_HEADER_NAME) == null) {
             traceparent = traceparentGenerator.generateW3cTraceparent()
@@ -118,7 +125,10 @@ internal class OkHttpDataSource(
         if (contentLength == null) {
             // If we get the body for a server-sent events stream, then we will wait forever
             contentLength =
-                getContentLengthFromBody(networkResponse, networkResponse.header(CONTENT_TYPE_HEADER_NAME, null))
+                getContentLengthFromBody(
+                    networkResponse,
+                    networkResponse.header(CONTENT_TYPE_HEADER_NAME, null)
+                )
         }
 
         if (contentLength == null) {
@@ -127,13 +137,18 @@ internal class OkHttpDataSource(
         }
 
         var response: Response = networkResponse
-        var networkCaptureData: NetworkCaptureData? = null
-        val shouldCaptureNetworkData =
-            embraceInternalApi.internalInterface.shouldCaptureNetworkBody(request.url.toString(), request.method)
+        var networkCaptureData: HttpNetworkRequest.HttpRequestBody? = null
+        val shouldCaptureNetworkData = networkCaptureDataSourceProvider()?.shouldCaptureNetworkBody(
+            request.url.toString(),
+            request.method
+        ) ?: false
 
         // If we need to capture the network response body,
         if (shouldCaptureNetworkData) {
-            if (ENCODING_GZIP.equals(networkResponse.header(CONTENT_ENCODING_HEADER_NAME, null), ignoreCase = true) &&
+            if (ENCODING_GZIP.equals(
+                    networkResponse.header(CONTENT_ENCODING_HEADER_NAME, null),
+                    ignoreCase = true
+                ) &&
                 networkResponse.promisesBody()
             ) {
                 val body = networkResponse.body
@@ -157,20 +172,26 @@ internal class OkHttpDataSource(
             networkCaptureData = getNetworkCaptureData(request, response)
         }
 
-        embrace.recordNetworkRequest(
-            EmbraceNetworkRequest.fromCompletedRequest(
-                getOverriddenURLString(EmbraceOkHttpPathOverrideRequest(request)),
-                HttpMethod.fromString(request.method),
-                response.sentRequestAtMillis + offset,
-                response.receivedResponseAtMillis + offset,
-                request.body?.contentLength() ?: 0,
-                contentLength,
-                response.code,
-                request.header(CUSTOM_TRACE_ID_HEADER_NAME),
-                if (networkSpanForwardingEnabled) request.header(TRACEPARENT_HEADER_NAME) else null,
-                networkCaptureData
-            )
+        val req = HttpNetworkRequest(
+            url = getOverriddenURLString(EmbraceOkHttpPathOverrideRequest(request)),
+            httpMethod = request.method,
+            startTime = response.sentRequestAtMillis + offset,
+            endTime = response.receivedResponseAtMillis + offset,
+            bytesSent = request.body?.contentLength() ?: 0,
+            bytesReceived = contentLength,
+            statusCode = response.code,
+            traceId = request.header(CUSTOM_TRACE_ID_HEADER_NAME),
+            w3cTraceparent = if (configService.networkSpanForwardingBehavior.isNetworkSpanForwardingEnabled()) {
+                request.header(
+                    TRACEPARENT_HEADER_NAME
+                )
+            } else {
+                null
+            },
+            body = networkCaptureData
         )
+        networkRequestDataSource?.recordNetworkRequest(req)
+        networkCaptureDataSource?.recordNetworkRequest(req)
         return response
     }
 
@@ -191,7 +212,8 @@ internal class OkHttpDataSource(
         var contentLength: Long? = null
 
         // Tolerant of a charset specified in header, e.g. Content-Type: text/event-stream;charset=UTF-8
-        val serverSentEvent = contentType != null && contentType.startsWith(CONTENT_TYPE_EVENT_STREAM)
+        val serverSentEvent =
+            contentType != null && contentType.startsWith(CONTENT_TYPE_EVENT_STREAM)
         if (!serverSentEvent) {
             try {
                 val body = networkResponse.body
@@ -208,7 +230,10 @@ internal class OkHttpDataSource(
         return contentLength
     }
 
-    private fun getNetworkCaptureData(request: Request, response: Response): NetworkCaptureData {
+    private fun getNetworkCaptureData(
+        request: Request,
+        response: Response,
+    ): HttpNetworkRequest.HttpRequestBody {
         var requestHeaders: Map<String, String>? = null
         var requestQueryParams: String? = null
         var responseHeaders: Map<String, String>? = null
@@ -245,17 +270,21 @@ internal class OkHttpDataSource(
             }
             dataCaptureErrorMessage =
                 "There were errors in capturing the following part(s) of the network call: %s$errors"
-            embraceInternalApi.internalInterface.logInternalError(
-                RuntimeException("Failure during the building of NetworkCaptureData. $dataCaptureErrorMessage", e)
+            logger.trackInternalError(
+                InternalErrorType.DATA_SOURCE_DATA_CAPTURE_FAIL,
+                RuntimeException(
+                    "Failure during the building of NetworkCaptureData. $dataCaptureErrorMessage",
+                    e
+                )
             )
         }
-        return NetworkCaptureData(
-            requestHeaders,
-            requestQueryParams,
-            requestBodyBytes,
-            responseHeaders,
-            responseBodyBytes,
-            dataCaptureErrorMessage
+        return HttpNetworkRequest.HttpRequestBody(
+            requestHeaders = requestHeaders,
+            requestQueryParams = requestQueryParams,
+            capturedRequestBody = requestBodyBytes,
+            responseHeaders = responseHeaders,
+            capturedResponseBody = responseBodyBytes,
+            dataCaptureErrorMessage = dataCaptureErrorMessage
         )
     }
 
@@ -281,9 +310,9 @@ internal class OkHttpDataSource(
                 return buffer.readByteArray()
             }
         } catch (e: IOException) {
-            embraceInternalApi.internalInterface.logInternalError(
-                "Failed to capture okhttp request body.",
-                e.javaClass.toString()
+            logger.trackInternalError(
+                InternalErrorType.DATA_SOURCE_DATA_CAPTURE_FAIL,
+                e
             )
         }
         return null
@@ -301,9 +330,9 @@ internal class OkHttpDataSource(
         // Any difference that is greater than 1 ms is likely the result of a change to the system clock during this process, or some
         // scheduling quirk that makes the result not trustworthy. In that case, we simply don't return an offset.
 
-        val sdkTime1 = embrace.getSdkCurrentTimeMs()
+        val sdkTime1 = clock.now()
         val systemTime1 = systemClock.now()
-        val sdkTime2 = embrace.getSdkCurrentTimeMs()
+        val sdkTime2 = clock.now()
         val systemTime2 = systemClock.now()
 
         val diff1 = sdkTime1 - systemTime1
@@ -319,7 +348,8 @@ internal class OkHttpDataSource(
     internal companion object {
         private const val TRACEPARENT_HEADER_NAME = "traceparent"
         private const val UNKNOWN_EXCEPTION = "Unknown"
-        private const val UNKNOWN_MESSAGE = "An error occurred during the execution of this network request"
+        private const val UNKNOWN_MESSAGE =
+            "An error occurred during the execution of this network request"
         private const val ENCODING_GZIP = "gzip"
         private const val CONTENT_LENGTH_HEADER_NAME = "Content-Length"
         private const val CONTENT_ENCODING_HEADER_NAME = "Content-Encoding"

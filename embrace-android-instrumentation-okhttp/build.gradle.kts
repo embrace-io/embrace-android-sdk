@@ -23,6 +23,5 @@ dependencies {
     testImplementation(project(":embrace-internal-api"))
     testImplementation(libs.mockk)
     testImplementation(libs.mockwebserver)
-
     implementation(libs.androidx.annotation)
 }

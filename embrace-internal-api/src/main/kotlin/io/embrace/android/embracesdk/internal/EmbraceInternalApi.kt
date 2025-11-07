@@ -12,7 +12,6 @@ import io.embrace.android.embracesdk.internal.api.delegate.NoopUnityInternalInte
  */
 object EmbraceInternalApi : InternalInterfaceApi {
 
-    const val CUSTOM_TRACE_ID_HEADER_NAME: String = "x-emb-trace-id"
     var internalTracingApi: InternalTracingApi? = null
     var internalInterfaceApi: InternalInterfaceApi? = null
     var isStarted: () -> Boolean = { false }

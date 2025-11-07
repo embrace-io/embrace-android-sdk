@@ -2,8 +2,8 @@ package io.embrace.android.embracesdk.internal.instrumentation.okhttp
 
 import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.internal.EmbraceInternalApi
-import io.embrace.android.embracesdk.internal.EmbraceInternalApi.CUSTOM_TRACE_ID_HEADER_NAME
 import io.embrace.android.embracesdk.internal.clock.Clock
+import io.embrace.android.embracesdk.internal.instrumentation.network.CUSTOM_TRACE_ID_HEADER_NAME
 import io.embrace.android.embracesdk.internal.instrumentation.network.DefaultTraceparentGenerator
 import io.embrace.android.embracesdk.internal.instrumentation.network.TraceparentGenerator
 import io.embrace.android.embracesdk.internal.instrumentation.network.getOverriddenURLString

@@ -17,7 +17,7 @@ object NetworkUtils {
     private const val IPV6_PATTERN = "(([a-fA-F0-9]{1,4}|):){1,7}([a-fA-F0-9]{1,4}|:)"
 
     private val IpAddrPattern = Pattern.compile("$IPV4_PATTERN|$IPV6_PATTERN")
-    private val DomainPattern = Pattern.compile("$DNS_PATTERN|$IPV4_PATTERN|$IPV6_PATTERN")
+    private val DomainPattern = Pattern.compile("localhost|$DNS_PATTERN|$IPV4_PATTERN|$IPV6_PATTERN")
 
     fun getValidTraceId(traceId: String?): String? {
         if (traceId == null) {

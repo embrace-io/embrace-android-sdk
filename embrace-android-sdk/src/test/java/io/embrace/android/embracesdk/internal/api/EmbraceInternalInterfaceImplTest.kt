@@ -45,7 +45,7 @@ internal class EmbraceInternalInterfaceImplTest {
         internalImpl = EmbraceInternalInterfaceImpl(
             embraceImpl,
             initModule,
-            FakeNetworkCaptureDataSource(),
+            ::FakeNetworkCaptureDataSource,
             fakeConfigService,
             initModule.openTelemetryModule.internalTracer
         )

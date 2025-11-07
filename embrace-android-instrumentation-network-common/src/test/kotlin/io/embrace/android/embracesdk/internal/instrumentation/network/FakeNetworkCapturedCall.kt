@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.internal.network
+package io.embrace.android.embracesdk.internal.instrumentation.network
 
 import io.embrace.android.embracesdk.internal.payload.NetworkCapturedCall
 

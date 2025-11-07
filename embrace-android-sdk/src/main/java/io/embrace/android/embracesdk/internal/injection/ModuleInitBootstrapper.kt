@@ -362,13 +362,11 @@ internal class ModuleInitBootstrapper(
                         logModuleSupplier(
                             initModule,
                             openTelemetryModule,
-                            androidServicesModule,
                             essentialServiceModule,
                             configModule,
                             deliveryModule,
                             workerThreadModule,
                             payloadSourceModule,
-                            instrumentationModule,
                         )
                     }
 

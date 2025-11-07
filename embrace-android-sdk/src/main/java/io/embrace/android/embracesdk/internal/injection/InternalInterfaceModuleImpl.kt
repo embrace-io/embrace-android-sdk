@@ -10,13 +10,14 @@ import io.embrace.android.embracesdk.internal.api.delegate.FlutterInternalInterf
 import io.embrace.android.embracesdk.internal.api.delegate.ReactNativeInternalInterfaceImpl
 import io.embrace.android.embracesdk.internal.api.delegate.UnityInternalInterfaceImpl
 import io.embrace.android.embracesdk.internal.instrumentation.crash.CrashModule
+import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkCaptureDataSource
 
 internal class InternalInterfaceModuleImpl(
     initModule: InitModule,
     openTelemetryModule: OpenTelemetryModule,
     configModule: ConfigModule,
     payloadSourceModule: PayloadSourceModule,
-    logModule: LogModule,
+    instrumentationModule: InstrumentationModule,
     embrace: EmbraceImpl,
     crashModule: CrashModule,
 ) : InternalInterfaceModule {
@@ -25,7 +26,7 @@ internal class InternalInterfaceModuleImpl(
         EmbraceInternalInterfaceImpl(
             embrace,
             initModule,
-            logModule.networkCaptureDataSource,
+            { instrumentationModule.instrumentationRegistry.findByType(NetworkCaptureDataSource::class) },
             configModule.configService,
             openTelemetryModule.internalTracer
         )

@@ -1,22 +1,14 @@
-package io.embrace.android.embracesdk.internal.network.logging
+package io.embrace.android.embracesdk.internal.instrumentation.network
 
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
-import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
-import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
-import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.createNetworkBehavior
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
-import io.embrace.android.embracesdk.internal.comms.api.EmbraceApiUrlBuilder
 import io.embrace.android.embracesdk.internal.config.remote.NetworkCaptureRuleRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
-import io.embrace.android.embracesdk.internal.instrumentation.network.HttpNetworkRequest
-import io.embrace.android.embracesdk.internal.network.fakeNetworkCapturedCall
-import io.embrace.android.embracesdk.internal.network.logging.NetworkCaptureDataSourceImpl.Companion.NETWORK_CAPTURE_RULE_PREFIX_KEY
-import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -26,22 +18,18 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 internal class NetworkCaptureDataSourceTest {
 
-    private lateinit var store: FakeKeyValueStore
     private lateinit var cfg: RemoteConfig
-    private lateinit var sessionIdTracker: FakeSessionIdTracker
     private lateinit var configService: FakeConfigService
+    private lateinit var args: FakeInstrumentationArgs
     private lateinit var destination: FakeTelemetryDestination
     private val networkCaptureData = HttpNetworkRequest.HttpRequestBody(null, null, null, null, null, null)
 
     @Before
     fun setUp() {
         cfg = RemoteConfig()
-        sessionIdTracker = FakeSessionIdTracker()
         configService = FakeConfigService(
             networkBehavior = createNetworkBehavior(remoteCfg = cfg)
         )
-        store = FakeKeyValueStore()
-        sessionIdTracker.setActiveSession("session-123", true)
     }
 
     @Test
@@ -85,12 +73,14 @@ internal class NetworkCaptureDataSourceTest {
     fun `test capture rule maxCount discount 1`() {
         val rule = getDefaultRule()
         cfg = RemoteConfig(networkCaptureRules = setOf(rule))
-        val result = getService().getNetworkCaptureRules("https://embrace.io/changelog", "GET")
+        val service = getService()
+
+        val result = service.getNetworkCaptureRules("https://embrace.io/changelog", "GET")
         assertEquals(1, result.size)
-        store.edit {
-            putInt(NETWORK_CAPTURE_RULE_PREFIX_KEY + rule.id, 0)
+        args.store.edit {
+            putInt(NetworkCaptureDataSourceImpl.Companion.NETWORK_CAPTURE_RULE_PREFIX_KEY + rule.id, 0)
         }
-        val emptyRule = getService().getNetworkCaptureRules("https://embrace.io/changelog", "GET")
+        val emptyRule = service.getNetworkCaptureRules("https://embrace.io/changelog", "GET")
         assertEquals(0, emptyRule.size)
     }
 
@@ -98,10 +88,11 @@ internal class NetworkCaptureDataSourceTest {
     fun `test capture rule maxCount is over`() {
         val rule = getDefaultRule()
         cfg = RemoteConfig(networkCaptureRules = setOf(rule))
-        store.edit {
-            putInt(NETWORK_CAPTURE_RULE_PREFIX_KEY + rule.id, 0)
+        val service = getService()
+        args.store.edit {
+            putInt(NetworkCaptureDataSourceImpl.Companion.NETWORK_CAPTURE_RULE_PREFIX_KEY + rule.id, 0)
         }
-        val emptyRule = getService().getNetworkCaptureRules("https://embrace.io/changelog", "GET")
+        val emptyRule = service.getNetworkCaptureRules("https://embrace.io/changelog", "GET")
         assertEquals(0, emptyRule.size)
     }
 
@@ -236,22 +227,12 @@ internal class NetworkCaptureDataSourceTest {
         configService = FakeConfigService(
             networkBehavior = createNetworkBehavior(remoteCfg = cfg)
         )
-        val args = FakeInstrumentationArgs(
+        args = FakeInstrumentationArgs(
             application = ApplicationProvider.getApplicationContext(),
             configService = configService
         )
         destination = args.destination
-        return NetworkCaptureDataSourceImpl(
-            args,
-            sessionIdTracker,
-            store,
-            EmbraceApiUrlBuilder(
-                "deviceId",
-                "1.0.0",
-                FakeInstrumentedConfig()
-            ),
-            EmbraceSerializer(),
-        )
+        return NetworkCaptureDataSourceImpl(args,)
     }
 
     private fun getDefaultRule(

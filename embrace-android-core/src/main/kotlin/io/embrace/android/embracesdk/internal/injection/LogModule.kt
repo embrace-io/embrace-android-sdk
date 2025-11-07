@@ -3,13 +3,11 @@ package io.embrace.android.embracesdk.internal.injection
 import io.embrace.android.embracesdk.internal.logs.LogOrchestrator
 import io.embrace.android.embracesdk.internal.logs.LogService
 import io.embrace.android.embracesdk.internal.logs.attachments.AttachmentService
-import io.embrace.android.embracesdk.internal.network.logging.NetworkCaptureDataSource
 
 /**
  * Holds dependencies that are required for a customer to send log messages to the backend.
  */
 interface LogModule {
-    val networkCaptureDataSource: NetworkCaptureDataSource
     val logService: LogService
     val logOrchestrator: LogOrchestrator
     val attachmentService: AttachmentService

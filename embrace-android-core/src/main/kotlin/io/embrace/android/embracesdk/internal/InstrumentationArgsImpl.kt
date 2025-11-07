@@ -8,6 +8,8 @@ import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.injection.WorkerThreadModule
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
+import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
+import io.embrace.android.embracesdk.internal.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.internal.worker.Worker
@@ -21,7 +23,9 @@ internal class InstrumentationArgsImpl(
     override val context: Context,
     override val application: Application,
     override val store: KeyValueStore,
+    override val serializer: PlatformSerializer,
     private val workerThreadModule: WorkerThreadModule,
+    private val sessionIdTracker: SessionIdTracker,
 ) : InstrumentationArgs {
 
     override fun backgroundWorker(worker: Worker.Background): BackgroundWorker = workerThreadModule.backgroundWorker(worker)
@@ -34,6 +38,8 @@ internal class InstrumentationArgsImpl(
             context.getSystemServiceSafe<T>(name)
         } as? T
     }
+
+    override fun sessionId(): String? = sessionIdTracker.getActiveSessionId()
 
     @Suppress("UNCHECKED_CAST")
     private fun <T> Context.getSystemServiceSafe(name: String): T? = runCatching {

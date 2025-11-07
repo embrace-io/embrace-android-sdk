@@ -1,35 +1,31 @@
-package io.embrace.android.embracesdk.internal.network.logging
+package io.embrace.android.embracesdk.internal.instrumentation.network
 
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceImpl
 import io.embrace.android.embracesdk.internal.arch.datasource.LogSeverity
 import io.embrace.android.embracesdk.internal.arch.limits.NoopLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
-import io.embrace.android.embracesdk.internal.comms.api.ApiUrlBuilder
 import io.embrace.android.embracesdk.internal.config.remote.NetworkCaptureRuleRemoteConfig
-import io.embrace.android.embracesdk.internal.instrumentation.network.HttpNetworkRequest
 import io.embrace.android.embracesdk.internal.payload.NetworkCapturedCall
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
-import io.embrace.android.embracesdk.internal.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import kotlin.math.max
 
 internal class NetworkCaptureDataSourceImpl(
-    args: InstrumentationArgs,
-    private val sessionIdTracker: SessionIdTracker,
-    private val keyValueStore: KeyValueStore,
-    private val urlBuilder: ApiUrlBuilder?,
-    private val serializer: PlatformSerializer,
+    private val args: InstrumentationArgs,
 ) : NetworkCaptureDataSource, DataSourceImpl(
     args = args,
     limitStrategy = NoopLimitStrategy,
 ) {
 
-    private val networkCaptureEncryptionManager = lazy { NetworkCaptureEncryptionManager(logger) }
+    private val keyValueStore: KeyValueStore = args.store
+    private val serializer: PlatformSerializer = args.serializer
+    private val networkCaptureEncryptionManager = NetworkCaptureEncryptionManager()
 
     internal companion object {
         const val NETWORK_ERROR_CODE = -1
         const val NETWORK_CAPTURE_RULE_PREFIX_KEY = "io.embrace.networkcapturerule"
+        private const val EMB_DATA_URL: String = "data.emb-api.com"
     }
 
     override fun recordNetworkRequest(request: HttpNetworkRequest) {
@@ -91,7 +87,7 @@ internal class NetworkCaptureDataSourceImpl(
                     responseHeaders = requestBody.responseHeaders,
                     responseSize = requestBody.responseBodySize,
                     responseStatus = statusCode,
-                    sessionId = sessionIdTracker.getActiveSessionId(),
+                    sessionId = args.sessionId(),
                     startTime = startTime,
                     url = url,
                     errorMessage = errorMessage
@@ -152,10 +148,8 @@ internal class NetworkCaptureDataSourceImpl(
         }
 
         // Embrace data endpoint cannot be captured, even if there is a rule for that.
-        urlBuilder?.baseDataUrl?.let {
-            if (url.startsWith(it)) {
-                return emptySet()
-            }
+        if (url.contains(EMB_DATA_URL)) {
+            return emptySet()
         }
 
         val applicableRules = networkCaptureRules.filter { rule ->
@@ -200,7 +194,7 @@ internal class NetworkCaptureDataSourceImpl(
 
     private fun encryptNetworkCall(capturedNetworkCall: NetworkCapturedCall): String? {
         val capturePublicKey = configService.networkBehavior.getNetworkBodyCapturePublicKey() ?: return null
-        return networkCaptureEncryptionManager.value.encrypt(
+        return networkCaptureEncryptionManager.encrypt(
             serializer.toJson(capturedNetworkCall),
             capturePublicKey
         )

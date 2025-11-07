@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.injection.embraceImplInject
 import io.embrace.android.embracesdk.internal.instrumentation.network.DefaultTraceparentGenerator
 import io.embrace.android.embracesdk.internal.instrumentation.network.HttpNetworkRequest
+import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkCaptureDataSource
 import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkRequestDataSource
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 
@@ -16,9 +17,6 @@ internal class NetworkRequestApiDelegate(
     private val configService by embraceImplInject(sdkCallChecker) { bootstrapper.configModule.configService }
     private val registry by embraceImplInject(sdkCallChecker) {
         bootstrapper.instrumentationModule.instrumentationRegistry
-    }
-    private val networkCaptureDataSource by embraceImplInject(sdkCallChecker) {
-        bootstrapper.logModule.networkCaptureDataSource
     }
     private val sessionOrchestrator by embraceImplInject(sdkCallChecker) {
         bootstrapper.sessionOrchestrationModule.sessionOrchestrator
@@ -39,8 +37,9 @@ internal class NetworkRequestApiDelegate(
 
     private fun logNetworkRequest(request: EmbraceNetworkRequest) {
         val req = request.toHttpNetworkRequest()
-        val dataSource = registry?.findByType(NetworkRequestDataSource::class)
-        dataSource?.recordNetworkRequest(req)
+        val networkRequestDataSource = registry?.findByType(NetworkRequestDataSource::class)
+        val networkCaptureDataSource = registry?.findByType(NetworkCaptureDataSource::class)
+        networkRequestDataSource?.recordNetworkRequest(req)
         networkCaptureDataSource?.recordNetworkRequest(req)
         sessionOrchestrator?.onSessionDataUpdate()
     }

@@ -6,33 +6,27 @@ package io.embrace.android.embracesdk.internal.injection
 typealias LogModuleSupplier = (
     initModule: InitModule,
     openTelemetryModule: OpenTelemetryModule,
-    androidServicesModule: AndroidServicesModule,
     essentialServiceModule: EssentialServiceModule,
     configModule: ConfigModule,
     deliveryModule: DeliveryModule,
     workerThreadModule: WorkerThreadModule,
     payloadSourceModule: PayloadSourceModule,
-    instrumentationModule: InstrumentationModule,
 ) -> LogModule
 
 fun createLogModule(
     initModule: InitModule,
     openTelemetryModule: OpenTelemetryModule,
-    androidServicesModule: AndroidServicesModule,
     essentialServiceModule: EssentialServiceModule,
     configModule: ConfigModule,
     deliveryModule: DeliveryModule,
     workerThreadModule: WorkerThreadModule,
     payloadSourceModule: PayloadSourceModule,
-    instrumentationModule: InstrumentationModule,
 ): LogModule = LogModuleImpl(
     initModule,
     openTelemetryModule,
-    androidServicesModule,
     essentialServiceModule,
     configModule,
     deliveryModule,
     workerThreadModule,
     payloadSourceModule,
-    instrumentationModule,
 )

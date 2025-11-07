@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.instrumentation.network.HttpNetworkRequest
-import io.embrace.android.embracesdk.internal.network.logging.NetworkCaptureDataSource
+import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkCaptureDataSource
 
 class FakeNetworkCaptureDataSource : NetworkCaptureDataSource {
 

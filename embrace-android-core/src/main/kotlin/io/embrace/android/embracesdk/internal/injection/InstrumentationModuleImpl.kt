@@ -31,6 +31,8 @@ internal class InstrumentationModuleImpl(
             destination = essentialServiceModule.telemetryDestination,
             workerThreadModule = workerThreadModule,
             store = androidServicesModule.store,
+            serializer = initModule.jsonSerializer,
+            sessionIdTracker = essentialServiceModule.sessionIdTracker,
         )
     }
 }

@@ -152,7 +152,7 @@ internal class EmbraceImpl(
                 bootstrapper.openTelemetryModule,
                 configModule,
                 bootstrapper.payloadSourceModule,
-                bootstrapper.logModule,
+                bootstrapper.instrumentationModule,
                 this,
                 crashModule
             )

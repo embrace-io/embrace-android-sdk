@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestinati
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
+import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.internal.worker.Worker
@@ -53,6 +54,11 @@ interface InstrumentationArgs {
     val store: KeyValueStore
 
     /**
+     * A serializer that can be used to serialize and deserialize data.
+     */
+    val serializer: PlatformSerializer
+
+    /**
      * Retrieves a background worker matching the given name.
      */
     fun backgroundWorker(worker: Worker.Background): BackgroundWorker
@@ -62,4 +68,9 @@ interface InstrumentationArgs {
      * is unavailable.
      */
     fun <T> systemService(name: String): T?
+
+    /**
+     * Retrieves the current session ID, or null if there is no active session.
+     */
+    fun sessionId(): String?
 }

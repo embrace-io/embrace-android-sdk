@@ -1,7 +1,6 @@
-package io.embrace.android.embracesdk.internal.network.logging
+package io.embrace.android.embracesdk.internal.instrumentation.network
 
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSource
-import io.embrace.android.embracesdk.internal.instrumentation.network.HttpNetworkRequest
 
 interface NetworkCaptureDataSource : DataSource {
 

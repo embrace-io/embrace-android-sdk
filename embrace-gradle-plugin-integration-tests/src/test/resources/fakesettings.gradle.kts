@@ -11,7 +11,7 @@ pluginManagement {
 
         id("com.android.application").version(agpVersion)
         id("org.jetbrains.kotlin.android").version(kotlinVersion)
-        id("io.embrace.swazzler").version(snapshotVersion)
+        id("io.embrace.gradle").version(snapshotVersion)
         id("io.embrace.android.testplugin").version(snapshotVersion)
     }
 }

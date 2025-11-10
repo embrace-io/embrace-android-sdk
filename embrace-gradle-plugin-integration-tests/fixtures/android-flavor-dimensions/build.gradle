@@ -1,6 +1,6 @@
 plugins {
     id("com.android.application")
-    id("io.embrace.swazzler")
+    id("io.embrace.gradle")
     id("io.embrace.android.testplugin")
 }
 

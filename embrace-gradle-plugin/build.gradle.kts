@@ -35,7 +35,7 @@ buildConfig {
 gradlePlugin {
     plugins {
         create("embraceGradle") {
-            id = "io.embrace.swazzler"
+            id = "io.embrace.gradle"
             group = "io.embrace"
             implementationClass = "io.embrace.android.gradle.plugin.EmbraceGradlePlugin"
             displayName = "Embrace Gradle Plugin"
@@ -46,7 +46,7 @@ gradlePlugin {
 
 // Configure Vanniktech Maven Publish Plugin
 mavenPublishing {
-    coordinates("io.embrace", "embrace-swazzler", project.version.toString())
+    coordinates("io.embrace", "embrace-gradle-plugin", project.version.toString())
 
     publishToMavenCentral()
 
@@ -56,7 +56,7 @@ mavenPublishing {
     }
 
     pom {
-        name = "embrace-swazzler"
+        name = "embrace-gradle-plugin"
         group = "io.embrace"
         description = "Embrace Gradle Plugin"
         url = "https://github.com/embrace-io/embrace-android-sdk"

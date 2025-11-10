@@ -17,13 +17,13 @@ internal class EmbraceUncaughtExceptionHandler(
     /**
      * The crash service which will submit the exception to the API as a crash
      */
-    private val jvmCrashService: JvmCrashService,
+    private val dataSource: JvmCrashDataSource,
     private val logger: EmbLogger,
 ) : Thread.UncaughtExceptionHandler {
 
     override fun uncaughtException(thread: Thread, exception: Throwable) {
         try {
-            jvmCrashService.logUnhandledJvmThrowable(exception)
+            dataSource.logUnhandledJvmThrowable(exception)
         } catch (ex: Exception) {
             logger.trackInternalError(InternalErrorType.UNCAUGHT_EXC_HANDLER, ex)
         } finally {

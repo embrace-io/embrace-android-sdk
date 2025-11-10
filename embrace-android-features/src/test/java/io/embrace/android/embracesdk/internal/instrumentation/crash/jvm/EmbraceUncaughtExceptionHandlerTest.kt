@@ -1,6 +1,8 @@
 package io.embrace.android.embracesdk.internal.instrumentation.crash.jvm
 
-import io.embrace.android.embracesdk.fakes.FakeJvmCrashService
+import io.embrace.android.embracesdk.fakes.FakeJvmCrashDataSource
+import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
+import io.embrace.android.embracesdk.internal.capture.crash.CrashTeardownHandler
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -9,7 +11,7 @@ import org.junit.Test
  * Tests that the [EmbraceUncaughtExceptionHandler]:
  *
  *  * Does not permit null args
- *  * Delegates to the [JvmCrashService]
+ *  * Delegates to the [JvmCrashDataSource]
  *  * Always delegates to the default [Thread.UncaughtExceptionHandler]
  */
 internal class EmbraceUncaughtExceptionHandlerTest {
@@ -22,17 +24,17 @@ internal class EmbraceUncaughtExceptionHandlerTest {
      */
     @Test
     fun testNullArg1() {
-        EmbraceUncaughtExceptionHandler(null, FakeJvmCrashService(), EmbLoggerImpl())
+        EmbraceUncaughtExceptionHandler(null, FakeJvmCrashDataSource(), EmbLoggerImpl())
     }
 
     /**
      * Tests that [EmbraceUncaughtExceptionHandler] correctly returns the crash to the
-     * [JvmCrashService], and then delegates to the default [Thread.UncaughtExceptionHandler].
+     * [JvmCrashDataSource], and then delegates to the default [Thread.UncaughtExceptionHandler].
      */
     @Test
     fun testExceptionHandler() {
         val defaultHandler = TestUncaughtExceptionHandler()
-        val fakeCrashService = FakeJvmCrashService()
+        val fakeCrashService = FakeJvmCrashDataSource()
         val handler = EmbraceUncaughtExceptionHandler(defaultHandler, fakeCrashService, EmbLoggerImpl())
 
         val testException = RuntimeException("Test exception")
@@ -64,10 +66,27 @@ internal class EmbraceUncaughtExceptionHandlerTest {
         assertEquals(testException, defaultHandler.throwable)
     }
 
-    internal class CrashingJvmCrashService : JvmCrashService {
+    internal class CrashingJvmCrashService : JvmCrashDataSource {
         override fun logUnhandledJvmThrowable(exception: Throwable) {
             throw RuntimeException("Test crash")
         }
+
+        override fun addCrashTeardownHandler(handler: CrashTeardownHandler) {
+        }
+
+        override fun onDataCaptureEnabled() {
+        }
+
+        override fun onDataCaptureDisabled() {
+        }
+
+        override fun resetDataCaptureLimits() {
+        }
+
+        override fun <T> captureTelemetry(
+            inputValidation: () -> Boolean,
+            action: TelemetryDestination.() -> T?,
+        ): T? = null
     }
 
     internal class TestUncaughtExceptionHandler : Thread.UncaughtExceptionHandler {

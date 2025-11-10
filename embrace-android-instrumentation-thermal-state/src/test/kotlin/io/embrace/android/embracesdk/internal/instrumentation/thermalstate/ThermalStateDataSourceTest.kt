@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.instrumentation.thermalstate
 
 import android.os.PowerManager
-import androidx.test.core.app.ApplicationProvider
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType

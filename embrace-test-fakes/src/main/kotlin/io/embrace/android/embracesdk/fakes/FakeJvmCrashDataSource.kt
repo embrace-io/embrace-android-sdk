@@ -5,7 +5,7 @@ import io.embrace.android.embracesdk.internal.capture.crash.CrashTeardownHandler
 import io.embrace.android.embracesdk.internal.instrumentation.crash.jvm.JvmCrashDataSource
 
 class FakeJvmCrashDataSource : JvmCrashDataSource {
-    internal var exception: Throwable? = null
+    var exception: Throwable? = null
 
     override fun onDataCaptureEnabled() {
     }

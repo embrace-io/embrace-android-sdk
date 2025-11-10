@@ -10,6 +10,8 @@ import io.embrace.android.embracesdk.fakes.FakeSessionOrchestrator
 import io.embrace.android.embracesdk.fakes.FakeSessionPropertiesService
 import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
+import io.embrace.android.embracesdk.internal.arch.schema.TelemetryAttributes
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
@@ -24,9 +26,9 @@ import org.junit.Before
 import org.junit.Test
 
 @OptIn(IncubatingApi::class)
-internal class CrashDataSourceImplTest {
+internal class JvmCrashDataSourceImplTest {
 
-    private lateinit var crashDataSource: CrashDataSourceImpl
+    private lateinit var crashDataSource: JvmCrashDataSourceImpl
     private lateinit var logOrchestrator: FakeLogOrchestrator
     private lateinit var sessionOrchestrator: FakeSessionOrchestrator
     private lateinit var sessionPropertiesService: FakeSessionPropertiesService
@@ -37,6 +39,7 @@ internal class CrashDataSourceImplTest {
     private lateinit var args: FakeInstrumentationArgs
     private lateinit var logger: EmbLogger
     private lateinit var testException: Exception
+    private var telemetryModifier: ((TelemetryAttributes) -> SchemaType)? = null
 
     @Before
     fun setUp() {
@@ -56,14 +59,17 @@ internal class CrashDataSourceImplTest {
         args = FakeInstrumentationArgs(
             mockk(),
             configService = FakeConfigService(
-                autoDataCaptureBehavior = FakeAutoDataCaptureBehavior(uncaughtExceptionHandlerEnabled = crashHandlerEnabled)
+                autoDataCaptureBehavior = FakeAutoDataCaptureBehavior(
+                    uncaughtExceptionHandlerEnabled = crashHandlerEnabled
+                )
             )
         )
-        crashDataSource = CrashDataSourceImpl(
+        crashDataSource = JvmCrashDataSourceImpl(
             sessionPropertiesService,
             keyValueStore,
             args,
             serializer,
+            telemetryModifier,
         ).apply {
             addCrashTeardownHandler(logOrchestrator)
             addCrashTeardownHandler(sessionOrchestrator)
@@ -79,7 +85,7 @@ internal class CrashDataSourceImplTest {
         crashDataSource.addCrashTeardownHandler { observedOrder.add(1) }
         crashDataSource.addCrashTeardownHandler { observedOrder.add(2) }
         crashDataSource.addCrashTeardownHandler { observedOrder.add(3) }
-        crashDataSource.logUnhandledJvmException(testException)
+        crashDataSource.logUnhandledJvmThrowable(testException)
         assertEquals(listOf(1, 2, 3), observedOrder)
     }
 
@@ -87,7 +93,7 @@ internal class CrashDataSourceImplTest {
     fun `test SessionOrchestrator and LogOrchestrator are called when handleCrash is called`() {
         setupForHandleCrash()
 
-        crashDataSource.logUnhandledJvmException(testException)
+        crashDataSource.logUnhandledJvmThrowable(testException)
 
         assertEquals(1, anrService.crashCount)
         assertEquals(1, args.destination.logEvents.size)
@@ -98,7 +104,7 @@ internal class CrashDataSourceImplTest {
     @Test
     fun `test LogWriter and SessionOrchestrator are called when handleCrash is called with JSException`() {
         setupForHandleCrash()
-        crashDataSource.logUnhandledJvmException(testException)
+        crashDataSource.logUnhandledJvmThrowable(testException)
 
         assertEquals(1, anrService.crashCount)
         val destination = args.destination
@@ -113,7 +119,7 @@ internal class CrashDataSourceImplTest {
          * Verify mainCrashHandled is true after the first execution
          * by testing that a second execution of handleCrash wont run anything
          */
-        crashDataSource.logUnhandledJvmException(testException)
+        crashDataSource.logUnhandledJvmThrowable(testException)
         assertEquals(1, anrService.crashCount)
         assertEquals(1, destination.logEvents.size)
         assertSame(lastSentCrash, destination.logEvents.single())
@@ -123,21 +129,24 @@ internal class CrashDataSourceImplTest {
     fun `test handleCrash calls mark() method when capture_last_run config is enabled`() {
         setupForHandleCrash()
 
-        crashDataSource.logUnhandledJvmException(testException)
+        crashDataSource.logUnhandledJvmThrowable(testException)
 
         assertTrue(crashMarker.isMarked())
     }
 
     @Test
     fun `test RN crash by calling logUnhandledJsException() before handleCrash()`() {
-        setupForHandleCrash()
-        crashDataSource.logUnhandledJsException(
+        val jsCrashService = JsCrashServiceImpl(serializer)
+        jsCrashService.logUnhandledJsException(
             "NullPointerException",
             "Null pointer exception occurred",
             "RuntimeException",
             "at com.example.MyClass.method(MyClass.kt:10)"
         )
-        crashDataSource.logUnhandledJvmException(testException)
+        telemetryModifier = jsCrashService::appendCrashTelemetryAttributes
+        setupForHandleCrash()
+
+        crashDataSource.logUnhandledJvmThrowable(testException)
 
         val destination = args.destination
         val logEvent = destination.logEvents.single()
@@ -145,7 +154,10 @@ internal class CrashDataSourceImplTest {
         val lastSentCrashAttributes = logEvent.schemaType.attributes()
         assertEquals(1, anrService.crashCount)
         assertEquals(1, destination.logEvents.size)
-        assertEquals(lastSentCrashAttributes[LogAttributes.LOG_RECORD_UID], sessionOrchestrator.crashId)
+        assertEquals(
+            lastSentCrashAttributes[LogAttributes.LOG_RECORD_UID],
+            sessionOrchestrator.crashId
+        )
         assertEquals(
             "{\"n\":\"NullPointerException\",\"" +
                 "m\":\"Null pointer exception occurred\",\"" +
@@ -164,6 +176,7 @@ internal class CrashDataSourceImplTest {
 
     @Test
     fun `test exception handler is not registered with config option disabled`() {
+        Thread.setDefaultUncaughtExceptionHandler { _, _ -> }
         setupForHandleCrash(false)
         assert(Thread.getDefaultUncaughtExceptionHandler() !is EmbraceUncaughtExceptionHandler)
     }

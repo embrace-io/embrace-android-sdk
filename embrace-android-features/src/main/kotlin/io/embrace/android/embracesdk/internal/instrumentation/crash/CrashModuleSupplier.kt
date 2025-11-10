@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.instrumentation.crash
 
 import io.embrace.android.embracesdk.internal.injection.AndroidServicesModule
+import io.embrace.android.embracesdk.internal.injection.ConfigModule
 import io.embrace.android.embracesdk.internal.injection.EssentialServiceModule
 import io.embrace.android.embracesdk.internal.injection.InitModule
 import io.embrace.android.embracesdk.internal.injection.InstrumentationModule
@@ -13,6 +14,7 @@ typealias CrashModuleSupplier = (
     initModule: InitModule,
     storageModule: StorageModule,
     essentialServiceModule: EssentialServiceModule,
+    configModule: ConfigModule,
     androidServicesModule: AndroidServicesModule,
     instrumentationModule: InstrumentationModule,
 ) -> CrashModule
@@ -21,6 +23,7 @@ fun createCrashModule(
     initModule: InitModule,
     storageModule: StorageModule,
     essentialServiceModule: EssentialServiceModule,
+    configModule: ConfigModule,
     androidServicesModule: AndroidServicesModule,
     instrumentationModule: InstrumentationModule,
 ): CrashModule {
@@ -28,6 +31,7 @@ fun createCrashModule(
         initModule,
         storageModule,
         essentialServiceModule,
+        configModule,
         androidServicesModule,
         instrumentationModule,
     )

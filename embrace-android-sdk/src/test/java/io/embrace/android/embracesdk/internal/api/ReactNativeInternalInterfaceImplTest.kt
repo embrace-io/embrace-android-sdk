@@ -8,7 +8,7 @@ import io.embrace.android.embracesdk.fakes.system.mockContext
 import io.embrace.android.embracesdk.internal.api.delegate.ReactNativeInternalInterfaceImpl
 import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.internal.envelope.metadata.ReactNativeSdkVersionInfo
-import io.embrace.android.embracesdk.internal.instrumentation.crash.jvm.CrashService
+import io.embrace.android.embracesdk.internal.instrumentation.crash.jvm.JsCrashService
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.mockk.every
 import io.mockk.mockk
@@ -22,7 +22,7 @@ internal class ReactNativeInternalInterfaceImplTest {
     private lateinit var impl: ReactNativeInternalInterfaceImpl
     private lateinit var embrace: EmbraceImpl
     private lateinit var store: FakeKeyValueStore
-    private lateinit var crashService: CrashService
+    private lateinit var jsCrashService: JsCrashService
     private lateinit var rnBundleIdTracker: FakeRnBundleIdTracker
     private lateinit var logger: EmbLogger
     private lateinit var context: Context
@@ -32,7 +32,7 @@ internal class ReactNativeInternalInterfaceImplTest {
     fun setUp() {
         embrace = mockk(relaxed = true)
         store = FakeKeyValueStore()
-        crashService = mockk(relaxed = true)
+        jsCrashService = mockk(relaxed = true)
         rnBundleIdTracker = FakeRnBundleIdTracker()
         hostedSdkVersionInfo = ReactNativeSdkVersionInfo(store)
         logger = mockk(relaxed = true)
@@ -40,7 +40,7 @@ internal class ReactNativeInternalInterfaceImplTest {
         impl = ReactNativeInternalInterfaceImpl(
             embrace,
             mockk(),
-            crashService,
+            jsCrashService,
             rnBundleIdTracker,
             hostedSdkVersionInfo,
             logger
@@ -118,7 +118,7 @@ internal class ReactNativeInternalInterfaceImplTest {
         impl = ReactNativeInternalInterfaceImpl(
             embrace,
             mockk(),
-            crashService,
+            jsCrashService,
             rnBundleIdTracker,
             hostedSdkVersionInfo,
             logger
@@ -136,7 +136,7 @@ internal class ReactNativeInternalInterfaceImplTest {
         impl = ReactNativeInternalInterfaceImpl(
             embrace,
             mockk(),
-            crashService,
+            jsCrashService,
             rnBundleIdTracker,
             hostedSdkVersionInfo,
             logger
@@ -155,7 +155,7 @@ internal class ReactNativeInternalInterfaceImplTest {
         impl.logUnhandledJsException("name", "message", "type", "stack")
 
         verify(exactly = 1) {
-            crashService.logUnhandledJsException("name", "message", "type", "stack")
+            jsCrashService.logUnhandledJsException("name", "message", "type", "stack")
         }
     }
 

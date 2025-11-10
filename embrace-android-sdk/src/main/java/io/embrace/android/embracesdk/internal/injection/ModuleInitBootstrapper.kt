@@ -399,14 +399,15 @@ internal class ModuleInitBootstrapper(
                             initModule,
                             storageModule,
                             essentialServiceModule,
+                            configModule,
                             androidServicesModule,
                             instrumentationModule,
                         )
                     }
 
                     postInit(CrashModule::class) {
-                        serviceRegistry.registerService(lazy { crashModule.crashDataSource })
-                        with(crashModule.crashDataSource) {
+                        serviceRegistry.registerService(lazy { crashModule.jvmCrashDataSource })
+                        with(crashModule.jvmCrashDataSource) {
                             anrModule.anrService?.let(::addCrashTeardownHandler)
                             addCrashTeardownHandler(logModule.logOrchestrator)
                             addCrashTeardownHandler(sessionOrchestrationModule.sessionOrchestrator)

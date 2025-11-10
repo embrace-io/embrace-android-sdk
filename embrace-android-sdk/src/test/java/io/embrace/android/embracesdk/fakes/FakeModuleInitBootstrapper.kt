@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.fakes
 import io.embrace.android.embracesdk.fakes.injection.FakeAndroidServicesModule
 import io.embrace.android.embracesdk.fakes.injection.FakeAnrModule
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
-import io.embrace.android.embracesdk.fakes.injection.FakeCrashModule
 import io.embrace.android.embracesdk.fakes.injection.FakeDataCaptureServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeDeliveryModule
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
@@ -29,7 +28,6 @@ import io.embrace.android.embracesdk.internal.injection.StorageModuleSupplier
 import io.embrace.android.embracesdk.internal.injection.SystemServiceModuleSupplier
 import io.embrace.android.embracesdk.internal.injection.WorkerThreadModuleSupplier
 import io.embrace.android.embracesdk.internal.instrumentation.anr.AnrModuleSupplier
-import io.embrace.android.embracesdk.internal.instrumentation.crash.CrashModuleSupplier
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeCoreModuleSupplier
 
 @Suppress("LongParameterList")
@@ -58,7 +56,6 @@ internal fun fakeModuleInitBootstrapper(
     nativeCoreModuleSupplier: NativeCoreModuleSupplier = { _, _, _, _, _, _, _, _, _, _, _ -> FakeNativeCoreModule() },
     sessionOrchestrationModuleSupplier: SessionOrchestrationModuleSupplier =
         { _, _, _, _, _, _, _, _, _, _ -> FakeSessionOrchestrationModule() },
-    crashModuleSupplier: CrashModuleSupplier = { _, _, _ -> FakeCrashModule() },
     payloadSourceModuleSupplier: PayloadSourceModuleSupplier =
         { _, _, _, _, _, _, _, _, _, _, _ -> FakePayloadSourceModule() },
 ) = ModuleInitBootstrapper(
@@ -80,6 +77,5 @@ internal fun fakeModuleInitBootstrapper(
     logModuleSupplier = logModuleSupplier,
     nativeCoreModuleSupplier = nativeCoreModuleSupplier,
     sessionOrchestrationModuleSupplier = sessionOrchestrationModuleSupplier,
-    crashModuleSupplier = crashModuleSupplier,
     payloadSourceModuleSupplier = payloadSourceModuleSupplier,
 )

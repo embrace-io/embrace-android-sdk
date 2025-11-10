@@ -9,7 +9,6 @@ import io.embrace.android.embracesdk.internal.api.delegate.EmbraceInternalInterf
 import io.embrace.android.embracesdk.internal.api.delegate.FlutterInternalInterfaceImpl
 import io.embrace.android.embracesdk.internal.api.delegate.ReactNativeInternalInterfaceImpl
 import io.embrace.android.embracesdk.internal.api.delegate.UnityInternalInterfaceImpl
-import io.embrace.android.embracesdk.internal.instrumentation.crash.CrashModule
 import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkCaptureDataSource
 
 internal class InternalInterfaceModuleImpl(
@@ -19,7 +18,7 @@ internal class InternalInterfaceModuleImpl(
     payloadSourceModule: PayloadSourceModule,
     instrumentationModule: InstrumentationModule,
     embrace: EmbraceImpl,
-    crashModule: CrashModule,
+    bootstrapper: ModuleInitBootstrapper,
 ) : InternalInterfaceModule {
 
     override val embraceInternalInterface: EmbraceInternalInterface by singleton {
@@ -36,7 +35,7 @@ internal class InternalInterfaceModuleImpl(
         ReactNativeInternalInterfaceImpl(
             embrace,
             embraceInternalInterface,
-            crashModule.jsCrashService,
+            bootstrapper,
             payloadSourceModule.rnBundleIdTracker,
             payloadSourceModule.hostedSdkVersionInfo,
             initModule.logger

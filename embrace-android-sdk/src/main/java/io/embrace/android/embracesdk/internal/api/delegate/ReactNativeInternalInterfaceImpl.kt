@@ -6,15 +6,20 @@ import io.embrace.android.embracesdk.LogExceptionType
 import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
 import io.embrace.android.embracesdk.internal.ReactNativeInternalInterface
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.ReactNativeCrash.embAndroidReactNativeCrashJsException
+import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.capture.metadata.RnBundleIdTracker
 import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo
-import io.embrace.android.embracesdk.internal.instrumentation.crash.jvm.JsCrashService
+import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
+import io.embrace.android.embracesdk.internal.instrumentation.crash.jvm.JvmCrashDataSource
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
+import io.embrace.android.embracesdk.internal.payload.JsException
+import io.embrace.android.embracesdk.internal.utils.encodeToUTF8String
 
 internal class ReactNativeInternalInterfaceImpl(
     private val embrace: EmbraceImpl,
     private val impl: EmbraceInternalInterface,
-    private val jsCrashService: JsCrashService?,
+    private val bootstrapper: ModuleInitBootstrapper,
     private val rnBundleIdTracker: RnBundleIdTracker,
     private val hostedSdkVersionInfo: HostedSdkVersionInfo,
     private val logger: EmbLogger,
@@ -27,7 +32,19 @@ internal class ReactNativeInternalInterfaceImpl(
         stacktrace: String?,
     ) {
         if (embrace.isStarted) {
-            jsCrashService?.logUnhandledJsException(name, message, type, stacktrace)
+            val registry = bootstrapper.instrumentationModule.instrumentationRegistry
+            val dataSource = registry.findByType(JvmCrashDataSource::class)
+            dataSource?.telemetryModifier = { attributes ->
+                val exception = JsException(name, message, type, stacktrace)
+                val serializer = bootstrapper.initModule.jsonSerializer
+                attributes.setAttribute(
+                    embAndroidReactNativeCrashJsException,
+                    encodeToUTF8String(
+                        serializer.toJson(exception, JsException::class.java),
+                    ),
+                )
+                SchemaType.ReactNativeCrash(attributes)
+            }
         } else {
             logger.logSdkNotInitialized("log JS exception")
         }

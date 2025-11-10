@@ -20,3 +20,7 @@ fun ByteArray.toUTF8String(): String {
     }
     return String(encoded.copyOf(i), Charsets.UTF_8)
 }
+
+fun encodeToUTF8String(source: String): String {
+    return source.toByteArray().toUTF8String()
+}

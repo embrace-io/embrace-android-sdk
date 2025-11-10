@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.internal.capture.crash
+package io.embrace.android.embracesdk.internal.arch
 
 /**
  * Interface for handling crash teardown.

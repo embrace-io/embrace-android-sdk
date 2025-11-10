@@ -13,6 +13,7 @@ include(
     ":embrace-android-instrumentation-schema",
     ":embrace-android-instrumentation-app-exit-info",
     ":embrace-android-instrumentation-compose-tap",
+    ":embrace-android-instrumentation-crash-jvm",
     ":embrace-android-instrumentation-fcm",
     ":embrace-android-instrumentation-huc",
     ":embrace-android-instrumentation-huc-lite",

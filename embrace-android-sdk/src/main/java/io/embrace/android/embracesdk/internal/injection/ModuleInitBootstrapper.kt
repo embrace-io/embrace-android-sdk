@@ -1,15 +1,15 @@
 package io.embrace.android.embracesdk.internal.injection
 
 import android.content.Context
+import io.embrace.android.embracesdk.internal.arch.InstrumentationProvider
+import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkStatusDataSource
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.clock.NormalizedIntervalClock
 import io.embrace.android.embracesdk.internal.instrumentation.anr.AnrModule
 import io.embrace.android.embracesdk.internal.instrumentation.anr.AnrModuleSupplier
 import io.embrace.android.embracesdk.internal.instrumentation.anr.OtelPayloadMapperImpl
 import io.embrace.android.embracesdk.internal.instrumentation.anr.createAnrModule
-import io.embrace.android.embracesdk.internal.instrumentation.crash.CrashModule
-import io.embrace.android.embracesdk.internal.instrumentation.crash.CrashModuleSupplier
-import io.embrace.android.embracesdk.internal.instrumentation.crash.createCrashModule
+import io.embrace.android.embracesdk.internal.instrumentation.crash.jvm.JvmCrashDataSource
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeCoreModule
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeCoreModuleSupplier
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeFeatureModule
@@ -25,6 +25,7 @@ import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.internal.worker.Worker
 import java.util.Locale
+import java.util.ServiceLoader
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.reflect.KClass
 
@@ -59,7 +60,6 @@ internal class ModuleInitBootstrapper(
     private val nativeCoreModuleSupplier: NativeCoreModuleSupplier = ::createNativeCoreModule,
     private val nativeFeatureModuleSupplier: NativeFeatureModuleSupplier = ::createNativeFeatureModule,
     private val sessionOrchestrationModuleSupplier: SessionOrchestrationModuleSupplier = ::createSessionOrchestrationModule,
-    private val crashModuleSupplier: CrashModuleSupplier = ::createCrashModule,
     private val payloadSourceModuleSupplier: PayloadSourceModuleSupplier = ::createPayloadSourceModule,
 ) {
     lateinit var coreModule: CoreModule
@@ -108,9 +108,6 @@ internal class ModuleInitBootstrapper(
         private set
 
     lateinit var sessionOrchestrationModule: SessionOrchestrationModule
-        private set
-
-    lateinit var crashModule: CrashModule
         private set
 
     lateinit var payloadSourceModule: PayloadSourceModule
@@ -395,25 +392,6 @@ internal class ModuleInitBootstrapper(
                         )
                     }
 
-                    crashModule = init(CrashModule::class) {
-                        crashModuleSupplier(
-                            initModule,
-                            configModule,
-                            instrumentationModule,
-                        )
-                    }
-
-                    postInit(CrashModule::class) {
-                        serviceRegistry.registerService(lazy { crashModule.jvmCrashDataSource })
-                        with(crashModule.jvmCrashDataSource) {
-                            anrModule.anrService?.let(::addCrashTeardownHandler)
-                            addCrashTeardownHandler(logModule.logOrchestrator)
-                            addCrashTeardownHandler(sessionOrchestrationModule.sessionOrchestrator)
-                            addCrashTeardownHandler(featureModule.crashMarker)
-                            deliveryModule.payloadStore?.let(::addCrashTeardownHandler)
-                        }
-                    }
-
                     // Sets up the registered services. This method is called after the SDK has been started and no more services can
                     // be added to the registry. It sets listeners for any services that were registered.
                     EmbTrace.trace("service-registration") {
@@ -439,6 +417,27 @@ internal class ModuleInitBootstrapper(
             }
         } finally {
             EmbTrace.end()
+        }
+    }
+
+    fun loadInstrumentation() {
+        val registry = instrumentationModule.instrumentationRegistry
+        val instrumentationProviders = ServiceLoader.load(InstrumentationProvider::class.java)
+        registry.loadInstrumentations(instrumentationProviders, instrumentationModule.instrumentationArgs)
+    }
+
+    fun postLoadInstrumentation() {
+        // setup crash teardown handlers
+        val registry = instrumentationModule.instrumentationRegistry
+        registry.findByType(JvmCrashDataSource::class)?.apply {
+            anrModule.anrService?.let(::addCrashTeardownHandler)
+            addCrashTeardownHandler(logModule.logOrchestrator)
+            addCrashTeardownHandler(sessionOrchestrationModule.sessionOrchestrator)
+            addCrashTeardownHandler(featureModule.crashMarker)
+            deliveryModule.payloadStore?.let(::addCrashTeardownHandler)
+        }
+        registry.findByType(NetworkStatusDataSource::class)?.let {
+            essentialServiceModule.networkConnectivityService.addNetworkConnectivityListener(it)
         }
     }
 

@@ -1,11 +1,10 @@
 package io.embrace.android.embracesdk.internal.instrumentation.crash.jvm
 
-import io.embrace.android.embracesdk.fakes.FakeJvmCrashDataSource
+import io.embrace.android.embracesdk.fakes.FakeEmbLogger
+import io.embrace.android.embracesdk.internal.arch.CrashTeardownHandler
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.arch.schema.TelemetryAttributes
-import io.embrace.android.embracesdk.internal.capture.crash.CrashTeardownHandler
-import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -18,15 +17,16 @@ import org.junit.Test
  */
 internal class EmbraceUncaughtExceptionHandlerTest {
 
+    private val logger = FakeEmbLogger(false)
+
     /**
      * Tests that [EmbraceUncaughtExceptionHandler] accepts a null arg.
-     *
      *
      * The [Thread.UncaughtExceptionHandler] is null by default.
      */
     @Test
     fun testNullArg1() {
-        EmbraceUncaughtExceptionHandler(null, FakeJvmCrashDataSource(), EmbLoggerImpl())
+        EmbraceUncaughtExceptionHandler(null, FakeJvmCrashDataSource(), logger)
     }
 
     /**
@@ -37,7 +37,7 @@ internal class EmbraceUncaughtExceptionHandlerTest {
     fun testExceptionHandler() {
         val defaultHandler = TestUncaughtExceptionHandler()
         val fakeCrashService = FakeJvmCrashDataSource()
-        val handler = EmbraceUncaughtExceptionHandler(defaultHandler, fakeCrashService, EmbLoggerImpl())
+        val handler = EmbraceUncaughtExceptionHandler(defaultHandler, fakeCrashService, logger)
 
         val testException = RuntimeException("Test exception")
         handler.uncaughtException(Thread.currentThread(), testException)
@@ -59,7 +59,7 @@ internal class EmbraceUncaughtExceptionHandlerTest {
     fun testCrashingExceptionHandler() {
         val defaultHandler = TestUncaughtExceptionHandler()
         val crashingCrashService = CrashingJvmCrashService()
-        val handler = EmbraceUncaughtExceptionHandler(defaultHandler, crashingCrashService, EmbLoggerImpl())
+        val handler = EmbraceUncaughtExceptionHandler(defaultHandler, crashingCrashService, logger)
         val testException = RuntimeException("Test exception")
         handler.uncaughtException(Thread.currentThread(), testException)
 

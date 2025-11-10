@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.instrumentation.crash
 
-import io.embrace.android.embracesdk.internal.capture.crash.CrashTeardownHandler
+import io.embrace.android.embracesdk.internal.arch.CrashTeardownHandler
 
 interface CrashFileMarker : CrashTeardownHandler {
 

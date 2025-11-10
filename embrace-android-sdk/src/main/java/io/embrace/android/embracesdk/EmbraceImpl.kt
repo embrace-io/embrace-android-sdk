@@ -31,8 +31,6 @@ import io.embrace.android.embracesdk.internal.api.delegate.SdkStateApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.SessionApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.UserApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.ViewTrackingApiDelegate
-import io.embrace.android.embracesdk.internal.arch.InstrumentationProvider
-import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkStatusDataSource
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.clock.NormalizedIntervalClock
 import io.embrace.android.embracesdk.internal.config.behavior.NetworkBehavior
@@ -49,7 +47,6 @@ import io.embrace.android.embracesdk.internal.utils.EmbTrace.end
 import io.embrace.android.embracesdk.internal.utils.EmbTrace.start
 import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.spans.TracingApi
-import java.util.ServiceLoader
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -139,7 +136,6 @@ internal class EmbraceImpl(
         application = coreModule.application
 
         val configModule = bootstrapper.configModule
-        val crashModule = bootstrapper.crashModule
         val featureModule = bootstrapper.featureModule
 
         featureModule.lastRunCrashVerifier.readAndCleanMarkerAsync(
@@ -154,7 +150,7 @@ internal class EmbraceImpl(
                 bootstrapper.payloadSourceModule,
                 bootstrapper.instrumentationModule,
                 this,
-                crashModule
+                bootstrapper
             )
         internalInterfaceModule = internalInterfaceModuleImpl
 
@@ -173,12 +169,8 @@ internal class EmbraceImpl(
         sdkCallChecker.started.set(true)
         end()
 
-        val registry = bootstrapper.instrumentationModule.instrumentationRegistry
-        val instrumentationProviders = ServiceLoader.load(InstrumentationProvider::class.java)
-        registry.loadInstrumentations(instrumentationProviders, bootstrapper.instrumentationModule.instrumentationArgs)
-        registry.findByType(NetworkStatusDataSource::class)?.let {
-            bootstrapper.essentialServiceModule.networkConnectivityService.addNetworkConnectivityListener(it)
-        }
+        bootstrapper.loadInstrumentation()
+        bootstrapper.postLoadInstrumentation()
 
         initializeHucInstrumentation(configModule.configService.networkBehavior)
 

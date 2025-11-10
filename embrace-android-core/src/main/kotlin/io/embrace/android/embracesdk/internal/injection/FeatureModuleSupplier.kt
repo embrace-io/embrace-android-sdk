@@ -8,12 +8,15 @@ import io.embrace.android.embracesdk.internal.config.ConfigService
 typealias FeatureModuleSupplier = (
     instrumentationModule: InstrumentationModule,
     configService: ConfigService,
+    storageModule: StorageModule,
 ) -> FeatureModule
 
 fun createFeatureModule(
     instrumentationModule: InstrumentationModule,
     configService: ConfigService,
+    storageModule: StorageModule,
 ): FeatureModule = FeatureModuleImpl(
     instrumentationModule = instrumentationModule,
     configService = configService,
+    storageModule = storageModule,
 )

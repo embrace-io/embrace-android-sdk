@@ -6,10 +6,14 @@ import io.embrace.android.embracesdk.internal.capture.crumbs.RnActionDataSource
 import io.embrace.android.embracesdk.internal.capture.telemetry.InternalErrorDataSource
 import io.embrace.android.embracesdk.internal.capture.telemetry.InternalErrorDataSourceImpl
 import io.embrace.android.embracesdk.internal.config.ConfigService
+import io.embrace.android.embracesdk.internal.instrumentation.crash.CrashFileMarker
+import io.embrace.android.embracesdk.internal.instrumentation.crash.CrashFileMarkerImpl
+import io.embrace.android.embracesdk.internal.instrumentation.crash.LastRunCrashVerifier
 
 internal class FeatureModuleImpl(
     instrumentationModule: InstrumentationModule,
     configService: ConfigService,
+    storageModule: StorageModule,
 ) : FeatureModule {
 
     override val breadcrumbDataSource: DataSourceState<BreadcrumbDataSource> by singleton {
@@ -41,5 +45,16 @@ internal class FeatureModuleImpl(
         ).apply {
             instrumentationModule.instrumentationRegistry.add(this)
         }
+    }
+
+    override val lastRunCrashVerifier: LastRunCrashVerifier by singleton {
+        LastRunCrashVerifier(crashMarker)
+    }
+
+    override val crashMarker: CrashFileMarker by singleton {
+        val markerFile = lazy {
+            storageModule.storageService.getFileForWrite(CrashFileMarkerImpl.CRASH_MARKER_FILE_NAME)
+        }
+        CrashFileMarkerImpl(markerFile)
     }
 }

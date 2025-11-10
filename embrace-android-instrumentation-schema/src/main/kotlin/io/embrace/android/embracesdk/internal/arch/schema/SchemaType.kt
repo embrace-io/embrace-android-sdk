@@ -157,7 +157,7 @@ sealed class SchemaType(
         override val schemaAttributes: Map<String, String> = attributes.snapshot()
     }
 
-    class Crash(attributes: TelemetryAttributes) : SchemaType(EmbType.System.Crash) {
+    class JvmCrash(attributes: TelemetryAttributes) : SchemaType(EmbType.System.Crash) {
         override val schemaAttributes: Map<String, String> = attributes.snapshot()
     }
 

@@ -43,7 +43,7 @@ internal class PayloadSourceModuleImpl(
 
     override val rnBundleIdTracker: RnBundleIdTracker by singleton {
         RnBundleIdTrackerImpl(
-            coreModule.buildInfoService.getBuildInfo(),
+            coreModule.buildInfo,
             coreModule.context,
             configModule.configService,
             androidServicesModule.preferencesService,
@@ -97,7 +97,7 @@ internal class PayloadSourceModuleImpl(
             EnvelopeResourceSourceImpl(
                 hostedSdkVersionInfo,
                 coreModule.appEnvironment.environment,
-                EmbTrace.trace("buildInfo") { coreModule.buildInfoService.getBuildInfo() },
+                EmbTrace.trace("buildInfo") { coreModule.buildInfo },
                 EmbTrace.trace("packageInfo") { coreModule.packageVersionInfo },
                 configModule.configService.appFramework,
                 deviceArchitecture,

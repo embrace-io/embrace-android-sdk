@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.internal.injection
 
 import android.app.Application
 import android.content.Context
-import io.embrace.android.embracesdk.internal.buildinfo.BuildInfoService
+import io.embrace.android.embracesdk.internal.buildinfo.BuildInfo
 import io.embrace.android.embracesdk.internal.capture.metadata.AppEnvironment
 import io.embrace.android.embracesdk.internal.registry.ServiceRegistry
 
@@ -34,5 +34,5 @@ interface CoreModule {
      */
     val appEnvironment: AppEnvironment
 
-    val buildInfoService: BuildInfoService
+    val buildInfo: BuildInfo
 }

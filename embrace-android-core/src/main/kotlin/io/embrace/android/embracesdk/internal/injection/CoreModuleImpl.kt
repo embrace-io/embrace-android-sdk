@@ -3,10 +3,10 @@ package io.embrace.android.embracesdk.internal.injection
 import android.app.Application
 import android.content.Context
 import android.content.pm.ApplicationInfo
-import io.embrace.android.embracesdk.internal.buildinfo.BuildInfoService
-import io.embrace.android.embracesdk.internal.buildinfo.BuildInfoServiceImpl
+import io.embrace.android.embracesdk.internal.buildinfo.BuildInfo
 import io.embrace.android.embracesdk.internal.capture.metadata.AppEnvironment
 import io.embrace.android.embracesdk.internal.registry.ServiceRegistry
+import kotlin.getValue
 
 class CoreModuleImpl(
     ctx: Context,
@@ -37,7 +37,13 @@ class CoreModuleImpl(
         AppEnvironment(isDebug)
     }
 
-    override val buildInfoService: BuildInfoService by lazy {
-        BuildInfoServiceImpl(initModule.instrumentedConfig)
+    override val buildInfo: BuildInfo by lazy {
+        val cfg = initModule.instrumentedConfig.project
+        BuildInfo(
+            cfg.getBuildId(),
+            cfg.getBuildType(),
+            cfg.getBuildFlavor(),
+            cfg.getReactNativeBundleId(),
+        )
     }
 }

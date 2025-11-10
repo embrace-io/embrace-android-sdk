@@ -41,14 +41,14 @@ interface PluginBehavior {
 
     /**
      * Whether the project should automatically add embrace dependencies to the classpath,
-     * set via `swazzler.disableDependencyInjection`
+     * set via `embrace.autoAddEmbraceDependencies`
      */
     @Deprecated("This will be removed in a future release. Add embrace dependencies to the classpath manually instead.")
     val autoAddEmbraceDependencies: Boolean
 
     /**
      * Whether the project should automatically add the embrace compose dependency to the classpath,
-     * set via `swazzler.disableComposeDependencyInjection`
+     * set via `embrace.autoAddEmbraceComposeClickDependency`
      */
     val autoAddEmbraceComposeDependency: Boolean
 
@@ -58,12 +58,12 @@ interface PluginBehavior {
     val customSymbolsDirectory: String?
 
     /**
-     * Whether bytecode instrumentation is disabled for this variant, set via `swazzler.variantFilter`.
+     * Whether bytecode instrumentation is disabled for this variant, set via `embrace.buildVariantFilter`.
      */
     fun isInstrumentationDisabledForVariant(variantName: String): Boolean
 
     /**
-     * Whether the plugin is disabled for this variant, set via `swazzler.variantFilter`.
+     * Whether the plugin is disabled for this variant, set via `embrace.buildVariantFilter`.
      */
     fun isPluginDisabledForVariant(variantName: String): Boolean
 }

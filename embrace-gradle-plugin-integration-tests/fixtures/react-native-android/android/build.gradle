@@ -13,7 +13,7 @@ buildscript {
     }
     dependencies {
         classpath("com.android.tools.build:gradle:$agp_version")
-        classpath "io.embrace:embrace-swazzler:$plugin_snapshot_version"
+        classpath "io.embrace:embrace-gradle-plugin:$plugin_snapshot_version"
         classpath "io.embrace:embrace-gradle-plugin-integration-tests:$plugin_snapshot_version"
         classpath("com.facebook.react:react-native-gradle-plugin")
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version")

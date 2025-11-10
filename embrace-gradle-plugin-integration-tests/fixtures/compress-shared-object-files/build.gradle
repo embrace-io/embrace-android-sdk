@@ -2,7 +2,7 @@ import io.embrace.android.gradle.plugin.tasks.ndk.CompressSharedObjectFilesTask
 
 plugins {
     id("java")
-    id("io.embrace.swazzler")
+    id("io.embrace.gradle")
     id("io.embrace.android.testplugin")
 }
 

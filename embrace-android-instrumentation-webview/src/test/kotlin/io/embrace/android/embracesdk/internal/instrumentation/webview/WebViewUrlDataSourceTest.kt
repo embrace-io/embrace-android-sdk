@@ -1,16 +1,19 @@
 package io.embrace.android.embracesdk.internal.instrumentation.webview
 
+import androidx.test.core.app.ApplicationProvider
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.fakes.behavior.FakeBreadcrumbBehavior
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.opentelemetry.kotlin.semconv.UrlAttributes
-import io.mockk.mockk
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
+import org.junit.runner.RunWith
 
+@RunWith(AndroidJUnit4::class)
 internal class WebViewUrlDataSourceTest {
 
     private lateinit var source: WebViewUrlDataSource
@@ -18,7 +21,7 @@ internal class WebViewUrlDataSourceTest {
 
     @Before
     fun setUp() {
-        args = FakeInstrumentationArgs(mockk())
+        args = FakeInstrumentationArgs(ApplicationProvider.getApplicationContext())
     }
 
     @Test
@@ -40,7 +43,7 @@ internal class WebViewUrlDataSourceTest {
     @Test
     fun `query param capture disabled`() {
         args = FakeInstrumentationArgs(
-            mockk(),
+            ApplicationProvider.getApplicationContext(),
             configService = FakeConfigService(
                 breadcrumbBehavior = FakeBreadcrumbBehavior(
                     queryParamCaptureEnabled = false,
@@ -67,7 +70,7 @@ internal class WebViewUrlDataSourceTest {
     @Test
     fun `limit not exceeded`() {
         args = FakeInstrumentationArgs(
-            mockk(),
+            ApplicationProvider.getApplicationContext(),
             configService = FakeConfigService(
                 breadcrumbBehavior = FakeBreadcrumbBehavior(
                     queryParamCaptureEnabled = false,

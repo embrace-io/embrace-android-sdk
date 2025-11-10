@@ -13,5 +13,5 @@ dependencies {
     implementation(libs.androidx.annotation)
 
     testImplementation(project(":embrace-android-instrumentation-api-fakes"))
-    testImplementation(libs.mockk)
+    testImplementation(libs.robolectric)
 }

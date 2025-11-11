@@ -2,7 +2,8 @@ package io.embrace.android.embracesdk.internal.session.message
 
 import io.embrace.android.embracesdk.internal.payload.ApplicationState
 import io.embrace.android.embracesdk.internal.payload.LifeEventType
-import io.embrace.android.embracesdk.internal.prefs.PreferencesService
+import io.embrace.android.embracesdk.internal.store.Ordinal
+import io.embrace.android.embracesdk.internal.store.OrdinalStore
 
 /**
  * Holds the parameters & logic needed to create an initial session object.
@@ -14,8 +15,8 @@ class InitialEnvelopeParams(
     val appState: ApplicationState,
 ) {
 
-    fun getSessionNumber(service: PreferencesService): Int = when (appState) {
-        ApplicationState.FOREGROUND -> service.incrementAndGetSessionNumber()
-        ApplicationState.BACKGROUND -> service.incrementAndGetBackgroundActivityNumber()
+    fun getSessionNumber(store: OrdinalStore): Int = when (appState) {
+        ApplicationState.FOREGROUND -> store.incrementAndGet(Ordinal.SESSION)
+        ApplicationState.BACKGROUND -> store.incrementAndGet(Ordinal.BACKGROUND_ACTIVITY)
     }
 }

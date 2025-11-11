@@ -61,22 +61,6 @@ internal class EmbracePreferencesService(
         get() = impl.getLong(SDK_CONFIG_FETCHED_TIMESTAMP)
         set(value) = impl.edit { putLong(SDK_CONFIG_FETCHED_TIMESTAMP, value) }
 
-    override fun incrementAndGetSessionNumber(): Int {
-        return impl.incrementAndGet(LAST_SESSION_NUMBER_KEY)
-    }
-
-    override fun incrementAndGetBackgroundActivityNumber(): Int {
-        return impl.incrementAndGet(LAST_BACKGROUND_ACTIVITY_NUMBER_KEY)
-    }
-
-    override fun incrementAndGetCrashNumber(): Int {
-        return impl.incrementAndGetCrashNumber()
-    }
-
-    override fun incrementAndGetNativeCrashNumber(): Int {
-        return impl.incrementAndGet(LAST_NATIVE_CRASH_NUMBER_KEY)
-    }
-
     override var javaScriptBundleURL: String?
         get() = impl.getString(JAVA_SCRIPT_BUNDLE_URL_KEY)
         set(value) = impl.edit { putString(JAVA_SCRIPT_BUNDLE_URL_KEY, value) }
@@ -100,9 +84,6 @@ internal class EmbracePreferencesService(
         private const val USER_USERNAME_KEY = "io.embrace.username"
         private const val USER_IS_PAYER_KEY = "io.embrace.userispayer"
         private const val USER_PERSONAS_KEY = "io.embrace.userpersonas"
-        private const val LAST_SESSION_NUMBER_KEY = "io.embrace.sessionnumber"
-        private const val LAST_BACKGROUND_ACTIVITY_NUMBER_KEY = "io.embrace.bgactivitynumber"
-        private const val LAST_NATIVE_CRASH_NUMBER_KEY = "io.embrace.nativecrashnumber"
         private const val JAVA_SCRIPT_BUNDLE_URL_KEY = "io.embrace.jsbundle.url"
         private const val JAVA_SCRIPT_BUNDLE_ID_KEY = "io.embrace.jsbundle.id"
         private const val SESSION_PROPERTIES_KEY = "io.embrace.session.properties"

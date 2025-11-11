@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.internal.instrumentation.crash.ndk
 
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.fakes.FakeNativeCrashProcessor
-import io.embrace.android.embracesdk.fakes.FakePreferenceService
+import io.embrace.android.embracesdk.fakes.FakeOrdinalStore
 import io.embrace.android.embracesdk.fixtures.testNativeCrashData
 import io.embrace.android.embracesdk.internal.arch.attrs.embCrashNumber
 import io.embrace.android.embracesdk.internal.arch.attrs.embState
@@ -34,12 +34,11 @@ internal class NativeCrashDataSourceImplTest {
     @Before
     fun setUp() {
         crashProcessor = FakeNativeCrashProcessor()
-        val preferencesService = FakePreferenceService()
         args = FakeInstrumentationArgs(mockk())
         serializer = EmbraceSerializer()
         nativeCrashDataSource = NativeCrashDataSourceImpl(
             nativeCrashProcessor = crashProcessor,
-            preferencesService = preferencesService,
+            ordinalStore = FakeOrdinalStore(),
             args = args,
             serializer = serializer,
         )

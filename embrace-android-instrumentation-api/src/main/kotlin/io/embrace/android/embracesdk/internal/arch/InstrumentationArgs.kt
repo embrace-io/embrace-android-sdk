@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
+import io.embrace.android.embracesdk.internal.store.OrdinalStore
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.internal.worker.Worker
 
@@ -57,6 +58,12 @@ interface InstrumentationArgs {
      * A serializer that can be used to serialize and deserialize data.
      */
     val serializer: PlatformSerializer
+
+    /**
+     * Persists ordinals that are cross-cutting concerns across the SDK, such as session number
+     * and crash number.
+     */
+    val ordinalStore: OrdinalStore
 
     /**
      * Retrieves a background worker matching the given name.

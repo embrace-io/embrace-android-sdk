@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.session.message
 
 import io.embrace.android.embracesdk.fakes.FakeConfigService
-import io.embrace.android.embracesdk.fakes.FakePreferenceService
+import io.embrace.android.embracesdk.fakes.FakeOrdinalStore
 import io.embrace.android.embracesdk.fakes.FakeSessionPayloadSource
 import io.embrace.android.embracesdk.fakes.createBackgroundActivityBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
@@ -33,7 +33,7 @@ internal class PayloadFactoryImplTest {
             sessionPayloadSource = sessionPayloadSource
         )
         val collator = PayloadMessageCollatorImpl(
-            preferencesService = FakePreferenceService(),
+            store = FakeOrdinalStore(),
             currentSessionSpan = initModule.openTelemetryModule.currentSessionSpan,
             sessionEnvelopeSource = payloadSourceModule.sessionEnvelopeSource
         )

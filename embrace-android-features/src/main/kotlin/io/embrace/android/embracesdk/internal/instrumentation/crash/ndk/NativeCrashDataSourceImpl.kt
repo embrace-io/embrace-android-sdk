@@ -9,14 +9,15 @@ import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.arch.schema.TelemetryAttributes
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
-import io.embrace.android.embracesdk.internal.prefs.PreferencesService
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
+import io.embrace.android.embracesdk.internal.store.Ordinal
+import io.embrace.android.embracesdk.internal.store.OrdinalStore
 import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
 import io.embrace.opentelemetry.kotlin.semconv.SessionAttributes
 
 internal class NativeCrashDataSourceImpl(
     private val nativeCrashProcessor: NativeCrashProcessor,
-    private val preferencesService: PreferencesService,
+    private val ordinalStore: OrdinalStore,
     args: InstrumentationArgs,
     private val serializer: PlatformSerializer,
 ) : NativeCrashDataSource, DataSourceImpl(
@@ -38,7 +39,7 @@ internal class NativeCrashDataSourceImpl(
         metadata: Map<String, String>,
     ) {
         captureTelemetry {
-            val nativeCrashNumber = preferencesService.incrementAndGetNativeCrashNumber()
+            val nativeCrashNumber = ordinalStore.incrementAndGet(Ordinal.NATIVE_CRASH)
             val crashAttributes = TelemetryAttributes(
                 sessionPropertiesProvider = { sessionProperties }
             )

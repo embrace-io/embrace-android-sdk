@@ -7,8 +7,8 @@ import io.embrace.android.embracesdk.fakes.FakeEnvelopeMetadataSource
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeResourceSource
 import io.embrace.android.embracesdk.fakes.FakeMemoryCleanerService
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
+import io.embrace.android.embracesdk.fakes.FakeOrdinalStore
 import io.embrace.android.embracesdk.fakes.FakeOtelPayloadMapper
-import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fakes.FakeSessionPropertiesService
@@ -33,6 +33,7 @@ import io.embrace.android.embracesdk.internal.session.message.PayloadFactory
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactoryImpl
 import io.embrace.android.embracesdk.internal.session.message.PayloadMessageCollatorImpl
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
+import io.embrace.android.embracesdk.internal.store.Ordinal
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -52,7 +53,7 @@ internal class SessionHandlerTest {
 
     private lateinit var spanSink: SpanSink
     private lateinit var spanService: SpanService
-    private lateinit var preferencesService: FakePreferenceService
+    private lateinit var store: FakeOrdinalStore
     private lateinit var sessionIdTracker: FakeSessionIdTracker
     private lateinit var metadataService: FakeMetadataService
     private lateinit var configService: FakeConfigService
@@ -78,7 +79,7 @@ internal class SessionHandlerTest {
         configService = FakeConfigService(
             sessionBehavior = createSessionBehavior()
         )
-        preferencesService = FakePreferenceService()
+        store = FakeOrdinalStore()
         val initModule = FakeInitModule(clock = clock)
         spanSink = initModule.openTelemetryModule.spanSink
         spanService = initModule.openTelemetryModule.spanService
@@ -103,7 +104,7 @@ internal class SessionHandlerTest {
                 resourceSource = FakeEnvelopeResourceSource(),
                 sessionPayloadSource = sessionPayloadSource
             ),
-            preferencesService,
+            store,
             currentSessionSpan
         )
         payloadFactory = PayloadFactoryImpl(collator, payloadSourceModule.logEnvelopeSource, configService, logger)
@@ -117,7 +118,7 @@ internal class SessionHandlerTest {
 
         payloadFactory.startPayloadWithState(ProcessState.FOREGROUND, NOW, true)
 
-        assertEquals(1, preferencesService.incrementAndGetSessionNumberCount)
+        assertEquals(2, store.incrementAndGet(Ordinal.SESSION))
     }
 
     @Test

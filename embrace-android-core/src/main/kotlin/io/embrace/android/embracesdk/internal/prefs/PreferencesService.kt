@@ -58,34 +58,6 @@ interface PreferencesService {
     var lastConfigFetchDate: Long?
 
     /**
-     * Increments and returns the session number ordinal. This is an integer that increments
-     * at the start of every session. This allows us to check the % of sessions that didn't get
-     * delivered to the backend.
-     */
-    fun incrementAndGetSessionNumber(): Int
-
-    /**
-     * Increments and returns the background activity number ordinal. This is an integer that
-     * increments at the start of every background activity. This allows us to check the % of
-     * requests that didn't get delivered to the backend.
-     */
-    fun incrementAndGetBackgroundActivityNumber(): Int
-
-    /**
-     * Increments and returns the crash number ordinal. This is an integer that
-     * increments on every crash. It allows us to check the % of crashes that
-     * didn't get delivered to the backend.
-     */
-    fun incrementAndGetCrashNumber(): Int
-
-    /**
-     * Increments and returns the native crash number ordinal. This is an integer that
-     * increments on every native crash. It allows us to check the % of native crashes that
-     * didn't get delivered to the backend.
-     */
-    fun incrementAndGetNativeCrashNumber(): Int
-
-    /**
      * Last javaScript bundle string url.
      */
     var javaScriptBundleURL: String?

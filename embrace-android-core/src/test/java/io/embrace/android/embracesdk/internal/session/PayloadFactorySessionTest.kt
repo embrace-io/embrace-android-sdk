@@ -4,7 +4,7 @@ import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorServic
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
-import io.embrace.android.embracesdk.fakes.FakePreferenceService
+import io.embrace.android.embracesdk.fakes.FakeOrdinalStore
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fakes.FakeUserService
@@ -44,7 +44,7 @@ internal class PayloadFactorySessionTest {
     private lateinit var spanRepository: SpanRepository
     private lateinit var currentSessionSpan: CurrentSessionSpan
     private lateinit var spanService: SpanService
-    private lateinit var preferencesService: FakePreferenceService
+    private lateinit var store: FakeOrdinalStore
     private lateinit var blockingExecutorService: BlockingScheduledExecutorService
 
     companion object {
@@ -73,7 +73,7 @@ internal class PayloadFactorySessionTest {
         metadataService = FakeMetadataService()
         sessionIdTracker = FakeSessionIdTracker()
         activityService = FakeProcessStateService(isInBackground = true)
-        preferencesService = FakePreferenceService()
+        store = FakeOrdinalStore()
         userService = FakeUserService()
         val initModule = FakeInitModule(clock = clock)
         spanRepository = initModule.openTelemetryModule.spanRepository
@@ -102,7 +102,7 @@ internal class PayloadFactorySessionTest {
         val logger = EmbLoggerImpl()
         val collator = PayloadMessageCollatorImpl(
             payloadSourceModule.sessionEnvelopeSource,
-            preferencesService,
+            store,
             currentSessionSpan
         )
         service = PayloadFactoryImpl(collator, payloadSourceModule.logEnvelopeSource, FakeConfigService(), logger)

@@ -6,6 +6,8 @@ import com.android.server.os.TombstoneProtos
 import io.embrace.android.embracesdk.ResourceReader
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
+import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
+import io.embrace.android.embracesdk.fakes.FakeOrdinalStore
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
 import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
@@ -138,7 +140,8 @@ internal class AeiNdkCrashProtobufSendTest {
             args,
             fakeBackgroundWorker(),
             activityManager,
-            FakeAeiDataStore()
+            FakeKeyValueStore(),
+            FakeOrdinalStore(),
         ) { ndkTraceFile }.onDataCaptureEnabled()
         return args.destination
     }

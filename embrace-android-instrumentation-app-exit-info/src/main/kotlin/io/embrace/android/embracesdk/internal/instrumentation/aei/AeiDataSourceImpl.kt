@@ -10,6 +10,9 @@ import io.embrace.android.embracesdk.internal.arch.datasource.LogSeverity
 import io.embrace.android.embracesdk.internal.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType.AeiLog
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.store.KeyValueStore
+import io.embrace.android.embracesdk.internal.store.Ordinal
+import io.embrace.android.embracesdk.internal.store.OrdinalStore
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
@@ -19,7 +22,8 @@ internal class AeiDataSourceImpl(
     args: InstrumentationArgs,
     private val backgroundWorker: BackgroundWorker,
     private val activityManager: ActivityManager,
-    private val aeiDataStore: AeiDataStore,
+    private val store: KeyValueStore,
+    private val ordinalStore: OrdinalStore,
     private val versionChecker: VersionChecker = BuildVersionChecker,
 ) : DataSourceImpl(
     args = args,
@@ -28,6 +32,7 @@ internal class AeiDataSourceImpl(
 
     private companion object {
         private const val SDK_AEI_SEND_LIMIT = 64
+        private const val AEI_HASH_CODES = "io.embrace.aeiHashCode"
     }
 
     override fun onDataCaptureEnabled() {
@@ -43,17 +48,17 @@ internal class AeiDataSourceImpl(
     private fun processAeiRecords() {
         val maxNum = configService.appExitInfoBehavior.appExitInfoMaxNum()
         val records = activityManager.getHistoricalProcessExitReasons(null, 0, maxNum).take(SDK_AEI_SEND_LIMIT)
-        val deliveredIds = aeiDataStore.deliveredAeiIds
+        val deliveredIds = store.deliveredAeiIds
 
         // update persisted state on what records were sent
         val unsentRecords = records.filter { !deliveredIds.contains(it.getAeiId()) }
         val sentRecords = records.minus(unsentRecords.toSet())
-        aeiDataStore.deliveredAeiIds = sentRecords.map { it.getAeiId() }.toSet()
+        store.deliveredAeiIds = sentRecords.map { it.getAeiId() }.toSet()
 
         unsentRecords.forEach {
             val obj = it.constructAeiObject(versionChecker, configService.appExitInfoBehavior.getTraceMaxLimit())
-            val crashNumber = obj?.getOrdinal(aeiDataStore::incrementAndGetCrashNumber)
-            val aeiNumber = obj?.getOrdinal(aeiDataStore::incrementAndGetAeiCrashNumber)
+            val crashNumber = obj?.getOrdinal { ordinalStore.incrementAndGet(Ordinal.CRASH) }
+            val aeiNumber = obj?.getOrdinal { ordinalStore.incrementAndGet(Ordinal.AEI_CRASH) }
             if (obj == null) {
                 return@forEach
             }
@@ -78,7 +83,7 @@ internal class AeiDataSourceImpl(
                 }
 
                 // always count AEI as delivered once we process it & submit to the OTel logging system, or discard
-                aeiDataStore.deliveredAeiIds = aeiDataStore.deliveredAeiIds.plus(obj.getAeiId())
+                store.deliveredAeiIds = store.deliveredAeiIds.plus(obj.getAeiId())
             }
         }
     }
@@ -91,6 +96,10 @@ internal class AeiDataSourceImpl(
         true -> provider()
         else -> null
     }
+
+    private var KeyValueStore.deliveredAeiIds: Set<String>
+        get() = store.getStringSet(AEI_HASH_CODES) ?: emptySet()
+        set(value) = store.edit { putStringSet(AEI_HASH_CODES, value) }
 
     private fun ApplicationExitInfo.getAeiId(): String = "${timestamp}_$pid"
     private fun AppExitInfoData.getAeiId(): String = "${timestamp}_$pid"

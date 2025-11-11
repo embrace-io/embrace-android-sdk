@@ -3,16 +3,16 @@ package io.embrace.android.embracesdk.internal.session.message
 import io.embrace.android.embracesdk.internal.envelope.session.SessionEnvelopeSource
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
-import io.embrace.android.embracesdk.internal.prefs.PreferencesService
 import io.embrace.android.embracesdk.internal.session.SessionZygote
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
+import io.embrace.android.embracesdk.internal.store.OrdinalStore
 
 /**
  * Generates a payload
  */
 internal class PayloadMessageCollatorImpl(
     private val sessionEnvelopeSource: SessionEnvelopeSource,
-    private val preferencesService: PreferencesService,
+    private val store: OrdinalStore,
     private val currentSessionSpan: CurrentSessionSpan,
 ) : PayloadMessageCollator {
 
@@ -24,7 +24,7 @@ internal class PayloadMessageCollatorImpl(
             isColdStart = coldStart,
             appState = appState,
             startType = startType,
-            number = getSessionNumber(preferencesService)
+            number = getSessionNumber(store)
         )
     }
 
@@ -34,8 +34,7 @@ internal class PayloadMessageCollatorImpl(
             startNewSession = params.startNewSession,
             crashId = params.crashId
         )
-        return Envelope<SessionPayload>(
-            // future work: make legacy fields null here.
+        return Envelope(
             resource = envelope.resource,
             metadata = envelope.metadata,
             data = envelope.data,

@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.Context
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
+import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.injection.WorkerThreadModule
@@ -28,6 +29,7 @@ internal class InstrumentationArgsImpl(
     override val ordinalStore: OrdinalStore,
     private val workerThreadModule: WorkerThreadModule,
     private val sessionIdTracker: SessionIdTracker,
+    private val sessionPropertiesService: SessionPropertiesService,
 ) : InstrumentationArgs {
 
     override fun backgroundWorker(worker: Worker.Background): BackgroundWorker = workerThreadModule.backgroundWorker(worker)
@@ -42,6 +44,8 @@ internal class InstrumentationArgsImpl(
     }
 
     override fun sessionId(): String? = sessionIdTracker.getActiveSessionId()
+
+    override fun sessionProperties(): Map<String, String> = sessionPropertiesService.getProperties()
 
     @Suppress("UNCHECKED_CAST")
     private fun <T> Context.getSystemServiceSafe(name: String): T? = runCatching {

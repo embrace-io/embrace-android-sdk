@@ -1,6 +1,8 @@
 package io.embrace.android.embracesdk.internal.utils
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.internal.arch.stacktrace.compatThreadId
+import io.embrace.android.embracesdk.internal.arch.stacktrace.getThreadInfo
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test

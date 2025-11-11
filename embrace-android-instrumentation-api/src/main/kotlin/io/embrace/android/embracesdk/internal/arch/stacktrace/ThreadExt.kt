@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.internal.utils
+package io.embrace.android.embracesdk.internal.arch.stacktrace
 
 import android.os.Build
 import io.embrace.android.embracesdk.internal.config.behavior.DEFAULT_STACKTRACE_SIZE_LIMIT
@@ -18,7 +18,7 @@ fun getThreadInfo(
 }
 
 @Suppress("DEPRECATION")
-fun Thread.compatThreadId() = if (BuildVersionChecker.isAtLeast(Build.VERSION_CODES.BAKLAVA)) {
+fun Thread.compatThreadId() = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA) {
     threadId()
 } else {
     id

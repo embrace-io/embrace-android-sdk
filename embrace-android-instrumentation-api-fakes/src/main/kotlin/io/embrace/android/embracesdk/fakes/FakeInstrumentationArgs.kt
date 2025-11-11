@@ -29,4 +29,6 @@ class FakeInstrumentationArgs(
     }
 
     override fun sessionId(): String? = null
+
+    override fun sessionProperties(): Map<String, String> = emptyMap()
 }

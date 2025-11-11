@@ -398,9 +398,7 @@ internal class ModuleInitBootstrapper(
                     crashModule = init(CrashModule::class) {
                         crashModuleSupplier(
                             initModule,
-                            essentialServiceModule,
                             configModule,
-                            androidServicesModule,
                             instrumentationModule,
                         )
                     }

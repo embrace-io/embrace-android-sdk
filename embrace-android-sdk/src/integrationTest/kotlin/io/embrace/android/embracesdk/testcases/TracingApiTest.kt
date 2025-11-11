@@ -30,7 +30,7 @@ import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
 import io.embrace.android.embracesdk.internal.payload.getSessionSpan
 import io.embrace.android.embracesdk.internal.toEmbraceSpanData
-import io.embrace.android.embracesdk.internal.utils.compatThreadId
+import io.embrace.android.embracesdk.internal.arch.stacktrace.compatThreadId
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule

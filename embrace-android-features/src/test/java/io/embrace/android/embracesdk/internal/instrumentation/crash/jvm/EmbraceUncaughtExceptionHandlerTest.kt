@@ -2,6 +2,8 @@ package io.embrace.android.embracesdk.internal.instrumentation.crash.jvm
 
 import io.embrace.android.embracesdk.fakes.FakeJvmCrashDataSource
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
+import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
+import io.embrace.android.embracesdk.internal.arch.schema.TelemetryAttributes
 import io.embrace.android.embracesdk.internal.capture.crash.CrashTeardownHandler
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import org.junit.Assert.assertEquals
@@ -70,6 +72,8 @@ internal class EmbraceUncaughtExceptionHandlerTest {
         override fun logUnhandledJvmThrowable(exception: Throwable) {
             throw RuntimeException("Test crash")
         }
+
+        override var telemetryModifier: ((TelemetryAttributes) -> SchemaType)? = null
 
         override fun addCrashTeardownHandler(handler: CrashTeardownHandler) {
         }

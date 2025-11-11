@@ -1,23 +1,21 @@
 package io.embrace.android.embracesdk.internal.instrumentation.anr
 
-import io.embrace.android.embracesdk.assertions.assertSuccessful
 import io.embrace.android.embracesdk.fakes.FakeAnrService
 import io.embrace.android.embracesdk.fakes.FakeClock
-import io.embrace.android.embracesdk.fakes.FakeSpanService
+import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.instrumentation.anr.payload.AnrInterval
 import io.embrace.android.embracesdk.internal.instrumentation.anr.payload.AnrSample
 import io.embrace.android.embracesdk.internal.instrumentation.anr.payload.AnrSampleList
-import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
 import io.embrace.android.embracesdk.internal.payload.ThreadInfo
-import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.semconv.ExceptionAttributes
 import io.embrace.opentelemetry.kotlin.semconv.JvmAttributes
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Before
 import org.junit.Test
@@ -33,7 +31,7 @@ private const val SECOND_SAMPLE_OVERHEAD_MS = 5L
 internal class AnrOtelMapperTest {
 
     private lateinit var anrService: FakeAnrService
-    private lateinit var spanService: FakeSpanService
+    private lateinit var destination: FakeTelemetryDestination
     private lateinit var mapper: AnrOtelMapper
 
     private val stacktrace = ThreadInfo(
@@ -106,16 +104,15 @@ internal class AnrOtelMapperTest {
         )
     )
 
-    @OptIn(ExperimentalApi::class)
     @Before
     fun setUp() {
         anrService = FakeAnrService()
-        spanService = FakeSpanService()
+        destination = FakeTelemetryDestination()
         clock = FakeClock()
         mapper = AnrOtelMapper(
             anrService,
             clock,
-            spanService
+            destination
         )
     }
 
@@ -134,7 +131,7 @@ internal class AnrOtelMapperTest {
         )
         mapper.snapshotSpans().verifySnapshotPayload(4)
         mapper.record()
-        assertEquals(4, spanService.createdSpans.size)
+        assertEquals(4, destination.createdSpans.size)
     }
 
     @Test
@@ -215,16 +212,16 @@ internal class AnrOtelMapperTest {
 
     private fun List<Span>.verifySnapshotPayload(expectedCount: Int) {
         assertEquals(expectedCount, size)
-        assertEquals(0, spanService.createdSpans.size)
+        assertEquals(0, destination.createdSpans.size)
     }
 
     private fun Span.assertCommonOtelCharacteristics() {
         assertNotNull(traceId)
         assertNotNull(spanId)
-        assertEquals(OtelIds.INVALID_SPAN_ID, parentSpanId)
+        assertEquals("0000000000000000", parentSpanId)
         assertEquals("emb-thread-blockage", name)
         assertEquals(START_TIME_MS, startTimeNanos?.nanosToMillis())
-        assertSuccessful()
+        assertNotEquals(Span.Status.ERROR, status)
         assertEquals("perf.thread_blockage", attributes?.findAttribute("emb.type")?.data)
     }
 

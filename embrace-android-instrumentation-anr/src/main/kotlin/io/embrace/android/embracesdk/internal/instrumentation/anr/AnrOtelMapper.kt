@@ -1,13 +1,12 @@
 package io.embrace.android.embracesdk.internal.instrumentation.anr
 
+import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.envelope.session.OtelPayloadMapper
 import io.embrace.android.embracesdk.internal.instrumentation.anr.payload.AnrInterval
 import io.embrace.android.embracesdk.internal.instrumentation.anr.payload.AnrSample
-import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
-import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
@@ -22,7 +21,7 @@ import kotlin.random.Random
 class AnrOtelMapper(
     private val anrService: AnrService,
     private val clock: Clock,
-    private val spanService: SpanService,
+    private val telemetryDestination: TelemetryDestination,
     private val random: Random = Random.Default,
 ) : OtelPayloadMapper {
 
@@ -51,14 +50,16 @@ class AnrOtelMapper(
     override fun record() = EmbTrace.trace("anr-record") {
         anrService.getCapturedData().forEach { interval ->
             val attributes = mapIntervalToSpanAttributes(interval).toEmbracePayload()
-            val events = interval.anrSampleList?.samples?.mapNotNull { mapSampleToSpanEvent(it).toEmbracePayload() }
-            spanService.recordCompletedSpan(
+            val events = interval.anrSampleList?.samples?.map {
+                mapSampleToSpanEvent(it).toArchSpanEvent()
+            } ?: emptyList()
+            telemetryDestination.recordCompletedSpan(
                 name = "thread-blockage",
                 startTimeMs = interval.startTime,
                 endTimeMs = interval.endTime ?: clock.now(),
                 type = EmbType.Performance.ThreadBlockage,
                 attributes = attributes,
-                events = events ?: emptyList(),
+                events = events,
             )
         }
     }
@@ -96,7 +97,12 @@ class AnrOtelMapper(
             attrs.add(Attribute("frame_count", thread.frameCount.toString()))
 
             thread.lines?.let { lines ->
-                attrs.add(Attribute(ExceptionAttributes.EXCEPTION_STACKTRACE, lines.joinToString("\n")))
+                attrs.add(
+                    Attribute(
+                        ExceptionAttributes.EXCEPTION_STACKTRACE,
+                        lines.joinToString("\n")
+                    )
+                )
             }
         }
         return SpanEvent(
@@ -113,4 +119,14 @@ class AnrOtelMapper(
         } while (bytes.all { it == 0.toByte() })
         return bytes.joinToString("") { "%02x".format(it) }
     }
+
+    private fun List<Attribute>.toEmbracePayload(): Map<String, String> =
+        associate { Pair(it.key ?: "", it.data ?: "") }.filterKeys { it.isNotBlank() }
+
+    private fun SpanEvent.toArchSpanEvent(): io.embrace.android.embracesdk.internal.arch.datasource.SpanEvent =
+        io.embrace.android.embracesdk.internal.arch.datasource.SpanEventImpl(
+            name ?: "",
+            timestampNanos ?: 0,
+            attributes?.toEmbracePayload() ?: emptyMap()
+        )
 }

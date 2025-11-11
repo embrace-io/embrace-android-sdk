@@ -21,7 +21,7 @@ jobs:
     timeout-minutes: 60
     steps:
       - name: Validate access to version data service
-        uses: embrace-io/public-actions/upload-sdk-version@88167cd1a3fce3418e26c8c842026e6dfab99e41
+        uses: embrace-io/public-actions/upload-sdk-version@1841c9025e9640e5bbf83db6900b828df30addeb
         with:
           platform: 'android'
           version: ${{ inputs.rc_version }}
@@ -80,7 +80,7 @@ jobs:
           git push --force origin gh-pages
 
       - name: Record SDK Version History
-        uses: embrace-io/public-actions/upload-sdk-version@88167cd1a3fce3418e26c8c842026e6dfab99e41
+        uses: embrace-io/public-actions/upload-sdk-version@1841c9025e9640e5bbf83db6900b828df30addeb
         with:
           platform: 'android'
           version: ${{ inputs.rc_version }}

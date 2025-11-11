@@ -19,6 +19,7 @@ import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import io.embrace.android.embracesdk.testframework.actions.createStoredNativeCrashData
 import io.embrace.android.embracesdk.assertions.getLastLog
+import io.embrace.android.embracesdk.internal.worker.Worker
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -40,7 +41,8 @@ internal class ResurrectionFeatureTest {
     @JvmField
     val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule {
         EmbraceSetupInterface(
-            fakeStorageLayer = true
+            fakeStorageLayer = true,
+            workerToFake = Worker.Background.NonIoRegWorker,
         ).apply {
             getEmbLogger().throwOnInternalError = false
             fakeSymbolService.symbolsForCurrentArch.putAll(fakeSymbols)

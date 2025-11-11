@@ -92,7 +92,7 @@ internal class PayloadSourceModuleImpl(
         }
     }
 
-    override val resourceSource by singleton {
+    private val resourceSource by singleton {
         EmbTrace.trace("resource-source") {
             EnvelopeResourceSourceImpl(
                 hostedSdkVersionInfo,
@@ -115,7 +115,7 @@ internal class PayloadSourceModuleImpl(
         }
     }
 
-    override val metadataSource by singleton {
+    private val metadataSource by singleton {
         EmbTrace.trace("metadata-source") {
             EnvelopeMetadataSourceImpl { essentialServiceModule.userService.getUserInfo() }
         }

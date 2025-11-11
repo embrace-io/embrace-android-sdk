@@ -51,7 +51,6 @@ class DeliveryModuleImplTest {
         assertNotNull(module.payloadStorageService)
         assertNotNull(module.cacheStorageService)
         assertNotNull(module.cachedLogEnvelopeStore)
-        assertNotNull(module.requestExecutionService)
         assertNotNull(module.schedulingService)
         assertTrue(module.payloadStore is PayloadStoreImpl)
     }
@@ -65,7 +64,6 @@ class DeliveryModuleImplTest {
         assertNull(module.payloadStorageService)
         assertNull(module.cacheStorageService)
         assertNull(module.cachedLogEnvelopeStore)
-        assertTrue(module.requestExecutionService is FakeRequestExecutionService)
         assertNull(module.schedulingService)
         assertNull(module.payloadStore)
     }

@@ -52,7 +52,6 @@ internal class SessionOrchestrationModuleImplTest {
             FakeStartupService(),
             FakeLogModule()
         )
-        assertNotNull(module.payloadMessageCollator)
         assertNotNull(module.payloadFactory)
         assertNotNull(module.sessionOrchestrator)
     }
@@ -81,7 +80,6 @@ internal class SessionOrchestrationModuleImplTest {
             FakeStartupService(),
             FakeLogModule()
         )
-        assertNotNull(module.payloadMessageCollator)
         assertNotNull(module.payloadFactory)
         assertNotNull(module.sessionOrchestrator)
     }

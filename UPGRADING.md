@@ -13,6 +13,41 @@
 | sourceCompatibility/targetCompatibility | 11                        |
 | minSdk                                  | 21                        |
 
+## Embrace Gradle Plugin renamed
+
+The Embrace Gradle Plugin artifact and plugin ID have been renamed:
+
+| Type        | Old name                       | New name                              |
+|-------------|--------------------------------|---------------------------------------|
+| Artifact ID | `io.embrace:embrace-swazzler`  | `io.embrace:embrace-gradle-plugin`    |
+| Plugin ID   | `io.embrace.swazzler`          | `io.embrace.gradle`                   |
+
+### Migration guide
+
+**Version Catalogs (gradle/libs.versions.toml):**
+```toml
+[plugins]
+embrace = { id = "io.embrace.gradle", version.ref = "embrace" }
+```
+
+**Non-Catalog Configuration (settings.gradle or settings.gradle.kts):**
+```kotlin
+pluginManagement {
+    plugins {
+        id("io.embrace.gradle") version "${embrace_version}"
+    }
+}
+```
+
+**Legacy Buildscript (root build.gradle):**
+```groovy
+buildscript {
+    dependencies {
+        classpath "io.embrace:embrace-gradle-plugin:${embrace_version}"
+    }
+}
+```
+
 ## Notable features
 
 The SDK now uses [opentelemetry-kotlin](https://github.com/embrace-io/opentelemetry-kotlin)'s API for capturing telemetry internally.

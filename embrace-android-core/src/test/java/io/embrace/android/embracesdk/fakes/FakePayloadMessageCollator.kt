@@ -10,7 +10,7 @@ import io.embrace.android.embracesdk.internal.session.message.PayloadMessageColl
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSnapshotType
 import java.util.concurrent.atomic.AtomicInteger
 
-class FakeV2PayloadCollator(
+class FakePayloadMessageCollator(
     val currentSessionSpan: FakeCurrentSessionSpan = FakeCurrentSessionSpan(),
 ) : PayloadMessageCollator {
 

@@ -1,13 +1,13 @@
 package io.embrace.android.embracesdk.internal
 
 import android.app.Activity
-import android.app.Application.ActivityLifecycleCallbacks
+import android.app.Application
 import android.os.Bundle
 import io.embrace.android.embracesdk.fakes.FakeClock
 
 class ClockTickingActivityLifecycleCallbacks(
     private val clock: FakeClock
-) : ActivityLifecycleCallbacks {
+) : Application.ActivityLifecycleCallbacks {
 
     override fun onActivityPreCreated(activity: Activity, savedInstanceState: Bundle?) {
         clock.tick(PRE_DURATION)

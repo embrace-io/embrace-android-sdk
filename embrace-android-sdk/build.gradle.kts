@@ -6,20 +6,9 @@ plugins {
 description = "Embrace Android SDK: Core"
 
 android {
-    ndkVersion = "29.0.14206865"
-
     defaultConfig {
         namespace = "io.embrace.android.embracesdk"
         consumerProguardFiles("embrace-proguard.cfg")
-    }
-
-    externalNativeBuild {
-        cmake {
-            path = file("CMakeLists.txt")
-        }
-    }
-    packaging {
-        jniLibs.pickFirsts.add("**/*.so")
     }
 }
 
@@ -40,6 +29,7 @@ dependencies {
     // automatically included instrumentation
     implementation(project(":embrace-android-instrumentation-app-exit-info"))
     implementation(project(":embrace-android-instrumentation-crash-jvm"))
+    implementation(project(":embrace-android-instrumentation-crash-ndk"))
     implementation(project(":embrace-android-instrumentation-fcm"))
     implementation(project(":embrace-android-instrumentation-huc-lite"))
     implementation(project(":embrace-android-instrumentation-network-status"))

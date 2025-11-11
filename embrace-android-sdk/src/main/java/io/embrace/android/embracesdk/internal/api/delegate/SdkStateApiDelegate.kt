@@ -16,7 +16,7 @@ internal class SdkStateApiDelegate(
     private val preferencesService by embraceImplInject(sdkCallChecker) {
         bootstrapper.androidServicesModule.preferencesService
     }
-    private val crashVerifier by embraceImplInject(sdkCallChecker) { bootstrapper.crashModule.lastRunCrashVerifier }
+    private val crashVerifier by embraceImplInject(sdkCallChecker) { bootstrapper.featureModule.lastRunCrashVerifier }
 
     override val isStarted: Boolean
         get() = sdkCallChecker.started.get()

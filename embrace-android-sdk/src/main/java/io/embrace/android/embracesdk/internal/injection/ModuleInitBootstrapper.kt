@@ -250,6 +250,7 @@ internal class ModuleInitBootstrapper(
                         featureModuleSupplier(
                             instrumentationModule,
                             configModule.configService,
+                            storageModule,
                         )
                     }
                     postInit(FeatureModule::class) {
@@ -397,7 +398,6 @@ internal class ModuleInitBootstrapper(
                     crashModule = init(CrashModule::class) {
                         crashModuleSupplier(
                             initModule,
-                            storageModule,
                             essentialServiceModule,
                             configModule,
                             androidServicesModule,
@@ -411,6 +411,7 @@ internal class ModuleInitBootstrapper(
                             anrModule.anrService?.let(::addCrashTeardownHandler)
                             addCrashTeardownHandler(logModule.logOrchestrator)
                             addCrashTeardownHandler(sessionOrchestrationModule.sessionOrchestrator)
+                            addCrashTeardownHandler(featureModule.crashMarker)
                             deliveryModule.payloadStore?.let(::addCrashTeardownHandler)
                         }
                     }

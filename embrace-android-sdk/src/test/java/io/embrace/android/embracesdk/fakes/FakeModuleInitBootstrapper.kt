@@ -58,7 +58,7 @@ internal fun fakeModuleInitBootstrapper(
     nativeCoreModuleSupplier: NativeCoreModuleSupplier = { _, _, _, _, _, _, _, _, _, _, _ -> FakeNativeCoreModule() },
     sessionOrchestrationModuleSupplier: SessionOrchestrationModuleSupplier =
         { _, _, _, _, _, _, _, _, _, _ -> FakeSessionOrchestrationModule() },
-    crashModuleSupplier: CrashModuleSupplier = { _, _, _, _, _, _ -> FakeCrashModule() },
+    crashModuleSupplier: CrashModuleSupplier = { _, _, _, _, _ -> FakeCrashModule() },
     payloadSourceModuleSupplier: PayloadSourceModuleSupplier =
         { _, _, _, _, _, _, _, _, _, _, _ -> FakePayloadSourceModule() },
 ) = ModuleInitBootstrapper(

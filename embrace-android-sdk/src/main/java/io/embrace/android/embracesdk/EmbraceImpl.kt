@@ -139,10 +139,10 @@ internal class EmbraceImpl(
         application = coreModule.application
 
         val configModule = bootstrapper.configModule
-
         val crashModule = bootstrapper.crashModule
+        val featureModule = bootstrapper.featureModule
 
-        crashModule.lastRunCrashVerifier.readAndCleanMarkerAsync(
+        featureModule.lastRunCrashVerifier.readAndCleanMarkerAsync(
             bootstrapper.workerThreadModule.backgroundWorker(Worker.Background.IoRegWorker)
         )
 

@@ -5,14 +5,12 @@ import io.embrace.android.embracesdk.internal.injection.ConfigModule
 import io.embrace.android.embracesdk.internal.injection.EssentialServiceModule
 import io.embrace.android.embracesdk.internal.injection.InitModule
 import io.embrace.android.embracesdk.internal.injection.InstrumentationModule
-import io.embrace.android.embracesdk.internal.injection.StorageModule
 
 /**
  * Function that returns an instance of [CrashModule]. Matches the signature of the constructor for [CrashModuleImpl]
  */
 typealias CrashModuleSupplier = (
     initModule: InitModule,
-    storageModule: StorageModule,
     essentialServiceModule: EssentialServiceModule,
     configModule: ConfigModule,
     androidServicesModule: AndroidServicesModule,
@@ -21,7 +19,6 @@ typealias CrashModuleSupplier = (
 
 fun createCrashModule(
     initModule: InitModule,
-    storageModule: StorageModule,
     essentialServiceModule: EssentialServiceModule,
     configModule: ConfigModule,
     androidServicesModule: AndroidServicesModule,
@@ -29,7 +26,6 @@ fun createCrashModule(
 ): CrashModule {
     return CrashModuleImpl(
         initModule,
-        storageModule,
         essentialServiceModule,
         configModule,
         androidServicesModule,

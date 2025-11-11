@@ -1,16 +1,15 @@
 package io.embrace.android.embracesdk.internal.instrumentation.crash.ndk
 
 import android.os.Build
+import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.delivery.storage.StorageLocation
 import io.embrace.android.embracesdk.internal.handler.AndroidMainThreadHandler
 import io.embrace.android.embracesdk.internal.injection.ConfigModule
 import io.embrace.android.embracesdk.internal.injection.EssentialServiceModule
-import io.embrace.android.embracesdk.internal.injection.InstrumentationModule
 import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModule
 import io.embrace.android.embracesdk.internal.injection.StorageModule
 import io.embrace.android.embracesdk.internal.injection.WorkerThreadModule
 import io.embrace.android.embracesdk.internal.injection.asFile
-import io.embrace.android.embracesdk.internal.injection.singleton
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.jni.JniDelegate
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.jni.JniDelegateImpl
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.symbols.SymbolService
@@ -24,20 +23,18 @@ class NativeCoreModuleImpl(
     workerThreadModule: WorkerThreadModule,
     storageModule: StorageModule,
     essentialServiceModule: EssentialServiceModule,
-    instrumentationModule: InstrumentationModule,
+    args: InstrumentationArgs,
     otelModule: OpenTelemetryModule,
     delegateProvider: Provider<JniDelegate?>,
     sharedObjectLoaderProvider: Provider<SharedObjectLoader?>,
     symbolServiceProvider: Provider<SymbolService?>,
 ) : NativeCoreModule {
 
-    private val args by singleton { instrumentationModule.instrumentationArgs }
-
-    override val delegate by singleton {
+    override val delegate by lazy {
         delegateProvider() ?: JniDelegateImpl()
     }
 
-    override val symbolService: SymbolService by singleton {
+    override val symbolService: SymbolService by lazy {
         symbolServiceProvider() ?: SymbolServiceImpl(
             configModule.cpuAbi,
             args.serializer,
@@ -45,7 +42,7 @@ class NativeCoreModuleImpl(
         )
     }
 
-    override val sharedObjectLoader: SharedObjectLoader by singleton {
+    override val sharedObjectLoader: SharedObjectLoader by lazy {
         sharedObjectLoaderProvider() ?: SharedObjectLoaderImpl(args.logger)
     }
 
@@ -61,18 +58,14 @@ class NativeCoreModuleImpl(
         workerThreadModule.priorityWorker(Worker.Priority.DataPersistenceWorker)
     )
 
-    override val nativeCrashHandlerInstaller: NativeCrashHandlerInstaller? by singleton {
+    override val nativeCrashHandlerInstaller: NativeCrashHandlerInstaller? by lazy {
         if (args.configService.autoDataCaptureBehavior.isNativeCrashCaptureEnabled()) {
             NativeCrashHandlerInstallerImpl(
-                configService = args.configService,
                 sharedObjectLoader = sharedObjectLoader,
-                logger = args.logger,
                 delegate = delegate,
-                backgroundWorker = workerThreadModule.backgroundWorker(Worker.Background.IoRegWorker),
                 nativeInstallMessage = nativeInstallMessage,
                 mainThreadHandler = AndroidMainThreadHandler(),
-                clock = args.clock,
-                sessionIdTracker = essentialServiceModule.sessionIdTracker,
+                args = args,
                 processIdProvider = { otelModule.otelSdkConfig.processIdentifier },
                 outputDir = nativeOutputDir
             )
@@ -81,7 +74,7 @@ class NativeCoreModuleImpl(
         }
     }
 
-    private val nativeInstallMessage: NativeInstallMessage by singleton {
+    private val nativeInstallMessage: NativeInstallMessage by lazy {
         val markerFilePath =
             storageModule.storageService.getFileForWrite("embrace_crash_marker").absolutePath
         NativeInstallMessage(

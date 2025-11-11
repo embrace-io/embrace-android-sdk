@@ -1,35 +1,33 @@
 package io.embrace.android.embracesdk.internal.instrumentation.crash.ndk
 
-import io.embrace.android.embracesdk.internal.clock.Clock
-import io.embrace.android.embracesdk.internal.config.ConfigService
+import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.delivery.PayloadType
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
 import io.embrace.android.embracesdk.internal.handler.MainThreadHandler
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.jni.JniDelegate
-import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
-import io.embrace.android.embracesdk.internal.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.Provider
-import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
+import io.embrace.android.embracesdk.internal.worker.Worker
 import java.io.File
 
 private const val HANDLER_CHECK_DELAY_MS = 5000L
 
 class NativeCrashHandlerInstallerImpl(
-    private val configService: ConfigService,
     private val sharedObjectLoader: SharedObjectLoader,
-    private val logger: EmbLogger,
     private val delegate: JniDelegate,
-    private val backgroundWorker: BackgroundWorker,
     private val nativeInstallMessage: NativeInstallMessage,
     private val mainThreadHandler: MainThreadHandler,
-    private val clock: Clock,
-    private val sessionIdTracker: SessionIdTracker,
+    private val args: InstrumentationArgs,
     private val processIdProvider: Provider<String>,
     private val outputDir: Lazy<File>,
 ) : NativeCrashHandlerInstaller {
+
+    private val backgroundWorker = args.backgroundWorker(Worker.Background.IoRegWorker)
+    private val configService = args.configService
+    private val logger = args.logger
+    private val clock = args.clock
 
     override fun install() {
         backgroundWorker.submit {
@@ -42,7 +40,7 @@ class NativeCrashHandlerInstallerImpl(
     private fun startNativeCrashMonitoring() {
         try {
             if (sharedObjectLoader.loadEmbraceNative()) {
-                delegate.onSessionChange(sanitizeSessionId(sessionIdTracker.getActiveSessionId()), createNativeReportPath())
+                delegate.onSessionChange(sanitizeSessionId(args.sessionId()), createNativeReportPath())
                 mainThreadHandler.postAtFrontOfQueue { installSignals() }
                 mainThreadHandler.postDelayed(
                     Runnable(::checkSignalHandlersOverwritten),
@@ -101,7 +99,7 @@ class NativeCrashHandlerInstallerImpl(
     private fun createNativeReportPath(): String {
         val metadata = StoredTelemetryMetadata(
             timestamp = clock.now(),
-            uuid = sanitizeSessionId(sessionIdTracker.getActiveSessionId()),
+            uuid = sanitizeSessionId(args.sessionId()),
             processId = processIdProvider(),
             envelopeType = SupportedEnvelopeType.CRASH,
             payloadType = PayloadType.NATIVE_CRASH,

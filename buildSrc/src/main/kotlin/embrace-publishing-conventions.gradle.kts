@@ -6,8 +6,11 @@ mavenPublishing {
     coordinates("io.embrace", project.name, project.version.toString())
 
     publishToMavenCentral()
-    signAllPublications()
 
+    // Only enable signing if credentials are available (e.g., in CI during publish or locally)
+    if (project.hasProperty("signingInMemoryKey")) {
+        signAllPublications()
+    }
     pom {
         name.set(project.name)
         description.set("Embrace Android SDK")

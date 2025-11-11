@@ -1,5 +1,7 @@
 package io.embrace.android.embracesdk.internal.instrumentation.crash.ndk
 
+import androidx.test.core.app.ApplicationProvider
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.fakes.FakeNativeCrashProcessor
 import io.embrace.android.embracesdk.fakes.FakeOrdinalStore
@@ -16,13 +18,14 @@ import io.embrace.android.embracesdk.internal.utils.toUTF8String
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
 import io.embrace.opentelemetry.kotlin.semconv.SessionAttributes
-import io.mockk.mockk
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
+import org.junit.runner.RunWith
 
+@RunWith(AndroidJUnit4::class)
 @OptIn(ExperimentalApi::class, IncubatingApi::class)
 internal class NativeCrashDataSourceImplTest {
 
@@ -34,7 +37,7 @@ internal class NativeCrashDataSourceImplTest {
     @Before
     fun setUp() {
         crashProcessor = FakeNativeCrashProcessor()
-        args = FakeInstrumentationArgs(mockk())
+        args = FakeInstrumentationArgs(ApplicationProvider.getApplicationContext())
         serializer = EmbraceSerializer()
         nativeCrashDataSource = NativeCrashDataSourceImpl(
             nativeCrashProcessor = crashProcessor,

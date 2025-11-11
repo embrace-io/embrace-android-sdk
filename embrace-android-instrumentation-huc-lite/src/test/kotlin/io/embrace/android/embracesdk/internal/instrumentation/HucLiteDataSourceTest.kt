@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.instrumentation
 
+import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
@@ -66,7 +67,7 @@ class HucLiteDataSourceTest {
             }
         hucLiteDataSource = HucLiteDataSource(
             args = FakeInstrumentationArgs(
-                application = mockk(),
+                application = ApplicationProvider.getApplicationContext(),
                 configService = fakeConfigService,
                 destination = fakeTelemetryDestination,
                 logger = fakeEmbLogger,
@@ -113,7 +114,7 @@ class HucLiteDataSourceTest {
     fun `record only if URL is enabled`() {
         val ds = HucLiteDataSource(
             FakeInstrumentationArgs(
-                application = mockk(),
+                application = ApplicationProvider.getApplicationContext(),
                 configService = FakeConfigService(
                     networkBehavior = FakeNetworkBehavior(
                         urlEnabled = false,

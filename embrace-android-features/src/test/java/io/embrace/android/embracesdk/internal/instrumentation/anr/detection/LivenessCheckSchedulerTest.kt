@@ -118,7 +118,7 @@ internal class LivenessCheckSchedulerTest {
     @Test
     fun testGetConfigService() {
         assertEquals(configService, scheduler.configService)
-        val obj = mockk<ConfigService>()
+        val obj = FakeConfigService()
         scheduler.configService = obj
         assertEquals(obj, scheduler.configService)
     }

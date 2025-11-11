@@ -1,9 +1,9 @@
 package io.embrace.android.embracesdk.internal.api
 
 import io.embrace.android.embracesdk.internal.api.delegate.NoopEmbraceInternalInterface
+import io.embrace.android.embracesdk.internal.api.delegate.NoopInternalTracingApi
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.http.HttpMethod
-import io.mockk.mockk
 import org.junit.Assert.assertFalse
 import org.junit.Before
 import org.junit.Test
@@ -16,7 +16,7 @@ internal class NoopEmbraceInternalInterfaceTest {
     @Before
     fun setUp() {
         impl = NoopEmbraceInternalInterface(
-            mockk(relaxed = true)
+            NoopInternalTracingApi()
         )
     }
 

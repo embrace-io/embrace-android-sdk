@@ -1,5 +1,7 @@
 package io.embrace.android.embracesdk.internal.capture
 
+import androidx.test.core.app.ApplicationProvider
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.fakes.FakeLogData
 import io.embrace.android.embracesdk.internal.arch.datasource.LogSeverity
@@ -7,12 +9,13 @@ import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.capture.telemetry.InternalErrorDataSourceImpl
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.opentelemetry.kotlin.semconv.ExceptionAttributes
-import io.mockk.mockk
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Before
 import org.junit.Test
+import org.junit.runner.RunWith
 
+@RunWith(AndroidJUnit4::class)
 internal class InternalErrorDataSourceImplTest {
 
     private lateinit var dataSource: InternalErrorDataSourceImpl
@@ -20,7 +23,7 @@ internal class InternalErrorDataSourceImplTest {
 
     @Before
     fun setUp() {
-        args = FakeInstrumentationArgs(mockk())
+        args = FakeInstrumentationArgs(ApplicationProvider.getApplicationContext())
         dataSource = InternalErrorDataSourceImpl(
             args
         )

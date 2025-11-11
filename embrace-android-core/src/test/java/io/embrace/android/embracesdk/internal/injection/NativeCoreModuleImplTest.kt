@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.injection
 
+import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeConfigModule
 import io.embrace.android.embracesdk.fakes.FakeConfigService
@@ -11,7 +12,6 @@ import io.embrace.android.embracesdk.fakes.injection.FakePayloadSourceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeStorageModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.createNativeCoreModule
-import io.mockk.mockk
 import org.junit.Assert.assertNotNull
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -24,7 +24,7 @@ internal class NativeCoreModuleImplTest {
         val initModule = FakeInitModule()
         val module = createNativeCoreModule(
             initModule,
-            createCoreModule(mockk(relaxed = true), initModule),
+            createCoreModule(ApplicationProvider.getApplicationContext(), initModule),
             FakePayloadSourceModule(),
             FakeWorkerThreadModule(),
             FakeConfigModule(

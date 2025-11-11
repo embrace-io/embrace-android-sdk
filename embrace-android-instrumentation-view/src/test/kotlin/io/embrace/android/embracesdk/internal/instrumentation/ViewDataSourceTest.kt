@@ -1,16 +1,19 @@
 package io.embrace.android.embracesdk.internal.instrumentation
 
+import androidx.test.core.app.ApplicationProvider
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.attrs.asPair
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.instrumentation.view.ViewDataSource
-import io.mockk.mockk
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import org.junit.runner.RunWith
 
+@RunWith(AndroidJUnit4::class)
 internal class ViewDataSourceTest {
 
     private lateinit var dataSource: ViewDataSource
@@ -18,7 +21,7 @@ internal class ViewDataSourceTest {
 
     @Before
     fun setUp() {
-        args = FakeInstrumentationArgs(mockk())
+        args = FakeInstrumentationArgs(ApplicationProvider.getApplicationContext())
         dataSource = ViewDataSource(args)
     }
 

@@ -18,7 +18,7 @@ internal class ThermalStateDataSourceTest {
 
     @Before
     fun setUp() {
-        args = FakeInstrumentationArgs(mockk())
+        args = FakeInstrumentationArgs(mockk(relaxed = true))
         dataSource = ThermalStateDataSource(
             args,
             fakeBackgroundWorker(),

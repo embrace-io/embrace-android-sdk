@@ -5,9 +5,10 @@ import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType.CRA
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType.LOG
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType.SESSION
 import io.embrace.android.embracesdk.internal.worker.PriorityRunnableFuture
-import io.mockk.mockk
 import org.junit.Assert.assertEquals
 import org.junit.Test
+import java.util.concurrent.RunnableFuture
+import java.util.concurrent.TimeUnit
 
 class StoredTelemetryComparatorTest {
 
@@ -21,12 +22,30 @@ class StoredTelemetryComparatorTest {
     @Test
     fun `sort values`() {
         val result = listOf(network, log, session2, crash, session3, session)
-            .map { PriorityRunnableFuture<StoredTelemetryMetadata>(mockk(relaxed = true), it) }
+            .map { PriorityRunnableFuture(FakeFuture(), it) }
             .sortedWith(storedTelemetryRunnableComparator)
             .map { it.priorityInfo as StoredTelemetryMetadata }
             .map(StoredTelemetryMetadata::uuid)
         val expected = listOf(crash, session, session2, session3, log, network)
             .map(StoredTelemetryMetadata::uuid)
         assertEquals(expected, result)
+    }
+
+    private class FakeFuture : RunnableFuture<StoredTelemetryMetadata> {
+        override fun run() {
+        }
+
+        override fun cancel(mayInterruptIfRunning: Boolean): Boolean = false
+
+        override fun isCancelled(): Boolean = false
+
+        override fun isDone(): Boolean = false
+
+        override fun get(): StoredTelemetryMetadata? = null
+
+        override fun get(
+            timeout: Long,
+            unit: TimeUnit,
+        ): StoredTelemetryMetadata? = null
     }
 }

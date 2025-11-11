@@ -4,7 +4,7 @@
 binaryCompatibilityValidator = "0.18.1"
 agp = "8.13.0"
 junit = "4.13.2"
-dokka = "1.9.20"
+dokka = "2.1.0"
 kotlinGradlePlugin = "2.2.21"
 koverGradlePlugin = "0.9.3"
 lint = "31.13.0"

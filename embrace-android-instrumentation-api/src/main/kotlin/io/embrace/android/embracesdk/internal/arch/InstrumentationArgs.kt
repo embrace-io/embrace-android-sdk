@@ -80,4 +80,9 @@ interface InstrumentationArgs {
      * Retrieves the current session ID, or null if there is no active session.
      */
     fun sessionId(): String?
+
+    /**
+     * Retrieves a snapshot of the current session properties
+     */
+    fun sessionProperties(): Map<String, String>
 }

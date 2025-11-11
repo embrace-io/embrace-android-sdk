@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.internal.instrumentation.anr
 
+import io.embrace.android.embracesdk.internal.arch.stacktrace.getThreadInfo
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.payload.ThreadInfo
-import io.embrace.android.embracesdk.internal.utils.getThreadInfo
 
 internal class ThreadInfoCollector(
     private val targetThread: Thread,

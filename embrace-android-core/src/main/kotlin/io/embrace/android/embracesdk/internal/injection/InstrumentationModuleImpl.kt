@@ -34,6 +34,7 @@ internal class InstrumentationModuleImpl(
             serializer = initModule.jsonSerializer,
             sessionIdTracker = essentialServiceModule.sessionIdTracker,
             ordinalStore = androidServicesModule.ordinalStore,
+            sessionPropertiesService = essentialServiceModule.sessionPropertiesService,
         )
     }
 }

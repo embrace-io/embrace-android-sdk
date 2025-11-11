@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.utils
 
+import io.embrace.android.embracesdk.internal.arch.stacktrace.compatThreadId
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Test

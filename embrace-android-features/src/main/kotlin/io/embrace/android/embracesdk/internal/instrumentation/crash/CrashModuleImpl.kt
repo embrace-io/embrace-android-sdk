@@ -1,8 +1,6 @@
 package io.embrace.android.embracesdk.internal.instrumentation.crash
 
-import io.embrace.android.embracesdk.internal.injection.AndroidServicesModule
 import io.embrace.android.embracesdk.internal.injection.ConfigModule
-import io.embrace.android.embracesdk.internal.injection.EssentialServiceModule
 import io.embrace.android.embracesdk.internal.injection.InitModule
 import io.embrace.android.embracesdk.internal.injection.InstrumentationModule
 import io.embrace.android.embracesdk.internal.injection.singleton
@@ -14,20 +12,17 @@ import io.embrace.android.embracesdk.internal.payload.AppFramework
 
 internal class CrashModuleImpl(
     initModule: InitModule,
-    essentialServiceModule: EssentialServiceModule,
     configModule: ConfigModule,
-    androidServicesModule: AndroidServicesModule,
     instrumentationModule: InstrumentationModule,
 ) : CrashModule {
 
     override val jvmCrashDataSource: JvmCrashDataSource by singleton {
         JvmCrashDataSourceImpl(
-            essentialServiceModule.sessionPropertiesService,
-            androidServicesModule.ordinalStore,
             instrumentationModule.instrumentationArgs,
-            initModule.jsonSerializer,
-            jsCrashService?.let { it::appendCrashTelemetryAttributes }
-        )
+
+        ).apply {
+            jsCrashService?.let { telemetryModifier = it::appendCrashTelemetryAttributes }
+        }
     }
 
     override val jsCrashService: JsCrashService? by singleton {

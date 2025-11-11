@@ -9,14 +9,12 @@ import io.embrace.android.embracesdk.internal.arch.limits.NoopLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.arch.schema.TelemetryAttributes
+import io.embrace.android.embracesdk.internal.arch.stacktrace.getThreadInfo
 import io.embrace.android.embracesdk.internal.capture.crash.CrashTeardownHandler
-import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
 import io.embrace.android.embracesdk.internal.payload.LegacyExceptionInfo
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.store.Ordinal
-import io.embrace.android.embracesdk.internal.store.OrdinalStore
 import io.embrace.android.embracesdk.internal.utils.Uuid
-import io.embrace.android.embracesdk.internal.utils.getThreadInfo
 import io.embrace.android.embracesdk.internal.utils.toUTF8String
 import io.embrace.opentelemetry.kotlin.semconv.ExceptionAttributes
 import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
@@ -28,19 +26,14 @@ import java.util.concurrent.atomic.AtomicBoolean
  * Intercept and track uncaught Android Runtime exceptions
  */
 internal class JvmCrashDataSourceImpl(
-    private val sessionPropertiesService: SessionPropertiesService,
-    private val ordinalStore: OrdinalStore,
-    args: InstrumentationArgs,
-    private val serializer: PlatformSerializer,
-
-    // allows modification of attributes and schema type if necessary.
-    private val telemetryModifier: ((TelemetryAttributes) -> SchemaType)? = null,
+    private val args: InstrumentationArgs,
 ) : JvmCrashDataSource,
     DataSourceImpl(
         args = args,
         limitStrategy = NoopLimitStrategy,
     ) {
 
+    private val serializer: PlatformSerializer = args.serializer
     private val mainCrashHandled = AtomicBoolean(false)
     private val handlers: CopyOnWriteArrayList<CrashTeardownHandler> = CopyOnWriteArrayList()
 
@@ -49,6 +42,8 @@ internal class JvmCrashDataSourceImpl(
             registerExceptionHandler()
         }
     }
+
+    override var telemetryModifier: ((TelemetryAttributes) -> SchemaType)? = null
 
     /**
      * Handles a crash caught by the [EmbraceUncaughtExceptionHandler] by constructing a
@@ -62,9 +57,9 @@ internal class JvmCrashDataSourceImpl(
         if (!mainCrashHandled.getAndSet(true)) {
             captureTelemetry {
                 val crashId = Uuid.getEmbUuid()
-                val crashNumber = ordinalStore.incrementAndGet(Ordinal.CRASH)
+                val crashNumber = args.ordinalStore.incrementAndGet(Ordinal.CRASH)
                 val attrs = TelemetryAttributes(
-                    sessionPropertiesProvider = sessionPropertiesService::getProperties,
+                    sessionPropertiesProvider = args::sessionProperties,
                 )
 
                 val crashException = LegacyExceptionInfo.ofThrowable(exception)

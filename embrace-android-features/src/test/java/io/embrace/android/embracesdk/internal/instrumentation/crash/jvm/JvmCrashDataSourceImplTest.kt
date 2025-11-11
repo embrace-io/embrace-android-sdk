@@ -5,16 +5,13 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeCrashFileMarker
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.fakes.FakeLogOrchestrator
-import io.embrace.android.embracesdk.fakes.FakeOrdinalStore
 import io.embrace.android.embracesdk.fakes.FakeSessionOrchestrator
-import io.embrace.android.embracesdk.fakes.FakeSessionPropertiesService
 import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.arch.schema.TelemetryAttributes
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
-import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
 import io.embrace.opentelemetry.kotlin.semconv.LogAttributes
 import io.mockk.mockk
@@ -31,26 +28,20 @@ internal class JvmCrashDataSourceImplTest {
     private lateinit var crashDataSource: JvmCrashDataSourceImpl
     private lateinit var logOrchestrator: FakeLogOrchestrator
     private lateinit var sessionOrchestrator: FakeSessionOrchestrator
-    private lateinit var sessionPropertiesService: FakeSessionPropertiesService
     private lateinit var anrService: FakeAnrService
-    private lateinit var ordinalStore: FakeOrdinalStore
     private lateinit var crashMarker: FakeCrashFileMarker
-    private lateinit var serializer: EmbraceSerializer
     private lateinit var args: FakeInstrumentationArgs
     private lateinit var logger: EmbLogger
     private lateinit var testException: Exception
-    private var telemetryModifier: ((TelemetryAttributes) -> SchemaType)? = null
+    private var modifier: ((TelemetryAttributes) -> SchemaType)? = null
 
     @Before
     fun setUp() {
         logOrchestrator = FakeLogOrchestrator()
         sessionOrchestrator = FakeSessionOrchestrator()
-        sessionPropertiesService = FakeSessionPropertiesService()
         anrService = FakeAnrService()
-        ordinalStore = FakeOrdinalStore()
         crashMarker = FakeCrashFileMarker()
         args = FakeInstrumentationArgs(mockk())
-        serializer = EmbraceSerializer()
         logger = EmbLoggerImpl()
         testException = RuntimeException("Test exception")
     }
@@ -64,13 +55,8 @@ internal class JvmCrashDataSourceImplTest {
                 )
             )
         )
-        crashDataSource = JvmCrashDataSourceImpl(
-            sessionPropertiesService,
-            ordinalStore,
-            args,
-            serializer,
-            telemetryModifier,
-        ).apply {
+        crashDataSource = JvmCrashDataSourceImpl(args).apply {
+            telemetryModifier = modifier
             addCrashTeardownHandler(logOrchestrator)
             addCrashTeardownHandler(sessionOrchestrator)
             addCrashTeardownHandler(crashMarker)
@@ -136,14 +122,14 @@ internal class JvmCrashDataSourceImplTest {
 
     @Test
     fun `test RN crash by calling logUnhandledJsException() before handleCrash()`() {
-        val jsCrashService = JsCrashServiceImpl(serializer)
+        val jsCrashService = JsCrashServiceImpl(args.serializer)
         jsCrashService.logUnhandledJsException(
             "NullPointerException",
             "Null pointer exception occurred",
             "RuntimeException",
             "at com.example.MyClass.method(MyClass.kt:10)"
         )
-        telemetryModifier = jsCrashService::appendCrashTelemetryAttributes
+        modifier = jsCrashService::appendCrashTelemetryAttributes
         setupForHandleCrash()
 
         crashDataSource.logUnhandledJvmThrowable(testException)

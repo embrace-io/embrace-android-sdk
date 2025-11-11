@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal
 
 import io.embrace.android.embracesdk.concurrency.SingleThreadTestScheduledExecutor
-import io.embrace.android.embracesdk.internal.utils.compatThreadId
+import io.embrace.android.embracesdk.internal.arch.stacktrace.compatThreadId
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull

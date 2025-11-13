@@ -1,11 +1,11 @@
 package io.embrace.android.embracesdk.testcases.session
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.assertions.assertMatches
 import io.embrace.android.embracesdk.assertions.findEventsOfType
 import io.embrace.android.embracesdk.assertions.findSessionSpan
+import io.embrace.android.embracesdk.assertions.getLogsOfType
 import io.embrace.android.embracesdk.assertions.getSessionId
-import io.embrace.android.embracesdk.internal.arch.schema.EmbType
-import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.arch.attrs.embCleanExit
 import io.embrace.android.embracesdk.internal.arch.attrs.embColdStart
 import io.embrace.android.embracesdk.internal.arch.attrs.embProcessIdentifier
@@ -15,13 +15,13 @@ import io.embrace.android.embracesdk.internal.arch.attrs.embSessionNumber
 import io.embrace.android.embracesdk.internal.arch.attrs.embSessionStartType
 import io.embrace.android.embracesdk.internal.arch.attrs.embState
 import io.embrace.android.embracesdk.internal.arch.attrs.embTerminated
-import io.embrace.android.embracesdk.internal.payload.ApplicationState
-import io.embrace.android.embracesdk.internal.payload.Span
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
+import io.embrace.android.embracesdk.internal.payload.Span
+import io.embrace.android.embracesdk.internal.session.lifecycle.AppState
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
-import io.embrace.android.embracesdk.assertions.assertMatches
-import io.embrace.android.embracesdk.assertions.getLogsOfType
 import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
 import io.embrace.opentelemetry.kotlin.semconv.SessionAttributes
 import org.junit.Assert.assertEquals
@@ -79,7 +79,7 @@ internal class BackgroundActivityDisabledTest {
             },
             assertAction = {
                 val sessions = getSessionEnvelopes(2)
-                getSessionEnvelopes(0, ApplicationState.BACKGROUND)
+                getSessionEnvelopes(0, AppState.BACKGROUND)
 
                 val logs = getLogEnvelopes(2).flatMap { it.getLogsOfType(EmbType.System.Log) }
                 with(logs[0]) {
@@ -165,7 +165,7 @@ internal class BackgroundActivityDisabledTest {
                 val session1 = sessions[0]
                 val session2 = sessions[1]
                 assertEquals(2, sessions.size)
-                assertEquals(0, getSessionEnvelopes(0, ApplicationState.BACKGROUND).size)
+                assertEquals(0, getSessionEnvelopes(0, AppState.BACKGROUND).size)
 
                 assertEquals(session1.metadata, session2.metadata)
                 assertEquals(

@@ -37,7 +37,7 @@ internal class EssentialServiceModuleImplTest {
             networkConnectivityServiceProvider = { null }
         )
 
-        assertNotNull(module.processStateService)
+        assertNotNull(module.appStateService)
         assertNotNull(module.activityLifecycleTracker)
         assertNotNull(module.sessionIdTracker)
         assertNotNull(module.sessionPropertiesService)

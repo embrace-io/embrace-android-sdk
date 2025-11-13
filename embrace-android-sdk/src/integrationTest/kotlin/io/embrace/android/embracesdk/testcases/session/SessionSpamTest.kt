@@ -4,7 +4,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.getSessionId
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
-import io.embrace.android.embracesdk.internal.payload.ApplicationState
+import io.embrace.android.embracesdk.internal.session.lifecycle.AppState
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -36,7 +36,7 @@ internal class SessionSpamTest {
                 val ids = messages.map { it.getSessionId() }.toSet()
                 assertEquals(SESSION_COUNT, ids.size)
 
-                val bas = getSessionEnvelopes(SESSION_COUNT, ApplicationState.BACKGROUND, waitTimeMs = 10000)
+                val bas = getSessionEnvelopes(SESSION_COUNT, AppState.BACKGROUND, waitTimeMs = 10000)
                 val baIds = bas.map { it.getSessionId() }.toSet()
                 assertEquals(SESSION_COUNT, baIds.size)
             }

@@ -13,14 +13,14 @@ import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.session.SessionZygote
 import io.embrace.android.embracesdk.internal.session.id.SessionIdTracker
-import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessState
-import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateService
+import io.embrace.android.embracesdk.internal.session.lifecycle.AppState
+import io.embrace.android.embracesdk.internal.session.lifecycle.AppStateService
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactory
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.Provider
 
 internal class SessionOrchestratorImpl(
-    processStateService: ProcessStateService,
+    appStateService: AppStateService,
     private val payloadFactory: PayloadFactory,
     private val clock: Clock,
     private val configService: ConfigService,
@@ -40,12 +40,12 @@ internal class SessionOrchestratorImpl(
      */
     private var activeSession: SessionZygote? = null
     private var state = when {
-        processStateService.isInBackground -> ProcessState.BACKGROUND
-        else -> ProcessState.FOREGROUND
+        appStateService.isInBackground -> AppState.BACKGROUND
+        else -> AppState.FOREGROUND
     }
 
     init {
-        processStateService.addListener(this)
+        appStateService.addListener(this)
         EmbTrace.trace("start-first-session") { createInitialSession() }
     }
 
@@ -63,10 +63,10 @@ internal class SessionOrchestratorImpl(
         transitionState(
             transitionType = TransitionType.ON_FOREGROUND,
             oldSessionAction = { initial: SessionZygote ->
-                payloadFactory.endPayloadWithState(ProcessState.BACKGROUND, timestamp, initial)
+                payloadFactory.endPayloadWithState(AppState.BACKGROUND, timestamp, initial)
             },
             newSessionAction = {
-                payloadFactory.startPayloadWithState(ProcessState.FOREGROUND, timestamp, coldStart)
+                payloadFactory.startPayloadWithState(AppState.FOREGROUND, timestamp, coldStart)
             },
             earlyTerminationCondition = {
                 return@transitionState shouldRunOnForeground(state)
@@ -78,10 +78,10 @@ internal class SessionOrchestratorImpl(
         transitionState(
             transitionType = TransitionType.ON_BACKGROUND,
             oldSessionAction = { initial: SessionZygote ->
-                payloadFactory.endPayloadWithState(ProcessState.FOREGROUND, timestamp, initial)
+                payloadFactory.endPayloadWithState(AppState.FOREGROUND, timestamp, initial)
             },
             newSessionAction = {
-                payloadFactory.startPayloadWithState(ProcessState.BACKGROUND, timestamp, false)
+                payloadFactory.startPayloadWithState(AppState.BACKGROUND, timestamp, false)
             },
             earlyTerminationCondition = {
                 return@transitionState shouldRunOnBackground(state)
@@ -123,7 +123,7 @@ internal class SessionOrchestratorImpl(
     }
 
     override fun onSessionDataUpdate() {
-        if (state == ProcessState.BACKGROUND) {
+        if (state == AppState.BACKGROUND) {
             payloadCachingService?.reportBackgroundActivityStateChange()
         }
     }
@@ -187,8 +187,8 @@ internal class SessionOrchestratorImpl(
             EmbTrace.end()
 
             // calculate new session state
-            val endProcessState = transitionType.endState(state)
-            val inForeground = endProcessState == ProcessState.FOREGROUND
+            val endAppState = transitionType.endState(state)
+            val inForeground = endAppState == AppState.FOREGROUND
 
             // create the next session span if we should, and update the SDK state to reflect the transition
             EmbTrace.start("create-new-session")
@@ -204,7 +204,7 @@ internal class SessionOrchestratorImpl(
                 EmbTrace.start("initiate-periodic-caching")
                 if (transitionType != TransitionType.CRASH) {
                     updatePeriodicCacheAttrs()
-                    payloadCachingService?.startCaching(newState, endProcessState) { state, timestamp, zygote ->
+                    payloadCachingService?.startCaching(newState, endAppState) { state, timestamp, zygote ->
                         synchronized(lock) {
                             updatePeriodicCacheAttrs()
                             payloadFactory.snapshotPayload(state, timestamp, zygote)
@@ -223,12 +223,12 @@ internal class SessionOrchestratorImpl(
 
             EmbTrace.start("alter-session-state")
             // update the current state of the SDK. this should match the value in sessionIdTracker
-            state = endProcessState
+            state = endAppState
 
             // update data capture orchestrator
-            val sessionType = when (endProcessState) {
-                ProcessState.FOREGROUND -> SessionType.FOREGROUND
-                ProcessState.BACKGROUND -> SessionType.BACKGROUND
+            val sessionType = when (endAppState) {
+                AppState.FOREGROUND -> SessionType.FOREGROUND
+                AppState.BACKGROUND -> SessionType.BACKGROUND
             }
             instrumentationRegistry.currentSessionType = sessionType
             EmbTrace.end()

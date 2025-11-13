@@ -3,13 +3,12 @@ package io.embrace.android.embracesdk.internal.session.message
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.envelope.log.LogEnvelopeSource
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
-import io.embrace.android.embracesdk.internal.payload.ApplicationState
 import io.embrace.android.embracesdk.internal.payload.Envelope
-import io.embrace.android.embracesdk.internal.payload.LifeEventType
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
+import io.embrace.android.embracesdk.internal.session.LifeEventType
 import io.embrace.android.embracesdk.internal.session.SessionZygote
-import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessState
+import io.embrace.android.embracesdk.internal.session.lifecycle.AppState
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSnapshotType
 
 internal class PayloadFactoryImpl(
@@ -19,40 +18,40 @@ internal class PayloadFactoryImpl(
     private val logger: EmbLogger,
 ) : PayloadFactory {
 
-    override fun startPayloadWithState(state: ProcessState, timestamp: Long, coldStart: Boolean): SessionZygote? =
+    override fun startPayloadWithState(state: AppState, timestamp: Long, coldStart: Boolean): SessionZygote? =
         when (state) {
-            ProcessState.FOREGROUND -> startSessionWithState(timestamp, coldStart)
-            ProcessState.BACKGROUND -> startBackgroundActivityWithState(timestamp, coldStart)
+            AppState.FOREGROUND -> startSessionWithState(timestamp, coldStart)
+            AppState.BACKGROUND -> startBackgroundActivityWithState(timestamp, coldStart)
         }
 
     override fun endPayloadWithState(
-        state: ProcessState,
+        state: AppState,
         timestamp: Long,
         initial: SessionZygote,
     ): Envelope<SessionPayload>? =
         when (state) {
-            ProcessState.FOREGROUND -> endSessionWithState(initial)
-            ProcessState.BACKGROUND -> endBackgroundActivityWithState(initial)
+            AppState.FOREGROUND -> endSessionWithState(initial)
+            AppState.BACKGROUND -> endBackgroundActivityWithState(initial)
         }
 
     override fun endPayloadWithCrash(
-        state: ProcessState,
+        state: AppState,
         timestamp: Long,
         initial: SessionZygote,
         crashId: String,
     ): Envelope<SessionPayload>? = when (state) {
-        ProcessState.FOREGROUND -> endSessionWithCrash(initial, crashId)
-        ProcessState.BACKGROUND -> endBackgroundActivityWithCrash(initial, crashId)
+        AppState.FOREGROUND -> endSessionWithCrash(initial, crashId)
+        AppState.BACKGROUND -> endBackgroundActivityWithCrash(initial, crashId)
     }
 
     override fun snapshotPayload(
-        state: ProcessState,
+        state: AppState,
         timestamp: Long,
         initial: SessionZygote,
     ): Envelope<SessionPayload>? =
         when (state) {
-            ProcessState.FOREGROUND -> snapshotSession(initial)
-            ProcessState.BACKGROUND -> snapshotBackgroundActivity(initial)
+            AppState.FOREGROUND -> snapshotSession(initial)
+            AppState.BACKGROUND -> snapshotBackgroundActivity(initial)
         }
 
     override fun startSessionWithManual(timestamp: Long): SessionZygote {
@@ -61,7 +60,7 @@ internal class PayloadFactoryImpl(
                 false,
                 LifeEventType.MANUAL,
                 timestamp,
-                ApplicationState.FOREGROUND
+                AppState.FOREGROUND
             )
         )
     }
@@ -87,7 +86,7 @@ internal class PayloadFactoryImpl(
                 coldStart,
                 LifeEventType.STATE,
                 timestamp,
-                ApplicationState.FOREGROUND
+                AppState.FOREGROUND
             )
         )
     }
@@ -108,7 +107,7 @@ internal class PayloadFactoryImpl(
                 coldStart = coldStart,
                 startType = LifeEventType.BKGND_STATE,
                 startTime = time,
-                ApplicationState.BACKGROUND
+                AppState.BACKGROUND
             )
         )
     }

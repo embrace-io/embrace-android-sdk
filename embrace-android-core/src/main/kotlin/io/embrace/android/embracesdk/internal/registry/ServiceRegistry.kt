@@ -4,8 +4,8 @@ import io.embrace.android.embracesdk.internal.session.MemoryCleanerListener
 import io.embrace.android.embracesdk.internal.session.MemoryCleanerService
 import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityLifecycleListener
 import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityTracker
-import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateListener
-import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateService
+import io.embrace.android.embracesdk.internal.session.lifecycle.AppStateListener
+import io.embrace.android.embracesdk.internal.session.lifecycle.AppStateService
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import java.io.Closeable
 import java.util.concurrent.atomic.AtomicBoolean
@@ -26,8 +26,8 @@ class ServiceRegistry : Closeable {
     val memoryCleanerListeners: List<MemoryCleanerListener> by lazy {
         finalRegistry.filterIsInstance<MemoryCleanerListener>()
     }
-    val processStateListeners: List<ProcessStateListener> by lazy {
-        finalRegistry.filterIsInstance<ProcessStateListener>()
+    val appStateListeners: List<AppStateListener> by lazy {
+        finalRegistry.filterIsInstance<AppStateListener>()
     }
     val activityLifecycleListeners: List<ActivityLifecycleListener> by lazy {
         finalRegistry.filterIsInstance<ActivityLifecycleListener>()
@@ -50,9 +50,9 @@ class ServiceRegistry : Closeable {
         initialized.set(true)
     }
 
-    fun registerActivityListeners(processStateService: ProcessStateService): Unit =
-        processStateListeners.forEachSafe(
-            processStateService::addListener
+    fun registerActivityListeners(appStateService: AppStateService): Unit =
+        appStateListeners.forEachSafe(
+            appStateService::addListener
         )
 
     fun registerActivityLifecycleListeners(activityLifecycleTracker: ActivityTracker): Unit =

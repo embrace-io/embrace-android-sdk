@@ -1,10 +1,10 @@
 package io.embrace.android.embracesdk.internal.envelope.session
 
+import io.embrace.android.embracesdk.fakes.FakeAppStateService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeCurrentSessionSpan
 import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
 import io.embrace.android.embracesdk.fakes.FakeOtelPayloadMapper
-import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanData
@@ -48,7 +48,7 @@ internal class SessionPayloadSourceImplTest {
             currentSessionSpan,
             spanRepository,
             FakeOtelPayloadMapper(),
-            FakeProcessStateService(),
+            FakeAppStateService(),
             FakeClock(),
             EmbLoggerImpl()
         )

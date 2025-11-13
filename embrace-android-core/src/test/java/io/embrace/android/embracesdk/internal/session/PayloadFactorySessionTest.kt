@@ -1,11 +1,11 @@
 package io.embrace.android.embracesdk.internal.session
 
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
+import io.embrace.android.embracesdk.fakes.FakeAppStateService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakeOrdinalStore
-import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
@@ -39,7 +39,7 @@ internal class PayloadFactorySessionTest {
     private lateinit var clock: FakeClock
     private lateinit var metadataService: MetadataService
     private lateinit var sessionIdTracker: FakeSessionIdTracker
-    private lateinit var activityService: FakeProcessStateService
+    private lateinit var activityService: FakeAppStateService
     private lateinit var userService: UserService
     private lateinit var spanRepository: SpanRepository
     private lateinit var currentSessionSpan: CurrentSessionSpan
@@ -49,7 +49,7 @@ internal class PayloadFactorySessionTest {
 
     companion object {
 
-        private val processStateService = FakeProcessStateService()
+        private val appStateService = FakeAppStateService()
 
         @BeforeClass
         @JvmStatic
@@ -72,7 +72,7 @@ internal class PayloadFactorySessionTest {
 
         metadataService = FakeMetadataService()
         sessionIdTracker = FakeSessionIdTracker()
-        activityService = FakeProcessStateService(isInBackground = true)
+        activityService = FakeAppStateService(isInBackground = true)
         store = FakeOrdinalStore()
         userService = FakeUserService()
         val initModule = FakeInitModule(clock = clock)
@@ -96,7 +96,7 @@ internal class PayloadFactorySessionTest {
     private fun initializeSessionService(
         isActivityInBackground: Boolean = true,
     ) {
-        processStateService.isInBackground = isActivityInBackground
+        appStateService.isInBackground = isActivityInBackground
 
         val payloadSourceModule = FakePayloadSourceModule()
         val logger = EmbLoggerImpl()

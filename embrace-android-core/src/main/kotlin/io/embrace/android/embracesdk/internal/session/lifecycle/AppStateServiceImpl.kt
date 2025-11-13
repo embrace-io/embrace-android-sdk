@@ -15,16 +15,16 @@ import java.util.concurrent.CopyOnWriteArrayList
  * Service tracking the app's current process state (foreground or background) as reported
  * by ProcessLifecycleOwner.
  */
-internal class EmbraceProcessStateService(
+internal class AppStateServiceImpl(
     private val clock: Clock,
     private val logger: EmbLogger,
     private val lifecycleOwner: LifecycleOwner,
-) : ProcessStateService, LifecycleEventObserver {
+) : AppStateService, LifecycleEventObserver {
 
     /**
      * List of listeners that subscribe to process lifecycle events.
      */
-    val listeners: CopyOnWriteArrayList<ProcessStateListener> = CopyOnWriteArrayList<ProcessStateListener>()
+    val listeners: CopyOnWriteArrayList<AppStateListener> = CopyOnWriteArrayList<AppStateListener>()
 
     private var sessionOrchestrator: SessionOrchestrator? = null
 
@@ -80,7 +80,7 @@ internal class EmbraceProcessStateService(
 
         invokeCallbackSafely { sessionOrchestrator?.onForeground(coldStart, timestamp) }
 
-        listeners.toList().forEach { listener: ProcessStateListener ->
+        listeners.toList().forEach { listener: AppStateListener ->
             invokeCallbackSafely {
                 listener.onForeground(coldStart, timestamp)
             }
@@ -96,7 +96,7 @@ internal class EmbraceProcessStateService(
         isInBackground = true
         val timestamp = clock.now()
 
-        listeners.toList().forEach { listener: ProcessStateListener ->
+        listeners.toList().forEach { listener: AppStateListener ->
             invokeCallbackSafely {
                 listener.onBackground(timestamp)
             }
@@ -109,11 +109,11 @@ internal class EmbraceProcessStateService(
         try {
             action()
         } catch (ex: Exception) {
-            logger.trackInternalError(InternalErrorType.PROCESS_STATE_CALLBACK_FAIL, ex)
+            logger.trackInternalError(InternalErrorType.APP_STATE_CALLBACK_FAIL, ex)
         }
     }
 
-    override fun addListener(listener: ProcessStateListener) {
+    override fun addListener(listener: AppStateListener) {
         when (listener) {
             is SessionOrchestrator -> sessionOrchestrator = listener
             else -> listeners.addIfAbsent(listener)
@@ -127,9 +127,9 @@ internal class EmbraceProcessStateService(
         }
     }
 
-    override fun getAppState(): String = when {
-        isInBackground -> BACKGROUND_STATE
-        else -> FOREGROUND_STATE
+    override fun getAppState(): AppState = when {
+        isInBackground -> AppState.BACKGROUND
+        else -> AppState.FOREGROUND
     }
 
     override fun isInitialized(): Boolean {

@@ -1,9 +1,9 @@
 package io.embrace.android.embracesdk.internal.session.lifecycle
 
 /**
- * Listener implemented by observers of the [ProcessStateService].
+ * Listener implemented by observers of the [AppStateService].
  */
-interface ProcessStateListener {
+interface AppStateListener {
 
     /**
      * Triggered when the app enters the background.

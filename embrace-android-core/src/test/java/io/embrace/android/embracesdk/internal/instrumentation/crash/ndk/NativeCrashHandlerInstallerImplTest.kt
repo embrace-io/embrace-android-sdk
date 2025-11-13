@@ -11,6 +11,7 @@ import io.embrace.android.embracesdk.fakes.FakeSharedObjectLoader
 import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.session.id.SessionData
+import io.embrace.android.embracesdk.internal.session.lifecycle.AppState
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -24,7 +25,7 @@ class NativeCrashHandlerInstallerImplTest {
 
     private val testNativeInstallMessage = NativeInstallMessage(
         markerFilePath = "testMarkerFilePath",
-        appState = "testAppState",
+        appState = AppState.BACKGROUND,
         reportId = "testReportId",
         apiLevel = 28,
         is32bit = false,

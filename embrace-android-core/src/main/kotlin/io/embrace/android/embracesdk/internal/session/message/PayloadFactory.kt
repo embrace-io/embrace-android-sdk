@@ -4,7 +4,7 @@ import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.session.SessionZygote
-import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessState
+import io.embrace.android.embracesdk.internal.session.lifecycle.AppState
 
 /**
  * Factory that creates payload envelopes.
@@ -14,13 +14,13 @@ interface PayloadFactory {
     /**
      * Starts a session in response to a state event.
      */
-    fun startPayloadWithState(state: ProcessState, timestamp: Long, coldStart: Boolean): SessionZygote?
+    fun startPayloadWithState(state: AppState, timestamp: Long, coldStart: Boolean): SessionZygote?
 
     /**
      * Ends a session in response to a state event.
      */
     fun endPayloadWithState(
-        state: ProcessState,
+        state: AppState,
         timestamp: Long,
         initial: SessionZygote,
     ): Envelope<SessionPayload>?
@@ -29,7 +29,7 @@ interface PayloadFactory {
      * Handles an uncaught exception, ending the session and saving the session to disk.
      */
     fun endPayloadWithCrash(
-        state: ProcessState,
+        state: AppState,
         timestamp: Long,
         initial: SessionZygote,
         crashId: String,
@@ -38,7 +38,7 @@ interface PayloadFactory {
     /**
      * Provides a snapshot of the active session
      */
-    fun snapshotPayload(state: ProcessState, timestamp: Long, initial: SessionZygote): Envelope<SessionPayload>?
+    fun snapshotPayload(state: AppState, timestamp: Long, initial: SessionZygote): Envelope<SessionPayload>?
 
     /**
      * Starts a session manually.

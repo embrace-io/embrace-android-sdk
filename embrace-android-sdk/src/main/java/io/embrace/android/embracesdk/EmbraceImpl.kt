@@ -112,7 +112,7 @@ internal class EmbraceImpl(
     private var internalInterfaceModule: InternalInterfaceModule? = null
 
     val metadataService by embraceImplInject { bootstrapper.payloadSourceModule.metadataService }
-    val processStateService by embraceImplInject { bootstrapper.essentialServiceModule.processStateService }
+    val appStateService by embraceImplInject { bootstrapper.essentialServiceModule.appStateService }
     val activityLifecycleTracker by embraceImplInject { bootstrapper.essentialServiceModule.activityLifecycleTracker }
 
     private val configService by embraceImplInject { bootstrapper.configModule.configService }
@@ -174,7 +174,7 @@ internal class EmbraceImpl(
 
         initializeHucInstrumentation(configModule.configService.networkBehavior)
 
-        val inForeground = !bootstrapper.essentialServiceModule.processStateService.isInBackground
+        val inForeground = !bootstrapper.essentialServiceModule.appStateService.isInBackground
         start("startup-tracking")
         val dataCaptureServiceModule = bootstrapper.dataCaptureServiceModule
         dataCaptureServiceModule.startupService.setSdkStartupInfo(

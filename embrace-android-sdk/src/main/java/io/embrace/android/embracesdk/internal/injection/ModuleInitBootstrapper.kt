@@ -209,7 +209,7 @@ internal class ModuleInitBootstrapper(
                     postInit(EssentialServiceModule::class) {
                         with(essentialServiceModule) {
                             serviceRegistry.registerServices(
-                                lazy { essentialServiceModule.processStateService },
+                                lazy { essentialServiceModule.appStateService },
                                 lazy { activityLifecycleTracker },
                                 lazy { networkConnectivityService }
                             )
@@ -237,7 +237,7 @@ internal class ModuleInitBootstrapper(
                         anrModuleSupplier(
                             instrumentationModule,
                             openTelemetryModule,
-                            essentialServiceModule.processStateService
+                            essentialServiceModule.appStateService
                         )
                     }
 
@@ -389,16 +389,16 @@ internal class ModuleInitBootstrapper(
                     // be added to the registry. It sets listeners for any services that were registered.
                     EmbTrace.trace("service-registration") {
                         serviceRegistry.closeRegistration()
-                        serviceRegistry.registerActivityListeners(essentialServiceModule.processStateService)
+                        serviceRegistry.registerActivityListeners(essentialServiceModule.appStateService)
                         serviceRegistry.registerMemoryCleanerListeners(sessionOrchestrationModule.memoryCleanerService)
                         serviceRegistry.registerActivityLifecycleListeners(essentialServiceModule.activityLifecycleTracker)
                     }
 
-                    // Verify that the ProcessStateService is fully initialized at this point, and log otherwise.
-                    if (!essentialServiceModule.processStateService.isInitialized()) {
+                    // Verify that the AppStateService is fully initialized at this point, and log otherwise.
+                    if (!essentialServiceModule.appStateService.isInitialized()) {
                         logger.trackInternalError(
-                            type = InternalErrorType.PROCESS_STATE_CALLBACK_FAIL,
-                            throwable = IllegalStateException("ProcessStateService not initialized"),
+                            type = InternalErrorType.APP_STATE_CALLBACK_FAIL,
+                            throwable = IllegalStateException("AppStateService not initialized"),
                         )
                     }
                     true

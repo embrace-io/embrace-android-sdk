@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.session.SessionZygote
 import io.embrace.android.embracesdk.internal.session.caching.PeriodicSessionCacher
 import io.embrace.android.embracesdk.internal.session.id.SessionIdTracker
-import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessState
+import io.embrace.android.embracesdk.internal.session.lifecycle.AppState
 import io.embrace.android.embracesdk.internal.session.orchestrator.PayloadStore
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import java.util.concurrent.atomic.AtomicBoolean
@@ -33,12 +33,12 @@ internal class PayloadCachingServiceImpl(
 
     override fun startCaching(
         initial: SessionZygote,
-        state: ProcessState,
+        state: AppState,
         supplier: SessionPayloadSupplier,
     ) {
         deliveryTracer?.onCachingStarted()
         periodicSessionCacher.start {
-            if (state == ProcessState.BACKGROUND) {
+            if (state == AppState.BACKGROUND) {
                 if (stateChanged.getAndSet(false)) {
                     onSessionCache(initial, state, supplier)
                 } else {
@@ -52,7 +52,7 @@ internal class PayloadCachingServiceImpl(
 
     private fun onSessionCache(
         initial: SessionZygote,
-        endProcessState: ProcessState,
+        endAppState: AppState,
         supplier: SessionPayloadSupplier,
     ): Envelope<SessionPayload>? {
         deliveryTracer?.onSessionCache()
@@ -61,7 +61,7 @@ internal class PayloadCachingServiceImpl(
             if (initial.sessionId != sessionIdTracker.getActiveSessionId()) {
                 return null
             }
-            return supplier(endProcessState, clock.now(), initial)?.apply {
+            return supplier(endAppState, clock.now(), initial)?.apply {
                 payloadStore.cacheSessionSnapshot(this)
             }
         }

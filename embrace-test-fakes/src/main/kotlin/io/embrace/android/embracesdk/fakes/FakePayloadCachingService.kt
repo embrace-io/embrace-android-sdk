@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.fakes
 import io.embrace.android.embracesdk.internal.delivery.caching.PayloadCachingService
 import io.embrace.android.embracesdk.internal.delivery.caching.SessionPayloadSupplier
 import io.embrace.android.embracesdk.internal.session.SessionZygote
-import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessState
+import io.embrace.android.embracesdk.internal.session.lifecycle.AppState
 
 class FakePayloadCachingService : PayloadCachingService {
 
@@ -15,7 +15,7 @@ class FakePayloadCachingService : PayloadCachingService {
 
     override fun startCaching(
         initial: SessionZygote,
-        state: ProcessState,
+        state: AppState,
         supplier: SessionPayloadSupplier,
     ) {
     }

@@ -3,11 +3,11 @@ package io.embrace.android.embracesdk.internal.instrumentation.anr
 import android.app.Application
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.fakes.FakeAppStateService
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationModule
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
-import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -29,7 +29,7 @@ internal class AnrModuleImplTest {
                 )
             ),
             FakeOpenTelemetryModule(),
-            FakeProcessStateService()
+            FakeAppStateService()
         )
         assertNotNull(module.anrService)
         assertNotNull(module.anrOtelMapper)
@@ -49,7 +49,7 @@ internal class AnrModuleImplTest {
                 )
             ),
             FakeOpenTelemetryModule(),
-            FakeProcessStateService()
+            FakeAppStateService()
         )
         assertNull(module.anrService)
         assertNull(module.anrOtelMapper)

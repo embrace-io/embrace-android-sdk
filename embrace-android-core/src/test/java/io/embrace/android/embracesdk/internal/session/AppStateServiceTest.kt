@@ -4,12 +4,13 @@ import android.app.Application
 import android.os.Looper
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.testing.TestLifecycleOwner
+import io.embrace.android.embracesdk.fakes.FakeAppStateListener
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
-import io.embrace.android.embracesdk.fakes.FakeProcessStateListener
 import io.embrace.android.embracesdk.fakes.FakeSessionOrchestrator
-import io.embrace.android.embracesdk.internal.session.lifecycle.EmbraceProcessStateService
-import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateListener
+import io.embrace.android.embracesdk.internal.session.lifecycle.AppState
+import io.embrace.android.embracesdk.internal.session.lifecycle.AppStateListener
+import io.embrace.android.embracesdk.internal.session.lifecycle.AppStateServiceImpl
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
 import io.mockk.clearAllMocks
 import io.mockk.every
@@ -24,9 +25,9 @@ import org.junit.Before
 import org.junit.BeforeClass
 import org.junit.Test
 
-internal class EmbraceProcessStateServiceTest {
+internal class AppStateServiceTest {
 
-    private lateinit var stateService: EmbraceProcessStateService
+    private lateinit var stateService: AppStateServiceImpl
 
     companion object {
         private lateinit var looper: Looper
@@ -63,7 +64,7 @@ internal class EmbraceProcessStateServiceTest {
             staticMocks = false
         )
         fakeEmbLogger = FakeEmbLogger()
-        stateService = EmbraceProcessStateService(
+        stateService = AppStateServiceImpl(
             fakeClock,
             fakeEmbLogger,
             TestLifecycleOwner(Lifecycle.State.INITIALIZED)
@@ -72,7 +73,7 @@ internal class EmbraceProcessStateServiceTest {
 
     @Test
     fun `verify on activity foreground for cold start triggers listeners`() {
-        val listener = FakeProcessStateListener()
+        val listener = FakeAppStateListener()
         stateService.addListener(listener)
         stateService.onForeground()
         assertTrue(listener.coldStart)
@@ -82,7 +83,7 @@ internal class EmbraceProcessStateServiceTest {
 
     @Test
     fun `verify on activity foreground called twice is not a cold start`() {
-        val listener = FakeProcessStateListener()
+        val listener = FakeAppStateListener()
         stateService.addListener(listener)
 
         stateService.onForeground()
@@ -95,7 +96,7 @@ internal class EmbraceProcessStateServiceTest {
 
     @Test
     fun `verify on activity background triggers listeners`() {
-        val listener = FakeProcessStateListener()
+        val listener = FakeAppStateListener()
         stateService.addListener(listener)
         stateService.onBackground()
         assertEquals(listener.timestamp, fakeClock.now())
@@ -124,14 +125,14 @@ internal class EmbraceProcessStateServiceTest {
         // assert empty list first
         assertEquals(0, stateService.listeners.size)
 
-        val listener = FakeProcessStateListener()
+        val listener = FakeAppStateListener()
         stateService.addListener(listener)
         assertEquals(1, stateService.listeners.size)
     }
 
     @Test
     fun `verify if listener is already present, then it does not add anything`() {
-        val listener = FakeProcessStateListener()
+        val listener = FakeAppStateListener()
         stateService.addListener(listener)
         // add it for a 2nd time
         stateService.addListener(listener)
@@ -140,8 +141,8 @@ internal class EmbraceProcessStateServiceTest {
 
     @Test
     fun `verify a listener is added with priority`() {
-        stateService.addListener(FakeProcessStateListener())
-        val listener = FakeProcessStateListener()
+        stateService.addListener(FakeAppStateListener())
+        val listener = FakeAppStateListener()
         stateService.addListener(listener)
         assertEquals(2, stateService.listeners.size)
         assertEquals(listener, stateService.listeners[1])
@@ -150,7 +151,7 @@ internal class EmbraceProcessStateServiceTest {
     @Test
     fun `verify close cleans everything`() {
         // add a listener first, so we then check that listener have been cleared
-        stateService.addListener(FakeProcessStateListener())
+        stateService.addListener(FakeAppStateListener())
         stateService.close()
         assertTrue(stateService.listeners.isEmpty())
     }
@@ -221,7 +222,7 @@ internal class EmbraceProcessStateServiceTest {
 
     @Test
     fun `launched in background`() {
-        stateService = EmbraceProcessStateService(
+        stateService = AppStateServiceImpl(
             fakeClock,
             fakeEmbLogger,
             mockk {
@@ -235,7 +236,7 @@ internal class EmbraceProcessStateServiceTest {
 
     @Test
     fun `launched in foreground`() {
-        stateService = EmbraceProcessStateService(
+        stateService = AppStateServiceImpl(
             fakeClock,
             fakeEmbLogger,
             mockk {
@@ -249,9 +250,9 @@ internal class EmbraceProcessStateServiceTest {
 
     @Test
     fun `verify app state`() {
-        assertEquals("background", stateService.getAppState())
+        assertEquals(AppState.BACKGROUND, stateService.getAppState())
         stateService.onForeground()
-        assertEquals("foreground", stateService.getAppState())
+        assertEquals(AppState.FOREGROUND, stateService.getAppState())
     }
 
     @Test
@@ -271,7 +272,7 @@ internal class EmbraceProcessStateServiceTest {
 
     private class DecoratedListener(
         private val invocations: MutableList<String>,
-    ) : ProcessStateListener {
+    ) : AppStateListener {
 
         override fun onBackground(timestamp: Long) {
             invocations.add(javaClass.simpleName)

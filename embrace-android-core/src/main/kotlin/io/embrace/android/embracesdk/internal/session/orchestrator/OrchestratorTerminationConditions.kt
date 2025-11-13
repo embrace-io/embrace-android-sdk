@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.session.orchestrator
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.session.SessionZygote
-import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessState
+import io.embrace.android.embracesdk.internal.session.lifecycle.AppState
 
 /**
  * The minimum threshold for how long a session must last. This prevents unintentional
@@ -16,9 +16,9 @@ internal fun shouldEndManualSession(
     configService: ConfigService,
     clock: Clock,
     activeSession: SessionZygote?,
-    state: ProcessState,
+    state: AppState,
 ): Boolean {
-    if (state == ProcessState.BACKGROUND || configService.sessionBehavior.isSessionControlEnabled()) {
+    if (state == AppState.BACKGROUND || configService.sessionBehavior.isSessionControlEnabled()) {
         return true
     }
     val initial = activeSession ?: return true
@@ -28,13 +28,13 @@ internal fun shouldEndManualSession(
 }
 
 internal fun shouldRunOnBackground(
-    state: ProcessState,
+    state: AppState,
 ): Boolean {
-    return state == ProcessState.BACKGROUND
+    return state == AppState.BACKGROUND
 }
 
 internal fun shouldRunOnForeground(
-    state: ProcessState,
+    state: AppState,
 ): Boolean {
-    return state == ProcessState.FOREGROUND
+    return state == AppState.FOREGROUND
 }

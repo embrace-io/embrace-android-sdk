@@ -8,7 +8,7 @@ import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.Bloc
 import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.LivenessCheckScheduler
 import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.TargetThreadHandler
 import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.ThreadMonitoringState
-import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateService
+import io.embrace.android.embracesdk.internal.session.lifecycle.AppStateService
 import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 
@@ -16,7 +16,7 @@ import io.embrace.opentelemetry.kotlin.ExperimentalApi
 internal class AnrModuleImpl(
     instrumentationModule: InstrumentationModule,
     openTelemetryModule: OpenTelemetryModule,
-    processStateService: ProcessStateService,
+    appStateService: AppStateService,
 ) : AnrModule {
 
     private val args by singleton { instrumentationModule.instrumentationArgs }
@@ -36,7 +36,7 @@ internal class AnrModuleImpl(
                 state = state,
                 clock = args.clock,
                 stacktraceSampler = stacktraceSampler,
-                processStateService = processStateService,
+                appStateService = appStateService,
             )
         } else {
             null

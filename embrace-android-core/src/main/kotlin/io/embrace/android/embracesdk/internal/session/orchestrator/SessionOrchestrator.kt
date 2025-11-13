@@ -1,13 +1,13 @@
 package io.embrace.android.embracesdk.internal.session.orchestrator
 
 import io.embrace.android.embracesdk.internal.arch.CrashTeardownHandler
-import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateListener
+import io.embrace.android.embracesdk.internal.session.lifecycle.AppStateListener
 
 /**
  * Orchestrates the session and background activities in response to state changes and manual
  * requests to end sessions.
  */
-interface SessionOrchestrator : ProcessStateListener, CrashTeardownHandler {
+interface SessionOrchestrator : AppStateListener, CrashTeardownHandler {
 
     /**
      * Ends the current session (if any) manually. If [clearUserInfo] is true,

@@ -21,8 +21,8 @@ import io.embrace.android.embracesdk.internal.otel.spans.SpanSinkImpl
 import io.embrace.android.embracesdk.internal.otel.spans.UninitializedSdkSpanService
 import io.embrace.android.embracesdk.internal.session.id.SessionData
 import io.embrace.android.embracesdk.internal.session.id.SessionIdTracker
-import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateListener
-import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateService
+import io.embrace.android.embracesdk.internal.session.lifecycle.AppStateListener
+import io.embrace.android.embracesdk.internal.session.lifecycle.AppStateService
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Rule
@@ -62,7 +62,7 @@ class LoggingApiBenchmarks {
         logWriter = LogWriterImpl(
             logger = otelSdkWrapper.logger,
             sessionIdTracker = NoopSessionIdTracker(),
-            processStateService = NoopProcessStateService(),
+            appStateService = NoopAppStateService(),
             clock = clock,
         )
     }
@@ -124,13 +124,13 @@ class LoggingApiBenchmarks {
         }
     }
 
-    private class NoopProcessStateService : ProcessStateService {
+    private class NoopAppStateService : AppStateService {
         override fun onStateChanged(source: LifecycleOwner, event: Lifecycle.Event) {
         }
 
         override val isInBackground: Boolean = false
 
-        override fun addListener(listener: ProcessStateListener) {
+        override fun addListener(listener: AppStateListener) {
         }
 
         override fun onForeground() {

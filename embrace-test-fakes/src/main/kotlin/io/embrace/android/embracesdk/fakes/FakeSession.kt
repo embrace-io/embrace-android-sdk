@@ -1,20 +1,20 @@
 package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.fixtures.testSpan
-import io.embrace.android.embracesdk.internal.payload.ApplicationState
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.EnvelopeMetadata
 import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
-import io.embrace.android.embracesdk.internal.payload.LifeEventType
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
+import io.embrace.android.embracesdk.internal.session.LifeEventType
 import io.embrace.android.embracesdk.internal.session.SessionZygote
+import io.embrace.android.embracesdk.internal.session.lifecycle.AppState
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 
 fun fakeSessionZygote(): SessionZygote = SessionZygote(
     sessionId = "fakeSessionId",
     startTime = 160000000000L,
     number = 1,
-    appState = ApplicationState.FOREGROUND,
+    appState = AppState.FOREGROUND,
     isColdStart = true,
     startType = LifeEventType.STATE
 )

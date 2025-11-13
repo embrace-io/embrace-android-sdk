@@ -1,16 +1,16 @@
 package io.embrace.android.embracesdk.testcases.session
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.assertions.assertMatches
 import io.embrace.android.embracesdk.assertions.findSessionSpan
 import io.embrace.android.embracesdk.assertions.getSessionId
 import io.embrace.android.embracesdk.assertions.hasSpanSnapshotsOfType
+import io.embrace.android.embracesdk.internal.arch.attrs.embSessionNumber
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
-import io.embrace.android.embracesdk.internal.arch.attrs.embSessionNumber
-import io.embrace.android.embracesdk.internal.payload.ApplicationState
+import io.embrace.android.embracesdk.internal.session.lifecycle.AppState
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
-import io.embrace.android.embracesdk.assertions.assertMatches
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
@@ -39,7 +39,7 @@ internal class BackgroundActivityTest {
             },
             assertAction = {
                 // filter out dupes from overwritten saves
-                val bgActivities = getSessionEnvelopes(2, ApplicationState.BACKGROUND).distinctBy { it.getSessionId() }
+                val bgActivities = getSessionEnvelopes(2, AppState.BACKGROUND).distinctBy { it.getSessionId() }
                 assertEquals(2, bgActivities.size)
 
                 // verify first bg activity

@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.instrumentation.crash.jvm
 
+import io.embrace.android.embracesdk.internal.arch.CrashTeardownHandler
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.attrs.embAndroidThreads
 import io.embrace.android.embracesdk.internal.arch.attrs.embCrashNumber
@@ -10,12 +11,11 @@ import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.arch.schema.TelemetryAttributes
 import io.embrace.android.embracesdk.internal.arch.stacktrace.getThreadInfo
-import io.embrace.android.embracesdk.internal.capture.crash.CrashTeardownHandler
 import io.embrace.android.embracesdk.internal.payload.LegacyExceptionInfo
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.store.Ordinal
 import io.embrace.android.embracesdk.internal.utils.Uuid
-import io.embrace.android.embracesdk.internal.utils.toUTF8String
+import io.embrace.android.embracesdk.internal.utils.encodeToUTF8String
 import io.embrace.opentelemetry.kotlin.semconv.ExceptionAttributes
 import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
 import io.embrace.opentelemetry.kotlin.semconv.LogAttributes
@@ -25,7 +25,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 /**
  * Intercept and track uncaught Android Runtime exceptions
  */
-internal class JvmCrashDataSourceImpl(
+class JvmCrashDataSourceImpl(
     private val args: InstrumentationArgs,
 ) : JvmCrashDataSource,
     DataSourceImpl(
@@ -38,9 +38,9 @@ internal class JvmCrashDataSourceImpl(
     private val handlers: CopyOnWriteArrayList<CrashTeardownHandler> = CopyOnWriteArrayList()
 
     init {
-        if (configService.autoDataCaptureBehavior.isJvmCrashCaptureEnabled()) {
-            registerExceptionHandler()
-        }
+        // we always register so that crash teardown can happen. We check whether telemetry
+        // should be captured at the point of a crash.
+        registerExceptionHandler()
     }
 
     override var telemetryModifier: ((TelemetryAttributes) -> SchemaType)? = null
@@ -55,7 +55,7 @@ internal class JvmCrashDataSourceImpl(
     @OptIn(IncubatingApi::class)
     override fun logUnhandledJvmThrowable(exception: Throwable) {
         if (!mainCrashHandled.getAndSet(true)) {
-            captureTelemetry {
+            captureTelemetry(inputValidation = configService.autoDataCaptureBehavior::isJvmCrashCaptureEnabled) {
                 val crashId = Uuid.getEmbUuid()
                 val crashNumber = args.ordinalStore.incrementAndGet(Ordinal.CRASH)
                 val attrs = TelemetryAttributes(
@@ -128,10 +128,6 @@ internal class JvmCrashDataSourceImpl(
     private fun getThreadsInfo(): String {
         val threadsList = Thread.getAllStackTraces().map { getThreadInfo(it.key, it.value) }
         return serializer.toJson(threadsList, List::class.java)
-    }
-
-    private fun encodeToUTF8String(source: String): String {
-        return source.toByteArray().toUTF8String()
     }
 
     /**

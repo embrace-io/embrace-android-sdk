@@ -1,30 +1,39 @@
 package io.embrace.android.embracesdk.internal.api
 
 import android.content.Context
+import androidx.test.core.app.ApplicationProvider
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.EmbraceImpl
+import io.embrace.android.embracesdk.fakes.FakeEmbLogger
+import io.embrace.android.embracesdk.fakes.FakeEmbraceInternalInterface
 import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.fakes.FakeRnBundleIdTracker
-import io.embrace.android.embracesdk.fakes.system.mockContext
+import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
+import io.embrace.android.embracesdk.fakes.fakeModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.api.delegate.ReactNativeInternalInterfaceImpl
+import io.embrace.android.embracesdk.internal.arch.SessionType
+import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.internal.envelope.metadata.ReactNativeSdkVersionInfo
-import io.embrace.android.embracesdk.internal.instrumentation.crash.jvm.JsCrashService
-import io.embrace.android.embracesdk.internal.logging.EmbLogger
+import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
+import io.embrace.android.embracesdk.internal.instrumentation.crash.jvm.JvmCrashDataSourceImpl
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.verify
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
+import org.junit.runner.RunWith
 
+@RunWith(AndroidJUnit4::class)
 internal class ReactNativeInternalInterfaceImplTest {
 
     private lateinit var impl: ReactNativeInternalInterfaceImpl
     private lateinit var embrace: EmbraceImpl
     private lateinit var store: FakeKeyValueStore
-    private lateinit var jsCrashService: JsCrashService
+    private lateinit var bootstrapper: ModuleInitBootstrapper
     private lateinit var rnBundleIdTracker: FakeRnBundleIdTracker
-    private lateinit var logger: EmbLogger
+    private lateinit var logger: FakeEmbLogger
     private lateinit var context: Context
     private lateinit var hostedSdkVersionInfo: HostedSdkVersionInfo
 
@@ -32,15 +41,15 @@ internal class ReactNativeInternalInterfaceImplTest {
     fun setUp() {
         embrace = mockk(relaxed = true)
         store = FakeKeyValueStore()
-        jsCrashService = mockk(relaxed = true)
         rnBundleIdTracker = FakeRnBundleIdTracker()
         hostedSdkVersionInfo = ReactNativeSdkVersionInfo(store)
-        logger = mockk(relaxed = true)
-        context = mockContext()
+        logger = FakeEmbLogger(false)
+        context = ApplicationProvider.getApplicationContext()
+        bootstrapper = fakeModuleInitBootstrapper()
         impl = ReactNativeInternalInterfaceImpl(
             embrace,
-            mockk(),
-            jsCrashService,
+            FakeEmbraceInternalInterface(),
+            bootstrapper,
             rnBundleIdTracker,
             hostedSdkVersionInfo,
             logger
@@ -51,9 +60,7 @@ internal class ReactNativeInternalInterfaceImplTest {
     fun testSetJavaScriptPatchNumberNotStarted() {
         every { embrace.isStarted } returns false
         impl.setJavaScriptPatchNumber("28.9.1")
-        verify(exactly = 1) {
-            logger.logSdkNotInitialized(any())
-        }
+        assertEquals(1, logger.sdkNotInitializedMessages.size)
     }
 
     @Test
@@ -76,9 +83,7 @@ internal class ReactNativeInternalInterfaceImplTest {
     fun testSetReactNativeVersionNumberNotStarted() {
         every { embrace.isStarted } returns false
         impl.setReactNativeVersionNumber("0.69.1")
-        verify(exactly = 1) {
-            logger.logSdkNotInitialized(any())
-        }
+        assertEquals(1, logger.sdkNotInitializedMessages.size)
     }
 
     @Test
@@ -108,17 +113,15 @@ internal class ReactNativeInternalInterfaceImplTest {
     fun testSetJavaScriptBundleURLNotStarted() {
         every { embrace.isStarted } returns false
         impl.setJavaScriptBundleUrl(context, "index.android.bundle")
-        verify(exactly = 1) {
-            logger.logSdkNotInitialized(any())
-        }
+        assertEquals(1, logger.sdkNotInitializedMessages.size)
     }
 
     @Test
     fun testSetCacheableJavaScriptBundleUrl() {
         impl = ReactNativeInternalInterfaceImpl(
             embrace,
-            mockk(),
-            jsCrashService,
+            FakeEmbraceInternalInterface(),
+            bootstrapper,
             rnBundleIdTracker,
             hostedSdkVersionInfo,
             logger
@@ -135,8 +138,8 @@ internal class ReactNativeInternalInterfaceImplTest {
     fun testSetJavaScriptBundleURLForOtherOTAs() {
         impl = ReactNativeInternalInterfaceImpl(
             embrace,
-            mockk(),
-            jsCrashService,
+            FakeEmbraceInternalInterface(),
+            bootstrapper,
             rnBundleIdTracker,
             hostedSdkVersionInfo,
             logger
@@ -150,21 +153,40 @@ internal class ReactNativeInternalInterfaceImplTest {
     }
 
     @Test
-    fun testLogUnhandledJsException() {
+    fun `test RN crash by calling logUnhandledJsException() before handleCrash()`() {
         every { embrace.isStarted } returns true
-        impl.logUnhandledJsException("name", "message", "type", "stack")
+        bootstrapper.init(ApplicationProvider.getApplicationContext(), 0)
 
-        verify(exactly = 1) {
-            jsCrashService.logUnhandledJsException("name", "message", "type", "stack")
-        }
+        val registry = bootstrapper.instrumentationModule.instrumentationRegistry
+        val args = bootstrapper.instrumentationModule.instrumentationArgs
+        val dataSource = JvmCrashDataSourceImpl(args)
+        registry.add(DataSourceState(factory = { dataSource }))
+        registry.currentSessionType = SessionType.FOREGROUND
+
+        impl.logUnhandledJsException("name", "message", "type", "stack")
+        dataSource.logUnhandledJvmThrowable(IllegalStateException("Whoops"))
+
+        val destination = args.destination as FakeTelemetryDestination
+        val logEvent = destination.logEvents.single()
+        assertEquals(EmbType.System.ReactNativeCrash, logEvent.schemaType.telemetryType)
+        val lastSentCrashAttributes = logEvent.schemaType.attributes()
+        assertEquals(1, destination.logEvents.size)
+        assertEquals("Whoops", lastSentCrashAttributes["exception.message"])
+        assertEquals("java.lang.IllegalStateException", lastSentCrashAttributes["exception.type"])
+        assertEquals(
+            "{\"n\":\"name\",\"" +
+                "m\":\"message\",\"" +
+                "t\":\"type\",\"" +
+                "st\":\"" +
+                "stack\"}",
+            lastSentCrashAttributes["emb.android.react_native_crash.js_exception"]
+        )
     }
 
     @Test
     fun testLogUnhandledJsExceptionNotStarted() {
         every { embrace.isStarted } returns false
         impl.logUnhandledJsException("name", "message", "type", "stack")
-        verify(exactly = 1) {
-            logger.logSdkNotInitialized(any())
-        }
+        assertEquals(1, logger.sdkNotInitializedMessages.size)
     }
 }

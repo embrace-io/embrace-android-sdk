@@ -1,10 +1,9 @@
-package io.embrace.android.embracesdk.fakes
+package io.embrace.android.embracesdk.internal.instrumentation.crash.jvm
 
+import io.embrace.android.embracesdk.internal.arch.CrashTeardownHandler
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.arch.schema.TelemetryAttributes
-import io.embrace.android.embracesdk.internal.capture.crash.CrashTeardownHandler
-import io.embrace.android.embracesdk.internal.instrumentation.crash.jvm.JvmCrashDataSource
 
 class FakeJvmCrashDataSource : JvmCrashDataSource {
     var exception: Throwable? = null

@@ -6,8 +6,11 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigModule
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeInstrumentationModule
 import io.embrace.android.embracesdk.fakes.FakeNativeFeatureModule
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
+import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistry
+import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.injection.EssentialServiceModuleImpl
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
@@ -32,20 +35,27 @@ internal class ModuleInitBootstrapperTest {
     private lateinit var clock: Clock
     private lateinit var coreModule: FakeCoreModule
     private lateinit var context: Context
+    private lateinit var registry: InstrumentationRegistry
 
     @Before
     fun setup() {
         logger = EmbLoggerImpl()
         clock = FakeClock()
         coreModule = FakeCoreModule()
+        val application = RuntimeEnvironment.getApplication()
+        context = application.applicationContext
         moduleInitBootstrapper = ModuleInitBootstrapper(
             logger = logger,
             clock = clock,
             configModuleSupplier = { _, _, _, _, _ -> FakeConfigModule(FakeConfigService()) },
             coreModuleSupplier = { _, _ -> coreModule },
             nativeFeatureModuleSupplier = { _, _, _, _, _ -> FakeNativeFeatureModule() },
+            instrumentationModuleSupplier = { _, _, _, _, _, _ ->
+                FakeInstrumentationModule(application).apply {
+                    registry = instrumentationRegistry
+                }
+            }
         )
-        context = RuntimeEnvironment.getApplication().applicationContext
     }
 
     @Test
@@ -96,6 +106,26 @@ internal class ModuleInitBootstrapperTest {
                 sdkStartTimeMs = 0L,
             )
         )
+    }
+
+    @Test
+    fun `post load instrumentation hooks up listeners`() {
+        moduleInitBootstrapper.init(context, 0)
+        val registry = moduleInitBootstrapper.instrumentationModule.instrumentationRegistry
+        val dataSource = CrashHandlerDataSource()
+        registry.add(DataSourceState(factory = { dataSource }))
+
+        moduleInitBootstrapper.postLoadInstrumentation()
+
+        val handlers = dataSource.handlers
+        val expected = listOf(
+            moduleInitBootstrapper.anrModule.anrService,
+            moduleInitBootstrapper.logModule.logOrchestrator,
+            moduleInitBootstrapper.sessionOrchestrationModule.sessionOrchestrator,
+            moduleInitBootstrapper.featureModule.crashMarker,
+            moduleInitBootstrapper.deliveryModule.payloadStore
+        )
+        assertEquals(expected, handlers)
     }
 
     @Test

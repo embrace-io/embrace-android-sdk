@@ -39,6 +39,7 @@ dependencies {
 
     // automatically included instrumentation
     implementation(project(":embrace-android-instrumentation-app-exit-info"))
+    implementation(project(":embrace-android-instrumentation-crash-jvm"))
     implementation(project(":embrace-android-instrumentation-fcm"))
     implementation(project(":embrace-android-instrumentation-huc-lite"))
     implementation(project(":embrace-android-instrumentation-network-status"))

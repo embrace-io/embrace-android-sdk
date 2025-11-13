@@ -18,4 +18,5 @@ dependencies {
     testImplementation(libs.protobuf.java)
     testImplementation(libs.protobuf.java.util)
     testImplementation(libs.mockk)
+    testImplementation(libs.robolectric)
 }

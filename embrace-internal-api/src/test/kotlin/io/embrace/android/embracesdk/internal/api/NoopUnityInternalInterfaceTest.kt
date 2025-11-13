@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.internal.api
 
 import io.embrace.android.embracesdk.internal.api.delegate.NoopEmbraceInternalInterface
+import io.embrace.android.embracesdk.internal.api.delegate.NoopInternalTracingApi
 import io.embrace.android.embracesdk.internal.api.delegate.NoopUnityInternalInterface
-import io.mockk.mockk
 import org.junit.Before
 import org.junit.Test
 
@@ -14,7 +14,7 @@ internal class NoopUnityInternalInterfaceTest {
     fun setUp() {
         impl = NoopUnityInternalInterface(
             NoopEmbraceInternalInterface(
-                mockk(relaxed = true)
+                NoopInternalTracingApi()
             )
         )
     }

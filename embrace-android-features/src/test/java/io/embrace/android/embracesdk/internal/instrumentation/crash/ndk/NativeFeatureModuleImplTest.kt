@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.instrumentation.crash.ndk
 
+import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeConfigModule
 import io.embrace.android.embracesdk.fakes.FakeConfigService
@@ -11,7 +12,6 @@ import io.embrace.android.embracesdk.fakes.injection.FakeAndroidServicesModule
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeNativeCoreModule
-import io.mockk.mockk
 import org.junit.Assert
 import org.junit.Before
 import org.junit.Test
@@ -107,7 +107,7 @@ internal class NativeFeatureModuleImplTest {
             fakeConfigModule,
             FakeAndroidServicesModule(),
             FakeNativeCoreModule(),
-            FakeInstrumentationModule(mockk())
+            FakeInstrumentationModule(ApplicationProvider.getApplicationContext())
         )
     }
 }

@@ -1,12 +1,12 @@
 package io.embrace.android.embracesdk.internal.session
 
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
+import io.embrace.android.embracesdk.fakes.FakeAppStateService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakeOrdinalStore
 import io.embrace.android.embracesdk.fakes.FakeOtelPayloadMapper
-import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.createBackgroundActivityBehavior
@@ -22,7 +22,7 @@ import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
-import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessState
+import io.embrace.android.embracesdk.internal.session.lifecycle.AppState
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactoryImpl
 import io.embrace.android.embracesdk.internal.session.message.PayloadMessageCollatorImpl
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
@@ -37,7 +37,7 @@ internal class PayloadFactoryBaTest {
     private lateinit var clock: FakeClock
     private lateinit var metadataService: MetadataService
     private lateinit var sessionIdTracker: FakeSessionIdTracker
-    private lateinit var activityService: FakeProcessStateService
+    private lateinit var activityService: FakeAppStateService
     private lateinit var userService: UserService
     private lateinit var configService: FakeConfigService
     private lateinit var spanRepository: SpanRepository
@@ -52,7 +52,7 @@ internal class PayloadFactoryBaTest {
         clock = FakeClock(10000L)
         metadataService = FakeMetadataService()
         sessionIdTracker = FakeSessionIdTracker()
-        activityService = FakeProcessStateService(isInBackground = true)
+        activityService = FakeAppStateService(isInBackground = true)
         store = FakeOrdinalStore()
         userService = FakeUserService()
         val initModule = FakeInitModule(clock = clock)
@@ -75,7 +75,7 @@ internal class PayloadFactoryBaTest {
         service = createService()
         val now = clock.now()
         spanService.initializeService(now)
-        val msg = service.endPayloadWithCrash(ProcessState.BACKGROUND, now, initial, "crashId")
+        val msg = service.endPayloadWithCrash(AppState.BACKGROUND, now, initial, "crashId")
 
         // there should be 1 completed span: the session span
         checkNotNull(msg)
@@ -87,7 +87,7 @@ internal class PayloadFactoryBaTest {
     fun `foregrounding will flush the current completed spans`() {
         service = createService()
         spanService.initializeService(clock.now())
-        val msg = service.endPayloadWithState(ProcessState.BACKGROUND, clock.now(), initial)
+        val msg = service.endPayloadWithState(AppState.BACKGROUND, clock.now(), initial)
 
         // there should be 1 completed span: the session span
         checkNotNull(msg)
@@ -100,7 +100,7 @@ internal class PayloadFactoryBaTest {
         service = createService()
         spanService.initializeService(clock.now())
         clock.tick(1000L)
-        val msg = service.endPayloadWithState(ProcessState.BACKGROUND, clock.now(), initial)
+        val msg = service.endPayloadWithState(AppState.BACKGROUND, clock.now(), initial)
 
         // there should be 1 completed span: the session span
         checkNotNull(msg)
@@ -117,7 +117,7 @@ internal class PayloadFactoryBaTest {
                 currentSessionSpan,
                 spanRepository,
                 FakeOtelPayloadMapper(),
-                FakeProcessStateService(),
+                FakeAppStateService(),
                 FakeClock(),
                 logger
             )
@@ -129,7 +129,7 @@ internal class PayloadFactoryBaTest {
         )
         return PayloadFactoryImpl(collator, payloadSourceModule.logEnvelopeSource, configService, logger).apply {
             if (createInitialSession) {
-                startPayloadWithState(ProcessState.BACKGROUND, clock.now(), true)
+                startPayloadWithState(AppState.BACKGROUND, clock.now(), true)
             }
         }
     }

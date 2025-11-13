@@ -13,9 +13,9 @@ import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.otel.sdk.toEmbraceObjectName
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.session.id.SessionIdTracker
-import io.embrace.android.embracesdk.internal.session.lifecycle.EmbraceProcessStateService.Companion.BACKGROUND_STATE
-import io.embrace.android.embracesdk.internal.session.lifecycle.EmbraceProcessStateService.Companion.FOREGROUND_STATE
-import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateService
+import io.embrace.android.embracesdk.internal.session.lifecycle.AppStateService
+import io.embrace.android.embracesdk.internal.session.lifecycle.AppStateServiceImpl.Companion.BACKGROUND_STATE
+import io.embrace.android.embracesdk.internal.session.lifecycle.AppStateServiceImpl.Companion.FOREGROUND_STATE
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.spans.AutoTerminationMode
@@ -33,7 +33,7 @@ import java.util.concurrent.TimeUnit
 internal class TelemetryDestinationImpl(
     private val logger: Logger,
     private val sessionIdTracker: SessionIdTracker,
-    private val processStateService: ProcessStateService,
+    private val appStateService: AppStateService,
     private val clock: Clock,
     private val spanService: SpanService,
     private val currentSessionSpan: CurrentSessionSpan,
@@ -74,7 +74,7 @@ internal class TelemetryDestinationImpl(
                         BACKGROUND_STATE
                     }
                 }
-                setStringAttribute(embState.name, sessionState ?: processStateService.getAppState())
+                setStringAttribute(embState.name, sessionState ?: appStateService.getAppState().description)
             }
 
             if (isPrivate) {
@@ -87,7 +87,7 @@ internal class TelemetryDestinationImpl(
                     setStringAttribute(it.key, it.value)
                 }
             }
-            processStateService.sessionUpdated()
+            appStateService.sessionUpdated()
         }
     }
 
@@ -109,9 +109,9 @@ internal class TelemetryDestinationImpl(
             schemaType.attributes().forEach {
                 addAttribute(it.key, it.value)
             }
-            processStateService.sessionUpdated()
+            appStateService.sessionUpdated()
         } ?: return null
-        return SpanTokenImpl(span, processStateService)
+        return SpanTokenImpl(span, appStateService)
     }
 
     override fun recordCompletedSpan(
@@ -130,7 +130,7 @@ internal class TelemetryDestinationImpl(
             type = type,
             attributes = attributes,
         )
-        processStateService.sessionUpdated()
+        appStateService.sessionUpdated()
     }
 
     override fun addSessionEvent(schemaType: SchemaType, startTimeMs: Long): Boolean {
@@ -140,26 +140,26 @@ internal class TelemetryDestinationImpl(
             startTimeMs,
             schemaType.attributes() + schemaType.telemetryType.asPair()
         ).also {
-            processStateService.sessionUpdated()
+            appStateService.sessionUpdated()
         }
     }
 
     override fun removeSessionEvents(type: EmbType) {
         val currentSession = currentSessionSpan.current() ?: return
         currentSession.removeSystemEvents(type)
-        processStateService.sessionUpdated()
+        appStateService.sessionUpdated()
     }
 
     override fun addSessionAttribute(key: String, value: String) {
         val currentSession = currentSessionSpan.current() ?: return
         currentSession.addSystemAttribute(key, value)
-        processStateService.sessionUpdated()
+        appStateService.sessionUpdated()
     }
 
     override fun removeSessionAttribute(key: String) {
         val currentSession = currentSessionSpan.current() ?: return
         currentSession.removeSystemAttribute(key)
-        processStateService.sessionUpdated()
+        appStateService.sessionUpdated()
     }
 
     private fun getSeverityText(severity: SeverityNumber) = when (severity) {
@@ -178,11 +178,11 @@ internal class TelemetryDestinationImpl(
 
     private class SpanTokenImpl(
         private val span: EmbraceSpan,
-        private val processStateService: ProcessStateService,
+        private val appStateService: AppStateService,
     ) : SpanToken {
         override fun stop(endTimeMs: Long?) {
             span.stop(endTimeMs = endTimeMs)
-            processStateService.sessionUpdated()
+            appStateService.sessionUpdated()
         }
     }
 }

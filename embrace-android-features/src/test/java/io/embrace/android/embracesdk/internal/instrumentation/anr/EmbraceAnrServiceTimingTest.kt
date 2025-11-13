@@ -73,7 +73,7 @@ internal class EmbraceAnrServiceTimingTest {
     fun `test delayed background check stops monitoring when app remains in background`() {
         with(rule) {
             // Set background state and recreate service
-            fakeProcessStateService.isInBackground = true
+            fakeAppStateService.isInBackground = true
             recreateService()
 
             // Start ANR capture - this should trigger scheduleDelayedBackgroundCheck
@@ -98,7 +98,7 @@ internal class EmbraceAnrServiceTimingTest {
     fun `test delayed background check does not stop monitoring when app transitions to foreground`() {
         with(rule) {
             // Set background state and recreate service
-            fakeProcessStateService.isInBackground = true
+            fakeAppStateService.isInBackground = true
             recreateService()
 
             // Start ANR capture - this should trigger scheduleDelayedBackgroundCheck
@@ -112,7 +112,7 @@ internal class EmbraceAnrServiceTimingTest {
             anrExecutorService.moveForwardAndRunBlocked(TimeUnit.SECONDS.toMillis(5))
 
             // Transition to foreground before the 10-second delay
-            fakeProcessStateService.isInBackground = false
+            fakeAppStateService.isInBackground = false
             anrService.onForeground(false, clock.now())
             anrExecutorService.runCurrentlyBlocked()
 

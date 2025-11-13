@@ -8,9 +8,9 @@ import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakePayloadSourceModule
 import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
-import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessState
-import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessState.BACKGROUND
-import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessState.FOREGROUND
+import io.embrace.android.embracesdk.internal.session.lifecycle.AppState
+import io.embrace.android.embracesdk.internal.session.lifecycle.AppState.BACKGROUND
+import io.embrace.android.embracesdk.internal.session.lifecycle.AppState.FOREGROUND
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -71,7 +71,7 @@ internal class PayloadFactoryImplTest {
         verifyPayloadWithManual()
     }
 
-    private fun verifyPayloadWithState(state: ProcessState, zygoteCreated: Boolean, startNewSession: Boolean) {
+    private fun verifyPayloadWithState(state: AppState, zygoteCreated: Boolean, startNewSession: Boolean) {
         val zygote = factory.startPayloadWithState(state, 0, false)
         if (zygoteCreated) {
             assertTrue(checkNotNull(zygote).sessionId.isNotBlank())

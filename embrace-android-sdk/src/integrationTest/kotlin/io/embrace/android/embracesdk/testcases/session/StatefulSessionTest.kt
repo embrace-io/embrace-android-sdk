@@ -8,7 +8,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.attrs.embErrorLogCount
 import io.embrace.android.embracesdk.internal.arch.attrs.embSessionEndType
 import io.embrace.android.embracesdk.internal.arch.attrs.embSessionStartType
-import io.embrace.android.embracesdk.internal.payload.LifeEventType
+import io.embrace.android.embracesdk.internal.session.LifeEventType
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.assertions.assertMatches
 import java.util.Locale

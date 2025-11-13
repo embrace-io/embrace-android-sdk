@@ -3,21 +3,22 @@ package io.embrace.android.embracesdk.fakes
 import android.content.res.Configuration
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
-import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateListener
-import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateService
+import io.embrace.android.embracesdk.internal.session.lifecycle.AppState
+import io.embrace.android.embracesdk.internal.session.lifecycle.AppStateListener
+import io.embrace.android.embracesdk.internal.session.lifecycle.AppStateService
 
-class FakeProcessStateService(
+class FakeAppStateService(
     override var isInBackground: Boolean = false,
-) : ProcessStateService {
+) : AppStateService {
 
     override fun onStateChanged(source: LifecycleOwner, event: Lifecycle.Event) {
     }
 
-    val listeners: MutableList<ProcessStateListener> = mutableListOf()
+    val listeners: MutableList<AppStateListener> = mutableListOf()
     var config: Configuration? = null
     var sessionDataUpdated = false
 
-    override fun addListener(listener: ProcessStateListener) {
+    override fun addListener(listener: AppStateListener) {
         listeners.add(listener)
     }
 
@@ -30,9 +31,9 @@ class FakeProcessStateService(
     override fun onBackground() {
     }
 
-    override fun getAppState(): String = when (isInBackground) {
-        true -> "background"
-        false -> "foreground"
+    override fun getAppState(): AppState = when (isInBackground) {
+        true -> AppState.BACKGROUND
+        false -> AppState.FOREGROUND
     }
 
     override fun isInitialized(): Boolean = true

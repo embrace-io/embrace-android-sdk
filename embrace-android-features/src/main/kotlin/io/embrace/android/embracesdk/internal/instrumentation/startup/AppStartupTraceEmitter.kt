@@ -10,7 +10,7 @@ import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
-import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateListener
+import io.embrace.android.embracesdk.internal.session.lifecycle.AppStateListener
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
@@ -50,7 +50,7 @@ internal class AppStartupTraceEmitter(
     private val logger: EmbLogger,
     manualEnd: Boolean,
     processInfo: ProcessInfo,
-) : AppStartupDataCollector, ProcessStateListener {
+) : AppStartupDataCollector, AppStateListener {
     private val additionalTrackedIntervals = ConcurrentLinkedQueue<TrackedInterval>()
     private val customAttributes: MutableMap<String, String> = ConcurrentHashMap()
     private val trackRender = hasRenderEvent(versionChecker)

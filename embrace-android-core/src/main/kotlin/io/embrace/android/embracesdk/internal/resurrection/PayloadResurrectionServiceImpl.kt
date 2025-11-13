@@ -18,7 +18,6 @@ import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.otel.spans.hasEmbraceAttribute
 import io.embrace.android.embracesdk.internal.otel.spans.toFailedSpan
-import io.embrace.android.embracesdk.internal.payload.ApplicationState
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.EnvelopeMetadata
@@ -27,14 +26,14 @@ import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.payload.Span
-import io.embrace.android.embracesdk.internal.payload.getSessionId
-import io.embrace.android.embracesdk.internal.payload.getSessionProperties
-import io.embrace.android.embracesdk.internal.payload.getSessionSpan
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
+import io.embrace.android.embracesdk.internal.session.getSessionId
+import io.embrace.android.embracesdk.internal.session.getSessionProperties
+import io.embrace.android.embracesdk.internal.session.getSessionSpan
+import io.embrace.android.embracesdk.internal.session.lifecycle.AppState
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
 import io.embrace.opentelemetry.kotlin.semconv.SessionAttributes
-import java.util.Locale
 import java.util.zip.GZIPInputStream
 import kotlin.math.max
 
@@ -127,7 +126,7 @@ internal class PayloadResurrectionServiceImpl(
                         nativeCrash = nativeCrash,
                         sessionProperties = emptyMap(),
                         metadata = mapOf(
-                            embState.name to ApplicationState.BACKGROUND.name.lowercase(Locale.ENGLISH)
+                            embState.name to AppState.BACKGROUND.description,
                         ),
                     )
                 }

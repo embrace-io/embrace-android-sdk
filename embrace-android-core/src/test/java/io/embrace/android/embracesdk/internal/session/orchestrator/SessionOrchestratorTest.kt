@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.session.orchestrator
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
+import io.embrace.android.embracesdk.fakes.FakeAppStateService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeCurrentSessionSpan
@@ -12,7 +13,6 @@ import io.embrace.android.embracesdk.fakes.FakeMemoryCleanerService
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakePayloadMessageCollator
 import io.embrace.android.embracesdk.fakes.FakePayloadStore
-import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fakes.FakeSessionPropertiesService
 import io.embrace.android.embracesdk.fakes.FakeStartupService
@@ -35,7 +35,7 @@ import io.embrace.android.embracesdk.internal.delivery.caching.PayloadCachingSer
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
-import io.embrace.android.embracesdk.internal.payload.LifeEventType
+import io.embrace.android.embracesdk.internal.session.LifeEventType
 import io.embrace.android.embracesdk.internal.session.caching.PeriodicSessionCacher
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactoryImpl
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
@@ -53,7 +53,7 @@ internal class SessionOrchestratorTest {
     private lateinit var payloadFactory: PayloadFactoryImpl
     private lateinit var payloadCollator: FakePayloadMessageCollator
     private lateinit var logEnvelopeSource: FakeLogEnvelopeSource
-    private lateinit var processStateService: FakeProcessStateService
+    private lateinit var appStateService: FakeAppStateService
     private lateinit var clock: FakeClock
     private lateinit var configService: FakeConfigService
     private lateinit var memoryCleanerService: FakeMemoryCleanerService
@@ -85,7 +85,7 @@ internal class SessionOrchestratorTest {
     fun `test initial behavior in background`() {
         createOrchestrator(true)
         assertEquals(1, memoryCleanerService.callCount)
-        assertEquals(orchestrator, processStateService.listeners.single())
+        assertEquals(orchestrator, appStateService.listeners.single())
         assertEquals(0, payloadCollator.sessionCount.get())
         assertEquals(1, payloadCollator.baCount.get())
         assertEquals(sessionIdTracker.sessionData?.id, currentSessionSpan.getSessionId())
@@ -98,7 +98,7 @@ internal class SessionOrchestratorTest {
     fun `test initial behavior in foreground`() {
         createOrchestrator(false)
         assertEquals(1, memoryCleanerService.callCount)
-        assertEquals(orchestrator, processStateService.listeners.single())
+        assertEquals(orchestrator, appStateService.listeners.single())
         assertEquals(1, payloadCollator.sessionCount.get())
         assertEquals(0, payloadCollator.baCount.get())
         assertEquals(sessionIdTracker.sessionData?.id, currentSessionSpan.getSessionId())
@@ -207,7 +207,7 @@ internal class SessionOrchestratorTest {
     @Test
     fun `end session with manual in background`() {
         createOrchestrator(true)
-        processStateService.isInBackground = true
+        appStateService.isInBackground = true
         orchestrator.endSessionWithManual(true)
         assertEquals(1, memoryCleanerService.callCount)
         assertTrue(store.storedSessionPayloads.isEmpty())
@@ -391,7 +391,7 @@ internal class SessionOrchestratorTest {
 
     private fun createOrchestrator(background: Boolean) {
         store = FakePayloadStore()
-        processStateService = FakeProcessStateService(background)
+        appStateService = FakeAppStateService(background)
         currentSessionSpan = FakeCurrentSessionSpan(clock).apply { initializeService(clock.now()) }
         destination = FakeTelemetryDestination()
         payloadCollator = FakePayloadMessageCollator(currentSessionSpan = currentSessionSpan)
@@ -431,7 +431,7 @@ internal class SessionOrchestratorTest {
         }
 
         orchestrator = SessionOrchestratorImpl(
-            processStateService,
+            appStateService,
             payloadFactory,
             clock,
             configService,

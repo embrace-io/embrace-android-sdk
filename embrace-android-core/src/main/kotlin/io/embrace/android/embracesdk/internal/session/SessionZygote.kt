@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.session
 
-import io.embrace.android.embracesdk.internal.payload.ApplicationState
-import io.embrace.android.embracesdk.internal.payload.LifeEventType
+import io.embrace.android.embracesdk.internal.session.lifecycle.AppState
 
 /**
  * A precursor object that holds state associated with a newly started session.
@@ -24,9 +23,9 @@ data class SessionZygote(
     val number: Int,
 
     /**
-     * Application state for this session (foreground or background)
+     * Process state for this session (foreground or background)
      */
-    val appState: ApplicationState,
+    val appState: AppState,
 
     /**
      * Whether the session is a cold start or not.

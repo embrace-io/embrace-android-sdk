@@ -5,9 +5,9 @@ import io.embrace.android.embracesdk.assertions.findSessionSpan
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.internal.api.SdkApi
-import io.embrace.android.embracesdk.internal.payload.ApplicationState
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.session.getSessionProperty
+import io.embrace.android.embracesdk.internal.session.lifecycle.AppState
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface
 import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
@@ -36,7 +36,7 @@ internal class SessionPropertiesTest {
             },
             assertAction = {
                 val sessions = getSessionEnvelopes(3)
-                val bas = getSessionEnvelopes(3, ApplicationState.BACKGROUND)
+                val bas = getSessionEnvelopes(3, AppState.BACKGROUND)
 
                 bas[0].findSessionSpan().assertPropertyExistence(
                     exist = listOf(EXISTING_KEY_2, EXISTING_KEY_3, PERM_KEY, TEMP_KEY),

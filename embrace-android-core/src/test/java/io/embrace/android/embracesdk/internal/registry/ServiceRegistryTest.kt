@@ -1,11 +1,11 @@
 package io.embrace.android.embracesdk.internal.registry
 
 import io.embrace.android.embracesdk.fakes.FakeActivityTracker
+import io.embrace.android.embracesdk.fakes.FakeAppStateService
 import io.embrace.android.embracesdk.fakes.FakeMemoryCleanerService
-import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.internal.session.MemoryCleanerListener
 import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityLifecycleListener
-import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateListener
+import io.embrace.android.embracesdk.internal.session.lifecycle.AppStateListener
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -23,7 +23,7 @@ internal class ServiceRegistryTest {
 
         val expected = listOf(service)
         assertEquals(expected, registry.closeables)
-        assertEquals(expected, registry.processStateListeners)
+        assertEquals(expected, registry.appStateListeners)
         assertEquals(expected, registry.activityLifecycleListeners)
         assertEquals(expected, registry.memoryCleanerListeners)
     }
@@ -35,7 +35,7 @@ internal class ServiceRegistryTest {
         registry.registerService(lazy { service })
         val expected = listOf(service)
 
-        val activityService = FakeProcessStateService()
+        val activityService = FakeAppStateService()
         registry.registerActivityListeners(activityService)
         assertEquals(expected, activityService.listeners)
 
@@ -62,7 +62,7 @@ internal class ServiceRegistryTest {
     private class FakeService :
         Closeable,
         MemoryCleanerListener,
-        ProcessStateListener,
+        AppStateListener,
         ActivityLifecycleListener {
 
         var closed = false

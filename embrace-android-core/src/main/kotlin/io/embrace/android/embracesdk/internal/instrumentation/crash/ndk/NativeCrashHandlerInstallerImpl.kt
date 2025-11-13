@@ -88,7 +88,7 @@ class NativeCrashHandlerInstallerImpl(
             with(nativeInstallMessage) {
                 delegate.installSignalHandlers(
                     markerFilePath,
-                    appState,
+                    appState.description,
                     reportId,
                     apiLevel,
                     is32bit,

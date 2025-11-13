@@ -6,7 +6,7 @@ import java.io.Closeable
 /**
  * Service which handles Android process lifecycle callbacks.
  */
-interface ProcessStateService : LifecycleEventObserver, Closeable {
+interface AppStateService : LifecycleEventObserver, Closeable {
 
     /**
      * Whether the application is in the background.
@@ -20,7 +20,7 @@ interface ProcessStateService : LifecycleEventObserver, Closeable {
      *
      * @param listener the observer to register
      */
-    fun addListener(listener: ProcessStateListener)
+    fun addListener(listener: AppStateListener)
 
     /**
      * This function should be automatically invoked when the process lifecycle
@@ -40,7 +40,7 @@ interface ProcessStateService : LifecycleEventObserver, Closeable {
      *
      * @return the current state of the app
      */
-    fun getAppState(): String
+    fun getAppState(): AppState
 
     /**
      * Returns true if this is fully initialized

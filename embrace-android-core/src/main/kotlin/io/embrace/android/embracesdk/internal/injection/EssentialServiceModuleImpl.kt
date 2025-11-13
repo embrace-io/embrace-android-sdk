@@ -13,8 +13,8 @@ import io.embrace.android.embracesdk.internal.capture.user.UserService
 import io.embrace.android.embracesdk.internal.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.internal.session.id.SessionIdTrackerImpl
 import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityLifecycleTracker
-import io.embrace.android.embracesdk.internal.session.lifecycle.EmbraceProcessStateService
-import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateService
+import io.embrace.android.embracesdk.internal.session.lifecycle.AppStateService
+import io.embrace.android.embracesdk.internal.session.lifecycle.AppStateServiceImpl
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.worker.Worker
@@ -35,10 +35,10 @@ class EssentialServiceModuleImpl(
 
     private val configService by lazy { configModule.configService }
 
-    override val processStateService: ProcessStateService by singleton {
+    override val appStateService: AppStateService by singleton {
         EmbTrace.trace("process-state-service-init") {
             val lifecycleOwner = lifecycleOwnerProvider() ?: ProcessLifecycleOwner.get()
-            EmbraceProcessStateService(initModule.clock, initModule.logger, lifecycleOwner)
+            AppStateServiceImpl(initModule.clock, initModule.logger, lifecycleOwner)
         }
     }
 
@@ -84,7 +84,7 @@ class EssentialServiceModuleImpl(
         TelemetryDestinationImpl(
             logger = openTelemetryModule.otelSdkWrapper.logger,
             sessionIdTracker = sessionIdTracker,
-            processStateService = processStateService,
+            appStateService = appStateService,
             clock = initModule.clock,
             spanService = openTelemetryModule.spanService,
             currentSessionSpan = openTelemetryModule.currentSessionSpan,

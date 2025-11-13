@@ -16,13 +16,13 @@ import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.source.ConfigHttpResponse
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
-import io.embrace.android.embracesdk.internal.payload.ApplicationState
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.payload.Span
-import io.embrace.android.embracesdk.internal.payload.getSessionSpan
+import io.embrace.android.embracesdk.internal.session.getSessionSpan
+import io.embrace.android.embracesdk.internal.session.lifecycle.AppState
 import io.embrace.android.embracesdk.testframework.assertions.JsonComparator
 import io.embrace.android.embracesdk.testframework.server.FakeApiServer
 import io.embrace.android.embracesdk.testframework.server.FormPart
@@ -108,7 +108,7 @@ internal class EmbracePayloadAssertionInterface(
      */
     internal fun getSessionEnvelopes(
         expectedSize: Int,
-        state: ApplicationState = ApplicationState.FOREGROUND,
+        state: AppState = AppState.FOREGROUND,
         waitTimeMs: Int = WAIT_TIME_MS,
     ): List<Envelope<SessionPayload>> {
         return retrieveSessionEnvelopes(expectedSize, state, waitTimeMs)
@@ -118,11 +118,11 @@ internal class EmbracePayloadAssertionInterface(
      * Asserts a single session was completed by the SDK.
      */
     internal fun getSingleSessionEnvelope(
-        state: ApplicationState = ApplicationState.FOREGROUND,
+        state: AppState = AppState.FOREGROUND,
     ): Envelope<SessionPayload> = getSessionEnvelopes(1, state).single()
 
     private fun retrieveSessionEnvelopes(
-        expectedSize: Int, appState: ApplicationState, waitTimeMs: Int,
+        expectedSize: Int, appState: AppState, waitTimeMs: Int,
     ): List<Envelope<SessionPayload>> {
         val supplier = {
             checkNotNull(apiServer).getSessionEnvelopes()
@@ -143,13 +143,13 @@ internal class EmbracePayloadAssertionInterface(
         }
     }
 
-    private fun Envelope<SessionPayload>.findAppState(): ApplicationState {
+    private fun Envelope<SessionPayload>.findAppState(): AppState {
         val attrs = findSessionSpan().attributes
         val state = checkNotNull(attrs?.findAttributeValue(embState.name)) {
             "AppState not found in session payload."
         }
         val value = state.uppercase(Locale.ENGLISH)
-        return ApplicationState.valueOf(value)
+        return AppState.valueOf(value)
     }
 
 

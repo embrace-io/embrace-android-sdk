@@ -1,9 +1,9 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateListener
+import io.embrace.android.embracesdk.internal.session.lifecycle.AppStateListener
 import java.util.concurrent.atomic.AtomicInteger
 
-class FakeProcessStateListener : ProcessStateListener {
+class FakeAppStateListener : AppStateListener {
     var coldStart: Boolean = false
     var timestamp: Long = -1
 

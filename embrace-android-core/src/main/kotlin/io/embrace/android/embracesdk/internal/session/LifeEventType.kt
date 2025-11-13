@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.internal.payload
+package io.embrace.android.embracesdk.internal.session
 
 /**
  * Enum to discriminate the different ways a session can start / end

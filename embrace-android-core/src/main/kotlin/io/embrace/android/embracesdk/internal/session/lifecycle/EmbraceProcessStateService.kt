@@ -1,5 +1,7 @@
 package io.embrace.android.embracesdk.internal.session.lifecycle
 
+import android.os.Handler
+import android.os.Looper
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.LifecycleOwner
@@ -7,8 +9,6 @@ import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
-import io.embrace.android.embracesdk.internal.utils.MainThreadUtils
-import io.embrace.android.embracesdk.internal.utils.stream
 import java.util.concurrent.CopyOnWriteArrayList
 
 /**
@@ -41,11 +41,22 @@ internal class EmbraceProcessStateService(
     override var isInBackground: Boolean = !lifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)
         private set
 
+    private val mainLooper = Looper.getMainLooper()
+    private val mainThread = mainLooper.thread
+
     init {
         // add lifecycle observer on main thread to avoid IllegalStateExceptions with
         // androidx.lifecycle
-        MainThreadUtils.runOnMainThread {
-            lifecycleOwner.lifecycle.addObserver(this)
+        val wrappedRunnable = Runnable {
+            runCatching {
+                lifecycleOwner.lifecycle.addObserver(this)
+            }
+        }
+        if (Thread.currentThread() !== mainThread) {
+            val mainHandler = Handler(mainLooper)
+            mainHandler.post(wrappedRunnable)
+        } else {
+            wrappedRunnable.run()
         }
     }
 
@@ -69,7 +80,7 @@ internal class EmbraceProcessStateService(
 
         invokeCallbackSafely { sessionOrchestrator?.onForeground(coldStart, timestamp) }
 
-        stream<ProcessStateListener>(listeners) { listener: ProcessStateListener ->
+        listeners.toList().forEach { listener: ProcessStateListener ->
             invokeCallbackSafely {
                 listener.onForeground(coldStart, timestamp)
             }
@@ -85,7 +96,7 @@ internal class EmbraceProcessStateService(
         isInBackground = true
         val timestamp = clock.now()
 
-        stream<ProcessStateListener>(listeners) { listener: ProcessStateListener ->
+        listeners.toList().forEach { listener: ProcessStateListener ->
             invokeCallbackSafely {
                 listener.onBackground(timestamp)
             }

@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.fakes.FakeLogEnvelopeSource
 import io.embrace.android.embracesdk.fakes.FakeLogService
 import io.embrace.android.embracesdk.fakes.FakeMemoryCleanerService
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
+import io.embrace.android.embracesdk.fakes.FakePayloadMessageCollator
 import io.embrace.android.embracesdk.fakes.FakePayloadStore
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
@@ -17,7 +18,6 @@ import io.embrace.android.embracesdk.fakes.FakeSessionPropertiesService
 import io.embrace.android.embracesdk.fakes.FakeStartupService
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
 import io.embrace.android.embracesdk.fakes.FakeUserService
-import io.embrace.android.embracesdk.fakes.FakeV2PayloadCollator
 import io.embrace.android.embracesdk.fakes.behavior.FakeSessionBehavior
 import io.embrace.android.embracesdk.fakes.createBackgroundActivityBehavior
 import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
@@ -51,7 +51,7 @@ internal class SessionOrchestratorTest {
 
     private lateinit var orchestrator: SessionOrchestratorImpl
     private lateinit var payloadFactory: PayloadFactoryImpl
-    private lateinit var payloadCollator: FakeV2PayloadCollator
+    private lateinit var payloadCollator: FakePayloadMessageCollator
     private lateinit var logEnvelopeSource: FakeLogEnvelopeSource
     private lateinit var processStateService: FakeProcessStateService
     private lateinit var clock: FakeClock
@@ -394,7 +394,7 @@ internal class SessionOrchestratorTest {
         processStateService = FakeProcessStateService(background)
         currentSessionSpan = FakeCurrentSessionSpan(clock).apply { initializeService(clock.now()) }
         destination = FakeTelemetryDestination()
-        payloadCollator = FakeV2PayloadCollator(currentSessionSpan = currentSessionSpan)
+        payloadCollator = FakePayloadMessageCollator(currentSessionSpan = currentSessionSpan)
         val payloadSourceModule = FakePayloadSourceModule()
         logEnvelopeSource = payloadSourceModule.logEnvelopeSource
         payloadFactory = PayloadFactoryImpl(

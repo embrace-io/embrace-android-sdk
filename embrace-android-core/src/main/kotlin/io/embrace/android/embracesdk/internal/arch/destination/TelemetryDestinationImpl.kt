@@ -184,5 +184,13 @@ internal class TelemetryDestinationImpl(
             span.stop(endTimeMs = endTimeMs)
             processStateService.sessionUpdated()
         }
+
+        override fun addEvent(name: String, eventTimeMs: Long, attributes: Map<String, String>) {
+            span.addEvent(
+                name = name,
+                timestampMs = eventTimeMs,
+                attributes = attributes
+            )
+        }
     }
 }

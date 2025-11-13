@@ -11,9 +11,18 @@ class FakeSpanToken(
     var errorCode: ErrorCodeAttribute?,
     val type: EmbType,
     val attributes: Map<String, String>,
+    val events: MutableList<Long> = mutableListOf()
 ) : SpanToken {
     override fun stop(endTimeMs: Long?) {
         this.endTimeMs = endTimeMs ?: 0
+    }
+
+    override fun addEvent(
+        name: String,
+        eventTimeMs: Long,
+        attributes: Map<String, String>,
+    ) {
+        events.add(eventTimeMs)
     }
 
     fun isRecording(): Boolean = endTimeMs == null

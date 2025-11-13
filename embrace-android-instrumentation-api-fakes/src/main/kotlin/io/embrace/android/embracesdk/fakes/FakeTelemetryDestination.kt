@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.internal.arch.attrs.asPair
 import io.embrace.android.embracesdk.internal.arch.datasource.LogSeverity
+import io.embrace.android.embracesdk.internal.arch.datasource.SpanEvent
 import io.embrace.android.embracesdk.internal.arch.datasource.SpanToken
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
@@ -55,6 +56,7 @@ class FakeTelemetryDestination : TelemetryDestination {
             null,
             schemaType.telemetryType,
             schemaType.attributes() + mapOf(schemaType.telemetryType.asPair()),
+            emptyList(),
         )
 
         createdSpans.add(token)
@@ -68,6 +70,7 @@ class FakeTelemetryDestination : TelemetryDestination {
         errorCode: ErrorCodeAttribute?,
         type: EmbType,
         attributes: Map<String, String>,
+        events: List<SpanEvent>,
     ) {
         val token = FakeSpanToken(
             name,
@@ -76,6 +79,7 @@ class FakeTelemetryDestination : TelemetryDestination {
             errorCode,
             type,
             attributes,
+            events,
         )
         createdSpans.add(token)
     }

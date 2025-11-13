@@ -61,5 +61,6 @@ interface TelemetryDestination {
         errorCode: ErrorCodeAttribute? = null,
         type: EmbType = EmbType.Performance.Default,
         attributes: Map<String, String> = emptyMap(),
+        events: List<SpanEvent> = emptyList(),
     )
 }

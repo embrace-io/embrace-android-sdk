@@ -3,17 +3,19 @@ package io.embrace.android.embracesdk.testframework.actions
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import io.embrace.android.embracesdk.ResourceReader
+import io.embrace.android.embracesdk.assertions.assertMatches
 import io.embrace.android.embracesdk.assertions.findSessionSpan
 import io.embrace.android.embracesdk.assertions.getSessionId
 import io.embrace.android.embracesdk.assertions.returnIfConditionMet
 import io.embrace.android.embracesdk.internal.TypeUtils
+import io.embrace.android.embracesdk.internal.arch.attrs.embCleanExit
+import io.embrace.android.embracesdk.internal.arch.attrs.embCrashId
+import io.embrace.android.embracesdk.internal.arch.attrs.embState
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.source.ConfigHttpResponse
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
-import io.embrace.android.embracesdk.internal.arch.attrs.embCleanExit
-import io.embrace.android.embracesdk.internal.arch.attrs.embCrashId
-import io.embrace.android.embracesdk.internal.arch.attrs.embState
+import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.payload.ApplicationState
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.Log
@@ -21,9 +23,7 @@ import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.getSessionSpan
-import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.testframework.assertions.JsonComparator
-import io.embrace.android.embracesdk.assertions.assertMatches
 import io.embrace.android.embracesdk.testframework.server.FakeApiServer
 import io.embrace.android.embracesdk.testframework.server.FormPart
 import java.io.File
@@ -33,7 +33,6 @@ import java.util.concurrent.TimeoutException
 import org.json.JSONObject
 import org.junit.Assert
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 
@@ -255,7 +254,30 @@ internal class EmbracePayloadAssertionInterface(
         if (crashData.sessionEnvelope != null) {
             assertEquals(crashData.sessionEnvelope.getSessionId(), attrs.findAttributeValue("session.id"))
         }
-        assertFalse(crashData.getCrashFile().exists())
+        assertNativeCrashDoesNotExist(crashData)
+    }
+
+    fun assertNativeCrashDoesNotExist(crashData: StoredNativeCrashData) {
+        returnIfConditionMet(
+            desiredValueSupplier = { false },
+            dataProvider = {
+                val exists = crashData.getCrashFile().exists()
+                exists
+            },
+            condition = { !it },
+        )
+    }
+
+    fun assertNativeCrashExists(
+        crashData: StoredNativeCrashData,
+    ) {
+        returnIfConditionMet(
+            desiredValueSupplier = { true },
+            dataProvider = {
+                crashData.getCrashFile().exists()
+            },
+            condition = { it },
+        )
     }
 
     /*** TEST INFRA ***/

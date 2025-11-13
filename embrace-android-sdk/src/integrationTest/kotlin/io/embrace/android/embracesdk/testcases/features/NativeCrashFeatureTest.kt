@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.testcases.features
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.assertions.getLogOfType
 import io.embrace.android.embracesdk.assertions.getSessionId
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
@@ -13,19 +14,15 @@ import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.delivery.PayloadType
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
+import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.LogPayload
-import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbracePayloadAssertionInterface
 import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import io.embrace.android.embracesdk.testframework.actions.StoredNativeCrashData
 import io.embrace.android.embracesdk.testframework.actions.createStoredNativeCrashData
-import io.embrace.android.embracesdk.assertions.getLogOfType
-import io.embrace.android.embracesdk.internal.worker.Worker
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -100,7 +97,6 @@ internal class NativeCrashFeatureTest {
     val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule {
         EmbraceSetupInterface(
             fakeStorageLayer = true,
-            workerToFake = Worker.Background.NonIoRegWorker,
         ).apply {
             getEmbLogger().throwOnInternalError = false
         }.also {
@@ -233,7 +229,7 @@ internal class NativeCrashFeatureTest {
                     assertDeadSessionResurrected(null)
                 }
                 assertEquals(0, getLogEnvelopes(0).size)
-                assertTrue(crashData.getCrashFile().exists())
+                assertNativeCrashExists(crashData)
             }
         )
     }
@@ -288,6 +284,6 @@ internal class NativeCrashFeatureTest {
         crashData: StoredNativeCrashData,
     ) {
         assertEquals(0, getLogEnvelopes(0).size)
-        assertFalse(crashData.getCrashFile().exists())
+        assertNativeCrashDoesNotExist(crashData)
     }
 }

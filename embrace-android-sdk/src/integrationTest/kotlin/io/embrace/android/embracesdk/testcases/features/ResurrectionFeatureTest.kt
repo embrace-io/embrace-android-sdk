@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.testcases.features
 
 import android.os.Build.VERSION_CODES.TIRAMISU
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.assertions.getLastLog
 import io.embrace.android.embracesdk.fakes.FakePayloadStorageService
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
@@ -18,8 +19,6 @@ import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import io.embrace.android.embracesdk.testframework.actions.createStoredNativeCrashData
-import io.embrace.android.embracesdk.assertions.getLastLog
-import io.embrace.android.embracesdk.internal.worker.Worker
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -42,7 +41,6 @@ internal class ResurrectionFeatureTest {
     val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule {
         EmbraceSetupInterface(
             fakeStorageLayer = true,
-            workerToFake = Worker.Background.NonIoRegWorker,
         ).apply {
             getEmbLogger().throwOnInternalError = false
             fakeSymbolService.symbolsForCurrentArch.putAll(fakeSymbols)

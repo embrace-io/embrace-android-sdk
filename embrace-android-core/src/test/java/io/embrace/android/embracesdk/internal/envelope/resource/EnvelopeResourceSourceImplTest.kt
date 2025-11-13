@@ -5,11 +5,11 @@ import android.os.Environment
 import io.embrace.android.embracesdk.fakes.FakeDevice
 import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.fakes.FakeRnBundleIdTracker
-import io.embrace.android.embracesdk.fakes.fakeDeviceArchitecture
-import io.embrace.android.embracesdk.internal.buildinfo.BuildInfo
 import io.embrace.android.embracesdk.internal.capture.metadata.AppEnvironment
+import io.embrace.android.embracesdk.internal.envelope.BuildInfo
+import io.embrace.android.embracesdk.internal.envelope.CpuAbi
+import io.embrace.android.embracesdk.internal.envelope.PackageVersionInfo
 import io.embrace.android.embracesdk.internal.envelope.metadata.UnitySdkVersionInfo
-import io.embrace.android.embracesdk.internal.injection.PackageVersionInfo
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.mockk.every
 import io.mockk.mockkStatic
@@ -25,7 +25,6 @@ internal class EnvelopeResourceSourceImplTest {
     companion object {
         private val packageInfo = PackageInfo()
         private lateinit var packageVersionInfo: PackageVersionInfo
-        private val fakeArchitecture = fakeDeviceArchitecture()
 
         @BeforeClass
         @JvmStatic
@@ -63,7 +62,7 @@ internal class EnvelopeResourceSourceImplTest {
             BuildInfo("100", "release", "oem", "bundle-id"),
             packageVersionInfo,
             AppFramework.NATIVE,
-            fakeArchitecture,
+            CpuAbi.ARM64_V8A,
             FakeDevice(),
             FakeRnBundleIdTracker()
         )

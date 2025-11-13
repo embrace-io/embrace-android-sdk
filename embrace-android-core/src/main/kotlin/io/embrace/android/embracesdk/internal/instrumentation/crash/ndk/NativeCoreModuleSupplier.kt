@@ -5,7 +5,6 @@ import io.embrace.android.embracesdk.internal.injection.CoreModule
 import io.embrace.android.embracesdk.internal.injection.EssentialServiceModule
 import io.embrace.android.embracesdk.internal.injection.InitModule
 import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModule
-import io.embrace.android.embracesdk.internal.injection.PayloadSourceModule
 import io.embrace.android.embracesdk.internal.injection.StorageModule
 import io.embrace.android.embracesdk.internal.injection.WorkerThreadModule
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.jni.JniDelegate
@@ -18,7 +17,6 @@ import io.embrace.android.embracesdk.internal.utils.Provider
 typealias NativeCoreModuleSupplier = (
     initModule: InitModule,
     coreModule: CoreModule,
-    payloadSourceModule: PayloadSourceModule,
     workerThreadModule: WorkerThreadModule,
     configModule: ConfigModule,
     storageModule: StorageModule,
@@ -32,7 +30,6 @@ typealias NativeCoreModuleSupplier = (
 fun createNativeCoreModule(
     initModule: InitModule,
     coreModule: CoreModule,
-    payloadSourceModule: PayloadSourceModule,
     workerThreadModule: WorkerThreadModule,
     configModule: ConfigModule,
     storageModule: StorageModule,
@@ -44,7 +41,6 @@ fun createNativeCoreModule(
 ): NativeCoreModule = NativeCoreModuleImpl(
     initModule,
     coreModule,
-    payloadSourceModule,
     workerThreadModule,
     configModule,
     storageModule,

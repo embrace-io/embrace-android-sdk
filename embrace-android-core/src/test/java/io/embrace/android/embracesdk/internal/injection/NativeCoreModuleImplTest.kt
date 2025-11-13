@@ -8,7 +8,6 @@ import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
 import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
-import io.embrace.android.embracesdk.fakes.injection.FakePayloadSourceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeStorageModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.createNativeCoreModule
@@ -25,7 +24,6 @@ internal class NativeCoreModuleImplTest {
         val module = createNativeCoreModule(
             initModule,
             createCoreModule(ApplicationProvider.getApplicationContext(), initModule),
-            FakePayloadSourceModule(),
             FakeWorkerThreadModule(),
             FakeConfigModule(
                 configService = FakeConfigService(

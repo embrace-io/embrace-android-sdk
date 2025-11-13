@@ -1,16 +1,16 @@
 package io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.symbols
 
 import android.util.Base64
-import io.embrace.android.embracesdk.internal.DeviceArchitecture
 import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.InstrumentedConfig
+import io.embrace.android.embracesdk.internal.envelope.CpuAbi
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.payload.NativeSymbols
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 
 class SymbolServiceImpl(
-    private val deviceArchitecture: DeviceArchitecture,
+    private val cpuAbi: CpuAbi,
     private val serializer: PlatformSerializer,
     private val logger: EmbLogger,
     private val instrumentedConfig: InstrumentedConfig = InstrumentedConfigImpl,
@@ -18,7 +18,7 @@ class SymbolServiceImpl(
 
     override val symbolsForCurrentArch: Map<String, String>? by lazy {
         getNativeSymbols()?.let {
-            val arch = deviceArchitecture.architecture
+            val arch = cpuAbi.archName
 
             when {
                 it.symbols.containsKey(arch) -> it.symbols[arch]

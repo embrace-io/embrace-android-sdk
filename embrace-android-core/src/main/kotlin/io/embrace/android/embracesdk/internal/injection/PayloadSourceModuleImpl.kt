@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.injection
 
-import io.embrace.android.embracesdk.internal.DeviceArchitecture
 import io.embrace.android.embracesdk.internal.capture.metadata.EmbraceMetadataService
 import io.embrace.android.embracesdk.internal.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.internal.capture.metadata.RnBundleIdTracker
@@ -78,10 +77,6 @@ internal class PayloadSourceModuleImpl(
         LogEnvelopeSourceImpl(metadataSource, resourceSource, logPayloadSource, deliveryModule.cachedLogEnvelopeStore)
     }
 
-    override val deviceArchitecture: DeviceArchitecture by singleton {
-        DeviceArchitecture()
-    }
-
     override val hostedSdkVersionInfo: HostedSdkVersionInfo by singleton {
         val store = androidServicesModule.store
         when (configModule.configService.appFramework) {
@@ -100,7 +95,7 @@ internal class PayloadSourceModuleImpl(
                 EmbTrace.trace("buildInfo") { coreModule.buildInfo },
                 EmbTrace.trace("packageInfo") { coreModule.packageVersionInfo },
                 configModule.configService.appFramework,
-                deviceArchitecture,
+                coreModule.cpuAbi,
                 EmbTrace.trace("deviceImpl") {
                     DeviceImpl(
                         systemServiceModule.windowManager,

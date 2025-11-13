@@ -1,12 +1,12 @@
 package io.embrace.android.embracesdk.internal.envelope.resource
 
 import io.embrace.android.embracesdk.core.BuildConfig
-import io.embrace.android.embracesdk.internal.DeviceArchitecture
-import io.embrace.android.embracesdk.internal.buildinfo.BuildInfo
 import io.embrace.android.embracesdk.internal.capture.metadata.AppEnvironment
 import io.embrace.android.embracesdk.internal.capture.metadata.RnBundleIdTracker
+import io.embrace.android.embracesdk.internal.envelope.BuildInfo
+import io.embrace.android.embracesdk.internal.envelope.CpuAbi
+import io.embrace.android.embracesdk.internal.envelope.PackageVersionInfo
 import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo
-import io.embrace.android.embracesdk.internal.injection.PackageVersionInfo
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
 
@@ -16,7 +16,7 @@ internal class EnvelopeResourceSourceImpl(
     private val buildInfo: BuildInfo,
     private val packageVersionInfo: PackageVersionInfo,
     private val appFramework: AppFramework,
-    private val deviceArchitecture: DeviceArchitecture,
+    private val cpuAbi: CpuAbi,
     private val device: Device,
     private val rnBundleIdTracker: RnBundleIdTracker,
 ) : EnvelopeResourceSource {
@@ -40,7 +40,7 @@ internal class EnvelopeResourceSourceImpl(
             unityBuildId = hosted.unityBuildIdNumber,
             deviceManufacturer = device.systemInfo.deviceManufacturer,
             deviceModel = device.systemInfo.deviceModel,
-            deviceArchitecture = deviceArchitecture.architecture,
+            deviceArchitecture = cpuAbi.archName,
             jailbroken = device.isJailbroken,
             diskTotalCapacity = device.internalStorageTotalCapacity.value,
             osType = device.systemInfo.osType,

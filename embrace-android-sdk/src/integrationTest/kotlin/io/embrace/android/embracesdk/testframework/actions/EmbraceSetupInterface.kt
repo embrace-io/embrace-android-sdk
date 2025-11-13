@@ -158,11 +158,10 @@ internal class EmbraceSetupInterface(
             )
         },
         anrModuleSupplier = { _, _, _, _, _ -> anrModule },
-        nativeCoreModuleSupplier = { initModule, coreModule, payloadSourceModule, workerThreadModule, configModule, storageModule, essentialServiceModule, openTelemetryModule, _, _, _ ->
+        nativeCoreModuleSupplier = { initModule, coreModule, workerThreadModule, configModule, storageModule, essentialServiceModule, openTelemetryModule, _, _, _ ->
             createNativeCoreModule(
                 initModule = initModule,
                 coreModule = coreModule,
-                payloadSourceModule = payloadSourceModule,
                 workerThreadModule = workerThreadModule,
                 configModule = configModule,
                 storageModule = storageModule,

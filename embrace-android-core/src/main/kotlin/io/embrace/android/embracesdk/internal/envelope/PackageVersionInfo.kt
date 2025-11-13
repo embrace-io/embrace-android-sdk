@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.internal.injection
+package io.embrace.android.embracesdk.internal.envelope
 
 import android.content.pm.PackageInfo
 

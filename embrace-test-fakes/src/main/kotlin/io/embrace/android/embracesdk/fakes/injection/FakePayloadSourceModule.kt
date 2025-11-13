@@ -10,8 +10,6 @@ import io.embrace.android.embracesdk.fakes.FakePayloadResurrectionService
 import io.embrace.android.embracesdk.fakes.FakeRnBundleIdTracker
 import io.embrace.android.embracesdk.fakes.FakeSessionEnvelopeSource
 import io.embrace.android.embracesdk.fakes.FakeSessionPayloadSource
-import io.embrace.android.embracesdk.fakes.fakeDeviceArchitecture
-import io.embrace.android.embracesdk.internal.DeviceArchitecture
 import io.embrace.android.embracesdk.internal.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.internal.envelope.log.LogPayloadSource
 import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo
@@ -22,7 +20,6 @@ import io.embrace.android.embracesdk.internal.resurrection.PayloadResurrectionSe
 
 class FakePayloadSourceModule(
     override val metadataService: MetadataService = FakeMetadataService(),
-    override val deviceArchitecture: DeviceArchitecture = fakeDeviceArchitecture(),
     override val hostedSdkVersionInfo: HostedSdkVersionInfo = FakeHostedSdkVersionInfo(),
     override val rnBundleIdTracker: FakeRnBundleIdTracker = FakeRnBundleIdTracker(),
     override val payloadResurrectionService: PayloadResurrectionService = FakePayloadResurrectionService(),

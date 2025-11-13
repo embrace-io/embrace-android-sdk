@@ -3,10 +3,11 @@ package io.embrace.android.embracesdk.internal.injection
 import android.app.Application
 import android.content.Context
 import android.content.pm.ApplicationInfo
-import io.embrace.android.embracesdk.internal.buildinfo.BuildInfo
 import io.embrace.android.embracesdk.internal.capture.metadata.AppEnvironment
+import io.embrace.android.embracesdk.internal.envelope.BuildInfo
+import io.embrace.android.embracesdk.internal.envelope.CpuAbi
+import io.embrace.android.embracesdk.internal.envelope.PackageVersionInfo
 import io.embrace.android.embracesdk.internal.registry.ServiceRegistry
-import kotlin.getValue
 
 class CoreModuleImpl(
     ctx: Context,
@@ -45,5 +46,9 @@ class CoreModuleImpl(
             cfg.getBuildFlavor(),
             cfg.getReactNativeBundleId(),
         )
+    }
+
+    override val cpuAbi: CpuAbi by singleton {
+        CpuAbi.current()
     }
 }

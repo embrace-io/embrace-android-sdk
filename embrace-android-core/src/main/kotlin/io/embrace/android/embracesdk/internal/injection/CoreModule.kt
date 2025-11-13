@@ -2,8 +2,10 @@ package io.embrace.android.embracesdk.internal.injection
 
 import android.app.Application
 import android.content.Context
-import io.embrace.android.embracesdk.internal.buildinfo.BuildInfo
 import io.embrace.android.embracesdk.internal.capture.metadata.AppEnvironment
+import io.embrace.android.embracesdk.internal.envelope.BuildInfo
+import io.embrace.android.embracesdk.internal.envelope.CpuAbi
+import io.embrace.android.embracesdk.internal.envelope.PackageVersionInfo
 import io.embrace.android.embracesdk.internal.registry.ServiceRegistry
 
 /**
@@ -35,4 +37,11 @@ interface CoreModule {
     val appEnvironment: AppEnvironment
 
     val buildInfo: BuildInfo
+
+    /**
+     * The primary CPU architecture. We assume that for the vast majority of devices
+     * all CPUs have the same ABI (technically not true, but a reasonable enough for
+     * simpler data analysis)
+     */
+    val cpuAbi: CpuAbi
 }

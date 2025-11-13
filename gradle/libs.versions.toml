@@ -4,7 +4,7 @@
 binaryCompatibilityValidator = "0.18.1"
 agp = "8.13.1"
 junit = "4.13.2"
-dokka = "1.9.20"
+dokka = "2.1.0"
 kotlinGradlePlugin = "2.2.21"
 koverGradlePlugin = "0.9.3"
 lint = "31.13.1"
@@ -45,6 +45,7 @@ minSdk = "21"
 [libraries]
 binary-compatibility-validator = { module = "org.jetbrains.kotlinx:binary-compatibility-validator", version.ref = "binaryCompatibilityValidator" }
 detekt-gradle-plugin = { module = "io.gitlab.arturbosch.detekt:detekt-gradle-plugin", version.ref = "detekt" }
+dokka-gradle-plugin = { module = "org.jetbrains.dokka:org.jetbrains.dokka.gradle.plugin", version.ref = "dokka" }
 vanniktech-maven-publish = { module = "com.vanniktech.maven.publish:com.vanniktech.maven.publish.gradle.plugin", version.ref = "vanniktechMavenPublish" }
 kover = { module = "org.jetbrains.kotlinx:kover-gradle-plugin", version.ref = "koverGradlePlugin" }
 agp = { module = "com.android.tools.build:gradle", version.ref = "agp" }

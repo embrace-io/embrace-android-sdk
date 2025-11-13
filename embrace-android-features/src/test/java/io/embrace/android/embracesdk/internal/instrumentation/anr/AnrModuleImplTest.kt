@@ -1,35 +1,34 @@
 package io.embrace.android.embracesdk.internal.instrumentation.anr
 
-import android.os.Looper
+import android.app.Application
+import androidx.test.core.app.ApplicationProvider
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
+import io.embrace.android.embracesdk.fakes.FakeInstrumentationModule
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
-import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
-import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
-import io.mockk.every
-import io.mockk.mockk
-import io.mockk.mockkStatic
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
-import org.junit.Before
 import org.junit.Test
+import org.junit.runner.RunWith
 
+@RunWith(AndroidJUnit4::class)
 internal class AnrModuleImplTest {
-
-    @Before
-    fun setUp() {
-        mockkStatic(Looper::class)
-        every { Looper.getMainLooper() } returns mockk(relaxed = true)
-    }
 
     @Test
     fun testDefaultImplementations() {
+        val application = ApplicationProvider.getApplicationContext<Application>()
         val module = AnrModuleImpl(
-            FakeInitModule(),
+            FakeInstrumentationModule(
+                application,
+                instrumentationArgs = FakeInstrumentationArgs(
+                    application,
+                    configService = FakeConfigService()
+                )
+            ),
             FakeOpenTelemetryModule(),
-            FakeConfigService(),
-            FakeWorkerThreadModule(),
             FakeProcessStateService()
         )
         assertNotNull(module.anrService)
@@ -38,13 +37,18 @@ internal class AnrModuleImplTest {
 
     @Test
     fun testBehaviorDisabled() {
+        val application = ApplicationProvider.getApplicationContext<Application>()
         val module = AnrModuleImpl(
-            FakeInitModule(),
-            FakeOpenTelemetryModule(),
-            FakeConfigService(
-                autoDataCaptureBehavior = FakeAutoDataCaptureBehavior(anrServiceEnabled = false)
+            FakeInstrumentationModule(
+                application,
+                instrumentationArgs = FakeInstrumentationArgs(
+                    application,
+                    configService = FakeConfigService(
+                        autoDataCaptureBehavior = FakeAutoDataCaptureBehavior(anrServiceEnabled = false)
+                    )
+                )
             ),
-            FakeWorkerThreadModule(),
+            FakeOpenTelemetryModule(),
             FakeProcessStateService()
         )
         assertNull(module.anrService)

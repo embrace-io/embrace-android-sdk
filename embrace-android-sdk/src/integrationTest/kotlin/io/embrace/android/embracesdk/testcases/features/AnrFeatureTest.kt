@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.testcases.features
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.assertions.assertMatches
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
-import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.BlockedThreadDetector
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.payload.Envelope
@@ -12,7 +12,6 @@ import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface
 import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
-import io.embrace.android.embracesdk.assertions.assertMatches
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -28,7 +27,6 @@ private const val SPAN_NAME = "emb-thread-blockage"
 internal class AnrFeatureTest {
 
     private lateinit var anrMonitorExecutor: BlockingScheduledExecutorService
-    private lateinit var blockedThreadDetector: BlockedThreadDetector
     private var startTimeMs: Long = 0L
 
     @Rule
@@ -41,7 +39,6 @@ internal class AnrFeatureTest {
             with(it) {
                 anrMonitorExecutor = getFakedWorkerExecutor()
                 anrMonitorExecutor.blockingMode = true
-                blockedThreadDetector = getBlockedThreadDetector()
             }
         }
     }
@@ -221,6 +218,7 @@ internal class AnrFeatureTest {
             repeat(sampleCount) {
                 moveForwardAndRunBlocked(intervalMs)
             }
+            val blockedThreadDetector = testRule.bootstrapper.anrModule.blockedThreadDetector
 
             if (!incomplete) {
                 // simulate the main thread becoming responsive again, ending the ANR interval

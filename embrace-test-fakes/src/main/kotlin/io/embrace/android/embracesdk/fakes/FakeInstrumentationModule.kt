@@ -6,10 +6,13 @@ import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistry
 import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistryImpl
 import io.embrace.android.embracesdk.internal.injection.InstrumentationModule
 
-class FakeInstrumentationModule(application: Application) : InstrumentationModule {
+class FakeInstrumentationModule(
+    application: Application,
+    private val logger: FakeEmbLogger = FakeEmbLogger(),
+    override val instrumentationArgs: InstrumentationArgs = FakeInstrumentationArgs(application, logger = logger)
+) : InstrumentationModule {
     override val instrumentationRegistry: InstrumentationRegistry = InstrumentationRegistryImpl(
         fakeBackgroundWorker(),
-        FakeEmbLogger()
+        logger
     )
-    override val instrumentationArgs: InstrumentationArgs = FakeInstrumentationArgs(application)
 }

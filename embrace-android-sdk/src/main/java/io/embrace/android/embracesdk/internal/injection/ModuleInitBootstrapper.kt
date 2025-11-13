@@ -222,16 +222,6 @@ internal class ModuleInitBootstrapper(
                         }
                     }
 
-                    anrModule = init(AnrModule::class) {
-                        anrModuleSupplier(
-                            initModule,
-                            openTelemetryModule,
-                            configModule.configService,
-                            workerThreadModule,
-                            essentialServiceModule.processStateService
-                        )
-                    }
-
                     instrumentationModule = init(InstrumentationModule::class) {
                         instrumentationModuleSupplier(
                             initModule,
@@ -240,6 +230,14 @@ internal class ModuleInitBootstrapper(
                             essentialServiceModule,
                             androidServicesModule,
                             coreModule,
+                        )
+                    }
+
+                    anrModule = init(AnrModule::class) {
+                        anrModuleSupplier(
+                            instrumentationModule,
+                            openTelemetryModule,
+                            essentialServiceModule.processStateService
                         )
                     }
 
@@ -327,12 +325,11 @@ internal class ModuleInitBootstrapper(
 
                     nativeCoreModule = init(NativeCoreModule::class) {
                         nativeCoreModuleSupplier(
-                            initModule,
                             coreModule,
                             workerThreadModule,
-                            configModule,
                             storageModule,
                             essentialServiceModule,
+                            instrumentationModule,
                             openTelemetryModule,
                             { null },
                             { null },
@@ -342,9 +339,6 @@ internal class ModuleInitBootstrapper(
 
                     nativeFeatureModule = init(NativeFeatureModule::class) {
                         nativeFeatureModuleSupplier(
-                            initModule,
-                            configModule,
-                            androidServicesModule,
                             nativeCoreModule,
                             instrumentationModule,
                         )

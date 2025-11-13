@@ -21,7 +21,7 @@ class FakeInstrumentationArgs(
 ) : InstrumentationArgs {
 
     override fun backgroundWorker(worker: Worker.Background): BackgroundWorker {
-        throw UnsupportedOperationException()
+        return fakeBackgroundWorker()
     }
 
     override fun <T> systemService(name: String): T? {

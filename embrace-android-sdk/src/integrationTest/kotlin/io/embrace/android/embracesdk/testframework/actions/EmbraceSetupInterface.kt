@@ -6,7 +6,6 @@ import androidx.lifecycle.testing.TestLifecycleOwner
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeAnrService
 import io.embrace.android.embracesdk.fakes.FakeClock
-import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeJniDelegate
 import io.embrace.android.embracesdk.fakes.FakeNetworkConnectivityService
@@ -33,10 +32,8 @@ import io.embrace.android.embracesdk.internal.injection.createDeliveryModule
 import io.embrace.android.embracesdk.internal.injection.createEssentialServiceModule
 import io.embrace.android.embracesdk.internal.injection.createInstrumentationModule
 import io.embrace.android.embracesdk.internal.injection.createWorkerThreadModule
-import io.embrace.android.embracesdk.internal.instrumentation.anr.AnrModule
 import io.embrace.android.embracesdk.internal.instrumentation.anr.AnrOtelMapper
 import io.embrace.android.embracesdk.internal.instrumentation.anr.createAnrModule
-import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.BlockedThreadDetector
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.createNativeCoreModule
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
@@ -54,7 +51,7 @@ import io.embrace.opentelemetry.kotlin.ExperimentalApi
  */
 internal class EmbraceSetupInterface(
     workerToFake: Worker.Background? = null,
-    anrMonitoringThread: Thread? = null,
+    private val anrMonitoringThread: Thread? = null,
     fakeStorageLayer: Boolean = false,
     val ignoredInternalErrors: List<InternalErrorType> = emptyList(),
     val fakeClock: FakeClock = FakeClock(currentTime = SdkIntegrationTestRule.DEFAULT_SDK_START_TIME_MS),
@@ -88,28 +85,6 @@ internal class EmbraceSetupInterface(
         anrMonitoringThread = anrMonitoringThread
     )
 
-    @OptIn(ExperimentalApi::class)
-    private val anrModule: AnrModule = if (anrMonitoringThread != null) {
-        createAnrModule(
-            fakeInitModule,
-            fakeInitModule.openTelemetryModule,
-            FakeConfigService(),
-            workerThreadModule,
-            FakeProcessStateService()
-        )
-    } else {
-        val fakeAnrService = FakeAnrService()
-        FakeAnrModule(
-            anrService = fakeAnrService,
-            anrOtelMapper = AnrOtelMapper(
-                anrService = fakeAnrService,
-                clock = fakeInitModule.clock,
-                spanService = fakeInitModule.openTelemetryModule.spanService,
-                tracingIdFactory = FakeTracingIdFactory()
-            )
-        )
-    }
-
     private val coreModule: CoreModule = FakeCoreModule()
 
     private val androidServicesModule: AndroidServicesModule = createAndroidServicesModule(
@@ -117,6 +92,7 @@ internal class EmbraceSetupInterface(
         coreModule = coreModule
     )
 
+    @OptIn(ExperimentalApi::class)
     fun createBootstrapper(
         instrumentedConfig: FakeInstrumentedConfig,
         deliveryTracer: DeliveryTracer,
@@ -157,15 +133,33 @@ internal class EmbraceSetupInterface(
                 deliveryTracer = deliveryTracer,
             )
         },
-        anrModuleSupplier = { _, _, _, _, _ -> anrModule },
-        nativeCoreModuleSupplier = { initModule, coreModule, workerThreadModule, configModule, storageModule, essentialServiceModule, openTelemetryModule, _, _, _ ->
+        anrModuleSupplier = { instrumentationModule, _, _ ->
+            if (anrMonitoringThread != null) {
+                createAnrModule(
+                    instrumentationModule,
+                    fakeInitModule.openTelemetryModule,
+                    FakeProcessStateService()
+                )
+            } else {
+                val fakeAnrService = FakeAnrService()
+                FakeAnrModule(
+                    anrService = fakeAnrService,
+                    anrOtelMapper = AnrOtelMapper(
+                        anrService = fakeAnrService,
+                        clock = fakeInitModule.clock,
+                        spanService = fakeInitModule.openTelemetryModule.spanService,
+                        tracingIdFactory = FakeTracingIdFactory()
+                    )
+                )
+            }
+        },
+        nativeCoreModuleSupplier = { coreModule, workerThreadModule, storageModule, essentialServiceModule, instrumentationModule, openTelemetryModule, _, _, _ ->
             createNativeCoreModule(
-                initModule = initModule,
                 coreModule = coreModule,
                 workerThreadModule = workerThreadModule,
-                configModule = configModule,
                 storageModule = storageModule,
                 essentialServiceModule = essentialServiceModule,
+                instrumentationModule = instrumentationModule,
                 otelModule = openTelemetryModule,
                 delegateProvider = { fakeJniDelegate },
                 sharedObjectLoaderProvider = ::FakeSharedObjectLoader,
@@ -233,8 +227,6 @@ internal class EmbraceSetupInterface(
     fun getContext(): Context = coreModule.context
 
     fun getFakedWorkerExecutor(): BlockingScheduledExecutorService = (workerThreadModule as FakeWorkerThreadModule).executor
-
-    fun getBlockedThreadDetector(): BlockedThreadDetector = anrModule.blockedThreadDetector
 
     fun getPreferencesService(): PreferencesService = androidServicesModule.preferencesService
 

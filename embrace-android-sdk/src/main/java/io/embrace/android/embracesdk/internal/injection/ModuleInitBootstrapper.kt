@@ -329,7 +329,6 @@ internal class ModuleInitBootstrapper(
                         nativeCoreModuleSupplier(
                             initModule,
                             coreModule,
-                            payloadSourceModule,
                             workerThreadModule,
                             configModule,
                             storageModule,

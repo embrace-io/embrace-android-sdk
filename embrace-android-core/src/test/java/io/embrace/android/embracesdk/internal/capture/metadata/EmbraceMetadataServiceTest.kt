@@ -12,13 +12,13 @@ import io.embrace.android.embracesdk.fakes.FakeHostedSdkVersionInfo
 import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.fakes.FakeRnBundleIdTracker
 import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
-import io.embrace.android.embracesdk.fakes.fakeDeviceArchitecture
 import io.embrace.android.embracesdk.internal.SystemInfo
-import io.embrace.android.embracesdk.internal.buildinfo.BuildInfo
+import io.embrace.android.embracesdk.internal.envelope.BuildInfo
+import io.embrace.android.embracesdk.internal.envelope.CpuAbi
+import io.embrace.android.embracesdk.internal.envelope.PackageVersionInfo
 import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.internal.envelope.resource.DeviceImpl
 import io.embrace.android.embracesdk.internal.envelope.resource.EnvelopeResourceSourceImpl
-import io.embrace.android.embracesdk.internal.injection.PackageVersionInfo
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.prefs.EmbracePreferencesService
 import io.mockk.clearAllMocks
@@ -43,7 +43,6 @@ internal class EmbraceMetadataServiceTest {
         private lateinit var ref: EmbraceMetadataService
         private val preferencesService: EmbracePreferencesService = mockk(relaxed = true)
         private val fakeClock = FakeClock()
-        private val fakeArchitecture = fakeDeviceArchitecture()
         private val storageStatsManager = mockk<StorageStatsManager>()
 
         @BeforeClass
@@ -107,7 +106,7 @@ internal class EmbraceMetadataServiceTest {
                     buildInfo,
                     PackageVersionInfo(packageInfo),
                     framework,
-                    fakeArchitecture,
+                    CpuAbi.ARM64_V8A,
                     DeviceImpl(
                         mockk(relaxed = true),
                         FakeKeyValueStore(),

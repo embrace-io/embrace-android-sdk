@@ -4,10 +4,11 @@ import android.app.Application
 import android.content.Context
 import android.content.pm.PackageInfo
 import io.embrace.android.embracesdk.fakes.system.mockApplication
-import io.embrace.android.embracesdk.internal.buildinfo.BuildInfo
 import io.embrace.android.embracesdk.internal.capture.metadata.AppEnvironment
+import io.embrace.android.embracesdk.internal.envelope.BuildInfo
+import io.embrace.android.embracesdk.internal.envelope.CpuAbi
+import io.embrace.android.embracesdk.internal.envelope.PackageVersionInfo
 import io.embrace.android.embracesdk.internal.injection.CoreModule
-import io.embrace.android.embracesdk.internal.injection.PackageVersionInfo
 import io.embrace.android.embracesdk.internal.registry.ServiceRegistry
 import io.mockk.every
 import io.mockk.isMockKMock
@@ -31,6 +32,7 @@ class FakeCoreModule(
         "fakeRnBundleId",
     ),
     override val packageVersionInfo: PackageVersionInfo = fakePackageVersionInfo,
+    override val cpuAbi: CpuAbi = CpuAbi.ARM64_V8A,
 ) : CoreModule {
 
     companion object {

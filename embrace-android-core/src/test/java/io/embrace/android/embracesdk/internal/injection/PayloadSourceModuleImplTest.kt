@@ -39,7 +39,6 @@ internal class PayloadSourceModuleImplTest {
         assertTrue(module.metadataService is EmbraceMetadataService)
         assertNotNull(module.sessionEnvelopeSource)
         assertNotNull(module.logEnvelopeSource)
-        assertNotNull(module.deviceArchitecture)
         assertNotNull(module.payloadResurrectionService)
     }
 }

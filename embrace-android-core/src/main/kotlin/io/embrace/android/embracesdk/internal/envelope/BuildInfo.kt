@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.internal.buildinfo
+package io.embrace.android.embracesdk.internal.envelope
 
 /**
  * Specifies the application ID and build ID.

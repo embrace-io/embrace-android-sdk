@@ -12,6 +12,7 @@ import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.fakeModuleInitBootstrapper
 import io.embrace.android.embracesdk.fakes.injection.FakeLogModule
 import io.embrace.android.embracesdk.internal.session.id.SessionData
+import io.embrace.android.embracesdk.internal.session.lifecycle.AppState
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -66,7 +67,7 @@ internal class SdkStateApiDelegateTest {
 
     @Test
     fun getCurrentSessionId() {
-        sessionIdTracker.sessionData = SessionData("test", true)
+        sessionIdTracker.sessionData = SessionData("test", AppState.FOREGROUND)
         assertEquals("test", delegate.currentSessionId)
     }
 

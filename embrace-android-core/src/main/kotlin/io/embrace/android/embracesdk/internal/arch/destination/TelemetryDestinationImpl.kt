@@ -13,9 +13,8 @@ import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.otel.sdk.toEmbraceObjectName
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.session.id.SessionIdTracker
+import io.embrace.android.embracesdk.internal.session.lifecycle.AppState
 import io.embrace.android.embracesdk.internal.session.lifecycle.AppStateService
-import io.embrace.android.embracesdk.internal.session.lifecycle.AppStateServiceImpl.Companion.BACKGROUND_STATE
-import io.embrace.android.embracesdk.internal.session.lifecycle.AppStateServiceImpl.Companion.FOREGROUND_STATE
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.spans.AutoTerminationMode
@@ -63,18 +62,15 @@ internal class TelemetryDestinationImpl(
             setStringAttribute(LogAttributes.LOG_RECORD_UID, Uuid.getEmbUuid())
 
             if (addCurrentSessionInfo) {
-                var sessionState: String? = null
+                var sessionState: AppState? = null
                 sessionIdTracker.getActiveSession()?.let { session ->
                     if (session.id.isNotBlank()) {
                         setStringAttribute(SessionAttributes.SESSION_ID, session.id)
                     }
-                    sessionState = if (session.isForeground) {
-                        FOREGROUND_STATE
-                    } else {
-                        BACKGROUND_STATE
-                    }
+                    sessionState = session.appState
                 }
-                setStringAttribute(embState.name, sessionState ?: appStateService.getAppState().description)
+                val state = sessionState ?: appStateService.getAppState()
+                setStringAttribute(embState.name, state.description)
             }
 
             if (isPrivate) {

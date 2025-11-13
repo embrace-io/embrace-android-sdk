@@ -105,19 +105,19 @@ internal class AppStateServiceTest {
 
     @Test
     fun `verify isInBackground returns true by default`() {
-        assertTrue(stateService.isInBackground)
+        assertEquals(AppState.BACKGROUND, stateService.getAppState())
     }
 
     @Test
     fun `verify isInBackground returns false if it was previously on foreground`() {
         stateService.onForeground()
-        assertFalse(stateService.isInBackground)
+        assertEquals(AppState.FOREGROUND, stateService.getAppState())
     }
 
     @Test
     fun `verify isInBackground returns true if it was previously on background`() {
         stateService.onBackground()
-        assertTrue(stateService.isInBackground)
+        assertEquals(AppState.BACKGROUND, stateService.getAppState())
     }
 
     @Test
@@ -146,14 +146,6 @@ internal class AppStateServiceTest {
         stateService.addListener(listener)
         assertEquals(2, stateService.listeners.size)
         assertEquals(listener, stateService.listeners[1])
-    }
-
-    @Test
-    fun `verify close cleans everything`() {
-        // add a listener first, so we then check that listener have been cleared
-        stateService.addListener(FakeAppStateListener())
-        stateService.close()
-        assertTrue(stateService.listeners.isEmpty())
     }
 
     /**
@@ -231,7 +223,7 @@ internal class AppStateServiceTest {
                 }
             }
         )
-        assertTrue(stateService.isInBackground)
+        assertEquals(AppState.BACKGROUND, stateService.getAppState())
     }
 
     @Test
@@ -245,7 +237,7 @@ internal class AppStateServiceTest {
                 }
             }
         )
-        assertFalse(stateService.isInBackground)
+        assertEquals(AppState.FOREGROUND, stateService.getAppState())
     }
 
     @Test

@@ -38,8 +38,10 @@ internal class AppStateServiceImpl(
      * Returns if the app's in background or not.
      */
     @Volatile
-    override var isInBackground: Boolean = !lifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)
-        private set
+    private var state: AppState = when {
+        lifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED) -> AppState.FOREGROUND
+        else -> AppState.BACKGROUND
+    }
 
     private val mainLooper = Looper.getMainLooper()
     private val mainThread = mainLooper.thread
@@ -74,8 +76,8 @@ internal class AppStateServiceImpl(
      * This method will be called by the ProcessLifecycleOwner when the main app process calls
      * ON START.
      */
-    override fun onForeground() {
-        isInBackground = false
+    internal fun onForeground() {
+        state = AppState.FOREGROUND
         val timestamp = clock.now()
 
         invokeCallbackSafely { sessionOrchestrator?.onForeground(coldStart, timestamp) }
@@ -92,8 +94,8 @@ internal class AppStateServiceImpl(
      * This method will be called by the ProcessLifecycleOwner when the main app process calls
      * ON STOP.
      */
-    override fun onBackground() {
-        isInBackground = true
+    internal fun onBackground() {
+        state = AppState.BACKGROUND
         val timestamp = clock.now()
 
         listeners.toList().forEach { listener: AppStateListener ->
@@ -120,28 +122,9 @@ internal class AppStateServiceImpl(
         }
     }
 
-    override fun close() {
-        runCatching {
-            listeners.clear()
-            sessionOrchestrator = null
-        }
-    }
-
-    override fun getAppState(): AppState = when {
-        isInBackground -> AppState.BACKGROUND
-        else -> AppState.FOREGROUND
-    }
-
-    override fun isInitialized(): Boolean {
-        return sessionOrchestrator != null
-    }
+    override fun getAppState(): AppState = state
 
     override fun sessionUpdated() {
         sessionOrchestrator?.onSessionDataUpdate()
-    }
-
-    companion object {
-        const val FOREGROUND_STATE: String = "foreground"
-        const val BACKGROUND_STATE: String = "background"
     }
 }

@@ -1,5 +1,7 @@
 package io.embrace.android.embracesdk.internal.capture.startup
 
+import io.embrace.android.embracesdk.internal.session.lifecycle.AppState
+
 /**
  * Service to track the SDK startup time.
  */
@@ -11,7 +13,7 @@ interface StartupService {
     fun setSdkStartupInfo(
         startTimeMs: Long,
         endTimeMs: Long,
-        endedInForeground: Boolean,
+        endState: AppState,
         threadName: String,
     )
 
@@ -29,11 +31,6 @@ interface StartupService {
      * The epoch time in milliseconds of when the SDK startup finished
      */
     fun getSdkInitEndMs(): Long?
-
-    /**
-     * Returns true if the SDK init ended when the app is in the foreground, false if in the background, null if startup info not recorded
-     */
-    fun endedInForeground(): Boolean?
 
     /**
      * Returns the name of the thread on which the SDK init was run. Returns null if startup info was not recorded yet.

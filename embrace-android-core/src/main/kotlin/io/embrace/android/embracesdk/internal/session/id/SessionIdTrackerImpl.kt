@@ -4,6 +4,7 @@ import android.app.ActivityManager
 import android.os.Build
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.session.lifecycle.AppState
 import java.util.concurrent.CopyOnWriteArraySet
 
 internal class SessionIdTrackerImpl(
@@ -27,10 +28,10 @@ internal class SessionIdTrackerImpl(
 
     override fun getActiveSession(): SessionData? = activeSession
 
-    override fun setActiveSession(sessionId: String?, isSession: Boolean) {
-        activeSession = sessionId?.run { SessionData(sessionId, isSession) }
+    override fun setActiveSession(sessionId: String?, appState: AppState) {
+        activeSession = sessionId?.run { SessionData(sessionId, appState) }
 
-        if (isSession) {
+        if (appState == AppState.FOREGROUND) {
             setSessionIdToProcessStateSummary(sessionId)
         }
     }

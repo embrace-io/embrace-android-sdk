@@ -174,13 +174,12 @@ internal class EmbraceImpl(
 
         initializeHucInstrumentation(configModule.configService.networkBehavior)
 
-        val inForeground = !bootstrapper.essentialServiceModule.appStateService.isInBackground
         start("startup-tracking")
         val dataCaptureServiceModule = bootstrapper.dataCaptureServiceModule
         dataCaptureServiceModule.startupService.setSdkStartupInfo(
             startTimeMs,
             endTimeMs,
-            inForeground,
+            bootstrapper.essentialServiceModule.appStateService.getAppState(),
             Thread.currentThread().name
         )
         end()

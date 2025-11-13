@@ -52,7 +52,7 @@ internal class PayloadFactoryBaTest {
         clock = FakeClock(10000L)
         metadataService = FakeMetadataService()
         sessionIdTracker = FakeSessionIdTracker()
-        activityService = FakeAppStateService(isInBackground = true)
+        activityService = FakeAppStateService(AppState.BACKGROUND)
         store = FakeOrdinalStore()
         userService = FakeUserService()
         val initModule = FakeInitModule(clock = clock)

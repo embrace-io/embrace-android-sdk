@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.Thre
 import io.embrace.android.embracesdk.internal.instrumentation.anr.payload.AnrInterval
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.session.lifecycle.AppState
 import io.embrace.android.embracesdk.internal.session.lifecycle.AppStateService
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import java.util.concurrent.Callable
@@ -38,7 +39,7 @@ internal class EmbraceAnrService(
     private var delayedBackgroundCheckTask: ScheduledFuture<*>? = null
 
     init {
-        if (appStateService.isInBackground) {
+        if (appStateService.getAppState() == AppState.BACKGROUND) {
             scheduleDelayedBackgroundCheck()
         }
         // add listeners
@@ -159,7 +160,7 @@ internal class EmbraceAnrService(
      * Called after a 10-second delay to handle slow startup scenarios.
      */
     private fun stopMonitoringIfStillInBackground() {
-        if (appStateService.isInBackground) {
+        if (appStateService.getAppState() == AppState.BACKGROUND) {
             livenessCheckScheduler.stopMonitoringThread()
         }
         delayedBackgroundCheckTask = null

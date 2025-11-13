@@ -37,6 +37,7 @@ import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.session.LifeEventType
 import io.embrace.android.embracesdk.internal.session.caching.PeriodicSessionCacher
+import io.embrace.android.embracesdk.internal.session.lifecycle.AppState
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactoryImpl
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import org.junit.Assert.assertEquals
@@ -83,7 +84,7 @@ internal class SessionOrchestratorTest {
 
     @Test
     fun `test initial behavior in background`() {
-        createOrchestrator(true)
+        createOrchestrator(AppState.BACKGROUND)
         assertEquals(1, memoryCleanerService.callCount)
         assertEquals(orchestrator, appStateService.listeners.single())
         assertEquals(0, payloadCollator.sessionCount.get())
@@ -96,7 +97,7 @@ internal class SessionOrchestratorTest {
 
     @Test
     fun `test initial behavior in foreground`() {
-        createOrchestrator(false)
+        createOrchestrator(AppState.FOREGROUND)
         assertEquals(1, memoryCleanerService.callCount)
         assertEquals(orchestrator, appStateService.listeners.single())
         assertEquals(1, payloadCollator.sessionCount.get())
@@ -109,7 +110,7 @@ internal class SessionOrchestratorTest {
 
     @Test
     fun `test on foreground call after starting in background`() {
-        createOrchestrator(true)
+        createOrchestrator(AppState.BACKGROUND)
         clock.tick()
         val foregroundTime = clock.now()
         val sessionSpan = currentSessionSpan.sessionSpan
@@ -126,7 +127,7 @@ internal class SessionOrchestratorTest {
 
     @Test
     fun `test on background call after starting in foreground`() {
-        createOrchestrator(false)
+        createOrchestrator(AppState.FOREGROUND)
         clock.tick()
         val backgroundTime = clock.now()
         val sessionSpan = currentSessionSpan.sessionSpan
@@ -142,7 +143,7 @@ internal class SessionOrchestratorTest {
 
     @Test
     fun `saved background activity save overridden after is sent`() {
-        createOrchestrator(true)
+        createOrchestrator(AppState.BACKGROUND)
         clock.tick()
         orchestrator.onSessionDataUpdate()
         sessionCacheExecutor.runCurrentlyBlocked()
@@ -156,7 +157,7 @@ internal class SessionOrchestratorTest {
 
     @Test
     fun `background activity save invoked after ending will not save it again`() {
-        createOrchestrator(true)
+        createOrchestrator(AppState.BACKGROUND)
         clock.tick()
         orchestrator.onForeground(true, clock.now())
         clock.tick()
@@ -167,7 +168,7 @@ internal class SessionOrchestratorTest {
 
     @Test
     fun `saved session overridden after it is sent`() {
-        createOrchestrator(false)
+        createOrchestrator(AppState.FOREGROUND)
         clock.tick()
         sessionCacheExecutor.runCurrentlyBlocked()
         assertEquals(1, store.cachedSessionPayloads.size)
@@ -179,7 +180,7 @@ internal class SessionOrchestratorTest {
 
     @Test
     fun `session save invoked after ending will not save it again`() {
-        createOrchestrator(false)
+        createOrchestrator(AppState.FOREGROUND)
         clock.tick()
         orchestrator.onBackground(clock.now())
         clock.tick()
@@ -190,7 +191,7 @@ internal class SessionOrchestratorTest {
 
     @Test
     fun `end session with manual in foreground`() {
-        createOrchestrator(false)
+        createOrchestrator(AppState.FOREGROUND)
         clock.tick(10000)
         val endTimeMs = clock.now()
         val sessionSpan = currentSessionSpan.sessionSpan
@@ -206,8 +207,8 @@ internal class SessionOrchestratorTest {
 
     @Test
     fun `end session with manual in background`() {
-        createOrchestrator(true)
-        appStateService.isInBackground = true
+        createOrchestrator(AppState.BACKGROUND)
+        appStateService.state = AppState.BACKGROUND
         orchestrator.endSessionWithManual(true)
         assertEquals(1, memoryCleanerService.callCount)
         assertTrue(store.storedSessionPayloads.isEmpty())
@@ -216,7 +217,7 @@ internal class SessionOrchestratorTest {
 
     @Test
     fun `backgrounding with background activity enabled does not cache empty crash envelope`() {
-        createOrchestrator(false)
+        createOrchestrator(AppState.FOREGROUND)
         orchestrator.onBackground(orchestratorStartTimeMs)
         assertTrue(store.cachedEmptyCrashPayloads.isEmpty())
     }
@@ -228,7 +229,7 @@ internal class SessionOrchestratorTest {
                 remoteCfg = RemoteConfig(backgroundActivityConfig = BackgroundActivityRemoteConfig(threshold = 0f))
             )
         )
-        createOrchestrator(false)
+        createOrchestrator(AppState.FOREGROUND)
         orchestrator.onBackground(orchestratorStartTimeMs)
         assertEquals(1, store.cachedEmptyCrashPayloads.size)
     }
@@ -240,7 +241,7 @@ internal class SessionOrchestratorTest {
                 remoteCfg = RemoteConfig(backgroundActivityConfig = BackgroundActivityRemoteConfig(threshold = 0f))
             )
         )
-        createOrchestrator(true)
+        createOrchestrator(AppState.BACKGROUND)
         orchestrator.onForeground(false, orchestratorStartTimeMs)
         assertTrue(store.cachedEmptyCrashPayloads.isEmpty())
     }
@@ -250,7 +251,7 @@ internal class SessionOrchestratorTest {
         configService = FakeConfigService(
             sessionBehavior = FakeSessionBehavior(sessionControlEnabled = true)
         )
-        createOrchestrator(false)
+        createOrchestrator(AppState.FOREGROUND)
 
         clock.tick(10000)
         assertEquals(1, payloadCollator.sessionCount.get())
@@ -263,7 +264,7 @@ internal class SessionOrchestratorTest {
     @Test
     fun `ending session manually clears user info`() {
         configService = FakeConfigService()
-        createOrchestrator(false)
+        createOrchestrator(AppState.FOREGROUND)
         clock.tick(10000)
 
         orchestrator.endSessionWithManual(true)
@@ -273,7 +274,7 @@ internal class SessionOrchestratorTest {
     @Test
     fun `ending session manually above time threshold succeeds`() {
         configService = FakeConfigService()
-        createOrchestrator(false)
+        createOrchestrator(AppState.FOREGROUND)
         clock.tick(10000)
         assertEquals(1, payloadCollator.sessionCount.get())
         orchestrator.endSessionWithManual(true)
@@ -284,7 +285,7 @@ internal class SessionOrchestratorTest {
     @Test
     fun `ending session manually below time threshold fails`() {
         configService = FakeConfigService()
-        createOrchestrator(false)
+        createOrchestrator(AppState.FOREGROUND)
         clock.tick(1000)
 
         orchestrator.endSessionWithManual(true)
@@ -295,7 +296,7 @@ internal class SessionOrchestratorTest {
     @Test
     fun `ending session manually when no session exists does not start a new session`() {
         configService = FakeConfigService()
-        createOrchestrator(true)
+        createOrchestrator(AppState.BACKGROUND)
         clock.tick(1000)
         orchestrator.endSessionWithManual(true)
         assertEquals(0, payloadCollator.baCount.get())
@@ -303,7 +304,7 @@ internal class SessionOrchestratorTest {
 
     @Test
     fun `end with crash in background`() {
-        createOrchestrator(true)
+        createOrchestrator(AppState.BACKGROUND)
         orchestrator.handleCrash("crashId")
         assertEquals("crashId", destination.attributes[embCrashId.name])
         assertTrue(store.cachedEmptyCrashPayloads.isEmpty())
@@ -311,7 +312,7 @@ internal class SessionOrchestratorTest {
 
     @Test
     fun `end with crash in foreground`() {
-        createOrchestrator(false)
+        createOrchestrator(AppState.FOREGROUND)
         orchestrator.handleCrash("crashId")
         assertEquals("crashId", destination.attributes[embCrashId.name])
         assertTrue(store.cachedEmptyCrashPayloads.isEmpty())
@@ -319,7 +320,7 @@ internal class SessionOrchestratorTest {
 
     @Test
     fun `periodic caching started with initial session`() {
-        createOrchestrator(false)
+        createOrchestrator(AppState.FOREGROUND)
         assertEquals(0, store.cachedSessionPayloads.size)
         sessionCacheExecutor.runCurrentlyBlocked()
         assertEquals(1, store.cachedSessionPayloads.size)
@@ -327,14 +328,14 @@ internal class SessionOrchestratorTest {
 
     @Test
     fun `test session span cold start`() {
-        createOrchestrator(true)
+        createOrchestrator(AppState.BACKGROUND)
         orchestrator.onForeground(true, clock.now())
         checkNotNull(store.storedSessionPayloads.last().first)
     }
 
     @Test
     fun `test session span non cold start`() {
-        createOrchestrator(true)
+        createOrchestrator(AppState.BACKGROUND)
         orchestrator.onForeground(true, orchestratorStartTimeMs)
         orchestrator.onBackground(orchestratorStartTimeMs)
         checkNotNull(store.storedSessionPayloads.last().first)
@@ -342,7 +343,7 @@ internal class SessionOrchestratorTest {
 
     @Test
     fun `test session span with crash`() {
-        createOrchestrator(true)
+        createOrchestrator(AppState.BACKGROUND)
         orchestrator.onForeground(true, orchestratorStartTimeMs)
         orchestrator.handleCrash("my-crash-id")
         checkNotNull(store.storedSessionPayloads.last().first)
@@ -350,7 +351,7 @@ internal class SessionOrchestratorTest {
 
     @Test
     fun `test foreground session span heartbeat`() {
-        createOrchestrator(true)
+        createOrchestrator(AppState.BACKGROUND)
         orchestrator.onForeground(true, orchestratorStartTimeMs)
         assertHeartbeatMatchesClock()
         assertEquals("true", destination.attributes["emb.terminated"])
@@ -368,7 +369,7 @@ internal class SessionOrchestratorTest {
 
     @Test
     fun `test background session span heartbeat`() {
-        createOrchestrator(true)
+        createOrchestrator(AppState.BACKGROUND)
         assertHeartbeatMatchesClock()
         assertEquals("true", destination.attributes["emb.terminated"])
 
@@ -389,9 +390,9 @@ internal class SessionOrchestratorTest {
         assertEquals(clock.now(), attr.toLong().nanosToMillis())
     }
 
-    private fun createOrchestrator(background: Boolean) {
+    private fun createOrchestrator(state: AppState) {
         store = FakePayloadStore()
-        appStateService = FakeAppStateService(background)
+        appStateService = FakeAppStateService(state)
         currentSessionSpan = FakeCurrentSessionSpan(clock).apply { initializeService(clock.now()) }
         destination = FakeTelemetryDestination()
         payloadCollator = FakePayloadMessageCollator(currentSessionSpan = currentSessionSpan)

@@ -1,18 +1,18 @@
 package io.embrace.android.embracesdk.internal.instrumentation.crash.ndk
 
+import android.app.Application
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.fakes.FakeConfigModule
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationModule
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fakes.FakeStorageService
 import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
-import io.embrace.android.embracesdk.fakes.injection.FakeAndroidServicesModule
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
-import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeNativeCoreModule
-import org.junit.Assert
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -20,94 +20,77 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 internal class NativeFeatureModuleImplTest {
 
-    private lateinit var fakeConfigModule: FakeConfigModule
     private lateinit var fakeStorageService: FakeStorageService
+    private lateinit var fakeConfigService: FakeConfigService
     private lateinit var fakeEssentialServiceModule: FakeEssentialServiceModule
 
-    private lateinit var module: NativeFeatureModuleImpl
+    private lateinit var module: NativeFeatureModule
 
     @Before
     fun setUp() {
-        fakeConfigModule = FakeConfigModule()
         fakeStorageService = FakeStorageService()
         fakeEssentialServiceModule = FakeEssentialServiceModule()
-        module = createNativeFeatureModule(fakeConfigModule)
+        fakeConfigService = FakeConfigService(
+            autoDataCaptureBehavior = FakeAutoDataCaptureBehavior(
+                ndkEnabled = true
+            )
+        )
+        module = createNativeFeatureModule()
     }
 
     @Test
     fun testDefaultImplementations() {
-        Assert.assertNull(module.nativeCrashService)
+        fakeConfigService = FakeConfigService(
+            autoDataCaptureBehavior = FakeAutoDataCaptureBehavior()
+        )
+        module = createNativeFeatureModule()
+        assertNull(module.nativeCrashService)
     }
 
     @Test
-    fun `do not create native crash handler installer when create native crash id throws`() {
+    fun `create native crash handler installer when create native crash id throws`() {
         fakeStorageService.shouldThrow = true
-        fakeConfigModule = FakeConfigModule(
-            configService = FakeConfigService(
-                autoDataCaptureBehavior = FakeAutoDataCaptureBehavior(
-                    ndkEnabled = true
-                )
-            )
-        )
-
-        module = createNativeFeatureModule(fakeConfigModule)
+        module = createNativeFeatureModule()
+        assertNotNull(module.nativeCrashService)
     }
 
     @Test
-    fun `do not create native crash handler installer when active session id is null`() {
+    fun `create native crash handler installer when active session id is null`() {
         // given active session id is null
-        fakeConfigModule = FakeConfigModule(
-            configService = FakeConfigService(
-                autoDataCaptureBehavior = FakeAutoDataCaptureBehavior(
-                    ndkEnabled = true
-                )
-            )
-        )
         fakeEssentialServiceModule = FakeEssentialServiceModule(sessionIdTracker = FakeSessionIdTracker())
-
-        module = createNativeFeatureModule(fakeConfigModule)
+        module = createNativeFeatureModule()
+        assertNotNull(module.nativeCrashService)
     }
 
     @Test
     fun `create native crash handler installer when everything is fine`() {
-        fakeConfigModule = FakeConfigModule(
-            configService = FakeConfigService(
-                autoDataCaptureBehavior = FakeAutoDataCaptureBehavior(
-                    ndkEnabled = true
-                )
-            )
-        )
         fakeEssentialServiceModule = FakeEssentialServiceModule(
             sessionIdTracker = FakeSessionIdTracker().apply {
                 setActiveSession("sessionId", true)
             }
         )
 
-        module = createNativeFeatureModule(fakeConfigModule)
+        module = createNativeFeatureModule()
+        assertNotNull(module.nativeCrashService)
     }
 
     @Test
     fun `create services when native crash capture is enabled`() {
-        fakeConfigModule = FakeConfigModule(
-            configService = FakeConfigService(
-                autoDataCaptureBehavior = FakeAutoDataCaptureBehavior(
-                    ndkEnabled = true
-                )
-            )
-        )
-
-        module = createNativeFeatureModule(fakeConfigModule)
-        Assert.assertNotNull(module.nativeCrashService)
+        module = createNativeFeatureModule()
+        assertNotNull(module.nativeCrashService)
     }
 
-    private fun createNativeFeatureModule(fakeConfigModule: FakeConfigModule): NativeFeatureModuleImpl {
-        val initModule = FakeInitModule()
+    private fun createNativeFeatureModule(): NativeFeatureModuleImpl {
+        val application = ApplicationProvider.getApplicationContext<Application>()
         return NativeFeatureModuleImpl(
-            initModule,
-            fakeConfigModule,
-            FakeAndroidServicesModule(),
             FakeNativeCoreModule(),
-            FakeInstrumentationModule(ApplicationProvider.getApplicationContext())
+            FakeInstrumentationModule(
+                application,
+                instrumentationArgs = FakeInstrumentationArgs(
+                    application = application,
+                    configService = fakeConfigService
+                )
+            )
         )
     }
 }

@@ -1,9 +1,11 @@
 package io.embrace.android.embracesdk.internal.injection
 
+import android.app.Application
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.fakes.FakeConfigModule
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
+import io.embrace.android.embracesdk.fakes.FakeInstrumentationModule
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
 import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
@@ -21,19 +23,24 @@ internal class NativeCoreModuleImplTest {
     @Test
     fun testDefaultImplementations() {
         val initModule = FakeInitModule()
+        val ctx = ApplicationProvider.getApplicationContext<Application>()
         val module = createNativeCoreModule(
-            initModule,
-            createCoreModule(ApplicationProvider.getApplicationContext(), initModule),
+            createCoreModule(ctx, initModule),
             FakeWorkerThreadModule(),
-            FakeConfigModule(
-                configService = FakeConfigService(
-                    autoDataCaptureBehavior = FakeAutoDataCaptureBehavior(
-                        ndkEnabled = true
+            FakeStorageModule(),
+            FakeEssentialServiceModule(),
+            FakeInstrumentationModule(
+                ctx,
+                instrumentationArgs =
+                FakeInstrumentationArgs(
+                    ctx,
+                    FakeConfigService(
+                        autoDataCaptureBehavior = FakeAutoDataCaptureBehavior(
+                            ndkEnabled = true
+                        )
                     )
                 )
             ),
-            FakeStorageModule(),
-            FakeEssentialServiceModule(),
             FakeOpenTelemetryModule(),
             { null },
             { null },

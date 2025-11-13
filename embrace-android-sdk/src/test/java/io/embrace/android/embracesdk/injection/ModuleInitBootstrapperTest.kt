@@ -6,6 +6,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigModule
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationModule
 import io.embrace.android.embracesdk.fakes.FakeNativeFeatureModule
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
@@ -14,8 +15,6 @@ import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.injection.EssentialServiceModuleImpl
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
-import io.embrace.android.embracesdk.internal.logging.EmbLogger
-import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -31,7 +30,7 @@ import org.robolectric.annotation.Config
 internal class ModuleInitBootstrapperTest {
 
     private lateinit var moduleInitBootstrapper: ModuleInitBootstrapper
-    private lateinit var logger: EmbLogger
+    private lateinit var logger: FakeEmbLogger
     private lateinit var clock: Clock
     private lateinit var coreModule: FakeCoreModule
     private lateinit var context: Context
@@ -39,7 +38,7 @@ internal class ModuleInitBootstrapperTest {
 
     @Before
     fun setup() {
-        logger = EmbLoggerImpl()
+        logger = FakeEmbLogger(false)
         clock = FakeClock()
         coreModule = FakeCoreModule()
         val application = RuntimeEnvironment.getApplication()
@@ -49,9 +48,9 @@ internal class ModuleInitBootstrapperTest {
             clock = clock,
             configModuleSupplier = { _, _, _, _, _ -> FakeConfigModule(FakeConfigService()) },
             coreModuleSupplier = { _, _ -> coreModule },
-            nativeFeatureModuleSupplier = { _, _, _, _, _ -> FakeNativeFeatureModule() },
+            nativeFeatureModuleSupplier = { _, _ -> FakeNativeFeatureModule() },
             instrumentationModuleSupplier = { _, _, _, _, _, _ ->
-                FakeInstrumentationModule(application).apply {
+                FakeInstrumentationModule(application, logger = logger).apply {
                     registry = instrumentationRegistry
                 }
             }

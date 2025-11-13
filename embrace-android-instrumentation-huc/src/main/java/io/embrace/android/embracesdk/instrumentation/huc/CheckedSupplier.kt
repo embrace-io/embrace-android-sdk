@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.internal.utils.exceptions.function
+package io.embrace.android.embracesdk.instrumentation.huc
 
 interface CheckedSupplier<R> {
 

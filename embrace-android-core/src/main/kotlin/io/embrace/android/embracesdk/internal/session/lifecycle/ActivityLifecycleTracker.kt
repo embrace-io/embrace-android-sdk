@@ -5,7 +5,6 @@ import android.app.Application
 import android.os.Bundle
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
-import io.embrace.android.embracesdk.internal.utils.stream
 import java.lang.ref.WeakReference
 import java.util.concurrent.CopyOnWriteArrayList
 
@@ -58,7 +57,7 @@ class ActivityLifecycleTracker(
 
     override fun onActivityCreated(activity: Activity, bundle: Bundle?) {
         updateStateWithActivity(activity)
-        stream(activityListeners) { listener: ActivityLifecycleListener ->
+        activityListeners.toList().forEach { listener: ActivityLifecycleListener ->
             try {
                 listener.onActivityCreated(activity, bundle)
             } catch (ex: Exception) {
@@ -69,7 +68,7 @@ class ActivityLifecycleTracker(
 
     override fun onActivityStarted(activity: Activity) {
         updateStateWithActivity(activity)
-        stream(activityListeners) { listener: ActivityLifecycleListener ->
+        activityListeners.toList().forEach { listener: ActivityLifecycleListener ->
             try {
                 listener.onActivityStarted(activity)
             } catch (ex: Exception) {
@@ -82,7 +81,7 @@ class ActivityLifecycleTracker(
     override fun onActivityPaused(activity: Activity) {}
 
     override fun onActivityStopped(activity: Activity) {
-        stream(activityListeners) { listener: ActivityLifecycleListener ->
+        activityListeners.toList().forEach { listener: ActivityLifecycleListener ->
             try {
                 listener.onActivityStopped(activity)
             } catch (ex: Exception) {

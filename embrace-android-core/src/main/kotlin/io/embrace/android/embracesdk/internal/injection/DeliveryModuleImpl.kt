@@ -138,7 +138,7 @@ internal class DeliveryModuleImpl(
         }
     }
 
-    override val requestExecutionService: RequestExecutionService? by singleton {
+    private val requestExecutionService: RequestExecutionService? by singleton {
         requestExecutionServiceProvider?.invoke() ?: if (configModule.configService.isOnlyUsingOtelExporters()) {
             null
         } else {

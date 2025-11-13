@@ -68,7 +68,7 @@ internal class ConfigModuleImpl(
         )
     }
 
-    override val remoteConfigStore: RemoteConfigStore by singleton {
+    private val remoteConfigStore: RemoteConfigStore by singleton {
         RemoteConfigStoreImpl(
             serializer = initModule.jsonSerializer,
             storageDir = File(coreModule.context.filesDir, "embrace_remote_config"),

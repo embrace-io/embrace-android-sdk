@@ -24,8 +24,6 @@ class FakePayloadSourceModule(
     override val metadataService: MetadataService = FakeMetadataService(),
     override val deviceArchitecture: DeviceArchitecture = fakeDeviceArchitecture(),
     override val hostedSdkVersionInfo: HostedSdkVersionInfo = FakeHostedSdkVersionInfo(),
-    override val resourceSource: FakeEnvelopeResourceSource = FakeEnvelopeResourceSource(),
-    override val metadataSource: FakeEnvelopeMetadataSource = FakeEnvelopeMetadataSource(),
     override val rnBundleIdTracker: FakeRnBundleIdTracker = FakeRnBundleIdTracker(),
     override val payloadResurrectionService: PayloadResurrectionService = FakePayloadResurrectionService(),
     sessionPayloadSource: SessionPayloadSource = FakeSessionPayloadSource(),

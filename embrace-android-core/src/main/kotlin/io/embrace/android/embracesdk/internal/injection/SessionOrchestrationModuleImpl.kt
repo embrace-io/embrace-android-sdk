@@ -30,7 +30,7 @@ internal class SessionOrchestrationModuleImpl(
         EmbraceMemoryCleanerService(logger = initModule.logger)
     }
 
-    override val payloadMessageCollator: PayloadMessageCollatorImpl by singleton {
+    private val payloadMessageCollator: PayloadMessageCollatorImpl by singleton {
         PayloadMessageCollatorImpl(
             EmbTrace.trace("sessionEnvelopeSource") { payloadSourceModule.sessionEnvelopeSource },
             androidServicesModule.ordinalStore,
@@ -55,7 +55,7 @@ internal class SessionOrchestrationModuleImpl(
         )
     }
 
-    override val sessionSpanAttrPopulator: SessionSpanAttrPopulator by singleton {
+    private val sessionSpanAttrPopulator: SessionSpanAttrPopulator by singleton {
         SessionSpanAttrPopulatorImpl(
             essentialServiceModule.telemetryDestination,
             startupService,

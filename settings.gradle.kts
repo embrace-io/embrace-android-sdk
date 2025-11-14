@@ -11,6 +11,7 @@ include(
     ":embrace-android-instrumentation-api",
     ":embrace-android-instrumentation-api-fakes",
     ":embrace-android-instrumentation-schema",
+    ":embrace-android-instrumentation-anr",
     ":embrace-android-instrumentation-app-exit-info",
     ":embrace-android-instrumentation-compose-tap",
     ":embrace-android-instrumentation-crash-jvm",

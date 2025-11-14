@@ -4,13 +4,12 @@ import android.content.Context
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.testing.TestLifecycleOwner
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
-import io.embrace.android.embracesdk.fakes.FakeAnrService
+import io.embrace.android.embracesdk.fakes.FakeAppStateTracker
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeJniDelegate
 import io.embrace.android.embracesdk.fakes.FakeNetworkConnectivityService
 import io.embrace.android.embracesdk.fakes.FakePayloadStorageService
-import io.embrace.android.embracesdk.fakes.FakeAppStateTracker
 import io.embrace.android.embracesdk.fakes.FakeSharedObjectLoader
 import io.embrace.android.embracesdk.fakes.FakeSymbolService
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
@@ -42,6 +41,7 @@ import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.internal.worker.Worker
+import io.embrace.android.embracesdk.testframework.NoopAnrService
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 
@@ -132,21 +132,20 @@ internal class EmbraceSetupInterface(
                 deliveryTracer = deliveryTracer,
             )
         },
-        anrModuleSupplier = { instrumentationModule, _, _ ->
+        anrModuleSupplier = { instrumentationModule, _ ->
             if (anrMonitoringThread != null) {
                 createAnrModule(
                     instrumentationModule,
-                    fakeInitModule.openTelemetryModule,
                     FakeAppStateTracker()
                 )
             } else {
-                val fakeAnrService = FakeAnrService()
+                val fakeAnrService = NoopAnrService
                 FakeAnrModule(
                     anrService = fakeAnrService,
                     anrOtelMapper = AnrOtelMapper(
                         anrService = fakeAnrService,
                         clock = fakeInitModule.clock,
-                        spanService = fakeInitModule.openTelemetryModule.spanService
+                        telemetryDestination = instrumentationModule.destination
                     )
                 )
             }

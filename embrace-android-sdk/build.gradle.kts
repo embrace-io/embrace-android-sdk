@@ -38,6 +38,7 @@ dependencies {
     implementation(project(":embrace-android-instrumentation-network-common"))
 
     // automatically included instrumentation
+    implementation(project(":embrace-android-instrumentation-anr"))
     implementation(project(":embrace-android-instrumentation-app-exit-info"))
     implementation(project(":embrace-android-instrumentation-crash-jvm"))
     implementation(project(":embrace-android-instrumentation-fcm"))

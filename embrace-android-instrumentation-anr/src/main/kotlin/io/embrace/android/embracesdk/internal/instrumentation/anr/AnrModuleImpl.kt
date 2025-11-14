@@ -1,29 +1,22 @@
 package io.embrace.android.embracesdk.internal.instrumentation.anr
 
 import android.os.Looper
+import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.state.AppStateTracker
-import io.embrace.android.embracesdk.internal.injection.InstrumentationModule
-import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModule
-import io.embrace.android.embracesdk.internal.injection.singleton
 import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.BlockedThreadDetector
 import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.LivenessCheckScheduler
 import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.TargetThreadHandler
 import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.ThreadMonitoringState
 import io.embrace.android.embracesdk.internal.worker.Worker
-import io.embrace.opentelemetry.kotlin.ExperimentalApi
 
-@OptIn(ExperimentalApi::class)
 internal class AnrModuleImpl(
-    instrumentationModule: InstrumentationModule,
-    openTelemetryModule: OpenTelemetryModule,
+    args: InstrumentationArgs,
     appStateTracker: AppStateTracker,
 ) : AnrModule {
 
-    private val args by singleton { instrumentationModule.instrumentationArgs }
-
     private val anrMonitorWorker = args.backgroundWorker(Worker.Background.AnrWatchdogWorker)
 
-    override val anrService: AnrService? by singleton {
+    override val anrService: AnrService? by lazy {
         if (args.configService.autoDataCaptureBehavior.isAnrCaptureEnabled()) {
             EmbraceAnrService(
                 configService = args.configService,
@@ -41,23 +34,23 @@ internal class AnrModuleImpl(
         }
     }
 
-    override val anrOtelMapper: AnrOtelMapper? by singleton {
+    override val anrOtelMapper: AnrOtelMapper? by lazy {
         if (args.configService.autoDataCaptureBehavior.isAnrCaptureEnabled()) {
             AnrOtelMapper(
                 checkNotNull(anrService),
                 args.clock,
-                openTelemetryModule.spanService
+                args.destination,
             )
         } else {
             null
         }
     }
 
-    private val looper by singleton { Looper.getMainLooper() }
+    private val looper by lazy { Looper.getMainLooper() }
 
-    private val state by singleton { ThreadMonitoringState(args.clock) }
+    private val state by lazy { ThreadMonitoringState(args.clock) }
 
-    private val stacktraceSampler by singleton {
+    private val stacktraceSampler by lazy {
         AnrStacktraceSampler(
             configService = args.configService,
             clock = args.clock,
@@ -66,7 +59,7 @@ internal class AnrModuleImpl(
         )
     }
 
-    private val targetThreadHandler by singleton {
+    private val targetThreadHandler by lazy {
         TargetThreadHandler(
             looper = looper,
             anrMonitorWorker = anrMonitorWorker,
@@ -74,7 +67,7 @@ internal class AnrModuleImpl(
         )
     }
 
-    override val blockedThreadDetector by singleton {
+    override val blockedThreadDetector by lazy {
         BlockedThreadDetector(
             configService = args.configService,
             clock = args.clock,
@@ -83,7 +76,7 @@ internal class AnrModuleImpl(
         )
     }
 
-    private val livenessCheckScheduler by singleton {
+    private val livenessCheckScheduler by lazy {
         LivenessCheckScheduler(
             configService = args.configService,
             anrMonitorWorker = anrMonitorWorker,

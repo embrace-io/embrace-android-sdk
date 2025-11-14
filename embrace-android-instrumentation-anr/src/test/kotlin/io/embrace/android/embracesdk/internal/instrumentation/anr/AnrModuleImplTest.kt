@@ -6,8 +6,6 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeAppStateTracker
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
-import io.embrace.android.embracesdk.fakes.FakeInstrumentationModule
-import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
 import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -21,14 +19,10 @@ internal class AnrModuleImplTest {
     fun testDefaultImplementations() {
         val application = ApplicationProvider.getApplicationContext<Application>()
         val module = AnrModuleImpl(
-            FakeInstrumentationModule(
+            FakeInstrumentationArgs(
                 application,
-                instrumentationArgs = FakeInstrumentationArgs(
-                    application,
-                    configService = FakeConfigService()
-                )
+                configService = FakeConfigService()
             ),
-            FakeOpenTelemetryModule(),
             FakeAppStateTracker()
         )
         assertNotNull(module.anrService)
@@ -39,16 +33,12 @@ internal class AnrModuleImplTest {
     fun testBehaviorDisabled() {
         val application = ApplicationProvider.getApplicationContext<Application>()
         val module = AnrModuleImpl(
-            FakeInstrumentationModule(
+            FakeInstrumentationArgs(
                 application,
-                instrumentationArgs = FakeInstrumentationArgs(
-                    application,
-                    configService = FakeConfigService(
-                        autoDataCaptureBehavior = FakeAutoDataCaptureBehavior(anrServiceEnabled = false)
-                    )
+                configService = FakeConfigService(
+                    autoDataCaptureBehavior = FakeAutoDataCaptureBehavior(anrServiceEnabled = false)
                 )
             ),
-            FakeOpenTelemetryModule(),
             FakeAppStateTracker()
         )
         assertNull(module.anrService)

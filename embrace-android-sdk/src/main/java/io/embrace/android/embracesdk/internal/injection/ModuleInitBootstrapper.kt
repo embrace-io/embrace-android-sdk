@@ -233,8 +233,7 @@ internal class ModuleInitBootstrapper(
 
                     anrModule = init(AnrModule::class) {
                         anrModuleSupplier(
-                            instrumentationModule,
-                            openTelemetryModule,
+                            instrumentationModule.instrumentationArgs,
                             essentialServiceModule.appStateTracker
                         )
                     }

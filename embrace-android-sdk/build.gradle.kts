@@ -6,20 +6,9 @@ plugins {
 description = "Embrace Android SDK: Core"
 
 android {
-    ndkVersion = "29.0.14206865"
-
     defaultConfig {
         namespace = "io.embrace.android.embracesdk"
         consumerProguardFiles("embrace-proguard.cfg")
-    }
-
-    externalNativeBuild {
-        cmake {
-            path = file("CMakeLists.txt")
-        }
-    }
-    packaging {
-        jniLibs.pickFirsts.add("**/*.so")
     }
 }
 
@@ -41,6 +30,7 @@ dependencies {
     implementation(project(":embrace-android-instrumentation-anr"))
     implementation(project(":embrace-android-instrumentation-app-exit-info"))
     implementation(project(":embrace-android-instrumentation-crash-jvm"))
+    implementation(project(":embrace-android-instrumentation-crash-ndk"))
     implementation(project(":embrace-android-instrumentation-fcm"))
     implementation(project(":embrace-android-instrumentation-huc-lite"))
     implementation(project(":embrace-android-instrumentation-network-status"))
@@ -70,12 +60,6 @@ dependencies {
     implementation(libs.opentelemetry.kotlin.semconv)
     implementation(libs.opentelemetry.kotlin.noop)
 
-    androidTestImplementation(project(":embrace-test-fakes"))
-    androidTestImplementation(project(":embrace-android-otel-java"))
-    androidTestImplementation(libs.androidx.test.core)
-    androidTestImplementation(libs.androidx.test.runner)
-    androidTestUtil(libs.androidx.test.orchestrator)
-
     testImplementation(project(":embrace-android-otel-java"))
     testImplementation(project(":embrace-test-fakes"))
     testImplementation(project(":embrace-test-common"))
@@ -95,7 +79,6 @@ dependencies {
     testImplementation(libs.opentelemetry.sdk)
     testImplementation(libs.robolectric)
     testImplementation(libs.opentelemetry.kotlin.compat)
-    androidTestImplementation(libs.opentelemetry.kotlin.compat)
 
     lintChecks(project(":embrace-lint"))
 }

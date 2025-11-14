@@ -29,6 +29,7 @@ dependencies {
     implementation(project(":embrace-android-instrumentation-api"))
     implementation(project(":embrace-android-instrumentation-schema"))
     implementation(project(":embrace-android-instrumentation-network-common"))
+    implementation(project(":embrace-android-instrumentation-crash-ndk"))
     compileOnly(project(":embrace-android-api"))
 
     implementation(libs.androidx.annotation)

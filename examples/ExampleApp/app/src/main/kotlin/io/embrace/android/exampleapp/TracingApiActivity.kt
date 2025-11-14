@@ -4,19 +4,11 @@ import android.os.Trace
 import androidx.activity.ComponentActivity
 import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.spans.EmbraceSpan
-import io.embrace.android.embracesdk.spans.ErrorCode
-import java.util.concurrent.Executors
-import java.util.concurrent.ScheduledExecutorService
-import java.util.concurrent.ScheduledFuture
-import java.util.concurrent.TimeUnit
-import kotlin.random.Random
 
 class TracingApiActivity : ComponentActivity() {
     private val attributesPairs = (1..ATTRIBUTES_PER_SPAN).map { Pair("test-key-$it", "test-long-ish-values-$it") }
     private val eventNames = (1..EVENTS_PER_SPAN).map { "test-span-event-name-$it" }
     private val extraAttributes = mapOf(attributesPairs.first().first to attributesPairs.first().second)
-    private val embrace = Embrace.getInstance()
-
     override fun onResume() {
         super.onResume()
         val attributes = intent.getBooleanExtra("attributes", false)
@@ -98,7 +90,7 @@ class TracingApiActivity : ComponentActivity() {
     ): EmbraceSpan {
         val span = try {
             Trace.beginSection("create-span")
-            checkNotNull(embrace.createSpan(name = name, parent = parent))
+            checkNotNull(Embrace.createSpan(name = name, parent = parent))
         } finally {
             Trace.endSection()
         }

@@ -11,7 +11,7 @@ private val clock = TimingClock()
 @Composable
 fun TracingApiExample() {
     Button(onClick = {
-        Embrace.getInstance().recordSpan("calculate-fibonacci") {
+        Embrace.recordSpan("calculate-fibonacci") {
             fibonacci(20)
         }
     }) {
@@ -23,14 +23,14 @@ fun TracingApiExample() {
         // do some work
         Thread.sleep(50)
         val endMs = clock.now()
-        Embrace.getInstance().recordCompletedSpan("sleep", startMs, endMs)
+        Embrace.recordCompletedSpan("sleep", startMs, endMs)
     }) {
         Text("Record completed span")
     }
 
     Button(onClick = {
-        val span = Embrace.getInstance().startSpan("my-span") ?: return@Button
-        val childSpan = Embrace.getInstance().startSpan("my-subspan", span) ?: return@Button
+        val span = Embrace.startSpan("my-span") ?: return@Button
+        val childSpan = Embrace.startSpan("my-subspan", span) ?: return@Button
 
         // Do some work
         Thread.sleep(50)

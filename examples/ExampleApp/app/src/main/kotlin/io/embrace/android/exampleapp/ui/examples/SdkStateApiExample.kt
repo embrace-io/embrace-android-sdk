@@ -11,18 +11,18 @@ import io.embrace.android.embracesdk.Embrace
 @Composable
 fun SdkStateApiExample() {
     Text("SDK started")
-    Text("${Embrace.getInstance().isStarted}")
+    Text("${Embrace.isStarted}")
     Spacer(Modifier.padding(4.dp))
 
     Text("Device ID")
-    Text(Embrace.getInstance().deviceId)
+    Text(Embrace.deviceId)
     Spacer(Modifier.padding(4.dp))
 
     Text("Session ID")
-    Text("${Embrace.getInstance().currentSessionId}")
+    Text("${Embrace.currentSessionId}")
     Spacer(Modifier.padding(4.dp))
 
     Text("Last run end state")
-    Text("${Embrace.getInstance().lastRunEndState}")
+    Text("${Embrace.lastRunEndState}")
     Spacer(Modifier.padding(4.dp))
 }

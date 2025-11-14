@@ -40,13 +40,13 @@ fun SessionPropertiesExample() {
 
     Spacer(Modifier.padding(8.dp))
     Button(onClick = {
-        Embrace.getInstance().addSessionProperty(propKey, propValue, permValue)
+        Embrace.addSessionProperty(propKey, propValue, permValue)
     }) {
         Text("Add session property")
     }
 
     Button(onClick = {
-        Embrace.getInstance().removeSessionProperty(propKey)
+        Embrace.removeSessionProperty(propKey)
     }) {
         Text("Remove session property")
     }

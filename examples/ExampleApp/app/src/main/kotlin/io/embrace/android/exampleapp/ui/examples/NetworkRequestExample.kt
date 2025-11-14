@@ -78,12 +78,12 @@ fun NetworkRequestExample() {
 
                     val responseCode = connection.responseCode
                     if (responseCode == 200) {
-                        Embrace.getInstance().addBreadcrumb("Successful request to $url")
+                        Embrace.addBreadcrumb("Successful request to $url")
                     } else {
-                        Embrace.getInstance().addBreadcrumb("Non-successful request to $url with response code $responseCode")
+                        Embrace.addBreadcrumb("Non-successful request to $url with response code $responseCode")
                     }
                 } catch (t: Throwable) {
-                    Embrace.getInstance().addBreadcrumb("Error while making HUC network request: $t")
+                    Embrace.addBreadcrumb("Error while making HUC network request: $t")
                 } finally {
                     connection?.disconnect()
                 }

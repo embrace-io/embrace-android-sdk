@@ -22,7 +22,7 @@ fun AddBreadcrumbExample() {
     })
     Spacer(Modifier.padding(8.dp))
     Button(onClick = {
-        Embrace.getInstance().addBreadcrumb(textValue)
+        Embrace.addBreadcrumb(textValue)
     }) {
         Text("Add Breadcrumb")
     }

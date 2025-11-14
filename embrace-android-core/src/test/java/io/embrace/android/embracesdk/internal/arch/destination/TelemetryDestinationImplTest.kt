@@ -12,6 +12,7 @@ import io.embrace.android.embracesdk.fakes.FakeSpanService
 import io.embrace.android.embracesdk.internal.arch.attrs.asPair
 import io.embrace.android.embracesdk.internal.arch.attrs.embState
 import io.embrace.android.embracesdk.internal.arch.datasource.LogSeverity
+import io.embrace.android.embracesdk.internal.arch.datasource.SpanEventImpl
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
@@ -205,12 +206,16 @@ internal class TelemetryDestinationImplTest {
     @Test
     fun `test record successful span`() {
         val name = "success-span"
-        val startTimeMs = 5L
-        val endTimeMs = 15L
+        val clock = FakeClock()
+        val startTimeMs = clock.now()
+        clock.tick(10)
+        val endTimeMs = clock.now()
         impl.recordCompletedSpan(
             name,
             startTimeMs,
             endTimeMs,
+            attributes = mapOf("foo" to "bar"),
+            events = listOf(SpanEventImpl("event", clock.now().millisToNanos(), mapOf("key" to "value")))
         )
         val span = spanService.createdSpans.single()
         assertEquals(name, span.name)
@@ -219,6 +224,11 @@ internal class TelemetryDestinationImplTest {
         assertEquals(StatusCode.UNSET, span.status.statusCode)
         assertTrue(span.hasEmbraceAttribute(EmbType.Performance.Default))
         assertFalse(span.attributes.containsKey("emb.error_code"))
+        assertEquals("bar", span.attributes["foo"])
+        val event = span.events.single()
+        assertEquals("event", event.name)
+        assertEquals(clock.now().millisToNanos(), event.timestampNanos)
+        assertEquals("value", event.attributes["key"])
         verifyAndResetSessionUpdate()
     }
 

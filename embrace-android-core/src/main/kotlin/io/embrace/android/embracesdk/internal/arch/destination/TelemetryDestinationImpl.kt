@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.arch.destination
 import io.embrace.android.embracesdk.internal.arch.attrs.asPair
 import io.embrace.android.embracesdk.internal.arch.attrs.embState
 import io.embrace.android.embracesdk.internal.arch.datasource.LogSeverity
+import io.embrace.android.embracesdk.internal.arch.datasource.SpanEvent
 import io.embrace.android.embracesdk.internal.arch.datasource.SpanToken
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
@@ -10,6 +11,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.clock.Clock
+import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.otel.sdk.toEmbraceObjectName
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.session.id.SessionIdTracker
@@ -19,6 +21,7 @@ import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
+import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.logging.Logger
@@ -117,6 +120,7 @@ internal class TelemetryDestinationImpl(
         errorCode: ErrorCodeAttribute?,
         type: EmbType,
         attributes: Map<String, String>,
+        events: List<SpanEvent>,
     ) {
         spanService.recordCompletedSpan(
             name = name,
@@ -125,6 +129,7 @@ internal class TelemetryDestinationImpl(
             errorCode = errorCode.toErrorCode(),
             type = type,
             attributes = attributes,
+            events = events.mapNotNull(::toEmbraceSpanEvent),
         )
         appStateService.sessionUpdated()
     }
@@ -156,6 +161,10 @@ internal class TelemetryDestinationImpl(
         val currentSession = currentSessionSpan.current() ?: return
         currentSession.removeSystemAttribute(key)
         appStateService.sessionUpdated()
+    }
+
+    private fun toEmbraceSpanEvent(event: SpanEvent): EmbraceSpanEvent? {
+        return EmbraceSpanEvent.create(event.name, event.timestampNanos.nanosToMillis(), event.attributes)
     }
 
     private fun getSeverityText(severity: SeverityNumber) = when (severity) {

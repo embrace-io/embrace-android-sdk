@@ -11,13 +11,17 @@ import io.embrace.android.embracesdk.fakes.FakeNotTracedActivity
 import io.embrace.android.embracesdk.fakes.FakeTracedActivity
 import io.embrace.android.embracesdk.fakes.FakeUiLoadEventListener
 import io.embrace.android.embracesdk.fakes.FakeUiLoadEventListener.EventData
-import io.embrace.android.embracesdk.internal.ClockTickingActivityLifecycleCallbacks
 import io.embrace.android.embracesdk.internal.ClockTickingActivityLifecycleCallbacks.Companion.POST_DURATION
 import io.embrace.android.embracesdk.internal.ClockTickingActivityLifecycleCallbacks.Companion.PRE_DURATION
 import io.embrace.android.embracesdk.internal.ClockTickingActivityLifecycleCallbacks.Companion.STATE_DURATION
+import io.embrace.android.embracesdk.internal.instrumentation.ClockTickingActivityLifecycleCallbacks
+import io.embrace.android.embracesdk.internal.instrumentation.ClockTickingActivityLifecycleCallbacks.Companion.POST_DURATION
+import io.embrace.android.embracesdk.internal.instrumentation.ClockTickingActivityLifecycleCallbacks.Companion.PRE_DURATION
+import io.embrace.android.embracesdk.internal.instrumentation.ClockTickingActivityLifecycleCallbacks.Companion.STATE_DURATION
 import io.embrace.android.embracesdk.internal.instrumentation.startup.ui.hasRenderEvent
 import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityLifecycleListener
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
+import kotlin.reflect.KClass
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
@@ -28,7 +32,6 @@ import org.robolectric.Robolectric
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.android.controller.ActivityController
 import org.robolectric.annotation.Config
-import kotlin.reflect.KClass
 
 @RunWith(AndroidJUnit4::class)
 internal class UiLoadExtTest {

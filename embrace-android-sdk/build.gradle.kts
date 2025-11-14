@@ -46,6 +46,7 @@ dependencies {
     implementation(project(":embrace-android-instrumentation-network-status"))
     implementation(project(":embrace-android-instrumentation-okhttp"))
     implementation(project(":embrace-android-instrumentation-power-save"))
+    implementation(project(":embrace-android-instrumentation-startup"))
     implementation(project(":embrace-android-instrumentation-taps"))
     implementation(project(":embrace-android-instrumentation-thermal-state"))
     implementation(project(":embrace-android-instrumentation-view"))

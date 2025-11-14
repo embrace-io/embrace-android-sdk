@@ -1,11 +1,11 @@
 package io.embrace.android.embracesdk.internal.injection
 
-import io.embrace.android.embracesdk.internal.capture.startup.StartupService
-import io.embrace.android.embracesdk.internal.capture.startup.StartupServiceImpl
-import io.embrace.android.embracesdk.internal.config.ConfigService
+import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.instrumentation.startup.AppStartupDataCollector
 import io.embrace.android.embracesdk.internal.instrumentation.startup.AppStartupTraceEmitter
 import io.embrace.android.embracesdk.internal.instrumentation.startup.ProcessInfoImpl
+import io.embrace.android.embracesdk.internal.instrumentation.startup.StartupService
+import io.embrace.android.embracesdk.internal.instrumentation.startup.StartupServiceImpl
 import io.embrace.android.embracesdk.internal.instrumentation.startup.StartupTracker
 import io.embrace.android.embracesdk.internal.instrumentation.startup.activity.UiLoadDataListener
 import io.embrace.android.embracesdk.internal.instrumentation.startup.activity.UiLoadTraceEmitter
@@ -16,26 +16,24 @@ import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
 
 internal class DataCaptureServiceModuleImpl(
-    initModule: InitModule,
-    openTelemetryModule: OpenTelemetryModule,
-    configService: ConfigService,
+    args: InstrumentationArgs,
     versionChecker: VersionChecker = BuildVersionChecker,
 ) : DataCaptureServiceModule {
 
-    override val startupService: StartupService by singleton {
+    override val startupService: StartupService by lazy {
         StartupServiceImpl(
             spanService = openTelemetryModule.spanService
         )
     }
 
-    override val appStartupDataCollector: AppStartupDataCollector by singleton {
+    override val appStartupDataCollector: AppStartupDataCollector by lazy {
         AppStartupTraceEmitter(
-            clock = initModule.clock,
+            clock = args.clock,
             startupServiceProvider = { startupService },
             spanService = openTelemetryModule.spanService,
             versionChecker = versionChecker,
-            logger = initModule.logger,
-            manualEnd = configService.autoDataCaptureBehavior.isEndStartupWithAppReadyEnabled(),
+            logger = args.logger,
+            manualEnd = args.configService.autoDataCaptureBehavior.isEndStartupWithAppReadyEnabled(),
             processInfo = ProcessInfoImpl(
                 deviceStartTimeMs = openTelemetryModule.deviceStartTimeMs(),
                 versionChecker = versionChecker,
@@ -43,16 +41,16 @@ internal class DataCaptureServiceModuleImpl(
         )
     }
 
-    override val startupTracker: StartupTracker by singleton {
+    override val startupTracker: StartupTracker by lazy {
         StartupTracker(
             appStartupDataCollector = appStartupDataCollector,
             activityLoadEventEmitter = activityLoadEventEmitter,
-            drawEventEmitter = createDrawEventEmitter(versionChecker, initModule.logger)
+            drawEventEmitter = createDrawEventEmitter(versionChecker, args.logger)
         )
     }
 
-    override val uiLoadDataListener: UiLoadDataListener? by singleton {
-        if (configService.autoDataCaptureBehavior.isUiLoadTracingEnabled()) {
+    override val uiLoadDataListener: UiLoadDataListener? by lazy {
+        if (args.configService.autoDataCaptureBehavior.isUiLoadTracingEnabled()) {
             UiLoadTraceEmitter(
                 spanService = openTelemetryModule.spanService,
                 versionChecker = versionChecker,
@@ -62,14 +60,14 @@ internal class DataCaptureServiceModuleImpl(
         }
     }
 
-    override val activityLoadEventEmitter: ActivityLifecycleListener? by singleton {
+    override val activityLoadEventEmitter: ActivityLifecycleListener? by lazy {
         val uiLoadEventListener = uiLoadDataListener
         if (uiLoadEventListener != null) {
             createActivityLoadEventEmitter(
                 uiLoadEventListener = uiLoadEventListener,
-                firstDrawDetector = createDrawEventEmitter(versionChecker, initModule.logger),
-                autoTraceEnabled = configService.autoDataCaptureBehavior.isUiLoadTracingTraceAll(),
-                clock = initModule.clock,
+                firstDrawDetector = createDrawEventEmitter(versionChecker, args.logger),
+                autoTraceEnabled = args.configService.autoDataCaptureBehavior.isUiLoadTracingTraceAll(),
+                clock = args.clock,
                 versionChecker = versionChecker
             )
         } else {

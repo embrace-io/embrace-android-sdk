@@ -14,7 +14,7 @@ import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import java.util.concurrent.ConcurrentHashMap
 
 /**
- * Creates [ActivityLifecycleListener] that maps Activity lifecycle events to the given [UiLoadEventListener].
+ * Creates [io.embrace.android.embracesdk.internal.session.lifecycle.ActivityLifecycleListener] that maps Activity lifecycle events to the given [UiLoadEventListener].
  * It will create an implementation that uses the most suitable API given the OS version.
  *
  * For details of how these events are used to create UI Load traces, see [UiLoadTraceEmitter] for details.

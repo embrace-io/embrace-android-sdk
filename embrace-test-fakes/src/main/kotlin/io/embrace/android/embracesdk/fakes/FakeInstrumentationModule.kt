@@ -12,7 +12,6 @@ class FakeInstrumentationModule(
     override val instrumentationArgs: InstrumentationArgs = FakeInstrumentationArgs(application, logger = logger)
 ) : InstrumentationModule {
     override val instrumentationRegistry: InstrumentationRegistry = InstrumentationRegistryImpl(
-        fakeBackgroundWorker(),
         logger
     )
 }

@@ -20,7 +20,6 @@ import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.behavior.FakeSessionBehavior
 import io.embrace.android.embracesdk.fakes.createBackgroundActivityBehavior
-import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
 import io.embrace.android.embracesdk.fakes.injection.FakePayloadSourceModule
 import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistry
 import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistryImpl
@@ -420,7 +419,6 @@ internal class SessionOrchestratorTest {
         )
         fakeDataSource = FakeDataSource(RuntimeEnvironment.getApplication())
         instrumentationRegistry = InstrumentationRegistryImpl(
-            fakeBackgroundWorker(),
             logger
         ).apply {
             add(

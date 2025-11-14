@@ -6,11 +6,11 @@ import io.embrace.android.embracesdk.fakes.FakeSessionPayloadSource
 import io.embrace.android.embracesdk.fakes.createBackgroundActivityBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakePayloadSourceModule
+import io.embrace.android.embracesdk.internal.arch.state.AppState
+import io.embrace.android.embracesdk.internal.arch.state.AppState.BACKGROUND
+import io.embrace.android.embracesdk.internal.arch.state.AppState.FOREGROUND
 import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
-import io.embrace.android.embracesdk.internal.session.lifecycle.AppState
-import io.embrace.android.embracesdk.internal.session.lifecycle.AppState.BACKGROUND
-import io.embrace.android.embracesdk.internal.session.lifecycle.AppState.FOREGROUND
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull

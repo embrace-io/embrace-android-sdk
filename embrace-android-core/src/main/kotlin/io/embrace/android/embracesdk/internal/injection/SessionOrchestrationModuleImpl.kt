@@ -66,7 +66,7 @@ internal class SessionOrchestrationModuleImpl(
 
     override val sessionOrchestrator: SessionOrchestrator by singleton(LoadType.EAGER) {
         SessionOrchestratorImpl(
-            essentialServiceModule.appStateService,
+            essentialServiceModule.appStateTracker,
             EmbTrace.trace("payloadFactory") { payloadFactory },
             initModule.clock,
             configModule.configService,

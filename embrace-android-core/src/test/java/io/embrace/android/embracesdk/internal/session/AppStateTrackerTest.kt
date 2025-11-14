@@ -8,9 +8,9 @@ import io.embrace.android.embracesdk.fakes.FakeAppStateListener
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeSessionOrchestrator
-import io.embrace.android.embracesdk.internal.session.lifecycle.AppState
-import io.embrace.android.embracesdk.internal.session.lifecycle.AppStateListener
-import io.embrace.android.embracesdk.internal.session.lifecycle.AppStateServiceImpl
+import io.embrace.android.embracesdk.internal.arch.state.AppState
+import io.embrace.android.embracesdk.internal.arch.state.AppStateListener
+import io.embrace.android.embracesdk.internal.session.lifecycle.AppStateTrackerImpl
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
 import io.mockk.clearAllMocks
 import io.mockk.every
@@ -25,9 +25,9 @@ import org.junit.Before
 import org.junit.BeforeClass
 import org.junit.Test
 
-internal class AppStateServiceTest {
+internal class AppStateTrackerTest {
 
-    private lateinit var stateService: AppStateServiceImpl
+    private lateinit var stateService: AppStateTrackerImpl
 
     companion object {
         private lateinit var looper: Looper
@@ -64,7 +64,7 @@ internal class AppStateServiceTest {
             staticMocks = false
         )
         fakeEmbLogger = FakeEmbLogger()
-        stateService = AppStateServiceImpl(
+        stateService = AppStateTrackerImpl(
             fakeClock,
             fakeEmbLogger,
             TestLifecycleOwner(Lifecycle.State.INITIALIZED)
@@ -214,7 +214,7 @@ internal class AppStateServiceTest {
 
     @Test
     fun `launched in background`() {
-        stateService = AppStateServiceImpl(
+        stateService = AppStateTrackerImpl(
             fakeClock,
             fakeEmbLogger,
             mockk {
@@ -228,7 +228,7 @@ internal class AppStateServiceTest {
 
     @Test
     fun `launched in foreground`() {
-        stateService = AppStateServiceImpl(
+        stateService = AppStateTrackerImpl(
             fakeClock,
             fakeEmbLogger,
             mockk {

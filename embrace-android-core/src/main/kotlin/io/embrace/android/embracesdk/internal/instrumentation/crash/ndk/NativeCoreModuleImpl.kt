@@ -86,7 +86,7 @@ internal class NativeCoreModuleImpl(
             storageModule.storageService.getFileForWrite("embrace_crash_marker").absolutePath
         NativeInstallMessage(
             markerFilePath = markerFilePath,
-            appState = essentialServiceModule.appStateService.getAppState(),
+            appState = essentialServiceModule.appStateTracker.getAppState(),
             reportId = Uuid.getEmbUuid(),
             apiLevel = Build.VERSION.SDK_INT,
             is32bit = coreModule.cpuAbi.is32BitDevice,

@@ -10,13 +10,13 @@ import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
+import io.embrace.android.embracesdk.internal.arch.state.AppState
+import io.embrace.android.embracesdk.internal.arch.state.AppStateTracker
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.otel.sdk.toEmbraceObjectName
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.session.id.SessionIdTracker
-import io.embrace.android.embracesdk.internal.session.lifecycle.AppState
-import io.embrace.android.embracesdk.internal.session.lifecycle.AppStateService
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.spans.AutoTerminationMode
@@ -35,7 +35,7 @@ import java.util.concurrent.TimeUnit
 internal class TelemetryDestinationImpl(
     private val logger: Logger,
     private val sessionIdTracker: SessionIdTracker,
-    private val appStateService: AppStateService,
+    private val appStateTracker: AppStateTracker,
     private val clock: Clock,
     private val spanService: SpanService,
     private val currentSessionSpan: CurrentSessionSpan,
@@ -74,7 +74,7 @@ internal class TelemetryDestinationImpl(
                     }
                     sessionState = session.appState
                 }
-                val state = sessionState ?: appStateService.getAppState()
+                val state = sessionState ?: appStateTracker.getAppState()
                 setStringAttribute(embState.name, state.description)
             }
 

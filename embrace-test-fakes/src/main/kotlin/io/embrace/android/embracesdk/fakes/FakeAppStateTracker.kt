@@ -1,12 +1,12 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.android.embracesdk.internal.session.lifecycle.AppState
-import io.embrace.android.embracesdk.internal.session.lifecycle.AppStateListener
-import io.embrace.android.embracesdk.internal.session.lifecycle.AppStateService
+import io.embrace.android.embracesdk.internal.arch.state.AppState
+import io.embrace.android.embracesdk.internal.arch.state.AppStateListener
+import io.embrace.android.embracesdk.internal.arch.state.AppStateTracker
 
-class FakeAppStateService(
+class FakeAppStateTracker(
     var state: AppState = AppState.FOREGROUND,
-) : AppStateService {
+) : AppStateTracker {
 
     val listeners: MutableList<AppStateListener> = mutableListOf()
 

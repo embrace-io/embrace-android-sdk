@@ -1,16 +1,16 @@
 package io.embrace.android.embracesdk.internal.instrumentation.anr
 
 import android.os.Looper
-import io.embrace.android.embracesdk.fakes.FakeAppStateService
+import io.embrace.android.embracesdk.fakes.FakeAppStateTracker
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.behavior.FakeAnrBehavior
+import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.BlockedThreadDetector
 import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.LivenessCheckScheduler
 import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.TargetThreadHandler
 import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.ThreadMonitoringState
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
-import io.embrace.android.embracesdk.internal.session.lifecycle.AppState
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.mockk.mockk
@@ -31,7 +31,7 @@ internal class EmbraceAnrServiceRule<T : ScheduledExecutorService>(
     val logger = EmbLoggerImpl()
 
     lateinit var fakeConfigService: FakeConfigService
-    lateinit var fakeAppStateService: FakeAppStateService
+    lateinit var fakeAppStateTracker: FakeAppStateTracker
     lateinit var anrService: EmbraceAnrService
     lateinit var livenessCheckScheduler: LivenessCheckScheduler
     lateinit var state: ThreadMonitoringState
@@ -50,7 +50,7 @@ internal class EmbraceAnrServiceRule<T : ScheduledExecutorService>(
         anrBehavior = FakeAnrBehavior()
         anrMonitorThread = AtomicReference(Thread.currentThread())
         fakeConfigService = FakeConfigService(anrBehavior = anrBehavior)
-        fakeAppStateService = FakeAppStateService(AppState.FOREGROUND)
+        fakeAppStateTracker = FakeAppStateTracker(AppState.FOREGROUND)
         anrExecutorService = scheduledExecutorSupplier.invoke()
         state = ThreadMonitoringState(clock)
         worker = BackgroundWorker(anrExecutorService)
@@ -89,7 +89,7 @@ internal class EmbraceAnrServiceRule<T : ScheduledExecutorService>(
             state = state,
             clock = clock,
             stacktraceSampler = stacktraceSampler,
-            appStateService = fakeAppStateService
+            appStateTracker = fakeAppStateTracker
         )
     }
 
@@ -106,7 +106,7 @@ internal class EmbraceAnrServiceRule<T : ScheduledExecutorService>(
             state = state,
             clock = clock,
             stacktraceSampler = stacktraceSampler,
-            appStateService = fakeAppStateService
+            appStateTracker = fakeAppStateTracker
         )
     }
 }

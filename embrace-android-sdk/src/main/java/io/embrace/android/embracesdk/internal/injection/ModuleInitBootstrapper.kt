@@ -207,7 +207,7 @@ internal class ModuleInitBootstrapper(
                     postInit(EssentialServiceModule::class) {
                         with(essentialServiceModule) {
                             serviceRegistry.registerServices(
-                                lazy { essentialServiceModule.appStateService },
+                                lazy { essentialServiceModule.appStateTracker },
                                 lazy { activityLifecycleTracker },
                                 lazy { networkConnectivityService }
                             )
@@ -235,7 +235,7 @@ internal class ModuleInitBootstrapper(
                         anrModuleSupplier(
                             instrumentationModule,
                             openTelemetryModule,
-                            essentialServiceModule.appStateService
+                            essentialServiceModule.appStateTracker
                         )
                     }
 
@@ -391,7 +391,7 @@ internal class ModuleInitBootstrapper(
                     // be added to the registry. It sets listeners for any services that were registered.
                     EmbTrace.trace("service-registration") {
                         serviceRegistry.closeRegistration()
-                        serviceRegistry.registerActivityListeners(essentialServiceModule.appStateService)
+                        serviceRegistry.registerActivityListeners(essentialServiceModule.appStateTracker)
                         serviceRegistry.registerMemoryCleanerListeners(sessionOrchestrationModule.memoryCleanerService)
                         serviceRegistry.registerActivityLifecycleListeners(essentialServiceModule.activityLifecycleTracker)
                     }

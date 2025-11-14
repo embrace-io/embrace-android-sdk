@@ -1,10 +1,10 @@
 package io.embrace.android.embracesdk.internal.delivery.caching
 
+import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.delivery.Shutdownable
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.session.SessionZygote
-import io.embrace.android.embracesdk.internal.session.lifecycle.AppState
 
 typealias SessionPayloadSupplier = (
     state: AppState,

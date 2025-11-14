@@ -1,6 +1,8 @@
 package io.embrace.android.embracesdk.internal.instrumentation.anr
 
 import android.os.Looper
+import io.embrace.android.embracesdk.internal.arch.state.AppState
+import io.embrace.android.embracesdk.internal.arch.state.AppStateTracker
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.LivenessCheckScheduler
@@ -8,8 +10,6 @@ import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.Thre
 import io.embrace.android.embracesdk.internal.instrumentation.anr.payload.AnrInterval
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
-import io.embrace.android.embracesdk.internal.session.lifecycle.AppState
-import io.embrace.android.embracesdk.internal.session.lifecycle.AppStateService
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import java.util.concurrent.Callable
 import java.util.concurrent.CopyOnWriteArrayList
@@ -32,14 +32,14 @@ internal class EmbraceAnrService(
     private val state: ThreadMonitoringState,
     private val clock: Clock,
     private val stacktraceSampler: AnrStacktraceSampler,
-    private val appStateService: AppStateService,
+    private val appStateTracker: AppStateTracker,
 ) : AnrService {
 
     private val listeners: CopyOnWriteArrayList<BlockedThreadListener> = CopyOnWriteArrayList<BlockedThreadListener>()
     private var delayedBackgroundCheckTask: ScheduledFuture<*>? = null
 
     init {
-        if (appStateService.getAppState() == AppState.BACKGROUND) {
+        if (appStateTracker.getAppState() == AppState.BACKGROUND) {
             scheduleDelayedBackgroundCheck()
         }
         // add listeners
@@ -160,7 +160,7 @@ internal class EmbraceAnrService(
      * Called after a 10-second delay to handle slow startup scenarios.
      */
     private fun stopMonitoringIfStillInBackground() {
-        if (appStateService.getAppState() == AppState.BACKGROUND) {
+        if (appStateTracker.getAppState() == AppState.BACKGROUND) {
             livenessCheckScheduler.stopMonitoringThread()
         }
         delayedBackgroundCheckTask = null

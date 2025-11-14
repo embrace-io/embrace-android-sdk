@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.internal.session.lifecycle
+package io.embrace.android.embracesdk.internal.arch.state
 
 enum class AppState(val description: String) {
     FOREGROUND("foreground"),

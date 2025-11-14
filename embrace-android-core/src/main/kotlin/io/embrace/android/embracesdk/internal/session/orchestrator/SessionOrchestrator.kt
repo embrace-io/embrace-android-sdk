@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.session.orchestrator
 
 import io.embrace.android.embracesdk.internal.arch.CrashTeardownHandler
-import io.embrace.android.embracesdk.internal.session.lifecycle.AppStateListener
+import io.embrace.android.embracesdk.internal.arch.state.AppStateListener
 
 /**
  * Orchestrates the session and background activities in response to state changes and manual

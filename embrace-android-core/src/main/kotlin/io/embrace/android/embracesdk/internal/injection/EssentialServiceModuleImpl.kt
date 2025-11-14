@@ -4,6 +4,7 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ProcessLifecycleOwner
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.arch.destination.TelemetryDestinationImpl
+import io.embrace.android.embracesdk.internal.arch.state.AppStateTracker
 import io.embrace.android.embracesdk.internal.capture.connectivity.EmbraceNetworkConnectivityService
 import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkConnectivityService
 import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
@@ -13,8 +14,7 @@ import io.embrace.android.embracesdk.internal.capture.user.UserService
 import io.embrace.android.embracesdk.internal.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.internal.session.id.SessionIdTrackerImpl
 import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityLifecycleTracker
-import io.embrace.android.embracesdk.internal.session.lifecycle.AppStateService
-import io.embrace.android.embracesdk.internal.session.lifecycle.AppStateServiceImpl
+import io.embrace.android.embracesdk.internal.session.lifecycle.AppStateTrackerImpl
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.worker.Worker
@@ -35,10 +35,10 @@ class EssentialServiceModuleImpl(
 
     private val configService by lazy { configModule.configService }
 
-    override val appStateService: AppStateService by singleton {
+    override val appStateTracker: AppStateTracker by singleton {
         EmbTrace.trace("process-state-service-init") {
             val lifecycleOwner = lifecycleOwnerProvider() ?: ProcessLifecycleOwner.get()
-            AppStateServiceImpl(initModule.clock, initModule.logger, lifecycleOwner)
+            AppStateTrackerImpl(initModule.clock, initModule.logger, lifecycleOwner)
         }
     }
 
@@ -84,7 +84,7 @@ class EssentialServiceModuleImpl(
         TelemetryDestinationImpl(
             logger = openTelemetryModule.otelSdkWrapper.logger,
             sessionIdTracker = sessionIdTracker,
-            appStateService = appStateService,
+            appStateTracker = appStateTracker,
             clock = initModule.clock,
             spanService = openTelemetryModule.spanService,
             currentSessionSpan = openTelemetryModule.currentSessionSpan,

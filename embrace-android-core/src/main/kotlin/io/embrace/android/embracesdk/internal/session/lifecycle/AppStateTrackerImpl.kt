@@ -5,6 +5,9 @@ import android.os.Looper
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.LifecycleOwner
+import io.embrace.android.embracesdk.internal.arch.state.AppState
+import io.embrace.android.embracesdk.internal.arch.state.AppStateListener
+import io.embrace.android.embracesdk.internal.arch.state.AppStateTracker
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
@@ -15,11 +18,11 @@ import java.util.concurrent.CopyOnWriteArrayList
  * Service tracking the app's current process state (foreground or background) as reported
  * by ProcessLifecycleOwner.
  */
-internal class AppStateServiceImpl(
+internal class AppStateTrackerImpl(
     private val clock: Clock,
     private val logger: EmbLogger,
     private val lifecycleOwner: LifecycleOwner,
-) : AppStateService, LifecycleEventObserver {
+) : AppStateTracker, LifecycleEventObserver {
 
     /**
      * List of listeners that subscribe to process lifecycle events.

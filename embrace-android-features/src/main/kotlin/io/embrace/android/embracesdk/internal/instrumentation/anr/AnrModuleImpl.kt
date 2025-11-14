@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.instrumentation.anr
 
 import android.os.Looper
+import io.embrace.android.embracesdk.internal.arch.state.AppStateTracker
 import io.embrace.android.embracesdk.internal.injection.InstrumentationModule
 import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModule
 import io.embrace.android.embracesdk.internal.injection.singleton
@@ -8,7 +9,6 @@ import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.Bloc
 import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.LivenessCheckScheduler
 import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.TargetThreadHandler
 import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.ThreadMonitoringState
-import io.embrace.android.embracesdk.internal.session.lifecycle.AppStateService
 import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 
@@ -16,7 +16,7 @@ import io.embrace.opentelemetry.kotlin.ExperimentalApi
 internal class AnrModuleImpl(
     instrumentationModule: InstrumentationModule,
     openTelemetryModule: OpenTelemetryModule,
-    appStateService: AppStateService,
+    appStateTracker: AppStateTracker,
 ) : AnrModule {
 
     private val args by singleton { instrumentationModule.instrumentationArgs }
@@ -34,7 +34,7 @@ internal class AnrModuleImpl(
                 state = state,
                 clock = args.clock,
                 stacktraceSampler = stacktraceSampler,
-                appStateService = appStateService,
+                appStateTracker = appStateTracker,
             )
         } else {
             null

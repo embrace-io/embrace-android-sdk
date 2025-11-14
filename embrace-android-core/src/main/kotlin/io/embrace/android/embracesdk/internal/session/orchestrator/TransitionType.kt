@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.session.orchestrator
 
+import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.session.LifeEventType
-import io.embrace.android.embracesdk.internal.session.lifecycle.AppState
 
 enum class TransitionType {
     INITIAL, END_MANUAL, ON_FOREGROUND, ON_BACKGROUND, CRASH;

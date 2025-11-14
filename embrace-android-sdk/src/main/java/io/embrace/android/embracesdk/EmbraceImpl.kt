@@ -112,7 +112,7 @@ internal class EmbraceImpl(
     private var internalInterfaceModule: InternalInterfaceModule? = null
 
     val metadataService by embraceImplInject { bootstrapper.payloadSourceModule.metadataService }
-    val appStateService by embraceImplInject { bootstrapper.essentialServiceModule.appStateService }
+    val appStateTracker by embraceImplInject { bootstrapper.essentialServiceModule.appStateTracker }
     val activityLifecycleTracker by embraceImplInject { bootstrapper.essentialServiceModule.activityLifecycleTracker }
 
     private val configService by embraceImplInject { bootstrapper.configModule.configService }
@@ -179,7 +179,7 @@ internal class EmbraceImpl(
         dataCaptureServiceModule.startupService.setSdkStartupInfo(
             startTimeMs,
             endTimeMs,
-            bootstrapper.essentialServiceModule.appStateService.getAppState(),
+            bootstrapper.essentialServiceModule.appStateTracker.getAppState(),
             Thread.currentThread().name
         )
         end()

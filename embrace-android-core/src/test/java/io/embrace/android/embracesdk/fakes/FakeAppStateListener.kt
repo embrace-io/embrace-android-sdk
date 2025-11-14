@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.android.embracesdk.internal.session.lifecycle.AppStateListener
+import io.embrace.android.embracesdk.internal.arch.state.AppStateListener
 import java.util.concurrent.atomic.AtomicInteger
 
 class FakeAppStateListener : AppStateListener {

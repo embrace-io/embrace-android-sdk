@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.session
 
-import io.embrace.android.embracesdk.internal.session.lifecycle.AppState
+import io.embrace.android.embracesdk.internal.arch.state.AppState
 
 /**
  * A precursor object that holds state associated with a newly started session.

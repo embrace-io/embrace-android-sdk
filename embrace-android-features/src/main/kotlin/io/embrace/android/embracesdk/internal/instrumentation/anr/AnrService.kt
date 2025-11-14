@@ -1,9 +1,9 @@
 package io.embrace.android.embracesdk.internal.instrumentation.anr
 
 import io.embrace.android.embracesdk.internal.arch.CrashTeardownHandler
+import io.embrace.android.embracesdk.internal.arch.state.AppStateListener
 import io.embrace.android.embracesdk.internal.instrumentation.anr.payload.AnrInterval
 import io.embrace.android.embracesdk.internal.session.MemoryCleanerListener
-import io.embrace.android.embracesdk.internal.session.lifecycle.AppStateListener
 
 /**
  * Service which detects when the application is not responding.

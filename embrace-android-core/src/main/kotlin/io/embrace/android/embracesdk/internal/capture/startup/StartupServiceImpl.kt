@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.capture.startup
 
+import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
-import io.embrace.android.embracesdk.internal.session.lifecycle.AppState
 
 class StartupServiceImpl(
     private val spanService: SpanService,

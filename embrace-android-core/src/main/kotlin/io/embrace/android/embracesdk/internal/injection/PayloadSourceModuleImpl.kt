@@ -58,7 +58,7 @@ internal class PayloadSourceModuleImpl(
                 otelModule.currentSessionSpan,
                 otelModule.spanRepository,
                 otelPayloadMapperProvider(),
-                essentialServiceModule.appStateService,
+                essentialServiceModule.appStateTracker,
                 initModule.clock,
                 initModule.logger
             )

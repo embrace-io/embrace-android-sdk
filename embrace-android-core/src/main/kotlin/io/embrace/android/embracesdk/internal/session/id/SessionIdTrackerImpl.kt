@@ -2,9 +2,9 @@ package io.embrace.android.embracesdk.internal.session.id
 
 import android.app.ActivityManager
 import android.os.Build
+import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
-import io.embrace.android.embracesdk.internal.session.lifecycle.AppState
 import java.util.concurrent.CopyOnWriteArraySet
 
 internal class SessionIdTrackerImpl(

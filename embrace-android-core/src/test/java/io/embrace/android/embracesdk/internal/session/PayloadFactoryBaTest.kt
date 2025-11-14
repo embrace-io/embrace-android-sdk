@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.session
 
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
-import io.embrace.android.embracesdk.fakes.FakeAppStateService
+import io.embrace.android.embracesdk.fakes.FakeAppStateTracker
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
@@ -13,6 +13,7 @@ import io.embrace.android.embracesdk.fakes.createBackgroundActivityBehavior
 import io.embrace.android.embracesdk.fakes.fakeSessionZygote
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakePayloadSourceModule
+import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.internal.capture.user.UserService
 import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRemoteConfig
@@ -22,7 +23,6 @@ import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
-import io.embrace.android.embracesdk.internal.session.lifecycle.AppState
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactoryImpl
 import io.embrace.android.embracesdk.internal.session.message.PayloadMessageCollatorImpl
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
@@ -37,7 +37,7 @@ internal class PayloadFactoryBaTest {
     private lateinit var clock: FakeClock
     private lateinit var metadataService: MetadataService
     private lateinit var sessionIdTracker: FakeSessionIdTracker
-    private lateinit var activityService: FakeAppStateService
+    private lateinit var activityService: FakeAppStateTracker
     private lateinit var userService: UserService
     private lateinit var configService: FakeConfigService
     private lateinit var spanRepository: SpanRepository
@@ -52,7 +52,7 @@ internal class PayloadFactoryBaTest {
         clock = FakeClock(10000L)
         metadataService = FakeMetadataService()
         sessionIdTracker = FakeSessionIdTracker()
-        activityService = FakeAppStateService(AppState.BACKGROUND)
+        activityService = FakeAppStateTracker(AppState.BACKGROUND)
         store = FakeOrdinalStore()
         userService = FakeUserService()
         val initModule = FakeInitModule(clock = clock)
@@ -117,7 +117,7 @@ internal class PayloadFactoryBaTest {
                 currentSessionSpan,
                 spanRepository,
                 FakeOtelPayloadMapper(),
-                FakeAppStateService(),
+                FakeAppStateTracker(),
                 FakeClock(),
                 logger
             )

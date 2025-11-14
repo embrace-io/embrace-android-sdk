@@ -1,11 +1,11 @@
 package io.embrace.android.embracesdk.internal.registry
 
+import io.embrace.android.embracesdk.internal.arch.state.AppStateListener
+import io.embrace.android.embracesdk.internal.arch.state.AppStateTracker
 import io.embrace.android.embracesdk.internal.session.MemoryCleanerListener
 import io.embrace.android.embracesdk.internal.session.MemoryCleanerService
 import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityLifecycleListener
 import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityTracker
-import io.embrace.android.embracesdk.internal.session.lifecycle.AppStateListener
-import io.embrace.android.embracesdk.internal.session.lifecycle.AppStateService
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import java.io.Closeable
 import java.util.concurrent.atomic.AtomicBoolean
@@ -50,9 +50,9 @@ class ServiceRegistry : Closeable {
         initialized.set(true)
     }
 
-    fun registerActivityListeners(appStateService: AppStateService): Unit =
+    fun registerActivityListeners(appStateTracker: AppStateTracker): Unit =
         appStateListeners.forEachSafe(
-            appStateService::addListener
+            appStateTracker::addListener
         )
 
     fun registerActivityLifecycleListeners(activityLifecycleTracker: ActivityTracker): Unit =

@@ -1,9 +1,9 @@
-package io.embrace.android.embracesdk.internal.session.lifecycle
+package io.embrace.android.embracesdk.internal.arch.state
 
 /**
  * Service which handles Android process lifecycle callbacks.
  */
-interface AppStateService {
+interface AppStateTracker {
 
     /**
      * Adds an observer of the application's process lifecycle events.

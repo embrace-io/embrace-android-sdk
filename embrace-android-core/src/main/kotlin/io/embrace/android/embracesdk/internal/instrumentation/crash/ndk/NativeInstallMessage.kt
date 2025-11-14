@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.instrumentation.crash.ndk
 
-import io.embrace.android.embracesdk.internal.session.lifecycle.AppState
+import io.embrace.android.embracesdk.internal.arch.state.AppState
 
 data class NativeInstallMessage(
     val markerFilePath: String,

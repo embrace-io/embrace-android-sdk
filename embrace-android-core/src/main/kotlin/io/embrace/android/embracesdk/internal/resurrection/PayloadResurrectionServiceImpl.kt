@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.internal.arch.attrs.embHeartbeatTimeUnixNan
 import io.embrace.android.embracesdk.internal.arch.attrs.embProcessIdentifier
 import io.embrace.android.embracesdk.internal.arch.attrs.embState
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
@@ -30,7 +31,6 @@ import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.session.getSessionId
 import io.embrace.android.embracesdk.internal.session.getSessionProperties
 import io.embrace.android.embracesdk.internal.session.getSessionSpan
-import io.embrace.android.embracesdk.internal.session.lifecycle.AppState
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
 import io.embrace.opentelemetry.kotlin.semconv.SessionAttributes

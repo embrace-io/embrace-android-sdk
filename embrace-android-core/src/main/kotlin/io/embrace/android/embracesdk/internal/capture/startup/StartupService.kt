@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.capture.startup
 
-import io.embrace.android.embracesdk.internal.session.lifecycle.AppState
+import io.embrace.android.embracesdk.internal.arch.state.AppState
 
 /**
  * Service to track the SDK startup time.

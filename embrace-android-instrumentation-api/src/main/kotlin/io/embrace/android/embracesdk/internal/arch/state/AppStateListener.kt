@@ -1,7 +1,7 @@
-package io.embrace.android.embracesdk.internal.session.lifecycle
+package io.embrace.android.embracesdk.internal.arch.state
 
 /**
- * Listener implemented by observers of the [AppStateService].
+ * Listener implemented by observers of the [AppStateTracker].
  */
 interface AppStateListener {
 

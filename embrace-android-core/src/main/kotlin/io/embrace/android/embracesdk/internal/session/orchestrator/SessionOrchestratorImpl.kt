@@ -5,6 +5,8 @@ import io.embrace.android.embracesdk.internal.arch.SessionType
 import io.embrace.android.embracesdk.internal.arch.attrs.embHeartbeatTimeUnixNano
 import io.embrace.android.embracesdk.internal.arch.attrs.embTerminated
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
+import io.embrace.android.embracesdk.internal.arch.state.AppState
+import io.embrace.android.embracesdk.internal.arch.state.AppStateTracker
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.config.ConfigService
@@ -13,14 +15,12 @@ import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.session.SessionZygote
 import io.embrace.android.embracesdk.internal.session.id.SessionIdTracker
-import io.embrace.android.embracesdk.internal.session.lifecycle.AppState
-import io.embrace.android.embracesdk.internal.session.lifecycle.AppStateService
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactory
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.Provider
 
 internal class SessionOrchestratorImpl(
-    appStateService: AppStateService,
+    appStateTracker: AppStateTracker,
     private val payloadFactory: PayloadFactory,
     private val clock: Clock,
     private val configService: ConfigService,
@@ -39,10 +39,10 @@ internal class SessionOrchestratorImpl(
      * The currently active session.
      */
     private var activeSession: SessionZygote? = null
-    private var state = appStateService.getAppState()
+    private var state = appStateTracker.getAppState()
 
     init {
-        appStateService.addListener(this)
+        appStateTracker.addListener(this)
         EmbTrace.trace("start-first-session") { createInitialSession() }
     }
 

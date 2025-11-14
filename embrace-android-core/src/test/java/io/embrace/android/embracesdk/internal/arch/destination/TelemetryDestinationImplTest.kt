@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.arch.destination
 
 import io.embrace.android.embracesdk.Severity
-import io.embrace.android.embracesdk.fakes.FakeAppStateService
+import io.embrace.android.embracesdk.fakes.FakeAppStateTracker
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeClock.Companion.DEFAULT_FAKE_CURRENT_TIME
 import io.embrace.android.embracesdk.fakes.FakeCurrentSessionSpan
@@ -19,11 +19,11 @@ import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.arch.schema.TelemetryAttributes
+import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.otel.toEmbracePayload
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.session.id.SessionData
-import io.embrace.android.embracesdk.internal.session.lifecycle.AppState
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
 import io.embrace.opentelemetry.kotlin.semconv.LogAttributes
@@ -42,7 +42,7 @@ internal class TelemetryDestinationImplTest {
     private lateinit var logger: FakeOpenTelemetryLogger
     private lateinit var sessionIdTracker: FakeSessionIdTracker
     private lateinit var impl: TelemetryDestination
-    private lateinit var appStateService: FakeAppStateService
+    private lateinit var appStateTracker: FakeAppStateTracker
     private lateinit var clock: FakeClock
     private lateinit var spanService: FakeSpanService
     private lateinit var currentSessionSpan: FakeCurrentSessionSpan
@@ -52,14 +52,14 @@ internal class TelemetryDestinationImplTest {
     fun setup() {
         sessionIdTracker = FakeSessionIdTracker()
         logger = FakeOpenTelemetryLogger()
-        appStateService = FakeAppStateService()
+        appStateTracker = FakeAppStateTracker()
         clock = FakeClock()
         spanService = FakeSpanService()
         currentSessionSpan = FakeCurrentSessionSpan()
         impl = TelemetryDestinationImpl(
             logger = logger,
             sessionIdTracker = sessionIdTracker,
-            appStateService = appStateService,
+            appStateTracker = appStateTracker,
             clock = clock,
             spanService = spanService,
             currentSessionSpan = currentSessionSpan,
@@ -118,7 +118,7 @@ internal class TelemetryDestinationImplTest {
     @Test
     fun `foreground state matches the session a log is associated with`() {
         sessionIdTracker.setActiveSession("foreground-session", AppState.FOREGROUND)
-        appStateService.state = AppState.BACKGROUND
+        appStateTracker.state = AppState.BACKGROUND
         impl.addLog(
             schemaType = SchemaType.Log(TelemetryAttributes()),
             severity = LogSeverity.ERROR,
@@ -137,7 +137,7 @@ internal class TelemetryDestinationImplTest {
     @Test
     fun `use app state for background or foreground if no session exists`() {
         sessionIdTracker.sessionData = null
-        appStateService.state = AppState.BACKGROUND
+        appStateTracker.state = AppState.BACKGROUND
         impl.addLog(
             schemaType = SchemaType.Log(TelemetryAttributes()),
             severity = LogSeverity.ERROR,

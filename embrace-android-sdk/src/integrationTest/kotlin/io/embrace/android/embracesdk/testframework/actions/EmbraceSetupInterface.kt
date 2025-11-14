@@ -10,7 +10,7 @@ import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeJniDelegate
 import io.embrace.android.embracesdk.fakes.FakeNetworkConnectivityService
 import io.embrace.android.embracesdk.fakes.FakePayloadStorageService
-import io.embrace.android.embracesdk.fakes.FakeAppStateService
+import io.embrace.android.embracesdk.fakes.FakeAppStateTracker
 import io.embrace.android.embracesdk.fakes.FakeSharedObjectLoader
 import io.embrace.android.embracesdk.fakes.FakeSymbolService
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
@@ -137,7 +137,7 @@ internal class EmbraceSetupInterface(
                 createAnrModule(
                     instrumentationModule,
                     fakeInitModule.openTelemetryModule,
-                    FakeAppStateService()
+                    FakeAppStateTracker()
                 )
             } else {
                 val fakeAnrService = FakeAnrService()

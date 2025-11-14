@@ -2,6 +2,8 @@ package io.embrace.android.embracesdk.internal.envelope.session
 
 import io.embrace.android.embracesdk.internal.arch.schema.AppTerminationCause
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.arch.state.AppState
+import io.embrace.android.embracesdk.internal.arch.state.AppStateTracker
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
@@ -11,8 +13,6 @@ import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.session.captureDataSafely
-import io.embrace.android.embracesdk.internal.session.lifecycle.AppState
-import io.embrace.android.embracesdk.internal.session.lifecycle.AppStateService
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSnapshotType
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
 
@@ -22,7 +22,7 @@ internal class SessionPayloadSourceImpl(
     private val currentSessionSpan: CurrentSessionSpan,
     private val spanRepository: SpanRepository,
     private val otelPayloadMapper: OtelPayloadMapper?,
-    private val appStateService: AppStateService,
+    private val appStateTracker: AppStateTracker,
     private val clock: Clock,
     private val logger: EmbLogger,
 ) : SessionPayloadSource {
@@ -36,7 +36,7 @@ internal class SessionPayloadSourceImpl(
         val isCacheAttempt = endType == SessionSnapshotType.PERIODIC_CACHE
         val includeSnapshots = endType != SessionSnapshotType.JVM_CRASH
 
-        if (!endType.forceQuit && appStateService.getAppState() == AppState.BACKGROUND) {
+        if (!endType.forceQuit && appStateTracker.getAppState() == AppState.BACKGROUND) {
             spanRepository.autoTerminateSpans(clock.now())
         }
 

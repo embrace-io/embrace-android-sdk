@@ -21,7 +21,7 @@ internal class SessionPayloadSourceImpl(
     private val spanSink: SpanSink,
     private val currentSessionSpan: CurrentSessionSpan,
     private val spanRepository: SpanRepository,
-    private val otelPayloadMapper: OtelPayloadMapper,
+    private val otelPayloadMapper: OtelPayloadMapper?,
     private val appStateService: AppStateService,
     private val clock: Clock,
     private val logger: EmbLogger,
@@ -69,7 +69,7 @@ internal class SessionPayloadSourceImpl(
                         crashId != null -> AppTerminationCause.Crash
                         else -> null
                     }
-                    otelPayloadMapper.record()
+                    otelPayloadMapper?.record()
                     val spans = currentSessionSpan.endSession(
                         startNewSession = startNewSession,
                         appTerminationCause = appTerminationCause
@@ -79,7 +79,7 @@ internal class SessionPayloadSourceImpl(
 
                 else -> spanSink.completedSpans()
                     .map(EmbraceSpanData::toEmbracePayload)
-                    .plus(otelPayloadMapper.snapshotSpans())
+                    .plus(otelPayloadMapper?.snapshotSpans() ?: emptyList())
             }
         }
         return spans

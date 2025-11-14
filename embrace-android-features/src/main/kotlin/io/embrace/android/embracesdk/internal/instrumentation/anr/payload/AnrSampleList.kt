@@ -9,4 +9,10 @@ data class AnrSampleList(
      * List of samples.
      */
     val samples: List<AnrSample>,
-)
+) {
+
+    /**
+     * Retrieves the size of the list.
+     */
+    internal fun size(): Int = samples.size
+}

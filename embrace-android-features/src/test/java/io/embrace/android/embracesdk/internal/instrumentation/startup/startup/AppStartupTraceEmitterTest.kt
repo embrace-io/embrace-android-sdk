@@ -33,6 +33,7 @@ import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
+import io.embrace.android.embracesdk.internal.session.lifecycle.AppState
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.spans.ErrorCode
 import org.junit.Assert.assertEquals
@@ -755,7 +756,7 @@ internal class AppStartupTraceEmitterTest {
         startupService?.setSdkStartupInfo(
             startTimeMs = start,
             endTimeMs = end,
-            endedInForeground = false,
+            endState = AppState.BACKGROUND,
             threadName = "main"
         )
 

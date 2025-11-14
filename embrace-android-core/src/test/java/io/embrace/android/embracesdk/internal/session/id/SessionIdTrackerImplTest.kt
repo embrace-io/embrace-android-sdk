@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.session.id
 
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
+import io.embrace.android.embracesdk.internal.session.lifecycle.AppState
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Before
@@ -25,15 +26,15 @@ internal class SessionIdTrackerImplTest {
         assertNull(tracker.getActiveSessionId())
         assertNull(id)
 
-        tracker.setActiveSession("123", true)
-        assertEquals(SessionData("123", true), tracker.getActiveSession())
+        tracker.setActiveSession("123", AppState.FOREGROUND)
+        assertEquals(SessionData("123", AppState.FOREGROUND), tracker.getActiveSession())
         assertEquals("123", tracker.getActiveSessionId())
         assertEquals("123", id)
 
-        tracker.setActiveSession("456", true)
+        tracker.setActiveSession("456", AppState.FOREGROUND)
         assertEquals("456", id)
 
-        tracker.setActiveSession(null, false)
+        tracker.setActiveSession(null, AppState.BACKGROUND)
         assertEquals(null, id)
     }
 }

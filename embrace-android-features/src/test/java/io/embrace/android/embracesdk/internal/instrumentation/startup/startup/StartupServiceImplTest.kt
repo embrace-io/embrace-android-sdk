@@ -13,6 +13,7 @@ import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
+import io.embrace.android.embracesdk.internal.session.lifecycle.AppState
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -46,7 +47,7 @@ internal class StartupServiceImplTest {
         startupService.setSdkStartupInfo(
             startTimeMs = startTimeMillis,
             endTimeMs = endTimeMillis,
-            endedInForeground = false,
+            endState = AppState.BACKGROUND,
             threadName = "main"
         )
         val currentSpans = spanSink.completedSpans()
@@ -71,7 +72,7 @@ internal class StartupServiceImplTest {
             setSdkStartupInfo(
                 startTimeMs = 10,
                 endTimeMs = 20,
-                endedInForeground = false,
+                endState = AppState.BACKGROUND,
                 threadName = "main"
             )
         }
@@ -80,7 +81,7 @@ internal class StartupServiceImplTest {
             setSdkStartupInfo(
                 startTimeMs = 10,
                 endTimeMs = 20,
-                endedInForeground = false,
+                endState = AppState.BACKGROUND,
                 threadName = "main"
             )
         }
@@ -89,14 +90,14 @@ internal class StartupServiceImplTest {
 
     @Test
     fun `sdk startup span recorded if the startup info is set before span service initializes`() {
-        startupService.setSdkStartupInfo(10, 20, false, "main")
+        startupService.setSdkStartupInfo(10, 20, AppState.BACKGROUND, "main")
         spanService.initializeService(10)
         assertEquals(1, spanSink.completedSpans().size)
     }
 
     @Test
     fun `startup info available right after setting on the service`() {
-        startupService.setSdkStartupInfo(1111L, 3222L, false, "main")
+        startupService.setSdkStartupInfo(1111L, 3222L, AppState.BACKGROUND, "main")
         assertEquals(1111L, startupService.getSdkInitStartMs())
         assertEquals(3222L, startupService.getSdkInitEndMs())
         assertEquals(2111L, startupService.getSdkStartupDuration())

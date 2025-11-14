@@ -11,6 +11,7 @@ import io.embrace.android.embracesdk.fakes.FakeStorageService
 import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeNativeCoreModule
+import io.embrace.android.embracesdk.internal.session.lifecycle.AppState
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Before
@@ -66,7 +67,7 @@ internal class NativeFeatureModuleImplTest {
     fun `create native crash handler installer when everything is fine`() {
         fakeEssentialServiceModule = FakeEssentialServiceModule(
             sessionIdTracker = FakeSessionIdTracker().apply {
-                setActiveSession("sessionId", true)
+                setActiveSession("sessionId", AppState.FOREGROUND)
             }
         )
 

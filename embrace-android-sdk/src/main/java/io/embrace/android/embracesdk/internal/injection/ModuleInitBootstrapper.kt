@@ -18,7 +18,6 @@ import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.createNa
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.createNativeFeatureModule
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
-import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.Provider
@@ -392,14 +391,6 @@ internal class ModuleInitBootstrapper(
                         serviceRegistry.registerActivityListeners(essentialServiceModule.appStateService)
                         serviceRegistry.registerMemoryCleanerListeners(sessionOrchestrationModule.memoryCleanerService)
                         serviceRegistry.registerActivityLifecycleListeners(essentialServiceModule.activityLifecycleTracker)
-                    }
-
-                    // Verify that the AppStateService is fully initialized at this point, and log otherwise.
-                    if (!essentialServiceModule.appStateService.isInitialized()) {
-                        logger.trackInternalError(
-                            type = InternalErrorType.APP_STATE_CALLBACK_FAIL,
-                            throwable = IllegalStateException("AppStateService not initialized"),
-                        )
                     }
                     true
                 } else {

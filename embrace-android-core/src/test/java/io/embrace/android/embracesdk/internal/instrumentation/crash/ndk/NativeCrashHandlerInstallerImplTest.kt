@@ -81,7 +81,7 @@ class NativeCrashHandlerInstallerImplTest {
 
     @Test
     fun `report path containing session ID`() {
-        sessionTracker.sessionData = SessionData("sid", true)
+        sessionTracker.sessionData = SessionData("sid", AppState.FOREGROUND)
         nativeCrashHandlerInstaller.install()
 
         assertTrue(fakeDelegate.signalHandlerInstalled)
@@ -96,7 +96,7 @@ class NativeCrashHandlerInstallerImplTest {
 
         // trigger new session and update report path
         clock.tick(9000)
-        sessionTracker.setActiveSession("sid", true)
+        sessionTracker.setActiveSession("sid", AppState.FOREGROUND)
         assertTrue(fakeDelegate.signalHandlerInstalled)
         assertEquals("p1_1692201610000_sid_pid_true_native_v1.json", getFilename())
     }

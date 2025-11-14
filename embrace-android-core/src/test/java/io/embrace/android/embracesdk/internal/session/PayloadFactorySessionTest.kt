@@ -16,6 +16,7 @@ import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
+import io.embrace.android.embracesdk.internal.session.lifecycle.AppState
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactory
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactoryImpl
 import io.embrace.android.embracesdk.internal.session.message.PayloadMessageCollatorImpl
@@ -72,7 +73,7 @@ internal class PayloadFactorySessionTest {
 
         metadataService = FakeMetadataService()
         sessionIdTracker = FakeSessionIdTracker()
-        activityService = FakeAppStateService(isInBackground = true)
+        activityService = FakeAppStateService(AppState.BACKGROUND)
         store = FakeOrdinalStore()
         userService = FakeUserService()
         val initModule = FakeInitModule(clock = clock)
@@ -93,10 +94,8 @@ internal class PayloadFactorySessionTest {
         assertEquals(0, spanSink.completedSpans().size)
     }
 
-    private fun initializeSessionService(
-        isActivityInBackground: Boolean = true,
-    ) {
-        appStateService.isInBackground = isActivityInBackground
+    private fun initializeSessionService() {
+        appStateService.state = AppState.BACKGROUND
 
         val payloadSourceModule = FakePayloadSourceModule()
         val logger = EmbLoggerImpl()

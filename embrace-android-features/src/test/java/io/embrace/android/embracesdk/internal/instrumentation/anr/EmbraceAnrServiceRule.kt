@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.Live
 import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.TargetThreadHandler
 import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.ThreadMonitoringState
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
+import io.embrace.android.embracesdk.internal.session.lifecycle.AppState
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.mockk.mockk
@@ -49,7 +50,7 @@ internal class EmbraceAnrServiceRule<T : ScheduledExecutorService>(
         anrBehavior = FakeAnrBehavior()
         anrMonitorThread = AtomicReference(Thread.currentThread())
         fakeConfigService = FakeConfigService(anrBehavior = anrBehavior)
-        fakeAppStateService = FakeAppStateService(false)
+        fakeAppStateService = FakeAppStateService(AppState.FOREGROUND)
         anrExecutorService = scheduledExecutorSupplier.invoke()
         state = ThreadMonitoringState(clock)
         worker = BackgroundWorker(anrExecutorService)

@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.instrumentation.anr
 
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
+import io.embrace.android.embracesdk.internal.session.lifecycle.AppState
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -73,7 +74,7 @@ internal class EmbraceAnrServiceTimingTest {
     fun `test delayed background check stops monitoring when app remains in background`() {
         with(rule) {
             // Set background state and recreate service
-            fakeAppStateService.isInBackground = true
+            fakeAppStateService.state = AppState.BACKGROUND
             recreateService()
 
             // Start ANR capture - this should trigger scheduleDelayedBackgroundCheck
@@ -98,7 +99,7 @@ internal class EmbraceAnrServiceTimingTest {
     fun `test delayed background check does not stop monitoring when app transitions to foreground`() {
         with(rule) {
             // Set background state and recreate service
-            fakeAppStateService.isInBackground = true
+            fakeAppStateService.state = AppState.BACKGROUND
             recreateService()
 
             // Start ANR capture - this should trigger scheduleDelayedBackgroundCheck
@@ -112,7 +113,7 @@ internal class EmbraceAnrServiceTimingTest {
             anrExecutorService.moveForwardAndRunBlocked(TimeUnit.SECONDS.toMillis(5))
 
             // Transition to foreground before the 10-second delay
-            fakeAppStateService.isInBackground = false
+            fakeAppStateService.state = AppState.FOREGROUND
             anrService.onForeground(false, clock.now())
             anrExecutorService.runCurrentlyBlocked()
 

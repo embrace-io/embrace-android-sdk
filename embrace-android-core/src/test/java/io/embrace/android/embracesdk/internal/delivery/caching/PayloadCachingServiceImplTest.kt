@@ -29,7 +29,7 @@ class PayloadCachingServiceImplTest {
         executorService = BlockingScheduledExecutorService(FakeClock())
         val cacher = PeriodicSessionCacher(BackgroundWorker(executorService), FakeEmbLogger(), INTERVAL)
         sessionIdTracker = FakeSessionIdTracker()
-        sessionIdTracker.setActiveSession(zygote.sessionId, true)
+        sessionIdTracker.setActiveSession(zygote.sessionId, AppState.FOREGROUND)
 
         service = PayloadCachingServiceImpl(
             cacher,
@@ -49,7 +49,7 @@ class PayloadCachingServiceImplTest {
 
     @Test
     fun `session id mismatch does not cache`() {
-        sessionIdTracker.setActiveSession("someOtherId", true)
+        sessionIdTracker.setActiveSession("someOtherId", AppState.FOREGROUND)
         var count = 0
         service.startCaching(zygote, AppState.FOREGROUND) { _, _, _ ->
             count++

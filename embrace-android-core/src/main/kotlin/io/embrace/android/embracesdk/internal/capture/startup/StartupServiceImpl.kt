@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.capture.startup
 
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
+import io.embrace.android.embracesdk.internal.session.lifecycle.AppState
 
 class StartupServiceImpl(
     private val spanService: SpanService,
@@ -11,9 +12,6 @@ class StartupServiceImpl(
 
     @Volatile
     private var sdkInitEndMs: Long? = null
-
-    @Volatile
-    private var endedInForeground: Boolean? = null
 
     @Volatile
     private var threadName: String = "unknown"
@@ -27,9 +25,10 @@ class StartupServiceImpl(
     override fun setSdkStartupInfo(
         startTimeMs: Long,
         endTimeMs: Long,
-        endedInForeground: Boolean,
+        endState: AppState,
         threadName: String,
     ) {
+        val foregroundEnd = endState == AppState.FOREGROUND
         if (sdkStartupDurationMs == null) {
             spanService.recordCompletedSpan(
                 name = "sdk-init",
@@ -37,14 +36,13 @@ class StartupServiceImpl(
                 endTimeMs = endTimeMs,
                 private = true,
                 attributes = mapOf(
-                    "ended-in-foreground" to endedInForeground.toString(),
+                    "ended-in-foreground" to foregroundEnd.toString(),
                     "thread-name" to threadName,
                 ),
             )
         }
         sdkInitStartMs = startTimeMs
         sdkInitEndMs = endTimeMs
-        this.endedInForeground = endedInForeground
         this.threadName = threadName
         sdkStartupDurationMs = endTimeMs - startTimeMs
     }
@@ -52,6 +50,5 @@ class StartupServiceImpl(
     override fun getSdkStartupDuration(): Long? = sdkStartupDurationMs
     override fun getSdkInitStartMs(): Long? = sdkInitStartMs
     override fun getSdkInitEndMs(): Long? = sdkInitEndMs
-    override fun endedInForeground(): Boolean? = endedInForeground
     override fun getInitThreadName(): String = threadName
 }

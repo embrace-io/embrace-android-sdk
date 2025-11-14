@@ -11,6 +11,7 @@ import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.session.captureDataSafely
+import io.embrace.android.embracesdk.internal.session.lifecycle.AppState
 import io.embrace.android.embracesdk.internal.session.lifecycle.AppStateService
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSnapshotType
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
@@ -35,7 +36,7 @@ internal class SessionPayloadSourceImpl(
         val isCacheAttempt = endType == SessionSnapshotType.PERIODIC_CACHE
         val includeSnapshots = endType != SessionSnapshotType.JVM_CRASH
 
-        if (!endType.forceQuit && appStateService.isInBackground) {
+        if (!endType.forceQuit && appStateService.getAppState() == AppState.BACKGROUND) {
             spanRepository.autoTerminateSpans(clock.now())
         }
 

@@ -39,10 +39,7 @@ internal class SessionOrchestratorImpl(
      * The currently active session.
      */
     private var activeSession: SessionZygote? = null
-    private var state = when {
-        appStateService.isInBackground -> AppState.BACKGROUND
-        else -> AppState.FOREGROUND
-    }
+    private var state = appStateService.getAppState()
 
     init {
         appStateService.addListener(this)
@@ -188,14 +185,13 @@ internal class SessionOrchestratorImpl(
 
             // calculate new session state
             val endAppState = transitionType.endState(state)
-            val inForeground = endAppState == AppState.FOREGROUND
 
             // create the next session span if we should, and update the SDK state to reflect the transition
             EmbTrace.start("create-new-session")
             val newState = newSessionAction?.invoke()
             activeSession = newState
             val sessionId = newState?.sessionId
-            sessionIdTracker.setActiveSession(sessionId, inForeground)
+            sessionIdTracker.setActiveSession(sessionId, endAppState)
 
             if (newState != null) {
                 boundaryDelegate.prepareForNewSession()

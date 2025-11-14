@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.internal.injection
 import io.embrace.android.embracesdk.internal.InstrumentationArgsImpl
 import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistry
 import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistryImpl
-import io.embrace.android.embracesdk.internal.worker.Worker
 
 internal class InstrumentationModuleImpl(
     initModule: InitModule,
@@ -16,7 +15,6 @@ internal class InstrumentationModuleImpl(
 
     override val instrumentationRegistry: InstrumentationRegistry by singleton {
         InstrumentationRegistryImpl(
-            workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker),
             initModule.logger
         )
     }

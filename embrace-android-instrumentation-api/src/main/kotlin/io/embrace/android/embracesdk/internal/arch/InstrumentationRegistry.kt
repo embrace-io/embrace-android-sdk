@@ -22,10 +22,9 @@ interface InstrumentationRegistry {
     fun <T : DataSource> findByType(clazz: KClass<T>): T?
 
     /**
-     * Alters the current session type so that instrumentation can be disabled
-     * if necessary.
+     * Invoked when a new session is ready.
      */
-    var currentSessionType: SessionType?
+    fun onNewSession()
 
     /**
      * Loads instrumentation via SPI and registers it with the SDK.

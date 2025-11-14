@@ -1,7 +1,5 @@
 package io.embrace.android.embracesdk.internal.arch.datasource
 
-import io.embrace.android.embracesdk.internal.arch.SessionType
-
 /**
  * Holds the current state of the service. This class automatically handles changes in config
  * that enable/disable the service, and creates new instances of the service as required.
@@ -20,13 +18,7 @@ class DataSourceState<T : DataSource>(
      * Predicate that determines if the service should be enabled or not, via a config value.
      * Defaults to true if not provided.
      */
-    private val configGate: () -> Boolean = { true },
-
-    /**
-     * A session type where data capture should be disabled. For example,
-     * background activities capture a subset of sessions.
-     */
-    private val disabledSessionType: SessionType? = null,
+    configGate: () -> Boolean = { true },
 
     /**
      * Whether this feature supports being initialized asynchronously. Defaults to false. If
@@ -38,45 +30,12 @@ class DataSourceState<T : DataSource>(
     val asyncInit: Boolean = false,
 ) {
 
-    /**
-     * The type of session that contains the data.
-     */
-    var currentSessionType: SessionType? = null
-        set(value) {
-            field = value
-            onSessionTypeChange()
-        }
-
     private val factoryRef = lazy(factory)
 
-    var dataSource: T? = null
-        private set
-
-    init {
-        updateDataSource()
-    }
-
-    /**
-     * Callback that is invoked when the session type changes.
-     */
-    private fun onSessionTypeChange() {
-        updateDataSource()
-        if (factoryRef.isInitialized()) {
-            factoryRef.value?.resetDataCaptureLimits()
+    var dataSource: T? = when {
+        configGate() -> factoryRef.value?.apply {
+            onDataCaptureEnabled()
         }
-    }
-
-    private fun updateDataSource() {
-        val enabled =
-            currentSessionType != null && currentSessionType != disabledSessionType && configGate()
-
-        if (enabled && dataSource == null) {
-            dataSource = factoryRef.value?.apply {
-                onDataCaptureEnabled()
-            }
-        } else if (!enabled && dataSource != null) {
-            dataSource?.onDataCaptureDisabled()
-            dataSource = null
-        }
+        else -> null
     }
 }

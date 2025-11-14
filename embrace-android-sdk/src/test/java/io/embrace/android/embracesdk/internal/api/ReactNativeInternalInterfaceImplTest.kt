@@ -11,7 +11,6 @@ import io.embrace.android.embracesdk.fakes.FakeRnBundleIdTracker
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
 import io.embrace.android.embracesdk.fakes.fakeModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.api.delegate.ReactNativeInternalInterfaceImpl
-import io.embrace.android.embracesdk.internal.arch.SessionType
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo
@@ -161,7 +160,6 @@ internal class ReactNativeInternalInterfaceImplTest {
         val args = bootstrapper.instrumentationModule.instrumentationArgs
         val dataSource = JvmCrashDataSourceImpl(args)
         registry.add(DataSourceState(factory = { dataSource }))
-        registry.currentSessionType = SessionType.FOREGROUND
 
         impl.logUnhandledJsException("name", "message", "type", "stack")
         dataSource.logUnhandledJvmThrowable(IllegalStateException("Whoops"))

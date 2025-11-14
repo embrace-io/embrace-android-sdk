@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.instrumentation.anr
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
+import io.embrace.android.embracesdk.internal.envelope.session.OtelPayloadMapper
 import io.embrace.android.embracesdk.internal.instrumentation.anr.payload.AnrInterval
 import io.embrace.android.embracesdk.internal.instrumentation.anr.payload.AnrSample
 import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
@@ -23,13 +24,13 @@ class AnrOtelMapper(
     private val clock: Clock,
     private val spanService: SpanService,
     private val random: Random = Random.Default,
-) {
+) : OtelPayloadMapper {
 
     private companion object {
         const val INVALID_SPAN_ID: String = "0000000000000000"
     }
 
-    fun snapshot(): List<Span> = EmbTrace.trace("anr-snapshot") {
+    override fun snapshotSpans(): List<Span> = EmbTrace.trace("anr-snapshot") {
         anrService.getCapturedData().map { interval ->
             val attrs = mapIntervalToSpanAttributes(interval)
             val events = mapIntervalToSpanEvents(interval)
@@ -47,7 +48,7 @@ class AnrOtelMapper(
         }
     }
 
-    fun record() = EmbTrace.trace("anr-record") {
+    override fun record() = EmbTrace.trace("anr-record") {
         anrService.getCapturedData().forEach { interval ->
             val attributes = mapIntervalToSpanAttributes(interval).toEmbracePayload()
             val events = interval.anrSampleList?.samples?.mapNotNull { mapSampleToSpanEvent(it).toEmbracePayload() }

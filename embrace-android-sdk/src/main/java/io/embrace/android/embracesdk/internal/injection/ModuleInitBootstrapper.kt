@@ -7,7 +7,6 @@ import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.clock.NormalizedIntervalClock
 import io.embrace.android.embracesdk.internal.instrumentation.anr.AnrModule
 import io.embrace.android.embracesdk.internal.instrumentation.anr.AnrModuleSupplier
-import io.embrace.android.embracesdk.internal.instrumentation.anr.OtelPayloadMapperImpl
 import io.embrace.android.embracesdk.internal.instrumentation.anr.createAnrModule
 import io.embrace.android.embracesdk.internal.instrumentation.crash.jvm.JvmCrashDataSource
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeCoreModule
@@ -314,7 +313,7 @@ internal class ModuleInitBootstrapper(
                             configModule,
                             { nativeCoreModule.symbolService.symbolsForCurrentArch },
                             openTelemetryModule,
-                            { OtelPayloadMapperImpl(anrModule.anrOtelMapper) },
+                            { anrModule.anrOtelMapper },
                             deliveryModule
                         )
                     }

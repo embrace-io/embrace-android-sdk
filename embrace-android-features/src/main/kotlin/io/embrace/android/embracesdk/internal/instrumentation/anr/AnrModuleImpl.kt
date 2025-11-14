@@ -25,8 +25,6 @@ internal class AnrModuleImpl(
 
     override val anrService: AnrService? by singleton {
         if (args.configService.autoDataCaptureBehavior.isAnrCaptureEnabled()) {
-            // the customer didn't enable early ANR detection, so construct the service
-            // as part of normal initialization.
             EmbraceAnrService(
                 configService = args.configService,
                 looper = looper,

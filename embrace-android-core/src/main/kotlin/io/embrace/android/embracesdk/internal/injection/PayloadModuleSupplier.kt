@@ -17,7 +17,7 @@ typealias PayloadSourceModuleSupplier = (
     configModule: ConfigModule,
     nativeSymbolsProvider: Provider<Map<String, String>?>,
     otelModule: OpenTelemetryModule,
-    otelPayloadMapperProvider: Provider<OtelPayloadMapper>,
+    otelPayloadMapperProvider: Provider<OtelPayloadMapper?>,
     deliveryModule: DeliveryModule,
 ) -> PayloadSourceModule
 
@@ -32,7 +32,7 @@ fun createPayloadSourceModule(
     configModule: ConfigModule,
     nativeSymbolsProvider: Provider<Map<String, String>?>,
     otelModule: OpenTelemetryModule,
-    otelPayloadMapperProvider: Provider<OtelPayloadMapper>,
+    otelPayloadMapperProvider: Provider<OtelPayloadMapper?>,
     deliveryModule: DeliveryModule,
 ): PayloadSourceModule = PayloadSourceModuleImpl(
     initModule,

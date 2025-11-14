@@ -19,4 +19,10 @@ class FakeSessionOrchestrator : SessionOrchestrator {
     override fun onSessionDataUpdate() {
         stateChangeCount++
     }
+
+    override fun onBackground() {
+    }
+
+    override fun onForeground() {
+    }
 }

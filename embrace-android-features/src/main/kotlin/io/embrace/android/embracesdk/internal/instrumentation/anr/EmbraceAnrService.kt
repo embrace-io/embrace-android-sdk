@@ -107,7 +107,7 @@ internal class EmbraceAnrService(
      * When app goes to foreground, we need to monitor the target thread again to
      * capture ANRs.
      */
-    override fun onForeground(coldStart: Boolean, timestamp: Long) {
+    override fun onForeground() {
         this.anrMonitorWorker.submit {
             // Cancel any pending delayed background check since we're now in foreground
             cancelDelayedBackgroundCheck()
@@ -121,7 +121,7 @@ internal class EmbraceAnrService(
      * because we don't need to capture ANRs on background and we don't
      * want to affect customer's app performance.
      */
-    override fun onBackground(timestamp: Long) {
+    override fun onBackground() {
         this.anrMonitorWorker.submit {
             livenessCheckScheduler.stopMonitoringThread()
         }

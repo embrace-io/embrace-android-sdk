@@ -32,4 +32,10 @@ class FakeAnrService : AnrService {
 
     override fun onThreadUnblocked(thread: Thread, timestamp: Long) {
     }
+
+    override fun onBackground() {
+    }
+
+    override fun onForeground() {
+    }
 }

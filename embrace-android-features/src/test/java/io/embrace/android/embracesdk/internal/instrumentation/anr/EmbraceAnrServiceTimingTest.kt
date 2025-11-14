@@ -63,7 +63,7 @@ internal class EmbraceAnrServiceTimingTest {
             anrExecutorService.runCurrentlyBlocked()
             anrExecutorService.runCurrentlyBlocked()
             assertEquals(1, anrExecutorService.scheduledTasksCount())
-            anrService.onForeground(true, clock.now() + 1)
+            anrService.onForeground()
             anrExecutorService.runCurrentlyBlocked()
             anrExecutorService.runCurrentlyBlocked()
             assertEquals(1, anrExecutorService.scheduledTasksCount())
@@ -114,7 +114,7 @@ internal class EmbraceAnrServiceTimingTest {
 
             // Transition to foreground before the 10-second delay
             fakeAppStateTracker.state = AppState.FOREGROUND
-            anrService.onForeground(false, clock.now())
+            anrService.onForeground()
             anrExecutorService.runCurrentlyBlocked()
 
             // Advance time by 5 more seconds to reach the 10-second mark

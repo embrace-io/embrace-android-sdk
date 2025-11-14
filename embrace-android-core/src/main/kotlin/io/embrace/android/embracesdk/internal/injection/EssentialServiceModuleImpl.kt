@@ -38,7 +38,7 @@ class EssentialServiceModuleImpl(
     override val appStateTracker: AppStateTracker by singleton {
         EmbTrace.trace("process-state-service-init") {
             val lifecycleOwner = lifecycleOwnerProvider() ?: ProcessLifecycleOwner.get()
-            AppStateTrackerImpl(initModule.clock, initModule.logger, lifecycleOwner)
+            AppStateTrackerImpl(initModule.logger, lifecycleOwner)
         }
     }
 

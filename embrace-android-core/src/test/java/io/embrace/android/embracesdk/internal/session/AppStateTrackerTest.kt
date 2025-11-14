@@ -19,7 +19,6 @@ import io.mockk.mockkStatic
 import io.mockk.unmockkAll
 import org.junit.AfterClass
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.BeforeClass
@@ -65,7 +64,6 @@ internal class AppStateTrackerTest {
         )
         fakeEmbLogger = FakeEmbLogger()
         stateService = AppStateTrackerImpl(
-            fakeClock,
             fakeEmbLogger,
             TestLifecycleOwner(Lifecycle.State.INITIALIZED)
         )
@@ -76,8 +74,6 @@ internal class AppStateTrackerTest {
         val listener = FakeAppStateListener()
         stateService.addListener(listener)
         stateService.onForeground()
-        assertTrue(listener.coldStart)
-        assertEquals(listener.timestamp, fakeClock.now())
         assertEquals(1, listener.foregroundCount.get())
     }
 
@@ -85,12 +81,8 @@ internal class AppStateTrackerTest {
     fun `verify on activity foreground called twice is not a cold start`() {
         val listener = FakeAppStateListener()
         stateService.addListener(listener)
-
         stateService.onForeground()
-        assertTrue(listener.coldStart)
-
         stateService.onForeground()
-        assertFalse(listener.coldStart)
         assertEquals(2, listener.foregroundCount.get())
     }
 
@@ -99,7 +91,6 @@ internal class AppStateTrackerTest {
         val listener = FakeAppStateListener()
         stateService.addListener(listener)
         stateService.onBackground()
-        assertEquals(listener.timestamp, fakeClock.now())
         assertEquals(1, listener.backgroundCount.get())
     }
 
@@ -215,7 +206,6 @@ internal class AppStateTrackerTest {
     @Test
     fun `launched in background`() {
         stateService = AppStateTrackerImpl(
-            fakeClock,
             fakeEmbLogger,
             mockk {
                 every { lifecycle } returns mockk<Lifecycle> {
@@ -229,7 +219,6 @@ internal class AppStateTrackerTest {
     @Test
     fun `launched in foreground`() {
         stateService = AppStateTrackerImpl(
-            fakeClock,
             fakeEmbLogger,
             mockk {
                 every { lifecycle } returns mockk<Lifecycle> {
@@ -251,11 +240,11 @@ internal class AppStateTrackerTest {
         private val invocations: MutableList<String>,
     ) : AppStateListener {
 
-        override fun onBackground(timestamp: Long) {
+        override fun onBackground() {
             invocations.add(javaClass.simpleName)
         }
 
-        override fun onForeground(coldStart: Boolean, timestamp: Long) {
+        override fun onForeground() {
             invocations.add(javaClass.simpleName)
         }
     }
@@ -265,11 +254,11 @@ internal class AppStateTrackerTest {
         private val orchestrator: SessionOrchestrator = FakeSessionOrchestrator(),
     ) : SessionOrchestrator by orchestrator {
 
-        override fun onBackground(timestamp: Long) {
+        override fun onBackground() {
             invocations.add(javaClass.simpleName)
         }
 
-        override fun onForeground(coldStart: Boolean, timestamp: Long) {
+        override fun onForeground() {
             invocations.add(javaClass.simpleName)
         }
     }

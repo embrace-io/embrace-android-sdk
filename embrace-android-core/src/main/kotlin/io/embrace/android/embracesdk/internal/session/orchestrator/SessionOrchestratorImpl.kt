@@ -33,6 +33,12 @@ internal class SessionOrchestratorImpl(
     private val sessionSpanAttrPopulator: SessionSpanAttrPopulator,
 ) : SessionOrchestrator {
 
+    /**
+     * Tracks whether the foreground phase comes from a cold start or not.
+     */
+    @Volatile
+    private var coldStart = true
+
     private val lock = Any()
 
     /**
@@ -56,7 +62,8 @@ internal class SessionOrchestratorImpl(
         )
     }
 
-    override fun onForeground(coldStart: Boolean, timestamp: Long) {
+    override fun onForeground() {
+        val timestamp = clock.now()
         transitionState(
             transitionType = TransitionType.ON_FOREGROUND,
             oldSessionAction = { initial: SessionZygote ->
@@ -69,9 +76,11 @@ internal class SessionOrchestratorImpl(
                 return@transitionState shouldRunOnForeground(state)
             }
         )
+        coldStart = false
     }
 
-    override fun onBackground(timestamp: Long) {
+    override fun onBackground() {
+        val timestamp = clock.now()
         transitionState(
             transitionType = TransitionType.ON_BACKGROUND,
             oldSessionAction = { initial: SessionZygote ->

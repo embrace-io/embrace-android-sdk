@@ -200,8 +200,11 @@ internal class AppStartupTraceEmitter(
         customAttributes[key] = value
     }
 
-    override fun onBackground(timestamp: Long) {
-        dataCollectionComplete(timestamp, false)
+    override fun onBackground() {
+        dataCollectionComplete(clock.now(), false)
+    }
+
+    override fun onForeground() {
     }
 
     /**

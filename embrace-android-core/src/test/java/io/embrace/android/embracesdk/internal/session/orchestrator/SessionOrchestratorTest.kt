@@ -114,7 +114,7 @@ internal class SessionOrchestratorTest {
         clock.tick()
         val foregroundTime = clock.now()
         val sessionSpan = currentSessionSpan.sessionSpan
-        orchestrator.onForeground(true, foregroundTime)
+        orchestrator.onForeground()
         assertEquals(2, memoryCleanerService.callCount)
         assertEquals(1, fakeDataSource.enableDataCaptureCount)
         validateSession(
@@ -131,7 +131,7 @@ internal class SessionOrchestratorTest {
         clock.tick()
         val backgroundTime = clock.now()
         val sessionSpan = currentSessionSpan.sessionSpan
-        orchestrator.onBackground(backgroundTime)
+        orchestrator.onBackground()
         assertEquals(2, memoryCleanerService.callCount)
         validateSession(
             sessionSpan = sessionSpan,
@@ -148,9 +148,9 @@ internal class SessionOrchestratorTest {
         orchestrator.onSessionDataUpdate()
         sessionCacheExecutor.runCurrentlyBlocked()
         assertEquals(1, store.cachedSessionPayloads.size)
-        orchestrator.onForeground(true, clock.now())
+        orchestrator.onForeground()
         clock.tick()
-        orchestrator.onBackground(clock.now())
+        orchestrator.onBackground()
         assertEquals(1, store.cachedSessionPayloads.size)
         assertEquals(2, store.storedSessionPayloads.size)
     }
@@ -159,7 +159,7 @@ internal class SessionOrchestratorTest {
     fun `background activity save invoked after ending will not save it again`() {
         createOrchestrator(AppState.BACKGROUND)
         clock.tick()
-        orchestrator.onForeground(true, clock.now())
+        orchestrator.onForeground()
         clock.tick()
         assertEquals(1, store.storedSessionPayloads.size)
         sessionCacheExecutor.runCurrentlyBlocked()
@@ -172,7 +172,7 @@ internal class SessionOrchestratorTest {
         clock.tick()
         sessionCacheExecutor.runCurrentlyBlocked()
         assertEquals(1, store.cachedSessionPayloads.size)
-        orchestrator.onBackground(clock.now())
+        orchestrator.onBackground()
         clock.tick()
         assertEquals(1, store.cachedSessionPayloads.size)
         assertEquals(1, store.storedSessionPayloads.size)
@@ -182,7 +182,7 @@ internal class SessionOrchestratorTest {
     fun `session save invoked after ending will not save it again`() {
         createOrchestrator(AppState.FOREGROUND)
         clock.tick()
-        orchestrator.onBackground(clock.now())
+        orchestrator.onBackground()
         clock.tick()
         assertEquals(1, store.storedSessionPayloads.size)
         sessionCacheExecutor.runCurrentlyBlocked()
@@ -218,7 +218,7 @@ internal class SessionOrchestratorTest {
     @Test
     fun `backgrounding with background activity enabled does not cache empty crash envelope`() {
         createOrchestrator(AppState.FOREGROUND)
-        orchestrator.onBackground(orchestratorStartTimeMs)
+        orchestrator.onBackground()
         assertTrue(store.cachedEmptyCrashPayloads.isEmpty())
     }
 
@@ -230,7 +230,7 @@ internal class SessionOrchestratorTest {
             )
         )
         createOrchestrator(AppState.FOREGROUND)
-        orchestrator.onBackground(orchestratorStartTimeMs)
+        orchestrator.onBackground()
         assertEquals(1, store.cachedEmptyCrashPayloads.size)
     }
 
@@ -242,7 +242,7 @@ internal class SessionOrchestratorTest {
             )
         )
         createOrchestrator(AppState.BACKGROUND)
-        orchestrator.onForeground(false, orchestratorStartTimeMs)
+        orchestrator.onForeground()
         assertTrue(store.cachedEmptyCrashPayloads.isEmpty())
     }
 
@@ -329,22 +329,22 @@ internal class SessionOrchestratorTest {
     @Test
     fun `test session span cold start`() {
         createOrchestrator(AppState.BACKGROUND)
-        orchestrator.onForeground(true, clock.now())
+        orchestrator.onForeground()
         checkNotNull(store.storedSessionPayloads.last().first)
     }
 
     @Test
     fun `test session span non cold start`() {
         createOrchestrator(AppState.BACKGROUND)
-        orchestrator.onForeground(true, orchestratorStartTimeMs)
-        orchestrator.onBackground(orchestratorStartTimeMs)
+        orchestrator.onForeground()
+        orchestrator.onBackground()
         checkNotNull(store.storedSessionPayloads.last().first)
     }
 
     @Test
     fun `test session span with crash`() {
         createOrchestrator(AppState.BACKGROUND)
-        orchestrator.onForeground(true, orchestratorStartTimeMs)
+        orchestrator.onForeground()
         orchestrator.handleCrash("my-crash-id")
         checkNotNull(store.storedSessionPayloads.last().first)
     }
@@ -352,7 +352,7 @@ internal class SessionOrchestratorTest {
     @Test
     fun `test foreground session span heartbeat`() {
         createOrchestrator(AppState.BACKGROUND)
-        orchestrator.onForeground(true, orchestratorStartTimeMs)
+        orchestrator.onForeground()
         assertHeartbeatMatchesClock()
         assertEquals("true", destination.attributes["emb.terminated"])
 

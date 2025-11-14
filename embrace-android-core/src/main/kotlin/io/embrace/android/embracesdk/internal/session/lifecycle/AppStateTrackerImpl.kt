@@ -8,7 +8,6 @@ import androidx.lifecycle.LifecycleOwner
 import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.arch.state.AppStateListener
 import io.embrace.android.embracesdk.internal.arch.state.AppStateTracker
-import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
@@ -19,7 +18,6 @@ import java.util.concurrent.CopyOnWriteArrayList
  * by ProcessLifecycleOwner.
  */
 internal class AppStateTrackerImpl(
-    private val clock: Clock,
     private val logger: EmbLogger,
     private val lifecycleOwner: LifecycleOwner,
 ) : AppStateTracker, LifecycleEventObserver {
@@ -30,12 +28,6 @@ internal class AppStateTrackerImpl(
     val listeners: CopyOnWriteArrayList<AppStateListener> = CopyOnWriteArrayList<AppStateListener>()
 
     private var sessionOrchestrator: SessionOrchestrator? = null
-
-    /**
-     * States if the foreground phase comes from a cold start or not.
-     */
-    @Volatile
-    private var coldStart = true
 
     /**
      * Returns if the app's in background or not.
@@ -81,16 +73,14 @@ internal class AppStateTrackerImpl(
      */
     internal fun onForeground() {
         state = AppState.FOREGROUND
-        val timestamp = clock.now()
 
-        invokeCallbackSafely { sessionOrchestrator?.onForeground(coldStart, timestamp) }
+        invokeCallbackSafely { sessionOrchestrator?.onForeground() }
 
         listeners.toList().forEach { listener: AppStateListener ->
             invokeCallbackSafely {
-                listener.onForeground(coldStart, timestamp)
+                listener.onForeground()
             }
         }
-        coldStart = false
     }
 
     /**
@@ -99,15 +89,14 @@ internal class AppStateTrackerImpl(
      */
     internal fun onBackground() {
         state = AppState.BACKGROUND
-        val timestamp = clock.now()
 
         listeners.toList().forEach { listener: AppStateListener ->
             invokeCallbackSafely {
-                listener.onBackground(timestamp)
+                listener.onBackground()
             }
         }
 
-        invokeCallbackSafely { sessionOrchestrator?.onBackground(timestamp) }
+        invokeCallbackSafely { sessionOrchestrator?.onBackground() }
     }
 
     private inline fun invokeCallbackSafely(action: () -> Unit) {

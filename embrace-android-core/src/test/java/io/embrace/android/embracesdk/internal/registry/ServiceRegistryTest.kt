@@ -73,5 +73,11 @@ internal class ServiceRegistryTest {
 
         override fun cleanCollections() {
         }
+
+        override fun onBackground() {
+        }
+
+        override fun onForeground() {
+        }
     }
 }

@@ -159,7 +159,7 @@ internal class AppStartupTraceEmitterTest {
             preActivityInit(false)
         }
         val abandonTime = clock.tick()
-        emitter.onBackground(abandonTime)
+        emitter.onBackground()
         val spanMap = spanSink.completedSpans().associateBy { it.name }
         with(checkNotNull(spanMap.coldAppStartupRootSpan())) {
             assertError(ErrorCode.USER_ABANDON)
@@ -187,7 +187,7 @@ internal class AppStartupTraceEmitterTest {
         }
 
         val abandonTime = clock.tick()
-        emitter.onBackground(abandonTime)
+        emitter.onBackground()
         with(spanSink.completedSpans().associateBy { it.name }) {
             with(checkNotNull(coldAppStartupRootSpan())) {
                 assertError(ErrorCode.USER_ABANDON)
@@ -216,7 +216,7 @@ internal class AppStartupTraceEmitterTest {
             )
         }
         val abandonTime = clock.tick()
-        emitter.onBackground(abandonTime)
+        emitter.onBackground()
         with(spanSink.completedSpans().associateBy { it.name }) {
             with(checkNotNull(coldAppStartupRootSpan())) {
                 assertError(ErrorCode.USER_ABANDON)
@@ -242,7 +242,7 @@ internal class AppStartupTraceEmitterTest {
             preActivityInit(false)
         }
         val abandonTime = clock.tick()
-        emitter.onBackground(abandonTime)
+        emitter.onBackground()
         val spanMap = spanSink.completedSpans().associateBy { it.name }
         with(checkNotNull(spanMap.warmAppStartupRootSpan())) {
             assertError(ErrorCode.USER_ABANDON)
@@ -265,7 +265,7 @@ internal class AppStartupTraceEmitterTest {
             )
         }
         val abandonTime = clock.tick()
-        emitter.onBackground(abandonTime)
+        emitter.onBackground()
         with(spanSink.completedSpans().associateBy { it.name }) {
             with(checkNotNull(warmAppStartupRootSpan())) {
                 assertError(ErrorCode.USER_ABANDON)

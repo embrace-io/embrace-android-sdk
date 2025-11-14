@@ -77,7 +77,7 @@ internal class EmbraceAnrServiceTest {
         with(rule) {
             // cold starts should always be ignored
             state.lastTargetThreadResponseMs = 1
-            anrService.onForeground(true, 0L)
+            anrService.onForeground()
 
             // assert no ANR interval was added
             assertEquals(0, stacktraceSampler.anrIntervals.size)
@@ -213,14 +213,13 @@ internal class EmbraceAnrServiceTest {
     @Test
     fun `test ANR state is reset when onForeground is executed to prevent false positive ANR`() {
         val anrStartTs = 15020000L
-        val anrInProgressTs = 15020500L
         val anrEndTs = 15023000L
         with(rule) {
             clock.setCurrentTime(anrStartTs)
-            anrService.onForeground(false, anrInProgressTs)
-            anrService.onBackground(anrEndTs)
+            anrService.onForeground()
+            anrService.onBackground()
             clock.setCurrentTime(anrEndTs)
-            anrService.onForeground(false, anrEndTs)
+            anrService.onForeground()
             // Since Looper is a mock, we execute this operation to
             // ensure onMainThreadUnblocked runs and lastTargetThreadResponseMs gets updated
             targetThreadHandler.onIdleThread()
@@ -232,15 +231,14 @@ internal class EmbraceAnrServiceTest {
     @Test
     fun `test timestamps are updated if onMainThreadUnblocked runs before onMonitorThreadHeartbeat to prevent false positive ANR`() {
         val anrStartTs = 15020000L
-        val anrInProgressTs = 15020500L
         val anrEndTs = 15023000L
 
         with(rule) {
             clock.setCurrentTime(anrStartTs)
-            anrService.onForeground(false, anrInProgressTs)
-            anrService.onBackground(anrEndTs)
+            anrService.onForeground()
+            anrService.onBackground()
             clock.setCurrentTime(anrEndTs)
-            anrService.onForeground(false, anrEndTs)
+            anrService.onForeground()
             targetThreadHandler.onIdleThread()
             val intervals = anrService.getCapturedData()
             assertEquals(0, intervals.size)
@@ -400,7 +398,7 @@ internal class EmbraceAnrServiceTest {
         with(rule) {
             clock.setCurrentTime(14000000L)
             rule.anrBehavior.bgAnrCaptureEnabled = true
-            anrService.onForeground(true, clock.now())
+            anrService.onForeground()
             anrExecutorService.submit {
                 assertTrue(state.started.get())
             }

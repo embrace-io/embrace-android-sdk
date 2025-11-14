@@ -53,6 +53,6 @@ androidx-benchmark-macro-junit4 = { group = "androidx.benchmark", name = "benchm
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
-embrace = { id = "io.embrace.gradle", version.ref = "embrace" }
+embrace = { id = "io.embrace.swazzler", version.ref = "embrace" }
 android-test = { id = "com.android.test", version.ref = "agp" }
 

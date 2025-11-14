@@ -8,5 +8,5 @@ VERSIONS="10-robolectric-5803371 11-robolectric-6757853 12-robolectric-7732740 1
 for version in $VERSIONS; do
   echo $(date): Fetching Robolectric ${version}
   mvn dependency:get -Dartifact=org.robolectric:android-all:${version} --no-transfer-progress
-  mvn dependency:get -Dartifact=org.robolectric:android-all-instrumented:${version}-i6 --no-transfer-progress
+  mvn dependency:get -Dartifact=org.robolectric:android-all-instrumented:${version}-i7 --no-transfer-progress
 done

@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.internal.instrumentation.anr
 import io.embrace.android.embracesdk.assertions.assertSuccessful
 import io.embrace.android.embracesdk.fakes.FakeAnrService
 import io.embrace.android.embracesdk.fakes.FakeClock
-import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
 import io.embrace.android.embracesdk.fakes.FakeSpanService
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
@@ -116,8 +115,7 @@ internal class AnrOtelMapperTest {
         mapper = AnrOtelMapper(
             anrService,
             clock,
-            spanService,
-            FakeOpenTelemetryModule().otelSdkWrapper.openTelemetryKotlin.tracingIdFactory
+            spanService
         )
     }
 

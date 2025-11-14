@@ -7,6 +7,5 @@ import io.embrace.opentelemetry.kotlin.ExperimentalApi
 fun fakeAnrOtelMapper(): AnrOtelMapper = AnrOtelMapper(
     FakeAnrService(),
     FakeClock(),
-    FakeSpanService(),
-    FakeOpenTelemetryModule().otelSdkWrapper.openTelemetryKotlin.tracingIdFactory
+    FakeSpanService()
 )

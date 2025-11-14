@@ -32,6 +32,9 @@ tasks.withType<Test>().configureEach {
             .filter { it.plugins.hasPlugin(MavenPublishPlugin::class.java) }
             .map { it.tasks.named("publishToMavenLocal") }
     )
+
+    // avoid default behavior of parallelisation as it can lead to resource exhaustion on CI (and locally)
+    maxParallelForks = 1
 }
 
 group = "io.embrace"

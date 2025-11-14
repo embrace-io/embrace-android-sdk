@@ -46,8 +46,8 @@ public final class io/embrace/test/fixtures/MethodReturnValueVisitorObj {
   public final getSomeLong()J
    L0
     LINENUMBER 7 L0
-    LDC 2
-    LDC 150900202020202
+    LDC 2L
+    LDC 150900202020202L
     LRETURN
    L1
     LOCALVARIABLE this Lio/embrace/test/fixtures/MethodReturnValueVisitorObj; L0 L1 0

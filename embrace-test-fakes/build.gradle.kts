@@ -12,6 +12,7 @@ dependencies {
     implementation(project(":embrace-android-delivery-fakes"))
     implementation(project(":embrace-android-otel-fakes"))
     implementation(project(":embrace-android-instrumentation-api-fakes"))
+    implementation(project(":embrace-android-instrumentation-crash-ndk"))
     implementation(project(":embrace-android-instrumentation-network-common"))
 
     compileOnly(project(":embrace-android-core"))

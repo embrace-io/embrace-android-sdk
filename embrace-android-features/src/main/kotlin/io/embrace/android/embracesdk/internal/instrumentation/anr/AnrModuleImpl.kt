@@ -48,8 +48,7 @@ internal class AnrModuleImpl(
             AnrOtelMapper(
                 checkNotNull(anrService),
                 args.clock,
-                openTelemetryModule.spanService,
-                openTelemetryModule.otelSdkWrapper.openTelemetryKotlin.tracingIdFactory
+                openTelemetryModule.spanService
             )
         } else {
             null

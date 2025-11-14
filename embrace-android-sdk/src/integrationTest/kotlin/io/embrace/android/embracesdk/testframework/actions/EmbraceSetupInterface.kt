@@ -13,7 +13,6 @@ import io.embrace.android.embracesdk.fakes.FakePayloadStorageService
 import io.embrace.android.embracesdk.fakes.FakeAppStateService
 import io.embrace.android.embracesdk.fakes.FakeSharedObjectLoader
 import io.embrace.android.embracesdk.fakes.FakeSymbolService
-import io.embrace.android.embracesdk.fakes.FakeTracingIdFactory
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.injection.FakeAnrModule
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
@@ -147,8 +146,7 @@ internal class EmbraceSetupInterface(
                     anrOtelMapper = AnrOtelMapper(
                         anrService = fakeAnrService,
                         clock = fakeInitModule.clock,
-                        spanService = fakeInitModule.openTelemetryModule.spanService,
-                        tracingIdFactory = FakeTracingIdFactory()
+                        spanService = fakeInitModule.openTelemetryModule.spanService
                     )
                 )
             }

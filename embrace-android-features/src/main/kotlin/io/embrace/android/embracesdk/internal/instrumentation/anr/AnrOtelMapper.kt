@@ -6,36 +6,37 @@ import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.instrumentation.anr.payload.AnrInterval
 import io.embrace.android.embracesdk.internal.instrumentation.anr.payload.AnrSample
 import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
-import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
-import io.embrace.opentelemetry.kotlin.ExperimentalApi
-import io.embrace.opentelemetry.kotlin.factory.TracingIdFactory
-import io.embrace.opentelemetry.kotlin.factory.toHexString
 import io.embrace.opentelemetry.kotlin.semconv.ExceptionAttributes
 import io.embrace.opentelemetry.kotlin.semconv.JvmAttributes
+import kotlin.random.Random
 
 /**
  * Maps captured ANRs to OTel constructs.
  */
-@OptIn(ExperimentalApi::class)
 class AnrOtelMapper(
     private val anrService: AnrService,
     private val clock: Clock,
     private val spanService: SpanService,
-    private val tracingIdFactory: TracingIdFactory,
+    private val random: Random = Random.Default,
 ) {
+
+    private companion object {
+        const val INVALID_SPAN_ID: String = "0000000000000000"
+    }
+
     fun snapshot(): List<Span> = EmbTrace.trace("anr-snapshot") {
         anrService.getCapturedData().map { interval ->
             val attrs = mapIntervalToSpanAttributes(interval)
             val events = mapIntervalToSpanEvents(interval)
             Span(
-                traceId = tracingIdFactory.generateTraceIdBytes().toHexString(),
-                spanId = tracingIdFactory.generateSpanIdBytes().toHexString(),
-                parentSpanId = OtelIds.INVALID_SPAN_ID,
+                traceId = generateId(16),
+                spanId = generateId(8),
+                parentSpanId = INVALID_SPAN_ID,
                 name = "emb-thread-blockage",
                 startTimeNanos = interval.startTime.millisToNanos(),
                 endTimeNanos = (interval.endTime ?: clock.now()).millisToNanos(),
@@ -102,5 +103,13 @@ class AnrOtelMapper(
             timestampNanos = sample.timestamp.millisToNanos(),
             attributes = attrs
         )
+    }
+
+    private fun generateId(numBytes: Int): String {
+        val bytes = ByteArray(numBytes)
+        do {
+            random.nextBytes(bytes)
+        } while (bytes.all { it == 0.toByte() })
+        return bytes.joinToString("") { "%02x".format(it) }
     }
 }

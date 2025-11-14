@@ -19,9 +19,4 @@ interface AppStateService {
      * @return the current state of the app
      */
     fun getAppState(): AppState
-
-    /**
-     * Notify the SDK that the current session has updated telemetry or metadata
-     */
-    fun sessionUpdated()
 }

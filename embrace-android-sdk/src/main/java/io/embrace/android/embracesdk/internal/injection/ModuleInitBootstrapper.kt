@@ -201,7 +201,7 @@ internal class ModuleInitBootstrapper(
                             systemServiceModule,
                             androidServicesModule,
                             { null },
-                            { null }
+                            { null },
                         )
                     }
                     postInit(EssentialServiceModule::class) {
@@ -381,6 +381,10 @@ internal class ModuleInitBootstrapper(
                             dataCaptureServiceModule.startupService,
                             logModule
                         )
+                    }
+                    postInit(SessionOrchestrationModule::class) {
+                        essentialServiceModule.telemetryDestination.sessionUpdateAction =
+                            sessionOrchestrationModule.sessionOrchestrator::onSessionDataUpdate
                     }
 
                     // Sets up the registered services. This method is called after the SDK has been started and no more services can

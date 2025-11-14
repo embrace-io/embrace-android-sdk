@@ -38,5 +38,5 @@ fun createEssentialServiceModule(
     systemServiceModule,
     androidServicesModule,
     lifecycleOwnerProvider,
-    networkConnectivityServiceProvider
+    networkConnectivityServiceProvider,
 )

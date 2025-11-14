@@ -41,6 +41,8 @@ internal class TelemetryDestinationImpl(
     private val currentSessionSpan: CurrentSessionSpan,
 ) : TelemetryDestination {
 
+    override var sessionUpdateAction: (() -> Unit)? = null
+
     @OptIn(IncubatingApi::class)
     override fun addLog(
         schemaType: SchemaType,
@@ -86,7 +88,7 @@ internal class TelemetryDestinationImpl(
                     setStringAttribute(it.key, it.value)
                 }
             }
-            appStateService.sessionUpdated()
+            sessionUpdateAction?.invoke()
         }
     }
 
@@ -108,9 +110,11 @@ internal class TelemetryDestinationImpl(
             schemaType.attributes().forEach {
                 addAttribute(it.key, it.value)
             }
-            appStateService.sessionUpdated()
+            sessionUpdateAction?.invoke()
         } ?: return null
-        return SpanTokenImpl(span, appStateService)
+        return SpanTokenImpl(span) {
+            sessionUpdateAction?.invoke()
+        }
     }
 
     override fun recordCompletedSpan(
@@ -131,7 +135,7 @@ internal class TelemetryDestinationImpl(
             attributes = attributes,
             events = events.mapNotNull(::toEmbraceSpanEvent),
         )
-        appStateService.sessionUpdated()
+        sessionUpdateAction?.invoke()
     }
 
     override fun addSessionEvent(schemaType: SchemaType, startTimeMs: Long): Boolean {
@@ -141,26 +145,26 @@ internal class TelemetryDestinationImpl(
             startTimeMs,
             schemaType.attributes() + schemaType.telemetryType.asPair()
         ).also {
-            appStateService.sessionUpdated()
+            sessionUpdateAction?.invoke()
         }
     }
 
     override fun removeSessionEvents(type: EmbType) {
         val currentSession = currentSessionSpan.current() ?: return
         currentSession.removeSystemEvents(type)
-        appStateService.sessionUpdated()
+        sessionUpdateAction?.invoke()
     }
 
     override fun addSessionAttribute(key: String, value: String) {
         val currentSession = currentSessionSpan.current() ?: return
         currentSession.addSystemAttribute(key, value)
-        appStateService.sessionUpdated()
+        sessionUpdateAction?.invoke()
     }
 
     override fun removeSessionAttribute(key: String) {
         val currentSession = currentSessionSpan.current() ?: return
         currentSession.removeSystemAttribute(key)
-        appStateService.sessionUpdated()
+        sessionUpdateAction?.invoke()
     }
 
     private fun toEmbraceSpanEvent(event: SpanEvent): EmbraceSpanEvent? {
@@ -183,11 +187,11 @@ internal class TelemetryDestinationImpl(
 
     private class SpanTokenImpl(
         private val span: EmbraceSpan,
-        private val appStateService: AppStateService,
+        private val sessionUpdateAction: () -> Unit?,
     ) : SpanToken {
         override fun stop(endTimeMs: Long?) {
             span.stop(endTimeMs = endTimeMs)
-            appStateService.sessionUpdated()
+            sessionUpdateAction.invoke()
         }
     }
 }

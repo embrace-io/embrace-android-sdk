@@ -63,4 +63,9 @@ interface TelemetryDestination {
         attributes: Map<String, String> = emptyMap(),
         events: List<SpanEvent> = emptyList(),
     )
+
+    /**
+     * Notify the SDK that the current session has updated telemetry or metadata
+     */
+    var sessionUpdateAction: (() -> Unit)?
 }

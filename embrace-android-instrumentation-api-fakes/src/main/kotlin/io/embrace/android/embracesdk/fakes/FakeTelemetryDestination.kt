@@ -83,4 +83,6 @@ class FakeTelemetryDestination : TelemetryDestination {
         )
         createdSpans.add(token)
     }
+
+    override var sessionUpdateAction: (() -> Unit)? = null
 }

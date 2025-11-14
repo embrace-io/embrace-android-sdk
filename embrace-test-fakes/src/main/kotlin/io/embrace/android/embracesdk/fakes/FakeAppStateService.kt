@@ -9,15 +9,10 @@ class FakeAppStateService(
 ) : AppStateService {
 
     val listeners: MutableList<AppStateListener> = mutableListOf()
-    var sessionDataUpdated = false
 
     override fun addListener(listener: AppStateListener) {
         listeners.add(listener)
     }
 
     override fun getAppState(): AppState = state
-
-    override fun sessionUpdated() {
-        sessionDataUpdated = true
-    }
 }

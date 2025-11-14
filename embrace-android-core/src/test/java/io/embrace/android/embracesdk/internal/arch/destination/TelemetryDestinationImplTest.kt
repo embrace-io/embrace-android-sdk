@@ -46,6 +46,7 @@ internal class TelemetryDestinationImplTest {
     private lateinit var clock: FakeClock
     private lateinit var spanService: FakeSpanService
     private lateinit var currentSessionSpan: FakeCurrentSessionSpan
+    private var sessionDataUpdated = false
 
     @Before
     fun setup() {
@@ -62,7 +63,9 @@ internal class TelemetryDestinationImplTest {
             clock = clock,
             spanService = spanService,
             currentSessionSpan = currentSessionSpan,
-        )
+        ).also {
+            it.sessionUpdateAction = { sessionDataUpdated = true }
+        }
     }
 
     @Test
@@ -290,7 +293,7 @@ internal class TelemetryDestinationImplTest {
     }
 
     private fun verifyAndResetSessionUpdate() {
-        assertTrue(appStateService.sessionDataUpdated)
-        appStateService.sessionDataUpdated = false
+        assertTrue(sessionDataUpdated)
+        sessionDataUpdated = false
     }
 }

@@ -123,8 +123,4 @@ internal class AppStateServiceImpl(
     }
 
     override fun getAppState(): AppState = state
-
-    override fun sessionUpdated() {
-        sessionOrchestrator?.onSessionDataUpdate()
-    }
 }

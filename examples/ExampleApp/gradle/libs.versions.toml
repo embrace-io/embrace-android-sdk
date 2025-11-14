@@ -8,7 +8,7 @@ espressoCore = "3.7.0"
 lifecycleRuntimeKtx = "2.9.4"
 activityCompose = "1.11.0"
 composeBom = "2025.11.00"
-embrace = "7.9.3"
+embrace = "8.0.0"
 navigationCompose = "2.9.6"
 okhttp = "5.3.0"
 otel = "1.56.0"
@@ -45,7 +45,7 @@ embrace-android-core = { group = "io.embrace", name = "embrace-android-core", ve
 embrace-android-features = { group = "io.embrace", name = "embrace-android-features", version.ref = "embrace" }
 embrace-android-payload = { group = "io.embrace", name = "embrace-android-payload", version.ref = "embrace" }
 embrace-android-delivery = { group = "io.embrace", name = "embrace-android-delivery", version.ref = "embrace" }
-embrace-android-fcm = { module = "io.embrace:embrace-android-fcm", version.ref = "embrace" }
+embrace-android-otel-java = { group = "io.embrace", name = "embrace-android-otel-java", version.ref = "embrace" }
 androidx-uiautomator = { group = "androidx.test.uiautomator", name = "uiautomator", version.ref = "uiautomator" }
 androidx-benchmark-macro-junit4 = { group = "androidx.benchmark", name = "benchmark-macro-junit4", version.ref = "benchmarkMacroJunit4" }
 
@@ -53,6 +53,6 @@ androidx-benchmark-macro-junit4 = { group = "androidx.benchmark", name = "benchm
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
-embrace = { id = "io.embrace.swazzler", version.ref = "embrace" }
+embrace = { id = "io.embrace.gradle", version.ref = "embrace" }
 android-test = { id = "com.android.test", version.ref = "agp" }
 

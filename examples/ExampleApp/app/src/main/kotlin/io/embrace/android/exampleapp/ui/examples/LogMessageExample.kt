@@ -59,18 +59,18 @@ fun LogMessageExample() {
             true -> mapOf(
                 "my_custom_key" to "my_custom_value"
             )
-            else -> null
+            else -> emptyMap()
         }
 
         if (includeStacktrace) {
-            Embrace.getInstance().logException(
+            Embrace.logException(
                 IllegalStateException(textValue),
                 severityValue,
                 properties,
                 textValue
             )
         } else {
-            Embrace.getInstance().logMessage(textValue, severityValue, properties)
+            Embrace.logMessage(textValue, severityValue, properties)
         }
     }) {
         Text("Send Log")

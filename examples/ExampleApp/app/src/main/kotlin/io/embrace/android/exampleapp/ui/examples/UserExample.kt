@@ -26,12 +26,12 @@ fun UserExample() {
     })
     Spacer(Modifier.padding(4.dp))
     Button(onClick = {
-        Embrace.getInstance().setUsername(usernameValue)
+        Embrace.setUsername(usernameValue)
     }) {
         Text("Set username")
     }
     Button(onClick = {
-        Embrace.getInstance().clearUsername()
+        Embrace.clearUsername()
     }) {
         Text("Clear username")
     }
@@ -43,12 +43,12 @@ fun UserExample() {
     Spacer(Modifier.padding(4.dp))
 
     Button(onClick = {
-        Embrace.getInstance().setUserEmail(userEmailValue)
+        Embrace.setUserEmail(userEmailValue)
     }) {
         Text("Set user email")
     }
     Button(onClick = {
-        Embrace.getInstance().clearUserEmail()
+        Embrace.clearUserEmail()
     }) {
         Text("Clear user email")
     }
@@ -60,12 +60,12 @@ fun UserExample() {
     Spacer(Modifier.padding(4.dp))
 
     Button(onClick = {
-        Embrace.getInstance().setUserIdentifier(userEmailValue)
+        Embrace.setUserIdentifier(userEmailValue)
     }) {
         Text("Set user ID")
     }
     Button(onClick = {
-        Embrace.getInstance().clearUserIdentifier()
+        Embrace.clearUserIdentifier()
     }) {
         Text("Clear user ID")
     }

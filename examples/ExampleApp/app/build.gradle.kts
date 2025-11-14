@@ -86,12 +86,12 @@ dependencies {
 
     // uncomment to enable debugging through source contained in those modules
 //    implementation(libs.embrace.android.api)
-//    implementation(libs.embrace.android.sdk)
 //    implementation(libs.embrace.android.core)
 //    implementation(libs.embrace.android.features)
 //    implementation(libs.embrace.android.payload)
 //    implementation(libs.embrace.android.delivery)
-    implementation(libs.embrace.android.fcm)
+    implementation(libs.embrace.android.sdk)
+    implementation(libs.embrace.android.otel.java)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

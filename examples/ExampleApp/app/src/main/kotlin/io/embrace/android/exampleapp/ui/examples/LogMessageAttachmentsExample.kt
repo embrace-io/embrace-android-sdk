@@ -61,11 +61,11 @@ fun LogMessageAttachmentsExample() {
             true -> mapOf(
                 "my_custom_key" to "my_custom_value"
             )
-            else -> null
+            else -> emptyMap()
         }
 
         if (hostFileOn3rdPartyServer) {
-            Embrace.getInstance().logMessage(
+            Embrace.logMessage(
                 message = textValue,
                 severity = severityValue,
                 properties = properties,
@@ -73,7 +73,7 @@ fun LogMessageAttachmentsExample() {
                 attachmentUrl = "https://example.com/my-attachment",
             )
         } else {
-            Embrace.getInstance().logMessage(
+            Embrace.logMessage(
                 message = textValue,
                 severity = severityValue,
                 properties = properties,

@@ -24,10 +24,10 @@ fun ViewTrackingExample() {
     Spacer(Modifier.padding(8.dp))
     Button(onClick = {
         if (started) {
-            Embrace.getInstance().endView(textValue)
+            Embrace.endView(textValue)
             started = false
         } else {
-            Embrace.getInstance().startView(textValue)
+            Embrace.startView(textValue)
             started = true
         }
     }) {

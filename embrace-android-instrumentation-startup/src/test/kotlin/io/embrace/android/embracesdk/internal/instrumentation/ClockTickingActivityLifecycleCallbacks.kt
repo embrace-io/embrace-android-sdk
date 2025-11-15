@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.internal
+package io.embrace.android.embracesdk.internal.instrumentation
 
 import android.app.Activity
 import android.app.Application

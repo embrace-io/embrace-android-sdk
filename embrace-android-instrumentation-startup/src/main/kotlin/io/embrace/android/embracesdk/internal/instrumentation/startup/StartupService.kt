@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.internal.capture.startup
+package io.embrace.android.embracesdk.internal.instrumentation.startup
 
 import io.embrace.android.embracesdk.internal.arch.state.AppState
 

@@ -22,6 +22,7 @@ include(
     ":embrace-android-instrumentation-network-status",
     ":embrace-android-instrumentation-okhttp",
     ":embrace-android-instrumentation-power-save",
+    ":embrace-android-instrumentation-startup",
     ":embrace-android-instrumentation-taps",
     ":embrace-android-instrumentation-thermal-state",
     ":embrace-android-instrumentation-view",

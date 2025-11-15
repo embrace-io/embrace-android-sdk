@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.instrumentation.startup.ui
 
 import android.app.Activity
+import android.os.Message
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeMainThreadHandler
 import org.junit.Assert.assertTrue
@@ -34,8 +35,8 @@ internal class HandlerMessageDrawDetectorTest {
         )
         assertTrue(beginCallbackInvoked)
         with(handler.messageQueue.single()) {
-            assertTrue(isAsynchronous)
-            callback.run()
+            assertTrue(Message.isAsynchronous)
+            Message.getCallback.run()
         }
         assertTrue(endCallbackInvoked)
     }

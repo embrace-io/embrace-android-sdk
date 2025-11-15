@@ -15,6 +15,7 @@ import io.embrace.android.embracesdk.internal.instrumentation.startup.StartupTra
 import io.embrace.android.embracesdk.internal.instrumentation.startup.ui.hasRenderEvent
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
+import org.junit.Assert
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
@@ -158,19 +159,22 @@ internal class StartupTrackerTest {
     @Test
     fun `verify startup tracker detached after trace recorded`() {
         val firstLaunchTimes = launchActivity()
-        assertEquals(firstLaunchTimes.createTime, dataCollector.startupActivityInitStartMs)
+        Assert.assertEquals(firstLaunchTimes.createTime, dataCollector.startupActivityInitStartMs)
         clock.tick(500_000)
         val secondLaunchTimes = launchActivity()
-        assertNotEquals(secondLaunchTimes.createTime, dataCollector.startupActivityInitStartMs)
+        Assert.assertNotEquals(
+            secondLaunchTimes.createTime,
+            dataCollector.startupActivityInitStartMs
+        )
     }
 
     @Config(sdk = [Build.VERSION_CODES.UPSIDE_DOWN_CAKE])
     @Test
     fun `lifecycle event emitter attached after activity launch`() {
         launchActivity()
-        assertEquals(0, activityLifecycleListener.onCreateInvokedCount)
+        Assert.assertEquals(0, activityLifecycleListener.onCreateInvokedCount)
         defaultActivityController.create(null)
-        assertEquals(1, activityLifecycleListener.onCreateInvokedCount)
+        Assert.assertEquals(1, activityLifecycleListener.onCreateInvokedCount)
     }
 
     @Config(sdk = [Build.VERSION_CODES.UPSIDE_DOWN_CAKE])
@@ -195,22 +199,22 @@ internal class StartupTrackerTest {
     fun `render time tracked if first draw event emitted`() {
         launchActivity()
         drawEventEmitter.draw(defaultActivityController.get())
-        assertEquals(clock.now(), dataCollector.firstFrameRenderedMs)
+        Assert.assertEquals(clock.now(), dataCollector.firstFrameRenderedMs)
     }
 
     @Config(sdk = [Build.VERSION_CODES.UPSIDE_DOWN_CAKE])
     @Test
     fun `first draw event emitted detaches startup tracker and attaches lifecycle event emitter`() {
         defaultActivityController.create(null)
-        assertEquals(clock.now(), dataCollector.startupActivityInitStartMs)
+        Assert.assertEquals(clock.now(), dataCollector.startupActivityInitStartMs)
         clock.tick()
         defaultActivityController.create(null)
-        assertEquals(clock.now(), dataCollector.startupActivityInitStartMs)
+        Assert.assertEquals(clock.now(), dataCollector.startupActivityInitStartMs)
         clock.tick()
         drawEventEmitter.draw(defaultActivityController.get())
         defaultActivityController.create(null)
-        assertNotEquals(clock.now(), dataCollector.startupActivityInitStartMs)
-        assertEquals(1, activityLifecycleListener.onCreateInvokedCount)
+        Assert.assertNotEquals(clock.now(), dataCollector.startupActivityInitStartMs)
+        Assert.assertEquals(1, activityLifecycleListener.onCreateInvokedCount)
     }
 
     private fun launchActivity(controller: ActivityController<*> = defaultActivityController): ActivityTiming {
@@ -244,14 +248,14 @@ internal class StartupTrackerTest {
         resumeTime: Long,
         renderTime: Long? = null
     ) {
-        assertEquals(firstActivityInitTime, dataCollector.firstActivityInitMs)
+        Assert.assertEquals(firstActivityInitTime, dataCollector.firstActivityInitMs)
         assertEquals(preCreateTime, dataCollector.startupActivityPreCreatedMs)
-        assertEquals(createTime, dataCollector.startupActivityInitStartMs)
+        Assert.assertEquals(createTime, dataCollector.startupActivityInitStartMs)
         assertEquals(postCreateTime, dataCollector.startupActivityPostCreatedMs)
-        assertEquals(startTime, dataCollector.startupActivityInitEndMs)
-        assertEquals(resumeTime, dataCollector.startupActivityResumedMs)
+        Assert.assertEquals(startTime, dataCollector.startupActivityInitEndMs)
+        Assert.assertEquals(resumeTime, dataCollector.startupActivityResumedMs)
         if (renderTime != null) {
-            assertEquals(renderTime, dataCollector.firstFrameRenderedMs)
+            Assert.assertEquals(renderTime, dataCollector.firstFrameRenderedMs)
         } else {
             assertNull(dataCollector.firstFrameRenderedMs)
         }

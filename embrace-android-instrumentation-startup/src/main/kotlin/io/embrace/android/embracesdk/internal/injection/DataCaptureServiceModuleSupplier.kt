@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.injection
 
-import io.embrace.android.embracesdk.internal.config.ConfigService
+import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
 
 /**
@@ -8,20 +8,14 @@ import io.embrace.android.embracesdk.internal.utils.VersionChecker
  * [DataCaptureServiceModuleImpl]
  */
 typealias DataCaptureServiceModuleSupplier = (
-    initModule: InitModule,
-    openTelemetryModule: OpenTelemetryModule,
-    configService: ConfigService,
+    args: InstrumentationArgs,
     versionChecker: VersionChecker,
 ) -> DataCaptureServiceModule
 
 fun createDataCaptureServiceModule(
-    initModule: InitModule,
-    openTelemetryModule: OpenTelemetryModule,
-    configService: ConfigService,
+    args: InstrumentationArgs,
     versionChecker: VersionChecker,
 ): DataCaptureServiceModule = DataCaptureServiceModuleImpl(
-    initModule,
-    openTelemetryModule,
-    configService,
+    args,
     versionChecker
 )

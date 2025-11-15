@@ -1,9 +1,0 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools">
-
-    <uses-sdk tools:overrideLibrary="io.embrace.android.embracesdk.testserver"/>
-
-    <application>
-        <activity android:name="io.embrace.android.embracesdk.EmbraceContext$ActivityAccess" />
-    </application>
-</manifest>

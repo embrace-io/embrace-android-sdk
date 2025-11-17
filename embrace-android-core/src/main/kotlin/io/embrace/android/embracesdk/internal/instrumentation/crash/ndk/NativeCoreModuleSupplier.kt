@@ -24,25 +24,3 @@ typealias NativeCoreModuleSupplier = (
     sharedObjectLoaderProvider: Provider<SharedObjectLoader?>,
     symbolServiceProvider: Provider<SymbolService?>,
 ) -> NativeCoreModule
-
-fun createNativeCoreModule(
-    coreModule: CoreModule,
-    workerThreadModule: WorkerThreadModule,
-    storageModule: StorageModule,
-    essentialServiceModule: EssentialServiceModule,
-    instrumentationModule: InstrumentationModule,
-    otelModule: OpenTelemetryModule,
-    delegateProvider: Provider<JniDelegate?>,
-    sharedObjectLoaderProvider: Provider<SharedObjectLoader?>,
-    symbolServiceProvider: Provider<SymbolService?>,
-): NativeCoreModule = NativeCoreModuleImpl(
-    coreModule,
-    workerThreadModule,
-    storageModule,
-    essentialServiceModule,
-    instrumentationModule,
-    otelModule,
-    delegateProvider,
-    sharedObjectLoaderProvider,
-    symbolServiceProvider,
-)

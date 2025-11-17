@@ -10,8 +10,3 @@ typealias AnrModuleSupplier = (
     args: InstrumentationArgs,
     appStateTracker: AppStateTracker,
 ) -> AnrModule
-
-fun createAnrModule(
-    args: InstrumentationArgs,
-    appStateTracker: AppStateTracker,
-): AnrModule = AnrModuleImpl(args, appStateTracker)

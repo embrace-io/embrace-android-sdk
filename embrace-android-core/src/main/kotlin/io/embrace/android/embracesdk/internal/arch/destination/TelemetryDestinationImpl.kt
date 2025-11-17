@@ -32,7 +32,7 @@ import io.embrace.opentelemetry.kotlin.semconv.SessionAttributes
 import java.util.concurrent.TimeUnit
 
 @OptIn(ExperimentalApi::class)
-internal class TelemetryDestinationImpl(
+class TelemetryDestinationImpl(
     private val logger: Logger,
     private val sessionIdTracker: SessionIdTracker,
     private val appStateTracker: AppStateTracker,

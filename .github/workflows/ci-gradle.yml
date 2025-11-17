@@ -77,7 +77,7 @@ jobs:
 
       - name: Gradle (assembleRelease check -x embrace-gradle-plugin-integration-tests:test)
         if: ${{ matrix.gradle-task == 'assembleRelease' }}
-        run: ./gradlew assembleRelease check -x embrace-gradle-plugin-integration-tests:test --stacktrace
+        run: ./gradlew assembleRelease check embrace-microbenchmark:assembleAndroidTest -x embrace-gradle-plugin-integration-tests:test --stacktrace
 
       - name: Gradle (examples/ExampleApp/ bundleRelease)
         if: ${{ matrix.gradle-task == 'bundleReleaseExampleApp' }}

@@ -4,14 +4,26 @@
 
 ## Minimum supported versions
 
-| Technology                       | Minimum supported version |
-|----------------------------------|---------------------------|
-| Kotlin                           | 2.0.21                    |
-| AGP                              | 8.0.2                     |
-| Gradle                           | 8.0.2                     |
-| JDK (build-time)                 | 17                        |
-| Java source/target compatibility | 11                        |
-| minSdk                           | 21                        |
+The Embrace Android SDK supports the following minimum versions of dependent technologies at build and run time:
+
+| Technology                       | Old minimum version | New minimum version |
+|----------------------------------|---------------------|---------------------|
+| JDK (Build-time)                 | 11                  | 17                  |
+| Kotlin (Run-time and build-time) | 1.8.22              | 2.0.21              |
+| Gradle (minSdk 26+)              | 7.5.1               | 8.0.2               |
+| AGP (minSdk 26+)                 | 7.4.2               | 8.0.2               |
+
+At runtime, the minimum supported Android version remains 5.0 (i.e. `minSdk` = 21). If your minSdk is less than 26, you will still require
+Gradle 8.4 and AGP 8.3.0 to workaround a desugaring issue.
+
+## Language compatibility target
+
+The Embrace Android SDK is compiled using the following language compatibility targets:
+
+| Technology                | Old target | New target |
+|---------------------------|------------|------------|
+| Java                      | 1.8        | 11         |
+| Kotlin (Language and API) | 1.8        | 2.0        |
 
 ## Embrace Gradle Plugin renamed
 
@@ -21,8 +33,6 @@ The Embrace Gradle Plugin artifact and plugin ID have been renamed:
 |-------------|-------------------------------|------------------------------------|
 | Artifact ID | `io.embrace:embrace-swazzler` | `io.embrace:embrace-gradle-plugin` |
 | Plugin ID   | `io.embrace.swazzler`         | `io.embrace.gradle`                |
-
-### Gradle plugin migration guide
 
 Replace references to the old Embrace Gradle Plugin name with the new one. Your configuration files should reference the plugin in one
 of the following ways:
@@ -58,8 +68,14 @@ buildscript {
 
 The SDK is moving towards supporting OpenTelemetry via a native Kotlin
 API ([opentelemetry-kotlin](https://github.com/embrace-io/opentelemetry-kotlin)). Currently, the Kotlin API
-is used internally for capturing telemetry. Under the hood [opentelemetry-java](https://github.com/open-telemetry/opentelemetry-java) is
+is used internally for capturing telemetry, but under the hood [opentelemetry-java](https://github.com/open-telemetry/opentelemetry-java) is
 still responsible for processing the telemetry.
+
+To use the Kotlin API in your app, which is in the process of being donated to OpenTelemetry and is still subject to changes before it
+becomes stable, you must include the module `io.embrace.opentelemetry.kotlin:opentelemetry-kotlin-api` in your app. With that, you can
+call the `Embrace.getOpenTelemetryKotlin()` function once the Embrace SDK is initialized to obtain an `OpenTelemetry` object with which
+you can instantiate OTel Tracers and Loggers. You can also add your own implementations of Kotlin Span and Log exporters, then configure
+the Embrace Android SDK to use them by calling them `Embrace.addSpanExporter()` and `Embrace.addLogRecordExporter()`.
 
 As part of this evolution, opentelemetry-java's API are not used internally or exported by default by the Embrace SDK. A compatibility
 layer is provided for those who currently use the Java OTel Tracing API or Java exporters with the Embrace SDK. To access that,
@@ -72,7 +88,7 @@ to the `Embrace` object:
 
 These methods allow you to use the associated Java OTel API integration points supported by older versions of the Embrace Android SDK.
 
-## Embrace.getInstance() deprecated
+## Embrace.getInstance() deprecation
 
 `Embrace.getInstance()` is deprecated in favour of `Embrace`. For example, you can now call `Embrace.start(Context)` instead
 of `Embrace.getInstance().start(Context)`.

@@ -21,18 +21,18 @@ import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistry
 import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
 import io.embrace.android.embracesdk.internal.injection.AndroidServicesModule
+import io.embrace.android.embracesdk.internal.injection.AndroidServicesModuleImpl
 import io.embrace.android.embracesdk.internal.injection.CoreModule
+import io.embrace.android.embracesdk.internal.injection.DeliveryModuleImpl
+import io.embrace.android.embracesdk.internal.injection.EssentialServiceModuleImpl
 import io.embrace.android.embracesdk.internal.injection.InstrumentationModule
+import io.embrace.android.embracesdk.internal.injection.InstrumentationModuleImpl
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.injection.WorkerThreadModule
-import io.embrace.android.embracesdk.internal.injection.createAndroidServicesModule
-import io.embrace.android.embracesdk.internal.injection.createDeliveryModule
-import io.embrace.android.embracesdk.internal.injection.createEssentialServiceModule
-import io.embrace.android.embracesdk.internal.injection.createInstrumentationModule
-import io.embrace.android.embracesdk.internal.injection.createWorkerThreadModule
+import io.embrace.android.embracesdk.internal.injection.WorkerThreadModuleImpl
+import io.embrace.android.embracesdk.internal.instrumentation.anr.AnrModuleImpl
 import io.embrace.android.embracesdk.internal.instrumentation.anr.AnrOtelMapper
-import io.embrace.android.embracesdk.internal.instrumentation.anr.createAnrModule
-import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.createNativeCoreModule
+import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeCoreModuleImpl
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
@@ -86,9 +86,9 @@ internal class EmbraceSetupInterface(
 
     private val coreModule: CoreModule = FakeCoreModule()
 
-    private val androidServicesModule: AndroidServicesModule = createAndroidServicesModule(
-        initModule = fakeInitModule,
-        coreModule = coreModule
+    private val androidServicesModule: AndroidServicesModule = AndroidServicesModuleImpl(
+        fakeInitModule,
+        coreModule
     )
 
     @OptIn(ExperimentalApi::class)
@@ -105,7 +105,7 @@ internal class EmbraceSetupInterface(
         workerThreadModuleSupplier = { workerThreadModule },
         androidServicesModuleSupplier = { _, _ -> androidServicesModule },
         essentialServiceModuleSupplier = { initModule, configModule, openTelemetryModule, coreModule, workerThreadModule, systemServiceModule, androidServicesModule, _, _ ->
-            createEssentialServiceModule(
+            EssentialServiceModuleImpl(
                 initModule = initModule,
                 configModule = configModule,
                 openTelemetryModule = openTelemetryModule,
@@ -114,11 +114,11 @@ internal class EmbraceSetupInterface(
                 systemServiceModule = systemServiceModule,
                 androidServicesModule = androidServicesModule,
                 lifecycleOwnerProvider = { fakeLifecycleOwner },
-                networkConnectivityServiceProvider = { fakeNetworkConnectivityService }
+                networkConnectivityServiceProvider = { fakeNetworkConnectivityService },
             )
         },
         deliveryModuleSupplier = { configModule, initModule, otelModule, workerThreadModule, coreModule, essentialServiceModule, androidServicesModule, _, _, _, _ ->
-            createDeliveryModule(
+            DeliveryModuleImpl(
                 configModule = configModule,
                 initModule = initModule,
                 otelModule = otelModule,
@@ -126,15 +126,15 @@ internal class EmbraceSetupInterface(
                 coreModule = coreModule,
                 essentialServiceModule = essentialServiceModule,
                 androidServicesModule = androidServicesModule,
+                requestExecutionServiceProvider = null,
                 payloadStorageServiceProvider = fakePayloadStorageService?.let { { it } },
                 cacheStorageServiceProvider = fakeCacheStorageService?.let { { it } },
-                requestExecutionServiceProvider = null,
-                deliveryTracer = deliveryTracer,
+                deliveryTracer = deliveryTracer
             )
         },
         anrModuleSupplier = { instrumentationModule, _ ->
             if (anrMonitoringThread != null) {
-                createAnrModule(
+                AnrModuleImpl(
                     instrumentationModule,
                     FakeAppStateTracker()
                 )
@@ -151,7 +151,7 @@ internal class EmbraceSetupInterface(
             }
         },
         nativeCoreModuleSupplier = { coreModule, workerThreadModule, storageModule, essentialServiceModule, instrumentationModule, openTelemetryModule, _, _, _ ->
-            createNativeCoreModule(
+            NativeCoreModuleImpl(
                 coreModule = coreModule,
                 workerThreadModule = workerThreadModule,
                 storageModule = storageModule,
@@ -171,13 +171,13 @@ internal class EmbraceSetupInterface(
                 androidServicesModule,
                 coreModule,
             ->
-            val impl = createInstrumentationModule(
+            val impl = InstrumentationModuleImpl(
                 initModule,
                 workerThreadModule,
                 configModule,
                 essentialServiceModule,
                 androidServicesModule,
-                coreModule
+                coreModule,
             )
             object : InstrumentationModule {
                 override val instrumentationRegistry: InstrumentationRegistry = FakeInstrumentationRegistry(impl.instrumentationRegistry)
@@ -234,7 +234,7 @@ internal class EmbraceSetupInterface(
             anrMonitoringThread: Thread?,
         ): WorkerThreadModule =
             if (workerToFake == null) {
-                createWorkerThreadModule()
+                WorkerThreadModuleImpl()
             } else {
                 FakeWorkerThreadModule(
                     fakeInitModule = fakeInitModule,

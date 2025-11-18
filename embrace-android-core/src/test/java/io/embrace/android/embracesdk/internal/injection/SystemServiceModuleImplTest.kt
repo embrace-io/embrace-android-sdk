@@ -20,14 +20,14 @@ internal class SystemServiceModuleImplTest {
 
     @Before
     fun setUp() {
-        coreModule = createCoreModule(RuntimeEnvironment.getApplication(), initModule)
+        coreModule = CoreModuleImpl(RuntimeEnvironment.getApplication(), initModule)
     }
 
     @Config(sdk = [Build.VERSION_CODES.O])
     @Test
     fun testVersionChecksNew() {
         val new = SystemServiceModuleImpl(
-            createCoreModule(RuntimeEnvironment.getApplication(), initModule),
+            CoreModuleImpl(RuntimeEnvironment.getApplication(), initModule),
             FakeVersionChecker(true)
         )
         assertNotNull(new.storageManager)

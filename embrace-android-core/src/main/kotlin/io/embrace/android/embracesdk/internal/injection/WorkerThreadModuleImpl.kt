@@ -17,7 +17,7 @@ import java.util.concurrent.atomic.AtomicReference
 
 // This lint error seems spurious as it only flags methods annotated with @JvmStatic even though the accessor is generated regardless
 // for lazily initialized members
-internal class WorkerThreadModuleImpl : WorkerThreadModule, RejectedExecutionHandler {
+class WorkerThreadModuleImpl : WorkerThreadModule, RejectedExecutionHandler {
 
     private val executors: MutableMap<Worker, ExecutorService> = ConcurrentHashMap()
     private val priorityWorkers: MutableMap<Worker, PriorityWorker<*>> = ConcurrentHashMap()

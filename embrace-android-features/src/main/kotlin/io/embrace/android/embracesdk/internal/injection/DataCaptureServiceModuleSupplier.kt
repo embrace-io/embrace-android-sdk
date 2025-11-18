@@ -13,15 +13,3 @@ typealias DataCaptureServiceModuleSupplier = (
     configService: ConfigService,
     versionChecker: VersionChecker,
 ) -> DataCaptureServiceModule
-
-fun createDataCaptureServiceModule(
-    initModule: InitModule,
-    openTelemetryModule: OpenTelemetryModule,
-    configService: ConfigService,
-    versionChecker: VersionChecker,
-): DataCaptureServiceModule = DataCaptureServiceModuleImpl(
-    initModule,
-    openTelemetryModule,
-    configService,
-    versionChecker
-)

@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.instrumentation.crash.ndk
 import io.embrace.android.embracesdk.internal.injection.InstrumentationModule
 import io.embrace.android.embracesdk.internal.injection.singleton
 
-internal class NativeFeatureModuleImpl(
+class NativeFeatureModuleImpl(
     nativeCoreModule: NativeCoreModule,
     instrumentationModule: InstrumentationModule,
 ) : NativeFeatureModule {

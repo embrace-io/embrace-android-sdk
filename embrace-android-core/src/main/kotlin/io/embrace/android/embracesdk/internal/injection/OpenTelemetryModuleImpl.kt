@@ -25,7 +25,7 @@ import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 
 @OptIn(ExperimentalApi::class)
-internal class OpenTelemetryModuleImpl(
+class OpenTelemetryModuleImpl(
     private val initModule: InitModule,
     override val openTelemetryClock: EmbClock = EmbClock(
         embraceClock = initModule.clock

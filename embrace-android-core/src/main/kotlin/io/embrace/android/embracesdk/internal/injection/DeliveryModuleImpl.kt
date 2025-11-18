@@ -23,7 +23,7 @@ import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.worker.PriorityWorker
 import io.embrace.android.embracesdk.internal.worker.Worker
 
-internal class DeliveryModuleImpl(
+class DeliveryModuleImpl(
     configModule: ConfigModule,
     initModule: InitModule,
     otelModule: OpenTelemetryModule,

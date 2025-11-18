@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.config.ConfigServiceImpl
 import io.embrace.android.embracesdk.internal.config.source.CombinedRemoteConfigSource
 import io.embrace.android.embracesdk.internal.config.source.OkHttpRemoteConfigSource
+import io.embrace.android.embracesdk.internal.config.source.RemoteConfigSource
 import io.embrace.android.embracesdk.internal.config.store.RemoteConfigStore
 import io.embrace.android.embracesdk.internal.config.store.RemoteConfigStoreImpl
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
@@ -15,7 +16,7 @@ import okhttp3.Protocol
 import java.io.File
 import java.util.concurrent.TimeUnit
 
-internal class ConfigModuleImpl(
+class ConfigModuleImpl(
     initModule: InitModule,
     coreModule: CoreModule,
     openTelemetryModule: OpenTelemetryModule,
@@ -59,7 +60,7 @@ internal class ConfigModuleImpl(
         }
     }
 
-    override val remoteConfigSource by singleton {
+    override val remoteConfigSource: RemoteConfigSource? by singleton {
         if (initModule.onlyOtelExportEnabled()) return@singleton null
         OkHttpRemoteConfigSource(
             okhttpClient = okHttpClient,

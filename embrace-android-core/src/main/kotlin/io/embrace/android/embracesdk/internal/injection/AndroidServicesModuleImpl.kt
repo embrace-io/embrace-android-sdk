@@ -10,7 +10,7 @@ import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.store.OrdinalStore
 import io.embrace.android.embracesdk.internal.store.OrdinalStoreImpl
 
-internal class AndroidServicesModuleImpl(
+class AndroidServicesModuleImpl(
     initModule: InitModule,
     coreModule: CoreModule,
 ) : AndroidServicesModule {

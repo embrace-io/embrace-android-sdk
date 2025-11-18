@@ -18,7 +18,7 @@ internal class ConfigModuleImplTest {
         val initModule = FakeInitModule()
         val module = ConfigModuleImpl(
             initModule = initModule,
-            coreModule = createCoreModule(ApplicationProvider.getApplicationContext(), initModule),
+            coreModule = CoreModuleImpl(ApplicationProvider.getApplicationContext(), initModule),
             openTelemetryModule = FakeOpenTelemetryModule(),
             workerThreadModule = FakeWorkerThreadModule(),
             androidServicesModule = FakeAndroidServicesModule(),

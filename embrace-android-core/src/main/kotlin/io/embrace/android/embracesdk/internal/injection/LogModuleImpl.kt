@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.internal.logs.LogService
 import io.embrace.android.embracesdk.internal.logs.attachments.AttachmentService
 import io.embrace.android.embracesdk.internal.worker.Worker
 
-internal class LogModuleImpl(
+class LogModuleImpl(
     initModule: InitModule,
     openTelemetryModule: OpenTelemetryModule,
     essentialServiceModule: EssentialServiceModule,

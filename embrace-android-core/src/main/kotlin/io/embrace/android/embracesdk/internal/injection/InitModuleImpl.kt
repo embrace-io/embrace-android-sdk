@@ -13,7 +13,7 @@ import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.telemetry.EmbraceTelemetryService
 import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
 
-internal class InitModuleImpl(
+class InitModuleImpl(
     override val clock: Clock = NormalizedIntervalClock(),
     override val logger: EmbLogger = EmbLoggerImpl(),
     override val systemInfo: SystemInfo = SystemInfo(),

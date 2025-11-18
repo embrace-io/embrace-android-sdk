@@ -9,7 +9,7 @@ import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.Targ
 import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.ThreadMonitoringState
 import io.embrace.android.embracesdk.internal.worker.Worker
 
-internal class AnrModuleImpl(
+class AnrModuleImpl(
     args: InstrumentationArgs,
     appStateTracker: AppStateTracker,
 ) : AnrModule {

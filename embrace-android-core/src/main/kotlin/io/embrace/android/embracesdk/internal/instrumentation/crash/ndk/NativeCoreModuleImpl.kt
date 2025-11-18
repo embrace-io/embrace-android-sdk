@@ -19,7 +19,7 @@ import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.internal.worker.Worker
 
-internal class NativeCoreModuleImpl(
+class NativeCoreModuleImpl(
     coreModule: CoreModule,
     workerThreadModule: WorkerThreadModule,
     storageModule: StorageModule,

@@ -13,7 +13,7 @@ import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSpanAt
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSpanAttrPopulatorImpl
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 
-internal class SessionOrchestrationModuleImpl(
+class SessionOrchestrationModuleImpl(
     initModule: InitModule,
     openTelemetryModule: OpenTelemetryModule,
     androidServicesModule: AndroidServicesModule,

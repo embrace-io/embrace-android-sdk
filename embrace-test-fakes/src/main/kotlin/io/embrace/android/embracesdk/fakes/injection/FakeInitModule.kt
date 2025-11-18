@@ -7,9 +7,9 @@ import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.InstrumentedConfig
 import io.embrace.android.embracesdk.internal.injection.InitModule
+import io.embrace.android.embracesdk.internal.injection.InitModuleImpl
 import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModule
-import io.embrace.android.embracesdk.internal.injection.createInitModule
-import io.embrace.android.embracesdk.internal.injection.createOpenTelemetryModule
+import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModuleImpl
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import java.util.UUID
 
@@ -21,7 +21,7 @@ class FakeInitModule(
         deviceManufacturer = "Fake Manufacturer",
         deviceModel = "Phake Phone Phive"
     ),
-    initModule: InitModule = createInitModule(
+    initModule: InitModule = InitModuleImpl(
         clock = clock,
         logger = logger,
         systemInfo = systemInfo
@@ -32,7 +32,7 @@ class FakeInitModule(
 
     override val processIdentifierProvider: () -> String = { processIdentifier }
 
-    val openTelemetryModule: OpenTelemetryModule by lazy { createOpenTelemetryModule(initModule = initModule) }
+    val openTelemetryModule: OpenTelemetryModule by lazy { OpenTelemetryModuleImpl(initModule = initModule) }
 
     fun getFakeClock(): FakeClock? = clock as? FakeClock
 }

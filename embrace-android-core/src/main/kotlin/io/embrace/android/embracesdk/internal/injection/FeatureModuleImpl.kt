@@ -10,7 +10,7 @@ import io.embrace.android.embracesdk.internal.instrumentation.crash.CrashFileMar
 import io.embrace.android.embracesdk.internal.instrumentation.crash.CrashFileMarkerImpl
 import io.embrace.android.embracesdk.internal.instrumentation.crash.LastRunCrashVerifier
 
-internal class FeatureModuleImpl(
+class FeatureModuleImpl(
     instrumentationModule: InstrumentationModule,
     configService: ConfigService,
     storageModule: StorageModule,

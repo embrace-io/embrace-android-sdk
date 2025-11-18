@@ -1,10 +1,11 @@
 package io.embrace.android.embracesdk.internal.injection
 
 import io.embrace.android.embracesdk.internal.InstrumentationArgsImpl
+import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistry
 import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistryImpl
 
-internal class InstrumentationModuleImpl(
+class InstrumentationModuleImpl(
     initModule: InitModule,
     workerThreadModule: WorkerThreadModule,
     configModule: ConfigModule,
@@ -19,7 +20,7 @@ internal class InstrumentationModuleImpl(
         )
     }
 
-    override val instrumentationArgs by singleton {
+    override val instrumentationArgs: InstrumentationArgs by singleton {
         InstrumentationArgsImpl(
             configService = configModule.configService,
             logger = initModule.logger,

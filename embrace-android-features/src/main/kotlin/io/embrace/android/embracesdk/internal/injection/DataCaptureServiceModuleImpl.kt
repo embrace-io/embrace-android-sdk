@@ -15,7 +15,7 @@ import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityLifecycl
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
 
-internal class DataCaptureServiceModuleImpl(
+class DataCaptureServiceModuleImpl(
     initModule: InitModule,
     openTelemetryModule: OpenTelemetryModule,
     configService: ConfigService,

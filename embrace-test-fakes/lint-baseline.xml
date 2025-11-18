@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<issues format="6" by="lint 8.13.0" type="baseline" client="gradle" dependencies="false" name="AGP (8.13.0)" variant="all" version="8.13.0">
+<issues format="6" by="lint 8.13.1" type="baseline" client="gradle" dependencies="false" name="AGP (8.13.1)" variant="all" version="8.13.1">
 
     <issue
         id="StopShip"
@@ -92,94 +92,6 @@
     <issue
         id="StopShip"
         message="`TODO` call found; points to code which must be fixed prior to release"
-        errorLine1="        TODO(&quot;Not yet implemented&quot;)"
-        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/embrace/android/embracesdk/fakes/FakeCrashDataSource.kt"
-            line="16"
-            column="9"/>
-    </issue>
-
-    <issue
-        id="StopShip"
-        message="`TODO` call found; points to code which must be fixed prior to release"
-        errorLine1="        TODO(&quot;Not yet implemented&quot;)"
-        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/embrace/android/embracesdk/fakes/FakeCrashDataSource.kt"
-            line="20"
-            column="9"/>
-    </issue>
-
-    <issue
-        id="StopShip"
-        message="`TODO` call found; points to code which must be fixed prior to release"
-        errorLine1="        TODO(&quot;Not yet implemented&quot;)"
-        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/embrace/android/embracesdk/fakes/FakeCrashDataSource.kt"
-            line="24"
-            column="9"/>
-    </issue>
-
-    <issue
-        id="StopShip"
-        message="`TODO` call found; points to code which must be fixed prior to release"
-        errorLine1="        TODO(&quot;Not yet implemented&quot;)"
-        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/embrace/android/embracesdk/fakes/FakeCrashDataSource.kt"
-            line="28"
-            column="9"/>
-    </issue>
-
-    <issue
-        id="StopShip"
-        message="`TODO` call found; points to code which must be fixed prior to release"
-        errorLine1="        TODO(&quot;Not yet implemented&quot;)"
-        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/embrace/android/embracesdk/fakes/FakeNetworkCaptureDataSource.kt"
-            line="19"
-            column="9"/>
-    </issue>
-
-    <issue
-        id="StopShip"
-        message="`TODO` call found; points to code which must be fixed prior to release"
-        errorLine1="        TODO(&quot;Not yet implemented&quot;)"
-        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/embrace/android/embracesdk/fakes/FakeNetworkCaptureDataSource.kt"
-            line="23"
-            column="9"/>
-    </issue>
-
-    <issue
-        id="StopShip"
-        message="`TODO` call found; points to code which must be fixed prior to release"
-        errorLine1="        TODO(&quot;Not yet implemented&quot;)"
-        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/embrace/android/embracesdk/fakes/FakeNetworkCaptureDataSource.kt"
-            line="27"
-            column="9"/>
-    </issue>
-
-    <issue
-        id="StopShip"
-        message="`TODO` call found; points to code which must be fixed prior to release"
-        errorLine1="        TODO(&quot;Not yet implemented&quot;)"
-        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/embrace/android/embracesdk/fakes/FakeNetworkCaptureDataSource.kt"
-            line="31"
-            column="9"/>
-    </issue>
-
-    <issue
-        id="StopShip"
-        message="`TODO` call found; points to code which must be fixed prior to release"
         errorLine1="        get() = TODO()"
         errorLine2="                ~~~~~~">
         <location
@@ -202,22 +114,11 @@
     <issue
         id="StopShip"
         message="`TODO` call found; points to code which must be fixed prior to release"
-        errorLine1="        get() = TODO(&quot;Not yet implemented&quot;)"
-        errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/embrace/android/embracesdk/fakes/FakeSessionOrchestrationModule.kt"
-            line="18"
-            column="17"/>
-    </issue>
-
-    <issue
-        id="StopShip"
-        message="`TODO` call found; points to code which must be fixed prior to release"
         errorLine1="        TODO(&quot;Not yet implemented&quot;)"
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/embrace/android/embracesdk/fakes/FakeStartupService.kt"
-            line="27"
+            line="28"
             column="9"/>
     </issue>
 
@@ -228,7 +129,7 @@
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/embrace/android/embracesdk/fakes/FakeStartupService.kt"
-            line="31"
+            line="32"
             column="9"/>
     </issue>
 

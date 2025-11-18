@@ -13,7 +13,7 @@ internal class AndroidServicesModuleImplTest {
     @Test
     fun testDefault() {
         val initModule = InitModuleImpl()
-        val coreModule = createCoreModule(ApplicationProvider.getApplicationContext(), initModule)
+        val coreModule = CoreModuleImpl(ApplicationProvider.getApplicationContext(), initModule)
         val module = AndroidServicesModuleImpl(
             initModule = initModule,
             coreModule = coreModule

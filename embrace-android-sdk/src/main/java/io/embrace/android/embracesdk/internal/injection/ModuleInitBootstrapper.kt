@@ -1,20 +1,34 @@
 package io.embrace.android.embracesdk.internal.injection
 
 import android.content.Context
+import androidx.lifecycle.LifecycleOwner
+import io.embrace.android.embracesdk.internal.SystemInfo
+import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.InstrumentationProvider
+import io.embrace.android.embracesdk.internal.arch.state.AppStateTracker
+import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkConnectivityService
 import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkStatusDataSource
+import io.embrace.android.embracesdk.internal.capture.startup.StartupService
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.clock.NormalizedIntervalClock
+import io.embrace.android.embracesdk.internal.config.ConfigService
+import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
+import io.embrace.android.embracesdk.internal.delivery.execution.RequestExecutionService
+import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageService
+import io.embrace.android.embracesdk.internal.envelope.session.OtelPayloadMapper
 import io.embrace.android.embracesdk.internal.instrumentation.anr.AnrModule
+import io.embrace.android.embracesdk.internal.instrumentation.anr.AnrModuleImpl
 import io.embrace.android.embracesdk.internal.instrumentation.anr.AnrModuleSupplier
-import io.embrace.android.embracesdk.internal.instrumentation.anr.createAnrModule
 import io.embrace.android.embracesdk.internal.instrumentation.crash.jvm.JvmCrashDataSource
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeCoreModule
+import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeCoreModuleImpl
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeCoreModuleSupplier
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeFeatureModule
+import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeFeatureModuleImpl
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeFeatureModuleSupplier
-import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.createNativeCoreModule
-import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.createNativeFeatureModule
+import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.SharedObjectLoader
+import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.jni.JniDelegate
+import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.symbols.SymbolService
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
@@ -34,31 +48,271 @@ internal class ModuleInitBootstrapper(
     val logger: EmbLogger = EmbTrace.trace("logger-init", ::EmbLoggerImpl),
     val clock: Clock = NormalizedIntervalClock(),
     val initModule: InitModule = EmbTrace.trace("init-module") {
-        createInitModule(
+        InitModuleImpl(
             clock = clock,
-            logger = logger
+            logger = logger,
+            systemInfo = SystemInfo()
         )
     },
     val openTelemetryModule: OpenTelemetryModule = EmbTrace.trace("otel-module") {
-        createOpenTelemetryModule(initModule)
+        OpenTelemetryModuleImpl(initModule)
     },
-    private val coreModuleSupplier: CoreModuleSupplier = ::createCoreModule,
-    private val configModuleSupplier: ConfigModuleSupplier = ::createConfigModule,
-    private val systemServiceModuleSupplier: SystemServiceModuleSupplier = ::createSystemServiceModule,
-    private val androidServicesModuleSupplier: AndroidServicesModuleSupplier = ::createAndroidServicesModule,
-    private val workerThreadModuleSupplier: WorkerThreadModuleSupplier = ::createWorkerThreadModule,
-    private val storageModuleSupplier: StorageModuleSupplier = ::createStorageModuleSupplier,
-    private val essentialServiceModuleSupplier: EssentialServiceModuleSupplier = ::createEssentialServiceModule,
-    private val featureModuleSupplier: FeatureModuleSupplier = ::createFeatureModule,
-    private val instrumentationModuleSupplier: InstrumentationModuleSupplier = ::createInstrumentationModule,
-    private val dataCaptureServiceModuleSupplier: DataCaptureServiceModuleSupplier = ::createDataCaptureServiceModule,
-    private val deliveryModuleSupplier: DeliveryModuleSupplier = ::createDeliveryModule,
-    private val anrModuleSupplier: AnrModuleSupplier = ::createAnrModule,
-    private val logModuleSupplier: LogModuleSupplier = ::createLogModule,
-    private val nativeCoreModuleSupplier: NativeCoreModuleSupplier = ::createNativeCoreModule,
-    private val nativeFeatureModuleSupplier: NativeFeatureModuleSupplier = ::createNativeFeatureModule,
-    private val sessionOrchestrationModuleSupplier: SessionOrchestrationModuleSupplier = ::createSessionOrchestrationModule,
-    private val payloadSourceModuleSupplier: PayloadSourceModuleSupplier = ::createPayloadSourceModule,
+    private val coreModuleSupplier: CoreModuleSupplier = {
+            context: Context,
+            initModule: InitModule,
+        ->
+        CoreModuleImpl(
+            context,
+            initModule
+        )
+    },
+    private val configModuleSupplier: ConfigModuleSupplier = {
+            initModule: InitModule,
+            coreModule: CoreModule,
+            openTelemetryModule: OpenTelemetryModule,
+            workerThreadModule: WorkerThreadModule,
+            androidServicesModule: AndroidServicesModule,
+        ->
+        ConfigModuleImpl(
+            initModule,
+            coreModule,
+            openTelemetryModule,
+            workerThreadModule,
+            androidServicesModule,
+        )
+    },
+    private val systemServiceModuleSupplier: SystemServiceModuleSupplier = {
+            coreModule: CoreModule,
+            versionChecker: VersionChecker,
+        ->
+        SystemServiceModuleImpl(
+            coreModule,
+            versionChecker
+        )
+    },
+    private val androidServicesModuleSupplier: AndroidServicesModuleSupplier = {
+            initModule: InitModule,
+            coreModule: CoreModule,
+        ->
+        AndroidServicesModuleImpl(
+            initModule,
+            coreModule
+        )
+    },
+    private val workerThreadModuleSupplier: WorkerThreadModuleSupplier = { WorkerThreadModuleImpl() },
+    private val storageModuleSupplier: StorageModuleSupplier = {
+            initModule: InitModule,
+            coreModule: CoreModule,
+            workerThreadModule: WorkerThreadModule,
+        ->
+        StorageModuleImpl(
+            initModule,
+            coreModule,
+            workerThreadModule
+        )
+    },
+    private val essentialServiceModuleSupplier: EssentialServiceModuleSupplier = {
+            initModule: InitModule,
+            configModule: ConfigModule,
+            openTelemetryModule: OpenTelemetryModule,
+            coreModule: CoreModule,
+            workerThreadModule: WorkerThreadModule,
+            systemServiceModule: SystemServiceModule,
+            androidServicesModule: AndroidServicesModule,
+            lifecycleOwnerProvider: Provider<LifecycleOwner?>,
+            networkConnectivityServiceProvider: Provider<NetworkConnectivityService?>,
+        ->
+        EssentialServiceModuleImpl(
+            initModule,
+            configModule,
+            openTelemetryModule,
+            coreModule,
+            workerThreadModule,
+            systemServiceModule,
+            androidServicesModule,
+            lifecycleOwnerProvider,
+            networkConnectivityServiceProvider,
+        )
+    },
+    private val featureModuleSupplier: FeatureModuleSupplier = {
+            instrumentationModule: InstrumentationModule,
+            configService: ConfigService,
+            storageModule: StorageModule,
+        ->
+        FeatureModuleImpl(
+            instrumentationModule = instrumentationModule,
+            configService = configService,
+            storageModule = storageModule,
+        )
+    },
+    private val instrumentationModuleSupplier: InstrumentationModuleSupplier = {
+            initModule: InitModule,
+            workerThreadModule: WorkerThreadModule,
+            configModule: ConfigModule,
+            essentialServiceModule: EssentialServiceModule,
+            androidServicesModule: AndroidServicesModule,
+            coreModule: CoreModule,
+        ->
+        InstrumentationModuleImpl(
+            initModule,
+            workerThreadModule,
+            configModule,
+            essentialServiceModule,
+            androidServicesModule,
+            coreModule,
+        )
+    },
+    private val dataCaptureServiceModuleSupplier: DataCaptureServiceModuleSupplier = {
+            initModule: InitModule,
+            openTelemetryModule: OpenTelemetryModule,
+            configService: ConfigService,
+            versionChecker: VersionChecker,
+        ->
+        DataCaptureServiceModuleImpl(
+            initModule,
+            openTelemetryModule,
+            configService,
+            versionChecker
+        )
+    },
+    private val deliveryModuleSupplier: DeliveryModuleSupplier = {
+            configModule: ConfigModule,
+            initModule: InitModule,
+            otelModule: OpenTelemetryModule,
+            workerThreadModule: WorkerThreadModule,
+            coreModule: CoreModule,
+            essentialServiceModule: EssentialServiceModule,
+            androidServicesModule: AndroidServicesModule,
+            payloadStorageServiceProvider: Provider<PayloadStorageService>?,
+            cacheStorageServiceProvider: Provider<PayloadStorageService>?,
+            requestExecutionServiceProvider: Provider<RequestExecutionService>?,
+            deliveryTracer: DeliveryTracer?,
+        ->
+        DeliveryModuleImpl(
+            configModule,
+            initModule,
+            otelModule,
+            workerThreadModule,
+            coreModule,
+            essentialServiceModule,
+            androidServicesModule,
+            requestExecutionServiceProvider,
+            payloadStorageServiceProvider,
+            cacheStorageServiceProvider,
+            deliveryTracer
+        )
+    },
+    private val anrModuleSupplier: AnrModuleSupplier = {
+            args: InstrumentationArgs,
+            appStateTracker: AppStateTracker,
+        ->
+        AnrModuleImpl(
+            args,
+            appStateTracker
+        )
+    },
+    private val logModuleSupplier: LogModuleSupplier = {
+            initModule: InitModule,
+            openTelemetryModule: OpenTelemetryModule,
+            essentialServiceModule: EssentialServiceModule,
+            configModule: ConfigModule,
+            deliveryModule: DeliveryModule,
+            workerThreadModule: WorkerThreadModule,
+            payloadSourceModule: PayloadSourceModule,
+        ->
+        LogModuleImpl(
+            initModule,
+            openTelemetryModule,
+            essentialServiceModule,
+            configModule,
+            deliveryModule,
+            workerThreadModule,
+            payloadSourceModule,
+        )
+    },
+    private val nativeCoreModuleSupplier: NativeCoreModuleSupplier = {
+            coreModule: CoreModule,
+            workerThreadModule: WorkerThreadModule,
+            storageModule: StorageModule,
+            essentialServiceModule: EssentialServiceModule,
+            instrumentationModule: InstrumentationModule,
+            otelModule: OpenTelemetryModule,
+            delegateProvider: Provider<JniDelegate?>,
+            sharedObjectLoaderProvider: Provider<SharedObjectLoader?>,
+            symbolServiceProvider: Provider<SymbolService?>,
+        ->
+        NativeCoreModuleImpl(
+            coreModule,
+            workerThreadModule,
+            storageModule,
+            essentialServiceModule,
+            instrumentationModule,
+            otelModule,
+            delegateProvider,
+            sharedObjectLoaderProvider,
+            symbolServiceProvider,
+        )
+    },
+    private val nativeFeatureModuleSupplier: NativeFeatureModuleSupplier = {
+            nativeCoreModule: NativeCoreModule,
+            instrumentationModule: InstrumentationModule,
+        ->
+        NativeFeatureModuleImpl(
+            nativeCoreModule,
+            instrumentationModule,
+        )
+    },
+    private val sessionOrchestrationModuleSupplier: SessionOrchestrationModuleSupplier = {
+            initModule: InitModule,
+            openTelemetryModule: OpenTelemetryModule,
+            androidServicesModule: AndroidServicesModule,
+            essentialServiceModule: EssentialServiceModule,
+            configModule: ConfigModule,
+            deliveryModule: DeliveryModule,
+            instrumentationModule: InstrumentationModule,
+            payloadSourceModule: PayloadSourceModule,
+            startupService: StartupService,
+            logModule: LogModule,
+        ->
+        SessionOrchestrationModuleImpl(
+            initModule,
+            openTelemetryModule,
+            androidServicesModule,
+            essentialServiceModule,
+            configModule,
+            deliveryModule,
+            instrumentationModule,
+            payloadSourceModule,
+            startupService,
+            logModule
+        )
+    },
+    private val payloadSourceModuleSupplier: PayloadSourceModuleSupplier = {
+            initModule: InitModule,
+            coreModule: CoreModule,
+            workerThreadModule: WorkerThreadModule,
+            systemServiceModule: SystemServiceModule,
+            androidServicesModule: AndroidServicesModule,
+            essentialServiceModule: EssentialServiceModule,
+            configModule: ConfigModule,
+            nativeSymbolsProvider: Provider<Map<String, String>?>,
+            otelModule: OpenTelemetryModule, otelPayloadMapperProvider: Provider<OtelPayloadMapper?>,
+            deliveryModule: DeliveryModule,
+        ->
+        PayloadSourceModuleImpl(
+            initModule,
+            coreModule,
+            workerThreadModule,
+            systemServiceModule,
+            androidServicesModule,
+            essentialServiceModule,
+            configModule,
+            nativeSymbolsProvider,
+            otelModule,
+            otelPayloadMapperProvider,
+            deliveryModule,
+        )
+    },
 ) {
     lateinit var coreModule: CoreModule
         private set

@@ -6,7 +6,7 @@ import io.embrace.android.embracesdk.internal.storage.StorageService
 import io.embrace.android.embracesdk.internal.worker.Worker
 import java.util.concurrent.TimeUnit
 
-internal class StorageModuleImpl(
+class StorageModuleImpl(
     initModule: InitModule,
     coreModule: CoreModule,
     workerThreadModule: WorkerThreadModule,

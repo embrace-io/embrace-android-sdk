@@ -12,7 +12,7 @@ import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeStorageModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
-import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.createNativeCoreModule
+import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeCoreModuleImpl
 import org.junit.Assert.assertNotNull
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -24,8 +24,8 @@ internal class NativeCoreModuleImplTest {
     fun testDefaultImplementations() {
         val initModule = FakeInitModule()
         val ctx = ApplicationProvider.getApplicationContext<Application>()
-        val module = createNativeCoreModule(
-            createCoreModule(ctx, initModule),
+        val module = NativeCoreModuleImpl(
+            CoreModuleImpl(ctx, initModule),
             FakeWorkerThreadModule(),
             FakeStorageModule(),
             FakeEssentialServiceModule(),

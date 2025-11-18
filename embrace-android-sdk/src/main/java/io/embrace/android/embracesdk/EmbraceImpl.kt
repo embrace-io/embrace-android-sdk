@@ -121,9 +121,6 @@ internal class EmbraceImpl(
         val startTimeMs = clock.now()
 
         if (!bootstrapper.init(context, startTimeMs)) {
-            if (bootstrapper.configModule.configService.sdkModeBehavior.isSdkDisabled()) {
-                stop()
-            }
             return
         }
         start("post-services-setup")
@@ -165,6 +162,7 @@ internal class EmbraceImpl(
         sdkCallChecker.started.set(true)
         end()
 
+        bootstrapper.registerListeners()
         bootstrapper.loadInstrumentation()
         bootstrapper.postLoadInstrumentation()
 

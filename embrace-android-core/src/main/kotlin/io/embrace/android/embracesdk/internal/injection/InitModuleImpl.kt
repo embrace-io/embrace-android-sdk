@@ -14,8 +14,8 @@ import io.embrace.android.embracesdk.internal.telemetry.EmbraceTelemetryService
 import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
 
 class InitModuleImpl(
-    override val clock: Clock = NormalizedIntervalClock(),
     override val logger: EmbLogger = EmbLoggerImpl(),
+    override val clock: Clock = NormalizedIntervalClock(),
     override val systemInfo: SystemInfo = SystemInfo(),
     override val processIdentifierProvider: () -> String = IdGenerator.Companion::generateLaunchInstanceId,
 ) : InitModule {

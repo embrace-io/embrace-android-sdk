@@ -22,8 +22,8 @@ class FakeInitModule(
         deviceModel = "Phake Phone Phive"
     ),
     initModule: InitModule = InitModuleImpl(
-        clock = clock,
         logger = logger,
+        clock = clock,
         systemInfo = systemInfo
     ),
     processIdentifier: String = UUID.randomUUID().toString(),

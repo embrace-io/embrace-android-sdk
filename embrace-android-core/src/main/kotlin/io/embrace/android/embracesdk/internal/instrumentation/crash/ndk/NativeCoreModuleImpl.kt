@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.instrumentation.crash.ndk
 import android.os.Build
 import io.embrace.android.embracesdk.internal.delivery.storage.StorageLocation
 import io.embrace.android.embracesdk.internal.handler.AndroidMainThreadHandler
-import io.embrace.android.embracesdk.internal.injection.CoreModule
+import io.embrace.android.embracesdk.internal.injection.ConfigModule
 import io.embrace.android.embracesdk.internal.injection.EssentialServiceModule
 import io.embrace.android.embracesdk.internal.injection.InstrumentationModule
 import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModule
@@ -20,7 +20,7 @@ import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.internal.worker.Worker
 
 class NativeCoreModuleImpl(
-    coreModule: CoreModule,
+    configModule: ConfigModule,
     workerThreadModule: WorkerThreadModule,
     storageModule: StorageModule,
     essentialServiceModule: EssentialServiceModule,
@@ -39,7 +39,7 @@ class NativeCoreModuleImpl(
 
     override val symbolService: SymbolService by singleton {
         symbolServiceProvider() ?: SymbolServiceImpl(
-            coreModule.cpuAbi,
+            configModule.cpuAbi,
             args.serializer,
             args.logger
         )
@@ -89,7 +89,7 @@ class NativeCoreModuleImpl(
             appState = essentialServiceModule.appStateTracker.getAppState(),
             reportId = Uuid.getEmbUuid(),
             apiLevel = Build.VERSION.SDK_INT,
-            is32bit = coreModule.cpuAbi.is32BitDevice,
+            is32bit = configModule.cpuAbi.is32BitDevice,
             devLogging = false,
         )
     }

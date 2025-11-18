@@ -1,8 +1,12 @@
 package io.embrace.android.embracesdk.fakes.injection
 
+import android.app.ActivityManager
 import android.app.Application
+import android.app.usage.StorageStatsManager
 import android.content.Context
 import android.content.pm.PackageInfo
+import android.net.ConnectivityManager
+import android.view.WindowManager
 import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.fakes.FakeOrdinalStore
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
@@ -31,6 +35,10 @@ class FakeCoreModule(
     override val preferencesService: PreferencesService = FakePreferenceService(),
     override val store: KeyValueStore = FakeKeyValueStore(),
     override val ordinalStore: OrdinalStore = FakeOrdinalStore(),
+    override val activityManager: ActivityManager? = null,
+    override val connectivityManager: ConnectivityManager? = null,
+    override val storageManager: StorageStatsManager? = null,
+    override val windowManager: WindowManager? = null,
 ) : CoreModule {
 
     companion object {

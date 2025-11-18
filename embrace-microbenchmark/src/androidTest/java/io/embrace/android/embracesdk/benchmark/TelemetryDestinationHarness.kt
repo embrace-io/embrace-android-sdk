@@ -10,7 +10,7 @@ import io.embrace.android.embracesdk.internal.clock.NormalizedIntervalClock
 import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.InstrumentedConfig
 import io.embrace.android.embracesdk.internal.injection.InitModule
-import io.embrace.android.embracesdk.internal.injection.createOpenTelemetryModule
+import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModuleImpl
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.otel.logs.LogSink
@@ -26,7 +26,7 @@ import io.embrace.opentelemetry.kotlin.ExperimentalApi
 internal class TelemetryDestinationHarness {
 
     private val initModule = TestInitModule()
-    private val otelModule = createOpenTelemetryModule(initModule).apply {
+    private val otelModule = OpenTelemetryModuleImpl(initModule).apply {
         this.spanService.initializeService(0)
     }
 

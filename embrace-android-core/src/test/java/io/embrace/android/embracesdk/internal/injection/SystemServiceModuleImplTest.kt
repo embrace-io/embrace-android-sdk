@@ -26,26 +26,22 @@ internal class SystemServiceModuleImplTest {
     @Config(sdk = [Build.VERSION_CODES.O])
     @Test
     fun testVersionChecksNew() {
-        val new = SystemServiceModuleImpl(
-            CoreModuleImpl(RuntimeEnvironment.getApplication(), initModule),
-            FakeVersionChecker(true)
-        )
-        assertNotNull(new.storageManager)
+        coreModule = CoreModuleImpl(RuntimeEnvironment.getApplication(), initModule, FakeVersionChecker(true))
+        assertNotNull(coreModule.storageManager)
     }
 
     @Config(sdk = [Build.VERSION_CODES.M])
     @Test
     fun testVersionChecksOld() {
-        val old = SystemServiceModuleImpl(coreModule, FakeVersionChecker(false))
-        assertNull(old.storageManager)
+        coreModule = CoreModuleImpl(RuntimeEnvironment.getApplication(), initModule, FakeVersionChecker(false))
+        assertNull(coreModule.storageManager)
     }
 
     @Test
     fun testSystemServiceModuleDefault() {
-        val module = SystemServiceModuleImpl(coreModule)
-        assertNotNull(module.activityManager)
-        assertNotNull(module.windowManager)
-        assertNotNull(module.connectivityManager)
-        assertNull(module.storageManager)
+        assertNotNull(coreModule.activityManager)
+        assertNotNull(coreModule.windowManager)
+        assertNotNull(coreModule.connectivityManager)
+        assertNull(coreModule.storageManager)
     }
 }

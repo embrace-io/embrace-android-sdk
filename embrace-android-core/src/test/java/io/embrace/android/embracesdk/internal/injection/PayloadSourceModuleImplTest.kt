@@ -7,7 +7,6 @@ import io.embrace.android.embracesdk.fakes.FakeOtelPayloadMapper
 import io.embrace.android.embracesdk.fakes.injection.FakeDeliveryModule
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
-import io.embrace.android.embracesdk.fakes.injection.FakeSystemServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import io.embrace.android.embracesdk.internal.capture.metadata.EmbraceMetadataService
 import org.junit.Assert.assertNotNull
@@ -26,7 +25,6 @@ internal class PayloadSourceModuleImplTest {
             initModule,
             CoreModuleImpl(RuntimeEnvironment.getApplication(), initModule),
             FakeWorkerThreadModule(),
-            FakeSystemServiceModule(),
             FakeEssentialServiceModule(),
             FakeConfigModule(),
             ::HashMap,

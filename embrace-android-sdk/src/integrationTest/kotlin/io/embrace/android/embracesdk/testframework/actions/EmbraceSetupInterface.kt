@@ -107,14 +107,13 @@ internal class EmbraceSetupInterface(
             val impl = ConfigModuleImpl(initModule, coreModule, openTelemetryModule, workerThreadModule)
             DecoratedConfigModule(impl)
         },
-        essentialServiceModuleSupplier = { initModule, configModule, openTelemetryModule, coreModule, workerThreadModule, systemServiceModule, _, _ ->
+        essentialServiceModuleSupplier = { initModule, configModule, openTelemetryModule, coreModule, workerThreadModule, _, _ ->
             EssentialServiceModuleImpl(
                 initModule = initModule,
                 configModule = configModule,
                 openTelemetryModule = openTelemetryModule,
                 coreModule = coreModule,
                 workerThreadModule = workerThreadModule,
-                systemServiceModule = systemServiceModule,
                 lifecycleOwnerProvider = { fakeLifecycleOwner },
                 networkConnectivityServiceProvider = { fakeNetworkConnectivityService },
             )

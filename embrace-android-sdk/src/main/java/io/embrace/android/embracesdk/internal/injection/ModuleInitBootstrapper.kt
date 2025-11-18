@@ -322,7 +322,7 @@ internal class ModuleInitBootstrapper(
                     nativeFeatureModuleSupplier,
                     sessionOrchestrationModuleSupplier,
                     payloadSourceModuleSupplier
-                )
+                ).apply(InitializedModuleGraph::postInit)
                 return isInitialized()
             }
         } catch (ignored: SdkDisabledException) {

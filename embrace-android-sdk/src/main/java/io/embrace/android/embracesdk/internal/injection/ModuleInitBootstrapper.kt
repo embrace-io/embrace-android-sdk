@@ -31,7 +31,6 @@ import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.internal.worker.Worker
-import java.util.Locale
 import java.util.ServiceLoader
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.reflect.KClass
@@ -350,26 +349,40 @@ internal class ModuleInitBootstrapper(
         sdkStartTimeMs: Long,
         versionChecker: VersionChecker = BuildVersionChecker,
     ): Boolean {
-        coreModule = init(CoreModule::class) { coreModuleSupplier(context, initModule) }
+        coreModule = init(
+            module = CoreModule::class,
+            initAction = { coreModuleSupplier(context, initModule) }
+        )
 
-        workerThreadModule = init(WorkerThreadModule::class) {
-            workerThreadModuleSupplier()
-        }
-
-        postInit(OpenTelemetryModule::class) {
-            EmbTrace.trace("span-service-init") {
-                openTelemetryModule.spanService.initializeService(sdkStartTimeMs)
+        workerThreadModule = init(
+            module = WorkerThreadModule::class,
+            initAction = {
+                workerThreadModuleSupplier()
             }
+        )
+
+        EmbTrace.trace("span-service-init") {
+            openTelemetryModule.spanService.initializeService(sdkStartTimeMs)
         }
 
-        configModule = init(ConfigModule::class) {
-            configModuleSupplier(
-                initModule,
-                coreModule,
-                openTelemetryModule,
-                workerThreadModule,
-            )
-        }
+        configModule = init(
+            module = ConfigModule::class,
+            initAction = {
+                configModuleSupplier(
+                    initModule,
+                    coreModule,
+                    openTelemetryModule,
+                    workerThreadModule,
+                )
+            },
+            postAction = { module ->
+                openTelemetryModule.applyConfiguration(
+                    sensitiveKeysBehavior = module.configService.sensitiveKeysBehavior,
+                    bypassValidation = module.configService.isOnlyUsingOtelExporters(),
+                    otelBehavior = module.configService.otelBehavior
+                )
+            }
+        )
 
         EmbTrace.trace("sdk-disable-check") {
             // kick off config HTTP request first so the SDK can't get in a permanently disabled state
@@ -384,73 +397,73 @@ internal class ModuleInitBootstrapper(
             }
         }
 
-        postInit(ConfigModule::class) {
-            openTelemetryModule.applyConfiguration(
-                sensitiveKeysBehavior = configModule.configService.sensitiveKeysBehavior,
-                bypassValidation = configModule.configService.isOnlyUsingOtelExporters(),
-                otelBehavior = configModule.configService.otelBehavior
-            )
-        }
+        storageModule = init(
+            module = StorageModule::class,
+            initAction = {
+                storageModuleSupplier(initModule, coreModule, workerThreadModule)
+            }
+        )
 
-        storageModule = init(StorageModule::class) {
-            storageModuleSupplier(initModule, coreModule, workerThreadModule)
-        }
-
-        essentialServiceModule = init(EssentialServiceModule::class) {
-            essentialServiceModuleSupplier(
-                initModule,
-                configModule,
-                openTelemetryModule,
-                coreModule,
-                workerThreadModule,
-                { null },
-                { null },
-            )
-        }
-        postInit(EssentialServiceModule::class) {
-            workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker).submit {
-                EmbTrace.trace("network-connectivity-registration") {
-                    essentialServiceModule.networkConnectivityService.register()
+        essentialServiceModule = init(
+            module = EssentialServiceModule::class,
+            initAction = {
+                essentialServiceModuleSupplier(
+                    initModule,
+                    configModule,
+                    openTelemetryModule,
+                    coreModule,
+                    workerThreadModule,
+                    { null },
+                    { null },
+                )
+            },
+            postAction = { module ->
+                workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker).submit {
+                    EmbTrace.trace("network-connectivity-registration") {
+                        module.networkConnectivityService.register()
+                    }
                 }
             }
-        }
+        )
 
-        instrumentationModule = init(InstrumentationModule::class) {
-            instrumentationModuleSupplier(
-                initModule,
-                workerThreadModule,
-                configModule,
-                essentialServiceModule,
-                coreModule,
-            )
-        }
+        instrumentationModule = init(
+            module = InstrumentationModule::class,
+            initAction = {
+                instrumentationModuleSupplier(
+                    initModule,
+                    workerThreadModule,
+                    configModule,
+                    essentialServiceModule,
+                    coreModule,
+                )
+            }
+        )
 
-        anrModule = init(AnrModule::class) {
-            anrModuleSupplier(
-                instrumentationModule.instrumentationArgs,
-                essentialServiceModule.appStateTracker
-            )
-        }
+        featureModule = init(
+            module = FeatureModule::class,
+            initAction = {
+                featureModuleSupplier(
+                    instrumentationModule,
+                    configModule.configService,
+                    storageModule,
+                )
+            },
+            postAction = { module ->
+                initModule.logger.errorHandlerProvider = { module.internalErrorDataSource.dataSource }
+            }
+        )
 
-        featureModule = init(FeatureModule::class) {
-            featureModuleSupplier(
-                instrumentationModule,
-                configModule.configService,
-                storageModule,
-            )
-        }
-        postInit(FeatureModule::class) {
-            initModule.logger.errorHandlerProvider = { featureModule.internalErrorDataSource.dataSource }
-        }
-
-        dataCaptureServiceModule = init(DataCaptureServiceModule::class) {
-            dataCaptureServiceModuleSupplier(
-                initModule,
-                openTelemetryModule,
-                configModule.configService,
-                versionChecker,
-            )
-        }
+        dataCaptureServiceModule = init(
+            module = DataCaptureServiceModule::class,
+            initAction = {
+                dataCaptureServiceModuleSupplier(
+                    initModule,
+                    openTelemetryModule,
+                    configModule.configService,
+                    versionChecker,
+                )
+            }
+        )
 
         EmbTrace.trace("startup-tracker") {
             coreModule.application.registerActivityLifecycleCallbacks(
@@ -458,112 +471,137 @@ internal class ModuleInitBootstrapper(
             )
         }
 
-        deliveryModule = init(DeliveryModule::class) {
-            deliveryModuleSupplier(
-                configModule,
-                initModule,
-                openTelemetryModule,
-                workerThreadModule,
-                coreModule,
-                essentialServiceModule,
-                null,
-                null,
-                null,
-                null
-            )
-        }
-        postInit(DeliveryModule::class) {
-            deliveryModule.payloadCachingService?.run {
-                openTelemetryModule.spanRepository.setSpanUpdateNotifier {
-                    reportBackgroundActivityStateChange()
+        deliveryModule = init(
+            module = DeliveryModule::class,
+            initAction = {
+                deliveryModuleSupplier(
+                    configModule,
+                    initModule,
+                    openTelemetryModule,
+                    workerThreadModule,
+                    coreModule,
+                    essentialServiceModule,
+                    null,
+                    null,
+                    null,
+                    null
+                )
+            },
+            postAction = { module ->
+                module.payloadCachingService?.run {
+                    openTelemetryModule.spanRepository.setSpanUpdateNotifier {
+                        reportBackgroundActivityStateChange()
+                    }
                 }
             }
-        }
+        )
 
-        postInit(AnrModule::class) {
-            anrModule.anrService?.startAnrCapture()
-        }
-
-        payloadSourceModule = init(PayloadSourceModule::class) {
-            payloadSourceModuleSupplier(
-                initModule,
-                coreModule,
-                workerThreadModule,
-                essentialServiceModule,
-                configModule,
-                { nativeCoreModule.symbolService.symbolsForCurrentArch },
-                openTelemetryModule,
-                { anrModule.anrOtelMapper },
-                deliveryModule
-            )
-        }
-        postInit(PayloadSourceModule::class) {
-            payloadSourceModule.metadataService.precomputeValues()
-        }
-
-        nativeCoreModule = init(NativeCoreModule::class) {
-            nativeCoreModuleSupplier(
-                configModule,
-                workerThreadModule,
-                storageModule,
-                essentialServiceModule,
-                instrumentationModule,
-                openTelemetryModule,
-                { null },
-                { null },
-                { null },
-            )
-        }
-
-        nativeFeatureModule = init(NativeFeatureModule::class) {
-            nativeFeatureModuleSupplier(
-                nativeCoreModule,
-                instrumentationModule,
-            )
-        }
-
-        postInit(NativeFeatureModule::class) {
-            nativeCoreModule.sharedObjectLoader.loadEmbraceNative()
-            nativeCoreModule.nativeCrashHandlerInstaller?.install()
-        }
-
-        logModule = init(LogModule::class) {
-            logModuleSupplier(
-                initModule,
-                openTelemetryModule,
-                essentialServiceModule,
-                configModule,
-                deliveryModule,
-                workerThreadModule,
-                payloadSourceModule,
-            )
-        }
-
-        postInit(LogModule::class) {
-            // Start the log orchestrator
-            openTelemetryModule.logSink.registerLogStoredCallback {
-                logModule.logOrchestrator.onLogsAdded()
+        anrModule = init(
+            module = AnrModule::class,
+            initAction = {
+                anrModuleSupplier(
+                    instrumentationModule.instrumentationArgs,
+                    essentialServiceModule.appStateTracker
+                )
+            },
+            postAction = { module ->
+                module.anrService?.startAnrCapture()
             }
-        }
+        )
 
-        sessionOrchestrationModule = init(SessionOrchestrationModule::class) {
-            sessionOrchestrationModuleSupplier(
-                initModule,
-                openTelemetryModule,
-                coreModule,
-                essentialServiceModule,
-                configModule,
-                deliveryModule,
-                instrumentationModule,
-                payloadSourceModule,
-                dataCaptureServiceModule.startupService,
-                logModule
-            )
-        }
-        postInit(SessionOrchestrationModule::class) {
-            essentialServiceModule.telemetryDestination.sessionUpdateAction =
-                sessionOrchestrationModule.sessionOrchestrator::onSessionDataUpdate
-        }
+        payloadSourceModule = init(
+            module = PayloadSourceModule::class,
+            initAction = {
+                payloadSourceModuleSupplier(
+                    initModule,
+                    coreModule,
+                    workerThreadModule,
+                    essentialServiceModule,
+                    configModule,
+                    { nativeCoreModule.symbolService.symbolsForCurrentArch },
+                    openTelemetryModule,
+                    { anrModule.anrOtelMapper },
+                    deliveryModule
+                )
+            },
+            postAction = { module ->
+                module.metadataService.precomputeValues()
+            }
+        )
+
+        nativeCoreModule = init(
+            module = NativeCoreModule::class,
+            initAction = {
+                nativeCoreModuleSupplier(
+                    configModule,
+                    workerThreadModule,
+                    storageModule,
+                    essentialServiceModule,
+                    instrumentationModule,
+                    openTelemetryModule,
+                    { null },
+                    { null },
+                    { null },
+                )
+            }
+        )
+
+        nativeFeatureModule = init(
+            module = NativeFeatureModule::class,
+            initAction = {
+                nativeFeatureModuleSupplier(
+                    nativeCoreModule,
+                    instrumentationModule,
+                )
+            },
+            postAction = { module ->
+                nativeCoreModule.sharedObjectLoader.loadEmbraceNative()
+                nativeCoreModule.nativeCrashHandlerInstaller?.install()
+            }
+        )
+
+        logModule = init(
+            module = LogModule::class,
+            initAction = {
+                logModuleSupplier(
+                    initModule,
+                    openTelemetryModule,
+                    essentialServiceModule,
+                    configModule,
+                    deliveryModule,
+                    workerThreadModule,
+                    payloadSourceModule,
+                )
+            },
+            postAction = { module ->
+                // Start the log orchestrator
+                openTelemetryModule.logSink.registerLogStoredCallback {
+                    module.logOrchestrator.onLogsAdded()
+                }
+            }
+        )
+
+        sessionOrchestrationModule = init(
+            module = SessionOrchestrationModule::class,
+            initAction = {
+                sessionOrchestrationModuleSupplier(
+                    initModule,
+                    openTelemetryModule,
+                    coreModule,
+                    essentialServiceModule,
+                    configModule,
+                    deliveryModule,
+                    instrumentationModule,
+                    payloadSourceModule,
+                    dataCaptureServiceModule.startupService,
+                    logModule
+                )
+            },
+            postAction = { module ->
+                essentialServiceModule.telemetryDestination.sessionUpdateAction =
+                    module.sessionOrchestrator::onSessionDataUpdate
+            }
+        )
         registerListeners()
         return true
     }
@@ -635,13 +673,14 @@ internal class ModuleInitBootstrapper(
 
     fun isInitialized(): Boolean = initialized.get()
 
-    private fun <T> init(module: KClass<*>, provider: Provider<T>): T =
-        EmbTrace.trace("${toSectionName(module)}-init") { provider() }
-
-    private fun <T> postInit(module: KClass<*>, code: () -> T): T =
-        EmbTrace.trace("${toSectionName(module)}-post-init") { code() }
-
-    // This is called twice for each input - memoizing/caching is not worth the hassle
-    private fun toSectionName(klass: KClass<*>): String =
-        klass.simpleName?.removeSuffix("Module")?.lowercase(Locale.ENGLISH) ?: "module"
+    private fun <T> init(
+        module: KClass<*>,
+        initAction: Provider<T>,
+        postAction: (module: T) -> Unit = {},
+    ): T {
+        val name = module.simpleName?.removeSuffix("Module")?.lowercase() ?: "module"
+        return EmbTrace.trace("$name-init") {
+            initAction().apply(postAction)
+        }
+    }
 }

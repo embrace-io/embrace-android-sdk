@@ -69,7 +69,7 @@ internal class NativeCoreModuleImpl(
                 logger = args.logger,
                 delegate = delegate,
                 backgroundWorker = workerThreadModule.backgroundWorker(Worker.Background.IoRegWorker),
-                nativeInstallMessage = nativeInstallMessage ?: return@singleton null,
+                nativeInstallMessage = nativeInstallMessage,
                 mainThreadHandler = AndroidMainThreadHandler(),
                 clock = args.clock,
                 sessionIdTracker = essentialServiceModule.sessionIdTracker,
@@ -81,7 +81,7 @@ internal class NativeCoreModuleImpl(
         }
     }
 
-    private val nativeInstallMessage: NativeInstallMessage? by singleton {
+    private val nativeInstallMessage: NativeInstallMessage by singleton {
         val markerFilePath =
             storageModule.storageService.getFileForWrite("embrace_crash_marker").absolutePath
         NativeInstallMessage(

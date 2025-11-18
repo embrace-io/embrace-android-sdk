@@ -4,33 +4,48 @@
 
 ## Minimum supported versions
 
-| Technology                              | Minimum supported version |
-|-----------------------------------------|---------------------------|
-| Kotlin                                  | 2.0.21                    |
-| AGP                                     | 8.0.2                     |
-| Gradle                                  | 8.0.2                     |
-| JDK (build-time)                        | 17                        |
-| sourceCompatibility/targetCompatibility | 11                        |
-| minSdk                                  | 21                        |
+The Embrace Android SDK supports the following minimum versions of dependent technologies at build and run time:
+
+| Technology                       | Old minimum version | New minimum version |
+|----------------------------------|---------------------|---------------------|
+| JDK (Build-time)                 | 11                  | 17                  |
+| Kotlin (Run-time and build-time) | 1.8.22              | 2.0.21              |
+| Gradle (minSdk 26+)              | 7.5.1               | 8.0.2               |
+| AGP (minSdk 26+)                 | 7.4.2               | 8.0.2               |
+
+At runtime, the minimum supported Android version remains 5.0 (i.e. `minSdk` = 21). If your minSdk is less than 26, you will still require
+Gradle 8.4 and AGP 8.3.0 to workaround a desugaring issue.
+
+## Language compatibility target
+
+The Embrace Android SDK is compiled using the following language compatibility targets:
+
+| Technology                | Old target | New target |
+|---------------------------|------------|------------|
+| Java                      | 1.8        | 11         |
+| Kotlin (Language and API) | 1.8        | 2.0        |
 
 ## Embrace Gradle Plugin renamed
 
 The Embrace Gradle Plugin artifact and plugin ID have been renamed:
 
-| Type        | Old name                       | New name                              |
-|-------------|--------------------------------|---------------------------------------|
-| Artifact ID | `io.embrace:embrace-swazzler`  | `io.embrace:embrace-gradle-plugin`    |
-| Plugin ID   | `io.embrace.swazzler`          | `io.embrace.gradle`                   |
+| Type        | Old name                      | New name                           |
+|-------------|-------------------------------|------------------------------------|
+| Artifact ID | `io.embrace:embrace-swazzler` | `io.embrace:embrace-gradle-plugin` |
+| Plugin ID   | `io.embrace.swazzler`         | `io.embrace.gradle`                |
 
-### Migration guide
+Replace references to the old Embrace Gradle Plugin name with the new one. Your configuration files should reference the plugin in one
+of the following ways:
 
 **Version Catalogs (gradle/libs.versions.toml):**
+
 ```toml
 [plugins]
 embrace = { id = "io.embrace.gradle", version.ref = "embrace" }
 ```
 
 **Non-Catalog Configuration (settings.gradle or settings.gradle.kts):**
+
 ```kotlin
 pluginManagement {
     plugins {
@@ -40,6 +55,7 @@ pluginManagement {
 ```
 
 **Legacy Buildscript (root build.gradle):**
+
 ```groovy
 buildscript {
     dependencies {
@@ -48,39 +64,60 @@ buildscript {
 }
 ```
 
-## Notable features
+## OpenTelemetry support evolution
 
-The SDK now uses [opentelemetry-kotlin](https://github.com/embrace-io/opentelemetry-kotlin)'s API for capturing telemetry internally.
-Under the hood [opentelemetry-java](https://github.com/open-telemetry/opentelemetry-java) is currently still responsible for processing the
-telemetry.
+The SDK is moving towards supporting OpenTelemetry via a native Kotlin
+API ([opentelemetry-kotlin](https://github.com/embrace-io/opentelemetry-kotlin)). Currently, the Kotlin API
+is used internally for capturing telemetry, but under the hood [opentelemetry-java](https://github.com/open-telemetry/opentelemetry-java) is
+still responsible for processing the telemetry.
 
-The new `embrace-android-otel-java` module provides a compatibility layer if you wish to use opentelemetry-java's APIs to perform operations
-such as adding exporters.
+To use the Kotlin API in your app, which is in the process of being donated to OpenTelemetry and is still subject to changes before it
+becomes stable, you must include the module `io.embrace.opentelemetry.kotlin:opentelemetry-kotlin-api` in your app. With that, you can
+call the `Embrace.getOpenTelemetryKotlin()` function once the Embrace SDK is initialized to obtain an `OpenTelemetry` object with which
+you can instantiate OTel Tracers and Loggers. You can also add your own implementations of Kotlin Span and Log exporters, then configure
+the Embrace Android SDK to use them by calling them `Embrace.addSpanExporter()` and `Embrace.addLogRecordExporter()`.
 
-## Embrace.getInstance() deprecated
+As part of this evolution, opentelemetry-java's API are not used internally or exported by default by the Embrace SDK. A compatibility
+layer is provided for those who currently use the Java OTel Tracing API or Java exporters with the Embrace SDK. To access that,
+include the new `io.embrace:embrace-android-otel-java` module in your app's classpath, which adds the following extension functions
+to the `Embrace` object:
+
+- `getJavaOpenTelemetry()`
+- `addJavaSpanExporter()`
+- `addJavaLogRecordExporter()`
+
+These methods allow you to use the associated Java OTel API integration points supported by older versions of the Embrace Android SDK.
+
+## Embrace.getInstance() deprecation
 
 `Embrace.getInstance()` is deprecated in favour of `Embrace`. For example, you can now call `Embrace.start(Context)` instead
 of `Embrace.getInstance().start(Context)`.
 
-## Internal modularisation
+## Internal modularization
 
-The Embrace SDK is going through a process of modularisation. If you rely on `embrace-android-sdk` then you should notice
+The Embrace SDK is going through a process of modularization. If you rely on `embrace-android-sdk` then you should notice
 very little change as most alterations are internal. However, you should be aware that:
 
 - `embrace-android-compose` has been renamed as `embrace-android-instrumentation-compose-tap`
 - `embrace-android-fcm` has been renamed as `embrace-android-instrumentation-fcm`
 - `embrace-android-okhttp3` has been renamed as `embrace-android-instrumentation-okhttp`
 
-`embrace.autoAddDependencies` is deprecated and will be removed in a future release. You should add
-the `io.embrace:embrace-android-sdk` dependency to your classpath manually.
+`embrace.autoAddEmbraceDependencies` is deprecated and will be removed in a future release. You should add the
+`io.embrace:embrace-android-sdk` module to your classpath manually if you reference any Embrace Android SDK API directly in your app.
 
 ## Http(s)URLConnection network request instrumentation changes
 
-Basic instrumentation for HTTPS network requests made using the `HttpsURLConnection` API is enabled by default and controlled by the `sdk_config.networking.enable_huc_lite_instrumentation` configuration flag. It will capture the request duration, status, as well as errors. It does not support advanced features like network request forwarding or request or response body sizes. Use the detailed instrumentation if you wish to enable those features.
+Basic instrumentation for HTTPS network requests made using the `HttpsURLConnection` API is enabled by default and controlled by
+the `sdk_config.networking.enable_huc_lite_instrumentation` configuration flag. It will capture the request duration, status, as well
+as errors. It does not support advanced features like network request forwarding or request or response body sizes. Use the detailed
+instrumentation if you wish to enable those features.
 
-Detailed instrumentation for both HTTP and HTTPS requests using the `HttpURLConnection` and `HttpsURLConnection` APIs, which was enabled by default in previous versions, is now disabled by default. The configuration flag to control this remains `sdk_config.networking.enable_native_monitoring`.
+Detailed instrumentation for both HTTP and HTTPS requests using the `HttpURLConnection` and `HttpsURLConnection` APIs, which was enabled
+by default in previous versions, is now disabled by default. The configuration flag to control this
+remains `sdk_config.networking.enable_native_monitoring`.
 
-If you wish to use the detailed instrumentation for these requests, you must include the module `embrace-android-instrumentation-huc` in your app.
+If you wish to use the detailed instrumentation for these requests, you must include the
+module `io.embrace:embrace-android-instrumentation-huc` in your app's classpath.
 
 This DOES NOT affect instrumentation of network requests made using `OkHttp`.
 
@@ -109,56 +146,10 @@ get in touch if you do have a use-case that is no longer met.
 | `Embrace.getInstance().unregisterComposeActivityListener()`             | Obsolete - no alternative provided.                                                                    |
 | `Embrace.getInstance().logWebView(String)`                              | Obsolete - no alternative provided.                                                                    |
 
-### Embrace Gradle Plugin removed APIs
+### New Embrace Gradle Plugin DSL
 
-| Old API                                               | New API                                                                 |
-|-------------------------------------------------------|-------------------------------------------------------------------------|
-| `swazzler.disableDependencyInjection`                 | `embrace.autoAddEmbraceDependencies`                                    |
-| `swazzler.disableComposeDependencyInjection`          | `embrace.autoAddEmbraceComposeClickDependency`                          |
-| `swazzler.instrumentOkHttp`                           | `embrace.bytecodeInstrumentation.okhttpEnabled`                         |
-| `swazzler.instrumentOnClick`                          | `embrace.bytecodeInstrumentation.onClickEnabled`                        |
-| `swazzler.instrumentOnLongClick`                      | `embrace.bytecodeInstrumentation.onLongClickEnabled`                    |
-| `swazzler.instrumentWebview`                          | `embrace.bytecodeInstrumentation.webviewOnPageStartedEnabled`           |
-| `swazzler.instrumentFirebaseMessaging`                | `embrace.bytecodeInstrumentation.firebasePushNotificationsEnabled`      |
-| `swazzler.classSkipList`                              | `embrace.bytecodeInstrumentation.classIgnorePatterns`                   |
-| `swazzler.variantFilter`                              | `embrace.buildVariantFilter`                                            |
-| `SwazzlerExtension.Variant.enabled`                   | `embrace.buildVariantFilter.disableBytecodeInstrumentationForVariant()` |
-| `SwazzlerExtension.Variant.swazzlerOff`               | `embrace.buildVariantFilter.disablePluginForVariant()`                  |
-| `SwazzlerExtension.Variant.setSwazzlingEnabled()`     | `embrace.buildVariantFilter.disableBytecodeInstrumentationForVariant()` |
-| `SwazzlerExtension.Variant.disablePluginForVariant()` | `embrace.buildVariantFilter.disablePluginForVariant()`                  |
-| `embrace.disableCollectBuildData`                     | `embrace.telemetryEnabled`                                              |
-| `swazzler.customSymbolsDirectory`                     | `embrace.customSymbolsDirectory`                                        |
-| `swazzler.forceIncrementalOverwrite`                  | Obsolete - no alternative provided.                                     |
-| `swazzler.disableRNBundleRetriever`                   | Obsolete - no alternative provided.                                     |
-
-### Embrace Android SDK overload changes
-
-The following functions had overloads manually defined. These have been replaced with one function
-that uses Kotlin's default parameter values.
-
-| Altered APIs                                  |
-|-----------------------------------------------|
-| `Embrace.getInstance().logCustomStacktrace()` |
-| `Embrace.getInstance().logException()`        |
-| `Embrace.getInstance().logMessage()`          |
-| `Embrace.getInstance().createSpan()`          |
-| `Embrace.getInstance().recordCompletedSpan()` |
-| `Embrace.getInstance().recordSpan()`          |
-| `Embrace.getInstance().startSpan()`           |
-| `Embrace.getInstance().endSession()`          |
-| `EmbraceSpan.addEvent()`                      |
-| `EmbraceSpan.addLink()`                       |
-| `EmbraceSpan.recordException()`               |
-| `EmbraceSpan.start()`                         |
-| `EmbraceSpan.stop()`                          |
-
-# Upgrading to 7.3.0 with the new Embrace Gradle Plugin DSL
-
-The Embrace Gradle Plugin previously had a DSL via the 'swazzler' extension. This has been replaced with a new DSL via the 'embrace'
+The Embrace Gradle Plugin previously had a DSL via the `swazzler` extension. This has been replaced with a new DSL via the `embrace`
 extension.
-You can still use the 'swazzler' extension but it is deprecated and will be removed in a future release. It's recommended you use one
-extension or the other, rather than combining their use. Migration instructions are shown
-below:
 
 | Old API                                               | New API                                                                 |
 |-------------------------------------------------------|-------------------------------------------------------------------------|
@@ -184,6 +175,27 @@ The following project properties are now ignored and have no effect. You should 
 
 - `embrace.logLevel`
 - `embrace.instrumentationScope`
+
+### Embrace Android SDK overload changes
+
+The following functions had overloads manually defined. These have been replaced with one function
+that uses Kotlin's default parameter values.
+
+| Altered APIs                                  |
+|-----------------------------------------------|
+| `Embrace.getInstance().logCustomStacktrace()` |
+| `Embrace.getInstance().logException()`        |
+| `Embrace.getInstance().logMessage()`          |
+| `Embrace.getInstance().createSpan()`          |
+| `Embrace.getInstance().recordCompletedSpan()` |
+| `Embrace.getInstance().recordSpan()`          |
+| `Embrace.getInstance().startSpan()`           |
+| `Embrace.getInstance().endSession()`          |
+| `EmbraceSpan.addEvent()`                      |
+| `EmbraceSpan.addLink()`                       |
+| `EmbraceSpan.recordException()`               |
+| `EmbraceSpan.start()`                         |
+| `EmbraceSpan.stop()`                          |
 
 # Upgrading from 6.x to 7.x
 
@@ -252,11 +264,11 @@ use-case that isn’t supported by the new API.
 | `Embrace.getInstance().logBreadcrumb(String)`         | `Embrace.getInstance().addBreadcrumb(String)`                       | Renamed function to better describe functionality.                    |
 | `Embrace.getInstance().startEvent()`                  | `Embrace.getInstance().startMoment(String)`                         | Renamed function to better describe functionality.                    |
 | `Embrace.getInstance().endEvent()`                    | `Embrace.getInstance().endMoment(String)`                           | Renamed function to better describe functionality.                    |
-| `Embrace.getInstance().logInfo(String, ...)`          | `Embrace.getInstance().logMessage(...)`                             | Altered function signature to standardise behavior.                   |
-| `Embrace.getInstance().logWarning(String, ...)`       | `Embrace.getInstance().logMessage(...)`                             | Altered function signature to standardise behavior.                   |
-| `Embrace.getInstance().logError(String, ...)`         | `Embrace.getInstance().logMessage(...)`                             | Altered function signature to standardise behavior.                   |
-| `Embrace.getInstance().logError(Throwable)`           | `Embrace.getInstance().logException()`                              | Altered function signature to standardise behavior.                   |
-| `Embrace.getInstance().logError(StacktraceElement[])` | `Embrace.getInstance().logCustomStacktrace()`                       | Altered function signature to standardise behavior.                   |
+| `Embrace.getInstance().logInfo(String, ...)`          | `Embrace.getInstance().logMessage(...)`                             | Altered function signature to standardize behavior.                   |
+| `Embrace.getInstance().logWarning(String, ...)`       | `Embrace.getInstance().logMessage(...)`                             | Altered function signature to standardize behavior.                   |
+| `Embrace.getInstance().logError(String, ...)`         | `Embrace.getInstance().logMessage(...)`                             | Altered function signature to standardize behavior.                   |
+| `Embrace.getInstance().logError(Throwable)`           | `Embrace.getInstance().logException()`                              | Altered function signature to standardize behavior.                   |
+| `Embrace.getInstance().logError(StacktraceElement[])` | `Embrace.getInstance().logCustomStacktrace()`                       | Altered function signature to standardize behavior.                   |
 | `EmbraceLogger`                                       | `Embrace.getInstance().logMessage()`                                | Moved function calls to main Embrace interface.                       |
 | `LogType`                                             | `Severity`                                                          | Use Severity enum rather than LogType.                                |
 | `PurchaseFlow`                                        | None                                                                | Please contact Embrace if you have a use-case for this functionality. |
@@ -265,7 +277,7 @@ use-case that isn’t supported by the new API.
 | `Embrace.getInstance().logNetworkCall()`              | `Embrace.getInstance().recordNetworkRequest(EmbraceNetworkRequest)` | Renamed function to better describe functionality.                    |
 | `Embrace.getInstance().logNetworkClientError()`       | `Embrace.getInstance().recordNetworkRequest(EmbraceNetworkRequest)` | Renamed function to better describe functionality.                    |
 
-### Previously deprecated APIs that have been removed
+## Previously deprecated APIs that have been removed
 
 | Old API                                     | Comments                                                 |
 |---------------------------------------------|----------------------------------------------------------|

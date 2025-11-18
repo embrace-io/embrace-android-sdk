@@ -6,11 +6,11 @@ import io.embrace.android.embracesdk.fakes.FakeMemoryCleanerService
 import io.embrace.android.embracesdk.internal.arch.state.AppStateListener
 import io.embrace.android.embracesdk.internal.session.MemoryCleanerListener
 import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityLifecycleListener
+import java.io.Closeable
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import java.io.Closeable
 
 internal class ServiceRegistryTest {
 
@@ -36,7 +36,7 @@ internal class ServiceRegistryTest {
         val expected = listOf(service)
 
         val activityService = FakeAppStateTracker()
-        registry.registerActivityListeners(activityService)
+        registry.registerAppStateListeners(activityService)
         assertEquals(expected, activityService.listeners)
 
         val activityLifecycleTracker = FakeActivityTracker()
@@ -50,13 +50,6 @@ internal class ServiceRegistryTest {
         assertFalse(service.closed)
         registry.close()
         assertTrue(service.closed)
-    }
-
-    @Test(expected = IllegalStateException::class)
-    fun testClosedRegistration() {
-        val registry = ServiceRegistry()
-        registry.closeRegistration()
-        registry.registerService(lazy { FakeService() })
     }
 
     private class FakeService :

@@ -30,7 +30,6 @@ class PayloadSourceModuleImpl(
     initModule: InitModule,
     coreModule: CoreModule,
     workerThreadModule: WorkerThreadModule,
-    systemServiceModule: SystemServiceModule,
     essentialServiceModule: EssentialServiceModule,
     configModule: ConfigModule,
     nativeSymbolsProvider: Provider<Map<String, String>?>,
@@ -97,7 +96,7 @@ class PayloadSourceModuleImpl(
                 configModule.cpuAbi,
                 EmbTrace.trace("deviceImpl") {
                     DeviceImpl(
-                        systemServiceModule.windowManager,
+                        coreModule.windowManager,
                         coreModule.store,
                         workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker),
                         initModule.systemInfo,
@@ -120,7 +119,7 @@ class PayloadSourceModuleImpl(
             EmbraceMetadataService(
                 lazy { resourceSource },
                 coreModule.context,
-                lazy { systemServiceModule.storageManager },
+                lazy { coreModule.storageManager },
                 configModule.configService,
                 coreModule.preferencesService,
                 workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker),

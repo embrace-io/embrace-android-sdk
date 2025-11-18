@@ -10,7 +10,6 @@ import io.embrace.android.embracesdk.internal.delivery.execution.RequestExecutio
 import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageService
 import io.embrace.android.embracesdk.internal.envelope.session.OtelPayloadMapper
 import io.embrace.android.embracesdk.internal.utils.Provider
-import io.embrace.android.embracesdk.internal.utils.VersionChecker
 
 typealias ConfigModuleSupplier = (
     initModule: InitModule,
@@ -43,7 +42,6 @@ typealias EssentialServiceModuleSupplier = (
     openTelemetryModule: OpenTelemetryModule,
     coreModule: CoreModule,
     workerThreadModule: WorkerThreadModule,
-    systemServiceModule: SystemServiceModule,
     lifecycleOwnerProvider: Provider<LifecycleOwner?>,
     networkConnectivityServiceProvider: Provider<NetworkConnectivityService?>,
 ) -> EssentialServiceModule
@@ -76,7 +74,6 @@ typealias PayloadSourceModuleSupplier = (
     initModule: InitModule,
     coreModule: CoreModule,
     workerThreadModule: WorkerThreadModule,
-    systemServiceModule: SystemServiceModule,
     essentialServiceModule: EssentialServiceModule,
     configModule: ConfigModule,
     nativeSymbolsProvider: Provider<Map<String, String>?>,
@@ -103,10 +100,5 @@ typealias StorageModuleSupplier = (
     coreModule: CoreModule,
     workerThreadModule: WorkerThreadModule,
 ) -> StorageModule
-
-typealias SystemServiceModuleSupplier = (
-    coreModule: CoreModule,
-    versionChecker: VersionChecker,
-) -> SystemServiceModule
 
 typealias WorkerThreadModuleSupplier = () -> WorkerThreadModule

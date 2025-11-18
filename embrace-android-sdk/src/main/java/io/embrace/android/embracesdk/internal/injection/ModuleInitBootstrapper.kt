@@ -66,15 +66,6 @@ internal class ModuleInitBootstrapper(
             workerThreadModule,
         )
     },
-    private val systemServiceModuleSupplier: SystemServiceModuleSupplier = {
-            coreModule: CoreModule,
-            versionChecker: VersionChecker,
-        ->
-        SystemServiceModuleImpl(
-            coreModule,
-            versionChecker
-        )
-    },
     private val workerThreadModuleSupplier: WorkerThreadModuleSupplier = { WorkerThreadModuleImpl() },
     private val storageModuleSupplier: StorageModuleSupplier = {
             initModule: InitModule,
@@ -93,7 +84,6 @@ internal class ModuleInitBootstrapper(
             openTelemetryModule: OpenTelemetryModule,
             coreModule: CoreModule,
             workerThreadModule: WorkerThreadModule,
-            systemServiceModule: SystemServiceModule,
             lifecycleOwnerProvider: Provider<LifecycleOwner?>,
             networkConnectivityServiceProvider: Provider<NetworkConnectivityService?>,
         ->
@@ -103,7 +93,6 @@ internal class ModuleInitBootstrapper(
             openTelemetryModule,
             coreModule,
             workerThreadModule,
-            systemServiceModule,
             lifecycleOwnerProvider,
             networkConnectivityServiceProvider,
         )
@@ -261,7 +250,6 @@ internal class ModuleInitBootstrapper(
             initModule: InitModule,
             coreModule: CoreModule,
             workerThreadModule: WorkerThreadModule,
-            systemServiceModule: SystemServiceModule,
             essentialServiceModule: EssentialServiceModule,
             configModule: ConfigModule,
             nativeSymbolsProvider: Provider<Map<String, String>?>,
@@ -272,7 +260,6 @@ internal class ModuleInitBootstrapper(
             initModule,
             coreModule,
             workerThreadModule,
-            systemServiceModule,
             essentialServiceModule,
             configModule,
             nativeSymbolsProvider,
@@ -289,9 +276,6 @@ internal class ModuleInitBootstrapper(
         private set
 
     lateinit var workerThreadModule: WorkerThreadModule
-        private set
-
-    lateinit var systemServiceModule: SystemServiceModule
         private set
 
     lateinit var storageModule: StorageModule
@@ -348,6 +332,9 @@ internal class ModuleInitBootstrapper(
                 return false
             }
             synchronized(initialized) {
+                if (isInitialized()) {
+                    return false
+                }
                 val result = initImpl(context, sdkStartTimeMs, versionChecker)
                 initialized.set(result)
                 return result
@@ -363,9 +350,6 @@ internal class ModuleInitBootstrapper(
         sdkStartTimeMs: Long,
         versionChecker: VersionChecker = BuildVersionChecker,
     ): Boolean {
-        if (isInitialized()) {
-            return false
-        }
         coreModule = init(CoreModule::class) { coreModuleSupplier(context, initModule) }
 
         workerThreadModule = init(WorkerThreadModule::class) {
@@ -400,20 +384,12 @@ internal class ModuleInitBootstrapper(
             }
         }
 
-        val serviceRegistry = coreModule.serviceRegistry
         postInit(ConfigModule::class) {
-            serviceRegistry.registerService(lazy { configModule.configService })
-            serviceRegistry.registerService(lazy { configModule.remoteConfigSource })
-            serviceRegistry.registerService(lazy { configModule.configService.networkBehavior.domainCountLimiter })
             openTelemetryModule.applyConfiguration(
                 sensitiveKeysBehavior = configModule.configService.sensitiveKeysBehavior,
                 bypassValidation = configModule.configService.isOnlyUsingOtelExporters(),
                 otelBehavior = configModule.configService.otelBehavior
             )
-        }
-
-        systemServiceModule = init(SystemServiceModule::class) {
-            systemServiceModuleSupplier(coreModule, versionChecker)
         }
 
         storageModule = init(StorageModule::class) {
@@ -427,23 +403,14 @@ internal class ModuleInitBootstrapper(
                 openTelemetryModule,
                 coreModule,
                 workerThreadModule,
-                systemServiceModule,
                 { null },
                 { null },
             )
         }
         postInit(EssentialServiceModule::class) {
-            with(essentialServiceModule) {
-                serviceRegistry.registerServices(
-                    lazy { essentialServiceModule.appStateTracker },
-                    lazy { activityLifecycleTracker },
-                    lazy { networkConnectivityService }
-                )
-
-                workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker).submit {
-                    EmbTrace.trace("network-connectivity-registration") {
-                        essentialServiceModule.networkConnectivityService.register()
-                    }
+            workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker).submit {
+                EmbTrace.trace("network-connectivity-registration") {
+                    essentialServiceModule.networkConnectivityService.register()
                 }
             }
         }
@@ -491,13 +458,6 @@ internal class ModuleInitBootstrapper(
             )
         }
 
-        postInit(DataCaptureServiceModule::class) {
-            serviceRegistry.registerServices(
-                lazy { dataCaptureServiceModule.appStartupDataCollector },
-                lazy { dataCaptureServiceModule.uiLoadDataListener },
-            )
-        }
-
         deliveryModule = init(DeliveryModule::class) {
             deliveryModuleSupplier(
                 configModule,
@@ -521,9 +481,6 @@ internal class ModuleInitBootstrapper(
         }
 
         postInit(AnrModule::class) {
-            serviceRegistry.registerServices(
-                lazy { anrModule.anrService }
-            )
             anrModule.anrService?.startAnrCapture()
         }
 
@@ -532,7 +489,6 @@ internal class ModuleInitBootstrapper(
                 initModule,
                 coreModule,
                 workerThreadModule,
-                systemServiceModule,
                 essentialServiceModule,
                 configModule,
                 { nativeCoreModule.symbolService.symbolsForCurrentArch },
@@ -584,8 +540,6 @@ internal class ModuleInitBootstrapper(
         }
 
         postInit(LogModule::class) {
-            serviceRegistry.registerService(lazy { logModule.attachmentService })
-            serviceRegistry.registerService(lazy { logModule.logService })
             // Start the log orchestrator
             openTelemetryModule.logSink.registerLogStoredCallback {
                 logModule.logOrchestrator.onLogsAdded()
@@ -610,16 +564,41 @@ internal class ModuleInitBootstrapper(
             essentialServiceModule.telemetryDestination.sessionUpdateAction =
                 sessionOrchestrationModule.sessionOrchestrator::onSessionDataUpdate
         }
-
-        // Sets up the registered services. This method is called after the SDK has been started and no more services can
-        // be added to the registry. It sets listeners for any services that were registered.
-        EmbTrace.trace("service-registration") {
-            serviceRegistry.closeRegistration()
-            serviceRegistry.registerActivityListeners(essentialServiceModule.appStateTracker)
-            serviceRegistry.registerMemoryCleanerListeners(sessionOrchestrationModule.memoryCleanerService)
-            serviceRegistry.registerActivityLifecycleListeners(essentialServiceModule.activityLifecycleTracker)
-        }
+        registerListeners()
         return true
+    }
+
+    /**
+     * Registers objects as listeners for lifecycle/state callbacks.
+     */
+    private fun registerListeners() {
+        EmbTrace.trace("service-registration") {
+            with(coreModule.serviceRegistry) {
+                registerService(lazy { configModule.configService })
+                registerService(lazy { configModule.remoteConfigSource })
+                registerService(lazy { configModule.configService.networkBehavior.domainCountLimiter })
+
+                registerServices(
+                    lazy { essentialServiceModule.appStateTracker },
+                    lazy { essentialServiceModule.activityLifecycleTracker },
+                    lazy { essentialServiceModule.networkConnectivityService }
+                )
+                registerServices(
+                    lazy { dataCaptureServiceModule.appStartupDataCollector },
+                    lazy { dataCaptureServiceModule.uiLoadDataListener },
+                )
+                registerServices(
+                    lazy { anrModule.anrService }
+                )
+                registerService(lazy { logModule.attachmentService })
+                registerService(lazy { logModule.logService })
+
+                // registration ignored after this point
+                registerAppStateListeners(essentialServiceModule.appStateTracker)
+                registerMemoryCleanerListeners(sessionOrchestrationModule.memoryCleanerService)
+                registerActivityLifecycleListeners(essentialServiceModule.activityLifecycleTracker)
+            }
+        }
     }
 
     fun loadInstrumentation() {

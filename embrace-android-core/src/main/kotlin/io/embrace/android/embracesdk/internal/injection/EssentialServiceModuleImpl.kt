@@ -27,7 +27,6 @@ class EssentialServiceModuleImpl(
     openTelemetryModule: OpenTelemetryModule,
     coreModule: CoreModule,
     workerThreadModule: WorkerThreadModule,
-    systemServiceModule: SystemServiceModule,
     lifecycleOwnerProvider: Provider<LifecycleOwner?>,
     networkConnectivityServiceProvider: Provider<NetworkConnectivityService?>,
 ) : EssentialServiceModule {
@@ -60,13 +59,13 @@ class EssentialServiceModuleImpl(
                 coreModule.context,
                 workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker),
                 initModule.logger,
-                systemServiceModule.connectivityManager
+                coreModule.connectivityManager
             )
         }
     }
 
     override val sessionIdTracker: SessionIdTracker by singleton {
-        SessionIdTrackerImpl(systemServiceModule.activityManager, initModule.logger)
+        SessionIdTrackerImpl(coreModule.activityManager, initModule.logger)
     }
 
     override val sessionPropertiesService: SessionPropertiesService by singleton {

@@ -16,7 +16,7 @@ import io.embrace.android.embracesdk.internal.utils.EmbTrace
 class SessionOrchestrationModuleImpl(
     initModule: InitModule,
     openTelemetryModule: OpenTelemetryModule,
-    androidServicesModule: AndroidServicesModule,
+    coreModule: CoreModule,
     essentialServiceModule: EssentialServiceModule,
     configModule: ConfigModule,
     deliveryModule: DeliveryModule,
@@ -33,7 +33,7 @@ class SessionOrchestrationModuleImpl(
     private val payloadMessageCollator: PayloadMessageCollatorImpl by singleton {
         PayloadMessageCollatorImpl(
             EmbTrace.trace("sessionEnvelopeSource") { payloadSourceModule.sessionEnvelopeSource },
-            androidServicesModule.ordinalStore,
+            coreModule.ordinalStore,
             openTelemetryModule.currentSessionSpan,
         )
     }

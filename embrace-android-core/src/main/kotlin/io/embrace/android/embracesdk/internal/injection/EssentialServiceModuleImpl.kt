@@ -28,7 +28,6 @@ class EssentialServiceModuleImpl(
     coreModule: CoreModule,
     workerThreadModule: WorkerThreadModule,
     systemServiceModule: SystemServiceModule,
-    androidServicesModule: AndroidServicesModule,
     lifecycleOwnerProvider: Provider<LifecycleOwner?>,
     networkConnectivityServiceProvider: Provider<NetworkConnectivityService?>,
 ) : EssentialServiceModule {
@@ -49,7 +48,7 @@ class EssentialServiceModuleImpl(
     override val userService: UserService by singleton {
         EmbTrace.trace("user-service-init") {
             EmbraceUserService(
-                androidServicesModule.preferencesService,
+                coreModule.preferencesService,
                 initModule.logger
             )
         }
@@ -73,7 +72,7 @@ class EssentialServiceModuleImpl(
     override val sessionPropertiesService: SessionPropertiesService by singleton {
         EmbTrace.trace("session-properties-init") {
             SessionPropertiesServiceImpl(
-                preferencesService = androidServicesModule.preferencesService,
+                preferencesService = coreModule.preferencesService,
                 configService = configService,
                 destination = telemetryDestination
             )

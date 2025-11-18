@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.internal.injection
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
-import io.embrace.android.embracesdk.fakes.injection.FakeAndroidServicesModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import org.junit.Assert.assertNotNull
@@ -21,7 +20,6 @@ internal class ConfigModuleImplTest {
             coreModule = CoreModuleImpl(ApplicationProvider.getApplicationContext(), initModule),
             openTelemetryModule = FakeOpenTelemetryModule(),
             workerThreadModule = FakeWorkerThreadModule(),
-            androidServicesModule = FakeAndroidServicesModule(),
         )
         assertNotNull(module.configService)
         assertNotNull(module.urlBuilder)

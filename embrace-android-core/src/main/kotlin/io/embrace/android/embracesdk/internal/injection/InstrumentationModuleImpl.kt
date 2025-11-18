@@ -10,7 +10,6 @@ class InstrumentationModuleImpl(
     workerThreadModule: WorkerThreadModule,
     configModule: ConfigModule,
     essentialServiceModule: EssentialServiceModule,
-    androidServicesModule: AndroidServicesModule,
     coreModule: CoreModule,
 ) : InstrumentationModule {
 
@@ -29,10 +28,10 @@ class InstrumentationModuleImpl(
             application = coreModule.application,
             destination = essentialServiceModule.telemetryDestination,
             workerThreadModule = workerThreadModule,
-            store = androidServicesModule.store,
+            store = coreModule.store,
             serializer = initModule.jsonSerializer,
             sessionIdTracker = essentialServiceModule.sessionIdTracker,
-            ordinalStore = androidServicesModule.ordinalStore,
+            ordinalStore = coreModule.ordinalStore,
             sessionPropertiesService = essentialServiceModule.sessionPropertiesService,
         )
     }

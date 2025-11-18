@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.internal.api.delegate
 
 import android.app.Activity
 import io.embrace.android.embracesdk.internal.api.InstrumentationApi
-import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.injection.embraceImplInject
 import io.embrace.android.embracesdk.internal.instrumentation.startup.activity.traceInstanceId
@@ -14,7 +13,9 @@ internal class InstrumentationApiDelegate(
     private val sdkCallChecker: SdkCallChecker,
 ) : InstrumentationApi {
 
-    private val clock: Clock = bootstrapper.clock
+    private val clock by embraceImplInject(sdkCallChecker) {
+        bootstrapper.initModule.clock
+    }
     private val uiLoadTraceEmitter by embraceImplInject(sdkCallChecker) {
         bootstrapper.dataCaptureServiceModule.uiLoadDataListener
     }
@@ -24,17 +25,17 @@ internal class InstrumentationApiDelegate(
 
     override fun appReady() {
         if (sdkCallChecker.check("app_ready")) {
-            appStartupDataCollector?.appReady(timestampMs = clock.now())
+            appStartupDataCollector?.appReady(timestampMs = clock?.now())
         }
     }
 
     override fun activityLoaded(activity: Activity) {
         if (sdkCallChecker.check("activity_fully_loaded")) {
-            uiLoadTraceEmitter?.complete(traceInstanceId(activity), clock.now())
+            uiLoadTraceEmitter?.complete(traceInstanceId(activity), clock?.now() ?: 0)
         }
     }
 
-    override fun getSdkCurrentTimeMs(): Long = clock.now()
+    override fun getSdkCurrentTimeMs(): Long = clock?.now() ?: 0
 
     override fun addLoadTraceAttribute(activity: Activity, key: String, value: String) {
         if (sdkCallChecker.check("add_load_trace_attribute")) {

@@ -4,7 +4,6 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeConfigModule
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
 import io.embrace.android.embracesdk.fakes.FakeOtelPayloadMapper
-import io.embrace.android.embracesdk.fakes.injection.FakeAndroidServicesModule
 import io.embrace.android.embracesdk.fakes.injection.FakeDeliveryModule
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
@@ -28,7 +27,6 @@ internal class PayloadSourceModuleImplTest {
             CoreModuleImpl(RuntimeEnvironment.getApplication(), initModule),
             FakeWorkerThreadModule(),
             FakeSystemServiceModule(),
-            FakeAndroidServicesModule(),
             FakeEssentialServiceModule(),
             FakeConfigModule(),
             ::HashMap,

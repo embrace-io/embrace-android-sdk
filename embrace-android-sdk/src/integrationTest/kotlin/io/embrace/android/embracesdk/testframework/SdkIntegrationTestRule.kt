@@ -153,7 +153,7 @@ internal class SdkIntegrationTestRule(
 
         setupAction(setup)
         with(setup) {
-            embraceImpl = EmbraceImpl(clock = setup.fakeClock, bootstrapper = bootstrapper)
+            embraceImpl = EmbraceImpl(bootstrapper = bootstrapper)
             preSdkStartAction(preSdkStart)
             //TODO: Filtered span and log exporters should be migrated to Kotlin.
             embraceImpl.addSpanExporter(spanExporter.toOtelKotlinSpanExporter())
@@ -168,7 +168,7 @@ internal class SdkIntegrationTestRule(
             )
 
             if (startSdk) {
-                embraceImpl.start(getContext())
+                embraceImpl.start(ApplicationProvider.getApplicationContext())
                 assertEquals(
                     "SDK did not start in integration test.",
                     expectSdkToStart,

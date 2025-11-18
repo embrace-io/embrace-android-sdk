@@ -2,15 +2,12 @@ package io.embrace.android.embracesdk.internal.injection
 
 import android.content.Context
 import androidx.lifecycle.LifecycleOwner
-import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.InstrumentationProvider
 import io.embrace.android.embracesdk.internal.arch.state.AppStateTracker
 import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkConnectivityService
 import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkStatusDataSource
 import io.embrace.android.embracesdk.internal.capture.startup.StartupService
-import io.embrace.android.embracesdk.internal.clock.Clock
-import io.embrace.android.embracesdk.internal.clock.NormalizedIntervalClock
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
 import io.embrace.android.embracesdk.internal.delivery.execution.RequestExecutionService
@@ -29,8 +26,6 @@ import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeFe
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.SharedObjectLoader
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.jni.JniDelegate
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.symbols.SymbolService
-import io.embrace.android.embracesdk.internal.logging.EmbLogger
-import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.Provider
@@ -45,15 +40,7 @@ import kotlin.reflect.KClass
  * A class that wires together and initializes modules in a manner that makes them work as a cohesive whole.
  */
 internal class ModuleInitBootstrapper(
-    val logger: EmbLogger = EmbTrace.trace("logger-init", ::EmbLoggerImpl),
-    val clock: Clock = NormalizedIntervalClock(),
-    val initModule: InitModule = EmbTrace.trace("init-module") {
-        InitModuleImpl(
-            clock = clock,
-            logger = logger,
-            systemInfo = SystemInfo()
-        )
-    },
+    val initModule: InitModule = EmbTrace.trace("init-module", ::InitModuleImpl),
     val openTelemetryModule: OpenTelemetryModule = EmbTrace.trace("otel-module") {
         OpenTelemetryModuleImpl(initModule)
     },
@@ -71,14 +58,12 @@ internal class ModuleInitBootstrapper(
             coreModule: CoreModule,
             openTelemetryModule: OpenTelemetryModule,
             workerThreadModule: WorkerThreadModule,
-            androidServicesModule: AndroidServicesModule,
         ->
         ConfigModuleImpl(
             initModule,
             coreModule,
             openTelemetryModule,
             workerThreadModule,
-            androidServicesModule,
         )
     },
     private val systemServiceModuleSupplier: SystemServiceModuleSupplier = {
@@ -88,15 +73,6 @@ internal class ModuleInitBootstrapper(
         SystemServiceModuleImpl(
             coreModule,
             versionChecker
-        )
-    },
-    private val androidServicesModuleSupplier: AndroidServicesModuleSupplier = {
-            initModule: InitModule,
-            coreModule: CoreModule,
-        ->
-        AndroidServicesModuleImpl(
-            initModule,
-            coreModule
         )
     },
     private val workerThreadModuleSupplier: WorkerThreadModuleSupplier = { WorkerThreadModuleImpl() },
@@ -118,7 +94,6 @@ internal class ModuleInitBootstrapper(
             coreModule: CoreModule,
             workerThreadModule: WorkerThreadModule,
             systemServiceModule: SystemServiceModule,
-            androidServicesModule: AndroidServicesModule,
             lifecycleOwnerProvider: Provider<LifecycleOwner?>,
             networkConnectivityServiceProvider: Provider<NetworkConnectivityService?>,
         ->
@@ -129,7 +104,6 @@ internal class ModuleInitBootstrapper(
             coreModule,
             workerThreadModule,
             systemServiceModule,
-            androidServicesModule,
             lifecycleOwnerProvider,
             networkConnectivityServiceProvider,
         )
@@ -150,7 +124,6 @@ internal class ModuleInitBootstrapper(
             workerThreadModule: WorkerThreadModule,
             configModule: ConfigModule,
             essentialServiceModule: EssentialServiceModule,
-            androidServicesModule: AndroidServicesModule,
             coreModule: CoreModule,
         ->
         InstrumentationModuleImpl(
@@ -158,7 +131,6 @@ internal class ModuleInitBootstrapper(
             workerThreadModule,
             configModule,
             essentialServiceModule,
-            androidServicesModule,
             coreModule,
         )
     },
@@ -182,7 +154,6 @@ internal class ModuleInitBootstrapper(
             workerThreadModule: WorkerThreadModule,
             coreModule: CoreModule,
             essentialServiceModule: EssentialServiceModule,
-            androidServicesModule: AndroidServicesModule,
             payloadStorageServiceProvider: Provider<PayloadStorageService>?,
             cacheStorageServiceProvider: Provider<PayloadStorageService>?,
             requestExecutionServiceProvider: Provider<RequestExecutionService>?,
@@ -195,7 +166,6 @@ internal class ModuleInitBootstrapper(
             workerThreadModule,
             coreModule,
             essentialServiceModule,
-            androidServicesModule,
             requestExecutionServiceProvider,
             payloadStorageServiceProvider,
             cacheStorageServiceProvider,
@@ -231,7 +201,7 @@ internal class ModuleInitBootstrapper(
         )
     },
     private val nativeCoreModuleSupplier: NativeCoreModuleSupplier = {
-            coreModule: CoreModule,
+            configModule: ConfigModule,
             workerThreadModule: WorkerThreadModule,
             storageModule: StorageModule,
             essentialServiceModule: EssentialServiceModule,
@@ -242,7 +212,7 @@ internal class ModuleInitBootstrapper(
             symbolServiceProvider: Provider<SymbolService?>,
         ->
         NativeCoreModuleImpl(
-            coreModule,
+            configModule,
             workerThreadModule,
             storageModule,
             essentialServiceModule,
@@ -265,7 +235,7 @@ internal class ModuleInitBootstrapper(
     private val sessionOrchestrationModuleSupplier: SessionOrchestrationModuleSupplier = {
             initModule: InitModule,
             openTelemetryModule: OpenTelemetryModule,
-            androidServicesModule: AndroidServicesModule,
+            coreModule: CoreModule,
             essentialServiceModule: EssentialServiceModule,
             configModule: ConfigModule,
             deliveryModule: DeliveryModule,
@@ -277,7 +247,7 @@ internal class ModuleInitBootstrapper(
         SessionOrchestrationModuleImpl(
             initModule,
             openTelemetryModule,
-            androidServicesModule,
+            coreModule,
             essentialServiceModule,
             configModule,
             deliveryModule,
@@ -292,7 +262,6 @@ internal class ModuleInitBootstrapper(
             coreModule: CoreModule,
             workerThreadModule: WorkerThreadModule,
             systemServiceModule: SystemServiceModule,
-            androidServicesModule: AndroidServicesModule,
             essentialServiceModule: EssentialServiceModule,
             configModule: ConfigModule,
             nativeSymbolsProvider: Provider<Map<String, String>?>,
@@ -304,7 +273,6 @@ internal class ModuleInitBootstrapper(
             coreModule,
             workerThreadModule,
             systemServiceModule,
-            androidServicesModule,
             essentialServiceModule,
             configModule,
             nativeSymbolsProvider,
@@ -324,9 +292,6 @@ internal class ModuleInitBootstrapper(
         private set
 
     lateinit var systemServiceModule: SystemServiceModule
-        private set
-
-    lateinit var androidServicesModule: AndroidServicesModule
         private set
 
     lateinit var storageModule: StorageModule
@@ -413,17 +378,12 @@ internal class ModuleInitBootstrapper(
             }
         }
 
-        androidServicesModule = init(AndroidServicesModule::class) {
-            androidServicesModuleSupplier(initModule, coreModule)
-        }
-
         configModule = init(ConfigModule::class) {
             configModuleSupplier(
                 initModule,
                 coreModule,
                 openTelemetryModule,
                 workerThreadModule,
-                androidServicesModule,
             )
         }
 
@@ -468,7 +428,6 @@ internal class ModuleInitBootstrapper(
                 coreModule,
                 workerThreadModule,
                 systemServiceModule,
-                androidServicesModule,
                 { null },
                 { null },
             )
@@ -495,7 +454,6 @@ internal class ModuleInitBootstrapper(
                 workerThreadModule,
                 configModule,
                 essentialServiceModule,
-                androidServicesModule,
                 coreModule,
             )
         }
@@ -548,7 +506,6 @@ internal class ModuleInitBootstrapper(
                 workerThreadModule,
                 coreModule,
                 essentialServiceModule,
-                androidServicesModule,
                 null,
                 null,
                 null,
@@ -576,7 +533,6 @@ internal class ModuleInitBootstrapper(
                 coreModule,
                 workerThreadModule,
                 systemServiceModule,
-                androidServicesModule,
                 essentialServiceModule,
                 configModule,
                 { nativeCoreModule.symbolService.symbolsForCurrentArch },
@@ -591,7 +547,7 @@ internal class ModuleInitBootstrapper(
 
         nativeCoreModule = init(NativeCoreModule::class) {
             nativeCoreModuleSupplier(
-                coreModule,
+                configModule,
                 workerThreadModule,
                 storageModule,
                 essentialServiceModule,
@@ -640,7 +596,7 @@ internal class ModuleInitBootstrapper(
             sessionOrchestrationModuleSupplier(
                 initModule,
                 openTelemetryModule,
-                androidServicesModule,
+                coreModule,
                 essentialServiceModule,
                 configModule,
                 deliveryModule,

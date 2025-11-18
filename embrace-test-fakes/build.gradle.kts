@@ -42,4 +42,7 @@ dependencies {
     implementation(libs.opentelemetry.kotlin.sdk)
     implementation(libs.opentelemetry.kotlin.compat)
     implementation(libs.opentelemetry.kotlin.semconv)
+
+    implementation(libs.robolectric)
+    implementation(libs.mockk)
 }

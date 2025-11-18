@@ -3,19 +3,9 @@ package io.embrace.android.embracesdk.benchmark
 import androidx.benchmark.junit4.BenchmarkRule
 import androidx.benchmark.junit4.measureRepeated
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.internal.SystemInfo
-import io.embrace.android.embracesdk.internal.clock.NormalizedIntervalClock
-import io.embrace.android.embracesdk.internal.otel.config.OtelSdkConfig
-import io.embrace.android.embracesdk.internal.otel.impl.EmbClock
-import io.embrace.android.embracesdk.internal.otel.logs.LogSinkImpl
-import io.embrace.android.embracesdk.internal.otel.sdk.DataValidator
-import io.embrace.android.embracesdk.internal.otel.sdk.OtelSdkWrapper
-import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanFactoryImpl
-import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
-import io.embrace.android.embracesdk.internal.otel.spans.SpanServiceImpl
+import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanData
+import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
-import io.embrace.android.embracesdk.internal.otel.spans.SpanSinkImpl
-import io.embrace.android.embracesdk.internal.otel.spans.UninitializedSdkSpanService
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -23,7 +13,6 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
-@Suppress("OPT_IN_USAGE")
 @RunWith(AndroidJUnit4::class)
 class TracingApiBenchmarks {
 
@@ -34,64 +23,45 @@ class TracingApiBenchmarks {
     private val eventNames = (1..EVENTS_PER_SPAN).map { "test-span-event-name-$it" }
     private val extraAttributes = mapOf(attributesPairs.first().first to attributesPairs.first().second)
 
+    private lateinit var harness: TelemetryDestinationHarness
     private lateinit var spanSink: SpanSink
-    private lateinit var spansService: SpanServiceImpl
+    private lateinit var spanService: SpanService
 
     @Before
     fun setup() {
-        val clock = EmbClock(NormalizedIntervalClock())
-        val dataValidator = DataValidator()
-        val spanRepository = SpanRepository()
-        spanSink = SpanSinkImpl()
-        val otelSdkWrapper = OtelSdkWrapper(
-            otelClock = clock,
-            configuration = OtelSdkConfig(
-                spanSink = spanSink,
-                logSink = LogSinkImpl(),
-                sdkName = "benchmark-test-sdk",
-                sdkVersion = "1.0",
-                systemInfo = SystemInfo(),
-                sessionIdProvider = { "fake-session-id" },
-                processIdentifierProvider = { "fake-pid" }
-            ),
-            spanService = UninitializedSdkSpanService()
-        )
-        spansService = SpanServiceImpl(
-            tracer = otelSdkWrapper.sdkTracer,
-            spanRepository = spanRepository,
-            embraceSpanFactory =
-                EmbraceSpanFactoryImpl(
-                    openTelemetryClock = clock,
-                    spanRepository = spanRepository,
-                    dataValidator = dataValidator
-                ),
-            dataValidator = dataValidator,
-            canStartNewSpan = { _, _ -> true },
-            initCallback = { },
-            openTelemetry = otelSdkWrapper.openTelemetryKotlin,
-        )
+        harness = TelemetryDestinationHarness()
+        spanSink = harness.spanSink
+        spanService = harness.spanService
     }
 
     @Test
     fun createSpans() {
         benchmarkRule.measureRepeated {
-            repeat(TOTAL_SPAN_COUNT) {
-                createSpan("test")
+            runWithMeasurementDisabled {
+                repeat(TOTAL_SPAN_COUNT) {
+                    createSpan(
+                        name = "test",
+                    )
+                }
             }
+            cleanup()
         }
     }
 
     @Test
     fun createSpansWithEverything() {
         benchmarkRule.measureRepeated {
-            repeat(TOTAL_SPAN_COUNT) {
-                createSpan(
-                    name = "test",
-                    attributes = true,
-                    events = true,
-                    links = true,
-                )
+            runWithMeasurementDisabled {
+                repeat(TOTAL_SPAN_COUNT) {
+                    createSpan(
+                        name = "test",
+                        attributes = true,
+                        events = true,
+                        links = true,
+                    )
+                }
             }
+            cleanup()
         }
     }
 
@@ -99,7 +69,7 @@ class TracingApiBenchmarks {
     fun startSpans() {
         benchmarkRule.measureRepeated {
             val spans = mutableListOf<EmbraceSpan>()
-            runWithTimingDisabled {
+            runWithMeasurementDisabled {
                 repeat(TOTAL_SPAN_COUNT) {
                     spans.add(createSpan("test"))
                 }
@@ -117,7 +87,7 @@ class TracingApiBenchmarks {
     fun startSpansWithEverything() {
         benchmarkRule.measureRepeated {
             val spans = mutableListOf<EmbraceSpan>()
-            runWithTimingDisabled {
+            runWithMeasurementDisabled {
                 repeat(TOTAL_SPAN_COUNT) {
                     spans.add(
                         createSpan(
@@ -142,7 +112,7 @@ class TracingApiBenchmarks {
     fun stopSpans() {
         benchmarkRule.measureRepeated {
             val spans = mutableListOf<EmbraceSpan>()
-            runWithTimingDisabled {
+            runWithMeasurementDisabled {
                 repeat(TOTAL_SPAN_COUNT) {
                     spans.add(createSpan(name = "test", start = true))
                 }
@@ -160,7 +130,7 @@ class TracingApiBenchmarks {
     fun stopSpansWithEverything() {
         benchmarkRule.measureRepeated {
             val spans = mutableListOf<EmbraceSpan>()
-            runWithTimingDisabled {
+            runWithMeasurementDisabled {
                 repeat(TOTAL_SPAN_COUNT) {
                     spans.add(
                         createSpan(
@@ -289,7 +259,7 @@ class TracingApiBenchmarks {
         links: Boolean = false,
         start: Boolean = false,
     ): EmbraceSpan {
-        return checkNotNull(spansService.createSpan(name = name, parent = parent) as EmbraceSpan).apply {
+        return checkNotNull(spanService.createSpan(name = name, parent = parent) as EmbraceSpan).apply {
             if (start) {
                 start()
             }
@@ -314,7 +284,7 @@ class TracingApiBenchmarks {
     }
 
     private fun BenchmarkRule.Scope.stopAndCleanup(spans: List<EmbraceSpan>) {
-        runWithTimingDisabled {
+        runWithMeasurementDisabled {
             spans.forEach {
                 it.stop()
             }
@@ -323,10 +293,15 @@ class TracingApiBenchmarks {
     }
 
     private fun BenchmarkRule.Scope.verifyAndCleanup() {
-        runWithTimingDisabled {
+        runWithMeasurementDisabled {
             assertEquals(TOTAL_SPAN_COUNT, spanSink.completedSpans().size)
-            spanSink.flushSpans()
+            cleanup()
         }
+    }
+
+    private fun cleanup(): List<EmbraceSpanData> {
+        spanSink.flushSpans()
+        return harness.currentSessionSpan.endSession(true)
     }
 
     companion object {

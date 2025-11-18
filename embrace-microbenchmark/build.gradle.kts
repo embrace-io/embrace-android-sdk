@@ -46,5 +46,7 @@ dependencies {
     androidTestImplementation(project(":embrace-android-core"))
     androidTestImplementation(project(":embrace-android-otel"))
     androidTestImplementation(project(":embrace-android-infra"))
+    androidTestImplementation(project(":embrace-android-utils"))
     androidTestImplementation(project(":embrace-android-payload"))
+    androidTestImplementation(project(":embrace-android-instrumentation-api"))
 }

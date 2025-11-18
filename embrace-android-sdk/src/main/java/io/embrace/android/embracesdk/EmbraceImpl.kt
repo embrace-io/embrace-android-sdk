@@ -31,8 +31,6 @@ import io.embrace.android.embracesdk.internal.api.delegate.SdkStateApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.SessionApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.UserApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.ViewTrackingApiDelegate
-import io.embrace.android.embracesdk.internal.clock.Clock
-import io.embrace.android.embracesdk.internal.clock.NormalizedIntervalClock
 import io.embrace.android.embracesdk.internal.config.behavior.NetworkBehavior
 import io.embrace.android.embracesdk.internal.delivery.storage.StorageLocation
 import io.embrace.android.embracesdk.internal.injection.InternalInterfaceModule
@@ -59,10 +57,7 @@ import java.util.concurrent.atomic.AtomicBoolean
  */
 @SuppressLint("EmbracePublicApiPackageRule")
 internal class EmbraceImpl(
-    private val clock: Clock = NormalizedIntervalClock(),
-    private val bootstrapper: ModuleInitBootstrapper = EmbTrace.trace(
-        "bootstrapper-init"
-    ) { ModuleInitBootstrapper(clock = clock) },
+    private val bootstrapper: ModuleInitBootstrapper = EmbTrace.trace("bootstrapper-init", ::ModuleInitBootstrapper),
     private val sdkCallChecker: SdkCallChecker =
         SdkCallChecker(bootstrapper.initModule.logger, bootstrapper.initModule.telemetryService),
     private val userApiDelegate: UserApiDelegate = UserApiDelegate(bootstrapper, sdkCallChecker),
@@ -97,6 +92,7 @@ internal class EmbraceImpl(
     }
 
     private val logger by lazy { bootstrapper.initModule.logger }
+    private val clock by lazy { bootstrapper.initModule.clock }
     private val sdkShuttingDown = AtomicBoolean(false)
 
     /**
@@ -125,9 +121,6 @@ internal class EmbraceImpl(
         val startTimeMs = clock.now()
 
         if (!bootstrapper.init(context, startTimeMs)) {
-            if (bootstrapper.configModule.configService.sdkModeBehavior.isSdkDisabled()) {
-                stop()
-            }
             return
         }
         start("post-services-setup")
@@ -169,6 +162,7 @@ internal class EmbraceImpl(
         sdkCallChecker.started.set(true)
         end()
 
+        bootstrapper.registerListeners()
         bootstrapper.loadInstrumentation()
         bootstrapper.postLoadInstrumentation()
 

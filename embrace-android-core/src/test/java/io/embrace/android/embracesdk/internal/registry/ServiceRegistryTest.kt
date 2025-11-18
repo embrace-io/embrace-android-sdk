@@ -36,7 +36,7 @@ internal class ServiceRegistryTest {
         val expected = listOf(service)
 
         val activityService = FakeAppStateTracker()
-        registry.registerActivityListeners(activityService)
+        registry.registerAppStateListeners(activityService)
         assertEquals(expected, activityService.listeners)
 
         val activityLifecycleTracker = FakeActivityTracker()
@@ -50,13 +50,6 @@ internal class ServiceRegistryTest {
         assertFalse(service.closed)
         registry.close()
         assertTrue(service.closed)
-    }
-
-    @Test(expected = IllegalStateException::class)
-    fun testClosedRegistration() {
-        val registry = ServiceRegistry()
-        registry.closeRegistration()
-        registry.registerService(lazy { FakeService() })
     }
 
     private class FakeService :

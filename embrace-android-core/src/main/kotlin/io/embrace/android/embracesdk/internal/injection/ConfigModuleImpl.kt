@@ -1,5 +1,7 @@
 package io.embrace.android.embracesdk.internal.injection
 
+import android.content.pm.ApplicationInfo
+import io.embrace.android.embracesdk.internal.capture.metadata.AppEnvironment
 import io.embrace.android.embracesdk.internal.comms.api.ApiUrlBuilder
 import io.embrace.android.embracesdk.internal.comms.api.EmbraceApiUrlBuilder
 import io.embrace.android.embracesdk.internal.config.ConfigService
@@ -9,6 +11,9 @@ import io.embrace.android.embracesdk.internal.config.source.OkHttpRemoteConfigSo
 import io.embrace.android.embracesdk.internal.config.source.RemoteConfigSource
 import io.embrace.android.embracesdk.internal.config.store.RemoteConfigStore
 import io.embrace.android.embracesdk.internal.config.store.RemoteConfigStoreImpl
+import io.embrace.android.embracesdk.internal.envelope.BuildInfo
+import io.embrace.android.embracesdk.internal.envelope.CpuAbi
+import io.embrace.android.embracesdk.internal.envelope.PackageVersionInfo
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.worker.Worker
 import okhttp3.OkHttpClient
@@ -21,7 +26,6 @@ class ConfigModuleImpl(
     coreModule: CoreModule,
     openTelemetryModule: OpenTelemetryModule,
     workerThreadModule: WorkerThreadModule,
-    androidServicesModule: AndroidServicesModule,
 ) : ConfigModule {
 
     companion object {
@@ -54,7 +58,7 @@ class ConfigModuleImpl(
             ConfigServiceImpl(
                 instrumentedConfig = initModule.instrumentedConfig,
                 remoteConfig = combinedRemoteConfigSource?.getConfig(),
-                deviceIdSupplier = androidServicesModule.preferencesService::deviceIdentifier,
+                deviceIdSupplier = coreModule.preferencesService::deviceIdentifier,
                 hasConfiguredOtelExporters = openTelemetryModule.otelSdkConfig::hasConfiguredOtelExporters,
             )
         }
@@ -80,11 +84,38 @@ class ConfigModuleImpl(
         if (initModule.onlyOtelExportEnabled()) return@singleton null
         EmbTrace.trace("url-builder-init") {
             EmbraceApiUrlBuilder(
-                deviceId = androidServicesModule.preferencesService.deviceIdentifier,
-                appVersionName = coreModule.packageVersionInfo.versionName,
+                deviceId = coreModule.preferencesService.deviceIdentifier,
+                appVersionName = packageVersionInfo.versionName,
                 instrumentedConfig = initModule.instrumentedConfig,
             )
         }
+    }
+
+    override val packageVersionInfo: PackageVersionInfo by singleton {
+        val context = coreModule.context
+        PackageVersionInfo(context.packageManager.getPackageInfo(context.packageName, 0))
+    }
+
+    override val appEnvironment: AppEnvironment by lazy {
+        val context = coreModule.context
+        val isDebug: Boolean = with(context.applicationInfo) {
+            flags and ApplicationInfo.FLAG_DEBUGGABLE != 0
+        }
+        AppEnvironment(isDebug)
+    }
+
+    override val buildInfo: BuildInfo by lazy {
+        val cfg = initModule.instrumentedConfig.project
+        BuildInfo(
+            cfg.getBuildId(),
+            cfg.getBuildType(),
+            cfg.getBuildFlavor(),
+            cfg.getReactNativeBundleId(),
+        )
+    }
+
+    override val cpuAbi: CpuAbi by singleton {
+        CpuAbi.current()
     }
 
     private fun InitModule.onlyOtelExportEnabled(): Boolean {

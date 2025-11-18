@@ -58,8 +58,11 @@ internal class EmbraceActionInterface(
                 startInBackground = true,
                 activitiesAndActions = activityAndAction
             ).let { executionTimestamps ->
-                val isBackgroundActivityEnabled =
+                val isBackgroundActivityEnabled = if (bootstrapper.isInitialized()) {
                     bootstrapper.configModule.configService.backgroundActivityBehavior.isBackgroundActivityCaptureEnabled()
+                } else {
+                    false
+                }
 
                 SessionTimestamps(
                     startTimeMs = if (isBackgroundActivityEnabled) {

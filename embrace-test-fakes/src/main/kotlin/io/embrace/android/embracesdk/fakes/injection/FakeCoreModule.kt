@@ -1,15 +1,21 @@
 package io.embrace.android.embracesdk.fakes.injection
 
+import android.app.ActivityManager
 import android.app.Application
+import android.app.usage.StorageStatsManager
 import android.content.Context
 import android.content.pm.PackageInfo
-import io.embrace.android.embracesdk.fakes.system.mockApplication
-import io.embrace.android.embracesdk.internal.capture.metadata.AppEnvironment
-import io.embrace.android.embracesdk.internal.envelope.BuildInfo
-import io.embrace.android.embracesdk.internal.envelope.CpuAbi
+import android.net.ConnectivityManager
+import android.view.WindowManager
+import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
+import io.embrace.android.embracesdk.fakes.FakeOrdinalStore
+import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.internal.envelope.PackageVersionInfo
 import io.embrace.android.embracesdk.internal.injection.CoreModule
+import io.embrace.android.embracesdk.internal.prefs.PreferencesService
 import io.embrace.android.embracesdk.internal.registry.ServiceRegistry
+import io.embrace.android.embracesdk.internal.store.KeyValueStore
+import io.embrace.android.embracesdk.internal.store.OrdinalStore
 import io.mockk.every
 import io.mockk.isMockKMock
 import io.mockk.mockk
@@ -20,19 +26,19 @@ import org.robolectric.RuntimeEnvironment
  */
 class FakeCoreModule(
     override val application: Application =
-        if (RuntimeEnvironment.getApplication() == null) mockApplication() else RuntimeEnvironment.getApplication(),
+        if (RuntimeEnvironment.getApplication() == null) mockk(relaxed = true) {
+            every { registerActivityLifecycleCallbacks(any()) } returns Unit
+        } else RuntimeEnvironment.getApplication(),
     override val context: Context =
         if (isMockKMock(application)) getMockedContext() else application.applicationContext,
     override val serviceRegistry: ServiceRegistry = ServiceRegistry(),
-    override val appEnvironment: AppEnvironment = AppEnvironment(true),
-    override val buildInfo: BuildInfo = BuildInfo(
-        "fakeBuildId",
-        "fakeBuildType",
-        "fakeBuildFlavor",
-        "fakeRnBundleId",
-    ),
-    override val packageVersionInfo: PackageVersionInfo = fakePackageVersionInfo,
-    override val cpuAbi: CpuAbi = CpuAbi.ARM64_V8A,
+    override val preferencesService: PreferencesService = FakePreferenceService(),
+    override val store: KeyValueStore = FakeKeyValueStore(),
+    override val ordinalStore: OrdinalStore = FakeOrdinalStore(),
+    override val activityManager: ActivityManager? = null,
+    override val connectivityManager: ConnectivityManager? = null,
+    override val storageManager: StorageStatsManager? = null,
+    override val windowManager: WindowManager? = null,
 ) : CoreModule {
 
     companion object {

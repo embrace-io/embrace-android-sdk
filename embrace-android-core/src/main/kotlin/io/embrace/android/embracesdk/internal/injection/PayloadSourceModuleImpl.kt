@@ -30,8 +30,6 @@ class PayloadSourceModuleImpl(
     initModule: InitModule,
     coreModule: CoreModule,
     workerThreadModule: WorkerThreadModule,
-    systemServiceModule: SystemServiceModule,
-    androidServicesModule: AndroidServicesModule,
     essentialServiceModule: EssentialServiceModule,
     configModule: ConfigModule,
     nativeSymbolsProvider: Provider<Map<String, String>?>,
@@ -42,10 +40,10 @@ class PayloadSourceModuleImpl(
 
     override val rnBundleIdTracker: RnBundleIdTracker by singleton {
         RnBundleIdTrackerImpl(
-            coreModule.buildInfo,
+            configModule.buildInfo,
             coreModule.context,
             configModule.configService,
-            androidServicesModule.preferencesService,
+            coreModule.preferencesService,
             workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker)
         )
     }
@@ -78,7 +76,7 @@ class PayloadSourceModuleImpl(
     }
 
     override val hostedSdkVersionInfo: HostedSdkVersionInfo by singleton {
-        val store = androidServicesModule.store
+        val store = coreModule.store
         when (configModule.configService.appFramework) {
             AppFramework.REACT_NATIVE -> ReactNativeSdkVersionInfo(store)
             AppFramework.UNITY -> UnitySdkVersionInfo(store)
@@ -91,15 +89,15 @@ class PayloadSourceModuleImpl(
         EmbTrace.trace("resource-source") {
             EnvelopeResourceSourceImpl(
                 hostedSdkVersionInfo,
-                coreModule.appEnvironment.environment,
-                EmbTrace.trace("buildInfo") { coreModule.buildInfo },
-                EmbTrace.trace("packageInfo") { coreModule.packageVersionInfo },
+                configModule.appEnvironment.environment,
+                EmbTrace.trace("buildInfo") { configModule.buildInfo },
+                EmbTrace.trace("packageInfo") { configModule.packageVersionInfo },
                 configModule.configService.appFramework,
-                coreModule.cpuAbi,
+                configModule.cpuAbi,
                 EmbTrace.trace("deviceImpl") {
                     DeviceImpl(
-                        systemServiceModule.windowManager,
-                        androidServicesModule.store,
+                        coreModule.windowManager,
+                        coreModule.store,
                         workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker),
                         initModule.systemInfo,
                         initModule.logger
@@ -121,9 +119,9 @@ class PayloadSourceModuleImpl(
             EmbraceMetadataService(
                 lazy { resourceSource },
                 coreModule.context,
-                lazy { systemServiceModule.storageManager },
+                lazy { coreModule.storageManager },
                 configModule.configService,
-                androidServicesModule.preferencesService,
+                coreModule.preferencesService,
                 workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker),
                 initModule.clock,
                 initModule.logger

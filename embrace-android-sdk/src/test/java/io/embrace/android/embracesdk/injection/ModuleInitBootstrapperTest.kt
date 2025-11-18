@@ -14,6 +14,7 @@ import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistry
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.injection.EssentialServiceModuleImpl
+import io.embrace.android.embracesdk.internal.injection.InitModuleImpl
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -44,12 +45,11 @@ internal class ModuleInitBootstrapperTest {
         val application = RuntimeEnvironment.getApplication()
         context = application.applicationContext
         moduleInitBootstrapper = ModuleInitBootstrapper(
-            logger = logger,
-            clock = clock,
-            configModuleSupplier = { _, _, _, _, _ -> FakeConfigModule(FakeConfigService()) },
+            InitModuleImpl(logger, clock),
+            configModuleSupplier = { _, _, _, _ -> FakeConfigModule(FakeConfigService()) },
             coreModuleSupplier = { _, _ -> coreModule },
             nativeFeatureModuleSupplier = { _, _ -> FakeNativeFeatureModule() },
-            instrumentationModuleSupplier = { _, _, _, _, _, _ ->
+            instrumentationModuleSupplier = { _, _, _, _, _ ->
                 FakeInstrumentationModule(application, logger = logger).apply {
                     registry = instrumentationRegistry
                 }
@@ -69,14 +69,11 @@ internal class ModuleInitBootstrapperTest {
             assertNotNull(initModule)
             assertNotNull(openTelemetryModule)
             assertNotNull(workerThreadModule)
-            assertNotNull(systemServiceModule)
-            assertNotNull(androidServicesModule)
             assertNotNull(storageModule)
             assertTrue(essentialServiceModule is EssentialServiceModuleImpl)
             assertNotNull(dataCaptureServiceModule)
             assertNotNull(deliveryModule)
             assertNotNull(payloadSourceModule)
-            assertEquals(clock, moduleInitBootstrapper.clock)
             assertEquals(clock, moduleInitBootstrapper.initModule.clock)
         }
     }

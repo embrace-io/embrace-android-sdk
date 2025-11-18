@@ -8,7 +8,6 @@ import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityLifecycl
 import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityTracker
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import java.io.Closeable
-import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * An object that holds all of the services that are registered with the SDK. This makes it simpler
@@ -18,7 +17,6 @@ class ServiceRegistry : Closeable {
 
     private val registry = mutableListOf<Lazy<Any?>>()
     private val finalRegistry: List<Any?> by lazy { registry.map(Lazy<Any?>::value) }
-    private var initialized = AtomicBoolean(false)
 
     // lazy init avoids type checks at startup until absolutely necessary.
     // once these variables are initialized, no further services should be registered.
@@ -40,17 +38,10 @@ class ServiceRegistry : Closeable {
     }
 
     fun registerService(service: Lazy<Any?>) {
-        if (initialized.get()) {
-            error("Cannot register a service - already initialized.")
-        }
         registry.add(service)
     }
 
-    fun closeRegistration() {
-        initialized.set(true)
-    }
-
-    fun registerActivityListeners(appStateTracker: AppStateTracker): Unit =
+    fun registerAppStateListeners(appStateTracker: AppStateTracker): Unit =
         appStateListeners.forEachSafe(
             appStateTracker::addListener
         )

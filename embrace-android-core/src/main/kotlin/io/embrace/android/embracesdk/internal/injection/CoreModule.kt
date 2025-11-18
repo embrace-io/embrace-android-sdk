@@ -1,12 +1,15 @@
 package io.embrace.android.embracesdk.internal.injection
 
+import android.app.ActivityManager
 import android.app.Application
+import android.app.usage.StorageStatsManager
 import android.content.Context
-import io.embrace.android.embracesdk.internal.capture.metadata.AppEnvironment
-import io.embrace.android.embracesdk.internal.envelope.BuildInfo
-import io.embrace.android.embracesdk.internal.envelope.CpuAbi
-import io.embrace.android.embracesdk.internal.envelope.PackageVersionInfo
+import android.net.ConnectivityManager
+import android.view.WindowManager
+import io.embrace.android.embracesdk.internal.prefs.PreferencesService
 import io.embrace.android.embracesdk.internal.registry.ServiceRegistry
+import io.embrace.android.embracesdk.internal.store.KeyValueStore
+import io.embrace.android.embracesdk.internal.store.OrdinalStore
 
 /**
  * Contains a core set of dependencies that are required by most services/classes in the SDK.
@@ -19,8 +22,6 @@ interface CoreModule {
      */
     val context: Context
 
-    val packageVersionInfo: PackageVersionInfo
-
     /**
      * Reference to the current application.
      */
@@ -31,17 +32,12 @@ interface CoreModule {
      */
     val serviceRegistry: ServiceRegistry
 
-    /**
-     * Whether the application is a debug build
-     */
-    val appEnvironment: AppEnvironment
+    val preferencesService: PreferencesService
+    val store: KeyValueStore
+    val ordinalStore: OrdinalStore
 
-    val buildInfo: BuildInfo
-
-    /**
-     * The primary CPU architecture. We assume that for the vast majority of devices
-     * all CPUs have the same ABI (technically not true, but a reasonable enough for
-     * simpler data analysis)
-     */
-    val cpuAbi: CpuAbi
+    val activityManager: ActivityManager?
+    val connectivityManager: ConnectivityManager?
+    val storageManager: StorageStatsManager?
+    val windowManager: WindowManager?
 }

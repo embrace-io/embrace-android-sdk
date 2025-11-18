@@ -2,15 +2,12 @@ package io.embrace.android.embracesdk.internal.injection
 
 import android.content.Context
 import androidx.lifecycle.LifecycleOwner
-import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.InstrumentationProvider
 import io.embrace.android.embracesdk.internal.arch.state.AppStateTracker
 import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkConnectivityService
 import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkStatusDataSource
 import io.embrace.android.embracesdk.internal.capture.startup.StartupService
-import io.embrace.android.embracesdk.internal.clock.Clock
-import io.embrace.android.embracesdk.internal.clock.NormalizedIntervalClock
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
 import io.embrace.android.embracesdk.internal.delivery.execution.RequestExecutionService
@@ -29,31 +26,17 @@ import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeFe
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.SharedObjectLoader
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.jni.JniDelegate
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.symbols.SymbolService
-import io.embrace.android.embracesdk.internal.logging.EmbLogger
-import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
-import io.embrace.android.embracesdk.internal.worker.Worker
-import java.util.Locale
 import java.util.ServiceLoader
-import java.util.concurrent.atomic.AtomicBoolean
-import kotlin.reflect.KClass
 
 /**
  * A class that wires together and initializes modules in a manner that makes them work as a cohesive whole.
  */
 internal class ModuleInitBootstrapper(
-    val logger: EmbLogger = EmbTrace.trace("logger-init", ::EmbLoggerImpl),
-    val clock: Clock = NormalizedIntervalClock(),
-    val initModule: InitModule = EmbTrace.trace("init-module") {
-        InitModuleImpl(
-            clock = clock,
-            logger = logger,
-            systemInfo = SystemInfo()
-        )
-    },
+    val initModule: InitModule = EmbTrace.trace("init-module", ::InitModuleImpl),
     val openTelemetryModule: OpenTelemetryModule = EmbTrace.trace("otel-module") {
         OpenTelemetryModuleImpl(initModule)
     },
@@ -71,32 +54,12 @@ internal class ModuleInitBootstrapper(
             coreModule: CoreModule,
             openTelemetryModule: OpenTelemetryModule,
             workerThreadModule: WorkerThreadModule,
-            androidServicesModule: AndroidServicesModule,
         ->
         ConfigModuleImpl(
             initModule,
             coreModule,
             openTelemetryModule,
             workerThreadModule,
-            androidServicesModule,
-        )
-    },
-    private val systemServiceModuleSupplier: SystemServiceModuleSupplier = {
-            coreModule: CoreModule,
-            versionChecker: VersionChecker,
-        ->
-        SystemServiceModuleImpl(
-            coreModule,
-            versionChecker
-        )
-    },
-    private val androidServicesModuleSupplier: AndroidServicesModuleSupplier = {
-            initModule: InitModule,
-            coreModule: CoreModule,
-        ->
-        AndroidServicesModuleImpl(
-            initModule,
-            coreModule
         )
     },
     private val workerThreadModuleSupplier: WorkerThreadModuleSupplier = { WorkerThreadModuleImpl() },
@@ -117,8 +80,6 @@ internal class ModuleInitBootstrapper(
             openTelemetryModule: OpenTelemetryModule,
             coreModule: CoreModule,
             workerThreadModule: WorkerThreadModule,
-            systemServiceModule: SystemServiceModule,
-            androidServicesModule: AndroidServicesModule,
             lifecycleOwnerProvider: Provider<LifecycleOwner?>,
             networkConnectivityServiceProvider: Provider<NetworkConnectivityService?>,
         ->
@@ -128,8 +89,6 @@ internal class ModuleInitBootstrapper(
             openTelemetryModule,
             coreModule,
             workerThreadModule,
-            systemServiceModule,
-            androidServicesModule,
             lifecycleOwnerProvider,
             networkConnectivityServiceProvider,
         )
@@ -150,7 +109,6 @@ internal class ModuleInitBootstrapper(
             workerThreadModule: WorkerThreadModule,
             configModule: ConfigModule,
             essentialServiceModule: EssentialServiceModule,
-            androidServicesModule: AndroidServicesModule,
             coreModule: CoreModule,
         ->
         InstrumentationModuleImpl(
@@ -158,7 +116,6 @@ internal class ModuleInitBootstrapper(
             workerThreadModule,
             configModule,
             essentialServiceModule,
-            androidServicesModule,
             coreModule,
         )
     },
@@ -182,7 +139,6 @@ internal class ModuleInitBootstrapper(
             workerThreadModule: WorkerThreadModule,
             coreModule: CoreModule,
             essentialServiceModule: EssentialServiceModule,
-            androidServicesModule: AndroidServicesModule,
             payloadStorageServiceProvider: Provider<PayloadStorageService>?,
             cacheStorageServiceProvider: Provider<PayloadStorageService>?,
             requestExecutionServiceProvider: Provider<RequestExecutionService>?,
@@ -195,7 +151,6 @@ internal class ModuleInitBootstrapper(
             workerThreadModule,
             coreModule,
             essentialServiceModule,
-            androidServicesModule,
             requestExecutionServiceProvider,
             payloadStorageServiceProvider,
             cacheStorageServiceProvider,
@@ -231,7 +186,7 @@ internal class ModuleInitBootstrapper(
         )
     },
     private val nativeCoreModuleSupplier: NativeCoreModuleSupplier = {
-            coreModule: CoreModule,
+            configModule: ConfigModule,
             workerThreadModule: WorkerThreadModule,
             storageModule: StorageModule,
             essentialServiceModule: EssentialServiceModule,
@@ -242,7 +197,7 @@ internal class ModuleInitBootstrapper(
             symbolServiceProvider: Provider<SymbolService?>,
         ->
         NativeCoreModuleImpl(
-            coreModule,
+            configModule,
             workerThreadModule,
             storageModule,
             essentialServiceModule,
@@ -265,7 +220,7 @@ internal class ModuleInitBootstrapper(
     private val sessionOrchestrationModuleSupplier: SessionOrchestrationModuleSupplier = {
             initModule: InitModule,
             openTelemetryModule: OpenTelemetryModule,
-            androidServicesModule: AndroidServicesModule,
+            coreModule: CoreModule,
             essentialServiceModule: EssentialServiceModule,
             configModule: ConfigModule,
             deliveryModule: DeliveryModule,
@@ -277,7 +232,7 @@ internal class ModuleInitBootstrapper(
         SessionOrchestrationModuleImpl(
             initModule,
             openTelemetryModule,
-            androidServicesModule,
+            coreModule,
             essentialServiceModule,
             configModule,
             deliveryModule,
@@ -291,8 +246,6 @@ internal class ModuleInitBootstrapper(
             initModule: InitModule,
             coreModule: CoreModule,
             workerThreadModule: WorkerThreadModule,
-            systemServiceModule: SystemServiceModule,
-            androidServicesModule: AndroidServicesModule,
             essentialServiceModule: EssentialServiceModule,
             configModule: ConfigModule,
             nativeSymbolsProvider: Provider<Map<String, String>?>,
@@ -303,8 +256,6 @@ internal class ModuleInitBootstrapper(
             initModule,
             coreModule,
             workerThreadModule,
-            systemServiceModule,
-            androidServicesModule,
             essentialServiceModule,
             configModule,
             nativeSymbolsProvider,
@@ -313,66 +264,29 @@ internal class ModuleInitBootstrapper(
             deliveryModule,
         )
     },
-) {
-    lateinit var coreModule: CoreModule
-        private set
-
-    lateinit var configModule: ConfigModule
-        private set
-
-    lateinit var workerThreadModule: WorkerThreadModule
-        private set
-
-    lateinit var systemServiceModule: SystemServiceModule
-        private set
-
-    lateinit var androidServicesModule: AndroidServicesModule
-        private set
-
-    lateinit var storageModule: StorageModule
-        private set
-
-    lateinit var essentialServiceModule: EssentialServiceModule
-        private set
-
-    lateinit var dataCaptureServiceModule: DataCaptureServiceModule
-        private set
-
-    lateinit var deliveryModule: DeliveryModule
-        private set
-
-    lateinit var anrModule: AnrModule
-        private set
-
-    lateinit var logModule: LogModule
-        private set
-
-    lateinit var nativeCoreModule: NativeCoreModule
-        private set
-
-    lateinit var nativeFeatureModule: NativeFeatureModule
-        private set
-
-    lateinit var instrumentationModule: InstrumentationModule
-        private set
-
-    lateinit var featureModule: FeatureModule
-        private set
-
-    lateinit var sessionOrchestrationModule: SessionOrchestrationModule
-        private set
-
-    lateinit var payloadSourceModule: PayloadSourceModule
-        private set
+) : ModuleGraph {
 
     @Volatile
-    var initialized: AtomicBoolean = AtomicBoolean(false)
+    private var delegate: ModuleGraph = UninitializedModuleGraph
+    override val coreModule: CoreModule get() = delegate.coreModule
+    override val configModule: ConfigModule get() = delegate.configModule
+    override val workerThreadModule: WorkerThreadModule get() = delegate.workerThreadModule
+    override val storageModule: StorageModule get() = delegate.storageModule
+    override val essentialServiceModule: EssentialServiceModule get() = delegate.essentialServiceModule
+    override val dataCaptureServiceModule: DataCaptureServiceModule get() = delegate.dataCaptureServiceModule
+    override val deliveryModule: DeliveryModule get() = delegate.deliveryModule
+    override val anrModule: AnrModule get() = delegate.anrModule
+    override val logModule: LogModule get() = delegate.logModule
+    override val nativeCoreModule: NativeCoreModule get() = delegate.nativeCoreModule
+    override val nativeFeatureModule: NativeFeatureModule get() = delegate.nativeFeatureModule
+    override val instrumentationModule: InstrumentationModule get() = delegate.instrumentationModule
+    override val featureModule: FeatureModule get() = delegate.featureModule
+    override val sessionOrchestrationModule: SessionOrchestrationModule get() = delegate.sessionOrchestrationModule
+    override val payloadSourceModule: PayloadSourceModule get() = delegate.payloadSourceModule
 
     /**
      * Returns true when the call has triggered an initialization, false if initialization is already in progress or is complete.
      */
-
-    @Suppress("CyclomaticComplexMethod", "ComplexMethod")
     fun init(
         context: Context,
         sdkStartTimeMs: Long,
@@ -383,280 +297,72 @@ internal class ModuleInitBootstrapper(
             if (isInitialized()) {
                 return false
             }
-
-            synchronized(initialized) {
-                val result = if (!isInitialized()) {
-                    coreModule = init(CoreModule::class) { coreModuleSupplier(context, initModule) }
-
-                    workerThreadModule = init(WorkerThreadModule::class) {
-                        workerThreadModuleSupplier()
-                    }
-
-                    postInit(OpenTelemetryModule::class) {
-                        EmbTrace.trace("span-service-init") {
-                            openTelemetryModule.spanService.initializeService(sdkStartTimeMs)
-                        }
-                    }
-
-                    androidServicesModule = init(AndroidServicesModule::class) {
-                        androidServicesModuleSupplier(initModule, coreModule)
-                    }
-
-                    configModule = init(ConfigModule::class) {
-                        configModuleSupplier(
-                            initModule,
-                            coreModule,
-                            openTelemetryModule,
-                            workerThreadModule,
-                            androidServicesModule,
-                        )
-                    }
-
-                    EmbTrace.trace("sdk-disable-check") {
-                        // kick off config HTTP request first so the SDK can't get in a permanently disabled state
-                        EmbTrace.trace("load-config-response") {
-                            configModule.combinedRemoteConfigSource?.scheduleConfigRequests()
-                        }
-
-                        EmbTrace.trace("behavior-check") {
-                            if (configModule.configService.sdkModeBehavior.isSdkDisabled()) {
-                                return false
-                            }
-                        }
-                    }
-
-                    val serviceRegistry = coreModule.serviceRegistry
-                    postInit(ConfigModule::class) {
-                        serviceRegistry.registerService(lazy { configModule.configService })
-                        serviceRegistry.registerService(lazy { configModule.remoteConfigSource })
-                        serviceRegistry.registerService(lazy { configModule.configService.networkBehavior.domainCountLimiter })
-                        openTelemetryModule.applyConfiguration(
-                            sensitiveKeysBehavior = configModule.configService.sensitiveKeysBehavior,
-                            bypassValidation = configModule.configService.isOnlyUsingOtelExporters(),
-                            otelBehavior = configModule.configService.otelBehavior
-                        )
-                    }
-
-                    systemServiceModule = init(SystemServiceModule::class) {
-                        systemServiceModuleSupplier(coreModule, versionChecker)
-                    }
-
-                    storageModule = init(StorageModule::class) {
-                        storageModuleSupplier(initModule, coreModule, workerThreadModule)
-                    }
-
-                    essentialServiceModule = init(EssentialServiceModule::class) {
-                        essentialServiceModuleSupplier(
-                            initModule,
-                            configModule,
-                            openTelemetryModule,
-                            coreModule,
-                            workerThreadModule,
-                            systemServiceModule,
-                            androidServicesModule,
-                            { null },
-                            { null },
-                        )
-                    }
-                    postInit(EssentialServiceModule::class) {
-                        with(essentialServiceModule) {
-                            serviceRegistry.registerServices(
-                                lazy { essentialServiceModule.appStateTracker },
-                                lazy { activityLifecycleTracker },
-                                lazy { networkConnectivityService }
-                            )
-
-                            workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker).submit {
-                                EmbTrace.trace("network-connectivity-registration") {
-                                    essentialServiceModule.networkConnectivityService.register()
-                                }
-                            }
-                        }
-                    }
-
-                    instrumentationModule = init(InstrumentationModule::class) {
-                        instrumentationModuleSupplier(
-                            initModule,
-                            workerThreadModule,
-                            configModule,
-                            essentialServiceModule,
-                            androidServicesModule,
-                            coreModule,
-                        )
-                    }
-
-                    anrModule = init(AnrModule::class) {
-                        anrModuleSupplier(
-                            instrumentationModule.instrumentationArgs,
-                            essentialServiceModule.appStateTracker
-                        )
-                    }
-
-                    featureModule = init(FeatureModule::class) {
-                        featureModuleSupplier(
-                            instrumentationModule,
-                            configModule.configService,
-                            storageModule,
-                        )
-                    }
-                    postInit(FeatureModule::class) {
-                        initModule.logger.errorHandlerProvider = { featureModule.internalErrorDataSource.dataSource }
-                    }
-
-                    dataCaptureServiceModule = init(DataCaptureServiceModule::class) {
-                        dataCaptureServiceModuleSupplier(
-                            initModule,
-                            openTelemetryModule,
-                            configModule.configService,
-                            versionChecker,
-                        )
-                    }
-
-                    EmbTrace.trace("startup-tracker") {
-                        coreModule.application.registerActivityLifecycleCallbacks(
-                            dataCaptureServiceModule.startupTracker
-                        )
-                    }
-
-                    postInit(DataCaptureServiceModule::class) {
-                        serviceRegistry.registerServices(
-                            lazy { dataCaptureServiceModule.appStartupDataCollector },
-                            lazy { dataCaptureServiceModule.uiLoadDataListener },
-                        )
-                    }
-
-                    deliveryModule = init(DeliveryModule::class) {
-                        deliveryModuleSupplier(
-                            configModule,
-                            initModule,
-                            openTelemetryModule,
-                            workerThreadModule,
-                            coreModule,
-                            essentialServiceModule,
-                            androidServicesModule,
-                            null,
-                            null,
-                            null,
-                            null
-                        )
-                    }
-                    postInit(DeliveryModule::class) {
-                        deliveryModule.payloadCachingService?.run {
-                            openTelemetryModule.spanRepository.setSpanUpdateNotifier {
-                                reportBackgroundActivityStateChange()
-                            }
-                        }
-                    }
-
-                    postInit(AnrModule::class) {
-                        serviceRegistry.registerServices(
-                            lazy { anrModule.anrService }
-                        )
-                        anrModule.anrService?.startAnrCapture()
-                    }
-
-                    payloadSourceModule = init(PayloadSourceModule::class) {
-                        payloadSourceModuleSupplier(
-                            initModule,
-                            coreModule,
-                            workerThreadModule,
-                            systemServiceModule,
-                            androidServicesModule,
-                            essentialServiceModule,
-                            configModule,
-                            { nativeCoreModule.symbolService.symbolsForCurrentArch },
-                            openTelemetryModule,
-                            { anrModule.anrOtelMapper },
-                            deliveryModule
-                        )
-                    }
-                    postInit(PayloadSourceModule::class) {
-                        payloadSourceModule.metadataService.precomputeValues()
-                    }
-
-                    nativeCoreModule = init(NativeCoreModule::class) {
-                        nativeCoreModuleSupplier(
-                            coreModule,
-                            workerThreadModule,
-                            storageModule,
-                            essentialServiceModule,
-                            instrumentationModule,
-                            openTelemetryModule,
-                            { null },
-                            { null },
-                            { null },
-                        )
-                    }
-
-                    nativeFeatureModule = init(NativeFeatureModule::class) {
-                        nativeFeatureModuleSupplier(
-                            nativeCoreModule,
-                            instrumentationModule,
-                        )
-                    }
-
-                    postInit(NativeFeatureModule::class) {
-                        nativeCoreModule.sharedObjectLoader.loadEmbraceNative()
-                        nativeCoreModule.nativeCrashHandlerInstaller?.install()
-                    }
-
-                    logModule = init(LogModule::class) {
-                        logModuleSupplier(
-                            initModule,
-                            openTelemetryModule,
-                            essentialServiceModule,
-                            configModule,
-                            deliveryModule,
-                            workerThreadModule,
-                            payloadSourceModule,
-                        )
-                    }
-
-                    postInit(LogModule::class) {
-                        serviceRegistry.registerService(lazy { logModule.attachmentService })
-                        serviceRegistry.registerService(lazy { logModule.logService })
-                        // Start the log orchestrator
-                        openTelemetryModule.logSink.registerLogStoredCallback {
-                            logModule.logOrchestrator.onLogsAdded()
-                        }
-                    }
-
-                    sessionOrchestrationModule = init(SessionOrchestrationModule::class) {
-                        sessionOrchestrationModuleSupplier(
-                            initModule,
-                            openTelemetryModule,
-                            androidServicesModule,
-                            essentialServiceModule,
-                            configModule,
-                            deliveryModule,
-                            instrumentationModule,
-                            payloadSourceModule,
-                            dataCaptureServiceModule.startupService,
-                            logModule
-                        )
-                    }
-                    postInit(SessionOrchestrationModule::class) {
-                        essentialServiceModule.telemetryDestination.sessionUpdateAction =
-                            sessionOrchestrationModule.sessionOrchestrator::onSessionDataUpdate
-                    }
-
-                    // Sets up the registered services. This method is called after the SDK has been started and no more services can
-                    // be added to the registry. It sets listeners for any services that were registered.
-                    EmbTrace.trace("service-registration") {
-                        serviceRegistry.closeRegistration()
-                        serviceRegistry.registerActivityListeners(essentialServiceModule.appStateTracker)
-                        serviceRegistry.registerMemoryCleanerListeners(sessionOrchestrationModule.memoryCleanerService)
-                        serviceRegistry.registerActivityLifecycleListeners(essentialServiceModule.activityLifecycleTracker)
-                    }
-                    true
-                } else {
-                    false
+            synchronized(delegate) {
+                if (isInitialized()) {
+                    return false
                 }
-                initialized.set(result)
-                return result
+                delegate = InitializedModuleGraph(
+                    context,
+                    sdkStartTimeMs,
+                    versionChecker,
+                    initModule,
+                    openTelemetryModule,
+                    coreModuleSupplier,
+                    configModuleSupplier,
+                    workerThreadModuleSupplier,
+                    storageModuleSupplier,
+                    essentialServiceModuleSupplier,
+                    featureModuleSupplier,
+                    instrumentationModuleSupplier,
+                    dataCaptureServiceModuleSupplier,
+                    deliveryModuleSupplier,
+                    anrModuleSupplier,
+                    logModuleSupplier,
+                    nativeCoreModuleSupplier,
+                    nativeFeatureModuleSupplier,
+                    sessionOrchestrationModuleSupplier,
+                    payloadSourceModuleSupplier
+                )
+                return isInitialized()
             }
+        } catch (ignored: SdkDisabledException) {
+            // do nothing - avoid instantiating SDK code any more than necessary.
+            return false
         } finally {
             EmbTrace.end()
+        }
+    }
+
+    /**
+     * Registers objects as listeners for lifecycle/state callbacks.
+     */
+    fun registerListeners() {
+        EmbTrace.trace("service-registration") {
+            with(coreModule.serviceRegistry) {
+                registerService(lazy { configModule.configService })
+                registerService(lazy { configModule.remoteConfigSource })
+                registerService(lazy { configModule.configService.networkBehavior.domainCountLimiter })
+
+                registerServices(
+                    lazy { essentialServiceModule.appStateTracker },
+                    lazy { essentialServiceModule.activityLifecycleTracker },
+                    lazy { essentialServiceModule.networkConnectivityService }
+                )
+                registerServices(
+                    lazy { dataCaptureServiceModule.appStartupDataCollector },
+                    lazy { dataCaptureServiceModule.uiLoadDataListener },
+                )
+                registerServices(
+                    lazy { anrModule.anrService }
+                )
+                registerService(lazy { logModule.attachmentService })
+                registerService(lazy { logModule.logService })
+
+                // registration ignored after this point
+                registerAppStateListeners(essentialServiceModule.appStateTracker)
+                registerMemoryCleanerListeners(sessionOrchestrationModule.memoryCleanerService)
+                registerActivityLifecycleListeners(essentialServiceModule.activityLifecycleTracker)
+            }
         }
     }
 
@@ -685,22 +391,14 @@ internal class ModuleInitBootstrapper(
         if (!isInitialized()) {
             return
         }
-        if (isInitialized()) {
-            coreModule.serviceRegistry.close()
-            workerThreadModule.close()
-            initialized.set(false)
+        synchronized(delegate) {
+            if (isInitialized()) {
+                coreModule.serviceRegistry.close()
+                workerThreadModule.close()
+                delegate = UninitializedModuleGraph
+            }
         }
     }
 
-    fun isInitialized(): Boolean = initialized.get()
-
-    private fun <T> init(module: KClass<*>, provider: Provider<T>): T =
-        EmbTrace.trace("${toSectionName(module)}-init") { provider() }
-
-    private fun <T> postInit(module: KClass<*>, code: () -> T): T =
-        EmbTrace.trace("${toSectionName(module)}-post-init") { code() }
-
-    // This is called twice for each input - memoizing/caching is not worth the hassle
-    private fun toSectionName(klass: KClass<*>): String =
-        klass.simpleName?.removeSuffix("Module")?.lowercase(Locale.ENGLISH) ?: "module"
+    fun isInitialized(): Boolean = delegate != UninitializedModuleGraph
 }

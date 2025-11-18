@@ -1,12 +1,10 @@
 package io.embrace.android.embracesdk.testcases.features
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.assertions.returnIfConditionMet
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
-import io.embrace.android.embracesdk.internal.injection.WorkerThreadModule
-import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbracePayloadAssertionInterface
-import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -29,8 +27,8 @@ internal class RemoteConfigTest {
 
     @Test
     fun `SDK can start`() {
-        val module by lazy { testRule.bootstrapper.workerThreadModule }
-        testRule.runTest(persistedRemoteConfig = sdkEnabledConfig,
+        testRule.runTest(
+            persistedRemoteConfig = sdkEnabledConfig,
             serverResponseConfig = sdkDisabledConfig,
             preSdkStartAction = {
                 assertNoConfigPersisted()
@@ -40,14 +38,14 @@ internal class RemoteConfigTest {
                 assertTrue(embrace.isStarted)
             },
             assertAction = {
-                assertConfigStored(module, 0)
+                assertConfigStored(0)
             })
     }
 
     @Test
     fun `SDK disabled via config cannot start`() {
-        val module by lazy { testRule.bootstrapper.workerThreadModule }
-        testRule.runTest(persistedRemoteConfig = sdkDisabledConfig,
+        testRule.runTest(
+            persistedRemoteConfig = sdkDisabledConfig,
             serverResponseConfig = sdkEnabledConfig,
             expectSdkToStart = false,
             preSdkStartAction = {
@@ -58,18 +56,22 @@ internal class RemoteConfigTest {
             },
             assertAction = {
                 assertConfigRequested(1)
-                assertConfigStored(module, 100)
+                assertConfigStored(100)
             })
     }
 
     private fun EmbracePayloadAssertionInterface.assertConfigStored(
-        module: WorkerThreadModule,
         expectedThreshold: Int,
     ) {
         assertConfigRequested(1)
-        module.backgroundWorker(Worker.Background.IoRegWorker).shutdownAndWait(10000)
-        val response = readPersistedConfigResponse()
-        assertEquals(expectedThreshold, response.cfg?.threshold)
-        assertEquals("server_etag_value", response.etag)
+        returnIfConditionMet(
+            desiredValueSupplier = {},
+            condition = {
+                expectedThreshold == it.cfg?.threshold && "server_etag_value" == it.etag
+            },
+            dataProvider = {
+                readPersistedConfigResponse()
+            }
+        )
     }
 }

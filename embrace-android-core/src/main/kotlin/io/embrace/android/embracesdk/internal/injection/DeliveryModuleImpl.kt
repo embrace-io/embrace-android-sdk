@@ -30,7 +30,6 @@ class DeliveryModuleImpl(
     workerThreadModule: WorkerThreadModule,
     coreModule: CoreModule,
     essentialServiceModule: EssentialServiceModule,
-    androidServicesModule: AndroidServicesModule,
     requestExecutionServiceProvider: Provider<RequestExecutionService>?,
     payloadStorageServiceProvider: Provider<PayloadStorageService>?,
     cacheStorageServiceProvider: Provider<PayloadStorageService>?,
@@ -144,7 +143,7 @@ class DeliveryModuleImpl(
         } else {
             val appId = configModule.configService.appId ?: return@singleton null
             val coreBaseUrl = configModule.urlBuilder?.baseDataUrl ?: return@singleton null
-            val lazyDeviceId = lazy(androidServicesModule.preferencesService::deviceIdentifier)
+            val lazyDeviceId = lazy(coreModule.preferencesService::deviceIdentifier)
             OkHttpRequestExecutionService(
                 configModule.okHttpClient,
                 coreBaseUrl,

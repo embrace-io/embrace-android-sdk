@@ -38,7 +38,7 @@ internal class SdkStateApiDelegateTest {
         )
         moduleInitBootstrapper.init(ApplicationProvider.getApplicationContext(), 0)
         orchestrator = moduleInitBootstrapper.sessionOrchestrationModule.sessionOrchestrator as FakeSessionOrchestrator
-        preferencesService = moduleInitBootstrapper.androidServicesModule.preferencesService as FakePreferenceService
+        preferencesService = moduleInitBootstrapper.coreModule.preferencesService as FakePreferenceService
         sessionIdTracker = moduleInitBootstrapper.essentialServiceModule.sessionIdTracker as FakeSessionIdTracker
         logger = FakeEmbLogger()
         sdkCallChecker = SdkCallChecker(logger, FakeTelemetryService())

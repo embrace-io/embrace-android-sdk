@@ -10,19 +10,12 @@ import io.embrace.android.embracesdk.internal.delivery.execution.RequestExecutio
 import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageService
 import io.embrace.android.embracesdk.internal.envelope.session.OtelPayloadMapper
 import io.embrace.android.embracesdk.internal.utils.Provider
-import io.embrace.android.embracesdk.internal.utils.VersionChecker
-
-typealias AndroidServicesModuleSupplier = (
-    initModule: InitModule,
-    coreModule: CoreModule,
-) -> AndroidServicesModule
 
 typealias ConfigModuleSupplier = (
     initModule: InitModule,
     coreModule: CoreModule,
     openTelemetryModule: OpenTelemetryModule,
     workerThreadModule: WorkerThreadModule,
-    androidServicesModule: AndroidServicesModule,
 ) -> ConfigModule
 
 typealias CoreModuleSupplier = (
@@ -37,7 +30,6 @@ typealias DeliveryModuleSupplier = (
     workerThreadModule: WorkerThreadModule,
     coreModule: CoreModule,
     essentialServiceModule: EssentialServiceModule,
-    androidServicesModule: AndroidServicesModule,
     payloadStorageServiceProvider: Provider<PayloadStorageService>?,
     cacheStorageServiceProvider: Provider<PayloadStorageService>?,
     requestExecutionServiceProvider: Provider<RequestExecutionService>?,
@@ -50,8 +42,6 @@ typealias EssentialServiceModuleSupplier = (
     openTelemetryModule: OpenTelemetryModule,
     coreModule: CoreModule,
     workerThreadModule: WorkerThreadModule,
-    systemServiceModule: SystemServiceModule,
-    androidServicesModule: AndroidServicesModule,
     lifecycleOwnerProvider: Provider<LifecycleOwner?>,
     networkConnectivityServiceProvider: Provider<NetworkConnectivityService?>,
 ) -> EssentialServiceModule
@@ -67,7 +57,6 @@ typealias InstrumentationModuleSupplier = (
     workerThreadModule: WorkerThreadModule,
     configModule: ConfigModule,
     essentialServiceModule: EssentialServiceModule,
-    androidServicesModule: AndroidServicesModule,
     coreModule: CoreModule,
 ) -> InstrumentationModule
 
@@ -85,8 +74,6 @@ typealias PayloadSourceModuleSupplier = (
     initModule: InitModule,
     coreModule: CoreModule,
     workerThreadModule: WorkerThreadModule,
-    systemServiceModule: SystemServiceModule,
-    androidServicesModule: AndroidServicesModule,
     essentialServiceModule: EssentialServiceModule,
     configModule: ConfigModule,
     nativeSymbolsProvider: Provider<Map<String, String>?>,
@@ -98,7 +85,7 @@ typealias PayloadSourceModuleSupplier = (
 typealias SessionOrchestrationModuleSupplier = (
     initModule: InitModule,
     openTelemetryModule: OpenTelemetryModule,
-    androidServicesModule: AndroidServicesModule,
+    coreModule: CoreModule,
     essentialServiceModule: EssentialServiceModule,
     configModule: ConfigModule,
     deliveryModule: DeliveryModule,
@@ -113,10 +100,5 @@ typealias StorageModuleSupplier = (
     coreModule: CoreModule,
     workerThreadModule: WorkerThreadModule,
 ) -> StorageModule
-
-typealias SystemServiceModuleSupplier = (
-    coreModule: CoreModule,
-    versionChecker: VersionChecker,
-) -> SystemServiceModule
 
 typealias WorkerThreadModuleSupplier = () -> WorkerThreadModule

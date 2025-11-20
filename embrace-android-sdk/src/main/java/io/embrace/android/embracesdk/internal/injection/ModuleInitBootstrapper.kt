@@ -37,8 +37,8 @@ import java.util.ServiceLoader
  * A class that wires together and initializes modules in a manner that makes them work as a cohesive whole.
  */
 internal class ModuleInitBootstrapper(
-    val initModule: InitModule = EmbTrace.trace("init-module", ::InitModuleImpl),
-    val openTelemetryModule: OpenTelemetryModule = EmbTrace.trace("otel-module") {
+    override val initModule: InitModule = EmbTrace.trace("init-module", ::InitModuleImpl),
+    override val openTelemetryModule: OpenTelemetryModule = EmbTrace.trace("otel-module") {
         OpenTelemetryModuleImpl(initModule)
     },
     private val coreModuleSupplier: CoreModuleSupplier = {

@@ -52,6 +52,16 @@ interface TelemetryDestination {
     ): SpanToken?
 
     /**
+     * Starts a new span with the given [name] and [startTimeMs].
+     */
+    fun startSpanCapture(
+        name: String,
+        startTimeMs: Long,
+        parent: SpanToken? = null,
+        type: EmbType = EmbType.Performance.Default,
+    ): SpanToken?
+
+    /**
      * Records a span that has already completed.
      */
     fun recordCompletedSpan(
@@ -59,7 +69,9 @@ interface TelemetryDestination {
         startTimeMs: Long,
         endTimeMs: Long,
         errorCode: ErrorCodeAttribute? = null,
+        parent: SpanToken? = null,
         type: EmbType = EmbType.Performance.Default,
+        internal: Boolean = true,
         attributes: Map<String, String> = emptyMap(),
         events: List<SpanEvent> = emptyList(),
     )

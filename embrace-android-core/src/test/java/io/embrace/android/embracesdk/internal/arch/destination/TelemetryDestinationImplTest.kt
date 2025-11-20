@@ -232,6 +232,7 @@ internal class TelemetryDestinationImplTest {
         assertEquals("event", event.name)
         assertEquals(clock.now().millisToNanos(), event.timestampNanos)
         assertEquals("value", event.attributes["key"])
+        assertNull(span.parent)
         verifyAndResetSessionUpdate()
     }
 
@@ -248,7 +249,9 @@ internal class TelemetryDestinationImplTest {
             startTimeMs,
             endTimeMs,
             errorCode,
+            null,
             type,
+            true,
             attributes
         )
         val span = spanService.createdSpans.single()
@@ -260,6 +263,26 @@ internal class TelemetryDestinationImplTest {
         assertTrue(span.hasEmbraceAttribute(errorCode))
         assertEquals(type, span.type)
         assertEquals(attributes + mapOf(type.asPair(), errorCode.asPair()), span.attributes)
+        verifyAndResetSessionUpdate()
+    }
+
+    @Test
+    fun `test start simple span`() {
+        val name = "success-span"
+        val startTimeMs = clock.now()
+        val token = impl.startSpanCapture(
+            name,
+            startTimeMs,
+        ) ?: error("Failed to create span")
+        token.stop()
+
+        val span = spanService.createdSpans.single()
+        assertEquals(name, span.name)
+        assertEquals(startTimeMs, span.spanStartTimeMs)
+        assertEquals(StatusCode.UNSET, span.status.statusCode)
+        assertTrue(span.hasEmbraceAttribute(EmbType.Performance.Default))
+        assertFalse(span.attributes.containsKey("emb.error_code"))
+        assertNull(span.parent)
         verifyAndResetSessionUpdate()
     }
 

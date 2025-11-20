@@ -26,7 +26,7 @@ internal class SessionApiDelegateTest {
     @Before
     fun setUp() {
         val moduleInitBootstrapper = fakeModuleInitBootstrapper()
-        moduleInitBootstrapper.init(ApplicationProvider.getApplicationContext(), 0)
+        moduleInitBootstrapper.init(ApplicationProvider.getApplicationContext())
         orchestrator = moduleInitBootstrapper.sessionOrchestrationModule.sessionOrchestrator as FakeSessionOrchestrator
         sessionPropertiesService =
             moduleInitBootstrapper.essentialServiceModule.sessionPropertiesService as FakeSessionPropertiesService

@@ -1,12 +1,12 @@
 package io.embrace.android.embracesdk.internal.instrumentation.startup.activity
 
 import android.app.Application.ActivityLifecycleCallbacks
+import io.embrace.android.embracesdk.internal.arch.datasource.SpanEvent
+import io.embrace.android.embracesdk.internal.arch.datasource.SpanToken
+import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
-import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
-import io.embrace.android.embracesdk.internal.otel.spans.SpanService
+import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
-import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
-import io.embrace.android.embracesdk.spans.ErrorCode
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicReference
 
@@ -45,7 +45,7 @@ import java.util.concurrent.atomic.AtomicReference
  * - Android 5, when [ActivityLifecycleCallbacks.onActivityResumed] is fired.
  */
 class UiLoadTraceEmitter(
-    private val spanService: SpanService,
+    private val destination: TelemetryDestination,
     versionChecker: VersionChecker,
 ) : UiLoadDataListener {
 
@@ -204,7 +204,7 @@ class UiLoadTraceEmitter(
         endTrace(
             instanceId = instanceId,
             timestampMs = timestampMs,
-            errorCode = ErrorCode.USER_ABANDON
+            errorCode = ErrorCodeAttribute.UserAbandon
         )
     }
 
@@ -220,11 +220,11 @@ class UiLoadTraceEmitter(
         startTimeMs: Long,
         endTimeMs: Long,
         attributes: Map<String, String>,
-        events: List<EmbraceSpanEvent>,
-        errorCode: ErrorCode?,
+        events: List<SpanEvent>,
+        errorCode: ErrorCodeAttribute?,
     ) {
         activeTraces[instanceId]?.run {
-            spanService.recordCompletedSpan(
+            destination.recordCompletedSpan(
                 name = name,
                 startTimeMs = startTimeMs,
                 endTimeMs = endTimeMs,
@@ -250,7 +250,7 @@ class UiLoadTraceEmitter(
                 discard(previousInstance.id, timestampMs)
             }
 
-            spanService.startSpan(
+            destination.startSpanCapture(
                 name = traceName(activityName, uiLoadType),
                 startTimeMs = timestampMs,
                 type = EmbType.Performance.UiLoad,
@@ -274,10 +274,10 @@ class UiLoadTraceEmitter(
         }
     }
 
-    private fun endTrace(instanceId: Int, timestampMs: Long, errorCode: ErrorCode? = null) {
+    private fun endTrace(instanceId: Int, timestampMs: Long, errorCode: ErrorCodeAttribute? = null) {
         activeTraces[instanceId]?.let { trace ->
             with(trace) {
-                children.values.filter { it.isRecording }.forEach { span ->
+                children.values.filter { it.isRecording() }.forEach { span ->
                     span.stop(endTimeMs = timestampMs, errorCode = errorCode)
                 }
                 root.stop(endTimeMs = timestampMs, errorCode = errorCode)
@@ -289,7 +289,7 @@ class UiLoadTraceEmitter(
     private fun startChildSpan(instanceId: Int, timestampMs: Long, lifecycleStage: LifecycleStage) {
         val trace = activeTraces[instanceId]
         if (trace != null && !trace.children.containsKey(lifecycleStage)) {
-            spanService.startSpan(
+            destination.startSpanCapture(
                 name = lifecycleStage.spanName(trace.activityName),
                 parent = trace.root,
                 startTimeMs = timestampMs,
@@ -322,8 +322,8 @@ class UiLoadTraceEmitter(
     private data class UiLoadTrace(
         val activityName: String,
         val traceCompleteTrigger: TraceCompleteTrigger,
-        val root: EmbraceSdkSpan,
-        val children: Map<LifecycleStage, EmbraceSdkSpan> = ConcurrentHashMap(),
+        val root: SpanToken,
+        val children: Map<LifecycleStage, SpanToken> = ConcurrentHashMap(),
     )
 
     private data class UiInstance(val name: String, val id: Int)

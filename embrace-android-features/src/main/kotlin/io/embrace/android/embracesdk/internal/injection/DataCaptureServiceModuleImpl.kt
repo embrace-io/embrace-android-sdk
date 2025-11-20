@@ -19,7 +19,6 @@ import io.embrace.android.embracesdk.internal.utils.VersionChecker
 
 class DataCaptureServiceModuleImpl(
     initModule: InitModule,
-    openTelemetryModule: OpenTelemetryModule,
     instrumentationModule: InstrumentationModule,
     configService: ConfigService,
     versionChecker: VersionChecker = BuildVersionChecker,
@@ -35,7 +34,7 @@ class DataCaptureServiceModuleImpl(
         AppStartupTraceEmitter(
             clock = initModule.clock,
             startupServiceProvider = { startupService },
-            spanService = openTelemetryModule.spanService,
+            destination = instrumentationModule.instrumentationArgs.destination,
             versionChecker = versionChecker,
             logger = initModule.logger,
             manualEnd = configService.autoDataCaptureBehavior.isEndStartupWithAppReadyEnabled(),
@@ -57,7 +56,7 @@ class DataCaptureServiceModuleImpl(
     override val uiLoadDataListener: UiLoadDataListener? by singleton {
         if (configService.autoDataCaptureBehavior.isUiLoadTracingEnabled()) {
             UiLoadTraceEmitter(
-                spanService = openTelemetryModule.spanService,
+                destination = instrumentationModule.instrumentationArgs.destination,
                 versionChecker = versionChecker,
             )
         } else {

@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.fakes
 
+import io.embrace.android.embracesdk.internal.arch.datasource.SpanEvent
+import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.instrumentation.startup.activity.UiLoadDataListener
-import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
-import io.embrace.android.embracesdk.spans.ErrorCode
 
 class FakeUiLoadDataListener : UiLoadDataListener {
     override fun create(instanceId: Int, activityName: String, timestampMs: Long, manualEnd: Boolean) {
@@ -44,8 +44,8 @@ class FakeUiLoadDataListener : UiLoadDataListener {
         startTimeMs: Long,
         endTimeMs: Long,
         attributes: Map<String, String>,
-        events: List<EmbraceSpanEvent>,
-        errorCode: ErrorCode?,
+        events: List<SpanEvent>,
+        errorCode: ErrorCodeAttribute?,
     ) {
     }
 }

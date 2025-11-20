@@ -109,7 +109,6 @@ internal class InitializedModuleGraph(
     override val dataCaptureServiceModule: DataCaptureServiceModule = init {
         dataCaptureServiceModuleSupplier(
             initModule,
-            openTelemetryModule,
             instrumentationModule,
             configModule.configService,
             versionChecker,

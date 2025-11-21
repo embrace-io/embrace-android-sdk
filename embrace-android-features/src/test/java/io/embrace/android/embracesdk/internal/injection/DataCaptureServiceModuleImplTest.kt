@@ -1,9 +1,11 @@
 package io.embrace.android.embracesdk.internal.injection
 
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeInstrumentationModule
 import io.embrace.android.embracesdk.fakes.FakeVersionChecker
 import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
+import io.mockk.mockk
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Test
@@ -12,12 +14,14 @@ internal class DataCaptureServiceModuleImplTest {
 
     private val initModule = FakeInitModule()
     private val openTelemetryModule = initModule.openTelemetryModule
+    private val instrumentationModule = FakeInstrumentationModule(mockk())
 
     @Test
     fun testDefaultImplementations() {
         val module = DataCaptureServiceModuleImpl(
             initModule,
             openTelemetryModule,
+            instrumentationModule,
             FakeConfigService(),
             FakeVersionChecker(false)
         )
@@ -33,6 +37,7 @@ internal class DataCaptureServiceModuleImplTest {
         val module = DataCaptureServiceModuleImpl(
             initModule,
             openTelemetryModule,
+            instrumentationModule,
             FakeConfigService(
                 autoDataCaptureBehavior = FakeAutoDataCaptureBehavior(uiLoadTracingEnabled = false)
             ),
@@ -48,6 +53,7 @@ internal class DataCaptureServiceModuleImplTest {
         val module = DataCaptureServiceModuleImpl(
             initModule,
             openTelemetryModule,
+            instrumentationModule,
             FakeConfigService(
                 autoDataCaptureBehavior = FakeAutoDataCaptureBehavior(uiLoadTracingTraceAll = false)
             ),

@@ -72,6 +72,7 @@ interface TelemetryDestination {
         parent: SpanToken? = null,
         type: EmbType = EmbType.Performance.Default,
         internal: Boolean = true,
+        private: Boolean = false,
         attributes: Map<String, String> = emptyMap(),
         events: List<SpanEvent> = emptyList(),
     )

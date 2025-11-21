@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeClock.Companion.DEFAULT_FAKE_CURRENT_TIME
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeProcessInfo
+import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.arch.attrs.embStartupActivityName
 import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
@@ -77,7 +78,7 @@ internal class AppStartupTraceEmitterTest {
         }
         spanService.initializeService(clock.now())
         startupService = StartupServiceImpl(
-            spanService
+            FakeTelemetryDestination()
         )
         clock.tick(100L)
         logger = FakeEmbLogger(false)

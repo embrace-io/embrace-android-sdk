@@ -13,6 +13,7 @@ class FakeSpanToken(
     var parent: SpanToken?,
     val type: EmbType,
     val internal: Boolean,
+    val private: Boolean,
     initialAttrs: Map<String, String>,
     val events: List<SpanEvent>,
 ) : SpanToken {
@@ -34,6 +35,7 @@ class FakeSpanToken(
     }
 
     override fun setSystemAttribute(key: String, value: String) {
+        attrs[key] = value
     }
 
     override fun getStartTimeMs(): Long? = startTimeMs

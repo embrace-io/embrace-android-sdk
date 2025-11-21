@@ -110,6 +110,7 @@ internal class InitializedModuleGraph(
         dataCaptureServiceModuleSupplier(
             initModule,
             openTelemetryModule,
+            instrumentationModule,
             configModule.configService,
             versionChecker,
         )

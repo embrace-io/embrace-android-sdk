@@ -150,12 +150,12 @@ internal class BackgroundActivityDisabledTest {
 
         testRule.runTest(
             testCaseAction = {
-                with(recordSession()) {
+                with(recordSession(isBackgroundActivityEnabled = false)) {
                     session1StartMs = startTimeMs
                     session1EndMs = endTimeMs
                 }
                 clock.tick(15000)
-                with(recordSession()) {
+                with(recordSession(isBackgroundActivityEnabled = false)) {
                     session2StartMs = startTimeMs
                     session2EndMs = endTimeMs
                 }

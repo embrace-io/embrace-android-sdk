@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk
 import android.annotation.SuppressLint
 import android.content.Context
 import android.util.Log
-import io.embrace.android.embracesdk.core.BuildConfig
 import io.embrace.android.embracesdk.internal.EmbraceInternalApi
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
 import io.embrace.android.embracesdk.internal.FlutterInternalInterface
@@ -36,16 +35,18 @@ import io.embrace.android.embracesdk.internal.injection.InternalInterfaceModule
 import io.embrace.android.embracesdk.internal.injection.InternalInterfaceModuleImpl
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.injection.asFile
-import io.embrace.android.embracesdk.internal.injection.embraceImplInject
+import io.embrace.android.embracesdk.internal.injection.loadInstrumentation
+import io.embrace.android.embracesdk.internal.injection.markSdkInitComplete
+import io.embrace.android.embracesdk.internal.injection.postInit
+import io.embrace.android.embracesdk.internal.injection.postLoadInstrumentation
+import io.embrace.android.embracesdk.internal.injection.registerListeners
+import io.embrace.android.embracesdk.internal.injection.triggerPayloadSend
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
-import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.EmbTrace.end
 import io.embrace.android.embracesdk.internal.utils.EmbTrace.start
-import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.spans.TracingApi
 import java.util.concurrent.Executors
-import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * Implementation class of the SDK. Embrace.java forms our public API and calls functions in this
@@ -92,84 +93,39 @@ internal class EmbraceImpl(
 
     private val logger by lazy { bootstrapper.initModule.logger }
     private val clock by lazy { bootstrapper.initModule.clock }
-    private val sdkShuttingDown = AtomicBoolean(false)
 
     @Volatile
     private var applicationInitStartMs: Long? = null
 
     private var internalInterfaceModule: InternalInterfaceModule? = null
 
-    private val configService by embraceImplInject { bootstrapper.configModule.configService }
-
     override fun start(context: Context) {
-        if (bootstrapper.isInitialized()) {
+        if (!bootstrapper.init(context)) {
             return
         }
+        bootstrapper.postInit()
 
-        val startTimeMs = clock.now()
-
-        if (!bootstrapper.init(context, startTimeMs)) {
-            return
-        }
         start("post-services-setup")
+        internalInterfaceModule = InternalInterfaceModuleImpl(
+            bootstrapper.initModule,
+            bootstrapper.openTelemetryModule,
+            bootstrapper.configModule,
+            bootstrapper.payloadSourceModule,
+            bootstrapper.instrumentationModule,
+            this,
+            bootstrapper
+        )
 
-        val configModule = bootstrapper.configModule
-
-        val internalInterfaceModuleImpl =
-            InternalInterfaceModuleImpl(
-                bootstrapper.initModule,
-                bootstrapper.openTelemetryModule,
-                configModule,
-                bootstrapper.payloadSourceModule,
-                bootstrapper.instrumentationModule,
-                this,
-                bootstrapper
-            )
-        internalInterfaceModule = internalInterfaceModuleImpl
-
-        when (configService?.appFramework) {
-            AppFramework.NATIVE -> {}
-            AppFramework.REACT_NATIVE -> internalInterfaceModuleImpl.reactNativeInternalInterface
-            AppFramework.UNITY -> internalInterfaceModuleImpl.unityInternalInterface
-            AppFramework.FLUTTER -> internalInterfaceModuleImpl.flutterInternalInterface
-            null -> {}
-        }
-        val appId = configModule.configService.appId
-        val startMsg = "Embrace SDK version ${BuildConfig.VERSION_NAME} started" + appId?.run { " for appId =  $this" }
-        logger.logInfo(startMsg)
-
-        val endTimeMs = clock.now()
+        // not fully initialized, but the SDK shouldn't catastrophically throw after this point,
+        // so we allow external calls.
         sdkCallChecker.started.set(true)
-        end()
-
         bootstrapper.registerListeners()
         bootstrapper.loadInstrumentation()
+        initializeHucInstrumentation(bootstrapper.configModule.configService.networkBehavior)
         bootstrapper.postLoadInstrumentation()
-
-        initializeHucInstrumentation(configModule.configService.networkBehavior)
-
-        start("startup-tracking")
-        val dataCaptureServiceModule = bootstrapper.dataCaptureServiceModule
-        dataCaptureServiceModule.startupService.setSdkStartupInfo(
-            startTimeMs,
-            endTimeMs,
-            bootstrapper.essentialServiceModule.appStateTracker.getAppState(),
-            Thread.currentThread().name
-        )
+        bootstrapper.triggerPayloadSend()
+        bootstrapper.markSdkInitComplete()
         end()
-
-        val worker = bootstrapper
-            .workerThreadModule
-            .backgroundWorker(Worker.Background.IoRegWorker)
-        worker.submit {
-            bootstrapper.payloadSourceModule.payloadResurrectionService?.resurrectOldPayloads(
-                nativeCrashServiceProvider = { bootstrapper.nativeFeatureModule.nativeCrashService }
-            )
-        }
-        worker.submit { // potentially trigger first delivery attempt by firing network status callback
-            registerDeliveryNetworkListener()
-            bootstrapper.deliveryModule.schedulingService?.onPayloadIntake()
-        }
     }
 
     private fun initializeHucInstrumentation(networkBehavior: NetworkBehavior) {
@@ -200,23 +156,11 @@ internal class EmbraceImpl(
         }
     }
 
-    private fun registerDeliveryNetworkListener() {
-        bootstrapper.deliveryModule.schedulingService?.let(
-            bootstrapper.essentialServiceModule.networkConnectivityService::addNetworkConnectivityListener
-        )
-    }
-
     /**
      * Shuts down the Embrace SDK.
      */
     fun stop() {
-        synchronized(sdkCallChecker) {
-            if (sdkShuttingDown.compareAndSet(false, true)) {
-                runCatching {
-                    bootstrapper.stopServices()
-                }
-            }
-        }
+        bootstrapper.stop()
     }
 
     override fun disable() {
@@ -256,36 +200,6 @@ internal class EmbraceImpl(
             exceptionName = exceptionName,
             exceptionMessage = exceptionMessage,
             customLogAttrs = customLogAttrs,
-        )
-    }
-
-    override fun logMessage(
-        message: String,
-        severity: Severity,
-        properties: Map<String, Any>,
-        attachment: ByteArray,
-    ) {
-        logsApiDelegate.logMessage(
-            message,
-            severity,
-            properties,
-            attachment
-        )
-    }
-
-    override fun logMessage(
-        message: String,
-        severity: Severity,
-        properties: Map<String, Any>,
-        attachmentId: String,
-        attachmentUrl: String,
-    ) {
-        logsApiDelegate.logMessage(
-            message,
-            severity,
-            properties,
-            attachmentId,
-            attachmentUrl,
         )
     }
 

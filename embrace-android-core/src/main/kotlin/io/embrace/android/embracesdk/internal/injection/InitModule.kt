@@ -11,6 +11,7 @@ import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
  * A module of components and services required at SDK instantiation time, i.e. before the SDK has fully started
  */
 interface InitModule {
+
     /**
      * Clock instance locked to the time of creation used by the SDK throughout its lifetime
      */

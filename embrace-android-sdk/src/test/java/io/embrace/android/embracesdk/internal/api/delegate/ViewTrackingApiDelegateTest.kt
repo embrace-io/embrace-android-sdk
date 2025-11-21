@@ -17,7 +17,7 @@ internal class ViewTrackingApiDelegateTest {
     @Before
     fun setUp() {
         val moduleInitBootstrapper = fakeModuleInitBootstrapper()
-        moduleInitBootstrapper.init(ApplicationProvider.getApplicationContext(), 0)
+        moduleInitBootstrapper.init(ApplicationProvider.getApplicationContext())
 
         val sdkCallChecker = SdkCallChecker(FakeEmbLogger(), FakeTelemetryService())
         sdkCallChecker.started.set(true)

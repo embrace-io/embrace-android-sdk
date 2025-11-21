@@ -26,6 +26,8 @@ class CoreModuleImpl(
     versionChecker: VersionChecker = BuildVersionChecker,
 ) : CoreModule {
 
+    override val sdkStartTime: Long = initModule.clock.now()
+
     override val context: Context by singleton {
         when (ctx) {
             is Application -> ctx

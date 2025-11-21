@@ -154,7 +154,7 @@ internal class ReactNativeInternalInterfaceImplTest {
     @Test
     fun `test RN crash by calling logUnhandledJsException() before handleCrash()`() {
         every { embrace.isStarted } returns true
-        bootstrapper.init(ApplicationProvider.getApplicationContext(), 0)
+        bootstrapper.init(ApplicationProvider.getApplicationContext())
 
         val registry = bootstrapper.instrumentationModule.instrumentationRegistry
         val args = bootstrapper.instrumentationModule.instrumentationArgs

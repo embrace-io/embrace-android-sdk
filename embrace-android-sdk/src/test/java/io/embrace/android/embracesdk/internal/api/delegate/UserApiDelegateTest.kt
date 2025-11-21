@@ -31,10 +31,7 @@ internal class UserApiDelegateTest {
                 }
             }
         )
-        moduleInitBootstrapper.init(
-            ApplicationProvider.getApplicationContext(),
-            0
-        )
+        moduleInitBootstrapper.init(ApplicationProvider.getApplicationContext())
         val sdkCallChecker = SdkCallChecker(FakeEmbLogger(), FakeTelemetryService())
         sdkCallChecker.started.set(true)
         delegate = UserApiDelegate(moduleInitBootstrapper, sdkCallChecker)

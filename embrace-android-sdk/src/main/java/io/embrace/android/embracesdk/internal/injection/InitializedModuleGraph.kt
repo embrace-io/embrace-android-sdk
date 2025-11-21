@@ -17,7 +17,6 @@ import io.embrace.android.embracesdk.internal.utils.VersionChecker
 @Suppress("UseCheckOrError")
 internal class InitializedModuleGraph(
     context: Context,
-    sdkStartTimeMs: Long,
     versionChecker: VersionChecker = BuildVersionChecker,
     override val initModule: InitModule,
     override val openTelemetryModule: OpenTelemetryModule,
@@ -46,7 +45,7 @@ internal class InitializedModuleGraph(
         workerThreadModuleSupplier()
     }.apply {
         EmbTrace.trace("span-service-init") {
-            openTelemetryModule.spanService.initializeService(sdkStartTimeMs)
+            openTelemetryModule.spanService.initializeService(coreModule.sdkStartTime)
         }
     }
 

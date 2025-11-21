@@ -36,7 +36,7 @@ internal class SdkStateApiDelegateTest {
         val moduleInitBootstrapper = fakeModuleInitBootstrapper(
             logModuleSupplier = { _, _, _, _, _, _, _ -> FakeLogModule(logService = logService) }
         )
-        moduleInitBootstrapper.init(ApplicationProvider.getApplicationContext(), 0)
+        moduleInitBootstrapper.init(ApplicationProvider.getApplicationContext())
         orchestrator = moduleInitBootstrapper.sessionOrchestrationModule.sessionOrchestrator as FakeSessionOrchestrator
         preferencesService = moduleInitBootstrapper.coreModule.preferencesService as FakePreferenceService
         sessionIdTracker = moduleInitBootstrapper.essentialServiceModule.sessionIdTracker as FakeSessionIdTracker

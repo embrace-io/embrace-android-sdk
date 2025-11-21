@@ -90,7 +90,7 @@ internal class EmbraceSetupInterface(
     )
 
     private val fakeCoreModule: CoreModule = FakeCoreModule()
-    private val coreModule: CoreModule = CoreModuleImpl(fakeCoreModule.context, fakeInitModule)
+    private val coreModule: CoreModule by lazy { CoreModuleImpl(fakeCoreModule.context, fakeInitModule) }
 
     @OptIn(ExperimentalApi::class)
     fun createBootstrapper(
@@ -240,7 +240,7 @@ internal class EmbraceSetupInterface(
             }
     }
 
-    private class DecoratedConfigModule(private val impl: ConfigModule): ConfigModule by impl {
+    private class DecoratedConfigModule(private val impl: ConfigModule) : ConfigModule by impl {
         override val appEnvironment: AppEnvironment = AppEnvironment(true)
         override val buildInfo: BuildInfo = BuildInfo(
             "fakeBuildId",

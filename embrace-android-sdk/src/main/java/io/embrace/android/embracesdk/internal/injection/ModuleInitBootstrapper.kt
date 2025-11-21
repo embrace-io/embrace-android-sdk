@@ -3,10 +3,8 @@ package io.embrace.android.embracesdk.internal.injection
 import android.content.Context
 import androidx.lifecycle.LifecycleOwner
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
-import io.embrace.android.embracesdk.internal.arch.InstrumentationProvider
 import io.embrace.android.embracesdk.internal.arch.state.AppStateTracker
 import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkConnectivityService
-import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkStatusDataSource
 import io.embrace.android.embracesdk.internal.capture.startup.StartupService
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
@@ -16,7 +14,6 @@ import io.embrace.android.embracesdk.internal.envelope.session.OtelPayloadMapper
 import io.embrace.android.embracesdk.internal.instrumentation.anr.AnrModule
 import io.embrace.android.embracesdk.internal.instrumentation.anr.AnrModuleImpl
 import io.embrace.android.embracesdk.internal.instrumentation.anr.AnrModuleSupplier
-import io.embrace.android.embracesdk.internal.instrumentation.crash.jvm.JvmCrashDataSource
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeCoreModule
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeCoreModuleImpl
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeCoreModuleSupplier
@@ -30,8 +27,6 @@ import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
-import io.embrace.android.embracesdk.internal.worker.Worker
-import java.util.ServiceLoader
 
 /**
  * A class that wires together and initializes modules in a manner that makes them work as a cohesive whole.
@@ -290,7 +285,6 @@ internal class ModuleInitBootstrapper(
      */
     fun init(
         context: Context,
-        sdkStartTimeMs: Long,
         versionChecker: VersionChecker = BuildVersionChecker,
     ): Boolean {
         try {
@@ -304,7 +298,6 @@ internal class ModuleInitBootstrapper(
                 }
                 delegate = InitializedModuleGraph(
                     context,
-                    sdkStartTimeMs,
                     versionChecker,
                     initModule,
                     openTelemetryModule,
@@ -324,7 +317,6 @@ internal class ModuleInitBootstrapper(
                     sessionOrchestrationModuleSupplier,
                     payloadSourceModuleSupplier
                 )
-                postInit()
                 return isInitialized()
             }
         } catch (ignored: SdkDisabledException) {
@@ -335,107 +327,7 @@ internal class ModuleInitBootstrapper(
         }
     }
 
-    fun postInit() {
-        openTelemetryModule.applyConfiguration(
-            sensitiveKeysBehavior = configModule.configService.sensitiveKeysBehavior,
-            bypassValidation = configModule.configService.isOnlyUsingOtelExporters(),
-            otelBehavior = configModule.configService.otelBehavior
-        )
-
-        workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker).submit {
-            EmbTrace.trace("network-connectivity-registration") {
-                essentialServiceModule.networkConnectivityService.register()
-            }
-        }
-
-        initModule.logger.errorHandlerProvider = { featureModule.internalErrorDataSource.dataSource }
-
-        EmbTrace.trace("startup-tracker") {
-            coreModule.application.registerActivityLifecycleCallbacks(
-                dataCaptureServiceModule.startupTracker
-            )
-        }
-        deliveryModule.payloadCachingService?.run {
-            openTelemetryModule.spanRepository.setSpanUpdateNotifier {
-                reportBackgroundActivityStateChange()
-            }
-        }
-
-        anrModule.anrService?.startAnrCapture()
-
-        payloadSourceModule.metadataService.precomputeValues()
-
-        nativeCoreModule.sharedObjectLoader.loadEmbraceNative()
-        nativeCoreModule.nativeCrashHandlerInstaller?.install()
-
-        // Start the log orchestrator
-        openTelemetryModule.logSink.registerLogStoredCallback {
-            logModule.logOrchestrator.onLogsAdded()
-        }
-
-        essentialServiceModule.telemetryDestination.sessionUpdateAction =
-            sessionOrchestrationModule.sessionOrchestrator::onSessionDataUpdate
-
-        featureModule.lastRunCrashVerifier.readAndCleanMarkerAsync(
-            workerThreadModule.backgroundWorker(Worker.Background.IoRegWorker)
-        )
-    }
-
-    /**
-     * Registers objects as listeners for lifecycle/state callbacks.
-     */
-    fun registerListeners() {
-        EmbTrace.trace("service-registration") {
-            with(coreModule.serviceRegistry) {
-                registerService(lazy { configModule.configService })
-                registerService(lazy { configModule.remoteConfigSource })
-                registerService(lazy { configModule.configService.networkBehavior.domainCountLimiter })
-
-                registerServices(
-                    lazy { essentialServiceModule.appStateTracker },
-                    lazy { essentialServiceModule.activityLifecycleTracker },
-                    lazy { essentialServiceModule.networkConnectivityService }
-                )
-                registerServices(
-                    lazy { dataCaptureServiceModule.appStartupDataCollector },
-                    lazy { dataCaptureServiceModule.uiLoadDataListener },
-                )
-                registerServices(
-                    lazy { anrModule.anrService }
-                )
-                registerService(lazy { logModule.attachmentService })
-                registerService(lazy { logModule.logService })
-
-                // registration ignored after this point
-                registerAppStateListeners(essentialServiceModule.appStateTracker)
-                registerMemoryCleanerListeners(sessionOrchestrationModule.memoryCleanerService)
-                registerActivityLifecycleListeners(essentialServiceModule.activityLifecycleTracker)
-            }
-        }
-    }
-
-    fun loadInstrumentation() {
-        val registry = instrumentationModule.instrumentationRegistry
-        val instrumentationProviders = ServiceLoader.load(InstrumentationProvider::class.java)
-        registry.loadInstrumentations(instrumentationProviders, instrumentationModule.instrumentationArgs)
-    }
-
-    fun postLoadInstrumentation() {
-        // setup crash teardown handlers
-        val registry = instrumentationModule.instrumentationRegistry
-        registry.findByType(JvmCrashDataSource::class)?.apply {
-            anrModule.anrService?.let(::addCrashTeardownHandler)
-            addCrashTeardownHandler(logModule.logOrchestrator)
-            addCrashTeardownHandler(sessionOrchestrationModule.sessionOrchestrator)
-            addCrashTeardownHandler(featureModule.crashMarker)
-            deliveryModule.payloadStore?.let(::addCrashTeardownHandler)
-        }
-        registry.findByType(NetworkStatusDataSource::class)?.let {
-            essentialServiceModule.networkConnectivityService.addNetworkConnectivityListener(it)
-        }
-    }
-
-    fun stopServices() {
+    fun stop() {
         if (!isInitialized()) {
             return
         }
@@ -448,5 +340,5 @@ internal class ModuleInitBootstrapper(
         }
     }
 
-    fun isInitialized(): Boolean = delegate != UninitializedModuleGraph
+    private fun isInitialized(): Boolean = delegate != UninitializedModuleGraph
 }

@@ -22,7 +22,7 @@ internal class NetworkRequestApiDelegateTest {
     @Before
     fun setUp() {
         val moduleInitBootstrapper = fakeModuleInitBootstrapper()
-        moduleInitBootstrapper.init(ApplicationProvider.getApplicationContext(), 0)
+        moduleInitBootstrapper.init(ApplicationProvider.getApplicationContext())
         configService = moduleInitBootstrapper.configModule.configService as FakeConfigService
         val sdkCallChecker = SdkCallChecker(FakeEmbLogger(), FakeTelemetryService())
         sdkCallChecker.started.set(true)

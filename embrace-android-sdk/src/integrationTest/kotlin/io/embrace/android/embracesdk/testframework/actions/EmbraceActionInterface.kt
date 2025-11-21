@@ -41,6 +41,7 @@ internal class EmbraceActionInterface(
      * are guaranteed not to change in the start/end message.
      */
     internal fun recordSession(
+        isBackgroundActivityEnabled: Boolean = true,
         action: EmbraceActionInterface.() -> Unit = {},
     ): SessionTimestamps {
         val sessionAction: () -> Unit = {
@@ -58,12 +59,6 @@ internal class EmbraceActionInterface(
                 startInBackground = true,
                 activitiesAndActions = activityAndAction
             ).let { executionTimestamps ->
-                val isBackgroundActivityEnabled = if (bootstrapper.isInitialized()) {
-                    bootstrapper.configModule.configService.backgroundActivityBehavior.isBackgroundActivityCaptureEnabled()
-                } else {
-                    false
-                }
-
                 SessionTimestamps(
                     startTimeMs = if (isBackgroundActivityEnabled) {
                         executionTimestamps.firstForegroundTimeMs

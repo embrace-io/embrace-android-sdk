@@ -302,7 +302,8 @@ internal class AppStartupTraceTest {
             },
             otelExportAssertion = {
                 with(awaitSpansWithType(5, EmbType.Performance.Default).associateBy { it.name }) {
-                    assertEquals(sdkStartTime, coldAppStartupRootSpan().startEpochNanos.nanosToMillis())
+                    val observed = coldAppStartupRootSpan().startEpochNanos.nanosToMillis()
+                    assertEquals(sdkStartTime, observed)
                 }
             }
         )

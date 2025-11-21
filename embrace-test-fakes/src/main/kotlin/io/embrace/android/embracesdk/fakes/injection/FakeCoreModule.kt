@@ -39,6 +39,7 @@ class FakeCoreModule(
     override val connectivityManager: ConnectivityManager? = null,
     override val storageManager: StorageStatsManager? = null,
     override val windowManager: WindowManager? = null,
+    override val sdkStartTime: Long = -1,
 ) : CoreModule {
 
     companion object {

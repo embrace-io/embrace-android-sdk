@@ -16,6 +16,7 @@ import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.injection.EssentialServiceModuleImpl
 import io.embrace.android.embracesdk.internal.injection.InitModuleImpl
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
+import io.embrace.android.embracesdk.internal.injection.postLoadInstrumentation
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -63,7 +64,6 @@ internal class ModuleInitBootstrapperTest {
             assertTrue(
                 moduleInitBootstrapper.init(
                     context = context,
-                    sdkStartTimeMs = 0L,
                 )
             )
             assertNotNull(initModule)
@@ -83,13 +83,11 @@ internal class ModuleInitBootstrapperTest {
         assertTrue(
             moduleInitBootstrapper.init(
                 context = context,
-                sdkStartTimeMs = 0L,
             )
         )
         assertFalse(
             moduleInitBootstrapper.init(
                 context = context,
-                sdkStartTimeMs = 0L,
             )
         )
     }
@@ -99,14 +97,13 @@ internal class ModuleInitBootstrapperTest {
         assertTrue(
             moduleInitBootstrapper.init(
                 context = context,
-                sdkStartTimeMs = 0L,
             )
         )
     }
 
     @Test
     fun `post load instrumentation hooks up listeners`() {
-        moduleInitBootstrapper.init(context, 0)
+        moduleInitBootstrapper.init(context)
         val registry = moduleInitBootstrapper.instrumentationModule.instrumentationRegistry
         val dataSource = CrashHandlerDataSource()
         registry.add(DataSourceState(factory = { dataSource }))
@@ -122,19 +119,5 @@ internal class ModuleInitBootstrapperTest {
             moduleInitBootstrapper.deliveryModule.payloadStore
         )
         assertEquals(expected, handlers)
-    }
-
-    @Test
-    fun `stopping services makes bootstrapper not initialized`() {
-        assertTrue(
-            moduleInitBootstrapper.init(
-                context = context,
-                sdkStartTimeMs = 0L,
-            )
-        )
-
-        assertTrue(moduleInitBootstrapper.isInitialized())
-        moduleInitBootstrapper.stopServices()
-        assertFalse(moduleInitBootstrapper.isInitialized())
     }
 }

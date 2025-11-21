@@ -13,14 +13,12 @@ import org.junit.Test
 internal class DataCaptureServiceModuleImplTest {
 
     private val initModule = FakeInitModule()
-    private val openTelemetryModule = initModule.openTelemetryModule
     private val instrumentationModule = FakeInstrumentationModule(mockk())
 
     @Test
     fun testDefaultImplementations() {
         val module = DataCaptureServiceModuleImpl(
             initModule,
-            openTelemetryModule,
             instrumentationModule,
             FakeConfigService(),
             FakeVersionChecker(false)
@@ -36,7 +34,6 @@ internal class DataCaptureServiceModuleImplTest {
     fun `disable ui load performance capture`() {
         val module = DataCaptureServiceModuleImpl(
             initModule,
-            openTelemetryModule,
             instrumentationModule,
             FakeConfigService(
                 autoDataCaptureBehavior = FakeAutoDataCaptureBehavior(uiLoadTracingEnabled = false)
@@ -52,7 +49,6 @@ internal class DataCaptureServiceModuleImplTest {
     fun `enable only selected ui load performance capture`() {
         val module = DataCaptureServiceModuleImpl(
             initModule,
-            openTelemetryModule,
             instrumentationModule,
             FakeConfigService(
                 autoDataCaptureBehavior = FakeAutoDataCaptureBehavior(uiLoadTracingTraceAll = false)

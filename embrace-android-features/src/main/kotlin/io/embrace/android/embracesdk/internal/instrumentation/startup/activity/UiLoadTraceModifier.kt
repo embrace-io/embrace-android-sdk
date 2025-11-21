@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.instrumentation.startup.activity
 
-import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
-import io.embrace.android.embracesdk.spans.ErrorCode
+import io.embrace.android.embracesdk.internal.arch.datasource.SpanEvent
+import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 
 /**
  * Interface containing methods that will add more data to any on-going UI Load trace
@@ -22,7 +22,7 @@ interface UiLoadTraceModifier {
         startTimeMs: Long,
         endTimeMs: Long,
         attributes: Map<String, String> = emptyMap(),
-        events: List<EmbraceSpanEvent> = emptyList(),
-        errorCode: ErrorCode? = null,
+        events: List<SpanEvent> = emptyList(),
+        errorCode: ErrorCodeAttribute? = null,
     )
 }

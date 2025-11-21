@@ -2,6 +2,10 @@ package io.embrace.android.embracesdk.internal.instrumentation.startup
 
 import android.os.Build.VERSION_CODES
 import io.embrace.android.embracesdk.internal.arch.attrs.embStartupActivityName
+import io.embrace.android.embracesdk.internal.arch.datasource.SpanEvent
+import io.embrace.android.embracesdk.internal.arch.datasource.SpanToken
+import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
+import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.arch.state.AppStateListener
 import io.embrace.android.embracesdk.internal.capture.startup.StartupService
 import io.embrace.android.embracesdk.internal.clock.Clock
@@ -9,14 +13,9 @@ import io.embrace.android.embracesdk.internal.instrumentation.startup.ui.hasRend
 import io.embrace.android.embracesdk.internal.instrumentation.startup.ui.supportFrameCommitCallback
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
-import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
-import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
-import io.embrace.android.embracesdk.spans.EmbraceSpan
-import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
-import io.embrace.android.embracesdk.spans.ErrorCode
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicBoolean
@@ -45,7 +44,7 @@ import java.util.concurrent.atomic.AtomicReference
 internal class AppStartupTraceEmitter(
     private val clock: Clock,
     private val startupServiceProvider: Provider<StartupService?>,
-    private val spanService: SpanService,
+    private val destination: TelemetryDestination,
     private val versionChecker: VersionChecker,
     private val logger: EmbLogger,
     manualEnd: Boolean,
@@ -55,7 +54,7 @@ internal class AppStartupTraceEmitter(
     private val customAttributes: MutableMap<String, String> = ConcurrentHashMap()
     private val trackRender = hasRenderEvent(versionChecker)
     private val trackFrameCommit = supportFrameCommitCallback(versionChecker)
-    private val appStartupRootSpan = AtomicReference<EmbraceSdkSpan?>(null)
+    private val appStartupRootSpan = AtomicReference<SpanToken?>(null)
     private val dataCollectionComplete = AtomicBoolean(false)
     private val traceEnd = if (manualEnd) {
         TraceEnd.READY
@@ -181,8 +180,8 @@ internal class AppStartupTraceEmitter(
         startTimeMs: Long,
         endTimeMs: Long,
         attributes: Map<String, String>,
-        events: List<EmbraceSpanEvent>,
-        errorCode: ErrorCode?,
+        events: List<SpanEvent>,
+        errorCode: ErrorCodeAttribute?,
     ) {
         additionalTrackedIntervals.add(
             TrackedInterval(
@@ -214,7 +213,7 @@ internal class AppStartupTraceEmitter(
         if (!dataCollectionComplete.getAndSet(true)) {
             EmbTrace.trace("record-startup") {
                 recordStartup(traceEndTimeMs, completed)
-                if (appStartupRootSpan.get()?.isRecording != false) {
+                if (appStartupRootSpan.get()?.isRecording() != false) {
                     logger.trackInternalError(
                         type = InternalErrorType.APP_LAUNCH_TRACE_FAIL,
                         throwable = IllegalStateException("App startup trace recording attempted but did not succeed")
@@ -236,12 +235,12 @@ internal class AppStartupTraceEmitter(
                     sdkInitStartMs
                 }
 
-            spanService.startSpan(
+            destination.startSpanCapture(
                 name = COLD_APP_STARTUP_ROOT_SPAN,
-                startTimeMs = processStartTimeMs,
+                startTimeMs = processStartTimeMs ?: clock.now(),
             )
         } else {
-            spanService.startSpan(
+            destination.startSpanCapture(
                 name = WARM_APP_STARTUP_ROOT_SPAN,
                 startTimeMs = activityInitTimeMs,
             )
@@ -304,10 +303,10 @@ internal class AppStartupTraceEmitter(
             value
         }
 
-    private fun recordAdditionalIntervals(startupTrace: EmbraceSpan) {
+    private fun recordAdditionalIntervals(startupTrace: SpanToken) {
         do {
             additionalTrackedIntervals.poll()?.let { trackedInterval ->
-                spanService.recordCompletedSpan(
+                destination.recordCompletedSpan(
                     name = trackedInterval.name,
                     startTimeMs = trackedInterval.startTimeMs,
                     endTimeMs = trackedInterval.endTimeMs,
@@ -333,17 +332,17 @@ internal class AppStartupTraceEmitter(
         traceEndTimeMs: Long,
         completed: Boolean,
     ) {
-        appStartupRootSpan.get()?.takeIf { it.isRecording }?.apply {
+        appStartupRootSpan.get()?.takeIf { it.isRecording() }?.apply {
             addTraceMetadata()
 
             stop(
-                errorCode = if (!completed) ErrorCode.USER_ABANDON else null,
+                errorCode = if (!completed) ErrorCodeAttribute.UserAbandon else null,
                 endTimeMs = traceEndTimeMs
             )
 
             getStartTimeMs()?.let { traceStartTimeMs ->
                 if (applicationInitEndMs != null) {
-                    spanService.recordCompletedSpan(
+                    destination.recordCompletedSpan(
                         name = PROCESS_INIT_SPAN,
                         startTimeMs = traceStartTimeMs,
                         endTimeMs = applicationInitEndMs,
@@ -353,7 +352,7 @@ internal class AppStartupTraceEmitter(
             }
 
             if (sdkInitStartMs != null && sdkInitEndMs != null) {
-                spanService.recordCompletedSpan(
+                destination.recordCompletedSpan(
                     name = EMBRACE_INIT_SPAN,
                     startTimeMs = sdkInitStartMs,
                     endTimeMs = sdkInitEndMs,
@@ -363,7 +362,7 @@ internal class AppStartupTraceEmitter(
 
             val lastEventBeforeActivityInit = applicationInitEndMs ?: sdkInitEndMs
             if (lastEventBeforeActivityInit != null && firstActivityInitMs != null) {
-                spanService.recordCompletedSpan(
+                destination.recordCompletedSpan(
                     name = ACTIVITY_INIT_DELAY_SPAN,
                     startTimeMs = lastEventBeforeActivityInit,
                     endTimeMs = firstActivityInitMs,
@@ -372,7 +371,7 @@ internal class AppStartupTraceEmitter(
             }
 
             if (activityInitStartMs != null && activityInitEndMs != null) {
-                spanService.recordCompletedSpan(
+                destination.recordCompletedSpan(
                     name = ACTIVITY_INIT_SPAN,
                     startTimeMs = activityInitStartMs,
                     endTimeMs = activityInitEndMs,
@@ -390,7 +389,7 @@ internal class AppStartupTraceEmitter(
                 } else {
                     ACTIVITY_LOAD_SPAN
                 }
-                spanService.recordCompletedSpan(
+                destination.recordCompletedSpan(
                     name = uiLoadSpanName,
                     startTimeMs = activityInitEndMs,
                     endTimeMs = uiLoadedMs,
@@ -399,7 +398,7 @@ internal class AppStartupTraceEmitter(
             }
 
             if (traceEnd == TraceEnd.READY && uiLoadedMs != null && completed) {
-                spanService.recordCompletedSpan(
+                destination.recordCompletedSpan(
                     name = APP_READY_SPAN,
                     startTimeMs = uiLoadedMs,
                     endTimeMs = traceEndTimeMs,
@@ -414,7 +413,7 @@ internal class AppStartupTraceEmitter(
 
     private fun nowMs(): Long = clock.now()
 
-    private fun EmbraceSdkSpan.addTraceMetadata() {
+    private fun SpanToken.addTraceMetadata() {
         addCustomAttributes()
 
         startupActivityName?.let { name ->
@@ -422,7 +421,7 @@ internal class AppStartupTraceEmitter(
         }
     }
 
-    private fun EmbraceSdkSpan.addCustomAttributes() {
+    private fun SpanToken.addCustomAttributes() {
         customAttributes.forEach {
             addAttribute(it.key, it.value)
         }
@@ -433,8 +432,8 @@ internal class AppStartupTraceEmitter(
         val startTimeMs: Long,
         val endTimeMs: Long,
         val attributes: Map<String, String>,
-        val events: List<EmbraceSpanEvent>,
-        val errorCode: ErrorCode?,
+        val events: List<SpanEvent>,
+        val errorCode: ErrorCodeAttribute?,
     )
 
     private enum class TraceEnd {

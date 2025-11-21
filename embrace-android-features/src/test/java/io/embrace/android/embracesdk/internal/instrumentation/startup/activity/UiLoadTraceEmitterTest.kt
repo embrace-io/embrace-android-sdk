@@ -2,17 +2,14 @@ package io.embrace.android.embracesdk.internal.instrumentation.startup.activity
 
 import android.os.Build.VERSION_CODES
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.assertions.assertEmbraceSpanData
 import io.embrace.android.embracesdk.fakes.FakeClock
-import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
-import io.embrace.android.embracesdk.internal.clock.nanosToMillis
-import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
-import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
-import io.embrace.android.embracesdk.internal.otel.spans.SpanService
-import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
+import io.embrace.android.embracesdk.fakes.FakeSpanToken
+import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
+import io.embrace.android.embracesdk.internal.arch.datasource.SpanEvent
+import io.embrace.android.embracesdk.internal.arch.datasource.SpanEventImpl
+import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
+import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
-import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
-import io.embrace.android.embracesdk.spans.ErrorCode
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNull
@@ -26,9 +23,9 @@ import kotlin.math.min
 
 @RunWith(AndroidJUnit4::class)
 internal class UiLoadTraceEmitterTest {
+
     private lateinit var clock: FakeClock
-    private lateinit var spanSink: SpanSink
-    private lateinit var spanService: SpanService
+    private lateinit var destination: FakeTelemetryDestination
     private lateinit var traceEmitter: UiLoadTraceEmitter
     private var hasRenderEvent: Boolean = false
     private var hasPreAndPostEvents: Boolean = false
@@ -38,13 +35,10 @@ internal class UiLoadTraceEmitterTest {
         clock = FakeClock()
         hasRenderEvent = false
         hasPreAndPostEvents = hasPrePostEvents(BuildVersionChecker)
-        val initModule = FakeInitModule(clock = clock)
-        spanSink = initModule.openTelemetryModule.spanSink
-        spanService = initModule.openTelemetryModule.spanService
-        spanService.initializeService(clock.now())
+        destination = FakeTelemetryDestination()
         clock.tick(100L)
         traceEmitter = UiLoadTraceEmitter(
-            spanService = spanService,
+            destination = destination,
             versionChecker = BuildVersionChecker,
         )
     }
@@ -209,32 +203,31 @@ internal class UiLoadTraceEmitterTest {
             uiLoadType = uiLoadType,
             manualEnd = manualEnd,
         ).let { timestamps ->
-            val spanMap = spanSink.completedSpans().associateBy { it.name }
-            val trace = checkNotNull(spanMap["emb-$activityName-${uiLoadType.typeName}-time-to-initial-display"])
+            val spanMap = destination.completedSpans().associateBy { it.name }
+            val trace = checkNotNull(spanMap["$activityName-${uiLoadType.typeName}-time-to-initial-display"])
             val expectedEvent = checkNotNull(
-                EmbraceSpanEvent.create(
+                SpanEventImpl(
                     name = "custom-event",
-                    timestampMs = timestamps.first,
+                    timestampNanos = timestamps.first.millisToNanos(),
                     attributes = customAttributes
                 )
-            ).toEmbracePayload()
+            )
 
             assertEmbraceSpanData(
-                span = trace.toEmbracePayload(),
+                span = trace,
                 expectedStartTimeMs = timestamps.first,
                 expectedEndTimeMs = timestamps.second,
-                expectedParentId = OtelIds.INVALID_SPAN_ID,
                 expectedCustomAttributes = customAttributes,
             )
 
             assertEmbraceSpanData(
-                span = checkNotNull(spanMap["custom-span"]).toEmbracePayload(),
+                span = checkNotNull(spanMap["custom-span"]),
                 expectedStartTimeMs = timestamps.first,
                 expectedEndTimeMs = timestamps.first + 1,
-                expectedParentId = trace.spanId,
+                expectedParent = trace,
                 expectedCustomAttributes = customAttributes,
                 expectedEvents = listOf(expectedEvent),
-                expectedErrorCode = ErrorCode.FAILURE
+                expectedErrorCode = ErrorCodeAttribute.Failure
             )
 
             assertTrue(trace.attributes.keys.none { it == "before-start" || it == "after-end" })
@@ -243,49 +236,49 @@ internal class UiLoadTraceEmitterTest {
             if (uiLoadType == UiLoadType.COLD) {
                 checkNotNull(events[LifecycleStage.CREATE]).run {
                     assertEmbraceSpanData(
-                        span = checkNotNull(spanMap["emb-$activityName-create"]).toEmbracePayload(),
+                        span = checkNotNull(spanMap["$activityName-create"]),
                         expectedStartTimeMs = startMs(),
                         expectedEndTimeMs = endMs(),
-                        expectedParentId = trace.spanId
+                        expectedParent = trace
                     )
                 }
             } else {
-                assertNull(spanMap["emb-$activityName-create"])
+                assertNull(spanMap["$activityName-create"])
             }
 
             checkNotNull(events[LifecycleStage.START]).run {
                 assertEmbraceSpanData(
-                    span = checkNotNull(spanMap["emb-$activityName-start"]).toEmbracePayload(),
+                    span = checkNotNull(spanMap["$activityName-start"]),
                     expectedStartTimeMs = startMs(),
                     expectedEndTimeMs = endMs(),
-                    expectedParentId = trace.spanId
+                    expectedParent = trace
                 )
             }
 
             if (hasPreAndPostEvents) {
                 checkNotNull(events[LifecycleStage.RESUME]).run {
                     assertEmbraceSpanData(
-                        span = checkNotNull(spanMap["emb-$activityName-resume"]).toEmbracePayload(),
+                        span = checkNotNull(spanMap["$activityName-resume"]),
                         expectedStartTimeMs = startMs(),
                         expectedEndTimeMs = endMs(),
-                        expectedParentId = trace.spanId
+                        expectedParent = trace
                     )
                 }
             } else {
-                assertNull(spanMap["emb-$activityName-resume"])
+                assertNull(spanMap["$activityName-resume"])
             }
 
             if (hasRenderEvent) {
                 checkNotNull(events[LifecycleStage.RENDER]).run {
                     assertEmbraceSpanData(
-                        span = checkNotNull(spanMap["emb-$activityName-render"]).toEmbracePayload(),
+                        span = checkNotNull(spanMap["$activityName-render"]),
                         expectedStartTimeMs = startMs(),
                         expectedEndTimeMs = endMs(),
-                        expectedParentId = trace.spanId
+                        expectedParent = trace
                     )
                 }
             } else {
-                assertNull(spanMap["emb-$activityName-render"])
+                assertNull(spanMap["$activityName-render"])
             }
 
             val lastEventEndTimeMs = if (hasRenderEvent) {
@@ -298,13 +291,13 @@ internal class UiLoadTraceEmitterTest {
                 }
             }
 
-            val traceEndTime = trace.endTimeNanos.nanosToMillis()
+            val traceEndTime = trace.endTimeMs
             if (manualEnd) {
                 assertEmbraceSpanData(
-                    span = checkNotNull(spanMap["emb-$activityName-ready"]).toEmbracePayload(),
+                    span = checkNotNull(spanMap["$activityName-ready"]),
                     expectedStartTimeMs = lastEventEndTimeMs,
                     expectedEndTimeMs = traceEndTime,
-                    expectedParentId = trace.spanId
+                    expectedParent = trace
                 )
                 assertNotEquals(traceEndTime, lastEventEndTimeMs)
             } else {
@@ -405,14 +398,14 @@ internal class UiLoadTraceEmitterTest {
             attributes = customAttributes,
             events = listOf(
                 checkNotNull(
-                    EmbraceSpanEvent.create(
+                    SpanEventImpl(
                         name = "custom-event",
-                        timestampMs = traceStartMs,
+                        timestampNanos = traceStartMs.millisToNanos(),
                         attributes = customAttributes
                     )
                 )
             ),
-            errorCode = ErrorCode.FAILURE
+            errorCode = ErrorCodeAttribute.Failure
         )
 
         val resumeEvents = activityResume(instanceId).apply {
@@ -529,6 +522,38 @@ internal class UiLoadTraceEmitterTest {
     private fun LifecycleEvents.startMs(): Long = min(pre, eventStart)
 
     private fun LifecycleEvents.endMs(): Long = max(post, eventEnd)
+
+    fun assertEmbraceSpanData(
+        span: FakeSpanToken?,
+        expectedStartTimeMs: Long,
+        expectedEndTimeMs: Long?,
+        expectedParent: FakeSpanToken? = null,
+        expectedErrorCode: ErrorCodeAttribute? = null,
+        expectedCustomAttributes: Map<String, String> = emptyMap(),
+        expectedEvents: List<SpanEvent> = emptyList(),
+    ) {
+        checkNotNull(span)
+        with(span) {
+            assertEquals("Wrong start time", expectedStartTimeMs, startTimeMs)
+            assertEquals("Wrong end time", expectedEndTimeMs, endTimeMs)
+            assertEquals(expectedParent, span.parent)
+
+            if (expectedErrorCode != null) {
+                assertEquals(expectedErrorCode, errorCode)
+            }
+            expectedCustomAttributes.forEach { entry ->
+                assertEquals(entry.value, attributes[entry.key])
+            }
+            assertEquals(expectedEvents.size, events.size)
+
+            expectedEvents.forEachIndexed { index, expected ->
+                val observed = events[index]
+                assertEquals(expected.name, observed.name)
+                assertEquals(expected.timestampNanos, observed.timestampNanos)
+                assertEquals(expected.attributes, observed.attributes)
+            }
+        }
+    }
 
     private enum class PreviousState {
         FROM_ACTIVITY,

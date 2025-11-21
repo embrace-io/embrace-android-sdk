@@ -118,12 +118,14 @@ internal class ModuleInitBootstrapper(
     private val dataCaptureServiceModuleSupplier: DataCaptureServiceModuleSupplier = {
             initModule: InitModule,
             openTelemetryModule: OpenTelemetryModule,
+            instrumentationModule: InstrumentationModule,
             configService: ConfigService,
             versionChecker: VersionChecker,
         ->
         DataCaptureServiceModuleImpl(
             initModule,
             openTelemetryModule,
+            instrumentationModule,
             configService,
             versionChecker
         )

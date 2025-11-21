@@ -20,14 +20,13 @@ import io.embrace.android.embracesdk.internal.utils.VersionChecker
 class DataCaptureServiceModuleImpl(
     initModule: InitModule,
     openTelemetryModule: OpenTelemetryModule,
+    instrumentationModule: InstrumentationModule,
     configService: ConfigService,
     versionChecker: VersionChecker = BuildVersionChecker,
 ) : DataCaptureServiceModule {
 
     override val startupService: StartupService by singleton {
-        StartupServiceImpl(
-            spanService = openTelemetryModule.spanService
-        )
+        StartupServiceImpl(instrumentationModule.instrumentationArgs.destination)
     }
 
     override val appStartupDataCollector: AppStartupDataCollector by singleton {

@@ -1,10 +1,10 @@
 package io.embrace.android.embracesdk.internal.capture.startup
 
+import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.arch.state.AppState
-import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 
 class StartupServiceImpl(
-    private val spanService: SpanService,
+    private val destination: TelemetryDestination,
 ) : StartupService {
 
     @Volatile
@@ -30,7 +30,7 @@ class StartupServiceImpl(
     ) {
         val foregroundEnd = endState == AppState.FOREGROUND
         if (sdkStartupDurationMs == null) {
-            spanService.recordCompletedSpan(
+            destination.recordCompletedSpan(
                 name = "sdk-init",
                 startTimeMs = startTimeMs,
                 endTimeMs = endTimeMs,

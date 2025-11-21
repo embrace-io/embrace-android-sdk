@@ -144,6 +144,7 @@ class TelemetryDestinationImpl(
         parent: SpanToken?,
         type: EmbType,
         internal: Boolean,
+        private: Boolean,
         attributes: Map<String, String>,
         events: List<SpanEvent>,
     ) {
@@ -156,6 +157,7 @@ class TelemetryDestinationImpl(
             type = type,
             parent = parentRef,
             internal = internal,
+            private = private,
             attributes = attributes,
             events = events.mapNotNull(::toEmbraceSpanEvent),
         )

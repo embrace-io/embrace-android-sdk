@@ -15,6 +15,7 @@ class FakeTelemetryDestination : TelemetryDestination {
     val addedEvents = mutableListOf<FakeSessionEvent>()
     val attributes = mutableMapOf<String, String>()
     val createdSpans: MutableList<FakeSpanToken> = mutableListOf()
+    fun completedSpans(): List<FakeSpanToken> = createdSpans.filterNot(FakeSpanToken::isRecording)
 
     override fun addLog(
         schemaType: SchemaType,
@@ -57,6 +58,7 @@ class FakeTelemetryDestination : TelemetryDestination {
             null,
             schemaType.telemetryType,
             true,
+            false,
             schemaType.attributes() + mapOf(schemaType.telemetryType.asPair()),
             emptyList(),
         )
@@ -79,6 +81,7 @@ class FakeTelemetryDestination : TelemetryDestination {
             parent,
             type,
             true,
+            false,
             emptyMap(),
             emptyList(),
         )
@@ -95,6 +98,7 @@ class FakeTelemetryDestination : TelemetryDestination {
         parent: SpanToken?,
         type: EmbType,
         internal: Boolean,
+        private: Boolean,
         attributes: Map<String, String>,
         events: List<SpanEvent>,
     ) {
@@ -106,6 +110,7 @@ class FakeTelemetryDestination : TelemetryDestination {
             parent,
             type,
             internal,
+            private,
             attributes,
             events,
         )

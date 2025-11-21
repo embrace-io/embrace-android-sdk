@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.internal.utils.VersionChecker
 typealias DataCaptureServiceModuleSupplier = (
     initModule: InitModule,
     openTelemetryModule: OpenTelemetryModule,
+    instrumentationModule: InstrumentationModule,
     configService: ConfigService,
     versionChecker: VersionChecker,
 ) -> DataCaptureServiceModule

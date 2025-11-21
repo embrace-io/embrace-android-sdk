@@ -252,6 +252,7 @@ internal class TelemetryDestinationImplTest {
             null,
             type,
             true,
+            false,
             attributes
         )
         val span = spanService.createdSpans.single()

@@ -10,7 +10,6 @@ import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeFe
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
-import io.embrace.android.embracesdk.internal.worker.Worker
 
 /**
  * Constructed module dependencies that will be used by the initialized SDK.
@@ -20,8 +19,8 @@ internal class InitializedModuleGraph(
     context: Context,
     sdkStartTimeMs: Long,
     versionChecker: VersionChecker = BuildVersionChecker,
-    private val initModule: InitModule,
-    private val openTelemetryModule: OpenTelemetryModule,
+    override val initModule: InitModule,
+    override val openTelemetryModule: OpenTelemetryModule,
     private val coreModuleSupplier: CoreModuleSupplier,
     private val configModuleSupplier: ConfigModuleSupplier,
     private val workerThreadModuleSupplier: WorkerThreadModuleSupplier,
@@ -58,6 +57,20 @@ internal class InitializedModuleGraph(
             openTelemetryModule,
             workerThreadModule,
         )
+    }.apply {
+        EmbTrace.trace("sdk-disable-check") {
+            // kick off config HTTP request first so the SDK can't get in a permanently disabled state
+            EmbTrace.trace("load-config-response") {
+                combinedRemoteConfigSource?.scheduleConfigRequests()
+            }
+
+            EmbTrace.trace("behavior-check") {
+                if (configService.sdkModeBehavior.isSdkDisabled()) {
+                    // bail out early. Caught at a higher-level that relies on this specific type
+                    throw SdkDisabledException()
+                }
+            }
+        }
     }
 
     override val storageModule: StorageModule = init {
@@ -191,61 +204,5 @@ internal class InitializedModuleGraph(
         val module = T::class
         val name = module.simpleName?.removeSuffix("Module")?.lowercase() ?: "module"
         return EmbTrace.trace("$name-init") { supplier() }
-    }
-
-    fun postInit() {
-        openTelemetryModule.applyConfiguration(
-            sensitiveKeysBehavior = configModule.configService.sensitiveKeysBehavior,
-            bypassValidation = configModule.configService.isOnlyUsingOtelExporters(),
-            otelBehavior = configModule.configService.otelBehavior
-        )
-
-        EmbTrace.trace("sdk-disable-check") {
-            // kick off config HTTP request first so the SDK can't get in a permanently disabled state
-            EmbTrace.trace("load-config-response") {
-                configModule.combinedRemoteConfigSource?.scheduleConfigRequests()
-            }
-
-            EmbTrace.trace("behavior-check") {
-                if (configModule.configService.sdkModeBehavior.isSdkDisabled()) {
-                    // bail out early. Caught at a higher-level that relies on this specific type
-                    throw SdkDisabledException()
-                }
-            }
-        }
-
-        workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker).submit {
-            EmbTrace.trace("network-connectivity-registration") {
-                essentialServiceModule.networkConnectivityService.register()
-            }
-        }
-
-        initModule.logger.errorHandlerProvider = { featureModule.internalErrorDataSource.dataSource }
-
-        EmbTrace.trace("startup-tracker") {
-            coreModule.application.registerActivityLifecycleCallbacks(
-                dataCaptureServiceModule.startupTracker
-            )
-        }
-        deliveryModule.payloadCachingService?.run {
-            openTelemetryModule.spanRepository.setSpanUpdateNotifier {
-                reportBackgroundActivityStateChange()
-            }
-        }
-
-        anrModule.anrService?.startAnrCapture()
-
-        payloadSourceModule.metadataService.precomputeValues()
-
-        nativeCoreModule.sharedObjectLoader.loadEmbraceNative()
-        nativeCoreModule.nativeCrashHandlerInstaller?.install()
-
-        // Start the log orchestrator
-        openTelemetryModule.logSink.registerLogStoredCallback {
-            logModule.logOrchestrator.onLogsAdded()
-        }
-
-        essentialServiceModule.telemetryDestination.sessionUpdateAction =
-            sessionOrchestrationModule.sessionOrchestrator::onSessionDataUpdate
     }
 }

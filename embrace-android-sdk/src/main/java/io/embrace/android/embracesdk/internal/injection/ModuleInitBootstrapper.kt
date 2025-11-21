@@ -30,14 +30,15 @@ import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
+import io.embrace.android.embracesdk.internal.worker.Worker
 import java.util.ServiceLoader
 
 /**
  * A class that wires together and initializes modules in a manner that makes them work as a cohesive whole.
  */
 internal class ModuleInitBootstrapper(
-    val initModule: InitModule = EmbTrace.trace("init-module", ::InitModuleImpl),
-    val openTelemetryModule: OpenTelemetryModule = EmbTrace.trace("otel-module") {
+    override val initModule: InitModule = EmbTrace.trace("init-module", ::InitModuleImpl),
+    override val openTelemetryModule: OpenTelemetryModule = EmbTrace.trace("otel-module") {
         OpenTelemetryModuleImpl(initModule)
     },
     private val coreModuleSupplier: CoreModuleSupplier = {
@@ -322,7 +323,8 @@ internal class ModuleInitBootstrapper(
                     nativeFeatureModuleSupplier,
                     sessionOrchestrationModuleSupplier,
                     payloadSourceModuleSupplier
-                ).apply(InitializedModuleGraph::postInit)
+                )
+                postInit()
                 return isInitialized()
             }
         } catch (ignored: SdkDisabledException) {
@@ -331,6 +333,52 @@ internal class ModuleInitBootstrapper(
         } finally {
             EmbTrace.end()
         }
+    }
+
+    fun postInit() {
+        openTelemetryModule.applyConfiguration(
+            sensitiveKeysBehavior = configModule.configService.sensitiveKeysBehavior,
+            bypassValidation = configModule.configService.isOnlyUsingOtelExporters(),
+            otelBehavior = configModule.configService.otelBehavior
+        )
+
+        workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker).submit {
+            EmbTrace.trace("network-connectivity-registration") {
+                essentialServiceModule.networkConnectivityService.register()
+            }
+        }
+
+        initModule.logger.errorHandlerProvider = { featureModule.internalErrorDataSource.dataSource }
+
+        EmbTrace.trace("startup-tracker") {
+            coreModule.application.registerActivityLifecycleCallbacks(
+                dataCaptureServiceModule.startupTracker
+            )
+        }
+        deliveryModule.payloadCachingService?.run {
+            openTelemetryModule.spanRepository.setSpanUpdateNotifier {
+                reportBackgroundActivityStateChange()
+            }
+        }
+
+        anrModule.anrService?.startAnrCapture()
+
+        payloadSourceModule.metadataService.precomputeValues()
+
+        nativeCoreModule.sharedObjectLoader.loadEmbraceNative()
+        nativeCoreModule.nativeCrashHandlerInstaller?.install()
+
+        // Start the log orchestrator
+        openTelemetryModule.logSink.registerLogStoredCallback {
+            logModule.logOrchestrator.onLogsAdded()
+        }
+
+        essentialServiceModule.telemetryDestination.sessionUpdateAction =
+            sessionOrchestrationModule.sessionOrchestrator::onSessionDataUpdate
+
+        featureModule.lastRunCrashVerifier.readAndCleanMarkerAsync(
+            workerThreadModule.backgroundWorker(Worker.Background.IoRegWorker)
+        )
     }
 
     /**

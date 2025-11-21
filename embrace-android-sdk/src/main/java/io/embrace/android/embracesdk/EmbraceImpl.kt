@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk
 
 import android.annotation.SuppressLint
-import android.app.Application
 import android.content.Context
 import android.util.Log
 import io.embrace.android.embracesdk.core.BuildConfig
@@ -95,26 +94,15 @@ internal class EmbraceImpl(
     private val clock by lazy { bootstrapper.initModule.clock }
     private val sdkShuttingDown = AtomicBoolean(false)
 
-    /**
-     * The application being instrumented by the SDK.
-     */
-    @Volatile
-    var application: Application? = null
-        private set
-
     @Volatile
     private var applicationInitStartMs: Long? = null
 
     private var internalInterfaceModule: InternalInterfaceModule? = null
 
-    val metadataService by embraceImplInject { bootstrapper.payloadSourceModule.metadataService }
-    val appStateTracker by embraceImplInject { bootstrapper.essentialServiceModule.appStateTracker }
-    val activityLifecycleTracker by embraceImplInject { bootstrapper.essentialServiceModule.activityLifecycleTracker }
-
     private val configService by embraceImplInject { bootstrapper.configModule.configService }
 
     override fun start(context: Context) {
-        if (application != null) {
+        if (bootstrapper.isInitialized()) {
             return
         }
 
@@ -125,15 +113,7 @@ internal class EmbraceImpl(
         }
         start("post-services-setup")
 
-        val coreModule = bootstrapper.coreModule
-        application = coreModule.application
-
         val configModule = bootstrapper.configModule
-        val featureModule = bootstrapper.featureModule
-
-        featureModule.lastRunCrashVerifier.readAndCleanMarkerAsync(
-            bootstrapper.workerThreadModule.backgroundWorker(Worker.Background.IoRegWorker)
-        )
 
         val internalInterfaceModuleImpl =
             InternalInterfaceModuleImpl(
@@ -233,7 +213,6 @@ internal class EmbraceImpl(
         synchronized(sdkCallChecker) {
             if (sdkShuttingDown.compareAndSet(false, true)) {
                 runCatching {
-                    application = null
                     bootstrapper.stopServices()
                 }
             }

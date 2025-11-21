@@ -10,6 +10,8 @@ internal class SdkDisabledException : IllegalStateException()
  * Uninitialized modules that will throw an IllegalStateException if they are accessed.
  */
 internal object UninitializedModuleGraph : ModuleGraph {
+    override val initModule: InitModule get() = throwSdkNotInitialized()
+    override val openTelemetryModule: OpenTelemetryModule get() = throwSdkNotInitialized()
     override val coreModule: CoreModule get() = throwSdkNotInitialized()
     override val configModule: ConfigModule get() = throwSdkNotInitialized()
     override val workerThreadModule: WorkerThreadModule get() = throwSdkNotInitialized()

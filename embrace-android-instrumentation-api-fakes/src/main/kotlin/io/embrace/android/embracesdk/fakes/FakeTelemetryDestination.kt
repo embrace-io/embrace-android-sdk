@@ -54,8 +54,32 @@ class FakeTelemetryDestination : TelemetryDestination {
             startTimeMs,
             null,
             null,
+            null,
             schemaType.telemetryType,
+            true,
             schemaType.attributes() + mapOf(schemaType.telemetryType.asPair()),
+            emptyList(),
+        )
+
+        createdSpans.add(token)
+        return token
+    }
+
+    override fun startSpanCapture(
+        name: String,
+        startTimeMs: Long,
+        parent: SpanToken?,
+        type: EmbType,
+    ): SpanToken? {
+        val token = FakeSpanToken(
+            name,
+            startTimeMs,
+            null,
+            null,
+            parent,
+            type,
+            true,
+            emptyMap(),
             emptyList(),
         )
 
@@ -68,7 +92,9 @@ class FakeTelemetryDestination : TelemetryDestination {
         startTimeMs: Long,
         endTimeMs: Long,
         errorCode: ErrorCodeAttribute?,
+        parent: SpanToken?,
         type: EmbType,
+        internal: Boolean,
         attributes: Map<String, String>,
         events: List<SpanEvent>,
     ) {
@@ -77,7 +103,9 @@ class FakeTelemetryDestination : TelemetryDestination {
             startTimeMs,
             endTimeMs,
             errorCode,
+            parent,
             type,
+            internal,
             attributes,
             events,
         )

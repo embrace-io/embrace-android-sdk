@@ -87,7 +87,7 @@ class FakeSpanService : SpanService {
                 parentContext = fakeOpenTelemetry().contextFactory.root(),
                 type = type,
                 internal = internal,
-                private = private
+                private = private,
             ).apply {
                 start(startTimeMs)
                 attributes.forEach { (key, value) -> addAttribute(key, value) }

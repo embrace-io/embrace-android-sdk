@@ -15,6 +15,7 @@ import io.embrace.android.embracesdk.internal.arch.state.AppStateTracker
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.otel.sdk.toEmbraceObjectName
+import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
@@ -117,21 +118,44 @@ class TelemetryDestinationImpl(
         }
     }
 
+    override fun startSpanCapture(
+        name: String,
+        startTimeMs: Long,
+        parent: SpanToken?,
+        type: EmbType,
+    ): SpanToken? {
+        val parentRef = retrieveParentReference(parent)
+        val span = spanService.startSpan(
+            name = name,
+            startTimeMs = startTimeMs,
+            parent = parentRef,
+            type = type,
+        ) ?: return null
+        return SpanTokenImpl(span) {
+            sessionUpdateAction?.invoke()
+        }
+    }
+
     override fun recordCompletedSpan(
         name: String,
         startTimeMs: Long,
         endTimeMs: Long,
         errorCode: ErrorCodeAttribute?,
+        parent: SpanToken?,
         type: EmbType,
+        internal: Boolean,
         attributes: Map<String, String>,
         events: List<SpanEvent>,
     ) {
+        val parentRef = retrieveParentReference(parent)
         spanService.recordCompletedSpan(
             name = name,
             startTimeMs = startTimeMs,
             endTimeMs = endTimeMs,
             errorCode = errorCode.toErrorCode(),
             type = type,
+            parent = parentRef,
+            internal = internal,
             attributes = attributes,
             events = events.mapNotNull(::toEmbraceSpanEvent),
         )
@@ -167,6 +191,8 @@ class TelemetryDestinationImpl(
         sessionUpdateAction?.invoke()
     }
 
+    private fun retrieveParentReference(parent: SpanToken?): EmbraceSpan? = (parent as? SpanTokenImpl)?.span
+
     private fun toEmbraceSpanEvent(event: SpanEvent): EmbraceSpanEvent? {
         return EmbraceSpanEvent.create(event.name, event.timestampNanos.nanosToMillis(), event.attributes)
     }
@@ -176,22 +202,32 @@ class TelemetryDestinationImpl(
         else -> severity.name
     }
 
-    private fun ErrorCodeAttribute?.toErrorCode(): ErrorCode? {
-        return when (this) {
-            ErrorCodeAttribute.Failure -> ErrorCode.FAILURE
-            ErrorCodeAttribute.Unknown -> ErrorCode.UNKNOWN
-            ErrorCodeAttribute.UserAbandon -> ErrorCode.USER_ABANDON
-            else -> null
-        }
-    }
-
     private class SpanTokenImpl(
-        private val span: EmbraceSpan,
+        val span: EmbraceSdkSpan,
         private val sessionUpdateAction: () -> Unit?,
     ) : SpanToken {
-        override fun stop(endTimeMs: Long?) {
-            span.stop(endTimeMs = endTimeMs)
+        override fun stop(endTimeMs: Long?, errorCode: ErrorCodeAttribute?) {
+            span.stop(endTimeMs = endTimeMs, errorCode = errorCode?.toErrorCode())
             sessionUpdateAction.invoke()
         }
+
+        override fun isRecording() = span.isRecording
+
+        override fun addAttribute(key: String, value: String) {
+            span.addAttribute(key, value)
+        }
+
+        override fun getStartTimeMs(): Long? = span.getStartTimeMs()
+
+        override fun setSystemAttribute(key: String, value: String) = span.setSystemAttribute(key, value)
+    }
+}
+
+internal fun ErrorCodeAttribute?.toErrorCode(): ErrorCode? {
+    return when (this) {
+        ErrorCodeAttribute.Failure -> ErrorCode.FAILURE
+        ErrorCodeAttribute.Unknown -> ErrorCode.UNKNOWN
+        ErrorCodeAttribute.UserAbandon -> ErrorCode.USER_ABANDON
+        else -> null
     }
 }

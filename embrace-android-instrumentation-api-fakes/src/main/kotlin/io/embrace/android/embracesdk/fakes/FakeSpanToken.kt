@@ -10,13 +10,31 @@ class FakeSpanToken(
     val startTimeMs: Long,
     var endTimeMs: Long?,
     var errorCode: ErrorCodeAttribute?,
+    var parent: SpanToken?,
     val type: EmbType,
-    val attributes: Map<String, String>,
-    val events: List<SpanEvent>
+    val internal: Boolean,
+    initialAttrs: Map<String, String>,
+    val events: List<SpanEvent>,
 ) : SpanToken {
-    override fun stop(endTimeMs: Long?) {
+
+    val attributes: Map<String, String>
+        get() = attrs.toMap()
+
+    private val attrs: MutableMap<String, String> = initialAttrs.toMutableMap()
+
+    override fun stop(endTimeMs: Long?, errorCode: ErrorCodeAttribute?) {
         this.endTimeMs = endTimeMs ?: 0
+        this.errorCode = errorCode
     }
 
-    fun isRecording(): Boolean = endTimeMs == null
+    override fun isRecording(): Boolean = endTimeMs == null
+
+    override fun addAttribute(key: String, value: String) {
+        attrs[key] = value
+    }
+
+    override fun setSystemAttribute(key: String, value: String) {
+    }
+
+    override fun getStartTimeMs(): Long? = startTimeMs
 }

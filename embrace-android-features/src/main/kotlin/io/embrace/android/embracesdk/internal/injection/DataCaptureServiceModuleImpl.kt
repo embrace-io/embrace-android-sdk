@@ -1,7 +1,9 @@
 package io.embrace.android.embracesdk.internal.injection
 
+import android.os.SystemClock
 import io.embrace.android.embracesdk.internal.capture.startup.StartupService
 import io.embrace.android.embracesdk.internal.capture.startup.StartupServiceImpl
+import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.instrumentation.startup.AppStartupDataCollector
 import io.embrace.android.embracesdk.internal.instrumentation.startup.AppStartupTraceEmitter
@@ -29,6 +31,8 @@ class DataCaptureServiceModuleImpl(
     }
 
     override val appStartupDataCollector: AppStartupDataCollector by singleton {
+        val deviceStartTimeMs = (initModule.clock.now().millisToNanos() - SystemClock.elapsedRealtimeNanos()).millisToNanos()
+
         AppStartupTraceEmitter(
             clock = initModule.clock,
             startupServiceProvider = { startupService },
@@ -37,7 +41,7 @@ class DataCaptureServiceModuleImpl(
             logger = initModule.logger,
             manualEnd = configService.autoDataCaptureBehavior.isEndStartupWithAppReadyEnabled(),
             processInfo = ProcessInfoImpl(
-                deviceStartTimeMs = openTelemetryModule.deviceStartTimeMs(),
+                deviceStartTimeMs = deviceStartTimeMs,
                 versionChecker = versionChecker,
             )
         )

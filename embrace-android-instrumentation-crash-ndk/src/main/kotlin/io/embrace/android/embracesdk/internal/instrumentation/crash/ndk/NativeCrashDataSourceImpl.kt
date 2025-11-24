@@ -20,6 +20,9 @@ internal class NativeCrashDataSourceImpl(
     args = args,
     limitStrategy = NoopLimitStrategy,
 ) {
+    private val ordinalStore: OrdinalStore = args.ordinalStore
+    private val serializer: PlatformSerializer = args.serializer
+
     override fun getAndSendNativeCrash(): NativeCrashData? {
         return nativeCrashProcessor.getLatestNativeCrash()?.apply {
             sendNativeCrash(nativeCrash = this, sessionProperties = emptyMap(), metadata = emptyMap())

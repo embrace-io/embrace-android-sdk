@@ -1,6 +1,8 @@
 package io.embrace.android.embracesdk.internal.instrumentation.crash.ndk
 
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
+import io.embrace.android.embracesdk.internal.clock.Clock
+import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.delivery.PayloadType
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
@@ -9,25 +11,27 @@ import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.jni.JniD
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.Provider
+import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.internal.worker.Worker
 import java.io.File
 
 private const val HANDLER_CHECK_DELAY_MS = 5000L
 
 class NativeCrashHandlerInstallerImpl(
+    private val args: InstrumentationArgs,
     private val sharedObjectLoader: SharedObjectLoader,
     private val delegate: JniDelegate,
     private val nativeInstallMessage: NativeInstallMessage,
     private val mainThreadHandler: MainThreadHandler,
-    private val args: InstrumentationArgs,
+    private val sessionIdTracker: SessionIdTracker,
     private val processIdProvider: Provider<String>,
     private val outputDir: Lazy<File>,
 ) : NativeCrashHandlerInstaller {
 
-    private val backgroundWorker = args.backgroundWorker(Worker.Background.IoRegWorker)
-    private val configService = args.configService
-    private val logger = args.logger
-    private val clock = args.clock
+    private val configService: ConfigService = args.configService
+    private val logger: EmbLogger = args.logger
+    private val clock: Clock = args.clock
+    private val backgroundWorker: BackgroundWorker = args.backgroundWorker(Worker.Background.IoRegWorker)
 
     override fun install() {
         backgroundWorker.submit {

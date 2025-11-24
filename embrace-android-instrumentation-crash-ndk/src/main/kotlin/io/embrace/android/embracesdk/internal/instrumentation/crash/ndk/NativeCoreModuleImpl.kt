@@ -61,11 +61,11 @@ class NativeCoreModuleImpl(
     override val nativeCrashHandlerInstaller: NativeCrashHandlerInstaller? by lazy {
         if (args.configService.autoDataCaptureBehavior.isNativeCrashCaptureEnabled()) {
             NativeCrashHandlerInstallerImpl(
+                args = args,
                 sharedObjectLoader = sharedObjectLoader,
                 delegate = delegate,
                 nativeInstallMessage = nativeInstallMessage,
                 mainThreadHandler = AndroidMainThreadHandler(),
-                args = args,
                 processIdProvider = { otelModule.otelSdkConfig.processIdentifier },
                 outputDir = nativeOutputDir
             )

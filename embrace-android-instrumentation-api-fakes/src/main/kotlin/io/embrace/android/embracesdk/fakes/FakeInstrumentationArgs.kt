@@ -18,17 +18,17 @@ class FakeInstrumentationArgs(
     override val store: FakeKeyValueStore = FakeKeyValueStore(),
     override val serializer: PlatformSerializer = TestPlatformSerializer(),
     override val ordinalStore: OrdinalStore = FakeOrdinalStore(),
+    val workerSupplier: (worker: Worker.Background) -> BackgroundWorker = { fakeBackgroundWorker() },
+    val sessionIdSupplier: () -> String? = { null },
 ) : InstrumentationArgs {
 
-    override fun backgroundWorker(worker: Worker.Background): BackgroundWorker {
-        return fakeBackgroundWorker()
-    }
+    override fun backgroundWorker(worker: Worker.Background): BackgroundWorker = workerSupplier(worker)
 
     override fun <T> systemService(name: String): T? {
         throw UnsupportedOperationException()
     }
 
-    override fun sessionId(): String? = null
+    override fun sessionId(): String? = sessionIdSupplier()
 
     override fun sessionProperties(): Map<String, String> = emptyMap()
 }

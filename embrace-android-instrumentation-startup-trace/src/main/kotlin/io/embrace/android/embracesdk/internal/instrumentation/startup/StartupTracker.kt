@@ -6,7 +6,6 @@ import android.os.Bundle
 import io.embrace.android.embracesdk.annotation.IgnoreForStartup
 import io.embrace.android.embracesdk.internal.instrumentation.startup.activity.traceInstanceId
 import io.embrace.android.embracesdk.internal.instrumentation.startup.ui.DrawEventEmitter
-import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityLifecycleListener
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
@@ -30,7 +29,7 @@ import java.util.concurrent.atomic.AtomicBoolean
  */
 class StartupTracker(
     private val appStartupDataCollector: AppStartupDataCollector,
-    private val activityLoadEventEmitter: ActivityLifecycleListener?,
+    private val activityLoadEventEmitter: Application.ActivityLifecycleCallbacks?,
     private val drawEventEmitter: DrawEventEmitter?,
 ) : Application.ActivityLifecycleCallbacks {
 

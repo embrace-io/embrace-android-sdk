@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.instrumentation.startup.activity
 
 import android.app.Activity
+import android.app.Application
 import android.os.Build.VERSION_CODES
 import android.os.Bundle
 import androidx.annotation.RequiresApi
@@ -9,7 +10,6 @@ import io.embrace.android.embracesdk.annotation.LoadTracedActivity
 import io.embrace.android.embracesdk.annotation.NotTracedActivity
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.instrumentation.startup.ui.DrawEventEmitter
-import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityLifecycleListener
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import java.util.concurrent.ConcurrentHashMap
 
@@ -26,7 +26,7 @@ fun createActivityLoadEventEmitter(
     autoTraceEnabled: Boolean,
     clock: Clock,
     versionChecker: VersionChecker,
-): ActivityLifecycleListener {
+): Application.ActivityLifecycleCallbacks {
     val lifecycleEventEmitter = LifecycleEventEmitter(
         uiLoadEventListener = uiLoadEventListener,
         drawEventEmitter = firstDrawDetector,
@@ -56,7 +56,7 @@ fun hasPrePostEvents(versionChecker: VersionChecker) = versionChecker.isAtLeast(
 @RequiresApi(VERSION_CODES.Q)
 private class ActivityLoadEventEmitter(
     private val lifecycleEventEmitter: LifecycleEventEmitter,
-) : ActivityLifecycleListener {
+) : Application.ActivityLifecycleCallbacks {
 
     override fun onActivityPreCreated(activity: Activity, savedInstanceState: Bundle?) {
         lifecycleEventEmitter.create(activity)
@@ -85,6 +85,19 @@ private class ActivityLoadEventEmitter(
     override fun onActivityPrePaused(activity: Activity) {
         lifecycleEventEmitter.pause(activity)
     }
+    override fun onActivityCreated(activity: Activity, bundle: Bundle?) {}
+
+    override fun onActivityStarted(activity: Activity) {}
+
+    override fun onActivityResumed(activity: Activity) {}
+
+    override fun onActivityPaused(activity: Activity) {}
+
+    override fun onActivityStopped(activity: Activity) {}
+
+    override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) {}
+
+    override fun onActivityDestroyed(activity: Activity) {}
 }
 
 /**
@@ -92,7 +105,7 @@ private class ActivityLoadEventEmitter(
  */
 private class LegacyActivityLoadEventEmitter(
     private val lifecycleEventEmitter: LifecycleEventEmitter,
-) : ActivityLifecycleListener {
+) : Application.ActivityLifecycleCallbacks {
 
     override fun onActivityCreated(activity: Activity, bundle: Bundle?) {
         lifecycleEventEmitter.create(activity)
@@ -111,6 +124,12 @@ private class LegacyActivityLoadEventEmitter(
     override fun onActivityPaused(activity: Activity) {
         lifecycleEventEmitter.pause(activity)
     }
+
+    override fun onActivityStopped(activity: Activity) {}
+
+    override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) {}
+
+    override fun onActivityDestroyed(activity: Activity) {}
 }
 
 /**

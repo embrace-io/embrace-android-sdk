@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.instrumentation.startup
 
+import android.app.Application
 import io.embrace.android.embracesdk.internal.instrumentation.startup.activity.UiLoadDataListener
-import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityLifecycleListener
 
 /**
  * This modules provides services that capture data from within an application. It could be argued
@@ -34,5 +34,5 @@ interface DataCaptureServiceModule {
     /**
      * Listens for lifecycle events during the loading of Activities proxies them to [uiLoadDataListener]
      */
-    val activityLoadEventEmitter: ActivityLifecycleListener?
+    val activityLoadEventEmitter: Application.ActivityLifecycleCallbacks?
 }

@@ -41,7 +41,7 @@ class EssentialServiceModuleImpl(
     }
 
     override val activityLifecycleTracker: ActivityLifecycleTracker by singleton {
-        ActivityLifecycleTracker(coreModule.application, initModule.logger)
+        ActivityLifecycleTracker(coreModule.application)
     }
 
     override val userService: UserService by singleton {

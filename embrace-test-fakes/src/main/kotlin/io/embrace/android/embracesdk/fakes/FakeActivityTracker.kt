@@ -2,18 +2,11 @@ package io.embrace.android.embracesdk.fakes
 
 import android.app.Activity
 import android.os.Bundle
-import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityLifecycleListener
 import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityTracker
 
 class FakeActivityTracker(
     override var foregroundActivity: Activity? = null,
 ) : ActivityTracker {
-
-    val listeners: MutableList<ActivityLifecycleListener> = mutableListOf()
-
-    override fun addListener(listener: ActivityLifecycleListener) {
-        listeners.add(listener)
-    }
 
     override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
         TODO("Not yet implemented")

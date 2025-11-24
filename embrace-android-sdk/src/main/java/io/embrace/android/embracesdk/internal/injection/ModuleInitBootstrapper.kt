@@ -3,9 +3,10 @@ package io.embrace.android.embracesdk.internal.injection
 import android.content.Context
 import androidx.lifecycle.LifecycleOwner
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
+import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.arch.state.AppStateTracker
 import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkConnectivityService
-import io.embrace.android.embracesdk.internal.capture.startup.StartupService
+import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
 import io.embrace.android.embracesdk.internal.delivery.execution.RequestExecutionService
@@ -23,6 +24,10 @@ import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeFe
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.SharedObjectLoader
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.jni.JniDelegate
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.symbols.SymbolService
+import io.embrace.android.embracesdk.internal.instrumentation.startup.DataCaptureServiceModule
+import io.embrace.android.embracesdk.internal.instrumentation.startup.DataCaptureServiceModuleImpl
+import io.embrace.android.embracesdk.internal.instrumentation.startup.DataCaptureServiceModuleSupplier
+import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.Provider
@@ -116,14 +121,16 @@ internal class ModuleInitBootstrapper(
         )
     },
     private val dataCaptureServiceModuleSupplier: DataCaptureServiceModuleSupplier = {
-            initModule: InitModule,
-            instrumentationModule: InstrumentationModule,
+            clock: Clock,
+            logger: EmbLogger,
+            destination: TelemetryDestination,
             configService: ConfigService,
             versionChecker: VersionChecker,
         ->
         DataCaptureServiceModuleImpl(
-            initModule,
-            instrumentationModule,
+            clock,
+            logger,
+            destination,
             configService,
             versionChecker
         )
@@ -222,7 +229,7 @@ internal class ModuleInitBootstrapper(
             deliveryModule: DeliveryModule,
             instrumentationModule: InstrumentationModule,
             payloadSourceModule: PayloadSourceModule,
-            startupService: StartupService,
+            startupDurationProvider: () -> Long?,
             logModule: LogModule,
         ->
         SessionOrchestrationModuleImpl(
@@ -234,7 +241,7 @@ internal class ModuleInitBootstrapper(
             deliveryModule,
             instrumentationModule,
             payloadSourceModule,
-            startupService,
+            startupDurationProvider,
             logModule
         )
     },

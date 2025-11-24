@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.internal.session
 
 import io.embrace.android.embracesdk.fakes.FakeConfigModule
 import io.embrace.android.embracesdk.fakes.FakeConfigService
-import io.embrace.android.embracesdk.fakes.FakeStartupService
 import io.embrace.android.embracesdk.fakes.createBackgroundActivityBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeDeliveryModule
@@ -47,7 +46,7 @@ internal class SessionOrchestrationModuleImplTest {
             FakeDeliveryModule(),
             dataSourceModule,
             FakePayloadSourceModule(),
-            FakeStartupService(),
+            { 0 },
             FakeLogModule()
         )
         assertNotNull(module.payloadFactory)
@@ -75,7 +74,7 @@ internal class SessionOrchestrationModuleImplTest {
             FakeDeliveryModule(),
             dataSourceModule,
             FakePayloadSourceModule(),
-            FakeStartupService(),
+            { 0 },
             FakeLogModule()
         )
         assertNotNull(module.payloadFactory)

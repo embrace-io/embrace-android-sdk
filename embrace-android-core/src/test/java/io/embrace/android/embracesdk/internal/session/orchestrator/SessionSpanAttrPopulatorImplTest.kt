@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.internal.session.orchestrator
 import io.embrace.android.embracesdk.fakes.FakeLogService
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakeSessionPropertiesService
-import io.embrace.android.embracesdk.fakes.FakeStartupService
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
 import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.session.LifeEventType
@@ -25,7 +24,7 @@ internal class SessionSpanAttrPopulatorImplTest {
         destination = FakeTelemetryDestination()
         populator = SessionSpanAttrPopulatorImpl(
             destination,
-            FakeStartupService(),
+            { 0 },
             FakeLogService(),
             FakeMetadataService()
         )

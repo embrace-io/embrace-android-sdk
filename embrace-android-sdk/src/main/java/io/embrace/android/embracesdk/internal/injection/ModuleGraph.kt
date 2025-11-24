@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.injection
 import io.embrace.android.embracesdk.internal.instrumentation.anr.AnrModule
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeCoreModule
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeFeatureModule
+import io.embrace.android.embracesdk.internal.instrumentation.startup.DataCaptureServiceModule
 
 /**
  * Contains all the dependency modules that are required by the initialized SDK.

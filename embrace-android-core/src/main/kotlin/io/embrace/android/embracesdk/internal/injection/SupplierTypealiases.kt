@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.internal.injection
 import android.content.Context
 import androidx.lifecycle.LifecycleOwner
 import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkConnectivityService
-import io.embrace.android.embracesdk.internal.capture.startup.StartupService
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
 import io.embrace.android.embracesdk.internal.delivery.execution.RequestExecutionService
@@ -91,7 +90,7 @@ typealias SessionOrchestrationModuleSupplier = (
     deliveryModule: DeliveryModule,
     instrumentationModule: InstrumentationModule,
     payloadSourceModule: PayloadSourceModule,
-    startupService: StartupService,
+    startupDurationProvider: () -> Long?,
     logModule: LogModule,
 ) -> SessionOrchestrationModule
 

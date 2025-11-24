@@ -8,12 +8,9 @@ import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.fakes.FakeJniDelegate
 import io.embrace.android.embracesdk.fakes.FakeMainThreadHandler
-import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fakes.FakeSharedObjectLoader
 import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
-import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
-import io.embrace.android.embracesdk.internal.session.id.SessionData
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -32,9 +29,9 @@ class NativeCrashHandlerInstallerImplTest {
     private lateinit var fakeDelegate: FakeJniDelegate
     private lateinit var fakeMainThreadHandler: FakeMainThreadHandler
     private lateinit var nativeCrashHandlerInstaller: NativeCrashHandlerInstallerImpl
-    private lateinit var sessionTracker: FakeSessionIdTracker
     private lateinit var executorService: BlockingScheduledExecutorService
     private lateinit var outputDir: File
+    private var sessionId: String? = null
 
     @Before
     fun setUp() {
@@ -47,7 +44,7 @@ class NativeCrashHandlerInstallerImplTest {
         fakeSharedObjectLoader = FakeSharedObjectLoader()
         fakeDelegate = FakeJniDelegate()
         fakeMainThreadHandler = FakeMainThreadHandler()
-        sessionTracker = FakeSessionIdTracker()
+        sessionId = null
         outputDir = Files.createTempDirectory("test").toFile()
         executorService = BlockingScheduledExecutorService(blockingMode = false)
 
@@ -56,7 +53,7 @@ class NativeCrashHandlerInstallerImplTest {
             configService = fakeConfigService,
             logger = FakeEmbLogger(false),
             backgroundWorkerSupplier = { BackgroundWorker(executorService) },
-            sessionIdSupplier = sessionTracker::getActiveSessionId,
+            sessionIdSupplier = { sessionId },
             processIdentifier = "pid"
         )
         nativeCrashHandlerInstaller = NativeCrashHandlerInstallerImpl(
@@ -79,7 +76,7 @@ class NativeCrashHandlerInstallerImplTest {
 
     @Test
     fun `report path containing session ID`() {
-        sessionTracker.sessionData = SessionData("sid", AppState.FOREGROUND)
+        sessionId = "sid"
         nativeCrashHandlerInstaller.install()
 
         assertTrue(fakeDelegate.signalHandlerInstalled)
@@ -94,7 +91,7 @@ class NativeCrashHandlerInstallerImplTest {
 
         // trigger new session and update report path
         args.clock.tick(9000)
-        sessionTracker.setActiveSession("sid", AppState.FOREGROUND)
+        sessionId = "sid"
         args.sessionChangeListeners.forEach { it() }
         assertTrue(fakeDelegate.signalHandlerInstalled)
         assertEquals("p1_1692201610000_sid_pid_true_native_v1.json", getFilename())

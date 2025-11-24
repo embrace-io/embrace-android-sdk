@@ -7,7 +7,6 @@ include(
     ":embrace-android-config-fakes",
     ":embrace-android-infra",
     ":embrace-android-utils",
-    ":embrace-android-features",
     ":embrace-android-instrumentation-api",
     ":embrace-android-instrumentation-api-fakes",
     ":embrace-android-instrumentation-schema",

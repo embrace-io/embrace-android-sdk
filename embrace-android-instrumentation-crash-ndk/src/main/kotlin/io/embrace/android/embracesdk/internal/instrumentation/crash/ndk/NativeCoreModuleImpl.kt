@@ -4,7 +4,6 @@ import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.delivery.storage.StorageLocation
 import io.embrace.android.embracesdk.internal.delivery.storage.asFile
 import io.embrace.android.embracesdk.internal.handler.AndroidMainThreadHandler
-import io.embrace.android.embracesdk.internal.injection.singleton
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.jni.JniDelegate
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.jni.JniDelegateImpl
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.symbols.SymbolService
@@ -19,11 +18,11 @@ class NativeCoreModuleImpl(
     symbolServiceProvider: Provider<SymbolService?>,
 ) : NativeCoreModule {
 
-    override val delegate by singleton {
+    override val delegate by lazy {
         delegateProvider() ?: JniDelegateImpl()
     }
 
-    override val symbolService: SymbolService by singleton {
+    override val symbolService: SymbolService by lazy {
         symbolServiceProvider() ?: SymbolServiceImpl(
             args.cpuAbi,
             args.serializer,
@@ -31,7 +30,7 @@ class NativeCoreModuleImpl(
         )
     }
 
-    override val sharedObjectLoader: SharedObjectLoader by singleton {
+    override val sharedObjectLoader: SharedObjectLoader by lazy {
         sharedObjectLoaderProvider() ?: SharedObjectLoaderImpl(args.logger)
     }
 
@@ -50,7 +49,7 @@ class NativeCoreModuleImpl(
         args.priorityWorker(Worker.Priority.DataPersistenceWorker)
     )
 
-    override val nativeCrashHandlerInstaller: NativeCrashHandlerInstaller? by singleton {
+    override val nativeCrashHandlerInstaller: NativeCrashHandlerInstaller? by lazy {
         if (args.configService.autoDataCaptureBehavior.isNativeCrashCaptureEnabled()) {
             NativeCrashHandlerInstallerImpl(
                 args,

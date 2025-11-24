@@ -9,17 +9,13 @@ import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.arch.schema.TelemetryAttributes
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
-import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.store.Ordinal
-import io.embrace.android.embracesdk.internal.store.OrdinalStore
 import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
 import io.embrace.opentelemetry.kotlin.semconv.SessionAttributes
 
 internal class NativeCrashDataSourceImpl(
     private val nativeCrashProcessor: NativeCrashProcessor,
-    private val ordinalStore: OrdinalStore,
-    args: InstrumentationArgs,
-    private val serializer: PlatformSerializer,
+    private val args: InstrumentationArgs,
 ) : NativeCrashDataSource, DataSourceImpl(
     args = args,
     limitStrategy = NoopLimitStrategy,
@@ -39,7 +35,7 @@ internal class NativeCrashDataSourceImpl(
         metadata: Map<String, String>,
     ) {
         captureTelemetry {
-            val nativeCrashNumber = ordinalStore.incrementAndGet(Ordinal.NATIVE_CRASH)
+            val nativeCrashNumber = args.ordinalStore.incrementAndGet(Ordinal.NATIVE_CRASH)
             val crashAttributes = TelemetryAttributes(
                 sessionPropertiesProvider = { sessionProperties }
             )
@@ -68,7 +64,8 @@ internal class NativeCrashDataSourceImpl(
             }
 
             if (!nativeCrash.symbols.isNullOrEmpty()) {
-                serializer.toJson(nativeCrash.symbols, Map::class.java).let { nativeSymbolsJson ->
+                val json = args.serializer.toJson(nativeCrash.symbols, Map::class.java)
+                json.let { nativeSymbolsJson ->
                     crashAttributes.setAttribute(
                         EmbType.System.NativeCrash.embNativeCrashSymbols,
                         nativeSymbolsJson,

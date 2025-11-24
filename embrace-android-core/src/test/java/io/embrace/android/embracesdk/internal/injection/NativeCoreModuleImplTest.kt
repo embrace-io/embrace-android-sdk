@@ -6,7 +6,6 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeConfigModule
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
-import io.embrace.android.embracesdk.fakes.FakeInstrumentationModule
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
 import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
@@ -28,15 +27,11 @@ internal class NativeCoreModuleImplTest {
             FakeWorkerThreadModule(),
             FakeStorageModule(),
             FakeEssentialServiceModule(),
-            FakeInstrumentationModule(
+            FakeInstrumentationArgs(
                 ctx,
-                instrumentationArgs =
-                FakeInstrumentationArgs(
-                    ctx,
-                    FakeConfigService(
-                        autoDataCaptureBehavior = FakeAutoDataCaptureBehavior(
-                            ndkEnabled = true
-                        )
+                FakeConfigService(
+                    autoDataCaptureBehavior = FakeAutoDataCaptureBehavior(
+                        ndkEnabled = true
                     )
                 )
             ),

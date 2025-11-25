@@ -57,8 +57,9 @@ class IntakeServiceImpl(
                 else -> cacheStorageService
             }
             service.store(metadata) { stream ->
-                if (metadata.envelopeType.serializedType != null) {
-                    serializer.toJson(intake, metadata.envelopeType.serializedType, stream)
+                val type = metadata.envelopeType.serializedType
+                if (type != null) {
+                    serializer.toJson(intake, type, stream)
                 } else { // payload doesn't require serialization
                     val pair = intake.data as Pair<String, ByteArray>
                     storeAttachment(stream, pair.second, pair.first)

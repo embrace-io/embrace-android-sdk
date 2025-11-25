@@ -7,10 +7,12 @@ import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistryImpl
 
 class InstrumentationModuleImpl(
     initModule: InitModule,
+    openTelemetryModule: OpenTelemetryModule,
     workerThreadModule: WorkerThreadModule,
     configModule: ConfigModule,
     essentialServiceModule: EssentialServiceModule,
     coreModule: CoreModule,
+    storageModule: StorageModule,
 ) : InstrumentationModule {
 
     override val instrumentationRegistry: InstrumentationRegistry by singleton {
@@ -33,6 +35,9 @@ class InstrumentationModuleImpl(
             sessionIdTracker = essentialServiceModule.sessionIdTracker,
             ordinalStore = coreModule.ordinalStore,
             sessionPropertiesService = essentialServiceModule.sessionPropertiesService,
+            cpuAbi = configModule.cpuAbi,
+            processIdentifier = openTelemetryModule.otelSdkConfig.processIdentifier,
+            crashMarkerFileProvider = { storageModule.storageService.getFileForWrite("embrace_crash_marker") }
         )
     }
 }

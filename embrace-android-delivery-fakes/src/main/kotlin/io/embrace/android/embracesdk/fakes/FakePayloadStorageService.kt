@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.fakes
 import io.embrace.android.embracesdk.internal.delivery.PayloadType
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageService
-import io.embrace.android.embracesdk.internal.injection.SerializationAction
+import io.embrace.android.embracesdk.internal.delivery.storage.SerializationAction
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
@@ -61,7 +61,7 @@ class FakePayloadStorageService(
         cachedPayloads.filter { it.key.complete }.keys.toList()
 
     override fun getUndeliveredPayloads(): List<StoredTelemetryMetadata> =
-        cachedPayloads.filter { !it.key.complete && it.key.processId != processIdProvider() }.keys.toList()
+        cachedPayloads.filter { !it.key.complete && it.key.processIdentifier != processIdProvider() }.keys.toList()
 
     fun <T> addPayload(metadata: StoredTelemetryMetadata, data: T) {
         store(metadata) { stream ->

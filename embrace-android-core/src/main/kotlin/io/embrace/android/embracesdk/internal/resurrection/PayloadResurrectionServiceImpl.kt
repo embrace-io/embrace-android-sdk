@@ -166,7 +166,7 @@ internal class PayloadResurrectionServiceImpl(
                     nativeCrashProvider(sessionId)?.apply {
                         val nativeCrashEnvelopeMetadata = createNativeCrashEnvelopeMetadata(
                             sessionId = sessionId,
-                            processIdentifier = processId
+                            processIdentifier = processIdentifier
                         )
 
                         cachedLogEnvelopeStore.create(
@@ -181,7 +181,7 @@ internal class PayloadResurrectionServiceImpl(
                             metadata = if (appState != null) {
                                 mapOf(
                                     embState.name to appState,
-                                    embProcessIdentifier.name to processId
+                                    embProcessIdentifier.name to processIdentifier
                                 )
                             } else {
                                 emptyMap()

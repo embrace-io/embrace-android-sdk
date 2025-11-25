@@ -134,7 +134,7 @@ class PayloadStorageServiceImplTest {
                     val metadata = StoredTelemetryMetadata(
                         timestamp = appInstance.second,
                         uuid = UUID,
-                        processId = appInstance.first,
+                        processIdentifier = appInstance.first,
                         envelopeType = type,
                         complete = complete,
                     )
@@ -148,7 +148,7 @@ class PayloadStorageServiceImplTest {
         with(service.getUndeliveredPayloads()) {
             assertEquals(4, size)
             assertEquals(0, filter { it.complete }.size)
-            assertEquals(0, filter { it.processId == PROCESS_ID }.size)
+            assertEquals(0, filter { it.processIdentifier == PROCESS_ID }.size)
             assertNotNull(singleOrNull { it.envelopeType == CRASH })
             assertNotNull(singleOrNull { it.envelopeType == SESSION })
             assertNotNull(singleOrNull { it.envelopeType == LOG })

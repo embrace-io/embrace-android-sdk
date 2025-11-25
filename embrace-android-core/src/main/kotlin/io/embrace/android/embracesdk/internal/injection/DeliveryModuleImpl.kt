@@ -16,6 +16,7 @@ import io.embrace.android.embracesdk.internal.delivery.storage.CachedLogEnvelope
 import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageService
 import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageServiceImpl
 import io.embrace.android.embracesdk.internal.delivery.storage.StorageLocation
+import io.embrace.android.embracesdk.internal.delivery.storage.asFile
 import io.embrace.android.embracesdk.internal.session.caching.PeriodicSessionCacher
 import io.embrace.android.embracesdk.internal.session.orchestrator.PayloadStore
 import io.embrace.android.embracesdk.internal.session.orchestrator.PayloadStoreImpl
@@ -97,7 +98,11 @@ class DeliveryModuleImpl(
         payloadStorageServiceProvider?.invoke() ?: if (configModule.configService.isOnlyUsingOtelExporters()) {
             null
         } else {
-            val location = StorageLocation.PAYLOAD.asFile(coreModule.context, initModule.logger)
+            val location = StorageLocation.PAYLOAD.asFile(
+                logger = initModule.logger,
+                rootDirSupplier = { coreModule.context.filesDir },
+                fallbackDirSupplier = { coreModule.context.cacheDir }
+            )
             PayloadStorageServiceImpl(
                 location,
                 dataPersistenceWorker,
@@ -112,7 +117,11 @@ class DeliveryModuleImpl(
         cacheStorageServiceProvider?.invoke() ?: if (configModule.configService.isOnlyUsingOtelExporters()) {
             null
         } else {
-            val location = StorageLocation.CACHE.asFile(coreModule.context, initModule.logger)
+            val location = StorageLocation.CACHE.asFile(
+                logger = initModule.logger,
+                rootDirSupplier = { coreModule.context.filesDir },
+                fallbackDirSupplier = { coreModule.context.cacheDir }
+            )
             PayloadStorageServiceImpl(
                 location,
                 dataPersistenceWorker,
@@ -127,7 +136,11 @@ class DeliveryModuleImpl(
         if (configModule.configService.isOnlyUsingOtelExporters()) {
             null
         } else {
-            val location = StorageLocation.ENVELOPE.asFile(coreModule.context, initModule.logger)
+            val location = StorageLocation.ENVELOPE.asFile(
+                logger = initModule.logger,
+                rootDirSupplier = { coreModule.context.filesDir },
+                fallbackDirSupplier = { coreModule.context.cacheDir }
+            )
             CachedLogEnvelopeStoreImpl(
                 outputDir = location,
                 worker = dataPersistenceWorker,

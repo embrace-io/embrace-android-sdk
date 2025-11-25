@@ -93,10 +93,12 @@ internal class InitializedModuleGraph(
     override val instrumentationModule: InstrumentationModule = init {
         instrumentationModuleSupplier(
             initModule,
+            openTelemetryModule,
             workerThreadModule,
             configModule,
             essentialServiceModule,
             coreModule,
+            storageModule,
         )
     }
 
@@ -156,12 +158,8 @@ internal class InitializedModuleGraph(
 
     override val nativeCoreModule: NativeCoreModule = init {
         nativeCoreModuleSupplier(
-            configModule,
-            workerThreadModule,
-            storageModule,
             essentialServiceModule,
             instrumentationModule.instrumentationArgs,
-            openTelemetryModule,
             { null },
             { null },
             { null },

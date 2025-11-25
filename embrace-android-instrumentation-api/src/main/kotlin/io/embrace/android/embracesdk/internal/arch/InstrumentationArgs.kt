@@ -5,12 +5,15 @@ import android.content.Context
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.ConfigService
+import io.embrace.android.embracesdk.internal.envelope.CpuAbi
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.store.OrdinalStore
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
+import io.embrace.android.embracesdk.internal.worker.PriorityWorker
 import io.embrace.android.embracesdk.internal.worker.Worker
+import java.io.File
 
 /**
  * Provides references to essential functionality that can be used when registering instrumentation via SPI.
@@ -66,9 +69,19 @@ interface InstrumentationArgs {
     val ordinalStore: OrdinalStore
 
     /**
+     * The CPU's ABI
+     */
+    val cpuAbi: CpuAbi
+
+    /**
      * Retrieves a background worker matching the given name.
      */
     fun backgroundWorker(worker: Worker.Background): BackgroundWorker
+
+    /**
+     * Retrieves a background worker matching the given name.
+     */
+    fun <T> priorityWorker(worker: Worker.Priority): PriorityWorker<T>
 
     /**
      * Retrieves a system service matching the given name. This may be null if the service
@@ -82,7 +95,17 @@ interface InstrumentationArgs {
     fun sessionId(): String?
 
     /**
+     * Identifier that uniquely identifies the current process.
+     */
+    val processIdentifier: String
+
+    /**
      * Retrieves a snapshot of the current session properties
      */
     fun sessionProperties(): Map<String, String>
+
+    /**
+     * Retrieves the crash marker file.
+     */
+    val crashMarkerFile: File
 }

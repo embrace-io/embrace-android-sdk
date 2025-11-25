@@ -42,7 +42,7 @@ interface CachedLogEnvelopeStore {
         ) = StoredTelemetryMetadata(
             timestamp = 0L,
             uuid = sessionId ?: "none",
-            processId = processIdentifier ?: "none",
+            processIdentifier = processIdentifier ?: "none",
             envelopeType = SupportedEnvelopeType.CRASH,
             payloadType = PayloadType.NATIVE_CRASH,
         )

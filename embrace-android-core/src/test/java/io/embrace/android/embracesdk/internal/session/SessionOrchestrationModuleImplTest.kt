@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.session
 
 import io.embrace.android.embracesdk.fakes.FakeConfigModule
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
 import io.embrace.android.embracesdk.fakes.createBackgroundActivityBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeDeliveryModule
@@ -9,6 +10,7 @@ import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeLogModule
 import io.embrace.android.embracesdk.fakes.injection.FakePayloadSourceModule
+import io.embrace.android.embracesdk.fakes.injection.FakeStorageModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
@@ -32,10 +34,12 @@ internal class SessionOrchestrationModuleImplTest {
         val coreModule = FakeCoreModule()
         val dataSourceModule = InstrumentationModuleImpl(
             initModule,
+            FakeOpenTelemetryModule(),
             workerThreadModule,
             FakeConfigModule(),
             FakeEssentialServiceModule(),
             coreModule,
+            FakeStorageModule()
         )
         val module = SessionOrchestrationModuleImpl(
             initModule,
@@ -59,10 +63,12 @@ internal class SessionOrchestrationModuleImplTest {
         val coreModule = FakeCoreModule()
         val dataSourceModule = InstrumentationModuleImpl(
             initModule,
+            FakeOpenTelemetryModule(),
             workerThreadModule,
             FakeConfigModule(),
             FakeEssentialServiceModule(),
             coreModule,
+            FakeStorageModule()
         )
 
         val module = SessionOrchestrationModuleImpl(

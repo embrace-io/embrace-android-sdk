@@ -237,7 +237,7 @@ class PayloadResurrectionServiceImplTest {
         val earlierDeadSessionMetadata = StoredTelemetryMetadata(
             timestamp = earlierDeadSession.getStartTime(),
             uuid = "fake-uuid",
-            processId = "fakePid",
+            processIdentifier = "fakePid",
             envelopeType = SupportedEnvelopeType.SESSION,
             complete = false
         )
@@ -414,7 +414,7 @@ class PayloadResurrectionServiceImplTest {
         val fakeCachedCrashEnvelopeMetadata = StoredTelemetryMetadata(
             timestamp = 1000L,
             uuid = "old-session-id",
-            processId = "old-process-id",
+            processIdentifier = "old-process-id",
             envelopeType = CRASH,
             complete = false,
             payloadType = PayloadType.UNKNOWN

@@ -150,14 +150,10 @@ internal class EmbraceSetupInterface(
                 )
             }
         },
-        nativeCoreModuleSupplier = { configModule, workerThreadModule, storageModule, essentialServiceModule, instrumentationArgs, openTelemetryModule, _, _, _ ->
+        nativeCoreModuleSupplier = { essentialServiceModule, instrumentationArgs, _, _, _ ->
             NativeCoreModuleImpl(
-                configModule = configModule,
-                workerThreadModule = workerThreadModule,
-                storageModule = storageModule,
                 essentialServiceModule = essentialServiceModule,
                 args = instrumentationArgs,
-                otelModule = openTelemetryModule,
                 delegateProvider = { fakeJniDelegate },
                 sharedObjectLoaderProvider = ::FakeSharedObjectLoader,
                 symbolServiceProvider = { fakeSymbolService }
@@ -165,17 +161,21 @@ internal class EmbraceSetupInterface(
         },
         instrumentationModuleSupplier = {
                 initModule,
+                openTelemetryModule,
                 workerThreadModule,
                 configModule,
                 essentialServiceModule,
                 coreModule,
+                storageModule,
             ->
             val impl = InstrumentationModuleImpl(
                 initModule,
+                openTelemetryModule,
                 workerThreadModule,
                 configModule,
                 essentialServiceModule,
                 coreModule,
+                storageModule,
             )
             object : InstrumentationModule {
                 override val instrumentationRegistry: InstrumentationRegistry = FakeInstrumentationRegistry(impl.instrumentationRegistry)

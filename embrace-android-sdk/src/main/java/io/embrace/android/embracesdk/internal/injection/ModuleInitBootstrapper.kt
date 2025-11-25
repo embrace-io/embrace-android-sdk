@@ -107,17 +107,21 @@ internal class ModuleInitBootstrapper(
     },
     private val instrumentationModuleSupplier: InstrumentationModuleSupplier = {
             initModule: InitModule,
+            openTelemetryModule: OpenTelemetryModule,
             workerThreadModule: WorkerThreadModule,
             configModule: ConfigModule,
             essentialServiceModule: EssentialServiceModule,
             coreModule: CoreModule,
+            storageModule: StorageModule,
         ->
         InstrumentationModuleImpl(
             initModule,
+            openTelemetryModule,
             workerThreadModule,
             configModule,
             essentialServiceModule,
             coreModule,
+            storageModule,
         )
     },
     private val dataCaptureServiceModuleSupplier: DataCaptureServiceModuleSupplier = {
@@ -189,23 +193,15 @@ internal class ModuleInitBootstrapper(
         )
     },
     private val nativeCoreModuleSupplier: NativeCoreModuleSupplier = {
-            configModule: ConfigModule,
-            workerThreadModule: WorkerThreadModule,
-            storageModule: StorageModule,
             essentialServiceModule: EssentialServiceModule,
             instrumentationArgs: InstrumentationArgs,
-            otelModule: OpenTelemetryModule,
             delegateProvider: Provider<JniDelegate?>,
             sharedObjectLoaderProvider: Provider<SharedObjectLoader?>,
             symbolServiceProvider: Provider<SymbolService?>,
         ->
         NativeCoreModuleImpl(
-            configModule,
-            workerThreadModule,
-            storageModule,
             essentialServiceModule,
             instrumentationArgs,
-            otelModule,
             delegateProvider,
             sharedObjectLoaderProvider,
             symbolServiceProvider,

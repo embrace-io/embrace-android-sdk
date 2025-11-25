@@ -12,10 +12,7 @@ class FakeJniDelegate : JniDelegate {
 
     override fun installSignalHandlers(
         markerFilePath: String?,
-        appState: String?,
         reportId: String?,
-        apiLevel: Int,
-        is32bit: Boolean,
         devLogging: Boolean,
     ) {
         signalHandlerInstalled = true

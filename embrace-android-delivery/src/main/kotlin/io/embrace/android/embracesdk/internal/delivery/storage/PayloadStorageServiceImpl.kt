@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.internal.delivery.storage
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
 import io.embrace.android.embracesdk.internal.delivery.storedTelemetryComparator
-import io.embrace.android.embracesdk.internal.injection.SerializationAction
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.worker.PriorityWorker
 import java.io.File
@@ -65,7 +64,7 @@ class PayloadStorageServiceImpl(
 
     override fun getUndeliveredPayloads(): List<StoredTelemetryMetadata> {
         return fileStorageService.getStoredPayloads().sortedWith(storedTelemetryComparator)
-            .filter { !it.complete && it.processId != processIdProvider() }
+            .filter { !it.complete && it.processIdentifier != processIdProvider() }
             .toList().apply {
                 deliveryTracer?.onGetUndeliveredPayloads(this)
             }

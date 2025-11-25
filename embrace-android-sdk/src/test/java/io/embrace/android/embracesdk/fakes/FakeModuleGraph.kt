@@ -36,7 +36,7 @@ internal fun fakeModuleInitBootstrapper(
     storageModuleSupplier: StorageModuleSupplier = { _, _, _ -> FakeStorageModule() },
     essentialServiceModuleSupplier: EssentialServiceModuleSupplier = { _, _, _, _, _, _, _ -> FakeEssentialServiceModule() },
     configModuleSupplier: ConfigModuleSupplier = { _, _, _, _ -> FakeConfigModule() },
-    instrumentationModuleSupplier: InstrumentationModuleSupplier = { _, _, _, _, _ ->
+    instrumentationModuleSupplier: InstrumentationModuleSupplier = { _, _, _, _, _, _, _ ->
         FakeInstrumentationModule(
             fakeCoreModule.application
         )
@@ -45,7 +45,7 @@ internal fun fakeModuleInitBootstrapper(
     deliveryModuleSupplier: DeliveryModuleSupplier = { _, _, _, _, _, _, _, _, _, _ -> FakeDeliveryModule() },
     anrModuleSupplier: AnrModuleSupplier = { _, _ -> FakeAnrModule() },
     logModuleSupplier: LogModuleSupplier = { _, _, _, _, _, _, _ -> FakeLogModule() },
-    nativeCoreModuleSupplier: NativeCoreModuleSupplier = { _, _, _, _, _, _, _, _, _ -> FakeNativeCoreModule() },
+    nativeCoreModuleSupplier: NativeCoreModuleSupplier = { _, _, _, _, _ -> FakeNativeCoreModule() },
     sessionOrchestrationModuleSupplier: SessionOrchestrationModuleSupplier =
         { _, _, _, _, _, _, _, _, _, _ -> FakeSessionOrchestrationModule() },
     payloadSourceModuleSupplier: PayloadSourceModuleSupplier =

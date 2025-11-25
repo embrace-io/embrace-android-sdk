@@ -12,7 +12,7 @@ import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
-import io.embrace.android.embracesdk.internal.utils.Provider
+import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.internal.worker.Worker
 import java.io.File
@@ -23,11 +23,13 @@ class NativeCrashHandlerInstallerImpl(
     private val args: InstrumentationArgs,
     private val sharedObjectLoader: SharedObjectLoader,
     private val delegate: JniDelegate,
-    private val nativeInstallMessage: NativeInstallMessage,
     private val mainThreadHandler: MainThreadHandler,
     private val sessionIdTracker: SessionIdTracker,
-    private val processIdProvider: Provider<String>,
+    private val processIdentifier: String,
     private val outputDir: Lazy<File>,
+    private val markerFilePath: String,
+    private val reportId: String = Uuid.getEmbUuid(),
+    private val devLogging: Boolean = false,
 ) : NativeCrashHandlerInstaller {
 
     private val configService: ConfigService = args.configService
@@ -93,16 +95,11 @@ class NativeCrashHandlerInstallerImpl(
 
     private fun installSignals() {
         EmbTrace.trace("native-install-handlers") {
-            with(nativeInstallMessage) {
-                delegate.installSignalHandlers(
-                    markerFilePath,
-                    appState.description,
-                    reportId,
-                    apiLevel,
-                    is32bit,
-                    devLogging
-                )
-            }
+            delegate.installSignalHandlers(
+                markerFilePath,
+                reportId,
+                devLogging
+            )
         }
     }
 
@@ -110,7 +107,7 @@ class NativeCrashHandlerInstallerImpl(
         val metadata = StoredTelemetryMetadata(
             timestamp = clock.now(),
             uuid = sanitizeSessionId(args.sessionId()),
-            processId = processIdProvider(),
+            processIdentifier = processIdentifier,
             envelopeType = SupportedEnvelopeType.CRASH,
             payloadType = PayloadType.NATIVE_CRASH,
         )

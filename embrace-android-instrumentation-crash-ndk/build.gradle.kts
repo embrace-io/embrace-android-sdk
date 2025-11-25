@@ -21,6 +21,7 @@ android {
 dependencies {
     implementation(project(":embrace-android-instrumentation-api"))
     implementation(project(":embrace-android-utils"))
+    implementation(project(":embrace-android-telemetry-persistence"))
 
     testImplementation(project(":embrace-android-instrumentation-api-fakes"))
     testImplementation(libs.robolectric)

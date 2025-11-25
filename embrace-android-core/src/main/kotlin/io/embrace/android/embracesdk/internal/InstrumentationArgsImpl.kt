@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestinati
 import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.ConfigService
+import io.embrace.android.embracesdk.internal.envelope.CpuAbi
 import io.embrace.android.embracesdk.internal.injection.WorkerThreadModule
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
@@ -14,7 +15,9 @@ import io.embrace.android.embracesdk.internal.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.store.OrdinalStore
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
+import io.embrace.android.embracesdk.internal.worker.PriorityWorker
 import io.embrace.android.embracesdk.internal.worker.Worker
+import java.io.File
 import java.util.concurrent.ConcurrentHashMap
 
 internal class InstrumentationArgsImpl(
@@ -27,12 +30,20 @@ internal class InstrumentationArgsImpl(
     override val store: KeyValueStore,
     override val serializer: PlatformSerializer,
     override val ordinalStore: OrdinalStore,
+    override val cpuAbi: CpuAbi,
+    override val processIdentifier: String,
     private val workerThreadModule: WorkerThreadModule,
     private val sessionIdTracker: SessionIdTracker,
     private val sessionPropertiesService: SessionPropertiesService,
+    crashMarkerFileProvider: () -> File,
 ) : InstrumentationArgs {
 
+    override val crashMarkerFile: File by lazy { crashMarkerFileProvider() }
+
     override fun backgroundWorker(worker: Worker.Background): BackgroundWorker = workerThreadModule.backgroundWorker(worker)
+    override fun <T> priorityWorker(
+        worker: Worker.Priority
+    ): PriorityWorker<T> = workerThreadModule.priorityWorker(worker)
 
     private val memo = ConcurrentHashMap<String, Any>()
 

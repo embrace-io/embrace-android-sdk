@@ -31,10 +31,10 @@ import io.embrace.android.embracesdk.internal.api.delegate.UserApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.ViewTrackingApiDelegate
 import io.embrace.android.embracesdk.internal.config.behavior.NetworkBehavior
 import io.embrace.android.embracesdk.internal.delivery.storage.StorageLocation
+import io.embrace.android.embracesdk.internal.delivery.storage.asFile
 import io.embrace.android.embracesdk.internal.injection.InternalInterfaceModule
 import io.embrace.android.embracesdk.internal.injection.InternalInterfaceModuleImpl
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
-import io.embrace.android.embracesdk.internal.injection.asFile
 import io.embrace.android.embracesdk.internal.injection.loadInstrumentation
 import io.embrace.android.embracesdk.internal.injection.markSdkInitComplete
 import io.embrace.android.embracesdk.internal.injection.postInit
@@ -169,7 +169,13 @@ internal class EmbraceImpl(
             stop()
             Executors.newSingleThreadExecutor().execute {
                 runCatching {
-                    StorageLocation.entries.map { it.asFile(bootstrapper.coreModule.context, logger).value }.forEach {
+                    StorageLocation.entries.map {
+                        it.asFile(
+                            logger = logger,
+                            rootDirSupplier = { bootstrapper.coreModule.context.filesDir },
+                            fallbackDirSupplier = { bootstrapper.coreModule.context.cacheDir }
+                        ).value
+                    }.forEach {
                         it.deleteRecursively()
                     }
                 }.onFailure { exception ->

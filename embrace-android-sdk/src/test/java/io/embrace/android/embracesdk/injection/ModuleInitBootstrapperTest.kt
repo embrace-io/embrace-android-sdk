@@ -8,7 +8,6 @@ import io.embrace.android.embracesdk.fakes.FakeConfigModule
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationModule
-import io.embrace.android.embracesdk.fakes.FakeNativeFeatureModule
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistry
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState
@@ -49,7 +48,6 @@ internal class ModuleInitBootstrapperTest {
             InitModuleImpl(logger, clock),
             configModuleSupplier = { _, _, _, _ -> FakeConfigModule(FakeConfigService()) },
             coreModuleSupplier = { _, _ -> coreModule },
-            nativeFeatureModuleSupplier = { _, _ -> FakeNativeFeatureModule() },
             instrumentationModuleSupplier = { _, _, _, _, _, _, _ ->
                 FakeInstrumentationModule(application, logger = logger).apply {
                     registry = instrumentationRegistry

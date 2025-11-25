@@ -115,7 +115,7 @@ internal fun ModuleGraph.triggerPayloadSend() {
     val worker = workerThreadModule.backgroundWorker(Worker.Background.IoRegWorker)
     worker.submit {
         payloadSourceModule.payloadResurrectionService?.resurrectOldPayloads(
-            nativeCrashServiceProvider = { nativeFeatureModule.nativeCrashService }
+            nativeCrashServiceProvider = { nativeCoreModule.nativeCrashService }
         )
     }
     worker.submit { // potentially trigger first delivery attempt by firing network status callback

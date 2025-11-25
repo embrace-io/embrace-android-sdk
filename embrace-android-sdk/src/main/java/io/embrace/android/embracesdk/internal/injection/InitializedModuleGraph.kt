@@ -5,8 +5,6 @@ import io.embrace.android.embracesdk.internal.instrumentation.anr.AnrModule
 import io.embrace.android.embracesdk.internal.instrumentation.anr.AnrModuleSupplier
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeCoreModule
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeCoreModuleSupplier
-import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeFeatureModule
-import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeFeatureModuleSupplier
 import io.embrace.android.embracesdk.internal.instrumentation.startup.DataCaptureServiceModule
 import io.embrace.android.embracesdk.internal.instrumentation.startup.DataCaptureServiceModuleSupplier
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
@@ -34,7 +32,6 @@ internal class InitializedModuleGraph(
     private val anrModuleSupplier: AnrModuleSupplier,
     private val logModuleSupplier: LogModuleSupplier,
     private val nativeCoreModuleSupplier: NativeCoreModuleSupplier,
-    private val nativeFeatureModuleSupplier: NativeFeatureModuleSupplier,
     private val sessionOrchestrationModuleSupplier: SessionOrchestrationModuleSupplier,
     private val payloadSourceModuleSupplier: PayloadSourceModuleSupplier,
 ) : ModuleGraph {
@@ -162,13 +159,6 @@ internal class InitializedModuleGraph(
             { null },
             { null },
             { null },
-        )
-    }
-
-    override val nativeFeatureModule: NativeFeatureModule = init {
-        nativeFeatureModuleSupplier(
-            nativeCoreModule,
-            instrumentationModule.instrumentationArgs,
         )
     }
 

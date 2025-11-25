@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.internal.injection
 
 import io.embrace.android.embracesdk.internal.instrumentation.anr.AnrModule
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeCoreModule
-import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeFeatureModule
 import io.embrace.android.embracesdk.internal.instrumentation.startup.DataCaptureServiceModule
 
 /**
@@ -21,7 +20,6 @@ internal interface ModuleGraph {
     val anrModule: AnrModule
     val logModule: LogModule
     val nativeCoreModule: NativeCoreModule
-    val nativeFeatureModule: NativeFeatureModule
     val instrumentationModule: InstrumentationModule
     val featureModule: FeatureModule
     val sessionOrchestrationModule: SessionOrchestrationModule

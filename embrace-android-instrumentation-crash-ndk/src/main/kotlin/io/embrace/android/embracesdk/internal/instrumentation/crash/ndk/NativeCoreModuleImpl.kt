@@ -62,4 +62,15 @@ class NativeCoreModuleImpl(
             null
         }
     }
+
+    override val nativeCrashService: NativeCrashService? by lazy {
+        if (!args.configService.autoDataCaptureBehavior.isNativeCrashCaptureEnabled()) {
+            null
+        } else {
+            NativeCrashDataSourceImpl(
+                nativeCrashProcessor = processor,
+                args = args,
+            )
+        }
+    }
 }

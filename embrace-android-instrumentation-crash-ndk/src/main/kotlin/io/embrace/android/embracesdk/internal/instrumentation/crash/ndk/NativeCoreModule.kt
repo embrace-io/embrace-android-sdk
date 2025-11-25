@@ -9,4 +9,5 @@ interface NativeCoreModule {
     val symbolService: SymbolService
     val delegate: JniDelegate
     val nativeCrashHandlerInstaller: NativeCrashHandlerInstaller?
+    val nativeCrashService: NativeCrashService?
 }

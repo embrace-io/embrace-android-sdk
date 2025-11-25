@@ -156,7 +156,6 @@ internal class InitializedModuleGraph(
 
     override val nativeCoreModule: NativeCoreModule = init {
         nativeCoreModuleSupplier(
-            configModule,
             workerThreadModule,
             storageModule,
             essentialServiceModule,

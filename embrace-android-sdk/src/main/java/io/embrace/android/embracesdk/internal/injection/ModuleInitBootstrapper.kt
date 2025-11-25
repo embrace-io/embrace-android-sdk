@@ -189,7 +189,6 @@ internal class ModuleInitBootstrapper(
         )
     },
     private val nativeCoreModuleSupplier: NativeCoreModuleSupplier = {
-            configModule: ConfigModule,
             workerThreadModule: WorkerThreadModule,
             storageModule: StorageModule,
             essentialServiceModule: EssentialServiceModule,
@@ -200,7 +199,6 @@ internal class ModuleInitBootstrapper(
             symbolServiceProvider: Provider<SymbolService?>,
         ->
         NativeCoreModuleImpl(
-            configModule,
             workerThreadModule,
             storageModule,
             essentialServiceModule,

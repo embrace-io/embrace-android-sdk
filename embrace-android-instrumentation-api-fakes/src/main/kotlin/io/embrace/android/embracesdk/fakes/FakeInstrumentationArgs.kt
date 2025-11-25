@@ -20,6 +20,7 @@ class FakeInstrumentationArgs(
     override val serializer: PlatformSerializer = TestPlatformSerializer(),
     override val ordinalStore: OrdinalStore = FakeOrdinalStore(),
     override val cpuAbi: CpuAbi = CpuAbi.ARM64_V8A,
+    override val processIdentifier: String = "fake-process-id",
     val workerSupplier: (worker: Worker.Background) -> BackgroundWorker = { fakeBackgroundWorker() },
     val sessionIdSupplier: () -> String? = { null },
 ) : InstrumentationArgs {

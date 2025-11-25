@@ -150,13 +150,12 @@ internal class EmbraceSetupInterface(
                 )
             }
         },
-        nativeCoreModuleSupplier = { workerThreadModule, storageModule, essentialServiceModule, instrumentationArgs, openTelemetryModule, _, _, _ ->
+        nativeCoreModuleSupplier = { workerThreadModule, storageModule, essentialServiceModule, instrumentationArgs, _, _, _ ->
             NativeCoreModuleImpl(
                 workerThreadModule = workerThreadModule,
                 storageModule = storageModule,
                 essentialServiceModule = essentialServiceModule,
                 args = instrumentationArgs,
-                otelModule = openTelemetryModule,
                 delegateProvider = { fakeJniDelegate },
                 sharedObjectLoaderProvider = ::FakeSharedObjectLoader,
                 symbolServiceProvider = { fakeSymbolService }
@@ -164,6 +163,7 @@ internal class EmbraceSetupInterface(
         },
         instrumentationModuleSupplier = {
                 initModule,
+                openTelemetryModule,
                 workerThreadModule,
                 configModule,
                 essentialServiceModule,
@@ -171,6 +171,7 @@ internal class EmbraceSetupInterface(
             ->
             val impl = InstrumentationModuleImpl(
                 initModule,
+                openTelemetryModule,
                 workerThreadModule,
                 configModule,
                 essentialServiceModule,

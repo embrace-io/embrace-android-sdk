@@ -47,7 +47,7 @@ internal class NativeCrashFeatureTest {
     private val sessionMetadata = StoredTelemetryMetadata(
         timestamp = BASE_TIME_MS,
         uuid = "30690ad1-6b87-4e08-b72c-7deca14451d8",
-        processId = "8115ec91-3e5e-4d8a-816d-cc40306f9822",
+        processIdentifier = "8115ec91-3e5e-4d8a-816d-cc40306f9822",
         envelopeType = SupportedEnvelopeType.SESSION,
         complete = false,
         payloadType = PayloadType.SESSION,
@@ -55,7 +55,7 @@ internal class NativeCrashFeatureTest {
     private val sessionMetadata2 = StoredTelemetryMetadata(
         timestamp = BASE_TIME_MS + 10_000L,
         uuid = "aa690ad1-6b87-4e08-b72c-7deca14451d8",
-        processId = "aa15ec91-3e5e-4d8a-816d-cc40306f9822",
+        processIdentifier = "aa15ec91-3e5e-4d8a-816d-cc40306f9822",
         envelopeType = SupportedEnvelopeType.SESSION,
         complete = false,
         payloadType = PayloadType.SESSION,
@@ -63,7 +63,7 @@ internal class NativeCrashFeatureTest {
     private val crashMetadata = StoredTelemetryMetadata(
         timestamp = sessionMetadata.timestamp + 1_000L,
         uuid = "EB96C6A8AF09449A8547C7703CE6BDAE",
-        processId = "8115ec91-3e5e-4d8a-816d-cc40306f9822",
+        processIdentifier = "8115ec91-3e5e-4d8a-816d-cc40306f9822",
         envelopeType = SupportedEnvelopeType.CRASH,
         complete = false,
         payloadType = PayloadType.NATIVE_CRASH,
@@ -71,7 +71,7 @@ internal class NativeCrashFeatureTest {
     private val crashMetadata2 = StoredTelemetryMetadata(
         timestamp = sessionMetadata2.timestamp + 1_000L,
         uuid = "A0A0C6A8AF09449A8547C7703CE6BDAE",
-        processId = "aa15ec91-3e5e-4d8a-816d-cc40306f9822",
+        processIdentifier = "aa15ec91-3e5e-4d8a-816d-cc40306f9822",
         envelopeType = SupportedEnvelopeType.CRASH,
         complete = false,
         payloadType = PayloadType.NATIVE_CRASH,

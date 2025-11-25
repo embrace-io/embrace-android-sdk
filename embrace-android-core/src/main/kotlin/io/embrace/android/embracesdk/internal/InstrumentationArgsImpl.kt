@@ -29,6 +29,7 @@ internal class InstrumentationArgsImpl(
     override val serializer: PlatformSerializer,
     override val ordinalStore: OrdinalStore,
     override val cpuAbi: CpuAbi,
+    override val processIdentifier: String,
     private val workerThreadModule: WorkerThreadModule,
     private val sessionIdTracker: SessionIdTracker,
     private val sessionPropertiesService: SessionPropertiesService,

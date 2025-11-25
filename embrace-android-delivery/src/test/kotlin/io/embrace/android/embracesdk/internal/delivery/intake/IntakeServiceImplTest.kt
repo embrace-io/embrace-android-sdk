@@ -214,7 +214,7 @@ class IntakeServiceImplTest {
         val filename = cacheStorageService.storedFilenames().single()
         val metadata = StoredTelemetryMetadata.fromFilename(filename).getOrThrow()
         assertEquals(SESSION, metadata.envelopeType)
-        assertEquals("3", metadata.processId)
+        assertEquals("3", metadata.processIdentifier)
     }
 
     @Test

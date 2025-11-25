@@ -59,7 +59,7 @@ internal fun createStoredNativeCrashData(
             StoredTelemetryMetadata(
                 timestamp = crashMetadata.timestamp,
                 uuid = nativeCrashData.sessionId,
-                processId = crashMetadata.processId,
+                processIdentifier = crashMetadata.processIdentifier,
                 complete = false,
                 envelopeType = SupportedEnvelopeType.CRASH,
             )
@@ -72,7 +72,7 @@ internal fun createStoredNativeCrashData(
                 startMs = sessionMetadata.timestamp,
                 lastHeartbeatTimeMs = sessionMetadata.timestamp + 1000L,
                 sessionId = nativeCrashData.sessionId,
-                processIdentifier = sessionMetadata.processId,
+                processIdentifier = sessionMetadata.processIdentifier,
                 resource = envelopeResource,
                 metadata = envelopeMetadata
             )

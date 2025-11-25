@@ -107,6 +107,7 @@ internal class ModuleInitBootstrapper(
     },
     private val instrumentationModuleSupplier: InstrumentationModuleSupplier = {
             initModule: InitModule,
+            openTelemetryModule: OpenTelemetryModule,
             workerThreadModule: WorkerThreadModule,
             configModule: ConfigModule,
             essentialServiceModule: EssentialServiceModule,
@@ -114,6 +115,7 @@ internal class ModuleInitBootstrapper(
         ->
         InstrumentationModuleImpl(
             initModule,
+            openTelemetryModule,
             workerThreadModule,
             configModule,
             essentialServiceModule,
@@ -193,7 +195,6 @@ internal class ModuleInitBootstrapper(
             storageModule: StorageModule,
             essentialServiceModule: EssentialServiceModule,
             instrumentationArgs: InstrumentationArgs,
-            otelModule: OpenTelemetryModule,
             delegateProvider: Provider<JniDelegate?>,
             sharedObjectLoaderProvider: Provider<SharedObjectLoader?>,
             symbolServiceProvider: Provider<SymbolService?>,
@@ -203,7 +204,6 @@ internal class ModuleInitBootstrapper(
             storageModule,
             essentialServiceModule,
             instrumentationArgs,
-            otelModule,
             delegateProvider,
             sharedObjectLoaderProvider,
             symbolServiceProvider,

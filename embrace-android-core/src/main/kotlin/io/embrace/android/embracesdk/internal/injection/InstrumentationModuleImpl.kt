@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistryImpl
 
 class InstrumentationModuleImpl(
     initModule: InitModule,
+    openTelemetryModule: OpenTelemetryModule,
     workerThreadModule: WorkerThreadModule,
     configModule: ConfigModule,
     essentialServiceModule: EssentialServiceModule,
@@ -34,6 +35,7 @@ class InstrumentationModuleImpl(
             ordinalStore = coreModule.ordinalStore,
             sessionPropertiesService = essentialServiceModule.sessionPropertiesService,
             cpuAbi = configModule.cpuAbi,
+            processIdentifier = openTelemetryModule.otelSdkConfig.processIdentifier,
         )
     }
 }

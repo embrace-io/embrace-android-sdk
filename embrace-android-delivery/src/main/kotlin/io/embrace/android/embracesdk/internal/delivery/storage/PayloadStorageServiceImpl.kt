@@ -64,7 +64,7 @@ class PayloadStorageServiceImpl(
 
     override fun getUndeliveredPayloads(): List<StoredTelemetryMetadata> {
         return fileStorageService.getStoredPayloads().sortedWith(storedTelemetryComparator)
-            .filter { !it.complete && it.processId != processIdProvider() }
+            .filter { !it.complete && it.processIdentifier != processIdProvider() }
             .toList().apply {
                 deliveryTracer?.onGetUndeliveredPayloads(this)
             }

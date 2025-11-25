@@ -12,7 +12,6 @@ import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
-import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.internal.worker.Worker
@@ -26,7 +25,7 @@ class NativeCrashHandlerInstallerImpl(
     private val delegate: JniDelegate,
     private val mainThreadHandler: MainThreadHandler,
     private val sessionIdTracker: SessionIdTracker,
-    private val processIdProvider: Provider<String>,
+    private val processIdentifier: String,
     private val outputDir: Lazy<File>,
     private val markerFilePath: String,
     private val reportId: String = Uuid.getEmbUuid(),
@@ -108,7 +107,7 @@ class NativeCrashHandlerInstallerImpl(
         val metadata = StoredTelemetryMetadata(
             timestamp = clock.now(),
             uuid = sanitizeSessionId(args.sessionId()),
-            processId = processIdProvider(),
+            processIdentifier = processIdentifier,
             envelopeType = SupportedEnvelopeType.CRASH,
             payloadType = PayloadType.NATIVE_CRASH,
         )

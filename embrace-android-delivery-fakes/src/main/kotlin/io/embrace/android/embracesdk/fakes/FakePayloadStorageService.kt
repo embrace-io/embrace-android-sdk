@@ -61,7 +61,7 @@ class FakePayloadStorageService(
         cachedPayloads.filter { it.key.complete }.keys.toList()
 
     override fun getUndeliveredPayloads(): List<StoredTelemetryMetadata> =
-        cachedPayloads.filter { !it.key.complete && it.key.processId != processIdProvider() }.keys.toList()
+        cachedPayloads.filter { !it.key.complete && it.key.processIdentifier != processIdProvider() }.keys.toList()
 
     fun <T> addPayload(metadata: StoredTelemetryMetadata, data: T) {
         store(metadata) { stream ->

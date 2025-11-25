@@ -50,7 +50,7 @@ internal class ModuleInitBootstrapperTest {
             configModuleSupplier = { _, _, _, _ -> FakeConfigModule(FakeConfigService()) },
             coreModuleSupplier = { _, _ -> coreModule },
             nativeFeatureModuleSupplier = { _, _ -> FakeNativeFeatureModule() },
-            instrumentationModuleSupplier = { _, _, _, _, _ ->
+            instrumentationModuleSupplier = { _, _, _, _, _, _ ->
                 FakeInstrumentationModule(application, logger = logger).apply {
                     registry = instrumentationRegistry
                 }

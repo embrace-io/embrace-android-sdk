@@ -64,7 +64,7 @@ class NativeCrashHandlerInstallerImplTest {
             delegate = fakeDelegate,
             mainThreadHandler = fakeMainThreadHandler,
             sessionIdTracker = sessionTracker,
-            processIdProvider = { "pid" },
+            processIdentifier = "pid",
             outputDir = lazy { outputDir },
             markerFilePath = "testMarkerFilePath",
             reportId = "testReportId",

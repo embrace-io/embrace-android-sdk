@@ -2,10 +2,10 @@ package io.embrace.android.embracesdk.internal.instrumentation.crash.ndk
 
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.delivery.storage.StorageLocation
+import io.embrace.android.embracesdk.internal.delivery.storage.asFile
 import io.embrace.android.embracesdk.internal.handler.AndroidMainThreadHandler
 import io.embrace.android.embracesdk.internal.injection.EssentialServiceModule
 import io.embrace.android.embracesdk.internal.injection.StorageModule
-import io.embrace.android.embracesdk.internal.injection.asFile
 import io.embrace.android.embracesdk.internal.injection.singleton
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.jni.JniDelegate
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.jni.JniDelegateImpl
@@ -39,7 +39,11 @@ class NativeCoreModuleImpl(
         sharedObjectLoaderProvider() ?: SharedObjectLoaderImpl(args.logger)
     }
 
-    private val nativeOutputDir by lazy { StorageLocation.NATIVE.asFile(args.context, args.logger) }
+    private val nativeOutputDir = StorageLocation.NATIVE.asFile(
+        logger = args.logger,
+        rootDirSupplier = { args.context.filesDir },
+        fallbackDirSupplier = { args.context.cacheDir }
+    )
 
     override val processor: NativeCrashProcessor = NativeCrashProcessorImpl(
         args,

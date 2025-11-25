@@ -15,7 +15,6 @@ import io.embrace.android.embracesdk.fakes.FakePayloadMessageCollator
 import io.embrace.android.embracesdk.fakes.FakePayloadStore
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fakes.FakeSessionPropertiesService
-import io.embrace.android.embracesdk.fakes.FakeStartupService
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.behavior.FakeSessionBehavior
@@ -446,7 +445,7 @@ internal class SessionOrchestratorTest {
             destination,
             SessionSpanAttrPopulatorImpl(
                 destination,
-                FakeStartupService(),
+                { 0 },
                 FakeLogService(),
                 FakeMetadataService()
             )

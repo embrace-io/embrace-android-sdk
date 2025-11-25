@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.injection
 
-import io.embrace.android.embracesdk.internal.capture.startup.StartupService
 import io.embrace.android.embracesdk.internal.session.EmbraceMemoryCleanerService
 import io.embrace.android.embracesdk.internal.session.MemoryCleanerService
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactory
@@ -22,7 +21,7 @@ class SessionOrchestrationModuleImpl(
     deliveryModule: DeliveryModule,
     instrumentationModule: InstrumentationModule,
     payloadSourceModule: PayloadSourceModule,
-    startupService: StartupService,
+    startupDurationProvider: () -> Long?,
     logModule: LogModule,
 ) : SessionOrchestrationModule {
 
@@ -58,7 +57,7 @@ class SessionOrchestrationModuleImpl(
     private val sessionSpanAttrPopulator: SessionSpanAttrPopulator by singleton {
         SessionSpanAttrPopulatorImpl(
             essentialServiceModule.telemetryDestination,
-            startupService,
+            startupDurationProvider,
             logModule.logService,
             payloadSourceModule.metadataService
         )

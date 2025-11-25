@@ -13,7 +13,6 @@ import io.embrace.android.embracesdk.internal.arch.attrs.embState
 import io.embrace.android.embracesdk.internal.arch.attrs.embTerminated
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.capture.metadata.MetadataService
-import io.embrace.android.embracesdk.internal.capture.startup.StartupService
 import io.embrace.android.embracesdk.internal.logs.LogService
 import io.embrace.android.embracesdk.internal.session.LifeEventType
 import io.embrace.android.embracesdk.internal.session.SessionZygote
@@ -21,7 +20,7 @@ import java.util.Locale
 
 internal class SessionSpanAttrPopulatorImpl(
     private val destination: TelemetryDestination,
-    private val startupService: StartupService,
+    private val startupDurationProvider: () -> Long?,
     private val logService: LogService,
     private val metadataService: MetadataService,
 ) : SessionSpanAttrPopulator {
@@ -51,7 +50,7 @@ internal class SessionSpanAttrPopulatorImpl(
                 addSessionAttribute(embSessionEndType.name, it)
             }
             if (coldStart) {
-                startupService.getSdkStartupDuration()?.let { duration ->
+                startupDurationProvider()?.let { duration ->
                     addSessionAttribute(embSessionStartupDuration.name, duration.toString())
                 }
             }

@@ -13,7 +13,6 @@ import io.embrace.android.embracesdk.fakes.injection.FakeStorageModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import io.embrace.android.embracesdk.internal.injection.ConfigModuleSupplier
 import io.embrace.android.embracesdk.internal.injection.CoreModuleSupplier
-import io.embrace.android.embracesdk.internal.injection.DataCaptureServiceModuleSupplier
 import io.embrace.android.embracesdk.internal.injection.DeliveryModuleSupplier
 import io.embrace.android.embracesdk.internal.injection.EssentialServiceModuleSupplier
 import io.embrace.android.embracesdk.internal.injection.InstrumentationModuleSupplier
@@ -25,6 +24,7 @@ import io.embrace.android.embracesdk.internal.injection.StorageModuleSupplier
 import io.embrace.android.embracesdk.internal.injection.WorkerThreadModuleSupplier
 import io.embrace.android.embracesdk.internal.instrumentation.anr.AnrModuleSupplier
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeCoreModuleSupplier
+import io.embrace.android.embracesdk.internal.instrumentation.startup.DataCaptureServiceModuleSupplier
 
 @Suppress("LongParameterList")
 internal fun fakeModuleInitBootstrapper(
@@ -41,7 +41,7 @@ internal fun fakeModuleInitBootstrapper(
             fakeCoreModule.application
         )
     },
-    dataCaptureServiceModuleSupplier: DataCaptureServiceModuleSupplier = { _, _, _, _ -> FakeDataCaptureServiceModule() },
+    dataCaptureServiceModuleSupplier: DataCaptureServiceModuleSupplier = { _, _, _, _, _ -> FakeDataCaptureServiceModule() },
     deliveryModuleSupplier: DeliveryModuleSupplier = { _, _, _, _, _, _, _, _, _, _ -> FakeDeliveryModule() },
     anrModuleSupplier: AnrModuleSupplier = { _, _ -> FakeAnrModule() },
     logModuleSupplier: LogModuleSupplier = { _, _, _, _, _, _, _ -> FakeLogModule() },

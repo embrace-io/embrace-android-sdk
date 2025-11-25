@@ -7,6 +7,8 @@ import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeCo
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeCoreModuleSupplier
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeFeatureModule
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeFeatureModuleSupplier
+import io.embrace.android.embracesdk.internal.instrumentation.startup.DataCaptureServiceModule
+import io.embrace.android.embracesdk.internal.instrumentation.startup.DataCaptureServiceModuleSupplier
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
@@ -108,8 +110,9 @@ internal class InitializedModuleGraph(
 
     override val dataCaptureServiceModule: DataCaptureServiceModule = init {
         dataCaptureServiceModuleSupplier(
-            initModule,
-            instrumentationModule,
+            initModule.clock,
+            initModule.logger,
+            instrumentationModule.instrumentationArgs.destination,
             configModule.configService,
             versionChecker,
         )
@@ -194,7 +197,7 @@ internal class InitializedModuleGraph(
             deliveryModule,
             instrumentationModule,
             payloadSourceModule,
-            dataCaptureServiceModule.startupService,
+            dataCaptureServiceModule.startupService::getSdkStartupDuration,
             logModule
         )
     }

@@ -27,6 +27,7 @@ class FakeInstrumentationArgs(
     val backgroundWorkerSupplier: (worker: Worker.Background) -> BackgroundWorker = { fakeBackgroundWorker() },
     val priorityWorkerSupplier: (worker: Worker.Priority) -> PriorityWorker<*> = { fakePriorityWorker<Any>() },
     val sessionIdSupplier: () -> String? = { null },
+    val sessionChangeListeners: MutableList<() -> Unit> = mutableListOf(),
 ) : InstrumentationArgs {
 
     override fun backgroundWorker(worker: Worker.Background): BackgroundWorker = backgroundWorkerSupplier(worker)
@@ -45,4 +46,8 @@ class FakeInstrumentationArgs(
     override fun sessionProperties(): Map<String, String> = emptyMap()
 
     override val crashMarkerFile: File by lazy { File.createTempFile("crash_marker", "") }
+
+    override fun registerSessionChangeListener(listener: () -> Unit) {
+        sessionChangeListeners.add(listener)
+    }
 }

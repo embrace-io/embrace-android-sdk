@@ -193,14 +193,12 @@ internal class ModuleInitBootstrapper(
         )
     },
     private val nativeCoreModuleSupplier: NativeCoreModuleSupplier = {
-            essentialServiceModule: EssentialServiceModule,
             instrumentationArgs: InstrumentationArgs,
             delegateProvider: Provider<JniDelegate?>,
             sharedObjectLoaderProvider: Provider<SharedObjectLoader?>,
             symbolServiceProvider: Provider<SymbolService?>,
         ->
         NativeCoreModuleImpl(
-            essentialServiceModule,
             instrumentationArgs,
             delegateProvider,
             sharedObjectLoaderProvider,

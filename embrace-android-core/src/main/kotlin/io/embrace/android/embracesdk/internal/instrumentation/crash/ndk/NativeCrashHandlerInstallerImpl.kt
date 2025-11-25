@@ -10,7 +10,6 @@ import io.embrace.android.embracesdk.internal.handler.MainThreadHandler
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.jni.JniDelegate
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
-import io.embrace.android.embracesdk.internal.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
@@ -24,13 +23,13 @@ class NativeCrashHandlerInstallerImpl(
     private val sharedObjectLoader: SharedObjectLoader,
     private val delegate: JniDelegate,
     private val mainThreadHandler: MainThreadHandler,
-    private val sessionIdTracker: SessionIdTracker,
-    private val processIdentifier: String,
     private val outputDir: Lazy<File>,
-    private val markerFilePath: String,
     private val reportId: String = Uuid.getEmbUuid(),
     private val devLogging: Boolean = false,
 ) : NativeCrashHandlerInstaller {
+
+    private val processIdentifier = args.processIdentifier
+    private val markerFilePath = args.crashMarkerFile.absolutePath
 
     private val configService: ConfigService = args.configService
     private val logger: EmbLogger = args.logger
@@ -58,8 +57,8 @@ class NativeCrashHandlerInstallerImpl(
                     Runnable(::checkSignalHandlersOverwritten),
                     HANDLER_CHECK_DELAY_MS
                 )
-                sessionIdTracker.addListener { sessionId ->
-                    delegate.onSessionChange(sanitizeSessionId(sessionId), createNativeReportPath())
+                args.registerSessionChangeListener {
+                    delegate.onSessionChange(sanitizeSessionId(args.sessionId()), createNativeReportPath())
                 }
             }
         } catch (ex: Exception) {

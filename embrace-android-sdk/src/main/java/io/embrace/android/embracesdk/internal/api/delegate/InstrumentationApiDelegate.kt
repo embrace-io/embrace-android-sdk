@@ -2,6 +2,9 @@ package io.embrace.android.embracesdk.internal.api.delegate
 
 import android.app.Activity
 import io.embrace.android.embracesdk.internal.api.InstrumentationApi
+import io.embrace.android.embracesdk.internal.arch.datasource.SpanEvent
+import io.embrace.android.embracesdk.internal.arch.datasource.SpanEventImpl
+import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.injection.embraceImplInject
 import io.embrace.android.embracesdk.internal.instrumentation.startup.activity.traceInstanceId
@@ -59,8 +62,8 @@ internal class InstrumentationApiDelegate(
                 startTimeMs = startTimeMs,
                 endTimeMs = endTimeMs,
                 attributes = attributes,
-                events = events,
-                errorCode = errorCode
+                events = events.map(::toSpanEvent),
+                errorCode = errorCode.toErrorCodeAttribute()
             )
         }
     }
@@ -85,9 +88,24 @@ internal class InstrumentationApiDelegate(
                 startTimeMs = startTimeMs,
                 endTimeMs = endTimeMs,
                 attributes = attributes,
-                events = events,
-                errorCode = errorCode
+                events = events.map(::toSpanEvent),
+                errorCode = errorCode?.toErrorCodeAttribute()
             )
+        }
+    }
+
+    private fun toSpanEvent(event: EmbraceSpanEvent): SpanEvent = SpanEventImpl(
+        name = event.name,
+        timestampNanos = event.timestampNanos,
+        attributes = event.attributes
+    )
+
+    private fun ErrorCode?.toErrorCodeAttribute(): ErrorCodeAttribute? {
+        return when (this) {
+            ErrorCode.FAILURE -> ErrorCodeAttribute.Failure
+            ErrorCode.UNKNOWN -> ErrorCodeAttribute.Unknown
+            ErrorCode.USER_ABANDON -> ErrorCodeAttribute.UserAbandon
+            null -> null
         }
     }
 }

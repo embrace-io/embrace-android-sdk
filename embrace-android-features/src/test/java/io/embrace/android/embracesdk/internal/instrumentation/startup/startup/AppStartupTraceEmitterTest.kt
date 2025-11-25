@@ -2,20 +2,18 @@ package io.embrace.android.embracesdk.internal.instrumentation.startup.startup
 
 import android.os.Build.VERSION_CODES
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.assertions.assertDoesNotHaveEmbraceAttribute
-import io.embrace.android.embracesdk.assertions.assertError
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeClock.Companion.DEFAULT_FAKE_CURRENT_TIME
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeProcessInfo
+import io.embrace.android.embracesdk.fakes.FakeSpanToken
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
-import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.arch.attrs.embStartupActivityName
+import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.capture.startup.StartupService
 import io.embrace.android.embracesdk.internal.capture.startup.StartupServiceImpl
-import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.instrumentation.startup.AppStartupTraceEmitter
 import io.embrace.android.embracesdk.internal.instrumentation.startup.AppStartupTraceEmitter.Companion.ACTIVITY_FIRST_DRAW_SPAN
 import io.embrace.android.embracesdk.internal.instrumentation.startup.AppStartupTraceEmitter.Companion.ACTIVITY_INIT_DELAY_SPAN
@@ -30,14 +28,9 @@ import io.embrace.android.embracesdk.internal.instrumentation.startup.AppStartup
 import io.embrace.android.embracesdk.internal.instrumentation.startup.activity.hasPrePostEvents
 import io.embrace.android.embracesdk.internal.instrumentation.startup.ui.hasRenderEvent
 import io.embrace.android.embracesdk.internal.instrumentation.startup.ui.supportFrameCommitCallback
-import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
-import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
-import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanData
-import io.embrace.android.embracesdk.internal.otel.spans.SpanService
-import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
-import io.embrace.android.embracesdk.spans.ErrorCode
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Before
@@ -56,6 +49,7 @@ import org.robolectric.annotation.Config
  */
 @RunWith(AndroidJUnit4::class)
 internal class AppStartupTraceEmitterTest {
+
     private val processInitTime: Long = DEFAULT_FAKE_CURRENT_TIME
     private var startupService: StartupService? = null
     private var dataCollectionCompletedCallbackInvokedCount = 0
@@ -65,21 +59,14 @@ internal class AppStartupTraceEmitterTest {
     private var hasFrameCommitEvent = true
 
     private lateinit var clock: FakeClock
-    private lateinit var spanSink: SpanSink
-    private lateinit var spanService: SpanService
+    private lateinit var destination: FakeTelemetryDestination
     private lateinit var logger: FakeEmbLogger
 
     @Before
     fun setUp() {
         clock = FakeClock(processInitTime)
-        FakeInitModule(clock = clock).run {
-            spanSink = openTelemetryModule.spanSink
-            spanService = openTelemetryModule.spanService
-        }
-        spanService.initializeService(clock.now())
-        startupService = StartupServiceImpl(
-            FakeTelemetryDestination()
-        )
+        destination = FakeTelemetryDestination()
+        startupService = StartupServiceImpl(destination)
         clock.tick(100L)
         logger = FakeEmbLogger(false)
         firePreAndPostCreate = hasPrePostEvents(BuildVersionChecker)
@@ -161,10 +148,10 @@ internal class AppStartupTraceEmitterTest {
         }
         val abandonTime = clock.tick()
         emitter.onBackground()
-        val spanMap = spanSink.completedSpans().associateBy { it.name }
+        val spanMap = destination.completedSpans().associateBy { it.name }
         with(checkNotNull(spanMap.coldAppStartupRootSpan())) {
-            assertError(ErrorCode.USER_ABANDON)
-            assertEquals(abandonTime, endTimeNanos.nanosToMillis())
+            assertEquals(ErrorCodeAttribute.UserAbandon, errorCode)
+            assertEquals(abandonTime, endTimeMs)
         }
 
         assertNotNull(spanMap.processInitSpan())
@@ -189,10 +176,10 @@ internal class AppStartupTraceEmitterTest {
 
         val abandonTime = clock.tick()
         emitter.onBackground()
-        with(spanSink.completedSpans().associateBy { it.name }) {
+        with(destination.completedSpans().associateBy { it.name }) {
             with(checkNotNull(coldAppStartupRootSpan())) {
-                assertError(ErrorCode.USER_ABANDON)
-                assertEquals(abandonTime, endTimeNanos.nanosToMillis())
+                assertEquals(ErrorCodeAttribute.UserAbandon, errorCode)
+                assertEquals(abandonTime, endTimeMs)
             }
             assertNotNull(processInitSpan())
             assertNotNull(embraceInitSpan())
@@ -218,10 +205,10 @@ internal class AppStartupTraceEmitterTest {
         }
         val abandonTime = clock.tick()
         emitter.onBackground()
-        with(spanSink.completedSpans().associateBy { it.name }) {
+        with(destination.completedSpans().associateBy { it.name }) {
             with(checkNotNull(coldAppStartupRootSpan())) {
-                assertError(ErrorCode.USER_ABANDON)
-                assertEquals(abandonTime, endTimeNanos.nanosToMillis())
+                assertEquals(ErrorCodeAttribute.UserAbandon, errorCode)
+                assertEquals(abandonTime, endTimeMs)
             }
             assertNotNull(processInitSpan())
             assertNotNull(embraceInitSpan())
@@ -244,10 +231,10 @@ internal class AppStartupTraceEmitterTest {
         }
         val abandonTime = clock.tick()
         emitter.onBackground()
-        val spanMap = spanSink.completedSpans().associateBy { it.name }
+        val spanMap = destination.completedSpans().associateBy { it.name }
         with(checkNotNull(spanMap.warmAppStartupRootSpan())) {
-            assertError(ErrorCode.USER_ABANDON)
-            assertEquals(abandonTime, endTimeNanos.nanosToMillis())
+            assertEquals(ErrorCodeAttribute.UserAbandon, errorCode)
+            assertEquals(abandonTime, endTimeMs)
         }
     }
 
@@ -267,10 +254,10 @@ internal class AppStartupTraceEmitterTest {
         }
         val abandonTime = clock.tick()
         emitter.onBackground()
-        with(spanSink.completedSpans().associateBy { it.name }) {
+        with(destination.completedSpans().associateBy { it.name }) {
             with(checkNotNull(warmAppStartupRootSpan())) {
-                assertError(ErrorCode.USER_ABANDON)
-                assertEquals(abandonTime, endTimeNanos.nanosToMillis())
+                assertEquals(ErrorCodeAttribute.UserAbandon, errorCode)
+                assertEquals(abandonTime, endTimeMs)
             }
             assertNotNull(activityInitSpan())
             assertNotNull(firstFrameRenderedSpan())
@@ -610,7 +597,7 @@ internal class AppStartupTraceEmitterTest {
         AppStartupTraceEmitter(
             clock = clock,
             startupServiceProvider = { startupService },
-            spanService = spanService,
+            destination = destination,
             versionChecker = BuildVersionChecker,
             logger = logger,
             manualEnd = manualEnd,
@@ -684,7 +671,7 @@ internal class AppStartupTraceEmitterTest {
         hasAppInitEvents: Boolean = true,
         manualEnd: Boolean = false,
     ) {
-        val spanMap = spanSink.completedSpans().associateBy { it.name }
+        val spanMap = destination.completedSpans().associateBy { it.name }
         val trace = if (isColdStart) {
             with(appInitTimestamps) {
                 assertChildSpan(spanMap.embraceInitSpan(), sdkInitStart, sdkInitEnd)
@@ -882,43 +869,44 @@ internal class AppStartupTraceEmitterTest {
     }
 
     private fun assertTraceRoot(
-        input: EmbraceSpanData?,
+        input: FakeSpanToken?,
         expectedStartTimeMs: Long,
         expectedEndTimeMs: Long,
         expectedCustomAttributes: Map<String, String> = emptyMap(),
     ) {
         checkNotNull(input)
-        val trace = input.toEmbracePayload()
-        assertEquals(expectedStartTimeMs, trace.startTimeNanos?.nanosToMillis())
-        assertEquals(expectedEndTimeMs, trace.endTimeNanos?.nanosToMillis())
-        trace.assertDoesNotHaveEmbraceAttribute(PrivateSpan)
+        val trace = input
+        assertEquals(expectedStartTimeMs, trace.startTimeMs)
+        assertEquals(expectedEndTimeMs, trace.endTimeMs)
+        assertFalse(trace.attributes.containsKey(PrivateSpan.key.name))
+
         val attrs = checkNotNull(trace.attributes)
-        assertEquals(STARTUP_ACTIVITY_NAME, attrs.findAttributeValue(embStartupActivityName.name))
+        assertEquals(STARTUP_ACTIVITY_NAME, attrs[embStartupActivityName.name])
         assertEquals(1, dataCollectionCompletedCallbackInvokedCount)
 
         expectedCustomAttributes.forEach { entry ->
-            assertEquals(entry.value, trace.attributes?.findAttributeValue(entry.key))
+            assertEquals(entry.value, trace.attributes[entry.key])
         }
     }
 
-    private fun assertChildSpan(span: EmbraceSpanData?, expectedStartTimeNanos: Long?, expectedEndTimeNanos: Long?) {
+    private fun assertChildSpan(span: FakeSpanToken?, expectedStartTimeNanos: Long?, expectedEndTimeNanos: Long?) {
         checkNotNull(span)
-        assertEquals(expectedStartTimeNanos, span.startTimeNanos.nanosToMillis())
-        assertEquals(expectedEndTimeNanos, span.endTimeNanos.nanosToMillis())
-        span.assertDoesNotHaveEmbraceAttribute(PrivateSpan)
+        assertEquals(expectedStartTimeNanos, span.startTimeMs)
+        assertEquals(expectedEndTimeNanos, span.endTimeMs)
+        assertFalse(span.attributes.containsKey(PrivateSpan.key.name))
     }
 
-    private fun Map<String, EmbraceSpanData?>.coldAppStartupRootSpan() = this["emb-${COLD_APP_STARTUP_ROOT_SPAN}"]
-    private fun Map<String, EmbraceSpanData?>.warmAppStartupRootSpan() = this["emb-${WARM_APP_STARTUP_ROOT_SPAN}"]
-    private fun Map<String, EmbraceSpanData?>.processInitSpan() = this["emb-${PROCESS_INIT_SPAN}"]
-    private fun Map<String, EmbraceSpanData?>.embraceInitSpan() = this["emb-${EMBRACE_INIT_SPAN}"]
-    private fun Map<String, EmbraceSpanData?>.initGapSpan() = this["emb-${ACTIVITY_INIT_DELAY_SPAN}"]
-    private fun Map<String, EmbraceSpanData?>.activityInitSpan() = this["emb-${ACTIVITY_INIT_SPAN}"]
-    private fun Map<String, EmbraceSpanData?>.firstFrameRenderedSpan() = this["emb-${ACTIVITY_RENDER_SPAN}"]
-    private fun Map<String, EmbraceSpanData?>.firstFrameDrawSpan() = this["emb-${ACTIVITY_FIRST_DRAW_SPAN}"]
-    private fun Map<String, EmbraceSpanData?>.activityResumeSpan() = this["emb-${ACTIVITY_LOAD_SPAN}"]
-    private fun Map<String, EmbraceSpanData?>.appReadySpan() = this["emb-${APP_READY_SPAN}"]
-    private fun Map<String, EmbraceSpanData?>.customSpan() = this["custom-span"]
+    private fun Map<String, FakeSpanToken>.coldAppStartupRootSpan() = this[COLD_APP_STARTUP_ROOT_SPAN]
+    private fun Map<String, FakeSpanToken>.warmAppStartupRootSpan() = this[WARM_APP_STARTUP_ROOT_SPAN]
+    private fun Map<String, FakeSpanToken>.processInitSpan() = this[PROCESS_INIT_SPAN]
+    private fun Map<String, FakeSpanToken>.embraceInitSpan() = this[EMBRACE_INIT_SPAN]
+    private fun Map<String, FakeSpanToken>.initGapSpan() = this[ACTIVITY_INIT_DELAY_SPAN]
+    private fun Map<String, FakeSpanToken>.activityInitSpan() = this[ACTIVITY_INIT_SPAN]
+    private fun Map<String, FakeSpanToken>.firstFrameRenderedSpan() = this[ACTIVITY_RENDER_SPAN]
+    private fun Map<String, FakeSpanToken>.firstFrameDrawSpan() = this[ACTIVITY_FIRST_DRAW_SPAN]
+    private fun Map<String, FakeSpanToken>.activityResumeSpan() = this[ACTIVITY_LOAD_SPAN]
+    private fun Map<String, FakeSpanToken>.appReadySpan() = this[APP_READY_SPAN]
+    private fun Map<String, FakeSpanToken>.customSpan() = this["custom-span"]
 
     private data class StartupTimestamps(
         val traceStart: Long,

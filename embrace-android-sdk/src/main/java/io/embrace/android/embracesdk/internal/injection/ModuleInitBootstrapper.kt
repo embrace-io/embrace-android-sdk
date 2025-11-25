@@ -20,7 +20,6 @@ import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeCo
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeCoreModuleSupplier
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.SharedObjectLoader
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.jni.JniDelegate
-import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.symbols.SymbolService
 import io.embrace.android.embracesdk.internal.instrumentation.startup.DataCaptureServiceModule
 import io.embrace.android.embracesdk.internal.instrumentation.startup.DataCaptureServiceModuleImpl
 import io.embrace.android.embracesdk.internal.instrumentation.startup.DataCaptureServiceModuleSupplier
@@ -193,13 +192,11 @@ internal class ModuleInitBootstrapper(
             instrumentationArgs: InstrumentationArgs,
             delegateProvider: Provider<JniDelegate?>,
             sharedObjectLoaderProvider: Provider<SharedObjectLoader?>,
-            symbolServiceProvider: Provider<SymbolService?>,
         ->
         NativeCoreModuleImpl(
             instrumentationArgs,
             delegateProvider,
             sharedObjectLoaderProvider,
-            symbolServiceProvider,
         )
     },
     private val sessionOrchestrationModuleSupplier: SessionOrchestrationModuleSupplier = {
@@ -233,7 +230,6 @@ internal class ModuleInitBootstrapper(
             workerThreadModule: WorkerThreadModule,
             essentialServiceModule: EssentialServiceModule,
             configModule: ConfigModule,
-            nativeSymbolsProvider: Provider<Map<String, String>?>,
             otelModule: OpenTelemetryModule, otelPayloadMapperProvider: Provider<OtelPayloadMapper?>,
             deliveryModule: DeliveryModule,
         ->
@@ -243,7 +239,6 @@ internal class ModuleInitBootstrapper(
             workerThreadModule,
             essentialServiceModule,
             configModule,
-            nativeSymbolsProvider,
             otelModule,
             otelPayloadMapperProvider,
             deliveryModule,

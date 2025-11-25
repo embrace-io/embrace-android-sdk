@@ -43,7 +43,7 @@ internal class SessionPayloadSourceImplTest {
         spanRepository.trackStartedSpan(checkNotNull(currentSessionSpan.sessionSpan))
         spanRepository.trackStartedSpan(activeSpan)
         impl = SessionPayloadSourceImpl(
-            { mapOf("armeabi-v7a" to "my-symbols") },
+            mapOf("armeabi-v7a" to "my-symbols"),
             sink,
             currentSessionSpan,
             spanRepository,

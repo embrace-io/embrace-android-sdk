@@ -77,7 +77,6 @@ typealias PayloadSourceModuleSupplier = (
     workerThreadModule: WorkerThreadModule,
     essentialServiceModule: EssentialServiceModule,
     configModule: ConfigModule,
-    nativeSymbolsProvider: Provider<Map<String, String>?>,
     otelModule: OpenTelemetryModule,
     otelPayloadMapperProvider: Provider<OtelPayloadMapper?>,
     deliveryModule: DeliveryModule,

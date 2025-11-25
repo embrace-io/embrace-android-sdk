@@ -86,7 +86,7 @@ internal class SessionHandlerTest {
         spanRepository = initModule.openTelemetryModule.spanRepository
         currentSessionSpan = initModule.openTelemetryModule.currentSessionSpan
         val sessionPayloadSource = SessionPayloadSourceImpl(
-            { null },
+            null,
             spanSink,
             currentSessionSpan,
             spanRepository,

@@ -11,7 +11,6 @@ import io.embrace.android.embracesdk.fakes.FakeJniDelegate
 import io.embrace.android.embracesdk.fakes.FakeNetworkConnectivityService
 import io.embrace.android.embracesdk.fakes.FakePayloadStorageService
 import io.embrace.android.embracesdk.fakes.FakeSharedObjectLoader
-import io.embrace.android.embracesdk.fakes.FakeSymbolService
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.injection.FakeAnrModule
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
@@ -64,7 +63,6 @@ internal class EmbraceSetupInterface(
 
     val fakeNetworkConnectivityService = FakeNetworkConnectivityService()
     val fakeJniDelegate = FakeJniDelegate()
-    val fakeSymbolService = FakeSymbolService()
     val fakeLifecycleOwner: TestLifecycleOwner = TestLifecycleOwner(initialState = Lifecycle.State.INITIALIZED)
     val fakePayloadStorageService = if (fakeStorageLayer) {
         FakePayloadStorageService(processIdentifier)
@@ -150,12 +148,11 @@ internal class EmbraceSetupInterface(
                 )
             }
         },
-        nativeCoreModuleSupplier = { instrumentationArgs, _, _, _ ->
+        nativeCoreModuleSupplier = { instrumentationArgs, _, _ ->
             NativeCoreModuleImpl(
                 args = instrumentationArgs,
                 delegateProvider = { fakeJniDelegate },
                 sharedObjectLoaderProvider = ::FakeSharedObjectLoader,
-                symbolServiceProvider = { fakeSymbolService }
             )
         },
         instrumentationModuleSupplier = {

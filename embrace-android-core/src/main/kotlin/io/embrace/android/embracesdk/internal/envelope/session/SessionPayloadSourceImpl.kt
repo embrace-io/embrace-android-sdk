@@ -17,7 +17,7 @@ import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSnapsh
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
 
 internal class SessionPayloadSourceImpl(
-    private val symbolMapProvider: () -> Map<String, String>?,
+    private val symbolMap: Map<String, String>?,
     private val spanSink: SpanSink,
     private val currentSessionSpan: CurrentSessionSpan,
     private val spanRepository: SpanRepository,
@@ -32,7 +32,6 @@ internal class SessionPayloadSourceImpl(
         startNewSession: Boolean,
         crashId: String?,
     ): SessionPayload {
-        val sharedLibSymbolMapping = captureDataSafely(logger, symbolMapProvider)
         val isCacheAttempt = endType == SessionSnapshotType.PERIODIC_CACHE
         val includeSnapshots = endType != SessionSnapshotType.JVM_CRASH
 
@@ -53,7 +52,7 @@ internal class SessionPayloadSourceImpl(
         return SessionPayload(
             spans = spans,
             spanSnapshots = snapshots,
-            sharedLibSymbolMapping = sharedLibSymbolMapping
+            sharedLibSymbolMapping = symbolMap
         )
     }
 

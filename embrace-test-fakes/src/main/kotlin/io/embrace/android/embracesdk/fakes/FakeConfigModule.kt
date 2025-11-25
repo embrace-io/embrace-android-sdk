@@ -31,7 +31,9 @@ class FakeConfigModule(
     ),
     override val packageVersionInfo: PackageVersionInfo = fakePackageVersionInfo,
     override val cpuAbi: CpuAbi = CpuAbi.ARM64_V8A,
+    override val nativeSymbolMap: Map<String, String>? = emptyMap(),
 ) : ConfigModule {
+
     override val okHttpClient: OkHttpClient by lazy { OkHttpClient() }
 
     companion object {

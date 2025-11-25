@@ -14,6 +14,7 @@ import io.embrace.android.embracesdk.internal.config.store.RemoteConfigStoreImpl
 import io.embrace.android.embracesdk.internal.envelope.BuildInfo
 import io.embrace.android.embracesdk.internal.envelope.CpuAbi
 import io.embrace.android.embracesdk.internal.envelope.PackageVersionInfo
+import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.symbols.SymbolServiceImpl
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.worker.Worker
 import okhttp3.OkHttpClient
@@ -121,5 +122,14 @@ class ConfigModuleImpl(
     private fun InitModule.onlyOtelExportEnabled(): Boolean {
         instrumentedConfig.project.getAppId() ?: return true
         return false
+    }
+
+    override val nativeSymbolMap: Map<String, String>? by lazy {
+        SymbolServiceImpl(
+            cpuAbi,
+            initModule.jsonSerializer,
+            initModule.logger,
+            initModule.instrumentedConfig,
+        ).symbolsForCurrentArch
     }
 }

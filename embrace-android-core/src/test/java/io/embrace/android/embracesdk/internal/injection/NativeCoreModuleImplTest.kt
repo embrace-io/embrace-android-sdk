@@ -28,10 +28,8 @@ internal class NativeCoreModuleImplTest {
             ),
             { null },
             { null },
-            { null },
         )
         assertNotNull(module.sharedObjectLoader)
-        assertNotNull(module.symbolService)
         assertNotNull(module.processor)
         assertNotNull(module.delegate)
         assertNotNull(module.nativeCrashHandlerInstaller)

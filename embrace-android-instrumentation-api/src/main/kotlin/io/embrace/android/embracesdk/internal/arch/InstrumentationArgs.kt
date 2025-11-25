@@ -105,6 +105,11 @@ interface InstrumentationArgs {
     fun sessionProperties(): Map<String, String>
 
     /**
+     * The current native symbols.
+     */
+    val symbols: Map<String, String>?
+
+    /**
      * Retrieves the crash marker file.
      */
     val crashMarkerFile: File

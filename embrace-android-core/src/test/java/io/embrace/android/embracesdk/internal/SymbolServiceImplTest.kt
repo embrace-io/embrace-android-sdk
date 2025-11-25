@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.symbols
+package io.embrace.android.embracesdk.internal
 
 import android.util.Base64
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.fakes.config.FakeBase64SharedObjectFilesMap
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.internal.envelope.CpuAbi
+import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.symbols.SymbolServiceImpl
 import io.embrace.android.embracesdk.internal.payload.NativeSymbols
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -61,7 +62,7 @@ class SymbolServiceImplTest {
     private fun createService(
         symbolMap: Map<String, Map<String, String>>,
         arch: String = "arm64-v8a",
-    ): SymbolService {
+    ): SymbolServiceImpl {
         val json = serializer.toJson(NativeSymbols(symbols = symbolMap))
         val encodedSymbols = Base64.encodeToString(json.toByteArray(), Base64.DEFAULT)
 
@@ -73,7 +74,7 @@ class SymbolServiceImplTest {
         )
     }
 
-    private fun createServiceWithNullSymbols(): SymbolService {
+    private fun createServiceWithNullSymbols(): SymbolServiceImpl {
         return SymbolServiceImpl(
             CpuAbi.fromArchName("arm64-v8a"),
             serializer,

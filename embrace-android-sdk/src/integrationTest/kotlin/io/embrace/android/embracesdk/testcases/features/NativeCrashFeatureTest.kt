@@ -1,9 +1,11 @@
 package io.embrace.android.embracesdk.testcases.features
 
+import android.util.Base64
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.getLogOfType
 import io.embrace.android.embracesdk.assertions.getSessionId
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
+import io.embrace.android.embracesdk.fakes.config.FakeBase64SharedObjectFilesMap
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.fakeEnvelopeMetadata
@@ -14,6 +16,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.delivery.PayloadType
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
+import io.embrace.android.embracesdk.internal.envelope.CpuAbi
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.LogPayload
@@ -42,8 +45,13 @@ internal class NativeCrashFeatureTest {
         private const val BASE_TIME_MS = 1691000299000L
     }
 
-    private val config = FakeInstrumentedConfig(enabledFeatures = FakeEnabledFeatureConfig(nativeCrashCapture = true))
     private val serializer = TestPlatformSerializer()
+    private val fakeSymbols = mapOf("libfoo.so" to "symbol_content")
+
+    private val config = FakeInstrumentedConfig(
+        enabledFeatures = FakeEnabledFeatureConfig(nativeCrashCapture = true),
+        symbols = createNativeSymbolsForCurrentArch(fakeSymbols)
+    )
     private val sessionMetadata = StoredTelemetryMetadata(
         timestamp = BASE_TIME_MS,
         uuid = "30690ad1-6b87-4e08-b72c-7deca14451d8",
@@ -90,7 +98,6 @@ internal class NativeCrashFeatureTest {
         envelopeResource = fakeLaterEnvelopeResource,
         envelopeMetadata = fakeLaterEnvelopeMetadata
     )
-    private val fakeSymbols = mapOf("libfoo.so" to "symbol_content")
 
     @Rule
     @JvmField
@@ -99,8 +106,6 @@ internal class NativeCrashFeatureTest {
             fakeStorageLayer = true,
         ).apply {
             getEmbLogger().throwOnInternalError = false
-        }.also {
-            it.fakeSymbolService.symbolsForCurrentArch.putAll(fakeSymbols)
         }
     }
 

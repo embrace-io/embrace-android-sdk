@@ -5,7 +5,6 @@ import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.storage.FileStorageService
 import io.embrace.android.embracesdk.internal.delivery.storage.FileStorageServiceImpl
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.jni.JniDelegate
-import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.symbols.SymbolService
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
@@ -18,7 +17,7 @@ class NativeCrashProcessorImpl(
     args: InstrumentationArgs,
     private val sharedObjectLoader: SharedObjectLoader,
     private val delegate: JniDelegate,
-    private val symbolService: SymbolService,
+    private val symbolMap: Map<String, String>?,
     private val outputDir: Lazy<File>,
     worker: PriorityWorker<StoredTelemetryMetadata>,
 ) : NativeCrashProcessor {
@@ -53,7 +52,7 @@ class NativeCrashProcessorImpl(
                 val crashReport = delegate.getCrashReport(crashFile.path)
                 if (crashReport != null) {
                     serializer.fromJson(crashReport, NativeCrashData::class.java).apply {
-                        symbols = symbolService.symbolsForCurrentArch
+                        this.symbols = symbolMap
                     }
                 } else {
                     logger.trackInternalError(

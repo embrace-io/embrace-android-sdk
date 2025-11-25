@@ -32,6 +32,7 @@ internal class InstrumentationArgsImpl(
     override val ordinalStore: OrdinalStore,
     override val cpuAbi: CpuAbi,
     override val processIdentifier: String,
+    override val symbols: Map<String, String>?,
     private val workerThreadModule: WorkerThreadModule,
     private val sessionIdTracker: SessionIdTracker,
     private val sessionPropertiesService: SessionPropertiesService,

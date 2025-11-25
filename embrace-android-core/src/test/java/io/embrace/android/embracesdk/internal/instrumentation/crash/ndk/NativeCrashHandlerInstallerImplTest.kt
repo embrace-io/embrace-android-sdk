@@ -1,9 +1,11 @@
 package io.embrace.android.embracesdk.internal.instrumentation.crash.ndk
 
+import androidx.test.core.app.ApplicationProvider
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
-import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
+import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.fakes.FakeJniDelegate
 import io.embrace.android.embracesdk.fakes.FakeMainThreadHandler
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
@@ -18,9 +20,11 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import org.junit.runner.RunWith
 import java.io.File
 import java.nio.file.Files
 
+@RunWith(AndroidJUnit4::class)
 class NativeCrashHandlerInstallerImplTest {
 
     private val testNativeInstallMessage = NativeInstallMessage(
@@ -32,39 +36,43 @@ class NativeCrashHandlerInstallerImplTest {
         devLogging = false,
     )
 
-    private lateinit var fakeConfigService: FakeConfigService
+    private lateinit var args: FakeInstrumentationArgs
     private lateinit var fakeSharedObjectLoader: FakeSharedObjectLoader
-    private lateinit var fakeLogger: FakeEmbLogger
     private lateinit var fakeDelegate: FakeJniDelegate
     private lateinit var fakeMainThreadHandler: FakeMainThreadHandler
     private lateinit var nativeCrashHandlerInstaller: NativeCrashHandlerInstallerImpl
     private lateinit var sessionTracker: FakeSessionIdTracker
-    private lateinit var clock: FakeClock
     private lateinit var executorService: BlockingScheduledExecutorService
     private lateinit var outputDir: File
 
     @Before
     fun setUp() {
-        fakeConfigService =
-            FakeConfigService(autoDataCaptureBehavior = FakeAutoDataCaptureBehavior(sigHandlerDetectionEnabled = true))
+        val fakeConfigService =
+            FakeConfigService(
+                autoDataCaptureBehavior = FakeAutoDataCaptureBehavior(
+                    sigHandlerDetectionEnabled = true
+                )
+            )
         fakeSharedObjectLoader = FakeSharedObjectLoader()
-        fakeLogger = FakeEmbLogger(false)
         fakeDelegate = FakeJniDelegate()
         fakeMainThreadHandler = FakeMainThreadHandler()
         sessionTracker = FakeSessionIdTracker()
-        clock = FakeClock()
         outputDir = Files.createTempDirectory("test").toFile()
-
         executorService = BlockingScheduledExecutorService(blockingMode = false)
+
+        args = FakeInstrumentationArgs(
+            ApplicationProvider.getApplicationContext(),
+            configService = fakeConfigService,
+            logger = FakeEmbLogger(false),
+            workerSupplier = { BackgroundWorker(executorService) },
+            sessionIdSupplier = sessionTracker::getActiveSessionId
+        )
         nativeCrashHandlerInstaller = NativeCrashHandlerInstallerImpl(
-            fakeConfigService,
+            args,
             fakeSharedObjectLoader,
-            fakeLogger,
             fakeDelegate,
-            BackgroundWorker(executorService),
             testNativeInstallMessage,
             fakeMainThreadHandler,
-            clock,
             sessionTracker,
             { "pid" },
             lazy { outputDir }
@@ -95,7 +103,7 @@ class NativeCrashHandlerInstallerImplTest {
         assertEquals("p1_1692201601000_null_pid_true_native_v1.json", getFilename())
 
         // trigger new session and update report path
-        clock.tick(9000)
+        args.clock.tick(9000)
         sessionTracker.setActiveSession("sid", AppState.FOREGROUND)
         assertTrue(fakeDelegate.signalHandlerInstalled)
         assertEquals("p1_1692201610000_sid_pid_true_native_v1.json", getFilename())
@@ -103,7 +111,8 @@ class NativeCrashHandlerInstallerImplTest {
 
     @Test
     fun `signal handlers are not reinstalled when the 3rd party signal handler detection is disabled`() {
-        fakeConfigService.autoDataCaptureBehavior = FakeAutoDataCaptureBehavior(sigHandlerDetectionEnabled = false)
+        args.configService.autoDataCaptureBehavior =
+            FakeAutoDataCaptureBehavior(sigHandlerDetectionEnabled = false)
 
         nativeCrashHandlerInstaller.install()
 
@@ -149,9 +158,12 @@ class NativeCrashHandlerInstallerImplTest {
 
         assertEquals(
             InternalErrorType.NATIVE_HANDLER_INSTALL_FAIL.toString(),
-            fakeLogger.internalErrorMessages.last().msg
+            args.logger.internalErrorMessages.last().msg
         )
-        assertEquals(SecurityException::class.java, fakeLogger.internalErrorMessages.last().throwable?.javaClass)
+        assertEquals(
+            SecurityException::class.java,
+            args.logger.internalErrorMessages.last().throwable?.javaClass
+        )
     }
 
     @Test
@@ -160,7 +172,7 @@ class NativeCrashHandlerInstallerImplTest {
 
         nativeCrashHandlerInstaller.install()
 
-        assertEquals(0, fakeLogger.internalErrorMessages.size)
+        assertEquals(0, args.logger.internalErrorMessages.size)
         assertFalse(fakeDelegate.signalHandlerInstalled)
     }
 

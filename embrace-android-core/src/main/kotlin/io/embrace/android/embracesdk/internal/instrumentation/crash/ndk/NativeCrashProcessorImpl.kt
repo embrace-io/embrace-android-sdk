@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.instrumentation.crash.ndk
 
+import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.storage.FileStorageService
 import io.embrace.android.embracesdk.internal.delivery.storage.FileStorageServiceImpl
@@ -14,15 +15,16 @@ import java.io.File
 import java.io.FileNotFoundException
 
 class NativeCrashProcessorImpl(
+    args: InstrumentationArgs,
     private val sharedObjectLoader: SharedObjectLoader,
-    private val logger: EmbLogger,
     private val delegate: JniDelegate,
-    private val serializer: PlatformSerializer,
     private val symbolService: SymbolService,
     private val outputDir: Lazy<File>,
     worker: PriorityWorker<StoredTelemetryMetadata>,
 ) : NativeCrashProcessor {
 
+    private val logger: EmbLogger = args.logger
+    private val serializer: PlatformSerializer = args.serializer
     private val fileStorageService: FileStorageService = FileStorageServiceImpl(
         outputDir,
         worker,

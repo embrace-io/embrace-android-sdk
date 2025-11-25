@@ -5,7 +5,6 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
-import io.embrace.android.embracesdk.fakes.FakeInstrumentationModule
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fakes.FakeStorageService
 import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
@@ -58,7 +57,8 @@ internal class NativeFeatureModuleImplTest {
     @Test
     fun `create native crash handler installer when active session id is null`() {
         // given active session id is null
-        fakeEssentialServiceModule = FakeEssentialServiceModule(sessionIdTracker = FakeSessionIdTracker())
+        fakeEssentialServiceModule =
+            FakeEssentialServiceModule(sessionIdTracker = FakeSessionIdTracker())
         module = createNativeFeatureModule()
         assertNotNull(module.nativeCrashService)
     }
@@ -85,12 +85,9 @@ internal class NativeFeatureModuleImplTest {
         val application = ApplicationProvider.getApplicationContext<Application>()
         return NativeFeatureModuleImpl(
             FakeNativeCoreModule(),
-            FakeInstrumentationModule(
-                application,
-                instrumentationArgs = FakeInstrumentationArgs(
-                    application = application,
-                    configService = fakeConfigService
-                )
+            FakeInstrumentationArgs(
+                application = application,
+                configService = fakeConfigService
             )
         )
     }

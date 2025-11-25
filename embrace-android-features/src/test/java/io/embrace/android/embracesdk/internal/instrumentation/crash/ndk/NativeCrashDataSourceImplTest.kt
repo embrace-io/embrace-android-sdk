@@ -4,7 +4,6 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.fakes.FakeNativeCrashProcessor
-import io.embrace.android.embracesdk.fakes.FakeOrdinalStore
 import io.embrace.android.embracesdk.internal.arch.attrs.embCrashNumber
 import io.embrace.android.embracesdk.internal.arch.attrs.embState
 import io.embrace.android.embracesdk.internal.arch.attrs.toEmbraceAttributeName
@@ -12,7 +11,6 @@ import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.NativeCrash.embNativeCrashException
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.NativeCrash.embNativeCrashSymbols
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
-import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.utils.toUTF8String
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
@@ -29,7 +27,6 @@ import org.junit.runner.RunWith
 internal class NativeCrashDataSourceImplTest {
 
     private lateinit var crashProcessor: FakeNativeCrashProcessor
-    private lateinit var serializer: EmbraceSerializer
     private lateinit var args: FakeInstrumentationArgs
     private lateinit var nativeCrashDataSource: NativeCrashDataSourceImpl
 
@@ -37,12 +34,9 @@ internal class NativeCrashDataSourceImplTest {
     fun setUp() {
         crashProcessor = FakeNativeCrashProcessor()
         args = FakeInstrumentationArgs(ApplicationProvider.getApplicationContext())
-        serializer = EmbraceSerializer()
         nativeCrashDataSource = NativeCrashDataSourceImpl(
             nativeCrashProcessor = crashProcessor,
-            ordinalStore = FakeOrdinalStore(),
             args = args,
-            serializer = serializer,
         )
     }
 
@@ -72,8 +66,9 @@ internal class NativeCrashDataSourceImplTest {
             )
             assertEquals("1", attributes[embCrashNumber.name])
             assertEquals(testNativeCrashData.crash, attributes[embNativeCrashException.name])
+            val json = args.serializer.toJson(testNativeCrashData.symbols, Map::class.java)
             assertEquals(
-                serializer.toJson(testNativeCrashData.symbols, Map::class.java).toByteArray().toUTF8String(),
+                json.toByteArray().toUTF8String(),
                 attributes[embNativeCrashSymbols.name]
             )
         }

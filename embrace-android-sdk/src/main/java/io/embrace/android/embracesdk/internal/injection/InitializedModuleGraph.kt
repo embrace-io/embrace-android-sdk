@@ -160,7 +160,7 @@ internal class InitializedModuleGraph(
             workerThreadModule,
             storageModule,
             essentialServiceModule,
-            instrumentationModule,
+            instrumentationModule.instrumentationArgs,
             openTelemetryModule,
             { null },
             { null },
@@ -171,7 +171,7 @@ internal class InitializedModuleGraph(
     override val nativeFeatureModule: NativeFeatureModule = init {
         nativeFeatureModuleSupplier(
             nativeCoreModule,
-            instrumentationModule,
+            instrumentationModule.instrumentationArgs,
         )
     }
 

@@ -9,7 +9,6 @@ import java.io.FileNotFoundException
 import java.io.InputStream
 import java.util.concurrent.CopyOnWriteArraySet
 import java.util.concurrent.RejectedExecutionException
-import kotlin.collections.forEach
 
 class FileStorageServiceImpl(
     outputDir: Lazy<File>,

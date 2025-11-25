@@ -11,6 +11,7 @@ import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.store.OrdinalStore
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
+import io.embrace.android.embracesdk.internal.worker.PriorityWorker
 import io.embrace.android.embracesdk.internal.worker.Worker
 
 /**
@@ -75,6 +76,11 @@ interface InstrumentationArgs {
      * Retrieves a background worker matching the given name.
      */
     fun backgroundWorker(worker: Worker.Background): BackgroundWorker
+
+    /**
+     * Retrieves a background worker matching the given name.
+     */
+    fun <T> priorityWorker(worker: Worker.Priority): PriorityWorker<T>
 
     /**
      * Retrieves a system service matching the given name. This may be null if the service

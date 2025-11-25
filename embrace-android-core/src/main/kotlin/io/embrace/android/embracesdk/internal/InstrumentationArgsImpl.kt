@@ -15,6 +15,7 @@ import io.embrace.android.embracesdk.internal.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.store.OrdinalStore
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
+import io.embrace.android.embracesdk.internal.worker.PriorityWorker
 import io.embrace.android.embracesdk.internal.worker.Worker
 import java.util.concurrent.ConcurrentHashMap
 
@@ -36,6 +37,9 @@ internal class InstrumentationArgsImpl(
 ) : InstrumentationArgs {
 
     override fun backgroundWorker(worker: Worker.Background): BackgroundWorker = workerThreadModule.backgroundWorker(worker)
+    override fun <T> priorityWorker(
+        worker: Worker.Priority
+    ): PriorityWorker<T> = workerThreadModule.priorityWorker(worker)
 
     private val memo = ConcurrentHashMap<String, Any>()
 

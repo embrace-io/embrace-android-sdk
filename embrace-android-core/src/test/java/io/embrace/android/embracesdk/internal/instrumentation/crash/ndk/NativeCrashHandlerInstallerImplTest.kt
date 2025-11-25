@@ -55,7 +55,7 @@ class NativeCrashHandlerInstallerImplTest {
             ApplicationProvider.getApplicationContext(),
             configService = fakeConfigService,
             logger = FakeEmbLogger(false),
-            workerSupplier = { BackgroundWorker(executorService) },
+            backgroundWorkerSupplier = { BackgroundWorker(executorService) },
             sessionIdSupplier = sessionTracker::getActiveSessionId
         )
         nativeCrashHandlerInstaller = NativeCrashHandlerInstallerImpl(

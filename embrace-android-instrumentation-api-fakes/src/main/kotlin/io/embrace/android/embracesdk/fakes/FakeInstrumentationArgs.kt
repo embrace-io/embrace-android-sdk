@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.internal.envelope.CpuAbi
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.store.OrdinalStore
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
+import io.embrace.android.embracesdk.internal.worker.PriorityWorker
 import io.embrace.android.embracesdk.internal.worker.Worker
 
 class FakeInstrumentationArgs(
@@ -21,11 +22,17 @@ class FakeInstrumentationArgs(
     override val ordinalStore: OrdinalStore = FakeOrdinalStore(),
     override val cpuAbi: CpuAbi = CpuAbi.ARM64_V8A,
     override val processIdentifier: String = "fake-process-id",
-    val workerSupplier: (worker: Worker.Background) -> BackgroundWorker = { fakeBackgroundWorker() },
+    val backgroundWorkerSupplier: (worker: Worker.Background) -> BackgroundWorker = { fakeBackgroundWorker() },
+    val priorityWorkerSupplier: (worker: Worker.Priority) -> PriorityWorker<*> = { fakePriorityWorker<Any>() },
     val sessionIdSupplier: () -> String? = { null },
 ) : InstrumentationArgs {
 
-    override fun backgroundWorker(worker: Worker.Background): BackgroundWorker = workerSupplier(worker)
+    override fun backgroundWorker(worker: Worker.Background): BackgroundWorker = backgroundWorkerSupplier(worker)
+
+    @Suppress("UNCHECKED_CAST")
+    override fun <T> priorityWorker(worker: Worker.Priority): PriorityWorker<T> {
+        return priorityWorkerSupplier(worker) as PriorityWorker<T>
+    }
 
     override fun <T> systemService(name: String): T? {
         throw UnsupportedOperationException()

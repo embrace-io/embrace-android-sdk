@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
+import io.embrace.android.embracesdk.fakes.injection.FakeStorageModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import io.embrace.android.embracesdk.internal.worker.Worker
 import org.junit.Assert.assertNotNull
@@ -26,6 +27,7 @@ internal class InstrumentationModuleImplTest {
             FakeConfigModule(),
             FakeEssentialServiceModule(),
             FakeCoreModule(),
+            FakeStorageModule(),
         )
         assertSame(module.instrumentationRegistry, module.instrumentationRegistry)
         assertNotNull(module.instrumentationRegistry)

@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeLogModule
 import io.embrace.android.embracesdk.fakes.injection.FakePayloadSourceModule
+import io.embrace.android.embracesdk.fakes.injection.FakeStorageModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
@@ -38,6 +39,7 @@ internal class SessionOrchestrationModuleImplTest {
             FakeConfigModule(),
             FakeEssentialServiceModule(),
             coreModule,
+            FakeStorageModule()
         )
         val module = SessionOrchestrationModuleImpl(
             initModule,
@@ -66,6 +68,7 @@ internal class SessionOrchestrationModuleImplTest {
             FakeConfigModule(),
             FakeEssentialServiceModule(),
             coreModule,
+            FakeStorageModule()
         )
 
         val module = SessionOrchestrationModuleImpl(

@@ -112,6 +112,7 @@ internal class ModuleInitBootstrapper(
             configModule: ConfigModule,
             essentialServiceModule: EssentialServiceModule,
             coreModule: CoreModule,
+            storageModule: StorageModule,
         ->
         InstrumentationModuleImpl(
             initModule,
@@ -120,6 +121,7 @@ internal class ModuleInitBootstrapper(
             configModule,
             essentialServiceModule,
             coreModule,
+            storageModule,
         )
     },
     private val dataCaptureServiceModuleSupplier: DataCaptureServiceModuleSupplier = {
@@ -191,7 +193,6 @@ internal class ModuleInitBootstrapper(
         )
     },
     private val nativeCoreModuleSupplier: NativeCoreModuleSupplier = {
-            storageModule: StorageModule,
             essentialServiceModule: EssentialServiceModule,
             instrumentationArgs: InstrumentationArgs,
             delegateProvider: Provider<JniDelegate?>,
@@ -199,7 +200,6 @@ internal class ModuleInitBootstrapper(
             symbolServiceProvider: Provider<SymbolService?>,
         ->
         NativeCoreModuleImpl(
-            storageModule,
             essentialServiceModule,
             instrumentationArgs,
             delegateProvider,

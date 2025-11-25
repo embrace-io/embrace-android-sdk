@@ -17,6 +17,7 @@ import io.embrace.android.embracesdk.internal.store.OrdinalStore
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.internal.worker.PriorityWorker
 import io.embrace.android.embracesdk.internal.worker.Worker
+import java.io.File
 import java.util.concurrent.ConcurrentHashMap
 
 internal class InstrumentationArgsImpl(
@@ -34,7 +35,10 @@ internal class InstrumentationArgsImpl(
     private val workerThreadModule: WorkerThreadModule,
     private val sessionIdTracker: SessionIdTracker,
     private val sessionPropertiesService: SessionPropertiesService,
+    crashMarkerFileProvider: () -> File,
 ) : InstrumentationArgs {
+
+    override val crashMarkerFile: File by lazy { crashMarkerFileProvider() }
 
     override fun backgroundWorker(worker: Worker.Background): BackgroundWorker = workerThreadModule.backgroundWorker(worker)
     override fun <T> priorityWorker(

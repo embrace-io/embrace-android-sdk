@@ -58,6 +58,7 @@ typealias InstrumentationModuleSupplier = (
     configModule: ConfigModule,
     essentialServiceModule: EssentialServiceModule,
     coreModule: CoreModule,
+    storageModule: StorageModule,
 ) -> InstrumentationModule
 
 typealias LogModuleSupplier = (

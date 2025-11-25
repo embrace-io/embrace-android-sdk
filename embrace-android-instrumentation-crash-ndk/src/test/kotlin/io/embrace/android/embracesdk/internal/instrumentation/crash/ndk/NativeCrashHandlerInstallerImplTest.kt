@@ -10,7 +10,6 @@ import io.embrace.android.embracesdk.fakes.FakeJniDelegate
 import io.embrace.android.embracesdk.fakes.FakeMainThreadHandler
 import io.embrace.android.embracesdk.fakes.FakeSharedObjectLoader
 import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
-import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -136,22 +135,6 @@ class NativeCrashHandlerInstallerImplTest {
 
         assertTrue(fakeDelegate.signalHandlerInstalled)
         assertTrue(fakeDelegate.signalHandlerReinstalled)
-    }
-
-    @Test
-    fun `an internal error is tracked when an exception occurs`() {
-        fakeSharedObjectLoader.throwWhenLoading = true
-
-        nativeCrashHandlerInstaller.install()
-
-        assertEquals(
-            InternalErrorType.NATIVE_HANDLER_INSTALL_FAIL.toString(),
-            args.logger.internalErrorMessages.last().msg
-        )
-        assertEquals(
-            SecurityException::class.java,
-            args.logger.internalErrorMessages.last().throwable?.javaClass
-        )
     }
 
     @Test

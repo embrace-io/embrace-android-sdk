@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.core.BuildConfig
 import io.embrace.android.embracesdk.internal.arch.InstrumentationProvider
 import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkStatusDataSource
 import io.embrace.android.embracesdk.internal.instrumentation.crash.jvm.JvmCrashDataSource
+import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeCrashDataSource
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.EmbTrace.end
 import io.embrace.android.embracesdk.internal.utils.EmbTrace.start
@@ -82,8 +83,6 @@ internal fun ModuleGraph.loadInstrumentation() {
     registry.loadInstrumentations(instrumentationProviders, instrumentationModule.instrumentationArgs)
 
     anrModule.anrService?.startAnrCapture()
-    nativeCoreModule.sharedObjectLoader.loadEmbraceNative()
-    nativeCoreModule.nativeCrashHandlerInstaller?.install()
 
     featureModule.lastRunCrashVerifier.readAndCleanMarkerAsync(
         workerThreadModule.backgroundWorker(Worker.Background.IoRegWorker)
@@ -114,9 +113,11 @@ internal fun ModuleGraph.postLoadInstrumentation() {
 internal fun ModuleGraph.triggerPayloadSend() {
     val worker = workerThreadModule.backgroundWorker(Worker.Background.IoRegWorker)
     worker.submit {
-        payloadSourceModule.payloadResurrectionService?.resurrectOldPayloads(
-            nativeCrashServiceProvider = { nativeCoreModule.nativeCrashService }
-        )
+        instrumentationModule.instrumentationRegistry.findByType(NativeCrashDataSource::class)?.let {
+            payloadSourceModule.payloadResurrectionService?.resurrectOldPayloads(
+                nativeCrashServiceProvider = { it }
+            )
+        }
     }
     worker.submit { // potentially trigger first delivery attempt by firing network status callback
         deliveryModule.schedulingService?.let(

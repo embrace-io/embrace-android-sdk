@@ -40,6 +40,7 @@ class NativeCrashHandlerInstallerImpl(
     override fun install() {
         backgroundWorker.submit {
             EmbTrace.trace("install-native-crash-signal-handlers") {
+                sharedObjectLoader.loadEmbraceNative()
                 startNativeCrashMonitoring()
             }
         }

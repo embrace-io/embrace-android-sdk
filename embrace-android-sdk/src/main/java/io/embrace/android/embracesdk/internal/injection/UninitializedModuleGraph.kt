@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.injection
 
 import io.embrace.android.embracesdk.internal.instrumentation.anr.AnrModule
-import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeCoreModule
 import io.embrace.android.embracesdk.internal.instrumentation.startup.DataCaptureServiceModule
 
 internal class SdkDisabledException : IllegalStateException()
@@ -21,7 +20,6 @@ internal object UninitializedModuleGraph : ModuleGraph {
     override val deliveryModule: DeliveryModule get() = throwSdkNotInitialized()
     override val anrModule: AnrModule get() = throwSdkNotInitialized()
     override val logModule: LogModule get() = throwSdkNotInitialized()
-    override val nativeCoreModule: NativeCoreModule get() = throwSdkNotInitialized()
     override val instrumentationModule: InstrumentationModule get() = throwSdkNotInitialized()
     override val featureModule: FeatureModule get() = throwSdkNotInitialized()
     override val sessionOrchestrationModule: SessionOrchestrationModule get() = throwSdkNotInitialized()

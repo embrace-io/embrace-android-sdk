@@ -11,6 +11,7 @@ import io.embrace.android.embracesdk.internal.TypeUtils
 import io.embrace.android.embracesdk.internal.arch.attrs.embCleanExit
 import io.embrace.android.embracesdk.internal.arch.attrs.embCrashId
 import io.embrace.android.embracesdk.internal.arch.attrs.embState
+import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.source.ConfigHttpResponse
@@ -22,7 +23,6 @@ import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.session.getSessionSpan
-import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.testframework.assertions.JsonComparator
 import io.embrace.android.embracesdk.testframework.server.FakeApiServer
 import io.embrace.android.embracesdk.testframework.server.FormPart
@@ -265,18 +265,6 @@ internal class EmbracePayloadAssertionInterface(
                 exists
             },
             condition = { !it },
-        )
-    }
-
-    fun assertNativeCrashExists(
-        crashData: StoredNativeCrashData,
-    ) {
-        returnIfConditionMet(
-            desiredValueSupplier = { true },
-            dataProvider = {
-                crashData.getCrashFile().exists()
-            },
-            condition = { it },
         )
     }
 

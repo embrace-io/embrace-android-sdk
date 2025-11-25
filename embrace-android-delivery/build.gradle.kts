@@ -6,6 +6,7 @@ dependencies {
     implementation(platform(libs.okhttp.bom))
     implementation(libs.okhttp)
     implementation(project(":embrace-android-payload"))
+    api(project(":embrace-android-telemetry-persistence"))
     implementation(project(":embrace-android-infra"))
 
     testImplementation(project(":embrace-test-common"))

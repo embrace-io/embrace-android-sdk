@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.delivery
 
 import kotlin.Result.Companion.failure
+import kotlin.Result.Companion.success
 
 /**
  * Metadata about the telemetry payload.
@@ -42,7 +43,7 @@ data class StoredTelemetryMetadata(
                 IllegalArgumentException("Invalid completeness state: $filename")
             )
             val payloadType = PayloadType.fromFilenameComponent(parts[5])
-            return Result.success(
+            return success(
                 StoredTelemetryMetadata(
                     timestamp,
                     uuid,

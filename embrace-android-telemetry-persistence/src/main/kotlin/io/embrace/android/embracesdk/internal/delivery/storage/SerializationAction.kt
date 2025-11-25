@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.internal.injection
+package io.embrace.android.embracesdk.internal.delivery.storage
 
 import java.io.OutputStream
 

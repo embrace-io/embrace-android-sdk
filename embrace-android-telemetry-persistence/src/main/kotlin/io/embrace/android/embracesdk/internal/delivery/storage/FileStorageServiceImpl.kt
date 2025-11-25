@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.delivery.storage
 
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
-import io.embrace.android.embracesdk.internal.injection.SerializationAction
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.worker.PriorityWorker
@@ -10,6 +9,7 @@ import java.io.FileNotFoundException
 import java.io.InputStream
 import java.util.concurrent.CopyOnWriteArraySet
 import java.util.concurrent.RejectedExecutionException
+import kotlin.collections.forEach
 
 class FileStorageServiceImpl(
     outputDir: Lazy<File>,

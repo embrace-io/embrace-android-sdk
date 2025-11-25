@@ -29,6 +29,7 @@ include(
     ":embrace-android-instrumentation-view",
     ":embrace-android-instrumentation-webview",
     ":embrace-android-payload",
+    ":embrace-android-telemetry-persistence",
     ":embrace-android-delivery",
     ":embrace-android-delivery-fakes",
     ":embrace-android-otel",

@@ -1,8 +1,11 @@
 package io.embrace.android.embracesdk.internal.delivery.storage
 
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
+import io.embrace.android.embracesdk.fakes.FakeClock.Companion.DEFAULT_FAKE_CURRENT_TIME
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
-import io.embrace.android.embracesdk.fixtures.fakeSessionStoredTelemetryMetadata
+import io.embrace.android.embracesdk.internal.delivery.PayloadType
+import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
+import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
 import io.embrace.android.embracesdk.internal.worker.PriorityWorker
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -59,4 +62,13 @@ class FileStorageServiceImplTest {
         assertNull(service.loadPayloadAsStream(fakeSessionStoredTelemetryMetadata))
         checkNotNull(logger.internalErrorMessages.single())
     }
+
+    val fakeSessionStoredTelemetryMetadata = StoredTelemetryMetadata(
+        timestamp = DEFAULT_FAKE_CURRENT_TIME + 1000L,
+        uuid = "30690ad1-6b87-4e08-b72c-7deca14451d8",
+        processId = "8115ec91-3e5e-4d8a-816d-cc40306f9822",
+        envelopeType = SupportedEnvelopeType.SESSION,
+        true,
+        payloadType = PayloadType.SESSION,
+    )
 }

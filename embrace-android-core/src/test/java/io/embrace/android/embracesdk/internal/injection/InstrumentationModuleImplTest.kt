@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.injection
 
 import io.embrace.android.embracesdk.fakes.FakeConfigModule
+import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
@@ -17,6 +18,7 @@ internal class InstrumentationModuleImplTest {
         val fakeInitModule = FakeInitModule()
         val module = InstrumentationModuleImpl(
             fakeInitModule,
+            FakeOpenTelemetryModule(),
             FakeWorkerThreadModule(
                 fakeInitModule = fakeInitModule,
                 testWorker = Worker.Background.NonIoRegWorker

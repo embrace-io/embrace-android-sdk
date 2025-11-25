@@ -122,7 +122,7 @@ internal class LogEnvelopeSourceImplTest {
         with(cachedLogEnvelopeStore.envelopeGetRequest.single()) {
             assertEquals(0L, timestamp)
             assertEquals(expectedSessionId, uuid)
-            assertEquals(expectedProcessIdentifier, processId)
+            assertEquals(expectedProcessIdentifier, processIdentifier)
             assertEquals(SupportedEnvelopeType.CRASH, envelopeType)
             assertEquals(PayloadType.NATIVE_CRASH, payloadType)
         }
@@ -147,7 +147,7 @@ internal class LogEnvelopeSourceImplTest {
         with(cachedLogEnvelopeStore.envelopeGetRequest.single()) {
             assertEquals(0L, timestamp)
             assertEquals("none", uuid)
-            assertEquals("none", processId)
+            assertEquals("none", processIdentifier)
             assertEquals(SupportedEnvelopeType.CRASH, envelopeType)
             assertEquals(PayloadType.NATIVE_CRASH, payloadType)
         }

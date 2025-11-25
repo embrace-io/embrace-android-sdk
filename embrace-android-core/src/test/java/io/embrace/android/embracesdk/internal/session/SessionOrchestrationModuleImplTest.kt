@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.session
 
 import io.embrace.android.embracesdk.fakes.FakeConfigModule
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
 import io.embrace.android.embracesdk.fakes.createBackgroundActivityBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeDeliveryModule
@@ -32,6 +33,7 @@ internal class SessionOrchestrationModuleImplTest {
         val coreModule = FakeCoreModule()
         val dataSourceModule = InstrumentationModuleImpl(
             initModule,
+            FakeOpenTelemetryModule(),
             workerThreadModule,
             FakeConfigModule(),
             FakeEssentialServiceModule(),
@@ -59,6 +61,7 @@ internal class SessionOrchestrationModuleImplTest {
         val coreModule = FakeCoreModule()
         val dataSourceModule = InstrumentationModuleImpl(
             initModule,
+            FakeOpenTelemetryModule(),
             workerThreadModule,
             FakeConfigModule(),
             FakeEssentialServiceModule(),

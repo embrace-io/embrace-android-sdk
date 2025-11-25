@@ -53,6 +53,7 @@ typealias FeatureModuleSupplier = (
 
 typealias InstrumentationModuleSupplier = (
     initModule: InitModule,
+    openTelemetryModule: OpenTelemetryModule,
     workerThreadModule: WorkerThreadModule,
     configModule: ConfigModule,
     essentialServiceModule: EssentialServiceModule,

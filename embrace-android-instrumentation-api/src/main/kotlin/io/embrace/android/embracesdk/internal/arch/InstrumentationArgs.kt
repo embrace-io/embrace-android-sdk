@@ -88,6 +88,11 @@ interface InstrumentationArgs {
     fun sessionId(): String?
 
     /**
+     * Identifier that uniquely identifies the current process.
+     */
+    val processIdentifier: String
+
+    /**
      * Retrieves a snapshot of the current session properties
      */
     fun sessionProperties(): Map<String, String>

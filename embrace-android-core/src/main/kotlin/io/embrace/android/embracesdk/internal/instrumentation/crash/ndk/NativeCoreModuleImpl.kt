@@ -4,7 +4,6 @@ import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.delivery.storage.StorageLocation
 import io.embrace.android.embracesdk.internal.handler.AndroidMainThreadHandler
 import io.embrace.android.embracesdk.internal.injection.EssentialServiceModule
-import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModule
 import io.embrace.android.embracesdk.internal.injection.StorageModule
 import io.embrace.android.embracesdk.internal.injection.WorkerThreadModule
 import io.embrace.android.embracesdk.internal.injection.asFile
@@ -21,7 +20,6 @@ class NativeCoreModuleImpl(
     storageModule: StorageModule,
     essentialServiceModule: EssentialServiceModule,
     args: InstrumentationArgs,
-    otelModule: OpenTelemetryModule,
     delegateProvider: Provider<JniDelegate?>,
     sharedObjectLoaderProvider: Provider<SharedObjectLoader?>,
     symbolServiceProvider: Provider<SymbolService?>,
@@ -64,7 +62,7 @@ class NativeCoreModuleImpl(
                 delegate = delegate,
                 mainThreadHandler = AndroidMainThreadHandler(),
                 sessionIdTracker = essentialServiceModule.sessionIdTracker,
-                processIdProvider = { otelModule.otelSdkConfig.processIdentifier },
+                processIdentifier = args.processIdentifier,
                 outputDir = nativeOutputDir,
                 markerFilePath = markerFilePath,
             )

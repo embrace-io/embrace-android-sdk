@@ -66,7 +66,7 @@ class FileStorageServiceImplTest {
     val fakeSessionStoredTelemetryMetadata = StoredTelemetryMetadata(
         timestamp = DEFAULT_FAKE_CURRENT_TIME + 1000L,
         uuid = "30690ad1-6b87-4e08-b72c-7deca14451d8",
-        processId = "8115ec91-3e5e-4d8a-816d-cc40306f9822",
+        processIdentifier = "8115ec91-3e5e-4d8a-816d-cc40306f9822",
         envelopeType = SupportedEnvelopeType.SESSION,
         true,
         payloadType = PayloadType.SESSION,

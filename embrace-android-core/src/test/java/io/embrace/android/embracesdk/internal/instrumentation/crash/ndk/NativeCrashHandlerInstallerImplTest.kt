@@ -27,15 +27,6 @@ import java.nio.file.Files
 @RunWith(AndroidJUnit4::class)
 class NativeCrashHandlerInstallerImplTest {
 
-    private val testNativeInstallMessage = NativeInstallMessage(
-        markerFilePath = "testMarkerFilePath",
-        appState = AppState.BACKGROUND,
-        reportId = "testReportId",
-        apiLevel = 28,
-        is32bit = false,
-        devLogging = false,
-    )
-
     private lateinit var args: FakeInstrumentationArgs
     private lateinit var fakeSharedObjectLoader: FakeSharedObjectLoader
     private lateinit var fakeDelegate: FakeJniDelegate
@@ -68,14 +59,15 @@ class NativeCrashHandlerInstallerImplTest {
             sessionIdSupplier = sessionTracker::getActiveSessionId
         )
         nativeCrashHandlerInstaller = NativeCrashHandlerInstallerImpl(
-            args,
-            fakeSharedObjectLoader,
-            fakeDelegate,
-            testNativeInstallMessage,
-            fakeMainThreadHandler,
-            sessionTracker,
-            { "pid" },
-            lazy { outputDir }
+            args = args,
+            sharedObjectLoader = fakeSharedObjectLoader,
+            delegate = fakeDelegate,
+            mainThreadHandler = fakeMainThreadHandler,
+            sessionIdTracker = sessionTracker,
+            processIdProvider = { "pid" },
+            outputDir = lazy { outputDir },
+            markerFilePath = "testMarkerFilePath",
+            reportId = "testReportId",
         )
     }
 

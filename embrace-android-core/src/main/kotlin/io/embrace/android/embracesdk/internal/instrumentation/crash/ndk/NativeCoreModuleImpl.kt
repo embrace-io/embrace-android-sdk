@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.instrumentation.crash.ndk
 
-import android.os.Build
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.delivery.storage.StorageLocation
 import io.embrace.android.embracesdk.internal.handler.AndroidMainThreadHandler
@@ -15,7 +14,6 @@ import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.jni.JniD
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.symbols.SymbolService
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.symbols.SymbolServiceImpl
 import io.embrace.android.embracesdk.internal.utils.Provider
-import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.internal.worker.Worker
 
 class NativeCoreModuleImpl(
@@ -58,31 +56,20 @@ class NativeCoreModuleImpl(
 
     override val nativeCrashHandlerInstaller: NativeCrashHandlerInstaller? by singleton {
         if (args.configService.autoDataCaptureBehavior.isNativeCrashCaptureEnabled()) {
+            val markerFilePath =
+                storageModule.storageService.getFileForWrite("embrace_crash_marker").absolutePath
             NativeCrashHandlerInstallerImpl(
                 args,
                 sharedObjectLoader = sharedObjectLoader,
                 delegate = delegate,
-                nativeInstallMessage = nativeInstallMessage,
                 mainThreadHandler = AndroidMainThreadHandler(),
                 sessionIdTracker = essentialServiceModule.sessionIdTracker,
                 processIdProvider = { otelModule.otelSdkConfig.processIdentifier },
-                outputDir = nativeOutputDir
+                outputDir = nativeOutputDir,
+                markerFilePath = markerFilePath,
             )
         } else {
             null
         }
-    }
-
-    private val nativeInstallMessage: NativeInstallMessage by singleton {
-        val markerFilePath =
-            storageModule.storageService.getFileForWrite("embrace_crash_marker").absolutePath
-        NativeInstallMessage(
-            markerFilePath = markerFilePath,
-            appState = essentialServiceModule.appStateTracker.getAppState(),
-            reportId = Uuid.getEmbUuid(),
-            apiLevel = Build.VERSION.SDK_INT,
-            is32bit = args.cpuAbi.is32BitDevice,
-            devLogging = false,
-        )
     }
 }

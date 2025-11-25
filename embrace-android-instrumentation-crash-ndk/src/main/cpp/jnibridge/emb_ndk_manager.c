@@ -33,10 +33,7 @@ JNIEXPORT void JNICALL
 Java_io_embrace_android_embracesdk_internal_instrumentation_crash_ndk_jni_JniDelegateImpl_installSignalHandlers(JNIEnv *env,
                                                                                                                 jobject thiz,
                                                                                                                 jstring _crash_marker_path,
-                                                                                                                jstring _app_state,
                                                                                                                 jstring _report_id,
-                                                                                                                jint api_level,
-                                                                                                                jboolean is_32bit,
                                                                                                                 jboolean dev_logging) {
     if (dev_logging) {
         emb_enable_dev_logging();
@@ -47,8 +44,6 @@ Java_io_embrace_android_embracesdk_internal_instrumentation_crash_ndk_jni_JniDel
         return;
     }
     __emb_jni_env = env;
-
-    EMB_LOGDEV("unwinder args: apiLevel=%d, 32bit=%d", api_level, is_32bit);
 
     EMB_LOGDEV("Setting up initial state.");
     const char *report_id = (*env)->GetStringUTFChars(env, _report_id, 0);

@@ -5,7 +5,6 @@ import io.embrace.android.embracesdk.internal.delivery.storage.StorageLocation
 import io.embrace.android.embracesdk.internal.handler.AndroidMainThreadHandler
 import io.embrace.android.embracesdk.internal.injection.EssentialServiceModule
 import io.embrace.android.embracesdk.internal.injection.StorageModule
-import io.embrace.android.embracesdk.internal.injection.WorkerThreadModule
 import io.embrace.android.embracesdk.internal.injection.asFile
 import io.embrace.android.embracesdk.internal.injection.singleton
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.jni.JniDelegate
@@ -16,7 +15,6 @@ import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.worker.Worker
 
 class NativeCoreModuleImpl(
-    workerThreadModule: WorkerThreadModule,
     storageModule: StorageModule,
     essentialServiceModule: EssentialServiceModule,
     args: InstrumentationArgs,
@@ -49,7 +47,7 @@ class NativeCoreModuleImpl(
         delegate,
         symbolService,
         nativeOutputDir,
-        workerThreadModule.priorityWorker(Worker.Priority.DataPersistenceWorker)
+        args.priorityWorker(Worker.Priority.DataPersistenceWorker)
     )
 
     override val nativeCrashHandlerInstaller: NativeCrashHandlerInstaller? by singleton {

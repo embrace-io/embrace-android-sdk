@@ -150,9 +150,8 @@ internal class EmbraceSetupInterface(
                 )
             }
         },
-        nativeCoreModuleSupplier = { workerThreadModule, storageModule, essentialServiceModule, instrumentationArgs, _, _, _ ->
+        nativeCoreModuleSupplier = { storageModule, essentialServiceModule, instrumentationArgs, _, _, _ ->
             NativeCoreModuleImpl(
-                workerThreadModule = workerThreadModule,
                 storageModule = storageModule,
                 essentialServiceModule = essentialServiceModule,
                 args = instrumentationArgs,

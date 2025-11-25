@@ -13,6 +13,7 @@ import io.embrace.android.embracesdk.internal.store.OrdinalStore
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.internal.worker.PriorityWorker
 import io.embrace.android.embracesdk.internal.worker.Worker
+import java.io.File
 
 /**
  * Provides references to essential functionality that can be used when registering instrumentation via SPI.
@@ -102,4 +103,9 @@ interface InstrumentationArgs {
      * Retrieves a snapshot of the current session properties
      */
     fun sessionProperties(): Map<String, String>
+
+    /**
+     * Retrieves the crash marker file.
+     */
+    val crashMarkerFile: File
 }

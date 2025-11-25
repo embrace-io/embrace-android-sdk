@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.internal.store.OrdinalStore
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.internal.worker.PriorityWorker
 import io.embrace.android.embracesdk.internal.worker.Worker
+import java.io.File
 
 class FakeInstrumentationArgs(
     override val application: Application,
@@ -22,6 +23,7 @@ class FakeInstrumentationArgs(
     override val ordinalStore: OrdinalStore = FakeOrdinalStore(),
     override val cpuAbi: CpuAbi = CpuAbi.ARM64_V8A,
     override val processIdentifier: String = "fake-process-id",
+
     val backgroundWorkerSupplier: (worker: Worker.Background) -> BackgroundWorker = { fakeBackgroundWorker() },
     val priorityWorkerSupplier: (worker: Worker.Priority) -> PriorityWorker<*> = { fakePriorityWorker<Any>() },
     val sessionIdSupplier: () -> String? = { null },
@@ -41,4 +43,6 @@ class FakeInstrumentationArgs(
     override fun sessionId(): String? = sessionIdSupplier()
 
     override fun sessionProperties(): Map<String, String> = emptyMap()
+
+    override val crashMarkerFile: File by lazy { File.createTempFile("crash_marker", "") }
 }

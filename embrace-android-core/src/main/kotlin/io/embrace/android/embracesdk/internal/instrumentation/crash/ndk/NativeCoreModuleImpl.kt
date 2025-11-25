@@ -5,7 +5,6 @@ import io.embrace.android.embracesdk.internal.delivery.storage.StorageLocation
 import io.embrace.android.embracesdk.internal.delivery.storage.asFile
 import io.embrace.android.embracesdk.internal.handler.AndroidMainThreadHandler
 import io.embrace.android.embracesdk.internal.injection.EssentialServiceModule
-import io.embrace.android.embracesdk.internal.injection.StorageModule
 import io.embrace.android.embracesdk.internal.injection.singleton
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.jni.JniDelegate
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.jni.JniDelegateImpl
@@ -15,7 +14,6 @@ import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.worker.Worker
 
 class NativeCoreModuleImpl(
-    storageModule: StorageModule,
     essentialServiceModule: EssentialServiceModule,
     args: InstrumentationArgs,
     delegateProvider: Provider<JniDelegate?>,
@@ -56,8 +54,6 @@ class NativeCoreModuleImpl(
 
     override val nativeCrashHandlerInstaller: NativeCrashHandlerInstaller? by singleton {
         if (args.configService.autoDataCaptureBehavior.isNativeCrashCaptureEnabled()) {
-            val markerFilePath =
-                storageModule.storageService.getFileForWrite("embrace_crash_marker").absolutePath
             NativeCrashHandlerInstallerImpl(
                 args,
                 sharedObjectLoader = sharedObjectLoader,
@@ -66,7 +62,7 @@ class NativeCoreModuleImpl(
                 sessionIdTracker = essentialServiceModule.sessionIdTracker,
                 processIdentifier = args.processIdentifier,
                 outputDir = nativeOutputDir,
-                markerFilePath = markerFilePath,
+                markerFilePath = args.crashMarkerFile.absolutePath,
             )
         } else {
             null

@@ -5,7 +5,6 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.fakes.FakeNativeCrashProcessor
 import io.embrace.android.embracesdk.fakes.FakeOrdinalStore
-import io.embrace.android.embracesdk.fixtures.testNativeCrashData
 import io.embrace.android.embracesdk.internal.arch.attrs.embCrashNumber
 import io.embrace.android.embracesdk.internal.arch.attrs.embState
 import io.embrace.android.embracesdk.internal.arch.attrs.toEmbraceAttributeName
@@ -126,4 +125,12 @@ internal class NativeCrashDataSourceImplTest {
             assertNull(attributes[embNativeCrashSymbols.name])
         }
     }
+
+    private val testNativeCrashData: NativeCrashData = NativeCrashData(
+        nativeCrashId = "nativeCrashId",
+        sessionId = "sessionId",
+        timestamp = 1700000000000,
+        crash = "base64binarystring",
+        symbols = mapOf("key" to "value"),
+    )
 }

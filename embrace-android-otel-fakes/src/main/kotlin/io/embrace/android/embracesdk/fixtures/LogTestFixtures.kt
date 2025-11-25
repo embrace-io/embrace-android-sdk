@@ -41,14 +41,6 @@ val deferredLog: Log = Log(
     attributes = listOf(Attribute(embSendMode.name, SendMode.DEFER.name))
 )
 
-val testNativeCrashData: NativeCrashData = NativeCrashData(
-    nativeCrashId = "nativeCrashId",
-    sessionId = "sessionId",
-    timestamp = 1700000000000,
-    crash = "base64binarystring",
-    symbols = mapOf("key" to "value"),
-)
-
 @OptIn(IncubatingApi::class)
 val nativeCrashLog = Log(
     timeUnixNano = 1681972471806000000L,

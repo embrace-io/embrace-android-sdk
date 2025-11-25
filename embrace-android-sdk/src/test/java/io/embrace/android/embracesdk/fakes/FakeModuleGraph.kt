@@ -41,7 +41,7 @@ internal fun fakeModuleInitBootstrapper(
             fakeCoreModule.application
         )
     },
-    dataCaptureServiceModuleSupplier: DataCaptureServiceModuleSupplier = { _, _, _, _ -> FakeDataCaptureServiceModule() },
+    dataCaptureServiceModuleSupplier: DataCaptureServiceModuleSupplier = { _, _, _, _, _ -> FakeDataCaptureServiceModule() },
     deliveryModuleSupplier: DeliveryModuleSupplier = { _, _, _, _, _, _, _, _, _, _ -> FakeDeliveryModule() },
     anrModuleSupplier: AnrModuleSupplier = { _, _ -> FakeAnrModule() },
     logModuleSupplier: LogModuleSupplier = { _, _, _, _, _, _, _ -> FakeLogModule() },

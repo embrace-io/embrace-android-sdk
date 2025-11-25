@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.instrumentation.startup
 
+import android.app.Application
 import android.os.SystemClock
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.clock.Clock
@@ -10,7 +11,6 @@ import io.embrace.android.embracesdk.internal.instrumentation.startup.activity.U
 import io.embrace.android.embracesdk.internal.instrumentation.startup.activity.createActivityLoadEventEmitter
 import io.embrace.android.embracesdk.internal.instrumentation.startup.ui.createDrawEventEmitter
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
-import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityLifecycleListener
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
 
@@ -62,7 +62,7 @@ class DataCaptureServiceModuleImpl(
         }
     }
 
-    override val activityLoadEventEmitter: ActivityLifecycleListener? by lazy {
+    override val activityLoadEventEmitter: Application.ActivityLifecycleCallbacks? by lazy {
         val uiLoadEventListener = uiLoadDataListener
         if (uiLoadEventListener != null) {
             createActivityLoadEventEmitter(

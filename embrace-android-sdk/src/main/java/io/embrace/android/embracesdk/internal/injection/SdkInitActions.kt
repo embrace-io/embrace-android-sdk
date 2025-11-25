@@ -44,30 +44,21 @@ internal fun ModuleGraph.postInit() {
  */
 internal fun ModuleGraph.registerListeners() {
     EmbTrace.trace("service-registration") {
-        EmbTrace.trace("startup-tracker") {
-            coreModule.application.registerActivityLifecycleCallbacks(
-                dataCaptureServiceModule.startupTracker
-            )
-        }
+        val ctx = coreModule.application
+        ctx.registerActivityLifecycleCallbacks(dataCaptureServiceModule.startupTracker)
+        ctx.registerActivityLifecycleCallbacks(essentialServiceModule.activityLifecycleTracker)
 
         workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker).submit {
-            EmbTrace.trace("network-connectivity-registration") {
-                essentialServiceModule.networkConnectivityService.register()
-            }
+            essentialServiceModule.networkConnectivityService.register()
         }
         with(coreModule.serviceRegistry) {
-            registerService(lazy { configModule.configService })
-            registerService(lazy { configModule.remoteConfigSource })
             registerService(lazy { configModule.configService.networkBehavior.domainCountLimiter })
 
             registerServices(
-                lazy { essentialServiceModule.appStateTracker },
-                lazy { essentialServiceModule.activityLifecycleTracker },
                 lazy { essentialServiceModule.networkConnectivityService }
             )
             registerServices(
                 lazy { dataCaptureServiceModule.appStartupDataCollector },
-                lazy { dataCaptureServiceModule.uiLoadDataListener },
             )
             registerServices(
                 lazy { anrModule.anrService }
@@ -78,7 +69,6 @@ internal fun ModuleGraph.registerListeners() {
             // registration ignored after this point
             registerAppStateListeners(essentialServiceModule.appStateTracker)
             registerMemoryCleanerListeners(sessionOrchestrationModule.memoryCleanerService)
-            registerActivityLifecycleListeners(essentialServiceModule.activityLifecycleTracker)
         }
     }
 }

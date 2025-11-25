@@ -15,6 +15,4 @@ interface ActivityTracker : Application.ActivityLifecycleCallbacks, Closeable {
      * @return an optional of the activity currently in the foreground
      */
     val foregroundActivity: Activity?
-
-    fun addListener(listener: ActivityLifecycleListener)
 }

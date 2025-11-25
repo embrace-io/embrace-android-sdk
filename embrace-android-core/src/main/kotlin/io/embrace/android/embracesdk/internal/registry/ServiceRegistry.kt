@@ -4,8 +4,6 @@ import io.embrace.android.embracesdk.internal.arch.state.AppStateListener
 import io.embrace.android.embracesdk.internal.arch.state.AppStateTracker
 import io.embrace.android.embracesdk.internal.session.MemoryCleanerListener
 import io.embrace.android.embracesdk.internal.session.MemoryCleanerService
-import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityLifecycleListener
-import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityTracker
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import java.io.Closeable
 
@@ -27,9 +25,6 @@ class ServiceRegistry : Closeable {
     val appStateListeners: List<AppStateListener> by lazy {
         finalRegistry.filterIsInstance<AppStateListener>()
     }
-    val activityLifecycleListeners: List<ActivityLifecycleListener> by lazy {
-        finalRegistry.filterIsInstance<ActivityLifecycleListener>()
-    }
 
     fun registerServices(vararg services: Lazy<Any?>) {
         EmbTrace.traceAsync("register-services") {
@@ -44,11 +39,6 @@ class ServiceRegistry : Closeable {
     fun registerAppStateListeners(appStateTracker: AppStateTracker): Unit =
         appStateListeners.forEachSafe(
             appStateTracker::addListener
-        )
-
-    fun registerActivityLifecycleListeners(activityLifecycleTracker: ActivityTracker): Unit =
-        activityLifecycleListeners.forEachSafe(
-            activityLifecycleTracker::addListener
         )
 
     fun registerMemoryCleanerListeners(memoryCleanerService: MemoryCleanerService): Unit =

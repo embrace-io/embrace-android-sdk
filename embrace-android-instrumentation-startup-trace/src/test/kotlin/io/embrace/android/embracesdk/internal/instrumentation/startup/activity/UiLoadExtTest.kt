@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.instrumentation.startup.activity
 
 import android.app.Activity
+import android.app.Application
 import android.os.Build
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeClock
@@ -16,7 +17,6 @@ import io.embrace.android.embracesdk.internal.instrumentation.startup.ClockTicki
 import io.embrace.android.embracesdk.internal.instrumentation.startup.ClockTickingActivityLifecycleCallbacks.Companion.PRE_DURATION
 import io.embrace.android.embracesdk.internal.instrumentation.startup.ClockTickingActivityLifecycleCallbacks.Companion.STATE_DURATION
 import io.embrace.android.embracesdk.internal.instrumentation.startup.ui.hasRenderEvent
-import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityLifecycleListener
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -35,7 +35,7 @@ internal class UiLoadExtTest {
 
     private lateinit var clock: FakeClock
     private lateinit var uiLoadEventListener: FakeUiLoadEventListener
-    private lateinit var eventEmitter: ActivityLifecycleListener
+    private lateinit var eventEmitter: Application.ActivityLifecycleCallbacks
     private lateinit var drawEventEmitter: FakeDrawEventEmitter
     private lateinit var activityController: ActivityController<*>
 

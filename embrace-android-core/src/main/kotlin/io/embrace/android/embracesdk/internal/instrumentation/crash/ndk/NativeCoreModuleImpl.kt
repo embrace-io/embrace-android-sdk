@@ -4,7 +4,6 @@ import android.os.Build
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.delivery.storage.StorageLocation
 import io.embrace.android.embracesdk.internal.handler.AndroidMainThreadHandler
-import io.embrace.android.embracesdk.internal.injection.ConfigModule
 import io.embrace.android.embracesdk.internal.injection.EssentialServiceModule
 import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModule
 import io.embrace.android.embracesdk.internal.injection.StorageModule
@@ -20,7 +19,6 @@ import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.internal.worker.Worker
 
 class NativeCoreModuleImpl(
-    configModule: ConfigModule,
     workerThreadModule: WorkerThreadModule,
     storageModule: StorageModule,
     essentialServiceModule: EssentialServiceModule,
@@ -37,7 +35,7 @@ class NativeCoreModuleImpl(
 
     override val symbolService: SymbolService by singleton {
         symbolServiceProvider() ?: SymbolServiceImpl(
-            configModule.cpuAbi,
+            args.cpuAbi,
             args.serializer,
             args.logger
         )
@@ -83,7 +81,7 @@ class NativeCoreModuleImpl(
             appState = essentialServiceModule.appStateTracker.getAppState(),
             reportId = Uuid.getEmbUuid(),
             apiLevel = Build.VERSION.SDK_INT,
-            is32bit = configModule.cpuAbi.is32BitDevice,
+            is32bit = args.cpuAbi.is32BitDevice,
             devLogging = false,
         )
     }

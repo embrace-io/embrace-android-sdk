@@ -33,6 +33,7 @@ class InstrumentationModuleImpl(
             sessionIdTracker = essentialServiceModule.sessionIdTracker,
             ordinalStore = coreModule.ordinalStore,
             sessionPropertiesService = essentialServiceModule.sessionPropertiesService,
+            cpuAbi = configModule.cpuAbi,
         )
     }
 }

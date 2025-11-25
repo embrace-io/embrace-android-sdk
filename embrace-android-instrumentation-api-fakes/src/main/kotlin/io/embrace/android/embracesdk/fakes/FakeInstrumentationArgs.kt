@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.fakes
 import android.app.Application
 import android.content.Context
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
+import io.embrace.android.embracesdk.internal.envelope.CpuAbi
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.store.OrdinalStore
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
@@ -18,6 +19,7 @@ class FakeInstrumentationArgs(
     override val store: FakeKeyValueStore = FakeKeyValueStore(),
     override val serializer: PlatformSerializer = TestPlatformSerializer(),
     override val ordinalStore: OrdinalStore = FakeOrdinalStore(),
+    override val cpuAbi: CpuAbi = CpuAbi.ARM64_V8A,
     val workerSupplier: (worker: Worker.Background) -> BackgroundWorker = { fakeBackgroundWorker() },
     val sessionIdSupplier: () -> String? = { null },
 ) : InstrumentationArgs {

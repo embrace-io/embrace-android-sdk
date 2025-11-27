@@ -6,10 +6,11 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.EmbraceImpl
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeEmbraceInternalInterface
+import io.embrace.android.embracesdk.fakes.FakeInstrumentationModule
 import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.fakes.FakeRnBundleIdTracker
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
-import io.embrace.android.embracesdk.fakes.fakeModuleInitBootstrapper
+import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.api.delegate.ReactNativeInternalInterfaceImpl
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
@@ -44,7 +45,12 @@ internal class ReactNativeInternalInterfaceImplTest {
         hostedSdkVersionInfo = ReactNativeSdkVersionInfo(store)
         logger = FakeEmbLogger(false)
         context = ApplicationProvider.getApplicationContext()
-        bootstrapper = fakeModuleInitBootstrapper()
+        bootstrapper = ModuleInitBootstrapper(
+            FakeInitModule(),
+            instrumentationModuleSupplier = { _, _, _, _, _, _, _ ->
+                FakeInstrumentationModule(ApplicationProvider.getApplicationContext())
+            }
+        )
         impl = ReactNativeInternalInterfaceImpl(
             embrace,
             FakeEmbraceInternalInterface(),

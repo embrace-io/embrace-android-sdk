@@ -1,11 +1,5 @@
-package io.embrace.android.embracesdk.fakes.injection
+package io.embrace.android.embracesdk.fakes
 
-import io.embrace.android.embracesdk.fakes.FakeCachedLogEnvelopeStore
-import io.embrace.android.embracesdk.fakes.FakeIntakeService
-import io.embrace.android.embracesdk.fakes.FakePayloadCachingService
-import io.embrace.android.embracesdk.fakes.FakePayloadStorageService
-import io.embrace.android.embracesdk.fakes.FakePayloadStore
-import io.embrace.android.embracesdk.fakes.FakeSchedulingService
 import io.embrace.android.embracesdk.internal.delivery.caching.PayloadCachingService
 import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
 import io.embrace.android.embracesdk.internal.delivery.intake.IntakeService

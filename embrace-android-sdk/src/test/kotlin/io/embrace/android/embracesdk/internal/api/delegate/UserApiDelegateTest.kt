@@ -5,8 +5,9 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.FakeUserService
-import io.embrace.android.embracesdk.fakes.fakeModuleInitBootstrapper
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
+import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
+import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -24,7 +25,8 @@ internal class UserApiDelegateTest {
 
     @Before
     fun setUp() {
-        val moduleInitBootstrapper = fakeModuleInitBootstrapper(
+        val moduleInitBootstrapper = ModuleInitBootstrapper(
+            FakeInitModule(),
             essentialServiceModuleSupplier = { _, _, _, _, _, _, _ ->
                 FakeEssentialServiceModule().apply {
                     fakeUserService = userService as FakeUserService

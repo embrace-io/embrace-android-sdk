@@ -22,9 +22,6 @@ internal class LogsApiDelegate(
 ) : LogsApi {
 
     private val logService by embraceImplInject(sdkCallChecker) { bootstrapper.logModule.logService }
-    private val sessionOrchestrator by embraceImplInject(sdkCallChecker) {
-        bootstrapper.sessionOrchestrationModule.sessionOrchestrator
-    }
     private val serializer by embraceImplInject(sdkCallChecker) {
         bootstrapper.initModule.jsonSerializer
     }

@@ -5,11 +5,11 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.EmbraceImpl
 import io.embrace.android.embracesdk.fakes.FakeConfigModule
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationModule
-import io.embrace.android.embracesdk.fakes.fakeModuleInitBootstrapper
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakePayloadSourceModule
 import io.embrace.android.embracesdk.internal.injection.InternalInterfaceModule
 import io.embrace.android.embracesdk.internal.injection.InternalInterfaceModuleImpl
+import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import org.junit.Assert.assertNotNull
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -27,7 +27,7 @@ internal class InternalInterfaceModuleImplTest {
             FakePayloadSourceModule(),
             FakeInstrumentationModule(ApplicationProvider.getApplicationContext()),
             EmbraceImpl(),
-            fakeModuleInitBootstrapper()
+            ModuleInitBootstrapper(FakeInitModule())
         )
 
         assertNotNull(module.flutterInternalInterface)

@@ -7,12 +7,15 @@ import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeLogService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
-import io.embrace.android.embracesdk.fakes.FakeSessionOrchestrator
 import io.embrace.android.embracesdk.fakes.FakeTelemetryService
-import io.embrace.android.embracesdk.fakes.fakeModuleInitBootstrapper
+import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
+import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
+import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeLogModule
 import io.embrace.android.embracesdk.internal.arch.state.AppState
+import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.session.id.SessionData
+import io.embrace.android.embracesdk.internal.utils.Uuid
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -24,7 +27,6 @@ internal class SdkStateApiDelegateTest {
 
     private lateinit var delegate: SdkStateApiDelegate
     private lateinit var logService: FakeLogService
-    private lateinit var orchestrator: FakeSessionOrchestrator
     private lateinit var preferencesService: FakePreferenceService
     private lateinit var sessionIdTracker: FakeSessionIdTracker
     private lateinit var sdkCallChecker: SdkCallChecker
@@ -33,11 +35,21 @@ internal class SdkStateApiDelegateTest {
     @Before
     fun setUp() {
         logService = FakeLogService()
-        val moduleInitBootstrapper = fakeModuleInitBootstrapper(
-            logModuleSupplier = { _, _, _, _, _, _, _ -> FakeLogModule(logService = logService) }
+        val moduleInitBootstrapper = ModuleInitBootstrapper(
+            FakeInitModule(),
+            coreModuleSupplier = { _, _ ->
+                FakeCoreModule().apply {
+                    preferencesService.deviceIdentifier = Uuid.getEmbUuid()
+                }
+            },
+            essentialServiceModuleSupplier = { _, _, _, _, _, _, _ ->
+                FakeEssentialServiceModule()
+            },
+            logModuleSupplier = { _, _, _, _, _, _, _ ->
+                FakeLogModule(logService = logService)
+            },
         )
         moduleInitBootstrapper.init(ApplicationProvider.getApplicationContext())
-        orchestrator = moduleInitBootstrapper.sessionOrchestrationModule.sessionOrchestrator as FakeSessionOrchestrator
         preferencesService = moduleInitBootstrapper.coreModule.preferencesService as FakePreferenceService
         sessionIdTracker = moduleInitBootstrapper.essentialServiceModule.sessionIdTracker as FakeSessionIdTracker
         logger = FakeEmbLogger()

@@ -6,10 +6,10 @@ import io.embrace.android.embracesdk.LogExceptionType
 import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeLogService
-import io.embrace.android.embracesdk.fakes.FakeSessionOrchestrator
 import io.embrace.android.embracesdk.fakes.FakeTelemetryService
-import io.embrace.android.embracesdk.fakes.fakeModuleInitBootstrapper
+import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeLogModule
+import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
@@ -20,16 +20,17 @@ internal class LogsApiDelegateTest {
 
     private lateinit var delegate: LogsApiDelegate
     private lateinit var logService: FakeLogService
-    private lateinit var orchestrator: FakeSessionOrchestrator
 
     @Before
     fun setUp() {
         logService = FakeLogService()
-        val moduleInitBootstrapper = fakeModuleInitBootstrapper(
-            logModuleSupplier = { _, _, _, _, _, _, _ -> FakeLogModule(logService = logService) }
+        val moduleInitBootstrapper = ModuleInitBootstrapper(
+            FakeInitModule(),
+            logModuleSupplier = { _, _, _, _, _, _, _ ->
+                FakeLogModule(logService = logService)
+            },
         )
         moduleInitBootstrapper.init(ApplicationProvider.getApplicationContext())
-        orchestrator = moduleInitBootstrapper.sessionOrchestrationModule.sessionOrchestrator as FakeSessionOrchestrator
 
         val sdkCallChecker = SdkCallChecker(FakeEmbLogger(), FakeTelemetryService())
         sdkCallChecker.started.set(true)

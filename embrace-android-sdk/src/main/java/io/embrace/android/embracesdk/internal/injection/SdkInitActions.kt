@@ -2,9 +2,9 @@ package io.embrace.android.embracesdk.internal.injection
 
 import io.embrace.android.embracesdk.core.BuildConfig
 import io.embrace.android.embracesdk.internal.arch.InstrumentationProvider
-import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkStatusDataSource
 import io.embrace.android.embracesdk.internal.instrumentation.crash.jvm.JvmCrashDataSource
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeCrashDataSource
+import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkStatusDataSource
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.EmbTrace.end
 import io.embrace.android.embracesdk.internal.utils.EmbTrace.start

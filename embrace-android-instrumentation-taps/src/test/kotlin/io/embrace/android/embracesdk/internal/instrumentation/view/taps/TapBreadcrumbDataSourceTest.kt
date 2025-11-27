@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.internal.instrumentation
+package io.embrace.android.embracesdk.internal.instrumentation.view.taps
 
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4

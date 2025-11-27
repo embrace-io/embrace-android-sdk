@@ -1,10 +1,11 @@
-package io.embrace.android.embracesdk.internal.capture.connectivity
+package io.embrace.android.embracesdk.internal.instrumentation.network
 
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceImpl
 import io.embrace.android.embracesdk.internal.arch.datasource.SpanToken
 import io.embrace.android.embracesdk.internal.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
+import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkConnectivityListener
 import io.embrace.android.embracesdk.internal.comms.delivery.NetworkStatus
 
 class NetworkStatusDataSource(

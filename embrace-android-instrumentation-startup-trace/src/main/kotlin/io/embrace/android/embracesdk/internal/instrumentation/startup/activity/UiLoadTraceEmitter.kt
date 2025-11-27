@@ -44,7 +44,7 @@ import java.util.concurrent.atomic.AtomicReference
  *
  * - Android 5, when [ActivityLifecycleCallbacks.onActivityResumed] is fired.
  */
-class UiLoadTraceEmitter(
+internal class UiLoadTraceEmitter(
     private val destination: TelemetryDestination,
     versionChecker: VersionChecker,
 ) : UiLoadDataListener {

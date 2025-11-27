@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.instrumentation.startup
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.arch.state.AppState
 
-class StartupServiceImpl(
+internal class StartupServiceImpl(
     private val destination: TelemetryDestination,
 ) : StartupService {
 

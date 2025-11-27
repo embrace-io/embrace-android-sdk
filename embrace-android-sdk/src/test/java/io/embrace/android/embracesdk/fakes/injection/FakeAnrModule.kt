@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.fakes.injection
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
+import io.embrace.android.embracesdk.internal.envelope.session.OtelPayloadMapper
 import io.embrace.android.embracesdk.internal.instrumentation.anr.AnrModule
 import io.embrace.android.embracesdk.internal.instrumentation.anr.AnrOtelMapper
 import io.embrace.android.embracesdk.internal.instrumentation.anr.AnrService
@@ -12,7 +13,7 @@ import io.embrace.android.embracesdk.testframework.NoopAnrService
 
 class FakeAnrModule(
     override val anrService: AnrService = NoopAnrService,
-    override val anrOtelMapper: AnrOtelMapper = AnrOtelMapper(anrService, FakeClock(), FakeTelemetryDestination()),
+    override val anrOtelMapper: OtelPayloadMapper = AnrOtelMapper(anrService, FakeClock(), FakeTelemetryDestination()),
     override val blockedThreadDetector: BlockedThreadDetector = BlockedThreadDetector(
         FakeConfigService(),
         FakeClock(),

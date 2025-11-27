@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.instrumentation.anr
 import android.os.Looper
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.state.AppStateTracker
+import io.embrace.android.embracesdk.internal.envelope.session.OtelPayloadMapper
 import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.BlockedThreadDetector
 import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.LivenessCheckScheduler
 import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.TargetThreadHandler
@@ -34,7 +35,7 @@ class AnrModuleImpl(
         }
     }
 
-    override val anrOtelMapper: AnrOtelMapper? by lazy {
+    override val anrOtelMapper: OtelPayloadMapper? by lazy {
         if (args.configService.autoDataCaptureBehavior.isAnrCaptureEnabled()) {
             AnrOtelMapper(
                 checkNotNull(anrService),

@@ -1,1 +1,1 @@
-io.embrace.android.embracesdk.compose.internal.instrumentation.ComposeTapInstrumentationProvider
+io.embrace.android.embracesdk.internal.instrumentation.compose.tap.ComposeTapInstrumentationProvider

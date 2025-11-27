@@ -4,7 +4,7 @@ import android.os.Build.VERSION_CODES
 import android.os.Process
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
 
-class ProcessInfoImpl(
+internal class ProcessInfoImpl(
     private val deviceStartTimeMs: Long,
     private val versionChecker: VersionChecker,
 ) : ProcessInfo {

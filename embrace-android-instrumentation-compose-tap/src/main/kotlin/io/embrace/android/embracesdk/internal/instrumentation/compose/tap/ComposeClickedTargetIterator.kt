@@ -1,9 +1,8 @@
-package io.embrace.android.embracesdk.compose.internal
+package io.embrace.android.embracesdk.internal.instrumentation.compose.tap
 
 import android.view.View
 import android.view.ViewGroup
 import androidx.compose.ui.platform.ComposeView
-import io.embrace.android.embracesdk.compose.internal.instrumentation.ComposeTapDataSource
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import java.util.LinkedList
 import java.util.Queue

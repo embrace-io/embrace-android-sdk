@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.internal.instrumentation.thermalstate
 
 import android.os.PowerManager
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
-import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.mockk.mockk
 import io.mockk.verify
@@ -18,11 +17,8 @@ internal class ThermalStateDataSourceTest {
 
     @Before
     fun setUp() {
-        args = FakeInstrumentationArgs(mockk())
-        dataSource = ThermalStateDataSource(
-            args,
-            fakeBackgroundWorker(),
-        ) { mockPowerManager }
+        args = FakeInstrumentationArgs(mockk(), systemServiceSupplier = { mockPowerManager })
+        dataSource = ThermalStateDataSource(args)
     }
 
     @Test

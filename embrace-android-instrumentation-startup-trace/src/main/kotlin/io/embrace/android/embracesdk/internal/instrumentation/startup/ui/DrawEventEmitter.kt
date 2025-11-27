@@ -27,7 +27,7 @@ interface DrawEventEmitter {
     fun unregisterFirstDrawCallback(activity: Activity)
 }
 
-fun createDrawEventEmitter(
+internal fun createDrawEventEmitter(
     versionChecker: VersionChecker,
     logger: EmbLogger,
 ): DrawEventEmitter? = if (supportFrameCommitCallback(versionChecker)) {
@@ -38,7 +38,7 @@ fun createDrawEventEmitter(
     null
 }
 
-fun hasRenderEvent(versionChecker: VersionChecker) = versionChecker.isAtLeast(VERSION_CODES.M)
+internal fun hasRenderEvent(versionChecker: VersionChecker) = versionChecker.isAtLeast(VERSION_CODES.M)
 
-fun supportFrameCommitCallback(versionChecker: VersionChecker) = versionChecker.isAtLeast(VERSION_CODES.Q) &&
+internal fun supportFrameCommitCallback(versionChecker: VersionChecker) = versionChecker.isAtLeast(VERSION_CODES.Q) &&
     (Build.VERSION.SDK_INT != VERSION_CODES.S && Build.VERSION.SDK_INT != VERSION_CODES.S_V2)

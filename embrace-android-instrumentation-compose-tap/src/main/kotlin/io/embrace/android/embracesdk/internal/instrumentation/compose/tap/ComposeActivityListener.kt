@@ -1,16 +1,13 @@
-package io.embrace.android.embracesdk.compose
+package io.embrace.android.embracesdk.internal.instrumentation.compose.tap
 
 import android.app.Activity
 import android.app.Application.ActivityLifecycleCallbacks
 import android.os.Bundle
 import android.view.GestureDetector
 import android.view.Window
-import io.embrace.android.embracesdk.compose.internal.EmbraceGestureListener
-import io.embrace.android.embracesdk.compose.internal.EmbraceWindowCallback
-import io.embrace.android.embracesdk.compose.internal.instrumentation.ComposeTapDataSource
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 
-class ComposeActivityListener(
+internal class ComposeActivityListener(
     private val logger: EmbLogger,
     private val dataSource: ComposeTapDataSource,
 ) : ActivityLifecycleCallbacks {

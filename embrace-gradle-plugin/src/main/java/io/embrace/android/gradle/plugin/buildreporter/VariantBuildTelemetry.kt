@@ -5,10 +5,10 @@ import com.squareup.moshi.JsonClass
 import java.io.Serializable
 
 @JsonClass(generateAdapter = true)
-data class BuildTelemetryVariant(
-    @Json(name = "vn") val variantName: String? = null,
-    @Json(name = "aid") val appId: String? = null,
-    @Json(name = "bid") val buildId: String? = null,
+data class VariantBuildTelemetry(
+    @Json(name = "variant_name") val variantName: String? = null,
+    @Json(name = "app_id") val appId: String? = null,
+    @Json(name = "build_id") val buildId: String? = null,
 ) : Serializable {
 
     private companion object {

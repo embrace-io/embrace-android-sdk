@@ -6,8 +6,6 @@ import io.embrace.android.embracesdk.internal.delivery.storage.asFile
 import io.embrace.android.embracesdk.internal.handler.AndroidMainThreadHandler
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.jni.JniDelegate
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.jni.JniDelegateImpl
-import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.symbols.SymbolService
-import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.symbols.SymbolServiceImpl
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.worker.Worker
 
@@ -15,19 +13,10 @@ class NativeCoreModuleImpl(
     args: InstrumentationArgs,
     delegateProvider: Provider<JniDelegate?>,
     sharedObjectLoaderProvider: Provider<SharedObjectLoader?>,
-    symbolServiceProvider: Provider<SymbolService?>,
 ) : NativeCoreModule {
 
     override val delegate by lazy {
         delegateProvider() ?: JniDelegateImpl()
-    }
-
-    override val symbolService: SymbolService by lazy {
-        symbolServiceProvider() ?: SymbolServiceImpl(
-            args.cpuAbi,
-            args.serializer,
-            args.logger
-        )
     }
 
     override val sharedObjectLoader: SharedObjectLoader by lazy {
@@ -44,7 +33,7 @@ class NativeCoreModuleImpl(
         args,
         sharedObjectLoader,
         delegate,
-        symbolService,
+        args.symbols,
         nativeOutputDir,
         args.priorityWorker(Worker.Priority.DataPersistenceWorker)
     )

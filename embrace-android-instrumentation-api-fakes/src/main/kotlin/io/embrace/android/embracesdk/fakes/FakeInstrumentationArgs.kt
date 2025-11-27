@@ -23,12 +23,13 @@ class FakeInstrumentationArgs(
     override val ordinalStore: OrdinalStore = FakeOrdinalStore(),
     override val cpuAbi: CpuAbi = CpuAbi.ARM64_V8A,
     override val processIdentifier: String = "fake-process-id",
-
+    override val symbols: Map<String, String>? = emptyMap(),
     val backgroundWorkerSupplier: (worker: Worker.Background) -> BackgroundWorker = { fakeBackgroundWorker() },
     val priorityWorkerSupplier: (worker: Worker.Priority) -> PriorityWorker<*> = { fakePriorityWorker<Any>() },
     val sessionIdSupplier: () -> String? = { null },
     val sessionChangeListeners: MutableList<() -> Unit> = mutableListOf(),
-) : InstrumentationArgs {
+
+    ) : InstrumentationArgs {
 
     override fun backgroundWorker(worker: Worker.Background): BackgroundWorker = backgroundWorkerSupplier(worker)
 

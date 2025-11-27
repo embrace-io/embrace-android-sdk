@@ -32,7 +32,6 @@ class PayloadSourceModuleImpl(
     workerThreadModule: WorkerThreadModule,
     essentialServiceModule: EssentialServiceModule,
     configModule: ConfigModule,
-    nativeSymbolsProvider: Provider<Map<String, String>?>,
     otelModule: OpenTelemetryModule,
     otelPayloadMapperProvider: Provider<OtelPayloadMapper?>,
     deliveryModule: DeliveryModule,
@@ -51,7 +50,7 @@ class PayloadSourceModuleImpl(
     private val sessionPayloadSource by singleton {
         EmbTrace.trace("session-payload-source") {
             SessionPayloadSourceImpl(
-                nativeSymbolsProvider,
+                configModule.nativeSymbolMap,
                 otelModule.spanSink,
                 otelModule.currentSessionSpan,
                 otelModule.spanRepository,

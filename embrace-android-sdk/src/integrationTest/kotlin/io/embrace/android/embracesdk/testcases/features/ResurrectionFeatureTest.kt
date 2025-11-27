@@ -34,6 +34,7 @@ internal class ResurrectionFeatureTest {
 
     private val serializer = TestPlatformSerializer()
     private val fakeSymbols = mapOf("libfoo.so" to "symbol_content")
+    private val symbols = createNativeSymbolsForCurrentArch(fakeSymbols)
     private lateinit var cacheStorageService: FakePayloadStorageService
 
     @Rule
@@ -43,7 +44,6 @@ internal class ResurrectionFeatureTest {
             fakeStorageLayer = true,
         ).apply {
             getEmbLogger().throwOnInternalError = false
-            fakeSymbolService.symbolsForCurrentArch.putAll(fakeSymbols)
         }.also {
             cacheStorageService = checkNotNull(it.fakeCacheStorageService)
         }
@@ -58,7 +58,10 @@ internal class ResurrectionFeatureTest {
             sessionMetadata = fakeCachedSessionStoredTelemetryMetadata,
         )
         testRule.runTest(
-            instrumentedConfig = FakeInstrumentedConfig(enabledFeatures = FakeEnabledFeatureConfig(nativeCrashCapture = true)),
+            instrumentedConfig = FakeInstrumentedConfig(
+                enabledFeatures = FakeEnabledFeatureConfig(nativeCrashCapture = true),
+                symbols = symbols
+            ),
             setupAction = {
                 setupCachedDataFromNativeCrash(crashData = crashData)
                 setupFakeNativeCrash(serializer, crashData)
@@ -88,7 +91,10 @@ internal class ResurrectionFeatureTest {
             crashMetadata = fakeNativeCrashStoredTelemetryMetadata,
         )
         testRule.runTest(
-            instrumentedConfig = FakeInstrumentedConfig(enabledFeatures = FakeEnabledFeatureConfig(nativeCrashCapture = true)),
+            instrumentedConfig = FakeInstrumentedConfig(
+                enabledFeatures = FakeEnabledFeatureConfig(nativeCrashCapture = true),
+                symbols = symbols
+            ),
             setupAction = {
                 setupCachedDataFromNativeCrash(crashData = crashData)
                 setupFakeNativeCrash(serializer, crashData)
@@ -122,7 +128,8 @@ internal class ResurrectionFeatureTest {
                 enabledFeatures = FakeEnabledFeatureConfig(
                     bgActivityCapture = false,
                     nativeCrashCapture = true
-                )
+                ),
+                symbols = symbols
             ),
             setupAction = {
                 setupCachedDataFromNativeCrash(crashData = crashData)
@@ -153,7 +160,10 @@ internal class ResurrectionFeatureTest {
             sessionMetadata = fakeCachedSessionStoredTelemetryMetadata,
         )
         testRule.runTest(
-            instrumentedConfig = FakeInstrumentedConfig(enabledFeatures = FakeEnabledFeatureConfig(nativeCrashCapture = true)),
+            instrumentedConfig = FakeInstrumentedConfig(
+                enabledFeatures = FakeEnabledFeatureConfig(nativeCrashCapture = true),
+                symbols = symbols
+            ),
             setupAction = {
                 setupCachedDataFromNativeCrash(crashData = crashData)
             },

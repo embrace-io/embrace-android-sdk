@@ -112,7 +112,7 @@ internal class PayloadFactoryBaTest {
         val logger = EmbLoggerImpl()
         val payloadSourceModule = FakePayloadSourceModule(
             sessionPayloadSource = SessionPayloadSourceImpl(
-                { null },
+                null,
                 spanSink,
                 currentSessionSpan,
                 spanRepository,

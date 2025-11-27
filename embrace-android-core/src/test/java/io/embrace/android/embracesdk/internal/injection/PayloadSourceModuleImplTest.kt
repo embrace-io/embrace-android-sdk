@@ -27,7 +27,6 @@ internal class PayloadSourceModuleImplTest {
             FakeWorkerThreadModule(),
             FakeEssentialServiceModule(),
             FakeConfigModule(),
-            ::HashMap,
             FakeOpenTelemetryModule(),
             ::FakeOtelPayloadMapper,
             FakeDeliveryModule(),

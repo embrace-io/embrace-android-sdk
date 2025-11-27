@@ -9,14 +9,14 @@ import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.payload.NativeSymbols
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 
-class SymbolServiceImpl(
+internal class SymbolServiceImpl(
     private val cpuAbi: CpuAbi,
     private val serializer: PlatformSerializer,
     private val logger: EmbLogger,
     private val instrumentedConfig: InstrumentedConfig = InstrumentedConfigImpl,
-) : SymbolService {
+) {
 
-    override val symbolsForCurrentArch: Map<String, String>? by lazy {
+    val symbolsForCurrentArch: Map<String, String>? by lazy {
         getNativeSymbols()?.let {
             val arch = cpuAbi.archName
 

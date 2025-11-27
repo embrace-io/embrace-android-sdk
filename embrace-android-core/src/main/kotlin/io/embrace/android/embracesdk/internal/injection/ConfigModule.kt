@@ -32,4 +32,9 @@ interface ConfigModule {
      * simpler data analysis)
      */
     val cpuAbi: CpuAbi
+
+    /**
+     * The current native symbols.
+     */
+    val nativeSymbolMap: Map<String, String>?
 }

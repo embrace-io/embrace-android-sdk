@@ -146,7 +146,6 @@ internal class InitializedModuleGraph(
             workerThreadModule,
             essentialServiceModule,
             configModule,
-            { nativeCoreModule.symbolService.symbolsForCurrentArch },
             openTelemetryModule,
             { anrModule.anrOtelMapper },
             deliveryModule
@@ -156,7 +155,6 @@ internal class InitializedModuleGraph(
     override val nativeCoreModule: NativeCoreModule = init {
         nativeCoreModuleSupplier(
             instrumentationModule.instrumentationArgs,
-            { null },
             { null },
             { null },
         )

@@ -6,6 +6,7 @@ description = "Embrace Android SDK: HttpUrlConnection instrumentation"
 
 android {
     namespace = "io.embrace.android.embracesdk.instrumentation.huc"
+    defaultConfig.consumerProguardFiles("embrace-proguard.cfg")
 }
 
 dependencies {

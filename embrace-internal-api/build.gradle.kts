@@ -6,6 +6,7 @@ description = "Embrace Android SDK: Internal API"
 
 android {
     namespace = "io.embrace.android.embracesdk.api.internal"
+    defaultConfig.consumerProguardFiles("embrace-proguard.cfg")
 }
 
 dependencies {

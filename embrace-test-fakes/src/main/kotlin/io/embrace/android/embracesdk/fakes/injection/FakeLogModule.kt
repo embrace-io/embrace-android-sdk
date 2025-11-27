@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.fakes.injection
 
 import io.embrace.android.embracesdk.fakes.FakeConfigService
-import io.embrace.android.embracesdk.fakes.FakeLogOrchestrator
 import io.embrace.android.embracesdk.fakes.FakePayloadStore
 import io.embrace.android.embracesdk.fakes.FakeSessionPropertiesService
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
@@ -24,4 +23,20 @@ class FakeLogModule(
         get() = FakeLogOrchestrator()
 
     override val attachmentService: AttachmentService = AttachmentService()
+}
+
+private class FakeLogOrchestrator : LogOrchestrator {
+
+    var flushCalled: Boolean = false
+
+    override fun flush(saveOnly: Boolean) {
+        flushCalled = true
+    }
+
+    override fun handleCrash(crashId: String) {
+        flush(true)
+    }
+
+    override fun onLogsAdded() {
+    }
 }

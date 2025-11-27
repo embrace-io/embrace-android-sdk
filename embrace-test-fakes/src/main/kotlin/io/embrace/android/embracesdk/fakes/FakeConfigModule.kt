@@ -4,6 +4,7 @@ import android.content.pm.PackageInfo
 import io.embrace.android.embracesdk.fakes.behavior.FakeNetworkBehavior
 import io.embrace.android.embracesdk.internal.capture.metadata.AppEnvironment
 import io.embrace.android.embracesdk.internal.comms.api.ApiUrlBuilder
+import io.embrace.android.embracesdk.internal.comms.api.Endpoint
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.config.source.CombinedRemoteConfigSource
 import io.embrace.android.embracesdk.internal.config.source.RemoteConfigSource
@@ -47,4 +48,12 @@ class FakeConfigModule(
 
         private val fakePackageVersionInfo = PackageVersionInfo(fakePackageInfo)
     }
+}
+
+private class FakeApiUrlBuilder(
+    override val appId: String = "",
+    override val deviceId: String = "",
+    override val baseDataUrl: String = "",
+) : ApiUrlBuilder {
+    override fun resolveUrl(endpoint: Endpoint): String = ""
 }

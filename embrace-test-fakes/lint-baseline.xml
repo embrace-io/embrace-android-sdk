@@ -7,8 +7,8 @@
         errorLine1="        TODO(&quot;Not yet implemented&quot;)"
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/kotlin/io/embrace/android/embracesdk/fakes/FakeActivityTracker.kt"
-            line="19"
+            file="src/main/kotlin/io/embrace/android/embracesdk/fakes/injection/FakeEssentialServiceModule.kt"
+            line="34"
             column="9"/>
     </issue>
 
@@ -18,8 +18,8 @@
         errorLine1="        TODO(&quot;Not yet implemented&quot;)"
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/kotlin/io/embrace/android/embracesdk/fakes/FakeActivityTracker.kt"
-            line="23"
+            file="src/main/kotlin/io/embrace/android/embracesdk/fakes/injection/FakeEssentialServiceModule.kt"
+            line="38"
             column="9"/>
     </issue>
 
@@ -29,8 +29,8 @@
         errorLine1="        TODO(&quot;Not yet implemented&quot;)"
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/kotlin/io/embrace/android/embracesdk/fakes/FakeActivityTracker.kt"
-            line="27"
+            file="src/main/kotlin/io/embrace/android/embracesdk/fakes/injection/FakeEssentialServiceModule.kt"
+            line="42"
             column="9"/>
     </issue>
 
@@ -40,8 +40,8 @@
         errorLine1="        TODO(&quot;Not yet implemented&quot;)"
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/kotlin/io/embrace/android/embracesdk/fakes/FakeActivityTracker.kt"
-            line="31"
+            file="src/main/kotlin/io/embrace/android/embracesdk/fakes/injection/FakeEssentialServiceModule.kt"
+            line="46"
             column="9"/>
     </issue>
 
@@ -51,8 +51,8 @@
         errorLine1="        TODO(&quot;Not yet implemented&quot;)"
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/kotlin/io/embrace/android/embracesdk/fakes/FakeActivityTracker.kt"
-            line="35"
+            file="src/main/kotlin/io/embrace/android/embracesdk/fakes/injection/FakeEssentialServiceModule.kt"
+            line="50"
             column="9"/>
     </issue>
 
@@ -62,8 +62,8 @@
         errorLine1="        TODO(&quot;Not yet implemented&quot;)"
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/kotlin/io/embrace/android/embracesdk/fakes/FakeActivityTracker.kt"
-            line="39"
+            file="src/main/kotlin/io/embrace/android/embracesdk/fakes/injection/FakeEssentialServiceModule.kt"
+            line="54"
             column="9"/>
     </issue>
 
@@ -73,8 +73,8 @@
         errorLine1="        TODO(&quot;Not yet implemented&quot;)"
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/kotlin/io/embrace/android/embracesdk/fakes/FakeActivityTracker.kt"
-            line="43"
+            file="src/main/kotlin/io/embrace/android/embracesdk/fakes/injection/FakeEssentialServiceModule.kt"
+            line="58"
             column="9"/>
     </issue>
 
@@ -84,8 +84,8 @@
         errorLine1="        TODO(&quot;Not yet implemented&quot;)"
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/kotlin/io/embrace/android/embracesdk/fakes/FakeActivityTracker.kt"
-            line="47"
+            file="src/main/kotlin/io/embrace/android/embracesdk/fakes/injection/FakeEssentialServiceModule.kt"
+            line="62"
             column="9"/>
     </issue>
 
@@ -109,28 +109,6 @@
             file="src/main/kotlin/io/embrace/android/embracesdk/fakes/FakeOpenTelemetryModule.kt"
             line="58"
             column="17"/>
-    </issue>
-
-    <issue
-        id="StopShip"
-        message="`TODO` call found; points to code which must be fixed prior to release"
-        errorLine1="        TODO(&quot;Not yet implemented&quot;)"
-        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/embrace/android/embracesdk/fakes/FakeStartupService.kt"
-            line="28"
-            column="9"/>
-    </issue>
-
-    <issue
-        id="StopShip"
-        message="`TODO` call found; points to code which must be fixed prior to release"
-        errorLine1="        TODO(&quot;Not yet implemented&quot;)"
-        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/embrace/android/embracesdk/fakes/FakeStartupService.kt"
-            line="32"
-            column="9"/>
     </issue>
 
     <issue
@@ -202,8 +180,8 @@
         errorLine1="        Files.createTempDirectory(&quot;cache_temp&quot;).toFile()"
         errorLine2="              ~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/kotlin/io/embrace/android/embracesdk/fakes/FakeStorageService.kt"
-            line="13"
+            file="src/main/kotlin/io/embrace/android/embracesdk/fakes/injection/FakeStorageModule.kt"
+            line="18"
             column="15"/>
     </issue>
 
@@ -213,8 +191,8 @@
         errorLine1="        Files.createTempDirectory(&quot;cache_temp&quot;).toFile()"
         errorLine2="                                                ~~~~~~">
         <location
-            file="src/main/kotlin/io/embrace/android/embracesdk/fakes/FakeStorageService.kt"
-            line="13"
+            file="src/main/kotlin/io/embrace/android/embracesdk/fakes/injection/FakeStorageModule.kt"
+            line="18"
             column="49"/>
     </issue>
 
@@ -224,8 +202,8 @@
         errorLine1="        Files.createTempDirectory(&quot;files_temp&quot;).toFile()"
         errorLine2="              ~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/kotlin/io/embrace/android/embracesdk/fakes/FakeStorageService.kt"
-            line="16"
+            file="src/main/kotlin/io/embrace/android/embracesdk/fakes/injection/FakeStorageModule.kt"
+            line="21"
             column="15"/>
     </issue>
 
@@ -235,8 +213,8 @@
         errorLine1="        Files.createTempDirectory(&quot;files_temp&quot;).toFile()"
         errorLine2="                                                ~~~~~~">
         <location
-            file="src/main/kotlin/io/embrace/android/embracesdk/fakes/FakeStorageService.kt"
-            line="16"
+            file="src/main/kotlin/io/embrace/android/embracesdk/fakes/injection/FakeStorageModule.kt"
+            line="21"
             column="49"/>
     </issue>
 

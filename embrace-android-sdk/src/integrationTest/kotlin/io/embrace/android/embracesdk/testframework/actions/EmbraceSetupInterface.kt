@@ -150,9 +150,8 @@ internal class EmbraceSetupInterface(
                 )
             }
         },
-        nativeCoreModuleSupplier = { essentialServiceModule, instrumentationArgs, _, _, _ ->
+        nativeCoreModuleSupplier = { instrumentationArgs, _, _, _ ->
             NativeCoreModuleImpl(
-                essentialServiceModule = essentialServiceModule,
                 args = instrumentationArgs,
                 delegateProvider = { fakeJniDelegate },
                 sharedObjectLoaderProvider = ::FakeSharedObjectLoader,

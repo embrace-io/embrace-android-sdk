@@ -6,7 +6,6 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
-import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeCoreModuleImpl
 import org.junit.Assert.assertNotNull
 import org.junit.Test
@@ -19,7 +18,6 @@ internal class NativeCoreModuleImplTest {
     fun testDefaultImplementations() {
         val ctx = ApplicationProvider.getApplicationContext<Application>()
         val module = NativeCoreModuleImpl(
-            FakeEssentialServiceModule(),
             FakeInstrumentationArgs(
                 ctx,
                 FakeConfigService(

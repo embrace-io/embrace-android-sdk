@@ -56,17 +56,15 @@ class NativeCrashHandlerInstallerImplTest {
             configService = fakeConfigService,
             logger = FakeEmbLogger(false),
             backgroundWorkerSupplier = { BackgroundWorker(executorService) },
-            sessionIdSupplier = sessionTracker::getActiveSessionId
+            sessionIdSupplier = sessionTracker::getActiveSessionId,
+            processIdentifier = "pid"
         )
         nativeCrashHandlerInstaller = NativeCrashHandlerInstallerImpl(
             args = args,
             sharedObjectLoader = fakeSharedObjectLoader,
             delegate = fakeDelegate,
             mainThreadHandler = fakeMainThreadHandler,
-            sessionIdTracker = sessionTracker,
-            processIdentifier = "pid",
             outputDir = lazy { outputDir },
-            markerFilePath = "testMarkerFilePath",
             reportId = "testReportId",
         )
     }
@@ -97,6 +95,7 @@ class NativeCrashHandlerInstallerImplTest {
         // trigger new session and update report path
         args.clock.tick(9000)
         sessionTracker.setActiveSession("sid", AppState.FOREGROUND)
+        args.sessionChangeListeners.forEach { it() }
         assertTrue(fakeDelegate.signalHandlerInstalled)
         assertEquals("p1_1692201610000_sid_pid_true_native_v1.json", getFilename())
     }

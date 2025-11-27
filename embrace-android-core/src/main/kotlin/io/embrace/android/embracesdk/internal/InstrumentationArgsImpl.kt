@@ -42,7 +42,7 @@ internal class InstrumentationArgsImpl(
 
     override fun backgroundWorker(worker: Worker.Background): BackgroundWorker = workerThreadModule.backgroundWorker(worker)
     override fun <T> priorityWorker(
-        worker: Worker.Priority
+        worker: Worker.Priority,
     ): PriorityWorker<T> = workerThreadModule.priorityWorker(worker)
 
     private val memo = ConcurrentHashMap<String, Any>()
@@ -57,6 +57,12 @@ internal class InstrumentationArgsImpl(
     override fun sessionId(): String? = sessionIdTracker.getActiveSessionId()
 
     override fun sessionProperties(): Map<String, String> = sessionPropertiesService.getProperties()
+
+    override fun registerSessionChangeListener(listener: () -> Unit) {
+        sessionIdTracker.addListener {
+            listener()
+        }
+    }
 
     @Suppress("UNCHECKED_CAST")
     private fun <T> Context.getSystemServiceSafe(name: String): T? = runCatching {

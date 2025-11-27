@@ -108,4 +108,9 @@ interface InstrumentationArgs {
      * Retrieves the crash marker file.
      */
     val crashMarkerFile: File
+
+    /**
+     * Sets a listener that is invoked after a session changes.
+     */
+    fun registerSessionChangeListener(listener: () -> Unit)
 }

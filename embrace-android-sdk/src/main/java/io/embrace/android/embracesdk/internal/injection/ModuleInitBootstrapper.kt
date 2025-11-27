@@ -18,9 +18,6 @@ import io.embrace.android.embracesdk.internal.instrumentation.anr.AnrModuleSuppl
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeCoreModule
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeCoreModuleImpl
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeCoreModuleSupplier
-import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeFeatureModule
-import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeFeatureModuleImpl
-import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeFeatureModuleSupplier
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.SharedObjectLoader
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.jni.JniDelegate
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.symbols.SymbolService
@@ -205,12 +202,6 @@ internal class ModuleInitBootstrapper(
             symbolServiceProvider,
         )
     },
-    private val nativeFeatureModuleSupplier: NativeFeatureModuleSupplier = {
-            nativeCoreModule: NativeCoreModule,
-            instrumentationArgs: InstrumentationArgs,
-        ->
-        NativeFeatureModuleImpl(nativeCoreModule, instrumentationArgs)
-    },
     private val sessionOrchestrationModuleSupplier: SessionOrchestrationModuleSupplier = {
             initModule: InitModule,
             openTelemetryModule: OpenTelemetryModule,
@@ -272,7 +263,6 @@ internal class ModuleInitBootstrapper(
     override val anrModule: AnrModule get() = delegate.anrModule
     override val logModule: LogModule get() = delegate.logModule
     override val nativeCoreModule: NativeCoreModule get() = delegate.nativeCoreModule
-    override val nativeFeatureModule: NativeFeatureModule get() = delegate.nativeFeatureModule
     override val instrumentationModule: InstrumentationModule get() = delegate.instrumentationModule
     override val featureModule: FeatureModule get() = delegate.featureModule
     override val sessionOrchestrationModule: SessionOrchestrationModule get() = delegate.sessionOrchestrationModule
@@ -311,7 +301,6 @@ internal class ModuleInitBootstrapper(
                     anrModuleSupplier,
                     logModuleSupplier,
                     nativeCoreModuleSupplier,
-                    nativeFeatureModuleSupplier,
                     sessionOrchestrationModuleSupplier,
                     payloadSourceModuleSupplier
                 )

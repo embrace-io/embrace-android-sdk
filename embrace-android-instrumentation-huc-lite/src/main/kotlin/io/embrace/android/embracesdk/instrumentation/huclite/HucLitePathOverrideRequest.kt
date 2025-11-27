@@ -4,7 +4,7 @@ import io.embrace.android.embracesdk.internal.instrumentation.network.HttpPathOv
 import java.net.MalformedURLException
 import java.net.URL
 
-class HucLitePathOverrideRequest(
+internal class HucLitePathOverrideRequest(
     private val requestHeaderProvider: (name: String) -> String?,
     private val originalUrl: URL,
 ) : HttpPathOverrideRequest {

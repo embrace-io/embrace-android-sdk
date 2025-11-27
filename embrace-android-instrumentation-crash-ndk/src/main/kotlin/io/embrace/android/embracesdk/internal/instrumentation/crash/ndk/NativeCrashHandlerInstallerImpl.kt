@@ -18,7 +18,7 @@ import java.io.File
 
 private const val HANDLER_CHECK_DELAY_MS = 5000L
 
-class NativeCrashHandlerInstallerImpl(
+internal class NativeCrashHandlerInstallerImpl(
     private val args: InstrumentationArgs,
     private val sharedObjectLoader: SharedObjectLoader,
     private val delegate: JniDelegate,

@@ -21,7 +21,7 @@ import java.util.concurrent.ConcurrentHashMap
  * that can be found here: https://blog.p-y.wtf/tracking-android-app-launch-in-production. PY's code was adapted and tweaked for use here.
  */
 @RequiresApi(Build.VERSION_CODES.Q)
-class FirstDrawDetector(
+internal class FirstDrawDetector(
     private val logger: EmbLogger,
 ) : DrawEventEmitter {
 

@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.instrumentation.thermalstate
 
+import android.content.Context
 import android.os.Build
 import android.os.PowerManager
 import androidx.annotation.RequiresApi
@@ -9,15 +10,12 @@ import io.embrace.android.embracesdk.internal.arch.datasource.SpanToken
 import io.embrace.android.embracesdk.internal.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
-import io.embrace.android.embracesdk.internal.utils.Provider
-import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
+import io.embrace.android.embracesdk.internal.worker.Worker
 import java.util.concurrent.Executor
 
 @RequiresApi(Build.VERSION_CODES.Q)
 class ThermalStateDataSource(
     args: InstrumentationArgs,
-    private val backgroundWorker: BackgroundWorker,
-    powerManagerProvider: Provider<PowerManager?>,
 ) : DataSourceImpl(
     args,
     limitStrategy = UpToLimitStrategy { MAX_CAPTURED_THERMAL_STATES }
@@ -26,9 +24,10 @@ class ThermalStateDataSource(
         private const val MAX_CAPTURED_THERMAL_STATES = 100
     }
 
-    private var thermalStatusListener: PowerManager.OnThermalStatusChangedListener? = null
+    private val backgroundWorker = args.backgroundWorker(Worker.Background.NonIoRegWorker)
+    private val powerManager: PowerManager? = args.systemService(Context.POWER_SERVICE)
 
-    private val powerManager: PowerManager? by lazy(powerManagerProvider)
+    private var thermalStatusListener: PowerManager.OnThermalStatusChangedListener? = null
 
     private var span: SpanToken? = null
 

@@ -20,7 +20,7 @@ import java.util.concurrent.ConcurrentHashMap
  *
  * For details of how these events are used to create UI Load traces, see [UiLoadTraceEmitter] for details.
  */
-fun createActivityLoadEventEmitter(
+internal fun createActivityLoadEventEmitter(
     uiLoadEventListener: UiLoadEventListener,
     firstDrawDetector: DrawEventEmitter?,
     autoTraceEnabled: Boolean,
@@ -48,7 +48,7 @@ fun traceInstanceId(activity: Activity): Int = activity.hashCode()
 /**
  * Determine if the current instance of the app will pre and post lifecycle events
  */
-fun hasPrePostEvents(versionChecker: VersionChecker) = versionChecker.isAtLeast(VERSION_CODES.Q)
+internal fun hasPrePostEvents(versionChecker: VersionChecker) = versionChecker.isAtLeast(VERSION_CODES.Q)
 
 /**
  * Implementation that works with Android 10+ APIs

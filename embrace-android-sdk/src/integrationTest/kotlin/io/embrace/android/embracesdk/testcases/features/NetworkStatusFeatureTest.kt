@@ -8,7 +8,7 @@ import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.comms.delivery.NetworkStatus
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.assertions.assertMatches
-import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkStatusDataSource
+import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkStatusDataSource
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test

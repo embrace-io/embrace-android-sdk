@@ -7,7 +7,7 @@ import androidx.annotation.RequiresApi
 import io.embrace.android.embracesdk.internal.handler.MainThreadHandler
 
 @RequiresApi(M)
-class HandlerMessageDrawDetector(
+internal class HandlerMessageDrawDetector(
     private val handler: MainThreadHandler
 ) : DrawEventEmitter {
 

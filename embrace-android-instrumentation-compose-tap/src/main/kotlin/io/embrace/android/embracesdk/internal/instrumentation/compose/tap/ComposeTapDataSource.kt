@@ -1,16 +1,15 @@
-package io.embrace.android.embracesdk.compose.internal.instrumentation
+package io.embrace.android.embracesdk.internal.instrumentation.compose.tap
 
-import io.embrace.android.embracesdk.compose.ComposeActivityListener
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceImpl
 import io.embrace.android.embracesdk.internal.arch.limits.UpToLimitStrategy
-import io.embrace.android.embracesdk.internal.instrumentation.TapDataSource
+import io.embrace.android.embracesdk.internal.instrumentation.view.taps.TapDataSource
 import kotlin.concurrent.Volatile
 
 /**
  * Captures custom breadcrumbs for compose taps.
  */
-class ComposeTapDataSource(
+internal class ComposeTapDataSource(
     private val args: InstrumentationArgs,
     private val tapDataSourceProvider: () -> TapDataSource?,
 ) : DataSourceImpl(

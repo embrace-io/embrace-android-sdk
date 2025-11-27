@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.internal.instrumentation
+package io.embrace.android.embracesdk.internal.instrumentation.view.taps
 
 import android.view.View
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs

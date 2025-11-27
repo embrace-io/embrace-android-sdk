@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.compose.internal
+package io.embrace.android.embracesdk.internal.instrumentation.compose.tap
 
 import android.view.View
 

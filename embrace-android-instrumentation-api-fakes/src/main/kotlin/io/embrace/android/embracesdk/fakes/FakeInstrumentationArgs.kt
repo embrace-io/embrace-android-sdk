@@ -28,8 +28,8 @@ class FakeInstrumentationArgs(
     val priorityWorkerSupplier: (worker: Worker.Priority) -> PriorityWorker<*> = { fakePriorityWorker<Any>() },
     val sessionIdSupplier: () -> String? = { null },
     val sessionChangeListeners: MutableList<() -> Unit> = mutableListOf(),
-
-    ) : InstrumentationArgs {
+    val systemServiceSupplier: (name: String) -> Any? = { null },
+) : InstrumentationArgs {
 
     override fun backgroundWorker(worker: Worker.Background): BackgroundWorker = backgroundWorkerSupplier(worker)
 
@@ -38,9 +38,8 @@ class FakeInstrumentationArgs(
         return priorityWorkerSupplier(worker) as PriorityWorker<T>
     }
 
-    override fun <T> systemService(name: String): T? {
-        throw UnsupportedOperationException()
-    }
+    @Suppress("UNCHECKED_CAST")
+    override fun <T> systemService(name: String): T? = systemServiceSupplier(name) as? T
 
     override fun sessionId(): String? = sessionIdSupplier()
 

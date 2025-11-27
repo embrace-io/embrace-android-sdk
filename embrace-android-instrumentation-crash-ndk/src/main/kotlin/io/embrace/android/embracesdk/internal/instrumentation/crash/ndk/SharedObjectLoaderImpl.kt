@@ -5,7 +5,7 @@ import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import java.util.concurrent.atomic.AtomicBoolean
 
-class SharedObjectLoaderImpl(
+internal class SharedObjectLoaderImpl(
     private val logger: EmbLogger,
 ) : SharedObjectLoader {
     override val loaded = AtomicBoolean(false)

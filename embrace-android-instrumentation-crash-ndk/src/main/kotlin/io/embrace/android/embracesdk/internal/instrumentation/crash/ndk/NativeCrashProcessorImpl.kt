@@ -13,7 +13,7 @@ import io.embrace.android.embracesdk.internal.worker.PriorityWorker
 import java.io.File
 import java.io.FileNotFoundException
 
-class NativeCrashProcessorImpl(
+internal class NativeCrashProcessorImpl(
     args: InstrumentationArgs,
     private val sharedObjectLoader: SharedObjectLoader,
     private val delegate: JniDelegate,

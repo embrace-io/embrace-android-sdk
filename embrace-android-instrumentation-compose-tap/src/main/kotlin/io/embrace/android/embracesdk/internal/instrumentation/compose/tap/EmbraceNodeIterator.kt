@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.compose.internal
+package io.embrace.android.embracesdk.internal.instrumentation.compose.tap
 
 import android.annotation.SuppressLint
 import android.view.View
@@ -10,7 +10,6 @@ import androidx.compose.ui.semantics.SemanticsNode
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getAllSemanticsNodes
 import androidx.compose.ui.semantics.getOrNull
-import io.embrace.android.embracesdk.compose.internal.instrumentation.ComposeTapDataSource
 
 private const val UNKNOWN_ELEMENT_NAME = "Unlabeled Compose element"
 

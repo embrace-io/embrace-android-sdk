@@ -1,10 +1,9 @@
-package io.embrace.android.embracesdk.compose.internal
+package io.embrace.android.embracesdk.internal.instrumentation.compose.tap
 
 import android.app.Activity
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.View
-import io.embrace.android.embracesdk.compose.internal.instrumentation.ComposeTapDataSource
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import java.lang.ref.WeakReference
 

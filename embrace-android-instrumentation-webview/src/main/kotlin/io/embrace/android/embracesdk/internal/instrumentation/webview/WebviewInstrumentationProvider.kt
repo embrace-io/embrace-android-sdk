@@ -5,7 +5,7 @@ import io.embrace.android.embracesdk.internal.arch.InstrumentationProvider
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState
 
 // retain a reference for use in bytecode instrumentation
-var webViewUrlDataSource: WebViewUrlDataSource? = null
+internal var webViewUrlDataSource: WebViewUrlDataSource? = null
 
 class WebviewInstrumentationProvider : InstrumentationProvider {
     override fun register(args: InstrumentationArgs): DataSourceState<*>? {

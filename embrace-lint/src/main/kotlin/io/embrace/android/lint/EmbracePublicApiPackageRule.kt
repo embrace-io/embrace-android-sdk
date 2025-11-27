@@ -14,7 +14,6 @@ import org.jetbrains.uast.UClass
  * Checks for classes in the io.embrace.android.embracesdk package and warns against
  * adding new ones.
  */
-@Suppress("UnstableApiUsage")
 class EmbracePublicApiPackageRule : Detector(), Detector.UastScanner {
 
     override fun getApplicableUastTypes(): List<Class<out UClass>> {

@@ -36,7 +36,8 @@ import io.embrace.android.embracesdk.internal.injection.WorkerThreadModule
 import io.embrace.android.embracesdk.internal.injection.WorkerThreadModuleImpl
 import io.embrace.android.embracesdk.internal.instrumentation.anr.AnrModuleImpl
 import io.embrace.android.embracesdk.internal.instrumentation.anr.AnrOtelMapper
-import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeCoreModuleImpl
+import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.jniDelegateTestOverride
+import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.sharedObjectLoaderTestOverride
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
@@ -62,7 +63,12 @@ internal class EmbraceSetupInterface(
     private val processIdentifier: String = Uuid.getEmbUuid()
 
     val fakeNetworkConnectivityService = FakeNetworkConnectivityService()
-    val fakeJniDelegate = FakeJniDelegate()
+    val fakeJniDelegate = FakeJniDelegate().also {
+        jniDelegateTestOverride = it
+    }
+    val fakeSharedObjectLoader = FakeSharedObjectLoader().also {
+        sharedObjectLoaderTestOverride = it
+    }
     val fakeLifecycleOwner: TestLifecycleOwner = TestLifecycleOwner(initialState = Lifecycle.State.INITIALIZED)
     val fakePayloadStorageService = if (fakeStorageLayer) {
         FakePayloadStorageService(processIdentifier)
@@ -147,13 +153,6 @@ internal class EmbraceSetupInterface(
                     )
                 )
             }
-        },
-        nativeCoreModuleSupplier = { instrumentationArgs, _, _ ->
-            NativeCoreModuleImpl(
-                args = instrumentationArgs,
-                delegateProvider = { fakeJniDelegate },
-                sharedObjectLoaderProvider = ::FakeSharedObjectLoader,
-            )
         },
         instrumentationModuleSupplier = {
                 initModule,

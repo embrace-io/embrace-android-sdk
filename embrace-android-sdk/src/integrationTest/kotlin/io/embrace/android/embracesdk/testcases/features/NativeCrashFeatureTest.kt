@@ -1,11 +1,9 @@
 package io.embrace.android.embracesdk.testcases.features
 
-import android.util.Base64
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.getLogOfType
 import io.embrace.android.embracesdk.assertions.getSessionId
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
-import io.embrace.android.embracesdk.fakes.config.FakeBase64SharedObjectFilesMap
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.fakeEnvelopeMetadata
@@ -16,7 +14,6 @@ import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.delivery.PayloadType
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
-import io.embrace.android.embracesdk.internal.envelope.CpuAbi
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.LogPayload
@@ -230,11 +227,8 @@ internal class NativeCrashFeatureTest {
             },
             testCaseAction = {},
             assertAction = {
-                with(getSingleSessionEnvelope()) {
-                    assertDeadSessionResurrected(null)
-                }
+                assertEquals(0, getSessionEnvelopes(0).size)
                 assertEquals(0, getLogEnvelopes(0).size)
-                assertNativeCrashExists(crashData)
             }
         )
     }

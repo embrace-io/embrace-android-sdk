@@ -7,7 +7,6 @@ import io.embrace.android.embracesdk.fakes.injection.FakeDeliveryModule
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeLogModule
-import io.embrace.android.embracesdk.fakes.injection.FakeNativeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakePayloadSourceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeStorageModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
@@ -23,7 +22,6 @@ import io.embrace.android.embracesdk.internal.injection.SessionOrchestrationModu
 import io.embrace.android.embracesdk.internal.injection.StorageModuleSupplier
 import io.embrace.android.embracesdk.internal.injection.WorkerThreadModuleSupplier
 import io.embrace.android.embracesdk.internal.instrumentation.anr.AnrModuleSupplier
-import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeCoreModuleSupplier
 import io.embrace.android.embracesdk.internal.instrumentation.startup.DataCaptureServiceModuleSupplier
 
 @Suppress("LongParameterList")
@@ -45,7 +43,6 @@ internal fun fakeModuleInitBootstrapper(
     deliveryModuleSupplier: DeliveryModuleSupplier = { _, _, _, _, _, _, _, _, _, _ -> FakeDeliveryModule() },
     anrModuleSupplier: AnrModuleSupplier = { _, _ -> FakeAnrModule() },
     logModuleSupplier: LogModuleSupplier = { _, _, _, _, _, _, _ -> FakeLogModule() },
-    nativeCoreModuleSupplier: NativeCoreModuleSupplier = { _, _, _ -> FakeNativeCoreModule() },
     sessionOrchestrationModuleSupplier: SessionOrchestrationModuleSupplier =
         { _, _, _, _, _, _, _, _, _, _ -> FakeSessionOrchestrationModule() },
     payloadSourceModuleSupplier: PayloadSourceModuleSupplier =
@@ -63,7 +60,6 @@ internal fun fakeModuleInitBootstrapper(
     deliveryModuleSupplier = deliveryModuleSupplier,
     anrModuleSupplier = anrModuleSupplier,
     logModuleSupplier = logModuleSupplier,
-    nativeCoreModuleSupplier = nativeCoreModuleSupplier,
     sessionOrchestrationModuleSupplier = sessionOrchestrationModuleSupplier,
     payloadSourceModuleSupplier = payloadSourceModuleSupplier,
 )

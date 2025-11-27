@@ -3,8 +3,6 @@ package io.embrace.android.embracesdk.internal.injection
 import android.content.Context
 import io.embrace.android.embracesdk.internal.instrumentation.anr.AnrModule
 import io.embrace.android.embracesdk.internal.instrumentation.anr.AnrModuleSupplier
-import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeCoreModule
-import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeCoreModuleSupplier
 import io.embrace.android.embracesdk.internal.instrumentation.startup.DataCaptureServiceModule
 import io.embrace.android.embracesdk.internal.instrumentation.startup.DataCaptureServiceModuleSupplier
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
@@ -31,7 +29,6 @@ internal class InitializedModuleGraph(
     private val deliveryModuleSupplier: DeliveryModuleSupplier,
     private val anrModuleSupplier: AnrModuleSupplier,
     private val logModuleSupplier: LogModuleSupplier,
-    private val nativeCoreModuleSupplier: NativeCoreModuleSupplier,
     private val sessionOrchestrationModuleSupplier: SessionOrchestrationModuleSupplier,
     private val payloadSourceModuleSupplier: PayloadSourceModuleSupplier,
 ) : ModuleGraph {
@@ -149,14 +146,6 @@ internal class InitializedModuleGraph(
             openTelemetryModule,
             { anrModule.anrOtelMapper },
             deliveryModule
-        )
-    }
-
-    override val nativeCoreModule: NativeCoreModule = init {
-        nativeCoreModuleSupplier(
-            instrumentationModule.instrumentationArgs,
-            { null },
-            { null },
         )
     }
 

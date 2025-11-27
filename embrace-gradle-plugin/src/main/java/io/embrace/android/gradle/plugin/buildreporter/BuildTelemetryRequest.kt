@@ -21,6 +21,7 @@ data class BuildTelemetryRequest(
     @Json(name = "edm") val isEdmEnabled: Boolean? = null,
     @Json(name = "edmv") val edmVersion: String? = null,
     @Json(name = "kgpv") val kotlinVersion: String? = null,
+    @Json(name = "kjvm") val kotlinJvmTarget: String? = null,
     @Json(name = "sc") val sourceCompatibility: String? = null,
     @Json(name = "msdk") val minSdk: Int? = null,
     @Json(name = "csdk") val compileSdk: Int? = null,

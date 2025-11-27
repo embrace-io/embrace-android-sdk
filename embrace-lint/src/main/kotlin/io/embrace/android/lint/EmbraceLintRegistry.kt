@@ -8,7 +8,6 @@ import com.android.tools.lint.detector.api.Issue
 /**
  * Container for all the lint issues that this module should scan for.
  */
-@Suppress("UnstableApiUsage")
 class EmbraceLintRegistry : IssueRegistry() {
 
     override val issues: List<Issue> = listOf(EmbracePublicApiPackageRule.ISSUE)

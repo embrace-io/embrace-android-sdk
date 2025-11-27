@@ -5,9 +5,10 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeLogRecordExporter
 import io.embrace.android.embracesdk.fakes.FakeMutableAttributeContainer
+import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
 import io.embrace.android.embracesdk.fakes.FakeSpanExporter
 import io.embrace.android.embracesdk.fakes.FakeTelemetryService
-import io.embrace.android.embracesdk.fakes.fakeModuleInitBootstrapper
+import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.otel.config.OtelSdkConfig
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
@@ -33,7 +34,10 @@ internal class OTelApiDelegateTest {
 
     @Before
     fun setUp() {
-        bootstrapper = fakeModuleInitBootstrapper()
+        bootstrapper = ModuleInitBootstrapper(
+            FakeInitModule(),
+            FakeOpenTelemetryModule(),
+        )
         bootstrapper.init(ApplicationProvider.getApplicationContext())
         cfg = bootstrapper.openTelemetryModule.otelSdkConfig
 

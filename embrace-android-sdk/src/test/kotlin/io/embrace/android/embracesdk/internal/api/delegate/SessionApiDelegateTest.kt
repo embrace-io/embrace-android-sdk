@@ -3,10 +3,13 @@ package io.embrace.android.embracesdk.internal.api.delegate
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
+import io.embrace.android.embracesdk.fakes.FakeSessionOrchestrationModule
 import io.embrace.android.embracesdk.fakes.FakeSessionOrchestrator
 import io.embrace.android.embracesdk.fakes.FakeSessionPropertiesService
 import io.embrace.android.embracesdk.fakes.FakeTelemetryService
-import io.embrace.android.embracesdk.fakes.fakeModuleInitBootstrapper
+import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
+import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
+import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -25,7 +28,15 @@ internal class SessionApiDelegateTest {
 
     @Before
     fun setUp() {
-        val moduleInitBootstrapper = fakeModuleInitBootstrapper()
+        val moduleInitBootstrapper = ModuleInitBootstrapper(
+            FakeInitModule(),
+            essentialServiceModuleSupplier = { _, _, _, _, _, _, _ ->
+                FakeEssentialServiceModule()
+            },
+            sessionOrchestrationModuleSupplier = { _, _, _, _, _, _, _, _, _, _ ->
+                FakeSessionOrchestrationModule()
+            }
+        )
         moduleInitBootstrapper.init(ApplicationProvider.getApplicationContext())
         orchestrator = moduleInitBootstrapper.sessionOrchestrationModule.sessionOrchestrator as FakeSessionOrchestrator
         sessionPropertiesService =

@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.fakes.injection
+package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.internal.injection.StorageModule
 import io.embrace.android.embracesdk.internal.storage.StorageService

@@ -11,13 +11,9 @@ android {
 dependencies {
     implementation(project(":embrace-android-instrumentation-api"))
     implementation(project(":embrace-android-instrumentation-network-common"))
-    implementation(libs.opentelemetry.kotlin.semconv)
 
     testImplementation(project(":embrace-android-instrumentation-api-fakes"))
-    testImplementation(project(":embrace-android-config-fakes"))
     testImplementation(project(":embrace-test-fakes"))
-    testImplementation(project(":embrace-test-common"))
     testImplementation(libs.robolectric)
     testImplementation(libs.mockk)
-    implementation(libs.androidx.annotation)
 }

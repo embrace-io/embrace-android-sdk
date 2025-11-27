@@ -10,7 +10,6 @@ android {
 
 dependencies {
     implementation(project(":embrace-android-instrumentation-api"))
-    implementation(libs.androidx.annotation)
 
     testImplementation(project(":embrace-android-instrumentation-api-fakes"))
     testImplementation(libs.robolectric)

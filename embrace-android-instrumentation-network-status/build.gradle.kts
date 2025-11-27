@@ -10,7 +10,5 @@ android {
 
 dependencies {
     implementation(project(":embrace-android-instrumentation-api"))
-
-    testImplementation(project(":embrace-test-common"))
     testImplementation(project(":embrace-android-instrumentation-api-fakes"))
 }

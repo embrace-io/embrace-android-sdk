@@ -41,8 +41,6 @@ dependencies {
     implementation(project(":embrace-android-instrumentation-view"))
     implementation(project(":embrace-android-instrumentation-webview"))
 
-    implementation(libs.opentelemetry.java.aliases)
-
     // lifecycle
     implementation(libs.lifecycle.runtime)
     implementation(libs.lifecycle.process)
@@ -60,19 +58,14 @@ dependencies {
     implementation(libs.opentelemetry.kotlin.semconv)
     implementation(libs.opentelemetry.kotlin.noop)
 
+    testImplementation(libs.opentelemetry.java.aliases)
     testImplementation(project(":embrace-android-otel-java"))
     testImplementation(project(":embrace-test-fakes"))
-    testImplementation(project(":embrace-test-common"))
     testImplementation(project(":embrace-android-config-fakes"))
     testImplementation(project(":embrace-android-delivery-fakes"))
     testImplementation(project(":embrace-android-instrumentation-api-fakes"))
     testImplementation(project(":embrace-android-otel-fakes"))
     testImplementation(project(":embrace-android-instrumentation-huc"))
-    testImplementation(project(":embrace-android-instrumentation-huc-lite"))
-    testImplementation(project(":embrace-android-instrumentation-power-save"))
-    testImplementation(project(":embrace-android-instrumentation-thermal-state"))
-    testImplementation(libs.protobuf.java)
-    testImplementation(libs.protobuf.java.util)
     testImplementation(platform(libs.okhttp.bom))
     testImplementation(libs.mockwebserver)
     testImplementation(libs.mockk)

@@ -21,10 +21,8 @@ android {
 
 dependencies {
     implementation(project(":embrace-android-instrumentation-api"))
-    implementation(project(":embrace-android-utils"))
     implementation(project(":embrace-android-telemetry-persistence"))
     implementation(libs.opentelemetry.kotlin.api)
-    implementation(libs.opentelemetry.kotlin.semconv)
 
     testImplementation(project(":embrace-android-instrumentation-api-fakes"))
     testImplementation(project(":embrace-test-fakes")) // TODO: remove this dependency after full modularisation

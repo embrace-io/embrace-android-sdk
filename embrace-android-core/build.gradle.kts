@@ -43,7 +43,6 @@ dependencies {
     implementation(libs.opentelemetry.java.aliases)
 
     testImplementation(project(":embrace-android-api"))
-    testImplementation(project(":embrace-android-features"))
     testImplementation(project(":embrace-test-fakes"))
     testImplementation(project(":embrace-test-common"))
     testImplementation(project(":embrace-android-config-fakes"))

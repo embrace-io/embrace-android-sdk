@@ -16,6 +16,7 @@ android {
     packaging {
         jniLibs.pickFirsts.add("**/*.so")
     }
+    defaultConfig.consumerProguardFiles("embrace-proguard.cfg")
 }
 
 dependencies {

@@ -16,6 +16,7 @@ android {
     buildFeatures {
         buildConfig = true
     }
+    defaultConfig.consumerProguardFiles("embrace-proguard.cfg")
 }
 
 dependencies {

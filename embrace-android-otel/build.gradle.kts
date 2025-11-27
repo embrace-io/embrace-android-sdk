@@ -6,6 +6,7 @@ description = "Embrace Android SDK: OTel"
 
 android {
     namespace = "io.embrace.android.embracesdk.otel"
+    defaultConfig.consumerProguardFiles("embrace-proguard.cfg")
 }
 
 dependencies {

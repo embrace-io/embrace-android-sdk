@@ -6,6 +6,7 @@ description = "Embrace Android SDK: Firebase Cloud Messaging"
 
 android {
     namespace = "io.embrace.android.embracesdk.fcm"
+    defaultConfig.consumerProguardFiles("embrace-proguard.cfg")
 }
 
 dependencies {

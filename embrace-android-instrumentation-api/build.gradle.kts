@@ -6,6 +6,7 @@ description = "Embrace Android SDK: Instrumentation API"
 
 android {
     namespace = "io.embrace.android.embracesdk.internal.instrumentation"
+    defaultConfig.consumerProguardFiles("embrace-proguard.cfg")
 }
 
 dependencies {

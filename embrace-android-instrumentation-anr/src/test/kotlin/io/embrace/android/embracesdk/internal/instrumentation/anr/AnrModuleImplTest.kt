@@ -24,7 +24,6 @@ internal class AnrModuleImplTest {
             ),
         )
         assertNotNull(module.anrService)
-        assertNotNull(module.anrOtelMapper)
     }
 
     @Test
@@ -39,6 +38,5 @@ internal class AnrModuleImplTest {
             ),
         )
         assertNull(module.anrService)
-        assertNull(module.anrOtelMapper)
     }
 }

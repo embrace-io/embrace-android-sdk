@@ -143,7 +143,7 @@ internal class InitializedModuleGraph(
             essentialServiceModule,
             configModule,
             openTelemetryModule,
-            { anrModule.anrOtelMapper },
+            anrModule,
             deliveryModule
         )
     }

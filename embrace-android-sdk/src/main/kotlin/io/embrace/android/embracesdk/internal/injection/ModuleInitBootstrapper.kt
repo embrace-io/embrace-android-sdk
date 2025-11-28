@@ -10,7 +10,6 @@ import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
 import io.embrace.android.embracesdk.internal.delivery.execution.RequestExecutionService
 import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageService
-import io.embrace.android.embracesdk.internal.envelope.session.OtelPayloadMapper
 import io.embrace.android.embracesdk.internal.instrumentation.anr.AnrModule
 import io.embrace.android.embracesdk.internal.instrumentation.anr.AnrModuleImpl
 import io.embrace.android.embracesdk.internal.instrumentation.anr.AnrModuleSupplier
@@ -207,7 +206,8 @@ internal class ModuleInitBootstrapper(
             workerThreadModule: WorkerThreadModule,
             essentialServiceModule: EssentialServiceModule,
             configModule: ConfigModule,
-            otelModule: OpenTelemetryModule, otelPayloadMapperProvider: Provider<OtelPayloadMapper?>,
+            otelModule: OpenTelemetryModule,
+            anrModule: AnrModule,
             deliveryModule: DeliveryModule,
         ->
         PayloadSourceModuleImpl(
@@ -217,7 +217,7 @@ internal class ModuleInitBootstrapper(
             essentialServiceModule,
             configModule,
             otelModule,
-            otelPayloadMapperProvider,
+            anrModule.anrService,
             deliveryModule,
         )
     },

@@ -4,7 +4,9 @@ import android.annotation.SuppressLint
 import io.embrace.android.embracesdk.EmbraceImpl
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
 import io.embrace.android.embracesdk.internal.InternalTracingApi
+import io.embrace.android.embracesdk.internal.TypeUtils
 import io.embrace.android.embracesdk.internal.config.ConfigService
+import io.embrace.android.embracesdk.internal.config.HybridSdkConfigService
 import io.embrace.android.embracesdk.internal.injection.InitModule
 import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkCaptureDataSource
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
@@ -48,5 +50,17 @@ internal class EmbraceInternalInterfaceImpl(
 
     override fun logInternalError(error: Throwable) {
         initModule.logger.trackInternalError(InternalErrorType.INTERNAL_INTERFACE_FAIL, error)
+    }
+
+    override fun getRemoteConfig(): Map<String, Any>? {
+        val cfg = (configService as? HybridSdkConfigService)?.remoteConfig ?: return null
+        val serializer = initModule.jsonSerializer
+        val json = serializer.toJson(cfg)
+        val type = TypeUtils.typedMap(String::class.java, Any::class.java)
+        return serializer.fromJson(json, type)
+    }
+
+    override fun isConfigFeatureEnabled(pctEnabled: Float?): Boolean? {
+        return (configService as? HybridSdkConfigService)?.isBehaviorEnabled(pctEnabled)
     }
 }

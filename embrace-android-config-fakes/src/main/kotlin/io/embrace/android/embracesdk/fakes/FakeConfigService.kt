@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.fakes.behavior.FakeBreadcrumbBehavior
 import io.embrace.android.embracesdk.internal.config.ConfigService
+import io.embrace.android.embracesdk.internal.config.HybridSdkConfigService
 import io.embrace.android.embracesdk.internal.config.behavior.AppExitInfoBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.AutoDataCaptureBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.BackgroundActivityBehavior
@@ -15,6 +16,7 @@ import io.embrace.android.embracesdk.internal.config.behavior.SdkModeBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.SessionBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.ThreadBlockageBehavior
+import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 
 /**
@@ -39,6 +41,8 @@ class FakeConfigService(
     override var networkSpanForwardingBehavior: NetworkSpanForwardingBehavior = createNetworkSpanForwardingBehavior(),
     override var sensitiveKeysBehavior: SensitiveKeysBehavior = createSensitiveKeysBehavior(),
     override val otelBehavior: OtelBehavior = createOtelBehavior(),
-) : ConfigService {
+    override var remoteConfig: RemoteConfig? = null
+) : ConfigService, HybridSdkConfigService {
     override fun isOnlyUsingOtelExporters(): Boolean = onlyUsingOtelExporters
+    override fun isBehaviorEnabled(pctEnabled: Float?): Boolean? = false
 }

@@ -69,4 +69,8 @@ class FakeEmbraceInternalInterface(
     override fun recordNetworkRequest(networkRequest: EmbraceNetworkRequest) {
         networkRequests.add(networkRequest)
     }
+
+    override fun getRemoteConfig(): Map<String, Any>? = null
+
+    override fun isConfigFeatureEnabled(pctEnabled: Float?): Boolean? = null
 }

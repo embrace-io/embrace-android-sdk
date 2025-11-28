@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.assertions.assertMatches
 import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkStatusDataSource
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -26,6 +27,7 @@ internal class NetworkStatusFeatureTest {
         val tickTimeMs = 3000L
         var sdkStartTimeMs: Long = 0
         var statusChangeTimeMs: Long = 0
+        var sessionEndTimeMs: Long = 0
 
         testRule.runTest(
             testCaseAction = {
@@ -36,6 +38,7 @@ internal class NetworkStatusFeatureTest {
                     val dataSource = findDataSource<NetworkStatusDataSource>()
                     dataSource.onNetworkConnectivityStatusChanged(NetworkStatus.WIFI)
                 }
+                sessionEndTimeMs = clock.now()
             },
             assertAction = {
                 val message = getSingleSessionEnvelope()
@@ -60,6 +63,11 @@ internal class NetworkStatusFeatureTest {
                         "network" to "wifi"
                     )
                 )
+
+                val stateSpan = message.findSpanOfType(EmbType.Performance.State)
+                assertEquals("emb-state-network-connectivity", stateSpan.name)
+                assertEquals(sdkStartTimeMs, stateSpan.startTimeNanos?.nanosToMillis())
+                assertEquals(sessionEndTimeMs, stateSpan.endTimeNanos?.nanosToMillis())
             }
         )
     }
@@ -83,6 +91,30 @@ internal class NetworkStatusFeatureTest {
                         "network" to "unknown"
                     )
                 )
+            }
+        )
+    }
+
+    @Test
+    fun `network state feature`() {
+        val tickTimeMs = 3000L
+
+        testRule.runTest(
+            testCaseAction = {
+                recordSession {
+                    val dataSource = findDataSource<NetworkStatusDataSource>()
+                    clock.tick(tickTimeMs)
+                    dataSource.onNetworkConnectivityStatusChanged(NetworkStatus.WIFI)
+                    clock.tick(50000L)
+                    dataSource.onNetworkConnectivityStatusChanged(NetworkStatus.NOT_REACHABLE)
+                    clock.tick(9000L)
+                    dataSource.onNetworkConnectivityStatusChanged(NetworkStatus.WAN)
+                    clock.tick(500L)
+                }
+            },
+            assertAction = {
+                val stateSpan = getSingleSessionEnvelope().findSpanOfType(EmbType.Performance.State)
+                assertNotNull(stateSpan)
             }
         )
     }

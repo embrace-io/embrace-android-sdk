@@ -189,7 +189,7 @@ internal class BackgroundActivityDisabledTest {
                     startMs = session2StartMs,
                     endMs = session2EndMs,
                     sessionNumber = 2,
-                    sequenceId = 10,
+                    sequenceId = 11,
                     coldStart = false,
                 )
 

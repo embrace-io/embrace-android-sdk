@@ -67,5 +67,9 @@ internal class NoopEmbraceInternalInterface(
 
     override fun logInternalError(error: Throwable) {}
 
+    override fun getRemoteConfig(): Map<String, Any>? = null
+
+    override fun isConfigFeatureEnabled(pctEnabled: Float?): Boolean? = false
+
     override fun stopSdk() {}
 }

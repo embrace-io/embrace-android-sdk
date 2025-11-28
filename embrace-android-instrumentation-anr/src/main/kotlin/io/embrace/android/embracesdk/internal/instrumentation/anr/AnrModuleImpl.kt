@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.internal.instrumentation.anr
 
 import android.os.Looper
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
-import io.embrace.android.embracesdk.internal.arch.state.AppStateTracker
 import io.embrace.android.embracesdk.internal.envelope.session.OtelPayloadMapper
 import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.BlockedThreadDetector
 import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.LivenessCheckScheduler
@@ -12,7 +11,6 @@ import io.embrace.android.embracesdk.internal.worker.Worker
 
 class AnrModuleImpl(
     args: InstrumentationArgs,
-    appStateTracker: AppStateTracker,
 ) : AnrModule {
 
     private val anrMonitorWorker = args.backgroundWorker(Worker.Background.AnrWatchdogWorker)
@@ -28,7 +26,7 @@ class AnrModuleImpl(
                 state = state,
                 clock = args.clock,
                 stacktraceSampler = stacktraceSampler,
-                appStateTracker = appStateTracker,
+                appStateTracker = args.appStateTracker,
             )
         } else {
             null

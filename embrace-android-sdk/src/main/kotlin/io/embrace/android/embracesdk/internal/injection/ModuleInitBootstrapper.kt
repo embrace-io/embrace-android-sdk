@@ -4,7 +4,6 @@ import android.content.Context
 import androidx.lifecycle.LifecycleOwner
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
-import io.embrace.android.embracesdk.internal.arch.state.AppStateTracker
 import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkConnectivityService
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.ConfigService
@@ -155,14 +154,8 @@ internal class ModuleInitBootstrapper(
             deliveryTracer
         )
     },
-    private val anrModuleSupplier: AnrModuleSupplier = {
-            args: InstrumentationArgs,
-            appStateTracker: AppStateTracker,
-        ->
-        AnrModuleImpl(
-            args,
-            appStateTracker
-        )
+    private val anrModuleSupplier: AnrModuleSupplier = { args: InstrumentationArgs ->
+        AnrModuleImpl(args)
     },
     private val logModuleSupplier: LogModuleSupplier = {
             initModule: InitModule,

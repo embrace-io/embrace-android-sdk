@@ -132,7 +132,6 @@ internal class InitializedModuleGraph(
     override val anrModule: AnrModule = init {
         anrModuleSupplier(
             instrumentationModule.instrumentationArgs,
-            essentialServiceModule.appStateTracker
         )
     }
 

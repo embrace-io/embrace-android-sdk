@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.internal.instrumentation.anr.detection
 
 import android.os.Message
 import io.embrace.android.embracesdk.internal.clock.Clock
-import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.instrumentation.anr.BlockedThreadListener
 import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.TargetThreadHandler.Companion.HEARTBEAT_REQUEST
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
@@ -22,20 +21,14 @@ import java.util.concurrent.TimeUnit
  * class is responsible for the actual business logic that checks whether a thread is blocked or not.
  */
 internal class LivenessCheckScheduler(
-    configService: ConfigService,
     private val anrMonitorWorker: BackgroundWorker,
     private val clock: Clock,
     private val state: ThreadMonitoringState,
     private val targetThreadHandler: TargetThreadHandler,
     private val blockedThreadDetector: BlockedThreadDetector,
+    private var intervalMs: Long,
     private val logger: EmbLogger,
 ) {
-
-    var configService: ConfigService
-        set(value) {
-            blockedThreadDetector.configService = value
-        }
-        get() = blockedThreadDetector.configService
 
     var listener: BlockedThreadListener?
         set(value) {
@@ -43,7 +36,6 @@ internal class LivenessCheckScheduler(
         }
         get() = blockedThreadDetector.listener
 
-    private var intervalMs: Long = configService.anrBehavior.getSamplingIntervalMs()
     private var monitorFuture: ScheduledFuture<*>? = null
 
     init {
@@ -71,7 +63,6 @@ internal class LivenessCheckScheduler(
     }
 
     private fun scheduleRegularHeartbeats() {
-        intervalMs = configService.anrBehavior.getSamplingIntervalMs()
         val runnable = Runnable(::checkHeartbeat)
         runCatching {
             monitorFuture = anrMonitorWorker.scheduleAtFixedRate(runnable, 0, intervalMs, TimeUnit.MILLISECONDS)
@@ -100,20 +91,11 @@ internal class LivenessCheckScheduler(
      */
     fun checkHeartbeat() {
         try {
-            if (intervalMs != configService.anrBehavior.getSamplingIntervalMs()) {
-                // Different interval detected, scheduling a heartbeat restart
-                anrMonitorWorker.submit {
-                    if (stopHeartbeatTask()) {
-                        scheduleRegularHeartbeats()
-                    }
-                }
-            } else {
-                val now = clock.now()
-                if (!targetThreadHandler.hasMessages(HEARTBEAT_REQUEST)) {
-                    sendHeartbeatMessage()
-                }
-                blockedThreadDetector.updateAnrTracking(now)
+            val now = clock.now()
+            if (!targetThreadHandler.hasMessages(HEARTBEAT_REQUEST)) {
+                sendHeartbeatMessage()
             }
+            blockedThreadDetector.updateAnrTracking(now)
         } catch (exc: Exception) {
             logger.trackInternalError(InternalErrorType.ANR_HEARTBEAT_CHECK_FAIL, exc)
         }

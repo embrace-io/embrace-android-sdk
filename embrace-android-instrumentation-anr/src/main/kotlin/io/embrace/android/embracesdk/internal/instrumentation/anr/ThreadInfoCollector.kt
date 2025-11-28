@@ -1,11 +1,11 @@
 package io.embrace.android.embracesdk.internal.instrumentation.anr
 
 import io.embrace.android.embracesdk.internal.arch.stacktrace.getThreadInfo
-import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.payload.ThreadInfo
 
 internal class ThreadInfoCollector(
     private val targetThread: Thread,
+    private val stacktraceFrameLimit: Int,
 ) {
 
     private val currentStacktraceStates: MutableMap<Long, ThreadInfo> = HashMap()
@@ -18,8 +18,8 @@ internal class ThreadInfoCollector(
     /**
      * Captures the thread traces required for the given sample.
      */
-    fun captureSample(configService: ConfigService): List<ThreadInfo> {
-        val threadInfo = getMainThread(configService)
+    fun captureSample(): List<ThreadInfo> {
+        val threadInfo = getMainThread()
         val sanitizedThreads = mutableListOf<ThreadInfo>()
 
         // Compares main thread with the last known thread state via hashcode. If hashcode changed
@@ -40,9 +40,9 @@ internal class ThreadInfoCollector(
      *
      * @return filtered threads
      */
-    fun getMainThread(configService: ConfigService): ThreadInfo = getThreadInfo(
+    fun getMainThread(): ThreadInfo = getThreadInfo(
         targetThread,
         targetThread.stackTrace,
-        configService.anrBehavior.getStacktraceFrameLimit()
+        stacktraceFrameLimit
     )
 }

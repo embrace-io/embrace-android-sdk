@@ -19,12 +19,12 @@ internal class ThreadInfoCollectorTest {
         configService = FakeConfigService(
             anrBehavior = FakeAnrBehavior(frameLimit = 5)
         )
-        threadInfoCollector = ThreadInfoCollector(currentThread())
+        threadInfoCollector = ThreadInfoCollector(currentThread(), configService.anrBehavior.getStacktraceFrameLimit())
     }
 
     @Test
     fun `verify truncation of ANR stacktrace respects the config`() {
-        val thread = threadInfoCollector.getMainThread(configService)
+        val thread = threadInfoCollector.getMainThread()
         val frames = checkNotNull(thread.lines)
         assertEquals(5, frames.size)
         assertTrue(thread.frameCount > frames.size)

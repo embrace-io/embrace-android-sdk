@@ -11,10 +11,10 @@ import io.embrace.android.embracesdk.testframework.NoopAnrService
 class FakeAnrModule(
     override val anrService: AnrService = NoopAnrService,
     override val blockedThreadDetector: BlockedThreadDetector = BlockedThreadDetector(
-        FakeConfigService(),
         FakeClock(),
-        null,
-        ThreadMonitoringState(FakeClock()),
-        Thread.currentThread()
+        state = ThreadMonitoringState(FakeClock()),
+        targetThread = Thread.currentThread(),
+        blockedDurationThreshold = FakeConfigService().anrBehavior.getMinDuration(),
+        samplingIntervalMs = FakeConfigService().anrBehavior.getSamplingIntervalMs()
     ),
 ) : AnrModule

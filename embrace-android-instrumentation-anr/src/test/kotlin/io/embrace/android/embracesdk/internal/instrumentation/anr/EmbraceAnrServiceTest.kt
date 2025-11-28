@@ -301,13 +301,10 @@ internal class EmbraceAnrServiceTest {
     @Test
     fun testReachedAnrCaptureLimit() {
         with(rule) {
-            rule.anrBehavior.anrPerSessionImpl = 3
-            assertFalse(stacktraceSampler.reachedAnrStacktraceCaptureLimit())
-
-            stacktraceSampler.anrIntervals.add(AnrInterval(0, anrSampleList = AnrSampleList(listOf())))
-            stacktraceSampler.anrIntervals.add(AnrInterval(0, anrSampleList = AnrSampleList(listOf())))
-            stacktraceSampler.anrIntervals.add(AnrInterval(0, anrSampleList = AnrSampleList(listOf())))
-            assertFalse(stacktraceSampler.reachedAnrStacktraceCaptureLimit())
+            repeat(rule.anrBehavior.anrPerSessionImpl) {
+                stacktraceSampler.anrIntervals.add(AnrInterval(0, anrSampleList = AnrSampleList(listOf())))
+                assertFalse(stacktraceSampler.reachedAnrStacktraceCaptureLimit())
+            }
 
             stacktraceSampler.anrIntervals.add(AnrInterval(0, anrSampleList = AnrSampleList(listOf())))
             assertTrue(stacktraceSampler.reachedAnrStacktraceCaptureLimit())

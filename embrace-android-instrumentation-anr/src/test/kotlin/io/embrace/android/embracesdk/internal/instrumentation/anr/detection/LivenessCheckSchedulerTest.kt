@@ -49,10 +49,11 @@ internal class LivenessCheckSchedulerTest {
         }
         state = ThreadMonitoringState(fakeClock)
         detector = BlockedThreadDetector(
-            configService = configService,
             clock = fakeClock,
             state = state,
-            targetThread = Thread.currentThread()
+            targetThread = Thread.currentThread(),
+            blockedDurationThreshold = configService.anrBehavior.getMinDuration(),
+            samplingIntervalMs = configService.anrBehavior.getSamplingIntervalMs()
         )
         fakeTargetThreadHandler = mockk(relaxUnitFun = true) {
             every { action = any() } returns Unit
@@ -61,12 +62,12 @@ internal class LivenessCheckSchedulerTest {
         every { fakeTargetThreadHandler.hasMessages(any()) } returns false
 
         scheduler = LivenessCheckScheduler(
-            configService,
             BackgroundWorker(anrExecutorService),
             fakeClock,
             state,
             fakeTargetThreadHandler,
             detector,
+            configService.anrBehavior.getSamplingIntervalMs(),
             logger
         )
     }
@@ -113,14 +114,6 @@ internal class LivenessCheckSchedulerTest {
         scheduler.startMonitoringThread()
         anrExecutorService.runCurrentlyBlocked()
         assertEquals(lastTimeThreadResponded, state.lastMonitorThreadResponseMs)
-    }
-
-    @Test
-    fun testGetConfigService() {
-        assertEquals(configService, scheduler.configService)
-        val obj = FakeConfigService()
-        scheduler.configService = obj
-        assertEquals(obj, scheduler.configService)
     }
 
     @Test

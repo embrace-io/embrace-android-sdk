@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.internal.instrumentation.anr.detection
 
 import android.os.Debug
 import io.embrace.android.embracesdk.internal.clock.Clock
-import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.instrumentation.anr.BlockedThreadListener
 
 /**
@@ -28,11 +27,12 @@ private const val SAMPLE_BACKOFF_FACTOR = 0.5
  * [LivenessCheckScheduler] whereas this class contains the business logic.
  */
 class BlockedThreadDetector(
-    var configService: ConfigService,
     private val clock: Clock,
     var listener: BlockedThreadListener? = null,
     private val state: ThreadMonitoringState,
     private val targetThread: Thread,
+    val blockedDurationThreshold: Int,
+    val samplingIntervalMs: Long,
 ) {
 
     /**
@@ -94,8 +94,7 @@ class BlockedThreadDetector(
     fun shouldAttemptAnrSample(timestamp: Long): Boolean {
         val lastMonitorThreadResponseMs = state.lastMonitorThreadResponseMs
         val delta = timestamp - lastMonitorThreadResponseMs // time since last check
-        val intervalMs = configService.anrBehavior.getSamplingIntervalMs()
-        return delta > intervalMs * SAMPLE_BACKOFF_FACTOR
+        return delta > samplingIntervalMs * SAMPLE_BACKOFF_FACTOR
     }
 
     /**
@@ -122,8 +121,7 @@ class BlockedThreadDetector(
             state.lastMonitorThreadResponseMs = now
             return false
         }
-        val minTriggerDuration = configService.anrBehavior.getMinDuration()
-        return targetThreadLag > minTriggerDuration
+        return targetThreadLag > blockedDurationThreshold
     }
 
     /**

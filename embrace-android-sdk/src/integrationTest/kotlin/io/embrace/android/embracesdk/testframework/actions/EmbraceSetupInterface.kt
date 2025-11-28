@@ -4,7 +4,6 @@ import android.content.pm.PackageInfo
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.testing.TestLifecycleOwner
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
-import io.embrace.android.embracesdk.fakes.FakeAppStateTracker
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeJniDelegate
@@ -35,7 +34,6 @@ import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.injection.WorkerThreadModule
 import io.embrace.android.embracesdk.internal.injection.WorkerThreadModuleImpl
 import io.embrace.android.embracesdk.internal.instrumentation.anr.AnrModuleImpl
-import io.embrace.android.embracesdk.internal.instrumentation.anr.AnrOtelMapper
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.jniDelegateTestOverride
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.sharedObjectLoaderTestOverride
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
@@ -136,22 +134,11 @@ internal class EmbraceSetupInterface(
                 deliveryTracer = deliveryTracer
             )
         },
-        anrModuleSupplier = { instrumentationModule, _ ->
+        anrModuleSupplier = { instrumentationModule ->
             if (anrMonitoringThread != null) {
-                AnrModuleImpl(
-                    instrumentationModule,
-                    FakeAppStateTracker()
-                )
+                AnrModuleImpl(instrumentationModule)
             } else {
-                val fakeAnrService = NoopAnrService
-                FakeAnrModule(
-                    anrService = fakeAnrService,
-                    anrOtelMapper = AnrOtelMapper(
-                        anrService = fakeAnrService,
-                        clock = fakeInitModule.clock,
-                        telemetryDestination = instrumentationModule.destination
-                    )
-                )
+                FakeAnrModule(anrService = NoopAnrService)
             }
         },
         instrumentationModuleSupplier = {

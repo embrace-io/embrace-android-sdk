@@ -5,7 +5,7 @@ import io.embrace.android.embracesdk.internal.payload.ThreadInfo
 /**
  * Holds thread data taken during an [AnrInterval].
  */
-data class AnrSample(
+internal data class AnrSample(
 
     /**
      * The timestamp in milliseconds at which this sample was captured

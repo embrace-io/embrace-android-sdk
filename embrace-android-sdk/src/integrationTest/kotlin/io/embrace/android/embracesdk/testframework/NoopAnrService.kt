@@ -2,11 +2,9 @@ package io.embrace.android.embracesdk.testframework
 
 import io.embrace.android.embracesdk.internal.instrumentation.anr.AnrService
 import io.embrace.android.embracesdk.internal.instrumentation.anr.BlockedThreadListener
-import io.embrace.android.embracesdk.internal.instrumentation.anr.payload.AnrInterval
+import io.embrace.android.embracesdk.internal.payload.Span
 
 internal object NoopAnrService : AnrService {
-
-    override fun getCapturedData(): List<AnrInterval> = emptyList()
 
     override fun startAnrCapture() {
     }
@@ -33,5 +31,10 @@ internal object NoopAnrService : AnrService {
     }
 
     override fun onThreadUnblocked(thread: Thread, timestamp: Long) {
+    }
+
+    override fun snapshotSpans(): List<Span> = emptyList()
+
+    override fun record() {
     }
 }

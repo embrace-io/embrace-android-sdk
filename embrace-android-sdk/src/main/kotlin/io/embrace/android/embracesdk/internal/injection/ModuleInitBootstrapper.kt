@@ -4,14 +4,12 @@ import android.content.Context
 import androidx.lifecycle.LifecycleOwner
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
-import io.embrace.android.embracesdk.internal.arch.state.AppStateTracker
 import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkConnectivityService
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
 import io.embrace.android.embracesdk.internal.delivery.execution.RequestExecutionService
 import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageService
-import io.embrace.android.embracesdk.internal.envelope.session.OtelPayloadMapper
 import io.embrace.android.embracesdk.internal.instrumentation.anr.AnrModule
 import io.embrace.android.embracesdk.internal.instrumentation.anr.AnrModuleImpl
 import io.embrace.android.embracesdk.internal.instrumentation.anr.AnrModuleSupplier
@@ -155,14 +153,8 @@ internal class ModuleInitBootstrapper(
             deliveryTracer
         )
     },
-    private val anrModuleSupplier: AnrModuleSupplier = {
-            args: InstrumentationArgs,
-            appStateTracker: AppStateTracker,
-        ->
-        AnrModuleImpl(
-            args,
-            appStateTracker
-        )
+    private val anrModuleSupplier: AnrModuleSupplier = { args: InstrumentationArgs ->
+        AnrModuleImpl(args)
     },
     private val logModuleSupplier: LogModuleSupplier = {
             initModule: InitModule,
@@ -214,7 +206,8 @@ internal class ModuleInitBootstrapper(
             workerThreadModule: WorkerThreadModule,
             essentialServiceModule: EssentialServiceModule,
             configModule: ConfigModule,
-            otelModule: OpenTelemetryModule, otelPayloadMapperProvider: Provider<OtelPayloadMapper?>,
+            otelModule: OpenTelemetryModule,
+            anrModule: AnrModule,
             deliveryModule: DeliveryModule,
         ->
         PayloadSourceModuleImpl(
@@ -224,7 +217,7 @@ internal class ModuleInitBootstrapper(
             essentialServiceModule,
             configModule,
             otelModule,
-            otelPayloadMapperProvider,
+            anrModule.anrService,
             deliveryModule,
         )
     },

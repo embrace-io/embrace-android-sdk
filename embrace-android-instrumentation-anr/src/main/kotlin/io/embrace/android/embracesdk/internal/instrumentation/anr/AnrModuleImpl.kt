@@ -2,8 +2,6 @@ package io.embrace.android.embracesdk.internal.instrumentation.anr
 
 import android.os.Looper
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
-import io.embrace.android.embracesdk.internal.arch.state.AppStateTracker
-import io.embrace.android.embracesdk.internal.envelope.session.OtelPayloadMapper
 import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.BlockedThreadDetector
 import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.LivenessCheckScheduler
 import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.TargetThreadHandler
@@ -12,7 +10,6 @@ import io.embrace.android.embracesdk.internal.worker.Worker
 
 class AnrModuleImpl(
     args: InstrumentationArgs,
-    appStateTracker: AppStateTracker,
 ) : AnrModule {
 
     private val anrMonitorWorker = args.backgroundWorker(Worker.Background.AnrWatchdogWorker)
@@ -20,27 +17,12 @@ class AnrModuleImpl(
     override val anrService: AnrService? by lazy {
         if (args.configService.autoDataCaptureBehavior.isAnrCaptureEnabled()) {
             EmbraceAnrService(
-                configService = args.configService,
+                args = args,
                 looper = looper,
-                logger = args.logger,
                 livenessCheckScheduler = livenessCheckScheduler,
                 anrMonitorWorker = anrMonitorWorker,
                 state = state,
-                clock = args.clock,
                 stacktraceSampler = stacktraceSampler,
-                appStateTracker = appStateTracker,
-            )
-        } else {
-            null
-        }
-    }
-
-    override val anrOtelMapper: OtelPayloadMapper? by lazy {
-        if (args.configService.autoDataCaptureBehavior.isAnrCaptureEnabled()) {
-            AnrOtelMapper(
-                checkNotNull(anrService),
-                args.clock,
-                args.destination,
             )
         } else {
             null

@@ -1,20 +1,21 @@
 package io.embrace.android.embracesdk.internal.instrumentation.anr
 
 import android.os.Looper
+import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.state.AppState
-import io.embrace.android.embracesdk.internal.arch.state.AppStateTracker
-import io.embrace.android.embracesdk.internal.clock.Clock
-import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.LivenessCheckScheduler
 import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.ThreadMonitoringState
 import io.embrace.android.embracesdk.internal.instrumentation.anr.payload.AnrInterval
-import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.payload.Span
+import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import java.util.concurrent.Callable
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
+import kotlin.random.Random
 
 /**
  * Checks whether the target thread is still responding by using the following strategy:
@@ -24,16 +25,20 @@ import java.util.concurrent.TimeUnit
  *  3. Determining whether the target thread responds in time, and if not logging an ANR
  */
 internal class EmbraceAnrService(
-    private val configService: ConfigService,
+    args: InstrumentationArgs,
     private val looper: Looper,
-    private val logger: EmbLogger,
     private val livenessCheckScheduler: LivenessCheckScheduler,
     private val anrMonitorWorker: BackgroundWorker,
     private val state: ThreadMonitoringState,
-    private val clock: Clock,
     private val stacktraceSampler: AnrStacktraceSampler,
-    private val appStateTracker: AppStateTracker,
+    private val random: Random = Random.Default,
 ) : AnrService {
+
+    private val configService = args.configService
+    private val logger = args.logger
+    private val clock = args.clock
+    private val appStateTracker = args.appStateTracker
+    private val telemetryDestination = args.destination
 
     private val listeners: CopyOnWriteArrayList<BlockedThreadListener> = CopyOnWriteArrayList<BlockedThreadListener>()
     private var delayedBackgroundCheckTask: ScheduledFuture<*>? = null
@@ -63,7 +68,7 @@ internal class EmbraceAnrService(
      * All functions in this class MUST be called from the same thread as [BlockedThreadDetector].
      * This is part of the synchronization strategy that ensures ANR data is not corrupted.
      */
-    override fun getCapturedData(): List<AnrInterval> {
+    internal fun getCapturedData(): List<AnrInterval> {
         return try {
             val callable = Callable {
                 checkNotNull(stacktraceSampler.getAnrIntervals(state, clock)) {
@@ -164,6 +169,29 @@ internal class EmbraceAnrService(
             livenessCheckScheduler.stopMonitoringThread()
         }
         delayedBackgroundCheckTask = null
+    }
+
+    override fun snapshotSpans(): List<Span> = EmbTrace.trace("anr-snapshot") {
+        getCapturedData().map { interval ->
+            mapIntervalToSpan(interval, clock, random)
+        }
+    }
+
+    override fun record() = EmbTrace.trace("anr-record") {
+        getCapturedData().forEach { interval ->
+            val attributes = mapIntervalToSpanAttributes(interval).toEmbracePayload()
+            val events = interval.anrSampleList?.samples?.map {
+                mapSampleToSpanEvent(it).toArchSpanEvent()
+            } ?: emptyList()
+            telemetryDestination.recordCompletedSpan(
+                name = "thread-blockage",
+                startTimeMs = interval.startTime,
+                endTimeMs = interval.endTime ?: clock.now(),
+                type = EmbType.Performance.ThreadBlockage,
+                attributes = attributes,
+                events = events,
+            )
+        }
     }
 
     private companion object {

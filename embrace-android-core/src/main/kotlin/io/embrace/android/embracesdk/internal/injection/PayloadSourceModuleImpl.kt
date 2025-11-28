@@ -23,7 +23,6 @@ import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.resurrection.PayloadResurrectionService
 import io.embrace.android.embracesdk.internal.resurrection.PayloadResurrectionServiceImpl
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
-import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.worker.Worker
 
 class PayloadSourceModuleImpl(
@@ -33,7 +32,7 @@ class PayloadSourceModuleImpl(
     essentialServiceModule: EssentialServiceModule,
     configModule: ConfigModule,
     otelModule: OpenTelemetryModule,
-    otelPayloadMapperProvider: Provider<OtelPayloadMapper?>,
+    otelPayloadMapper: OtelPayloadMapper?,
     deliveryModule: DeliveryModule,
 ) : PayloadSourceModule {
 
@@ -54,7 +53,7 @@ class PayloadSourceModuleImpl(
                 otelModule.spanSink,
                 otelModule.currentSessionSpan,
                 otelModule.spanRepository,
-                otelPayloadMapperProvider(),
+                otelPayloadMapper,
                 essentialServiceModule.appStateTracker,
                 initModule.clock,
                 initModule.logger

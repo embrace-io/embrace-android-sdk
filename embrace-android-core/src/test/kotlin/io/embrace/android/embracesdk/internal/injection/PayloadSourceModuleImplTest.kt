@@ -28,7 +28,7 @@ internal class PayloadSourceModuleImplTest {
             FakeEssentialServiceModule(),
             FakeConfigModule(),
             FakeOpenTelemetryModule(),
-            ::FakeOtelPayloadMapper,
+            FakeOtelPayloadMapper(),
             FakeDeliveryModule(),
         )
         assertTrue(module.metadataService is EmbraceMetadataService)

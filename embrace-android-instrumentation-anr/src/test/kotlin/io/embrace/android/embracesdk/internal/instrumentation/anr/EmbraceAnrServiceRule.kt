@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.fakes.FakeAppStateTracker
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
+import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.fakes.behavior.FakeAnrBehavior
 import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.BlockedThreadDetector
@@ -43,6 +44,7 @@ internal class EmbraceAnrServiceRule<T : ScheduledExecutorService>(
     lateinit var stacktraceSampler: AnrStacktraceSampler
     lateinit var looper: Looper
     lateinit var worker: BackgroundWorker
+    lateinit var args: FakeInstrumentationArgs
 
     override fun before() {
         clock.setCurrentTime(0)
@@ -80,16 +82,20 @@ internal class EmbraceAnrServiceRule<T : ScheduledExecutorService>(
             targetThread = looper.thread,
             anrMonitorWorker = worker
         )
-        anrService = EmbraceAnrService(
+        args = FakeInstrumentationArgs(
+            mockk(),
             configService = fakeConfigService,
-            looper = looper,
             logger = logger,
+            clock = clock,
+            appStateTracker = fakeAppStateTracker,
+        )
+        anrService = EmbraceAnrService(
+            args = args,
+            looper = looper,
             livenessCheckScheduler = livenessCheckScheduler,
             anrMonitorWorker = worker,
             state = state,
-            clock = clock,
             stacktraceSampler = stacktraceSampler,
-            appStateTracker = fakeAppStateTracker
         )
     }
 
@@ -98,15 +104,12 @@ internal class EmbraceAnrServiceRule<T : ScheduledExecutorService>(
      */
     fun recreateService() {
         anrService = EmbraceAnrService(
-            configService = fakeConfigService,
+            args = args,
             looper = looper,
-            logger = logger,
             livenessCheckScheduler = livenessCheckScheduler,
             anrMonitorWorker = worker,
             state = state,
-            clock = clock,
             stacktraceSampler = stacktraceSampler,
-            appStateTracker = fakeAppStateTracker
         )
     }
 }

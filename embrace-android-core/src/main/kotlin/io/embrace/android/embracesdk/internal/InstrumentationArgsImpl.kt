@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.Context
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
+import io.embrace.android.embracesdk.internal.arch.state.AppStateTracker
 import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.ConfigService
@@ -33,6 +34,7 @@ internal class InstrumentationArgsImpl(
     override val cpuAbi: CpuAbi,
     override val processIdentifier: String,
     override val symbols: Map<String, String>?,
+    override val appStateTracker: AppStateTracker,
     private val workerThreadModule: WorkerThreadModule,
     private val sessionIdTracker: SessionIdTracker,
     private val sessionPropertiesService: SessionPropertiesService,

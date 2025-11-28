@@ -1,8 +1,7 @@
 package io.embrace.android.embracesdk.internal.instrumentation.anr
 
-import io.embrace.android.embracesdk.fakes.FakeAnrService
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeClock
-import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.instrumentation.anr.payload.AnrInterval
@@ -19,6 +18,8 @@ import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Before
 import org.junit.Test
+import org.junit.runner.RunWith
+import kotlin.random.Random
 
 private const val END_TIME_MS = 2000L
 private const val START_TIME_MS = 1000L
@@ -28,11 +29,8 @@ private const val SECOND_SAMPLE_MS: Long = 15000100L
 private const val FIRST_SAMPLE_OVERHEAD_MS = 3L
 private const val SECOND_SAMPLE_OVERHEAD_MS = 5L
 
+@RunWith(AndroidJUnit4::class)
 internal class AnrOtelMapperTest {
-
-    private lateinit var anrService: FakeAnrService
-    private lateinit var destination: FakeTelemetryDestination
-    private lateinit var mapper: AnrOtelMapper
 
     private val stacktrace = ThreadInfo(
         threadId = 1,
@@ -91,6 +89,7 @@ internal class AnrOtelMapperTest {
     private val clearedInterval = completedInterval.clearSamples()
 
     private lateinit var clock: FakeClock
+    private val random = Random(0)
 
     private val intervalWithLimitedSample = completedInterval.copy(
         anrSampleList = AnrSampleList(
@@ -106,38 +105,12 @@ internal class AnrOtelMapperTest {
 
     @Before
     fun setUp() {
-        anrService = FakeAnrService()
-        destination = FakeTelemetryDestination()
         clock = FakeClock()
-        mapper = AnrOtelMapper(
-            anrService,
-            clock,
-            destination
-        )
-    }
-
-    @Test
-    fun `empty intervals`() {
-        mapper.snapshotSpans().verifySnapshotPayload(0)
-    }
-
-    @Test
-    fun `map multiple intervals to otel`() {
-        anrService.data = listOf(
-            completedInterval,
-            inProgressInterval,
-            clearedInterval,
-            intervalWithLimitedSample
-        )
-        mapper.snapshotSpans().verifySnapshotPayload(4)
-        mapper.record()
-        assertEquals(4, destination.createdSpans.size)
     }
 
     @Test
     fun `map completed interval`() {
-        anrService.data = listOf(completedInterval)
-        val span = mapper.snapshotSpans().verifySingleAnrSnapshot()
+        val span = listOf(completedInterval).map { mapIntervalToSpan(it, clock, random) }.single()
         span.assertCommonOtelCharacteristics()
         assertEquals(END_TIME_MS, span.endTimeNanos?.nanosToMillis())
         assertEquals("0", span.attributes?.findAttribute("interval_code")?.data)
@@ -151,8 +124,7 @@ internal class AnrOtelMapperTest {
 
     @Test
     fun `map in progress interval`() {
-        anrService.data = listOf(inProgressInterval)
-        val span = mapper.snapshotSpans().verifySingleAnrSnapshot()
+        val span = listOf(inProgressInterval).map { mapIntervalToSpan(it, clock, random) }.single()
         span.assertCommonOtelCharacteristics()
 
         assertEquals(clock.now().millisToNanos(), span.endTimeNanos)
@@ -170,8 +142,7 @@ internal class AnrOtelMapperTest {
 
     @Test
     fun `map cleared interval`() {
-        anrService.data = listOf(clearedInterval)
-        val span = mapper.snapshotSpans().verifySingleAnrSnapshot()
+        val span = listOf(clearedInterval).map { mapIntervalToSpan(it, clock, random) }.single()
         span.assertCommonOtelCharacteristics()
         assertEquals("1", span.attributes?.findAttribute("interval_code")?.data)
         assertEquals(0, span.events?.size)
@@ -179,8 +150,7 @@ internal class AnrOtelMapperTest {
 
     @Test
     fun `map limited sample`() {
-        anrService.data = listOf(intervalWithLimitedSample)
-        val span = mapper.snapshotSpans().verifySingleAnrSnapshot()
+        val span = listOf(intervalWithLimitedSample).map { mapIntervalToSpan(it, clock, random) }.single()
         span.assertCommonOtelCharacteristics()
         assertEquals("0", span.attributes?.findAttribute("interval_code")?.data)
 
@@ -198,21 +168,10 @@ internal class AnrOtelMapperTest {
 
     @Test
     fun `truncated stack shows the pre-truncated frame count`() {
-        anrService.data = listOf(completedIntervalWithTruncatedSample)
-        val span = mapper.snapshotSpans().verifySingleAnrSnapshot()
+        val span = listOf(completedIntervalWithTruncatedSample).map { mapIntervalToSpan(it, clock, random) }.single()
         val events = checkNotNull(span.events)
         assertEquals(2, events.size)
         assertSampleMapped(events[1], truncatedSecondSample)
-    }
-
-    private fun List<Span>.verifySingleAnrSnapshot(): Span {
-        verifySnapshotPayload(1)
-        return single()
-    }
-
-    private fun List<Span>.verifySnapshotPayload(expectedCount: Int) {
-        assertEquals(expectedCount, size)
-        assertEquals(0, destination.createdSpans.size)
     }
 
     private fun Span.assertCommonOtelCharacteristics() {

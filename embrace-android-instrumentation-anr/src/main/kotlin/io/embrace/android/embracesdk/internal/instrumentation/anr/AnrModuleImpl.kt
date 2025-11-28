@@ -8,11 +8,9 @@ import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.Targ
 import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.ThreadMonitoringState
 import io.embrace.android.embracesdk.internal.worker.Worker
 
-class AnrModuleImpl(
-    args: InstrumentationArgs,
-) : AnrModule {
+class AnrModuleImpl(args: InstrumentationArgs) : AnrModule {
 
-    private val anrMonitorWorker = args.backgroundWorker(Worker.Background.AnrWatchdogWorker)
+    private val anrMonitorWorker by lazy { args.backgroundWorker(Worker.Background.AnrWatchdogWorker) }
 
     override val anrService: AnrService? by lazy {
         if (args.configService.autoDataCaptureBehavior.isAnrCaptureEnabled()) {
@@ -35,10 +33,12 @@ class AnrModuleImpl(
 
     private val stacktraceSampler by lazy {
         AnrStacktraceSampler(
-            configService = args.configService,
             clock = args.clock,
             targetThread = looper.thread,
-            anrMonitorWorker = anrMonitorWorker
+            anrMonitorWorker = anrMonitorWorker,
+            maxIntervalsPerSession = args.configService.anrBehavior.getMaxAnrIntervalsPerSession(),
+            maxStacktracesPerInterval = args.configService.anrBehavior.getMaxStacktracesPerInterval(),
+            stacktraceFrameLimit = args.configService.anrBehavior.getStacktraceFrameLimit(),
         )
     }
 
@@ -52,21 +52,22 @@ class AnrModuleImpl(
 
     override val blockedThreadDetector by lazy {
         BlockedThreadDetector(
-            configService = args.configService,
             clock = args.clock,
             state = state,
             targetThread = looper.thread,
+            blockedDurationThreshold = args.configService.anrBehavior.getMinDuration(),
+            samplingIntervalMs = args.configService.anrBehavior.getSamplingIntervalMs(),
         )
     }
 
     private val livenessCheckScheduler by lazy {
         LivenessCheckScheduler(
-            configService = args.configService,
             anrMonitorWorker = anrMonitorWorker,
             clock = args.clock,
             state = state,
             targetThreadHandler = targetThreadHandler,
             blockedThreadDetector = blockedThreadDetector,
+            intervalMs = args.configService.anrBehavior.getSamplingIntervalMs(),
             logger = args.logger,
         )
     }

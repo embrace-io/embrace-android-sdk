@@ -30,11 +30,12 @@ internal class BlockedThreadDetectorTest {
         state = ThreadMonitoringState(clock)
         anrMonitorThread = AtomicReference(Thread.currentThread())
         detector = BlockedThreadDetector(
-            configService,
             clock,
             listener,
             state,
-            Thread.currentThread()
+            Thread.currentThread(),
+            configService.anrBehavior.getMinDuration(),
+            configService.anrBehavior.getSamplingIntervalMs()
         )
     }
 

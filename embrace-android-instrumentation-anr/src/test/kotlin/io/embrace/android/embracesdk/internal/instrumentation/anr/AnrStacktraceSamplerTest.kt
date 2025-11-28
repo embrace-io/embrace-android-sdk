@@ -27,7 +27,14 @@ internal class AnrStacktraceSamplerTest {
 
     @Test
     fun testLeastValuableInterval() {
-        val sampler = AnrStacktraceSampler(configService, clock, thread, worker)
+        val sampler = AnrStacktraceSampler(
+            clock,
+            thread,
+            worker,
+            configService.anrBehavior.getMaxAnrIntervalsPerSession(),
+            configService.anrBehavior.getMaxStacktracesPerInterval(),
+            configService.anrBehavior.getStacktraceFrameLimit(),
+        )
         assertNull(sampler.findLeastValuableIntervalWithSamples())
         val interval1 = AnrInterval(
             startTime = BASELINE_MS,
@@ -78,7 +85,14 @@ internal class AnrStacktraceSamplerTest {
         clock.setCurrentTime(BASELINE_MS)
         val repeatCount = 100
         val intervalMs: Long = 100
-        val sampler = AnrStacktraceSampler(configService, clock, thread, worker)
+        val sampler = AnrStacktraceSampler(
+            clock,
+            thread,
+            worker,
+            configService.anrBehavior.getMaxAnrIntervalsPerSession(),
+            configService.anrBehavior.getMaxStacktracesPerInterval(),
+            configService.anrBehavior.getStacktraceFrameLimit(),
+        )
 
         // simulate one ANR with 100 intervals
         sampler.onThreadBlocked(thread, clock.now())
@@ -126,7 +140,14 @@ internal class AnrStacktraceSamplerTest {
         val anrRepeatCount = 15
         val intervalRepeatCount = 100
         val intervalMs: Long = 100
-        val sampler = AnrStacktraceSampler(configService, clock, thread, worker)
+        val sampler = AnrStacktraceSampler(
+            clock,
+            thread,
+            worker,
+            configService.anrBehavior.getMaxAnrIntervalsPerSession(),
+            configService.anrBehavior.getMaxStacktracesPerInterval(),
+            configService.anrBehavior.getStacktraceFrameLimit(),
+        )
 
         // simulate multiple ANRs with intervals
         repeat(anrRepeatCount) { index ->
@@ -169,7 +190,14 @@ internal class AnrStacktraceSamplerTest {
         clock.setCurrentTime(BASELINE_MS)
         val anrRepeatCount = 110
         val intervalMs: Long = 100
-        val sampler = AnrStacktraceSampler(configService, clock, thread, worker)
+        val sampler = AnrStacktraceSampler(
+            clock,
+            thread,
+            worker,
+            configService.anrBehavior.getMaxAnrIntervalsPerSession(),
+            configService.anrBehavior.getMaxStacktracesPerInterval(),
+            configService.anrBehavior.getStacktraceFrameLimit(),
+        )
 
         // simulate 110 ANRs with intervals
         repeat(anrRepeatCount) {

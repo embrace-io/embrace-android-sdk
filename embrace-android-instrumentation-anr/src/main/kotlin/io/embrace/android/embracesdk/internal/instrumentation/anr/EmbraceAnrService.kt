@@ -34,7 +34,6 @@ internal class EmbraceAnrService(
     private val random: Random = Random.Default,
 ) : AnrService {
 
-    private val configService = args.configService
     private val logger = args.logger
     private val clock = args.clock
     private val appStateTracker = args.appStateTracker
@@ -133,12 +132,6 @@ internal class EmbraceAnrService(
     }
 
     private fun processAnrTick(timestamp: Long) {
-        // Check if ANR capture is enabled
-        if (!configService.anrBehavior.isAnrCaptureEnabled()) {
-            return
-        }
-
-        // Invoke callbacks
         for (listener in listeners) {
             listener.onThreadBlockedInterval(looper.thread, timestamp)
         }

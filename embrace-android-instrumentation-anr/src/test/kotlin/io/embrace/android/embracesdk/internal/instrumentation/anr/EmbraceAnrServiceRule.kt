@@ -62,25 +62,28 @@ internal class EmbraceAnrServiceRule<T : ScheduledExecutorService>(
             clock = clock
         )
         blockedThreadDetector = BlockedThreadDetector(
-            configService = fakeConfigService,
             clock = clock,
             state = state,
-            targetThread = Thread.currentThread()
+            targetThread = Thread.currentThread(),
+            blockedDurationThreshold = fakeConfigService.anrBehavior.getMinDuration(),
+            samplingIntervalMs = fakeConfigService.anrBehavior.getSamplingIntervalMs()
         )
         livenessCheckScheduler = LivenessCheckScheduler(
-            configService = fakeConfigService,
             anrMonitorWorker = worker,
             clock = clock,
             state = state,
             targetThreadHandler = targetThreadHandler,
             blockedThreadDetector = blockedThreadDetector,
-            logger = logger
+            logger = logger,
+            intervalMs = fakeConfigService.anrBehavior.getSamplingIntervalMs(),
         )
         stacktraceSampler = AnrStacktraceSampler(
-            configService = fakeConfigService,
             clock = clock,
             targetThread = looper.thread,
-            anrMonitorWorker = worker
+            anrMonitorWorker = worker,
+            maxIntervalsPerSession = fakeConfigService.anrBehavior.getMaxAnrIntervalsPerSession(),
+            maxStacktracesPerInterval = fakeConfigService.anrBehavior.getMaxStacktracesPerInterval(),
+            stacktraceFrameLimit = fakeConfigService.anrBehavior.getStacktraceFrameLimit(),
         )
         args = FakeInstrumentationArgs(
             mockk(),

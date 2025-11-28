@@ -4,12 +4,12 @@ import io.embrace.android.embracesdk.internal.arch.attrs.embAeiNumber
 import io.embrace.android.embracesdk.internal.arch.attrs.embCrashNumber
 import io.embrace.android.embracesdk.internal.arch.attrs.embSendMode
 import io.embrace.android.embracesdk.internal.arch.attrs.toEmbraceAttributeName
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType.Performance.State.embInitialState
 import io.embrace.opentelemetry.kotlin.semconv.ExceptionAttributes
 import io.embrace.opentelemetry.kotlin.semconv.HttpAttributes
 import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
 import io.embrace.opentelemetry.kotlin.semconv.SessionAttributes
 import io.embrace.opentelemetry.kotlin.semconv.UrlAttributes
-import kotlin.Suppress
 
 /**
  * The collections of attribute schemas used by the associated telemetry types.
@@ -280,6 +280,16 @@ sealed class SchemaType(
                 transform = StackTraceElement::toString
             ),
             ExceptionAttributes.EXCEPTION_MESSAGE to (throwable.message ?: "")
+        )
+    }
+
+    class NetworkState(initialState: String) : SchemaType(
+        telemetryType = EmbType.Performance.State,
+        fixedObjectName = "state-network-connectivity"
+    ) {
+        override val schemaAttributes: Map<String, String> = mapOf(
+            embInitialState.name to initialState,
+            "initial_state" to initialState
         )
     }
 }

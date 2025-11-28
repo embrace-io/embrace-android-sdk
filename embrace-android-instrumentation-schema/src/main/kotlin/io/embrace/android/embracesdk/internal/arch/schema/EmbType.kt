@@ -28,6 +28,10 @@ sealed class EmbType(type: String, subtype: String?) : EmbraceAttribute {
         object ThermalState : Performance("thermal_state")
 
         object UiLoad : Performance("ui_load")
+
+        object State : System("state") {
+            val embInitialState: EmbraceAttributeKey = EmbraceAttributeKey.create("initial_state")
+        }
     }
 
     /**

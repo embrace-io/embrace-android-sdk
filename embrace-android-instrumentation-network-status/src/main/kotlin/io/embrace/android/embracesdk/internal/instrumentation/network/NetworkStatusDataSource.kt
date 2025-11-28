@@ -19,6 +19,9 @@ class NetworkStatusDataSource(
     }
 
     private var span: SpanToken? = null
+    private var state: SpanToken? = null
+    private var currentState: NetworkStatus = NetworkStatus.UNKNOWN
+    private var transitionCount = 0
 
     override fun onNetworkConnectivityStatusChanged(status: NetworkStatus) {
         // close previous span
@@ -27,6 +30,32 @@ class NetworkStatusDataSource(
         // start a new span with the new network status
         captureTelemetry {
             span = startSpanCapture(SchemaType.NetworkStatus(status.value), timestamp)
+        }
+        stateChange(status, timestamp)
+        currentState = status
+    }
+
+    private fun stateChange(newState: NetworkStatus, timestamp: Long) {
+        captureTelemetry {
+            val stateSpan = state
+            if (stateSpan == null) {
+                transitionCount = 0
+                state = startSpanCapture(
+                    schemaType = SchemaType.NetworkState(currentState.value),
+                    startTimeMs = timestamp,
+                    autoTerminate = true
+                )
+            } else if (newState != currentState) {
+                transitionCount++
+                stateSpan.addEvent(
+                    name = "state_transition",
+                    eventTimeMs = timestamp,
+                    attributes = mapOf(
+                        "new_state" to newState.value,
+                        "transition_count" to transitionCount.toString()
+                    )
+                )
+            }
         }
     }
 }

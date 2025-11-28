@@ -222,6 +222,14 @@ class TelemetryDestinationImpl(
         override fun getStartTimeMs(): Long? = span.getStartTimeMs()
 
         override fun setSystemAttribute(key: String, value: String) = span.setSystemAttribute(key, value)
+
+        override fun addEvent(name: String, eventTimeMs: Long, attributes: Map<String, String>) {
+            span.addEvent(
+                name = name,
+                timestampMs = eventTimeMs,
+                attributes = attributes
+            )
+        }
     }
 }
 

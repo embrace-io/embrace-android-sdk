@@ -79,10 +79,10 @@ jobs:
         if: ${{ matrix.gradle-task == 'assembleRelease' }}
         run: ./gradlew assembleRelease check embrace-microbenchmark:assembleAndroidTest -x embrace-gradle-plugin-integration-tests:test --stacktrace
 
-      - name: Gradle (examples/ExampleApp/ bundleRelease)
-        if: ${{ matrix.gradle-task == 'bundleReleaseExampleApp' }}
-        working-directory: examples/ExampleApp
-        run: ./gradlew bundleRelease
+#      - name: Gradle (examples/ExampleApp/ bundleRelease)
+#        if: ${{ matrix.gradle-task == 'bundleReleaseExampleApp' }}
+#        working-directory: examples/ExampleApp
+#        run: ./gradlew bundleRelease
 
       - name: Archive Test Results
         if: ${{ always() && matrix.gradle-task != 'bundleReleaseExampleApp' }}

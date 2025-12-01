@@ -23,7 +23,6 @@ jobs:
     strategy:
       matrix:
         api-level: [29]
-        working-directory: ['.', 'examples/ExampleApp']
       fail-fast: false
     steps:
       - name: Checkout
@@ -67,22 +66,7 @@ jobs:
 
       - name: Run tests on android emulator
         uses: reactivecircus/android-emulator-runner@b530d96654c385303d652368551fb075bc2f0b6b # v2.35.0
-        if: matrix.working-directory == 'examples/ExampleApp'
         with:
-          working-directory: ${{ matrix.working-directory }}
-          api-level: ${{ matrix.api-level }}
-          target: default
-          arch: x86_64
-          cores: 4
-          profile: Nexus 6
-          # Grab the failures from the device so we can include them in results. Exit with non-zero so GH checks still fail.
-          script: ./gradlew connectedCheck
-
-      - name: Run tests on android emulator
-        uses: reactivecircus/android-emulator-runner@b530d96654c385303d652368551fb075bc2f0b6b # v2.35.0
-        if: matrix.working-directory != 'examples/ExampleApp'
-        with:
-          working-directory: ${{ matrix.working-directory }}
           api-level: ${{ matrix.api-level }}
           target: default
           arch: x86_64
@@ -92,11 +76,11 @@ jobs:
           script: ./gradlew connectedCheck -x :embrace-microbenchmark:connectedCheck --stacktrace || (adb logcat '[Embrace]:d' '*:S' -t 100000 > emulator_logcat.log && adb pull /storage/emulated/0/Android/data/io.embrace.android.embracesdk.test/cache/test_failure/ && exit 127)
 
       - name: Archive Test Results
-        if: ${{ always() && matrix.working-directory == '.' }}
         uses: actions/upload-artifact@v5
         with:
-          name: android-emulator-${{ matrix.working-directory }}-test-results
+          name: android-emulator-test-results
           path: |
-            embrace-android-sdk/build/reports/androidTests/connected
+            embrace-android-instrumentation-crash-ndk/build/reports/androidTests/connected
+            examples/ExampleApp/build/reports/androidTests/connected
             test_failure
             emulator_logcat.log

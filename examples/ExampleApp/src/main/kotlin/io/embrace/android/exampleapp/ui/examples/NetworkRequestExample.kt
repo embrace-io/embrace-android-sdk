@@ -49,7 +49,7 @@ fun NetworkRequestExample() {
                 }
 
                 override fun onResponse(call: okhttp3.Call, response: okhttp3.Response) {
-                    Log.i("EmbraceTestApp", "Network request completed ${response.code} ${response.body.string()}")
+                    Log.i("EmbraceTestApp", "Network request completed ${response.code} ${response.body?.string()}")
                 }
             })
         },

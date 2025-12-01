@@ -15,10 +15,7 @@ internal class NdkJniInterfaceTest : NativeTestSuite() {
         // install signal handlers first so we can test the other methods without race conditions
         val result = delegate.installSignalHandlers(
             "markerFilePath",
-            "app_state",
             "report_id",
-            29,
-            false,
             true
         )
         // we can't really check the result because it's a void function, but if the class is moved or renamed this will fail

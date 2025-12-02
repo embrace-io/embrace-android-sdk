@@ -44,7 +44,6 @@ import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.internal.worker.Worker
-import io.embrace.android.embracesdk.testframework.NoopAnrService
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 
@@ -138,7 +137,7 @@ internal class EmbraceSetupInterface(
             if (anrMonitoringThread != null) {
                 AnrModuleImpl(instrumentationModule)
             } else {
-                FakeAnrModule(anrService = NoopAnrService)
+                FakeAnrModule()
             }
         },
         instrumentationModuleSupplier = {

@@ -7,7 +7,7 @@ import java.util.concurrent.atomic.AtomicBoolean
  * This class holds state that is used when monitoring a thread. For instance, the last response
  * time of the target/main threads.
  */
-class ThreadMonitoringState(
+internal class ThreadMonitoringState(
     private val clock: Clock,
 ) {
 

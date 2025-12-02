@@ -62,7 +62,7 @@ internal fun ModuleGraph.registerListeners() {
                 lazy { dataCaptureServiceModule.appStartupDataCollector },
             )
             registerServices(
-                lazy { anrModule.anrService }
+                lazy { anrService }
             )
             registerService(lazy { logModule.attachmentService })
             registerService(lazy { logModule.logService })
@@ -82,7 +82,7 @@ internal fun ModuleGraph.loadInstrumentation() {
     val instrumentationProviders = ServiceLoader.load(InstrumentationProvider::class.java)
     registry.loadInstrumentations(instrumentationProviders, instrumentationModule.instrumentationArgs)
 
-    anrModule.anrService?.startAnrCapture()
+    anrService?.startAnrCapture()
 
     featureModule.lastRunCrashVerifier.readAndCleanMarkerAsync(
         workerThreadModule.backgroundWorker(Worker.Background.IoRegWorker)
@@ -96,7 +96,7 @@ internal fun ModuleGraph.postLoadInstrumentation() {
     // setup crash teardown handlers
     val registry = instrumentationModule.instrumentationRegistry
     registry.findByType(JvmCrashDataSource::class)?.apply {
-        anrModule.anrService?.let(::addCrashTeardownHandler)
+        anrService?.let(::addCrashTeardownHandler)
         addCrashTeardownHandler(logModule.logOrchestrator)
         addCrashTeardownHandler(sessionOrchestrationModule.sessionOrchestrator)
         addCrashTeardownHandler(featureModule.crashMarker)

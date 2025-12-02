@@ -110,7 +110,7 @@ internal class ModuleInitBootstrapperTest {
 
         val handlers = dataSource.handlers
         val expected = listOf(
-            moduleInitBootstrapper.anrModule.anrService,
+            moduleInitBootstrapper.anrService,
             moduleInitBootstrapper.logModule.logOrchestrator,
             moduleInitBootstrapper.sessionOrchestrationModule.sessionOrchestrator,
             moduleInitBootstrapper.featureModule.crashMarker,

@@ -221,7 +221,7 @@ internal class AnrFeatureTest {
 
             if (!incomplete) {
                 // simulate the main thread becoming responsive again, ending the ANR interval
-                testRule.bootstrapper.anrModule.anrService?.simulateTargetThreadResponse()
+                testRule.bootstrapper.anrService?.simulateTargetThreadResponse()
             }
 
             // AnrService#getCapturedData() currently gets a Callable with a timeout, so we

@@ -5,6 +5,9 @@ import android.os.Handler
 import android.os.Looper
 import android.os.Message
 import io.embrace.android.embracesdk.internal.clock.Clock
+import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.ThreadBlockageEvent.BLOCKED
+import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.ThreadBlockageEvent.BLOCKED_INTERVAL
+import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.ThreadBlockageEvent.UNBLOCKED
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
@@ -45,11 +48,10 @@ class BlockedThreadDetector(
     private val state: ThreadMonitoringState,
     private val looper: Looper,
     private val logger: EmbLogger,
-    private val listener: BlockedThreadListener,
+    private val listener: ThreadBlockageListener,
     private val intervalMs: Long,
     private val blockedDurationThreshold: Int,
 ) {
-    private val targetThread = looper.thread
 
     private val targetThreadHandler: TargetThreadHandler = TargetThreadHandler(
         looper = looper,
@@ -134,7 +136,7 @@ class BlockedThreadDetector(
             // Application was not responding, but recovered
             // Invoke callbacks
             state.anrInProgress = false
-            listener.onThreadUnblocked(targetThread, timestamp)
+            listener.onThreadBlockageEvent(UNBLOCKED, timestamp)
         }
     }
 
@@ -149,13 +151,10 @@ class BlockedThreadDetector(
 
         if (!state.anrInProgress && isAnrDurationThresholdExceeded(timestamp)) {
             state.anrInProgress = true
-            listener.onThreadBlocked(targetThread, state.lastTargetThreadResponseMs)
+            listener.onThreadBlockageEvent(BLOCKED, state.lastTargetThreadResponseMs)
         }
         if (state.anrInProgress && shouldAttemptAnrSample(timestamp)) {
-            listener.onThreadBlockedInterval(
-                targetThread,
-                timestamp
-            )
+            listener.onThreadBlockageEvent(BLOCKED_INTERVAL, timestamp)
             state.lastSampleAttemptMs = clock.now()
         }
         state.lastMonitorThreadResponseMs = clock.now()

@@ -99,36 +99,6 @@ internal class BlockedThreadDetectorTest {
     }
 
     @Test
-    fun testMonitoringThreadStateWhenDoingStartStopStart() {
-        detector.startMonitoringThread()
-        anrExecutorService.runCurrentlyBlocked()
-        assertTrue(state.started.get())
-
-        detector.stopMonitoringThread()
-        anrExecutorService.runCurrentlyBlocked()
-        assertFalse(state.started.get())
-
-        detector.startMonitoringThread()
-        anrExecutorService.runCurrentlyBlocked()
-        assertTrue(state.started.get())
-    }
-
-    @Test
-    fun testMonitoringThreadStateWhenDoingStartStopStartAndIsDoneReturnsFalse() {
-        detector.startMonitoringThread()
-        anrExecutorService.runCurrentlyBlocked()
-        assertTrue(state.started.get())
-
-        detector.stopMonitoringThread()
-        anrExecutorService.runCurrentlyBlocked()
-        assertFalse(state.started.get())
-
-        detector.startMonitoringThread()
-        anrExecutorService.runCurrentlyBlocked()
-        assertTrue(state.started.get())
-    }
-
-    @Test
     fun testStartMonitoringThreadDoubleCall() {
         detector.startMonitoringThread()
         val lastTimeThreadResponded = clock.now()

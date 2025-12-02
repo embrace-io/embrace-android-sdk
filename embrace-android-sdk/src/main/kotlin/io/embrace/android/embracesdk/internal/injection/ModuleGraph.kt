@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.injection
 
-import io.embrace.android.embracesdk.internal.instrumentation.anr.AnrModule
+import io.embrace.android.embracesdk.internal.instrumentation.anr.AnrService
 import io.embrace.android.embracesdk.internal.instrumentation.startup.DataCaptureServiceModule
 
 /**
@@ -16,7 +16,7 @@ internal interface ModuleGraph {
     val essentialServiceModule: EssentialServiceModule
     val dataCaptureServiceModule: DataCaptureServiceModule
     val deliveryModule: DeliveryModule
-    val anrModule: AnrModule
+    val anrService: AnrService?
     val logModule: LogModule
     val instrumentationModule: InstrumentationModule
     val featureModule: FeatureModule

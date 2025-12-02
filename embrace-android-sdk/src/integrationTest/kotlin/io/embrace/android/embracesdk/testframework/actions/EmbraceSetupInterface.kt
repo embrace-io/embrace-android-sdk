@@ -11,7 +11,6 @@ import io.embrace.android.embracesdk.fakes.FakeNetworkConnectivityService
 import io.embrace.android.embracesdk.fakes.FakePayloadStorageService
 import io.embrace.android.embracesdk.fakes.FakeSharedObjectLoader
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
-import io.embrace.android.embracesdk.fakes.injection.FakeAnrModule
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
@@ -33,7 +32,7 @@ import io.embrace.android.embracesdk.internal.injection.InstrumentationModuleImp
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.injection.WorkerThreadModule
 import io.embrace.android.embracesdk.internal.injection.WorkerThreadModuleImpl
-import io.embrace.android.embracesdk.internal.instrumentation.anr.AnrModuleImpl
+import io.embrace.android.embracesdk.internal.instrumentation.anr.createAnrService
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.jniDelegateTestOverride
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.sharedObjectLoaderTestOverride
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
@@ -133,11 +132,11 @@ internal class EmbraceSetupInterface(
                 deliveryTracer = deliveryTracer
             )
         },
-        anrModuleSupplier = { instrumentationModule ->
+        anrServiceSupplier = { args ->
             if (anrMonitoringThread != null) {
-                AnrModuleImpl(instrumentationModule)
+                createAnrService(args)
             } else {
-                FakeAnrModule()
+                null
             }
         },
         instrumentationModuleSupplier = {

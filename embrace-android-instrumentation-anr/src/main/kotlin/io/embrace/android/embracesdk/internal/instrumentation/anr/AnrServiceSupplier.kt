@@ -6,29 +6,21 @@ import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.Bloc
 import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.ThreadMonitoringState
 import io.embrace.android.embracesdk.internal.worker.Worker
 
-class AnrModuleImpl(args: InstrumentationArgs) : AnrModule {
+/**
+ * Function that returns an instance of [AnrService].
+ */
+typealias AnrServiceSupplier = (args: InstrumentationArgs) -> AnrService?
 
-    private val anrMonitorWorker by lazy { args.backgroundWorker(Worker.Background.AnrWatchdogWorker) }
-
-    override val anrService: AnrService? by lazy {
-        if (args.configService.autoDataCaptureBehavior.isAnrCaptureEnabled()) {
-            EmbraceAnrService(
-                args = args,
-                blockedThreadDetector = blockedThreadDetector,
-                anrMonitorWorker = anrMonitorWorker,
-                state = state,
-                stacktraceSampler = stacktraceSampler,
-            )
-        } else {
-            null
-        }
+fun createAnrService(args: InstrumentationArgs): AnrService? {
+    if (!args.configService.autoDataCaptureBehavior.isAnrCaptureEnabled()) {
+        return null
     }
 
-    private val looper by lazy { Looper.getMainLooper() }
+    val anrMonitorWorker by lazy { args.backgroundWorker(Worker.Background.AnrWatchdogWorker) }
+    val looper by lazy { Looper.getMainLooper() }
+    val state by lazy { ThreadMonitoringState(args.clock) }
 
-    private val state by lazy { ThreadMonitoringState(args.clock) }
-
-    private val stacktraceSampler by lazy {
+    val stacktraceSampler by lazy {
         AnrStacktraceSampler(
             clock = args.clock,
             targetThread = looper.thread,
@@ -38,8 +30,7 @@ class AnrModuleImpl(args: InstrumentationArgs) : AnrModule {
             stacktraceFrameLimit = args.configService.anrBehavior.getStacktraceFrameLimit(),
         )
     }
-
-    private val blockedThreadDetector by lazy {
+    val blockedThreadDetector by lazy {
         BlockedThreadDetector(
             anrMonitorWorker = anrMonitorWorker,
             clock = args.clock,
@@ -51,4 +42,11 @@ class AnrModuleImpl(args: InstrumentationArgs) : AnrModule {
             listener = stacktraceSampler,
         )
     }
+    return EmbraceAnrService(
+        args = args,
+        blockedThreadDetector = blockedThreadDetector,
+        anrMonitorWorker = anrMonitorWorker,
+        state = state,
+        stacktraceSampler = stacktraceSampler,
+    )
 }

@@ -2,10 +2,10 @@ package io.embrace.android.embracesdk.internal.instrumentation.anr.detection
 
 import android.os.Looper
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
-import io.embrace.android.embracesdk.fakes.FakeBlockedThreadListener
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
+import io.embrace.android.embracesdk.fakes.FakeThreadBlockageListener
 import io.embrace.android.embracesdk.fakes.createAnrBehavior
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.config.remote.AnrRemoteConfig
@@ -28,7 +28,7 @@ internal class BlockedThreadDetectorTest {
     private lateinit var detector: BlockedThreadDetector
     private lateinit var configService: ConfigService
     private lateinit var clock: FakeClock
-    private lateinit var listener: FakeBlockedThreadListener
+    private lateinit var listener: FakeThreadBlockageListener
     private lateinit var state: ThreadMonitoringState
     private lateinit var anrMonitorThread: AtomicReference<Thread>
     private lateinit var anrExecutorService: BlockingScheduledExecutorService
@@ -48,7 +48,7 @@ internal class BlockedThreadDetectorTest {
             every { thread } returns Thread.currentThread()
         }
         state = ThreadMonitoringState(clock)
-        listener = FakeBlockedThreadListener()
+        listener = FakeThreadBlockageListener()
         detector = BlockedThreadDetector(
             anrMonitorWorker = BackgroundWorker(anrExecutorService),
             clock = clock,

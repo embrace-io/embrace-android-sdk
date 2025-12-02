@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.instrumentation.anr.detection
 
 import android.os.Looper
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
+import io.embrace.android.embracesdk.fakes.FakeBlockedThreadListener
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
@@ -13,13 +14,12 @@ import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.verify
+import java.util.concurrent.atomic.AtomicReference
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import java.util.concurrent.atomic.AtomicReference
 
 internal class LivenessCheckSchedulerTest {
 
@@ -30,7 +30,6 @@ internal class LivenessCheckSchedulerTest {
     private lateinit var logger: EmbLogger
     private lateinit var looper: Looper
     private lateinit var fakeClock: FakeClock
-    private lateinit var fakeTargetThreadHandler: TargetThreadHandler
     private lateinit var state: ThreadMonitoringState
     private lateinit var detector: BlockedThreadDetector
     private lateinit var cfg: AnrRemoteConfig
@@ -53,18 +52,15 @@ internal class LivenessCheckSchedulerTest {
             state = state,
             targetThread = Thread.currentThread(),
             blockedDurationThreshold = configService.anrBehavior.getMinDuration(),
-            samplingIntervalMs = configService.anrBehavior.getSamplingIntervalMs()
+            samplingIntervalMs = configService.anrBehavior.getSamplingIntervalMs(),
+            listener = FakeBlockedThreadListener(),
         )
-        fakeTargetThreadHandler = mockk(relaxUnitFun = true) {
-            every { sendMessage(any()) } returns true
-        }
-        every { fakeTargetThreadHandler.hasMessages(any()) } returns false
 
         scheduler = LivenessCheckScheduler(
             BackgroundWorker(anrExecutorService),
             fakeClock,
             state,
-            fakeTargetThreadHandler,
+            looper,
             detector,
             configService.anrBehavior.getSamplingIntervalMs(),
             logger
@@ -113,30 +109,6 @@ internal class LivenessCheckSchedulerTest {
         scheduler.startMonitoringThread()
         anrExecutorService.runCurrentlyBlocked()
         assertEquals(lastTimeThreadResponded, state.lastMonitorThreadResponseMs)
-    }
-
-    @Test
-    fun testExecuteHealthCheckSameInterval() {
-        every { fakeTargetThreadHandler.hasMessages(any()) } returns false
-        scheduler.checkHeartbeat()
-
-        // verify target thread handler called with scheduling
-        verify(exactly = 1) { fakeTargetThreadHandler.sendMessage(any()) }
-
-        // verify heartbeat check
-        assertEquals(160982340900, state.lastMonitorThreadResponseMs)
-    }
-
-    @Test
-    fun testExecuteHealthCheckPendingMessage() {
-        every { fakeTargetThreadHandler.hasMessages(any()) } returns true
-        scheduler.checkHeartbeat()
-
-        // verify target thread handler called with scheduling
-        verify(exactly = 0) { fakeTargetThreadHandler.sendMessage(any()) }
-
-        // verify heartbeat check
-        assertEquals(160982340900, state.lastMonitorThreadResponseMs)
     }
 
     @Test

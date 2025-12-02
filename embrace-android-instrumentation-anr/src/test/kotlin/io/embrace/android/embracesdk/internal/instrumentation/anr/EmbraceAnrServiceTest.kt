@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.instrumentation.anr
 
 import io.embrace.android.embracesdk.concurrency.SingleThreadTestScheduledExecutor
-import io.embrace.android.embracesdk.fakes.FakeBlockedThreadListener
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.internal.instrumentation.anr.payload.AnrInterval
 import io.embrace.android.embracesdk.internal.instrumentation.anr.payload.AnrSample
@@ -54,21 +53,6 @@ internal class EmbraceAnrServiceTest {
             }.get(1L, TimeUnit.SECONDS)
             // verify the config service was changed from the bootstrapped early version
             assertNotSame(this.fakeConfigService, configService)
-        }
-    }
-
-    @Test
-    fun testListener() {
-        with(rule) {
-            val listener = FakeBlockedThreadListener()
-            anrService.addBlockedThreadListener(listener)
-
-            // Test that the listener actually gets notified when thread blocking events occur
-            anrService.onThreadBlocked(currentThread(), 1000L)
-            assertEquals(1, listener.blockedCount)
-
-            anrService.onThreadUnblocked(currentThread(), 2000L)
-            assertEquals(1, listener.unblockedCount)
         }
     }
 

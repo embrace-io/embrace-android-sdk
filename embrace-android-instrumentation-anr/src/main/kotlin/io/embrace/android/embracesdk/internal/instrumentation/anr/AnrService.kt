@@ -19,9 +19,4 @@ interface AnrService :
      * Initializes capture of ANRs
      */
     fun startAnrCapture()
-
-    /**
-     * Adds a listener which is invoked when the thread becomes blocked/unblocked.
-     */
-    fun addBlockedThreadListener(listener: BlockedThreadListener)
 }

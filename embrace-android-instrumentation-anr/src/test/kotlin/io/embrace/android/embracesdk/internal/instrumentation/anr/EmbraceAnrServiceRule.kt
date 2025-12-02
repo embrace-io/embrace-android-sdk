@@ -9,14 +9,14 @@ import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.fakes.behavior.FakeAnrBehavior
 import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.BlockedThreadDetector
-import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.LivenessCheckScheduler
 import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.ThreadMonitoringState
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
+import io.mockk.every
 import io.mockk.mockk
+import org.junit.rules.ExternalResource
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.atomic.AtomicReference
-import org.junit.rules.ExternalResource
 
 /**
  * A [org.junit.Rule] that creates an [EmbraceAnrService] suitable for use in tests
@@ -31,7 +31,6 @@ internal class EmbraceAnrServiceRule<T : ScheduledExecutorService>(
     lateinit var fakeConfigService: FakeConfigService
     lateinit var fakeAppStateTracker: FakeAppStateTracker
     lateinit var anrService: EmbraceAnrService
-    lateinit var livenessCheckScheduler: LivenessCheckScheduler
     lateinit var state: ThreadMonitoringState
     lateinit var blockedThreadDetector: BlockedThreadDetector
     lateinit var anrBehavior: FakeAnrBehavior
@@ -44,7 +43,9 @@ internal class EmbraceAnrServiceRule<T : ScheduledExecutorService>(
 
     override fun before() {
         clock.setCurrentTime(0)
-        looper = mockk(relaxed = true)
+        looper = mockk(relaxed = true) {
+            every { thread } returns Thread.currentThread()
+        }
         anrBehavior = FakeAnrBehavior()
         anrMonitorThread = AtomicReference(Thread.currentThread())
         fakeConfigService = FakeConfigService(anrBehavior = anrBehavior)
@@ -61,21 +62,14 @@ internal class EmbraceAnrServiceRule<T : ScheduledExecutorService>(
             stacktraceFrameLimit = fakeConfigService.anrBehavior.getStacktraceFrameLimit(),
         )
         blockedThreadDetector = BlockedThreadDetector(
-            clock = clock,
-            state = state,
-            targetThread = Thread.currentThread(),
-            blockedDurationThreshold = fakeConfigService.anrBehavior.getMinDuration(),
-            samplingIntervalMs = fakeConfigService.anrBehavior.getSamplingIntervalMs(),
-            listener = stacktraceSampler,
-        )
-        livenessCheckScheduler = LivenessCheckScheduler(
             anrMonitorWorker = worker,
             clock = clock,
             state = state,
             looper = looper,
-            blockedThreadDetector = blockedThreadDetector,
-            logger = logger,
+            blockedDurationThreshold = fakeConfigService.anrBehavior.getMinDuration(),
             intervalMs = fakeConfigService.anrBehavior.getSamplingIntervalMs(),
+            listener = stacktraceSampler,
+            logger = logger,
         )
         args = FakeInstrumentationArgs(
             mockk(),
@@ -86,7 +80,7 @@ internal class EmbraceAnrServiceRule<T : ScheduledExecutorService>(
         )
         anrService = EmbraceAnrService(
             args = args,
-            livenessCheckScheduler = livenessCheckScheduler,
+            blockedThreadDetector = blockedThreadDetector,
             anrMonitorWorker = worker,
             state = state,
             stacktraceSampler = stacktraceSampler,
@@ -99,7 +93,7 @@ internal class EmbraceAnrServiceRule<T : ScheduledExecutorService>(
     fun recreateService() {
         anrService = EmbraceAnrService(
             args = args,
-            livenessCheckScheduler = livenessCheckScheduler,
+            blockedThreadDetector = blockedThreadDetector,
             anrMonitorWorker = worker,
             state = state,
             stacktraceSampler = stacktraceSampler,

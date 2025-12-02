@@ -39,28 +39,30 @@ internal const val HEARTBEAT_REQUEST: Int = 34593
  * target thread & scheduling regular checks on a background thread. [BlockedThreadDetector]
  * is responsible for the business logic that checks whether a thread is blocked.
  */
-internal class LivenessCheckScheduler(
+class BlockedThreadDetector(
     private val anrMonitorWorker: BackgroundWorker,
     private val clock: Clock,
     private val state: ThreadMonitoringState,
     private val looper: Looper,
-    private val blockedThreadDetector: BlockedThreadDetector,
-    private val intervalMs: Long,
     private val logger: EmbLogger,
+    private val listener: BlockedThreadListener,
+    private val intervalMs: Long,
+    private val blockedDurationThreshold: Int,
 ) {
+    private val targetThread = looper.thread
 
     private val targetThreadHandler: TargetThreadHandler = TargetThreadHandler(
         looper = looper,
         anrMonitorWorker = anrMonitorWorker,
         clock = clock,
-        action = blockedThreadDetector::onTargetThreadResponse
+        action = ::onTargetThreadResponse
     )
     private var monitorFuture: ScheduledFuture<*>? = null
 
     /**
      * Starts monitoring the target thread for blockages.
      */
-    fun startMonitoringThread() {
+    internal fun startMonitoringThread() {
         if (!state.started.getAndSet(true)) {
             val runnable = Runnable(::checkHeartbeat)
             runCatching {
@@ -72,7 +74,7 @@ internal class LivenessCheckScheduler(
     /**
      * Stops monitoring the target thread.
      */
-    fun stopMonitoringThread() {
+    internal fun stopMonitoringThread() {
         if (state.started.get()) {
             if (stopHeartbeatTask()) {
                 state.started.set(false)
@@ -100,13 +102,13 @@ internal class LivenessCheckScheduler(
      * Called at regular intervals on the monitor thread. This function posts a message to the
      * main thread that is used to check whether it is live or not.
      */
-    fun checkHeartbeat() {
+    private fun checkHeartbeat() {
         try {
             val now = clock.now()
             if (!targetThreadHandler.hasMessages(HEARTBEAT_REQUEST)) {
                 sendHeartbeatMessage()
             }
-            blockedThreadDetector.updateAnrTracking(now)
+            updateAnrTracking(now)
         } catch (exc: Exception) {
             logger.trackInternalError(InternalErrorType.ANR_HEARTBEAT_CHECK_FAIL, exc)
         }
@@ -116,6 +118,92 @@ internal class LivenessCheckScheduler(
         val heartbeatMessage = Message.obtain(targetThreadHandler, HEARTBEAT_REQUEST)
         targetThreadHandler.sendMessage(heartbeatMessage)
     }
+
+    /**
+     * Called when the target thread process the message. This indicates that the target thread is
+     * responsive and (usually) means an ANR is about to end.
+     */
+    fun onTargetThreadResponse(timestamp: Long) {
+        state.lastTargetThreadResponseMs = timestamp
+
+        if (isDebuggerEnabled()) {
+            return
+        }
+
+        if (state.anrInProgress) {
+            // Application was not responding, but recovered
+            // Invoke callbacks
+            state.anrInProgress = false
+            listener.onThreadUnblocked(targetThread, timestamp)
+        }
+    }
+
+    /**
+     * Called at regular intervals by the monitor thread. We should check whether the
+     * target thread has been unresponsive & decide whether this means an ANR is happening.
+     */
+    internal fun updateAnrTracking(timestamp: Long) {
+        if (isDebuggerEnabled()) {
+            return
+        }
+
+        if (!state.anrInProgress && isAnrDurationThresholdExceeded(timestamp)) {
+            state.anrInProgress = true
+            listener.onThreadBlocked(targetThread, state.lastTargetThreadResponseMs)
+        }
+        if (state.anrInProgress && shouldAttemptAnrSample(timestamp)) {
+            listener.onThreadBlockedInterval(
+                targetThread,
+                timestamp
+            )
+            state.lastSampleAttemptMs = clock.now()
+        }
+        state.lastMonitorThreadResponseMs = clock.now()
+    }
+
+    /**
+     * Decides whether we should attempt an ANR sample or not. In ordinary conditions this
+     * function will always return true. If the thread has been unable run due to priority then
+     * several scheduled tasks may run in very quick succession of each other (e.g. 1ms apart).
+     *
+     * To avoid useless samples grouped within a few ms of each other, this function will return
+     * false & thus avoid sampling if less than half of the interval MS has passed.
+     */
+    internal fun shouldAttemptAnrSample(timestamp: Long): Boolean {
+        val lastMonitorThreadResponseMs = state.lastMonitorThreadResponseMs
+        val delta = timestamp - lastMonitorThreadResponseMs // time since last check
+        return delta > intervalMs * SAMPLE_BACKOFF_FACTOR
+    }
+
+    /**
+     * Checks whether the ANR duration threshold has been exceeded or not.
+     */
+    internal fun isAnrDurationThresholdExceeded(timestamp: Long): Boolean {
+        val monitorThreadLag = timestamp - state.lastMonitorThreadResponseMs
+        val targetThreadLag = timestamp - state.lastTargetThreadResponseMs
+
+        // If the last monitor thread check greatly exceeds the ANR threshold
+        // then it is very probable that the process has been cached or frozen. In this case
+        // we need to ignore the first heartbeat as the clock won't have been ticking
+        // while the process was cached and this could cause a false positive.
+        //
+        // Therefore we reset the last response time from the target + monitor threads to
+        // the current time so that we can start monitoring for ANRs again.
+        // https://developer.android.com/guide/components/activities/process-lifecycle
+        if (monitorThreadLag > MONITOR_THREAD_TIMEOUT_MS) {
+            val now = clock.now()
+            state.lastTargetThreadResponseMs = now
+            state.lastMonitorThreadResponseMs = now
+            return false
+        }
+        return targetThreadLag > blockedDurationThreshold
+    }
+
+    /**
+     * Returns true if the debugger is enabled - as we want to eliminate false positive ANRs.
+     */
+    private fun isDebuggerEnabled(): Boolean =
+        Debug.isDebuggerConnected() || Debug.waitingForDebugger()
 
     /**
      * A [Handler] that processes messages enqueued on the target [Looper]. If a message is not
@@ -144,106 +232,4 @@ internal class LivenessCheckScheduler(
             }
         }
     }
-}
-
-/**
- * Responsible for deciding whether a thread is blocked or not. The actual scheduling happens in
- * [LivenessCheckScheduler] whereas this class contains the business logic.
- *
- * All functions in this class MUST be called from the same thread.
- */
-class BlockedThreadDetector(
-    private val clock: Clock,
-    private val listener: BlockedThreadListener,
-    private val state: ThreadMonitoringState,
-    private val targetThread: Thread,
-    private val blockedDurationThreshold: Int,
-    private val samplingIntervalMs: Long,
-) {
-
-    /**
-     * Called when the target thread process the message. This indicates that the target thread is
-     * responsive and (usually) means an ANR is about to end.
-     */
-    fun onTargetThreadResponse(timestamp: Long) {
-        state.lastTargetThreadResponseMs = timestamp
-
-        if (isDebuggerEnabled()) {
-            return
-        }
-
-        if (state.anrInProgress) {
-            // Application was not responding, but recovered
-            // Invoke callbacks
-            state.anrInProgress = false
-            listener.onThreadUnblocked(targetThread, timestamp)
-        }
-    }
-
-    /**
-     * Called at regular intervals by the monitor thread. We should check whether the
-     * target thread has been unresponsive & decide whether this means an ANR is happening.
-     */
-    fun updateAnrTracking(timestamp: Long) {
-        if (isDebuggerEnabled()) {
-            return
-        }
-
-        if (!state.anrInProgress && isAnrDurationThresholdExceeded(timestamp)) {
-            state.anrInProgress = true
-            listener.onThreadBlocked(targetThread, state.lastTargetThreadResponseMs)
-        }
-        if (state.anrInProgress && shouldAttemptAnrSample(timestamp)) {
-            listener.onThreadBlockedInterval(
-                targetThread,
-                timestamp
-            )
-            state.lastSampleAttemptMs = clock.now()
-        }
-        state.lastMonitorThreadResponseMs = clock.now()
-    }
-
-    /**
-     * Decides whether we should attempt an ANR sample or not. In ordinary conditions this
-     * function will always return true. If the thread has been unable run due to priority then
-     * several scheduled tasks may run in very quick succession of each other (e.g. 1ms apart).
-     *
-     * To avoid useless samples grouped within a few ms of each other, this function will return
-     * false & thus avoid sampling if less than half of the interval MS has passed.
-     */
-    fun shouldAttemptAnrSample(timestamp: Long): Boolean {
-        val lastMonitorThreadResponseMs = state.lastMonitorThreadResponseMs
-        val delta = timestamp - lastMonitorThreadResponseMs // time since last check
-        return delta > samplingIntervalMs * SAMPLE_BACKOFF_FACTOR
-    }
-
-    /**
-     * Checks whether the ANR duration threshold has been exceeded or not.
-     */
-    fun isAnrDurationThresholdExceeded(timestamp: Long): Boolean {
-        val monitorThreadLag = timestamp - state.lastMonitorThreadResponseMs
-        val targetThreadLag = timestamp - state.lastTargetThreadResponseMs
-
-        // If the last monitor thread check greatly exceeds the ANR threshold
-        // then it is very probable that the process has been cached or frozen. In this case
-        // we need to ignore the first heartbeat as the clock won't have been ticking
-        // while the process was cached and this could cause a false positive.
-        //
-        // Therefore we reset the last response time from the target + monitor threads to
-        // the current time so that we can start monitoring for ANRs again.
-        // https://developer.android.com/guide/components/activities/process-lifecycle
-        if (monitorThreadLag > MONITOR_THREAD_TIMEOUT_MS) {
-            val now = clock.now()
-            state.lastTargetThreadResponseMs = now
-            state.lastMonitorThreadResponseMs = now
-            return false
-        }
-        return targetThreadLag > blockedDurationThreshold
-    }
-
-    /**
-     * Returns true if the debugger is enabled - as we want to eliminate false positive ANRs.
-     */
-    private fun isDebuggerEnabled(): Boolean =
-        Debug.isDebuggerConnected() || Debug.waitingForDebugger()
 }

@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.internal.instrumentation.anr
 import android.os.Looper
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.BlockedThreadDetector
-import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.LivenessCheckScheduler
 import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.ThreadMonitoringState
 import io.embrace.android.embracesdk.internal.worker.Worker
 
@@ -15,7 +14,7 @@ class AnrModuleImpl(args: InstrumentationArgs) : AnrModule {
         if (args.configService.autoDataCaptureBehavior.isAnrCaptureEnabled()) {
             EmbraceAnrService(
                 args = args,
-                livenessCheckScheduler = livenessCheckScheduler,
+                blockedThreadDetector = blockedThreadDetector,
                 anrMonitorWorker = anrMonitorWorker,
                 state = state,
                 stacktraceSampler = stacktraceSampler,
@@ -42,24 +41,14 @@ class AnrModuleImpl(args: InstrumentationArgs) : AnrModule {
 
     override val blockedThreadDetector by lazy {
         BlockedThreadDetector(
-            clock = args.clock,
-            state = state,
-            targetThread = looper.thread,
-            blockedDurationThreshold = args.configService.anrBehavior.getMinDuration(),
-            samplingIntervalMs = args.configService.anrBehavior.getSamplingIntervalMs(),
-            listener = stacktraceSampler,
-        )
-    }
-
-    private val livenessCheckScheduler by lazy {
-        LivenessCheckScheduler(
             anrMonitorWorker = anrMonitorWorker,
             clock = args.clock,
             state = state,
             looper = looper,
-            blockedThreadDetector = blockedThreadDetector,
-            intervalMs = args.configService.anrBehavior.getSamplingIntervalMs(),
             logger = args.logger,
+            intervalMs = args.configService.anrBehavior.getSamplingIntervalMs(),
+            blockedDurationThreshold = args.configService.anrBehavior.getMinDuration(),
+            listener = stacktraceSampler,
         )
     }
 }

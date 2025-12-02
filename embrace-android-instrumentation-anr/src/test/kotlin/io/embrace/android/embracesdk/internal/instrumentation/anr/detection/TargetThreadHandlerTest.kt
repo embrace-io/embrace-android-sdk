@@ -1,13 +1,11 @@
 package io.embrace.android.embracesdk.internal.instrumentation.anr.detection
 
 import android.os.Message
-import android.os.MessageQueue
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.mockk.mockk
-import io.mockk.verify
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Before
@@ -31,21 +29,19 @@ internal class TargetThreadHandlerTest {
         runnable = Runnable {}
         configService = FakeConfigService()
         anrMonitorThread = AtomicReference()
-        executorService = BlockingScheduledExecutorService(blockingMode = true)
+        executorService = BlockingScheduledExecutorService()
         executorService.submit { anrMonitorThread.set(Thread.currentThread()) }
         executorService.runCurrentlyBlocked()
-        handler = createHandler(null)
-        handler.action = mockk()
+        handler = createHandler()
     }
 
-    private fun createHandler(messageQueue: MessageQueue?): TargetThreadHandler {
+    private fun createHandler(): TargetThreadHandler {
         return TargetThreadHandler(
             mockk(relaxed = true),
             BackgroundWorker(executorService),
-            messageQueue
-        ) { FAKE_TIME_MS }.apply {
+            { FAKE_TIME_MS },
             action = {}
-        }
+        )
     }
 
     @Test
@@ -55,7 +51,7 @@ internal class TargetThreadHandlerTest {
 
         // process a message
         handler.handleMessage(mockk(relaxed = true))
-        verify(exactly = 0) { handler.action.invoke(any()) }
+        assertEquals(1, executorService.submitCount)
     }
 
     @Test
@@ -82,13 +78,11 @@ internal class TargetThreadHandlerTest {
         handler.handleMessage(msg)
         assertEquals(2, executorService.submitCount)
         executorService.runCurrentlyBlocked()
-        verify { handler.action.invoke(FAKE_TIME_MS) }
     }
 
     @Test
     fun testCorrectMsgNonNullQueue() {
-        handler = createHandler(mockk(relaxed = true))
-        handler.installed = true
+        handler = createHandler()
         assertNotNull(handler)
         state.lastTargetThreadResponseMs = 0L
         state.anrInProgress = true

@@ -4,21 +4,16 @@ import android.os.Debug
 import android.os.Handler
 import android.os.Looper
 import android.os.Message
-import android.os.MessageQueue
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
-import java.util.concurrent.ExecutorService
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 
 /**
  * The number of milliseconds which the monitor thread is allowed to timeout before we
- * assume that the process has been put into the cached state.
- *
- * All functions in this class MUST be called from the same thread - this is part of the
- * synchronization strategy that ensures ANR data is not corrupted.
+ * assume the process is in a cached state.
  */
 private const val MONITOR_THREAD_TIMEOUT_MS = 60000L
 
@@ -38,13 +33,11 @@ internal const val HEARTBEAT_REQUEST: Int = 34593
 
 /**
  * Responsible for scheduling 'heartbeat' checks on a background thread & posting messages on the
- * target thread.
- *
- * If the target thread does not respond within a given time, an ANR is assumed to have happened.
+ * target thread. If the target thread does not respond within a given time, an ANR is assumed.
  *
  * This class is responsible solely for the complicated logic of enqueuing a regular message on the
- * target thread & scheduling regular checks on a background thread. The [BlockedThreadDetector]
- * class is responsible for the actual business logic that checks whether a thread is blocked or not.
+ * target thread & scheduling regular checks on a background thread. [BlockedThreadDetector]
+ * is responsible for the business logic that checks whether a thread is blocked.
  */
 internal class LivenessCheckScheduler(
     private val anrMonitorWorker: BackgroundWorker,
@@ -56,24 +49,17 @@ internal class LivenessCheckScheduler(
     private val logger: EmbLogger,
 ) {
 
-    var listener: BlockedThreadListener?
-        set(value) {
-            blockedThreadDetector.listener = value
-        }
-        get() = blockedThreadDetector.listener
-
     private var monitorFuture: ScheduledFuture<*>? = null
-
-    init {
-        targetThreadHandler.action = blockedThreadDetector::onTargetThreadResponse
-    }
 
     /**
      * Starts monitoring the target thread for blockages.
      */
     fun startMonitoringThread() {
         if (!state.started.getAndSet(true)) {
-            scheduleRegularHeartbeats()
+            val runnable = Runnable(::checkHeartbeat)
+            runCatching {
+                monitorFuture = anrMonitorWorker.scheduleAtFixedRate(runnable, 0, intervalMs, TimeUnit.MILLISECONDS)
+            }
         }
     }
 
@@ -85,13 +71,6 @@ internal class LivenessCheckScheduler(
             if (stopHeartbeatTask()) {
                 state.started.set(false)
             }
-        }
-    }
-
-    private fun scheduleRegularHeartbeats() {
-        val runnable = Runnable(::checkHeartbeat)
-        runCatching {
-            monitorFuture = anrMonitorWorker.scheduleAtFixedRate(runnable, 0, intervalMs, TimeUnit.MILLISECONDS)
         }
     }
 
@@ -136,49 +115,27 @@ internal class LivenessCheckScheduler(
 /**
  * A [Handler] that processes messages enqueued on the target [Looper]. If a message is not
  * processed by this class in a timely manner then it indicates the target thread is blocked
- * with too much work.
- *
- * When this class processes the message it submits the [action] for execution on the supplied
- * [ExecutorService].
- *
- * Basically speaking: if [handleMessage] takes a long time, the monitor thread assumes there is
- * an ANR after a certain time threshold. Once [handleMessage] is invoked, the monitor thread
- * knows for sure that the target thread is responsive, so resets the timer for any ANRs.
+ * with too much work. Once this class has processed the message, the ANR is marked as finished.
  */
 internal class TargetThreadHandler(
     looper: Looper,
     private val anrMonitorWorker: BackgroundWorker,
-    private val messageQueue: MessageQueue? = LooperCompat.getMessageQueue(looper),
     private val clock: Clock,
+    private val action: (time: Long) -> Unit,
 ) : Handler(looper) {
-
-    lateinit var action: (time: Long) -> Unit
-
-    @Volatile
-    var installed: Boolean = false
-
-    fun onIdleThread(): Boolean {
-        onMainThreadUnblocked()
-        return true
-    }
 
     override fun handleMessage(msg: Message) {
         runCatching {
             if (msg.what == HEARTBEAT_REQUEST) {
-                // We couldn't obtain the target thread message queue. This should not happen,
-                // but if it does then we just log an internal error & consider the ANR ended at
-                // this point.
-                if (messageQueue == null || !installed) {
-                    onMainThreadUnblocked()
-                }
+                onIdleThread()
             }
         }
     }
 
-    private fun onMainThreadUnblocked() {
+    fun onIdleThread() {
         val timestamp = clock.now()
         anrMonitorWorker.submit {
-            action.invoke(timestamp)
+            action(timestamp)
         }
     }
 }
@@ -186,6 +143,8 @@ internal class TargetThreadHandler(
 /**
  * Responsible for deciding whether a thread is blocked or not. The actual scheduling happens in
  * [LivenessCheckScheduler] whereas this class contains the business logic.
+ *
+ * All functions in this class MUST be called from the same thread.
  */
 class BlockedThreadDetector(
     private val clock: Clock,
@@ -199,9 +158,6 @@ class BlockedThreadDetector(
     /**
      * Called when the target thread process the message. This indicates that the target thread is
      * responsive and (usually) means an ANR is about to end.
-     *
-     * All functions in this class MUST be called from the same thread - this is part of the
-     * synchronization strategy that ensures ANR data is not corrupted.
      */
     fun onTargetThreadResponse(timestamp: Long) {
         state.lastTargetThreadResponseMs = timestamp
@@ -221,9 +177,6 @@ class BlockedThreadDetector(
     /**
      * Called at regular intervals by the monitor thread. We should check whether the
      * target thread has been unresponsive & decide whether this means an ANR is happening.
-     *
-     * All functions in this class MUST be called from the same thread - this is part of the
-     * synchronization strategy that ensures ANR data is not corrupted.
      */
     fun updateAnrTracking(timestamp: Long) {
         if (isDebuggerEnabled()) {
@@ -260,10 +213,7 @@ class BlockedThreadDetector(
 
     /**
      * Checks whether the ANR duration threshold has been exceeded or not.
-     *
-     * This defaults to the main thread not having processed a message within 1s.
      */
-
     fun isAnrDurationThresholdExceeded(timestamp: Long): Boolean {
         val monitorThreadLag = timestamp - state.lastMonitorThreadResponseMs
         val targetThreadLag = timestamp - state.lastTargetThreadResponseMs

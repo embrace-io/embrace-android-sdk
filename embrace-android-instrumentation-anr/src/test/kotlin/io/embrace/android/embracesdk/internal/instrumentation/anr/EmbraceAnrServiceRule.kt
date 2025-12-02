@@ -56,17 +56,18 @@ internal class EmbraceAnrServiceRule<T : ScheduledExecutorService>(
         anrExecutorService = scheduledExecutorSupplier.invoke()
         state = ThreadMonitoringState(clock)
         worker = BackgroundWorker(anrExecutorService)
-        targetThreadHandler = TargetThreadHandler(
-            looper = looper,
-            anrMonitorWorker = worker,
-            clock = clock
-        )
         blockedThreadDetector = BlockedThreadDetector(
             clock = clock,
             state = state,
             targetThread = Thread.currentThread(),
             blockedDurationThreshold = fakeConfigService.anrBehavior.getMinDuration(),
             samplingIntervalMs = fakeConfigService.anrBehavior.getSamplingIntervalMs()
+        )
+        targetThreadHandler = TargetThreadHandler(
+            looper = looper,
+            anrMonitorWorker = worker,
+            clock = clock,
+            action = blockedThreadDetector::onTargetThreadResponse
         )
         livenessCheckScheduler = LivenessCheckScheduler(
             anrMonitorWorker = worker,

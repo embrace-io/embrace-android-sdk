@@ -4,6 +4,7 @@ import android.os.Debug
 import android.os.Handler
 import android.os.Looper
 import android.os.Message
+import android.os.Message.obtain
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.ThreadBlockageEvent.BLOCKED
 import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.ThreadBlockageEvent.BLOCKED_INTERVAL
@@ -13,26 +14,7 @@ import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
-
-/**
- * The number of milliseconds which the monitor thread is allowed to timeout before we
- * assume the process is in a cached state.
- */
-private const val MONITOR_THREAD_TIMEOUT_MS = 60000L
-
-/**
- * The % of a regular interval that must have elapsed for us to consider taking another sample.
- *
- * This helps avoid two scenarios: performing too much work and contributing to ANRs, and
- * taking many samples within a few ms of each other (when the monitor thread has not been
- * scheduled enough CPU time).
- */
-private const val SAMPLE_BACKOFF_FACTOR = 0.5
-
-/**
- * Unique ID for Handler message (arbitrary number).
- */
-internal const val HEARTBEAT_REQUEST: Int = 34593
+import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * Responsible for scheduling 'heartbeat' checks on a background thread & posting messages on the
@@ -59,13 +41,14 @@ internal class BlockedThreadDetector(
         clock = clock,
         action = ::onTargetThreadResponse
     )
+    private val started: AtomicBoolean = AtomicBoolean(false)
     private var monitorFuture: ScheduledFuture<*>? = null
 
     /**
      * Starts monitoring the target thread for blockages.
      */
     internal fun startMonitoringThread() {
-        if (!state.started.getAndSet(true)) {
+        if (!started.getAndSet(true)) {
             val runnable = Runnable(::checkHeartbeat)
             runCatching {
                 monitorFuture = anrMonitorWorker.scheduleAtFixedRate(runnable, 0, intervalMs, TimeUnit.MILLISECONDS)
@@ -77,27 +60,13 @@ internal class BlockedThreadDetector(
      * Stops monitoring the target thread.
      */
     internal fun stopMonitoringThread() {
-        if (state.started.get()) {
-            if (stopHeartbeatTask()) {
-                state.started.set(false)
+        if (started.getAndSet(false)) {
+            monitorFuture?.let { monitorTask ->
+                if (monitorTask.cancel(false)) {
+                    monitorFuture = null
+                }
             }
         }
-    }
-
-    private fun stopHeartbeatTask(): Boolean {
-        monitorFuture?.let { monitorTask ->
-            if (monitorTask.cancel(false)) {
-                monitorFuture = null
-                return true
-            }
-        }
-        // There is no expected situation where this cancel should fail because monitorFuture should never be null or canceled when
-        // we get here, and if this is running, the heartbeat task won't be. If for some reason it fails, log an error.
-        val message =
-            "Scheduled heartbeat task could not be stopped." + if (monitorFuture == null) "Task is null." else ""
-        val exc = IllegalStateException(message)
-        logger.trackInternalError(InternalErrorType.ANR_HEARTBEAT_STOP_FAIL, exc)
-        return false
     }
 
     /**
@@ -108,17 +77,13 @@ internal class BlockedThreadDetector(
         try {
             val now = clock.now()
             if (!targetThreadHandler.hasMessages(HEARTBEAT_REQUEST)) {
-                sendHeartbeatMessage()
+                val heartbeatMessage = obtain(targetThreadHandler, HEARTBEAT_REQUEST)
+                targetThreadHandler.sendMessage(heartbeatMessage)
             }
             updateAnrTracking(now)
         } catch (exc: Exception) {
             logger.trackInternalError(InternalErrorType.ANR_HEARTBEAT_CHECK_FAIL, exc)
         }
-    }
-
-    private fun sendHeartbeatMessage() {
-        val heartbeatMessage = Message.obtain(targetThreadHandler, HEARTBEAT_REQUEST)
-        targetThreadHandler.sendMessage(heartbeatMessage)
     }
 
     /**
@@ -230,5 +195,28 @@ internal class BlockedThreadDetector(
                 action(timestamp)
             }
         }
+    }
+
+    private companion object {
+
+        /**
+         * The number of milliseconds which the monitor thread is allowed to timeout before we
+         * assume the process is in a cached state.
+         */
+        const val MONITOR_THREAD_TIMEOUT_MS = 60000L
+
+        /**
+         * The % of a regular interval that must have elapsed for us to consider taking another sample.
+         *
+         * This helps avoid two scenarios: performing too much work and contributing to ANRs, and
+         * taking many samples within a few ms of each other (when the monitor thread has not been
+         * scheduled enough CPU time).
+         */
+        const val SAMPLE_BACKOFF_FACTOR = 0.5
+
+        /**
+         * Unique ID for Handler message (arbitrary number).
+         */
+        const val HEARTBEAT_REQUEST: Int = 34593
     }
 }

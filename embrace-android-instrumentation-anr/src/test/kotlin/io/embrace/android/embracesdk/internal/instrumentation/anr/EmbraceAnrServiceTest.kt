@@ -106,7 +106,7 @@ internal class EmbraceAnrServiceTest {
     fun testGetIntervalsAnrInProgress() {
         with(rule) {
             clock.setCurrentTime(500)
-            blockedThreadDetector.listener = anrService
+            blockedThreadDetector.listener = stacktraceSampler
             state.anrInProgress = true
 
             // assert only one anr interval was added from the anrInProgress flag
@@ -124,7 +124,7 @@ internal class EmbraceAnrServiceTest {
     fun testGetIntervalsCrashInProgress() {
         with(rule) {
             clock.setCurrentTime(500)
-            blockedThreadDetector.listener = anrService
+            blockedThreadDetector.listener = stacktraceSampler
             state.anrInProgress = true
 
             // assert only one anr interval was added from the anrInProgress flag
@@ -139,10 +139,10 @@ internal class EmbraceAnrServiceTest {
             // create an ANR service with one stacktrace
             clock.setCurrentTime(15020000L)
 
-            blockedThreadDetector.listener = anrService
+            blockedThreadDetector.listener = stacktraceSampler
             state.anrInProgress = true
             state.lastTargetThreadResponseMs = 15000000L
-            anrService.onThreadBlockedInterval(currentThread(), clock.now())
+            stacktraceSampler.onThreadBlockedInterval(currentThread(), clock.now())
             assertEquals(1, stacktraceSampler.size())
 
             // assert only one anr interval was added from the anrInProgress flag
@@ -240,9 +240,9 @@ internal class EmbraceAnrServiceTest {
                 val count = defaultLimit + extra
 
                 repeat(count) {
-                    anrService.onThreadBlockedInterval(currentThread(), clock.now())
+                    stacktraceSampler.onThreadBlockedInterval(currentThread(), clock.now())
                 }
-                anrService.onThreadUnblocked(currentThread(), clock.now())
+                stacktraceSampler.onThreadUnblocked(currentThread(), clock.now())
 
                 assertEquals(1, stacktraceSampler.anrIntervals.size)
 

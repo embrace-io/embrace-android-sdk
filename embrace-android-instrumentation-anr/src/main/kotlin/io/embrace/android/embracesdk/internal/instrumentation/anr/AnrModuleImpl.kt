@@ -16,7 +16,6 @@ class AnrModuleImpl(args: InstrumentationArgs) : AnrModule {
         if (args.configService.autoDataCaptureBehavior.isAnrCaptureEnabled()) {
             EmbraceAnrService(
                 args = args,
-                looper = looper,
                 livenessCheckScheduler = livenessCheckScheduler,
                 anrMonitorWorker = anrMonitorWorker,
                 state = state,

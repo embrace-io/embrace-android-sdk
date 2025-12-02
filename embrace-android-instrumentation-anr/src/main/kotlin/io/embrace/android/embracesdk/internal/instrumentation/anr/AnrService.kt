@@ -12,7 +12,6 @@ interface AnrService :
     MemoryCleanerListener,
     CrashTeardownHandler,
     AppStateListener,
-    BlockedThreadListener,
     OtelPayloadMapper {
 
     /**

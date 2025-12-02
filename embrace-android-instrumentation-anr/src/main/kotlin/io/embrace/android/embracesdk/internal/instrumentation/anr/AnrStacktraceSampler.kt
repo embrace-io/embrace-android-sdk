@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.instrumentation.anr
 
 import io.embrace.android.embracesdk.internal.clock.Clock
+import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.BlockedThreadListener
 import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.ThreadMonitoringState
 import io.embrace.android.embracesdk.internal.instrumentation.anr.payload.AnrInterval
 import io.embrace.android.embracesdk.internal.instrumentation.anr.payload.AnrSample

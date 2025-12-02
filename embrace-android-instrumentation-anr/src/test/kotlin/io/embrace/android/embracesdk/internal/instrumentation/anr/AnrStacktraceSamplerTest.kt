@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.instrumentation.anr
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.behavior.FakeAnrBehavior
 import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.ThreadBlockageEvent.BLOCKED
 import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.ThreadBlockageEvent.BLOCKED_INTERVAL
 import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.ThreadBlockageEvent.UNBLOCKED
@@ -14,6 +15,7 @@ import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 private const val BASELINE_MS = 16000000000
@@ -212,5 +214,33 @@ internal class AnrStacktraceSamplerTest {
         // verify maximum of 100 intervals were recorded
         val intervals = sampler.getAnrIntervals(state, clock)
         assertEquals(100, intervals.size)
+    }
+
+    @Test
+    fun `verify truncation of ANR stacktrace respects the config`() {
+        configService.anrBehavior = FakeAnrBehavior(frameLimit = 5)
+
+        val sampler = AnrStacktraceSampler(
+            clock,
+            thread,
+            worker,
+            configService.anrBehavior.getMaxAnrIntervalsPerSession(),
+            configService.anrBehavior.getMaxStacktracesPerInterval(),
+            configService.anrBehavior.getStacktraceFrameLimit(),
+        )
+
+        sampler.onThreadBlockageEvent(BLOCKED, clock.now())
+        sampler.onThreadBlockageEvent(BLOCKED_INTERVAL, clock.now())
+        clock.tick(5000)
+        sampler.onThreadBlockageEvent(UNBLOCKED, clock.now())
+        val intervals = sampler.getAnrIntervals(state, clock)
+        val interval = intervals.single()
+        interval.anrSampleList?.samples?.forEach { sample ->
+            sample.threads?.forEach { thread ->
+                val lines = checkNotNull(thread.lines)
+                assertEquals(5, lines.size)
+                assertTrue(thread.frameCount > lines.size)
+            }
+        }
     }
 }

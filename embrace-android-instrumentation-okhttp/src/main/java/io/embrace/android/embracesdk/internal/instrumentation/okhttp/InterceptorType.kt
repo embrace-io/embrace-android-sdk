@@ -13,7 +13,7 @@ internal enum class InterceptorType {
      * OkHttp network interceptors are added almost at the end of stack, they are closer to "the wire"
      * so they are not able to see network errors.
      *
-     * We use the [EmbraceCustomPathException] to capture the custom path added in the interceptor
+     * We use the [io.embrace.android.embracesdk.okhttp3.EmbraceCustomPathException] to capture the custom path added in the interceptor
      * chain process for client errors on requests to a generic URL like a GraphQL endpoint.
      */
     APPLICATION,

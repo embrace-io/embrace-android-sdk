@@ -12,6 +12,7 @@ import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkReq
 import io.embrace.android.embracesdk.internal.instrumentation.network.TraceparentGenerator
 import io.embrace.android.embracesdk.internal.instrumentation.network.getOverriddenURLString
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.okhttp3.EmbraceCustomPathException
 import okhttp3.Interceptor
 import okhttp3.Request
 import okhttp3.Response

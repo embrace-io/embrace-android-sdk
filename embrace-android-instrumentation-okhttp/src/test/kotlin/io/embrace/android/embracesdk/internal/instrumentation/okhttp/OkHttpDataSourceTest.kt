@@ -14,6 +14,7 @@ import io.embrace.android.embracesdk.internal.config.remote.NetworkCaptureRuleRe
 import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkCaptureDataSourceImpl
 import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkRequestDataSourceImpl
 import io.embrace.android.embracesdk.internal.utils.NetworkUtils.getValidTraceId
+import io.embrace.android.embracesdk.okhttp3.EmbraceCustomPathException
 import io.embrace.opentelemetry.kotlin.semconv.ErrorAttributes
 import io.embrace.opentelemetry.kotlin.semconv.ExceptionAttributes
 import io.embrace.opentelemetry.kotlin.semconv.HttpAttributes

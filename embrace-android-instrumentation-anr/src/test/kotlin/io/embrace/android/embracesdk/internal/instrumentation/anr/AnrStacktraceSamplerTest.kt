@@ -33,55 +33,31 @@ internal class AnrStacktraceSamplerTest {
     fun testLeastValuableInterval() {
         val sampler = AnrStacktraceSampler(
             clock,
+            state,
             thread,
             worker,
             configService.anrBehavior.getMaxAnrIntervalsPerSession(),
             configService.anrBehavior.getMaxStacktracesPerInterval(),
             configService.anrBehavior.getStacktraceFrameLimit(),
-        )
-        assertNull(sampler.findLeastValuableIntervalWithSamples())
-        val interval1 = ThreadBlockageInterval(
-            startTime = BASELINE_MS,
-            lastKnownTime = BASELINE_MS + 5000,
-            samples = emptyList()
-        )
-        val interval2 = ThreadBlockageInterval(
-            startTime = BASELINE_MS,
-            lastKnownTime = BASELINE_MS + 4000,
-            samples = emptyList()
-        )
-        val interval3 = ThreadBlockageInterval(
-            startTime = BASELINE_MS,
-            lastKnownTime = BASELINE_MS + 1000,
-            samples = emptyList()
-        )
-        val interval4 = ThreadBlockageInterval(
-            startTime = BASELINE_MS,
-            lastKnownTime = BASELINE_MS + 1000,
-            samples = emptyList()
-        )
-        val interval5 = ThreadBlockageInterval(
-            startTime = BASELINE_MS,
-            lastKnownTime = BASELINE_MS + 500,
-            code = ThreadBlockageInterval.CODE_SAMPLES_CLEARED
-        )
+        ).apply {
+            createThreadBlockageInterval(clock, 10000)
+            createThreadBlockageInterval(clock, 8000)
+            createThreadBlockageInterval(clock, 6000)
+            createThreadBlockageInterval(clock, 4000)
+            createThreadBlockageInterval(clock, 2000)
+            createThreadBlockageInterval(clock, 1500)
+            createThreadBlockageInterval(clock, 1200)
+        }
 
-        sampler.threadBlockageIntervals.add(interval1)
-        assertEquals(interval1, sampler.findLeastValuableIntervalWithSamples())
-
-        sampler.threadBlockageIntervals.add(interval2)
-        assertEquals(interval2, sampler.findLeastValuableIntervalWithSamples())
-
-        sampler.threadBlockageIntervals.add(interval3)
-        assertEquals(interval3, sampler.findLeastValuableIntervalWithSamples())
-
-        // most recent interval gets binned if duration is equal
-        sampler.threadBlockageIntervals.add(interval4)
-        assertEquals(interval3, sampler.findLeastValuableIntervalWithSamples())
-
-        // intervals without any samples are ignored
-        sampler.threadBlockageIntervals.add(interval5)
-        assertEquals(interval3, sampler.findLeastValuableIntervalWithSamples())
+        val intervals = sampler.getAnrIntervals()
+        assertEquals(
+            listOf(10000L, 8000L, 6000L, 4000L, 2000L),
+            intervals.filter { it.samples != null }.map { checkNotNull(it.endTime) - it.startTime }
+        )
+        assertEquals(
+            listOf(1500L, 1200L),
+            intervals.filter { it.samples == null }.map { checkNotNull(it.endTime) - it.startTime }
+        )
     }
 
     @Test
@@ -91,6 +67,7 @@ internal class AnrStacktraceSamplerTest {
         val intervalMs: Long = 100
         val sampler = AnrStacktraceSampler(
             clock,
+            state,
             thread,
             worker,
             configService.anrBehavior.getMaxAnrIntervalsPerSession(),
@@ -109,7 +86,7 @@ internal class AnrStacktraceSamplerTest {
         sampler.onThreadBlockageEvent(UNBLOCKED, clock.now())
 
         // verify one interval recorded
-        val intervals = sampler.getAnrIntervals(state, clock)
+        val intervals = sampler.getAnrIntervals()
         assertEquals(1, intervals.size)
 
         // verify basic metadata about the interval
@@ -146,6 +123,7 @@ internal class AnrStacktraceSamplerTest {
         val intervalMs: Long = 100
         val sampler = AnrStacktraceSampler(
             clock,
+            state,
             thread,
             worker,
             configService.anrBehavior.getMaxAnrIntervalsPerSession(),
@@ -165,7 +143,7 @@ internal class AnrStacktraceSamplerTest {
         }
 
         // verify 15 intervals were recorded
-        val intervals = sampler.getAnrIntervals(state, clock)
+        val intervals = sampler.getAnrIntervals()
         assertEquals(anrRepeatCount, intervals.size)
 
         // verify basic metadata about each interval
@@ -195,6 +173,7 @@ internal class AnrStacktraceSamplerTest {
         val intervalMs: Long = 100
         val sampler = AnrStacktraceSampler(
             clock,
+            state,
             thread,
             worker,
             configService.anrBehavior.getMaxAnrIntervalsPerSession(),
@@ -211,7 +190,7 @@ internal class AnrStacktraceSamplerTest {
         }
 
         // verify maximum of 100 intervals were recorded
-        val intervals = sampler.getAnrIntervals(state, clock)
+        val intervals = sampler.getAnrIntervals()
         assertEquals(100, intervals.size)
     }
 
@@ -221,6 +200,7 @@ internal class AnrStacktraceSamplerTest {
 
         val sampler = AnrStacktraceSampler(
             clock,
+            state,
             thread,
             worker,
             configService.anrBehavior.getMaxAnrIntervalsPerSession(),
@@ -232,7 +212,7 @@ internal class AnrStacktraceSamplerTest {
         sampler.onThreadBlockageEvent(BLOCKED_INTERVAL, clock.now())
         clock.tick(5000)
         sampler.onThreadBlockageEvent(UNBLOCKED, clock.now())
-        val intervals = sampler.getAnrIntervals(state, clock)
+        val intervals = sampler.getAnrIntervals()
         val interval = intervals.single()
         interval.samples?.forEach { sample ->
             sample.threads?.forEach { thread ->
@@ -241,5 +221,12 @@ internal class AnrStacktraceSamplerTest {
                 assertTrue(thread.frameCount > lines.size)
             }
         }
+    }
+
+    private fun AnrStacktraceSampler.createThreadBlockageInterval(clock: FakeClock, duration: Long) {
+        onThreadBlockageEvent(BLOCKED, clock.now())
+        onThreadBlockageEvent(BLOCKED_INTERVAL, clock.now())
+        clock.tick(duration)
+        onThreadBlockageEvent(UNBLOCKED, clock.now())
     }
 }

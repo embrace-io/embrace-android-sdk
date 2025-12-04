@@ -58,7 +58,7 @@ internal class AnrServiceImpl(
     internal fun getCapturedData(): List<ThreadBlockageInterval> {
         return try {
             val callable = Callable {
-                checkNotNull(stacktraceSampler.getAnrIntervals(state, clock)) {
+                checkNotNull(stacktraceSampler.getAnrIntervals()) {
                     "ANR samples to be cached is null"
                 }
             }

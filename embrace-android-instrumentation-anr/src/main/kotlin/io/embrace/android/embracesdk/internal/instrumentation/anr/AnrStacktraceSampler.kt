@@ -17,6 +17,7 @@ import java.util.concurrent.CopyOnWriteArrayList
  */
 internal class AnrStacktraceSampler(
     private val clock: Clock,
+    private val state: ThreadMonitoringState,
     private val targetThread: Thread,
     private val watchdogWorker: BackgroundWorker,
     private val maxIntervalsPerSession: Int,
@@ -24,13 +25,11 @@ internal class AnrStacktraceSampler(
     private val stacktraceFrameLimit: Int,
 ) : ThreadBlockageListener, MemoryCleanerListener {
 
-    val threadBlockageIntervals: CopyOnWriteArrayList<ThreadBlockageInterval> =
+    private val threadBlockageIntervals: CopyOnWriteArrayList<ThreadBlockageInterval> =
         CopyOnWriteArrayList<ThreadBlockageInterval>()
     private val samples = mutableListOf<ThreadBlockageSample>()
     private val currentStacktraceStates: MutableMap<Long, ThreadInfo> = HashMap()
     private var lastUnblockedMs: Long = 0
-
-    fun size(): Int = samples.size
 
     override fun onThreadBlockageEvent(
         event: ThreadBlockageEvent,
@@ -42,6 +41,37 @@ internal class AnrStacktraceSampler(
             ThreadBlockageEvent.UNBLOCKED -> onThreadUnblocked(timestamp)
         }
     }
+
+    /**
+     * Retrieves ANR intervals that match the given start/time windows.
+     */
+    fun getAnrIntervals(): List<ThreadBlockageInterval> {
+        synchronized(threadBlockageIntervals) {
+            val results = threadBlockageIntervals.toMutableList()
+
+            // add any in-progress ANRs
+            if (state.threadBlockageInProgress) {
+                val intervalEndTime = clock.now()
+                val responseMs = state.lastTargetThreadResponseMs
+                val threadBlockageInterval = ThreadBlockageInterval(
+                    responseMs,
+                    intervalEndTime,
+                    null,
+                    samples.toList()
+                )
+                results.add(threadBlockageInterval)
+            }
+            return results.map(ThreadBlockageInterval::deepCopy)
+        }
+    }
+
+    override fun cleanCollections() {
+        watchdogWorker.submit {
+            threadBlockageIntervals.removeAll { it.endTime != null }
+        }
+    }
+
+    private fun size(): Int = samples.size
 
     private fun onThreadBlocked(timestamp: Long) {
         clearStacktraceCache()
@@ -97,47 +127,15 @@ internal class AnrStacktraceSampler(
      * intervals with samples has been reached & the SDK needs to discard samples. We attempt
      * to pick the least valuable interval in this case.
      */
-    fun findLeastValuableIntervalWithSamples(): ThreadBlockageInterval? =
+    private fun findLeastValuableIntervalWithSamples(): ThreadBlockageInterval? =
         findIntervalsWithSamples().minByOrNull(ThreadBlockageInterval::duration)
 
-    override fun cleanCollections() {
-        watchdogWorker.submit {
-            threadBlockageIntervals.removeAll { it.endTime != null }
-        }
-    }
-
-    fun reachedAnrStacktraceCaptureLimit(): Boolean {
+    private fun reachedAnrStacktraceCaptureLimit(): Boolean {
         val count = findIntervalsWithSamples().size
         return count > maxIntervalsPerSession
     }
 
     private fun findIntervalsWithSamples() = threadBlockageIntervals.filter(ThreadBlockageInterval::hasSamples)
-
-    /**
-     * Retrieves ANR intervals that match the given start/time windows.
-     */
-    fun getAnrIntervals(
-        state: ThreadMonitoringState,
-        clock: Clock,
-    ): List<ThreadBlockageInterval> {
-        synchronized(threadBlockageIntervals) {
-            val results = threadBlockageIntervals.toMutableList()
-
-            // add any in-progress ANRs
-            if (state.threadBlockageInProgress) {
-                val intervalEndTime = clock.now()
-                val responseMs = state.lastTargetThreadResponseMs
-                val threadBlockageInterval = ThreadBlockageInterval(
-                    responseMs,
-                    intervalEndTime,
-                    null,
-                    samples.toList()
-                )
-                results.add(threadBlockageInterval)
-            }
-            return results.map(ThreadBlockageInterval::deepCopy)
-        }
-    }
 
     /**
      * Clears the stacktrace cache for all threads.

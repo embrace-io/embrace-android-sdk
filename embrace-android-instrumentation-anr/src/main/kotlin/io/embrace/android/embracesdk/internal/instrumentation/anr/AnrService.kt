@@ -18,4 +18,10 @@ interface AnrService :
      * Initializes capture of ANRs
      */
     fun startAnrCapture()
+
+    /**
+     * Test hook not intended for production use. This simulates the target thread responding to messages
+     * again (and therefore ending an ANR).
+     */
+    fun simulateTargetThreadResponse()
 }

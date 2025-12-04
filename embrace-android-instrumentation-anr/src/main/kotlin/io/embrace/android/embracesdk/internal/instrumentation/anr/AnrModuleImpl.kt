@@ -39,7 +39,7 @@ class AnrModuleImpl(args: InstrumentationArgs) : AnrModule {
         )
     }
 
-    override val blockedThreadDetector by lazy {
+    private val blockedThreadDetector by lazy {
         BlockedThreadDetector(
             anrMonitorWorker = anrMonitorWorker,
             clock = args.clock,

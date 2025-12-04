@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.instrumentation.anr
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.state.AppState
-import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.LivenessCheckScheduler
+import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.BlockedThreadDetector
 import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.ThreadMonitoringState
 import io.embrace.android.embracesdk.internal.instrumentation.anr.payload.AnrInterval
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
@@ -24,7 +24,7 @@ import kotlin.random.Random
  */
 internal class EmbraceAnrService(
     args: InstrumentationArgs,
-    private val livenessCheckScheduler: LivenessCheckScheduler,
+    private val blockedThreadDetector: BlockedThreadDetector,
     private val anrMonitorWorker: BackgroundWorker,
     private val state: ThreadMonitoringState,
     private val stacktraceSampler: AnrStacktraceSampler,
@@ -45,7 +45,7 @@ internal class EmbraceAnrService(
 
     override fun startAnrCapture() {
         this.anrMonitorWorker.submit {
-            livenessCheckScheduler.startMonitoringThread()
+            blockedThreadDetector.startMonitoringThread()
         }
     }
 
@@ -71,7 +71,7 @@ internal class EmbraceAnrService(
 
     override fun handleCrash(crashId: String) {
         this.anrMonitorWorker.submit {
-            livenessCheckScheduler.stopMonitoringThread()
+            blockedThreadDetector.stopMonitoringThread()
         }
     }
 
@@ -88,7 +88,7 @@ internal class EmbraceAnrService(
             // Cancel any pending delayed background check since we're now in foreground
             cancelDelayedBackgroundCheck()
             state.resetState()
-            livenessCheckScheduler.startMonitoringThread()
+            blockedThreadDetector.startMonitoringThread()
         }
     }
 
@@ -99,7 +99,7 @@ internal class EmbraceAnrService(
      */
     override fun onBackground() {
         this.anrMonitorWorker.submit {
-            livenessCheckScheduler.stopMonitoringThread()
+            blockedThreadDetector.stopMonitoringThread()
         }
     }
 
@@ -125,7 +125,7 @@ internal class EmbraceAnrService(
      */
     private fun stopMonitoringIfStillInBackground() {
         if (appStateTracker.getAppState() == AppState.BACKGROUND) {
-            livenessCheckScheduler.stopMonitoringThread()
+            blockedThreadDetector.stopMonitoringThread()
         }
         delayedBackgroundCheckTask = null
     }

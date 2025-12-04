@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.internal.instrumentation.anr
 import android.app.Application
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.fakes.FakeAppStateTracker
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
@@ -13,35 +12,31 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
-internal class AnrModuleImplTest {
+internal class AnrServiceSupplierTest {
 
     @Test
     fun testDefaultImplementations() {
         val application = ApplicationProvider.getApplicationContext<Application>()
-        val module = AnrModuleImpl(
+        val service = createAnrService(
             FakeInstrumentationArgs(
                 application,
                 configService = FakeConfigService()
             ),
-            FakeAppStateTracker()
         )
-        assertNotNull(module.anrService)
-        assertNotNull(module.anrOtelMapper)
+        assertNotNull(service)
     }
 
     @Test
     fun testBehaviorDisabled() {
         val application = ApplicationProvider.getApplicationContext<Application>()
-        val module = AnrModuleImpl(
+        val service = createAnrService(
             FakeInstrumentationArgs(
                 application,
                 configService = FakeConfigService(
                     autoDataCaptureBehavior = FakeAutoDataCaptureBehavior(anrServiceEnabled = false)
                 )
             ),
-            FakeAppStateTracker()
         )
-        assertNull(module.anrService)
-        assertNull(module.anrOtelMapper)
+        assertNull(service)
     }
 }

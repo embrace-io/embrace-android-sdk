@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.fakes
 import android.app.Application
 import android.content.Context
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
+import io.embrace.android.embracesdk.internal.arch.state.AppStateTracker
 import io.embrace.android.embracesdk.internal.envelope.CpuAbi
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.store.OrdinalStore
@@ -24,6 +25,7 @@ class FakeInstrumentationArgs(
     override val cpuAbi: CpuAbi = CpuAbi.ARM64_V8A,
     override val processIdentifier: String = "fake-process-id",
     override val symbols: Map<String, String>? = emptyMap(),
+    override val appStateTracker: AppStateTracker = FakeAppStateTracker(),
     val backgroundWorkerSupplier: (worker: Worker.Background) -> BackgroundWorker = { fakeBackgroundWorker() },
     val priorityWorkerSupplier: (worker: Worker.Priority) -> PriorityWorker<*> = { fakePriorityWorker<Any>() },
     val sessionIdSupplier: () -> String? = { null },

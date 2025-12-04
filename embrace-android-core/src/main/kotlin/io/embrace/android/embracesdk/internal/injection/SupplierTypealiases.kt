@@ -78,7 +78,7 @@ typealias PayloadSourceModuleSupplier = (
     essentialServiceModule: EssentialServiceModule,
     configModule: ConfigModule,
     otelModule: OpenTelemetryModule,
-    otelPayloadMapperProvider: Provider<OtelPayloadMapper?>,
+    otelPayloadMapper: OtelPayloadMapper?,
     deliveryModule: DeliveryModule,
 ) -> PayloadSourceModule
 

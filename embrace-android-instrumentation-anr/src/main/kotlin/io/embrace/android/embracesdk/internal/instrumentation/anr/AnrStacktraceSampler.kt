@@ -1,11 +1,14 @@
 package io.embrace.android.embracesdk.internal.instrumentation.anr
 
+import io.embrace.android.embracesdk.internal.arch.stacktrace.getThreadInfo
 import io.embrace.android.embracesdk.internal.clock.Clock
-import io.embrace.android.embracesdk.internal.config.ConfigService
+import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.ThreadBlockageEvent
+import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.ThreadBlockageListener
 import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.ThreadMonitoringState
 import io.embrace.android.embracesdk.internal.instrumentation.anr.payload.AnrInterval
 import io.embrace.android.embracesdk.internal.instrumentation.anr.payload.AnrSample
 import io.embrace.android.embracesdk.internal.instrumentation.anr.payload.AnrSampleList
+import io.embrace.android.embracesdk.internal.payload.ThreadInfo
 import io.embrace.android.embracesdk.internal.session.MemoryCleanerListener
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import java.util.concurrent.CopyOnWriteArrayList
@@ -14,38 +17,51 @@ import java.util.concurrent.CopyOnWriteArrayList
  * This class is responsible for tracking the state of JVM stacktraces sampled during an ANR.
  */
 internal class AnrStacktraceSampler(
-    private var configService: ConfigService,
     private val clock: Clock,
-    targetThread: Thread,
+    private val targetThread: Thread,
     private val anrMonitorWorker: BackgroundWorker,
-) : BlockedThreadListener, MemoryCleanerListener {
+    private val maxIntervalsPerSession: Int,
+    private val maxStacktracesPerInterval: Int,
+    private val stacktraceFrameLimit: Int,
+) : ThreadBlockageListener, MemoryCleanerListener {
 
     val anrIntervals: CopyOnWriteArrayList<AnrInterval> = CopyOnWriteArrayList<AnrInterval>()
     private val samples = mutableListOf<AnrSample>()
+    private val currentStacktraceStates: MutableMap<Long, ThreadInfo> = HashMap()
     private var lastUnblockedMs: Long = 0
-    private val threadInfoCollector = ThreadInfoCollector(targetThread)
 
     fun size(): Int = samples.size
 
-    override fun onThreadBlocked(thread: Thread, timestamp: Long) {
-        threadInfoCollector.clearStacktraceCache()
+    override fun onThreadBlockageEvent(
+        event: ThreadBlockageEvent,
+        timestamp: Long,
+    ) {
+        when (event) {
+            ThreadBlockageEvent.BLOCKED -> onThreadBlocked(timestamp)
+            ThreadBlockageEvent.BLOCKED_INTERVAL -> onThreadBlockedInterval(timestamp)
+            ThreadBlockageEvent.UNBLOCKED -> onThreadUnblocked(timestamp)
+        }
+    }
+
+    private fun onThreadBlocked(timestamp: Long) {
+        clearStacktraceCache()
         lastUnblockedMs = timestamp
     }
 
-    override fun onThreadBlockedInterval(thread: Thread, timestamp: Long) {
-        val limit = configService.anrBehavior.getMaxStacktracesPerInterval()
+    private fun onThreadBlockedInterval(timestamp: Long) {
+        val limit = maxStacktracesPerInterval
         val anrSample = if (size() >= limit) {
             AnrSample(timestamp, null, 0, AnrSample.CODE_SAMPLE_LIMIT_REACHED)
         } else {
             val start = clock.now()
-            val threads = threadInfoCollector.captureSample(configService)
+            val threads = captureSample()
             val sampleOverheadMs = clock.now() - start
             AnrSample(timestamp, threads, sampleOverheadMs)
         }
         samples.add(anrSample)
     }
 
-    override fun onThreadUnblocked(thread: Thread, timestamp: Long) {
+    private fun onThreadUnblocked(timestamp: Long) {
         // Finalize AnrInterval
         val responseMs = lastUnblockedMs
         val sanitizedSamples = samples.filter { it.timestamp in responseMs..timestamp }
@@ -74,7 +90,7 @@ internal class AnrStacktraceSampler(
         // reset state
         samples.clear()
         lastUnblockedMs = timestamp
-        threadInfoCollector.clearStacktraceCache()
+        clearStacktraceCache()
     }
 
     /**
@@ -82,7 +98,6 @@ internal class AnrStacktraceSampler(
      * intervals with samples has been reached & the SDK needs to discard samples. We attempt
      * to pick the least valuable interval in this case.
      */
-
     fun findLeastValuableIntervalWithSamples(): AnrInterval? =
         findIntervalsWithSamples().minByOrNull(AnrInterval::duration)
 
@@ -93,9 +108,8 @@ internal class AnrStacktraceSampler(
     }
 
     fun reachedAnrStacktraceCaptureLimit(): Boolean {
-        val limit = configService.anrBehavior.getMaxAnrIntervalsPerSession()
         val count = findIntervalsWithSamples().size
-        return count > limit
+        return count > maxIntervalsPerSession
     }
 
     private fun findIntervalsWithSamples() = anrIntervals.filter(AnrInterval::hasSamples)
@@ -126,6 +140,42 @@ internal class AnrStacktraceSampler(
             return results.map(AnrInterval::deepCopy)
         }
     }
+
+    /**
+     * Clears the stacktrace cache for all threads.
+     */
+    private fun clearStacktraceCache(): Unit = currentStacktraceStates.clear()
+
+    /**
+     * Captures the thread traces required for the given sample.
+     */
+    private fun captureSample(): List<ThreadInfo> {
+        val threadInfo = getMainThread()
+        val sanitizedThreads = mutableListOf<ThreadInfo>()
+
+        // Compares main thread with the last known thread state via hashcode. If hashcode changed
+        // it should be added to the anrInfo list and also the currentAnrInfoState must be updated.
+        val threadId = threadInfo.threadId
+        val cache: ThreadInfo? = currentStacktraceStates[threadId]
+
+        // only serialize if the previous stacktrace doesn't match.
+        if (cache == null || threadInfo != cache) {
+            sanitizedThreads.add(threadInfo)
+            currentStacktraceStates[threadId] = threadInfo
+        }
+        return sanitizedThreads
+    }
+
+    /**
+     * Filter the thread list based on allow/block list get by config.
+     *
+     * @return filtered threads
+     */
+    private fun getMainThread(): ThreadInfo = getThreadInfo(
+        targetThread,
+        targetThread.stackTrace,
+        stacktraceFrameLimit
+    )
 
     private companion object {
 

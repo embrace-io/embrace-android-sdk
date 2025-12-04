@@ -1,48 +1,96 @@
 package io.embrace.android.embracesdk.internal.instrumentation.anr.detection
 
 import android.os.Debug
+import android.os.Handler
+import android.os.Looper
+import android.os.Message
+import android.os.Message.obtain
 import io.embrace.android.embracesdk.internal.clock.Clock
-import io.embrace.android.embracesdk.internal.config.ConfigService
-import io.embrace.android.embracesdk.internal.instrumentation.anr.BlockedThreadListener
+import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.ThreadBlockageEvent.BLOCKED
+import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.ThreadBlockageEvent.BLOCKED_INTERVAL
+import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.ThreadBlockageEvent.UNBLOCKED
+import io.embrace.android.embracesdk.internal.logging.EmbLogger
+import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
+import java.util.concurrent.ScheduledFuture
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 
 /**
- * The number of milliseconds which the monitor thread is allowed to timeout before we
- * assume that the process has been put into the cached state.
+ * Responsible for scheduling 'heartbeat' checks on a background thread & posting messages on the
+ * target thread. If the target thread does not respond within a given time, an ANR is assumed.
  *
- * All functions in this class MUST be called from the same thread - this is part of the
- * synchronization strategy that ensures ANR data is not corrupted.
+ * This class is responsible solely for the complicated logic of enqueuing a regular message on the
+ * target thread & scheduling regular checks on a background thread. [BlockedThreadDetector]
+ * is responsible for the business logic that checks whether a thread is blocked.
  */
-private const val MONITOR_THREAD_TIMEOUT_MS = 60000L
-
-/**
- * The % of a regular interval that must have elapsed for us to consider taking another sample.
- *
- * This helps avoid two scenarios: performing too much work and contributing to ANRs, and
- * taking many samples within a few ms of each other (when the monitor thread has not been
- * scheduled enough CPU time).
- */
-private const val SAMPLE_BACKOFF_FACTOR = 0.5
-
-/**
- * Responsible for deciding whether a thread is blocked or not. The actual scheduling happens in
- * [LivenessCheckScheduler] whereas this class contains the business logic.
- */
-class BlockedThreadDetector(
-    var configService: ConfigService,
+internal class BlockedThreadDetector(
+    private val anrMonitorWorker: BackgroundWorker,
     private val clock: Clock,
-    var listener: BlockedThreadListener? = null,
     private val state: ThreadMonitoringState,
-    private val targetThread: Thread,
+    private val looper: Looper,
+    private val logger: EmbLogger,
+    private val listener: ThreadBlockageListener,
+    private val intervalMs: Long,
+    private val blockedDurationThreshold: Int,
 ) {
+
+    private val targetThreadHandler: TargetThreadHandler = TargetThreadHandler(
+        looper = looper,
+        anrMonitorWorker = anrMonitorWorker,
+        clock = clock,
+        action = ::onTargetThreadResponse
+    )
+    private val started: AtomicBoolean = AtomicBoolean(false)
+    private var monitorFuture: ScheduledFuture<*>? = null
+
+    /**
+     * Starts monitoring the target thread for blockages.
+     */
+    internal fun startMonitoringThread() {
+        if (!started.getAndSet(true)) {
+            val runnable = Runnable(::checkHeartbeat)
+            runCatching {
+                monitorFuture = anrMonitorWorker.scheduleAtFixedRate(runnable, 0, intervalMs, TimeUnit.MILLISECONDS)
+            }
+        }
+    }
+
+    /**
+     * Stops monitoring the target thread.
+     */
+    internal fun stopMonitoringThread() {
+        if (started.getAndSet(false)) {
+            monitorFuture?.let { monitorTask ->
+                if (monitorTask.cancel(false)) {
+                    monitorFuture = null
+                }
+            }
+        }
+    }
+
+    /**
+     * Called at regular intervals on the monitor thread. This function posts a message to the
+     * main thread that is used to check whether it is live or not.
+     */
+    private fun checkHeartbeat() {
+        try {
+            val now = clock.now()
+            if (!targetThreadHandler.hasMessages(HEARTBEAT_REQUEST)) {
+                val heartbeatMessage = obtain(targetThreadHandler, HEARTBEAT_REQUEST)
+                targetThreadHandler.sendMessage(heartbeatMessage)
+            }
+            updateAnrTracking(now)
+        } catch (exc: Exception) {
+            logger.trackInternalError(InternalErrorType.ANR_HEARTBEAT_CHECK_FAIL, exc)
+        }
+    }
 
     /**
      * Called when the target thread process the message. This indicates that the target thread is
      * responsive and (usually) means an ANR is about to end.
-     *
-     * All functions in this class MUST be called from the same thread - this is part of the
-     * synchronization strategy that ensures ANR data is not corrupted.
      */
-    fun onTargetThreadResponse(timestamp: Long) {
+    internal fun onTargetThreadResponse(timestamp: Long) {
         state.lastTargetThreadResponseMs = timestamp
 
         if (isDebuggerEnabled()) {
@@ -53,31 +101,25 @@ class BlockedThreadDetector(
             // Application was not responding, but recovered
             // Invoke callbacks
             state.anrInProgress = false
-            listener?.onThreadUnblocked(targetThread, timestamp)
+            listener.onThreadBlockageEvent(UNBLOCKED, timestamp)
         }
     }
 
     /**
      * Called at regular intervals by the monitor thread. We should check whether the
      * target thread has been unresponsive & decide whether this means an ANR is happening.
-     *
-     * All functions in this class MUST be called from the same thread - this is part of the
-     * synchronization strategy that ensures ANR data is not corrupted.
      */
-    fun updateAnrTracking(timestamp: Long) {
+    internal fun updateAnrTracking(timestamp: Long) {
         if (isDebuggerEnabled()) {
             return
         }
 
         if (!state.anrInProgress && isAnrDurationThresholdExceeded(timestamp)) {
             state.anrInProgress = true
-            listener?.onThreadBlocked(targetThread, state.lastTargetThreadResponseMs)
+            listener.onThreadBlockageEvent(BLOCKED, state.lastTargetThreadResponseMs)
         }
         if (state.anrInProgress && shouldAttemptAnrSample(timestamp)) {
-            listener?.onThreadBlockedInterval(
-                targetThread,
-                timestamp
-            )
+            listener.onThreadBlockageEvent(BLOCKED_INTERVAL, timestamp)
             state.lastSampleAttemptMs = clock.now()
         }
         state.lastMonitorThreadResponseMs = clock.now()
@@ -91,20 +133,16 @@ class BlockedThreadDetector(
      * To avoid useless samples grouped within a few ms of each other, this function will return
      * false & thus avoid sampling if less than half of the interval MS has passed.
      */
-    fun shouldAttemptAnrSample(timestamp: Long): Boolean {
+    internal fun shouldAttemptAnrSample(timestamp: Long): Boolean {
         val lastMonitorThreadResponseMs = state.lastMonitorThreadResponseMs
         val delta = timestamp - lastMonitorThreadResponseMs // time since last check
-        val intervalMs = configService.anrBehavior.getSamplingIntervalMs()
         return delta > intervalMs * SAMPLE_BACKOFF_FACTOR
     }
 
     /**
      * Checks whether the ANR duration threshold has been exceeded or not.
-     *
-     * This defaults to the main thread not having processed a message within 1s.
      */
-
-    fun isAnrDurationThresholdExceeded(timestamp: Long): Boolean {
+    internal fun isAnrDurationThresholdExceeded(timestamp: Long): Boolean {
         val monitorThreadLag = timestamp - state.lastMonitorThreadResponseMs
         val targetThreadLag = timestamp - state.lastTargetThreadResponseMs
 
@@ -122,8 +160,7 @@ class BlockedThreadDetector(
             state.lastMonitorThreadResponseMs = now
             return false
         }
-        val minTriggerDuration = configService.anrBehavior.getMinDuration()
-        return targetThreadLag > minTriggerDuration
+        return targetThreadLag > blockedDurationThreshold
     }
 
     /**
@@ -131,4 +168,51 @@ class BlockedThreadDetector(
      */
     private fun isDebuggerEnabled(): Boolean =
         Debug.isDebuggerConnected() || Debug.waitingForDebugger()
+
+    /**
+     * A [Handler] that processes messages enqueued on the target [Looper]. If a message is not
+     * processed by this class in a timely manner then it indicates the target thread is blocked
+     * with too much work. Once this class has processed the message, the ANR is marked as finished.
+     */
+    private class TargetThreadHandler(
+        looper: Looper,
+        private val anrMonitorWorker: BackgroundWorker,
+        private val clock: Clock,
+        private val action: (time: Long) -> Unit,
+    ) : Handler(looper) {
+
+        override fun handleMessage(msg: Message) {
+            runCatching {
+                if (msg.what == HEARTBEAT_REQUEST) {
+                    val timestamp = clock.now()
+                    anrMonitorWorker.submit {
+                        action(timestamp)
+                    }
+                }
+            }
+        }
+    }
+
+    private companion object {
+
+        /**
+         * The number of milliseconds which the monitor thread is allowed to timeout before we
+         * assume the process is in a cached state.
+         */
+        const val MONITOR_THREAD_TIMEOUT_MS = 60000L
+
+        /**
+         * The % of a regular interval that must have elapsed for us to consider taking another sample.
+         *
+         * This helps avoid two scenarios: performing too much work and contributing to ANRs, and
+         * taking many samples within a few ms of each other (when the monitor thread has not been
+         * scheduled enough CPU time).
+         */
+        const val SAMPLE_BACKOFF_FACTOR = 0.5
+
+        /**
+         * Unique ID for Handler message (arbitrary number).
+         */
+        const val HEARTBEAT_REQUEST: Int = 34593
+    }
 }

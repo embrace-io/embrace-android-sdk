@@ -218,11 +218,10 @@ internal class AnrFeatureTest {
             repeat(sampleCount) {
                 moveForwardAndRunBlocked(intervalMs)
             }
-            val blockedThreadDetector = testRule.bootstrapper.anrModule.blockedThreadDetector
 
             if (!incomplete) {
                 // simulate the main thread becoming responsive again, ending the ANR interval
-                blockedThreadDetector.onTargetThreadResponse(clock.now())
+                testRule.bootstrapper.anrService?.simulateTargetThreadResponse()
             }
 
             // AnrService#getCapturedData() currently gets a Callable with a timeout, so we

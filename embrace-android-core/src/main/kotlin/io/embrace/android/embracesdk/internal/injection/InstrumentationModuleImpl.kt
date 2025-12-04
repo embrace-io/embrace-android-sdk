@@ -39,6 +39,7 @@ class InstrumentationModuleImpl(
             processIdentifier = openTelemetryModule.otelSdkConfig.processIdentifier,
             crashMarkerFileProvider = { storageModule.storageService.getFileForWrite("embrace_crash_marker") },
             symbols = configModule.nativeSymbolMap,
+            appStateTracker = essentialServiceModule.appStateTracker,
         )
     }
 }

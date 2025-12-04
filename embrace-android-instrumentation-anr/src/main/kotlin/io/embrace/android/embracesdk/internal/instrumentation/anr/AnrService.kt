@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.internal.instrumentation.anr
 
 import io.embrace.android.embracesdk.internal.arch.CrashTeardownHandler
 import io.embrace.android.embracesdk.internal.arch.state.AppStateListener
-import io.embrace.android.embracesdk.internal.instrumentation.anr.payload.AnrInterval
+import io.embrace.android.embracesdk.internal.envelope.session.OtelPayloadMapper
 import io.embrace.android.embracesdk.internal.session.MemoryCleanerListener
 
 /**
@@ -12,15 +12,7 @@ interface AnrService :
     MemoryCleanerListener,
     CrashTeardownHandler,
     AppStateListener,
-    BlockedThreadListener {
-
-    /**
-     * Returns a representation of all the data that has already been captured so far.
-     *
-     * This does NOT mean that implementations should go capture data - they should just return
-     * what has already been captured, if anything.
-     */
-    fun getCapturedData(): List<AnrInterval>
+    OtelPayloadMapper {
 
     /**
      * Initializes capture of ANRs
@@ -28,7 +20,8 @@ interface AnrService :
     fun startAnrCapture()
 
     /**
-     * Adds a listener which is invoked when the thread becomes blocked/unblocked.
+     * Test hook not intended for production use. This simulates the target thread responding to messages
+     * again (and therefore ending an ANR).
      */
-    fun addBlockedThreadListener(listener: BlockedThreadListener)
+    fun simulateTargetThreadResponse()
 }

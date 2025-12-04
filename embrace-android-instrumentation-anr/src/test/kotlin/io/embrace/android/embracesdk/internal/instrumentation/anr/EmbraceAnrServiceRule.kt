@@ -10,20 +10,17 @@ import io.embrace.android.embracesdk.fakes.behavior.FakeAnrBehavior
 import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.BlockedThreadDetector
 import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.LivenessCheckScheduler
-import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.TargetThreadHandler
 import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.ThreadMonitoringState
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.mockk.mockk
-import org.junit.rules.ExternalResource
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.atomic.AtomicReference
+import org.junit.rules.ExternalResource
 
 /**
- * A [org.junit.Rule] that creates an [EmbraceAnrService] suitable for use in tests using mostly real sub-components including:
- * - [TargetThreadHandler]
- * - [BlockedThreadDetector]
- * - [LivenessCheckScheduler]
+ * A [org.junit.Rule] that creates an [EmbraceAnrService] suitable for use in tests
+ * using mostly real sub-components.
  */
 internal class EmbraceAnrServiceRule<T : ScheduledExecutorService>(
     val clock: FakeClock = FakeClock(),
@@ -39,7 +36,6 @@ internal class EmbraceAnrServiceRule<T : ScheduledExecutorService>(
     lateinit var blockedThreadDetector: BlockedThreadDetector
     lateinit var anrBehavior: FakeAnrBehavior
     lateinit var anrExecutorService: T
-    lateinit var targetThreadHandler: TargetThreadHandler
     lateinit var anrMonitorThread: AtomicReference<Thread>
     lateinit var stacktraceSampler: AnrStacktraceSampler
     lateinit var looper: Looper
@@ -56,28 +52,6 @@ internal class EmbraceAnrServiceRule<T : ScheduledExecutorService>(
         anrExecutorService = scheduledExecutorSupplier.invoke()
         state = ThreadMonitoringState(clock)
         worker = BackgroundWorker(anrExecutorService)
-        blockedThreadDetector = BlockedThreadDetector(
-            clock = clock,
-            state = state,
-            targetThread = Thread.currentThread(),
-            blockedDurationThreshold = fakeConfigService.anrBehavior.getMinDuration(),
-            samplingIntervalMs = fakeConfigService.anrBehavior.getSamplingIntervalMs()
-        )
-        targetThreadHandler = TargetThreadHandler(
-            looper = looper,
-            anrMonitorWorker = worker,
-            clock = clock,
-            action = blockedThreadDetector::onTargetThreadResponse
-        )
-        livenessCheckScheduler = LivenessCheckScheduler(
-            anrMonitorWorker = worker,
-            clock = clock,
-            state = state,
-            targetThreadHandler = targetThreadHandler,
-            blockedThreadDetector = blockedThreadDetector,
-            logger = logger,
-            intervalMs = fakeConfigService.anrBehavior.getSamplingIntervalMs(),
-        )
         stacktraceSampler = AnrStacktraceSampler(
             clock = clock,
             targetThread = looper.thread,
@@ -85,6 +59,23 @@ internal class EmbraceAnrServiceRule<T : ScheduledExecutorService>(
             maxIntervalsPerSession = fakeConfigService.anrBehavior.getMaxAnrIntervalsPerSession(),
             maxStacktracesPerInterval = fakeConfigService.anrBehavior.getMaxStacktracesPerInterval(),
             stacktraceFrameLimit = fakeConfigService.anrBehavior.getStacktraceFrameLimit(),
+        )
+        blockedThreadDetector = BlockedThreadDetector(
+            clock = clock,
+            state = state,
+            targetThread = Thread.currentThread(),
+            blockedDurationThreshold = fakeConfigService.anrBehavior.getMinDuration(),
+            samplingIntervalMs = fakeConfigService.anrBehavior.getSamplingIntervalMs(),
+            listener = stacktraceSampler,
+        )
+        livenessCheckScheduler = LivenessCheckScheduler(
+            anrMonitorWorker = worker,
+            clock = clock,
+            state = state,
+            looper = looper,
+            blockedThreadDetector = blockedThreadDetector,
+            logger = logger,
+            intervalMs = fakeConfigService.anrBehavior.getSamplingIntervalMs(),
         )
         args = FakeInstrumentationArgs(
             mockk(),

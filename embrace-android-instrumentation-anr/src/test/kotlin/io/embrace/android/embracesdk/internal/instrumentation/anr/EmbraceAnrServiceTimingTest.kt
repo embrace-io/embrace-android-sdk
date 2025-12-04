@@ -3,15 +3,15 @@ package io.embrace.android.embracesdk.internal.instrumentation.anr
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.internal.arch.state.AppState
+import java.lang.Thread.currentThread
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicReference
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
-import java.lang.Thread.currentThread
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicReference
 
 /**
  * Tests for the [EmbraceAnrService] that verifies behaviour when a specific order of events happen
@@ -44,16 +44,20 @@ internal class EmbraceAnrServiceTimingTest {
             clock.setCurrentTime(100000L)
             anrService.startAnrCapture()
             anrExecutorService.runCurrentlyBlocked()
-            targetThreadHandler.onIdleThread()
+            simulateAnrRecovery()
             anrExecutorService.runCurrentlyBlocked()
             repeat(20) {
                 anrExecutorService.moveForwardAndRunBlocked(100L)
             }
             assertTrue(state.anrInProgress)
-            targetThreadHandler.onIdleThread()
+            simulateAnrRecovery()
             anrExecutorService.runCurrentlyBlocked()
             assertFalse(state.anrInProgress)
         }
+    }
+
+    private fun EmbraceAnrServiceRule<*>.simulateAnrRecovery() {
+        blockedThreadDetector.onTargetThreadResponse(clock.now())
     }
 
     @Test

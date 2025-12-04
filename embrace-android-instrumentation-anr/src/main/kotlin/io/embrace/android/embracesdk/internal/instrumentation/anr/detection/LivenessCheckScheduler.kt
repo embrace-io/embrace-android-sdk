@@ -43,12 +43,18 @@ internal class LivenessCheckScheduler(
     private val anrMonitorWorker: BackgroundWorker,
     private val clock: Clock,
     private val state: ThreadMonitoringState,
-    private val targetThreadHandler: TargetThreadHandler,
+    private val looper: Looper,
     private val blockedThreadDetector: BlockedThreadDetector,
-    private var intervalMs: Long,
+    private val intervalMs: Long,
     private val logger: EmbLogger,
 ) {
 
+    private val targetThreadHandler: TargetThreadHandler = TargetThreadHandler(
+        looper = looper,
+        anrMonitorWorker = anrMonitorWorker,
+        clock = clock,
+        action = blockedThreadDetector::onTargetThreadResponse
+    )
     private var monitorFuture: ScheduledFuture<*>? = null
 
     /**
@@ -110,32 +116,32 @@ internal class LivenessCheckScheduler(
         val heartbeatMessage = Message.obtain(targetThreadHandler, HEARTBEAT_REQUEST)
         targetThreadHandler.sendMessage(heartbeatMessage)
     }
-}
 
-/**
- * A [Handler] that processes messages enqueued on the target [Looper]. If a message is not
- * processed by this class in a timely manner then it indicates the target thread is blocked
- * with too much work. Once this class has processed the message, the ANR is marked as finished.
- */
-internal class TargetThreadHandler(
-    looper: Looper,
-    private val anrMonitorWorker: BackgroundWorker,
-    private val clock: Clock,
-    private val action: (time: Long) -> Unit,
-) : Handler(looper) {
+    /**
+     * A [Handler] that processes messages enqueued on the target [Looper]. If a message is not
+     * processed by this class in a timely manner then it indicates the target thread is blocked
+     * with too much work. Once this class has processed the message, the ANR is marked as finished.
+     */
+    private class TargetThreadHandler(
+        looper: Looper,
+        private val anrMonitorWorker: BackgroundWorker,
+        private val clock: Clock,
+        private val action: (time: Long) -> Unit,
+    ) : Handler(looper) {
 
-    override fun handleMessage(msg: Message) {
-        runCatching {
-            if (msg.what == HEARTBEAT_REQUEST) {
-                onIdleThread()
+        override fun handleMessage(msg: Message) {
+            runCatching {
+                if (msg.what == HEARTBEAT_REQUEST) {
+                    onIdleThread()
+                }
             }
         }
-    }
 
-    fun onIdleThread() {
-        val timestamp = clock.now()
-        anrMonitorWorker.submit {
-            action(timestamp)
+        fun onIdleThread() {
+            val timestamp = clock.now()
+            anrMonitorWorker.submit {
+                action(timestamp)
+            }
         }
     }
 }
@@ -148,11 +154,11 @@ internal class TargetThreadHandler(
  */
 class BlockedThreadDetector(
     private val clock: Clock,
-    var listener: BlockedThreadListener? = null,
+    private val listener: BlockedThreadListener,
     private val state: ThreadMonitoringState,
     private val targetThread: Thread,
-    val blockedDurationThreshold: Int,
-    val samplingIntervalMs: Long,
+    private val blockedDurationThreshold: Int,
+    private val samplingIntervalMs: Long,
 ) {
 
     /**
@@ -170,7 +176,7 @@ class BlockedThreadDetector(
             // Application was not responding, but recovered
             // Invoke callbacks
             state.anrInProgress = false
-            listener?.onThreadUnblocked(targetThread, timestamp)
+            listener.onThreadUnblocked(targetThread, timestamp)
         }
     }
 
@@ -185,10 +191,10 @@ class BlockedThreadDetector(
 
         if (!state.anrInProgress && isAnrDurationThresholdExceeded(timestamp)) {
             state.anrInProgress = true
-            listener?.onThreadBlocked(targetThread, state.lastTargetThreadResponseMs)
+            listener.onThreadBlocked(targetThread, state.lastTargetThreadResponseMs)
         }
         if (state.anrInProgress && shouldAttemptAnrSample(timestamp)) {
-            listener?.onThreadBlockedInterval(
+            listener.onThreadBlockedInterval(
                 targetThread,
                 timestamp
             )

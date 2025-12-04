@@ -4,7 +4,6 @@ import android.os.Looper
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.BlockedThreadDetector
 import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.LivenessCheckScheduler
-import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.TargetThreadHandler
 import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.ThreadMonitoringState
 import io.embrace.android.embracesdk.internal.worker.Worker
 
@@ -41,15 +40,6 @@ class AnrModuleImpl(args: InstrumentationArgs) : AnrModule {
         )
     }
 
-    private val targetThreadHandler by lazy {
-        TargetThreadHandler(
-            looper = looper,
-            anrMonitorWorker = anrMonitorWorker,
-            clock = args.clock,
-            action = blockedThreadDetector::onTargetThreadResponse
-        )
-    }
-
     override val blockedThreadDetector by lazy {
         BlockedThreadDetector(
             clock = args.clock,
@@ -66,7 +56,7 @@ class AnrModuleImpl(args: InstrumentationArgs) : AnrModule {
             anrMonitorWorker = anrMonitorWorker,
             clock = args.clock,
             state = state,
-            targetThreadHandler = targetThreadHandler,
+            looper = looper,
             blockedThreadDetector = blockedThreadDetector,
             intervalMs = args.configService.anrBehavior.getSamplingIntervalMs(),
             logger = args.logger,

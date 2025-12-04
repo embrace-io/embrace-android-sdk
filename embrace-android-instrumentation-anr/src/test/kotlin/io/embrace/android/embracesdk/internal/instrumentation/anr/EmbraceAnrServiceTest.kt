@@ -2,6 +2,8 @@ package io.embrace.android.embracesdk.internal.instrumentation.anr
 
 import io.embrace.android.embracesdk.concurrency.SingleThreadTestScheduledExecutor
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.ThreadBlockageEvent.BLOCKED_INTERVAL
+import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.ThreadBlockageEvent.UNBLOCKED
 import io.embrace.android.embracesdk.internal.instrumentation.anr.payload.AnrInterval
 import io.embrace.android.embracesdk.internal.instrumentation.anr.payload.AnrSample
 import io.embrace.android.embracesdk.internal.instrumentation.anr.payload.AnrSampleList
@@ -139,7 +141,7 @@ internal class EmbraceAnrServiceTest {
 
             state.anrInProgress = true
             state.lastTargetThreadResponseMs = 15000000L
-            stacktraceSampler.onThreadBlockedInterval(currentThread(), clock.now())
+            stacktraceSampler.onThreadBlockageEvent(BLOCKED_INTERVAL, clock.now())
             assertEquals(1, stacktraceSampler.size())
 
             // assert only one anr interval was added from the anrInProgress flag
@@ -241,9 +243,9 @@ internal class EmbraceAnrServiceTest {
                 val count = defaultLimit + extra
 
                 repeat(count) {
-                    stacktraceSampler.onThreadBlockedInterval(currentThread(), clock.now())
+                    stacktraceSampler.onThreadBlockageEvent(BLOCKED_INTERVAL, clock.now())
                 }
-                stacktraceSampler.onThreadUnblocked(currentThread(), clock.now())
+                stacktraceSampler.onThreadBlockageEvent(UNBLOCKED, clock.now())
 
                 assertEquals(1, stacktraceSampler.anrIntervals.size)
 

@@ -1,7 +1,8 @@
 package io.embrace.android.embracesdk.internal.instrumentation.anr
 
 import io.embrace.android.embracesdk.internal.clock.Clock
-import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.BlockedThreadListener
+import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.ThreadBlockageEvent
+import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.ThreadBlockageListener
 import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.ThreadMonitoringState
 import io.embrace.android.embracesdk.internal.instrumentation.anr.payload.AnrInterval
 import io.embrace.android.embracesdk.internal.instrumentation.anr.payload.AnrSample
@@ -20,7 +21,7 @@ internal class AnrStacktraceSampler(
     val maxIntervalsPerSession: Int,
     val maxStacktracesPerInterval: Int,
     val stacktraceFrameLimit: Int,
-) : BlockedThreadListener, MemoryCleanerListener {
+) : ThreadBlockageListener, MemoryCleanerListener {
 
     val anrIntervals: CopyOnWriteArrayList<AnrInterval> = CopyOnWriteArrayList<AnrInterval>()
     private val samples = mutableListOf<AnrSample>()
@@ -29,12 +30,23 @@ internal class AnrStacktraceSampler(
 
     fun size(): Int = samples.size
 
-    override fun onThreadBlocked(thread: Thread, timestamp: Long) {
+    override fun onThreadBlockageEvent(
+        event: ThreadBlockageEvent,
+        timestamp: Long,
+    ) {
+        when (event) {
+            ThreadBlockageEvent.BLOCKED -> onThreadBlocked(timestamp)
+            ThreadBlockageEvent.BLOCKED_INTERVAL -> onThreadBlockedInterval(timestamp)
+            ThreadBlockageEvent.UNBLOCKED -> onThreadUnblocked(timestamp)
+        }
+    }
+
+    private fun onThreadBlocked(timestamp: Long) {
         threadInfoCollector.clearStacktraceCache()
         lastUnblockedMs = timestamp
     }
 
-    override fun onThreadBlockedInterval(thread: Thread, timestamp: Long) {
+    private fun onThreadBlockedInterval(timestamp: Long) {
         val limit = maxStacktracesPerInterval
         val anrSample = if (size() >= limit) {
             AnrSample(timestamp, null, 0, AnrSample.CODE_SAMPLE_LIMIT_REACHED)
@@ -47,7 +59,7 @@ internal class AnrStacktraceSampler(
         samples.add(anrSample)
     }
 
-    override fun onThreadUnblocked(thread: Thread, timestamp: Long) {
+    private fun onThreadUnblocked(timestamp: Long) {
         // Finalize AnrInterval
         val responseMs = lastUnblockedMs
         val sanitizedSamples = samples.filter { it.timestamp in responseMs..timestamp }

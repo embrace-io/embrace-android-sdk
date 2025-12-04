@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
 import io.embrace.android.embracesdk.internal.instrumentation.anr.AnrModule
 import io.embrace.android.embracesdk.internal.instrumentation.anr.AnrService
 import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.BlockedThreadDetector
-import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.BlockedThreadListener
+import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.ThreadBlockageListener
 import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.ThreadMonitoringState
 import io.embrace.android.embracesdk.testframework.NoopAnrService
 import io.mockk.every
@@ -25,15 +25,6 @@ class FakeAnrModule(
         blockedDurationThreshold = FakeConfigService().anrBehavior.getMinDuration(),
         intervalMs = FakeConfigService().anrBehavior.getSamplingIntervalMs(),
         logger = FakeEmbLogger(),
-        listener = object : BlockedThreadListener {
-            override fun onThreadBlocked(thread: Thread, timestamp: Long) {
-            }
-
-            override fun onThreadBlockedInterval(thread: Thread, timestamp: Long) {
-            }
-
-            override fun onThreadUnblocked(thread: Thread, timestamp: Long) {
-            }
-        }
+        listener = ThreadBlockageListener { _, _ -> }
     ),
 ) : AnrModule

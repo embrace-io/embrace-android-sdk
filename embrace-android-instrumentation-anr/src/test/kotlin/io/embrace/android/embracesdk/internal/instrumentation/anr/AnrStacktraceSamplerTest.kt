@@ -3,6 +3,9 @@ package io.embrace.android.embracesdk.internal.instrumentation.anr
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.ThreadBlockageEvent.BLOCKED
+import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.ThreadBlockageEvent.BLOCKED_INTERVAL
+import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.ThreadBlockageEvent.UNBLOCKED
 import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.ThreadMonitoringState
 import io.embrace.android.embracesdk.internal.instrumentation.anr.payload.AnrInterval
 import io.embrace.android.embracesdk.internal.instrumentation.anr.payload.AnrSample
@@ -95,14 +98,14 @@ internal class AnrStacktraceSamplerTest {
         )
 
         // simulate one ANR with 100 intervals
-        sampler.onThreadBlocked(thread, clock.now())
+        sampler.onThreadBlockageEvent(BLOCKED, clock.now())
 
         repeat(repeatCount) {
-            sampler.onThreadBlockedInterval(thread, clock.now())
+            sampler.onThreadBlockageEvent(BLOCKED_INTERVAL, clock.now())
             clock.tick(intervalMs)
         }
 
-        sampler.onThreadUnblocked(thread, clock.now())
+        sampler.onThreadBlockageEvent(UNBLOCKED, clock.now())
 
         // verify one interval recorded
         val intervals = sampler.getAnrIntervals(state, clock)
@@ -151,14 +154,13 @@ internal class AnrStacktraceSamplerTest {
 
         // simulate multiple ANRs with intervals
         repeat(anrRepeatCount) { index ->
-            sampler.onThreadBlocked(thread, clock.now())
+            sampler.onThreadBlockageEvent(BLOCKED, clock.now())
 
             repeat(intervalRepeatCount + index) {
-                sampler.onThreadBlockedInterval(thread, clock.now())
+                sampler.onThreadBlockageEvent(BLOCKED_INTERVAL, clock.now())
                 clock.tick(intervalMs)
             }
-
-            sampler.onThreadUnblocked(thread, clock.now())
+            sampler.onThreadBlockageEvent(UNBLOCKED, clock.now())
         }
 
         // verify 15 intervals were recorded
@@ -201,10 +203,10 @@ internal class AnrStacktraceSamplerTest {
 
         // simulate 110 ANRs with intervals
         repeat(anrRepeatCount) {
-            sampler.onThreadBlocked(thread, clock.now())
-            sampler.onThreadBlockedInterval(thread, clock.now())
+            sampler.onThreadBlockageEvent(BLOCKED, clock.now())
+            sampler.onThreadBlockageEvent(BLOCKED_INTERVAL, clock.now())
             clock.tick(intervalMs)
-            sampler.onThreadUnblocked(thread, clock.now())
+            sampler.onThreadBlockageEvent(UNBLOCKED, clock.now())
         }
 
         // verify maximum of 100 intervals were recorded

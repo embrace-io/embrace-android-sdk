@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.internal.instrumentation.anr.detection
 
 import android.os.Debug
 import io.embrace.android.embracesdk.internal.clock.Clock
-import io.embrace.android.embracesdk.internal.instrumentation.anr.BlockedThreadListener
 
 /**
  * The number of milliseconds which the monitor thread is allowed to timeout before we

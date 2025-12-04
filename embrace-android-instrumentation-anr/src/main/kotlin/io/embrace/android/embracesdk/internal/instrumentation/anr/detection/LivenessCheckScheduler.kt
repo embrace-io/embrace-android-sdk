@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.internal.instrumentation.anr.detection
 
 import android.os.Message
 import io.embrace.android.embracesdk.internal.clock.Clock
-import io.embrace.android.embracesdk.internal.instrumentation.anr.BlockedThreadListener
 import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.TargetThreadHandler.Companion.HEARTBEAT_REQUEST
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType

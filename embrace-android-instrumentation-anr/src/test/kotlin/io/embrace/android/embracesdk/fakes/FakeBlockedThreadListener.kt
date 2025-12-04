@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.android.embracesdk.internal.instrumentation.anr.BlockedThreadListener
+import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.BlockedThreadListener
 
 class FakeBlockedThreadListener : BlockedThreadListener {
     var blockedCount: Int = 0

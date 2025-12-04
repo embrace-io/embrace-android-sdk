@@ -94,7 +94,6 @@ internal class EmbraceAnrServiceRule<T : ScheduledExecutorService>(
         )
         anrService = EmbraceAnrService(
             args = args,
-            looper = looper,
             livenessCheckScheduler = livenessCheckScheduler,
             anrMonitorWorker = worker,
             state = state,
@@ -108,7 +107,6 @@ internal class EmbraceAnrServiceRule<T : ScheduledExecutorService>(
     fun recreateService() {
         anrService = EmbraceAnrService(
             args = args,
-            looper = looper,
             livenessCheckScheduler = livenessCheckScheduler,
             anrMonitorWorker = worker,
             state = state,

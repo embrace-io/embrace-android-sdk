@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.instrumentation.anr
 
-import android.os.Looper
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.state.AppState
@@ -12,7 +11,6 @@ import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import java.util.concurrent.Callable
-import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 import kotlin.random.Random
@@ -26,7 +24,6 @@ import kotlin.random.Random
  */
 internal class EmbraceAnrService(
     args: InstrumentationArgs,
-    private val looper: Looper,
     private val livenessCheckScheduler: LivenessCheckScheduler,
     private val anrMonitorWorker: BackgroundWorker,
     private val state: ThreadMonitoringState,
@@ -38,17 +35,13 @@ internal class EmbraceAnrService(
     private val clock = args.clock
     private val appStateTracker = args.appStateTracker
     private val telemetryDestination = args.destination
-
-    private val listeners: CopyOnWriteArrayList<BlockedThreadListener> = CopyOnWriteArrayList<BlockedThreadListener>()
     private var delayedBackgroundCheckTask: ScheduledFuture<*>? = null
 
     init {
         if (appStateTracker.getAppState() == AppState.BACKGROUND) {
             scheduleDelayedBackgroundCheck()
         }
-        // add listeners
-        listeners.add(stacktraceSampler)
-        livenessCheckScheduler.listener = this
+        livenessCheckScheduler.listener = stacktraceSampler
     }
 
     override fun startAnrCapture() {
@@ -87,22 +80,6 @@ internal class EmbraceAnrService(
         stacktraceSampler.cleanCollections()
     }
 
-    override fun onThreadBlocked(thread: Thread, timestamp: Long) {
-        for (listener in listeners) {
-            listener.onThreadBlocked(thread, timestamp)
-        }
-    }
-
-    override fun onThreadBlockedInterval(thread: Thread, timestamp: Long) {
-        processAnrTick(timestamp)
-    }
-
-    override fun onThreadUnblocked(thread: Thread, timestamp: Long) {
-        for (listener in listeners) {
-            listener.onThreadUnblocked(thread, timestamp)
-        }
-    }
-
     /**
      * When app goes to foreground, we need to monitor the target thread again to
      * capture ANRs.
@@ -124,12 +101,6 @@ internal class EmbraceAnrService(
     override fun onBackground() {
         this.anrMonitorWorker.submit {
             livenessCheckScheduler.stopMonitoringThread()
-        }
-    }
-
-    private fun processAnrTick(timestamp: Long) {
-        for (listener in listeners) {
-            listener.onThreadBlockedInterval(looper.thread, timestamp)
         }
     }
 

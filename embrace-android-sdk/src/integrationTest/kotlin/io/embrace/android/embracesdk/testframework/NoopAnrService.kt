@@ -20,15 +20,6 @@ internal object NoopAnrService : AnrService {
     override fun onForeground() {
     }
 
-    override fun onThreadBlocked(thread: Thread, timestamp: Long) {
-    }
-
-    override fun onThreadBlockedInterval(thread: Thread, timestamp: Long) {
-    }
-
-    override fun onThreadUnblocked(thread: Thread, timestamp: Long) {
-    }
-
     override fun snapshotSpans(): List<Span> = emptyList()
 
     override fun record() {

@@ -1,5 +1,28 @@
 # Embrace Android SDK Changelog
 
+> **Important**
+>
+> Please be sure to review the [Upgrade Guide](UPGRADING.md) when moving from one major version to another (e.g. Android 7.x to Android 8.x)
+
+## 8.0.0
+
+*December 4, 2025*
+
+- New minimum versions for platform dependencies like Gradle, AGP, Kotlin, and JDK.
+    - Better support of new versions of these dependencies going forward, including the upcoming Kotlin 2.3
+- Renames of the Embrace Gradle Plugin artifact and in the Embrace Gradle DSL (RIP "Swazzler").
+- Reorganization and renames of certain classes, methods, and modules to improve clarity.
+- Removal of deprecated symbols that are no longer functional.
+- Changes to the default `HttpsURLConnection` instrumentation.
+- More information about this release, including step-by-step upgrade instructions, could be found in the [Upgrade Guide](UPGRADING.md).
+
+## 7.9.3
+
+*November 11, 2025*
+
+- Fix method signature mismatch in HttpsURLConnection instrumentation wrapper
+- Added deprecation warning: this is the last version with the `io.embrace.swazzler` gradle plugin ID. From 8.0.0, the ID will be `io.embrace.gradle`
+
 ## 7.9.2
 
 *October 20, 2025*
@@ -16,9 +39,7 @@
 
 *August 27, 2025*
 
-:::info Important
-This release bumped the minimum runtime Java version to 11. Compatibility with 1.8 is restored in 7.9.1.
-:::
+> This release bumped the minimum runtime Java version to 11. Compatibility with 1.8 is restored in 7.9.1
 
 - Fix transitive dependency issue to restore the minimum Kotlin version to 1.8.22.
 

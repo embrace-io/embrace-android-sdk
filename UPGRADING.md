@@ -2,6 +2,55 @@
 
 # Upgrading from 7.x to 8.x
 
+## Quick Start
+
+If you wish to do the upgrade using step-by-step instructions that will work for most apps, follow this `Quick Start` guide. Scroll down to the rest of this guide to see all the changes described in greater detail.
+
+1. **Change Embrace version**
+    - Set the version of the Embrace Android SDK to `{{ embrace_sdk_version platform="android" }}`.
+
+2. **Update dependency versions**
+    - Ensure app dependencies like Gradle, AGP, Kotlin, and JDK meet [the new minimum version requirements](#minimum-supported-versions).
+    - In addition, check Java and Kotlin language compatibility targets are at least `11` and `2.0`, respectively.
+    - Check `android.compileOptions` and `android.kotlin` in your app's Gradle file to verify that the specified versions are supported.
+
+3. **Update references to Embrace Gradle Plugin**
+    - Replace Embrace Gradle Plugin artifact and plugin ID names:
+        - Where you specify the artifact ID (i.e. `embrace-swazzler`), replace it with `embrace-gradle-plugin`.
+        - Where you specify the plugin ID (i.e. `io.embrace.swazzler`), replace it with `io.embrace.gradle`.
+
+4. **Update Embrace Gradle Plugin DSL references**
+    - In your app's Gradle file, replace `swazzler {}` with `embrace {}`
+    - Replace the attributes that were changed. See the [New Embrace Gradle Plugin DSL](#new-embrace-gradle-plugin-dsl) section for the full list of changes.
+
+5. **Update Embrace module dependencies**
+    - Search your app's TOML (Version Catalogue) and Gradle files for module references that start with `io.embrace` and update the module names that were changed.
+        - See the [Internal Modularization](#internal-modularization) for the full list.
+    - If you use OkHttp and want network requests made through it to be instrumented, add a dependency to `io.embrace:embrace-android-instrumentation-okhttp`.
+    - If you use the SDK's Java OpenTelemetry implementation or add custom `Span` and `LogRecord` exporters, add a dependency to `io.embrace:embrace-android-otel-java`.
+
+6. **Run Gradle sync**
+    - Verify the sync runs successfully with no errors.
+
+7. **Compile the app and fix errors**
+    - You may get some build errors due to symbols that were renamed, moved, or deleted.
+        - See the full list of symbols that were renamed in the [Altered API](#altered-apis) section.
+    - Fix compilation errors as they show up.
+        - Start by removing all import statements that references unknown symbols.
+        - Any moved but not renamed symbols can be re-imported.
+        - For deleted symbols, remove any references to them from your code.
+        - For renamed symbols, find the new names and replace them in your code.
+        - For method calls in Java, you may need to add in additional parameters, as some overloads were removed.
+    - Recompile after the identified errors were fixed until there are no more errors.
+        - Alternatively, you can proactively look for errors in your code and fix them preemptively to reduce the number of iterations.
+
+8. **Fix deprecation warnings** (optional but recommended)
+    - Deprecated methods should be replaced with the suggested alternatives to ensure a smoother upgrade in the future.
+    - The bulk of this can be achieved by replaces calls to `Embrace.getInstance()` with `Embrace`.
+
+9. **Build and install your app**
+    - Verify the migration was successful by sending a test session and seeing it on the dashboard.
+
 ## Minimum supported versions
 
 The Embrace Android SDK supports the following minimum versions of dependent technologies at build and run time:

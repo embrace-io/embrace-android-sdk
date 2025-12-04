@@ -71,16 +71,14 @@ internal class AnrStacktraceSampler(
         }
     }
 
-    private fun size(): Int = samples.size
-
     private fun onThreadBlocked(timestamp: Long) {
-        clearStacktraceCache()
+        currentStacktraceStates.clear()
         lastUnblockedMs = timestamp
     }
 
     private fun onThreadBlockedInterval(timestamp: Long) {
         val limit = maxStacktracesPerInterval
-        val threadBlockageSample = if (size() >= limit) {
+        val threadBlockageSample = if (samples.size >= limit) {
             ThreadBlockageSample(timestamp, null, 0, ThreadBlockageSample.CODE_SAMPLE_LIMIT_REACHED)
         } else {
             val start = clock.now()
@@ -119,7 +117,7 @@ internal class AnrStacktraceSampler(
         // reset state
         samples.clear()
         lastUnblockedMs = timestamp
-        clearStacktraceCache()
+        currentStacktraceStates.clear()
     }
 
     /**
@@ -138,15 +136,14 @@ internal class AnrStacktraceSampler(
     private fun findIntervalsWithSamples() = threadBlockageIntervals.filter(ThreadBlockageInterval::hasSamples)
 
     /**
-     * Clears the stacktrace cache for all threads.
-     */
-    private fun clearStacktraceCache(): Unit = currentStacktraceStates.clear()
-
-    /**
      * Captures the thread traces required for the given sample.
      */
     private fun captureSample(): List<ThreadInfo> {
-        val threadInfo = getMainThread()
+        val threadInfo = getThreadInfo(
+            targetThread,
+            targetThread.stackTrace,
+            stacktraceFrameLimit
+        )
         val sanitizedThreads = mutableListOf<ThreadInfo>()
 
         // Compares main thread with the last known thread state via hashcode. If hashcode changed
@@ -161,17 +158,6 @@ internal class AnrStacktraceSampler(
         }
         return sanitizedThreads
     }
-
-    /**
-     * Filter the thread list based on allow/block list get by config.
-     *
-     * @return filtered threads
-     */
-    private fun getMainThread(): ThreadInfo = getThreadInfo(
-        targetThread,
-        targetThread.stackTrace,
-        stacktraceFrameLimit
-    )
 
     private companion object {
 

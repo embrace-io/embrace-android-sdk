@@ -42,8 +42,8 @@ class BuildTelemetryCollector {
                 jvmArgs = getJvmArgs(),
                 isEdmEnabled = behavior.isUnityEdmEnabled,
                 edmVersion = getEdmVersion(),
-                metadataRequestId = UUID.randomUUID().toString(),
-                pluginVersion = BuildConfig.VERSION,
+                buildTelemetryId = UUID.randomUUID().toString(),
+                embracePluginVersion = BuildConfig.VERSION,
                 operatingSystem = getOperatingSystem(),
                 jdkVersion = getJdkVersion(),
                 sourceCompatibility = agpWrapper.sourceCompatibility,
@@ -55,8 +55,8 @@ class BuildTelemetryCollector {
         // accidentally performing eager initialisations
         return providerFactory.provider {
             configPhaseTelemetry.copy(
-                variantMetadata = variantConfigs.get().map { config ->
-                    BuildTelemetryVariant(
+                variantBuildTelemetry = variantConfigs.get().map { config ->
+                    VariantBuildTelemetry(
                         variantName = config.variantName,
                         appId = config.embraceConfig?.appId,
                         buildId = config.buildId,

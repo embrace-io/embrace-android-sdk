@@ -89,8 +89,8 @@ class AssertionInterface(
         additionalAssertions: (BuildTelemetryRequest.() -> Unit)?,
     ) {
         with(deserializeRequestBody<BuildTelemetryRequest>(request)) {
-            assertNotNull(metadataRequestId)
-            assertNotNull(pluginVersion)
+            assertNotNull(buildTelemetryId)
+            assertNotNull(embracePluginVersion)
             assertEquals(testMatrix.gradle, gradleVersion)
             assertEquals(testMatrix.agp, agpVersion)
             assertTrue(checkNotNull(isBuildCacheEnabled))
@@ -101,7 +101,7 @@ class AssertionInterface(
             assertFalse(checkNotNull(isEdmEnabled))
 
             // assert variants match expected list and contain unique build IDs
-            val variants = checkNotNull(variantMetadata)
+            val variants = checkNotNull(variantBuildTelemetry)
             variants.forEachIndexed { i, variant ->
                 assertNotNull(variant.buildId)
                 assertTrue(expectedVariants.contains(variant.variantName))

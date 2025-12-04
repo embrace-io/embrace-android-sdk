@@ -1,15 +1,11 @@
 package io.embrace.android.embracesdk.testframework
 
 import io.embrace.android.embracesdk.internal.instrumentation.anr.AnrService
-import io.embrace.android.embracesdk.internal.instrumentation.anr.BlockedThreadListener
 import io.embrace.android.embracesdk.internal.payload.Span
 
 internal object NoopAnrService : AnrService {
 
     override fun startAnrCapture() {
-    }
-
-    override fun addBlockedThreadListener(listener: BlockedThreadListener) {
     }
 
     override fun cleanCollections() {

@@ -57,10 +57,6 @@ internal class EmbraceAnrService(
         }
     }
 
-    override fun addBlockedThreadListener(listener: BlockedThreadListener) {
-        listeners.add(listener)
-    }
-
     /**
      * Gets the intervals during which the application was not responding (ANR).
      *

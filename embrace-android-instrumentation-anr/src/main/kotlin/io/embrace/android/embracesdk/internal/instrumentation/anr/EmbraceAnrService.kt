@@ -41,7 +41,6 @@ internal class EmbraceAnrService(
         if (appStateTracker.getAppState() == AppState.BACKGROUND) {
             scheduleDelayedBackgroundCheck()
         }
-        livenessCheckScheduler.listener = stacktraceSampler
     }
 
     override fun startAnrCapture() {

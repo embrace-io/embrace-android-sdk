@@ -46,6 +46,7 @@ class AnrModuleImpl(args: InstrumentationArgs) : AnrModule {
             looper = looper,
             anrMonitorWorker = anrMonitorWorker,
             clock = args.clock,
+            action = blockedThreadDetector::onTargetThreadResponse
         )
     }
 
@@ -56,6 +57,7 @@ class AnrModuleImpl(args: InstrumentationArgs) : AnrModule {
             targetThread = looper.thread,
             blockedDurationThreshold = args.configService.anrBehavior.getMinDuration(),
             samplingIntervalMs = args.configService.anrBehavior.getSamplingIntervalMs(),
+            listener = stacktraceSampler,
         )
     }
 

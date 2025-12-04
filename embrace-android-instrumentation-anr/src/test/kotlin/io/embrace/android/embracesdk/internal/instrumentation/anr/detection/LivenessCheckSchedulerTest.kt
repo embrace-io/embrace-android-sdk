@@ -56,7 +56,6 @@ internal class LivenessCheckSchedulerTest {
             samplingIntervalMs = configService.anrBehavior.getSamplingIntervalMs()
         )
         fakeTargetThreadHandler = mockk(relaxUnitFun = true) {
-            every { action = any() } returns Unit
             every { sendMessage(any()) } returns true
         }
         every { fakeTargetThreadHandler.hasMessages(any()) } returns false

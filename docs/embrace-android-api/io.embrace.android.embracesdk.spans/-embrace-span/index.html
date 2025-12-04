@@ -1,22 +1,22 @@
 <!doctype html>
-<html class="no-js">
+<html class="no-js" lang="en">
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
     <title>EmbraceSpan</title>
-<link href="../../../images/logo-icon.svg" rel="icon" type="image/svg">    <script>var pathToRoot = "../../../";</script>
-    <script>document.documentElement.classList.replace("no-js","js");</script>
+<link href="../../../images/logo-icon.svg" rel="icon" type="image/svg"><script>var pathToRoot = "../../../";</script>
+    <script>document.documentElement.classList.replace("no-js", "js");</script>
     <script>const storage = localStorage.getItem("dokka-dark-mode")
-    if (storage == null) {
+      if (storage == null) {
         const osDarkSchemePreferred = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
         if (osDarkSchemePreferred === true) {
-            document.getElementsByTagName("html")[0].classList.add("theme-dark")
+          document.getElementsByTagName("html")[0].classList.add("theme-dark")
         }
-    } else {
+      } else {
         const savedDarkMode = JSON.parse(storage)
-        if(savedDarkMode === true) {
-            document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        if (savedDarkMode === true) {
+          document.getElementsByTagName("html")[0].classList.add("theme-dark")
         }
-    }
+      }
     </script>
 <script type="text/javascript" src="https://unpkg.com/kotlin-playground@1/dist/playground.min.js" async></script>
 <script type="text/javascript" src="../../../scripts/sourceset_dependencies.js" async></script>
@@ -24,137 +24,169 @@
 <link href="../../../styles/main.css" rel="Stylesheet">
 <link href="../../../styles/prism.css" rel="Stylesheet">
 <link href="../../../styles/logo-styles.css" rel="Stylesheet">
-<link href="../../../styles/font-jb-sans-auto.css" rel="Stylesheet">
-<script type="text/javascript" src="../../../scripts/clipboard.js" async></script>
+<link href="../../../ui-kit/ui-kit.min.css" rel="Stylesheet">
+<script type="text/javascript" src="../../../scripts/safe-local-storage_blocking.js"></script>
 <script type="text/javascript" src="../../../scripts/navigation-loader.js" async></script>
 <script type="text/javascript" src="../../../scripts/platform-content-handler.js" async></script>
 <script type="text/javascript" src="../../../scripts/main.js" defer></script>
 <script type="text/javascript" src="../../../scripts/prism.js" async></script>
-<script type="text/javascript" src="../../../scripts/symbol-parameters-wrapper_deferred.js" defer></script></head>
+<script type="text/javascript" src="../../../ui-kit/ui-kit.min.js" defer></script></head>
 <body>
-    <div class="root">
-<nav class="navigation" id="navigation-wrapper">
-    <div class="navigation--inner">
-        <div class="navigation-title">
-            <button class="menu-toggle" id="menu-toggle" type="button">toggle menu</button>
-            <div class="library-name">
-<a class="library-name--link" href="../../../index.html">
-                            embrace-android-sdk
-                    </a>            </div>
-            <div class="library-version">7.9.3
+<div class="root">
+    <header class="navigation theme-dark" id="navigation-wrapper" role="banner">
+<a class="library-name--link" href="../../../index.html" tabindex="1">
+                    embrace-android-sdk
+            </a>        <button class="navigation-controls--btn navigation-controls--btn_toc ui-kit_mobile-only" id="toc-toggle" type="button">Toggle table of contents
+        </button>
+        <div class="navigation-controls--break ui-kit_mobile-only"></div>
+        <div class="library-version" id="library-version">8.0.0
+        </div>
+        <div class="navigation-controls">
+        <ul class="filter-section filter-section_loading" id="filter-section" aria-label="Target filter">
+                <button class="platform-tag platform-selector jvm-like" data-active="" aria-pressed="true" data-filter=":embrace-android-api/main">androidJvm</button>
+            <div class="dropdown filter-section--dropdown" data-role="dropdown" id="filter-section-dropdown">
+                <button class="button button_dropdown filter-section--dropdown-toggle" role="combobox" data-role="dropdown-toggle" aria-controls="platform-tags-listbox" aria-haspopup="listbox" aria-expanded="false" aria-label="Toggle source sets"></button>
+                <ul role="listbox" id="platform-tags-listbox" class="dropdown--list" data-role="dropdown-listbox" aria-label="Target filter">
+                    <div class="dropdown--header"><span>Target filter</span>
+                        <button class="button" data-role="dropdown-toggle" aria-label="Close target filter">
+                            <i class="ui-kit-icon ui-kit-icon_cross"></i>
+                        </button>
+                    </div>
+                        <li role="option" class="dropdown--option platform-selector-option jvm-like" tabindex="0">
+                            <label class="checkbox">
+                                <input type="checkbox" class="checkbox--input" id=":embrace-android-api/main" data-filter=":embrace-android-api/main">
+                                <span class="checkbox--icon"></span>
+                                androidJvm
+                            </label>
+                        </li>
+                </ul>
+                <div class="dropdown--overlay"></div>
+            </div>
+        </ul>
+            <button class="navigation-controls--btn navigation-controls--btn_theme" id="theme-toggle-button" type="button">Switch theme
+            </button>
+            <div class="navigation-controls--btn navigation-controls--btn_search" id="searchBar" role="button">Search in
+                API
             </div>
         </div>
-        <div class="filter-section" id="filter-section">
-                <button class="platform-tag platform-selector jvm-like" data-active="" data-filter=":embrace-android-api:dokkaHtmlPartial/release">androidJvm</button>
-        </div>
-    </div>
-    <div class="navigation-controls">
-        <button class="navigation-controls--btn navigation-controls--theme" id="theme-toggle-button" type="button">switch theme</button>
-        <div class="navigation-controls--btn navigation-controls--search" id="searchBar" role="button">search in API</div>
-    </div>
-</nav>
-        <div id="container">
-            <div class="sidebar" id="leftColumn">
-                <div class="sidebar--inner" id="sideMenu"></div>
+    </header>
+    <div id="container">
+        <nav id="leftColumn" class="sidebar" data-item-type="SECTION" data-item-config="{&quot;defaultSize&quot;: 280, &quot;minSize&quot;: 200, &quot;maxSize&quot;: 400}">
+            <a class="toc--skip-link" href="#main">Skip to content</a>
+            <div class="dropdown theme-dark_mobile" data-role="dropdown" id="toc-dropdown">
+                <ul role="listbox" id="toc-listbox" class="dropdown--list dropdown--list_toc-list" data-role="dropdown-listbox" aria-label="Table of contents">
+                    <div class="dropdown--header">
+                            <span>
+                                    embrace-android-sdk
+                            </span>
+                        <button class="button" data-role="dropdown-toggle" aria-label="Close table of contents">
+                            <i class="ui-kit-icon ui-kit-icon_cross"></i>
+                        </button>
+                    </div>
+                    <div class="sidebar--inner" id="sideMenu"></div>
+                </ul>
+                <div class="dropdown--overlay"></div>
             </div>
-            <div id="main">
-<div class="main-content" data-page-type="classlike" id="content" pageids="embrace-android-api::io.embrace.android.embracesdk.spans/EmbraceSpan///PointingToDeclaration//182265131">
+        </nav>
+        <div id="resizer" class="resizer" data-item-type="BAR"></div>
+        <div id="main" data-item-type="SECTION" role="main">
+<div class="main-content" data-page-type="classlike" id="content" pageids="embrace-android-api::io.embrace.android.embracesdk.spans/EmbraceSpan///PointingToDeclaration//-353716863">
   <div class="breadcrumbs"><a href="../../index.html">embrace-android-api</a><span class="delimiter">/</span><a href="../index.html">io.embrace.android.embracesdk.spans</a><span class="delimiter">/</span><span class="current">EmbraceSpan</span></div>
   <div class="cover ">
     <h1 class="cover"><span>Embrace</span><wbr><span><span>Span</span></span></h1>
-    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":embrace-android-api:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">interface </span><a href="index.html">EmbraceSpan</a></div><p class="paragraph">Represents a Span that can be started and stopped with the appropriate <a href="../-error-code/index.html">ErrorCode</a> if applicable. This wraps the OpenTelemetry Span by adding an additional layer for local validation</p></div></div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":embrace-android-api/main"><div class="symbol monospace"><span class="token keyword">interface </span><a href="index.html">EmbraceSpan</a><span class="source-link-wrapper"><span class="source-link" data-element-type="source-link">(<a href="https://github.com/embrace-io/embrace-android-sdk/blob/main/embrace-android-api/src/main/kotlin/io/embrace/android/embracesdk/spans/EmbraceSpan.kt#L11">source</a>)</span></span></div><p class="paragraph">Represents a Span that can be started and stopped with the appropriate <a href="../-error-code/index.html">ErrorCode</a> if applicable. This wraps the OpenTelemetry Span by adding an additional layer for local validation</p></div></div>
   </div>
   <div class="tabbedcontent">
     <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="CONSTRUCTOR,TYPE,PROPERTY,FUNCTION">Members</button></div>
     <div class="tabs-section-body">
       <div data-togglable="PROPERTY">
-        <h2 class="">Properties</h2>
-        <div class="table"><a data-name="2046916058%2FProperties%2F182265131" anchor-label="autoTerminationMode" id="2046916058%2FProperties%2F182265131" data-filterable-set=":embrace-android-api:dokkaHtmlPartial/release"></a>
-          <div class="table-row" data-filterable-current=":embrace-android-api:dokkaHtmlPartial/release" data-filterable-set=":embrace-android-api:dokkaHtmlPartial/release">
+        <h2 class="tableheader">Properties</h2>
+        <div class="table"><a data-name="2046916058%2FProperties%2F-353716863" anchor-label="autoTerminationMode" id="2046916058%2FProperties%2F-353716863" data-filterable-set=":embrace-android-api/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":embrace-android-api/main" data-filterable-set=":embrace-android-api/main">
             <div class="main-subrow keyValue ">
               <div class=""><span class="inline-flex">
                   <div><a href="auto-termination-mode.html"><span>auto</span><wbr><span>Termination</span><wbr><span><span>Mode</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="2046916058%2FProperties%2F182265131"></span>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="2046916058%2FProperties%2F-353716863"></span>
                     <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":embrace-android-api:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">val </span><a href="auto-termination-mode.html">autoTerminationMode</a><span class="token operator">: </span><a href="../-auto-termination-mode/index.html">AutoTerminationMode</a></div><div class="brief "><p class="paragraph">The auto termination mode for this span</p></div></div></div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":embrace-android-api/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">val </span><a href="auto-termination-mode.html">autoTerminationMode</a><span class="token operator">: </span><a href="../-auto-termination-mode/index.html">AutoTerminationMode</a></div><div class="brief "><p class="paragraph">The auto termination mode for this span</p></div></div></div>
                 </div>
               </div>
             </div>
           </div>
-<a data-name="1157556971%2FProperties%2F182265131" anchor-label="isRecording" id="1157556971%2FProperties%2F182265131" data-filterable-set=":embrace-android-api:dokkaHtmlPartial/release"></a>
-          <div class="table-row" data-filterable-current=":embrace-android-api:dokkaHtmlPartial/release" data-filterable-set=":embrace-android-api:dokkaHtmlPartial/release">
+<a data-name="1157556971%2FProperties%2F-353716863" anchor-label="isRecording" id="1157556971%2FProperties%2F-353716863" data-filterable-set=":embrace-android-api/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":embrace-android-api/main" data-filterable-set=":embrace-android-api/main">
             <div class="main-subrow keyValue ">
               <div class=""><span class="inline-flex">
                   <div><a href="is-recording.html"><span>is</span><wbr><span><span>Recording</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1157556971%2FProperties%2F182265131"></span>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1157556971%2FProperties%2F-353716863"></span>
                     <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":embrace-android-api:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">val </span><a href="is-recording.html">isRecording</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-boolean/index.html">Boolean</a></div><div class="brief "><p class="paragraph">Returns true if and only if this Span has been started and has not been stopped</p></div></div></div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":embrace-android-api/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">val </span><a href="is-recording.html">isRecording</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-boolean/index.html">Boolean</a></div><div class="brief "><p class="paragraph">Returns true if and only if this Span has been started and has not been stopped</p></div></div></div>
                 </div>
               </div>
             </div>
           </div>
-<a data-name="-687244290%2FProperties%2F182265131" anchor-label="parent" id="-687244290%2FProperties%2F182265131" data-filterable-set=":embrace-android-api:dokkaHtmlPartial/release"></a>
-          <div class="table-row" data-filterable-current=":embrace-android-api:dokkaHtmlPartial/release" data-filterable-set=":embrace-android-api:dokkaHtmlPartial/release">
+<a data-name="-687244290%2FProperties%2F-353716863" anchor-label="parent" id="-687244290%2FProperties%2F-353716863" data-filterable-set=":embrace-android-api/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":embrace-android-api/main" data-filterable-set=":embrace-android-api/main">
             <div class="main-subrow keyValue ">
               <div class=""><span class="inline-flex">
                   <div><a href="parent.html"><span><span>parent</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-687244290%2FProperties%2F182265131"></span>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-687244290%2FProperties%2F-353716863"></span>
                     <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":embrace-android-api:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">val </span><a href="parent.html">parent</a><span class="token operator">: </span><a href="index.html">EmbraceSpan</a><span class="token operator">?</span></div><div class="brief "><p class="paragraph">The Span that is the parent of this Span. If this is null, it means this Span is the root of the Trace.</p></div></div></div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":embrace-android-api/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">val </span><a href="parent.html">parent</a><span class="token operator">: </span><a href="index.html">EmbraceSpan</a><span class="token operator">?</span></div><div class="brief "><p class="paragraph">The Span that is the parent of this Span. If this is null, it means this Span is the root of the Trace.</p></div></div></div>
                 </div>
               </div>
             </div>
           </div>
-<a data-name="-1164813939%2FProperties%2F182265131" anchor-label="spanContext" id="-1164813939%2FProperties%2F182265131" data-filterable-set=":embrace-android-api:dokkaHtmlPartial/release"></a>
-          <div class="table-row" data-filterable-current=":embrace-android-api:dokkaHtmlPartial/release" data-filterable-set=":embrace-android-api:dokkaHtmlPartial/release">
+<a data-name="-1164813939%2FProperties%2F-353716863" anchor-label="spanContext" id="-1164813939%2FProperties%2F-353716863" data-filterable-set=":embrace-android-api/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":embrace-android-api/main" data-filterable-set=":embrace-android-api/main">
             <div class="main-subrow keyValue ">
               <div class=""><span class="inline-flex">
                   <div><a href="span-context.html"><span>span</span><wbr><span><span>Context</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1164813939%2FProperties%2F182265131"></span>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1164813939%2FProperties%2F-353716863"></span>
                     <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":embrace-android-api:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">val </span><a href="span-context.html">spanContext</a><span class="token operator">: </span><span data-unresolved-link="io.embrace.opentelemetry.kotlin.aliases/OtelJavaSpanContext///PointingToDeclaration/">OtelJavaSpanContext</span><span class="token operator">?</span></div><div class="brief "><p class="paragraph">The SpanContext for this <a href="index.html">EmbraceSpan</a> instance. This is null if the span has not been started.</p></div></div></div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":embrace-android-api/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">val </span><a href="span-context.html">spanContext</a><span class="token operator">: </span><span data-unresolved-link="io.embrace.opentelemetry.kotlin.tracing.model/SpanContext///PointingToDeclaration/">SpanContext</span><span class="token operator">?</span></div><div class="brief "><p class="paragraph">The <span data-unresolved-link="io.embrace.opentelemetry.kotlin.tracing.model/SpanContext///PointingToDeclaration/">SpanContext</span> for this <a href="index.html">EmbraceSpan</a> instance. This is null if the span has not been started.</p></div></div></div>
                 </div>
               </div>
             </div>
           </div>
-<a data-name="1923111683%2FProperties%2F182265131" anchor-label="spanId" id="1923111683%2FProperties%2F182265131" data-filterable-set=":embrace-android-api:dokkaHtmlPartial/release"></a>
-          <div class="table-row" data-filterable-current=":embrace-android-api:dokkaHtmlPartial/release" data-filterable-set=":embrace-android-api:dokkaHtmlPartial/release">
+<a data-name="1923111683%2FProperties%2F-353716863" anchor-label="spanId" id="1923111683%2FProperties%2F-353716863" data-filterable-set=":embrace-android-api/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":embrace-android-api/main" data-filterable-set=":embrace-android-api/main">
             <div class="main-subrow keyValue ">
               <div class=""><span class="inline-flex">
                   <div><a href="span-id.html"><span>span</span><wbr><span><span>Id</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1923111683%2FProperties%2F182265131"></span>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1923111683%2FProperties%2F-353716863"></span>
                     <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":embrace-android-api:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">val </span><a href="span-id.html">spanId</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token operator">?</span></div><div class="brief "><p class="paragraph">ID of the Span. The format adheres to the OpenTelemetry standard for Span IDs</p></div></div></div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":embrace-android-api/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">val </span><a href="span-id.html">spanId</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token operator">?</span></div><div class="brief "><p class="paragraph">ID of the Span. The format adheres to the OpenTelemetry standard for Span IDs</p></div></div></div>
                 </div>
               </div>
             </div>
           </div>
-<a data-name="1508726322%2FProperties%2F182265131" anchor-label="traceId" id="1508726322%2FProperties%2F182265131" data-filterable-set=":embrace-android-api:dokkaHtmlPartial/release"></a>
-          <div class="table-row" data-filterable-current=":embrace-android-api:dokkaHtmlPartial/release" data-filterable-set=":embrace-android-api:dokkaHtmlPartial/release">
+<a data-name="1508726322%2FProperties%2F-353716863" anchor-label="traceId" id="1508726322%2FProperties%2F-353716863" data-filterable-set=":embrace-android-api/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":embrace-android-api/main" data-filterable-set=":embrace-android-api/main">
             <div class="main-subrow keyValue ">
               <div class=""><span class="inline-flex">
                   <div><a href="trace-id.html"><span>trace</span><wbr><span><span>Id</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1508726322%2FProperties%2F182265131"></span>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1508726322%2FProperties%2F-353716863"></span>
                     <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":embrace-android-api:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">val </span><a href="trace-id.html">traceId</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token operator">?</span></div><div class="brief "><p class="paragraph">ID of the Trace that this Span belongs to. The format adheres to the OpenTelemetry standard for Trace IDs</p></div></div></div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":embrace-android-api/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">val </span><a href="trace-id.html">traceId</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token operator">?</span></div><div class="brief "><p class="paragraph">ID of the Trace that this Span belongs to. The format adheres to the OpenTelemetry standard for Trace IDs</p></div></div></div>
                 </div>
               </div>
             </div>
@@ -162,108 +194,108 @@
         </div>
       </div>
       <div data-togglable="FUNCTION">
-        <h2 class="">Functions</h2>
-        <div class="table"><a data-name="-283788228%2FFunctions%2F182265131" anchor-label="addAttribute" id="-283788228%2FFunctions%2F182265131" data-filterable-set=":embrace-android-api:dokkaHtmlPartial/release"></a>
-          <div class="table-row" data-filterable-current=":embrace-android-api:dokkaHtmlPartial/release" data-filterable-set=":embrace-android-api:dokkaHtmlPartial/release">
+        <h2 class="tableheader">Functions</h2>
+        <div class="table"><a data-name="-283788228%2FFunctions%2F-353716863" anchor-label="addAttribute" id="-283788228%2FFunctions%2F-353716863" data-filterable-set=":embrace-android-api/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":embrace-android-api/main" data-filterable-set=":embrace-android-api/main">
             <div class="main-subrow keyValue ">
               <div class=""><span class="inline-flex">
                   <div><a href="add-attribute.html"><span>add</span><wbr><span><span>Attribute</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-283788228%2FFunctions%2F182265131"></span>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-283788228%2FFunctions%2F-353716863"></span>
                     <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":embrace-android-api:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">fun </span><a href="add-attribute.html"><span class="token function">addAttribute</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">key<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span></span><span class="parameter ">value<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-string/index.html">String</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-boolean/index.html">Boolean</a></div><div class="brief "><p class="paragraph">Add the given key-value pair as an Attribute to the Event. Returns false if the Attribute was definitely not added. Returns true if the validation at the Embrace Level has passed and the call to add the Attribute at the OpenTelemetry level was successful.</p></div></div></div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":embrace-android-api/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">fun </span><a href="add-attribute.html"><span class="token function">addAttribute</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">key<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span></span><span class="parameter ">value<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-string/index.html">String</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-boolean/index.html">Boolean</a></div><div class="brief "><p class="paragraph">Add the given key-value pair as an Attribute to the Event. Returns false if the Attribute was definitely not added. Returns true if the validation at the Embrace Level has passed and the call to add the Attribute at the OpenTelemetry level was successful.</p></div></div></div>
                 </div>
               </div>
             </div>
           </div>
-<a data-name="-2024633877%2FFunctions%2F182265131" anchor-label="addEvent" id="-2024633877%2FFunctions%2F182265131" data-filterable-set=":embrace-android-api:dokkaHtmlPartial/release"></a>
-          <div class="table-row" data-filterable-current=":embrace-android-api:dokkaHtmlPartial/release" data-filterable-set=":embrace-android-api:dokkaHtmlPartial/release">
+<a data-name="533629765%2FFunctions%2F-353716863" anchor-label="addEvent" id="533629765%2FFunctions%2F-353716863" data-filterable-set=":embrace-android-api/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":embrace-android-api/main" data-filterable-set=":embrace-android-api/main">
             <div class="main-subrow keyValue ">
               <div class=""><span class="inline-flex">
                   <div><a href="add-event.html"><span>add</span><wbr><span><span>Event</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-2024633877%2FFunctions%2F182265131"></span>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="533629765%2FFunctions%2F-353716863"></span>
                     <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":embrace-android-api:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">fun </span><a href="add-event.html"><span class="token function">addEvent</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">name<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-string/index.html">String</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-boolean/index.html">Boolean</a></div><div class="brief "><p class="paragraph">Add an <a href="../-embrace-span-event/index.html">EmbraceSpanEvent</a> with the given <a href="add-event.html">name</a> at the current time. Returns false if the Event was definitely not successfully added. Returns true if the validation at the Embrace level has passed and the call to add the Event at the OpenTelemetry level was successful.</p></div><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">fun </span><a href="add-event.html"><span class="token function">addEvent</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">name<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span></span><span class="parameter ">timestampMs<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-long/index.html">Long</a><span class="token operator">?</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-boolean/index.html">Boolean</a></div><div class="brief "><p class="paragraph">Add an <a href="../-embrace-span-event/index.html">EmbraceSpanEvent</a> with the given <a href="add-event.html">name</a> and <a href="add-event.html">timestampMs</a>. Optionally, a set of attributes associated with the event can be passed in. Returns false if the Event was definitely not successfully added. Returns true if the validation at the Embrace level has passed and the call to add the Event at the OpenTelemetry level was successful.</p></div><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">fun </span><a href="add-event.html"><span class="token function">addEvent</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">name<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span></span><span class="parameter ">timestampMs<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-long/index.html">Long</a><span class="token operator">?</span><span class="token punctuation">, </span></span><span class="parameter ">attributes<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.collections/-map/index.html">Map</a><span class="token operator">&lt;</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token operator">&gt;</span><span class="token operator">?</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-boolean/index.html">Boolean</a></div><div class="brief "><p class="paragraph">Add an <a href="../-embrace-span-event/index.html">EmbraceSpanEvent</a> with the given <a href="add-event.html">name</a>. If <a href="add-event.html">timestampMs</a> is null, the current time will be used. Optionally, the specific time of the event and a set of attributes can be passed in associated with the event. Returns false if the Event was definitely not successfully added. Returns true if the validation at the Embrace level has passed and the call to add the Event at the OpenTelemetry level was successful.</p></div></div></div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":embrace-android-api/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">fun </span><a href="add-event.html"><span class="token function">addEvent</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">name<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span></span><span class="parameter ">timestampMs<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-long/index.html">Long</a><span class="token operator">?</span><span class="token operator"> = </span>null<span class="token punctuation">, </span></span><span class="parameter ">attributes<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.collections/-map/index.html">Map</a><span class="token operator">&lt;</span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token operator">&gt;</span><span class="token operator"> = </span>emptyMap()</span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-boolean/index.html">Boolean</a></div><div class="brief "><p class="paragraph">Add an <a href="../-embrace-span-event/index.html">EmbraceSpanEvent</a> with the given <a href="add-event.html">name</a>. If <a href="add-event.html">timestampMs</a> is null, the current time will be used. Optionally, the specific time of the event and a set of attributes can be passed in associated with the event. Returns false if the Event was definitely not successfully added. Returns true if the validation at the Embrace level has passed and the call to add the Event at the OpenTelemetry level was successful.</p></div></div></div>
                 </div>
               </div>
             </div>
           </div>
-<a data-name="-1201765064%2FFunctions%2F182265131" anchor-label="addLink" id="-1201765064%2FFunctions%2F182265131" data-filterable-set=":embrace-android-api:dokkaHtmlPartial/release"></a>
-          <div class="table-row" data-filterable-current=":embrace-android-api:dokkaHtmlPartial/release" data-filterable-set=":embrace-android-api:dokkaHtmlPartial/release">
+<a data-name="1311521622%2FFunctions%2F-353716863" anchor-label="addLink" id="1311521622%2FFunctions%2F-353716863" data-filterable-set=":embrace-android-api/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":embrace-android-api/main" data-filterable-set=":embrace-android-api/main">
             <div class="main-subrow keyValue ">
               <div class=""><span class="inline-flex">
                   <div><a href="add-link.html"><span>add</span><wbr><span><span>Link</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1201765064%2FFunctions%2F182265131"></span>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1311521622%2FFunctions%2F-353716863"></span>
                     <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":embrace-android-api:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">fun </span><a href="add-link.html"><span class="token function">addLink</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">linkedSpan<span class="token operator">: </span><a href="index.html">EmbraceSpan</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-boolean/index.html">Boolean</a></div><div class="brief "><p class="paragraph">Add a link to the given <a href="index.html">EmbraceSpan</a></p></div><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">fun </span><a href="add-link.html"><span class="token function">addLink</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">linkedSpanContext<span class="token operator">: </span><span data-unresolved-link="io.embrace.opentelemetry.kotlin.aliases/OtelJavaSpanContext///PointingToDeclaration/">OtelJavaSpanContext</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-boolean/index.html">Boolean</a></div><div class="brief "><p class="paragraph">Add a link to the span with the given SpanContext</p></div><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">fun </span><a href="add-link.html"><span class="token function">addLink</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">linkedSpan<span class="token operator">: </span><a href="index.html">EmbraceSpan</a><span class="token punctuation">, </span></span><span class="parameter ">attributes<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.collections/-map/index.html">Map</a><span class="token operator">&lt;</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token operator">&gt;</span><span class="token operator">?</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-boolean/index.html">Boolean</a></div><div class="brief "><p class="paragraph">Add a link to the given <a href="index.html">EmbraceSpan</a> with the given attributes</p></div><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">fun </span><a href="add-link.html"><span class="token function">addLink</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">linkedSpanContext<span class="token operator">: </span><span data-unresolved-link="io.embrace.opentelemetry.kotlin.aliases/OtelJavaSpanContext///PointingToDeclaration/">OtelJavaSpanContext</span><span class="token punctuation">, </span></span><span class="parameter ">attributes<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.collections/-map/index.html">Map</a><span class="token operator">&lt;</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token operator">&gt;</span><span class="token operator">?</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-boolean/index.html">Boolean</a></div><div class="brief "><p class="paragraph">Add a link to the span with the given SpanContext with the given attributes</p></div></div></div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":embrace-android-api/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">fun </span><a href="add-link.html"><span class="token function">addLink</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">linkedSpan<span class="token operator">: </span><a href="index.html">EmbraceSpan</a><span class="token punctuation">, </span></span><span class="parameter ">attributes<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.collections/-map/index.html">Map</a><span class="token operator">&lt;</span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token operator">&gt;</span><span class="token operator"> = </span>emptyMap()</span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-boolean/index.html">Boolean</a></div><div class="brief "><p class="paragraph">Add a link to the given <a href="index.html">EmbraceSpan</a> with the given attributes</p></div><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">fun </span><a href="add-link.html"><span class="token function">addLink</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">linkedSpanContext<span class="token operator">: </span><span data-unresolved-link="io.embrace.opentelemetry.kotlin.tracing.model/SpanContext///PointingToDeclaration/">SpanContext</span><span class="token punctuation">, </span></span><span class="parameter ">attributes<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.collections/-map/index.html">Map</a><span class="token operator">&lt;</span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token operator">&gt;</span><span class="token operator"> = </span>emptyMap()</span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-boolean/index.html">Boolean</a></div><div class="brief "><p class="paragraph">Add a link to the span with the given <span data-unresolved-link="io.embrace.opentelemetry.kotlin.tracing.model/SpanContext///PointingToDeclaration/">SpanContext</span> with the given attributes</p></div></div></div>
                 </div>
               </div>
             </div>
           </div>
-<a data-name="-705142682%2FFunctions%2F182265131" anchor-label="recordException" id="-705142682%2FFunctions%2F182265131" data-filterable-set=":embrace-android-api:dokkaHtmlPartial/release"></a>
-          <div class="table-row" data-filterable-current=":embrace-android-api:dokkaHtmlPartial/release" data-filterable-set=":embrace-android-api:dokkaHtmlPartial/release">
+<a data-name="1750992466%2FFunctions%2F-353716863" anchor-label="recordException" id="1750992466%2FFunctions%2F-353716863" data-filterable-set=":embrace-android-api/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":embrace-android-api/main" data-filterable-set=":embrace-android-api/main">
             <div class="main-subrow keyValue ">
               <div class=""><span class="inline-flex">
                   <div><a href="record-exception.html"><span>record</span><wbr><span><span>Exception</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-705142682%2FFunctions%2F182265131"></span>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1750992466%2FFunctions%2F-353716863"></span>
                     <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":embrace-android-api:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">fun </span><a href="record-exception.html"><span class="token function">recordException</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">exception<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-throwable/index.html">Throwable</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-boolean/index.html">Boolean</a></div><div class="brief "><p class="paragraph">Record the given <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-throwable/index.html">Throwable</a> as a Span Event at the current time. Returns false if event was definitely not recorded. Returns true if the validation at the Embrace level has passed and the call to add the Event at the OpenTelemetry level was successful.</p></div><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">fun </span><a href="record-exception.html"><span class="token function">recordException</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">exception<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-throwable/index.html">Throwable</a><span class="token punctuation">, </span></span><span class="parameter ">attributes<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.collections/-map/index.html">Map</a><span class="token operator">&lt;</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token operator">&gt;</span><span class="token operator">?</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-boolean/index.html">Boolean</a></div><div class="brief "><p class="paragraph">Record the given <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-throwable/index.html">Throwable</a> as a Span Event at the current with the given set of Attributes. Returns false if event was definitely not recorded. Returns true if the validation at the Embrace level has passed and the call to add the Event at the OpenTelemetry level was successful.</p></div></div></div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":embrace-android-api/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">fun </span><a href="record-exception.html"><span class="token function">recordException</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">exception<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-throwable/index.html">Throwable</a><span class="token punctuation">, </span></span><span class="parameter ">attributes<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.collections/-map/index.html">Map</a><span class="token operator">&lt;</span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token operator">&gt;</span><span class="token operator"> = </span>emptyMap()</span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-boolean/index.html">Boolean</a></div><div class="brief "><p class="paragraph">Record the given <a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-throwable/index.html">Throwable</a> as a Span Event at the current with the given set of attributes. Returns false if event was definitely not recorded. Returns true if the validation at the Embrace level has passed and the call to add the Event at the OpenTelemetry level was successful.</p></div></div></div>
                 </div>
               </div>
             </div>
           </div>
-<a data-name="370529374%2FFunctions%2F182265131" anchor-label="start" id="370529374%2FFunctions%2F182265131" data-filterable-set=":embrace-android-api:dokkaHtmlPartial/release"></a>
-          <div class="table-row" data-filterable-current=":embrace-android-api:dokkaHtmlPartial/release" data-filterable-set=":embrace-android-api:dokkaHtmlPartial/release">
+<a data-name="-34050726%2FFunctions%2F-353716863" anchor-label="start" id="-34050726%2FFunctions%2F-353716863" data-filterable-set=":embrace-android-api/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":embrace-android-api/main" data-filterable-set=":embrace-android-api/main">
             <div class="main-subrow keyValue ">
               <div class=""><span class="inline-flex">
                   <div><a href="start.html"><span><span>start</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="370529374%2FFunctions%2F182265131"></span>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-34050726%2FFunctions%2F-353716863"></span>
                     <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":embrace-android-api:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">fun </span><a href="start.html"><span class="token function">start</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-boolean/index.html">Boolean</a></div><div class="brief "><p class="paragraph">Start recording of the Span. Returns true if this call triggered the start of the recording. Returns false if the Span has already been started or has been stopped.</p></div><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">fun </span><a href="start.html"><span class="token function">start</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">startTimeMs<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-long/index.html">Long</a><span class="token operator">?</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-boolean/index.html">Boolean</a></div><div class="brief "><p class="paragraph">Start recording of the Span with the given start time. Returns true if this call triggered the start of the recording. Returns false if the Span has already been started or has been stopped.</p></div></div></div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":embrace-android-api/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">fun </span><a href="start.html"><span class="token function">start</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">startTimeMs<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-long/index.html">Long</a><span class="token operator">?</span><span class="token operator"> = </span>null</span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-boolean/index.html">Boolean</a></div><div class="brief "><p class="paragraph">Start recording of the Span with the given start time. Returns true if this call triggered the start of the recording. Returns false if the Span has already been started or has been stopped.</p></div></div></div>
                 </div>
               </div>
             </div>
           </div>
-<a data-name="-440853553%2FFunctions%2F182265131" anchor-label="stop" id="-440853553%2FFunctions%2F182265131" data-filterable-set=":embrace-android-api:dokkaHtmlPartial/release"></a>
-          <div class="table-row" data-filterable-current=":embrace-android-api:dokkaHtmlPartial/release" data-filterable-set=":embrace-android-api:dokkaHtmlPartial/release">
+<a data-name="624376071%2FFunctions%2F-353716863" anchor-label="stop" id="624376071%2FFunctions%2F-353716863" data-filterable-set=":embrace-android-api/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":embrace-android-api/main" data-filterable-set=":embrace-android-api/main">
             <div class="main-subrow keyValue ">
               <div class=""><span class="inline-flex">
                   <div><a href="stop.html"><span><span>stop</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-440853553%2FFunctions%2F182265131"></span>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="624376071%2FFunctions%2F-353716863"></span>
                     <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":embrace-android-api:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">fun </span><a href="stop.html"><span class="token function">stop</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-boolean/index.html">Boolean</a></div><div class="brief "><p class="paragraph">Stop the recording of the Span to mark a successful completion of the underlying operation. Returns true if this call triggered the stopping of the recording. Returns false if the Span has not been started or if has already been stopped.</p></div><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">fun </span><a href="stop.html"><span class="token function">stop</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">errorCode<span class="token operator">: </span><a href="../-error-code/index.html">ErrorCode</a><span class="token operator">?</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-boolean/index.html">Boolean</a></div><div class="brief "><p class="paragraph">Stop the recording of the Span with an <a href="../-error-code/index.html">ErrorCode</a>, a non-null value indicating an unsuccessful completion of the underlying operation with the given reason. Returns true if this call triggered the stopping of the recording. Returns false if the Span has not been started or if has already been stopped.</p></div><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">fun </span><a href="stop.html"><span class="token function">stop</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">endTimeMs<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-long/index.html">Long</a><span class="token operator">?</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-boolean/index.html">Boolean</a></div><div class="brief "><p class="paragraph">Stop the recording of the Span at the given time to mark the successful completion of the underlying operation. Returns true if this call triggered the stopping of the recording. Returns false if the Span has not been started or if has already been stopped.</p></div><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">fun </span><a href="stop.html"><span class="token function">stop</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">errorCode<span class="token operator">: </span><a href="../-error-code/index.html">ErrorCode</a><span class="token operator">?</span><span class="token punctuation">, </span></span><span class="parameter ">endTimeMs<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-long/index.html">Long</a><span class="token operator">?</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-boolean/index.html">Boolean</a></div><div class="brief "><p class="paragraph">Stop the recording of the Span with an <a href="../-error-code/index.html">ErrorCode</a> the the specific time, a non-null value indicating an unsuccessful completion of the underlying operation with the given reason. Returns true if this call triggered the stopping of the recording. Returns false if the Span has not been started or if has already been stopped.</p></div></div></div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":embrace-android-api/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">fun </span><a href="stop.html"><span class="token function">stop</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">errorCode<span class="token operator">: </span><a href="../-error-code/index.html">ErrorCode</a><span class="token operator">?</span><span class="token operator"> = </span>null<span class="token punctuation">, </span></span><span class="parameter ">endTimeMs<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-long/index.html">Long</a><span class="token operator">?</span><span class="token operator"> = </span>null</span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-boolean/index.html">Boolean</a></div><div class="brief "><p class="paragraph">Stop the recording of the Span with an <a href="../-error-code/index.html">ErrorCode</a> the the specific time, a non-null value indicating an unsuccessful completion of the underlying operation with the given reason. Returns true if this call triggered the stopping of the recording. Returns false if the Span has not been started or if has already been stopped.</p></div></div></div>
                 </div>
               </div>
             </div>
           </div>
-<a data-name="452192784%2FFunctions%2F182265131" anchor-label="updateName" id="452192784%2FFunctions%2F182265131" data-filterable-set=":embrace-android-api:dokkaHtmlPartial/release"></a>
-          <div class="table-row" data-filterable-current=":embrace-android-api:dokkaHtmlPartial/release" data-filterable-set=":embrace-android-api:dokkaHtmlPartial/release">
+<a data-name="452192784%2FFunctions%2F-353716863" anchor-label="updateName" id="452192784%2FFunctions%2F-353716863" data-filterable-set=":embrace-android-api/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":embrace-android-api/main" data-filterable-set=":embrace-android-api/main">
             <div class="main-subrow keyValue ">
               <div class=""><span class="inline-flex">
                   <div><a href="update-name.html"><span>update</span><wbr><span><span>Name</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="452192784%2FFunctions%2F182265131"></span>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="452192784%2FFunctions%2F-353716863"></span>
                     <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":embrace-android-api:dokkaHtmlPartial/release"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">fun </span><a href="update-name.html"><span class="token function">updateName</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">newName<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-string/index.html">String</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-boolean/index.html">Boolean</a></div><div class="brief "><p class="paragraph">Update the name of the span. Returns false if the update was not successful, like when it has already been stopped</p></div></div></div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":embrace-android-api/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">fun </span><a href="update-name.html"><span class="token function">updateName</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">newName<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-string/index.html">String</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-boolean/index.html">Boolean</a></div><div class="brief "><p class="paragraph">Update the name of the span. Returns false if the update was not successful, like when it has already been stopped</p></div></div></div>
                 </div>
               </div>
             </div>
@@ -273,12 +305,22 @@
     </div>
   </div>
 </div>
-      <div class="footer">
-        <span class="go-to-top-icon"><a href="#content" id="go-to-top-link"></a></span><span>© 2025 Copyright</span><span class="pull-right"><span>Generated by </span><a href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span>
-      </div>
+    <div class="footer">
+        <div class="footer--container">
+            <a href="#content" id="go-to-top-link" class="footer--button footer--button_go-to-top"></a>
+            <div class="footer--content">
+                <div>
+                    <span>Generated by </span>
+                    <a class="footer--link footer--link_external" href="https://github.com/Kotlin/dokka">
+                        Dokka
+                    </a>
+                    <div>(c) embrace.io</div>
+                </div>
             </div>
         </div>
     </div>
+        </div>
+    </div>
+</div>
 </body>
 </html>
-

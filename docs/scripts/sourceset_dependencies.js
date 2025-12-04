@@ -1,1 +1,1 @@
-sourceset_dependencies = '{":embrace-android-api:dokkaHtmlPartial/debug":[],":embrace-android-api:dokkaHtmlPartial/main":[],":embrace-android-api:dokkaHtmlPartial/release":[],":embrace-android-sdk:dokkaHtmlPartial/debug":[],":embrace-android-sdk:dokkaHtmlPartial/main":[],":embrace-android-sdk:dokkaHtmlPartial/release":[]}'
+sourceset_dependencies = '{":embrace-android-api/debug":[],":embrace-android-api/main":[],":embrace-android-api/release":[],":embrace-android-sdk/debug":[],":embrace-android-sdk/main":[],":embrace-android-sdk/release":[]}'

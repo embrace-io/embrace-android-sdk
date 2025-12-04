@@ -184,15 +184,11 @@ internal class BlockedThreadDetector(
         override fun handleMessage(msg: Message) {
             runCatching {
                 if (msg.what == HEARTBEAT_REQUEST) {
-                    onIdleThread()
+                    val timestamp = clock.now()
+                    anrMonitorWorker.submit {
+                        action(timestamp)
+                    }
                 }
-            }
-        }
-
-        fun onIdleThread() {
-            val timestamp = clock.now()
-            anrMonitorWorker.submit {
-                action(timestamp)
             }
         }
     }

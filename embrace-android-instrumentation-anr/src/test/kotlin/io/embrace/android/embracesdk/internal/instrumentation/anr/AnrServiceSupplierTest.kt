@@ -12,24 +12,24 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
-internal class AnrModuleImplTest {
+internal class AnrServiceSupplierTest {
 
     @Test
     fun testDefaultImplementations() {
         val application = ApplicationProvider.getApplicationContext<Application>()
-        val module = AnrModuleImpl(
+        val service = createAnrService(
             FakeInstrumentationArgs(
                 application,
                 configService = FakeConfigService()
             ),
         )
-        assertNotNull(module.anrService)
+        assertNotNull(service)
     }
 
     @Test
     fun testBehaviorDisabled() {
         val application = ApplicationProvider.getApplicationContext<Application>()
-        val module = AnrModuleImpl(
+        val service = createAnrService(
             FakeInstrumentationArgs(
                 application,
                 configService = FakeConfigService(
@@ -37,6 +37,6 @@ internal class AnrModuleImplTest {
                 )
             ),
         )
-        assertNull(module.anrService)
+        assertNull(service)
     }
 }

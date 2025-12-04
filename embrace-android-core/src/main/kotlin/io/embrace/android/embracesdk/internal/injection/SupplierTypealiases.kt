@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
 import io.embrace.android.embracesdk.internal.delivery.execution.RequestExecutionService
 import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageService
-import io.embrace.android.embracesdk.internal.instrumentation.anr.AnrModule
+import io.embrace.android.embracesdk.internal.envelope.session.OtelPayloadMapper
 import io.embrace.android.embracesdk.internal.utils.Provider
 
 typealias ConfigModuleSupplier = (
@@ -78,7 +78,7 @@ typealias PayloadSourceModuleSupplier = (
     essentialServiceModule: EssentialServiceModule,
     configModule: ConfigModule,
     otelModule: OpenTelemetryModule,
-    anrModule: AnrModule,
+    otelPayloadMapper: OtelPayloadMapper?,
     deliveryModule: DeliveryModule,
 ) -> PayloadSourceModule
 

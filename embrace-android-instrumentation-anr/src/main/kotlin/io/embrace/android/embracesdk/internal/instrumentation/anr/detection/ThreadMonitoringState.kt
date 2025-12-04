@@ -29,16 +29,16 @@ internal class ThreadMonitoringState(
     var lastSampleAttemptMs: Long = 0
 
     /**
-     * Whether an ANR is already in progress or not.
+     * Whether the thread blockage is in progress or not.
      */
     @Volatile
-    var anrInProgress: Boolean = false
+    var threadBlockageInProgress: Boolean = false
 
     /**
      * Resets state properties to the initial values
      */
     fun resetState() {
-        anrInProgress = false
+        threadBlockageInProgress = false
         lastTargetThreadResponseMs = clock.now()
         lastMonitorThreadResponseMs = clock.now()
         lastSampleAttemptMs = 0

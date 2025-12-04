@@ -2,8 +2,8 @@ package io.embrace.android.embracesdk.internal.instrumentation.anr
 
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
-import io.embrace.android.embracesdk.internal.instrumentation.anr.payload.AnrInterval
-import io.embrace.android.embracesdk.internal.instrumentation.anr.payload.AnrSample
+import io.embrace.android.embracesdk.internal.instrumentation.anr.payload.ThreadBlockageInterval
+import io.embrace.android.embracesdk.internal.instrumentation.anr.payload.ThreadBlockageSample
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
@@ -13,7 +13,7 @@ import kotlin.random.Random
 
 private const val INVALID_SPAN_ID: String = "0000000000000000"
 
-internal fun mapIntervalToSpan(interval: AnrInterval, clock: Clock, random: Random): Span {
+internal fun mapIntervalToSpan(interval: ThreadBlockageInterval, clock: Clock, random: Random): Span {
     val attrs = mapIntervalToSpanAttributes(interval)
     val events = mapIntervalToSpanEvents(interval)
     return Span(
@@ -29,7 +29,7 @@ internal fun mapIntervalToSpan(interval: AnrInterval, clock: Clock, random: Rand
     )
 }
 
-internal fun mapIntervalToSpanAttributes(interval: AnrInterval): List<Attribute> {
+internal fun mapIntervalToSpanAttributes(interval: ThreadBlockageInterval): List<Attribute> {
     val attrs = mutableListOf<Attribute>()
     attrs.add(Attribute("emb.type", "perf.thread_blockage"))
 
@@ -42,11 +42,11 @@ internal fun mapIntervalToSpanAttributes(interval: AnrInterval): List<Attribute>
     return attrs
 }
 
-private fun mapIntervalToSpanEvents(interval: AnrInterval): List<SpanEvent> {
+private fun mapIntervalToSpanEvents(interval: ThreadBlockageInterval): List<SpanEvent> {
     return interval.samples?.map(::mapSampleToSpanEvent) ?: emptyList()
 }
 
-internal fun mapSampleToSpanEvent(sample: AnrSample): SpanEvent {
+internal fun mapSampleToSpanEvent(sample: ThreadBlockageSample): SpanEvent {
     val attrs = mutableListOf<Attribute>()
     attrs.add(Attribute("emb.type", "perf.thread_blockage_sample"))
 

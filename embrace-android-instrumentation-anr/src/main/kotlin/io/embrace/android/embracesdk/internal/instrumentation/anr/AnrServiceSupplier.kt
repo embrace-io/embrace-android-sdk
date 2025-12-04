@@ -24,7 +24,7 @@ fun createAnrService(args: InstrumentationArgs): AnrService? {
         AnrStacktraceSampler(
             clock = args.clock,
             targetThread = looper.thread,
-            anrMonitorWorker = anrMonitorWorker,
+            watchdogWorker = anrMonitorWorker,
             maxIntervalsPerSession = args.configService.anrBehavior.getMaxAnrIntervalsPerSession(),
             maxStacktracesPerInterval = args.configService.anrBehavior.getMaxStacktracesPerInterval(),
             stacktraceFrameLimit = args.configService.anrBehavior.getStacktraceFrameLimit(),
@@ -32,7 +32,7 @@ fun createAnrService(args: InstrumentationArgs): AnrService? {
     }
     val blockedThreadDetector by lazy {
         BlockedThreadDetector(
-            anrMonitorWorker = anrMonitorWorker,
+            watchdogWorker = anrMonitorWorker,
             clock = args.clock,
             state = state,
             looper = looper,
@@ -42,10 +42,10 @@ fun createAnrService(args: InstrumentationArgs): AnrService? {
             listener = stacktraceSampler,
         )
     }
-    return EmbraceAnrService(
+    return AnrServiceImpl(
         args = args,
         blockedThreadDetector = blockedThreadDetector,
-        anrMonitorWorker = anrMonitorWorker,
+        watchdogWorker = anrMonitorWorker,
         state = state,
         stacktraceSampler = stacktraceSampler,
     )

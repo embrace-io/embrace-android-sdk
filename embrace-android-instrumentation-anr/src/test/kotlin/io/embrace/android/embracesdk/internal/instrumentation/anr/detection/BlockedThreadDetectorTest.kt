@@ -30,19 +30,19 @@ internal class BlockedThreadDetectorTest {
     private lateinit var clock: FakeClock
     private lateinit var listener: FakeThreadBlockageListener
     private lateinit var state: ThreadMonitoringState
-    private lateinit var anrMonitorThread: AtomicReference<Thread>
-    private lateinit var anrExecutorService: BlockingScheduledExecutorService
+    private lateinit var watchdogThread: AtomicReference<Thread>
+    private lateinit var watchdogExecutorService: BlockingScheduledExecutorService
     private lateinit var logger: EmbLogger
     private lateinit var looper: Looper
     private lateinit var cfg: AnrRemoteConfig
 
     @Before
     fun setUp() {
-        anrMonitorThread = AtomicReference(Thread.currentThread())
+        watchdogThread = AtomicReference(Thread.currentThread())
         cfg = AnrRemoteConfig()
         clock = FakeClock(BASELINE_MS)
         configService = FakeConfigService(anrBehavior = createAnrBehavior(remoteCfg = RemoteConfig(anrConfig = cfg)))
-        anrExecutorService = BlockingScheduledExecutorService(clock)
+        watchdogExecutorService = BlockingScheduledExecutorService(clock)
         logger = FakeEmbLogger()
         looper = mockk {
             every { thread } returns Thread.currentThread()
@@ -50,7 +50,7 @@ internal class BlockedThreadDetectorTest {
         state = ThreadMonitoringState(clock)
         listener = FakeThreadBlockageListener()
         detector = BlockedThreadDetector(
-            anrMonitorWorker = BackgroundWorker(anrExecutorService),
+            watchdogWorker = BackgroundWorker(watchdogExecutorService),
             clock = clock,
             state = state,
             looper = mockk {
@@ -64,22 +64,22 @@ internal class BlockedThreadDetectorTest {
     }
 
     @Test
-    fun testShouldAttemptAnrSample() {
-        assertFalse(detector.shouldAttemptAnrSample(BASELINE_MS))
-        assertFalse(detector.shouldAttemptAnrSample(-23409))
-        assertFalse(detector.shouldAttemptAnrSample(0))
-        assertFalse(detector.shouldAttemptAnrSample(BASELINE_MS - 23409))
-        assertFalse(detector.shouldAttemptAnrSample(BASELINE_MS + 50))
-        assertTrue(detector.shouldAttemptAnrSample(BASELINE_MS + 51))
-        assertTrue(detector.shouldAttemptAnrSample(BASELINE_MS + 100))
-        assertTrue(detector.shouldAttemptAnrSample(BASELINE_MS + 30000))
+    fun testShouldSampleBlockedThread() {
+        assertFalse(detector.shouldSampleBlockedThread(BASELINE_MS))
+        assertFalse(detector.shouldSampleBlockedThread(-23409))
+        assertFalse(detector.shouldSampleBlockedThread(0))
+        assertFalse(detector.shouldSampleBlockedThread(BASELINE_MS - 23409))
+        assertFalse(detector.shouldSampleBlockedThread(BASELINE_MS + 50))
+        assertTrue(detector.shouldSampleBlockedThread(BASELINE_MS + 51))
+        assertTrue(detector.shouldSampleBlockedThread(BASELINE_MS + 100))
+        assertTrue(detector.shouldSampleBlockedThread(BASELINE_MS + 30000))
     }
 
     @Test
     fun testListenerFired() {
         val now = BASELINE_MS + 3000
         clock.setCurrentTime(now)
-        detector.updateAnrTracking(BASELINE_MS + 2000)
+        detector.updateThreadBlockageTracking(BASELINE_MS + 2000)
         assertEquals(1, listener.intervalCount)
         assertEquals(now, state.lastMonitorThreadResponseMs)
         assertEquals(now, state.lastSampleAttemptMs)
@@ -92,7 +92,7 @@ internal class BlockedThreadDetectorTest {
         state.lastMonitorThreadResponseMs = now - 10
         state.lastSampleAttemptMs = now - 10
 
-        detector.updateAnrTracking(now)
+        detector.updateThreadBlockageTracking(now)
         assertEquals(0, listener.intervalCount)
         assertEquals(now, state.lastMonitorThreadResponseMs)
         assertEquals(now - 10, state.lastSampleAttemptMs)
@@ -102,13 +102,13 @@ internal class BlockedThreadDetectorTest {
     fun testStartMonitoringThreadDoubleCall() {
         detector.startMonitoringThread()
         val lastTimeThreadResponded = clock.now()
-        anrExecutorService.runCurrentlyBlocked()
+        watchdogExecutorService.runCurrentlyBlocked()
         assertEquals(lastTimeThreadResponded, state.lastMonitorThreadResponseMs)
         clock.tick(10L)
         assertEquals(lastTimeThreadResponded, state.lastMonitorThreadResponseMs)
         // double-start should not schedule anything
         detector.startMonitoringThread()
-        anrExecutorService.runCurrentlyBlocked()
+        watchdogExecutorService.runCurrentlyBlocked()
         assertEquals(lastTimeThreadResponded, state.lastMonitorThreadResponseMs)
     }
 
@@ -116,8 +116,8 @@ internal class BlockedThreadDetectorTest {
     fun `starting monitoring thread twice does not result in multiple recurring tasks`() {
         repeat(2) {
             detector.startMonitoringThread()
-            anrExecutorService.runCurrentlyBlocked()
-            assertEquals(1, anrExecutorService.scheduledTasksCount())
+            watchdogExecutorService.runCurrentlyBlocked()
+            assertEquals(1, watchdogExecutorService.scheduledTasksCount())
         }
     }
 }

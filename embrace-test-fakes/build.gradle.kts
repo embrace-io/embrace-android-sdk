@@ -4,6 +4,8 @@ plugins {
 
 android {
     namespace = "io.embrace.android.embracesdk.test.fakes"
+    packaging.resources.excludes += "META-INF/LICENSE.md"
+    packaging.resources.excludes += "META-INF/LICENSE-notice.md"
 }
 
 dependencies {

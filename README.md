@@ -33,12 +33,13 @@ Currently, only Spans and Logs are supported, but other signals will be added in
      - Setting up configuration files to be read at runtime.
      - Doing bytecode instrumentation to enable the capture of certain telemetry.
 2. For multi-module projects, in the Gradle files of modules where you want to invoke Embrace SDK API methods, add a dependency to the main Embrace SDK module: `'io.embrace:embrace-android-sdk:<version>`.
-3. In the `main` directory of your app's root source folder (i.e. `app/src/main/`), add a file called `embrace-config.json` that contains `{}` as its only line.
+3. To configure Java OTel Exporters with the Embrace Android SDK or access its implementation of the Java OpenTelemetry API, add a dependency to the Embrace Java OpenTelemetry module, which provides extension methods that allow you to do so: `io.embrace:embrace-android-otel-java:<version>`
+4. In the `main` directory of your app's root source folder (i.e. `app/src/main/`), add a file called `embrace-config.json` that contains `{}` as its only line.
    - To further configure the SDK, additional attributes can be added to this configuration file. 
    - See our [configuration documentation page](https://embrace.io/docs/android/features/configuration-file/) for further details.
-4. In your app's Gradle properties file, add the entry `embrace.disableMappingFileUpload=true`
+5. In your app's Gradle properties file, add the entry `embrace.disableMappingFileUpload=true`
    - This allows the SDK to function without sending data to Embrace.
-5. In Android Studio, do a Gradle Sync. Barring any errors, you should be able to configure and start the SDK to begin recording and exporting data.
+6. In Android Studio, do a Gradle Sync. Barring any errors, you should be able to configure and start the SDK to begin recording and exporting data.
 
 ### Configure Exporters and Start SDK
 Using the Embrace SDK without being an Embrace customer requires you to set up OTel Exporters to work with the SDK so that recorded telemetry can be sent somewhere. 
@@ -51,8 +52,8 @@ val grafanaCloudExporter = OtlpHttpSpanExporter.builder()
     .addHeader("Authorization", "YourToken")
     .build()
 
-Embrace.getInstance().addSpanExporter(grafanaCloudExporter)
-Embrace.getInstance().addLogRecordExporter(SystemOutLogRecordExporter.create())
+Embrace.addJavaSpanExporter(grafanaCloudExporter)
+Embrace.addJavaLogRecordExporter(SystemOutLogRecordExporter.create())
 
 ```
 
@@ -67,7 +68,7 @@ internal class MyApplication : Application() {
 
         // Do your exporter setup before starting the SDK
 
-        Embrace.getInstance().start(this)
+        Embrace.start(this)
     }
 }
 ```
@@ -79,11 +80,11 @@ For details about the features the Embrace Android SDK supports, refer to our [f
 - After you've obtained an `appId` and `API token`, checkout our [integration guide](https://embrace.io/docs/android/integration/) for further instructions.
 
 ## Existing Embrace Customers Upgrading from 6.x and 7.x
-- For existing customers on older versions of the Embrace SDK, follow the instructions in our [upgrade guide](https://github.com/embrace-io/embrace-android-sdk/blob/main/UPGRADING.md).
+- For existing customers on older versions of the Embrace SDK, follow the instructions in our [upgrade guide](UPGRADING.md).
 
 ## Support 
 
-We appreciate any feedback you have on the SDK and the APIs that it provides. To contribute to this project, please see our [Contribution Guidelines](https://github.com/embrace-io/embrace-android-sdk/blob/master/CONTRIBUTING.md). There, you'll be able to submit a feature request, create a bug report, or submit a pull request.
+We appreciate any feedback you have on the SDK and the APIs that it provides. To contribute to this project, please see our [Contribution Guidelines](CONTRIBUTING.md). There, you'll be able to submit a feature request, create a bug report, or submit a pull request.
 
 For urgent matters (such as outages) or issues concerning the Embrace service or UI reach out in our [Community Slack](https://join.slack.com/t/embraceio-community/shared_invite/zt-ywr4jhzp-DLROX0ndN9a0soHMf6Ksow) for direct, faster assistance.
 

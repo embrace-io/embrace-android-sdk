@@ -255,13 +255,13 @@ internal class AnrServiceImplTest {
                 assertEquals(
                     extra,
                     samples.count { sample ->
-                        sample.threads == null && sample.code == ThreadBlockageSample.CODE_SAMPLE_LIMIT_REACHED
+                        sample.threadSample == null && sample.code == ThreadBlockageSample.CODE_SAMPLE_LIMIT_REACHED
                     }
                 )
                 assertEquals(
                     defaultLimit,
                     samples.count { sample ->
-                        sample.threads != null && sample.code == ThreadBlockageSample.CODE_DEFAULT
+                        sample.threadSample != null && sample.code == ThreadBlockageSample.CODE_DEFAULT
                     }
                 )
             }

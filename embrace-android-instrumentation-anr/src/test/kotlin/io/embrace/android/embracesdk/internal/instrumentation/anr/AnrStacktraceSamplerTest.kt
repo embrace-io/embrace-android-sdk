@@ -215,7 +215,7 @@ internal class AnrStacktraceSamplerTest {
         val intervals = sampler.getAnrIntervals()
         val interval = intervals.single()
         interval.samples?.forEach { sample ->
-            sample.threads?.forEach { thread ->
+            sample.threadSample?.let { thread ->
                 val lines = checkNotNull(thread.lines)
                 assertEquals(5, lines.size)
                 assertTrue(thread.frameCount > lines.size)

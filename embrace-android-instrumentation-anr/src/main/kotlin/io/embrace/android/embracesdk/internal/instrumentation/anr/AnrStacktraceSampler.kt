@@ -1,13 +1,13 @@
 package io.embrace.android.embracesdk.internal.instrumentation.anr
 
-import io.embrace.android.embracesdk.internal.arch.stacktrace.getThreadInfo
+import io.embrace.android.embracesdk.internal.arch.stacktrace.ThreadSample
+import io.embrace.android.embracesdk.internal.arch.stacktrace.truncateStacktrace
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.ThreadBlockageEvent
 import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.ThreadBlockageListener
 import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.ThreadMonitoringState
 import io.embrace.android.embracesdk.internal.instrumentation.anr.payload.ThreadBlockageInterval
 import io.embrace.android.embracesdk.internal.instrumentation.anr.payload.ThreadBlockageSample
-import io.embrace.android.embracesdk.internal.payload.ThreadInfo
 import io.embrace.android.embracesdk.internal.session.MemoryCleanerListener
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import java.util.concurrent.CopyOnWriteArrayList
@@ -28,7 +28,7 @@ internal class AnrStacktraceSampler(
     private val threadBlockageIntervals: CopyOnWriteArrayList<ThreadBlockageInterval> =
         CopyOnWriteArrayList<ThreadBlockageInterval>()
     private val samples = mutableListOf<ThreadBlockageSample>()
-    private val currentStacktraceStates: MutableMap<Long, ThreadInfo> = HashMap()
+    private val memo: MutableMap<Long, ThreadSample> = mutableMapOf()
     private var lastUnblockedMs: Long = 0
 
     override fun onThreadBlockageEvent(
@@ -72,7 +72,7 @@ internal class AnrStacktraceSampler(
     }
 
     private fun onThreadBlocked(timestamp: Long) {
-        currentStacktraceStates.clear()
+        memo.clear()
         lastUnblockedMs = timestamp
     }
 
@@ -117,7 +117,7 @@ internal class AnrStacktraceSampler(
         // reset state
         samples.clear()
         lastUnblockedMs = timestamp
-        currentStacktraceStates.clear()
+        memo.clear()
     }
 
     /**
@@ -138,25 +138,24 @@ internal class AnrStacktraceSampler(
     /**
      * Captures the thread traces required for the given sample.
      */
-    private fun captureSample(): List<ThreadInfo> {
-        val threadInfo = getThreadInfo(
+    private fun captureSample(): ThreadSample? {
+        val capturedTrace = truncateStacktrace(
             targetThread,
             targetThread.stackTrace,
             stacktraceFrameLimit
         )
-        val sanitizedThreads = mutableListOf<ThreadInfo>()
 
         // Compares main thread with the last known thread state via hashcode. If hashcode changed
         // it should be added to the anrInfo list and also the currentAnrInfoState must be updated.
-        val threadId = threadInfo.threadId
-        val cache: ThreadInfo? = currentStacktraceStates[threadId]
+        val threadId = capturedTrace.threadId
+        val cache: ThreadSample? = memo[threadId]
 
         // only serialize if the previous stacktrace doesn't match.
-        if (cache == null || threadInfo != cache) {
-            sanitizedThreads.add(threadInfo)
-            currentStacktraceStates[threadId] = threadInfo
+        if (cache == null || capturedTrace != cache) {
+            memo[threadId] = capturedTrace
+            return capturedTrace
         }
-        return sanitizedThreads
+        return null
     }
 
     private companion object {

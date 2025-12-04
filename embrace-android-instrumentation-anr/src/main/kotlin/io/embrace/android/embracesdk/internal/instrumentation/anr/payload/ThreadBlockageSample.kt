@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.instrumentation.anr.payload
 
-import io.embrace.android.embracesdk.internal.payload.ThreadInfo
+import io.embrace.android.embracesdk.internal.arch.stacktrace.ThreadSample
 
 /**
  * Holds thread data taken during an [ThreadBlockageInterval].
@@ -15,7 +15,7 @@ internal data class ThreadBlockageSample(
     /**
      * All the information for threads that were captured during a sample
      */
-    val threads: List<ThreadInfo>?,
+    val threadSample: ThreadSample?,
 
     /**
      * The overhead in milliseconds associated with capturing thread traces for this sample

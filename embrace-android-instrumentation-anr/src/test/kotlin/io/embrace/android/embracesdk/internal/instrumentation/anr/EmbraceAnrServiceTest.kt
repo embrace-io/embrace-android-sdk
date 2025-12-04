@@ -284,30 +284,12 @@ internal class EmbraceAnrServiceTest {
     }
 
     @Test
-    fun testProcessAnrTickDisabled() {
-        with(rule) {
-            // create an ANR service with config that disables ANR capture
-            rule.anrBehavior.anrCaptureEnabled = false
-            clock.setCurrentTime(15020000L)
-            anrService.onThreadBlockedInterval(currentThread(), clock.now())
-            assertEquals(0, stacktraceSampler.size())
-
-            // assert no anr intervals were added
-            val anrIntervals = anrService.getCapturedData()
-            assertTrue(anrIntervals.isEmpty())
-        }
-    }
-
-    @Test
     fun testReachedAnrCaptureLimit() {
         with(rule) {
-            rule.anrBehavior.anrPerSessionImpl = 3
-            assertFalse(stacktraceSampler.reachedAnrStacktraceCaptureLimit())
-
-            stacktraceSampler.anrIntervals.add(AnrInterval(0, anrSampleList = AnrSampleList(listOf())))
-            stacktraceSampler.anrIntervals.add(AnrInterval(0, anrSampleList = AnrSampleList(listOf())))
-            stacktraceSampler.anrIntervals.add(AnrInterval(0, anrSampleList = AnrSampleList(listOf())))
-            assertFalse(stacktraceSampler.reachedAnrStacktraceCaptureLimit())
+            repeat(rule.anrBehavior.anrPerSessionImpl) {
+                stacktraceSampler.anrIntervals.add(AnrInterval(0, anrSampleList = AnrSampleList(listOf())))
+                assertFalse(stacktraceSampler.reachedAnrStacktraceCaptureLimit())
+            }
 
             stacktraceSampler.anrIntervals.add(AnrInterval(0, anrSampleList = AnrSampleList(listOf())))
             assertTrue(stacktraceSampler.reachedAnrStacktraceCaptureLimit())

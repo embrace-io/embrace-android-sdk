@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.instrumentation.anr
 
 import io.embrace.android.embracesdk.internal.clock.Clock
-import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.ThreadMonitoringState
 import io.embrace.android.embracesdk.internal.instrumentation.anr.payload.AnrInterval
 import io.embrace.android.embracesdk.internal.instrumentation.anr.payload.AnrSample
@@ -14,16 +13,18 @@ import java.util.concurrent.CopyOnWriteArrayList
  * This class is responsible for tracking the state of JVM stacktraces sampled during an ANR.
  */
 internal class AnrStacktraceSampler(
-    private var configService: ConfigService,
     private val clock: Clock,
     targetThread: Thread,
     private val anrMonitorWorker: BackgroundWorker,
+    val maxIntervalsPerSession: Int,
+    val maxStacktracesPerInterval: Int,
+    val stacktraceFrameLimit: Int,
 ) : BlockedThreadListener, MemoryCleanerListener {
 
     val anrIntervals: CopyOnWriteArrayList<AnrInterval> = CopyOnWriteArrayList<AnrInterval>()
     private val samples = mutableListOf<AnrSample>()
     private var lastUnblockedMs: Long = 0
-    private val threadInfoCollector = ThreadInfoCollector(targetThread)
+    private val threadInfoCollector = ThreadInfoCollector(targetThread, stacktraceFrameLimit)
 
     fun size(): Int = samples.size
 
@@ -33,12 +34,12 @@ internal class AnrStacktraceSampler(
     }
 
     override fun onThreadBlockedInterval(thread: Thread, timestamp: Long) {
-        val limit = configService.anrBehavior.getMaxStacktracesPerInterval()
+        val limit = maxStacktracesPerInterval
         val anrSample = if (size() >= limit) {
             AnrSample(timestamp, null, 0, AnrSample.CODE_SAMPLE_LIMIT_REACHED)
         } else {
             val start = clock.now()
-            val threads = threadInfoCollector.captureSample(configService)
+            val threads = threadInfoCollector.captureSample()
             val sampleOverheadMs = clock.now() - start
             AnrSample(timestamp, threads, sampleOverheadMs)
         }
@@ -93,9 +94,8 @@ internal class AnrStacktraceSampler(
     }
 
     fun reachedAnrStacktraceCaptureLimit(): Boolean {
-        val limit = configService.anrBehavior.getMaxAnrIntervalsPerSession()
         val count = findIntervalsWithSamples().size
-        return count > limit
+        return count > maxIntervalsPerSession
     }
 
     private fun findIntervalsWithSamples() = anrIntervals.filter(AnrInterval::hasSamples)

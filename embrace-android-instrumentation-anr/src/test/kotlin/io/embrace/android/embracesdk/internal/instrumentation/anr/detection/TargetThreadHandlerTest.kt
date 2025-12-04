@@ -8,7 +8,8 @@ import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.mockk.mockk
 import io.mockk.verify
-import org.junit.Assert
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Before
 import org.junit.Test
 import java.util.concurrent.atomic.AtomicReference
@@ -49,7 +50,7 @@ internal class TargetThreadHandlerTest {
 
     @Test
     fun testTargetThreadHandlerWrongMsg() {
-        Assert.assertNotNull(handler)
+        assertNotNull(handler)
         state.lastTargetThreadResponseMs = 0L
 
         // process a message
@@ -59,27 +60,27 @@ internal class TargetThreadHandlerTest {
 
     @Test
     fun testNoAnrInProgress() {
-        Assert.assertNotNull(handler)
+        assertNotNull(handler)
         state.lastTargetThreadResponseMs = 0L
 
         // process a message
         val msg = mockk<Message>()
-        msg.what = TargetThreadHandler.HEARTBEAT_REQUEST
+        msg.what = HEARTBEAT_REQUEST
         handler.handleMessage(msg)
-        Assert.assertEquals(2, executorService.submitCount)
+        assertEquals(2, executorService.submitCount)
     }
 
     @Test
     fun testTargetThreadHandlerCorrectMsg() {
-        Assert.assertNotNull(handler)
+        assertNotNull(handler)
         state.lastTargetThreadResponseMs = 0L
         state.anrInProgress = true
 
         // process a message
         val msg = mockk<Message>()
-        msg.what = TargetThreadHandler.HEARTBEAT_REQUEST
+        msg.what = HEARTBEAT_REQUEST
         handler.handleMessage(msg)
-        Assert.assertEquals(2, executorService.submitCount)
+        assertEquals(2, executorService.submitCount)
         executorService.runCurrentlyBlocked()
         verify { handler.action.invoke(FAKE_TIME_MS) }
     }
@@ -88,24 +89,24 @@ internal class TargetThreadHandlerTest {
     fun testCorrectMsgNonNullQueue() {
         handler = createHandler(mockk(relaxed = true))
         handler.installed = true
-        Assert.assertNotNull(handler)
+        assertNotNull(handler)
         state.lastTargetThreadResponseMs = 0L
         state.anrInProgress = true
 
         // process a message
         val msg = mockk<Message>()
-        msg.what = TargetThreadHandler.HEARTBEAT_REQUEST
+        msg.what = HEARTBEAT_REQUEST
         handler.handleMessage(msg)
     }
 
     @Test
     fun testRejectedExecution() {
         executorService.shutdownNow()
-        Assert.assertNotNull(handler)
+        assertNotNull(handler)
         state.lastTargetThreadResponseMs = 0L
 
         // RejectedExecutionException ignored as ScheduledExecutorService will be shutting down.
         handler.handleMessage(mockk(relaxed = true))
-        Assert.assertEquals(0L, state.lastTargetThreadResponseMs)
+        assertEquals(0L, state.lastTargetThreadResponseMs)
     }
 }

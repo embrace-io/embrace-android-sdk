@@ -42,7 +42,7 @@ internal const val HEARTBEAT_REQUEST: Int = 34593
  * target thread & scheduling regular checks on a background thread. [BlockedThreadDetector]
  * is responsible for the business logic that checks whether a thread is blocked.
  */
-class BlockedThreadDetector(
+internal class BlockedThreadDetector(
     private val anrMonitorWorker: BackgroundWorker,
     private val clock: Clock,
     private val state: ThreadMonitoringState,
@@ -125,7 +125,7 @@ class BlockedThreadDetector(
      * Called when the target thread process the message. This indicates that the target thread is
      * responsive and (usually) means an ANR is about to end.
      */
-    fun onTargetThreadResponse(timestamp: Long) {
+    internal fun onTargetThreadResponse(timestamp: Long) {
         state.lastTargetThreadResponseMs = timestamp
 
         if (isDebuggerEnabled()) {

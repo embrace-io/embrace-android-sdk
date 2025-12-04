@@ -69,6 +69,10 @@ internal class EmbraceAnrService(
         }
     }
 
+    override fun simulateTargetThreadResponse() {
+        blockedThreadDetector.onTargetThreadResponse(clock.now())
+    }
+
     override fun handleCrash(crashId: String) {
         this.anrMonitorWorker.submit {
             blockedThreadDetector.stopMonitoringThread()

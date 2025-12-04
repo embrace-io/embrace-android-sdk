@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.instrumentation.anr.detection
 /**
  * The state of the thread.
  */
-enum class ThreadBlockageEvent {
+internal enum class ThreadBlockageEvent {
 
     /**
      * When the thread becomes blocked (i.e. not responsive for X milliseconds)

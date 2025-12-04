@@ -368,14 +368,10 @@ internal class EmbraceAnrServiceTest {
             clock.setCurrentTime(14000000L)
             rule.anrBehavior.bgAnrCaptureEnabled = true
             anrService.onForeground()
-            anrExecutorService.submit {
-                assertTrue(state.started.get())
-            }
             populateAnrIntervals()
             anrService.handleCrash("")
             val anrIntervals = anrService.getCapturedData()
             assertEquals(5, anrIntervals.size)
-            assertFalse(state.started.get())
         }
     }
 

@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.instrumentation.anr.detection
 
 import io.embrace.android.embracesdk.internal.clock.Clock
-import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * This class holds state that is used when monitoring a thread. For instance, the last response
@@ -10,12 +9,6 @@ import java.util.concurrent.atomic.AtomicBoolean
 internal class ThreadMonitoringState(
     private val clock: Clock,
 ) {
-
-    /**
-     * Whether blocked thread detection has already been started or not.
-     */
-    @JvmField
-    val started: AtomicBoolean = AtomicBoolean(false)
 
     /**
      * The last response time of the target thread in ms.

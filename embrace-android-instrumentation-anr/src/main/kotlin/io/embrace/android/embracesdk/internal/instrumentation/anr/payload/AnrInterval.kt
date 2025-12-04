@@ -24,27 +24,15 @@ internal data class AnrInterval(
     val endTime: Long? = null,
 
     /**
-     * The component of the application which stopped responding.
-     */
-    val type: Type = Type.UI,
-
-    /**
      * The captured stacktraces of the anr interval.
      */
-    val anrSampleList: AnrSampleList? = null,
+    val samples: List<AnrSample>? = null,
 
     /**
      * The status code of the ANR interval.
      */
     val code: Int? = CODE_DEFAULT,
 ) {
-
-    /**
-     * The type of thread not responding. Currently only the UI thread is monitored.
-     */
-    enum class Type {
-        UI
-    }
 
     companion object {
         const val CODE_DEFAULT: Int = 0
@@ -55,7 +43,7 @@ internal data class AnrInterval(
      * Retrieves the ANR sample count associated with this interval, or 0 if the samples have been
      * redacted.
      */
-    internal fun size(): Int = anrSampleList?.size() ?: 0
+    internal fun size(): Int = samples?.size ?: 0
 
     /**
      * Calculates the duration of the interval, returning -1 if this is unknown.
@@ -68,27 +56,19 @@ internal data class AnrInterval(
     }
 
     /**
-     * Performs a copy of the AnrInterval that ensures the [anrSampleList] is a new object. Note:
+     * Performs a copy of the AnrInterval that ensures the [samples] is a new object. Note:
      * that this does not copy all the way down the object tree.
      */
-    internal fun deepCopy(): AnrInterval {
-        val copy = when (val original = anrSampleList) {
-            null -> null
-            else -> original.copy(samples = original.samples.toMutableList())
-        }
-        return AnrInterval(
-            startTime,
-            lastKnownTime,
-            endTime,
-            type,
-            copy,
-            code
-        )
-    }
+    internal fun deepCopy(): AnrInterval = AnrInterval(
+        startTime,
+        lastKnownTime,
+        endTime,
+        samples?.toList(),
+        code
+    )
 
     @CheckResult
-    internal fun clearSamples(): AnrInterval =
-        copy(anrSampleList = null, code = AnrInterval.CODE_SAMPLES_CLEARED)
+    internal fun clearSamples(): AnrInterval = copy(samples = null, code = CODE_SAMPLES_CLEARED)
 
-    internal fun hasSamples(): Boolean = code != AnrInterval.CODE_SAMPLES_CLEARED
+    internal fun hasSamples(): Boolean = code != CODE_SAMPLES_CLEARED
 }

@@ -143,7 +143,7 @@ internal class EmbraceAnrService(
     override fun record() = EmbTrace.trace("anr-record") {
         getCapturedData().forEach { interval ->
             val attributes = mapIntervalToSpanAttributes(interval).toEmbracePayload()
-            val events = interval.anrSampleList?.samples?.map {
+            val events = interval.samples?.map {
                 mapSampleToSpanEvent(it).toArchSpanEvent()
             } ?: emptyList()
             telemetryDestination.recordCompletedSpan(

@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.internal.instrumentation.anr
 
 import io.embrace.android.embracesdk.internal.instrumentation.anr.payload.AnrInterval
 import io.embrace.android.embracesdk.internal.instrumentation.anr.payload.AnrSample
-import io.embrace.android.embracesdk.internal.instrumentation.anr.payload.AnrSampleList
 import io.embrace.android.embracesdk.internal.payload.ThreadInfo
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotSame
@@ -25,14 +24,13 @@ internal class AnrIntervalTest {
 
     private val anrSample = AnrSample(150980980980, listOf(threadInfo), 0)
 
-    private val anrSampleList = AnrSampleList(listOf(anrSample))
+    private val anrSampleList = listOf(anrSample)
 
     private val interval = AnrInterval(
         startTime = 150980980980,
         endTime = 150980980980 + 5000,
         lastKnownTime = 150980980980 + 4000,
-        type = AnrInterval.Type.UI,
-        anrSampleList = anrSampleList,
+        samples = anrSampleList,
         code = AnrInterval.CODE_SAMPLES_CLEARED
     )
 
@@ -45,7 +43,7 @@ internal class AnrIntervalTest {
         val copy = interval.clearSamples()
         assertEquals(1, interval.size())
         assertEquals(AnrInterval.CODE_DEFAULT, interval.code)
-        assertNull(copy.anrSampleList)
+        assertNull(copy.samples)
         assertEquals(AnrInterval.CODE_SAMPLES_CLEARED, copy.code)
     }
 
@@ -55,10 +53,9 @@ internal class AnrIntervalTest {
         assertEquals(interval.startTime, deepCopy.startTime)
         assertEquals(interval.endTime, deepCopy.endTime)
         assertEquals(interval.lastKnownTime, deepCopy.lastKnownTime)
-        assertEquals(interval.type, deepCopy.type)
         assertEquals(interval.code, deepCopy.code)
-        assertEquals(interval.anrSampleList, deepCopy.anrSampleList)
-        assertNotSame(interval.anrSampleList, deepCopy.anrSampleList)
+        assertEquals(interval.samples, deepCopy.samples)
+        assertNotSame(interval.samples, deepCopy.samples)
     }
 
     @Test

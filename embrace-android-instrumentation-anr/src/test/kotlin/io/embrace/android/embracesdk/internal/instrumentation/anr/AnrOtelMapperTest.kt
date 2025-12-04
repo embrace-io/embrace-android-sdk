@@ -6,7 +6,6 @@ import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.instrumentation.anr.payload.AnrInterval
 import io.embrace.android.embracesdk.internal.instrumentation.anr.payload.AnrSample
-import io.embrace.android.embracesdk.internal.instrumentation.anr.payload.AnrSampleList
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
@@ -73,14 +72,14 @@ internal class AnrOtelMapperTest {
         startTime = START_TIME_MS,
         endTime = END_TIME_MS,
         code = AnrInterval.CODE_DEFAULT,
-        anrSampleList = AnrSampleList(listOf(firstSample, secondSample))
+        samples = listOf(firstSample, secondSample)
     )
 
     private val completedIntervalWithTruncatedSample = AnrInterval(
         startTime = START_TIME_MS,
         endTime = END_TIME_MS,
         code = AnrInterval.CODE_DEFAULT,
-        anrSampleList = AnrSampleList(listOf(firstSample, truncatedSecondSample))
+        samples = listOf(firstSample, truncatedSecondSample)
     )
 
     private val inProgressInterval =
@@ -92,15 +91,13 @@ internal class AnrOtelMapperTest {
     private val random = Random(0)
 
     private val intervalWithLimitedSample = completedInterval.copy(
-        anrSampleList = AnrSampleList(
-            List(100) { k ->
-                if (k >= 80) {
-                    firstSample.copy(code = AnrSample.CODE_SAMPLE_LIMIT_REACHED)
-                } else {
-                    firstSample
-                }
+        samples = List(100) { k ->
+            if (k >= 80) {
+                firstSample.copy(code = AnrSample.CODE_SAMPLE_LIMIT_REACHED)
+            } else {
+                firstSample
             }
-        )
+        }
     )
 
     @Before

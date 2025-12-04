@@ -7,7 +7,6 @@ import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.Thre
 import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.ThreadMonitoringState
 import io.embrace.android.embracesdk.internal.instrumentation.anr.payload.AnrInterval
 import io.embrace.android.embracesdk.internal.instrumentation.anr.payload.AnrSample
-import io.embrace.android.embracesdk.internal.instrumentation.anr.payload.AnrSampleList
 import io.embrace.android.embracesdk.internal.payload.ThreadInfo
 import io.embrace.android.embracesdk.internal.session.MemoryCleanerListener
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
@@ -69,8 +68,7 @@ internal class AnrStacktraceSampler(
             responseMs,
             null,
             timestamp,
-            AnrInterval.Type.UI,
-            AnrSampleList(sanitizedSamples)
+            sanitizedSamples
         )
 
         synchronized(anrIntervals) {
@@ -132,8 +130,7 @@ internal class AnrStacktraceSampler(
                     responseMs,
                     intervalEndTime,
                     null,
-                    AnrInterval.Type.UI,
-                    AnrSampleList(samples.toList())
+                    samples.toList()
                 )
                 results.add(anrInterval)
             }

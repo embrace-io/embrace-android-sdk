@@ -6,7 +6,6 @@ import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.Thre
 import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.ThreadBlockageEvent.UNBLOCKED
 import io.embrace.android.embracesdk.internal.instrumentation.anr.payload.AnrInterval
 import io.embrace.android.embracesdk.internal.instrumentation.anr.payload.AnrSample
-import io.embrace.android.embracesdk.internal.instrumentation.anr.payload.AnrSampleList
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -116,8 +115,7 @@ internal class EmbraceAnrServiceTest {
             assertEquals(0, interval.startTime)
             assertNull(interval.endTime)
             assertEquals(500L, interval.lastKnownTime)
-            assertEquals(AnrInterval.Type.UI, interval.type)
-            assertNotNull(interval.anrSampleList)
+            assertNotNull(interval.samples)
         }
     }
 
@@ -150,11 +148,8 @@ internal class EmbraceAnrServiceTest {
             assertEquals(15000000L, interval.startTime)
             assertNull(interval.endTime)
             assertEquals(15020000L, interval.lastKnownTime)
-            assertEquals(AnrInterval.Type.UI, interval.type)
 
-            val stacktraces = interval.anrSampleList
-            assertNotNull(stacktraces)
-            val tick = checkNotNull(stacktraces?.samples?.single())
+            val tick = checkNotNull(interval.samples?.single())
             assertEquals(15020000, tick.timestamp)
             assertNotNull(tick.threads?.single())
         }
@@ -250,7 +245,7 @@ internal class EmbraceAnrServiceTest {
                 assertEquals(1, stacktraceSampler.anrIntervals.size)
 
                 val interval = checkNotNull(stacktraceSampler.anrIntervals.first())
-                val samples = checkNotNull(interval.anrSampleList).samples
+                val samples = checkNotNull(interval.samples)
                 assertEquals(count, samples.size)
 
                 // after the default limit, samples are dropped samples are still serialized
@@ -274,11 +269,11 @@ internal class EmbraceAnrServiceTest {
     fun testReachedAnrCaptureLimit() {
         with(rule) {
             repeat(rule.anrBehavior.anrPerSessionImpl) {
-                stacktraceSampler.anrIntervals.add(AnrInterval(0, anrSampleList = AnrSampleList(listOf())))
+                stacktraceSampler.anrIntervals.add(AnrInterval(0, samples = emptyList()))
                 assertFalse(stacktraceSampler.reachedAnrStacktraceCaptureLimit())
             }
 
-            stacktraceSampler.anrIntervals.add(AnrInterval(0, anrSampleList = AnrSampleList(listOf())))
+            stacktraceSampler.anrIntervals.add(AnrInterval(0, samples = emptyList()))
             assertTrue(stacktraceSampler.reachedAnrStacktraceCaptureLimit())
         }
     }

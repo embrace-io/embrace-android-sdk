@@ -43,7 +43,7 @@ internal fun mapIntervalToSpanAttributes(interval: AnrInterval): List<Attribute>
 }
 
 private fun mapIntervalToSpanEvents(interval: AnrInterval): List<SpanEvent> {
-    return interval.anrSampleList?.samples?.map(::mapSampleToSpanEvent) ?: emptyList()
+    return interval.samples?.map(::mapSampleToSpanEvent) ?: emptyList()
 }
 
 internal fun mapSampleToSpanEvent(sample: AnrSample): SpanEvent {

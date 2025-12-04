@@ -10,7 +10,6 @@ import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.Thre
 import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.ThreadMonitoringState
 import io.embrace.android.embracesdk.internal.instrumentation.anr.payload.AnrInterval
 import io.embrace.android.embracesdk.internal.instrumentation.anr.payload.AnrSample
-import io.embrace.android.embracesdk.internal.instrumentation.anr.payload.AnrSampleList
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -44,22 +43,22 @@ internal class AnrStacktraceSamplerTest {
         val interval1 = AnrInterval(
             startTime = BASELINE_MS,
             lastKnownTime = BASELINE_MS + 5000,
-            anrSampleList = AnrSampleList(emptyList())
+            samples = emptyList()
         )
         val interval2 = AnrInterval(
             startTime = BASELINE_MS,
             lastKnownTime = BASELINE_MS + 4000,
-            anrSampleList = AnrSampleList(emptyList())
+            samples = emptyList()
         )
         val interval3 = AnrInterval(
             startTime = BASELINE_MS,
             lastKnownTime = BASELINE_MS + 1000,
-            anrSampleList = AnrSampleList(emptyList())
+            samples = emptyList()
         )
         val interval4 = AnrInterval(
             startTime = BASELINE_MS,
             lastKnownTime = BASELINE_MS + 1000,
-            anrSampleList = AnrSampleList(emptyList())
+            samples = emptyList()
         )
         val interval5 = AnrInterval(
             startTime = BASELINE_MS,
@@ -120,7 +119,7 @@ internal class AnrStacktraceSamplerTest {
         assertEquals(AnrInterval.CODE_DEFAULT, interval.code)
 
         // verify samples were captured up to the limit
-        val samples = checkNotNull(interval.anrSampleList?.samples)
+        val samples = checkNotNull(interval.samples)
         assertEquals(repeatCount, samples.size)
 
         // verify timestamps match
@@ -173,10 +172,10 @@ internal class AnrStacktraceSamplerTest {
         intervals.forEachIndexed { index, interval ->
             if (index >= 10) {
                 assertEquals(AnrInterval.CODE_DEFAULT, interval.code)
-                assertNotNull(interval.anrSampleList)
+                assertNotNull(interval.samples)
             } else {
                 assertEquals(AnrInterval.CODE_SAMPLES_CLEARED, interval.code)
-                assertNull(interval.anrSampleList)
+                assertNull(interval.samples)
             }
         }
 
@@ -185,7 +184,7 @@ internal class AnrStacktraceSamplerTest {
             if (index < 10) {
                 return
             }
-            assertEquals(intervalRepeatCount + index, interval.anrSampleList?.samples?.size)
+            assertEquals(intervalRepeatCount + index, interval.samples?.size)
         }
     }
 
@@ -235,7 +234,7 @@ internal class AnrStacktraceSamplerTest {
         sampler.onThreadBlockageEvent(UNBLOCKED, clock.now())
         val intervals = sampler.getAnrIntervals(state, clock)
         val interval = intervals.single()
-        interval.anrSampleList?.samples?.forEach { sample ->
+        interval.samples?.forEach { sample ->
             sample.threads?.forEach { thread ->
                 val lines = checkNotNull(thread.lines)
                 assertEquals(5, lines.size)

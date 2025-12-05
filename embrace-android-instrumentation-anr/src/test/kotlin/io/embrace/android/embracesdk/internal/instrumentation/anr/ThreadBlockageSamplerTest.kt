@@ -14,20 +14,20 @@ import org.junit.Test
 
 private const val BASELINE_MS = 16000000000
 
-internal class AnrStacktraceSamplerTest {
+internal class ThreadBlockageSamplerTest {
 
     private val thread = Thread.currentThread()
     private val clock = FakeClock()
-    private val configService = FakeConfigService()
+    private val behavior = FakeConfigService().anrBehavior
 
     @Test
     fun testLeastValuableInterval() {
-        val sampler = AnrStacktraceSampler(
+        val sampler = ThreadBlockageSampler(
             clock,
             thread,
-            configService.anrBehavior.getMaxAnrIntervalsPerSession(),
-            configService.anrBehavior.getMaxStacktracesPerInterval(),
-            configService.anrBehavior.getStacktraceFrameLimit(),
+            behavior.getMaxAnrIntervalsPerSession(),
+            behavior.getMaxStacktracesPerInterval(),
+            behavior.getStacktraceFrameLimit(),
         ).apply {
             createThreadBlockageInterval(clock, 10000)
             createThreadBlockageInterval(clock, 8000)
@@ -38,31 +38,33 @@ internal class AnrStacktraceSamplerTest {
             createThreadBlockageInterval(clock, 1200)
         }
 
-        val intervals = sampler.getAnrIntervals()
+        val intervals = sampler.getThreadBlockageIntervals()
         assertEquals(
             listOf(10000L, 8000L, 6000L, 4000L, 2000L),
             intervals.filter { it.samples != null }.map { checkNotNull(it.endTime) - it.startTime }
         )
         assertEquals(
             listOf(1500L, 1200L),
-            intervals.filter { it.samples == null }.map { checkNotNull(it.endTime) - it.startTime }
+            intervals.filter {
+                it.samples == null
+            }.map { checkNotNull(it.endTime) - it.startTime }
         )
     }
 
     @Test
-    fun `exceed sample limit for one ANR interval`() {
+    fun `exceed sample limit for one thread blockage interval`() {
         clock.setCurrentTime(BASELINE_MS)
         val repeatCount = 100
         val intervalMs: Long = 100
-        val sampler = AnrStacktraceSampler(
+        val sampler = ThreadBlockageSampler(
             clock,
             thread,
-            configService.anrBehavior.getMaxAnrIntervalsPerSession(),
-            configService.anrBehavior.getMaxStacktracesPerInterval(),
-            configService.anrBehavior.getStacktraceFrameLimit(),
+            behavior.getMaxAnrIntervalsPerSession(),
+            behavior.getMaxStacktracesPerInterval(),
+            behavior.getStacktraceFrameLimit(),
         )
 
-        // simulate one ANR with 100 intervals
+        // simulate one thread blockage with 100 intervals
         sampler.onThreadBlockageEvent(BLOCKED, clock.now())
 
         repeat(repeatCount) {
@@ -73,7 +75,7 @@ internal class AnrStacktraceSamplerTest {
         sampler.onThreadBlockageEvent(UNBLOCKED, clock.now())
 
         // verify one interval recorded
-        val intervals = sampler.getAnrIntervals()
+        val intervals = sampler.getThreadBlockageIntervals()
         assertEquals(1, intervals.size)
 
         // verify basic metadata about the interval
@@ -103,21 +105,21 @@ internal class AnrStacktraceSamplerTest {
     }
 
     @Test
-    fun `exceed limit for number of ANRs`() {
+    fun `exceed limit for number of thread blockages`() {
         clock.setCurrentTime(BASELINE_MS)
-        val anrRepeatCount = 15
+        val threadBlockageRepeatCount = 15
         val intervalRepeatCount = 100
         val intervalMs: Long = 100
-        val sampler = AnrStacktraceSampler(
+        val sampler = ThreadBlockageSampler(
             clock,
             thread,
-            configService.anrBehavior.getMaxAnrIntervalsPerSession(),
-            configService.anrBehavior.getMaxStacktracesPerInterval(),
-            configService.anrBehavior.getStacktraceFrameLimit(),
+            behavior.getMaxAnrIntervalsPerSession(),
+            behavior.getMaxStacktracesPerInterval(),
+            behavior.getStacktraceFrameLimit(),
         )
 
-        // simulate multiple ANRs with intervals
-        repeat(anrRepeatCount) { index ->
+        // simulate multiple thread blockages
+        repeat(threadBlockageRepeatCount) { index ->
             sampler.onThreadBlockageEvent(BLOCKED, clock.now())
 
             repeat(intervalRepeatCount + index) {
@@ -128,8 +130,8 @@ internal class AnrStacktraceSamplerTest {
         }
 
         // verify 15 intervals were recorded
-        val intervals = sampler.getAnrIntervals()
-        assertEquals(anrRepeatCount, intervals.size)
+        val intervals = sampler.getThreadBlockageIntervals()
+        assertEquals(threadBlockageRepeatCount, intervals.size)
 
         // verify basic metadata about each interval
         intervals.forEachIndexed { index, interval ->
@@ -152,20 +154,20 @@ internal class AnrStacktraceSamplerTest {
     }
 
     @Test
-    fun `verify hard limit of 100 anr intervals`() {
+    fun `verify hard limit of 100 intervals`() {
         clock.setCurrentTime(BASELINE_MS)
-        val anrRepeatCount = 110
+        val intervalRepeatCount = 110
         val intervalMs: Long = 100
-        val sampler = AnrStacktraceSampler(
+        val sampler = ThreadBlockageSampler(
             clock,
             thread,
-            configService.anrBehavior.getMaxAnrIntervalsPerSession(),
-            configService.anrBehavior.getMaxStacktracesPerInterval(),
-            configService.anrBehavior.getStacktraceFrameLimit(),
+            behavior.getMaxAnrIntervalsPerSession(),
+            behavior.getMaxStacktracesPerInterval(),
+            behavior.getStacktraceFrameLimit(),
         )
 
-        // simulate 110 ANRs with intervals
-        repeat(anrRepeatCount) {
+        // simulate 110 intervals
+        repeat(intervalRepeatCount) {
             sampler.onThreadBlockageEvent(BLOCKED, clock.now())
             sampler.onThreadBlockageEvent(BLOCKED_INTERVAL, clock.now())
             clock.tick(intervalMs)
@@ -173,27 +175,26 @@ internal class AnrStacktraceSamplerTest {
         }
 
         // verify maximum of 100 intervals were recorded
-        val intervals = sampler.getAnrIntervals()
+        val intervals = sampler.getThreadBlockageIntervals()
         assertEquals(100, intervals.size)
     }
 
     @Test
-    fun `verify truncation of ANR stacktrace respects the config`() {
-        configService.anrBehavior = FakeAnrBehavior(frameLimit = 5)
-
-        val sampler = AnrStacktraceSampler(
+    fun `verify truncation of stacktrace respects the config`() {
+        val behavior = FakeAnrBehavior(frameLimit = 5)
+        val sampler = ThreadBlockageSampler(
             clock,
             thread,
-            configService.anrBehavior.getMaxAnrIntervalsPerSession(),
-            configService.anrBehavior.getMaxStacktracesPerInterval(),
-            configService.anrBehavior.getStacktraceFrameLimit(),
+            behavior.getMaxAnrIntervalsPerSession(),
+            behavior.getMaxStacktracesPerInterval(),
+            behavior.getStacktraceFrameLimit(),
         )
 
         sampler.onThreadBlockageEvent(BLOCKED, clock.now())
         sampler.onThreadBlockageEvent(BLOCKED_INTERVAL, clock.now())
         clock.tick(5000)
         sampler.onThreadBlockageEvent(UNBLOCKED, clock.now())
-        val intervals = sampler.getAnrIntervals()
+        val intervals = sampler.getThreadBlockageIntervals()
         val interval = intervals.single()
         interval.samples?.forEach { sample ->
             sample.threadSample?.let { thread ->
@@ -204,7 +205,7 @@ internal class AnrStacktraceSamplerTest {
         }
     }
 
-    private fun AnrStacktraceSampler.createThreadBlockageInterval(clock: FakeClock, duration: Long) {
+    private fun ThreadBlockageSampler.createThreadBlockageInterval(clock: FakeClock, duration: Long) {
         onThreadBlockageEvent(BLOCKED, clock.now())
         onThreadBlockageEvent(BLOCKED_INTERVAL, clock.now())
         clock.tick(duration)

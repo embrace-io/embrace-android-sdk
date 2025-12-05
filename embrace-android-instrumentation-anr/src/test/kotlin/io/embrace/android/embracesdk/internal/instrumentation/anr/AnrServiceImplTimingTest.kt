@@ -39,11 +39,11 @@ internal class AnrServiceImplTimingTest {
     @Test
     fun `only one recurring heartbeat task is created after foregrounding`() {
         with(rule) {
-            anrService.startCapture()
+            service.startCapture()
             watchdogExecutorService.runCurrentlyBlocked()
             watchdogExecutorService.runCurrentlyBlocked()
             assertEquals(1, watchdogExecutorService.scheduledTasksCount())
-            anrService.onForeground()
+            service.onForeground()
             watchdogExecutorService.runCurrentlyBlocked()
             watchdogExecutorService.runCurrentlyBlocked()
             assertEquals(1, watchdogExecutorService.scheduledTasksCount())
@@ -57,8 +57,8 @@ internal class AnrServiceImplTimingTest {
             fakeAppStateTracker.state = AppState.BACKGROUND
             recreateService()
 
-            // Start ANR capture - this should trigger scheduleDelayedBackgroundCheck
-            anrService.startCapture()
+            // Start capture - this should trigger scheduleDelayedBackgroundCheck
+            service.startCapture()
             watchdogExecutorService.runCurrentlyBlocked()
 
             // Advance time by 20 seconds - this should trigger the delayed background check
@@ -76,8 +76,8 @@ internal class AnrServiceImplTimingTest {
             fakeAppStateTracker.state = AppState.BACKGROUND
             recreateService()
 
-            // Start ANR capture - this should trigger scheduleDelayedBackgroundCheck
-            anrService.startCapture()
+            // Start capture - this should trigger scheduleDelayedBackgroundCheck
+            service.startCapture()
             watchdogExecutorService.runCurrentlyBlocked()
 
             // Advance time by 5 seconds
@@ -85,7 +85,7 @@ internal class AnrServiceImplTimingTest {
 
             // Transition to foreground before the 10-second delay
             fakeAppStateTracker.state = AppState.FOREGROUND
-            anrService.onForeground()
+            service.onForeground()
             watchdogExecutorService.runCurrentlyBlocked()
 
             // Advance time by 5 more seconds to reach the 10-second mark
@@ -96,8 +96,8 @@ internal class AnrServiceImplTimingTest {
     @Test
     fun `test delayed background check is not scheduled when app starts in foreground`() {
         with(rule) {
-            // Start ANR capture - this won't trigger scheduleDelayedBackgroundCheck as the default state is foreground
-            anrService.startCapture()
+            // Start capture - this won't trigger scheduleDelayedBackgroundCheck as the default state is foreground
+            service.startCapture()
             watchdogExecutorService.runCurrentlyBlocked()
 
             // Advance time by 15 seconds to ensure any delayed check would have triggered

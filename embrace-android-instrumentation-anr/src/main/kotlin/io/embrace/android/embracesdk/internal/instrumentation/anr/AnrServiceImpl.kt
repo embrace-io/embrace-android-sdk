@@ -22,7 +22,7 @@ internal class AnrServiceImpl(
     args: InstrumentationArgs,
     private val blockedThreadDetector: BlockedThreadDetector,
     private val watchdogWorker: BackgroundWorker,
-    private val stacktraceSampler: AnrStacktraceSampler,
+    private val stacktraceSampler: ThreadBlockageSampler,
     private val random: Random = Random.Default,
 ) : AnrService {
 
@@ -73,13 +73,13 @@ internal class AnrServiceImpl(
     }
 
     override fun snapshotSpans(): List<Span> = EmbTrace.trace("anr-snapshot") {
-        stacktraceSampler.getAnrIntervals().map { interval ->
+        stacktraceSampler.getThreadBlockageIntervals().map { interval ->
             mapIntervalToSpan(interval, clock, random)
         }
     }
 
     override fun record() = EmbTrace.trace("anr-record") {
-        stacktraceSampler.getAnrIntervals().forEach { interval ->
+        stacktraceSampler.getThreadBlockageIntervals().forEach { interval ->
             val attributes = mapIntervalToSpanAttributes(interval).toEmbracePayload()
             val events = interval.samples?.map {
                 mapSampleToSpanEvent(it).toArchSpanEvent()

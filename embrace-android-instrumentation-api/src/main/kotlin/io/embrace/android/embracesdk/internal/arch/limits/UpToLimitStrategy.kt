@@ -9,7 +9,7 @@ class UpToLimitStrategy(
     private val limitProvider: Provider<Int>,
 ) : LimitStrategy {
 
-    private var lock = Any()
+    private val lock = Any()
     private var count = 0
 
     override fun shouldCapture(): Boolean {

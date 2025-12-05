@@ -15,8 +15,6 @@ import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.mockk.every
 import io.mockk.mockk
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import java.util.concurrent.atomic.AtomicReference
@@ -65,21 +63,37 @@ internal class BlockedThreadDetectorTest {
 
     @Test
     fun testShouldSampleBlockedThread() {
-        assertFalse(detector.shouldSampleBlockedThread(BASELINE_MS))
-        assertFalse(detector.shouldSampleBlockedThread(-23409))
-        assertFalse(detector.shouldSampleBlockedThread(0))
-        assertFalse(detector.shouldSampleBlockedThread(BASELINE_MS - 23409))
-        assertFalse(detector.shouldSampleBlockedThread(BASELINE_MS + 50))
-        assertTrue(detector.shouldSampleBlockedThread(BASELINE_MS + 51))
-        assertTrue(detector.shouldSampleBlockedThread(BASELINE_MS + 100))
-        assertTrue(detector.shouldSampleBlockedThread(BASELINE_MS + 30000))
+        state.threadBlockageInProgress = true
+        detector.onMonitorThreadInterval(-23409)
+        assertEquals(0, listener.intervalCount)
+
+        detector.onMonitorThreadInterval(0)
+        assertEquals(0, listener.intervalCount)
+
+        detector.onMonitorThreadInterval(BASELINE_MS)
+        assertEquals(0, listener.intervalCount)
+
+        detector.onMonitorThreadInterval(BASELINE_MS - 23409)
+        assertEquals(0, listener.intervalCount)
+
+        detector.onMonitorThreadInterval(BASELINE_MS + 50)
+        assertEquals(0, listener.intervalCount)
+
+        detector.onMonitorThreadInterval(BASELINE_MS + 51)
+        assertEquals(1, listener.intervalCount)
+
+        detector.onMonitorThreadInterval(BASELINE_MS + 100)
+        assertEquals(2, listener.intervalCount)
+
+        detector.onMonitorThreadInterval(BASELINE_MS + 30000)
+        assertEquals(3, listener.intervalCount)
     }
 
     @Test
     fun testListenerFired() {
         val now = BASELINE_MS + 3000
         clock.setCurrentTime(now)
-        detector.updateThreadBlockageTracking(BASELINE_MS + 2000)
+        detector.onMonitorThreadInterval(BASELINE_MS + 2000)
         assertEquals(1, listener.intervalCount)
         assertEquals(now, state.lastMonitorThreadResponseMs)
         assertEquals(now, state.lastSampleAttemptMs)
@@ -92,22 +106,22 @@ internal class BlockedThreadDetectorTest {
         state.lastMonitorThreadResponseMs = now - 10
         state.lastSampleAttemptMs = now - 10
 
-        detector.updateThreadBlockageTracking(now)
+        detector.onMonitorThreadInterval(now)
         assertEquals(0, listener.intervalCount)
         assertEquals(now, state.lastMonitorThreadResponseMs)
         assertEquals(now - 10, state.lastSampleAttemptMs)
     }
 
     @Test
-    fun testStartMonitoringThreadDoubleCall() {
-        detector.startMonitoringThread()
+    fun testStartDoubleCall() {
+        detector.start()
         val lastTimeThreadResponded = clock.now()
         watchdogExecutorService.runCurrentlyBlocked()
         assertEquals(lastTimeThreadResponded, state.lastMonitorThreadResponseMs)
         clock.tick(10L)
         assertEquals(lastTimeThreadResponded, state.lastMonitorThreadResponseMs)
         // double-start should not schedule anything
-        detector.startMonitoringThread()
+        detector.start()
         watchdogExecutorService.runCurrentlyBlocked()
         assertEquals(lastTimeThreadResponded, state.lastMonitorThreadResponseMs)
     }
@@ -115,7 +129,7 @@ internal class BlockedThreadDetectorTest {
     @Test
     fun `starting monitoring thread twice does not result in multiple recurring tasks`() {
         repeat(2) {
-            detector.startMonitoringThread()
+            detector.start()
             watchdogExecutorService.runCurrentlyBlocked()
             assertEquals(1, watchdogExecutorService.scheduledTasksCount())
         }

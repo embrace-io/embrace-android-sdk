@@ -57,7 +57,7 @@ internal class AnrServiceImplTimingTest {
     }
 
     private fun AnrServiceRule<*>.simulateAnrRecovery() {
-        blockedThreadDetector.onTargetThreadResponse(clock.now())
+        blockedThreadDetector.onTargetThreadProcessedMessage(clock.now())
     }
 
     @Test

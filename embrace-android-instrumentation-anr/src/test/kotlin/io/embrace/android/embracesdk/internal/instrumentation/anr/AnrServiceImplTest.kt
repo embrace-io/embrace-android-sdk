@@ -167,18 +167,18 @@ internal class AnrServiceImplTest {
                 val anrEndTs = 15023000L
                 clock.setCurrentTime(anrStartTs)
 
-                blockedThreadDetector.updateThreadBlockageTracking(anrStartTs)
+                blockedThreadDetector.onMonitorThreadInterval(anrStartTs)
                 state.lastTargetThreadResponseMs = anrStartTs
-                blockedThreadDetector.onTargetThreadResponse(anrStartTs)
+                blockedThreadDetector.onTargetThreadProcessedMessage(anrStartTs)
                 assertFalse(state.threadBlockageInProgress)
 
-                blockedThreadDetector.updateThreadBlockageTracking(
+                blockedThreadDetector.onMonitorThreadInterval(
                     anrInProgressTs
                 )
                 assertTrue(state.threadBlockageInProgress)
 
                 state.lastTargetThreadResponseMs = anrEndTs
-                blockedThreadDetector.onTargetThreadResponse(anrEndTs)
+                blockedThreadDetector.onTargetThreadProcessedMessage(anrEndTs)
                 assertFalse(state.threadBlockageInProgress)
 
                 val intervals = anrService.snapshotSpans()
@@ -210,7 +210,7 @@ internal class AnrServiceImplTest {
     }
 
     private fun AnrServiceRule<SingleThreadTestScheduledExecutor>.simulateAnrRecovery() {
-        blockedThreadDetector.onTargetThreadResponse(clock.now())
+        blockedThreadDetector.onTargetThreadProcessedMessage(clock.now())
     }
 
     @Test
@@ -289,8 +289,10 @@ internal class AnrServiceImplTest {
                 // if the lastTimeThreadUnblocked is zero this should never be true
                 state.lastTargetThreadResponseMs = 0
                 state.lastMonitorThreadResponseMs = 0
-                assertFalse(blockedThreadDetector.isThreadBlockageThresholdExceeded(700))
-                assertFalse(blockedThreadDetector.isThreadBlockageThresholdExceeded(70000))
+
+                blockedThreadDetector.onMonitorThreadInterval(700)
+                blockedThreadDetector.onMonitorThreadInterval(70000)
+                assertTrue(stacktraceSampler.getAnrIntervals().isEmpty())
             }
         }
     }
@@ -301,12 +303,19 @@ internal class AnrServiceImplTest {
             with(rule) {
                 // if the lastTimeThreadUnblocked is above the threshold return true
                 val now = 100L
+                recreateService()
                 state.lastTargetThreadResponseMs = now
                 state.lastMonitorThreadResponseMs = now
-                assertFalse(blockedThreadDetector.isThreadBlockageThresholdExceeded(now + 500))
-                assertFalse(blockedThreadDetector.isThreadBlockageThresholdExceeded(now + 1000))
-                assertTrue(blockedThreadDetector.isThreadBlockageThresholdExceeded(now + 1001))
-                assertTrue(blockedThreadDetector.isThreadBlockageThresholdExceeded(now + 10000))
+
+                blockedThreadDetector.onMonitorThreadInterval(now + 500)
+                blockedThreadDetector.onMonitorThreadInterval(now + 1000)
+                blockedThreadDetector.onMonitorThreadInterval(now + 1001)
+                blockedThreadDetector.onMonitorThreadInterval(now + 10000)
+
+                val samples = checkNotNull(stacktraceSampler.getAnrIntervals().single().samples)
+                assertEquals(2, samples.size)
+                assertEquals(now + 1001, samples[0].timestamp)
+                assertEquals(now + 10000, samples[1].timestamp)
             }
         }
     }
@@ -327,22 +336,22 @@ internal class AnrServiceImplTest {
                 clock.setCurrentTime(endTime)
 
                 // timestamp not updated if ANR threshold is not met
-                assertTrue(blockedThreadDetector.isThreadBlockageThresholdExceeded(startTime + 500))
+                blockedThreadDetector.onMonitorThreadInterval(startTime + 500)
 
                 assertEquals(0, state.lastTargetThreadResponseMs)
-                assertEquals(startTime, state.lastMonitorThreadResponseMs)
+                assertEquals(clock.now(), state.lastMonitorThreadResponseMs)
 
                 // timestamp not updated if ANR threshold is met
                 state.lastTargetThreadResponseMs = 0
-                assertTrue(blockedThreadDetector.isThreadBlockageThresholdExceeded(startTime + 5000))
+                blockedThreadDetector.onMonitorThreadInterval(startTime + 5000)
 
                 assertEquals(0, state.lastTargetThreadResponseMs)
-                assertEquals(startTime, state.lastMonitorThreadResponseMs)
+                assertEquals(clock.now(), state.lastMonitorThreadResponseMs)
 
                 // timestamp only updated if cached process threshold is reached
-                assertFalse(blockedThreadDetector.isThreadBlockageThresholdExceeded(startTime + 60001))
+                blockedThreadDetector.onMonitorThreadInterval(startTime + 60001)
 
-                assertEquals(endTime, state.lastTargetThreadResponseMs)
+                assertEquals(0, state.lastTargetThreadResponseMs)
                 assertEquals(endTime, state.lastMonitorThreadResponseMs)
             }
         }
@@ -354,7 +363,7 @@ internal class AnrServiceImplTest {
             clock.setCurrentTime(100000L)
             simulateAnrRecovery()
             clock.tick(2000L)
-            watchdogExecutorService.submit { blockedThreadDetector.updateThreadBlockageTracking(clock.now()) }
+            watchdogExecutorService.submit { blockedThreadDetector.onMonitorThreadInterval(clock.now()) }
                 .get(1L, TimeUnit.SECONDS)
             simulateAnrRecovery()
             assertFalse(state.threadBlockageInProgress)
@@ -376,10 +385,10 @@ internal class AnrServiceImplTest {
         }
     }
 
-    private fun AnrServiceRule<*>.createThreadBlockageInterval() {
+    private fun AnrServiceRule<*>.createThreadBlockageInterval(duration: Long = 1000) {
         stacktraceSampler.onThreadBlockageEvent(BLOCKED, clock.now())
         stacktraceSampler.onThreadBlockageEvent(BLOCKED_INTERVAL, clock.now())
-        clock.tick(1000)
+        clock.tick(duration)
         stacktraceSampler.onThreadBlockageEvent(UNBLOCKED, clock.now())
     }
 

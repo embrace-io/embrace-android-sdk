@@ -14,63 +14,63 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 
 /**
- * Tests for the [EmbraceAnrService] that verifies behaviour when a specific order of events happen
+ * Tests for the [AnrServiceImpl] that verifies behaviour when a specific order of events happen
  */
-internal class EmbraceAnrServiceTimingTest {
+internal class AnrServiceImplTimingTest {
 
     private val clock = FakeClock()
 
     @Rule
     @JvmField
-    val rule = EmbraceAnrServiceRule(
+    val rule = AnrServiceRule(
         clock = clock,
         scheduledExecutorSupplier = { BlockingScheduledExecutorService(fakeClock = clock) }
     )
 
-    private lateinit var anrExecutorService: BlockingScheduledExecutorService
+    private lateinit var watchdogExecutorService: BlockingScheduledExecutorService
 
     @Before
     fun setUp() {
-        anrExecutorService = checkNotNull(rule.anrExecutorService)
-        anrExecutorService.execute {
-            rule.anrMonitorThread = AtomicReference(currentThread())
+        watchdogExecutorService = checkNotNull(rule.watchdogExecutorService)
+        watchdogExecutorService.execute {
+            rule.watchdogMonitorThread = AtomicReference(currentThread())
         }
-        anrExecutorService.runCurrentlyBlocked()
+        watchdogExecutorService.runCurrentlyBlocked()
     }
 
     @Test
     fun `check ANR recovery`() {
         with(rule) {
             clock.setCurrentTime(100000L)
-            anrService.startAnrCapture()
-            anrExecutorService.runCurrentlyBlocked()
+            anrService.startCapture()
+            watchdogExecutorService.runCurrentlyBlocked()
             simulateAnrRecovery()
-            anrExecutorService.runCurrentlyBlocked()
+            watchdogExecutorService.runCurrentlyBlocked()
             repeat(20) {
-                anrExecutorService.moveForwardAndRunBlocked(100L)
+                watchdogExecutorService.moveForwardAndRunBlocked(100L)
             }
-            assertTrue(state.anrInProgress)
+            assertTrue(state.threadBlockageInProgress)
             simulateAnrRecovery()
-            anrExecutorService.runCurrentlyBlocked()
-            assertFalse(state.anrInProgress)
+            watchdogExecutorService.runCurrentlyBlocked()
+            assertFalse(state.threadBlockageInProgress)
         }
     }
 
-    private fun EmbraceAnrServiceRule<*>.simulateAnrRecovery() {
+    private fun AnrServiceRule<*>.simulateAnrRecovery() {
         blockedThreadDetector.onTargetThreadResponse(clock.now())
     }
 
     @Test
     fun `only one recurring heartbeat task is created after foregrounding`() {
         with(rule) {
-            anrService.startAnrCapture()
-            anrExecutorService.runCurrentlyBlocked()
-            anrExecutorService.runCurrentlyBlocked()
-            assertEquals(1, anrExecutorService.scheduledTasksCount())
+            anrService.startCapture()
+            watchdogExecutorService.runCurrentlyBlocked()
+            watchdogExecutorService.runCurrentlyBlocked()
+            assertEquals(1, watchdogExecutorService.scheduledTasksCount())
             anrService.onForeground()
-            anrExecutorService.runCurrentlyBlocked()
-            anrExecutorService.runCurrentlyBlocked()
-            assertEquals(1, anrExecutorService.scheduledTasksCount())
+            watchdogExecutorService.runCurrentlyBlocked()
+            watchdogExecutorService.runCurrentlyBlocked()
+            assertEquals(1, watchdogExecutorService.scheduledTasksCount())
         }
     }
 
@@ -82,14 +82,14 @@ internal class EmbraceAnrServiceTimingTest {
             recreateService()
 
             // Start ANR capture - this should trigger scheduleDelayedBackgroundCheck
-            anrService.startAnrCapture()
-            anrExecutorService.runCurrentlyBlocked()
+            anrService.startCapture()
+            watchdogExecutorService.runCurrentlyBlocked()
 
             // Advance time by 20 seconds - this should trigger the delayed background check
-            anrExecutorService.moveForwardAndRunBlocked(TimeUnit.SECONDS.toMillis(20))
+            watchdogExecutorService.moveForwardAndRunBlocked(TimeUnit.SECONDS.toMillis(20))
 
             // Run any pending tasks to ensure the delayed check executes
-            anrExecutorService.runCurrentlyBlocked()
+            watchdogExecutorService.runCurrentlyBlocked()
         }
     }
 
@@ -101,19 +101,19 @@ internal class EmbraceAnrServiceTimingTest {
             recreateService()
 
             // Start ANR capture - this should trigger scheduleDelayedBackgroundCheck
-            anrService.startAnrCapture()
-            anrExecutorService.runCurrentlyBlocked()
+            anrService.startCapture()
+            watchdogExecutorService.runCurrentlyBlocked()
 
             // Advance time by 5 seconds
-            anrExecutorService.moveForwardAndRunBlocked(TimeUnit.SECONDS.toMillis(5))
+            watchdogExecutorService.moveForwardAndRunBlocked(TimeUnit.SECONDS.toMillis(5))
 
             // Transition to foreground before the 10-second delay
             fakeAppStateTracker.state = AppState.FOREGROUND
             anrService.onForeground()
-            anrExecutorService.runCurrentlyBlocked()
+            watchdogExecutorService.runCurrentlyBlocked()
 
             // Advance time by 5 more seconds to reach the 10-second mark
-            anrExecutorService.moveForwardAndRunBlocked(TimeUnit.SECONDS.toMillis(5))
+            watchdogExecutorService.moveForwardAndRunBlocked(TimeUnit.SECONDS.toMillis(5))
         }
     }
 
@@ -121,11 +121,11 @@ internal class EmbraceAnrServiceTimingTest {
     fun `test delayed background check is not scheduled when app starts in foreground`() {
         with(rule) {
             // Start ANR capture - this won't trigger scheduleDelayedBackgroundCheck as the default state is foreground
-            anrService.startAnrCapture()
-            anrExecutorService.runCurrentlyBlocked()
+            anrService.startCapture()
+            watchdogExecutorService.runCurrentlyBlocked()
 
             // Advance time by 15 seconds to ensure any delayed check would have triggered
-            anrExecutorService.moveForwardAndRunBlocked(TimeUnit.SECONDS.toMillis(15))
+            watchdogExecutorService.moveForwardAndRunBlocked(TimeUnit.SECONDS.toMillis(15))
         }
     }
 }

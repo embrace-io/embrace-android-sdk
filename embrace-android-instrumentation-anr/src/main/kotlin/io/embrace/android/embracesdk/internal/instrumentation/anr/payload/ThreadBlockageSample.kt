@@ -3,9 +3,9 @@ package io.embrace.android.embracesdk.internal.instrumentation.anr.payload
 import io.embrace.android.embracesdk.internal.payload.ThreadInfo
 
 /**
- * Holds thread data taken during an [AnrInterval].
+ * Holds thread data taken during an [ThreadBlockageInterval].
  */
-internal data class AnrSample(
+internal data class ThreadBlockageSample(
 
     /**
      * The timestamp in milliseconds at which this sample was captured
@@ -13,7 +13,7 @@ internal data class AnrSample(
     val timestamp: Long,
 
     /**
-     * All the information for threads that were captured during an ANR sample
+     * All the information for threads that were captured during a sample
      */
     val threads: List<ThreadInfo>?,
 
@@ -23,7 +23,7 @@ internal data class AnrSample(
     val sampleOverheadMs: Long?,
 
     /**
-     * The status code of the ANR sample.
+     * The status code of the sample.
      */
     val code: Int? = CODE_DEFAULT,
 ) {

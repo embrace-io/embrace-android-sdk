@@ -17,7 +17,7 @@ interface AnrService :
     /**
      * Initializes capture of ANRs
      */
-    fun startAnrCapture()
+    fun startCapture()
 
     /**
      * Test hook not intended for production use. This simulates the target thread responding to messages

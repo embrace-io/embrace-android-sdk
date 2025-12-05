@@ -8,9 +8,8 @@ import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.Thre
 import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.ThreadBlockageEvent.BLOCKED_INTERVAL
 import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.ThreadBlockageEvent.UNBLOCKED
 import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.ThreadMonitoringState
-import io.embrace.android.embracesdk.internal.instrumentation.anr.payload.AnrInterval
-import io.embrace.android.embracesdk.internal.instrumentation.anr.payload.AnrSample
-import io.embrace.android.embracesdk.internal.instrumentation.anr.payload.AnrSampleList
+import io.embrace.android.embracesdk.internal.instrumentation.anr.payload.ThreadBlockageInterval
+import io.embrace.android.embracesdk.internal.instrumentation.anr.payload.ThreadBlockageSample
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -34,55 +33,31 @@ internal class AnrStacktraceSamplerTest {
     fun testLeastValuableInterval() {
         val sampler = AnrStacktraceSampler(
             clock,
+            state,
             thread,
             worker,
             configService.anrBehavior.getMaxAnrIntervalsPerSession(),
             configService.anrBehavior.getMaxStacktracesPerInterval(),
             configService.anrBehavior.getStacktraceFrameLimit(),
-        )
-        assertNull(sampler.findLeastValuableIntervalWithSamples())
-        val interval1 = AnrInterval(
-            startTime = BASELINE_MS,
-            lastKnownTime = BASELINE_MS + 5000,
-            anrSampleList = AnrSampleList(emptyList())
-        )
-        val interval2 = AnrInterval(
-            startTime = BASELINE_MS,
-            lastKnownTime = BASELINE_MS + 4000,
-            anrSampleList = AnrSampleList(emptyList())
-        )
-        val interval3 = AnrInterval(
-            startTime = BASELINE_MS,
-            lastKnownTime = BASELINE_MS + 1000,
-            anrSampleList = AnrSampleList(emptyList())
-        )
-        val interval4 = AnrInterval(
-            startTime = BASELINE_MS,
-            lastKnownTime = BASELINE_MS + 1000,
-            anrSampleList = AnrSampleList(emptyList())
-        )
-        val interval5 = AnrInterval(
-            startTime = BASELINE_MS,
-            lastKnownTime = BASELINE_MS + 500,
-            code = AnrInterval.CODE_SAMPLES_CLEARED
-        )
+        ).apply {
+            createThreadBlockageInterval(clock, 10000)
+            createThreadBlockageInterval(clock, 8000)
+            createThreadBlockageInterval(clock, 6000)
+            createThreadBlockageInterval(clock, 4000)
+            createThreadBlockageInterval(clock, 2000)
+            createThreadBlockageInterval(clock, 1500)
+            createThreadBlockageInterval(clock, 1200)
+        }
 
-        sampler.anrIntervals.add(interval1)
-        assertEquals(interval1, sampler.findLeastValuableIntervalWithSamples())
-
-        sampler.anrIntervals.add(interval2)
-        assertEquals(interval2, sampler.findLeastValuableIntervalWithSamples())
-
-        sampler.anrIntervals.add(interval3)
-        assertEquals(interval3, sampler.findLeastValuableIntervalWithSamples())
-
-        // most recent interval gets binned if duration is equal
-        sampler.anrIntervals.add(interval4)
-        assertEquals(interval3, sampler.findLeastValuableIntervalWithSamples())
-
-        // intervals without any samples are ignored
-        sampler.anrIntervals.add(interval5)
-        assertEquals(interval3, sampler.findLeastValuableIntervalWithSamples())
+        val intervals = sampler.getAnrIntervals()
+        assertEquals(
+            listOf(10000L, 8000L, 6000L, 4000L, 2000L),
+            intervals.filter { it.samples != null }.map { checkNotNull(it.endTime) - it.startTime }
+        )
+        assertEquals(
+            listOf(1500L, 1200L),
+            intervals.filter { it.samples == null }.map { checkNotNull(it.endTime) - it.startTime }
+        )
     }
 
     @Test
@@ -92,6 +67,7 @@ internal class AnrStacktraceSamplerTest {
         val intervalMs: Long = 100
         val sampler = AnrStacktraceSampler(
             clock,
+            state,
             thread,
             worker,
             configService.anrBehavior.getMaxAnrIntervalsPerSession(),
@@ -110,17 +86,17 @@ internal class AnrStacktraceSamplerTest {
         sampler.onThreadBlockageEvent(UNBLOCKED, clock.now())
 
         // verify one interval recorded
-        val intervals = sampler.getAnrIntervals(state, clock)
+        val intervals = sampler.getAnrIntervals()
         assertEquals(1, intervals.size)
 
         // verify basic metadata about the interval
         val interval = intervals.single()
         assertEquals(BASELINE_MS, interval.startTime)
         assertEquals(clock.now(), interval.endTime)
-        assertEquals(AnrInterval.CODE_DEFAULT, interval.code)
+        assertEquals(ThreadBlockageInterval.CODE_DEFAULT, interval.code)
 
         // verify samples were captured up to the limit
-        val samples = checkNotNull(interval.anrSampleList?.samples)
+        val samples = checkNotNull(interval.samples)
         assertEquals(repeatCount, samples.size)
 
         // verify timestamps match
@@ -132,8 +108,8 @@ internal class AnrStacktraceSamplerTest {
         // verify samples after the sample limit record a code that they are cleared
         samples.forEachIndexed { index, sample ->
             val expected = when {
-                index >= 80 -> AnrSample.CODE_SAMPLE_LIMIT_REACHED
-                else -> AnrSample.CODE_DEFAULT
+                index >= 80 -> ThreadBlockageSample.CODE_SAMPLE_LIMIT_REACHED
+                else -> ThreadBlockageSample.CODE_DEFAULT
             }
             assertEquals(expected, sample.code)
         }
@@ -147,6 +123,7 @@ internal class AnrStacktraceSamplerTest {
         val intervalMs: Long = 100
         val sampler = AnrStacktraceSampler(
             clock,
+            state,
             thread,
             worker,
             configService.anrBehavior.getMaxAnrIntervalsPerSession(),
@@ -166,17 +143,17 @@ internal class AnrStacktraceSamplerTest {
         }
 
         // verify 15 intervals were recorded
-        val intervals = sampler.getAnrIntervals(state, clock)
+        val intervals = sampler.getAnrIntervals()
         assertEquals(anrRepeatCount, intervals.size)
 
         // verify basic metadata about each interval
         intervals.forEachIndexed { index, interval ->
             if (index >= 10) {
-                assertEquals(AnrInterval.CODE_DEFAULT, interval.code)
-                assertNotNull(interval.anrSampleList)
+                assertEquals(ThreadBlockageInterval.CODE_DEFAULT, interval.code)
+                assertNotNull(interval.samples)
             } else {
-                assertEquals(AnrInterval.CODE_SAMPLES_CLEARED, interval.code)
-                assertNull(interval.anrSampleList)
+                assertEquals(ThreadBlockageInterval.CODE_SAMPLES_CLEARED, interval.code)
+                assertNull(interval.samples)
             }
         }
 
@@ -185,7 +162,7 @@ internal class AnrStacktraceSamplerTest {
             if (index < 10) {
                 return
             }
-            assertEquals(intervalRepeatCount + index, interval.anrSampleList?.samples?.size)
+            assertEquals(intervalRepeatCount + index, interval.samples?.size)
         }
     }
 
@@ -196,6 +173,7 @@ internal class AnrStacktraceSamplerTest {
         val intervalMs: Long = 100
         val sampler = AnrStacktraceSampler(
             clock,
+            state,
             thread,
             worker,
             configService.anrBehavior.getMaxAnrIntervalsPerSession(),
@@ -212,7 +190,7 @@ internal class AnrStacktraceSamplerTest {
         }
 
         // verify maximum of 100 intervals were recorded
-        val intervals = sampler.getAnrIntervals(state, clock)
+        val intervals = sampler.getAnrIntervals()
         assertEquals(100, intervals.size)
     }
 
@@ -222,6 +200,7 @@ internal class AnrStacktraceSamplerTest {
 
         val sampler = AnrStacktraceSampler(
             clock,
+            state,
             thread,
             worker,
             configService.anrBehavior.getMaxAnrIntervalsPerSession(),
@@ -233,14 +212,21 @@ internal class AnrStacktraceSamplerTest {
         sampler.onThreadBlockageEvent(BLOCKED_INTERVAL, clock.now())
         clock.tick(5000)
         sampler.onThreadBlockageEvent(UNBLOCKED, clock.now())
-        val intervals = sampler.getAnrIntervals(state, clock)
+        val intervals = sampler.getAnrIntervals()
         val interval = intervals.single()
-        interval.anrSampleList?.samples?.forEach { sample ->
+        interval.samples?.forEach { sample ->
             sample.threads?.forEach { thread ->
                 val lines = checkNotNull(thread.lines)
                 assertEquals(5, lines.size)
                 assertTrue(thread.frameCount > lines.size)
             }
         }
+    }
+
+    private fun AnrStacktraceSampler.createThreadBlockageInterval(clock: FakeClock, duration: Long) {
+        onThreadBlockageEvent(BLOCKED, clock.now())
+        onThreadBlockageEvent(BLOCKED_INTERVAL, clock.now())
+        clock.tick(duration)
+        onThreadBlockageEvent(UNBLOCKED, clock.now())
     }
 }

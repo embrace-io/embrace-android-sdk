@@ -2,10 +2,13 @@ package io.embrace.android.embracesdk.internal.instrumentation.anr
 
 import io.embrace.android.embracesdk.concurrency.SingleThreadTestScheduledExecutor
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.ThreadBlockageEvent.BLOCKED
 import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.ThreadBlockageEvent.BLOCKED_INTERVAL
 import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.ThreadBlockageEvent.UNBLOCKED
 import io.embrace.android.embracesdk.internal.instrumentation.anr.payload.ThreadBlockageSample
+import io.embrace.android.embracesdk.internal.payload.Span
+import io.embrace.opentelemetry.kotlin.semconv.ExceptionAttributes
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -99,7 +102,7 @@ internal class AnrServiceImplTest {
                 createThreadBlockageInterval()
             }
 
-            val intervals = anrService.getCapturedData()
+            val intervals = anrService.snapshotSpans()
             assertEquals(5, intervals.size)
         }
     }
@@ -111,12 +114,11 @@ internal class AnrServiceImplTest {
             state.threadBlockageInProgress = true
 
             // assert only one interval was added from the anrInProgress flag
-            val intervals = anrService.getCapturedData()
+            val intervals = anrService.snapshotSpans()
             val interval = intervals.single()
-            assertEquals(0, interval.startTime)
-            assertNull(interval.endTime)
-            assertEquals(500L, interval.lastKnownTime)
-            assertNotNull(interval.samples)
+            assertEquals(0L, interval.startTimeNanos?.nanosToMillis())
+            assertEquals(500L, interval.endTimeNanos?.nanosToMillis())
+            assertEquals(500L, interval.lastKnownTime?.nanosToMillis())
         }
     }
 
@@ -127,7 +129,7 @@ internal class AnrServiceImplTest {
             state.threadBlockageInProgress = true
 
             // assert only one interval was added from the anrInProgress flag
-            val intervals = anrService.getCapturedData()
+            val intervals = anrService.snapshotSpans()
             assertEquals(1, intervals.size)
         }
     }
@@ -144,15 +146,15 @@ internal class AnrServiceImplTest {
             assertEquals(1, stacktraceSampler.getAnrIntervals().size)
 
             // assert only one interval was added from the anrInProgress flag
-            val intervals = anrService.getCapturedData()
+            val intervals = anrService.snapshotSpans()
             val interval = intervals.single()
-            assertEquals(15000000L, interval.startTime)
-            assertNull(interval.endTime)
-            assertEquals(15020000L, interval.lastKnownTime)
+            assertEquals(15000000L, interval.startTimeNanos?.nanosToMillis())
+            assertEquals(15020000L, interval.endTimeNanos?.nanosToMillis())
+            assertEquals(15020000L, interval.lastKnownTime?.nanosToMillis())
 
-            val tick = checkNotNull(interval.samples?.single())
-            assertEquals(15020000, tick.timestamp)
-            assertNotNull(tick.threads?.single())
+            val tick = checkNotNull(interval.events?.single())
+            assertEquals(15020000L, tick.timestampNanos?.nanosToMillis())
+            assertNotNull(tick.attributes?.find { it.key == ExceptionAttributes.EXCEPTION_STACKTRACE })
         }
     }
 
@@ -179,11 +181,11 @@ internal class AnrServiceImplTest {
                 blockedThreadDetector.onTargetThreadResponse(anrEndTs)
                 assertFalse(state.threadBlockageInProgress)
 
-                val intervals = anrService.getCapturedData()
+                val intervals = anrService.snapshotSpans()
                 assertEquals(1, intervals.size)
                 val interval = intervals[0]
-                assertEquals(anrStartTs, interval.startTime)
-                assertEquals(anrEndTs, interval.endTime)
+                assertEquals(anrStartTs, interval.startTimeNanos?.nanosToMillis())
+                assertEquals(anrEndTs, interval.endTimeNanos?.nanosToMillis())
                 assertNull(interval.lastKnownTime)
             }
         }
@@ -202,7 +204,7 @@ internal class AnrServiceImplTest {
             // Since Looper is a mock, we execute this operation to
             // ensure onMainThreadUnblocked runs and lastTargetThreadResponseMs gets updated
             simulateAnrRecovery()
-            val intervals = anrService.getCapturedData()
+            val intervals = anrService.snapshotSpans()
             assertEquals(0, intervals.size)
         }
     }
@@ -223,7 +225,7 @@ internal class AnrServiceImplTest {
             clock.setCurrentTime(anrEndTs)
             anrService.onForeground()
             simulateAnrRecovery()
-            val intervals = anrService.getCapturedData()
+            val intervals = anrService.snapshotSpans()
             assertEquals(0, intervals.size)
         }
     }
@@ -369,7 +371,7 @@ internal class AnrServiceImplTest {
                 createThreadBlockageInterval()
             }
             anrService.handleCrash("")
-            val anrIntervals = anrService.getCapturedData()
+            val anrIntervals = anrService.snapshotSpans()
             assertEquals(5, anrIntervals.size)
         }
     }
@@ -396,4 +398,7 @@ internal class AnrServiceImplTest {
             }
         }
     }
+
+    private val Span.lastKnownTime: Long?
+        get() = attributes?.find { it.key == "last_known_time_unix_nano" }?.data?.toLong()
 }

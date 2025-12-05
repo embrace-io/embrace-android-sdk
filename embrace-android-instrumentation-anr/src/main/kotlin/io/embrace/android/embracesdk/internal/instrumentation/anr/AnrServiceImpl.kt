@@ -49,26 +49,6 @@ internal class AnrServiceImpl(
         }
     }
 
-    /**
-     * Gets the intervals during which the application was not responding (ANR).
-     *
-     * All functions in this class MUST be called from the same thread as [BlockedThreadDetector].
-     * This is part of the synchronization strategy that ensures data is not corrupted.
-     */
-    internal fun getCapturedData(): List<ThreadBlockageInterval> {
-        return try {
-            val callable = Callable {
-                checkNotNull(stacktraceSampler.getAnrIntervals()) {
-                    "ANR samples to be cached is null"
-                }
-            }
-            watchdogWorker.submit(callable).get(MAX_DATA_WAIT_MS, TimeUnit.MILLISECONDS)
-        } catch (exc: Exception) {
-            logger.trackInternalError(InternalErrorType.ANR_DATA_FETCH, exc)
-            emptyList()
-        }
-    }
-
     override fun simulateTargetThreadResponse() {
         blockedThreadDetector.onTargetThreadResponse(clock.now())
     }
@@ -107,6 +87,49 @@ internal class AnrServiceImpl(
         }
     }
 
+    override fun snapshotSpans(): List<Span> = EmbTrace.trace("anr-snapshot") {
+        getCapturedData().map { interval ->
+            mapIntervalToSpan(interval, clock, random)
+        }
+    }
+
+    override fun record() = EmbTrace.trace("anr-record") {
+        getCapturedData().forEach { interval ->
+            val attributes = mapIntervalToSpanAttributes(interval).toEmbracePayload()
+            val events = interval.samples?.map {
+                mapSampleToSpanEvent(it).toArchSpanEvent()
+            } ?: emptyList()
+            telemetryDestination.recordCompletedSpan(
+                name = "thread-blockage",
+                startTimeMs = interval.startTime,
+                endTimeMs = interval.endTime ?: clock.now(),
+                type = EmbType.Performance.ThreadBlockage,
+                attributes = attributes,
+                events = events,
+            )
+        }
+    }
+
+    /**
+     * Gets the intervals during which the application was not responding (ANR).
+     *
+     * All functions in this class MUST be called from the same thread as [BlockedThreadDetector].
+     * This is part of the synchronization strategy that ensures data is not corrupted.
+     */
+    private fun getCapturedData(): List<ThreadBlockageInterval> {
+        return try {
+            val callable = Callable {
+                checkNotNull(stacktraceSampler.getAnrIntervals()) {
+                    "ANR samples to be cached is null"
+                }
+            }
+            watchdogWorker.submit(callable).get(MAX_DATA_WAIT_MS, TimeUnit.MILLISECONDS)
+        } catch (exc: Exception) {
+            logger.trackInternalError(InternalErrorType.ANR_DATA_FETCH, exc)
+            emptyList()
+        }
+    }
+
     /**
      * Schedules a delayed check to stop stacktrace sampling if the app is still in background.
      * This handles slow app startup scenarios where the app takes time to transition to foreground.
@@ -132,29 +155,6 @@ internal class AnrServiceImpl(
             blockedThreadDetector.stopMonitoringThread()
         }
         delayedBackgroundCheckTask = null
-    }
-
-    override fun snapshotSpans(): List<Span> = EmbTrace.trace("anr-snapshot") {
-        getCapturedData().map { interval ->
-            mapIntervalToSpan(interval, clock, random)
-        }
-    }
-
-    override fun record() = EmbTrace.trace("anr-record") {
-        getCapturedData().forEach { interval ->
-            val attributes = mapIntervalToSpanAttributes(interval).toEmbracePayload()
-            val events = interval.samples?.map {
-                mapSampleToSpanEvent(it).toArchSpanEvent()
-            } ?: emptyList()
-            telemetryDestination.recordCompletedSpan(
-                name = "thread-blockage",
-                startTimeMs = interval.startTime,
-                endTimeMs = interval.endTime ?: clock.now(),
-                type = EmbType.Performance.ThreadBlockage,
-                attributes = attributes,
-                events = events,
-            )
-        }
     }
 
     private companion object {

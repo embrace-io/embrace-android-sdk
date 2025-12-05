@@ -5,8 +5,6 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.internal.arch.stacktrace.ThreadSample
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
-import io.embrace.android.embracesdk.internal.instrumentation.anr.payload.ThreadBlockageInterval
-import io.embrace.android.embracesdk.internal.instrumentation.anr.payload.ThreadBlockageSample
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.SpanEvent

@@ -1,8 +1,8 @@
-package io.embrace.android.embracesdk.internal.instrumentation.anr
+package io.embrace.android.embracesdk.internal.instrumentation.thread.blockage
 
 import io.embrace.android.embracesdk.internal.arch.stacktrace.ThreadSample
-import io.embrace.android.embracesdk.internal.instrumentation.anr.payload.ThreadBlockageInterval
-import io.embrace.android.embracesdk.internal.instrumentation.anr.payload.ThreadBlockageSample
+import io.embrace.android.embracesdk.internal.instrumentation.anr.ThreadBlockageInterval
+import io.embrace.android.embracesdk.internal.instrumentation.anr.ThreadBlockageSample
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotSame
 import org.junit.Assert.assertNull

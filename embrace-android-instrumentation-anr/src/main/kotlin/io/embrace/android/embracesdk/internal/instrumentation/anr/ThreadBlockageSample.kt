@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.internal.instrumentation.anr.payload
+package io.embrace.android.embracesdk.internal.instrumentation.anr
 
 import io.embrace.android.embracesdk.internal.arch.stacktrace.ThreadSample
 

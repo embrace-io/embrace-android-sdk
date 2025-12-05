@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.internal.instrumentation.anr.payload
+package io.embrace.android.embracesdk.internal.instrumentation.anr
 
 import androidx.annotation.CheckResult
 

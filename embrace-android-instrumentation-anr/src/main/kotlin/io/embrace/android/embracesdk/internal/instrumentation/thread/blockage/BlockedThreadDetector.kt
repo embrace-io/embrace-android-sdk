@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.internal.instrumentation.anr.detection
+package io.embrace.android.embracesdk.internal.instrumentation.thread.blockage
 
 import android.os.Debug
 import android.os.Handler
@@ -6,9 +6,9 @@ import android.os.Looper
 import android.os.Message
 import android.os.Message.obtain
 import io.embrace.android.embracesdk.internal.clock.Clock
-import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.ThreadBlockageEvent.BLOCKED
-import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.ThreadBlockageEvent.BLOCKED_INTERVAL
-import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.ThreadBlockageEvent.UNBLOCKED
+import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageEvent.BLOCKED
+import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageEvent.BLOCKED_INTERVAL
+import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageEvent.UNBLOCKED
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker

@@ -8,7 +8,7 @@ import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.fakes.behavior.FakeAnrBehavior
 import io.embrace.android.embracesdk.internal.arch.state.AppState
-import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.BlockedThreadDetector
+import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.BlockedThreadDetector
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.mockk.every

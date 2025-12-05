@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.instrumentation.anr
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.state.AppState
-import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.BlockedThreadDetector
+import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.BlockedThreadDetector
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker

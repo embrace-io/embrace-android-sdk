@@ -4,8 +4,8 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.toMap
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
-import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.arch.attrs.embFreeDiskBytes
+import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
@@ -47,10 +47,11 @@ internal class SessionApiTest {
 
                 // validate snapshots separately, as the JSON diff is tricky to debug
                 val snapshots = checkNotNull(message.data.spanSnapshots)
-                assertEquals(1, snapshots.size)
+                assertEquals(2, snapshots.size)
 
                 // validate expected in-process spans
                 checkNotNull(snapshots.single { it.name == "emb-network-status" })
+                checkNotNull(snapshots.single { it.name == "emb-state-network" })
 
                 // validate session span
                 val spans = checkNotNull(message.data.spans)

@@ -9,7 +9,6 @@ import io.embrace.opentelemetry.kotlin.semconv.HttpAttributes
 import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
 import io.embrace.opentelemetry.kotlin.semconv.SessionAttributes
 import io.embrace.opentelemetry.kotlin.semconv.UrlAttributes
-import kotlin.Suppress
 
 /**
  * The collections of attribute schemas used by the associated telemetry types.
@@ -280,6 +279,27 @@ sealed class SchemaType(
                 transform = StackTraceElement::toString
             ),
             ExceptionAttributes.EXCEPTION_MESSAGE to (throwable.message ?: "")
+        )
+    }
+
+    abstract class State(stateSpanName: String) :
+        SchemaType(
+            telemetryType = EmbType.State,
+            fixedObjectName = stateSpanName
+        )
+
+    class NetworkState(
+        initialStatus: Status,
+    ) : State("state-network") {
+        enum class Status(val value: String) {
+            NOT_REACHABLE("none"),
+            WIFI("wifi"),
+            WAN("wan"),
+            UNKNOWN("unknown")
+        }
+
+        override val schemaAttributes: Map<String, String> = mapOf(
+            "initial_value" to initialStatus.value
         )
     }
 }

@@ -10,7 +10,6 @@ import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
-import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface
 import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -202,11 +201,12 @@ internal class AnrFeatureTest {
      * Triggers an ANR by simulating the main thread getting blocked & unblocked. Time is controlled
      * with a fake Clock instance & a blockable executor that runs the blockage checks.
      */
-    private fun EmbraceActionInterface.triggerAnr(
+    private fun triggerAnr(
         sampleCount: Int,
         intervalMs: Long = INTERVAL_MS,
         incomplete: Boolean = false,
     ) {
+        testRule.bootstrapper.anrService?.simulateTargetThreadResponse()
         with(anrMonitorExecutor) {
             blockingMode = true
 

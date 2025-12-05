@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.internal.instrumentation.anr.detection
+package io.embrace.android.embracesdk.internal.instrumentation.thread.blockage
 
 /**
  * The state of the thread.

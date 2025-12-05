@@ -5,7 +5,6 @@ import io.embrace.android.embracesdk.internal.arch.stacktrace.truncateStacktrace
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.ThreadBlockageEvent
 import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.ThreadBlockageListener
-import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.ThreadMonitoringState
 import io.embrace.android.embracesdk.internal.instrumentation.anr.payload.ThreadBlockageInterval
 import io.embrace.android.embracesdk.internal.instrumentation.anr.payload.ThreadBlockageSample
 import io.embrace.android.embracesdk.internal.session.MemoryCleanerListener
@@ -18,7 +17,6 @@ import java.util.concurrent.atomic.AtomicBoolean
  */
 internal class AnrStacktraceSampler(
     private val clock: Clock,
-    private val state: ThreadMonitoringState,
     private val targetThread: Thread,
     private val watchdogWorker: BackgroundWorker,
     private val maxIntervalsPerSession: Int,
@@ -55,9 +53,8 @@ internal class AnrStacktraceSampler(
             // add any in-progress ANRs
             if (blocked.get()) {
                 val intervalEndTime = clock.now()
-                val responseMs = state.lastTargetThreadResponseMs
                 val threadBlockageInterval = ThreadBlockageInterval(
-                    responseMs,
+                    lastUnblockedMs,
                     intervalEndTime,
                     null,
                     samples.toList()

@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.internal.instrumentation.anr
 import android.os.Looper
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.BlockedThreadDetector
-import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.ThreadMonitoringState
 import io.embrace.android.embracesdk.internal.worker.Worker
 
 /**
@@ -18,12 +17,10 @@ fun createAnrService(args: InstrumentationArgs): AnrService? {
 
     val anrMonitorWorker by lazy { args.backgroundWorker(Worker.Background.AnrWatchdogWorker) }
     val looper by lazy { Looper.getMainLooper() }
-    val state by lazy { ThreadMonitoringState(args.clock) }
 
     val stacktraceSampler by lazy {
         AnrStacktraceSampler(
             clock = args.clock,
-            state = state,
             targetThread = looper.thread,
             watchdogWorker = anrMonitorWorker,
             maxIntervalsPerSession = args.configService.anrBehavior.getMaxAnrIntervalsPerSession(),
@@ -35,7 +32,6 @@ fun createAnrService(args: InstrumentationArgs): AnrService? {
         BlockedThreadDetector(
             watchdogWorker = anrMonitorWorker,
             clock = args.clock,
-            state = state,
             looper = looper,
             logger = args.logger,
             intervalMs = args.configService.anrBehavior.getSamplingIntervalMs(),
@@ -47,7 +43,6 @@ fun createAnrService(args: InstrumentationArgs): AnrService? {
         args = args,
         blockedThreadDetector = blockedThreadDetector,
         watchdogWorker = anrMonitorWorker,
-        state = state,
         stacktraceSampler = stacktraceSampler,
     )
 }

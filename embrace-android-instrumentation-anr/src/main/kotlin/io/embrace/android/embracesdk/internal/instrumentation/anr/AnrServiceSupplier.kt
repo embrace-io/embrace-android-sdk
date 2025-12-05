@@ -22,7 +22,6 @@ fun createAnrService(args: InstrumentationArgs): AnrService? {
         AnrStacktraceSampler(
             clock = args.clock,
             targetThread = looper.thread,
-            watchdogWorker = anrMonitorWorker,
             maxIntervalsPerSession = args.configService.anrBehavior.getMaxAnrIntervalsPerSession(),
             maxStacktracesPerInterval = args.configService.anrBehavior.getMaxStacktracesPerInterval(),
             stacktraceFrameLimit = args.configService.anrBehavior.getStacktraceFrameLimit(),

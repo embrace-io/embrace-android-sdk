@@ -11,7 +11,6 @@ import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.Thre
 import io.embrace.android.embracesdk.internal.instrumentation.anr.payload.ThreadBlockageInterval
 import io.embrace.android.embracesdk.internal.instrumentation.anr.payload.ThreadBlockageSample
 import io.embrace.android.embracesdk.internal.session.MemoryCleanerListener
-import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
@@ -23,7 +22,6 @@ import java.util.concurrent.atomic.AtomicReference
 internal class AnrStacktraceSampler(
     private val clock: Clock,
     private val targetThread: Thread,
-    private val watchdogWorker: BackgroundWorker,
     private val maxIntervalsPerSession: Int,
     private val maxStacktracesPerInterval: Int,
     private val stacktraceFrameLimit: Int,
@@ -69,7 +67,7 @@ internal class AnrStacktraceSampler(
     }
 
     override fun cleanCollections() {
-        watchdogWorker.submit {
+        synchronized(intervals) {
             intervals.removeAll { it.endTime != null }
         }
     }

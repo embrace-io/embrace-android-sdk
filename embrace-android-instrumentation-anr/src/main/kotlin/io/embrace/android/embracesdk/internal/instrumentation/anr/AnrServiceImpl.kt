@@ -4,12 +4,9 @@ import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.BlockedThreadDetector
-import io.embrace.android.embracesdk.internal.instrumentation.anr.payload.ThreadBlockageInterval
-import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
-import java.util.concurrent.Callable
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 import kotlin.random.Random
@@ -29,7 +26,6 @@ internal class AnrServiceImpl(
     private val random: Random = Random.Default,
 ) : AnrService {
 
-    private val logger = args.logger
     private val clock = args.clock
     private val appStateTracker = args.appStateTracker
     private val telemetryDestination = args.destination
@@ -42,9 +38,7 @@ internal class AnrServiceImpl(
     }
 
     override fun startCapture() {
-        this.watchdogWorker.submit {
-            blockedThreadDetector.start()
-        }
+        blockedThreadDetector.start()
     }
 
     override fun simulateTargetThreadResponse() {
@@ -52,9 +46,7 @@ internal class AnrServiceImpl(
     }
 
     override fun handleCrash(crashId: String) {
-        this.watchdogWorker.submit {
-            blockedThreadDetector.stop()
-        }
+        blockedThreadDetector.stop()
     }
 
     override fun cleanCollections() {
@@ -66,11 +58,9 @@ internal class AnrServiceImpl(
      * capture stacktrace samples.
      */
     override fun onForeground() {
-        this.watchdogWorker.submit {
-            // Cancel any pending delayed background check since we're now in foreground
-            cancelDelayedBackgroundCheck()
-            blockedThreadDetector.start()
-        }
+        // Cancel any pending delayed background check since we're now in foreground
+        cancelDelayedBackgroundCheck()
+        blockedThreadDetector.start()
     }
 
     /**
@@ -79,19 +69,17 @@ internal class AnrServiceImpl(
      * want to affect customer's app performance.
      */
     override fun onBackground() {
-        this.watchdogWorker.submit {
-            blockedThreadDetector.stop()
-        }
+        blockedThreadDetector.stop()
     }
 
     override fun snapshotSpans(): List<Span> = EmbTrace.trace("anr-snapshot") {
-        getCapturedData().map { interval ->
+        stacktraceSampler.getAnrIntervals().map { interval ->
             mapIntervalToSpan(interval, clock, random)
         }
     }
 
     override fun record() = EmbTrace.trace("anr-record") {
-        getCapturedData().forEach { interval ->
+        stacktraceSampler.getAnrIntervals().forEach { interval ->
             val attributes = mapIntervalToSpanAttributes(interval).toEmbracePayload()
             val events = interval.samples?.map {
                 mapSampleToSpanEvent(it).toArchSpanEvent()
@@ -104,26 +92,6 @@ internal class AnrServiceImpl(
                 attributes = attributes,
                 events = events,
             )
-        }
-    }
-
-    /**
-     * Gets the intervals during which the application was not responding (ANR).
-     *
-     * All functions in this class MUST be called from the same thread as [BlockedThreadDetector].
-     * This is part of the synchronization strategy that ensures data is not corrupted.
-     */
-    private fun getCapturedData(): List<ThreadBlockageInterval> {
-        return try {
-            val callable = Callable {
-                checkNotNull(stacktraceSampler.getAnrIntervals()) {
-                    "ANR samples to be cached is null"
-                }
-            }
-            watchdogWorker.submit(callable).get(MAX_DATA_WAIT_MS, TimeUnit.MILLISECONDS)
-        } catch (exc: Exception) {
-            logger.trackInternalError(InternalErrorType.ANR_DATA_FETCH, exc)
-            emptyList()
         }
     }
 
@@ -152,15 +120,5 @@ internal class AnrServiceImpl(
             blockedThreadDetector.stop()
         }
         delayedBackgroundCheckTask = null
-    }
-
-    private companion object {
-
-        /**
-         * The maximum number of milliseconds we should wait to retrieve stacktrace samples for the
-         * session payload. The vast majority of times this wait time should effectively be 0ms -
-         * a limit is included to avoid blocking the main thread/sampling.
-         */
-        private const val MAX_DATA_WAIT_MS = 1000L
     }
 }

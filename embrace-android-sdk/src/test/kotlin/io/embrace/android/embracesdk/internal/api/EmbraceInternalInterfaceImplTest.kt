@@ -13,6 +13,9 @@ import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.fakes.behavior.FakeNetworkSpanForwardingBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.api.delegate.EmbraceInternalInterfaceImpl
+import io.embrace.android.embracesdk.internal.config.remote.AnrRemoteConfig
+import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.internal.config.remote.UiRemoteConfig
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.http.HttpMethod
 import io.mockk.every
@@ -20,13 +23,13 @@ import io.mockk.mockk
 import io.mockk.mockkStatic
 import io.mockk.slot
 import io.mockk.verify
+import java.net.SocketException
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import java.net.SocketException
 
 internal class EmbraceInternalInterfaceImplTest {
 
@@ -205,6 +208,53 @@ internal class EmbraceInternalInterfaceImplTest {
     fun `check stopping SDK`() {
         internalImpl.stopSdk()
         assertFalse(embraceImpl.isStarted)
+    }
+
+    @Test
+    fun `test retrieve remote config null`() {
+        val cfg = internalImpl.getRemoteConfig()
+        assertNull(cfg)
+    }
+
+    @Test
+    fun `test retrieve remote config empty map`() {
+        fakeConfigService.remoteConfig = RemoteConfig()
+        val cfg = internalImpl.getRemoteConfig()
+        assertEquals(emptyMap<String, String>(), cfg)
+    }
+
+    @Test
+    fun `test retrieve remote config with values`() {
+        fakeConfigService.remoteConfig = RemoteConfig(
+            threshold = 50,
+            uiConfig = UiRemoteConfig(
+                taps = 25
+            ),
+            anrConfig = AnrRemoteConfig(
+                sampleIntervalMs = 200
+            ),
+            internalExceptionCaptureEnabled = true,
+            disabledUrlPatterns = setOf("*.google.com")
+        )
+        val cfg = internalImpl.getRemoteConfig()
+        val expected = mapOf(
+            "threshold" to 50.0,
+            "ui" to mapOf(
+                "taps" to 25.0
+            ),
+            "anr" to mapOf(
+                "interval" to 200.0
+            ),
+            "internal_exception_capture_enabled" to true,
+            "disabled_url_patterns" to listOf("*.google.com")
+        )
+        assertEquals(expected, cfg)
+    }
+
+    @Test
+    fun `test is config feature enabled`() {
+        assertFalse(checkNotNull(internalImpl.isConfigFeatureEnabled(0.0f)))
+        assertTrue(checkNotNull(internalImpl.isConfigFeatureEnabled(100.0f)))
     }
 
     companion object {

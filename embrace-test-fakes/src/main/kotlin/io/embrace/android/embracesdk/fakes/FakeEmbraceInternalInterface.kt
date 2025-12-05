@@ -131,4 +131,8 @@ class FakeEmbraceInternalInterface(
     ): Boolean {
         return true
     }
+
+    override fun getRemoteConfig(): Map<String, Any>? = null
+
+    override fun isConfigFeatureEnabled(pctEnabled: Float?): Boolean? = null
 }

@@ -4,8 +4,6 @@ import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorServic
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.internal.arch.state.AppState
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -36,28 +34,6 @@ internal class AnrServiceImplTimingTest {
             rule.watchdogMonitorThread = AtomicReference(currentThread())
         }
         watchdogExecutorService.runCurrentlyBlocked()
-    }
-
-    @Test
-    fun `check ANR recovery`() {
-        with(rule) {
-            clock.setCurrentTime(100000L)
-            anrService.startCapture()
-            watchdogExecutorService.runCurrentlyBlocked()
-            simulateAnrRecovery()
-            watchdogExecutorService.runCurrentlyBlocked()
-            repeat(20) {
-                watchdogExecutorService.moveForwardAndRunBlocked(100L)
-            }
-            assertTrue(state.threadBlockageInProgress)
-            simulateAnrRecovery()
-            watchdogExecutorService.runCurrentlyBlocked()
-            assertFalse(state.threadBlockageInProgress)
-        }
-    }
-
-    private fun AnrServiceRule<*>.simulateAnrRecovery() {
-        blockedThreadDetector.onTargetThreadProcessedMessage(clock.now())
     }
 
     @Test

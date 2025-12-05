@@ -42,6 +42,7 @@ internal class BlockedThreadDetector(
         action = ::onTargetThreadProcessedMessage
     )
     private val started: AtomicBoolean = AtomicBoolean(false)
+    private val blocked: AtomicBoolean = AtomicBoolean(false)
     private var monitorFuture: ScheduledFuture<*>? = null
 
     /**
@@ -80,10 +81,8 @@ internal class BlockedThreadDetector(
             return
         }
 
-        if (state.threadBlockageInProgress) {
-            // Application was not responding, but recovered
-            // Invoke callbacks
-            state.threadBlockageInProgress = false
+        // thread was blocked but recovered
+        if (blocked.getAndSet(false)) {
             listener.onThreadBlockageEvent(UNBLOCKED, timestamp)
         }
     }
@@ -97,13 +96,11 @@ internal class BlockedThreadDetector(
             return
         }
 
-        if (!state.threadBlockageInProgress && isThreadBlockageThresholdExceeded(timestamp)) {
-            state.threadBlockageInProgress = true
+        if (isThreadBlockageThresholdExceeded(timestamp) && !blocked.getAndSet(true)) {
             listener.onThreadBlockageEvent(BLOCKED, state.lastTargetThreadResponseMs)
         }
-        if (state.threadBlockageInProgress && shouldSampleBlockedThread(timestamp)) {
+        if (blocked.get() && shouldSampleBlockedThread(timestamp)) {
             listener.onThreadBlockageEvent(BLOCKED_INTERVAL, timestamp)
-            state.lastSampleAttemptMs = clock.now()
         }
         state.lastMonitorThreadResponseMs = clock.now()
     }

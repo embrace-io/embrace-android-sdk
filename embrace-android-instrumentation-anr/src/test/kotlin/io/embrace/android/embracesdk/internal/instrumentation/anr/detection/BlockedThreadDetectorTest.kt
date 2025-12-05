@@ -63,7 +63,6 @@ internal class BlockedThreadDetectorTest {
 
     @Test
     fun testShouldSampleBlockedThread() {
-        state.threadBlockageInProgress = true
         detector.onMonitorThreadInterval(-23409)
         assertEquals(0, listener.intervalCount)
 
@@ -79,10 +78,10 @@ internal class BlockedThreadDetectorTest {
         detector.onMonitorThreadInterval(BASELINE_MS + 50)
         assertEquals(0, listener.intervalCount)
 
-        detector.onMonitorThreadInterval(BASELINE_MS + 51)
+        detector.onMonitorThreadInterval(BASELINE_MS + 1001)
         assertEquals(1, listener.intervalCount)
 
-        detector.onMonitorThreadInterval(BASELINE_MS + 100)
+        detector.onMonitorThreadInterval(BASELINE_MS + 5000)
         assertEquals(2, listener.intervalCount)
 
         detector.onMonitorThreadInterval(BASELINE_MS + 30000)
@@ -96,7 +95,6 @@ internal class BlockedThreadDetectorTest {
         detector.onMonitorThreadInterval(BASELINE_MS + 2000)
         assertEquals(1, listener.intervalCount)
         assertEquals(now, state.lastMonitorThreadResponseMs)
-        assertEquals(now, state.lastSampleAttemptMs)
     }
 
     @Test
@@ -104,12 +102,10 @@ internal class BlockedThreadDetectorTest {
         val now = BASELINE_MS + 2000
         clock.setCurrentTime(now)
         state.lastMonitorThreadResponseMs = now - 10
-        state.lastSampleAttemptMs = now - 10
 
         detector.onMonitorThreadInterval(now)
         assertEquals(0, listener.intervalCount)
         assertEquals(now, state.lastMonitorThreadResponseMs)
-        assertEquals(now - 10, state.lastSampleAttemptMs)
     }
 
     @Test

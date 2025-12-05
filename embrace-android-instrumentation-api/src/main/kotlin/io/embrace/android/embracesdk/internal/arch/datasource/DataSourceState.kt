@@ -19,15 +19,6 @@ class DataSourceState<T : DataSource>(
      * Defaults to true if not provided.
      */
     configGate: () -> Boolean = { true },
-
-    /**
-     * Whether this feature supports being initialized asynchronously. Defaults to false. If
-     * the feature is set to true the feature will be initialized on a background thread.
-     *
-     * If you enable this behavior please ensure your implementation is thread safe (e.g.
-     * it can handle unbalanced calls to [DataSource.onDataCaptureEnabled] and others).
-     */
-    val asyncInit: Boolean = false,
 ) {
 
     private val factoryRef = lazy(factory)

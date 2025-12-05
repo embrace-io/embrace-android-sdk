@@ -8,8 +8,8 @@ import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.Thre
 import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.ThreadBlockageEvent.BLOCKED_INTERVAL
 import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.ThreadBlockageEvent.UNBLOCKED
 import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.ThreadMonitoringState
-import io.embrace.android.embracesdk.internal.instrumentation.anr.payload.AnrInterval
-import io.embrace.android.embracesdk.internal.instrumentation.anr.payload.AnrSample
+import io.embrace.android.embracesdk.internal.instrumentation.anr.payload.ThreadBlockageInterval
+import io.embrace.android.embracesdk.internal.instrumentation.anr.payload.ThreadBlockageSample
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -40,47 +40,47 @@ internal class AnrStacktraceSamplerTest {
             configService.anrBehavior.getStacktraceFrameLimit(),
         )
         assertNull(sampler.findLeastValuableIntervalWithSamples())
-        val interval1 = AnrInterval(
+        val interval1 = ThreadBlockageInterval(
             startTime = BASELINE_MS,
             lastKnownTime = BASELINE_MS + 5000,
             samples = emptyList()
         )
-        val interval2 = AnrInterval(
+        val interval2 = ThreadBlockageInterval(
             startTime = BASELINE_MS,
             lastKnownTime = BASELINE_MS + 4000,
             samples = emptyList()
         )
-        val interval3 = AnrInterval(
+        val interval3 = ThreadBlockageInterval(
             startTime = BASELINE_MS,
             lastKnownTime = BASELINE_MS + 1000,
             samples = emptyList()
         )
-        val interval4 = AnrInterval(
+        val interval4 = ThreadBlockageInterval(
             startTime = BASELINE_MS,
             lastKnownTime = BASELINE_MS + 1000,
             samples = emptyList()
         )
-        val interval5 = AnrInterval(
+        val interval5 = ThreadBlockageInterval(
             startTime = BASELINE_MS,
             lastKnownTime = BASELINE_MS + 500,
-            code = AnrInterval.CODE_SAMPLES_CLEARED
+            code = ThreadBlockageInterval.CODE_SAMPLES_CLEARED
         )
 
-        sampler.anrIntervals.add(interval1)
+        sampler.threadBlockageIntervals.add(interval1)
         assertEquals(interval1, sampler.findLeastValuableIntervalWithSamples())
 
-        sampler.anrIntervals.add(interval2)
+        sampler.threadBlockageIntervals.add(interval2)
         assertEquals(interval2, sampler.findLeastValuableIntervalWithSamples())
 
-        sampler.anrIntervals.add(interval3)
+        sampler.threadBlockageIntervals.add(interval3)
         assertEquals(interval3, sampler.findLeastValuableIntervalWithSamples())
 
         // most recent interval gets binned if duration is equal
-        sampler.anrIntervals.add(interval4)
+        sampler.threadBlockageIntervals.add(interval4)
         assertEquals(interval3, sampler.findLeastValuableIntervalWithSamples())
 
         // intervals without any samples are ignored
-        sampler.anrIntervals.add(interval5)
+        sampler.threadBlockageIntervals.add(interval5)
         assertEquals(interval3, sampler.findLeastValuableIntervalWithSamples())
     }
 
@@ -116,7 +116,7 @@ internal class AnrStacktraceSamplerTest {
         val interval = intervals.single()
         assertEquals(BASELINE_MS, interval.startTime)
         assertEquals(clock.now(), interval.endTime)
-        assertEquals(AnrInterval.CODE_DEFAULT, interval.code)
+        assertEquals(ThreadBlockageInterval.CODE_DEFAULT, interval.code)
 
         // verify samples were captured up to the limit
         val samples = checkNotNull(interval.samples)
@@ -131,8 +131,8 @@ internal class AnrStacktraceSamplerTest {
         // verify samples after the sample limit record a code that they are cleared
         samples.forEachIndexed { index, sample ->
             val expected = when {
-                index >= 80 -> AnrSample.CODE_SAMPLE_LIMIT_REACHED
-                else -> AnrSample.CODE_DEFAULT
+                index >= 80 -> ThreadBlockageSample.CODE_SAMPLE_LIMIT_REACHED
+                else -> ThreadBlockageSample.CODE_DEFAULT
             }
             assertEquals(expected, sample.code)
         }
@@ -171,10 +171,10 @@ internal class AnrStacktraceSamplerTest {
         // verify basic metadata about each interval
         intervals.forEachIndexed { index, interval ->
             if (index >= 10) {
-                assertEquals(AnrInterval.CODE_DEFAULT, interval.code)
+                assertEquals(ThreadBlockageInterval.CODE_DEFAULT, interval.code)
                 assertNotNull(interval.samples)
             } else {
-                assertEquals(AnrInterval.CODE_SAMPLES_CLEARED, interval.code)
+                assertEquals(ThreadBlockageInterval.CODE_SAMPLES_CLEARED, interval.code)
                 assertNull(interval.samples)
             }
         }

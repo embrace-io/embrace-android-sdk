@@ -19,10 +19,10 @@ import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.atomic.AtomicReference
 
 /**
- * A [org.junit.Rule] that creates an [EmbraceAnrService] suitable for use in tests
+ * A [org.junit.Rule] that creates an [AnrServiceImpl] suitable for use in tests
  * using mostly real sub-components.
  */
-internal class EmbraceAnrServiceRule<T : ScheduledExecutorService>(
+internal class AnrServiceRule<T : ScheduledExecutorService>(
     val clock: FakeClock = FakeClock(),
     private val scheduledExecutorSupplier: Provider<T>,
 ) : ExternalResource() {
@@ -30,12 +30,12 @@ internal class EmbraceAnrServiceRule<T : ScheduledExecutorService>(
 
     lateinit var fakeConfigService: FakeConfigService
     lateinit var fakeAppStateTracker: FakeAppStateTracker
-    lateinit var anrService: EmbraceAnrService
+    lateinit var anrService: AnrServiceImpl
     lateinit var state: ThreadMonitoringState
     lateinit var blockedThreadDetector: BlockedThreadDetector
     lateinit var anrBehavior: FakeAnrBehavior
-    lateinit var anrExecutorService: T
-    lateinit var anrMonitorThread: AtomicReference<Thread>
+    lateinit var watchdogExecutorService: T
+    lateinit var watchdogMonitorThread: AtomicReference<Thread>
     lateinit var stacktraceSampler: AnrStacktraceSampler
     lateinit var looper: Looper
     lateinit var worker: BackgroundWorker
@@ -47,22 +47,22 @@ internal class EmbraceAnrServiceRule<T : ScheduledExecutorService>(
             every { thread } returns Thread.currentThread()
         }
         anrBehavior = FakeAnrBehavior()
-        anrMonitorThread = AtomicReference(Thread.currentThread())
+        watchdogMonitorThread = AtomicReference(Thread.currentThread())
         fakeConfigService = FakeConfigService(anrBehavior = anrBehavior)
         fakeAppStateTracker = FakeAppStateTracker(AppState.FOREGROUND)
-        anrExecutorService = scheduledExecutorSupplier.invoke()
+        watchdogExecutorService = scheduledExecutorSupplier.invoke()
         state = ThreadMonitoringState(clock)
-        worker = BackgroundWorker(anrExecutorService)
+        worker = BackgroundWorker(watchdogExecutorService)
         stacktraceSampler = AnrStacktraceSampler(
             clock = clock,
             targetThread = looper.thread,
-            anrMonitorWorker = worker,
+            watchdogWorker = worker,
             maxIntervalsPerSession = fakeConfigService.anrBehavior.getMaxAnrIntervalsPerSession(),
             maxStacktracesPerInterval = fakeConfigService.anrBehavior.getMaxStacktracesPerInterval(),
             stacktraceFrameLimit = fakeConfigService.anrBehavior.getStacktraceFrameLimit(),
         )
         blockedThreadDetector = BlockedThreadDetector(
-            anrMonitorWorker = worker,
+            watchdogWorker = worker,
             clock = clock,
             state = state,
             looper = looper,
@@ -78,10 +78,10 @@ internal class EmbraceAnrServiceRule<T : ScheduledExecutorService>(
             clock = clock,
             appStateTracker = fakeAppStateTracker,
         )
-        anrService = EmbraceAnrService(
+        anrService = AnrServiceImpl(
             args = args,
             blockedThreadDetector = blockedThreadDetector,
-            anrMonitorWorker = worker,
+            watchdogWorker = worker,
             state = state,
             stacktraceSampler = stacktraceSampler,
         )
@@ -91,10 +91,10 @@ internal class EmbraceAnrServiceRule<T : ScheduledExecutorService>(
      * Recreates the ANR service. Useful for tests where we need to update the fakes that we pass to the EmbraceAnrService.
      */
     fun recreateService() {
-        anrService = EmbraceAnrService(
+        anrService = AnrServiceImpl(
             args = args,
             blockedThreadDetector = blockedThreadDetector,
-            anrMonitorWorker = worker,
+            watchdogWorker = worker,
             state = state,
             stacktraceSampler = stacktraceSampler,
         )

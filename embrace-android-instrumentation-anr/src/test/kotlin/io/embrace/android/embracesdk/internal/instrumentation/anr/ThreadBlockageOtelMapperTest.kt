@@ -4,8 +4,8 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
-import io.embrace.android.embracesdk.internal.instrumentation.anr.payload.AnrInterval
-import io.embrace.android.embracesdk.internal.instrumentation.anr.payload.AnrSample
+import io.embrace.android.embracesdk.internal.instrumentation.anr.payload.ThreadBlockageInterval
+import io.embrace.android.embracesdk.internal.instrumentation.anr.payload.ThreadBlockageSample
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
@@ -29,7 +29,7 @@ private const val FIRST_SAMPLE_OVERHEAD_MS = 3L
 private const val SECOND_SAMPLE_OVERHEAD_MS = 5L
 
 @RunWith(AndroidJUnit4::class)
-internal class AnrOtelMapperTest {
+internal class ThreadBlockageOtelMapperTest {
 
     private val stacktrace = ThreadInfo(
         threadId = 1,
@@ -47,38 +47,33 @@ internal class AnrOtelMapperTest {
     private val truncatedStack = stacktrace.copy(frameCount = 10000)
     private val truncatedThreads = listOf(truncatedStack)
 
-    private val firstSample = AnrSample(
+    private val firstSample = ThreadBlockageSample(
         timestamp = FIRST_SAMPLE_MS,
         sampleOverheadMs = FIRST_SAMPLE_OVERHEAD_MS,
-        code = AnrSample.CODE_DEFAULT,
         threads = threads
     )
 
-    private val secondSample = AnrSample(
+    private val secondSample = ThreadBlockageSample(
         timestamp = SECOND_SAMPLE_MS,
         sampleOverheadMs = SECOND_SAMPLE_OVERHEAD_MS,
-        code = AnrSample.CODE_DEFAULT,
         threads = threads
     )
 
-    private val truncatedSecondSample = AnrSample(
+    private val truncatedSecondSample = ThreadBlockageSample(
         timestamp = SECOND_SAMPLE_MS,
         sampleOverheadMs = SECOND_SAMPLE_OVERHEAD_MS,
-        code = AnrSample.CODE_DEFAULT,
         threads = truncatedThreads
     )
 
-    private val completedInterval = AnrInterval(
+    private val completedInterval = ThreadBlockageInterval(
         startTime = START_TIME_MS,
         endTime = END_TIME_MS,
-        code = AnrInterval.CODE_DEFAULT,
         samples = listOf(firstSample, secondSample)
     )
 
-    private val completedIntervalWithTruncatedSample = AnrInterval(
+    private val completedIntervalWithTruncatedSample = ThreadBlockageInterval(
         startTime = START_TIME_MS,
         endTime = END_TIME_MS,
-        code = AnrInterval.CODE_DEFAULT,
         samples = listOf(firstSample, truncatedSecondSample)
     )
 
@@ -93,7 +88,7 @@ internal class AnrOtelMapperTest {
     private val intervalWithLimitedSample = completedInterval.copy(
         samples = List(100) { k ->
             if (k >= 80) {
-                firstSample.copy(code = AnrSample.CODE_SAMPLE_LIMIT_REACHED)
+                firstSample.copy(code = ThreadBlockageSample.CODE_SAMPLE_LIMIT_REACHED)
             } else {
                 firstSample
             }
@@ -156,7 +151,7 @@ internal class AnrOtelMapperTest {
         assertEquals(100, events.size)
         events.forEachIndexed { index, event ->
             if (index >= 80) {
-                assertSampleMapped(event, firstSample.copy(code = AnrSample.CODE_SAMPLE_LIMIT_REACHED))
+                assertSampleMapped(event, firstSample.copy(code = ThreadBlockageSample.CODE_SAMPLE_LIMIT_REACHED))
             } else {
                 assertSampleMapped(event, firstSample)
             }
@@ -181,7 +176,7 @@ internal class AnrOtelMapperTest {
         assertEquals("perf.thread_blockage", attributes?.findAttribute("emb.type")?.data)
     }
 
-    private fun assertSampleMapped(event: SpanEvent, sample: AnrSample) {
+    private fun assertSampleMapped(event: SpanEvent, sample: ThreadBlockageSample) {
         assertEquals("perf.thread_blockage_sample", event.name)
         assertEquals("perf.thread_blockage_sample", event.attributes?.findAttribute("emb.type")?.data)
         assertEquals(sample.timestamp, checkNotNull(event.timestampNanos).nanosToMillis())

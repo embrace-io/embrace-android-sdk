@@ -82,7 +82,7 @@ internal fun ModuleGraph.loadInstrumentation() {
     val instrumentationProviders = ServiceLoader.load(InstrumentationProvider::class.java)
     registry.loadInstrumentations(instrumentationProviders, instrumentationModule.instrumentationArgs)
 
-    anrService?.startAnrCapture()
+    anrService?.startCapture()
 
     featureModule.lastRunCrashVerifier.readAndCleanMarkerAsync(
         workerThreadModule.backgroundWorker(Worker.Background.IoRegWorker)

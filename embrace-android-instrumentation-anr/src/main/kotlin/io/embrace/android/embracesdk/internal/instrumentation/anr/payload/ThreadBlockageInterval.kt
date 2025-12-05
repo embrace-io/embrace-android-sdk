@@ -3,10 +3,9 @@ package io.embrace.android.embracesdk.internal.instrumentation.anr.payload
 import androidx.annotation.CheckResult
 
 /**
- * Intervals during which the UI thread was blocked for more than 1 second, which
- * determines that the application is not responding (ANR).
+ * Intervals during which a thread was blocked for more than 1 second.
  */
-internal data class AnrInterval(
+internal data class ThreadBlockageInterval(
 
     /**
      * The time at which the application stopped responding.
@@ -24,12 +23,12 @@ internal data class AnrInterval(
     val endTime: Long? = null,
 
     /**
-     * The captured stacktraces of the anr interval.
+     * The captured stacktraces of the thread blockage interval.
      */
-    val samples: List<AnrSample>? = null,
+    val samples: List<ThreadBlockageSample>? = null,
 
     /**
-     * The status code of the ANR interval.
+     * The status code of the thread blockage interval.
      */
     val code: Int? = CODE_DEFAULT,
 ) {
@@ -40,7 +39,7 @@ internal data class AnrInterval(
     }
 
     /**
-     * Retrieves the ANR sample count associated with this interval, or 0 if the samples have been
+     * Retrieves the sample count associated with this interval, or 0 if the samples have been
      * redacted.
      */
     internal fun size(): Int = samples?.size ?: 0
@@ -56,10 +55,10 @@ internal data class AnrInterval(
     }
 
     /**
-     * Performs a copy of the AnrInterval that ensures the [samples] is a new object. Note:
+     * Performs a copy of the ThreadBlockageInterval that ensures the [samples] is a new object. Note:
      * that this does not copy all the way down the object tree.
      */
-    internal fun deepCopy(): AnrInterval = AnrInterval(
+    internal fun deepCopy(): ThreadBlockageInterval = ThreadBlockageInterval(
         startTime,
         lastKnownTime,
         endTime,
@@ -68,7 +67,7 @@ internal data class AnrInterval(
     )
 
     @CheckResult
-    internal fun clearSamples(): AnrInterval = copy(samples = null, code = CODE_SAMPLES_CLEARED)
+    internal fun clearSamples(): ThreadBlockageInterval = copy(samples = null, code = CODE_SAMPLES_CLEARED)
 
     internal fun hasSamples(): Boolean = code != CODE_SAMPLES_CLEARED
 }

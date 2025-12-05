@@ -12,6 +12,7 @@ import org.gradle.api.Project
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Provider
 import org.gradle.api.provider.ProviderFactory
+import org.jetbrains.kotlin.gradle.dsl.KotlinAndroidProjectExtension
 import org.jetbrains.kotlin.gradle.plugin.kotlinToolingVersion
 import java.util.UUID
 
@@ -41,8 +42,8 @@ class BuildTelemetryCollector {
                 jvmArgs = getJvmArgs(),
                 isEdmEnabled = behavior.isUnityEdmEnabled,
                 edmVersion = getEdmVersion(),
-                metadataRequestId = UUID.randomUUID().toString(),
-                pluginVersion = BuildConfig.VERSION,
+                buildTelemetryId = UUID.randomUUID().toString(),
+                embracePluginVersion = BuildConfig.VERSION,
                 operatingSystem = getOperatingSystem(),
                 jdkVersion = getJdkVersion(),
                 sourceCompatibility = agpWrapper.sourceCompatibility,
@@ -54,14 +55,15 @@ class BuildTelemetryCollector {
         // accidentally performing eager initialisations
         return providerFactory.provider {
             configPhaseTelemetry.copy(
-                variantMetadata = variantConfigs.get().map { config ->
-                    BuildTelemetryVariant(
+                variantBuildTelemetry = variantConfigs.get().map { config ->
+                    VariantBuildTelemetry(
                         variantName = config.variantName,
                         appId = config.embraceConfig?.appId,
                         buildId = config.buildId,
                     )
                 },
                 kotlinVersion = getKotlinVersion(project),
+                kotlinJvmTarget = getKotlinJvmTarget(project),
             )
         }
     }
@@ -112,6 +114,19 @@ class BuildTelemetryCollector {
     private fun getKotlinVersion(project: Project): String? {
         return if (project.pluginManager.hasPlugin("org.jetbrains.kotlin.android")) {
             project.kotlinToolingVersion.toString()
+        } else {
+            null
+        }
+    }
+
+    private fun getKotlinJvmTarget(project: Project): String? {
+        return if (project.pluginManager.hasPlugin("org.jetbrains.kotlin.android")) {
+            try {
+                val kotlinExtension = project.extensions.findByType(KotlinAndroidProjectExtension::class.java)
+                kotlinExtension?.compilerOptions?.jvmTarget?.orNull?.target
+            } catch (_: Throwable) {
+                null
+            }
         } else {
             null
         }

@@ -60,7 +60,7 @@ class FakeTelemetryDestination : TelemetryDestination {
             true,
             false,
             schemaType.attributes() + mapOf(schemaType.telemetryType.asPair()),
-            emptyList(),
+            mutableListOf(),
         )
 
         createdSpans.add(token)
@@ -83,7 +83,7 @@ class FakeTelemetryDestination : TelemetryDestination {
             true,
             false,
             emptyMap(),
-            emptyList(),
+            mutableListOf(),
         )
 
         createdSpans.add(token)
@@ -112,7 +112,7 @@ class FakeTelemetryDestination : TelemetryDestination {
             internal,
             private,
             attributes,
-            events,
+            events.toMutableList(),
         )
         createdSpans.add(token)
     }

@@ -2,9 +2,9 @@ package io.embrace.android.embracesdk.internal.instrumentation.anr
 
 import io.embrace.android.embracesdk.concurrency.SingleThreadTestScheduledExecutor
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.ThreadBlockageEvent.BLOCKED
 import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.ThreadBlockageEvent.BLOCKED_INTERVAL
 import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.ThreadBlockageEvent.UNBLOCKED
-import io.embrace.android.embracesdk.internal.instrumentation.anr.payload.ThreadBlockageInterval
 import io.embrace.android.embracesdk.internal.instrumentation.anr.payload.ThreadBlockageSample
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -66,7 +66,7 @@ internal class AnrServiceImplTest {
             anrService.onForeground()
 
             // assert no ANR interval was added
-            assertEquals(0, stacktraceSampler.threadBlockageIntervals.size)
+            assertEquals(0, stacktraceSampler.getAnrIntervals().size)
         }
     }
 
@@ -74,33 +74,33 @@ internal class AnrServiceImplTest {
     fun testCleanCollections() {
         with(rule) {
             // assert the ANR interval was added
-            val intervals = stacktraceSampler.threadBlockageIntervals
-            intervals.add(ThreadBlockageInterval(startTime = 15000000, endTime = 15000100))
-            val inProgressInterval = ThreadBlockageInterval(startTime = 15000000, lastKnownTime = 15000100)
-            intervals.add(inProgressInterval)
+            createThreadBlockageInterval()
+
+            // create in progress interval
+            stacktraceSampler.onThreadBlockageEvent(BLOCKED, clock.now())
+            stacktraceSampler.onThreadBlockageEvent(BLOCKED_INTERVAL, clock.now())
+            state.threadBlockageInProgress = true
+
+            val intervals = stacktraceSampler.getAnrIntervals()
             assertEquals(2, intervals.size)
 
             // the ANR interval should be removed here
             anrService.cleanCollections()
             watchdogExecutorService.shutdown()
             watchdogExecutorService.awaitTermination(1, TimeUnit.SECONDS)
-            assertEquals(1, intervals.size)
-            assertEquals(inProgressInterval, intervals.single())
+            assertEquals(1, stacktraceSampler.getAnrIntervals().size)
         }
     }
 
     @Test
     fun testGetIntervals() {
         with(rule) {
-            populateIntervals()
+            repeat(5) {
+                createThreadBlockageInterval()
+            }
 
             val intervals = anrService.getCapturedData()
             assertEquals(5, intervals.size)
-            assertEquals(14000000L, intervals[0].startTime)
-            assertEquals(15000000L, intervals[1].startTime)
-            assertEquals(15000500L, intervals[2].startTime)
-            assertEquals(15001000L, intervals[3].startTime)
-            assertEquals(16000000L, intervals[4].startTime)
         }
     }
 
@@ -141,7 +141,7 @@ internal class AnrServiceImplTest {
             state.threadBlockageInProgress = true
             state.lastTargetThreadResponseMs = 15000000L
             stacktraceSampler.onThreadBlockageEvent(BLOCKED_INTERVAL, clock.now())
-            assertEquals(1, stacktraceSampler.size())
+            assertEquals(1, stacktraceSampler.getAnrIntervals().size)
 
             // assert only one interval was added from the anrInProgress flag
             val intervals = anrService.getCapturedData()
@@ -243,9 +243,9 @@ internal class AnrServiceImplTest {
                 }
                 stacktraceSampler.onThreadBlockageEvent(UNBLOCKED, clock.now())
 
-                assertEquals(1, stacktraceSampler.threadBlockageIntervals.size)
+                assertEquals(1, stacktraceSampler.getAnrIntervals().size)
 
-                val interval = checkNotNull(stacktraceSampler.threadBlockageIntervals.first())
+                val interval = checkNotNull(stacktraceSampler.getAnrIntervals().first())
                 val samples = checkNotNull(interval.samples)
                 assertEquals(count, samples.size)
 
@@ -269,13 +269,14 @@ internal class AnrServiceImplTest {
     @Test
     fun testReachedAnrCaptureLimit() {
         with(rule) {
-            repeat(rule.anrBehavior.anrPerSessionImpl) {
-                stacktraceSampler.threadBlockageIntervals.add(ThreadBlockageInterval(0, samples = emptyList()))
-                assertFalse(stacktraceSampler.reachedAnrStacktraceCaptureLimit())
+            val limit = rule.anrBehavior.anrPerSessionImpl
+            repeat(limit) { count ->
+                createThreadBlockageInterval()
+                assertEquals(count + 1, stacktraceSampler.getAnrIntervals().size)
             }
-
-            stacktraceSampler.threadBlockageIntervals.add(ThreadBlockageInterval(0, samples = emptyList()))
-            assertTrue(stacktraceSampler.reachedAnrStacktraceCaptureLimit())
+            createThreadBlockageInterval()
+            assertEquals(5, stacktraceSampler.getAnrIntervals().filter { it.samples != null }.size)
+            assertEquals(1, stacktraceSampler.getAnrIntervals().filter { it.samples == null }.size)
         }
     }
 
@@ -364,22 +365,20 @@ internal class AnrServiceImplTest {
             clock.setCurrentTime(14000000L)
             rule.anrBehavior.bgAnrCaptureEnabled = true
             anrService.onForeground()
-            populateIntervals()
+            repeat(5) {
+                createThreadBlockageInterval()
+            }
             anrService.handleCrash("")
             val anrIntervals = anrService.getCapturedData()
             assertEquals(5, anrIntervals.size)
         }
     }
 
-    private fun populateIntervals() {
-        with(rule) {
-            val state = stacktraceSampler
-            state.threadBlockageIntervals.add(ThreadBlockageInterval(startTime = 14000000L))
-            state.threadBlockageIntervals.add(ThreadBlockageInterval(startTime = 15000000L))
-            state.threadBlockageIntervals.add(ThreadBlockageInterval(startTime = 15000500L))
-            state.threadBlockageIntervals.add(ThreadBlockageInterval(startTime = 15001000L))
-            state.threadBlockageIntervals.add(ThreadBlockageInterval(startTime = 16000000L))
-        }
+    private fun AnrServiceRule<*>.createThreadBlockageInterval() {
+        stacktraceSampler.onThreadBlockageEvent(BLOCKED, clock.now())
+        stacktraceSampler.onThreadBlockageEvent(BLOCKED_INTERVAL, clock.now())
+        clock.tick(1000)
+        stacktraceSampler.onThreadBlockageEvent(UNBLOCKED, clock.now())
     }
 
     /**

@@ -23,6 +23,7 @@ fun createAnrService(args: InstrumentationArgs): AnrService? {
     val stacktraceSampler by lazy {
         AnrStacktraceSampler(
             clock = args.clock,
+            state = state,
             targetThread = looper.thread,
             watchdogWorker = anrMonitorWorker,
             maxIntervalsPerSession = args.configService.anrBehavior.getMaxAnrIntervalsPerSession(),

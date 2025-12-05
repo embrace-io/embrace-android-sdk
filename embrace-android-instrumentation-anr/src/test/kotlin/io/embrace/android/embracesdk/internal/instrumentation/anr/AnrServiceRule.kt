@@ -55,6 +55,7 @@ internal class AnrServiceRule<T : ScheduledExecutorService>(
         worker = BackgroundWorker(watchdogExecutorService)
         stacktraceSampler = AnrStacktraceSampler(
             clock = clock,
+            state = state,
             targetThread = looper.thread,
             watchdogWorker = worker,
             maxIntervalsPerSession = fakeConfigService.anrBehavior.getMaxAnrIntervalsPerSession(),

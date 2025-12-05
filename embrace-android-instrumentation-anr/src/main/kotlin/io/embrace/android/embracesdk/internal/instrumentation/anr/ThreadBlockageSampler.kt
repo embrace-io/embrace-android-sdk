@@ -15,9 +15,9 @@ import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
 
 /**
- * This class is responsible for tracking the state of JVM stacktraces sampled during an ANR.
+ * This class is responsible for tracking the state of JVM stacktraces sampled during a thread blockage.
  */
-internal class AnrStacktraceSampler(
+internal class ThreadBlockageSampler(
     private val clock: Clock,
     private val targetThread: Thread,
     private val maxIntervalsPerSession: Int,
@@ -44,13 +44,13 @@ internal class AnrStacktraceSampler(
     }
 
     /**
-     * Retrieves ANR intervals that match the given start/time windows.
+     * Retrieves thread blockage intervals for the current session
      */
-    fun getAnrIntervals(): List<ThreadBlockageInterval> {
+    fun getThreadBlockageIntervals(): List<ThreadBlockageInterval> {
         synchronized(intervals) {
             val results = intervals.toMutableList()
 
-            // add any in-progress ANRs
+            // add any in-progress intervals
             if (blocked.get()) {
                 results.add(
                     ThreadBlockageInterval(
@@ -103,7 +103,6 @@ internal class AnrStacktraceSampler(
     }
 
     private fun onThreadUnblocked(timestamp: Long) {
-        // Finalize AnrInterval
         val responseMs = lastUnblockedMs.get()
         val sanitizedSamples = samples.filter { it.timestamp in responseMs..timestamp }
         val threadBlockageInterval = ThreadBlockageInterval(
@@ -116,7 +115,7 @@ internal class AnrStacktraceSampler(
             if (intervals.size < MAX_INTERVAL_COUNT) {
                 intervals.add(threadBlockageInterval)
 
-                while (reachedAnrStacktraceCaptureLimit()) {
+                while (reachedIntervalCaptureLimit()) {
                     findLeastValuableIntervalWithSamples()?.let { entry ->
                         val index = intervals.indexOf(entry)
                         intervals.remove(entry)
@@ -133,7 +132,7 @@ internal class AnrStacktraceSampler(
     }
 
     /**
-     * Finds the 'least valuable' ANR interval. This is used when the maximum number of ANR
+     * Finds the 'least valuable' interval. This is used when the maximum number of
      * intervals with samples has been reached & the SDK needs to discard samples. We attempt
      * to pick the least valuable interval in this case.
      */
@@ -141,7 +140,7 @@ internal class AnrStacktraceSampler(
         return intervals.filter(ThreadBlockageInterval::hasSamples).minByOrNull(ThreadBlockageInterval::duration)
     }
 
-    private fun reachedAnrStacktraceCaptureLimit(): Boolean {
+    private fun reachedIntervalCaptureLimit(): Boolean {
         val count = intervals.filter(ThreadBlockageInterval::hasSamples).size
         return count > maxIntervalsPerSession
     }
@@ -168,7 +167,7 @@ internal class AnrStacktraceSampler(
     private companion object {
 
         /**
-         * Hard limit for the maximum number of ANR intervals an SDK wants to send in a payload.
+         * Hard limit for the maximum number of intervals an SDK wants to send in a payload.
          * Not all of these intervals will have stacktrace samples associated with them
          * (that is set via a configurable limit).
          */

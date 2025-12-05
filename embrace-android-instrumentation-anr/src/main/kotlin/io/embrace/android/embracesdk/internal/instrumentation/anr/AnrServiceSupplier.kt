@@ -15,33 +15,34 @@ fun createAnrService(args: InstrumentationArgs): AnrService? {
         return null
     }
 
-    val anrMonitorWorker by lazy { args.backgroundWorker(Worker.Background.AnrWatchdogWorker) }
+    val watchdogWorker by lazy { args.backgroundWorker(Worker.Background.AnrWatchdogWorker) }
     val looper by lazy { Looper.getMainLooper() }
 
+    val anrBehavior = args.configService.anrBehavior
     val stacktraceSampler by lazy {
-        AnrStacktraceSampler(
+        ThreadBlockageSampler(
             clock = args.clock,
             targetThread = looper.thread,
-            maxIntervalsPerSession = args.configService.anrBehavior.getMaxAnrIntervalsPerSession(),
-            maxStacktracesPerInterval = args.configService.anrBehavior.getMaxStacktracesPerInterval(),
-            stacktraceFrameLimit = args.configService.anrBehavior.getStacktraceFrameLimit(),
+            maxIntervalsPerSession = anrBehavior.getMaxAnrIntervalsPerSession(),
+            maxStacktracesPerInterval = anrBehavior.getMaxStacktracesPerInterval(),
+            stacktraceFrameLimit = anrBehavior.getStacktraceFrameLimit(),
         )
     }
     val blockedThreadDetector by lazy {
         BlockedThreadDetector(
-            watchdogWorker = anrMonitorWorker,
+            watchdogWorker = watchdogWorker,
             clock = args.clock,
             looper = looper,
             logger = args.logger,
-            intervalMs = args.configService.anrBehavior.getSamplingIntervalMs(),
-            blockedDurationThreshold = args.configService.anrBehavior.getMinDuration(),
+            intervalMs = anrBehavior.getSamplingIntervalMs(),
+            blockedDurationThreshold = anrBehavior.getMinDuration(),
             listener = stacktraceSampler,
         )
     }
     return AnrServiceImpl(
         args = args,
         blockedThreadDetector = blockedThreadDetector,
-        watchdogWorker = anrMonitorWorker,
+        watchdogWorker = watchdogWorker,
         stacktraceSampler = stacktraceSampler,
     )
 }

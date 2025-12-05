@@ -29,12 +29,12 @@ internal class AnrServiceRule<T : ScheduledExecutorService>(
 
     lateinit var fakeConfigService: FakeConfigService
     lateinit var fakeAppStateTracker: FakeAppStateTracker
-    lateinit var anrService: AnrServiceImpl
+    lateinit var service: AnrServiceImpl
     lateinit var blockedThreadDetector: BlockedThreadDetector
-    lateinit var anrBehavior: FakeAnrBehavior
+    lateinit var behavior: FakeAnrBehavior
     lateinit var watchdogExecutorService: T
     lateinit var watchdogMonitorThread: AtomicReference<Thread>
-    lateinit var stacktraceSampler: AnrStacktraceSampler
+    lateinit var stacktraceSampler: ThreadBlockageSampler
     lateinit var looper: Looper
     lateinit var worker: BackgroundWorker
     lateinit var args: FakeInstrumentationArgs
@@ -44,13 +44,13 @@ internal class AnrServiceRule<T : ScheduledExecutorService>(
         looper = mockk(relaxed = true) {
             every { thread } returns Thread.currentThread()
         }
-        anrBehavior = FakeAnrBehavior()
+        behavior = FakeAnrBehavior()
         watchdogMonitorThread = AtomicReference(Thread.currentThread())
-        fakeConfigService = FakeConfigService(anrBehavior = anrBehavior)
+        fakeConfigService = FakeConfigService(anrBehavior = behavior)
         fakeAppStateTracker = FakeAppStateTracker(AppState.FOREGROUND)
         watchdogExecutorService = scheduledExecutorSupplier.invoke()
         worker = BackgroundWorker(watchdogExecutorService)
-        stacktraceSampler = AnrStacktraceSampler(
+        stacktraceSampler = ThreadBlockageSampler(
             clock = clock,
             targetThread = looper.thread,
             maxIntervalsPerSession = fakeConfigService.anrBehavior.getMaxAnrIntervalsPerSession(),
@@ -73,7 +73,7 @@ internal class AnrServiceRule<T : ScheduledExecutorService>(
             clock = clock,
             appStateTracker = fakeAppStateTracker,
         )
-        anrService = AnrServiceImpl(
+        service = AnrServiceImpl(
             args = args,
             blockedThreadDetector = blockedThreadDetector,
             watchdogWorker = worker,
@@ -85,7 +85,7 @@ internal class AnrServiceRule<T : ScheduledExecutorService>(
      * Recreates the ANR service. Useful for tests where we need to update the fakes that we pass to the EmbraceAnrService.
      */
     fun recreateService() {
-        anrService = AnrServiceImpl(
+        service = AnrServiceImpl(
             args = args,
             blockedThreadDetector = blockedThreadDetector,
             watchdogWorker = worker,

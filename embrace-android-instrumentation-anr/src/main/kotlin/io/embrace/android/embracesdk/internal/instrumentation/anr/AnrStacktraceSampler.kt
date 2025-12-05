@@ -4,6 +4,9 @@ import io.embrace.android.embracesdk.internal.arch.stacktrace.ThreadSample
 import io.embrace.android.embracesdk.internal.arch.stacktrace.truncateStacktrace
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.ThreadBlockageEvent
+import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.ThreadBlockageEvent.BLOCKED
+import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.ThreadBlockageEvent.BLOCKED_INTERVAL
+import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.ThreadBlockageEvent.UNBLOCKED
 import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.ThreadBlockageListener
 import io.embrace.android.embracesdk.internal.instrumentation.anr.payload.ThreadBlockageInterval
 import io.embrace.android.embracesdk.internal.instrumentation.anr.payload.ThreadBlockageSample
@@ -11,6 +14,8 @@ import io.embrace.android.embracesdk.internal.session.MemoryCleanerListener
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicLong
+import java.util.concurrent.atomic.AtomicReference
 
 /**
  * This class is responsible for tracking the state of JVM stacktraces sampled during an ANR.
@@ -24,22 +29,21 @@ internal class AnrStacktraceSampler(
     private val stacktraceFrameLimit: Int,
 ) : ThreadBlockageListener, MemoryCleanerListener {
 
-    private val threadBlockageIntervals: CopyOnWriteArrayList<ThreadBlockageInterval> =
-        CopyOnWriteArrayList<ThreadBlockageInterval>()
-    private val samples = mutableListOf<ThreadBlockageSample>()
-    private val memo: MutableMap<Long, ThreadSample> = mutableMapOf()
-    private var lastUnblockedMs: Long = 0
+    private val intervals = CopyOnWriteArrayList<ThreadBlockageInterval>()
+    private val samples = CopyOnWriteArrayList<ThreadBlockageSample>()
+    private val prevSample: AtomicReference<ThreadSample?> = AtomicReference(null)
+    private val lastUnblockedMs: AtomicLong = AtomicLong(0)
     private val blocked = AtomicBoolean(false)
 
     override fun onThreadBlockageEvent(
         event: ThreadBlockageEvent,
         timestamp: Long,
     ) {
-        blocked.set(event != ThreadBlockageEvent.UNBLOCKED)
+        blocked.set(event != UNBLOCKED)
         when (event) {
-            ThreadBlockageEvent.BLOCKED -> onThreadBlocked(timestamp)
-            ThreadBlockageEvent.BLOCKED_INTERVAL -> onThreadBlockedInterval(timestamp)
-            ThreadBlockageEvent.UNBLOCKED -> onThreadUnblocked(timestamp)
+            BLOCKED -> onThreadBlocked(timestamp)
+            BLOCKED_INTERVAL -> onThreadBlockedInterval(timestamp)
+            UNBLOCKED -> onThreadUnblocked(timestamp)
         }
     }
 
@@ -47,19 +51,18 @@ internal class AnrStacktraceSampler(
      * Retrieves ANR intervals that match the given start/time windows.
      */
     fun getAnrIntervals(): List<ThreadBlockageInterval> {
-        synchronized(threadBlockageIntervals) {
-            val results = threadBlockageIntervals.toMutableList()
+        synchronized(intervals) {
+            val results = intervals.toMutableList()
 
             // add any in-progress ANRs
             if (blocked.get()) {
-                val intervalEndTime = clock.now()
-                val threadBlockageInterval = ThreadBlockageInterval(
-                    lastUnblockedMs,
-                    intervalEndTime,
-                    null,
-                    samples.toList()
+                results.add(
+                    ThreadBlockageInterval(
+                        startTime = lastUnblockedMs.get(),
+                        lastKnownTime = clock.now(),
+                        samples = samples.toList()
+                    )
                 )
-                results.add(threadBlockageInterval)
             }
             return results.map(ThreadBlockageInterval::deepCopy)
         }
@@ -67,48 +70,61 @@ internal class AnrStacktraceSampler(
 
     override fun cleanCollections() {
         watchdogWorker.submit {
-            threadBlockageIntervals.removeAll { it.endTime != null }
+            intervals.removeAll { it.endTime != null }
         }
     }
 
     private fun onThreadBlocked(timestamp: Long) {
-        memo.clear()
-        lastUnblockedMs = timestamp
+        prevSample.set(null)
+        lastUnblockedMs.set(timestamp)
     }
 
     private fun onThreadBlockedInterval(timestamp: Long) {
-        val limit = maxStacktracesPerInterval
-        val threadBlockageSample = if (samples.size >= limit) {
-            ThreadBlockageSample(timestamp, null, 0, ThreadBlockageSample.CODE_SAMPLE_LIMIT_REACHED)
-        } else {
-            val start = clock.now()
-            val threads = captureSample()
-            val sampleOverheadMs = clock.now() - start
-            ThreadBlockageSample(timestamp, threads, sampleOverheadMs)
+        val start = clock.now()
+        val sampleLimitExceeded = samples.size >= maxStacktracesPerInterval
+
+        val threads = when {
+            sampleLimitExceeded -> null
+            else -> captureSample()
         }
-        samples.add(threadBlockageSample)
+        val code = when {
+            sampleLimitExceeded -> ThreadBlockageSample.CODE_SAMPLE_LIMIT_REACHED
+            else -> ThreadBlockageSample.CODE_DEFAULT
+        }
+        val sampleOverheadMs = when {
+            sampleLimitExceeded -> 0
+            else -> clock.now() - start
+        }
+
+        samples.add(
+            ThreadBlockageSample(
+                timestamp = timestamp,
+                threadSample = threads,
+                sampleOverheadMs = sampleOverheadMs,
+                code = code,
+            )
+        )
     }
 
     private fun onThreadUnblocked(timestamp: Long) {
         // Finalize AnrInterval
-        val responseMs = lastUnblockedMs
+        val responseMs = lastUnblockedMs.get()
         val sanitizedSamples = samples.filter { it.timestamp in responseMs..timestamp }
         val threadBlockageInterval = ThreadBlockageInterval(
-            responseMs,
-            null,
-            timestamp,
-            sanitizedSamples
+            startTime = responseMs,
+            endTime = timestamp,
+            samples = sanitizedSamples
         )
 
-        synchronized(threadBlockageIntervals) {
-            if (threadBlockageIntervals.size < MAX_INTERVAL_COUNT) {
-                threadBlockageIntervals.add(threadBlockageInterval)
+        synchronized(intervals) {
+            if (intervals.size < MAX_INTERVAL_COUNT) {
+                intervals.add(threadBlockageInterval)
 
                 while (reachedAnrStacktraceCaptureLimit()) {
                     findLeastValuableIntervalWithSamples()?.let { entry ->
-                        val index = threadBlockageIntervals.indexOf(entry)
-                        threadBlockageIntervals.remove(entry)
-                        threadBlockageIntervals.add(index, entry.clearSamples())
+                        val index = intervals.indexOf(entry)
+                        intervals.remove(entry)
+                        intervals.add(index, entry.clearSamples())
                     }
                 }
             }
@@ -116,8 +132,8 @@ internal class AnrStacktraceSampler(
 
         // reset state
         samples.clear()
-        lastUnblockedMs = timestamp
-        memo.clear()
+        lastUnblockedMs.set(timestamp)
+        prevSample.set(null)
     }
 
     /**
@@ -125,35 +141,30 @@ internal class AnrStacktraceSampler(
      * intervals with samples has been reached & the SDK needs to discard samples. We attempt
      * to pick the least valuable interval in this case.
      */
-    private fun findLeastValuableIntervalWithSamples(): ThreadBlockageInterval? =
-        findIntervalsWithSamples().minByOrNull(ThreadBlockageInterval::duration)
-
-    private fun reachedAnrStacktraceCaptureLimit(): Boolean {
-        val count = findIntervalsWithSamples().size
-        return count > maxIntervalsPerSession
+    private fun findLeastValuableIntervalWithSamples(): ThreadBlockageInterval? {
+        return intervals.filter(ThreadBlockageInterval::hasSamples).minByOrNull(ThreadBlockageInterval::duration)
     }
 
-    private fun findIntervalsWithSamples() = threadBlockageIntervals.filter(ThreadBlockageInterval::hasSamples)
+    private fun reachedAnrStacktraceCaptureLimit(): Boolean {
+        val count = intervals.filter(ThreadBlockageInterval::hasSamples).size
+        return count > maxIntervalsPerSession
+    }
 
     /**
      * Captures the thread traces required for the given sample.
      */
     private fun captureSample(): ThreadSample? {
-        val capturedTrace = truncateStacktrace(
+        val sample = truncateStacktrace(
             targetThread,
             targetThread.stackTrace,
             stacktraceFrameLimit
         )
 
-        // Compares main thread with the last known thread state via hashcode. If hashcode changed
-        // it should be added to the anrInfo list and also the currentAnrInfoState must be updated.
-        val threadId = capturedTrace.threadId
-        val cache: ThreadSample? = memo[threadId]
-
-        // only serialize if the previous stacktrace doesn't match.
-        if (cache == null || capturedTrace != cache) {
-            memo[threadId] = capturedTrace
-            return capturedTrace
+        // Compares main thread with the last known thread state via hashcode.
+        // Only serialize if the previous stacktrace doesn't match.
+        if (sample != prevSample.get()) {
+            prevSample.set(sample)
+            return sample
         }
         return null
     }

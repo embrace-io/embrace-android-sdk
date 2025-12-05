@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.internal.instrumentation.anr
 
+import io.embrace.android.embracesdk.internal.arch.stacktrace.ThreadSample
 import io.embrace.android.embracesdk.internal.instrumentation.anr.payload.ThreadBlockageInterval
 import io.embrace.android.embracesdk.internal.instrumentation.anr.payload.ThreadBlockageSample
-import io.embrace.android.embracesdk.internal.payload.ThreadInfo
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotSame
 import org.junit.Assert.assertNull
@@ -10,7 +10,7 @@ import org.junit.Test
 
 internal class ThreadBlockageIntervalTest {
 
-    private val threadInfo = ThreadInfo(
+    private val threadSample = ThreadSample(
         13,
         Thread.State.RUNNABLE,
         "my-thread",
@@ -22,7 +22,7 @@ internal class ThreadBlockageIntervalTest {
         2
     )
 
-    private val threadBlockageSample = ThreadBlockageSample(150980980980, listOf(threadInfo), 0)
+    private val threadBlockageSample = ThreadBlockageSample(150980980980, threadSample, 0)
 
     private val sampleList = listOf(threadBlockageSample)
 

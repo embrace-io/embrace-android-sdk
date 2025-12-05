@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.internal.utils
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.internal.arch.stacktrace.compatThreadId
-import io.embrace.android.embracesdk.internal.arch.stacktrace.getThreadInfo
+import io.embrace.android.embracesdk.internal.arch.stacktrace.truncateStacktrace
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -19,7 +19,7 @@ class ThreadExtKtTest {
     @Test
     fun `correct threadInfo created`() {
         val targetThread = currentThread()
-        val threadInfo = getThreadInfo(
+        val threadInfo = truncateStacktrace(
             thread = targetThread,
             stackTraceElements = targetThread.stackTrace,
             maxStacktraceSize = 4
@@ -35,7 +35,7 @@ class ThreadExtKtTest {
 
     @Test
     fun `verify default stacktrace size is 200`() {
-        val threadInfo = getThreadInfo(
+        val threadInfo = truncateStacktrace(
             thread = currentThread(),
             stackTraceElements = fakeBigStackTrace
         )
@@ -44,7 +44,7 @@ class ThreadExtKtTest {
 
     @Test
     fun `verify max stacktrace size capped at 500`() {
-        val threadInfo = getThreadInfo(
+        val threadInfo = truncateStacktrace(
             thread = currentThread(),
             stackTraceElements = fakeBigStackTrace,
             maxStacktraceSize = 600

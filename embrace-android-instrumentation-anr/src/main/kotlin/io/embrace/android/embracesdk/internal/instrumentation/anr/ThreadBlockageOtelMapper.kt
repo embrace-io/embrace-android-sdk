@@ -56,12 +56,12 @@ internal fun mapSampleToSpanEvent(sample: ThreadBlockageSample): SpanEvent {
     sample.code?.let {
         attrs.add(Attribute("sample_code", it.toString()))
     }
-    sample.threads?.singleOrNull()?.let { thread ->
-        attrs.add(Attribute(JvmAttributes.JVM_THREAD_STATE, thread.state.toString()))
-        attrs.add(Attribute("thread_priority", thread.priority.toString()))
-        attrs.add(Attribute("frame_count", thread.frameCount.toString()))
+    sample.threadSample?.let { threadTrace ->
+        attrs.add(Attribute(JvmAttributes.JVM_THREAD_STATE, threadTrace.state.toString()))
+        attrs.add(Attribute("thread_priority", threadTrace.priority.toString()))
+        attrs.add(Attribute("frame_count", threadTrace.frameCount.toString()))
 
-        thread.lines?.let { lines ->
+        threadTrace.lines?.let { lines ->
             attrs.add(
                 Attribute(
                     ExceptionAttributes.EXCEPTION_STACKTRACE,

@@ -10,7 +10,7 @@ import io.embrace.android.embracesdk.internal.arch.limits.NoopLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.arch.schema.TelemetryAttributes
-import io.embrace.android.embracesdk.internal.arch.stacktrace.getThreadInfo
+import io.embrace.android.embracesdk.internal.arch.stacktrace.truncateStacktrace
 import io.embrace.android.embracesdk.internal.payload.LegacyExceptionInfo
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.store.Ordinal
@@ -126,7 +126,7 @@ class JvmCrashDataSourceImpl(
      * @return a String representation of the current thread list.
      */
     private fun getThreadsInfo(): String {
-        val threadsList = Thread.getAllStackTraces().map { getThreadInfo(it.key, it.value) }
+        val threadsList = Thread.getAllStackTraces().map { truncateStacktrace(it.key, it.value) }
         return serializer.toJson(threadsList, List::class.java)
     }
 

@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.instrumentation.anr
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeClock
+import io.embrace.android.embracesdk.internal.arch.stacktrace.ThreadSample
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.instrumentation.anr.payload.ThreadBlockageInterval
@@ -9,7 +10,6 @@ import io.embrace.android.embracesdk.internal.instrumentation.anr.payload.Thread
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
-import io.embrace.android.embracesdk.internal.payload.ThreadInfo
 import io.embrace.opentelemetry.kotlin.semconv.ExceptionAttributes
 import io.embrace.opentelemetry.kotlin.semconv.JvmAttributes
 import org.junit.Assert.assertEquals
@@ -31,7 +31,7 @@ private const val SECOND_SAMPLE_OVERHEAD_MS = 5L
 @RunWith(AndroidJUnit4::class)
 internal class ThreadBlockageOtelMapperTest {
 
-    private val stacktrace = ThreadInfo(
+    private val threadSample = ThreadSample(
         threadId = 1,
         state = Thread.State.BLOCKED,
         name = "main",
@@ -42,27 +42,34 @@ internal class ThreadBlockageOtelMapperTest {
         ),
         frameCount = 2
     )
-
-    private val threads = listOf(stacktrace)
-    private val truncatedStack = stacktrace.copy(frameCount = 10000)
-    private val truncatedThreads = listOf(truncatedStack)
+    private val truncatedThreadSample = ThreadSample(
+        threadId = 1,
+        state = Thread.State.BLOCKED,
+        name = "main",
+        priority = 5,
+        lines = listOf(
+            "com.example.app.MainActivity.onCreate(MainActivity.kt:10)",
+            "com.example.app.MainActivity.onCreate(MainActivity.kt:20)"
+        ),
+        frameCount = 10000
+    )
 
     private val firstSample = ThreadBlockageSample(
         timestamp = FIRST_SAMPLE_MS,
         sampleOverheadMs = FIRST_SAMPLE_OVERHEAD_MS,
-        threads = threads
+        threadSample = threadSample
     )
 
     private val secondSample = ThreadBlockageSample(
         timestamp = SECOND_SAMPLE_MS,
         sampleOverheadMs = SECOND_SAMPLE_OVERHEAD_MS,
-        threads = threads
+        threadSample = threadSample
     )
 
     private val truncatedSecondSample = ThreadBlockageSample(
         timestamp = SECOND_SAMPLE_MS,
         sampleOverheadMs = SECOND_SAMPLE_OVERHEAD_MS,
-        threads = truncatedThreads
+        threadSample = truncatedThreadSample
     )
 
     private val completedInterval = ThreadBlockageInterval(
@@ -188,7 +195,7 @@ internal class ThreadBlockageOtelMapperTest {
         assertEquals(sample.code, attrs.findAttribute("sample_code").data?.toInt())
 
         // validate threads
-        val thread = checkNotNull(sample.threads?.single())
+        val thread = checkNotNull(sample.threadSample)
         assertEquals(thread.state.toString(), attrs.findAttribute(JvmAttributes.JVM_THREAD_STATE).data)
         assertEquals(thread.priority, attrs.findAttribute("thread_priority").data?.toInt())
         assertEquals(thread.frameCount, attrs.findAttribute("frame_count").data?.toInt())

@@ -39,7 +39,7 @@ internal class BlockedThreadDetector(
         looper = looper,
         watchdogWorker = watchdogWorker,
         clock = clock,
-        action = ::onTargetThreadResponse
+        action = ::onTargetThreadProcessedMessage
     )
     private val started: AtomicBoolean = AtomicBoolean(false)
     private var monitorFuture: ScheduledFuture<*>? = null
@@ -47,7 +47,7 @@ internal class BlockedThreadDetector(
     /**
      * Starts monitoring the target thread for blockages.
      */
-    internal fun startMonitoringThread() {
+    fun start() {
         if (!started.getAndSet(true)) {
             val runnable = Runnable(::checkHeartbeat)
             runCatching {
@@ -59,7 +59,7 @@ internal class BlockedThreadDetector(
     /**
      * Stops monitoring the target thread.
      */
-    internal fun stopMonitoringThread() {
+    fun stop() {
         if (started.getAndSet(false)) {
             monitorFuture?.let { monitorTask ->
                 if (monitorTask.cancel(false)) {
@@ -70,27 +70,10 @@ internal class BlockedThreadDetector(
     }
 
     /**
-     * Called at regular intervals on the monitor thread. This function posts a message to the
-     * main thread that is used to check whether it is live or not.
-     */
-    private fun checkHeartbeat() {
-        try {
-            val now = clock.now()
-            if (!targetThreadHandler.hasMessages(HEARTBEAT_REQUEST)) {
-                val heartbeatMessage = obtain(targetThreadHandler, HEARTBEAT_REQUEST)
-                targetThreadHandler.sendMessage(heartbeatMessage)
-            }
-            updateThreadBlockageTracking(now)
-        } catch (exc: Exception) {
-            logger.trackInternalError(InternalErrorType.THREAD_BLOCKAGE_HEARTBEAT_CHECK_FAIL, exc)
-        }
-    }
-
-    /**
      * Called when the target thread process the message. This indicates that the target thread is
      * responsive and (usually) means a thread blockage is about to end.
      */
-    internal fun onTargetThreadResponse(timestamp: Long) {
+    fun onTargetThreadProcessedMessage(timestamp: Long) {
         state.lastTargetThreadResponseMs = timestamp
 
         if (isDebuggerEnabled()) {
@@ -109,7 +92,7 @@ internal class BlockedThreadDetector(
      * Called at regular intervals by the monitor thread. We should check whether the
      * target thread has been unresponsive.
      */
-    internal fun updateThreadBlockageTracking(timestamp: Long) {
+    fun onMonitorThreadInterval(timestamp: Long) {
         if (isDebuggerEnabled()) {
             return
         }
@@ -126,6 +109,23 @@ internal class BlockedThreadDetector(
     }
 
     /**
+     * Called at regular intervals on the monitor thread. This function posts a message to the
+     * main thread that is used to check whether it is live or not.
+     */
+    private fun checkHeartbeat() {
+        try {
+            val now = clock.now()
+            if (!targetThreadHandler.hasMessages(HEARTBEAT_REQUEST)) {
+                val heartbeatMessage = obtain(targetThreadHandler, HEARTBEAT_REQUEST)
+                targetThreadHandler.sendMessage(heartbeatMessage)
+            }
+            onMonitorThreadInterval(now)
+        } catch (exc: Exception) {
+            logger.trackInternalError(InternalErrorType.THREAD_BLOCKAGE_HEARTBEAT_CHECK_FAIL, exc)
+        }
+    }
+
+    /**
      * Decides whether we should attempt to sample the blocked thread. In ordinary conditions this
      * function will always return true. If the thread has been unable run due to priority then
      * several scheduled tasks may run in very quick succession of each other (e.g. 1ms apart).
@@ -133,7 +133,7 @@ internal class BlockedThreadDetector(
      * To avoid useless samples grouped within a few ms of each other, this function will return
      * false & thus avoid sampling if less than half of the interval MS has passed.
      */
-    internal fun shouldSampleBlockedThread(timestamp: Long): Boolean {
+    private fun shouldSampleBlockedThread(timestamp: Long): Boolean {
         val lastMonitorThreadResponseMs = state.lastMonitorThreadResponseMs
         val delta = timestamp - lastMonitorThreadResponseMs // time since last check
         return delta > intervalMs * SAMPLE_BACKOFF_FACTOR
@@ -142,7 +142,7 @@ internal class BlockedThreadDetector(
     /**
      * Checks whether enough time has elapsed for a thread to count as blocked
      */
-    internal fun isThreadBlockageThresholdExceeded(timestamp: Long): Boolean {
+    private fun isThreadBlockageThresholdExceeded(timestamp: Long): Boolean {
         val monitorThreadLag = timestamp - state.lastMonitorThreadResponseMs
         val targetThreadLag = timestamp - state.lastTargetThreadResponseMs
 

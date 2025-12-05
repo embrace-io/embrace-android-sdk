@@ -45,17 +45,17 @@ internal class AnrServiceImpl(
 
     override fun startCapture() {
         this.watchdogWorker.submit {
-            blockedThreadDetector.startMonitoringThread()
+            blockedThreadDetector.start()
         }
     }
 
     override fun simulateTargetThreadResponse() {
-        blockedThreadDetector.onTargetThreadResponse(clock.now())
+        blockedThreadDetector.onTargetThreadProcessedMessage(clock.now())
     }
 
     override fun handleCrash(crashId: String) {
         this.watchdogWorker.submit {
-            blockedThreadDetector.stopMonitoringThread()
+            blockedThreadDetector.stop()
         }
     }
 
@@ -72,7 +72,7 @@ internal class AnrServiceImpl(
             // Cancel any pending delayed background check since we're now in foreground
             cancelDelayedBackgroundCheck()
             state.resetState()
-            blockedThreadDetector.startMonitoringThread()
+            blockedThreadDetector.start()
         }
     }
 
@@ -83,7 +83,7 @@ internal class AnrServiceImpl(
      */
     override fun onBackground() {
         this.watchdogWorker.submit {
-            blockedThreadDetector.stopMonitoringThread()
+            blockedThreadDetector.stop()
         }
     }
 
@@ -152,7 +152,7 @@ internal class AnrServiceImpl(
      */
     private fun stopMonitoringIfStillInBackground() {
         if (appStateTracker.getAppState() == AppState.BACKGROUND) {
-            blockedThreadDetector.stopMonitoringThread()
+            blockedThreadDetector.stop()
         }
         delayedBackgroundCheckTask = null
     }

@@ -12,8 +12,8 @@ class LogMessageBehaviorImpl(
 
     private companion object {
         private const val DEFAULT_LOG_INFO_LIMIT = 100
-        private const val DEFAULT_LOG_WARNING_LIMIT = 100
-        private const val DEFAULT_LOG_ERROR_LIMIT = 250
+        private const val DEFAULT_LOG_WARNING_LIMIT = 200
+        private const val DEFAULT_LOG_ERROR_LIMIT = 500
     }
 
     private val remote: LogRemoteConfig? = remote?.logConfig

@@ -22,8 +22,8 @@ internal class LogMessageBehaviorImplTest {
         with(createLogMessageBehavior()) {
             assertEquals(128, getLogMessageMaximumAllowedLength())
             assertEquals(100, getInfoLogLimit())
-            assertEquals(100, getWarnLogLimit())
-            assertEquals(250, getErrorLogLimit())
+            assertEquals(200, getWarnLogLimit())
+            assertEquals(500, getErrorLogLimit())
         }
     }
 

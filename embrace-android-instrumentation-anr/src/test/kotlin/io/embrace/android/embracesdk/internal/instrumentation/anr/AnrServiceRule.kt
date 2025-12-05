@@ -9,7 +9,6 @@ import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.fakes.behavior.FakeAnrBehavior
 import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.BlockedThreadDetector
-import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.ThreadMonitoringState
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.mockk.every
@@ -31,7 +30,6 @@ internal class AnrServiceRule<T : ScheduledExecutorService>(
     lateinit var fakeConfigService: FakeConfigService
     lateinit var fakeAppStateTracker: FakeAppStateTracker
     lateinit var anrService: AnrServiceImpl
-    lateinit var state: ThreadMonitoringState
     lateinit var blockedThreadDetector: BlockedThreadDetector
     lateinit var anrBehavior: FakeAnrBehavior
     lateinit var watchdogExecutorService: T
@@ -51,11 +49,9 @@ internal class AnrServiceRule<T : ScheduledExecutorService>(
         fakeConfigService = FakeConfigService(anrBehavior = anrBehavior)
         fakeAppStateTracker = FakeAppStateTracker(AppState.FOREGROUND)
         watchdogExecutorService = scheduledExecutorSupplier.invoke()
-        state = ThreadMonitoringState(clock)
         worker = BackgroundWorker(watchdogExecutorService)
         stacktraceSampler = AnrStacktraceSampler(
             clock = clock,
-            state = state,
             targetThread = looper.thread,
             watchdogWorker = worker,
             maxIntervalsPerSession = fakeConfigService.anrBehavior.getMaxAnrIntervalsPerSession(),
@@ -65,7 +61,6 @@ internal class AnrServiceRule<T : ScheduledExecutorService>(
         blockedThreadDetector = BlockedThreadDetector(
             watchdogWorker = worker,
             clock = clock,
-            state = state,
             looper = looper,
             blockedDurationThreshold = fakeConfigService.anrBehavior.getMinDuration(),
             intervalMs = fakeConfigService.anrBehavior.getSamplingIntervalMs(),
@@ -83,7 +78,6 @@ internal class AnrServiceRule<T : ScheduledExecutorService>(
             args = args,
             blockedThreadDetector = blockedThreadDetector,
             watchdogWorker = worker,
-            state = state,
             stacktraceSampler = stacktraceSampler,
         )
     }
@@ -96,7 +90,6 @@ internal class AnrServiceRule<T : ScheduledExecutorService>(
             args = args,
             blockedThreadDetector = blockedThreadDetector,
             watchdogWorker = worker,
-            state = state,
             stacktraceSampler = stacktraceSampler,
         )
     }

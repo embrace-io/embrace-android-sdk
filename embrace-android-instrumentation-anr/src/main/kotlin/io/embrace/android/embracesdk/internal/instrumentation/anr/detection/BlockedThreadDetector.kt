@@ -15,6 +15,7 @@ import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicLong
 
 /**
  * Responsible for scheduling 'heartbeat' checks on a background thread & posting messages on the
@@ -27,7 +28,6 @@ import java.util.concurrent.atomic.AtomicBoolean
 internal class BlockedThreadDetector(
     private val watchdogWorker: BackgroundWorker,
     private val clock: Clock,
-    private val state: ThreadMonitoringState,
     private val looper: Looper,
     private val logger: EmbLogger,
     private val listener: ThreadBlockageListener,
@@ -43,6 +43,8 @@ internal class BlockedThreadDetector(
     )
     private val started: AtomicBoolean = AtomicBoolean(false)
     private val blocked: AtomicBoolean = AtomicBoolean(false)
+    private val lastWatchdogThreadResponse: AtomicLong = AtomicLong(clock.now())
+    private val lastTargetThreadResponse: AtomicLong = AtomicLong(clock.now())
     private var monitorFuture: ScheduledFuture<*>? = null
 
     /**
@@ -50,6 +52,9 @@ internal class BlockedThreadDetector(
      */
     fun start() {
         if (!started.getAndSet(true)) {
+            blocked.set(false)
+            lastWatchdogThreadResponse.set(clock.now())
+            lastTargetThreadResponse.set(clock.now())
             val runnable = Runnable(::checkHeartbeat)
             runCatching {
                 monitorFuture = watchdogWorker.scheduleAtFixedRate(runnable, 0, intervalMs, TimeUnit.MILLISECONDS)
@@ -75,7 +80,7 @@ internal class BlockedThreadDetector(
      * responsive and (usually) means a thread blockage is about to end.
      */
     fun onTargetThreadProcessedMessage(timestamp: Long) {
-        state.lastTargetThreadResponseMs = timestamp
+        lastTargetThreadResponse.set(timestamp)
 
         if (isDebuggerEnabled()) {
             return
@@ -97,12 +102,12 @@ internal class BlockedThreadDetector(
         }
 
         if (isThreadBlockageThresholdExceeded(timestamp) && !blocked.getAndSet(true)) {
-            listener.onThreadBlockageEvent(BLOCKED, state.lastTargetThreadResponseMs)
+            listener.onThreadBlockageEvent(BLOCKED, lastTargetThreadResponse.get())
         }
         if (blocked.get() && shouldSampleBlockedThread(timestamp)) {
             listener.onThreadBlockageEvent(BLOCKED_INTERVAL, timestamp)
         }
-        state.lastMonitorThreadResponseMs = clock.now()
+        lastWatchdogThreadResponse.set(clock.now())
     }
 
     /**
@@ -131,7 +136,7 @@ internal class BlockedThreadDetector(
      * false & thus avoid sampling if less than half of the interval MS has passed.
      */
     private fun shouldSampleBlockedThread(timestamp: Long): Boolean {
-        val lastMonitorThreadResponseMs = state.lastMonitorThreadResponseMs
+        val lastMonitorThreadResponseMs = lastWatchdogThreadResponse.get()
         val delta = timestamp - lastMonitorThreadResponseMs // time since last check
         return delta > intervalMs * SAMPLE_BACKOFF_FACTOR
     }
@@ -140,8 +145,8 @@ internal class BlockedThreadDetector(
      * Checks whether enough time has elapsed for a thread to count as blocked
      */
     private fun isThreadBlockageThresholdExceeded(timestamp: Long): Boolean {
-        val monitorThreadLag = timestamp - state.lastMonitorThreadResponseMs
-        val targetThreadLag = timestamp - state.lastTargetThreadResponseMs
+        val monitorThreadLag = timestamp - lastWatchdogThreadResponse.get()
+        val targetThreadLag = timestamp - lastTargetThreadResponse.get()
 
         // If the last monitor thread check greatly exceeds the thread blockage threshold
         // then it is very probable that the process has been cached or frozen. In this case
@@ -153,8 +158,8 @@ internal class BlockedThreadDetector(
         // https://developer.android.com/guide/components/activities/process-lifecycle
         if (monitorThreadLag > MONITOR_THREAD_TIMEOUT_MS) {
             val now = clock.now()
-            state.lastTargetThreadResponseMs = now
-            state.lastMonitorThreadResponseMs = now
+            lastTargetThreadResponse.set(now)
+            lastWatchdogThreadResponse.set(now)
             return false
         }
         return targetThreadLag > blockedDurationThreshold

@@ -62,18 +62,6 @@ internal class AnrServiceImplTest {
     }
 
     @Test
-    fun testColdStartIgnored() {
-        with(rule) {
-            // cold starts should always be ignored
-            state.lastTargetThreadResponseMs = 1
-            anrService.onForeground()
-
-            // assert no ANR interval was added
-            assertEquals(0, stacktraceSampler.getAnrIntervals().size)
-        }
-    }
-
-    @Test
     fun testCleanCollections() {
         with(rule) {
             // assert the ANR interval was added
@@ -115,7 +103,7 @@ internal class AnrServiceImplTest {
             // assert only one interval was added from the anrInProgress flag
             val intervals = anrService.snapshotSpans()
             val interval = intervals.single()
-            assertEquals(0L, interval.startTimeNanos?.nanosToMillis())
+            assertEquals(500L, interval.startTimeNanos?.nanosToMillis())
             assertEquals(500L, interval.endTimeNanos?.nanosToMillis())
             assertEquals(500L, interval.lastKnownTime?.nanosToMillis())
         }
@@ -139,14 +127,14 @@ internal class AnrServiceImplTest {
             // create an ANR service with one stacktrace
             clock.setCurrentTime(15020000L)
 
-            state.lastTargetThreadResponseMs = 15000000L
+            stacktraceSampler.onThreadBlockageEvent(BLOCKED, clock.now())
             stacktraceSampler.onThreadBlockageEvent(BLOCKED_INTERVAL, clock.now())
             assertEquals(1, stacktraceSampler.getAnrIntervals().size)
 
             // assert only one interval was added from the anrInProgress flag
             val intervals = anrService.snapshotSpans()
             val interval = intervals.single()
-            assertEquals(15000000L, interval.startTimeNanos?.nanosToMillis())
+            assertEquals(15020000L, interval.startTimeNanos?.nanosToMillis())
             assertEquals(15020000L, interval.endTimeNanos?.nanosToMillis())
             assertEquals(15020000L, interval.lastKnownTime?.nanosToMillis())
 
@@ -166,14 +154,8 @@ internal class AnrServiceImplTest {
                 clock.setCurrentTime(anrStartTs)
 
                 blockedThreadDetector.onMonitorThreadInterval(anrStartTs)
-                state.lastTargetThreadResponseMs = anrStartTs
                 blockedThreadDetector.onTargetThreadProcessedMessage(anrStartTs)
-
-                blockedThreadDetector.onMonitorThreadInterval(
-                    anrInProgressTs
-                )
-
-                state.lastTargetThreadResponseMs = anrEndTs
+                blockedThreadDetector.onMonitorThreadInterval(anrInProgressTs)
                 blockedThreadDetector.onTargetThreadProcessedMessage(anrEndTs)
 
                 val intervals = anrService.snapshotSpans()
@@ -281,10 +263,7 @@ internal class AnrServiceImplTest {
     fun testBelowAnrDurationThreshold() {
         executeSynchronouslyOnCurrentThread {
             with(rule) {
-                // if the lastTimeThreadUnblocked is zero this should never be true
-                state.lastTargetThreadResponseMs = 0
-                state.lastMonitorThreadResponseMs = 0
-
+                clock.setCurrentTime(0)
                 blockedThreadDetector.onMonitorThreadInterval(700)
                 blockedThreadDetector.onMonitorThreadInterval(70000)
                 assertTrue(stacktraceSampler.getAnrIntervals().isEmpty())
@@ -296,11 +275,8 @@ internal class AnrServiceImplTest {
     fun testAboveAnrDurationThreshold() {
         executeSynchronouslyOnCurrentThread {
             with(rule) {
-                // if the lastTimeThreadUnblocked is above the threshold return true
                 val now = 100L
                 recreateService()
-                state.lastTargetThreadResponseMs = now
-                state.lastMonitorThreadResponseMs = now
 
                 blockedThreadDetector.onMonitorThreadInterval(now + 500)
                 blockedThreadDetector.onMonitorThreadInterval(now + 1000)
@@ -308,46 +284,10 @@ internal class AnrServiceImplTest {
                 blockedThreadDetector.onMonitorThreadInterval(now + 10000)
 
                 val samples = checkNotNull(stacktraceSampler.getAnrIntervals().single().samples)
-                assertEquals(2, samples.size)
-                assertEquals(now + 1001, samples[0].timestamp)
-                assertEquals(now + 10000, samples[1].timestamp)
-            }
-        }
-    }
-
-    @Test
-    fun testMonitorThreadTimeout() {
-        executeSynchronouslyOnCurrentThread {
-            with(rule) {
-                // if the last response times greatly exceed the capture threshold it indicates the
-                // process has been cached. We need to avoid a false positive in this case.
-
-                val startTime = 150000000L
-                val endTime = 150150239L
-                clock.setCurrentTime(startTime)
-
-                state.lastTargetThreadResponseMs = 0
-                state.lastMonitorThreadResponseMs = startTime
-                clock.setCurrentTime(endTime)
-
-                // timestamp not updated if ANR threshold is not met
-                blockedThreadDetector.onMonitorThreadInterval(startTime + 500)
-
-                assertEquals(0, state.lastTargetThreadResponseMs)
-                assertEquals(clock.now(), state.lastMonitorThreadResponseMs)
-
-                // timestamp not updated if ANR threshold is met
-                state.lastTargetThreadResponseMs = 0
-                blockedThreadDetector.onMonitorThreadInterval(startTime + 5000)
-
-                assertEquals(0, state.lastTargetThreadResponseMs)
-                assertEquals(clock.now(), state.lastMonitorThreadResponseMs)
-
-                // timestamp only updated if cached process threshold is reached
-                blockedThreadDetector.onMonitorThreadInterval(startTime + 60001)
-
-                assertEquals(0, state.lastTargetThreadResponseMs)
-                assertEquals(endTime, state.lastMonitorThreadResponseMs)
+                assertEquals(3, samples.size)
+                assertEquals(now + 1000, samples[0].timestamp)
+                assertEquals(now + 1001, samples[1].timestamp)
+                assertEquals(now + 10000, samples[2].timestamp)
             }
         }
     }

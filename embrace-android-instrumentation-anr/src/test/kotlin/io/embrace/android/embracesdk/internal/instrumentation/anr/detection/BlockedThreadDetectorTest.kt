@@ -27,7 +27,6 @@ internal class BlockedThreadDetectorTest {
     private lateinit var configService: ConfigService
     private lateinit var clock: FakeClock
     private lateinit var listener: FakeThreadBlockageListener
-    private lateinit var state: ThreadMonitoringState
     private lateinit var watchdogThread: AtomicReference<Thread>
     private lateinit var watchdogExecutorService: BlockingScheduledExecutorService
     private lateinit var logger: EmbLogger
@@ -45,12 +44,10 @@ internal class BlockedThreadDetectorTest {
         looper = mockk {
             every { thread } returns Thread.currentThread()
         }
-        state = ThreadMonitoringState(clock)
         listener = FakeThreadBlockageListener()
         detector = BlockedThreadDetector(
             watchdogWorker = BackgroundWorker(watchdogExecutorService),
             clock = clock,
-            state = state,
             looper = mockk {
                 every { thread } returns Thread.currentThread()
             },
@@ -94,32 +91,29 @@ internal class BlockedThreadDetectorTest {
         clock.setCurrentTime(now)
         detector.onMonitorThreadInterval(BASELINE_MS + 2000)
         assertEquals(1, listener.intervalCount)
-        assertEquals(now, state.lastMonitorThreadResponseMs)
     }
 
     @Test
     fun testSampleBackoff() {
         val now = BASELINE_MS + 2000
         clock.setCurrentTime(now)
-        state.lastMonitorThreadResponseMs = now - 10
-
-        detector.onMonitorThreadInterval(now)
+        detector.start()
+        detector.onMonitorThreadInterval(now + 10)
         assertEquals(0, listener.intervalCount)
-        assertEquals(now, state.lastMonitorThreadResponseMs)
     }
 
     @Test
     fun testStartDoubleCall() {
         detector.start()
-        val lastTimeThreadResponded = clock.now()
+
+        assertEquals(1, watchdogExecutorService.submitCount)
         watchdogExecutorService.runCurrentlyBlocked()
-        assertEquals(lastTimeThreadResponded, state.lastMonitorThreadResponseMs)
         clock.tick(10L)
-        assertEquals(lastTimeThreadResponded, state.lastMonitorThreadResponseMs)
+
         // double-start should not schedule anything
         detector.start()
         watchdogExecutorService.runCurrentlyBlocked()
-        assertEquals(lastTimeThreadResponded, state.lastMonitorThreadResponseMs)
+        assertEquals(1, watchdogExecutorService.submitCount)
     }
 
     @Test

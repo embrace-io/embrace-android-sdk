@@ -4,7 +4,6 @@ import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.BlockedThreadDetector
-import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.ThreadMonitoringState
 import io.embrace.android.embracesdk.internal.instrumentation.anr.payload.ThreadBlockageInterval
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.payload.Span
@@ -26,7 +25,6 @@ internal class AnrServiceImpl(
     args: InstrumentationArgs,
     private val blockedThreadDetector: BlockedThreadDetector,
     private val watchdogWorker: BackgroundWorker,
-    private val state: ThreadMonitoringState,
     private val stacktraceSampler: AnrStacktraceSampler,
     private val random: Random = Random.Default,
 ) : AnrService {
@@ -71,7 +69,6 @@ internal class AnrServiceImpl(
         this.watchdogWorker.submit {
             // Cancel any pending delayed background check since we're now in foreground
             cancelDelayedBackgroundCheck()
-            state.resetState()
             blockedThreadDetector.start()
         }
     }

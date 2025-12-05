@@ -7,7 +7,6 @@ import io.embrace.android.embracesdk.fakes.behavior.FakeAnrBehavior
 import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.ThreadBlockageEvent.BLOCKED
 import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.ThreadBlockageEvent.BLOCKED_INTERVAL
 import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.ThreadBlockageEvent.UNBLOCKED
-import io.embrace.android.embracesdk.internal.instrumentation.anr.detection.ThreadMonitoringState
 import io.embrace.android.embracesdk.internal.instrumentation.anr.payload.ThreadBlockageInterval
 import io.embrace.android.embracesdk.internal.instrumentation.anr.payload.ThreadBlockageSample
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
@@ -24,7 +23,6 @@ internal class AnrStacktraceSamplerTest {
     private val thread = Thread.currentThread()
     private val clock = FakeClock()
     private val configService = FakeConfigService()
-    private val state = ThreadMonitoringState(clock)
     private val worker = BackgroundWorker(
         BlockingScheduledExecutorService()
     )
@@ -33,7 +31,6 @@ internal class AnrStacktraceSamplerTest {
     fun testLeastValuableInterval() {
         val sampler = AnrStacktraceSampler(
             clock,
-            state,
             thread,
             worker,
             configService.anrBehavior.getMaxAnrIntervalsPerSession(),
@@ -67,7 +64,6 @@ internal class AnrStacktraceSamplerTest {
         val intervalMs: Long = 100
         val sampler = AnrStacktraceSampler(
             clock,
-            state,
             thread,
             worker,
             configService.anrBehavior.getMaxAnrIntervalsPerSession(),
@@ -123,7 +119,6 @@ internal class AnrStacktraceSamplerTest {
         val intervalMs: Long = 100
         val sampler = AnrStacktraceSampler(
             clock,
-            state,
             thread,
             worker,
             configService.anrBehavior.getMaxAnrIntervalsPerSession(),
@@ -173,7 +168,6 @@ internal class AnrStacktraceSamplerTest {
         val intervalMs: Long = 100
         val sampler = AnrStacktraceSampler(
             clock,
-            state,
             thread,
             worker,
             configService.anrBehavior.getMaxAnrIntervalsPerSession(),
@@ -200,7 +194,6 @@ internal class AnrStacktraceSamplerTest {
 
         val sampler = AnrStacktraceSampler(
             clock,
-            state,
             thread,
             worker,
             configService.anrBehavior.getMaxAnrIntervalsPerSession(),

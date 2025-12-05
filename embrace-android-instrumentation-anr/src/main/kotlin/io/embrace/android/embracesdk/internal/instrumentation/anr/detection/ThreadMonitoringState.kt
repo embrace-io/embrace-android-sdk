@@ -23,24 +23,10 @@ internal class ThreadMonitoringState(
     var lastMonitorThreadResponseMs: Long = clock.now()
 
     /**
-     * The last sample attempt in ms.
-     */
-    @Volatile
-    var lastSampleAttemptMs: Long = 0
-
-    /**
-     * Whether the thread blockage is in progress or not.
-     */
-    @Volatile
-    var threadBlockageInProgress: Boolean = false
-
-    /**
      * Resets state properties to the initial values
      */
     fun resetState() {
-        threadBlockageInProgress = false
         lastTargetThreadResponseMs = clock.now()
         lastMonitorThreadResponseMs = clock.now()
-        lastSampleAttemptMs = 0
     }
 }

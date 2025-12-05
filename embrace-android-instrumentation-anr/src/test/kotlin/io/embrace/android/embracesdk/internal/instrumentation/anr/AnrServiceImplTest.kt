@@ -82,7 +82,6 @@ internal class AnrServiceImplTest {
             // create in progress interval
             stacktraceSampler.onThreadBlockageEvent(BLOCKED, clock.now())
             stacktraceSampler.onThreadBlockageEvent(BLOCKED_INTERVAL, clock.now())
-            state.threadBlockageInProgress = true
 
             val intervals = stacktraceSampler.getAnrIntervals()
             assertEquals(2, intervals.size)
@@ -111,7 +110,7 @@ internal class AnrServiceImplTest {
     fun testGetIntervalsAnrInProgress() {
         with(rule) {
             clock.setCurrentTime(500)
-            state.threadBlockageInProgress = true
+            createThreadBlockageInterval(complete = false)
 
             // assert only one interval was added from the anrInProgress flag
             val intervals = anrService.snapshotSpans()
@@ -126,7 +125,7 @@ internal class AnrServiceImplTest {
     fun testGetIntervalsCrashInProgress() {
         with(rule) {
             clock.setCurrentTime(500)
-            state.threadBlockageInProgress = true
+            createThreadBlockageInterval(complete = false)
 
             // assert only one interval was added from the anrInProgress flag
             val intervals = anrService.snapshotSpans()
@@ -140,7 +139,6 @@ internal class AnrServiceImplTest {
             // create an ANR service with one stacktrace
             clock.setCurrentTime(15020000L)
 
-            state.threadBlockageInProgress = true
             state.lastTargetThreadResponseMs = 15000000L
             stacktraceSampler.onThreadBlockageEvent(BLOCKED_INTERVAL, clock.now())
             assertEquals(1, stacktraceSampler.getAnrIntervals().size)
@@ -170,16 +168,13 @@ internal class AnrServiceImplTest {
                 blockedThreadDetector.onMonitorThreadInterval(anrStartTs)
                 state.lastTargetThreadResponseMs = anrStartTs
                 blockedThreadDetector.onTargetThreadProcessedMessage(anrStartTs)
-                assertFalse(state.threadBlockageInProgress)
 
                 blockedThreadDetector.onMonitorThreadInterval(
                     anrInProgressTs
                 )
-                assertTrue(state.threadBlockageInProgress)
 
                 state.lastTargetThreadResponseMs = anrEndTs
                 blockedThreadDetector.onTargetThreadProcessedMessage(anrEndTs)
-                assertFalse(state.threadBlockageInProgress)
 
                 val intervals = anrService.snapshotSpans()
                 assertEquals(1, intervals.size)
@@ -358,19 +353,6 @@ internal class AnrServiceImplTest {
     }
 
     @Test
-    fun `check ANR recovery`() {
-        with(rule) {
-            clock.setCurrentTime(100000L)
-            simulateAnrRecovery()
-            clock.tick(2000L)
-            watchdogExecutorService.submit { blockedThreadDetector.onMonitorThreadInterval(clock.now()) }
-                .get(1L, TimeUnit.SECONDS)
-            simulateAnrRecovery()
-            assertFalse(state.threadBlockageInProgress)
-        }
-    }
-
-    @Test
     fun `test handleCrash stops ANR tracking but samples can still be retrieved`() {
         with(rule) {
             clock.setCurrentTime(14000000L)
@@ -385,11 +367,14 @@ internal class AnrServiceImplTest {
         }
     }
 
-    private fun AnrServiceRule<*>.createThreadBlockageInterval(duration: Long = 1000) {
+    private fun AnrServiceRule<*>.createThreadBlockageInterval(duration: Long = 1000, complete: Boolean = true) {
         stacktraceSampler.onThreadBlockageEvent(BLOCKED, clock.now())
         stacktraceSampler.onThreadBlockageEvent(BLOCKED_INTERVAL, clock.now())
-        clock.tick(duration)
-        stacktraceSampler.onThreadBlockageEvent(UNBLOCKED, clock.now())
+
+        if (complete) {
+            clock.tick(duration)
+            stacktraceSampler.onThreadBlockageEvent(UNBLOCKED, clock.now())
+        }
     }
 
     /**

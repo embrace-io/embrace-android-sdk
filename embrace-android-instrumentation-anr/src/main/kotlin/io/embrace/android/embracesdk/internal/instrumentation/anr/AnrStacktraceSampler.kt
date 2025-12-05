@@ -11,6 +11,7 @@ import io.embrace.android.embracesdk.internal.instrumentation.anr.payload.Thread
 import io.embrace.android.embracesdk.internal.session.MemoryCleanerListener
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * This class is responsible for tracking the state of JVM stacktraces sampled during an ANR.
@@ -30,11 +31,13 @@ internal class AnrStacktraceSampler(
     private val samples = mutableListOf<ThreadBlockageSample>()
     private val memo: MutableMap<Long, ThreadSample> = mutableMapOf()
     private var lastUnblockedMs: Long = 0
+    private val blocked = AtomicBoolean(false)
 
     override fun onThreadBlockageEvent(
         event: ThreadBlockageEvent,
         timestamp: Long,
     ) {
+        blocked.set(event != ThreadBlockageEvent.UNBLOCKED)
         when (event) {
             ThreadBlockageEvent.BLOCKED -> onThreadBlocked(timestamp)
             ThreadBlockageEvent.BLOCKED_INTERVAL -> onThreadBlockedInterval(timestamp)
@@ -50,7 +53,7 @@ internal class AnrStacktraceSampler(
             val results = threadBlockageIntervals.toMutableList()
 
             // add any in-progress ANRs
-            if (state.threadBlockageInProgress) {
+            if (blocked.get()) {
                 val intervalEndTime = clock.now()
                 val responseMs = state.lastTargetThreadResponseMs
                 val threadBlockageInterval = ThreadBlockageInterval(

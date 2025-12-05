@@ -77,6 +77,8 @@ interface TelemetryDestination {
         events: List<SpanEvent> = emptyList(),
     )
 
+    fun createState(state: SchemaType.State, initialValue: String): StateToken?
+
     /**
      * Notify the SDK that the current session has updated telemetry or metadata
      */

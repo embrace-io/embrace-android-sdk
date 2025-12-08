@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.internal.otel.impl.EmbClock
 import io.embrace.android.embracesdk.internal.otel.logs.LogSink
 import io.embrace.android.embracesdk.internal.otel.logs.LogSinkImpl
 import io.embrace.android.embracesdk.internal.otel.sdk.DataValidator
+import io.embrace.android.embracesdk.internal.otel.sdk.IdGenerator
 import io.embrace.android.embracesdk.internal.otel.sdk.OtelSdkWrapper
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanFactory
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanFactoryImpl
@@ -32,6 +33,8 @@ class OpenTelemetryModuleImpl(
     )
 ) : OpenTelemetryModule {
 
+    private val processIdentifierProvider: () -> String by lazy { IdGenerator.Companion::generateLaunchInstanceId }
+
     private var otelBehavior: OtelBehavior? = null
 
     override val spanRepository: SpanRepository by lazy {
@@ -50,7 +53,7 @@ class OpenTelemetryModuleImpl(
             sdkVersion = BuildConfig.VERSION_NAME,
             systemInfo = initModule.systemInfo,
             sessionIdProvider = { currentSessionSpan.getSessionId() },
-            processIdentifierProvider = initModule.processIdentifierProvider,
+            processIdentifierProvider = processIdentifierProvider,
         )
     }
 

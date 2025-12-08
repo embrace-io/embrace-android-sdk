@@ -94,7 +94,7 @@ class DeliveryModuleImpl(
         }
     }
 
-    override val payloadStorageService: PayloadStorageService? by singleton {
+    private val payloadStorageService: PayloadStorageService? by singleton {
         payloadStorageServiceProvider?.invoke() ?: if (configModule.configService.isOnlyUsingOtelExporters()) {
             null
         } else {

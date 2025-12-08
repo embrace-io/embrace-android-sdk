@@ -53,7 +53,6 @@ internal class SessionOrchestrationModuleImplTest {
             { 0 },
             FakeLogModule()
         )
-        assertNotNull(module.payloadFactory)
         assertNotNull(module.sessionOrchestrator)
     }
 
@@ -83,7 +82,6 @@ internal class SessionOrchestrationModuleImplTest {
             { 0 },
             FakeLogModule()
         )
-        assertNotNull(module.payloadFactory)
         assertNotNull(module.sessionOrchestrator)
     }
 

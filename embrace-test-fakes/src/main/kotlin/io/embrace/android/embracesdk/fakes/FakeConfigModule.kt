@@ -7,7 +7,6 @@ import io.embrace.android.embracesdk.internal.comms.api.ApiUrlBuilder
 import io.embrace.android.embracesdk.internal.comms.api.Endpoint
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.config.source.CombinedRemoteConfigSource
-import io.embrace.android.embracesdk.internal.config.source.RemoteConfigSource
 import io.embrace.android.embracesdk.internal.envelope.BuildInfo
 import io.embrace.android.embracesdk.internal.envelope.CpuAbi
 import io.embrace.android.embracesdk.internal.envelope.PackageVersionInfo
@@ -20,7 +19,6 @@ class FakeConfigModule(
     ),
     override val combinedRemoteConfigSource: CombinedRemoteConfigSource? = null,
 
-    override val remoteConfigSource: RemoteConfigSource = FakeRemoteConfigSource(),
     override val urlBuilder: ApiUrlBuilder = FakeApiUrlBuilder(),
 
     override val appEnvironment: AppEnvironment = AppEnvironment(true),

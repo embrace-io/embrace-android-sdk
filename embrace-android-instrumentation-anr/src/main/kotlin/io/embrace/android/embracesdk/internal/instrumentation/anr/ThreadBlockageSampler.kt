@@ -103,17 +103,15 @@ internal class ThreadBlockageSampler(
     }
 
     private fun onThreadUnblocked(timestamp: Long) {
-        val responseMs = lastUnblockedMs.get()
-        val sanitizedSamples = samples.filter { it.timestamp in responseMs..timestamp }
-        val threadBlockageInterval = ThreadBlockageInterval(
-            startTime = responseMs,
-            endTime = timestamp,
-            samples = sanitizedSamples
-        )
-
         synchronized(intervals) {
             if (intervals.size < MAX_INTERVAL_COUNT) {
-                intervals.add(threadBlockageInterval)
+                intervals.add(
+                    ThreadBlockageInterval(
+                        startTime = lastUnblockedMs.get(),
+                        endTime = timestamp,
+                        samples = samples.toList()
+                    )
+                )
 
                 while (reachedIntervalCaptureLimit()) {
                     findLeastValuableIntervalWithSamples()?.let { entry ->

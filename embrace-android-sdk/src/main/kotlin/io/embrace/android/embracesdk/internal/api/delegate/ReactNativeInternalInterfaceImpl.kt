@@ -2,8 +2,6 @@ package io.embrace.android.embracesdk.internal.api.delegate
 
 import android.content.Context
 import io.embrace.android.embracesdk.EmbraceImpl
-import io.embrace.android.embracesdk.LogExceptionType
-import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
 import io.embrace.android.embracesdk.internal.ReactNativeInternalInterface
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.ReactNativeCrash.embAndroidReactNativeCrashJsException
@@ -50,25 +48,6 @@ internal class ReactNativeInternalInterfaceImpl(
         }
     }
 
-    override fun logHandledJsException(
-        name: String,
-        message: String,
-        properties: Map<String, Any>,
-        stacktrace: String?,
-    ) {
-        if (embrace.isStarted) {
-            embrace.logMessage(
-                severity = Severity.ERROR,
-                message = message,
-                properties = properties,
-                customStackTrace = stacktrace,
-                logExceptionType = LogExceptionType.HANDLED
-            )
-        } else {
-            logger.logSdkNotInitialized("log JS exception")
-        }
-    }
-
     override fun setJavaScriptPatchNumber(number: String?) {
         if (embrace.isStarted) {
             if (number.isNullOrEmpty()) {
@@ -100,33 +79,10 @@ internal class ReactNativeInternalInterfaceImpl(
     }
 
     override fun setJavaScriptBundleUrl(context: Context, url: String) {
-        setJavaScriptBundleUrl(url, null)
-    }
-
-    override fun setCacheableJavaScriptBundleUrl(context: Context, url: String, didUpdate: Boolean) {
-        setJavaScriptBundleUrl(url, didUpdate)
-    }
-
-    private fun setJavaScriptBundleUrl(url: String, didUpdate: Boolean? = null) {
         if (embrace.isStarted) {
-            rnBundleIdTracker.setReactNativeBundleId(url, didUpdate)
+            rnBundleIdTracker.setReactNativeBundleId(url)
         } else {
             logger.logSdkNotInitialized("set JavaScript bundle URL")
         }
-    }
-
-    override fun logRnAction(
-        name: String,
-        startTime: Long,
-        endTime: Long,
-        properties: Map<String?, Any?>,
-        bytesSent: Int,
-        output: String,
-    ) {
-        embrace.logRnAction(name, startTime, endTime, properties, bytesSent, output)
-    }
-
-    override fun logRnView(screen: String) {
-        embrace.logRnView(screen)
     }
 }

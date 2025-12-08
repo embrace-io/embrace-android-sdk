@@ -23,6 +23,7 @@ internal interface ViewTrackingApi {
     /**
      * Logs a React Native Redux Action.
      */
+    @Deprecated("This function has no effect.")
     fun logRnAction(
         name: String,
         startTime: Long,
@@ -40,5 +41,6 @@ internal interface ViewTrackingApi {
      *
      * @param screen the name of the view to log
      */
+    @Deprecated("This function has no effect.")
     fun logRnView(screen: String)
 }

@@ -28,13 +28,9 @@ internal class NoopReactNativeInternalInterfaceTest {
     fun `check no errors thrown when invoked`() {
         val ctx = ApplicationProvider.getApplicationContext<Context>()
         impl.logUnhandledJsException("name", "message", "type", "stacktrace")
-        impl.logHandledJsException("name", "message", emptyMap(), "stacktrace")
         impl.setJavaScriptPatchNumber("number")
         impl.setReactNativeSdkVersion("version")
         impl.setReactNativeVersionNumber("version")
         impl.setJavaScriptBundleUrl(ctx, "url")
-        impl.setCacheableJavaScriptBundleUrl(ctx, "url", true)
-        impl.logRnAction("name", 1L, 2L, emptyMap(), 3, "output")
-        impl.logRnView("screen")
     }
 }

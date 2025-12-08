@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal
 
-import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 
 /**
@@ -8,88 +7,6 @@ import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
  * with the Android SDK. This is not publicly supported and methods can change at any time.
  */
 interface EmbraceInternalInterface : InternalTracingApi {
-    /**
-     * See [Embrace.logInfo]
-     */
-    fun logInfo(
-        message: String,
-        properties: Map<String, Any>?,
-    )
-
-    /**
-     * See [Embrace.logWarning]
-     */
-    fun logWarning(
-        message: String,
-        properties: Map<String, Any>?,
-        stacktrace: String?,
-    )
-
-    /**
-     * See [Embrace.logError]
-     */
-    fun logError(
-        message: String,
-        properties: Map<String, Any>?,
-        stacktrace: String?,
-        isException: Boolean,
-    )
-
-    /**
-     * See [Embrace.recordNetworkRequest]
-     */
-    fun recordCompletedNetworkRequest(
-        url: String,
-        httpMethod: String,
-        startTime: Long,
-        endTime: Long,
-        bytesSent: Long,
-        bytesReceived: Long,
-        statusCode: Int,
-        traceId: String?,
-        networkCaptureData: NetworkCaptureData?,
-    )
-
-    /**
-     * See [Embrace.recordNetworkRequest]
-     */
-    fun recordIncompleteNetworkRequest(
-        url: String,
-        httpMethod: String,
-        startTime: Long,
-        endTime: Long,
-        error: Throwable?,
-        traceId: String?,
-        networkCaptureData: NetworkCaptureData?,
-    )
-
-    /**
-     * See [Embrace.recordNetworkRequest]
-     */
-    fun recordIncompleteNetworkRequest(
-        url: String,
-        httpMethod: String,
-        startTime: Long,
-        endTime: Long,
-        errorType: String?,
-        errorMessage: String?,
-        traceId: String?,
-        networkCaptureData: NetworkCaptureData?,
-    )
-
-    /**
-     * Record a network request.
-     *
-     * @param embraceNetworkRequest the request to be recorded
-     */
-    fun recordNetworkRequest(
-        embraceNetworkRequest: EmbraceNetworkRequest,
-    )
-
-    /**
-     * For the given URL and method, whether the response body should be captured for network request logging
-     */
-    fun shouldCaptureNetworkBody(url: String, method: String): Boolean
 
     /**
      * Whether the Network Span Forwarding feature is enabled
@@ -97,14 +14,9 @@ interface EmbraceInternalInterface : InternalTracingApi {
     fun isNetworkSpanForwardingEnabled(): Boolean
 
     /**
-     * Whether the ANR capture service is enabled
+     * For the given URL and method, whether the response body should be captured for network request logging
      */
-    fun isAnrCaptureEnabled(): Boolean
-
-    /**
-     * Whether the native crash capture is enabled
-     */
-    fun isNdkEnabled(): Boolean
+    fun shouldCaptureNetworkBody(url: String, method: String): Boolean
 
     /**
      * Logs an internal error to the Embrace SDK - this is not intended for public use.
@@ -116,8 +28,5 @@ interface EmbraceInternalInterface : InternalTracingApi {
      */
     fun logInternalError(error: Throwable)
 
-    /**
-     * Stop the Embrace SDK and disable its functionality
-     */
-    fun stopSdk()
+    fun recordNetworkRequest(networkRequest: EmbraceNetworkRequest)
 }

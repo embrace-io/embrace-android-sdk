@@ -5,8 +5,7 @@ package io.embrace.android.embracesdk.internal
  * sole source of communication with the Android SDK.
  * @suppress
  */
-interface UnityInternalInterface :
-    EmbraceInternalInterface {
+interface UnityInternalInterface : EmbraceInternalInterface {
 
     /**
      * @suppress
@@ -29,32 +28,5 @@ interface UnityInternalInterface :
         name: String,
         message: String,
         stacktrace: String?,
-    )
-
-    /**
-     * @suppress
-     */
-    fun recordIncompleteNetworkRequest(
-        url: String,
-        httpMethod: String,
-        startTime: Long,
-        endTime: Long,
-        errorType: String?,
-        errorMessage: String?,
-        traceId: String?,
-    )
-
-    /**
-     * @suppress
-     */
-    fun recordCompletedNetworkRequest(
-        url: String,
-        httpMethod: String,
-        startTime: Long,
-        endTime: Long,
-        bytesSent: Long,
-        bytesReceived: Long,
-        statusCode: Int,
-        traceId: String?,
     )
 }

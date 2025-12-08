@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
-import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.spans.ErrorCode
 
@@ -17,80 +16,15 @@ class FakeEmbraceInternalInterface(
         return null
     }
 
-    override fun logInfo(message: String, properties: Map<String, Any>?) {
-    }
-
-    override fun logWarning(message: String, properties: Map<String, Any>?, stacktrace: String?) {
-    }
-
-    override fun logError(
-        message: String,
-        properties: Map<String, Any>?,
-        stacktrace: String?,
-        isException: Boolean,
-    ) {
-    }
-
-    override fun recordCompletedNetworkRequest(
-        url: String,
-        httpMethod: String,
-        startTime: Long,
-        endTime: Long,
-        bytesSent: Long,
-        bytesReceived: Long,
-        statusCode: Int,
-        traceId: String?,
-        networkCaptureData: NetworkCaptureData?,
-    ) {
-    }
-
-    override fun recordIncompleteNetworkRequest(
-        url: String,
-        httpMethod: String,
-        startTime: Long,
-        endTime: Long,
-        error: Throwable?,
-        traceId: String?,
-        networkCaptureData: NetworkCaptureData?,
-    ) {
-    }
-
-    override fun recordIncompleteNetworkRequest(
-        url: String,
-        httpMethod: String,
-        startTime: Long,
-        endTime: Long,
-        errorType: String?,
-        errorMessage: String?,
-        traceId: String?,
-        networkCaptureData: NetworkCaptureData?,
-    ) {
-    }
-
-    override fun recordNetworkRequest(embraceNetworkRequest: EmbraceNetworkRequest) {
-        networkRequests.add(embraceNetworkRequest)
-    }
-
-    override fun shouldCaptureNetworkBody(url: String, method: String): Boolean = captureNetworkBody
-
     override fun isNetworkSpanForwardingEnabled(): Boolean = networkSpanForwardingEnabled
 
-    override fun isAnrCaptureEnabled(): Boolean {
-        return true
-    }
-
-    override fun isNdkEnabled(): Boolean {
-        return true
-    }
+    override fun shouldCaptureNetworkBody(url: String, method: String): Boolean = captureNetworkBody
 
     override fun logInternalError(message: String?, details: String?) {
     }
 
     override fun logInternalError(error: Throwable) {
         internalErrors.add(error)
-    }
-
-    override fun stopSdk() {
     }
 
     override fun stopSpan(spanId: String, errorCode: ErrorCode?, endTimeMs: Long?): Boolean {
@@ -130,5 +64,9 @@ class FakeEmbraceInternalInterface(
         events: List<Map<String, Any>>,
     ): Boolean {
         return true
+    }
+
+    override fun recordNetworkRequest(networkRequest: EmbraceNetworkRequest) {
+        networkRequests.add(networkRequest)
     }
 }

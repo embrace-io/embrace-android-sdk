@@ -54,7 +54,7 @@ internal class AnrServiceRule<T : ScheduledExecutorService>(
             clock = clock,
             targetThread = looper.thread,
             maxIntervalsPerSession = fakeConfigService.anrBehavior.getMaxAnrIntervalsPerSession(),
-            maxStacktracesPerInterval = fakeConfigService.anrBehavior.getMaxStacktracesPerInterval(),
+            maxSamplesPerInterval = fakeConfigService.anrBehavior.getMaxStacktracesPerInterval(),
             stacktraceFrameLimit = fakeConfigService.anrBehavior.getStacktraceFrameLimit(),
         )
         blockedThreadDetector = BlockedThreadDetector(

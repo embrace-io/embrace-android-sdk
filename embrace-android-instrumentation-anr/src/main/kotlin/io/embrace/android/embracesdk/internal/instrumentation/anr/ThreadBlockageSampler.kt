@@ -1,13 +1,15 @@
 package io.embrace.android.embracesdk.internal.instrumentation.anr
 
 import io.embrace.android.embracesdk.internal.arch.stacktrace.ThreadSample
-import io.embrace.android.embracesdk.internal.arch.stacktrace.truncateStacktrace
 import io.embrace.android.embracesdk.internal.clock.Clock
+import io.embrace.android.embracesdk.internal.instrumentation.anr.ThreadBlockageSample.Companion.CODE_DEFAULT
+import io.embrace.android.embracesdk.internal.instrumentation.anr.ThreadBlockageSample.Companion.CODE_SAMPLE_LIMIT_REACHED
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageEvent
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageEvent.BLOCKED
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageEvent.BLOCKED_INTERVAL
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageEvent.UNBLOCKED
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageListener
+import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadStacktraceSampler
 import io.embrace.android.embracesdk.internal.session.MemoryCleanerListener
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicBoolean
@@ -21,13 +23,12 @@ internal class ThreadBlockageSampler(
     private val clock: Clock,
     private val targetThread: Thread,
     private val maxIntervalsPerSession: Int,
-    private val maxStacktracesPerInterval: Int,
+    private val maxSamplesPerInterval: Int,
     private val stacktraceFrameLimit: Int,
 ) : ThreadBlockageListener, MemoryCleanerListener {
 
     private val intervals = CopyOnWriteArrayList<ThreadBlockageInterval>()
-    private val samples = CopyOnWriteArrayList<ThreadBlockageSample>()
-    private val prevSample: AtomicReference<ThreadSample?> = AtomicReference(null)
+    private val sampler = AtomicReference<ThreadStacktraceSampler>()
     private val lastUnblockedMs: AtomicLong = AtomicLong(0)
     private val blocked = AtomicBoolean(false)
 
@@ -38,7 +39,7 @@ internal class ThreadBlockageSampler(
         blocked.set(event != UNBLOCKED)
         when (event) {
             BLOCKED -> onThreadBlocked(timestamp)
-            BLOCKED_INTERVAL -> onThreadBlockedInterval(timestamp)
+            BLOCKED_INTERVAL -> sampler.get().captureSample()
             UNBLOCKED -> onThreadUnblocked(timestamp)
         }
     }
@@ -56,7 +57,7 @@ internal class ThreadBlockageSampler(
                     ThreadBlockageInterval(
                         startTime = lastUnblockedMs.get(),
                         lastKnownTime = clock.now(),
-                        samples = samples.toList()
+                        samples = sampler.get().getThreadBlockageSamples(),
                     )
                 )
             }
@@ -71,35 +72,7 @@ internal class ThreadBlockageSampler(
     }
 
     private fun onThreadBlocked(timestamp: Long) {
-        prevSample.set(null)
-        lastUnblockedMs.set(timestamp)
-    }
-
-    private fun onThreadBlockedInterval(timestamp: Long) {
-        val start = clock.now()
-        val sampleLimitExceeded = samples.size >= maxStacktracesPerInterval
-
-        val threads = when {
-            sampleLimitExceeded -> null
-            else -> captureSample()
-        }
-        val code = when {
-            sampleLimitExceeded -> ThreadBlockageSample.CODE_SAMPLE_LIMIT_REACHED
-            else -> ThreadBlockageSample.CODE_DEFAULT
-        }
-        val sampleOverheadMs = when {
-            sampleLimitExceeded -> 0
-            else -> clock.now() - start
-        }
-
-        samples.add(
-            ThreadBlockageSample(
-                timestamp = timestamp,
-                threadSample = threads,
-                sampleOverheadMs = sampleOverheadMs,
-                code = code,
-            )
-        )
+        resetState(timestamp)
     }
 
     private fun onThreadUnblocked(timestamp: Long) {
@@ -109,7 +82,7 @@ internal class ThreadBlockageSampler(
                     ThreadBlockageInterval(
                         startTime = lastUnblockedMs.get(),
                         endTime = timestamp,
-                        samples = samples.toList()
+                        samples = sampler.get().getThreadBlockageSamples(),
                     )
                 )
 
@@ -122,11 +95,39 @@ internal class ThreadBlockageSampler(
                 }
             }
         }
+        resetState(timestamp)
+    }
 
-        // reset state
-        samples.clear()
+    private fun ThreadStacktraceSampler.getThreadBlockageSamples(): List<ThreadBlockageSample> {
+        val metadata = retrieveSampleMetadata()
+        var lastSample: ThreadSample? = null
+
+        return metadata.map {
+            val current = it.sample
+
+            // if a stacktrace is repeated in consecutive elements, omit it from the payload. This
+            // is done for legacy reasons with the aim of saving payload size.
+            val dedupe = when (lastSample) {
+                current -> null
+                else -> current
+            }
+            lastSample = current
+
+            ThreadBlockageSample(
+                timestamp = it.sampleTimeMs,
+                threadSample = dedupe,
+                sampleOverheadMs = it.sampleOverheadMs,
+                code = when (current) {
+                    null -> CODE_SAMPLE_LIMIT_REACHED
+                    else -> CODE_DEFAULT
+                }
+            )
+        }
+    }
+
+    private fun resetState(timestamp: Long) {
+        sampler.set(ThreadStacktraceSampler(clock, targetThread, maxSamplesPerInterval, stacktraceFrameLimit))
         lastUnblockedMs.set(timestamp)
-        prevSample.set(null)
     }
 
     /**
@@ -141,25 +142,6 @@ internal class ThreadBlockageSampler(
     private fun reachedIntervalCaptureLimit(): Boolean {
         val count = intervals.filter(ThreadBlockageInterval::hasSamples).size
         return count > maxIntervalsPerSession
-    }
-
-    /**
-     * Captures the thread traces required for the given sample.
-     */
-    private fun captureSample(): ThreadSample? {
-        val sample = truncateStacktrace(
-            targetThread,
-            targetThread.stackTrace,
-            stacktraceFrameLimit
-        )
-
-        // Compares main thread with the last known thread state via hashcode.
-        // Only serialize if the previous stacktrace doesn't match.
-        if (sample != prevSample.get()) {
-            prevSample.set(sample)
-            return sample
-        }
-        return null
     }
 
     private companion object {

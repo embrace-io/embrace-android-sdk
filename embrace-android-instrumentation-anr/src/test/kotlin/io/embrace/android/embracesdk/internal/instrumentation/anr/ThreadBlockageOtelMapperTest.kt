@@ -85,7 +85,7 @@ internal class ThreadBlockageOtelMapperTest {
     private val inProgressInterval =
         completedInterval.copy(endTime = null, lastKnownTime = LAST_KNOWN_TIME)
 
-    private val clearedInterval = completedInterval.clearSamples()
+    private val clearedInterval = completedInterval.copy(samples = null, code = ThreadBlockageInterval.CODE_SAMPLES_CLEARED)
 
     private lateinit var clock: FakeClock
     private val random = Random(0)

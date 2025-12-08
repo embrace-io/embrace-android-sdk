@@ -11,12 +11,12 @@ import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
 import io.embrace.android.embracesdk.internal.delivery.execution.RequestExecutionService
 import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageService
 import io.embrace.android.embracesdk.internal.envelope.session.OtelPayloadMapper
-import io.embrace.android.embracesdk.internal.instrumentation.anr.AnrService
-import io.embrace.android.embracesdk.internal.instrumentation.anr.AnrServiceSupplier
-import io.embrace.android.embracesdk.internal.instrumentation.anr.createAnrService
 import io.embrace.android.embracesdk.internal.instrumentation.startup.DataCaptureServiceModule
 import io.embrace.android.embracesdk.internal.instrumentation.startup.DataCaptureServiceModuleImpl
 import io.embrace.android.embracesdk.internal.instrumentation.startup.DataCaptureServiceModuleSupplier
+import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageService
+import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageServiceSupplier
+import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.createThreadBlockageService
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
@@ -154,8 +154,8 @@ internal class ModuleInitBootstrapper(
             deliveryTracer
         )
     },
-    private val anrServiceSupplier: AnrServiceSupplier = { args: InstrumentationArgs ->
-        createAnrService(args)
+    private val threadBlockageServiceSupplier: ThreadBlockageServiceSupplier = { args: InstrumentationArgs ->
+        createThreadBlockageService(args)
     },
     private val logModuleSupplier: LogModuleSupplier = {
             initModule: InitModule,
@@ -233,7 +233,7 @@ internal class ModuleInitBootstrapper(
     override val essentialServiceModule: EssentialServiceModule get() = delegate.essentialServiceModule
     override val dataCaptureServiceModule: DataCaptureServiceModule get() = delegate.dataCaptureServiceModule
     override val deliveryModule: DeliveryModule get() = delegate.deliveryModule
-    override val anrService: AnrService? get() = delegate.anrService
+    override val threadBlockageService: ThreadBlockageService? get() = delegate.threadBlockageService
     override val logModule: LogModule get() = delegate.logModule
     override val instrumentationModule: InstrumentationModule get() = delegate.instrumentationModule
     override val featureModule: FeatureModule get() = delegate.featureModule
@@ -270,7 +270,7 @@ internal class ModuleInitBootstrapper(
                     instrumentationModuleSupplier,
                     dataCaptureServiceModuleSupplier,
                     deliveryModuleSupplier,
-                    anrServiceSupplier,
+                    threadBlockageServiceSupplier,
                     logModuleSupplier,
                     sessionOrchestrationModuleSupplier,
                     payloadSourceModuleSupplier

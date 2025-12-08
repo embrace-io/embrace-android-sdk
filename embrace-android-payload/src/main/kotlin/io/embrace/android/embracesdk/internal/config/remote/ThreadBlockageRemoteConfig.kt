@@ -4,10 +4,10 @@ import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 
 /**
- * Configuration values relating to the ANR tracking on the app.
+ * Configuration values relating to thread blockage tracking
  */
 @JsonClass(generateAdapter = true)
-data class AnrRemoteConfig(
+data class ThreadBlockageRemoteConfig(
 
     @Json(name = "pct_enabled")
     val pctEnabled: Int? = null,
@@ -22,7 +22,7 @@ data class AnrRemoteConfig(
     val stacktraceFrameLimit: Int? = null,
 
     @Json(name = "per_session")
-    val anrPerSession: Int? = null,
+    val intervalsPerSession: Int? = null,
 
     @Json(name = "min_duration")
     val minDuration: Int? = null,

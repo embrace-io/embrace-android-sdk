@@ -14,7 +14,7 @@ data class AutomaticDataCaptureLocalConfig(
     val networkConnectivityServiceEnabled: Boolean? = null,
 
     @Json(name = "anr_info")
-    val anrServiceEnabled: Boolean? = null,
+    val threadBlockageServiceEnabled: Boolean? = null,
 
     @Json(name = "ui_load_tracing_disabled")
     val uiLoadPerfTracingDisabled: Boolean? = null,

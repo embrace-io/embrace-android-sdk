@@ -1,8 +1,8 @@
-package io.embrace.android.embracesdk.internal.instrumentation.anr
+package io.embrace.android.embracesdk.internal.instrumentation.thread.blockage
 
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
-import io.embrace.android.embracesdk.fakes.behavior.FakeAnrBehavior
+import io.embrace.android.embracesdk.fakes.behavior.FakeThreadBlockageBehavior
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageEvent.BLOCKED
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageEvent.BLOCKED_INTERVAL
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageEvent.UNBLOCKED
@@ -18,14 +18,14 @@ internal class ThreadBlockageSamplerTest {
 
     private val thread = Thread.currentThread()
     private val clock = FakeClock()
-    private val behavior = FakeConfigService().anrBehavior
+    private val behavior = FakeConfigService().threadBlockageBehavior
 
     @Test
     fun testLeastValuableInterval() {
         val sampler = ThreadBlockageSampler(
             clock,
             thread,
-            behavior.getMaxAnrIntervalsPerSession(),
+            behavior.getMaxIntervalsPerSession(),
             behavior.getMaxStacktracesPerInterval(),
             behavior.getStacktraceFrameLimit(),
         ).apply {
@@ -59,7 +59,7 @@ internal class ThreadBlockageSamplerTest {
         val sampler = ThreadBlockageSampler(
             clock,
             thread,
-            behavior.getMaxAnrIntervalsPerSession(),
+            behavior.getMaxIntervalsPerSession(),
             behavior.getMaxStacktracesPerInterval(),
             behavior.getStacktraceFrameLimit(),
         )
@@ -113,7 +113,7 @@ internal class ThreadBlockageSamplerTest {
         val sampler = ThreadBlockageSampler(
             clock,
             thread,
-            behavior.getMaxAnrIntervalsPerSession(),
+            behavior.getMaxIntervalsPerSession(),
             behavior.getMaxStacktracesPerInterval(),
             behavior.getStacktraceFrameLimit(),
         )
@@ -161,7 +161,7 @@ internal class ThreadBlockageSamplerTest {
         val sampler = ThreadBlockageSampler(
             clock,
             thread,
-            behavior.getMaxAnrIntervalsPerSession(),
+            behavior.getMaxIntervalsPerSession(),
             behavior.getMaxStacktracesPerInterval(),
             behavior.getStacktraceFrameLimit(),
         )
@@ -181,11 +181,11 @@ internal class ThreadBlockageSamplerTest {
 
     @Test
     fun `verify truncation of stacktrace respects the config`() {
-        val behavior = FakeAnrBehavior(frameLimit = 5)
+        val behavior = FakeThreadBlockageBehavior(frameLimit = 5)
         val sampler = ThreadBlockageSampler(
             clock,
             thread,
-            behavior.getMaxAnrIntervalsPerSession(),
+            behavior.getMaxIntervalsPerSession(),
             behavior.getMaxStacktracesPerInterval(),
             behavior.getStacktraceFrameLimit(),
         )

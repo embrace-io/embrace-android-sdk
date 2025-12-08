@@ -5,7 +5,7 @@ import com.squareup.moshi.JsonClass
 import java.io.Serializable
 
 @JsonClass(generateAdapter = true)
-data class AnrLocalConfig(
+data class ThreadBlockageLocalConfig(
     @Json(name = "capture_unity_thread")
     val captureUnityThread: Boolean? = null
 ) : Serializable {

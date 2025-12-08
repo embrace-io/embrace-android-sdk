@@ -45,9 +45,9 @@ sealed class Worker(val threadName: String) {
         object LogMessageWorker : Background("log-message")
 
         /**
-         * Monitor thread that checks the main thread for ANRs.
+         * Monitor thread that checks the main thread for thread blockages
          */
-        object AnrWatchdogWorker : Background("anr-watchdog")
+        object ThreadBlockageWatchdogWorker : Background("thread-blockage-watchdog")
 
         /**
          * Worker that performs HTTP requests that push data to the server.

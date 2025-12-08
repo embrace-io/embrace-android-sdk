@@ -1,5 +1,6 @@
-package io.embrace.android.embracesdk.internal.instrumentation.anr
+package io.embrace.android.embracesdk.internal.instrumentation.thread.blockage
 
+import io.embrace.android.embracesdk.internal.arch.datasource.SpanEventImpl
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.payload.Attribute
@@ -87,7 +88,7 @@ internal fun List<Attribute>.toEmbracePayload(): Map<String, String> =
     associate { Pair(it.key ?: "", it.data ?: "") }.filterKeys { it.isNotBlank() }
 
 internal fun SpanEvent.toArchSpanEvent(): io.embrace.android.embracesdk.internal.arch.datasource.SpanEvent =
-    io.embrace.android.embracesdk.internal.arch.datasource.SpanEventImpl(
+    SpanEventImpl(
         name ?: "",
         timestampNanos ?: 0,
         attributes?.toEmbracePayload() ?: emptyMap()

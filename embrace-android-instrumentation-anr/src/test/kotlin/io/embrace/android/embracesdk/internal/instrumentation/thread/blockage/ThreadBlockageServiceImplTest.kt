@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.internal.instrumentation.anr
+package io.embrace.android.embracesdk.internal.instrumentation.thread.blockage
 
 import io.embrace.android.embracesdk.concurrency.SingleThreadTestScheduledExecutor
 import io.embrace.android.embracesdk.fakes.FakeConfigService
@@ -21,13 +21,13 @@ import org.junit.Test
 import java.lang.Thread.currentThread
 import java.util.concurrent.TimeUnit
 
-internal class AnrServiceImplTest {
+internal class ThreadBlockageServiceImplTest {
 
     private lateinit var watchdogExecutorService: SingleThreadTestScheduledExecutor
 
     @Rule
     @JvmField
-    val rule = AnrServiceRule(
+    val rule = ThreadBlockageServiceRule(
         scheduledExecutorSupplier = {
             watchdogExecutorService = SingleThreadTestScheduledExecutor()
             watchdogExecutorService
@@ -182,7 +182,7 @@ internal class AnrServiceImplTest {
         }
     }
 
-    private fun AnrServiceRule<SingleThreadTestScheduledExecutor>.simulateMainThreadRecovery() {
+    private fun ThreadBlockageServiceRule<SingleThreadTestScheduledExecutor>.simulateMainThreadRecovery() {
         blockedThreadDetector.onTargetThreadProcessedMessage(clock.now())
     }
 
@@ -246,7 +246,7 @@ internal class AnrServiceImplTest {
     @Test
     fun testReachedIntervalCaptureLimit() {
         with(rule) {
-            val limit = rule.behavior.anrPerSessionImpl
+            val limit = rule.behavior.intervalsPerSessionImpl
             repeat(limit) { count ->
                 createThreadBlockageInterval()
                 assertEquals(count + 1, stacktraceSampler.getThreadBlockageIntervals().size)
@@ -301,7 +301,6 @@ internal class AnrServiceImplTest {
     fun `test handleCrash stops tracking but samples can still be retrieved`() {
         with(rule) {
             clock.setCurrentTime(14000000L)
-            rule.behavior.bgAnrCaptureEnabled = true
             service.onForeground()
             repeat(5) {
                 createThreadBlockageInterval()
@@ -312,7 +311,7 @@ internal class AnrServiceImplTest {
         }
     }
 
-    private fun AnrServiceRule<*>.createThreadBlockageInterval(duration: Long = 1000, complete: Boolean = true) {
+    private fun ThreadBlockageServiceRule<*>.createThreadBlockageInterval(duration: Long = 1000, complete: Boolean = true) {
         stacktraceSampler.onThreadBlockageEvent(BLOCKED, clock.now())
         stacktraceSampler.onThreadBlockageEvent(BLOCKED_INTERVAL, clock.now())
 
@@ -323,9 +322,8 @@ internal class AnrServiceImplTest {
     }
 
     /**
-     * Some tests require running functions meant to be run in the ANR monitoring thread synchronously on the current thread to simulate
-     * conditions that are to be tested. This allows the [enforceThread] to not fail by temporarily switching out the thread to be
-     * compared against.
+     * Some tests require running functions meant to be run in the monitoring thread synchronously on the current thread to simulate
+     * conditions that are to be tested.
      */
     private fun executeSynchronouslyOnCurrentThread(action: () -> Unit) {
         with(rule) {

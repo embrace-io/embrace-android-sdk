@@ -24,9 +24,6 @@
           "signature": "isAeiCaptureEnabled()Z"
         },
         {
-          "signature": "isAnrCaptureEnabled()Z"
-        },
-        {
           "signature": "isBackgroundActivityCaptureEnabled()Z"
         },
         {
@@ -61,6 +58,9 @@
         },
         {
           "signature": "isRequestContentLengthCaptureEnabled()Z"
+        },
+        {
+          "signature": "isThreadBlockageCaptureEnabled()Z"
         },
         {
           "signature": "isUiLoadTracingEnabled()Z"

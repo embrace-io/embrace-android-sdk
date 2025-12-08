@@ -131,7 +131,7 @@ internal class EmbraceInternalInterfaceImpl(
     override fun isNetworkSpanForwardingEnabled(): Boolean =
         configService.networkSpanForwardingBehavior.isNetworkSpanForwardingEnabled()
 
-    override fun isAnrCaptureEnabled(): Boolean = configService.anrBehavior.isAnrCaptureEnabled()
+    override fun isAnrCaptureEnabled(): Boolean = configService.threadBlockageBehavior.isThreadBlockageCaptureEnabled()
 
     override fun isNdkEnabled(): Boolean = configService.autoDataCaptureBehavior.isNativeCrashCaptureEnabled()
 

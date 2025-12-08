@@ -29,7 +29,7 @@ class AutoDataCaptureBehaviorImpl(
     override fun isNetworkConnectivityCaptureEnabled(): Boolean =
         local.isNetworkConnectivityCaptureEnabled()
 
-    override fun isAnrCaptureEnabled(): Boolean = local.isAnrCaptureEnabled()
+    override fun isThreadBlockageCaptureEnabled(): Boolean = local.isThreadBlockageCaptureEnabled()
     override fun isJvmCrashCaptureEnabled(): Boolean = local.isJvmCrashCaptureEnabled()
     override fun isComposeClickCaptureEnabled(): Boolean =
         remote?.killSwitchConfig?.jetpackCompose ?: local.isComposeClickCaptureEnabled()

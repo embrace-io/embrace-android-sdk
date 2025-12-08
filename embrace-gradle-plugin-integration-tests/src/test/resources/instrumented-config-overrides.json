@@ -29,10 +29,6 @@
           "returnValue": "false"
         },
         {
-          "signature": "isAnrCaptureEnabled()Z",
-          "returnValue": "false"
-        },
-        {
           "signature": "isBackgroundActivityCaptureEnabled()Z",
           "returnValue": "true"
         },
@@ -79,6 +75,10 @@
         {
           "signature": "isRequestContentLengthCaptureEnabled()Z",
           "returnValue": "true"
+        },
+        {
+          "signature": "isThreadBlockageCaptureEnabled()Z",
+          "returnValue": "false"
         },
         {
           "signature": "isUiLoadTracingEnabled()Z",

@@ -10,7 +10,7 @@ class FakeEnabledFeatureConfig(
     private val viewClickCoordCapture: Boolean = base.isViewClickCoordinateCaptureEnabled(),
     private val powerSaveCapture: Boolean = base.isPowerSaveModeCaptureEnabled(),
     private val networkConnectivityCapture: Boolean = base.isNetworkConnectivityCaptureEnabled(),
-    private val anrCapture: Boolean = base.isAnrCaptureEnabled(),
+    private val threadBlockageCapture: Boolean = base.isThreadBlockageCaptureEnabled(),
     private val diskUsageCapture: Boolean = base.isDiskUsageCaptureEnabled(),
     private val jvmCrashCapture: Boolean = base.isJvmCrashCaptureEnabled(),
     private val nativeCrashCapture: Boolean = base.isNativeCrashCaptureEnabled(),
@@ -39,7 +39,7 @@ class FakeEnabledFeatureConfig(
 
     override fun isPowerSaveModeCaptureEnabled(): Boolean = powerSaveCapture
     override fun isNetworkConnectivityCaptureEnabled(): Boolean = networkConnectivityCapture
-    override fun isAnrCaptureEnabled(): Boolean = anrCapture
+    override fun isThreadBlockageCaptureEnabled(): Boolean = threadBlockageCapture
     override fun isDiskUsageCaptureEnabled(): Boolean = diskUsageCapture
     override fun isJvmCrashCaptureEnabled(): Boolean = jvmCrashCapture
     override fun isNativeCrashCaptureEnabled(): Boolean = nativeCrashCapture

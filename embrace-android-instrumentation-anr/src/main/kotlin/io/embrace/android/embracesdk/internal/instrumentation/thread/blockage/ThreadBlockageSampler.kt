@@ -1,17 +1,13 @@
-package io.embrace.android.embracesdk.internal.instrumentation.anr
+package io.embrace.android.embracesdk.internal.instrumentation.thread.blockage
 
 import androidx.annotation.CheckResult
 import io.embrace.android.embracesdk.internal.arch.stacktrace.ThreadSample
 import io.embrace.android.embracesdk.internal.clock.Clock
-import io.embrace.android.embracesdk.internal.instrumentation.anr.ThreadBlockageInterval.Companion.CODE_SAMPLES_CLEARED
-import io.embrace.android.embracesdk.internal.instrumentation.anr.ThreadBlockageSample.Companion.CODE_DEFAULT
-import io.embrace.android.embracesdk.internal.instrumentation.anr.ThreadBlockageSample.Companion.CODE_SAMPLE_LIMIT_REACHED
-import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageEvent
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageEvent.BLOCKED
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageEvent.BLOCKED_INTERVAL
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageEvent.UNBLOCKED
-import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageListener
-import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadStacktraceSampler
+import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageSample.Companion.CODE_DEFAULT
+import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageSample.Companion.CODE_SAMPLE_LIMIT_REACHED
 import io.embrace.android.embracesdk.internal.session.MemoryCleanerListener
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicBoolean
@@ -153,9 +149,12 @@ internal class ThreadBlockageSampler(
     }
 
     @CheckResult
-    private fun ThreadBlockageInterval.clearSamples(): ThreadBlockageInterval = copy(samples = null, code = CODE_SAMPLES_CLEARED)
+    private fun ThreadBlockageInterval.clearSamples(): ThreadBlockageInterval = copy(
+        samples = null,
+        code = ThreadBlockageInterval.Companion.CODE_SAMPLES_CLEARED
+    )
 
-    private fun ThreadBlockageInterval.hasSamples(): Boolean = code != CODE_SAMPLES_CLEARED
+    private fun ThreadBlockageInterval.hasSamples(): Boolean = code != ThreadBlockageInterval.Companion.CODE_SAMPLES_CLEARED
 
     private companion object {
 

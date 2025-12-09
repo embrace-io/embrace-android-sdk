@@ -236,7 +236,7 @@ internal class AnrServiceImplTest {
                 assertEquals(
                     defaultLimit,
                     samples.count { sample ->
-                        sample.threadSample != null && sample.code == ThreadBlockageSample.CODE_DEFAULT
+                        sample.code == ThreadBlockageSample.CODE_DEFAULT
                     }
                 )
             }

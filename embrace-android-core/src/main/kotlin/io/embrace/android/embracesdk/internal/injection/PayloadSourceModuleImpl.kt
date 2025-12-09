@@ -133,7 +133,7 @@ class PayloadSourceModuleImpl(
                 coreModule.context,
                 lazy { storageManager },
                 configModule.configService,
-                coreModule.preferencesService,
+                coreModule.store,
                 workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker),
                 initModule.logger
             )

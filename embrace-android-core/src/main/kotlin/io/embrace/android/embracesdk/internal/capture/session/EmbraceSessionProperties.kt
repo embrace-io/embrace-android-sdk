@@ -3,20 +3,24 @@ package io.embrace.android.embracesdk.internal.capture.session
 import io.embrace.android.embracesdk.internal.arch.attrs.toEmbraceAttributeName
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.config.ConfigService
-import io.embrace.android.embracesdk.internal.prefs.PreferencesService
+import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.utils.Provider
 import java.util.concurrent.atomic.AtomicReference
 
 internal class EmbraceSessionProperties(
-    private val preferencesService: PreferencesService,
+    private val store: KeyValueStore,
     private val configService: ConfigService,
     private val destination: TelemetryDestination,
 ) {
     private val temporary: MutableMap<String, String> = HashMap()
     private val permanentPropertiesReference = AtomicReference(NOT_LOADED)
     private val permanentPropertiesProvider: Provider<MutableMap<String, String>> = {
-        preferencesService.permanentSessionProperties?.let { HashMap(it) } ?: HashMap()
+        permanentSessionProperties?.let { HashMap(it) } ?: HashMap()
     }
+
+    private var permanentSessionProperties: Map<String, String>?
+        get() = store.getStringMap(SESSION_PROPERTIES_KEY)
+        set(value) = store.edit { putStringMap(SESSION_PROPERTIES_KEY, value) }
 
     private fun permanentProperties(): MutableMap<String, String> {
         if (permanentPropertiesReference.get() === NOT_LOADED) {
@@ -45,13 +49,13 @@ internal class EmbraceSessionProperties(
             if (isPermanent) {
                 permanentProperties()[sanitizedKey] = sanitizedValue
                 temporary.remove(sanitizedKey)
-                preferencesService.permanentSessionProperties = permanentProperties()
+                permanentSessionProperties = permanentProperties()
             } else {
                 // only save the permanent values if the key existed in the permanent map
                 val newPermanent = permanentProperties()
                 if (newPermanent.remove(sanitizedKey) != null) {
                     permanentPropertiesReference.set(newPermanent)
-                    preferencesService.permanentSessionProperties = permanentProperties()
+                    permanentSessionProperties = permanentProperties()
                 }
                 temporary[sanitizedKey] = sanitizedValue
             }
@@ -73,7 +77,7 @@ internal class EmbraceSessionProperties(
             val newPermanent = permanentProperties()
             if (newPermanent.remove(sanitizedKey) != null) {
                 permanentPropertiesReference.set(newPermanent)
-                preferencesService.permanentSessionProperties = permanentProperties()
+                permanentSessionProperties = permanentProperties()
                 existed = true
             }
             destination.removeSessionAttribute(sanitizedKey.toEmbraceAttributeName())
@@ -104,5 +108,6 @@ internal class EmbraceSessionProperties(
 
     private companion object {
         private val NOT_LOADED = mutableMapOf<String, String>()
+        private const val SESSION_PROPERTIES_KEY = "io.embrace.session.properties"
     }
 }

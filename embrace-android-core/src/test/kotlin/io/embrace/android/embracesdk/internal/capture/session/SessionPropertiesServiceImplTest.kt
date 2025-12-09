@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.capture.session
 
 import io.embrace.android.embracesdk.fakes.FakeConfigService
-import io.embrace.android.embracesdk.fakes.FakePreferenceService
+import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.config.FakeRedactionConfig
@@ -29,7 +29,7 @@ internal class SessionPropertiesServiceImplTest {
             )
         destination = FakeTelemetryDestination()
         service = SessionPropertiesServiceImpl(
-            FakePreferenceService(),
+            FakeKeyValueStore(),
             fakeConfigService,
             destination
         )

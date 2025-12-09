@@ -24,7 +24,7 @@ fun createAnrService(args: InstrumentationArgs): AnrService? {
             clock = args.clock,
             targetThread = looper.thread,
             maxIntervalsPerSession = anrBehavior.getMaxAnrIntervalsPerSession(),
-            maxStacktracesPerInterval = anrBehavior.getMaxStacktracesPerInterval(),
+            maxSamplesPerInterval = anrBehavior.getMaxStacktracesPerInterval(),
             stacktraceFrameLimit = anrBehavior.getStacktraceFrameLimit(),
         )
     }

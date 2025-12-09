@@ -213,6 +213,8 @@ internal class AnrServiceImplTest {
                 val extra = 10
                 val count = defaultLimit + extra
 
+                stacktraceSampler.onThreadBlockageEvent(BLOCKED, clock.now())
+
                 repeat(count) {
                     stacktraceSampler.onThreadBlockageEvent(BLOCKED_INTERVAL, clock.now())
                 }
@@ -274,15 +276,22 @@ internal class AnrServiceImplTest {
                 val now = 100L
                 recreateService()
 
+                clock.setCurrentTime(now + 500)
                 blockedThreadDetector.onMonitorThreadInterval(now + 500)
+
+                clock.setCurrentTime(now + 1000)
                 blockedThreadDetector.onMonitorThreadInterval(now + 1000)
-                blockedThreadDetector.onMonitorThreadInterval(now + 1001)
+
+                clock.setCurrentTime(now + 2001)
+                blockedThreadDetector.onMonitorThreadInterval(now + 2001)
+
+                clock.setCurrentTime(now + 10000)
                 blockedThreadDetector.onMonitorThreadInterval(now + 10000)
 
                 val samples = checkNotNull(stacktraceSampler.getThreadBlockageIntervals().single().samples)
                 assertEquals(3, samples.size)
                 assertEquals(now + 1000, samples[0].timestamp)
-                assertEquals(now + 1001, samples[1].timestamp)
+                assertEquals(now + 2001, samples[1].timestamp)
                 assertEquals(now + 10000, samples[2].timestamp)
             }
         }

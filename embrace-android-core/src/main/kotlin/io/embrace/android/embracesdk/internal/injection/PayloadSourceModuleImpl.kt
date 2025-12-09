@@ -1,5 +1,8 @@
 package io.embrace.android.embracesdk.internal.injection
 
+import android.app.usage.StorageStatsManager
+import android.content.Context
+import android.os.Build
 import io.embrace.android.embracesdk.internal.capture.metadata.EmbraceMetadataService
 import io.embrace.android.embracesdk.internal.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.internal.capture.metadata.RnBundleIdTracker
@@ -22,7 +25,9 @@ import io.embrace.android.embracesdk.internal.envelope.session.SessionPayloadSou
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.resurrection.PayloadResurrectionService
 import io.embrace.android.embracesdk.internal.resurrection.PayloadResurrectionServiceImpl
+import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
+import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.internal.worker.Worker
 
 class PayloadSourceModuleImpl(
@@ -34,6 +39,7 @@ class PayloadSourceModuleImpl(
     otelModule: OpenTelemetryModule,
     otelPayloadMapper: OtelPayloadMapper?,
     deliveryModule: DeliveryModule,
+    versionChecker: VersionChecker = BuildVersionChecker,
 ) : PayloadSourceModule {
 
     override val rnBundleIdTracker: RnBundleIdTracker by singleton {
@@ -83,6 +89,14 @@ class PayloadSourceModuleImpl(
         }
     }
 
+    private val storageManager: StorageStatsManager? by singleton {
+        if (versionChecker.isAtLeast(Build.VERSION_CODES.O)) {
+            coreModule.context.getSystemServiceSafe(Context.STORAGE_STATS_SERVICE) as StorageStatsManager?
+        } else {
+            null
+        }
+    }
+
     private val resourceSource by singleton {
         EmbTrace.trace("resource-source") {
             EnvelopeResourceSourceImpl(
@@ -94,7 +108,7 @@ class PayloadSourceModuleImpl(
                 configModule.cpuAbi,
                 EmbTrace.trace("deviceImpl") {
                     DeviceImpl(
-                        coreModule.windowManager,
+                        coreModule.context.getSystemServiceSafe(Context.WINDOW_SERVICE),
                         coreModule.store,
                         workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker),
                         initModule.systemInfo,
@@ -117,7 +131,7 @@ class PayloadSourceModuleImpl(
             EmbraceMetadataService(
                 lazy { resourceSource },
                 coreModule.context,
-                lazy { coreModule.storageManager },
+                lazy { storageManager },
                 configModule.configService,
                 coreModule.preferencesService,
                 workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker),

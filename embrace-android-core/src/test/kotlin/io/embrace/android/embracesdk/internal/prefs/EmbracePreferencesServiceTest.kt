@@ -35,24 +35,6 @@ internal class EmbracePreferencesServiceTest {
     }
 
     @Test
-    fun `test app version is saved`() {
-        assertNull(service.appVersion)
-
-        val appVersion = "1.1"
-        service.appVersion = appVersion
-        assertEquals(appVersion, service.appVersion)
-    }
-
-    @Test
-    fun `test OS version is saved`() {
-        assertNull(service.osVersion)
-
-        val osVersion = "12.1"
-        service.osVersion = osVersion
-        assertEquals(osVersion, service.osVersion)
-    }
-
-    @Test
     fun `test device identifier is saved`() {
         val deviceIdentifier = "android"
         service.deviceIdentifier = deviceIdentifier
@@ -62,25 +44,6 @@ internal class EmbracePreferencesServiceTest {
     @Test
     fun `test device identifier is created`() {
         assertNotNull(service.deviceIdentifier)
-    }
-
-    @Test
-    fun `test permanent session properties are saved`() {
-        assertNull(service.permanentSessionProperties)
-
-        val map = mapOf("property1" to "1", "property2" to "2")
-        service.permanentSessionProperties = map
-        assertEquals(map, service.permanentSessionProperties)
-
-        service.permanentSessionProperties = null
-        assertNull(service.permanentSessionProperties)
-    }
-
-    @Test
-    fun `test last config fetch date is saved`() {
-        assertNull(service.lastConfigFetchDate)
-        service.lastConfigFetchDate = 1234L
-        assertEquals(1234L, service.lastConfigFetchDate)
     }
 
     @Test

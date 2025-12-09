@@ -24,24 +24,5 @@ internal class NoopUnityInternalInterfaceTest {
         impl.setUnityMetaData("unityVersion", "buildGuid", "unitySdkVersion")
         impl.logUnhandledUnityException("name", "message", "stacktrace")
         impl.logHandledUnityException("name", "message", "stacktrace")
-        impl.recordIncompleteNetworkRequest(
-            "https://google.com",
-            "get",
-            15092342340,
-            15092342799,
-            "errorType",
-            "errorMessage",
-            "traceId"
-        )
-        impl.recordCompletedNetworkRequest(
-            "https://google.com",
-            "get",
-            15092342340,
-            15092342799,
-            140,
-            2509,
-            200,
-            "traceId"
-        )
     }
 }

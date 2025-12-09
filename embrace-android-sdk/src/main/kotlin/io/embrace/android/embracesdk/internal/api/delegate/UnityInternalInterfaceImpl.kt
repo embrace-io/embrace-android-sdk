@@ -7,8 +7,6 @@ import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
 import io.embrace.android.embracesdk.internal.UnityInternalInterface
 import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
-import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
-import io.embrace.android.embracesdk.network.http.HttpMethod
 
 internal class UnityInternalInterfaceImpl(
     private val embrace: EmbraceImpl,
@@ -68,55 +66,5 @@ internal class UnityInternalInterfaceImpl(
         } else {
             logger.logSdkNotInitialized("log Unity exception")
         }
-    }
-
-    override fun recordIncompleteNetworkRequest(
-        url: String,
-        httpMethod: String,
-        startTime: Long,
-        endTime: Long,
-        errorType: String?,
-        errorMessage: String?,
-        traceId: String?,
-    ) {
-        embrace.recordNetworkRequest(
-            EmbraceNetworkRequest.fromIncompleteRequest(
-                url,
-                HttpMethod.fromString(httpMethod),
-                startTime,
-                endTime,
-                errorType ?: "",
-                errorMessage ?: "",
-                traceId,
-                null,
-                null
-            )
-        )
-    }
-
-    override fun recordCompletedNetworkRequest(
-        url: String,
-        httpMethod: String,
-        startTime: Long,
-        endTime: Long,
-        bytesSent: Long,
-        bytesReceived: Long,
-        statusCode: Int,
-        traceId: String?,
-    ) {
-        embrace.recordNetworkRequest(
-            EmbraceNetworkRequest.fromCompletedRequest(
-                url,
-                HttpMethod.fromString(httpMethod),
-                startTime,
-                endTime,
-                bytesSent,
-                bytesReceived,
-                statusCode,
-                traceId,
-                null,
-                null
-            )
-        )
     }
 }

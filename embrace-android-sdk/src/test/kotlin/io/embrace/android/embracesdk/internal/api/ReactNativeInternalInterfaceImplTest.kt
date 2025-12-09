@@ -122,24 +122,6 @@ internal class ReactNativeInternalInterfaceImplTest {
     }
 
     @Test
-    fun testSetCacheableJavaScriptBundleUrl() {
-        impl = ReactNativeInternalInterfaceImpl(
-            embrace,
-            FakeEmbraceInternalInterface(),
-            bootstrapper,
-            rnBundleIdTracker,
-            hostedSdkVersionInfo,
-            logger
-        )
-
-        every { embrace.isStarted } returns true
-        impl.setCacheableJavaScriptBundleUrl(context, "index.android.bundle", true)
-        // Test that the metadata service was called with the correct parameters
-        assertEquals("index.android.bundle", rnBundleIdTracker.fakeReactNativeBundleId)
-        assertEquals(true, rnBundleIdTracker.forceUpdate)
-    }
-
-    @Test
     fun testSetJavaScriptBundleURLForOtherOTAs() {
         impl = ReactNativeInternalInterfaceImpl(
             embrace,

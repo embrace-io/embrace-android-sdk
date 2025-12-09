@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.internal.injection
 
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState
 import io.embrace.android.embracesdk.internal.capture.crumbs.BreadcrumbDataSource
-import io.embrace.android.embracesdk.internal.capture.crumbs.RnActionDataSource
 import io.embrace.android.embracesdk.internal.capture.telemetry.InternalErrorDataSource
 import io.embrace.android.embracesdk.internal.capture.telemetry.InternalErrorDataSourceImpl
 import io.embrace.android.embracesdk.internal.config.ConfigService
@@ -20,16 +19,6 @@ class FeatureModuleImpl(
         DataSourceState(
             factory = {
                 BreadcrumbDataSource(instrumentationModule.instrumentationArgs)
-            }
-        ).apply {
-            instrumentationModule.instrumentationRegistry.add(this)
-        }
-    }
-
-    override val rnActionDataSource: DataSourceState<RnActionDataSource> by singleton {
-        DataSourceState(
-            factory = {
-                RnActionDataSource(instrumentationModule.instrumentationArgs)
             }
         ).apply {
             instrumentationModule.instrumentationRegistry.add(this)

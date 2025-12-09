@@ -51,8 +51,7 @@ internal class InternalNetworkApiImplTest {
             traceparent = null
         )
         fakeInternalInterface = FakeEmbraceInternalInterface(
-            networkSpanForwardingEnabled = false,
-            captureNetworkBody = false
+            networkSpanForwardingEnabled = false
         )
         initialize().verifyDelegation()
     }
@@ -69,8 +68,7 @@ internal class InternalNetworkApiImplTest {
             traceparent = "foo"
         )
         fakeInternalInterface = FakeEmbraceInternalInterface(
-            networkSpanForwardingEnabled = true,
-            captureNetworkBody = true
+            networkSpanForwardingEnabled = true
         )
         initialize().verifyDelegation()
     }

@@ -6,14 +6,9 @@ import io.embrace.android.embracesdk.assertions.findSpansByName
 import io.embrace.android.embracesdk.internal.EmbraceInternalApi
 import io.embrace.android.embracesdk.internal.config.remote.NetworkCaptureRuleRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
-import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.payload.Span
-import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
-import io.embrace.android.embracesdk.network.http.HttpMethod
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
-import io.embrace.opentelemetry.kotlin.semconv.HttpAttributes
-import java.net.SocketException
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -40,126 +35,10 @@ internal class EmbraceInternalInterfaceTest {
             testCaseAction = {
                 assertFalse(embrace.isStarted)
                 with(EmbraceInternalApi.internalInterface) {
-                    logInfo("", null)
-                    logWarning("", null, null)
-                    logError("", null, null, false)
-                    recordCompletedNetworkRequest(
-                        url = "",
-                        httpMethod = "GET",
-                        startTime = 0L,
-                        endTime = 1L,
-                        bytesSent = 0L,
-                        bytesReceived = 0L,
-                        statusCode = 200,
-                        traceId = null,
-                        networkCaptureData = null
-                    )
-
-                    recordIncompleteNetworkRequest(
-                        url = "",
-                        httpMethod = "GET",
-                        startTime = 0L,
-                        endTime = 1L,
-                        error = null,
-                        traceId = null,
-                        networkCaptureData = null
-                    )
-
-                    recordIncompleteNetworkRequest(
-                        url = "",
-                        httpMethod = "GET",
-                        startTime = 0L,
-                        endTime = 1L,
-                        errorType = null,
-                        errorMessage = null,
-                        traceId = null,
-                        networkCaptureData = null
-                    )
-
-                    recordNetworkRequest(
-                        embraceNetworkRequest = EmbraceNetworkRequest.fromCompletedRequest(
-                            "",
-                            HttpMethod.GET,
-                            0L,
-                            1L,
-                            0L,
-                            0L,
-                            200,
-                            null
-                        )
-                    )
-
                     assertFalse(shouldCaptureNetworkBody("", ""))
                     assertFalse(isNetworkSpanForwardingEnabled())
                 }
                 assertFalse(embrace.isStarted)
-            }
-        )
-    }
-
-    @Test
-    fun `network recording methods work as expected`() {
-        testRule.runTest(
-            testCaseAction = {
-                recordSession {
-                    clock.tick()
-                    EmbraceInternalApi.internalInterface.recordCompletedNetworkRequest(
-                        url = URL,
-                        httpMethod = "GET",
-                        startTime = START_TIME,
-                        endTime = END_TIME,
-                        bytesSent = 0L,
-                        bytesReceived = 0L,
-                        statusCode = 500,
-                        traceId = null,
-                        networkCaptureData = null
-                    )
-
-                    EmbraceInternalApi.internalInterface.recordIncompleteNetworkRequest(
-                        url = URL,
-                        httpMethod = "GET",
-                        startTime = START_TIME,
-                        endTime = END_TIME,
-                        error = NullPointerException(),
-                        traceId = null,
-                        networkCaptureData = null
-                    )
-
-                    EmbraceInternalApi.internalInterface.recordIncompleteNetworkRequest(
-                        url = URL,
-                        httpMethod = "GET",
-                        startTime = START_TIME,
-                        endTime = END_TIME,
-                        errorType = SocketException::class.java.canonicalName,
-                        errorMessage = "",
-                        traceId = null,
-                        networkCaptureData = null
-                    )
-
-                    EmbraceInternalApi.internalInterface.recordNetworkRequest(
-                        embraceNetworkRequest = EmbraceNetworkRequest.fromCompletedRequest(
-                            URL,
-                            HttpMethod.POST,
-                            START_TIME,
-                            END_TIME,
-                            99L,
-                            301L,
-                            200,
-                            null
-                        )
-                    )
-                }
-            },
-            assertAction = {
-                val session = getSingleSessionEnvelope()
-                val spans = checkNotNull(session.data.spans)
-                val requests =
-                    checkNotNull(spans.filter { it.attributes?.findAttributeValue(HttpAttributes.HTTP_REQUEST_METHOD) != null })
-                assertEquals(
-                    "Unexpected number of requests in sent session: ${requests.size}",
-                    4,
-                    requests.size
-                )
             }
         )
     }
@@ -344,7 +223,5 @@ internal class EmbraceInternalInterfaceTest {
 
     companion object {
         private const val URL = "https://embrace.io"
-        private const val START_TIME = 1692201601000L
-        private const val END_TIME = 1692201603000L
     }
 }

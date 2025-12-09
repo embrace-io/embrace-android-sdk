@@ -60,7 +60,7 @@ data class RemoteConfig(
     val logConfig: LogRemoteConfig? = null,
 
     @Json(name = "anr")
-    val anrConfig: AnrRemoteConfig? = null,
+    val threadBlockageRemoteConfig: ThreadBlockageRemoteConfig? = null,
 
     @Json(name = "data")
     val dataConfig: DataRemoteConfig? = null,

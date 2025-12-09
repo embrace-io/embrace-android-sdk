@@ -20,10 +20,9 @@ interface AutoDataCaptureBehavior {
     fun isNetworkConnectivityCaptureEnabled(): Boolean
 
     /**
-     * Returns true if [io.embrace.android.embracesdk.anr.AnrService] should
-     * automatically capture data.
+     * Returns true if thread blockages should be captured.
      */
-    fun isAnrCaptureEnabled(): Boolean
+    fun isThreadBlockageCaptureEnabled(): Boolean
 
     /**
      * Control whether the Embrace SDK automatically attaches to the uncaught exception handler.

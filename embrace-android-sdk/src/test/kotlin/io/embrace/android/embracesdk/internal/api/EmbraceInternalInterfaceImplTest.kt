@@ -8,9 +8,9 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeNetworkCaptureDataSource
-import io.embrace.android.embracesdk.fakes.behavior.FakeAnrBehavior
 import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.fakes.behavior.FakeNetworkSpanForwardingBehavior
+import io.embrace.android.embracesdk.fakes.behavior.FakeThreadBlockageBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.api.delegate.EmbraceInternalInterfaceImpl
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
@@ -173,9 +173,9 @@ internal class EmbraceInternalInterfaceImplTest {
     @Test
     fun `check isAnrCaptureEnabled`() {
         assertTrue(internalImpl.isAnrCaptureEnabled())
-        fakeConfigService.anrBehavior = FakeAnrBehavior(anrCaptureEnabled = false)
+        fakeConfigService.threadBlockageBehavior = FakeThreadBlockageBehavior(captureEnabled = false)
         assertFalse(internalImpl.isAnrCaptureEnabled())
-        fakeConfigService.anrBehavior = FakeAnrBehavior(anrCaptureEnabled = true)
+        fakeConfigService.threadBlockageBehavior = FakeThreadBlockageBehavior(captureEnabled = true)
         assertTrue(internalImpl.isAnrCaptureEnabled())
     }
 

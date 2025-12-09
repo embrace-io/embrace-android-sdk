@@ -17,53 +17,53 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 private const val INTERVAL_MS = 100L
-private const val ANR_THRESHOLD_MS = 1000L
+private const val THREAD_BLOCKAGE_THRESHOLD_MS = 1000L
 private const val MAX_SAMPLE_COUNT = 80
 private const val MAX_INTERVAL_COUNT = 5
 private const val SPAN_NAME = "emb-thread-blockage"
 
 @RunWith(AndroidJUnit4::class)
-internal class AnrFeatureTest {
+internal class ThreadBlockageFeatureTest {
 
-    private lateinit var anrMonitorExecutor: BlockingScheduledExecutorService
+    private lateinit var watchdogExecutor: BlockingScheduledExecutorService
     private var startTimeMs: Long = 0L
 
     @Rule
     @JvmField
     val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule {
         EmbraceSetupInterface(
-            workerToFake = Worker.Background.AnrWatchdogWorker,
-            anrMonitoringThread = Thread.currentThread()
+            workerToFake = Worker.Background.ThreadBlockageWatchdogWorker,
+            threadBlockageWatchdogThread = Thread.currentThread()
         ).also {
             with(it) {
-                anrMonitorExecutor = getFakedWorkerExecutor()
-                anrMonitorExecutor.blockingMode = true
+                watchdogExecutor = getFakedWorkerExecutor()
+                watchdogExecutor.blockingMode = true
             }
         }
     }
 
     @Test
-    fun `trigger ANRs`() {
+    fun `trigger thread blockage`() {
         val firstSampleCount = 20
         val secondSampleCount = 10
-        var secondAnrStartTime: Long? = null
+        var secondStartTime: Long? = null
 
         testRule.runTest(
             testCaseAction = {
                 startTimeMs = recordSession {
-                    triggerAnr(firstSampleCount)
-                    secondAnrStartTime = clock.now()
-                    triggerAnr(secondSampleCount)
+                    triggerThreadBlockage(firstSampleCount)
+                    secondStartTime = clock.now()
+                    triggerThreadBlockage(secondSampleCount)
                 }.actionTimeMs
             },
             assertAction = {
                 val message = getSingleSessionEnvelope()
 
-                // assert ANRs received
-                val spans = message.findAnrSpans()
+                // assert thread blockages received
+                val spans = message.findThreadBlockageSpans()
                 assertEquals(2, spans.size)
-                assertAnrReceived(spans[0], startTimeMs, firstSampleCount)
-                assertAnrReceived(spans[1], checkNotNull(secondAnrStartTime), secondSampleCount)
+                assertThreadBlockageReceived(spans[0], startTimeMs, firstSampleCount)
+                assertThreadBlockageReceived(spans[1], checkNotNull(secondStartTime), secondSampleCount)
             },
             otelExportAssertion = {
                 awaitSpansWithType(2, EmbType.Performance.ThreadBlockage)
@@ -78,16 +78,16 @@ internal class AnrFeatureTest {
         testRule.runTest(
             testCaseAction = {
                 startTimeMs = recordSession {
-                    triggerAnr(sampleCount)
+                    triggerThreadBlockage(sampleCount)
                 }.actionTimeMs
             },
             assertAction = {
                 val message = getSingleSessionEnvelope()
 
-                // assert ANRs received
-                val spans = message.findAnrSpans()
+                // assert thread blockages received
+                val spans = message.findThreadBlockageSpans()
                 val span = spans.single()
-                assertAnrReceived(span, startTimeMs, sampleCount)
+                assertThreadBlockageReceived(span, startTimeMs, sampleCount)
             }
         )
     }
@@ -104,15 +104,15 @@ internal class AnrFeatureTest {
                 recordSession {
                     repeat(intervalCount) { index ->
                         startTimes.add(clock.now())
-                        triggerAnr(initialSamples + (index * extraSamples))
+                        triggerThreadBlockage(initialSamples + (index * extraSamples))
                     }
                 }
             },
             assertAction = {
                 val message = getSingleSessionEnvelope()
 
-                // assert ANRs received
-                val spans = message.findAnrSpans()
+                // assert thread blockages received
+                val spans = message.findThreadBlockageSpans()
                 assertEquals(intervalCount, spans.size)
 
                 repeat(intervalCount) { index ->
@@ -124,21 +124,21 @@ internal class AnrFeatureTest {
                         index < intervalCount - MAX_INTERVAL_COUNT -> "1"
                         else -> "0"
                     }
-                    assertAnrReceived(span, startTimes[index], expectedSamples, intervalCode)
+                    assertThreadBlockageReceived(span, startTimes[index], expectedSamples, intervalCode)
                 }
             }
         )
     }
 
     @Test
-    fun `in progress ANR added to payload`() {
+    fun `in progress thread blockage added to payload`() {
         val sampleCount = 10
         var endTime: Long = -1
 
         testRule.runTest(
             testCaseAction = {
                 recordSession {
-                    triggerAnr(sampleCount, incomplete = true)
+                    triggerThreadBlockage(sampleCount, incomplete = true)
                 }.let {
                     startTimeMs = it.actionTimeMs
                     endTime = it.endTimeMs
@@ -147,20 +147,20 @@ internal class AnrFeatureTest {
             assertAction = {
                 val message = getSingleSessionEnvelope()
 
-                // assert ANRs received
-                val spans = message.findAnrSpans()
+                // assert thread blockages received
+                val spans = message.findThreadBlockageSpans()
                 val span = spans.single()
-                assertAnrReceived(span, startTimeMs, sampleCount, endTime = endTime)
+                assertThreadBlockageReceived(span, startTimeMs, sampleCount, endTime = endTime)
             }
         )
     }
 
-    private fun assertAnrReceived(
+    private fun assertThreadBlockageReceived(
         span: Span,
         startTime: Long,
         sampleCount: Int,
         expectedIntervalCode: String = "0",
-        endTime: Long = startTime + ANR_THRESHOLD_MS + (sampleCount * INTERVAL_MS),
+        endTime: Long = startTime + THREAD_BLOCKAGE_THRESHOLD_MS + (sampleCount * INTERVAL_MS),
     ) {
         // assert span start/end times
         assertEquals(startTime, span.startTimeNanos?.nanosToMillis())
@@ -192,27 +192,27 @@ internal class AnrFeatureTest {
             )
 
             // assert interval time
-            val expectedTime = startTime + ANR_THRESHOLD_MS + ((index + 1) * INTERVAL_MS)
+            val expectedTime = startTime + THREAD_BLOCKAGE_THRESHOLD_MS + ((index + 1) * INTERVAL_MS)
             assertEquals(expectedTime, event.timestampNanos?.nanosToMillis())
         }
     }
 
     /**
-     * Triggers an ANR by simulating the main thread getting blocked & unblocked. Time is controlled
+     * Triggers a thread blockage by simulating the main thread getting blocked & unblocked. Time is controlled
      * with a fake Clock instance & a blockable executor that runs the blockage checks.
      */
-    private fun triggerAnr(
+    private fun triggerThreadBlockage(
         sampleCount: Int,
         intervalMs: Long = INTERVAL_MS,
         incomplete: Boolean = false,
     ) {
-        testRule.bootstrapper.anrService?.simulateTargetThreadResponse()
-        with(anrMonitorExecutor) {
+        testRule.bootstrapper.threadBlockageService?.simulateTargetThreadResponse()
+        with(watchdogExecutor) {
             blockingMode = true
 
             // increase time by initial delay, and kick off check that marks thread as blocked
             moveForwardAndRunBlocked(0)
-            moveForwardAndRunBlocked(ANR_THRESHOLD_MS)
+            moveForwardAndRunBlocked(THREAD_BLOCKAGE_THRESHOLD_MS)
 
             // run the thread block check & create a sample
             repeat(sampleCount) {
@@ -220,17 +220,14 @@ internal class AnrFeatureTest {
             }
 
             if (!incomplete) {
-                // simulate the main thread becoming responsive again, ending the ANR interval
-                testRule.bootstrapper.anrService?.simulateTargetThreadResponse()
+                // simulate the main thread becoming responsive again, ending the interval
+                testRule.bootstrapper.threadBlockageService?.simulateTargetThreadResponse()
             }
 
-            // AnrService#getCapturedData() currently gets a Callable with a timeout, so we
-            // need to allow all jobs on the executor to finish running for spans to be
-            // included in the payload.
             blockingMode = false
             runCurrentlyBlocked()
         }
     }
 
-    private fun Envelope<SessionPayload>.findAnrSpans() = checkNotNull(data.spans?.filter { it.name == SPAN_NAME })
+    private fun Envelope<SessionPayload>.findThreadBlockageSpans() = checkNotNull(data.spans?.filter { it.name == SPAN_NAME })
 }

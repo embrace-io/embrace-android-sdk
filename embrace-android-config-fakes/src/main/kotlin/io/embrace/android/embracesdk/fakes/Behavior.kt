@@ -1,7 +1,5 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.android.embracesdk.internal.config.behavior.AnrBehavior
-import io.embrace.android.embracesdk.internal.config.behavior.AnrBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.AppExitInfoBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.AppExitInfoBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.AutoDataCaptureBehavior
@@ -23,6 +21,8 @@ import io.embrace.android.embracesdk.internal.config.behavior.SdkModeBehaviorImp
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.SessionBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.SessionBehaviorImpl
+import io.embrace.android.embracesdk.internal.config.behavior.ThreadBlockageBehavior
+import io.embrace.android.embracesdk.internal.config.behavior.ThreadBlockageBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 
@@ -33,12 +33,12 @@ private val behaviorThresholdCheck = BehaviorThresholdCheck {
 }
 
 /**
- * A [AnrBehavior] that returns default values.
+ * A [ThreadBlockageBehavior] that returns default values.
  */
-fun createAnrBehavior(
+fun createThreadBlockageBehavior(
     thresholdCheck: BehaviorThresholdCheck = behaviorThresholdCheck,
     remoteCfg: RemoteConfig? = null,
-): AnrBehavior = AnrBehaviorImpl(thresholdCheck, remoteCfg)
+): ThreadBlockageBehavior = ThreadBlockageBehaviorImpl(thresholdCheck, remoteCfg)
 
 /**
  * A [SessionBehaviorImpl] that returns default values.

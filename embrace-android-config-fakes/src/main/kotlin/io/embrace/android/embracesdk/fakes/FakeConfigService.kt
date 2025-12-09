@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.fakes.behavior.FakeBreadcrumbBehavior
 import io.embrace.android.embracesdk.internal.config.ConfigService
-import io.embrace.android.embracesdk.internal.config.behavior.AnrBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.AppExitInfoBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.AutoDataCaptureBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.BackgroundActivityBehavior
@@ -15,6 +14,7 @@ import io.embrace.android.embracesdk.internal.config.behavior.OtelBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.SdkModeBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.SessionBehavior
+import io.embrace.android.embracesdk.internal.config.behavior.ThreadBlockageBehavior
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 
 /**
@@ -30,7 +30,7 @@ class FakeConfigService(
     override var autoDataCaptureBehavior: AutoDataCaptureBehavior = createAutoDataCaptureBehavior(),
     override var breadcrumbBehavior: BreadcrumbBehavior = FakeBreadcrumbBehavior(),
     override var logMessageBehavior: LogMessageBehavior = createLogMessageBehavior(),
-    override var anrBehavior: AnrBehavior = createAnrBehavior(),
+    override var threadBlockageBehavior: ThreadBlockageBehavior = createThreadBlockageBehavior(),
     override var sessionBehavior: SessionBehavior = createSessionBehavior(),
     override var networkBehavior: NetworkBehavior = createNetworkBehavior(),
     override var dataCaptureEventBehavior: DataCaptureEventBehavior = createDataCaptureEventBehavior(),

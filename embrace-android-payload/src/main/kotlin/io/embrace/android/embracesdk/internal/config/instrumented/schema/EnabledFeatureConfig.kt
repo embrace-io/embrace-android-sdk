@@ -41,11 +41,11 @@ interface EnabledFeatureConfig {
     fun isNetworkConnectivityCaptureEnabled(): Boolean = true
 
     /**
-     * Gates ANR capture
+     * Gates thread blockage capture
      *
      * sdk_config.automatic_data_capture.anr_info
      */
-    fun isAnrCaptureEnabled(): Boolean = true
+    fun isThreadBlockageCaptureEnabled(): Boolean = true
 
     /**
      * Gates disk usage capture

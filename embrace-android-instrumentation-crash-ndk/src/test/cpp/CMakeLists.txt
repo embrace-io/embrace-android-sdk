@@ -2,7 +2,6 @@ include_directories(
         ${CMAKE_CURRENT_SOURCE_DIR}/include
         ../../main/cpp
         ../../main/cpp/3rdparty
-        ../../main/cpp/anr
         ../../main/cpp/crashmarker
         ../../main/cpp/jnibridge
         ../../main/cpp/safejni

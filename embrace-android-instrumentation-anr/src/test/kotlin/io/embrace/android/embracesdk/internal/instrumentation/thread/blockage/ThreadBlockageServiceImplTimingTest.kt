@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.internal.instrumentation.anr
+package io.embrace.android.embracesdk.internal.instrumentation.thread.blockage
 
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
@@ -12,15 +12,15 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 
 /**
- * Tests for the [AnrServiceImpl] that verifies behaviour when a specific order of events happen
+ * Tests for the [ThreadBlockageServiceImpl] that verifies behaviour when a specific order of events happen
  */
-internal class AnrServiceImplTimingTest {
+internal class ThreadBlockageServiceImplTimingTest {
 
     private val clock = FakeClock()
 
     @Rule
     @JvmField
-    val rule = AnrServiceRule(
+    val rule = ThreadBlockageServiceRule(
         clock = clock,
         scheduledExecutorSupplier = { BlockingScheduledExecutorService(fakeClock = clock) }
     )

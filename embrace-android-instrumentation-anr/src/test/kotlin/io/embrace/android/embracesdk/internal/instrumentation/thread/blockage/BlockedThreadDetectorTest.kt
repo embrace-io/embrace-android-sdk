@@ -6,10 +6,10 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeThreadBlockageListener
-import io.embrace.android.embracesdk.fakes.createAnrBehavior
+import io.embrace.android.embracesdk.fakes.createThreadBlockageBehavior
 import io.embrace.android.embracesdk.internal.config.ConfigService
-import io.embrace.android.embracesdk.internal.config.remote.AnrRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.internal.config.remote.ThreadBlockageRemoteConfig
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.mockk.every
@@ -31,14 +31,20 @@ internal class BlockedThreadDetectorTest {
     private lateinit var watchdogExecutorService: BlockingScheduledExecutorService
     private lateinit var logger: EmbLogger
     private lateinit var looper: Looper
-    private lateinit var cfg: AnrRemoteConfig
+    private lateinit var cfg: ThreadBlockageRemoteConfig
 
     @Before
     fun setUp() {
         watchdogThread = AtomicReference(Thread.currentThread())
-        cfg = AnrRemoteConfig()
+        cfg = ThreadBlockageRemoteConfig()
         clock = FakeClock(BASELINE_MS)
-        configService = FakeConfigService(anrBehavior = createAnrBehavior(remoteCfg = RemoteConfig(anrConfig = cfg)))
+        configService = FakeConfigService(
+            threadBlockageBehavior = createThreadBlockageBehavior(
+                remoteCfg = RemoteConfig(
+                    threadBlockageRemoteConfig = cfg
+                )
+            )
+        )
         watchdogExecutorService = BlockingScheduledExecutorService(clock)
         logger = FakeEmbLogger()
         looper = mockk {
@@ -51,8 +57,8 @@ internal class BlockedThreadDetectorTest {
             looper = mockk {
                 every { thread } returns Thread.currentThread()
             },
-            blockedDurationThreshold = configService.anrBehavior.getMinDuration(),
-            intervalMs = configService.anrBehavior.getSamplingIntervalMs(),
+            blockedDurationThreshold = configService.threadBlockageBehavior.getMinDuration(),
+            intervalMs = configService.threadBlockageBehavior.getSamplingIntervalMs(),
             logger = logger,
             listener = listener,
         )

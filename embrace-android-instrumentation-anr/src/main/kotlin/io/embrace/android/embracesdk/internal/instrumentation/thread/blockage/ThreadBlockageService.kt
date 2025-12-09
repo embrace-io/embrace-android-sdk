@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.internal.instrumentation.anr
+package io.embrace.android.embracesdk.internal.instrumentation.thread.blockage
 
 import io.embrace.android.embracesdk.internal.arch.CrashTeardownHandler
 import io.embrace.android.embracesdk.internal.arch.state.AppStateListener
@@ -8,7 +8,7 @@ import io.embrace.android.embracesdk.internal.session.MemoryCleanerListener
 /**
  * Service which detects when the application is not responding.
  */
-interface AnrService :
+interface ThreadBlockageService :
     MemoryCleanerListener,
     CrashTeardownHandler,
     AppStateListener,

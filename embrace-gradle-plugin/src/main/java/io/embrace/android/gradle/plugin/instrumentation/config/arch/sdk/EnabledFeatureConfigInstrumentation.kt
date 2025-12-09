@@ -14,7 +14,7 @@ fun createEnabledFeatureConfigInstrumentation(cfg: VariantConfig) = modelSdkConf
         boolMethod(
             "isNetworkConnectivityCaptureEnabled"
         ) { automaticDataCaptureConfig?.networkConnectivityServiceEnabled }
-        boolMethod("isAnrCaptureEnabled") { automaticDataCaptureConfig?.anrServiceEnabled }
+        boolMethod("isThreadBlockageCaptureEnabled") { automaticDataCaptureConfig?.threadBlockageServiceEnabled }
         boolMethod("isDiskUsageCaptureEnabled") { app?.reportDiskUsage }
         boolMethod("isJvmCrashCaptureEnabled") { crashHandler?.enabled }
         boolMethod("isAeiCaptureEnabled") { appExitInfoConfig?.aeiCaptureEnabled }

@@ -27,7 +27,7 @@ internal class AutoDataCaptureBehaviorImplTest {
         with(createAutoDataCaptureBehavior()) {
             assertTrue(isPowerSaveModeCaptureEnabled())
             assertTrue(isNetworkConnectivityCaptureEnabled())
-            assertTrue(isAnrCaptureEnabled())
+            assertTrue(isThreadBlockageCaptureEnabled())
             assertTrue(isJvmCrashCaptureEnabled())
             assertFalse(isComposeClickCaptureEnabled())
             assertFalse(is3rdPartySigHandlerDetectionEnabled())

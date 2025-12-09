@@ -32,7 +32,7 @@ import io.embrace.android.embracesdk.internal.injection.InstrumentationModuleImp
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.injection.WorkerThreadModule
 import io.embrace.android.embracesdk.internal.injection.WorkerThreadModuleImpl
-import io.embrace.android.embracesdk.internal.instrumentation.anr.createAnrService
+import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.createThreadBlockageService
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.jniDelegateTestOverride
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.sharedObjectLoaderTestOverride
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
@@ -51,7 +51,7 @@ import io.embrace.opentelemetry.kotlin.ExperimentalApi
  */
 internal class EmbraceSetupInterface(
     workerToFake: Worker.Background? = null,
-    private val anrMonitoringThread: Thread? = null,
+    private val threadBlockageWatchdogThread: Thread? = null,
     fakeStorageLayer: Boolean = false,
     val ignoredInternalErrors: List<InternalErrorType> = emptyList(),
     val fakeClock: FakeClock = FakeClock(currentTime = SdkIntegrationTestRule.DEFAULT_SDK_START_TIME_MS),
@@ -86,7 +86,7 @@ internal class EmbraceSetupInterface(
     private val workerThreadModule: WorkerThreadModule = initWorkerThreadModule(
         fakeInitModule = fakeInitModule,
         workerToFake = workerToFake,
-        anrMonitoringThread = anrMonitoringThread
+        threadBlockageWatchdogThread = threadBlockageWatchdogThread
     )
 
     private val fakeCoreModule: CoreModule = FakeCoreModule()
@@ -132,9 +132,9 @@ internal class EmbraceSetupInterface(
                 deliveryTracer = deliveryTracer
             )
         },
-        anrServiceSupplier = { args ->
-            if (anrMonitoringThread != null) {
-                createAnrService(args)
+        threadBlockageServiceSupplier = { args ->
+            if (threadBlockageWatchdogThread != null) {
+                createThreadBlockageService(args)
             } else {
                 null
             }
@@ -207,7 +207,7 @@ internal class EmbraceSetupInterface(
         fun initWorkerThreadModule(
             fakeInitModule: FakeInitModule,
             workerToFake: Worker.Background?,
-            anrMonitoringThread: Thread?,
+            threadBlockageWatchdogThread: Thread?,
         ): WorkerThreadModule =
             if (workerToFake == null) {
                 WorkerThreadModuleImpl()
@@ -215,7 +215,7 @@ internal class EmbraceSetupInterface(
                 FakeWorkerThreadModule(
                     fakeInitModule = fakeInitModule,
                     testWorker = workerToFake,
-                    anrMonitoringThread = anrMonitoringThread
+                    threadBlockageMonitoringThread = threadBlockageWatchdogThread
                 )
             }
     }

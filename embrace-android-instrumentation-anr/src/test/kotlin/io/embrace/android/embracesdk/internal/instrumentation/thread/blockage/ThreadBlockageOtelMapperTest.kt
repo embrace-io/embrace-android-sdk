@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.internal.instrumentation.anr
+package io.embrace.android.embracesdk.internal.instrumentation.thread.blockage
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeClock
@@ -165,7 +165,13 @@ internal class ThreadBlockageOtelMapperTest {
 
     @Test
     fun `truncated stack shows the pre-truncated frame count`() {
-        val span = listOf(completedIntervalWithTruncatedSample).map { mapIntervalToSpan(it, clock, random) }.single()
+        val span = listOf(completedIntervalWithTruncatedSample).map {
+            mapIntervalToSpan(
+                it,
+                clock,
+                random
+            )
+        }.single()
         val events = checkNotNull(span.events)
         assertEquals(2, events.size)
         assertSampleMapped(events[1], truncatedSecondSample)

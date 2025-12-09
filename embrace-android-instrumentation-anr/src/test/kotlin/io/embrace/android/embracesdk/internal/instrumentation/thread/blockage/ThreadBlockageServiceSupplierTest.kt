@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.internal.instrumentation.anr
+package io.embrace.android.embracesdk.internal.instrumentation.thread.blockage
 
 import android.app.Application
 import androidx.test.core.app.ApplicationProvider
@@ -12,12 +12,12 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
-internal class AnrServiceSupplierTest {
+internal class ThreadBlockageServiceSupplierTest {
 
     @Test
     fun testDefaultImplementations() {
         val application = ApplicationProvider.getApplicationContext<Application>()
-        val service = createAnrService(
+        val service = createThreadBlockageService(
             FakeInstrumentationArgs(
                 application,
                 configService = FakeConfigService()
@@ -29,11 +29,11 @@ internal class AnrServiceSupplierTest {
     @Test
     fun testBehaviorDisabled() {
         val application = ApplicationProvider.getApplicationContext<Application>()
-        val service = createAnrService(
+        val service = createThreadBlockageService(
             FakeInstrumentationArgs(
                 application,
                 configService = FakeConfigService(
-                    autoDataCaptureBehavior = FakeAutoDataCaptureBehavior(anrServiceEnabled = false)
+                    autoDataCaptureBehavior = FakeAutoDataCaptureBehavior(threadBlockageServiceEnabled = false)
                 )
             ),
         )

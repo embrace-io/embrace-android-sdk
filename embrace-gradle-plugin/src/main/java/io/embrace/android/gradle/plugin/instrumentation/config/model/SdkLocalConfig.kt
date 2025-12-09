@@ -73,7 +73,7 @@ data class SdkLocalConfig(
      * ANR settings
      */
     @Json(name = "anr")
-    val anr: AnrLocalConfig? = null,
+    val threadBlockage: ThreadBlockageLocalConfig? = null,
 
     /**
      * App settings

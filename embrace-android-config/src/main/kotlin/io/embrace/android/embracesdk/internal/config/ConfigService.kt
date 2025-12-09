@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.config
 
-import io.embrace.android.embracesdk.internal.config.behavior.AnrBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.AppExitInfoBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.AutoDataCaptureBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.BackgroundActivityBehavior
@@ -13,6 +12,7 @@ import io.embrace.android.embracesdk.internal.config.behavior.OtelBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.SdkModeBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.SessionBehavior
+import io.embrace.android.embracesdk.internal.config.behavior.ThreadBlockageBehavior
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 
 /**
@@ -43,9 +43,9 @@ interface ConfigService {
     val logMessageBehavior: LogMessageBehavior
 
     /**
-     * How ANR functionality should behave.
+     * How thread blockage functionality should behave.
      */
-    val anrBehavior: AnrBehavior
+    val threadBlockageBehavior: ThreadBlockageBehavior
 
     /**
      * How sessions should behave.

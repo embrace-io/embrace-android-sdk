@@ -22,9 +22,9 @@ interface WorkerThreadModule : Closeable {
     fun <T> priorityWorker(worker: Worker.Priority): PriorityWorker<T>
 
     /**
-     * Returns the thread that monitors the main thread for ANRs
+     * Returns the thread that monitors the main thread for thread blockages
      */
-    val anrMonitorThread: AtomicReference<Thread>
+    val threadBlockageMonitorThread: AtomicReference<Thread>
 
     /**
      * This should only be invoked when the SDK is shutting down. Closing all the worker threads in production means the

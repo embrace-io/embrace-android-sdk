@@ -11,7 +11,7 @@ import java.util.concurrent.atomic.AtomicReference
 
 class FakeWorkerThreadModule(
     fakeInitModule: FakeInitModule = FakeInitModule(),
-    anrMonitoringThread: Thread? = null,
+    threadBlockageMonitoringThread: Thread? = null,
     private val testWorker: Worker? = null,
     private val anotherTestWorker: Worker? = null,
     private val testPriorityWorker: Worker.Priority? = null,
@@ -27,10 +27,10 @@ class FakeWorkerThreadModule(
     private val backgroundWorker = BackgroundWorker(executor)
     private val anotherBackgroundWorker = BackgroundWorker(anotherExecutor)
     private val priorityWorker = PriorityWorker<Any>(priorityWorkerExecutor)
-    private val anrMonitoringThreadRef: AtomicReference<Thread> = if (anrMonitoringThread == null) {
-        base.anrMonitorThread
+    private val threadBlockageWatchdogThreadRef: AtomicReference<Thread> = if (threadBlockageMonitoringThread == null) {
+        base.threadBlockageMonitorThread
     } else {
-        AtomicReference(anrMonitoringThread)
+        AtomicReference(threadBlockageMonitoringThread)
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -49,5 +49,5 @@ class FakeWorkerThreadModule(
         }
     }
 
-    override val anrMonitorThread: AtomicReference<Thread> = anrMonitoringThreadRef
+    override val threadBlockageMonitorThread: AtomicReference<Thread> = threadBlockageWatchdogThreadRef
 }

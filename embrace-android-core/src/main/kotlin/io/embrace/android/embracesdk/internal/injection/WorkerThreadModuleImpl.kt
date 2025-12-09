@@ -22,7 +22,7 @@ class WorkerThreadModuleImpl : WorkerThreadModule, RejectedExecutionHandler {
     private val executors: MutableMap<Worker, ExecutorService> = ConcurrentHashMap()
     private val priorityWorkers: MutableMap<Worker, PriorityWorker<*>> = ConcurrentHashMap()
     private val backgroundWorkers: MutableMap<Worker, BackgroundWorker> = ConcurrentHashMap()
-    override val anrMonitorThread: AtomicReference<Thread> = AtomicReference<Thread>()
+    override val threadBlockageMonitorThread: AtomicReference<Thread> = AtomicReference<Thread>()
 
     @Suppress("UNCHECKED_CAST")
     override fun <T> priorityWorker(worker: Worker.Priority): PriorityWorker<T> {
@@ -74,8 +74,8 @@ class WorkerThreadModuleImpl : WorkerThreadModule, RejectedExecutionHandler {
     private fun createThreadFactory(name: Worker): ThreadFactory {
         return ThreadFactory { runnable: Runnable ->
             Executors.defaultThreadFactory().newThread(runnable).apply {
-                if (name == Worker.Background.AnrWatchdogWorker) {
-                    anrMonitorThread.set(this)
+                if (name == Worker.Background.ThreadBlockageWatchdogWorker) {
+                    threadBlockageMonitorThread.set(this)
                 }
                 this.name = "emb-${name.threadName}"
             }

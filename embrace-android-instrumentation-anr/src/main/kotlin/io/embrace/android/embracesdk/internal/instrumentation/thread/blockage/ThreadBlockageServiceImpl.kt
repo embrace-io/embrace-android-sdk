@@ -1,9 +1,8 @@
-package io.embrace.android.embracesdk.internal.instrumentation.anr
+package io.embrace.android.embracesdk.internal.instrumentation.thread.blockage
 
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.state.AppState
-import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.BlockedThreadDetector
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
@@ -18,13 +17,13 @@ import kotlin.random.Random
  *  2. Using the 'monitoring' thread to message the target thread with a heartbeat
  *  3. Determining whether the target thread responds in time and taking stacktrace samples if not
  */
-internal class AnrServiceImpl(
+internal class ThreadBlockageServiceImpl(
     args: InstrumentationArgs,
     private val blockedThreadDetector: BlockedThreadDetector,
     private val watchdogWorker: BackgroundWorker,
     private val stacktraceSampler: ThreadBlockageSampler,
     private val random: Random = Random.Default,
-) : AnrService {
+) : ThreadBlockageService {
 
     private val clock = args.clock
     private val appStateTracker = args.appStateTracker

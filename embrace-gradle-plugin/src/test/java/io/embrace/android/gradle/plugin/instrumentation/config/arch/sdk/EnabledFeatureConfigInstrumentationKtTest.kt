@@ -1,6 +1,5 @@
 package io.embrace.android.gradle.plugin.instrumentation.config.arch.sdk
 
-import io.embrace.android.gradle.plugin.instrumentation.config.model.AnrLocalConfig
 import io.embrace.android.gradle.plugin.instrumentation.config.model.AppExitInfoLocalConfig
 import io.embrace.android.gradle.plugin.instrumentation.config.model.AppLocalConfig
 import io.embrace.android.gradle.plugin.instrumentation.config.model.AutomaticDataCaptureLocalConfig
@@ -12,6 +11,7 @@ import io.embrace.android.gradle.plugin.instrumentation.config.model.NetworkLoca
 import io.embrace.android.gradle.plugin.instrumentation.config.model.OpenTelemetryLocalConfig
 import io.embrace.android.gradle.plugin.instrumentation.config.model.SdkLocalConfig
 import io.embrace.android.gradle.plugin.instrumentation.config.model.TapsLocalConfig
+import io.embrace.android.gradle.plugin.instrumentation.config.model.ThreadBlockageLocalConfig
 import io.embrace.android.gradle.plugin.instrumentation.config.model.VariantConfig
 import io.embrace.android.gradle.plugin.instrumentation.config.model.ViewLocalConfig
 import io.embrace.android.gradle.plugin.instrumentation.config.model.WebViewLocalConfig
@@ -33,7 +33,7 @@ class EnabledFeatureConfigInstrumentationKtTest {
         ConfigMethod("isViewClickCoordinateCaptureEnabled", "()Z", true),
         ConfigMethod("isPowerSaveModeCaptureEnabled", "()Z", true),
         ConfigMethod("isNetworkConnectivityCaptureEnabled", "()Z", true),
-        ConfigMethod("isAnrCaptureEnabled", "()Z", true),
+        ConfigMethod("isThreadBlockageCaptureEnabled", "()Z", true),
         ConfigMethod("isDiskUsageCaptureEnabled", "()Z", true),
         ConfigMethod("isJvmCrashCaptureEnabled", "()Z", true),
         ConfigMethod("isNativeCrashCaptureEnabled", "()Z", true),
@@ -70,7 +70,7 @@ class EnabledFeatureConfigInstrumentationKtTest {
                     null,
                     true,
                     SdkLocalConfig(
-                        anr = AnrLocalConfig(
+                        threadBlockage = ThreadBlockageLocalConfig(
                             captureUnityThread = true
                         ),
                         app = AppLocalConfig(
@@ -82,7 +82,7 @@ class EnabledFeatureConfigInstrumentationKtTest {
                         automaticDataCaptureConfig = AutomaticDataCaptureLocalConfig(
                             powerSaveModeServiceEnabled = true,
                             networkConnectivityServiceEnabled = true,
-                            anrServiceEnabled = true,
+                            threadBlockageServiceEnabled = true,
                             uiLoadPerfTracingDisabled = false,
                             uiLoadPerfTracingSelectedOnly = false,
                             endStartupWithAppReadyEnabled = true,

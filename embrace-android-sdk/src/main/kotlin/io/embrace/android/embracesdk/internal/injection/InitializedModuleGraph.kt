@@ -1,10 +1,10 @@
 package io.embrace.android.embracesdk.internal.injection
 
 import android.content.Context
-import io.embrace.android.embracesdk.internal.instrumentation.anr.AnrService
-import io.embrace.android.embracesdk.internal.instrumentation.anr.AnrServiceSupplier
 import io.embrace.android.embracesdk.internal.instrumentation.startup.DataCaptureServiceModule
 import io.embrace.android.embracesdk.internal.instrumentation.startup.DataCaptureServiceModuleSupplier
+import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageService
+import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageServiceSupplier
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
@@ -27,7 +27,7 @@ internal class InitializedModuleGraph(
     private val instrumentationModuleSupplier: InstrumentationModuleSupplier,
     private val dataCaptureServiceModuleSupplier: DataCaptureServiceModuleSupplier,
     private val deliveryModuleSupplier: DeliveryModuleSupplier,
-    private val anrServiceSupplier: AnrServiceSupplier,
+    private val threadBlockageServiceSupplier: ThreadBlockageServiceSupplier,
     private val logModuleSupplier: LogModuleSupplier,
     private val sessionOrchestrationModuleSupplier: SessionOrchestrationModuleSupplier,
     private val payloadSourceModuleSupplier: PayloadSourceModuleSupplier,
@@ -129,8 +129,8 @@ internal class InitializedModuleGraph(
         )
     }
 
-    override val anrService: AnrService? = init {
-        anrServiceSupplier(instrumentationModule.instrumentationArgs)
+    override val threadBlockageService: ThreadBlockageService? = init {
+        threadBlockageServiceSupplier(instrumentationModule.instrumentationArgs)
     }
 
     override val payloadSourceModule: PayloadSourceModule = init {
@@ -141,7 +141,7 @@ internal class InitializedModuleGraph(
             essentialServiceModule,
             configModule,
             openTelemetryModule,
-            anrService,
+            threadBlockageService,
             deliveryModule
         )
     }

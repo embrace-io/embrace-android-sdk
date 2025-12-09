@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.config
 
-import io.embrace.android.embracesdk.internal.config.behavior.AnrBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.AppExitInfoBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.AutoDataCaptureBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.BackgroundActivityBehaviorImpl
@@ -14,6 +13,7 @@ import io.embrace.android.embracesdk.internal.config.behavior.OtelBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.SdkModeBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.SessionBehaviorImpl
+import io.embrace.android.embracesdk.internal.config.behavior.ThreadBlockageBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.InstrumentedConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.payload.AppFramework
@@ -36,7 +36,7 @@ class ConfigServiceImpl(
     override val breadcrumbBehavior = BreadcrumbBehaviorImpl(instrumentedConfig, remoteConfig)
     override val sensitiveKeysBehavior = SensitiveKeysBehaviorImpl(instrumentedConfig)
     override val logMessageBehavior = LogMessageBehaviorImpl(remoteConfig)
-    override val anrBehavior = AnrBehaviorImpl(thresholdCheck, remoteConfig)
+    override val threadBlockageBehavior = ThreadBlockageBehaviorImpl(thresholdCheck, remoteConfig)
     override val sessionBehavior = SessionBehaviorImpl(remoteConfig)
     override val networkBehavior = NetworkBehaviorImpl(instrumentedConfig, remoteConfig)
     override val dataCaptureEventBehavior = DataCaptureEventBehaviorImpl(remoteConfig)

@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.instrumentation.thread.blockage
 
 import androidx.annotation.CheckResult
+import io.embrace.android.embracesdk.internal.arch.SessionChangeListener
 import io.embrace.android.embracesdk.internal.arch.stacktrace.ThreadSample
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageEvent.BLOCKED
@@ -8,7 +9,6 @@ import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.Th
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageEvent.UNBLOCKED
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageSample.Companion.CODE_DEFAULT
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageSample.Companion.CODE_SAMPLE_LIMIT_REACHED
-import io.embrace.android.embracesdk.internal.session.MemoryCleanerListener
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
@@ -23,7 +23,7 @@ internal class ThreadBlockageSampler(
     private val maxIntervalsPerSession: Int,
     private val maxSamplesPerInterval: Int,
     private val stacktraceFrameLimit: Int,
-) : ThreadBlockageListener, MemoryCleanerListener {
+) : ThreadBlockageListener, SessionChangeListener {
 
     private val intervalSink = AtomicReference(CopyOnWriteArrayList<ThreadBlockageInterval>())
     private val sampler = AtomicReference<ThreadStacktraceSampler>()
@@ -70,7 +70,7 @@ internal class ThreadBlockageSampler(
         return results
     }
 
-    override fun cleanCollections() {
+    override fun onPostSessionChange() {
         intervalSink.set(CopyOnWriteArrayList(intervalSink.get().filter { it.endTime == null }))
     }
 

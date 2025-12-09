@@ -80,7 +80,7 @@ class EmbraceLogService(
         return logCounters.getValue(Severity.ERROR).getCount()
     }
 
-    override fun cleanCollections() {
+    override fun onPostSessionChange() {
         logCounters.forEach { it.value.clear() }
     }
 

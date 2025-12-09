@@ -1,9 +1,9 @@
 package io.embrace.android.embracesdk.internal.registry
 
 import io.embrace.android.embracesdk.fakes.FakeAppStateTracker
-import io.embrace.android.embracesdk.fakes.FakeMemoryCleanerService
+import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
+import io.embrace.android.embracesdk.internal.arch.SessionChangeListener
 import io.embrace.android.embracesdk.internal.arch.state.AppStateListener
-import io.embrace.android.embracesdk.internal.session.MemoryCleanerListener
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -22,7 +22,7 @@ internal class ServiceRegistryTest {
         val expected = listOf(service)
         assertEquals(expected, registry.closeables)
         assertEquals(expected, registry.appStateListeners)
-        assertEquals(expected, registry.memoryCleanerListeners)
+        assertEquals(expected, registry.sessionChangeListeners)
     }
 
     @Test
@@ -36,9 +36,9 @@ internal class ServiceRegistryTest {
         registry.registerAppStateListeners(activityService)
         assertEquals(expected, activityService.listeners)
 
-        val memoryCleanerService = FakeMemoryCleanerService()
-        registry.registerMemoryCleanerListeners(memoryCleanerService)
-        assertEquals(expected, memoryCleanerService.listeners)
+        val sessionidTracker = FakeSessionIdTracker()
+        registry.registerSessionChangeListeners(sessionidTracker)
+        assertEquals(expected, sessionidTracker.listeners)
 
         assertFalse(service.closed)
         registry.close()
@@ -47,7 +47,7 @@ internal class ServiceRegistryTest {
 
     private class FakeService :
         Closeable,
-        MemoryCleanerListener,
+        SessionChangeListener,
         AppStateListener {
 
         var closed = false
@@ -56,7 +56,7 @@ internal class ServiceRegistryTest {
             closed = true
         }
 
-        override fun cleanCollections() {
+        override fun onPostSessionChange() {
         }
 
         override fun onBackground() {

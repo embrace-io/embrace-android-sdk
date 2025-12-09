@@ -1,9 +1,9 @@
 package io.embrace.android.embracesdk.internal.registry
 
+import io.embrace.android.embracesdk.internal.arch.SessionChangeListener
 import io.embrace.android.embracesdk.internal.arch.state.AppStateListener
 import io.embrace.android.embracesdk.internal.arch.state.AppStateTracker
-import io.embrace.android.embracesdk.internal.session.MemoryCleanerListener
-import io.embrace.android.embracesdk.internal.session.MemoryCleanerService
+import io.embrace.android.embracesdk.internal.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import java.io.Closeable
 
@@ -19,8 +19,8 @@ class ServiceRegistry : Closeable {
     // lazy init avoids type checks at startup until absolutely necessary.
     // once these variables are initialized, no further services should be registered.
     val closeables: List<Closeable> by lazy { finalRegistry.filterIsInstance<Closeable>() }
-    val memoryCleanerListeners: List<MemoryCleanerListener> by lazy {
-        finalRegistry.filterIsInstance<MemoryCleanerListener>()
+    val sessionChangeListeners: List<SessionChangeListener> by lazy {
+        finalRegistry.filterIsInstance<SessionChangeListener>()
     }
     val appStateListeners: List<AppStateListener> by lazy {
         finalRegistry.filterIsInstance<AppStateListener>()
@@ -41,9 +41,9 @@ class ServiceRegistry : Closeable {
             appStateTracker::addListener
         )
 
-    fun registerMemoryCleanerListeners(memoryCleanerService: MemoryCleanerService): Unit =
-        memoryCleanerListeners.forEachSafe(
-            memoryCleanerService::addListener
+    fun registerSessionChangeListeners(sessionidTracker: SessionIdTracker): Unit =
+        sessionChangeListeners.forEachSafe(
+            sessionidTracker::addListener
         )
 
     // close all of the services in one go. this prevents someone creating a Closeable service

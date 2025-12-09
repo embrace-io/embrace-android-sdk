@@ -1,14 +1,14 @@
 package io.embrace.android.embracesdk.internal.logs.attachments
 
+import io.embrace.android.embracesdk.internal.arch.SessionChangeListener
 import io.embrace.android.embracesdk.internal.logs.attachments.Attachment.EmbraceHosted
 import io.embrace.android.embracesdk.internal.logs.attachments.Attachment.UserHosted
-import io.embrace.android.embracesdk.internal.session.MemoryCleanerListener
 import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * Counts the number of attachments that should be added to log records.
  */
-class AttachmentService(private val limit: Int = 5) : MemoryCleanerListener {
+class AttachmentService(private val limit: Int = 5) : SessionChangeListener {
 
     fun createAttachment(attachment: ByteArray): EmbraceHosted =
         EmbraceHosted(attachment, ::incrementAndCheckAttachmentLimit)
@@ -24,7 +24,7 @@ class AttachmentService(private val limit: Int = 5) : MemoryCleanerListener {
 
     private val count: AtomicInteger = AtomicInteger(0)
 
-    override fun cleanCollections() = count.set(0)
+    override fun onPostSessionChange() = count.set(0)
 
     /**
      * Increments the counter of attachments for this session and returns true if an attachment can be uploaded.

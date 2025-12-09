@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.injection
 
 import io.embrace.android.embracesdk.core.BuildConfig
 import io.embrace.android.embracesdk.internal.arch.InstrumentationProvider
+import io.embrace.android.embracesdk.internal.arch.SessionChangeListener
 import io.embrace.android.embracesdk.internal.instrumentation.crash.jvm.JvmCrashDataSource
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeCrashDataSource
 import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkStatusDataSource
@@ -53,7 +54,13 @@ internal fun ModuleGraph.registerListeners() {
             essentialServiceModule.networkConnectivityService.register()
         }
         with(coreModule.serviceRegistry) {
-            registerService(lazy { configModule.configService.networkBehavior.domainCountLimiter })
+            registerService(
+                lazy {
+                    SessionChangeListener {
+                        configModule.configService.networkBehavior.domainCountLimiter.reset()
+                    }
+                }
+            )
 
             registerServices(
                 lazy { essentialServiceModule.networkConnectivityService }
@@ -69,7 +76,7 @@ internal fun ModuleGraph.registerListeners() {
 
             // registration ignored after this point
             registerAppStateListeners(essentialServiceModule.appStateTracker)
-            registerMemoryCleanerListeners(sessionOrchestrationModule.memoryCleanerService)
+            registerSessionChangeListeners(essentialServiceModule.sessionIdTracker)
         }
     }
 }

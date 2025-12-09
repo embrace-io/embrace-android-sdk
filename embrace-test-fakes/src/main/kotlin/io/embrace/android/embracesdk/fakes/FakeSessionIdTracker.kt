@@ -1,14 +1,15 @@
 package io.embrace.android.embracesdk.fakes
 
+import io.embrace.android.embracesdk.internal.arch.SessionChangeListener
 import io.embrace.android.embracesdk.internal.session.id.SessionData
 import io.embrace.android.embracesdk.internal.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.internal.arch.state.AppState
 
 class FakeSessionIdTracker : SessionIdTracker {
     var sessionData: SessionData? = null
-    var listeners: MutableList<(String?) -> Unit> = mutableListOf()
+    var listeners: MutableList<SessionChangeListener> = mutableListOf()
 
-    override fun addListener(listener: (String?) -> Unit) {
+    override fun addListener(listener: SessionChangeListener) {
         listeners.add(listener)
     }
 
@@ -16,8 +17,6 @@ class FakeSessionIdTracker : SessionIdTracker {
 
     override fun setActiveSession(sessionId: String?, appState: AppState) {
         sessionData = sessionId?.run { SessionData(sessionId, appState) }
-        listeners.forEach {
-            it(sessionId)
-        }
+        listeners.forEach(SessionChangeListener::onPostSessionChange)
     }
 }

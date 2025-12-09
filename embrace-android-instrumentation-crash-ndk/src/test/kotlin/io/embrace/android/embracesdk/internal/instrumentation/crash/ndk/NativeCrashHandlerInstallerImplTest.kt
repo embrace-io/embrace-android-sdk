@@ -91,7 +91,7 @@ class NativeCrashHandlerInstallerImplTest {
         // trigger new session and update report path
         args.clock.tick(9000)
         sessionId = "sid"
-        args.sessionChangeListeners.forEach { it() }
+        args.sessionChangeListeners.forEach { it.onPostSessionChange() }
         assertTrue(fakeDelegate.signalHandlerInstalled)
         assertEquals("p1_1692201610000_sid_pid_true_native_v1.json", getFilename())
     }

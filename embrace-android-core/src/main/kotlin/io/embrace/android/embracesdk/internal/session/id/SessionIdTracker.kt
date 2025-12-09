@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.session.id
 
+import io.embrace.android.embracesdk.internal.arch.SessionChangeListener
 import io.embrace.android.embracesdk.internal.arch.state.AppState
 
 interface SessionIdTracker {
@@ -26,5 +27,5 @@ interface SessionIdTracker {
      * Adds a listener that will be called when the session ID changes, and with the initial session
      * ID (if there is any).
      */
-    fun addListener(listener: (String?) -> Unit)
+    fun addListener(listener: SessionChangeListener)
 }

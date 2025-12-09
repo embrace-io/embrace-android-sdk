@@ -55,10 +55,7 @@ class CoreModuleImpl(
     }
 
     override val preferencesService: PreferencesService by singleton {
-        EmbracePreferencesService(
-            store,
-            initModule.clock
-        )
+        EmbracePreferencesService(store)
     }
 
     override val activityManager: ActivityManager? by singleton {

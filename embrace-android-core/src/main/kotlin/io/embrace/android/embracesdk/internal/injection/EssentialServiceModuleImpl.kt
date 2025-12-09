@@ -47,7 +47,8 @@ class EssentialServiceModuleImpl(
     override val userService: UserService by singleton {
         EmbTrace.trace("user-service-init") {
             EmbraceUserService(
-                coreModule.preferencesService,
+                coreModule.store,
+                initModule.clock,
                 initModule.logger
             )
         }

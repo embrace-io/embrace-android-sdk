@@ -6,7 +6,7 @@ import java.util.concurrent.ConcurrentHashMap
 
 class FakeKeyValueStore : KeyValueStore {
 
-    private val map = ConcurrentHashMap<String, Any?>()
+    private val map = mutableMapOf<String, Any?>()
 
     fun values(): Map<String, Any?> = map.toMap()
 

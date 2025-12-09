@@ -21,10 +21,10 @@ internal class UserFeaturesTest {
     fun `user info setting and clearing`() {
         testRule.runTest(
             setupAction = {
-                getPreferencesService().apply {
-                    userIdentifier = "customId"
-                    username = "customUserName"
-                    userEmailAddress = "custom@domain.com"
+                getStore().edit {
+                    putString("io.embrace.userid", "customId")
+                    putString("io.embrace.username", "customUserName")
+                    putString("io.embrace.useremail", "custom@domain.com")
                 }
             },
             testCaseAction = {

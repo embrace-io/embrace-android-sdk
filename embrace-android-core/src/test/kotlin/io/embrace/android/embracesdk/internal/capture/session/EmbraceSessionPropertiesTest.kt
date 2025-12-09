@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.internal.capture.session
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
@@ -26,7 +25,6 @@ private const val MAX_SESSION_PROPERTIES_DEFAULT = 10
 internal class EmbraceSessionPropertiesTest {
 
     companion object {
-        private val fakeClock = FakeClock()
         private const val KEY_VALID = "abc"
         private const val VALUE_VALID = "def"
     }
@@ -41,7 +39,7 @@ internal class EmbraceSessionPropertiesTest {
     fun setUp() {
         context = ApplicationProvider.getApplicationContext()
         preferencesService =
-            EmbracePreferencesService(FakeKeyValueStore(), fakeClock)
+            EmbracePreferencesService(FakeKeyValueStore())
 
         configService = FakeConfigService(
             sessionBehavior = FakeSessionBehavior(MAX_SESSION_PROPERTIES_DEFAULT)

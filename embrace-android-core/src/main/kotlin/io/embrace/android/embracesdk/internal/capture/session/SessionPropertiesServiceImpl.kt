@@ -3,17 +3,17 @@ package io.embrace.android.embracesdk.internal.capture.session
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.config.behavior.REDACTED_LABEL
-import io.embrace.android.embracesdk.internal.prefs.PreferencesService
+import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.utils.PropertyUtils
 
 internal class SessionPropertiesServiceImpl(
-    preferencesService: PreferencesService,
+    private val store: KeyValueStore,
     private val configService: ConfigService,
-    destination: TelemetryDestination
+    destination: TelemetryDestination,
 ) : SessionPropertiesService {
 
     private var listener: ((Map<String, String>) -> Unit)? = null
-    private val props = EmbraceSessionProperties(preferencesService, configService, destination)
+    private val props = EmbraceSessionProperties(store, configService, destination)
 
     override fun addProperty(originalKey: String, originalValue: String, permanent: Boolean): Boolean {
         if (!isValidKey(originalKey)) {

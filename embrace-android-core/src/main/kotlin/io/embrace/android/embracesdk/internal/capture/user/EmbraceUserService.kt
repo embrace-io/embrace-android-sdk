@@ -4,7 +4,6 @@ import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.payload.UserInfo
-import io.embrace.android.embracesdk.internal.prefs.PreferencesService
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.Provider
@@ -47,7 +46,7 @@ internal class EmbraceUserService(
 
     private fun isUsersFirstDay(): Boolean {
         val installDate = installDate
-        return installDate != null && clock.now() - installDate <= PreferencesService.DAY_IN_MS
+        return installDate != null && clock.now() - installDate <= DAY_IN_MS
     }
 
     private var installDate: Long?
@@ -237,5 +236,6 @@ internal class EmbraceUserService(
         const val INSTALL_DATE_KEY = "io.embrace.installtimestamp"
         const val PERSONA_PAYER = "payer"
         const val PERSONA_FIRST_DAY_USER = "first_day"
+        const val DAY_IN_MS: Long = 60 * 60 * 24 * 1000L
     }
 }

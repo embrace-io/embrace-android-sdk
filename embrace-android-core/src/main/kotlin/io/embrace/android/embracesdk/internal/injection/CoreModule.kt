@@ -1,11 +1,7 @@
 package io.embrace.android.embracesdk.internal.injection
 
-import android.app.ActivityManager
 import android.app.Application
-import android.app.usage.StorageStatsManager
 import android.content.Context
-import android.net.ConnectivityManager
-import android.view.WindowManager
 import io.embrace.android.embracesdk.internal.prefs.PreferencesService
 import io.embrace.android.embracesdk.internal.registry.ServiceRegistry
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
@@ -40,9 +36,4 @@ interface CoreModule {
     val preferencesService: PreferencesService
     val store: KeyValueStore
     val ordinalStore: OrdinalStore
-
-    val activityManager: ActivityManager?
-    val connectivityManager: ConnectivityManager?
-    val storageManager: StorageStatsManager?
-    val windowManager: WindowManager?
 }

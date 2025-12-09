@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.injection
 
+import android.content.Context
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ProcessLifecycleOwner
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
@@ -60,13 +61,16 @@ class EssentialServiceModuleImpl(
                 coreModule.context,
                 workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker),
                 initModule.logger,
-                coreModule.connectivityManager
+                coreModule.context.getSystemServiceSafe(Context.CONNECTIVITY_SERVICE),
             )
         }
     }
 
     override val sessionIdTracker: SessionIdTracker by singleton {
-        SessionIdTrackerImpl(coreModule.activityManager, initModule.logger)
+        SessionIdTrackerImpl(
+            coreModule.context.getSystemServiceSafe(Context.ACTIVITY_SERVICE),
+            initModule.logger
+        )
     }
 
     override val sessionPropertiesService: SessionPropertiesService by singleton {

@@ -37,7 +37,7 @@ class SessionOrchestrationModuleImpl(
         )
     }
 
-    override val payloadFactory: PayloadFactory by singleton {
+    private val payloadFactory: PayloadFactory by singleton {
         PayloadFactoryImpl(
             EmbTrace.trace("payloadMessageCollator") { payloadMessageCollator },
             EmbTrace.trace("logEnvelopeSource") { payloadSourceModule.logEnvelopeSource },

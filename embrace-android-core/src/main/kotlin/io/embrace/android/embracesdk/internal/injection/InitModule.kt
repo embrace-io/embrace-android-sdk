@@ -38,6 +38,4 @@ interface InitModule {
     val jsonSerializer: PlatformSerializer
 
     val instrumentedConfig: InstrumentedConfig
-
-    val processIdentifierProvider: () -> String
 }

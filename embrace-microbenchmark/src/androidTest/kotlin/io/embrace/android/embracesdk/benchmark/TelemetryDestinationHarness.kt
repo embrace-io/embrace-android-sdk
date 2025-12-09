@@ -51,7 +51,6 @@ internal class TelemetryDestinationHarness {
         override val systemInfo: SystemInfo = SystemInfo()
         override val jsonSerializer: PlatformSerializer = EmbraceSerializer()
         override val instrumentedConfig: InstrumentedConfig = InstrumentedConfigImpl
-        override val processIdentifierProvider: () -> String = { "" }
     }
 
     private object NoopTelemetryService : TelemetryService {

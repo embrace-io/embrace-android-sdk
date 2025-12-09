@@ -18,7 +18,6 @@ interface DeliveryModule {
     val payloadStore: PayloadStore?
     val intakeService: IntakeService?
     val payloadCachingService: PayloadCachingService?
-    val payloadStorageService: PayloadStorageService?
     val cacheStorageService: PayloadStorageService?
     val cachedLogEnvelopeStore: CachedLogEnvelopeStore?
     val schedulingService: SchedulingService?

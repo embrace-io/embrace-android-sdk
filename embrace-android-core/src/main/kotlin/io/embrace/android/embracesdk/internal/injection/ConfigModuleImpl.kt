@@ -65,7 +65,7 @@ class ConfigModuleImpl(
         }
     }
 
-    override val remoteConfigSource: RemoteConfigSource? by singleton {
+    private val remoteConfigSource: RemoteConfigSource? by singleton {
         if (initModule.onlyOtelExportEnabled()) return@singleton null
         OkHttpRemoteConfigSource(
             okhttpClient = okHttpClient,

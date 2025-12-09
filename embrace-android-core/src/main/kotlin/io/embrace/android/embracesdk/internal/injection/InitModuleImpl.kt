@@ -7,7 +7,6 @@ import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedCo
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.InstrumentedConfig
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
-import io.embrace.android.embracesdk.internal.otel.sdk.IdGenerator
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.telemetry.EmbraceTelemetryService
@@ -17,7 +16,6 @@ class InitModuleImpl(
     override val logger: EmbLogger = EmbLoggerImpl(),
     override val clock: Clock = NormalizedIntervalClock(),
     override val systemInfo: SystemInfo = SystemInfo(),
-    override val processIdentifierProvider: () -> String = IdGenerator.Companion::generateLaunchInstanceId,
 ) : InitModule {
 
     override val telemetryService: TelemetryService by singleton {

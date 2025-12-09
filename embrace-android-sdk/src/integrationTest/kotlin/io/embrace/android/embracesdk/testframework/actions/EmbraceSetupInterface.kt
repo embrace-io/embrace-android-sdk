@@ -80,7 +80,6 @@ internal class EmbraceSetupInterface(
     private val fakeInitModule: FakeInitModule = FakeInitModule(
         clock = fakeClock,
         logger = FakeEmbLogger(ignoredErrors = ignoredInternalErrors),
-        processIdentifier = processIdentifier
     )
 
     private val workerThreadModule: WorkerThreadModule = initWorkerThreadModule(

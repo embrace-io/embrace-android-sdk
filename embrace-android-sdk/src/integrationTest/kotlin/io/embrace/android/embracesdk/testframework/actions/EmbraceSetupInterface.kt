@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorServic
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeJniDelegate
+import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.fakes.FakeNetworkConnectivityService
 import io.embrace.android.embracesdk.fakes.FakePayloadStorageService
 import io.embrace.android.embracesdk.fakes.FakeSharedObjectLoader
@@ -41,6 +42,7 @@ import io.embrace.android.embracesdk.internal.payload.NativeCrashData
 import io.embrace.android.embracesdk.internal.prefs.PreferencesService
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
+import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
@@ -201,6 +203,8 @@ internal class EmbraceSetupInterface(
     fun getFakedWorkerExecutor(): BlockingScheduledExecutorService = (workerThreadModule as FakeWorkerThreadModule).executor
 
     fun getPreferencesService(): PreferencesService = coreModule.preferencesService
+
+    fun getStore(): KeyValueStore = coreModule.store
 
     private companion object {
         fun initWorkerThreadModule(

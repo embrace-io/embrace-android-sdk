@@ -121,7 +121,6 @@ class PayloadSourceModuleImpl(
                 configModule.configService,
                 coreModule.preferencesService,
                 workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker),
-                initModule.clock,
                 initModule.logger
             )
         }

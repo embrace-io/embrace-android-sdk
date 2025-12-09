@@ -9,7 +9,6 @@ import android.os.Process
 import android.os.StatFs
 import android.os.storage.StorageManager
 import androidx.annotation.RequiresApi
-import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.envelope.resource.EnvelopeResourceSource
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
@@ -28,7 +27,6 @@ internal class EmbraceMetadataService(
     private val configService: ConfigService,
     private val preferencesService: PreferencesService,
     private val metadataBackgroundWorker: BackgroundWorker,
-    private val clock: Clock,
     private val logger: EmbLogger,
 ) : MetadataService {
 
@@ -47,9 +45,6 @@ internal class EmbraceMetadataService(
             with(preferencesService) {
                 appVersion = res.appVersion
                 osVersion = res.osVersion
-                if (installDate == null) {
-                    installDate = clock.now()
-                }
             }
             val free = statFs.freeBytes
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && configService.autoDataCaptureBehavior.isDiskUsageCaptureEnabled()) {

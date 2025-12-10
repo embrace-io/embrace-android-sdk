@@ -11,4 +11,7 @@ fun createProjectConfigInstrumentation(cfg: VariantConfig, reactNativeBundleId: 
     stringMethod("getBuildFlavor") { cfg.buildFlavor }
     stringMethod("getBuildType") { cfg.buildType }
     stringMethod("getReactNativeBundleId") { reactNativeBundleId }
+    stringMethod("getVersionName") { cfg.versionName }
+    stringMethod("getVersionCode") { cfg.versionCode }
+    stringMethod("getPackageName") { cfg.packageName }
 }

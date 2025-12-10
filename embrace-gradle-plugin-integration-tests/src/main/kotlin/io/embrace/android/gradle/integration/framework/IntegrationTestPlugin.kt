@@ -28,6 +28,8 @@ class IntegrationTestPlugin : Plugin<Project> {
                 "release",
                 false,
                 "1.2.3",
+                "hello",
+                "2.0",
                 listOf("development"),
                 ""
             )

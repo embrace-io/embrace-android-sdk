@@ -207,6 +207,8 @@ class BuildVariantConfigFromFileTest {
         isBuildTypeDebuggable = false,
         versionName = "1.0",
         productFlavors = listOf("product-flavor", "2nd-product-flavor"),
-        sourceMapPath = "source"
+        sourceMapPath = "source",
+        packageName = "hello",
+        versionCode = "2.0"
     )
 }

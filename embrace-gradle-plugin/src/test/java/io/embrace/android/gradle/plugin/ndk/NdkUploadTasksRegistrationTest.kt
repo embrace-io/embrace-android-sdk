@@ -51,7 +51,9 @@ class NdkUploadTasksRegistrationTest {
         isBuildTypeDebuggable = false,
         versionName = "versionName",
         productFlavors = emptyList(),
-        sourceMapPath = "sourceMapPath"
+        sourceMapPath = "sourceMapPath",
+        packageName = "hello",
+        versionCode = "2.0"
     )
 
     private val mockVariant = mockk<Variant>(relaxed = true)

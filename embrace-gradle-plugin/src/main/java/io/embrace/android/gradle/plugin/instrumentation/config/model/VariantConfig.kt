@@ -16,6 +16,9 @@ data class VariantConfig(
     val buildId: String? = null,
     val buildType: String? = null,
     val buildFlavor: String? = null,
+    val versionName: String? = null,
+    val versionCode: String? = null,
+    val packageName: String? = null,
     val embraceConfig: EmbraceVariantConfig? = null
 ) : Serializable {
 
@@ -37,6 +40,9 @@ data class VariantConfig(
                 buildType = androidVariantConfig.buildTypeName,
                 buildFlavor = androidVariantConfig.flavorName,
                 buildId = androidVariantConfig.buildId,
+                versionName = androidVariantConfig.versionName,
+                versionCode = androidVariantConfig.versionCode,
+                packageName = androidVariantConfig.packageName,
             )
     }
 }

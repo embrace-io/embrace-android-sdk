@@ -23,4 +23,19 @@ class BuildInfo(
      * The ID of the particular js bundle, generated at compile-time.
      */
     val rnBundleId: String?,
+
+    /**
+     * The version name of the particular build, extracted at compile-time.
+     */
+    val versionName: String,
+
+    /**
+     * The version code of the particular build, extracted at compile-time.
+     */
+    val versionCode: String,
+
+    /**
+     * The package name of the particular build, extracted at compile-time.
+     */
+    val packageName: String,
 )

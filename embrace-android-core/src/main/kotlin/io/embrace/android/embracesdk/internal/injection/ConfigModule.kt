@@ -6,7 +6,6 @@ import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.config.source.CombinedRemoteConfigSource
 import io.embrace.android.embracesdk.internal.envelope.BuildInfo
 import io.embrace.android.embracesdk.internal.envelope.CpuAbi
-import io.embrace.android.embracesdk.internal.envelope.PackageVersionInfo
 import okhttp3.OkHttpClient
 
 interface ConfigModule {
@@ -14,8 +13,6 @@ interface ConfigModule {
     val combinedRemoteConfigSource: CombinedRemoteConfigSource?
     val urlBuilder: ApiUrlBuilder?
     val okHttpClient: OkHttpClient
-
-    val packageVersionInfo: PackageVersionInfo
 
     /**
      * Whether the application is a debug build

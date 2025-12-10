@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.envelope.resource
 
-import android.content.pm.PackageInfo
 import android.os.Environment
 import io.embrace.android.embracesdk.fakes.FakeDevice
 import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
@@ -8,7 +7,6 @@ import io.embrace.android.embracesdk.fakes.FakeRnBundleIdTracker
 import io.embrace.android.embracesdk.internal.capture.metadata.AppEnvironment
 import io.embrace.android.embracesdk.internal.envelope.BuildInfo
 import io.embrace.android.embracesdk.internal.envelope.CpuAbi
-import io.embrace.android.embracesdk.internal.envelope.PackageVersionInfo
 import io.embrace.android.embracesdk.internal.envelope.metadata.UnitySdkVersionInfo
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.mockk.every
@@ -23,30 +21,16 @@ import java.io.File
 internal class EnvelopeResourceSourceImplTest {
 
     companion object {
-        private val packageInfo = PackageInfo()
-        private lateinit var packageVersionInfo: PackageVersionInfo
-
         @BeforeClass
         @JvmStatic
         fun beforeClass() {
             mockkStatic(Environment::class)
-
-            initContext()
-
             every { Environment.getDataDirectory() }.returns(File("ANDROID_DATA"))
         }
 
         @After
         fun tearDown() {
             unmockkAll()
-        }
-
-        private fun initContext() {
-            packageInfo.packageName = "com.embrace.fake"
-            packageInfo.versionName = "1.0.0"
-            @Suppress("DEPRECATION")
-            packageInfo.versionCode = 10
-            packageVersionInfo = PackageVersionInfo(packageInfo)
         }
     }
 
@@ -56,11 +40,19 @@ internal class EnvelopeResourceSourceImplTest {
         hostedSdkVersionInfo.hostedSdkVersion = "1.2.0"
         hostedSdkVersionInfo.hostedPlatformVersion = "19"
         hostedSdkVersionInfo.unityBuildIdNumber = "5092abc"
+        val buildInfo = BuildInfo(
+            buildId = "100",
+            buildType = "release",
+            buildFlavor = "oem",
+            rnBundleId = "bundle-id",
+            versionName = "1.0.0",
+            versionCode = "10",
+            packageName = "com.embrace.fake",
+        )
         val source = EnvelopeResourceSourceImpl(
             hostedSdkVersionInfo,
             AppEnvironment.Environment.PROD,
-            BuildInfo("100", "release", "oem", "bundle-id"),
-            packageVersionInfo,
+            buildInfo,
             AppFramework.NATIVE,
             CpuAbi.ARM64_V8A,
             FakeDevice(),

@@ -20,7 +20,6 @@ import io.embrace.android.embracesdk.internal.capture.metadata.AppEnvironment
 import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
 import io.embrace.android.embracesdk.internal.envelope.BuildInfo
 import io.embrace.android.embracesdk.internal.envelope.CpuAbi
-import io.embrace.android.embracesdk.internal.envelope.PackageVersionInfo
 import io.embrace.android.embracesdk.internal.injection.ConfigModule
 import io.embrace.android.embracesdk.internal.injection.ConfigModuleImpl
 import io.embrace.android.embracesdk.internal.injection.CoreModule
@@ -226,14 +225,10 @@ internal class EmbraceSetupInterface(
             "fakeBuildType",
             "fakeBuildFlavor",
             "fakeRnBundleId",
+            "2.5.1",
+            "99",
+            "com.fake.package",
         )
         override val cpuAbi: CpuAbi = CpuAbi.ARM64_V8A
-
-        @Suppress("DEPRECATION")
-        override val packageVersionInfo = PackageVersionInfo(PackageInfo().apply {
-            packageName = "com.fake.package"
-            versionName = "2.5.1"
-            versionCode = 99
-        })
     }
 }

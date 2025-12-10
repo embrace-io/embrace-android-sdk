@@ -10,7 +10,7 @@ import android.view.WindowManager
 import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.fakes.FakeOrdinalStore
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
-import io.embrace.android.embracesdk.internal.envelope.PackageVersionInfo
+import io.embrace.android.embracesdk.internal.envelope.BuildInfo
 import io.embrace.android.embracesdk.internal.injection.CoreModule
 import io.embrace.android.embracesdk.internal.prefs.PreferencesService
 import io.embrace.android.embracesdk.internal.registry.ServiceRegistry
@@ -51,12 +51,21 @@ class FakeCoreModule(
             versionCode = 99
         }
 
-        private val fakePackageVersionInfo = PackageVersionInfo(fakePackageInfo)
+        private val fakeBuildInfo = BuildInfo(
+            buildId = "fakeBuildId",
+            buildType = "fakeBuildType",
+            buildFlavor = "fakeBuildFlavor",
+            rnBundleId = "fakeRnBundleId",
+            versionName = "2.5.1",
+            versionCode = "99",
+            packageName = "com.fake.package",
+        )
 
         fun getMockedContext(): Context {
             val mockContext = mockk<Context>(relaxed = true)
-            every { mockContext.packageName }.returns(fakePackageVersionInfo.packageName)
-            every { mockContext.packageManager.getPackageInfo(fakePackageVersionInfo.packageName, 0) }.returns(
+            val packageName = fakeBuildInfo.packageName ?: "com.fake.package"
+            every { mockContext.packageName }.returns(packageName)
+            every { mockContext.packageManager.getPackageInfo(packageName, 0) }.returns(
                 fakePackageInfo
             )
             return mockContext

@@ -13,7 +13,6 @@ import io.embrace.android.embracesdk.internal.config.store.RemoteConfigStore
 import io.embrace.android.embracesdk.internal.config.store.RemoteConfigStoreImpl
 import io.embrace.android.embracesdk.internal.envelope.BuildInfo
 import io.embrace.android.embracesdk.internal.envelope.CpuAbi
-import io.embrace.android.embracesdk.internal.envelope.PackageVersionInfo
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.symbols.SymbolServiceImpl
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.worker.Worker
@@ -86,15 +85,10 @@ class ConfigModuleImpl(
         EmbTrace.trace("url-builder-init") {
             EmbraceApiUrlBuilder(
                 deviceId = coreModule.preferencesService.deviceIdentifier,
-                appVersionName = packageVersionInfo.versionName,
+                appVersionName = buildInfo.versionName,
                 instrumentedConfig = initModule.instrumentedConfig,
             )
         }
-    }
-
-    override val packageVersionInfo: PackageVersionInfo by singleton {
-        val context = coreModule.context
-        PackageVersionInfo(context.packageManager.getPackageInfo(context.packageName, 0))
     }
 
     override val appEnvironment: AppEnvironment by lazy {
@@ -112,6 +106,9 @@ class ConfigModuleImpl(
             cfg.getBuildType(),
             cfg.getBuildFlavor(),
             cfg.getReactNativeBundleId(),
+            cfg.getVersionName() ?: "UNKNOWN",
+            cfg.getVersionCode() ?: "UNKNOWN",
+            cfg.getPackageName() ?: "UNKNOWN",
         )
     }
 

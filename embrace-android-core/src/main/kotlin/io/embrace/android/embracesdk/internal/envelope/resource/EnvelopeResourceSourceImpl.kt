@@ -5,7 +5,6 @@ import io.embrace.android.embracesdk.internal.capture.metadata.AppEnvironment
 import io.embrace.android.embracesdk.internal.capture.metadata.RnBundleIdTracker
 import io.embrace.android.embracesdk.internal.envelope.BuildInfo
 import io.embrace.android.embracesdk.internal.envelope.CpuAbi
-import io.embrace.android.embracesdk.internal.envelope.PackageVersionInfo
 import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
@@ -14,7 +13,6 @@ internal class EnvelopeResourceSourceImpl(
     private val hosted: HostedSdkVersionInfo,
     private val environment: AppEnvironment.Environment,
     private val buildInfo: BuildInfo,
-    private val packageVersionInfo: PackageVersionInfo,
     private val appFramework: AppFramework,
     private val cpuAbi: CpuAbi,
     private val device: Device,
@@ -23,9 +21,9 @@ internal class EnvelopeResourceSourceImpl(
 
     override fun getEnvelopeResource(): EnvelopeResource {
         return EnvelopeResource(
-            appVersion = packageVersionInfo.versionName,
-            bundleVersion = packageVersionInfo.versionCode,
-            appEcosystemId = packageVersionInfo.packageName,
+            appVersion = buildInfo.versionName,
+            bundleVersion = buildInfo.versionCode,
+            appEcosystemId = buildInfo.packageName,
             appFramework = appFramework,
             buildId = buildInfo.buildId,
             buildType = buildInfo.buildType,

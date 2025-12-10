@@ -15,7 +15,6 @@ import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
 import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.envelope.BuildInfo
 import io.embrace.android.embracesdk.internal.envelope.CpuAbi
-import io.embrace.android.embracesdk.internal.envelope.PackageVersionInfo
 import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.internal.envelope.resource.DeviceImpl
 import io.embrace.android.embracesdk.internal.envelope.resource.EnvelopeResourceSourceImpl
@@ -37,7 +36,8 @@ internal class EmbraceMetadataServiceTest {
 
     companion object {
         private val context: Context = mockk(relaxed = true)
-        private val buildInfo: BuildInfo = BuildInfo("1234", "debug", "free", "bundle-id")
+        private val buildInfo: BuildInfo =
+            BuildInfo("1234", "debug", "free", "bundle-id", "UNKNOWN", "UNKNOWN", "UNKNOWN")
         private val packageInfo = PackageInfo()
         private lateinit var hostedSdkVersionInfo: HostedSdkVersionInfo
         private lateinit var ref: EmbraceMetadataService
@@ -104,7 +104,6 @@ internal class EmbraceMetadataServiceTest {
                     hostedSdkVersionInfo,
                     AppEnvironment.Environment.PROD,
                     buildInfo,
-                    PackageVersionInfo(packageInfo),
                     framework,
                     CpuAbi.ARM64_V8A,
                     DeviceImpl(

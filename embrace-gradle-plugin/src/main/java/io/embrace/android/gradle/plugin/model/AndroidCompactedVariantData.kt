@@ -12,7 +12,6 @@ data class AndroidCompactedVariantData(
     val flavorName: String,
     val buildTypeName: String,
     val isBuildTypeDebuggable: Boolean,
-    val versionName: String?,
     val productFlavors: List<String>,
     val sourceMapPath: String,
     val buildId: String = UuidUtils.generateEmbraceUuid()
@@ -30,7 +29,6 @@ data class AndroidCompactedVariantData(
                 variant.flavorName ?: "",
                 variant.buildType ?: "",
                 debuggable,
-                "", // not used for now
                 fetchProductFlavors(variant),
                 variant.name
             )

@@ -12,7 +12,6 @@ import java.io.Serializable
 @JsonClass(generateAdapter = true)
 data class VariantConfig(
     val variantName: String,
-    val variantVersion: String? = null,
     val buildId: String? = null,
     val buildType: String? = null,
     val buildFlavor: String? = null,
@@ -33,7 +32,6 @@ data class VariantConfig(
             VariantConfig(
                 embraceConfig = embraceVariantConfig,
                 variantName = androidVariantConfig.name,
-                variantVersion = androidVariantConfig.versionName,
                 buildType = androidVariantConfig.buildTypeName,
                 buildFlavor = androidVariantConfig.flavorName,
                 buildId = androidVariantConfig.buildId,

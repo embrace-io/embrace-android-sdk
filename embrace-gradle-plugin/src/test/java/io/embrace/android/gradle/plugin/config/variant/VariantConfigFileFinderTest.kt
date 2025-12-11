@@ -101,7 +101,6 @@ class VariantConfigFileFinderTest {
             flavorName = "flavor-name",
             buildTypeName = "buildType-name",
             isBuildTypeDebuggable = false,
-            versionName = "1.0",
             productFlavors = listOf("product-flavor", "2nd-product-flavor"),
             sourceMapPath = "source"
         )

@@ -23,7 +23,7 @@ class TestBytecodeInstrumentationParams(
 
     override val config: Property<VariantConfig> =
         DefaultProperty(PropertyHost.NO_OP, VariantConfig::class.javaObjectType).convention(
-            VariantConfig("", "", null, null, null, null)
+            VariantConfig("", "", null, null, null)
         )
     override val encodedSharedObjectFilesMap: RegularFileProperty = ProjectBuilder.builder().build().objects.fileProperty()
     override val reactNativeBundleId: RegularFileProperty = ProjectBuilder.builder().build().objects.fileProperty()

@@ -9,7 +9,7 @@ import org.junit.Test
 
 class InstrumentedConfigClassVisitorFactoryTest {
 
-    private val config = VariantConfig("", null, null, null, null, null)
+    private val config = VariantConfig("", null, null, null, null)
     private val api = ASM_API_VERSION
     private val embracePackage = "io.embrace.android.embracesdk.internal.config.instrumented"
 

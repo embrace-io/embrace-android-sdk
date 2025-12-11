@@ -89,7 +89,7 @@ internal class EmbraceLogServiceTest {
             message = "Hello world",
             severity = Severity.INFO,
             logExceptionType = LogExceptionType.NONE,
-            properties = props
+            attributes = props
         )
 
         val log = destination.logEvents.single()
@@ -241,7 +241,7 @@ internal class EmbraceLogServiceTest {
             message = "message",
             severity = Severity.INFO,
             logExceptionType = LogExceptionType.NONE,
-            properties = tooBigProperties
+            attributes = tooBigProperties
         )
 
         // then the message is not ellipsized
@@ -255,7 +255,7 @@ internal class EmbraceLogServiceTest {
             message = "message",
             severity = Severity.INFO,
             logExceptionType = LogExceptionType.NONE,
-            properties = mapOf("badvalue" to UnSerializableClass())
+            attributes = mapOf("badvalue" to UnSerializableClass())
         )
         assertEquals("not serializable", destination.logEvents.single().schemaType.attributes()["badvalue"])
     }
@@ -268,7 +268,7 @@ internal class EmbraceLogServiceTest {
             message = "message",
             severity = Severity.INFO,
             logExceptionType = LogExceptionType.NONE,
-            properties = tooBigProperties
+            attributes = tooBigProperties
         )
 
         // then the message is not ellipsized

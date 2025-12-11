@@ -190,24 +190,24 @@ internal class EmbraceImpl(
     fun logMessage(
         severity: Severity,
         message: String,
-        properties: Map<String, Any>? = null,
+        attributes: Map<String, Any> = emptyMap(),
         stackTraceElements: Array<StackTraceElement>? = null,
         customStackTrace: String? = null,
         logExceptionType: LogExceptionType = LogExceptionType.NONE,
         exceptionName: String? = null,
         exceptionMessage: String? = null,
-        customLogAttrs: Map<String, String> = emptyMap(),
+        embraceAttributes: Map<String, String> = emptyMap(),
     ) {
         logsApiDelegate.logMessageImpl(
             severity = severity,
             message = message,
-            properties = properties,
+            attributes = attributes,
             stackTraceElements = stackTraceElements,
             customStackTrace = customStackTrace,
             logExceptionType = logExceptionType,
             exceptionName = exceptionName,
             exceptionMessage = exceptionMessage,
-            customLogAttrs = customLogAttrs,
+            embraceAttributes = embraceAttributes,
         )
     }
 

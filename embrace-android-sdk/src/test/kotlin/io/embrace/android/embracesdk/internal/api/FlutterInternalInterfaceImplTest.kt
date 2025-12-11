@@ -59,7 +59,7 @@ internal class FlutterInternalInterfaceImplTest {
             embrace.logMessage(
                 Severity.ERROR,
                 "Dart error",
-                null,
+                emptyMap(),
                 null,
                 "stack",
                 LogExceptionType.UNHANDLED,
@@ -86,7 +86,7 @@ internal class FlutterInternalInterfaceImplTest {
                 logExceptionType = LogExceptionType.HANDLED,
                 exceptionName = "exception name",
                 exceptionMessage = "message",
-                customLogAttrs = mapOf(
+                embraceAttributes = mapOf(
                     embFlutterExceptionContext.name to "ctx",
                     embFlutterExceptionLibrary.name to "lib"
                 ),

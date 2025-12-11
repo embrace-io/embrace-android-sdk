@@ -99,7 +99,7 @@ internal class LogsApiDelegateTest {
         assertEquals("test", log.message)
         assertEquals(Severity.INFO, log.severity)
         assertEquals(LogExceptionType.HANDLED, log.logExceptionType)
-        assertEquals(props, log.properties)
+        assertEquals("bar", log.embraceAttributes["foo"])
     }
 
     @Test
@@ -110,7 +110,7 @@ internal class LogsApiDelegateTest {
         assertEquals("custom_message", log.message)
         assertEquals(Severity.INFO, log.severity)
         assertEquals(LogExceptionType.HANDLED, log.logExceptionType)
-        assertEquals(props, log.properties)
+        assertEquals("bar", log.embraceAttributes["foo"])
     }
 
     @Test
@@ -143,7 +143,7 @@ internal class LogsApiDelegateTest {
         assertEquals("", log.message)
         assertEquals(Severity.INFO, log.severity)
         assertEquals(LogExceptionType.HANDLED, log.logExceptionType)
-        assertEquals(props, log.properties)
+        assertEquals("bar", log.embraceAttributes["foo"])
     }
 
     @Test
@@ -156,6 +156,6 @@ internal class LogsApiDelegateTest {
         assertEquals("my message", log.message)
         assertEquals(Severity.INFO, log.severity)
         assertEquals(LogExceptionType.HANDLED, log.logExceptionType)
-        assertEquals(props, log.properties)
+        assertEquals("bar", log.embraceAttributes["foo"])
     }
 }

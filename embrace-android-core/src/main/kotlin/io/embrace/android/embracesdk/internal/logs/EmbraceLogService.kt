@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.logs
 import android.os.Parcelable
 import io.embrace.android.embracesdk.LogExceptionType
 import io.embrace.android.embracesdk.Severity
+import io.embrace.android.embracesdk.internal.arch.attrs.embExceptionHandling
 import io.embrace.android.embracesdk.internal.arch.datasource.LogSeverity
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
@@ -14,11 +15,15 @@ import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesS
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.config.behavior.REDACTED_LABEL
 import io.embrace.android.embracesdk.internal.logs.attachments.Attachment
+import io.embrace.android.embracesdk.internal.logs.attachments.Attachment.EmbraceHosted
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.payload.Envelope
+import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
+import io.embrace.android.embracesdk.internal.serialization.truncatedStacktrace
 import io.embrace.android.embracesdk.internal.session.orchestrator.PayloadStore
 import io.embrace.android.embracesdk.internal.utils.PropertyUtils.truncate
 import io.embrace.android.embracesdk.internal.utils.Uuid
+import io.embrace.opentelemetry.kotlin.semconv.ExceptionAttributes
 import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
 import io.embrace.opentelemetry.kotlin.semconv.LogAttributes
 import java.io.Serializable
@@ -32,6 +37,7 @@ class EmbraceLogService(
     private val configService: ConfigService,
     private val sessionPropertiesService: SessionPropertiesService,
     private val payloadStore: PayloadStore?,
+    private val serializer: PlatformSerializer,
 ) : LogService {
 
     private val behavior = configService.logMessageBehavior
@@ -48,64 +54,62 @@ class EmbraceLogService(
         logExceptionType: LogExceptionType,
         attributes: Map<String, Any>,
         embraceAttributes: Map<String, String>,
-        logAttachment: Attachment.EmbraceHosted?,
+        attachment: Attachment?,
+        stackTraceElements: Array<StackTraceElement>?,
+        customStackTrace: String?,
+        exceptionName: String?,
+        exceptionMessage: String?,
     ) {
+        val attrs = mutableMapOf<String, String>()
+        exceptionName?.let { attrs[ExceptionAttributes.EXCEPTION_TYPE] = it }
+        exceptionMessage?.let { attrs[ExceptionAttributes.EXCEPTION_MESSAGE] = it }
+
+        val stacktrace =
+            stackTraceElements?.let(serializer::truncatedStacktrace) ?: customStackTrace
+        stacktrace?.let { attrs[ExceptionAttributes.EXCEPTION_STACKTRACE] = it }
+
+        if (attachment != null) {
+            attrs.putAll(attachment.attributes.mapKeys { it.key.name })
+        }
+
+        val logAttachment = when {
+            attachment is EmbraceHosted && attachment.shouldAttemptUpload() -> attachment
+            else -> null
+        }
+
+        val finalAttrs = if (logExceptionType != LogExceptionType.NONE) {
+            attributes.plus(embExceptionHandling.name to logExceptionType.value)
+        } else {
+            attributes
+        }
+
         val redactedProperties =
-            redactSensitiveProperties(sanitizeProperties(attributes, bypassLimitsValidation))
-        val attrs = createTelemetryAttributes(redactedProperties, embraceAttributes)
+            redactSensitiveProperties(
+                sanitizeProperties(
+                    properties = finalAttrs,
+                    bypassPropertyLimit = bypassLimitsValidation
+                )
+            )
+        val telemetryAttributes = TelemetryAttributes(
+            sessionPropertiesProvider = sessionPropertiesService::getProperties,
+            customAttributes = redactedProperties.mapValues { it.value.toString() },
+        )
+        telemetryAttributes.setAttribute(LogAttributes.LOG_RECORD_UID, Uuid.getEmbUuid())
+        attrs.plus(embraceAttributes).forEach {
+            telemetryAttributes.setAttribute(it.key, it.value)
+        }
 
         val schemaProvider: (TelemetryAttributes) -> SchemaType = when {
             logExceptionType == LogExceptionType.NONE -> ::Log
             configService.appFramework == AppFramework.FLUTTER -> ::FlutterException
             else -> ::Exception
         }
-
         logAttachment?.let {
             val envelope = Envelope(data = Pair(it.id, it.bytes))
             payloadStore?.storeAttachment(envelope)
         }
 
-        addLogEventData(
-            message = message,
-            severity = severity,
-            attributes = attrs,
-            schemaProvider = schemaProvider
-        )
-    }
-
-    override fun getErrorLogsCount(): Int {
-        return logCounters.getValue(Severity.ERROR).getCount()
-    }
-
-    override fun onPostSessionChange() {
-        logCounters.forEach { it.value.clear() }
-    }
-
-    /**
-     * Create [TelemetryAttributes] with the standard log properties
-     */
-    private fun createTelemetryAttributes(
-        customProperties: Map<String, Any>,
-        logAttrs: Map<String, String>,
-    ): TelemetryAttributes {
-        val attributes = TelemetryAttributes(
-            sessionPropertiesProvider = sessionPropertiesService::getProperties,
-            customAttributes = customProperties.mapValues { it.value.toString() },
-        )
-        attributes.setAttribute(LogAttributes.LOG_RECORD_UID, Uuid.getEmbUuid())
-        logAttrs.forEach {
-            attributes.setAttribute(it.key, it.value)
-        }
-        return attributes
-    }
-
-    private fun addLogEventData(
-        message: String,
-        severity: Severity,
-        attributes: TelemetryAttributes,
-        schemaProvider: (TelemetryAttributes) -> SchemaType,
-    ) {
-        val logId = attributes.getAttribute(LogAttributes.LOG_RECORD_UID)
+        val logId = telemetryAttributes.getAttribute(LogAttributes.LOG_RECORD_UID)
         if (logId == null || !logCounters.getValue(severity).addIfAllowed()) {
             return
         }
@@ -114,7 +118,15 @@ class EmbraceLogService(
             Severity.WARNING -> LogSeverity.WARNING
             Severity.ERROR -> LogSeverity.ERROR
         }
-        destination.addLog(schemaProvider(attributes), logSeverity, trimToMaxLength(message))
+        destination.addLog(schemaProvider(telemetryAttributes), logSeverity, trimToMaxLength(message))
+    }
+
+    override fun getErrorLogsCount(): Int {
+        return logCounters.getValue(Severity.ERROR).getCount()
+    }
+
+    override fun onPostSessionChange() {
+        logCounters.forEach { it.value.clear() }
     }
 
     private fun trimToMaxLength(message: String): String {

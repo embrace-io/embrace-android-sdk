@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakePayloadStore
 import io.embrace.android.embracesdk.fakes.FakeSessionPropertiesService
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
+import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.fakes.behavior.FakeLogMessageBehavior
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.config.FakeRedactionConfig
@@ -49,6 +50,7 @@ internal class EmbraceLogServiceTest {
         configService = fakeConfigService,
         sessionPropertiesService = fakeSessionPropertiesService,
         payloadStore = payloadStore,
+        serializer = TestPlatformSerializer(),
     )
 
     @Test
@@ -225,7 +227,7 @@ internal class EmbraceLogServiceTest {
             message = msg,
             severity = Severity.INFO,
             logExceptionType = LogExceptionType.NONE,
-            logAttachment = Attachment.EmbraceHosted(bytes) { true },
+            attachment = Attachment.EmbraceHosted(bytes) { true },
         )
 
         // then the sensitive key is redacted

@@ -19,7 +19,11 @@ interface LogService : SessionChangeListener {
         logExceptionType: LogExceptionType,
         attributes: Map<String, Any> = emptyMap(),
         embraceAttributes: Map<String, String> = emptyMap(),
-        logAttachment: Attachment.EmbraceHosted? = null,
+        attachment: Attachment? = null,
+        stackTraceElements: Array<StackTraceElement>? = null,
+        customStackTrace: String? = null,
+        exceptionName: String? = null,
+        exceptionMessage: String? = null,
     )
 
     /**

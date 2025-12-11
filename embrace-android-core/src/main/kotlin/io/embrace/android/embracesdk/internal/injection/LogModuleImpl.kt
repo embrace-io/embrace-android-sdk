@@ -23,6 +23,7 @@ class LogModuleImpl(
             configModule.configService,
             essentialServiceModule.sessionPropertiesService,
             deliveryModule.payloadStore,
+            initModule.jsonSerializer,
         )
     }
 

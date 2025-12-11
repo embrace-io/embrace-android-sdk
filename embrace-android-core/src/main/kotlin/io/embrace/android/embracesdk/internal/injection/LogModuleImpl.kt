@@ -22,7 +22,6 @@ class LogModuleImpl(
             essentialServiceModule.telemetryDestination,
             configModule.configService,
             essentialServiceModule.sessionPropertiesService,
-            initModule.jsonSerializer,
         )
     }
 

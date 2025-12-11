@@ -15,6 +15,7 @@ import io.embrace.android.embracesdk.internal.logs.attachments.AttachmentErrorCo
 import io.embrace.android.embracesdk.internal.logs.attachments.AttachmentErrorCode.OVER_MAX_ATTACHMENTS
 import io.embrace.android.embracesdk.internal.logs.attachments.AttachmentErrorCode.UNKNOWN
 import io.embrace.android.embracesdk.internal.payload.Envelope
+import io.embrace.android.embracesdk.internal.serialization.truncatedStacktrace
 import io.embrace.android.embracesdk.internal.utils.getSafeStackTrace
 import io.embrace.opentelemetry.kotlin.semconv.ExceptionAttributes
 
@@ -32,6 +33,9 @@ internal class LogsApiDelegate(
     }
     private val payloadStore by embraceImplInject(sdkCallChecker) {
         bootstrapper.deliveryModule.payloadStore
+    }
+    private val serializer by embraceImplInject(sdkCallChecker) {
+        bootstrapper.initModule.jsonSerializer
     }
 
     override fun logInfo(message: String) = logMessage(message, Severity.INFO)
@@ -141,6 +145,7 @@ internal class LogsApiDelegate(
         if (sdkCallChecker.check("log_message")) {
             runCatching {
                 val dst = logService ?: return
+                val jsonSerializer = serializer ?: return
                 val attrs = attributes.toMutableMap()
 
                 // add exception name + message attrs
@@ -164,14 +169,16 @@ internal class LogsApiDelegate(
                     attrs[embExceptionHandling.name] = logExceptionType.value
                 }
 
+                // add stacktrace
+                val stacktrace = stackTraceElements?.let(jsonSerializer::truncatedStacktrace) ?: customStackTrace
+                stacktrace?.let { attrs[ExceptionAttributes.EXCEPTION_STACKTRACE] = it }
+
                 // send log
                 dst.log(
                     message = message,
                     severity = logSeverity,
                     logExceptionType = logExceptionType,
                     attributes = attrs,
-                    stackTraceElements = stackTraceElements,
-                    customStackTrace = customStackTrace,
                 )
 
                 // store attachment

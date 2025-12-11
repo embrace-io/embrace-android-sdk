@@ -21,8 +21,6 @@ class FakeLogService : LogService {
         severity: LogSeverity,
         logExceptionType: LogExceptionType,
         attributes: Map<String, Any>,
-        stackTraceElements: Array<StackTraceElement>?,
-        customStackTrace: String?,
     ) {
         loggedMessages.add(
             LogData(

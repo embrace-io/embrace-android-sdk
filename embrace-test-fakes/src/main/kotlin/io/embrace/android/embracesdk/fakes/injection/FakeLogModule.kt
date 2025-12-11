@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.fakes.injection
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeSessionPropertiesService
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
-import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.internal.injection.LogModule
 import io.embrace.android.embracesdk.internal.logs.LogServiceImpl
 import io.embrace.android.embracesdk.internal.logs.LogOrchestrator
@@ -15,7 +14,6 @@ class FakeLogModule(
         FakeTelemetryDestination(),
         FakeConfigService(),
         FakeSessionPropertiesService(),
-        TestPlatformSerializer(),
     ),
 ) : LogModule {
 

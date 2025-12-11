@@ -1,5 +1,7 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <SmellBaseline>
   <ManuallySuppressedIssues/>
-  <CurrentIssues/>
+  <CurrentIssues>
+    <ID>CyclomaticComplexMethod:LogsApiDelegate.kt$LogsApiDelegate$fun logMessageImpl( severity: Severity, message: String, attributes: Map&lt;String, Any> = emptyMap(), stackTraceElements: Array&lt;StackTraceElement>? = null, customStackTrace: String? = null, logExceptionType: LogExceptionType = LogExceptionType.NONE, exceptionName: String? = null, exceptionMessage: String? = null, attachment: Attachment? = null, )</ID>
+  </CurrentIssues>
 </SmellBaseline>

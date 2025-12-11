@@ -13,8 +13,6 @@ import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesS
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.config.behavior.REDACTED_LABEL
 import io.embrace.android.embracesdk.internal.payload.AppFramework
-import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
-import io.embrace.android.embracesdk.internal.serialization.truncatedStacktrace
 import io.embrace.android.embracesdk.internal.utils.PropertyUtils.truncate
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.opentelemetry.kotlin.semconv.ExceptionAttributes
@@ -30,7 +28,6 @@ class LogServiceImpl(
     private val destination: TelemetryDestination,
     private val configService: ConfigService,
     private val sessionPropertiesService: SessionPropertiesService,
-    private val serializer: PlatformSerializer,
 ) : LogService {
 
     private val behavior = configService.logMessageBehavior
@@ -46,25 +43,15 @@ class LogServiceImpl(
         severity: LogSeverity,
         logExceptionType: LogExceptionType,
         attributes: Map<String, Any>,
-        stackTraceElements: Array<StackTraceElement>?,
-        customStackTrace: String?,
     ) {
         if (!logCounters.getValue(severity).addIfAllowed()) {
             return
         }
 
-        val attrs = mutableMapOf(
-            LogAttributes.LOG_RECORD_UID to Uuid.getEmbUuid()
-        )
-
-        val stacktrace =
-            stackTraceElements?.let(serializer::truncatedStacktrace) ?: customStackTrace
-        stacktrace?.let { attrs[ExceptionAttributes.EXCEPTION_STACKTRACE] = it }
-
         val redactedAttributes = redactSensitiveAttributes(attributes)
         val telemetryAttributes = TelemetryAttributes(
             sessionPropertiesProvider = sessionPropertiesService::getProperties,
-            customAttributes = redactedAttributes.plus(attrs),
+            customAttributes = redactedAttributes.plus(LogAttributes.LOG_RECORD_UID to Uuid.getEmbUuid()),
         )
 
         val schemaProvider: (TelemetryAttributes) -> SchemaType = when {
@@ -128,7 +115,11 @@ class LogServiceImpl(
                 attributes.entries.take(MAX_PROPERTY_COUNT).associate {
                     Pair(
                         first = truncate(it.key, MAX_PROPERTY_KEY_LENGTH),
-                        second = truncate(checkIfSerializable(it.value).toString(), MAX_PROPERTY_VALUE_LENGTH)
+                        second = if (it.key == ExceptionAttributes.EXCEPTION_STACKTRACE) {
+                            it.value.toString()
+                        } else {
+                            truncate(checkIfSerializable(it.value).toString(), MAX_PROPERTY_VALUE_LENGTH)
+                        }
                     )
                 }
             }

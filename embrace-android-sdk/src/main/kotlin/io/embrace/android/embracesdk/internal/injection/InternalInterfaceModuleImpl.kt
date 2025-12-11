@@ -13,7 +13,6 @@ import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkCap
 
 internal class InternalInterfaceModuleImpl(
     initModule: InitModule,
-    openTelemetryModule: OpenTelemetryModule,
     configModule: ConfigModule,
     payloadSourceModule: PayloadSourceModule,
     instrumentationModule: InstrumentationModule,
@@ -27,7 +26,6 @@ internal class InternalInterfaceModuleImpl(
             initModule,
             { instrumentationModule.instrumentationRegistry.findByType(NetworkCaptureDataSource::class) },
             configModule.configService,
-            openTelemetryModule.internalTracer
         )
     }
 

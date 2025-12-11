@@ -10,7 +10,6 @@ import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
 import io.embrace.android.embracesdk.internal.spans.EmbraceTracer
-import io.embrace.android.embracesdk.internal.spans.InternalTracer
 import io.embrace.opentelemetry.kotlin.Clock
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 
@@ -49,11 +48,6 @@ interface OpenTelemetryModule {
      * Implementation of public tracing API
      */
     val embraceTracer: EmbraceTracer
-
-    /**
-     * Implementation of internal tracing API
-     */
-    val internalTracer: InternalTracer
 
     /**
      * Provides storage for completed logs that have not been forwarded yet to the delivery service

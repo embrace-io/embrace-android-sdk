@@ -34,7 +34,6 @@ internal class EmbraceInternalInterfaceImplTest {
             initModule,
             ::FakeNetworkCaptureDataSource,
             fakeConfigService,
-            initModule.openTelemetryModule.internalTracer
         )
     }
 
@@ -49,13 +48,6 @@ internal class EmbraceInternalInterfaceImplTest {
     fun `check logInternalError with exception`() {
         val expectedException = SocketException()
         internalImpl.logInternalError(expectedException)
-        val logger = initModule.logger as FakeEmbLogger
-        checkNotNull(logger.internalErrorMessages.single().throwable)
-    }
-
-    @Test
-    fun `check logInternalError with error type and message`() {
-        internalImpl.logInternalError("err", "message")
         val logger = initModule.logger as FakeEmbLogger
         checkNotNull(logger.internalErrorMessages.single().throwable)
     }

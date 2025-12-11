@@ -53,7 +53,7 @@ internal class PayloadTypesHeaderTest {
             },
             testCaseAction = {
                 embrace.logInfo("some message")
-                (embrace as EmbraceImpl).internalInterface.logInternalError("some internal error", "oh no!")
+                (embrace as EmbraceImpl).internalInterface.logInternalError(RuntimeException("some internal error"))
                 embrace.logWarning("uh oh!")
                 clock.tick(2000L)
             },
@@ -85,7 +85,7 @@ internal class PayloadTypesHeaderTest {
             },
             testCaseAction = {
                 embrace.logInfo("log message")
-                (embrace as EmbraceImpl).internalInterface.logInternalError("internal error", "oh no!")
+                (embrace as EmbraceImpl).internalInterface.logInternalError(RuntimeException("internal error"))
                 EmbraceInternalApi.flutterInternalInterface.logUnhandledDartException(
                     "Flutter stacktrace",
                     "FlutterException",
@@ -129,7 +129,7 @@ internal class PayloadTypesHeaderTest {
             },
             testCaseAction = {
                 embrace.logInfo("log message")
-                (embrace as EmbraceImpl).internalInterface.logInternalError("internal error", "oh no!")
+                (embrace as EmbraceImpl).internalInterface.logInternalError(RuntimeException("internal error"))
                 EmbraceInternalApi.unityInternalInterface.logUnhandledUnityException(
                     "UnityException",
                     "Unity error occurred",

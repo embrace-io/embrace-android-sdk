@@ -1,11 +1,10 @@
 package io.embrace.android.embracesdk.testcases.features
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.EmbraceImpl
+import io.embrace.android.embracesdk.assertions.getLogWithAttributeValue
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
-import io.embrace.android.embracesdk.assertions.getLogWithAttributeValue
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Rule
@@ -28,7 +27,7 @@ internal class InternalErrorLogTest {
             },
             testCaseAction = {
                 recordSession {
-                    (embrace as EmbraceImpl).internalInterface.logInternalError("Some error message", null)
+                    (embrace as EmbraceImpl).internalInterface.logInternalError(RuntimeException("Some error message"))
                 }
             },
             assertAction = {

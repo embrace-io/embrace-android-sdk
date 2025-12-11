@@ -17,7 +17,6 @@ interface LogService : SessionChangeListener {
         severity: LogSeverity,
         logExceptionType: LogExceptionType,
         attributes: Map<String, Any> = emptyMap(),
-        embraceAttributes: Map<String, String> = emptyMap(),
         stackTraceElements: Array<StackTraceElement>? = null,
         customStackTrace: String? = null,
     )

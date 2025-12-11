@@ -46,7 +46,6 @@ class LogServiceImpl(
         severity: LogSeverity,
         logExceptionType: LogExceptionType,
         attributes: Map<String, Any>,
-        embraceAttributes: Map<String, String>,
         stackTraceElements: Array<StackTraceElement>?,
         customStackTrace: String?,
     ) {
@@ -62,19 +61,11 @@ class LogServiceImpl(
             stackTraceElements?.let(serializer::truncatedStacktrace) ?: customStackTrace
         stacktrace?.let { attrs[ExceptionAttributes.EXCEPTION_STACKTRACE] = it }
 
-        val redactedProperties = redactSensitiveProperties(
-            sanitizeProperties(
-                properties = attributes,
-                bypassPropertyLimit = bypassLimitsValidation
-            )
-        )
+        val redactedAttributes = redactSensitiveAttributes(attributes)
         val telemetryAttributes = TelemetryAttributes(
             sessionPropertiesProvider = sessionPropertiesService::getProperties,
-            customAttributes = redactedProperties.mapValues { it.value.toString() },
+            customAttributes = redactedAttributes.plus(attrs),
         )
-        attrs.plus(embraceAttributes).forEach {
-            telemetryAttributes.setAttribute(it.key, it.value)
-        }
 
         val schemaProvider: (TelemetryAttributes) -> SchemaType = when {
             logExceptionType == LogExceptionType.NONE -> ::Log
@@ -112,23 +103,29 @@ class LogServiceImpl(
         }
     }
 
-    private fun redactSensitiveProperties(properties: Map<String, Any>): Map<String, Any> {
-        return properties.mapValues { (key, value) ->
-            if (configService.sensitiveKeysBehavior.isSensitiveKey(key)) REDACTED_LABEL else value
+    private fun redactSensitiveAttributes(attributes: Map<String, Any>): Map<String, String> {
+        return sanitizeAttributes(
+            attributes = attributes,
+            bypassPropertyLimit = bypassLimitsValidation
+        ).mapValues { (key, value) ->
+            when {
+                configService.sensitiveKeysBehavior.isSensitiveKey(key) -> REDACTED_LABEL
+                else -> value
+            }
         }
     }
 
-    private fun sanitizeProperties(
-        properties: Map<String, Any>,
+    private fun sanitizeAttributes(
+        attributes: Map<String, Any>,
         bypassPropertyLimit: Boolean = false,
-    ): Map<String, Any> {
+    ): Map<String, String> {
         return runCatching {
             if (bypassPropertyLimit) {
-                properties.entries.associate {
-                    Pair(it.key, checkIfSerializable(it.value))
+                attributes.entries.associate {
+                    Pair(it.key, checkIfSerializable(it.value).toString())
                 }
             } else {
-                properties.entries.take(MAX_PROPERTY_COUNT).associate {
+                attributes.entries.take(MAX_PROPERTY_COUNT).associate {
                     Pair(
                         first = truncate(it.key, MAX_PROPERTY_KEY_LENGTH),
                         second = truncate(checkIfSerializable(it.value).toString(), MAX_PROPERTY_VALUE_LENGTH)

@@ -196,7 +196,6 @@ internal class EmbraceImpl(
         logExceptionType: LogExceptionType = LogExceptionType.NONE,
         exceptionName: String? = null,
         exceptionMessage: String? = null,
-        embraceAttributes: Map<String, String> = emptyMap(),
     ) {
         logsApiDelegate.logMessageImpl(
             severity = severity,
@@ -207,7 +206,6 @@ internal class EmbraceImpl(
             logExceptionType = logExceptionType,
             exceptionName = exceptionName,
             exceptionMessage = exceptionMessage,
-            embraceAttributes = embraceAttributes,
         )
     }
 

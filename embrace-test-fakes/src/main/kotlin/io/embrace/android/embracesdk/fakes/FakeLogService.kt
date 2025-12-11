@@ -1,15 +1,16 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.android.embracesdk.LogExceptionType
 import io.embrace.android.embracesdk.internal.arch.datasource.LogSeverity
+import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
+import io.embrace.android.embracesdk.internal.arch.schema.TelemetryAttributes
 import io.embrace.android.embracesdk.internal.logs.LogService
 
 class FakeLogService : LogService {
     class LogData(
         val message: String,
         val severity: LogSeverity,
-        val logExceptionType: LogExceptionType,
-        val embraceAttributes: Map<String, Any>,
+        val schemaType: SchemaType,
+        val attributes: Map<String, Any>,
     )
 
     val logs: MutableList<String> = mutableListOf()
@@ -19,15 +20,15 @@ class FakeLogService : LogService {
     override fun log(
         message: String,
         severity: LogSeverity,
-        logExceptionType: LogExceptionType,
         attributes: Map<String, Any>,
+        schemaProvider: (TelemetryAttributes) -> SchemaType,
     ) {
         loggedMessages.add(
             LogData(
                 message = message,
                 severity = severity,
-                logExceptionType = logExceptionType,
-                embraceAttributes = attributes,
+                attributes = attributes,
+                schemaType = schemaProvider(TelemetryAttributes())
             )
         )
     }

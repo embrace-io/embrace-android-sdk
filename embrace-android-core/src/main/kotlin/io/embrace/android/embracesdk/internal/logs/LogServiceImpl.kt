@@ -1,13 +1,9 @@
 package io.embrace.android.embracesdk.internal.logs
 
 import android.os.Parcelable
-import io.embrace.android.embracesdk.LogExceptionType
 import io.embrace.android.embracesdk.internal.arch.datasource.LogSeverity
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
-import io.embrace.android.embracesdk.internal.arch.schema.SchemaType.Exception
-import io.embrace.android.embracesdk.internal.arch.schema.SchemaType.FlutterException
-import io.embrace.android.embracesdk.internal.arch.schema.SchemaType.Log
 import io.embrace.android.embracesdk.internal.arch.schema.TelemetryAttributes
 import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
 import io.embrace.android.embracesdk.internal.config.ConfigService
@@ -41,8 +37,8 @@ class LogServiceImpl(
     override fun log(
         message: String,
         severity: LogSeverity,
-        logExceptionType: LogExceptionType,
         attributes: Map<String, Any>,
+        schemaProvider: (TelemetryAttributes) -> SchemaType,
     ) {
         if (!logCounters.getValue(severity).addIfAllowed()) {
             return
@@ -53,12 +49,6 @@ class LogServiceImpl(
             sessionPropertiesProvider = sessionPropertiesService::getProperties,
             customAttributes = redactedAttributes.plus(LogAttributes.LOG_RECORD_UID to Uuid.getEmbUuid()),
         )
-
-        val schemaProvider: (TelemetryAttributes) -> SchemaType = when {
-            logExceptionType == LogExceptionType.NONE -> ::Log
-            configService.appFramework == AppFramework.FLUTTER -> ::FlutterException
-            else -> ::Exception
-        }
 
         destination.addLog(schemaProvider(telemetryAttributes), severity, trimToMaxLength(message))
     }

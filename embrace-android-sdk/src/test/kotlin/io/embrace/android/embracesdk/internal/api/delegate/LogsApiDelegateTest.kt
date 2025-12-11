@@ -2,16 +2,17 @@ package io.embrace.android.embracesdk.internal.api.delegate
 
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.LogExceptionType
 import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeLogService
 import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeLogModule
+import io.embrace.android.embracesdk.internal.arch.attrs.embExceptionHandling
 import io.embrace.android.embracesdk.internal.arch.datasource.LogSeverity
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -44,7 +45,7 @@ internal class LogsApiDelegateTest {
         val log = logService.loggedMessages.single()
         assertEquals("test", log.message)
         assertEquals(LogSeverity.INFO, log.severity)
-        assertEquals(LogExceptionType.NONE, log.logExceptionType)
+        assertNull(log.attributes[embExceptionHandling.name])
     }
 
     @Test
@@ -53,7 +54,7 @@ internal class LogsApiDelegateTest {
         val log = logService.loggedMessages.single()
         assertEquals("test", log.message)
         assertEquals(LogSeverity.WARNING, log.severity)
-        assertEquals(LogExceptionType.NONE, log.logExceptionType)
+        assertNull(log.attributes[embExceptionHandling.name])
     }
 
     @Test
@@ -62,7 +63,7 @@ internal class LogsApiDelegateTest {
         val log = logService.loggedMessages.single()
         assertEquals("test", log.message)
         assertEquals(LogSeverity.ERROR, log.severity)
-        assertEquals(LogExceptionType.NONE, log.logExceptionType)
+        assertNull(log.attributes[embExceptionHandling.name])
     }
 
     @Test
@@ -71,7 +72,7 @@ internal class LogsApiDelegateTest {
         val log = logService.loggedMessages.single()
         assertEquals("test", log.message)
         assertEquals(LogSeverity.WARNING, log.severity)
-        assertEquals(LogExceptionType.NONE, log.logExceptionType)
+        assertNull(log.attributes[embExceptionHandling.name])
     }
 
     @Test
@@ -80,7 +81,7 @@ internal class LogsApiDelegateTest {
         val log = logService.loggedMessages.single()
         assertEquals("test", log.message)
         assertEquals(LogSeverity.ERROR, log.severity)
-        assertEquals(LogExceptionType.HANDLED, log.logExceptionType)
+        assertEquals("handled", log.attributes[embExceptionHandling.name])
     }
 
     @Test
@@ -89,7 +90,7 @@ internal class LogsApiDelegateTest {
         val log = logService.loggedMessages.single()
         assertEquals("test", log.message)
         assertEquals(LogSeverity.INFO, log.severity)
-        assertEquals(LogExceptionType.HANDLED, log.logExceptionType)
+        assertEquals("handled", log.attributes[embExceptionHandling.name])
     }
 
     @Test
@@ -99,8 +100,8 @@ internal class LogsApiDelegateTest {
         val log = logService.loggedMessages.single()
         assertEquals("test", log.message)
         assertEquals(LogSeverity.INFO, log.severity)
-        assertEquals(LogExceptionType.HANDLED, log.logExceptionType)
-        assertEquals("bar", log.embraceAttributes["foo"])
+        assertEquals("handled", log.attributes[embExceptionHandling.name])
+        assertEquals("bar", log.attributes["foo"])
     }
 
     @Test
@@ -110,8 +111,8 @@ internal class LogsApiDelegateTest {
         val log = logService.loggedMessages.single()
         assertEquals("custom_message", log.message)
         assertEquals(LogSeverity.INFO, log.severity)
-        assertEquals(LogExceptionType.HANDLED, log.logExceptionType)
-        assertEquals("bar", log.embraceAttributes["foo"])
+        assertEquals("handled", log.attributes[embExceptionHandling.name])
+        assertEquals("bar", log.attributes["foo"])
     }
 
     @Test
@@ -121,7 +122,7 @@ internal class LogsApiDelegateTest {
         val log = logService.loggedMessages.single()
         assertEquals("", log.message)
         assertEquals(LogSeverity.ERROR, log.severity)
-        assertEquals(LogExceptionType.HANDLED, log.logExceptionType)
+        assertEquals("handled", log.attributes[embExceptionHandling.name])
     }
 
     @Test
@@ -131,7 +132,7 @@ internal class LogsApiDelegateTest {
         val log = logService.loggedMessages.single()
         assertEquals("", log.message)
         assertEquals(LogSeverity.INFO, log.severity)
-        assertEquals(LogExceptionType.HANDLED, log.logExceptionType)
+        assertEquals("handled", log.attributes[embExceptionHandling.name])
     }
 
     @Test
@@ -143,8 +144,8 @@ internal class LogsApiDelegateTest {
         val log = logService.loggedMessages.single()
         assertEquals("", log.message)
         assertEquals(LogSeverity.INFO, log.severity)
-        assertEquals(LogExceptionType.HANDLED, log.logExceptionType)
-        assertEquals("bar", log.embraceAttributes["foo"])
+        assertEquals("handled", log.attributes[embExceptionHandling.name])
+        assertEquals("bar", log.attributes["foo"])
     }
 
     @Test
@@ -156,7 +157,7 @@ internal class LogsApiDelegateTest {
         val log = logService.loggedMessages.single()
         assertEquals("my message", log.message)
         assertEquals(LogSeverity.INFO, log.severity)
-        assertEquals(LogExceptionType.HANDLED, log.logExceptionType)
-        assertEquals("bar", log.embraceAttributes["foo"])
+        assertEquals("handled", log.attributes[embExceptionHandling.name])
+        assertEquals("bar", log.attributes["foo"])
     }
 }

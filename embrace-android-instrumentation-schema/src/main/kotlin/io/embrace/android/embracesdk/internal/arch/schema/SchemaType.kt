@@ -277,6 +277,18 @@ sealed class SchemaType(
         )
     }
 
+    abstract class State<T>(
+        initialValue: T,
+        stateSpanName: String,
+    ) : SchemaType(
+        telemetryType = EmbType.State,
+        fixedObjectName = "state-$stateSpanName"
+    ) {
+        override val schemaAttributes: Map<String, String> = mapOf(
+            "initial_value" to initialValue.toString()
+        )
+    }
+
     /**
      * A custom telemetry type. This allows the hybrid SDKs (and others) to pass in custom
      * telemetry schemas if required.

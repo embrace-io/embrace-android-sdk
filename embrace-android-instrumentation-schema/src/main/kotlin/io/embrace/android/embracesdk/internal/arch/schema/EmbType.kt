@@ -107,6 +107,8 @@ sealed class EmbType(type: String, subtype: String?) : EmbraceAttribute {
         object WebViewInfo : System("webview_info")
     }
 
+    object State : EmbType("state", null)
+
     /**
      * Custom type for hybrid SDKs.
      */

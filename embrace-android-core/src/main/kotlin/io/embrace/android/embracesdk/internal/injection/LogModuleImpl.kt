@@ -1,9 +1,9 @@
 package io.embrace.android.embracesdk.internal.injection
 
-import io.embrace.android.embracesdk.internal.logs.EmbraceLogService
 import io.embrace.android.embracesdk.internal.logs.LogOrchestrator
 import io.embrace.android.embracesdk.internal.logs.LogOrchestratorImpl
 import io.embrace.android.embracesdk.internal.logs.LogService
+import io.embrace.android.embracesdk.internal.logs.LogServiceImpl
 import io.embrace.android.embracesdk.internal.logs.attachments.AttachmentService
 import io.embrace.android.embracesdk.internal.worker.Worker
 
@@ -18,11 +18,10 @@ class LogModuleImpl(
 ) : LogModule {
 
     override val logService: LogService by singleton {
-        EmbraceLogService(
+        LogServiceImpl(
             essentialServiceModule.telemetryDestination,
             configModule.configService,
             essentialServiceModule.sessionPropertiesService,
-            deliveryModule.payloadStore,
             initModule.jsonSerializer,
         )
     }

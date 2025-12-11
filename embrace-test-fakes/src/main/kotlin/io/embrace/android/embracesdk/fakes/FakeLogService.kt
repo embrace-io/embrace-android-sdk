@@ -2,13 +2,13 @@ package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.LogExceptionType
 import io.embrace.android.embracesdk.Severity
+import io.embrace.android.embracesdk.internal.arch.datasource.LogSeverity
 import io.embrace.android.embracesdk.internal.logs.LogService
-import io.embrace.android.embracesdk.internal.logs.attachments.Attachment
 
 class FakeLogService : LogService {
     class LogData(
         val message: String,
-        val severity: Severity,
+        val severity: LogSeverity,
         val logExceptionType: LogExceptionType,
         val embraceAttributes: Map<String, Any>,
     )
@@ -19,15 +19,12 @@ class FakeLogService : LogService {
 
     override fun log(
         message: String,
-        severity: Severity,
+        severity: LogSeverity,
         logExceptionType: LogExceptionType,
         attributes: Map<String, Any>,
         embraceAttributes: Map<String, String>,
-        attachment: Attachment?,
         stackTraceElements: Array<StackTraceElement>?,
         customStackTrace: String?,
-        exceptionName: String?,
-        exceptionMessage: String?,
     ) {
         loggedMessages.add(
             LogData(

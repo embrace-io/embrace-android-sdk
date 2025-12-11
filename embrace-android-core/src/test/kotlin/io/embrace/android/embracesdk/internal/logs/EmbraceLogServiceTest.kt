@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.logs
 
 import io.embrace.android.embracesdk.LogExceptionType
-import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakePayloadStore
 import io.embrace.android.embracesdk.fakes.FakeSessionPropertiesService
@@ -11,9 +10,9 @@ import io.embrace.android.embracesdk.fakes.behavior.FakeLogMessageBehavior
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.config.FakeRedactionConfig
 import io.embrace.android.embracesdk.internal.arch.attrs.toEmbraceAttributeName
+import io.embrace.android.embracesdk.internal.arch.datasource.LogSeverity
 import io.embrace.android.embracesdk.internal.config.behavior.REDACTED_LABEL
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehaviorImpl
-import io.embrace.android.embracesdk.internal.logs.attachments.Attachment
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
 import io.embrace.opentelemetry.kotlin.semconv.LogAttributes
@@ -26,7 +25,7 @@ import org.junit.Test
 @OptIn(IncubatingApi::class)
 internal class EmbraceLogServiceTest {
 
-    private lateinit var logService: EmbraceLogService
+    private lateinit var logService: LogServiceImpl
     private lateinit var destination: FakeTelemetryDestination
     private lateinit var fakeSessionPropertiesService: FakeSessionPropertiesService
     private lateinit var fakeConfigService: FakeConfigService
@@ -45,11 +44,10 @@ internal class EmbraceLogServiceTest {
         logService = createEmbraceLogService()
     }
 
-    private fun createEmbraceLogService() = EmbraceLogService(
+    private fun createEmbraceLogService() = LogServiceImpl(
         destination = destination,
         configService = fakeConfigService,
         sessionPropertiesService = fakeSessionPropertiesService,
-        payloadStore = payloadStore,
         serializer = TestPlatformSerializer(),
     )
 
@@ -59,7 +57,7 @@ internal class EmbraceLogServiceTest {
         val properties = mapOf("password" to "123456", "status" to "success")
 
         // when logging a message with those properties
-        logService.log("message", Severity.INFO, LogExceptionType.NONE, properties)
+        logService.log("message", LogSeverity.INFO, LogExceptionType.NONE, properties)
 
         // then the sensitive key is redacted
         val log = destination.logEvents.single()
@@ -75,7 +73,7 @@ internal class EmbraceLogServiceTest {
         logService = createEmbraceLogService()
 
         // when logging the message
-        logService.log("message", Severity.INFO, LogExceptionType.NONE)
+        logService.log("message", LogSeverity.INFO, LogExceptionType.NONE)
 
         // then the telemetry attributes are set correctly
         val log = destination.logEvents.single()
@@ -89,7 +87,7 @@ internal class EmbraceLogServiceTest {
         val props = mapOf(LogAttributes.LOG_RECORD_UID to "fakeUid")
         logService.log(
             message = "Hello world",
-            severity = Severity.INFO,
+            severity = LogSeverity.INFO,
             logExceptionType = LogExceptionType.NONE,
             attributes = props
         )
@@ -116,18 +114,18 @@ internal class EmbraceLogServiceTest {
 
         // when logging exactly the allowed count of each type
         repeat(testLogLimit) {
-            logService.log("info", Severity.INFO, LogExceptionType.NONE)
-            logService.log("warning!", Severity.WARNING, LogExceptionType.NONE)
-            logService.log("error!", Severity.ERROR, LogExceptionType.NONE)
+            logService.log("info", LogSeverity.INFO, LogExceptionType.NONE)
+            logService.log("warning!", LogSeverity.WARNING, LogExceptionType.NONE)
+            logService.log("error!", LogSeverity.ERROR, LogExceptionType.NONE)
         }
 
         // then the logs are all logged
         assertEquals(testLogLimit * 3, destination.logEvents.size)
 
         // when logging one more of each type
-        logService.log("info", Severity.INFO, LogExceptionType.NONE)
-        logService.log("warning!", Severity.WARNING, LogExceptionType.NONE)
-        logService.log("error!", Severity.ERROR, LogExceptionType.NONE)
+        logService.log("info", LogSeverity.INFO, LogExceptionType.NONE)
+        logService.log("warning!", LogSeverity.WARNING, LogExceptionType.NONE)
+        logService.log("error!", LogSeverity.ERROR, LogExceptionType.NONE)
 
         // then the logs are not logged
         assertEquals(testLogLimit * 3, destination.logEvents.size)
@@ -142,7 +140,7 @@ internal class EmbraceLogServiceTest {
         logService = createEmbraceLogService()
 
         // when logging a message that exceeds the limit
-        logService.log("message", Severity.INFO, LogExceptionType.NONE)
+        logService.log("message", LogSeverity.INFO, LogExceptionType.NONE)
 
         // then the message is not ellipsized
         val log = destination.logEvents.single()
@@ -158,7 +156,7 @@ internal class EmbraceLogServiceTest {
         logService = createEmbraceLogService()
 
         // when logging a message that exceeds the limit
-        logService.log("abcdef", Severity.INFO, LogExceptionType.NONE)
+        logService.log("abcdef", LogSeverity.INFO, LogExceptionType.NONE)
 
         // then the message is trimmed
         val log = destination.logEvents.single()
@@ -175,7 +173,7 @@ internal class EmbraceLogServiceTest {
         logService = createEmbraceLogService()
 
         // when logging a message that exceeds the logMessageMaximumAllowedLength
-        logService.log("abcdef", Severity.INFO, LogExceptionType.NONE)
+        logService.log("abcdef", LogSeverity.INFO, LogExceptionType.NONE)
 
         // then the message is not trimmed
         val log = destination.logEvents.single()
@@ -185,7 +183,7 @@ internal class EmbraceLogServiceTest {
         val unityMaxAllowedLength = 16384
         logService.log(
             "a".repeat(unityMaxAllowedLength + 1),
-            Severity.INFO,
+            LogSeverity.INFO,
             LogExceptionType.NONE
         )
 
@@ -201,7 +199,7 @@ internal class EmbraceLogServiceTest {
         val exceptionType = LogExceptionType.NONE
 
         // when logging the message
-        logService.log(message, Severity.INFO, exceptionType)
+        logService.log(message, LogSeverity.INFO, exceptionType)
 
         // then the message is logged
         val log = destination.logEvents.single()
@@ -212,7 +210,7 @@ internal class EmbraceLogServiceTest {
     fun `get error logs count returns the correct number`() {
         // when logging some error messages
         repeat(5) {
-            logService.log("error!", Severity.ERROR, LogExceptionType.NONE)
+            logService.log("error!", LogSeverity.ERROR, LogExceptionType.NONE)
         }
 
         // then the correct number of error logs is returned
@@ -220,28 +218,10 @@ internal class EmbraceLogServiceTest {
     }
 
     @Test
-    fun `log with attachment`() {
-        val bytes = ByteArray(2)
-        val msg = "message"
-        logService.log(
-            message = msg,
-            severity = Severity.INFO,
-            logExceptionType = LogExceptionType.NONE,
-            attachment = Attachment.EmbraceHosted(bytes) { true },
-        )
-
-        // then the sensitive key is redacted
-        val log = destination.logEvents.single()
-        assertEquals(msg, log.message)
-        val attachment = payloadStore.storedAttachments.single()
-        assertEquals(bytes, attachment.data.second)
-    }
-
-    @Test
     fun `log properties truncated properly`() {
         logService.log(
             message = "message",
-            severity = Severity.INFO,
+            severity = LogSeverity.INFO,
             logExceptionType = LogExceptionType.NONE,
             attributes = tooBigProperties
         )
@@ -255,7 +235,7 @@ internal class EmbraceLogServiceTest {
     fun `unserializable log values turned into error string`() {
         logService.log(
             message = "message",
-            severity = Severity.INFO,
+            severity = LogSeverity.INFO,
             logExceptionType = LogExceptionType.NONE,
             attributes = mapOf("badvalue" to UnSerializableClass())
         )
@@ -268,7 +248,7 @@ internal class EmbraceLogServiceTest {
         logService = createEmbraceLogService()
         logService.log(
             message = "message",
-            severity = Severity.INFO,
+            severity = LogSeverity.INFO,
             logExceptionType = LogExceptionType.NONE,
             attributes = tooBigProperties
         )

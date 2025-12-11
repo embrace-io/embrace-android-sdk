@@ -9,7 +9,6 @@ import io.embrace.android.embracesdk.fakes.FakeCurrentSessionSpan
 import io.embrace.android.embracesdk.fakes.FakeDataSource
 import io.embrace.android.embracesdk.fakes.FakeLogEnvelopeSource
 import io.embrace.android.embracesdk.fakes.FakeLogService
-import io.embrace.android.embracesdk.fakes.FakeMemoryCleanerService
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakePayloadMessageCollator
 import io.embrace.android.embracesdk.fakes.FakePayloadStore
@@ -55,7 +54,6 @@ internal class SessionOrchestratorTest {
     private lateinit var appStateTracker: FakeAppStateTracker
     private lateinit var clock: FakeClock
     private lateinit var configService: FakeConfigService
-    private lateinit var memoryCleanerService: FakeMemoryCleanerService
     private lateinit var userService: FakeUserService
     private lateinit var store: FakePayloadStore
     private lateinit var sessionPropertiesService: SessionPropertiesService
@@ -83,7 +81,6 @@ internal class SessionOrchestratorTest {
     @Test
     fun `test initial behavior in background`() {
         createOrchestrator(AppState.BACKGROUND)
-        assertEquals(1, memoryCleanerService.callCount)
         assertEquals(orchestrator, appStateTracker.listeners.single())
         assertEquals(0, payloadCollator.sessionCount.get())
         assertEquals(1, payloadCollator.baCount.get())
@@ -96,7 +93,6 @@ internal class SessionOrchestratorTest {
     @Test
     fun `test initial behavior in foreground`() {
         createOrchestrator(AppState.FOREGROUND)
-        assertEquals(1, memoryCleanerService.callCount)
         assertEquals(orchestrator, appStateTracker.listeners.single())
         assertEquals(1, payloadCollator.sessionCount.get())
         assertEquals(0, payloadCollator.baCount.get())
@@ -113,7 +109,6 @@ internal class SessionOrchestratorTest {
         val foregroundTime = clock.now()
         val sessionSpan = currentSessionSpan.sessionSpan
         orchestrator.onForeground()
-        assertEquals(2, memoryCleanerService.callCount)
         assertEquals(1, fakeDataSource.enableDataCaptureCount)
         validateSession(
             sessionSpan = sessionSpan,
@@ -130,7 +125,6 @@ internal class SessionOrchestratorTest {
         val backgroundTime = clock.now()
         val sessionSpan = currentSessionSpan.sessionSpan
         orchestrator.onBackground()
-        assertEquals(2, memoryCleanerService.callCount)
         validateSession(
             sessionSpan = sessionSpan,
             endTimeMs = backgroundTime,
@@ -194,7 +188,6 @@ internal class SessionOrchestratorTest {
         val endTimeMs = clock.now()
         val sessionSpan = currentSessionSpan.sessionSpan
         orchestrator.endSessionWithManual(true)
-        assertEquals(2, memoryCleanerService.callCount)
         validateSession(
             sessionSpan = sessionSpan,
             endTimeMs = endTimeMs,
@@ -208,7 +201,6 @@ internal class SessionOrchestratorTest {
         createOrchestrator(AppState.BACKGROUND)
         appStateTracker.state = AppState.BACKGROUND
         orchestrator.endSessionWithManual(true)
-        assertEquals(1, memoryCleanerService.callCount)
         assertTrue(store.storedSessionPayloads.isEmpty())
         assertTrue(store.cachedEmptyCrashPayloads.isEmpty())
     }
@@ -255,7 +247,6 @@ internal class SessionOrchestratorTest {
         assertEquals(1, payloadCollator.sessionCount.get())
         orchestrator.endSessionWithManual(false)
         assertEquals(1, payloadCollator.sessionCount.get())
-        assertEquals(1, memoryCleanerService.callCount)
         assertTrue(store.storedSessionPayloads.isEmpty())
     }
 
@@ -402,7 +393,6 @@ internal class SessionOrchestratorTest {
             configService = configService,
             logger = logger
         )
-        memoryCleanerService = FakeMemoryCleanerService()
         sessionPropertiesService = FakeSessionPropertiesService()
         userService = FakeUserService()
         sessionIdTracker = FakeSessionIdTracker()
@@ -435,7 +425,6 @@ internal class SessionOrchestratorTest {
             configService,
             sessionIdTracker,
             OrchestratorBoundaryDelegate(
-                memoryCleanerService,
                 userService,
                 sessionPropertiesService
             ),

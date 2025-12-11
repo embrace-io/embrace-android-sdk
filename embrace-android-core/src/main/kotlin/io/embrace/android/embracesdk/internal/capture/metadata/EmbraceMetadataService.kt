@@ -9,12 +9,11 @@ import android.os.Process
 import android.os.StatFs
 import android.os.storage.StorageManager
 import androidx.annotation.RequiresApi
-import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.envelope.resource.EnvelopeResourceSource
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
-import io.embrace.android.embracesdk.internal.prefs.PreferencesService
+import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 
 /**
@@ -26,9 +25,8 @@ internal class EmbraceMetadataService(
     private val context: Context,
     private val storageStatsManager: Lazy<StorageStatsManager?>,
     private val configService: ConfigService,
-    private val preferencesService: PreferencesService,
+    private val store: KeyValueStore,
     private val metadataBackgroundWorker: BackgroundWorker,
-    private val clock: Clock,
     private val logger: EmbLogger,
 ) : MetadataService {
 
@@ -39,18 +37,21 @@ internal class EmbraceMetadataService(
     @Volatile
     private var diskUsage: DiskUsage? = null
 
+    private var appVersion: String?
+        get() = store.getString(PREVIOUS_APP_VERSION_KEY)
+        set(value) = store.edit { putString(PREVIOUS_APP_VERSION_KEY, value) }
+
+    private var osVersion: String?
+        get() = store.getString(PREVIOUS_OS_VERSION_KEY)
+        set(value) = store.edit { putString(PREVIOUS_OS_VERSION_KEY, value) }
+
     /**
      * Queues in a single thread executor callables to retrieve values in background
      */
     override fun precomputeValues() {
         metadataBackgroundWorker.submit {
-            with(preferencesService) {
-                appVersion = res.appVersion
-                osVersion = res.osVersion
-                if (installDate == null) {
-                    installDate = clock.now()
-                }
-            }
+            appVersion = res.appVersion
+            osVersion = res.osVersion
             val free = statFs.freeBytes
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && configService.autoDataCaptureBehavior.isDiskUsageCaptureEnabled()) {
                 val deviceDiskAppUsage = getDeviceDiskAppUsage(
@@ -92,4 +93,9 @@ internal class EmbraceMetadataService(
     }
 
     override fun getDiskUsage(): DiskUsage? = diskUsage
+
+    private companion object {
+        const val PREVIOUS_APP_VERSION_KEY = "io.embrace.lastappversion"
+        const val PREVIOUS_OS_VERSION_KEY = "io.embrace.lastosversion"
+    }
 }

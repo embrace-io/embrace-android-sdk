@@ -8,4 +8,6 @@ interface DomainCountLimiter {
      * @return true if the network request should be logged, false otherwise
      */
     fun canLogNetworkRequest(domain: String): Boolean
+
+    fun reset()
 }

@@ -18,23 +18,23 @@ internal class SessionIdTrackerImplTest {
 
     @Test
     fun `test set session id`() {
-        var id: String? = null
+        var count = 0
         tracker.addListener {
-            id = it
+            count++
         }
         assertNull(tracker.getActiveSession())
         assertNull(tracker.getActiveSessionId())
-        assertNull(id)
+        assertEquals(0, count)
 
         tracker.setActiveSession("123", AppState.FOREGROUND)
         assertEquals(SessionData("123", AppState.FOREGROUND), tracker.getActiveSession())
         assertEquals("123", tracker.getActiveSessionId())
-        assertEquals("123", id)
+        assertEquals(1, count)
 
         tracker.setActiveSession("456", AppState.FOREGROUND)
-        assertEquals("456", id)
+        assertEquals(2, count)
 
         tracker.setActiveSession(null, AppState.BACKGROUND)
-        assertEquals(null, id)
+        assertEquals(3, count)
     }
 }

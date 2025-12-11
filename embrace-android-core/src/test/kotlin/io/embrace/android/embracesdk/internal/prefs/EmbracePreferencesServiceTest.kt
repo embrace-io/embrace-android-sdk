@@ -10,10 +10,8 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
-import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -33,38 +31,7 @@ internal class EmbracePreferencesServiceTest {
         fakeClock = FakeClock()
         service = EmbracePreferencesService(
             SharedPrefsStore(prefs, TestPlatformSerializer()),
-            fakeClock
         )
-    }
-
-    @Test
-    fun `test app version is saved`() {
-        assertNull(service.appVersion)
-
-        val appVersion = "1.1"
-        service.appVersion = appVersion
-        assertEquals(appVersion, service.appVersion)
-    }
-
-    @Test
-    fun `test OS version is saved`() {
-        assertNull(service.osVersion)
-
-        val osVersion = "12.1"
-        service.osVersion = osVersion
-        assertEquals(osVersion, service.osVersion)
-    }
-
-    @Test
-    fun `test install date is saved`() {
-        assertNull(service.installDate)
-
-        val installDate = 20221229L
-        service.installDate = installDate
-        assertEquals(installDate, service.installDate)
-
-        service.installDate = -1
-        assertNull(service.installDate)
     }
 
     @Test
@@ -77,71 +44,6 @@ internal class EmbracePreferencesServiceTest {
     @Test
     fun `test device identifier is created`() {
         assertNotNull(service.deviceIdentifier)
-    }
-
-    @Test
-    fun `test user payer is saved`() {
-        assertFalse(service.userPayer)
-        service.userPayer = true
-        assertTrue(service.userPayer)
-    }
-
-    @Test
-    fun `test user identifier is saved`() {
-        assertNull(service.userIdentifier)
-
-        val userIdentifier = "userId"
-        service.userIdentifier = userIdentifier
-        assertEquals(userIdentifier, service.userIdentifier)
-
-        service.userIdentifier = null
-        assertNull(service.userIdentifier)
-    }
-
-    @Test
-    fun `test user email is saved`() {
-        assertNull(service.userEmailAddress)
-
-        val email = "example@embrace.io"
-        service.userEmailAddress = email
-        assertEquals(email, service.userEmailAddress)
-    }
-
-    @Test
-    fun `test user personas is saved`() {
-        assertNull(service.userPersonas)
-
-        val list = setOf("persona1", "persona2")
-        service.userPersonas = list
-        assertEquals(list, service.userPersonas)
-    }
-
-    @Test
-    fun `test permanent session properties are saved`() {
-        assertNull(service.permanentSessionProperties)
-
-        val map = mapOf("property1" to "1", "property2" to "2")
-        service.permanentSessionProperties = map
-        assertEquals(map, service.permanentSessionProperties)
-
-        service.permanentSessionProperties = null
-        assertNull(service.permanentSessionProperties)
-    }
-
-    @Test
-    fun `test username is saved`() {
-        assertNull(service.username)
-
-        val username = "username"
-        service.username = username
-        assertEquals(username, service.username)
-    }
-
-    @Test
-    fun `test last config fetch date is saved`() {
-        assertNull(service.lastConfigFetchDate)
-        service.lastConfigFetchDate = 1234L
-        assertEquals(1234L, service.lastConfigFetchDate)
     }
 
     @Test
@@ -160,17 +62,5 @@ internal class EmbracePreferencesServiceTest {
         val id = "0d48510589c0426b43f01a5fa060a333"
         service.javaScriptBundleId = id
         assertEquals(id, service.javaScriptBundleId)
-    }
-
-    @Test
-    fun `test is users first day`() {
-        assertFalse(service.isUsersFirstDay())
-
-        service.installDate = 0L
-        fakeClock.setCurrentTime(PreferencesService.DAY_IN_MS + 1)
-        assertFalse(service.isUsersFirstDay())
-
-        fakeClock.setCurrentTime(PreferencesService.DAY_IN_MS - 1)
-        assertTrue(service.isUsersFirstDay())
     }
 }

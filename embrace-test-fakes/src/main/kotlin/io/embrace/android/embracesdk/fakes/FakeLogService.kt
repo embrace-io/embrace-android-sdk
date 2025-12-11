@@ -39,5 +39,5 @@ class FakeLogService : LogService {
         return errorLogIds.count()
     }
 
-    override fun cleanCollections() {}
+    override fun onPostSessionChange() {}
 }

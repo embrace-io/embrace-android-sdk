@@ -48,8 +48,8 @@ internal class ThreadBlockageServiceImpl(
         blockedThreadDetector.stop()
     }
 
-    override fun cleanCollections() {
-        stacktraceSampler.cleanCollections()
+    override fun onPostSessionChange() {
+        stacktraceSampler.onPostSessionChange()
     }
 
     /**

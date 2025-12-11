@@ -1,7 +1,5 @@
 package io.embrace.android.embracesdk.internal.injection
 
-import io.embrace.android.embracesdk.internal.session.EmbraceMemoryCleanerService
-import io.embrace.android.embracesdk.internal.session.MemoryCleanerService
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactory
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactoryImpl
 import io.embrace.android.embracesdk.internal.session.message.PayloadMessageCollatorImpl
@@ -25,10 +23,6 @@ class SessionOrchestrationModuleImpl(
     logModule: LogModule,
 ) : SessionOrchestrationModule {
 
-    override val memoryCleanerService: MemoryCleanerService by singleton {
-        EmbraceMemoryCleanerService(logger = initModule.logger)
-    }
-
     private val payloadMessageCollator: PayloadMessageCollatorImpl by singleton {
         PayloadMessageCollatorImpl(
             EmbTrace.trace("sessionEnvelopeSource") { payloadSourceModule.sessionEnvelopeSource },
@@ -48,7 +42,6 @@ class SessionOrchestrationModuleImpl(
 
     private val boundaryDelegate by singleton {
         OrchestratorBoundaryDelegate(
-            memoryCleanerService,
             essentialServiceModule.userService,
             essentialServiceModule.sessionPropertiesService
         )

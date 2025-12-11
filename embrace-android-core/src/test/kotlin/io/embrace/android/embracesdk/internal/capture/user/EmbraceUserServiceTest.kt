@@ -1,8 +1,9 @@
 package io.embrace.android.embracesdk.internal.capture.user
 
-import io.embrace.android.embracesdk.fakes.FakePreferenceService
+import io.embrace.android.embracesdk.fakes.FakeClock
+import io.embrace.android.embracesdk.fakes.FakeEmbLogger
+import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
-import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.payload.UserInfo
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -28,39 +29,48 @@ internal class EmbraceUserServiceTest {
     )
 
     private lateinit var service: EmbraceUserService
-    private lateinit var preferencesService: FakePreferenceService
+    private lateinit var store: FakeKeyValueStore
     private lateinit var logger: EmbLogger
+    private lateinit var clock: FakeClock
 
     @Before
     fun setUp() {
-        logger = EmbLoggerImpl()
-        preferencesService = FakePreferenceService()
+        logger = FakeEmbLogger()
+        clock = FakeClock()
+        store = FakeKeyValueStore()
+
+        setUserInfo(
+            id = "f0a923498c",
+            email = "test@example.com",
+            name = "Mr Test",
+            payer = true,
+            firstDay = true
+        )
+
+        // load user info
+        service = EmbraceUserService(store, clock, logger)
     }
 
     @Test
     fun testUserInfoNotLoaded() {
-        mockNoUserInfo()
+        setUserInfo(suppliedPersonas = emptySet())
         assertNotNull(service.getUserInfo())
         service.getUserInfo().verifyNoUserInfo()
     }
 
     @Test
     fun testUserInfoLoaded() {
-        mockUserInfo()
         assertNotNull(service.getUserInfo())
         service.getUserInfo().verifyExpectedUserInfo()
     }
 
     @Test
     fun testUserInfoSessionCopy() {
-        mockUserInfo()
         assertNotSame(service.getUserInfo(), service.getUserInfo())
     }
 
     @Test
     fun testUserIdentifier() {
-        mockUserInfo()
-
         with(service) {
             assertEquals("f0a923498c", getUserInfo().userId)
             setUserIdentifier("abc")
@@ -72,8 +82,6 @@ internal class EmbraceUserServiceTest {
 
     @Test
     fun testUsername() {
-        mockUserInfo()
-
         with(service) {
             assertEquals("Mr Test", getUserInfo().username)
             setUsername("Joe")
@@ -85,8 +93,6 @@ internal class EmbraceUserServiceTest {
 
     @Test
     fun testUserEmail() {
-        mockUserInfo()
-
         with(service) {
             assertEquals("test@example.com", getUserInfo().email)
             setUserEmail("foo@test.com")
@@ -98,8 +104,6 @@ internal class EmbraceUserServiceTest {
 
     @Test
     fun testUserAsPayer() {
-        mockUserInfo()
-
         with(service) {
             assertTrue(checkNotNull(getUserInfo().personas).contains("payer"))
             clearUserPersona("payer")
@@ -111,8 +115,6 @@ internal class EmbraceUserServiceTest {
 
     @Test
     fun testClearAllUserInfo() {
-        mockUserInfo()
-
         with(service) {
             getUserInfo().verifyExpectedUserInfo()
             service.clearAllUserInfo()
@@ -125,7 +127,6 @@ internal class EmbraceUserServiceTest {
 
     @Test
     fun testInvalidPersonaLogMsg() {
-        mockUserInfo()
         val persona = "!@£$$%*("
         service.addUserPersona(persona)
         val personas = checkNotNull(service.getUserInfo().personas)
@@ -134,39 +135,56 @@ internal class EmbraceUserServiceTest {
 
     @Test
     fun testMaxPersonaLogMsg() {
-        mockNoUserInfo()
+        setUserInfo()
 
         repeat(11) { k ->
             service.addUserPersona("Persona_$k")
         }
         val personas = checkNotNull(service.getUserInfo().personas)
-        assertTrue(personas.contains("Persona_1"))
-        assertTrue(personas.contains("Persona_9"))
-        assertFalse(personas.contains("Persona_10"))
+        assertEquals(
+            listOf(
+                "persona",
+                "first_day",
+                "Persona_0",
+                "Persona_1",
+                "Persona_2",
+                "Persona_3",
+                "Persona_4",
+                "Persona_5",
+                "Persona_6",
+                "Persona_7",
+            ),
+            personas.toList()
+        )
     }
 
-    private fun mockUserInfo() {
-        preferencesService.userEmailAddress = "test@example.com"
-        preferencesService.userIdentifier = "f0a923498c"
-        preferencesService.username = "Mr Test"
-        preferencesService.userPersonas = userPersonas
-        preferencesService.userPayer = true
-        preferencesService.firstDay = true
-
-        // load user info
-        service = EmbraceUserService(preferencesService, logger)
+    @Test
+    fun `test startup complete`() {
+        val timestamp = store.values()["io.embrace.installtimestamp"]
+        assertEquals(clock.now(), timestamp)
     }
 
-    private fun mockNoUserInfo() {
-        preferencesService.userEmailAddress = null
-        preferencesService.userIdentifier = null
-        preferencesService.username = null
-        preferencesService.userPersonas = null
-        preferencesService.userPayer = false
-        preferencesService.firstDay = false
+    private fun setUserInfo(
+        id: String? = null,
+        email: String? = null,
+        name: String? = null,
+        payer: Boolean? = null,
+        firstDay: Boolean? = null,
+        suppliedPersonas: Set<String> = userPersonas,
+    ) {
+        store.edit {
+            putString("io.embrace.userid", id)
+            putString("io.embrace.useremail", email)
+            putString("io.embrace.username", name)
+            putBoolean("io.embrace.userispayer", payer)
 
-        // load user info
-        service = EmbraceUserService(preferencesService, logger)
+            val personas = if (firstDay == true) {
+                suppliedPersonas.plus("payer")
+            } else {
+                suppliedPersonas
+            }
+            putStringSet("io.embrace.userpersonas", personas)
+        }
     }
 
     private fun UserInfo.verifyExpectedUserInfo() {
@@ -181,6 +199,6 @@ internal class EmbraceUserServiceTest {
         assertNull(email)
         assertNull(userId)
         assertNull(username)
-        assertEquals(emptySet<String>(), personas)
+        assertEquals(setOf("first_day"), personas)
     }
 }

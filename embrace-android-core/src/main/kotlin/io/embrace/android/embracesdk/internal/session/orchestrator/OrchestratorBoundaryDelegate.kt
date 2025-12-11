@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.internal.session.orchestrator
 
 import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
 import io.embrace.android.embracesdk.internal.capture.user.UserService
-import io.embrace.android.embracesdk.internal.session.MemoryCleanerService
 
 /**
  * This class is responsible for orchestrating a clean boundary between sessions.
@@ -13,7 +12,6 @@ import io.embrace.android.embracesdk.internal.session.MemoryCleanerService
  * contains references to various services that are otherwise irrelevant to the SessionOrchestrator.
  */
 internal class OrchestratorBoundaryDelegate(
-    private val memoryCleanerService: MemoryCleanerService,
     private val userService: UserService,
     private val sessionPropertiesService: SessionPropertiesService,
 ) {
@@ -23,7 +21,6 @@ internal class OrchestratorBoundaryDelegate(
      * resetting collections in services etc.. This will be invoked AFTER the final session payload has been created.
      */
     fun cleanupAfterSessionEnd(clearUserInfo: Boolean = false) {
-        memoryCleanerService.cleanServicesCollections()
         sessionPropertiesService.cleanupAfterSessionEnd()
 
         if (clearUserInfo) {

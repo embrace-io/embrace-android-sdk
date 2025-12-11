@@ -123,5 +123,5 @@ interface InstrumentationArgs {
     /**
      * Sets a listener that is invoked after a session changes.
      */
-    fun registerSessionChangeListener(listener: () -> Unit)
+    fun registerSessionChangeListener(listener: SessionChangeListener)
 }

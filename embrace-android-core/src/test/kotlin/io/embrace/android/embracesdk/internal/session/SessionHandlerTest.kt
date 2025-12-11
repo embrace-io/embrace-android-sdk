@@ -6,7 +6,6 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeMetadataSource
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeResourceSource
-import io.embrace.android.embracesdk.fakes.FakeMemoryCleanerService
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakeOrdinalStore
 import io.embrace.android.embracesdk.fakes.FakeOtelPayloadMapper
@@ -57,7 +56,6 @@ internal class SessionHandlerTest {
     private lateinit var sessionIdTracker: FakeSessionIdTracker
     private lateinit var metadataService: FakeMetadataService
     private lateinit var configService: FakeConfigService
-    private lateinit var memoryCleanerService: FakeMemoryCleanerService
     private lateinit var payloadFactory: PayloadFactory
     private lateinit var executorService: BlockingScheduledExecutorService
     private lateinit var worker: BackgroundWorker
@@ -75,7 +73,6 @@ internal class SessionHandlerTest {
         sessionPropertiesService = FakeSessionPropertiesService()
         metadataService = FakeMetadataService()
         sessionIdTracker = FakeSessionIdTracker()
-        memoryCleanerService = FakeMemoryCleanerService()
         configService = FakeConfigService(
             sessionBehavior = createSessionBehavior()
         )

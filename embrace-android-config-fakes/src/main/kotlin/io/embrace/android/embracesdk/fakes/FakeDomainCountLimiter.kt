@@ -8,4 +8,7 @@ class FakeDomainCountLimiter : DomainCountLimiter {
     override fun canLogNetworkRequest(domain: String): Boolean {
         return canLog
     }
+
+    override fun reset() {
+    }
 }

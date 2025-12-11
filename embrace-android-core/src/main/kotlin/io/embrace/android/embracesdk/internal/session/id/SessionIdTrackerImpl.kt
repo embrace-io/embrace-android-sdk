@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.session.id
 
 import android.app.ActivityManager
 import android.os.Build
+import io.embrace.android.embracesdk.internal.arch.SessionChangeListener
 import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
@@ -12,18 +13,20 @@ internal class SessionIdTrackerImpl(
     private val logger: EmbLogger,
 ) : SessionIdTracker {
 
-    private val listeners = CopyOnWriteArraySet<(String?) -> Unit>()
+    private val listeners = CopyOnWriteArraySet<SessionChangeListener>()
 
     @Volatile
     private var activeSession: SessionData? = null
         set(value) {
             field = value
-            listeners.forEach { it(value?.id) }
+            try {
+                listeners.forEach(SessionChangeListener::onPostSessionChange)
+            } catch (ignored: Throwable) {
+            }
         }
 
-    override fun addListener(listener: (String?) -> Unit) {
+    override fun addListener(listener: SessionChangeListener) {
         listeners.add(listener)
-        listener(activeSession?.id)
     }
 
     override fun getActiveSession(): SessionData? = activeSession

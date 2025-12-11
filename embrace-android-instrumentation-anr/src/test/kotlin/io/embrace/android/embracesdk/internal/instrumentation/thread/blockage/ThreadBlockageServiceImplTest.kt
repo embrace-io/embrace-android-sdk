@@ -74,7 +74,7 @@ internal class ThreadBlockageServiceImplTest {
             assertEquals(2, intervals.size)
 
             // the interval should be removed here
-            service.cleanCollections()
+            service.onPostSessionChange()
             watchdogExecutorService.shutdown()
             watchdogExecutorService.awaitTermination(1, TimeUnit.SECONDS)
             assertEquals(1, stacktraceSampler.getThreadBlockageIntervals().size)

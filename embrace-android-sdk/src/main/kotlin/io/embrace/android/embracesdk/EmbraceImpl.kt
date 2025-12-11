@@ -100,32 +100,36 @@ internal class EmbraceImpl(
     private var internalInterfaceModule: InternalInterfaceModule? = null
 
     override fun start(context: Context) {
-        if (!bootstrapper.init(context)) {
-            return
+        try {
+            if (!bootstrapper.init(context)) {
+                return
+            }
+            bootstrapper.postInit()
+
+            start("post-services-setup")
+            internalInterfaceModule = InternalInterfaceModuleImpl(
+                bootstrapper.initModule,
+                bootstrapper.openTelemetryModule,
+                bootstrapper.configModule,
+                bootstrapper.payloadSourceModule,
+                bootstrapper.instrumentationModule,
+                this,
+                bootstrapper
+            )
+
+            // not fully initialized, but the SDK shouldn't catastrophically throw after this point,
+            // so we allow external calls.
+            sdkCallChecker.started.set(true)
+            bootstrapper.registerListeners()
+            bootstrapper.loadInstrumentation()
+            initializeHucInstrumentation(bootstrapper.configModule.configService.networkBehavior)
+            bootstrapper.postLoadInstrumentation()
+            bootstrapper.triggerPayloadSend()
+            bootstrapper.markSdkInitComplete()
+            end()
+        } catch (ignored: Throwable) {
+            Log.w("Embrace", "Failed to initialize Embrace SDK", ignored)
         }
-        bootstrapper.postInit()
-
-        start("post-services-setup")
-        internalInterfaceModule = InternalInterfaceModuleImpl(
-            bootstrapper.initModule,
-            bootstrapper.openTelemetryModule,
-            bootstrapper.configModule,
-            bootstrapper.payloadSourceModule,
-            bootstrapper.instrumentationModule,
-            this,
-            bootstrapper
-        )
-
-        // not fully initialized, but the SDK shouldn't catastrophically throw after this point,
-        // so we allow external calls.
-        sdkCallChecker.started.set(true)
-        bootstrapper.registerListeners()
-        bootstrapper.loadInstrumentation()
-        initializeHucInstrumentation(bootstrapper.configModule.configService.networkBehavior)
-        bootstrapper.postLoadInstrumentation()
-        bootstrapper.triggerPayloadSend()
-        bootstrapper.markSdkInitComplete()
-        end()
     }
 
     private fun initializeHucInstrumentation(networkBehavior: NetworkBehavior) {

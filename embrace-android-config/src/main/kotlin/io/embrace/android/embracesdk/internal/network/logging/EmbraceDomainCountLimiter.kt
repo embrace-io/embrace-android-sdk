@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.network.logging
 
-import io.embrace.android.embracesdk.internal.session.MemoryCleanerListener
 import io.embrace.android.embracesdk.internal.utils.NetworkUtils
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
@@ -8,7 +7,7 @@ import java.util.concurrent.atomic.AtomicInteger
 class EmbraceDomainCountLimiter(
     private val defaultLimitSupplier: () -> Int,
     private val domainLimitsSupplier: () -> Map<String, Int>,
-) : MemoryCleanerListener, DomainCountLimiter {
+) : DomainCountLimiter {
 
     private val domainSetting = ConcurrentHashMap<String, DomainSettings>()
     private val callsPerDomainSuffix = ConcurrentHashMap<String, DomainCount>()
@@ -71,7 +70,7 @@ class EmbraceDomainCountLimiter(
         }
     }
 
-    override fun cleanCollections() {
+    override fun reset() {
         synchronized(lock) {
             clearNetworkCalls()
             // re-fetch limits in case they changed since they last time they were fetched

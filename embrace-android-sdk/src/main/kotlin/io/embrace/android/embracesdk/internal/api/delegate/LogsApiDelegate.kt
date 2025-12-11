@@ -3,19 +3,15 @@ package io.embrace.android.embracesdk.internal.api.delegate
 import io.embrace.android.embracesdk.LogExceptionType
 import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.internal.api.LogsApi
-import io.embrace.android.embracesdk.internal.arch.attrs.embExceptionHandling
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.injection.embraceImplInject
 import io.embrace.android.embracesdk.internal.instrumentation.fcm.PushNotificationBreadcrumb
 import io.embrace.android.embracesdk.internal.instrumentation.fcm.fcmDataSource
 import io.embrace.android.embracesdk.internal.logs.attachments.Attachment
-import io.embrace.android.embracesdk.internal.logs.attachments.Attachment.EmbraceHosted
 import io.embrace.android.embracesdk.internal.logs.attachments.AttachmentErrorCode.ATTACHMENT_TOO_LARGE
 import io.embrace.android.embracesdk.internal.logs.attachments.AttachmentErrorCode.OVER_MAX_ATTACHMENTS
 import io.embrace.android.embracesdk.internal.logs.attachments.AttachmentErrorCode.UNKNOWN
-import io.embrace.android.embracesdk.internal.serialization.truncatedStacktrace
 import io.embrace.android.embracesdk.internal.utils.getSafeStackTrace
-import io.embrace.opentelemetry.kotlin.semconv.ExceptionAttributes
 
 internal class LogsApiDelegate(
     bootstrapper: ModuleInitBootstrapper,
@@ -23,9 +19,6 @@ internal class LogsApiDelegate(
 ) : LogsApi {
 
     private val logService by embraceImplInject(sdkCallChecker) { bootstrapper.logModule.logService }
-    private val serializer by embraceImplInject(sdkCallChecker) {
-        bootstrapper.initModule.jsonSerializer
-    }
     private val attachmentService by embraceImplInject(sdkCallChecker) {
         bootstrapper.logModule.attachmentService
     }
@@ -140,36 +133,17 @@ internal class LogsApiDelegate(
     ) {
         if (sdkCallChecker.check("log_message")) {
             runCatching {
-                val attrs = mutableMapOf<String, String>()
-                exceptionName?.let { attrs[ExceptionAttributes.EXCEPTION_TYPE] = it }
-                exceptionMessage?.let { attrs[ExceptionAttributes.EXCEPTION_MESSAGE] = it }
-
-                val stacktrace =
-                    stackTraceElements?.let(checkNotNull(serializer)::truncatedStacktrace) ?: customStackTrace
-                stacktrace?.let { attrs[ExceptionAttributes.EXCEPTION_STACKTRACE] = it }
-
-                if (attachment != null) {
-                    attrs.putAll(attachment.attributes.mapKeys { it.key.name })
-                }
-
-                val logAttachment = when {
-                    attachment is EmbraceHosted && attachment.shouldAttemptUpload() -> attachment
-                    else -> null
-                }
-
-                val finalAttrs = if (logExceptionType != LogExceptionType.NONE) {
-                    attributes.plus(embExceptionHandling.name to logExceptionType.value)
-                } else {
-                    attributes
-                }
-
                 logService?.log(
                     message = message,
                     severity = severity,
                     logExceptionType = logExceptionType,
-                    attributes = finalAttrs,
-                    embraceAttributes = attrs.plus(embraceAttributes),
-                    logAttachment = logAttachment
+                    attributes = attributes,
+                    embraceAttributes = embraceAttributes,
+                    attachment = attachment,
+                    stackTraceElements = stackTraceElements,
+                    customStackTrace = customStackTrace,
+                    exceptionMessage = exceptionMessage,
+                    exceptionName = exceptionName,
                 )
             }
         }

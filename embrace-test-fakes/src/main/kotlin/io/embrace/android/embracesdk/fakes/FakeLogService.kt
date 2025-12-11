@@ -23,7 +23,11 @@ class FakeLogService : LogService {
         logExceptionType: LogExceptionType,
         attributes: Map<String, Any>,
         embraceAttributes: Map<String, String>,
-        logAttachment: Attachment.EmbraceHosted?,
+        attachment: Attachment?,
+        stackTraceElements: Array<StackTraceElement>?,
+        customStackTrace: String?,
+        exceptionName: String?,
+        exceptionMessage: String?,
     ) {
         loggedMessages.add(
             LogData(

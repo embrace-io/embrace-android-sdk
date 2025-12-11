@@ -23,10 +23,10 @@ import io.embrace.android.embracesdk.internal.payload.AppFramework
  */
 class ConfigServiceImpl(
     instrumentedConfig: InstrumentedConfig,
-    remoteConfig: RemoteConfig?,
+    override val remoteConfig: RemoteConfig?,
     deviceIdSupplier: () -> String,
     private val hasConfiguredOtelExporters: () -> Boolean,
-) : ConfigService {
+) : ConfigService, HybridSdkConfigService {
 
     private val thresholdCheck: BehaviorThresholdCheck = BehaviorThresholdCheck(deviceIdSupplier)
     override val backgroundActivityBehavior =
@@ -62,4 +62,6 @@ class ConfigServiceImpl(
     override val appFramework: AppFramework = instrumentedConfig.project.getAppFramework()?.let {
         AppFramework.fromString(it)
     } ?: AppFramework.NATIVE
+
+    override fun isBehaviorEnabled(pctEnabled: Float?): Boolean? = thresholdCheck.isBehaviorEnabled(pctEnabled)
 }

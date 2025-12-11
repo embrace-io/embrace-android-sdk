@@ -20,4 +20,7 @@ internal class NoopEmbraceInternalInterface(
 
     override fun recordNetworkRequest(networkRequest: EmbraceNetworkRequest) {
     }
+    override fun getRemoteConfig(): Map<String, Any>? = null
+
+    override fun isConfigFeatureEnabled(pctEnabled: Float?): Boolean? = false
 }

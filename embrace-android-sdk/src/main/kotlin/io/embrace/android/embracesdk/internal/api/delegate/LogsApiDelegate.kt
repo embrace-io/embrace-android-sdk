@@ -5,6 +5,11 @@ import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.internal.api.LogsApi
 import io.embrace.android.embracesdk.internal.arch.attrs.embExceptionHandling
 import io.embrace.android.embracesdk.internal.arch.datasource.LogSeverity
+import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
+import io.embrace.android.embracesdk.internal.arch.schema.SchemaType.Exception
+import io.embrace.android.embracesdk.internal.arch.schema.SchemaType.FlutterException
+import io.embrace.android.embracesdk.internal.arch.schema.SchemaType.Log
+import io.embrace.android.embracesdk.internal.arch.schema.TelemetryAttributes
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.injection.embraceImplInject
 import io.embrace.android.embracesdk.internal.instrumentation.fcm.PushNotificationBreadcrumb
@@ -14,6 +19,7 @@ import io.embrace.android.embracesdk.internal.logs.attachments.Attachment.Embrac
 import io.embrace.android.embracesdk.internal.logs.attachments.AttachmentErrorCode.ATTACHMENT_TOO_LARGE
 import io.embrace.android.embracesdk.internal.logs.attachments.AttachmentErrorCode.OVER_MAX_ATTACHMENTS
 import io.embrace.android.embracesdk.internal.logs.attachments.AttachmentErrorCode.UNKNOWN
+import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.serialization.truncatedStacktrace
 import io.embrace.android.embracesdk.internal.utils.getSafeStackTrace
@@ -36,6 +42,9 @@ internal class LogsApiDelegate(
     }
     private val serializer by embraceImplInject(sdkCallChecker) {
         bootstrapper.initModule.jsonSerializer
+    }
+    private val configService by embraceImplInject(sdkCallChecker) {
+        bootstrapper.configModule.configService
     }
 
     override fun logInfo(message: String) = logMessage(message, Severity.INFO)
@@ -173,12 +182,19 @@ internal class LogsApiDelegate(
                 val stacktrace = stackTraceElements?.let(jsonSerializer::truncatedStacktrace) ?: customStackTrace
                 stacktrace?.let { attrs[ExceptionAttributes.EXCEPTION_STACKTRACE] = it }
 
+                // determine log schema
+                val schemaProvider: (TelemetryAttributes) -> SchemaType = when {
+                    logExceptionType == LogExceptionType.NONE -> ::Log
+                    configService?.appFramework == AppFramework.FLUTTER -> ::FlutterException
+                    else -> ::Exception
+                }
+
                 // send log
                 dst.log(
                     message = message,
                     severity = logSeverity,
-                    logExceptionType = logExceptionType,
                     attributes = attrs,
+                    schemaProvider = schemaProvider
                 )
 
                 // store attachment

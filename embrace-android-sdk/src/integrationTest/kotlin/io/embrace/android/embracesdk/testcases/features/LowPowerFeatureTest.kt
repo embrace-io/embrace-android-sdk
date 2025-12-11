@@ -1,16 +1,27 @@
 package io.embrace.android.embracesdk.testcases.features
 
+import android.app.Application
+import android.content.Context
+import android.content.Intent
+import android.os.Looper
+import android.os.PowerManager
+import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.assertions.assertMatches
 import io.embrace.android.embracesdk.assertions.findSpanOfType
+import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
+import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
-import io.embrace.android.embracesdk.assertions.assertMatches
-import io.embrace.android.embracesdk.internal.instrumentation.powersave.LowPowerDataSource
 import org.junit.Assert.assertEquals
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.Shadows
+import org.robolectric.shadows.ShadowLooper
+import org.robolectric.shadows.ShadowPowerManager
 
 @RunWith(AndroidJUnit4::class)
 internal class LowPowerFeatureTest {
@@ -19,19 +30,29 @@ internal class LowPowerFeatureTest {
     @JvmField
     val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule()
 
+    private lateinit var application: Application
+    private lateinit var shadowPowerManager: ShadowPowerManager
+    private lateinit var shadowMainLooper: ShadowLooper
+
+    @Before
+    fun setup() {
+        application = ApplicationProvider.getApplicationContext() as Application
+        shadowPowerManager = Shadows.shadowOf(application.getSystemService(Context.POWER_SERVICE) as PowerManager)
+        shadowMainLooper = Shadows.shadowOf(Looper.getMainLooper())
+    }
+
     @Test
     fun `low power feature`() {
         val tickTimeMs = 3000L
         var startTimeMs: Long = 0
 
         testRule.runTest(
+            instrumentedConfig = FakeInstrumentedConfig(enabledFeatures = FakeEnabledFeatureConfig(powerSaveCapture = true)),
             testCaseAction = {
                 startTimeMs = recordSession {
-                    // look inside embrace internals as there isn't a good way to trigger this E2E
-                    val dataSource = findDataSource<LowPowerDataSource>()
-                    dataSource.onPowerSaveModeChanged(true)
+                    setPowerSaveMode(true)
                     clock.tick(tickTimeMs)
-                    dataSource.onPowerSaveModeChanged(false)
+                    setPowerSaveMode(false)
                 }.actionTimeMs
             },
             assertAction = {
@@ -51,5 +72,11 @@ internal class LowPowerFeatureTest {
                 assertSpansMatchGoldenFile(spans, "system-low-power-export.json")
             }
         )
+    }
+
+    private fun setPowerSaveMode(powerSaveModeEnabled: Boolean) {
+        shadowPowerManager.setIsPowerSaveMode(powerSaveModeEnabled)
+        application.sendBroadcast(Intent(PowerManager.ACTION_POWER_SAVE_MODE_CHANGED))
+        shadowMainLooper.idle()
     }
 }

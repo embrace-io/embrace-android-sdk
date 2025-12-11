@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.internal.logs
 import android.os.Parcelable
 import io.embrace.android.embracesdk.LogExceptionType
 import io.embrace.android.embracesdk.Severity
-import io.embrace.android.embracesdk.internal.arch.attrs.embExceptionHandling
 import io.embrace.android.embracesdk.internal.arch.datasource.LogSeverity
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
@@ -47,20 +46,18 @@ class EmbraceLogService(
         message: String,
         severity: Severity,
         logExceptionType: LogExceptionType,
-        properties: Map<String, Any>?,
-        customLogAttrs: Map<String, String>,
+        attributes: Map<String, Any>,
+        embraceAttributes: Map<String, String>,
         logAttachment: Attachment.EmbraceHosted?,
     ) {
-        val redactedProperties = redactSensitiveProperties(sanitizeProperties(properties, bypassLimitsValidation))
-        val attrs = createTelemetryAttributes(redactedProperties, customLogAttrs)
+        val redactedProperties =
+            redactSensitiveProperties(sanitizeProperties(attributes, bypassLimitsValidation))
+        val attrs = createTelemetryAttributes(redactedProperties, embraceAttributes)
 
         val schemaProvider: (TelemetryAttributes) -> SchemaType = when {
             logExceptionType == LogExceptionType.NONE -> ::Log
             configService.appFramework == AppFramework.FLUTTER -> ::FlutterException
             else -> ::Exception
-        }
-        if (logExceptionType != LogExceptionType.NONE) {
-            attrs.setAttribute(embExceptionHandling, logExceptionType.value)
         }
 
         logAttachment?.let {
@@ -88,12 +85,12 @@ class EmbraceLogService(
      * Create [TelemetryAttributes] with the standard log properties
      */
     private fun createTelemetryAttributes(
-        customProperties: Map<String, Any>?,
+        customProperties: Map<String, Any>,
         logAttrs: Map<String, String>,
     ): TelemetryAttributes {
         val attributes = TelemetryAttributes(
             sessionPropertiesProvider = sessionPropertiesService::getProperties,
-            customAttributes = customProperties?.mapValues { it.value.toString() } ?: emptyMap(),
+            customAttributes = customProperties.mapValues { it.value.toString() },
         )
         attributes.setAttribute(LogAttributes.LOG_RECORD_UID, Uuid.getEmbUuid())
         logAttrs.forEach {
@@ -139,34 +136,30 @@ class EmbraceLogService(
         }
     }
 
-    private fun redactSensitiveProperties(properties: Map<String, Any>?): Map<String, Any>? {
-        return properties?.mapValues { (key, value) ->
+    private fun redactSensitiveProperties(properties: Map<String, Any>): Map<String, Any> {
+        return properties.mapValues { (key, value) ->
             if (configService.sensitiveKeysBehavior.isSensitiveKey(key)) REDACTED_LABEL else value
         }
     }
 
     private fun sanitizeProperties(
-        properties: Map<String, Any>?,
+        properties: Map<String, Any>,
         bypassPropertyLimit: Boolean = false,
     ): Map<String, Any> {
-        return if (properties == null) {
-            emptyMap()
-        } else {
-            runCatching {
-                if (bypassPropertyLimit) {
-                    properties.entries.associate {
-                        Pair(it.key, checkIfSerializable(it.value))
-                    }
-                } else {
-                    properties.entries.take(MAX_PROPERTY_COUNT).associate {
-                        Pair(
-                            first = truncate(it.key, MAX_PROPERTY_KEY_LENGTH),
-                            second = truncate(checkIfSerializable(it.value).toString(), MAX_PROPERTY_VALUE_LENGTH)
-                        )
-                    }
+        return runCatching {
+            if (bypassPropertyLimit) {
+                properties.entries.associate {
+                    Pair(it.key, checkIfSerializable(it.value))
                 }
-            }.getOrDefault(emptyMap())
-        }
+            } else {
+                properties.entries.take(MAX_PROPERTY_COUNT).associate {
+                    Pair(
+                        first = truncate(it.key, MAX_PROPERTY_KEY_LENGTH),
+                        second = truncate(checkIfSerializable(it.value).toString(), MAX_PROPERTY_VALUE_LENGTH)
+                    )
+                }
+            }
+        }.getOrDefault(emptyMap())
     }
 
     private fun checkIfSerializable(value: Any): Any {

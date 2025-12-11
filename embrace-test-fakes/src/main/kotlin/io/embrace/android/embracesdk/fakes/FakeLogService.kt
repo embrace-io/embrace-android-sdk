@@ -10,7 +10,7 @@ class FakeLogService : LogService {
         val message: String,
         val severity: Severity,
         val logExceptionType: LogExceptionType,
-        val properties: Map<String, Any>?,
+        val embraceAttributes: Map<String, Any>,
     )
 
     val logs: MutableList<String> = mutableListOf()
@@ -21,8 +21,8 @@ class FakeLogService : LogService {
         message: String,
         severity: Severity,
         logExceptionType: LogExceptionType,
-        properties: Map<String, Any>?,
-        customLogAttrs: Map<String, String>,
+        attributes: Map<String, Any>,
+        embraceAttributes: Map<String, String>,
         logAttachment: Attachment.EmbraceHosted?,
     ) {
         loggedMessages.add(
@@ -30,7 +30,7 @@ class FakeLogService : LogService {
                 message = message,
                 severity = severity,
                 logExceptionType = logExceptionType,
-                properties = properties,
+                embraceAttributes = attributes,
             )
         )
     }

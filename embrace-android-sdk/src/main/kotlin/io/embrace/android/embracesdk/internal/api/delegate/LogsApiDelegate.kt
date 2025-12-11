@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.api.delegate
 import io.embrace.android.embracesdk.LogExceptionType
 import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.internal.api.LogsApi
+import io.embrace.android.embracesdk.internal.arch.attrs.embExceptionHandling
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.injection.embraceImplInject
 import io.embrace.android.embracesdk.internal.instrumentation.fcm.PushNotificationBreadcrumb
@@ -44,7 +45,7 @@ internal class LogsApiDelegate(
         logMessageImpl(
             severity = severity,
             message = message,
-            properties = properties,
+            attributes = properties,
         )
     }
 
@@ -59,7 +60,7 @@ internal class LogsApiDelegate(
         logMessageImpl(
             severity = severity,
             message = message,
-            properties = properties,
+            attributes = properties,
             attachment = obj,
         )
     }
@@ -76,7 +77,7 @@ internal class LogsApiDelegate(
         logMessageImpl(
             severity = severity,
             message = message,
-            properties = properties,
+            attributes = properties,
             attachment = obj,
         )
     }
@@ -101,7 +102,7 @@ internal class LogsApiDelegate(
         logMessageImpl(
             severity = severity,
             message = message ?: exceptionMessage,
-            properties = properties,
+            attributes = properties,
             stackTraceElements = throwable.getSafeStackTrace(),
             logExceptionType = LogExceptionType.HANDLED,
             exceptionName = throwable.javaClass.simpleName,
@@ -118,7 +119,7 @@ internal class LogsApiDelegate(
         logMessageImpl(
             severity = severity,
             message = message ?: "",
-            properties = properties,
+            attributes = properties,
             stackTraceElements = stacktraceElements,
             logExceptionType = LogExceptionType.HANDLED,
             exceptionMessage = message,
@@ -128,13 +129,13 @@ internal class LogsApiDelegate(
     fun logMessageImpl(
         severity: Severity,
         message: String,
-        properties: Map<String, Any>? = null,
+        attributes: Map<String, Any> = emptyMap(),
         stackTraceElements: Array<StackTraceElement>? = null,
         customStackTrace: String? = null,
         logExceptionType: LogExceptionType = LogExceptionType.NONE,
         exceptionName: String? = null,
         exceptionMessage: String? = null,
-        customLogAttrs: Map<String, String> = emptyMap(),
+        embraceAttributes: Map<String, String> = emptyMap(),
         attachment: Attachment? = null,
     ) {
         if (sdkCallChecker.check("log_message")) {
@@ -155,13 +156,20 @@ internal class LogsApiDelegate(
                     attachment is EmbraceHosted && attachment.shouldAttemptUpload() -> attachment
                     else -> null
                 }
+
+                val finalAttrs = if (logExceptionType != LogExceptionType.NONE) {
+                    attributes.plus(embExceptionHandling.name to logExceptionType.value)
+                } else {
+                    attributes
+                }
+
                 logService?.log(
-                    message,
-                    severity,
-                    logExceptionType,
-                    properties,
-                    attrs.plus(customLogAttrs),
-                    logAttachment
+                    message = message,
+                    severity = severity,
+                    logExceptionType = logExceptionType,
+                    attributes = finalAttrs,
+                    embraceAttributes = attrs.plus(embraceAttributes),
+                    logAttachment = logAttachment
                 )
             }
         }

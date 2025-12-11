@@ -17,8 +17,8 @@ interface LogService : SessionChangeListener {
         message: String,
         severity: Severity,
         logExceptionType: LogExceptionType,
-        properties: Map<String, Any>? = null,
-        customLogAttrs: Map<String, String> = emptyMap(),
+        attributes: Map<String, Any> = emptyMap(),
+        embraceAttributes: Map<String, String> = emptyMap(),
         logAttachment: Attachment.EmbraceHosted? = null,
     )
 

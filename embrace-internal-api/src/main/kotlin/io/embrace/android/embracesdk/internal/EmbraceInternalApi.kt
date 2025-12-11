@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.internal
 
 import io.embrace.android.embracesdk.internal.api.delegate.NoopEmbraceInternalInterface
 import io.embrace.android.embracesdk.internal.api.delegate.NoopFlutterInternalInterface
-import io.embrace.android.embracesdk.internal.api.delegate.NoopInternalTracingApi
 import io.embrace.android.embracesdk.internal.api.delegate.NoopReactNativeInternalInterface
 import io.embrace.android.embracesdk.internal.api.delegate.NoopUnityInternalInterface
 
@@ -12,7 +11,6 @@ import io.embrace.android.embracesdk.internal.api.delegate.NoopUnityInternalInte
  */
 object EmbraceInternalApi : InternalInterfaceApi {
 
-    var internalTracingApi: InternalTracingApi? = null
     var internalInterfaceApi: InternalInterfaceApi? = null
     var isStarted: () -> Boolean = { false }
 
@@ -21,7 +19,7 @@ object EmbraceInternalApi : InternalInterfaceApi {
     fun getInstance(): EmbraceInternalApi = this
 
     private val noopEmbraceInternalInterface by lazy {
-        NoopEmbraceInternalInterface(internalTracingApi ?: NoopInternalTracingApi())
+        NoopEmbraceInternalInterface
     }
     private val noopFlutterInternalInterface by lazy { NoopFlutterInternalInterface(noopEmbraceInternalInterface) }
     private val noopReactNativeInternalInterface by lazy { NoopReactNativeInternalInterface(noopEmbraceInternalInterface) }

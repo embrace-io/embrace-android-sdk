@@ -21,7 +21,6 @@ import io.embrace.android.embracesdk.internal.otel.spans.SpanSinkImpl
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpanImpl
 import io.embrace.android.embracesdk.internal.spans.EmbraceTracer
-import io.embrace.android.embracesdk.internal.spans.InternalTracer
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 
@@ -139,14 +138,6 @@ class OpenTelemetryModuleImpl(
     override val embraceTracer: EmbraceTracer by singleton {
         EmbraceTracer(
             spanService = spanService,
-        )
-    }
-
-    override val internalTracer: InternalTracer by lazy {
-        InternalTracer(
-            spanRepository = spanRepository,
-            embraceTracer = embraceTracer,
-            clock = initModule.clock,
         )
     }
 

@@ -86,7 +86,6 @@ internal class EmbraceImpl(
     InternalInterfaceApi {
 
     init {
-        EmbraceInternalApi.internalTracingApi = bootstrapper.openTelemetryModule.internalTracer
         EmbraceInternalApi.internalInterfaceApi = this
         EmbraceInternalApi.isStarted = sdkCallChecker.started::get
     }
@@ -109,7 +108,6 @@ internal class EmbraceImpl(
             start("post-services-setup")
             internalInterfaceModule = InternalInterfaceModuleImpl(
                 bootstrapper.initModule,
-                bootstrapper.openTelemetryModule,
                 bootstrapper.configModule,
                 bootstrapper.payloadSourceModule,
                 bootstrapper.instrumentationModule,

@@ -22,7 +22,6 @@ internal class InternalInterfaceModuleImplTest {
         val initModule = FakeInitModule()
         val module: InternalInterfaceModule = InternalInterfaceModuleImpl(
             initModule,
-            initModule.openTelemetryModule,
             FakeConfigModule(),
             FakePayloadSourceModule(),
             FakeInstrumentationModule(ApplicationProvider.getApplicationContext()),

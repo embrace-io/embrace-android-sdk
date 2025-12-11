@@ -2,10 +2,10 @@ package io.embrace.android.embracesdk.internal.arch.datasource
 
 import androidx.annotation.CallSuper
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
+import io.embrace.android.embracesdk.internal.arch.SessionChangeListener
 import io.embrace.android.embracesdk.internal.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
-import io.embrace.android.embracesdk.internal.session.MemoryCleanerListener
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 
@@ -13,7 +13,7 @@ abstract class StateDataSource<T>(
     private val args: InstrumentationArgs,
     private val stateValueFactory: (initialValue: T) -> SchemaType.State<T>,
     defaultValue: T,
-) : MemoryCleanerListener, DataSourceImpl(
+) : SessionChangeListener, DataSourceImpl(
     args = args,
     limitStrategy = UpToLimitStrategy { MAX_TRANSITIONS }
 ) {
@@ -49,7 +49,7 @@ abstract class StateDataSource<T>(
     }
 
     @CallSuper
-    override fun cleanCollections() {
+    override fun onPostSessionChange() {
         sessionStateToken.getAndSet(null)?.apply {
             end()
         }

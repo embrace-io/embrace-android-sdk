@@ -136,7 +136,6 @@ internal class LogsApiDelegate(
         logExceptionType: LogExceptionType = LogExceptionType.NONE,
         exceptionName: String? = null,
         exceptionMessage: String? = null,
-        embraceAttributes: Map<String, String> = emptyMap(),
         attachment: Attachment? = null,
     ) {
         if (sdkCallChecker.check("log_message")) {
@@ -171,7 +170,6 @@ internal class LogsApiDelegate(
                     severity = logSeverity,
                     logExceptionType = logExceptionType,
                     attributes = attrs,
-                    embraceAttributes = embraceAttributes,
                     stackTraceElements = stackTraceElements,
                     customStackTrace = customStackTrace,
                 )

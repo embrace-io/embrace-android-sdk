@@ -1,7 +1,5 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <SmellBaseline>
   <ManuallySuppressedIssues/>
-  <CurrentIssues>
-    <ID>CyclomaticComplexMethod:EmbraceLogService.kt$EmbraceLogService$override fun log( message: String, severity: Severity, logExceptionType: LogExceptionType, attributes: Map&lt;String, Any>, embraceAttributes: Map&lt;String, String>, attachment: Attachment?, stackTraceElements: Array&lt;StackTraceElement>?, customStackTrace: String?, exceptionName: String?, exceptionMessage: String?, )</ID>
-  </CurrentIssues>
+  <CurrentIssues/>
 </SmellBaseline>

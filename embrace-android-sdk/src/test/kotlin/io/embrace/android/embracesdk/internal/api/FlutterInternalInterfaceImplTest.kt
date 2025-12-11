@@ -57,18 +57,16 @@ internal class FlutterInternalInterfaceImplTest {
         impl.logUnhandledDartException("stack", "exception name", "message", "ctx", "lib")
         verify(exactly = 1) {
             embrace.logMessage(
-                Severity.ERROR,
-                "Dart error",
-                emptyMap(),
-                null,
-                "stack",
-                LogExceptionType.UNHANDLED,
-                "exception name",
-                "message",
-                mapOf(
+                severity = Severity.ERROR,
+                message = "Dart error",
+                attributes = mapOf(
                     embFlutterExceptionContext.name to "ctx",
                     embFlutterExceptionLibrary.name to "lib"
                 ),
+                customStackTrace = "stack",
+                logExceptionType = LogExceptionType.UNHANDLED,
+                exceptionName = "exception name",
+                exceptionMessage = "message",
             )
         }
     }
@@ -86,7 +84,7 @@ internal class FlutterInternalInterfaceImplTest {
                 logExceptionType = LogExceptionType.HANDLED,
                 exceptionName = "exception name",
                 exceptionMessage = "message",
-                embraceAttributes = mapOf(
+                attributes = mapOf(
                     embFlutterExceptionContext.name to "ctx",
                     embFlutterExceptionLibrary.name to "lib"
                 ),

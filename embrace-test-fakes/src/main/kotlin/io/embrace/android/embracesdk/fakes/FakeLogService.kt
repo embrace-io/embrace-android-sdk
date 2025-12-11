@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.LogExceptionType
-import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.internal.arch.datasource.LogSeverity
 import io.embrace.android.embracesdk.internal.logs.LogService
 
@@ -22,7 +21,6 @@ class FakeLogService : LogService {
         severity: LogSeverity,
         logExceptionType: LogExceptionType,
         attributes: Map<String, Any>,
-        embraceAttributes: Map<String, String>,
         stackTraceElements: Array<StackTraceElement>?,
         customStackTrace: String?,
     ) {

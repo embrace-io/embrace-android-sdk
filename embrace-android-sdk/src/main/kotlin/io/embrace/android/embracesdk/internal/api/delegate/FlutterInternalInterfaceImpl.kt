@@ -77,7 +77,7 @@ internal class FlutterInternalInterfaceImpl(
                 logExceptionType = exceptionType,
                 exceptionName = name,
                 exceptionMessage = message,
-                embraceAttributes = attrs,
+                attributes = attrs,
             )
         } else {
             logger.logSdkNotInitialized("logDartError")

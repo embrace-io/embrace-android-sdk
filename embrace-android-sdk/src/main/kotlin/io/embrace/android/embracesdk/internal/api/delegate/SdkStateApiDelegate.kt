@@ -10,8 +10,8 @@ internal class SdkStateApiDelegate(
     private val sdkCallChecker: SdkCallChecker,
 ) : SdkStateApi {
 
-    private val sessionIdTracker by embraceImplInject(sdkCallChecker) {
-        bootstrapper.essentialServiceModule.sessionIdTracker
+    private val sessionTracker by embraceImplInject(sdkCallChecker) {
+        bootstrapper.essentialServiceModule.sessionTracker
     }
     private val preferencesService by embraceImplInject(sdkCallChecker) {
         bootstrapper.coreModule.preferencesService
@@ -32,9 +32,9 @@ internal class SdkStateApiDelegate(
 
     override val currentSessionId: String?
         get() {
-            val localSessionIdTracker = sessionIdTracker
-            if (localSessionIdTracker != null && sdkCallChecker.check("get_current_session_id")) {
-                val sessionId = localSessionIdTracker.getActiveSessionId()
+            val localSessionTracker = sessionTracker
+            if (localSessionTracker != null && sdkCallChecker.check("get_current_session_id")) {
+                val sessionId = localSessionTracker.getActiveSessionId()
                 if (sessionId != null) {
                     return sessionId
                 }

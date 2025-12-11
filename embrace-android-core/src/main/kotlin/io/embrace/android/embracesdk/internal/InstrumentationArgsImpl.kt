@@ -13,7 +13,7 @@ import io.embrace.android.embracesdk.internal.envelope.CpuAbi
 import io.embrace.android.embracesdk.internal.injection.WorkerThreadModule
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
-import io.embrace.android.embracesdk.internal.session.id.SessionIdTracker
+import io.embrace.android.embracesdk.internal.session.id.SessionTracker
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.store.OrdinalStore
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
@@ -37,7 +37,7 @@ internal class InstrumentationArgsImpl(
     override val symbols: Map<String, String>?,
     override val appStateTracker: AppStateTracker,
     private val workerThreadModule: WorkerThreadModule,
-    private val sessionIdTracker: SessionIdTracker,
+    private val sessionTracker: SessionTracker,
     private val sessionPropertiesService: SessionPropertiesService,
     crashMarkerFileProvider: () -> File,
 ) : InstrumentationArgs {
@@ -58,12 +58,12 @@ internal class InstrumentationArgsImpl(
         } as? T
     }
 
-    override fun sessionId(): String? = sessionIdTracker.getActiveSessionId()
+    override fun sessionId(): String? = sessionTracker.getActiveSessionId()
 
     override fun sessionProperties(): Map<String, String> = sessionPropertiesService.getProperties()
 
     override fun registerSessionChangeListener(listener: SessionChangeListener) {
-        sessionIdTracker.addListener(listener)
+        sessionTracker.addListener(listener)
     }
 
     @Suppress("UNCHECKED_CAST")

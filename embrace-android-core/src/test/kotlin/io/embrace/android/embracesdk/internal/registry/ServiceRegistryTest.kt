@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.registry
 
 import io.embrace.android.embracesdk.fakes.FakeAppStateTracker
-import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
+import io.embrace.android.embracesdk.fakes.FakeSessionTracker
 import io.embrace.android.embracesdk.internal.arch.SessionChangeListener
 import io.embrace.android.embracesdk.internal.arch.state.AppStateListener
 import org.junit.Assert.assertEquals
@@ -36,9 +36,9 @@ internal class ServiceRegistryTest {
         registry.registerAppStateListeners(activityService)
         assertEquals(expected, activityService.listeners)
 
-        val sessionidTracker = FakeSessionIdTracker()
-        registry.registerSessionChangeListeners(sessionidTracker)
-        assertEquals(expected, sessionidTracker.listeners)
+        val sessionTracker = FakeSessionTracker()
+        registry.registerSessionChangeListeners(sessionTracker)
+        assertEquals(expected, sessionTracker.listeners)
 
         assertFalse(service.closed)
         registry.close()

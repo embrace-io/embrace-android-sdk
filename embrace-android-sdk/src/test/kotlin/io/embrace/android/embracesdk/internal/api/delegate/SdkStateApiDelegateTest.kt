@@ -6,7 +6,7 @@ import io.embrace.android.embracesdk.LastRunEndState
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeLogService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
-import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
+import io.embrace.android.embracesdk.fakes.FakeSessionTracker
 import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
@@ -28,7 +28,7 @@ internal class SdkStateApiDelegateTest {
     private lateinit var delegate: SdkStateApiDelegate
     private lateinit var logService: FakeLogService
     private lateinit var preferencesService: FakePreferenceService
-    private lateinit var sessionIdTracker: FakeSessionIdTracker
+    private lateinit var sessionTracker: FakeSessionTracker
     private lateinit var sdkCallChecker: SdkCallChecker
     private lateinit var logger: FakeEmbLogger
 
@@ -51,7 +51,7 @@ internal class SdkStateApiDelegateTest {
         )
         moduleInitBootstrapper.init(ApplicationProvider.getApplicationContext())
         preferencesService = moduleInitBootstrapper.coreModule.preferencesService as FakePreferenceService
-        sessionIdTracker = moduleInitBootstrapper.essentialServiceModule.sessionIdTracker as FakeSessionIdTracker
+        sessionTracker = moduleInitBootstrapper.essentialServiceModule.sessionTracker as FakeSessionTracker
         logger = FakeEmbLogger()
         sdkCallChecker = SdkCallChecker(logger, FakeTelemetryService())
         sdkCallChecker.started.set(true)
@@ -79,7 +79,7 @@ internal class SdkStateApiDelegateTest {
 
     @Test
     fun getCurrentSessionId() {
-        sessionIdTracker.sessionData = SessionData("test", AppState.FOREGROUND)
+        sessionTracker.sessionData = SessionData("test", AppState.FOREGROUND)
         assertEquals("test", delegate.currentSessionId)
     }
 

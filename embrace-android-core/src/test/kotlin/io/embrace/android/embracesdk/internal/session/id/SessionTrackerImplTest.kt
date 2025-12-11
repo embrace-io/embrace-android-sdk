@@ -7,13 +7,13 @@ import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
 
-internal class SessionIdTrackerImplTest {
+internal class SessionTrackerImplTest {
 
-    private lateinit var tracker: SessionIdTracker
+    private lateinit var tracker: SessionTracker
 
     @Before
     fun setUp() {
-        tracker = SessionIdTrackerImpl(null, EmbLoggerImpl())
+        tracker = SessionTrackerImpl(null, EmbLoggerImpl())
     }
 
     @Test

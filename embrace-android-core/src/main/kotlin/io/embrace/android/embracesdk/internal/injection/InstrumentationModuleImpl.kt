@@ -32,7 +32,7 @@ class InstrumentationModuleImpl(
             workerThreadModule = workerThreadModule,
             store = coreModule.store,
             serializer = initModule.jsonSerializer,
-            sessionIdTracker = essentialServiceModule.sessionIdTracker,
+            sessionTracker = essentialServiceModule.sessionTracker,
             ordinalStore = coreModule.ordinalStore,
             sessionPropertiesService = essentialServiceModule.sessionPropertiesService,
             cpuAbi = configModule.cpuAbi,

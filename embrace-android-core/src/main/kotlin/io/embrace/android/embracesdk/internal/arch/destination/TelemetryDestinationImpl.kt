@@ -17,7 +17,7 @@ import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.otel.sdk.toEmbraceObjectName
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
-import io.embrace.android.embracesdk.internal.session.id.SessionIdTracker
+import io.embrace.android.embracesdk.internal.session.id.SessionTracker
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.spans.AutoTerminationMode
@@ -35,7 +35,7 @@ import java.util.concurrent.TimeUnit
 @OptIn(ExperimentalApi::class)
 class TelemetryDestinationImpl(
     private val logger: Logger,
-    private val sessionIdTracker: SessionIdTracker,
+    private val sessionTracker: SessionTracker,
     private val appStateTracker: AppStateTracker,
     private val clock: Clock,
     private val spanService: SpanService,
@@ -71,7 +71,7 @@ class TelemetryDestinationImpl(
 
             if (addCurrentSessionInfo) {
                 var sessionState: AppState? = null
-                sessionIdTracker.getActiveSession()?.let { session ->
+                sessionTracker.getActiveSession()?.let { session ->
                     if (session.id.isNotBlank()) {
                         setStringAttribute(SessionAttributes.SESSION_ID, session.id)
                     }

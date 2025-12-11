@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.registry
 import io.embrace.android.embracesdk.internal.arch.SessionChangeListener
 import io.embrace.android.embracesdk.internal.arch.state.AppStateListener
 import io.embrace.android.embracesdk.internal.arch.state.AppStateTracker
-import io.embrace.android.embracesdk.internal.session.id.SessionIdTracker
+import io.embrace.android.embracesdk.internal.session.id.SessionTracker
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import java.io.Closeable
 
@@ -41,9 +41,9 @@ class ServiceRegistry : Closeable {
             appStateTracker::addListener
         )
 
-    fun registerSessionChangeListeners(sessionidTracker: SessionIdTracker): Unit =
+    fun registerSessionChangeListeners(sessionTracker: SessionTracker): Unit =
         sessionChangeListeners.forEachSafe(
-            sessionidTracker::addListener
+            sessionTracker::addListener
         )
 
     // close all of the services in one go. this prevents someone creating a Closeable service

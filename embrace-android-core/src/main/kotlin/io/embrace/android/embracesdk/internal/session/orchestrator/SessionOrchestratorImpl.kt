@@ -13,7 +13,7 @@ import io.embrace.android.embracesdk.internal.delivery.caching.PayloadCachingSer
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.session.SessionZygote
-import io.embrace.android.embracesdk.internal.session.id.SessionIdTracker
+import io.embrace.android.embracesdk.internal.session.id.SessionTracker
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactory
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.Provider
@@ -23,7 +23,7 @@ internal class SessionOrchestratorImpl(
     private val payloadFactory: PayloadFactory,
     private val clock: Clock,
     private val configService: ConfigService,
-    private val sessionIdTracker: SessionIdTracker,
+    private val sessionTracker: SessionTracker,
     private val boundaryDelegate: OrchestratorBoundaryDelegate,
     private val payloadStore: PayloadStore?,
     private val payloadCachingService: PayloadCachingService?,
@@ -199,7 +199,7 @@ internal class SessionOrchestratorImpl(
             val newState = newSessionAction?.invoke()
             activeSession = newState
             val sessionId = newState?.sessionId
-            sessionIdTracker.setActiveSession(sessionId, endAppState)
+            sessionTracker.setActiveSession(sessionId, endAppState)
 
             if (newState != null) {
                 boundaryDelegate.prepareForNewSession()
@@ -225,7 +225,7 @@ internal class SessionOrchestratorImpl(
             }
             EmbTrace.end()
 
-            // update the current state of the SDK. this should match the value in sessionIdTracker
+            // update the current state of the SDK. this should match the value in sessionTracker
             state = endAppState
 
             // update data capture orchestrator

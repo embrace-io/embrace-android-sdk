@@ -62,7 +62,7 @@ class SessionOrchestrationModuleImpl(
             EmbTrace.trace("payloadFactory") { payloadFactory },
             initModule.clock,
             configModule.configService,
-            essentialServiceModule.sessionIdTracker,
+            essentialServiceModule.sessionTracker,
             boundaryDelegate,
             deliveryModule.payloadStore,
             deliveryModule.payloadCachingService,

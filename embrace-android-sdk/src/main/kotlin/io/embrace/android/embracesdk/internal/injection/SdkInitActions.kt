@@ -76,7 +76,7 @@ internal fun ModuleGraph.registerListeners() {
 
             // registration ignored after this point
             registerAppStateListeners(essentialServiceModule.appStateTracker)
-            registerSessionChangeListeners(essentialServiceModule.sessionIdTracker)
+            registerSessionChangeListeners(essentialServiceModule.sessionTracker)
         }
     }
 }

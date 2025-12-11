@@ -19,7 +19,7 @@ import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.session.id.SessionData
-import io.embrace.android.embracesdk.internal.session.id.SessionIdTracker
+import io.embrace.android.embracesdk.internal.session.id.SessionTracker
 import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 
@@ -38,7 +38,7 @@ internal class TelemetryDestinationHarness {
 
     val destination: TelemetryDestination = TelemetryDestinationImpl(
         logger = otelModule.otelSdkWrapper.logger,
-        sessionIdTracker = NoopSessionIdTracker,
+        sessionTracker = NoopSessionTracker,
         appStateTracker = NoopAppStateTracker,
         clock = initModule.clock,
         spanService = spanService,
@@ -64,7 +64,7 @@ internal class TelemetryDestinationHarness {
         override fun getAndClearTelemetryAttributes(): Map<String, String> = emptyMap()
     }
 
-    private object NoopSessionIdTracker : SessionIdTracker {
+    private object NoopSessionTracker : SessionTracker {
         override fun getActiveSession(): SessionData? = null
 
         override fun setActiveSession(sessionId: String?, appState: AppState) {

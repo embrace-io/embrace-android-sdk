@@ -8,7 +8,7 @@ class FakeSessionStateToken<T>(
     private val clock: Clock = FakeClock(),
 ) : SessionStateToken<T> {
     var endTimeMs = 0L
-    override fun update(updateDetectedTimeMs: Long, newValue: T) {
+    override fun update(updateDetectedTimeMs: Long, newValue: T, droppedTransitions: Int) {
         transitions.add(Pair(updateDetectedTimeMs, newValue))
     }
 

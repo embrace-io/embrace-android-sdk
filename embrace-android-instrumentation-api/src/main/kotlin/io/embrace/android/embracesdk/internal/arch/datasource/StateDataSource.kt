@@ -6,47 +6,61 @@ import io.embrace.android.embracesdk.internal.arch.SessionChangeListener
 import io.embrace.android.embracesdk.internal.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicReference
 
 abstract class StateDataSource<T>(
     private val args: InstrumentationArgs,
+    private val stateValueFactory: (initialValue: T) -> SchemaType.State<T>,
     defaultValue: T,
-    private val schemaTypeFactory: (initialValue: T) -> SchemaType.State<T>,
 ) : SessionChangeListener, DataSourceImpl(
     args = args,
     limitStrategy = UpToLimitStrategy { MAX_TRANSITIONS }
 ) {
-    private var currentState: T = defaultValue
-    private var sessionStateToken: SessionStateToken<T>? = null
+    private val currentState: AtomicReference<T> = AtomicReference(defaultValue)
+    private val sessionStateToken: AtomicReference<SessionStateToken<T>?> = AtomicReference()
+    private val unrecordedTransitions = AtomicInteger(0)
 
-    protected fun onStateChange(updateDetectedTimeMs: Long, newState: T) {
-        val oldState = currentState
-        currentState = newState
-        val currentStateToken = sessionStateToken
+    protected fun onStateChange(updateDetectedTimeMs: Long, newState: T, droppedTransitions: Int = 0) {
+        val oldState = currentState.getAndSet(newState)
+        val currentStateToken = sessionStateToken.get()
+        unrecordedTransitions.addAndGet(droppedTransitions)
+        var transitionRecorded = false
         if (currentStateToken != null) {
             captureTelemetry(inputValidation = { newState != oldState }) {
                 currentStateToken.update(
                     updateDetectedTimeMs = updateDetectedTimeMs,
-                    newValue = newState
+                    newValue = newState,
+                    droppedTransitions = unrecordedTransitions.getAndSet(0)
                 )
+                transitionRecorded = true
             }
+        }
+
+        if (!transitionRecorded) {
+            unrecordedTransitions.incrementAndGet()
         }
     }
 
     @CallSuper
     override fun resetDataCaptureLimits() {
         super.resetDataCaptureLimits()
-        createSessionStateSpan(currentState)
+        createSessionStateSpan(currentState.get())
     }
 
     @CallSuper
     override fun onPostSessionChange() {
-        sessionStateToken?.end()
+        sessionStateToken.getAndSet(null)?.apply {
+            end()
+        }
     }
 
     private fun createSessionStateSpan(initialValue: T) {
         try {
-            sessionStateToken = args.destination.startSessionStateCapture(
-                state = schemaTypeFactory(initialValue)
+            sessionStateToken.set(
+                args.destination.startSessionStateCapture(
+                    state = stateValueFactory(initialValue)
+                )
             )
         } catch (t: Throwable) {
             logger.trackInternalError(InternalErrorType.SESSION_STATE_CREATION_FAIL, t)

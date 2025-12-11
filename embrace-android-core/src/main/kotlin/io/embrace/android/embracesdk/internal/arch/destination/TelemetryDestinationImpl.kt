@@ -253,13 +253,16 @@ class TelemetryDestinationImpl(
     ) : SessionStateToken<T> {
         private val transitionCount = AtomicInteger(0)
 
-        override fun update(updateDetectedTimeMs: Long, newValue: T) {
+        override fun update(updateDetectedTimeMs: Long, newValue: T, droppedTransitions: Int) {
             spanToken.addEvent(
                 name = "transition",
                 eventTimeMs = updateDetectedTimeMs,
-                attributes = mapOf(
-                    "new_state" to newValue.toString()
-                )
+                attributes = mutableMapOf("new_value" to newValue.toString())
+                    .apply {
+                        if (droppedTransitions > 0) {
+                            put("dropped_transitions", droppedTransitions.toString())
+                        }
+                    }.toMap()
             )
             spanToken.setSystemAttribute("transition_count", transitionCount.incrementAndGet().toString())
         }
@@ -270,7 +273,7 @@ class TelemetryDestinationImpl(
     }
 
     private class NoopSessionStateToken<T> : SessionStateToken<T> {
-        override fun update(updateDetectedTimeMs: Long, newValue: T) {}
+        override fun update(updateDetectedTimeMs: Long, newValue: T, droppedTransitions: Int) {}
         override fun end() {}
     }
 }

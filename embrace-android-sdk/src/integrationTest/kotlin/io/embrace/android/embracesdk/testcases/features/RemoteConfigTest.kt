@@ -66,11 +66,13 @@ internal class RemoteConfigTest {
         assertConfigRequested(1)
         returnIfConditionMet(
             desiredValueSupplier = {},
-            condition = {
-                expectedThreshold == it.cfg?.threshold && "server_etag_value" == it.etag
+            condition = { response ->
+                response != null && expectedThreshold == response.cfg?.threshold && "server_etag_value" == response.etag
             },
             dataProvider = {
-                readPersistedConfigResponse()
+                runCatching {
+                    readPersistedConfigResponse()
+                }.getOrNull()
             }
         )
     }

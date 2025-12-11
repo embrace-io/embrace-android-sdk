@@ -5,7 +5,6 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakePayloadStore
 import io.embrace.android.embracesdk.fakes.FakeSessionPropertiesService
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
-import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.fakes.behavior.FakeLogMessageBehavior
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.config.FakeRedactionConfig
@@ -48,7 +47,6 @@ internal class EmbraceLogServiceTest {
         destination = destination,
         configService = fakeConfigService,
         sessionPropertiesService = fakeSessionPropertiesService,
-        serializer = TestPlatformSerializer(),
     )
 
     @Test

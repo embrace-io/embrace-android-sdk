@@ -1,0 +1,18 @@
+package io.embrace.android.embracesdk.fakes
+
+import io.embrace.android.embracesdk.internal.arch.datasource.SessionStateToken
+import io.embrace.android.embracesdk.internal.clock.Clock
+
+class FakeSessionStateToken<T>(
+    val transitions: MutableList<Pair<Long, T>> = mutableListOf(),
+    private val clock: Clock = FakeClock(),
+) : SessionStateToken<T> {
+    var endTimeMs = 0L
+    override fun update(updateDetectedTimeMs: Long, newValue: T) {
+        transitions.add(Pair(updateDetectedTimeMs, newValue))
+    }
+
+    override fun end() {
+        endTimeMs = clock.now()
+    }
+}

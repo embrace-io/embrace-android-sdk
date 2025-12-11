@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.arch.destination
 import io.embrace.android.embracesdk.internal.arch.attrs.asPair
 import io.embrace.android.embracesdk.internal.arch.attrs.embState
 import io.embrace.android.embracesdk.internal.arch.datasource.LogSeverity
+import io.embrace.android.embracesdk.internal.arch.datasource.SessionStateToken
 import io.embrace.android.embracesdk.internal.arch.datasource.SpanEvent
 import io.embrace.android.embracesdk.internal.arch.datasource.SpanToken
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
@@ -31,6 +32,7 @@ import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
 import io.embrace.opentelemetry.kotlin.semconv.LogAttributes
 import io.embrace.opentelemetry.kotlin.semconv.SessionAttributes
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
 
 @OptIn(ExperimentalApi::class)
 class TelemetryDestinationImpl(
@@ -138,6 +140,18 @@ class TelemetryDestinationImpl(
         }
     }
 
+    override fun <T> startSessionStateCapture(state: SchemaType.State<T>): SessionStateToken<T> {
+        val spanToken = startSpanCapture(
+            schemaType = state,
+            startTimeMs = clock.now(),
+            autoTerminate = false
+        ) ?: return NoopSessionStateToken()
+
+        return SessionStateTokenImpl(
+            spanToken = spanToken
+        )
+    }
+
     override fun recordCompletedSpan(
         name: String,
         startTimeMs: Long,
@@ -224,6 +238,40 @@ class TelemetryDestinationImpl(
         override fun getStartTimeMs(): Long? = span.getStartTimeMs()
 
         override fun setSystemAttribute(key: String, value: String) = span.setSystemAttribute(key, value)
+
+        override fun addEvent(name: String, eventTimeMs: Long, attributes: Map<String, String>) {
+            span.addEvent(
+                name = name,
+                timestampMs = eventTimeMs,
+                attributes = attributes
+            )
+        }
+    }
+
+    private class SessionStateTokenImpl<T>(
+        private val spanToken: SpanToken,
+    ) : SessionStateToken<T> {
+        private val transitionCount = AtomicInteger(0)
+
+        override fun update(updateDetectedTimeMs: Long, newValue: T) {
+            spanToken.addEvent(
+                name = "transition",
+                eventTimeMs = updateDetectedTimeMs,
+                attributes = mapOf(
+                    "new_state" to newValue.toString()
+                )
+            )
+            spanToken.setSystemAttribute("transition_count", transitionCount.incrementAndGet().toString())
+        }
+
+        override fun end() {
+            spanToken.stop()
+        }
+    }
+
+    private class NoopSessionStateToken<T> : SessionStateToken<T> {
+        override fun update(updateDetectedTimeMs: Long, newValue: T) {}
+        override fun end() {}
     }
 }
 

@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.arch.datasource
 
+import androidx.annotation.CallSuper
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.limits.LimitStrategy
 import io.embrace.android.embracesdk.internal.clock.Clock
@@ -28,6 +29,7 @@ abstract class DataSourceImpl(
         // no-op
     }
 
+    @CallSuper
     override fun resetDataCaptureLimits() {
         limitStrategy.resetDataCaptureLimits()
     }

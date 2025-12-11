@@ -65,7 +65,9 @@ class TelemetryDestinationImpl(
             severityText = getSeverityText(severityNumber),
             timestamp = TimeUnit.MILLISECONDS.toNanos(logTimeMs)
         ) {
-            setStringAttribute(LogAttributes.LOG_RECORD_UID, Uuid.getEmbUuid())
+            if (!attributes.contains(LogAttributes.LOG_RECORD_UID)) {
+                setStringAttribute(LogAttributes.LOG_RECORD_UID, Uuid.getEmbUuid())
+            }
 
             if (addCurrentSessionInfo) {
                 var sessionState: AppState? = null

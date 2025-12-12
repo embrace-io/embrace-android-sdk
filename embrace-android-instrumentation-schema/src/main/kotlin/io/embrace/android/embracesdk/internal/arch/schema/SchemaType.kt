@@ -9,7 +9,6 @@ import io.embrace.opentelemetry.kotlin.semconv.HttpAttributes
 import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
 import io.embrace.opentelemetry.kotlin.semconv.SessionAttributes
 import io.embrace.opentelemetry.kotlin.semconv.UrlAttributes
-import kotlin.Suppress
 
 /**
  * The collections of attribute schemas used by the associated telemetry types.
@@ -152,11 +151,6 @@ sealed class SchemaType(
         override val schemaAttributes: Map<String, String> = attributes.snapshot()
     }
 
-    class FlutterException(attributes: TelemetryAttributes) :
-        SchemaType(EmbType.System.FlutterException) {
-        override val schemaAttributes: Map<String, String> = attributes.snapshot()
-    }
-
     class JvmCrash(attributes: TelemetryAttributes) : SchemaType(EmbType.System.Crash) {
         override val schemaAttributes: Map<String, String> = attributes.snapshot()
     }
@@ -281,6 +275,21 @@ sealed class SchemaType(
             ),
             ExceptionAttributes.EXCEPTION_MESSAGE to (throwable.message ?: "")
         )
+    }
+
+    /**
+     * A custom telemetry type. This allows the hybrid SDKs (and others) to pass in custom
+     * telemetry schemas if required.
+     */
+    class Custom(
+        type: String,
+        subType: String,
+        attributes: TelemetryAttributes,
+        sendMode: SendMode,
+    ) : SchemaType(
+        telemetryType = EmbType.Custom(type, subType, sendMode)
+    ) {
+        override val schemaAttributes: Map<String, String> = attributes.snapshot()
     }
 }
 

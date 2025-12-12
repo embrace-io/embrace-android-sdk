@@ -3,11 +3,12 @@ package io.embrace.android.embracesdk.internal.api.delegate
 import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.internal.api.LogsApi
 import io.embrace.android.embracesdk.internal.arch.attrs.embExceptionHandling
+import io.embrace.android.embracesdk.internal.arch.attrs.embSendMode
 import io.embrace.android.embracesdk.internal.arch.datasource.LogSeverity
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType.Exception
-import io.embrace.android.embracesdk.internal.arch.schema.SchemaType.FlutterException
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType.Log
+import io.embrace.android.embracesdk.internal.arch.schema.SendMode
 import io.embrace.android.embracesdk.internal.arch.schema.TelemetryAttributes
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.injection.embraceImplInject
@@ -20,7 +21,6 @@ import io.embrace.android.embracesdk.internal.logs.attachments.Attachment.Embrac
 import io.embrace.android.embracesdk.internal.logs.attachments.AttachmentErrorCode.ATTACHMENT_TOO_LARGE
 import io.embrace.android.embracesdk.internal.logs.attachments.AttachmentErrorCode.OVER_MAX_ATTACHMENTS
 import io.embrace.android.embracesdk.internal.logs.attachments.AttachmentErrorCode.UNKNOWN
-import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.serialization.truncatedStacktrace
 import io.embrace.android.embracesdk.internal.utils.getSafeStackTrace
@@ -43,9 +43,6 @@ internal class LogsApiDelegate(
     }
     private val serializer by embraceImplInject(sdkCallChecker) {
         bootstrapper.initModule.jsonSerializer
-    }
-    private val configService by embraceImplInject(sdkCallChecker) {
-        bootstrapper.configModule.configService
     }
 
     override fun logInfo(message: String) = logMessage(message, Severity.INFO)
@@ -193,19 +190,12 @@ internal class LogsApiDelegate(
             Severity.ERROR -> LogSeverity.ERROR
         }
 
-        // determine log schema
-        val schemaProvider: (TelemetryAttributes) -> SchemaType = when {
-            exceptionType == LogExceptionType.NONE -> ::Log
-            configService?.appFramework == AppFramework.FLUTTER -> ::FlutterException
-            else -> ::Exception
-        }
-
         // send log
         dst.log(
             message = message,
             severity = logSeverity,
             attributes = attrs,
-            schemaProvider = schemaProvider
+            schemaProvider = createSchemaProvider(attrs)
         )
 
         // store attachment
@@ -213,6 +203,32 @@ internal class LogsApiDelegate(
             val envelope = Envelope(data = Pair(attachment.id, attachment.bytes))
             payloadStore?.storeAttachment(envelope)
         }
+    }
+
+    /**
+     * Gets a provider for the SchemaType that should be used for the log. Ordinarily this will be [SchemaType.Log] but
+     * it's also possible for [SchemaType.Exception] or [SchemaType.Custom] to be supplied.
+     */
+    private fun createSchemaProvider(attrs: Map<String, Any>): (TelemetryAttributes) -> SchemaType {
+        val type = attrs["emb.type"] as? String
+        val sendMode = attrs[embSendMode.name] as? String
+        val handledMode = attrs[embExceptionHandling.name] as? String
+
+        return when {
+            type != null -> createCustomSchema(type, sendMode) ?: ::Log
+            handledMode == LogExceptionType.UNHANDLED.value -> ::Exception
+            handledMode == LogExceptionType.HANDLED.value -> ::Exception
+            else -> ::Log
+        }
+    }
+
+    private fun createCustomSchema(type: String, sendMode: String?): ((TelemetryAttributes) -> SchemaType)? {
+        val mode = SendMode.fromString(sendMode)
+        val parts = type.split(".")
+        if (parts.size != 2) {
+            return null
+        }
+        return { SchemaType.Custom(parts[0], parts[1], it, mode) }
     }
 
     private fun serializeStacktrace(elements: Array<StackTraceElement>): String? = runCatching {

@@ -13,7 +13,7 @@ import io.embrace.android.embracesdk.fakes.FakeSessionPropertiesService
 import io.embrace.android.embracesdk.fakes.FakeSessionTracker
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.createSessionBehavior
-import io.embrace.android.embracesdk.fakes.fakeSessionZygote
+import io.embrace.android.embracesdk.fakes.fakeSessionToken
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakePayloadSourceModule
 import io.embrace.android.embracesdk.internal.arch.state.AppState
@@ -47,7 +47,7 @@ internal class SessionHandlerTest {
         private var sessionNumber = 5
     }
 
-    private val initial = fakeSessionZygote().copy(startTime = NOW)
+    private val initial = fakeSessionToken().copy(startTime = NOW)
     private val userService: FakeUserService = FakeUserService()
 
     private lateinit var spanSink: SpanSink

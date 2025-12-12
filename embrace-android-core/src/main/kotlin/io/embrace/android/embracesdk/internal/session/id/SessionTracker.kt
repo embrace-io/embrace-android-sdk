@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.session.id
 import io.embrace.android.embracesdk.internal.arch.SessionChangeListener
 import io.embrace.android.embracesdk.internal.arch.state.AppState
 
-interface SessionIdTracker {
+interface SessionTracker {
 
     /**
      * Gets the currently active session, if present.

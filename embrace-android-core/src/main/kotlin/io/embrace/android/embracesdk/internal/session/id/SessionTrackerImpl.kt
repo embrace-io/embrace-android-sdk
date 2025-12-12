@@ -8,10 +8,10 @@ import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import java.util.concurrent.CopyOnWriteArraySet
 
-internal class SessionIdTrackerImpl(
+internal class SessionTrackerImpl(
     private val activityManager: ActivityManager?,
     private val logger: EmbLogger,
-) : SessionIdTracker {
+) : SessionTracker {
 
     private val listeners = CopyOnWriteArraySet<SessionChangeListener>()
 

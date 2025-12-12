@@ -4,7 +4,7 @@ import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorServic
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakePayloadStore
-import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
+import io.embrace.android.embracesdk.fakes.FakeSessionTracker
 import io.embrace.android.embracesdk.fakes.fakeSessionEnvelope
 import io.embrace.android.embracesdk.fakes.fakeSessionZygote
 import io.embrace.android.embracesdk.internal.arch.state.AppState
@@ -21,20 +21,20 @@ class PayloadCachingServiceImplTest {
 
     private lateinit var executorService: BlockingScheduledExecutorService
     private lateinit var service: PayloadCachingService
-    private lateinit var sessionIdTracker: FakeSessionIdTracker
+    private lateinit var sessionTracker: FakeSessionTracker
     private val zygote = fakeSessionZygote()
 
     @Before
     fun setUp() {
         executorService = BlockingScheduledExecutorService(FakeClock())
         val cacher = PeriodicSessionCacher(BackgroundWorker(executorService), FakeEmbLogger(), INTERVAL)
-        sessionIdTracker = FakeSessionIdTracker()
-        sessionIdTracker.setActiveSession(zygote.sessionId, AppState.FOREGROUND)
+        sessionTracker = FakeSessionTracker()
+        sessionTracker.setActiveSession(zygote.sessionId, AppState.FOREGROUND)
 
         service = PayloadCachingServiceImpl(
             cacher,
             FakeClock(),
-            sessionIdTracker,
+            sessionTracker,
             FakePayloadStore()
         )
     }
@@ -49,7 +49,7 @@ class PayloadCachingServiceImplTest {
 
     @Test
     fun `session id mismatch does not cache`() {
-        sessionIdTracker.setActiveSession("someOtherId", AppState.FOREGROUND)
+        sessionTracker.setActiveSession("someOtherId", AppState.FOREGROUND)
         var count = 0
         service.startCaching(zygote, AppState.FOREGROUND) { _, _, _ ->
             count++

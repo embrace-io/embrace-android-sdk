@@ -12,8 +12,8 @@ import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesS
 import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesServiceImpl
 import io.embrace.android.embracesdk.internal.capture.user.EmbraceUserService
 import io.embrace.android.embracesdk.internal.capture.user.UserService
-import io.embrace.android.embracesdk.internal.session.id.SessionIdTracker
-import io.embrace.android.embracesdk.internal.session.id.SessionIdTrackerImpl
+import io.embrace.android.embracesdk.internal.session.id.SessionTracker
+import io.embrace.android.embracesdk.internal.session.id.SessionTrackerImpl
 import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityLifecycleTracker
 import io.embrace.android.embracesdk.internal.session.lifecycle.AppStateTrackerImpl
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
@@ -66,8 +66,8 @@ class EssentialServiceModuleImpl(
         }
     }
 
-    override val sessionIdTracker: SessionIdTracker by singleton {
-        SessionIdTrackerImpl(
+    override val sessionTracker: SessionTracker by singleton {
+        SessionTrackerImpl(
             coreModule.context.getSystemServiceSafe(Context.ACTIVITY_SERVICE),
             initModule.logger
         )
@@ -86,7 +86,7 @@ class EssentialServiceModuleImpl(
     override val telemetryDestination: TelemetryDestination by singleton {
         TelemetryDestinationImpl(
             logger = openTelemetryModule.otelSdkWrapper.logger,
-            sessionIdTracker = sessionIdTracker,
+            sessionTracker = sessionTracker,
             appStateTracker = appStateTracker,
             clock = initModule.clock,
             spanService = openTelemetryModule.spanService,

@@ -6,7 +6,7 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakeOrdinalStore
-import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
+import io.embrace.android.embracesdk.fakes.FakeSessionTracker
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakePayloadSourceModule
@@ -39,7 +39,7 @@ internal class PayloadFactorySessionTest {
     private lateinit var configService: FakeConfigService
     private lateinit var clock: FakeClock
     private lateinit var metadataService: MetadataService
-    private lateinit var sessionIdTracker: FakeSessionIdTracker
+    private lateinit var sessionTracker: FakeSessionTracker
     private lateinit var activityService: FakeAppStateTracker
     private lateinit var userService: UserService
     private lateinit var spanRepository: SpanRepository
@@ -72,7 +72,7 @@ internal class PayloadFactorySessionTest {
         spanSink = FakeInitModule(clock = clock).openTelemetryModule.spanSink
 
         metadataService = FakeMetadataService()
-        sessionIdTracker = FakeSessionIdTracker()
+        sessionTracker = FakeSessionTracker()
         activityService = FakeAppStateTracker(AppState.BACKGROUND)
         store = FakeOrdinalStore()
         userService = FakeUserService()

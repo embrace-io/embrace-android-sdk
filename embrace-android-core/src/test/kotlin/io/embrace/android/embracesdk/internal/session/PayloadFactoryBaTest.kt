@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakeOrdinalStore
 import io.embrace.android.embracesdk.fakes.FakeOtelPayloadMapper
-import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
+import io.embrace.android.embracesdk.fakes.FakeSessionTracker
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.createBackgroundActivityBehavior
 import io.embrace.android.embracesdk.fakes.fakeSessionZygote
@@ -36,7 +36,7 @@ internal class PayloadFactoryBaTest {
     private lateinit var service: PayloadFactoryImpl
     private lateinit var clock: FakeClock
     private lateinit var metadataService: MetadataService
-    private lateinit var sessionIdTracker: FakeSessionIdTracker
+    private lateinit var sessionTracker: FakeSessionTracker
     private lateinit var activityService: FakeAppStateTracker
     private lateinit var userService: UserService
     private lateinit var configService: FakeConfigService
@@ -51,7 +51,7 @@ internal class PayloadFactoryBaTest {
     fun init() {
         clock = FakeClock(10000L)
         metadataService = FakeMetadataService()
-        sessionIdTracker = FakeSessionIdTracker()
+        sessionTracker = FakeSessionTracker()
         activityService = FakeAppStateTracker(AppState.BACKGROUND)
         store = FakeOrdinalStore()
         userService = FakeUserService()

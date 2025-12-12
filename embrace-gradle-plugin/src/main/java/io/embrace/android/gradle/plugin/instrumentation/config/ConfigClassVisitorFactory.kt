@@ -8,6 +8,7 @@ import io.embrace.android.gradle.plugin.instrumentation.config.arch.sdk.createRe
 import io.embrace.android.gradle.plugin.instrumentation.config.arch.sdk.createSharedObjectFilesMapInstrumentation
 import io.embrace.android.gradle.plugin.instrumentation.config.model.VariantConfig
 import io.embrace.android.gradle.plugin.instrumentation.config.visitor.ConfigInstrumentationClassVisitor
+import io.embrace.android.gradle.plugin.model.VariantOutputInfo
 import org.objectweb.asm.ClassVisitor
 
 object ConfigClassVisitorFactory {
@@ -25,6 +26,7 @@ object ConfigClassVisitorFactory {
             cfg: VariantConfig,
             encodedSharedObjectFilesMap: String?,
             reactNativeBundleId: String?,
+            variantOutputInfo: VariantOutputInfo,
             api: Int,
             cv: ClassVisitor?,
         ): ClassVisitor {
@@ -32,7 +34,7 @@ object ConfigClassVisitorFactory {
                 BaseUrlConfig -> createBaseUrlConfigInstrumentation(cfg)
                 EnabledFeatureConfig -> createEnabledFeatureConfigInstrumentation(cfg)
                 NetworkCaptureConfig -> createNetworkCaptureConfigInstrumentation(cfg)
-                ProjectConfig -> createProjectConfigInstrumentation(cfg, reactNativeBundleId)
+                ProjectConfig -> createProjectConfigInstrumentation(cfg, reactNativeBundleId, variantOutputInfo)
                 RedactionConfig -> createRedactionConfigInstrumentation(cfg)
                 Base64SharedObjectFilesMap -> createSharedObjectFilesMapInstrumentation(encodedSharedObjectFilesMap)
             }
@@ -48,11 +50,12 @@ object ConfigClassVisitorFactory {
         className: String,
         cfg: VariantConfig,
         encodedSharedObjectFilesMap: String?,
+        variantOutputInfo: VariantOutputInfo,
         reactNativeBundleId: String?,
         api: Int,
         cv: ClassVisitor?,
     ): ClassVisitor? {
         val type = ConfigClassType.entries.singleOrNull { it.className == className }
-        return type?.createClassVisitor(cfg, encodedSharedObjectFilesMap, reactNativeBundleId, api, cv)
+        return type?.createClassVisitor(cfg, encodedSharedObjectFilesMap, reactNativeBundleId, variantOutputInfo, api, cv)
     }
 }

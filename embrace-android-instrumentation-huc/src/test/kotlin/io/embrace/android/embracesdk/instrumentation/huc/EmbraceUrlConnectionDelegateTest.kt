@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.instrumentation.huc
 
-import io.embrace.android.embracesdk.fakes.FakeEmbraceInternalInterface
 import io.embrace.android.embracesdk.instrumentation.huc.EmbraceUrlConnectionDelegate.CONTENT_ENCODING
 import io.embrace.android.embracesdk.instrumentation.huc.EmbraceUrlConnectionDelegate.CONTENT_LENGTH
 import io.embrace.android.embracesdk.internal.config.behavior.NetworkSpanForwardingBehaviorImpl.Companion.TRACEPARENT_HEADER_NAME
@@ -33,7 +32,6 @@ internal class EmbraceUrlConnectionDelegateTest {
     fun setup() {
         internalApi = FakeInternalNetworkApi(
             time = REQUEST_TIME,
-            internalInterface = FakeEmbraceInternalInterface(captureNetworkBody = true)
         )
     }
 
@@ -253,7 +251,7 @@ internal class EmbraceUrlConnectionDelegateTest {
             connection = createMockUncompressedConnection(),
             wrappedIoStream = true
         )
-        assertEquals(1, internalApi.internalInterface.networkRequests.size)
+        assertEquals(1, internalApi.networkRequests.size)
     }
 
     @Test
@@ -262,7 +260,7 @@ internal class EmbraceUrlConnectionDelegateTest {
             connection = createMockUncompressedConnection(),
             wrappedIoStream = false
         )
-        assertEquals(1, internalApi.internalInterface.networkRequests.size)
+        assertEquals(1, internalApi.networkRequests.size)
     }
 
     @Test
@@ -272,7 +270,7 @@ internal class EmbraceUrlConnectionDelegateTest {
             wrappedIoStream = true,
             exceptionOnInputStream = true
         )
-        assertEquals(1, internalApi.internalInterface.networkRequests.size)
+        assertEquals(1, internalApi.networkRequests.size)
     }
 
     @Test
@@ -280,7 +278,7 @@ internal class EmbraceUrlConnectionDelegateTest {
         val mockConnection = createMockUncompressedConnection()
         EmbraceUrlConnectionDelegate(mockConnection, true, internalApi).disconnect()
         verifyIncompleteRequestLogged(mockConnection)
-        assertEquals(1, internalApi.internalInterface.networkRequests.size)
+        assertEquals(1, internalApi.networkRequests.size)
     }
 
     @Test
@@ -294,7 +292,7 @@ internal class EmbraceUrlConnectionDelegateTest {
             errorType = TIMEOUT_ERROR,
             noResponseAccess = false
         )
-        assertEquals(1, internalApi.internalInterface.networkRequests.size)
+        assertEquals(1, internalApi.networkRequests.size)
     }
 
     @Test
@@ -308,7 +306,7 @@ internal class EmbraceUrlConnectionDelegateTest {
             errorType = TIMEOUT_ERROR,
             noResponseAccess = false
         )
-        assertEquals(1, internalApi.internalInterface.networkRequests.size)
+        assertEquals(1, internalApi.networkRequests.size)
     }
 
     @Test
@@ -322,7 +320,7 @@ internal class EmbraceUrlConnectionDelegateTest {
             errorType = TIMEOUT_ERROR,
             noResponseAccess = false
         )
-        assertEquals(1, internalApi.internalInterface.networkRequests.size)
+        assertEquals(1, internalApi.networkRequests.size)
     }
 
     @Test
@@ -364,7 +362,7 @@ internal class EmbraceUrlConnectionDelegateTest {
 
     @Test
     fun `check traceparents are forwarded if feature flag is on`() {
-        internalApi.internalInterface.networkSpanForwardingEnabled = true
+        internalApi.networkSpanForwardingEnabled = true
         executeRequest(
             connection = createMockConnectionWithTraceparent(),
             wrappedIoStream = true
@@ -376,7 +374,7 @@ internal class EmbraceUrlConnectionDelegateTest {
 
     @Test
     fun `check traceparents are forwarded on errors if feature flag is on`() {
-        internalApi.internalInterface.networkSpanForwardingEnabled = true
+        internalApi.networkSpanForwardingEnabled = true
         executeRequest(
             connection = createMockConnectionWithTraceparent(),
             wrappedIoStream = true,
@@ -580,7 +578,7 @@ internal class EmbraceUrlConnectionDelegateTest {
         assertEquals(errorType, request.errorType)
     }
 
-    private fun retrieveNetworkRequest() = internalApi.internalInterface.networkRequests.single()
+    private fun retrieveNetworkRequest() = internalApi.networkRequests.single()
 
     companion object {
         private fun String.toGzipByteArray(): ByteArray {

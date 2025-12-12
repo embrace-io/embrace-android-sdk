@@ -1,10 +1,8 @@
 package io.embrace.android.embracesdk.internal.api
 
-import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.EmbraceImpl
 import io.embrace.android.embracesdk.fakes.FakeConfigModule
-import io.embrace.android.embracesdk.fakes.FakeInstrumentationModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakePayloadSourceModule
 import io.embrace.android.embracesdk.internal.injection.InternalInterfaceModule
@@ -24,7 +22,6 @@ internal class InternalInterfaceModuleImplTest {
             initModule,
             FakeConfigModule(),
             FakePayloadSourceModule(),
-            FakeInstrumentationModule(ApplicationProvider.getApplicationContext()),
             EmbraceImpl(),
             ModuleInitBootstrapper(FakeInitModule())
         )

@@ -57,7 +57,7 @@ internal class EmbraceUrlStreamHandlerTest {
 
     @Test
     fun `check traceparent is injected into http request if feature flag is on`() {
-        internalApi.internalInterface.networkSpanForwardingEnabled = true
+        internalApi.networkSpanForwardingEnabled = true
         val url = URL(
             "http",
             "embrace.io",
@@ -74,7 +74,7 @@ internal class EmbraceUrlStreamHandlerTest {
 
     @Test
     fun `check traceparent is injected into https request if feature flag is on`() {
-        internalApi.internalInterface.networkSpanForwardingEnabled = true
+        internalApi.networkSpanForwardingEnabled = true
         val url = URL(
             "https",
             "embrace.io",

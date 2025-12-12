@@ -20,6 +20,7 @@ import io.embrace.android.embracesdk.internal.api.SessionApi
 import io.embrace.android.embracesdk.internal.api.UserApi
 import io.embrace.android.embracesdk.internal.api.ViewTrackingApi
 import io.embrace.android.embracesdk.internal.api.delegate.BreadcrumbApiDelegate
+import io.embrace.android.embracesdk.internal.api.delegate.ExceptionData
 import io.embrace.android.embracesdk.internal.api.delegate.InstrumentationApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.LogsApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.NetworkRequestApiDelegate
@@ -191,19 +192,13 @@ internal class EmbraceImpl(
         severity: Severity,
         message: String,
         attributes: Map<String, Any> = emptyMap(),
-        customStackTrace: String? = null,
-        logExceptionType: LogExceptionType = LogExceptionType.NONE,
-        exceptionName: String? = null,
-        exceptionMessage: String? = null,
+        exceptionData: ExceptionData? = null,
     ) {
         logsApiDelegate.logMessageImpl(
             severity = severity,
             message = message,
             attributes = attributes,
-            customStackTrace = customStackTrace,
-            logExceptionType = logExceptionType,
-            exceptionName = exceptionName,
-            exceptionMessage = exceptionMessage,
+            exceptionData = exceptionData,
         )
     }
 

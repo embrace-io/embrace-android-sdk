@@ -1,13 +1,13 @@
 package io.embrace.android.embracesdk.internal.api
 
 import io.embrace.android.embracesdk.EmbraceImpl
-import io.embrace.android.embracesdk.LogExceptionType
 import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.internal.api.delegate.UnityInternalInterfaceImpl
 import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.internal.envelope.metadata.UnitySdkVersionInfo
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
+import io.embrace.android.embracesdk.internal.logs.LogExceptionType
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -56,10 +56,12 @@ internal class UnityInternalInterfaceImplTest {
             embrace.logMessage(
                 severity = Severity.ERROR,
                 message = "Unity exception",
-                customStackTrace = "stack",
-                logExceptionType = LogExceptionType.UNHANDLED,
-                exceptionName = "name",
-                exceptionMessage = "msg"
+                exceptionData = match {
+                    it.name == "name" &&
+                        it.message == "msg" &&
+                        it.stacktrace == "stack" &&
+                        it.logExceptionType == LogExceptionType.UNHANDLED
+                }
             )
         }
     }
@@ -72,10 +74,12 @@ internal class UnityInternalInterfaceImplTest {
             embrace.logMessage(
                 severity = Severity.ERROR,
                 message = "Unity exception",
-                customStackTrace = "stack",
-                logExceptionType = LogExceptionType.HANDLED,
-                exceptionName = "name",
-                exceptionMessage = "msg"
+                exceptionData = match {
+                    it.name == "name" &&
+                        it.message == "msg" &&
+                        it.stacktrace == "stack" &&
+                        it.logExceptionType == LogExceptionType.HANDLED
+                }
             )
         }
     }

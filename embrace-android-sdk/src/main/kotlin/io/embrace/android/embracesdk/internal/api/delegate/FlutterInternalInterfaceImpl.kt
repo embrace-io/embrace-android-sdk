@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.api.delegate
 
 import io.embrace.android.embracesdk.EmbraceImpl
-import io.embrace.android.embracesdk.LogExceptionType
 import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
 import io.embrace.android.embracesdk.internal.FlutterInternalInterface
@@ -9,6 +8,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.Flutter
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.FlutterException.embFlutterExceptionLibrary
 import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
+import io.embrace.android.embracesdk.internal.logs.LogExceptionType
 
 internal class FlutterInternalInterfaceImpl(
     private val embrace: EmbraceImpl,
@@ -73,11 +73,13 @@ internal class FlutterInternalInterfaceImpl(
             embrace.logMessage(
                 severity = Severity.ERROR,
                 message = "Dart error",
-                customStackTrace = stack,
-                logExceptionType = exceptionType,
-                exceptionName = name,
-                exceptionMessage = message,
                 attributes = attrs,
+                exceptionData = ExceptionData(
+                    name = name,
+                    message = message,
+                    stacktrace = stack,
+                    logExceptionType = exceptionType,
+                )
             )
         } else {
             logger.logSdkNotInitialized("logDartError")

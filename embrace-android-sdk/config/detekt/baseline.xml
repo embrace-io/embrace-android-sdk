@@ -2,6 +2,6 @@
 <SmellBaseline>
   <ManuallySuppressedIssues/>
   <CurrentIssues>
-    <ID>CyclomaticComplexMethod:LogsApiDelegate.kt$LogsApiDelegate$fun logMessageImpl( severity: Severity, message: String, attributes: Map&lt;String, Any> = emptyMap(), stackTraceElements: Array&lt;StackTraceElement>? = null, customStackTrace: String? = null, logExceptionType: LogExceptionType = LogExceptionType.NONE, exceptionName: String? = null, exceptionMessage: String? = null, attachment: Attachment? = null, )</ID>
+    <ID>CyclomaticComplexMethod:LogsApiDelegate.kt$LogsApiDelegate$private fun sendLog( attributes: Map&lt;String, Any>, exceptionData: ExceptionData?, attachment: Attachment?, severity: Severity, dst: LogService, message: String, )</ID>
   </CurrentIssues>
 </SmellBaseline>

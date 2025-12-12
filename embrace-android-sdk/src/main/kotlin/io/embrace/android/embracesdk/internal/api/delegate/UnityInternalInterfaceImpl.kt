@@ -1,12 +1,12 @@
 package io.embrace.android.embracesdk.internal.api.delegate
 
 import io.embrace.android.embracesdk.EmbraceImpl
-import io.embrace.android.embracesdk.LogExceptionType
 import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
 import io.embrace.android.embracesdk.internal.UnityInternalInterface
 import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
+import io.embrace.android.embracesdk.internal.logs.LogExceptionType
 
 internal class UnityInternalInterfaceImpl(
     private val embrace: EmbraceImpl,
@@ -58,10 +58,12 @@ internal class UnityInternalInterfaceImpl(
             embrace.logMessage(
                 severity = Severity.ERROR,
                 message = "Unity exception",
-                customStackTrace = stacktrace,
-                logExceptionType = exceptionType,
-                exceptionName = name,
-                exceptionMessage = message
+                exceptionData = ExceptionData(
+                    name = name,
+                    message = message,
+                    stacktrace = stacktrace,
+                    logExceptionType = exceptionType,
+                )
             )
         } else {
             logger.logSdkNotInitialized("log Unity exception")

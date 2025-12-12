@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.api.delegate
 
-import io.embrace.android.embracesdk.LogExceptionType
 import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.internal.api.LogsApi
 import io.embrace.android.embracesdk.internal.arch.attrs.embExceptionHandling
@@ -14,6 +13,8 @@ import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.injection.embraceImplInject
 import io.embrace.android.embracesdk.internal.instrumentation.fcm.PushNotificationBreadcrumb
 import io.embrace.android.embracesdk.internal.instrumentation.fcm.fcmDataSource
+import io.embrace.android.embracesdk.internal.logs.LogExceptionType
+import io.embrace.android.embracesdk.internal.logs.LogService
 import io.embrace.android.embracesdk.internal.logs.attachments.Attachment
 import io.embrace.android.embracesdk.internal.logs.attachments.Attachment.EmbraceHosted
 import io.embrace.android.embracesdk.internal.logs.attachments.AttachmentErrorCode.ATTACHMENT_TOO_LARGE
@@ -117,10 +118,12 @@ internal class LogsApiDelegate(
             severity = severity,
             message = message ?: exceptionMessage,
             attributes = properties,
-            stackTraceElements = throwable.getSafeStackTrace(),
-            logExceptionType = LogExceptionType.HANDLED,
-            exceptionName = throwable.javaClass.simpleName,
-            exceptionMessage = exceptionMessage,
+            exceptionData = ExceptionData(
+                name = throwable.javaClass.simpleName,
+                message = exceptionMessage,
+                stacktrace = throwable.getSafeStackTrace()?.let(::serializeStacktrace),
+                logExceptionType = LogExceptionType.HANDLED,
+            )
         )
     }
 
@@ -134,9 +137,12 @@ internal class LogsApiDelegate(
             severity = severity,
             message = message ?: "",
             attributes = properties,
-            stackTraceElements = stacktraceElements,
-            logExceptionType = LogExceptionType.HANDLED,
-            exceptionMessage = message,
+            exceptionData = ExceptionData(
+                name = null,
+                message = message,
+                stacktrace = serializeStacktrace(stacktraceElements),
+                logExceptionType = LogExceptionType.HANDLED,
+            )
         )
     }
 
@@ -144,67 +150,74 @@ internal class LogsApiDelegate(
         severity: Severity,
         message: String,
         attributes: Map<String, Any> = emptyMap(),
-        stackTraceElements: Array<StackTraceElement>? = null,
-        customStackTrace: String? = null,
-        logExceptionType: LogExceptionType = LogExceptionType.NONE,
-        exceptionName: String? = null,
-        exceptionMessage: String? = null,
+        exceptionData: ExceptionData? = null,
         attachment: Attachment? = null,
     ) {
         if (sdkCallChecker.check("log_message")) {
             runCatching {
                 val dst = logService ?: return
-                val jsonSerializer = serializer ?: return
-                val attrs = attributes.toMutableMap()
-
-                // add exception name + message attrs
-                exceptionName?.let { attrs[ExceptionAttributes.EXCEPTION_TYPE] = it }
-                exceptionMessage?.let { attrs[ExceptionAttributes.EXCEPTION_MESSAGE] = it }
-
-                // add attachment attrs
-                if (attachment != null) {
-                    attrs.putAll(attachment.attributes.mapKeys { it.key.name })
-                }
-
-                // map severity value
-                val logSeverity = when (severity) {
-                    Severity.INFO -> LogSeverity.INFO
-                    Severity.WARNING -> LogSeverity.WARNING
-                    Severity.ERROR -> LogSeverity.ERROR
-                }
-
-                // add log type
-                if (logExceptionType != LogExceptionType.NONE) {
-                    attrs[embExceptionHandling.name] = logExceptionType.value
-                }
-
-                // add stacktrace
-                val stacktrace = stackTraceElements?.let(jsonSerializer::truncatedStacktrace) ?: customStackTrace
-                stacktrace?.let { attrs[ExceptionAttributes.EXCEPTION_STACKTRACE] = it }
-
-                // determine log schema
-                val schemaProvider: (TelemetryAttributes) -> SchemaType = when {
-                    logExceptionType == LogExceptionType.NONE -> ::Log
-                    configService?.appFramework == AppFramework.FLUTTER -> ::FlutterException
-                    else -> ::Exception
-                }
-
-                // send log
-                dst.log(
-                    message = message,
-                    severity = logSeverity,
-                    attributes = attrs,
-                    schemaProvider = schemaProvider
-                )
-
-                // store attachment
-                if (attachment is EmbraceHosted && attachment.shouldAttemptUpload()) {
-                    val envelope = Envelope(data = Pair(attachment.id, attachment.bytes))
-                    payloadStore?.storeAttachment(envelope)
-                }
+                sendLog(attributes, exceptionData, attachment, severity, dst, message)
             }
         }
     }
+
+    private fun sendLog(
+        attributes: Map<String, Any>,
+        exceptionData: ExceptionData?,
+        attachment: Attachment?,
+        severity: Severity,
+        dst: LogService,
+        message: String,
+    ) {
+        val attrs = attributes.toMutableMap()
+
+        // add exception name + message attrs
+        val exceptionType = exceptionData?.logExceptionType ?: LogExceptionType.NONE
+        exceptionData?.name?.let { attrs[ExceptionAttributes.EXCEPTION_TYPE] = it }
+        exceptionData?.message?.let { attrs[ExceptionAttributes.EXCEPTION_MESSAGE] = it }
+        exceptionData?.stacktrace?.let { attrs[ExceptionAttributes.EXCEPTION_STACKTRACE] = it }
+
+        if (exceptionType != LogExceptionType.NONE) {
+            attrs[embExceptionHandling.name] = exceptionType.value
+        }
+
+        // add attachment attrs
+        if (attachment != null) {
+            attrs.putAll(attachment.attributes.mapKeys { it.key.name })
+        }
+
+        // map severity value
+        val logSeverity = when (severity) {
+            Severity.INFO -> LogSeverity.INFO
+            Severity.WARNING -> LogSeverity.WARNING
+            Severity.ERROR -> LogSeverity.ERROR
+        }
+
+        // determine log schema
+        val schemaProvider: (TelemetryAttributes) -> SchemaType = when {
+            exceptionType == LogExceptionType.NONE -> ::Log
+            configService?.appFramework == AppFramework.FLUTTER -> ::FlutterException
+            else -> ::Exception
+        }
+
+        // send log
+        dst.log(
+            message = message,
+            severity = logSeverity,
+            attributes = attrs,
+            schemaProvider = schemaProvider
+        )
+
+        // store attachment
+        if (attachment is EmbraceHosted && attachment.shouldAttemptUpload()) {
+            val envelope = Envelope(data = Pair(attachment.id, attachment.bytes))
+            payloadStore?.storeAttachment(envelope)
+        }
+    }
+
+    private fun serializeStacktrace(elements: Array<StackTraceElement>): String? = runCatching {
+        serializer?.truncatedStacktrace(elements)
+    }.getOrNull()
 
     @Deprecated("This API is deprecated and will be removed in a future release.Use logMessage() instead.")
     override fun logPushNotification(

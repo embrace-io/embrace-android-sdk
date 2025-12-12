@@ -3,6 +3,7 @@ package io.embrace.android.gradle.plugin.instrumentation.fakes
 import io.embrace.android.gradle.plugin.instrumentation.BytecodeInstrumentationParams
 import io.embrace.android.gradle.plugin.instrumentation.ClassInstrumentationFilter
 import io.embrace.android.gradle.plugin.instrumentation.config.model.VariantConfig
+import io.embrace.android.gradle.plugin.model.VariantOutputInfo
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.internal.provider.DefaultProperty
 import org.gradle.api.internal.provider.PropertyHost
@@ -24,6 +25,10 @@ class TestBytecodeInstrumentationParams(
     override val config: Property<VariantConfig> =
         DefaultProperty(PropertyHost.NO_OP, VariantConfig::class.javaObjectType).convention(
             VariantConfig("", "", null, null, null)
+        )
+    override val variantOutputInfo: Property<VariantOutputInfo> =
+        DefaultProperty(PropertyHost.NO_OP, VariantOutputInfo::class.javaObjectType).convention(
+            VariantOutputInfo("", "", "")
         )
     override val encodedSharedObjectFilesMap: RegularFileProperty = ProjectBuilder.builder().build().objects.fileProperty()
     override val reactNativeBundleId: RegularFileProperty = ProjectBuilder.builder().build().objects.fileProperty()

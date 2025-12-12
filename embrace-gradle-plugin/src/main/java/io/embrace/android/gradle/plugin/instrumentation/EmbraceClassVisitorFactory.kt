@@ -30,8 +30,17 @@ abstract class EmbraceClassVisitorFactory : AsmClassVisitorFactory<BytecodeInstr
         val params = parameters.get()
         val cfg = params.config.get()
         val reactNativeBundleId = readTextFromFile(params.reactNativeBundleId)
+        val variantOutputInfo = params.variantOutputInfo.get()
         val encodedSharedObjectFilesMap = readTextFromFile(params.encodedSharedObjectFilesMap)
-        ConfigClassVisitorFactory.createClassVisitor(className, cfg, encodedSharedObjectFilesMap, reactNativeBundleId, api, visitor)?.let {
+        ConfigClassVisitorFactory.createClassVisitor(
+            className,
+            cfg,
+            encodedSharedObjectFilesMap,
+            variantOutputInfo,
+            reactNativeBundleId,
+            api,
+            visitor
+        )?.let {
             visitor = it
         }
 

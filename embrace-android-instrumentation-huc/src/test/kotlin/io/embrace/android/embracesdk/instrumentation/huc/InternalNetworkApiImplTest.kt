@@ -1,30 +1,30 @@
 package io.embrace.android.embracesdk.instrumentation.huc
 
+import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.fakes.FakeEmbraceInternalInterface
-import io.embrace.android.embracesdk.fakes.FakeInstrumentationApi
-import io.embrace.android.embracesdk.fakes.FakeSdkStateApi
+import io.embrace.android.embracesdk.fakes.FakeEmbLogger
+import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
+import io.embrace.android.embracesdk.fakes.behavior.FakeNetworkSpanForwardingBehavior
 import io.embrace.android.embracesdk.fixtures.fakeCompleteEmbraceNetworkRequest
-import io.embrace.android.embracesdk.internal.api.InstrumentationApi
-import io.embrace.android.embracesdk.internal.api.SdkStateApi
+import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
+import io.embrace.android.embracesdk.internal.instrumentation.network.HttpNetworkRequest
+import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkRequestDataSource
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 internal class InternalNetworkApiImplTest {
-    private lateinit var fakeSdkStateApi: SdkStateApi
-    private lateinit var fakeInstrumentationApi: InstrumentationApi
-    private lateinit var fakeNetworkingApi: FakeNetworkRequestApi
-    private lateinit var fakeInternalInterface: FakeEmbraceInternalInterface
+
+    private lateinit var args: FakeInstrumentationArgs
+    private lateinit var requestDataSource: FakeNetworkRequestDataSource
 
     @Before
     fun setup() {
-        fakeSdkStateApi = FakeSdkStateApi()
-        fakeInstrumentationApi = FakeInstrumentationApi()
-        fakeNetworkingApi = FakeNetworkRequestApi()
-        fakeInternalInterface = FakeEmbraceInternalInterface()
+        args = FakeInstrumentationArgs(ApplicationProvider.getApplicationContext(), logger = FakeEmbLogger(false))
+        requestDataSource = FakeNetworkRequestDataSource()
     }
 
     @Test
@@ -32,58 +32,61 @@ internal class InternalNetworkApiImplTest {
         with(initialize()) {
             verifyDelegation()
             recordNetworkRequest(fakeCompleteEmbraceNetworkRequest)
-            assertEquals(fakeCompleteEmbraceNetworkRequest, fakeNetworkingApi.requests.single())
+            val observed = requestDataSource.requests.single()
+            assertEquals(fakeCompleteEmbraceNetworkRequest.url, observed.url)
+            assertEquals(fakeCompleteEmbraceNetworkRequest.responseCode, observed.statusCode)
+            assertEquals(fakeCompleteEmbraceNetworkRequest.startTime, observed.startTime)
+            assertEquals(fakeCompleteEmbraceNetworkRequest.endTime, observed.endTime)
             val exception = RuntimeException()
             logInternalError(exception)
-            assertEquals(exception, fakeInternalInterface.internalErrors.single())
+            assertEquals(exception, args.logger.internalErrorMessages.single().throwable)
         }
     }
 
     @Test
     fun `check disable everything`() {
-        fakeSdkStateApi = FakeSdkStateApi(
-            isStarted = false
-        )
-        fakeInstrumentationApi = FakeInstrumentationApi(
-            sdkTimeMs = 0L
-        )
-        fakeNetworkingApi = FakeNetworkRequestApi(
-            traceparent = null
-        )
-        fakeInternalInterface = FakeEmbraceInternalInterface(
-            networkSpanForwardingEnabled = false
-        )
+        args.clock.setCurrentTime(0)
         initialize().verifyDelegation()
     }
 
     @Test
     fun `check enable everything`() {
-        fakeSdkStateApi = FakeSdkStateApi(
-            isStarted = true
-        )
-        fakeInstrumentationApi = FakeInstrumentationApi(
-            sdkTimeMs = 1000L
-        )
-        fakeNetworkingApi = FakeNetworkRequestApi(
-            traceparent = "foo"
-        )
-        fakeInternalInterface = FakeEmbraceInternalInterface(
-            networkSpanForwardingEnabled = true
-        )
+        args.clock.setCurrentTime(1000L)
+        args.configService.networkSpanForwardingBehavior = FakeNetworkSpanForwardingBehavior(true)
         initialize().verifyDelegation()
     }
 
     private fun initialize(): InternalNetworkApiImpl = InternalNetworkApiImpl(
-        sdkStateApi = fakeSdkStateApi,
-        instrumentationApi = fakeInstrumentationApi,
-        networkRequestApi = fakeNetworkingApi,
-        internalInterface = fakeInternalInterface
+        args = args,
+        networkRequestDataSource = requestDataSource,
+        networkCaptureDataSource = null,
     )
 
     private fun InternalNetworkApi.verifyDelegation() {
-        assertEquals(fakeSdkStateApi.isStarted, isStarted())
-        assertEquals(fakeInstrumentationApi.getSdkCurrentTimeMs(), getSdkCurrentTimeMs())
-        assertEquals(fakeInternalInterface.isNetworkSpanForwardingEnabled(), isNetworkSpanForwardingEnabled())
-        assertEquals(fakeInternalInterface.shouldCaptureNetworkBody("foo", "GET"), shouldCaptureNetworkBody("foo", "GET"))
+        assertEquals(args.clock.now(), getSdkCurrentTimeMs())
+        assertEquals(args.configService.networkSpanForwardingBehavior.isNetworkSpanForwardingEnabled(), isNetworkSpanForwardingEnabled())
+        assertFalse(shouldCaptureNetworkBody("foo", "GET"))
+    }
+
+    private class FakeNetworkRequestDataSource : NetworkRequestDataSource {
+        val requests: MutableList<HttpNetworkRequest> = mutableListOf()
+
+        override fun recordNetworkRequest(request: HttpNetworkRequest) {
+            requests.add(request)
+        }
+
+        override fun onDataCaptureEnabled() {
+        }
+
+        override fun onDataCaptureDisabled() {
+        }
+
+        override fun resetDataCaptureLimits() {
+        }
+
+        override fun <T> captureTelemetry(
+            inputValidation: () -> Boolean,
+            action: TelemetryDestination.() -> T?,
+        ): T? = null
     }
 }

@@ -129,8 +129,6 @@ class EmbraceUrlConnectionDelegate<T extends HttpURLConnection> implements Embra
     @Nullable
     private volatile String traceparent = null;
 
-    private final boolean isSDKStarted;
-
     /**
      * Wraps an existing {@link HttpURLConnection} with the Embrace network logic.
      *
@@ -147,7 +145,6 @@ class EmbraceUrlConnectionDelegate<T extends HttpURLConnection> implements Embra
         this.enableWrapIoStreams = enableWrapIoStreams;
         this.internalNetworkApi = internalNetworkApi;
         this.createdTime = internalNetworkApi.getSdkCurrentTimeMs();
-        this.isSDKStarted = internalNetworkApi.isStarted();
     }
 
     @Override
@@ -157,15 +154,13 @@ class EmbraceUrlConnectionDelegate<T extends HttpURLConnection> implements Embra
 
     @Override
     public void connect() throws IOException {
-        if (isSDKStarted) {
-            identifyTraceId();
-            try {
-                if (internalNetworkApi.isNetworkSpanForwardingEnabled()) {
-                    traceparent = connection.getRequestProperty(TRACEPARENT_HEADER_NAME);
-                }
-            } catch (Exception e) {
-                // Ignore traceparent if there was a problem obtaining it
+        identifyTraceId();
+        try {
+            if (internalNetworkApi.isNetworkSpanForwardingEnabled()) {
+                traceparent = connection.getRequestProperty(TRACEPARENT_HEADER_NAME);
             }
+        } catch (Exception e) {
+            // Ignore traceparent if there was a problem obtaining it
         }
         this.connection.connect();
     }
@@ -527,7 +522,7 @@ class EmbraceUrlConnectionDelegate<T extends HttpURLConnection> implements Embra
      * If this delegate has already logged the call it represents, this method is a no-op.
      */
     synchronized void internalLogNetworkCall() {
-        if (isSDKStarted && !this.didLogNetworkCall) {
+        if (!this.didLogNetworkCall) {
             // We are proactive with setting this flag so that we don't get nested calls to log the network call by virtue of
             // extracting the data we need to log the network call.
             this.didLogNetworkCall = true;  // TODO: Wouldn't this mean that the network call might not be logged
@@ -656,7 +651,7 @@ class EmbraceUrlConnectionDelegate<T extends HttpURLConnection> implements Embra
     }
 
     private void identifyTraceId() {
-        if (isSDKStarted && traceId == null) {
+        if (traceId == null) {
             try {
                 traceId = getRequestProperty(CUSTOM_TRACE_ID_HEADER_NAME);
             } catch (Exception e) {
@@ -774,7 +769,7 @@ class EmbraceUrlConnectionDelegate<T extends HttpURLConnection> implements Embra
     }
 
     private boolean hasNetworkCaptureRules() {
-        if (!isSDKStarted || this.connection.getURL() == null) {
+        if (this.connection.getURL() == null) {
             return false;
         }
         String url = this.connection.getURL().toString();
@@ -792,10 +787,6 @@ class EmbraceUrlConnectionDelegate<T extends HttpURLConnection> implements Embra
      * is not available.
      */
     private void cacheNetworkCallData(@Nullable byte[] responseBody) {
-        if (!isSDKStarted) {
-            return;
-        }
-
         setStartTime(internalNetworkApi.getSdkCurrentTimeMs());
 
         if (headerFields.get() == null) {

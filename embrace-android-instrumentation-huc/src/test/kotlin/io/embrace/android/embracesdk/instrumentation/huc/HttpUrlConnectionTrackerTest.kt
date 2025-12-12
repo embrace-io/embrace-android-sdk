@@ -1,13 +1,12 @@
 package io.embrace.android.embracesdk.instrumentation.huc
 
+import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeEmbraceInternalInterface
-import io.embrace.android.embracesdk.fakes.FakeInstrumentationApi
-import io.embrace.android.embracesdk.fakes.FakeSdkStateApi
+import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
-import io.embrace.android.embracesdk.internal.api.InstrumentationApi
 import io.embrace.android.embracesdk.internal.api.NetworkRequestApi
-import io.embrace.android.embracesdk.internal.api.SdkStateApi
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
@@ -18,15 +17,14 @@ import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 internal class HttpUrlConnectionTrackerTest {
-    private lateinit var fakeSdkStateApi: SdkStateApi
-    private lateinit var fakeInstrumentationApi: InstrumentationApi
+
+    private lateinit var args: FakeInstrumentationArgs
     private lateinit var fakeNetworkingApi: NetworkRequestApi
     private lateinit var fakeInternalInterface: EmbraceInternalInterface
 
     @Before
     fun setup() {
-        fakeSdkStateApi = FakeSdkStateApi()
-        fakeInstrumentationApi = FakeInstrumentationApi()
+        args = FakeInstrumentationArgs(ApplicationProvider.getApplicationContext(), logger = FakeEmbLogger(false))
         fakeNetworkingApi = FakeNetworkRequestApi()
         fakeInternalInterface = FakeEmbraceInternalInterface()
     }
@@ -37,19 +35,17 @@ internal class HttpUrlConnectionTrackerTest {
         assertFalse(EmbraceUrlStreamHandler.enableRequestSizeCapture)
         HttpUrlConnectionTracker.registerUrlStreamHandlerFactory(
             requestContentLengthCaptureEnabled = true,
-            sdkStateApi = fakeSdkStateApi,
-            instrumentationApi = fakeInstrumentationApi,
-            networkRequestApi = fakeNetworkingApi,
-            internalInterface = fakeInternalInterface,
+            instrumentationArgs = args,
+            networkRequestDataSource = null,
+            networkCaptureDataSource = null,
         )
         assertNotEquals(NoopInternalNetworkApi, HttpUrlConnectionTracker.getInternalNetworkApi())
         assertTrue(EmbraceUrlStreamHandler.enableRequestSizeCapture)
         HttpUrlConnectionTracker.registerUrlStreamHandlerFactory(
             requestContentLengthCaptureEnabled = false,
-            sdkStateApi = fakeSdkStateApi,
-            instrumentationApi = fakeInstrumentationApi,
-            networkRequestApi = fakeNetworkingApi,
-            internalInterface = fakeInternalInterface,
+            instrumentationArgs = args,
+            networkRequestDataSource = null,
+            networkCaptureDataSource = null,
         )
         assertFalse(EmbraceUrlStreamHandler.enableRequestSizeCapture)
     }

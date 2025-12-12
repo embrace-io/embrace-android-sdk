@@ -22,6 +22,7 @@ dependencies {
     testImplementation(project(":embrace-android-sdk"))
     testImplementation(project(":embrace-internal-api"))
     testImplementation(project(":embrace-test-fakes"))
+    testImplementation(project(":embrace-android-instrumentation-api-fakes"))
     testImplementation(libs.mockk)
     testImplementation(libs.robolectric)
 }

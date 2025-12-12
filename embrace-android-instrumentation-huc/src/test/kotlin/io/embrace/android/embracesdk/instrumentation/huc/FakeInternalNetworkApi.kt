@@ -9,7 +9,6 @@ internal class FakeInternalNetworkApi(
     var started: Boolean = true,
 ) : InternalNetworkApi {
     override fun getSdkCurrentTimeMs(): Long = time
-    override fun isStarted(): Boolean = started
     override fun isNetworkSpanForwardingEnabled(): Boolean = internalInterface.isNetworkSpanForwardingEnabled()
     override fun recordNetworkRequest(
         embraceNetworkRequest: EmbraceNetworkRequest,

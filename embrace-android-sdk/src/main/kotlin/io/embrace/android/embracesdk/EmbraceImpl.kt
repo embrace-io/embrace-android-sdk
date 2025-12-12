@@ -29,6 +29,7 @@ import io.embrace.android.embracesdk.internal.api.delegate.SdkStateApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.SessionApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.UserApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.ViewTrackingApiDelegate
+import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.config.behavior.NetworkBehavior
 import io.embrace.android.embracesdk.internal.delivery.storage.StorageLocation
 import io.embrace.android.embracesdk.internal.delivery.storage.asFile
@@ -41,6 +42,8 @@ import io.embrace.android.embracesdk.internal.injection.postInit
 import io.embrace.android.embracesdk.internal.injection.postLoadInstrumentation
 import io.embrace.android.embracesdk.internal.injection.registerListeners
 import io.embrace.android.embracesdk.internal.injection.triggerPayloadSend
+import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkCaptureDataSource
+import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkRequestDataSource
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.EmbTrace.end
@@ -139,18 +142,17 @@ internal class EmbraceImpl(
                 val initMethod = trackerClass.getDeclaredMethod(
                     "registerUrlStreamHandlerFactory",
                     Boolean::class.java,
-                    SdkStateApi::class.java,
-                    InstrumentationApi::class.java,
-                    NetworkRequestApi::class.java,
-                    EmbraceInternalInterface::class.java,
+                    InstrumentationArgs::class.java,
+                    NetworkRequestDataSource::class.java,
+                    NetworkCaptureDataSource::class.java,
                 )
+                val module = bootstrapper.instrumentationModule
                 initMethod.invoke(
                     trackerObject,
                     networkBehavior.isRequestContentLengthCaptureEnabled(),
-                    sdkStateApiDelegate,
-                    instrumentationApiDelegate,
-                    networkRequestApiDelegate,
-                    internalInterface,
+                    module.instrumentationArgs,
+                    module.instrumentationRegistry.findByType(NetworkRequestDataSource::class),
+                    module.instrumentationRegistry.findByType(NetworkCaptureDataSource::class),
                 )
             }
         } catch (t: Throwable) {

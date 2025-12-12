@@ -1,10 +1,9 @@
 package io.embrace.android.embracesdk.instrumentation.huc
 
 import io.embrace.android.embracesdk.annotation.InternalApi
-import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
-import io.embrace.android.embracesdk.internal.api.InstrumentationApi
-import io.embrace.android.embracesdk.internal.api.NetworkRequestApi
-import io.embrace.android.embracesdk.internal.api.SdkStateApi
+import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
+import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkCaptureDataSource
+import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkRequestDataSource
 import java.lang.reflect.Field
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Modifier
@@ -46,22 +45,19 @@ internal object HttpUrlConnectionTracker {
      * a singleton, so if an existing factory is already registered, it is wrapped using reflection so
      * that Embrace can intercept network traffic.
      *
-     *
      * This relies on the Embrace SDK being initialized second, so that the Embrace SDK is able to
      * detect an existing [URLStreamHandlerFactory] and wrap it with its interception logic.
      */
     fun registerUrlStreamHandlerFactory(
         requestContentLengthCaptureEnabled: Boolean,
-        sdkStateApi: SdkStateApi,
-        instrumentationApi: InstrumentationApi,
-        networkRequestApi: NetworkRequestApi,
-        internalInterface: EmbraceInternalInterface,
+        instrumentationArgs: InstrumentationArgs,
+        networkRequestDataSource: NetworkRequestDataSource?,
+        networkCaptureDataSource: NetworkCaptureDataSource?,
     ) {
         internalNetworkApi = InternalNetworkApiImpl(
-            sdkStateApi = sdkStateApi,
-            instrumentationApi = instrumentationApi,
-            networkRequestApi = networkRequestApi,
-            internalInterface = internalInterface
+            args = instrumentationArgs,
+            networkRequestDataSource = networkRequestDataSource,
+            networkCaptureDataSource = networkCaptureDataSource,
         )
         registerFactory(requestContentLengthCaptureEnabled)
     }

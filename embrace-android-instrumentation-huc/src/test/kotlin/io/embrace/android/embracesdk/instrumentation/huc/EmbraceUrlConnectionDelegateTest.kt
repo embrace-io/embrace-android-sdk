@@ -12,7 +12,6 @@ import io.mockk.verify
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertThrows
-import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import java.io.ByteArrayInputStream
@@ -246,27 +245,6 @@ internal class EmbraceUrlConnectionDelegateTest {
             errorType = IO_ERROR,
             errorMessage = "nope"
         )
-    }
-
-    @Test
-    fun `completed requests are not recorded if the SDK has not started`() {
-        internalApi.started = false
-        executeRequest(
-            connection = createMockGzipConnection(),
-            wrappedIoStream = true
-        )
-        assertTrue(internalApi.internalInterface.networkRequests.isEmpty())
-    }
-
-    @Test
-    fun `incomplete requests are not recorded if the SDK has not started`() {
-        internalApi.started = false
-        executeRequest(
-            connection = createMockGzipConnection(),
-            wrappedIoStream = true,
-            exceptionOnInputStream = true
-        )
-        assertTrue(internalApi.internalInterface.networkRequests.isEmpty())
     }
 
     @Test

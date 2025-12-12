@@ -180,6 +180,7 @@ internal class SessionOrchestratorImpl(
             val endAppState = transitionType.endState(state)
             val newSession = sessionTracker.newActiveSession(
                 endSessionCallback = {
+                    instrumentationRegistry.onEndSession()
                     // End the current session or background activity, if either exist.
                     EmbTrace.trace("end-current-session") {
                         processEndMessage(oldSessionAction?.invoke(this), transitionType)

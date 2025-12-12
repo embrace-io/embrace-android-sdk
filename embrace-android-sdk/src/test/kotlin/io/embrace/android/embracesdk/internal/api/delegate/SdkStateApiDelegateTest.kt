@@ -8,7 +8,7 @@ import io.embrace.android.embracesdk.fakes.FakeLogService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeSessionTracker
 import io.embrace.android.embracesdk.fakes.FakeTelemetryService
-import io.embrace.android.embracesdk.fakes.fakeSessionZygote
+import io.embrace.android.embracesdk.fakes.fakeSessionToken
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
@@ -78,7 +78,7 @@ internal class SdkStateApiDelegateTest {
 
     @Test
     fun getCurrentSessionId() {
-        sessionTracker.currentSession = fakeSessionZygote().copy(sessionId = "test")
+        sessionTracker.currentSession = fakeSessionToken().copy(sessionId = "test")
         assertEquals("test", delegate.currentSessionId)
     }
 

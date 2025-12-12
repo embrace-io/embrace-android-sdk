@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.session.id
 
-import io.embrace.android.embracesdk.fakes.fakeSessionZygote
+import io.embrace.android.embracesdk.fakes.fakeSessionToken
 import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import org.junit.Assert.assertEquals
@@ -26,7 +26,7 @@ internal class SessionTrackerImplTest {
         assertNull(tracker.getActiveSession())
         assertNull(tracker.getActiveSessionId())
         assertEquals(0, count)
-        val newSession = fakeSessionZygote()
+        val newSession = fakeSessionToken()
         tracker.newActiveSession(
             endSessionCallback = {},
             startSessionCallback = { newSession },

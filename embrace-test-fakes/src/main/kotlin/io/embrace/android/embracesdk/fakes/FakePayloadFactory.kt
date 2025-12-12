@@ -67,7 +67,7 @@ class FakePayloadFactory : PayloadFactory {
 
     private fun startBackgroundActivityWithState(timestamp: Long): SessionToken {
         startBaTimestamps.add(timestamp)
-        return fakeSessionZygote().copy(appState = AppState.BACKGROUND)
+        return fakeSessionToken().copy(appState = AppState.BACKGROUND)
     }
 
     private fun endBackgroundActivityWithState(timestamp: Long): Envelope<SessionPayload> {
@@ -89,13 +89,13 @@ class FakePayloadFactory : PayloadFactory {
 
     private fun startSessionWithState(timestamp: Long): SessionToken {
         startSessionTimestamps.add(timestamp)
-        activeSession = fakeSessionZygote().copy(startTime = timestamp)
+        activeSession = fakeSessionToken().copy(startTime = timestamp)
         return checkNotNull(activeSession)
     }
 
     override fun startSessionWithManual(timestamp: Long): SessionToken {
         manualSessionStartCount++
-        activeSession = fakeSessionZygote()
+        activeSession = fakeSessionToken()
         return checkNotNull(activeSession)
     }
 

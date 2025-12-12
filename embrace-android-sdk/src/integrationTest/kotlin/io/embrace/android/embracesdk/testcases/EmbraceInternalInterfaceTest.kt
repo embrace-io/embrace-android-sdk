@@ -6,7 +6,6 @@ import io.embrace.android.embracesdk.internal.config.remote.NetworkCaptureRuleRe
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -28,7 +27,6 @@ internal class EmbraceInternalInterfaceTest {
             testCaseAction = {
                 assertFalse(embrace.isStarted)
                 with(EmbraceInternalApi.internalInterface) {
-                    assertFalse(shouldCaptureNetworkBody("", ""))
                     assertFalse(isNetworkSpanForwardingEnabled())
                 }
                 assertFalse(embrace.isStarted)
@@ -53,19 +51,6 @@ internal class EmbraceInternalInterfaceTest {
             ),
             testCaseAction = {
                 recordSession {
-                    assertTrue(
-                        EmbraceInternalApi.internalInterface.shouldCaptureNetworkBody(
-                            "capture.me",
-                            "GET"
-                        )
-                    )
-                    assertFalse(
-                        EmbraceInternalApi.internalInterface.shouldCaptureNetworkBody(
-                            "capture.me",
-                            "POST"
-                        )
-                    )
-                    assertFalse(EmbraceInternalApi.internalInterface.shouldCaptureNetworkBody(URL, "GET"))
                     assertFalse(EmbraceInternalApi.internalInterface.isNetworkSpanForwardingEnabled())
                 }
             }
@@ -81,9 +66,5 @@ internal class EmbraceInternalInterfaceTest {
                 assertFalse(embrace.isStarted)
             }
         )
-    }
-
-    companion object {
-        private const val URL = "https://embrace.io"
     }
 }

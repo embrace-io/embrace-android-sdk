@@ -7,7 +7,6 @@ import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorServic
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeJniDelegate
-import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.fakes.FakeNetworkConnectivityService
 import io.embrace.android.embracesdk.fakes.FakePayloadStorageService
 import io.embrace.android.embracesdk.fakes.FakeSharedObjectLoader
@@ -201,8 +200,6 @@ internal class EmbraceSetupInterface(
     fun getEmbLogger(): FakeEmbLogger = fakeInitModule.logger as FakeEmbLogger
 
     fun getFakedWorkerExecutor(): BlockingScheduledExecutorService = (workerThreadModule as FakeWorkerThreadModule).executor
-
-    fun getPreferencesService(): PreferencesService = coreModule.preferencesService
 
     fun getStore(): KeyValueStore = coreModule.store
 

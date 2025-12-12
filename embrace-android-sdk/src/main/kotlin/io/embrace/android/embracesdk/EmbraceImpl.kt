@@ -113,7 +113,6 @@ internal class EmbraceImpl(
                 bootstrapper.initModule,
                 bootstrapper.configModule,
                 bootstrapper.payloadSourceModule,
-                bootstrapper.instrumentationModule,
                 this,
                 bootstrapper
             )

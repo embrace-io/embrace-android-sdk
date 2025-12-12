@@ -9,24 +9,17 @@ import io.embrace.android.embracesdk.internal.api.delegate.EmbraceInternalInterf
 import io.embrace.android.embracesdk.internal.api.delegate.FlutterInternalInterfaceImpl
 import io.embrace.android.embracesdk.internal.api.delegate.ReactNativeInternalInterfaceImpl
 import io.embrace.android.embracesdk.internal.api.delegate.UnityInternalInterfaceImpl
-import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkCaptureDataSource
 
 internal class InternalInterfaceModuleImpl(
     initModule: InitModule,
     configModule: ConfigModule,
     payloadSourceModule: PayloadSourceModule,
-    instrumentationModule: InstrumentationModule,
     embrace: EmbraceImpl,
     bootstrapper: ModuleInitBootstrapper,
 ) : InternalInterfaceModule {
 
     override val embraceInternalInterface: EmbraceInternalInterface by singleton {
-        EmbraceInternalInterfaceImpl(
-            embrace,
-            initModule,
-            { instrumentationModule.instrumentationRegistry.findByType(NetworkCaptureDataSource::class) },
-            configModule.configService,
-        )
+        EmbraceInternalInterfaceImpl(configModule.configService)
     }
 
     override val reactNativeInternalInterface: ReactNativeInternalInterface by singleton {

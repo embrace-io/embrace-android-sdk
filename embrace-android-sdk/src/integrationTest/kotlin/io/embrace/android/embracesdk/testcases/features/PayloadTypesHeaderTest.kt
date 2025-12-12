@@ -6,6 +6,8 @@ import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.config.FakeProjectConfig
 import io.embrace.android.embracesdk.internal.EmbraceInternalApi
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.logging.EmbLogger
+import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -47,13 +49,16 @@ internal class PayloadTypesHeaderTest {
 
     @Test
     fun `batched logs of different types send a list of header types`() {
+        lateinit var logger: EmbLogger
+
         testRule.runTest(
             setupAction = {
                 getEmbLogger().throwOnInternalError = false
+                logger = getEmbLogger()
             },
             testCaseAction = {
                 embrace.logInfo("some message")
-                (embrace as EmbraceImpl).internalInterface.logInternalError(RuntimeException("some internal error"))
+                logger.trackInternalError(InternalErrorType.INTERNAL_INTERFACE_FAIL, RuntimeException("some internal error"))
                 embrace.logWarning("uh oh!")
                 clock.tick(2000L)
             },
@@ -78,14 +83,17 @@ internal class PayloadTypesHeaderTest {
                 appFramework = "flutter"
             )
         )
+        lateinit var logger: EmbLogger
+
         testRule.runTest(
             instrumentedConfig = instrumentedConfig,
             setupAction = {
                 getEmbLogger().throwOnInternalError = false
+                logger = getEmbLogger()
             },
             testCaseAction = {
                 embrace.logInfo("log message")
-                (embrace as EmbraceImpl).internalInterface.logInternalError(RuntimeException("internal error"))
+                logger.trackInternalError(InternalErrorType.INTERNAL_INTERFACE_FAIL, RuntimeException("some internal error"))
                 EmbraceInternalApi.flutterInternalInterface.logUnhandledDartException(
                     "Flutter stacktrace",
                     "FlutterException",
@@ -122,14 +130,17 @@ internal class PayloadTypesHeaderTest {
                 appFramework = "unity"
             )
         )
+        lateinit var logger: EmbLogger
+
         testRule.runTest(
             instrumentedConfig = instrumentedConfig,
             setupAction = {
                 getEmbLogger().throwOnInternalError = false
+                logger = getEmbLogger()
             },
             testCaseAction = {
                 embrace.logInfo("log message")
-                (embrace as EmbraceImpl).internalInterface.logInternalError(RuntimeException("internal error"))
+                logger.trackInternalError(InternalErrorType.INTERNAL_INTERFACE_FAIL, RuntimeException("some internal error"))
                 EmbraceInternalApi.unityInternalInterface.logUnhandledUnityException(
                     "UnityException",
                     "Unity error occurred",

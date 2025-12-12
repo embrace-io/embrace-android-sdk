@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.session.message
 import io.embrace.android.embracesdk.internal.envelope.session.SessionEnvelopeSource
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
-import io.embrace.android.embracesdk.internal.session.SessionZygote
+import io.embrace.android.embracesdk.internal.session.SessionToken
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
 import io.embrace.android.embracesdk.internal.store.OrdinalStore
 
@@ -16,9 +16,9 @@ internal class PayloadMessageCollatorImpl(
     private val currentSessionSpan: CurrentSessionSpan,
 ) : PayloadMessageCollator {
 
-    override fun buildInitialSession(params: InitialEnvelopeParams): SessionZygote = with(params) {
+    override fun buildInitialSession(params: InitialEnvelopeParams): SessionToken = with(params) {
         currentSessionSpan.readySession()
-        SessionZygote(
+        SessionToken(
             sessionId = currentSessionSpan.getSessionId(),
             startTime = startTime,
             isColdStart = coldStart,

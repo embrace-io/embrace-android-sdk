@@ -1,12 +1,12 @@
 package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.internal.session.LifeEventType
-import io.embrace.android.embracesdk.internal.session.SessionZygote
+import io.embrace.android.embracesdk.internal.session.SessionToken
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSpanAttrPopulator
 
 class FakeSessionSpanAttrPopulator : SessionSpanAttrPopulator {
 
-    override fun populateSessionSpanStartAttrs(session: SessionZygote) {
+    override fun populateSessionSpanStartAttrs(session: SessionToken) {
     }
 
     override fun populateSessionSpanEndAttrs(

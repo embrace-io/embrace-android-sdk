@@ -191,7 +191,7 @@ internal class SessionHandlerTest {
         assertEquals(0, spanSink.completedSpans().size)
     }
 
-    private fun startFakeSession(): SessionZygote {
+    private fun startFakeSession(): SessionToken {
         return checkNotNull(
             payloadFactory.startPayloadWithState(
                 AppState.FOREGROUND,

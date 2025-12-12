@@ -6,7 +6,7 @@ import io.embrace.android.embracesdk.internal.arch.SessionChangeListener
 import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
-import io.embrace.android.embracesdk.internal.session.SessionZygote
+import io.embrace.android.embracesdk.internal.session.SessionToken
 import java.util.concurrent.CopyOnWriteArraySet
 
 internal class SessionTrackerImpl(
@@ -17,7 +17,7 @@ internal class SessionTrackerImpl(
     private val listeners = CopyOnWriteArraySet<SessionChangeListener>()
 
     @Volatile
-    private var activeSession: SessionZygote? = null
+    private var activeSession: SessionToken? = null
         set(value) {
             field = value
             try {
@@ -30,13 +30,13 @@ internal class SessionTrackerImpl(
         listeners.add(listener)
     }
 
-    override fun getActiveSession(): SessionZygote? = activeSession
+    override fun getActiveSession(): SessionToken? = activeSession
 
     override fun newActiveSession(
-        endSessionCallback: SessionZygote.() -> Unit,
-        startSessionCallback: () -> SessionZygote?,
+        endSessionCallback: SessionToken.() -> Unit,
+        startSessionCallback: () -> SessionToken?,
         postTransitionAppState: AppState,
-    ): SessionZygote? {
+    ): SessionToken? {
         activeSession?.endSessionCallback()
         activeSession = startSessionCallback()
 

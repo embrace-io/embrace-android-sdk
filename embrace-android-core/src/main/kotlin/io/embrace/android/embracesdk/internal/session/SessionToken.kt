@@ -3,9 +3,9 @@ package io.embrace.android.embracesdk.internal.session
 import io.embrace.android.embracesdk.internal.arch.state.AppState
 
 /**
- * A precursor object that holds state associated with a newly started session.
+ * An object that holds immutable state associated with a started session.
  */
-data class SessionZygote(
+data class SessionToken(
 
     /**
      * A unique ID which identifies the session.

@@ -4,7 +4,7 @@ import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
-import io.embrace.android.embracesdk.internal.session.SessionZygote
+import io.embrace.android.embracesdk.internal.session.SessionToken
 
 /**
  * Factory that creates payload envelopes.
@@ -14,7 +14,7 @@ interface PayloadFactory {
     /**
      * Starts a session in response to a state event.
      */
-    fun startPayloadWithState(state: AppState, timestamp: Long, coldStart: Boolean): SessionZygote?
+    fun startPayloadWithState(state: AppState, timestamp: Long, coldStart: Boolean): SessionToken?
 
     /**
      * Ends a session in response to a state event.
@@ -22,7 +22,7 @@ interface PayloadFactory {
     fun endPayloadWithState(
         state: AppState,
         timestamp: Long,
-        initial: SessionZygote,
+        initial: SessionToken,
     ): Envelope<SessionPayload>?
 
     /**
@@ -31,24 +31,24 @@ interface PayloadFactory {
     fun endPayloadWithCrash(
         state: AppState,
         timestamp: Long,
-        initial: SessionZygote,
+        initial: SessionToken,
         crashId: String,
     ): Envelope<SessionPayload>?
 
     /**
      * Provides a snapshot of the active session
      */
-    fun snapshotPayload(state: AppState, timestamp: Long, initial: SessionZygote): Envelope<SessionPayload>?
+    fun snapshotPayload(state: AppState, timestamp: Long, initial: SessionToken): Envelope<SessionPayload>?
 
     /**
      * Starts a session manually.
      */
-    fun startSessionWithManual(timestamp: Long): SessionZygote
+    fun startSessionWithManual(timestamp: Long): SessionToken
 
     /**
      * Ends a session manually.
      */
-    fun endSessionWithManual(timestamp: Long, initial: SessionZygote): Envelope<SessionPayload>
+    fun endSessionWithManual(timestamp: Long, initial: SessionToken): Envelope<SessionPayload>
 
     /**
      * Create and return and empty [Envelope] for a [LogPayload] based on the current state of the SDK

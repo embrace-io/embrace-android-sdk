@@ -18,7 +18,7 @@ import io.embrace.android.embracesdk.internal.otel.logs.LogSink
 import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
-import io.embrace.android.embracesdk.internal.session.SessionZygote
+import io.embrace.android.embracesdk.internal.session.SessionToken
 import io.embrace.android.embracesdk.internal.session.id.SessionTracker
 import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
@@ -65,12 +65,12 @@ internal class TelemetryDestinationHarness {
     }
 
     private object NoopSessionTracker : SessionTracker {
-        override fun getActiveSession(): SessionZygote? = null
+        override fun getActiveSession(): SessionToken? = null
         override fun newActiveSession(
-            endSessionCallback: SessionZygote.() -> Unit,
-            startSessionCallback: () -> SessionZygote?,
+            endSessionCallback: SessionToken.() -> Unit,
+            startSessionCallback: () -> SessionToken?,
             postTransitionAppState: AppState,
-        ): SessionZygote? = null
+        ): SessionToken? = null
 
         override fun addListener(listener: SessionChangeListener) {
         }

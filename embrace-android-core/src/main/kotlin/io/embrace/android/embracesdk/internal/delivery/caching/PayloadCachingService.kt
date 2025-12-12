@@ -4,12 +4,12 @@ import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.delivery.Shutdownable
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
-import io.embrace.android.embracesdk.internal.session.SessionZygote
+import io.embrace.android.embracesdk.internal.session.SessionToken
 
 typealias SessionPayloadSupplier = (
     state: AppState,
     timestamp: Long,
-    initial: SessionZygote,
+    initial: SessionToken,
 ) -> Envelope<SessionPayload>?
 
 /**
@@ -22,7 +22,7 @@ interface PayloadCachingService : Shutdownable {
      * Starts caching a payload.
      */
     fun startCaching(
-        initial: SessionZygote,
+        initial: SessionToken,
         state: AppState,
         supplier: SessionPayloadSupplier,
     )

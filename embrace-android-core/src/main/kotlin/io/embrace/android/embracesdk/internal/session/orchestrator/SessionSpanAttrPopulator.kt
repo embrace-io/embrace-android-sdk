@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.session.orchestrator
 
 import io.embrace.android.embracesdk.internal.session.LifeEventType
-import io.embrace.android.embracesdk.internal.session.SessionZygote
+import io.embrace.android.embracesdk.internal.session.SessionToken
 
 /**
  * Populates the attributes of a session span.
@@ -11,7 +11,7 @@ interface SessionSpanAttrPopulator {
     /**
      * Populates session span attributes at the start of the session.
      */
-    fun populateSessionSpanStartAttrs(session: SessionZygote)
+    fun populateSessionSpanStartAttrs(session: SessionToken)
 
     /**
      * Populates session span attributes at the end of the session.

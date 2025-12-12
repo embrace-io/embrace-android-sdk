@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.session.message
 
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
-import io.embrace.android.embracesdk.internal.session.SessionZygote
+import io.embrace.android.embracesdk.internal.session.SessionToken
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSnapshotType
 
 /**
@@ -9,7 +9,7 @@ import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSnapsh
  * sent to the backend.
  */
 class FinalEnvelopeParams(
-    val initial: SessionZygote,
+    val initial: SessionToken,
     val endType: SessionSnapshotType,
     val logger: EmbLogger,
     continueMonitoring: Boolean,

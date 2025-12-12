@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeDataSource
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationProvider
+import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -43,5 +44,29 @@ internal class InstrumentationRegistryTest {
         )
         registry.loadInstrumentations(providers, args)
         assertEquals(listOf(10, 100, 1000), initOrder)
+    }
+
+    @Test
+    fun `verify session lifecycle listeners`() {
+        val provider =
+            FakeInstrumentationProvider(
+                priority = 1000,
+                action = {},
+                dataSourceState = DataSourceState(
+                    factory = { dataSource }
+                )
+            )
+
+        assertEquals(0, dataSource.sessionEnds)
+        assertEquals(0, dataSource.sessionChanges)
+
+        registry.loadInstrumentations(
+            instrumentationProviders = listOf(provider),
+            args = FakeInstrumentationArgs(ApplicationProvider.getApplicationContext())
+        )
+        registry.onEndSession()
+        registry.onNewSession()
+        assertEquals(1, dataSource.sessionEnds)
+        assertEquals(1, dataSource.sessionChanges)
     }
 }

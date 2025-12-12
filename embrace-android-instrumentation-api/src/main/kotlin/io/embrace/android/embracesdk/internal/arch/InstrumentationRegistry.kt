@@ -22,6 +22,11 @@ interface InstrumentationRegistry {
     fun <T : DataSource> findByType(clazz: KClass<T>): T?
 
     /**
+     * Invoked when a session is about to end
+     */
+    fun onEndSession()
+
+    /**
      * Invoked when a new session is ready.
      */
     fun onNewSession()

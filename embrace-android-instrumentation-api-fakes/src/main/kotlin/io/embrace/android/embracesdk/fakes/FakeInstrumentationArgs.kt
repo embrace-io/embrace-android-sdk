@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.Context
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.SessionChangeListener
+import io.embrace.android.embracesdk.internal.arch.SessionEndListener
 import io.embrace.android.embracesdk.internal.arch.state.AppStateTracker
 import io.embrace.android.embracesdk.internal.envelope.CpuAbi
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
@@ -31,6 +32,7 @@ class FakeInstrumentationArgs(
     val priorityWorkerSupplier: (worker: Worker.Priority) -> PriorityWorker<*> = { fakePriorityWorker<Any>() },
     val sessionIdSupplier: () -> String? = { null },
     val sessionChangeListeners: MutableList<SessionChangeListener> = mutableListOf(),
+    val sessionEndListeners: MutableList<SessionEndListener> = mutableListOf(),
     val systemServiceSupplier: (name: String) -> Any? = { null },
 ) : InstrumentationArgs {
 
@@ -52,5 +54,9 @@ class FakeInstrumentationArgs(
 
     override fun registerSessionChangeListener(listener: SessionChangeListener) {
         sessionChangeListeners.add(listener)
+    }
+
+    override fun registerSessionEndListener(listener: SessionEndListener) {
+        sessionEndListeners.add(listener)
     }
 }

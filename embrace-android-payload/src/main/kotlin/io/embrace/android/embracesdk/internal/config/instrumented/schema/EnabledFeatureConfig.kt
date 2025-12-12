@@ -168,4 +168,9 @@ interface EnabledFeatureConfig {
      * sdk_config.otel.enable_otel_kotlin_sdk
      */
     fun isOtelKotlinSdkEnabled(): Boolean = false
+
+    /**
+     * Gates whether the state feature is enabled
+     */
+    fun isStateCaptureEnabled(): Boolean = false
 }

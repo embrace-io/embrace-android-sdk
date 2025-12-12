@@ -10,7 +10,7 @@ import io.embrace.android.embracesdk.internal.session.SessionToken
 import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 
-fun fakeSessionZygote(): SessionToken = SessionToken(
+fun fakeSessionToken(): SessionToken = SessionToken(
     sessionId = "fakeSessionId",
     startTime = 160000000000L,
     number = 1,

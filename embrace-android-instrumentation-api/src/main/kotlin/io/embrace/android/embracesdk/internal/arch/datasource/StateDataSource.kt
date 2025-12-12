@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.arch.datasource
 import androidx.annotation.CallSuper
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.SessionChangeListener
+import io.embrace.android.embracesdk.internal.arch.SessionEndListener
 import io.embrace.android.embracesdk.internal.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
@@ -13,7 +14,7 @@ abstract class StateDataSource<T>(
     private val args: InstrumentationArgs,
     private val stateValueFactory: (initialValue: T) -> SchemaType.State<T>,
     defaultValue: T,
-) : SessionChangeListener, DataSourceImpl(
+) : SessionEndListener, SessionChangeListener, DataSourceImpl(
     args = args,
     limitStrategy = UpToLimitStrategy { MAX_TRANSITIONS }
 ) {
@@ -43,16 +44,15 @@ abstract class StateDataSource<T>(
     }
 
     @CallSuper
-    override fun resetDataCaptureLimits() {
-        super.resetDataCaptureLimits()
-        createSessionStateSpan(currentState.get())
+    override fun onPreSessionEnd() {
+        sessionStateToken.getAndSet(null)?.apply {
+            end()
+        }
     }
 
     @CallSuper
     override fun onPostSessionChange() {
-        sessionStateToken.getAndSet(null)?.apply {
-            end()
-        }
+        createSessionStateSpan(currentState.get())
     }
 
     private fun createSessionStateSpan(initialValue: T) {

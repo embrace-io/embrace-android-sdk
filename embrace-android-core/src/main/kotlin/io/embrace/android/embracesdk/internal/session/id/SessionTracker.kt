@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.session.id
 
 import io.embrace.android.embracesdk.internal.arch.SessionChangeListener
 import io.embrace.android.embracesdk.internal.arch.state.AppState
+import io.embrace.android.embracesdk.internal.session.SessionZygote
 
 interface SessionTracker {
 
@@ -16,12 +17,14 @@ interface SessionTracker {
     fun getActiveSessionId(): String? = getActiveSession()?.id
 
     /**
-     * Sets the currently active session.
-     *
-     * @param sessionId the session ID that is currently active
-     * @param appState FOREGROUND if it's a session, BACKGROUND if it's a background activity
+     * Manage the transition of the current session
      */
-    fun setActiveSession(sessionId: String?, appState: AppState)
+    fun newActiveSession(
+        endingSession: SessionZygote?,
+        endSessionCallback: SessionZygote.() -> Unit,
+        startSessionCallback: () -> SessionZygote?,
+        appState: AppState
+    ): SessionZygote?
 
     /**
      * Adds a listener that will be called when the session ID changes, and with the initial session

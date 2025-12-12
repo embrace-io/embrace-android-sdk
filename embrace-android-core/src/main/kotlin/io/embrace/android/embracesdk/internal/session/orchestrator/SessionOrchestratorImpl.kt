@@ -171,67 +171,67 @@ internal class SessionOrchestratorImpl(
             // first, disable any previous periodic caching so the job doesn't overwrite the to-be saved session
             payloadCachingService?.stopCaching()
 
-            // second, end the current session or background activity, if either exist.
-            EmbTrace.start("end-current-session")
-            val initial = activeSession
-            if (initial != null) {
+            val endingSession = activeSession
+            if (endingSession != null) {
                 sessionSpanAttrPopulator.populateSessionSpanEndAttrs(
-                    transitionType.lifeEventType(state),
-                    crashId,
-                    initial.isColdStart
+                    endType = transitionType.lifeEventType(state),
+                    crashId = crashId,
+                    coldStart = endingSession.isColdStart
                 )
-                val endMessage = oldSessionAction?.invoke(initial)
-                processEndMessage(endMessage, transitionType)
             }
-            EmbTrace.end()
-
-            // the previous session has fully ended at this point
-            // now, we can clear the SDK state and prepare for the next session
-            EmbTrace.start("prepare-new-session")
-            boundaryDelegate.cleanupAfterSessionEnd(clearUserInfo)
-            EmbTrace.end()
 
             // calculate new session state
             val endAppState = transitionType.endState(state)
+            val newSession = sessionTracker.newActiveSession(
+                endingSession = endingSession,
+                endSessionCallback = {
+                    // End the current session or background activity, if either exist.
+                    EmbTrace.trace("end-current-session") {
+                        processEndMessage(oldSessionAction?.invoke(this), transitionType)
+                    }
+                },
+                startSessionCallback = {
+                    // the previous session has fully ended at this point
+                    // now, we can clear the SDK state and prepare for the next session
+                    EmbTrace.trace("prepare-new-session") {
+                        boundaryDelegate.cleanupAfterSessionEnd(clearUserInfo)
+                    }
 
-            // create the next session span if we should, and update the SDK state to reflect the transition
-            EmbTrace.start("create-new-session")
-            val newState = newSessionAction?.invoke()
-            activeSession = newState
-            val sessionId = newState?.sessionId
-            sessionTracker.setActiveSession(sessionId, endAppState)
+                    // create the next session span if we should, and update the SDK state to reflect the transition
+                    EmbTrace.trace("create-new-session") {
+                        newSessionAction?.invoke()
+                    }
+                },
+                appState = endAppState
+            )
 
-            if (newState != null) {
+            // update the current state of the SDK
+            state = endAppState
+            activeSession = newSession
+
+            // update newly created session
+            if (newSession != null) {
                 boundaryDelegate.prepareForNewSession()
-                sessionSpanAttrPopulator.populateSessionSpanStartAttrs(newState)
-                // initiate periodic caching of the payload if a new session has started
-                EmbTrace.start("initiate-periodic-caching")
+                sessionSpanAttrPopulator.populateSessionSpanStartAttrs(newSession)
+                instrumentationRegistry.onNewSession()
                 if (transitionType != TransitionType.CRASH) {
+                    // initiate periodic caching of the payload if a new session has started
+                    EmbTrace.start("initiate-periodic-caching")
                     updatePeriodicCacheAttrs()
-                    payloadCachingService?.startCaching(newState, endAppState) { state, timestamp, zygote ->
+                    payloadCachingService?.startCaching(newSession, endAppState) { state, timestamp, zygote ->
                         synchronized(lock) {
                             updatePeriodicCacheAttrs()
                             payloadFactory.snapshotPayload(state, timestamp, zygote)
                         }
                     }
+                    EmbTrace.end()
                 }
-                EmbTrace.end()
-            }
-
-            if (activeSession == null && transitionType == TransitionType.ON_BACKGROUND) {
+            } else if (transitionType == TransitionType.ON_BACKGROUND) {
                 // if a new session hasn't been created when we background, cache an empty envelope to be used
                 // in case a native crash needs to be sent in the future after the current process dies
                 payloadStore?.cacheEmptyCrashEnvelope(payloadFactory.createEmptyLogEnvelope())
             }
-            EmbTrace.end()
 
-            // update the current state of the SDK. this should match the value in sessionTracker
-            state = endAppState
-
-            // update data capture orchestrator
-            instrumentationRegistry.onNewSession()
-
-            // et voila! a new session is born
             EmbTrace.end()
         }
     }

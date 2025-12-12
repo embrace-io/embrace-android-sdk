@@ -1,9 +1,10 @@
 package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.internal.arch.SessionChangeListener
+import io.embrace.android.embracesdk.internal.arch.state.AppState
+import io.embrace.android.embracesdk.internal.session.SessionZygote
 import io.embrace.android.embracesdk.internal.session.id.SessionData
 import io.embrace.android.embracesdk.internal.session.id.SessionTracker
-import io.embrace.android.embracesdk.internal.arch.state.AppState
 
 class FakeSessionTracker : SessionTracker {
     var sessionData: SessionData? = null
@@ -15,8 +16,16 @@ class FakeSessionTracker : SessionTracker {
 
     override fun getActiveSession(): SessionData? = sessionData
 
-    override fun setActiveSession(sessionId: String?, appState: AppState) {
-        sessionData = sessionId?.run { SessionData(sessionId, appState) }
+    override fun newActiveSession(
+        endingSession: SessionZygote?,
+        endSessionCallback: SessionZygote.() -> Unit,
+        startSessionCallback: () -> SessionZygote?,
+        appState: AppState,
+    ): SessionZygote? {
+        val newSession = startSessionCallback()
+        sessionData = newSession?.run { SessionData(sessionId, appState) }
         listeners.forEach(SessionChangeListener::onPostSessionChange)
+
+        return newSession
     }
 }

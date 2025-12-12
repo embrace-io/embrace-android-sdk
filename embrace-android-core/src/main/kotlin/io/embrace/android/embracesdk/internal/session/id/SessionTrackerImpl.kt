@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.internal.arch.SessionChangeListener
 import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.session.SessionZygote
 import java.util.concurrent.CopyOnWriteArraySet
 
 internal class SessionTrackerImpl(
@@ -31,12 +32,22 @@ internal class SessionTrackerImpl(
 
     override fun getActiveSession(): SessionData? = activeSession
 
-    override fun setActiveSession(sessionId: String?, appState: AppState) {
+    override fun newActiveSession(
+        endingSession: SessionZygote?,
+        endSessionCallback: SessionZygote.() -> Unit,
+        startSessionCallback: () -> SessionZygote?,
+        appState: AppState,
+    ): SessionZygote? {
+        endingSession?.endSessionCallback()
+        val newSession = startSessionCallback()
+        val sessionId = newSession?.sessionId
         activeSession = sessionId?.run { SessionData(sessionId, appState) }
 
         if (appState == AppState.FOREGROUND) {
             setSessionIdToProcessStateSummary(sessionId)
         }
+
+        return newSession
     }
 
     /**

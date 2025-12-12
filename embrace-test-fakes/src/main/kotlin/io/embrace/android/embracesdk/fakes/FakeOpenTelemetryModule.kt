@@ -35,6 +35,8 @@ class FakeOpenTelemetryModule(
             logSink = logSink,
             sdkName = sdkName,
             sdkVersion = sdkVersion,
+            appVersion = "1.0.0",
+            packageName = "com.test.app",
             systemInfo = systemInfo,
         )
 

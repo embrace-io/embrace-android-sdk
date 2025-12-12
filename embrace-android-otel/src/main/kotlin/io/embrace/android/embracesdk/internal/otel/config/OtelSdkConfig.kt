@@ -27,6 +27,8 @@ class OtelSdkConfig(
     logSink: LogSink,
     val sdkName: String,
     val sdkVersion: String,
+    val appVersion: String,
+    val packageName: String,
     private val systemInfo: SystemInfo,
     private val sessionIdProvider: () -> String? = { null },
     private val processIdentifierProvider: () -> String = IdGenerator.Companion::generateLaunchInstanceId
@@ -37,8 +39,8 @@ class OtelSdkConfig(
     @OptIn(IncubatingApi::class)
     val resourceAction: MutableAttributeContainer.() -> Unit
         get() = {
-            setStringAttribute(ServiceAttributes.SERVICE_NAME, sdkName)
-            setStringAttribute(ServiceAttributes.SERVICE_VERSION, sdkVersion)
+            setStringAttribute(ServiceAttributes.SERVICE_NAME, packageName)
+            setStringAttribute(ServiceAttributes.SERVICE_VERSION, appVersion)
             setStringAttribute(OsAttributes.OS_NAME, systemInfo.osName)
             setStringAttribute(OsAttributes.OS_VERSION, systemInfo.osVersion)
             setStringAttribute(OsAttributes.OS_TYPE, systemInfo.osType)

@@ -41,9 +41,11 @@ internal class OpenTelemetrySdkTest {
     fun `check resource added by sdk tracer`() {
         sdk.sdkTracer.createSpan("test").end()
         spanExporter.exportedSpans.single().resource.assertExpectedAttributes(
-            expectedServiceName = configuration.sdkName,
-            expectedServiceVersion = configuration.sdkVersion,
-            systemInfo = systemInfo
+            expectedServiceName = configuration.packageName,
+            expectedServiceVersion = configuration.appVersion,
+            systemInfo = systemInfo,
+            expectedDistroName = configuration.sdkName,
+            expectedDistroVersion = configuration.sdkVersion
         )
     }
 
@@ -51,9 +53,11 @@ internal class OpenTelemetrySdkTest {
     fun `check resource added by default logger`() {
         sdk.openTelemetryKotlin.loggerProvider.getLogger("my_logger").log()
         checkNotNull(logExporter.exportedLogs).single().resource.assertExpectedAttributes(
-            expectedServiceName = configuration.sdkName,
-            expectedServiceVersion = configuration.sdkVersion,
-            systemInfo = systemInfo
+            expectedServiceName = configuration.packageName,
+            expectedServiceVersion = configuration.appVersion,
+            systemInfo = systemInfo,
+            expectedDistroName = configuration.sdkName,
+            expectedDistroVersion = configuration.sdkVersion
         )
     }
 
@@ -96,6 +100,8 @@ internal class OpenTelemetrySdkTest {
             logSink = logSink,
             sdkName = "sdk",
             sdkVersion = "1.0",
+            appVersion = "2.5.1",
+            packageName = "com.test.app",
             systemInfo = systemInfo,
         )
         spanExporter = FakeSpanExporter()

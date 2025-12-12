@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.fakes
 import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
-import io.embrace.android.embracesdk.internal.session.SessionZygote
+import io.embrace.android.embracesdk.internal.session.SessionToken
 import io.embrace.android.embracesdk.internal.session.message.FinalEnvelopeParams
 import io.embrace.android.embracesdk.internal.session.message.InitialEnvelopeParams
 import io.embrace.android.embracesdk.internal.session.message.PayloadMessageCollator
@@ -17,7 +17,7 @@ class FakePayloadMessageCollator(
     val sessionCount: AtomicInteger = AtomicInteger(0)
     val baCount: AtomicInteger = AtomicInteger(0)
 
-    override fun buildInitialSession(params: InitialEnvelopeParams): SessionZygote = with(params) {
+    override fun buildInitialSession(params: InitialEnvelopeParams): SessionToken = with(params) {
         val sessionNumber = when (appState) {
             AppState.FOREGROUND -> {
                 sessionCount.incrementAndGet()
@@ -27,7 +27,7 @@ class FakePayloadMessageCollator(
                 baCount.incrementAndGet()
             }
         }
-        SessionZygote(
+        SessionToken(
             sessionId = currentSessionSpan.getSessionId(),
             startTime = startTime,
             isColdStart = coldStart,

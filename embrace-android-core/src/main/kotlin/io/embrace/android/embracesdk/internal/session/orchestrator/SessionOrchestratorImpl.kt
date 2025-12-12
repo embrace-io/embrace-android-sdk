@@ -12,7 +12,7 @@ import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.delivery.caching.PayloadCachingService
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
-import io.embrace.android.embracesdk.internal.session.SessionZygote
+import io.embrace.android.embracesdk.internal.session.SessionToken
 import io.embrace.android.embracesdk.internal.session.id.SessionTracker
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactory
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
@@ -61,7 +61,7 @@ internal class SessionOrchestratorImpl(
         val timestamp = clock.now()
         transitionState(
             transitionType = TransitionType.ON_FOREGROUND,
-            oldSessionAction = { initial: SessionZygote ->
+            oldSessionAction = { initial: SessionToken ->
                 payloadFactory.endPayloadWithState(AppState.BACKGROUND, timestamp, initial)
             },
             newSessionAction = {
@@ -78,7 +78,7 @@ internal class SessionOrchestratorImpl(
         val timestamp = clock.now()
         transitionState(
             transitionType = TransitionType.ON_BACKGROUND,
-            oldSessionAction = { initial: SessionZygote ->
+            oldSessionAction = { initial: SessionToken ->
                 payloadFactory.endPayloadWithState(AppState.FOREGROUND, timestamp, initial)
             },
             newSessionAction = {
@@ -95,7 +95,7 @@ internal class SessionOrchestratorImpl(
         transitionState(
             transitionType = TransitionType.END_MANUAL,
             clearUserInfo = clearUserInfo,
-            oldSessionAction = { initial: SessionZygote ->
+            oldSessionAction = { initial: SessionToken ->
                 payloadFactory.endSessionWithManual(timestamp, initial)
             },
             newSessionAction = {
@@ -116,7 +116,7 @@ internal class SessionOrchestratorImpl(
         val timestamp = clock.now()
         transitionState(
             transitionType = TransitionType.CRASH,
-            oldSessionAction = { initial: SessionZygote ->
+            oldSessionAction = { initial: SessionToken ->
                 payloadFactory.endPayloadWithCrash(state, timestamp, initial, crashId)
             },
             crashId = crashId
@@ -146,8 +146,8 @@ internal class SessionOrchestratorImpl(
      */
     private fun transitionState(
         transitionType: TransitionType,
-        oldSessionAction: ((initial: SessionZygote) -> Envelope<SessionPayload>?)? = null,
-        newSessionAction: (Provider<SessionZygote?>)? = null,
+        oldSessionAction: ((initial: SessionToken) -> Envelope<SessionPayload>?)? = null,
+        newSessionAction: (Provider<SessionToken?>)? = null,
         earlyTerminationCondition: () -> Boolean = { false },
         clearUserInfo: Boolean = false,
         crashId: String? = null,

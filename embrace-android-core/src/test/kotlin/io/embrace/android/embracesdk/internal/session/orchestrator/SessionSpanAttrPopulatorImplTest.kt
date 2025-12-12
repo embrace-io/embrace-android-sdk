@@ -6,14 +6,14 @@ import io.embrace.android.embracesdk.fakes.FakeSessionPropertiesService
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
 import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.session.LifeEventType
-import io.embrace.android.embracesdk.internal.session.SessionZygote
+import io.embrace.android.embracesdk.internal.session.SessionToken
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 
 internal class SessionSpanAttrPopulatorImplTest {
 
-    private val zygote = SessionZygote("id", 1, 5, AppState.FOREGROUND, false, LifeEventType.STATE)
+    private val zygote = SessionToken("id", 1, 5, AppState.FOREGROUND, false, LifeEventType.STATE)
     private lateinit var sessionPropertiesService: FakeSessionPropertiesService
     private lateinit var populator: SessionSpanAttrPopulatorImpl
     private lateinit var destination: FakeTelemetryDestination

@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.internal.session.message
 
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
-import io.embrace.android.embracesdk.internal.session.SessionZygote
+import io.embrace.android.embracesdk.internal.session.SessionToken
 
 interface PayloadMessageCollator {
 
@@ -10,7 +10,7 @@ interface PayloadMessageCollator {
      * Builds a new precursor session object. This is not sent to the backend but is used
      * to hold essential session information (such as ID), etc
      */
-    fun buildInitialSession(params: InitialEnvelopeParams): SessionZygote
+    fun buildInitialSession(params: InitialEnvelopeParams): SessionToken
 
     /**
      * Builds a fully populated payload.

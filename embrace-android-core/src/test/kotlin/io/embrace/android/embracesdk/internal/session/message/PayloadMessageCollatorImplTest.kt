@@ -13,7 +13,7 @@ import io.embrace.android.embracesdk.internal.injection.CoreModuleImpl
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.session.LifeEventType
-import io.embrace.android.embracesdk.internal.session.SessionZygote
+import io.embrace.android.embracesdk.internal.session.SessionToken
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSnapshotType
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
 import org.junit.Assert.assertEquals
@@ -154,7 +154,7 @@ internal class PayloadMessageCollatorImplTest {
         assertNotNull(type)
     }
 
-    private fun SessionZygote.verifyInitialFieldsPopulated() {
+    private fun SessionToken.verifyInitialFieldsPopulated() {
         assertTrue("Session ID invalid: $this", sessionId.isNotBlank())
         assertEquals(5L, startTime)
     }

@@ -8,7 +8,7 @@ import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.session.LifeEventType
-import io.embrace.android.embracesdk.internal.session.SessionZygote
+import io.embrace.android.embracesdk.internal.session.SessionToken
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSnapshotType
 
 internal class PayloadFactoryImpl(
@@ -18,7 +18,7 @@ internal class PayloadFactoryImpl(
     private val logger: EmbLogger,
 ) : PayloadFactory {
 
-    override fun startPayloadWithState(state: AppState, timestamp: Long, coldStart: Boolean): SessionZygote? =
+    override fun startPayloadWithState(state: AppState, timestamp: Long, coldStart: Boolean): SessionToken? =
         when (state) {
             AppState.FOREGROUND -> startSessionWithState(timestamp, coldStart)
             AppState.BACKGROUND -> startBackgroundActivityWithState(timestamp, coldStart)
@@ -27,7 +27,7 @@ internal class PayloadFactoryImpl(
     override fun endPayloadWithState(
         state: AppState,
         timestamp: Long,
-        initial: SessionZygote,
+        initial: SessionToken,
     ): Envelope<SessionPayload>? =
         when (state) {
             AppState.FOREGROUND -> endSessionWithState(initial)
@@ -37,7 +37,7 @@ internal class PayloadFactoryImpl(
     override fun endPayloadWithCrash(
         state: AppState,
         timestamp: Long,
-        initial: SessionZygote,
+        initial: SessionToken,
         crashId: String,
     ): Envelope<SessionPayload>? = when (state) {
         AppState.FOREGROUND -> endSessionWithCrash(initial, crashId)
@@ -47,14 +47,14 @@ internal class PayloadFactoryImpl(
     override fun snapshotPayload(
         state: AppState,
         timestamp: Long,
-        initial: SessionZygote,
+        initial: SessionToken,
     ): Envelope<SessionPayload>? =
         when (state) {
             AppState.FOREGROUND -> snapshotSession(initial)
             AppState.BACKGROUND -> snapshotBackgroundActivity(initial)
         }
 
-    override fun startSessionWithManual(timestamp: Long): SessionZygote {
+    override fun startSessionWithManual(timestamp: Long): SessionToken {
         return payloadMessageCollator.buildInitialSession(
             InitialEnvelopeParams(
                 false,
@@ -65,7 +65,7 @@ internal class PayloadFactoryImpl(
         )
     }
 
-    override fun endSessionWithManual(timestamp: Long, initial: SessionZygote): Envelope<SessionPayload> {
+    override fun endSessionWithManual(timestamp: Long, initial: SessionToken): Envelope<SessionPayload> {
         return payloadMessageCollator.buildFinalEnvelope(
             FinalEnvelopeParams(
                 initial = initial,
@@ -80,7 +80,7 @@ internal class PayloadFactoryImpl(
         return logEnvelopeSource.getEmptySingleLogEnvelope()
     }
 
-    private fun startSessionWithState(timestamp: Long, coldStart: Boolean): SessionZygote {
+    private fun startSessionWithState(timestamp: Long, coldStart: Boolean): SessionToken {
         return payloadMessageCollator.buildInitialSession(
             InitialEnvelopeParams(
                 coldStart,
@@ -91,7 +91,7 @@ internal class PayloadFactoryImpl(
         )
     }
 
-    private fun startBackgroundActivityWithState(timestamp: Long, coldStart: Boolean): SessionZygote? {
+    private fun startBackgroundActivityWithState(timestamp: Long, coldStart: Boolean): SessionToken? {
         if (!isBackgroundActivityEnabled()) {
             return null
         }
@@ -112,7 +112,7 @@ internal class PayloadFactoryImpl(
         )
     }
 
-    private fun endSessionWithState(initial: SessionZygote): Envelope<SessionPayload> {
+    private fun endSessionWithState(initial: SessionToken): Envelope<SessionPayload> {
         return payloadMessageCollator.buildFinalEnvelope(
             FinalEnvelopeParams(
                 initial = initial,
@@ -123,7 +123,7 @@ internal class PayloadFactoryImpl(
         )
     }
 
-    private fun endBackgroundActivityWithState(initial: SessionZygote): Envelope<SessionPayload>? {
+    private fun endBackgroundActivityWithState(initial: SessionToken): Envelope<SessionPayload>? {
         if (!isBackgroundActivityEnabled()) {
             return null
         }
@@ -141,7 +141,7 @@ internal class PayloadFactoryImpl(
     }
 
     private fun endSessionWithCrash(
-        initial: SessionZygote,
+        initial: SessionToken,
         crashId: String,
     ): Envelope<SessionPayload> {
         return payloadMessageCollator.buildFinalEnvelope(
@@ -156,7 +156,7 @@ internal class PayloadFactoryImpl(
     }
 
     private fun endBackgroundActivityWithCrash(
-        initial: SessionZygote,
+        initial: SessionToken,
         crashId: String,
     ): Envelope<SessionPayload>? {
         if (!isBackgroundActivityEnabled()) {
@@ -176,7 +176,7 @@ internal class PayloadFactoryImpl(
     /**
      * Called when the session is persisted every 2s to cache its state.
      */
-    private fun snapshotSession(initial: SessionZygote): Envelope<SessionPayload> {
+    private fun snapshotSession(initial: SessionToken): Envelope<SessionPayload> {
         return payloadMessageCollator.buildFinalEnvelope(
             FinalEnvelopeParams(
                 initial = initial,
@@ -187,7 +187,7 @@ internal class PayloadFactoryImpl(
         )
     }
 
-    private fun snapshotBackgroundActivity(initial: SessionZygote): Envelope<SessionPayload>? {
+    private fun snapshotBackgroundActivity(initial: SessionToken): Envelope<SessionPayload>? {
         if (!isBackgroundActivityEnabled()) {
             return null
         }

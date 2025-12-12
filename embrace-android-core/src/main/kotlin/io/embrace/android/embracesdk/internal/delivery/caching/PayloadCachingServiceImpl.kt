@@ -5,7 +5,7 @@ import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
-import io.embrace.android.embracesdk.internal.session.SessionZygote
+import io.embrace.android.embracesdk.internal.session.SessionToken
 import io.embrace.android.embracesdk.internal.session.caching.PeriodicSessionCacher
 import io.embrace.android.embracesdk.internal.session.id.SessionTracker
 import io.embrace.android.embracesdk.internal.session.orchestrator.PayloadStore
@@ -32,7 +32,7 @@ internal class PayloadCachingServiceImpl(
     }
 
     override fun startCaching(
-        initial: SessionZygote,
+        initial: SessionToken,
         state: AppState,
         supplier: SessionPayloadSupplier,
     ) {
@@ -51,7 +51,7 @@ internal class PayloadCachingServiceImpl(
     }
 
     private fun onSessionCache(
-        initial: SessionZygote,
+        initial: SessionToken,
         endAppState: AppState,
         supplier: SessionPayloadSupplier,
     ): Envelope<SessionPayload>? {

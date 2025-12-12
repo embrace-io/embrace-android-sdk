@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.fakes
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
-import io.embrace.android.embracesdk.internal.session.SessionZygote
+import io.embrace.android.embracesdk.internal.session.SessionToken
 import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactory
 
@@ -14,7 +14,7 @@ class FakePayloadFactory : PayloadFactory {
     var manualSessionEndCount: Int = 0
     var manualSessionStartCount: Int = 0
     var snapshotSessionCount: Int = 0
-    private var activeSession: SessionZygote? = null
+    private var activeSession: SessionToken? = null
     val endBaTimestamps: MutableList<Long> = mutableListOf()
     val startBaTimestamps: MutableList<Long> = mutableListOf()
     var baCrashId: String? = null
@@ -24,7 +24,7 @@ class FakePayloadFactory : PayloadFactory {
         state: AppState,
         timestamp: Long,
         coldStart: Boolean,
-    ): SessionZygote {
+    ): SessionToken {
         return when (state) {
             AppState.FOREGROUND -> startSessionWithState(timestamp)
             AppState.BACKGROUND -> startBackgroundActivityWithState(timestamp)
@@ -34,7 +34,7 @@ class FakePayloadFactory : PayloadFactory {
     override fun endPayloadWithState(
         state: AppState,
         timestamp: Long,
-        initial: SessionZygote,
+        initial: SessionToken,
     ): Envelope<SessionPayload> {
         return when (state) {
             AppState.FOREGROUND -> endSessionWithState(timestamp)
@@ -45,7 +45,7 @@ class FakePayloadFactory : PayloadFactory {
     override fun endPayloadWithCrash(
         state: AppState,
         timestamp: Long,
-        initial: SessionZygote,
+        initial: SessionToken,
         crashId: String,
     ): Envelope<SessionPayload> {
         return when (state) {
@@ -57,7 +57,7 @@ class FakePayloadFactory : PayloadFactory {
     override fun snapshotPayload(
         state: AppState,
         timestamp: Long,
-        initial: SessionZygote,
+        initial: SessionToken,
     ): Envelope<SessionPayload>? {
         return when (state) {
             AppState.FOREGROUND -> snapshotSession()
@@ -65,7 +65,7 @@ class FakePayloadFactory : PayloadFactory {
         }
     }
 
-    private fun startBackgroundActivityWithState(timestamp: Long): SessionZygote {
+    private fun startBackgroundActivityWithState(timestamp: Long): SessionToken {
         startBaTimestamps.add(timestamp)
         return fakeSessionZygote().copy(appState = AppState.BACKGROUND)
     }
@@ -87,13 +87,13 @@ class FakePayloadFactory : PayloadFactory {
         return fakeSessionEnvelope()
     }
 
-    private fun startSessionWithState(timestamp: Long): SessionZygote {
+    private fun startSessionWithState(timestamp: Long): SessionToken {
         startSessionTimestamps.add(timestamp)
         activeSession = fakeSessionZygote().copy(startTime = timestamp)
         return checkNotNull(activeSession)
     }
 
-    override fun startSessionWithManual(timestamp: Long): SessionZygote {
+    override fun startSessionWithManual(timestamp: Long): SessionToken {
         manualSessionStartCount++
         activeSession = fakeSessionZygote()
         return checkNotNull(activeSession)
@@ -113,7 +113,7 @@ class FakePayloadFactory : PayloadFactory {
         return fakeSessionEnvelope()
     }
 
-    override fun endSessionWithManual(timestamp: Long, initial: SessionZygote): Envelope<SessionPayload> {
+    override fun endSessionWithManual(timestamp: Long, initial: SessionToken): Envelope<SessionPayload> {
         manualSessionEndCount++
         activeSession = null
         return fakeSessionEnvelope()

@@ -1,22 +1,28 @@
 package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.internal.arch.SessionChangeListener
-import io.embrace.android.embracesdk.internal.session.id.SessionData
-import io.embrace.android.embracesdk.internal.session.id.SessionTracker
 import io.embrace.android.embracesdk.internal.arch.state.AppState
+import io.embrace.android.embracesdk.internal.session.SessionZygote
+import io.embrace.android.embracesdk.internal.session.id.SessionTracker
 
 class FakeSessionTracker : SessionTracker {
-    var sessionData: SessionData? = null
+    var currentSession: SessionZygote? = null
     var listeners: MutableList<SessionChangeListener> = mutableListOf()
 
     override fun addListener(listener: SessionChangeListener) {
         listeners.add(listener)
     }
 
-    override fun getActiveSession(): SessionData? = sessionData
+    override fun getActiveSession(): SessionZygote? = currentSession
 
-    override fun setActiveSession(sessionId: String?, appState: AppState) {
-        sessionData = sessionId?.run { SessionData(sessionId, appState) }
+    override fun newActiveSession(
+        endSessionCallback: SessionZygote.() -> Unit,
+        startSessionCallback: () -> SessionZygote?,
+        postTransitionAppState: AppState,
+    ): SessionZygote? {
+        currentSession = startSessionCallback()
         listeners.forEach(SessionChangeListener::onPostSessionChange)
+
+        return currentSession
     }
 }

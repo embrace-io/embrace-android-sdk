@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.internal.session.orchestrator
 import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.ConfigService
-import io.embrace.android.embracesdk.internal.session.SessionZygote
 
 /**
  * The minimum threshold for how long a session must last. This prevents unintentional
@@ -15,15 +14,14 @@ private const val MIN_SESSION_MS = 5000L
 internal fun shouldEndManualSession(
     configService: ConfigService,
     clock: Clock,
-    activeSession: SessionZygote?,
+    activeSessionStartTime: Long?,
     state: AppState,
 ): Boolean {
-    if (state == AppState.BACKGROUND || configService.sessionBehavior.isSessionControlEnabled()) {
+    if (state == AppState.BACKGROUND || configService.sessionBehavior.isSessionControlEnabled() || activeSessionStartTime == null) {
         return true
     }
-    val initial = activeSession ?: return true
-    val startTime = initial.startTime
-    val delta = clock.now() - startTime
+
+    val delta = clock.now() - activeSessionStartTime
     return delta < MIN_SESSION_MS
 }
 

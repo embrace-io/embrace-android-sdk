@@ -13,7 +13,6 @@ import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakePayloadMessageCollator
 import io.embrace.android.embracesdk.fakes.FakePayloadStore
 import io.embrace.android.embracesdk.fakes.FakeSessionPropertiesService
-import io.embrace.android.embracesdk.fakes.FakeSessionTracker
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.behavior.FakeSessionBehavior
@@ -35,6 +34,8 @@ import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.session.LifeEventType
 import io.embrace.android.embracesdk.internal.session.caching.PeriodicSessionCacher
+import io.embrace.android.embracesdk.internal.session.id.SessionTracker
+import io.embrace.android.embracesdk.internal.session.id.SessionTrackerImpl
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactoryImpl
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import org.junit.Assert.assertEquals
@@ -57,7 +58,7 @@ internal class SessionOrchestratorTest {
     private lateinit var userService: FakeUserService
     private lateinit var store: FakePayloadStore
     private lateinit var sessionPropertiesService: SessionPropertiesService
-    private lateinit var sessionTracker: FakeSessionTracker
+    private lateinit var sessionTracker: SessionTracker
     private lateinit var payloadCachingService: PayloadCachingService
     private lateinit var sessionCacheExecutor: BlockingScheduledExecutorService
     private lateinit var instrumentationRegistry: InstrumentationRegistry
@@ -84,7 +85,7 @@ internal class SessionOrchestratorTest {
         assertEquals(orchestrator, appStateTracker.listeners.single())
         assertEquals(0, payloadCollator.sessionCount.get())
         assertEquals(1, payloadCollator.baCount.get())
-        assertEquals(sessionTracker.sessionData?.id, currentSessionSpan.getSessionId())
+        assertEquals(sessionTracker.getActiveSessionId(), currentSessionSpan.getSessionId())
         assertTrue(store.storedSessionPayloads.isEmpty())
         assertTrue(store.cachedEmptyCrashPayloads.isEmpty())
         assertEquals(1, fakeDataSource.enableDataCaptureCount)
@@ -96,7 +97,7 @@ internal class SessionOrchestratorTest {
         assertEquals(orchestrator, appStateTracker.listeners.single())
         assertEquals(1, payloadCollator.sessionCount.get())
         assertEquals(0, payloadCollator.baCount.get())
-        assertEquals(sessionTracker.sessionData?.id, currentSessionSpan.getSessionId())
+        assertEquals(sessionTracker.getActiveSessionId(), currentSessionSpan.getSessionId())
         assertTrue(store.storedSessionPayloads.isEmpty())
         assertTrue(store.cachedEmptyCrashPayloads.isEmpty())
         assertEquals(1, fakeDataSource.enableDataCaptureCount)
@@ -395,7 +396,10 @@ internal class SessionOrchestratorTest {
         )
         sessionPropertiesService = FakeSessionPropertiesService()
         userService = FakeUserService()
-        sessionTracker = FakeSessionTracker()
+        sessionTracker = SessionTrackerImpl(
+            activityManager = null,
+            logger = logger
+        )
         sessionCacheExecutor = BlockingScheduledExecutorService(clock, true)
         payloadCachingService = PayloadCachingServiceImpl(
             PeriodicSessionCacher(

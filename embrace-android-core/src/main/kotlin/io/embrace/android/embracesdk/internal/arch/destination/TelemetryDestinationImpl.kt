@@ -72,8 +72,8 @@ class TelemetryDestinationImpl(
             if (addCurrentSessionInfo) {
                 var sessionState: AppState? = null
                 sessionTracker.getActiveSession()?.let { session ->
-                    if (session.id.isNotBlank()) {
-                        setStringAttribute(SessionAttributes.SESSION_ID, session.id)
+                    if (session.sessionId.isNotBlank()) {
+                        setStringAttribute(SessionAttributes.SESSION_ID, session.sessionId)
                     }
                     sessionState = session.appState
                 }

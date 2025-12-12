@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryLogger
 import io.embrace.android.embracesdk.fakes.FakeSessionTracker
 import io.embrace.android.embracesdk.fakes.FakeSpanService
+import io.embrace.android.embracesdk.fakes.fakeSessionZygote
 import io.embrace.android.embracesdk.internal.arch.attrs.asPair
 import io.embrace.android.embracesdk.internal.arch.attrs.embState
 import io.embrace.android.embracesdk.internal.arch.datasource.LogSeverity
@@ -23,7 +24,6 @@ import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.otel.toEmbracePayload
 import io.embrace.android.embracesdk.internal.payload.Span
-import io.embrace.android.embracesdk.internal.session.id.SessionData
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
 import io.embrace.opentelemetry.kotlin.semconv.LogAttributes
@@ -70,7 +70,11 @@ internal class TelemetryDestinationImplTest {
 
     @Test
     fun `check expected values added to every OTel log`() {
-        sessionTracker.setActiveSession("fake-session-id", AppState.FOREGROUND)
+        sessionTracker.newActiveSession(
+            endSessionCallback = {},
+            startSessionCallback = { fakeSessionZygote().copy(sessionId = "fake-session-id") },
+            postTransitionAppState = AppState.FOREGROUND
+        )
         impl.addLog(
             schemaType = SchemaType.Log(
                 TelemetryAttributes(
@@ -117,7 +121,11 @@ internal class TelemetryDestinationImplTest {
 
     @Test
     fun `foreground state matches the session a log is associated with`() {
-        sessionTracker.setActiveSession("foreground-session", AppState.FOREGROUND)
+        sessionTracker.newActiveSession(
+            endSessionCallback = {},
+            startSessionCallback = { fakeSessionZygote().copy(sessionId = "foreground-session") },
+            postTransitionAppState = AppState.FOREGROUND
+        )
         appStateTracker.state = AppState.BACKGROUND
         impl.addLog(
             schemaType = SchemaType.Log(TelemetryAttributes()),
@@ -136,7 +144,6 @@ internal class TelemetryDestinationImplTest {
 
     @Test
     fun `use app state for background or foreground if no session exists`() {
-        sessionTracker.sessionData = null
         appStateTracker.state = AppState.BACKGROUND
         impl.addLog(
             schemaType = SchemaType.Log(TelemetryAttributes()),
@@ -168,7 +175,11 @@ internal class TelemetryDestinationImplTest {
 
     @Test
     fun `only set current session info on log if instructed to`() {
-        sessionTracker.setActiveSession("foreground-session", AppState.FOREGROUND)
+        sessionTracker.newActiveSession(
+            endSessionCallback = {},
+            startSessionCallback = { fakeSessionZygote().copy(sessionId = "foreground-session") },
+            postTransitionAppState = AppState.FOREGROUND
+        )
         impl.addLog(
             schemaType = SchemaType.Log(TelemetryAttributes()),
             severity = LogSeverity.ERROR,
@@ -183,8 +194,8 @@ internal class TelemetryDestinationImplTest {
     }
 
     @Test
-    fun `no activity session will result in log written without sessionId`() {
-        sessionTracker.sessionData = SessionData("", AppState.BACKGROUND)
+    fun `no active session will result in log written without sessionId`() {
+        sessionTracker.currentSession = fakeSessionZygote().copy(sessionId = "", appState = AppState.BACKGROUND)
         impl.addLog(
             schemaType = SchemaType.Log(TelemetryAttributes()),
             severity = LogSeverity.ERROR,

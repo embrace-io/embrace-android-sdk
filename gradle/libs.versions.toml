@@ -2,12 +2,12 @@
 
 # Some dependencies are pinned to old versions because of an unpatched AGP issue in 7.x: https://issuetracker.google.com/issues/377760847
 binaryCompatibilityValidator = "0.18.1"
-agp = "8.13.1"
+agp = "8.13.2"
 junit = "4.13.2"
 dokka = "2.1.0"
 kotlinGradlePlugin = "2.2.21"
 koverGradlePlugin = "0.9.4"
-lint = "31.13.1"
+lint = "31.13.2"
 openTelemetryCore = "1.57.0"
 moshi = "1.15.2"
 lifecycle = "2.7.0" # version pinned to 2.7.0 because of AGP bug

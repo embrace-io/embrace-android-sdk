@@ -9,11 +9,17 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.assertMatches
 import io.embrace.android.embracesdk.assertions.findSpanOfType
+import io.embrace.android.embracesdk.assertions.findSpansOfType
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
+import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
+import io.embrace.android.embracesdk.internal.payload.SpanEvent
+import io.embrace.android.embracesdk.internal.session.getSessionSpan
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
+import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface.Companion.LIFECYCLE_EVENT_GAP
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Rule
@@ -72,6 +78,52 @@ internal class LowPowerFeatureTest {
                 assertSpansMatchGoldenFile(spans, "system-low-power-export.json")
             }
         )
+    }
+
+    @Test
+    fun `power state feature`() {
+        var firstTransitionTime = 0L
+        var secondTransitionTime = 0L
+        testRule.runTest(
+            instrumentedConfig = FakeInstrumentedConfig(
+                enabledFeatures = FakeEnabledFeatureConfig(
+                    stateCaptureEnabled = true,
+                    powerSaveCapture = true
+                )
+            ),
+            testCaseAction = {
+                recordSession {
+                    firstTransitionTime = clock.now()
+                    setPowerSaveMode(true)
+                    clock.tick(10000L)
+                    secondTransitionTime = clock.now()
+                    setPowerSaveMode(false)
+                }
+            },
+            assertAction = {
+                val message = getSingleSessionEnvelope()
+                val sessionSpan = checkNotNull(message.getSessionSpan())
+                val span = message.findSpansOfType(EmbType.State).single { it.name == "emb-state-power" }
+                with(span) {
+                    assertEquals(
+                        checkNotNull(sessionSpan.startTimeNanos).nanosToMillis() + LIFECYCLE_EVENT_GAP,
+                        checkNotNull(startTimeNanos).nanosToMillis()
+                    )
+                    assertEquals(sessionSpan.endTimeNanos, endTimeNanos)
+                    with(checkNotNull(events)) {
+                        assertEquals(2, size)
+                        get(0).assertTransition(firstTransitionTime, SchemaType.PowerState.PowerMode.LOW)
+                        get(1).assertTransition(secondTransitionTime, SchemaType.PowerState.PowerMode.NORMAL)
+                    }
+                }
+            }
+        )
+    }
+
+    private fun SpanEvent.assertTransition(timestampMs: Long, newState: SchemaType.PowerState.PowerMode) {
+        assertEquals("transition", name)
+        assertEquals(timestampMs.millisToNanos(), timestampNanos)
+        assertEquals(newState.toString(), attributes?.single { it.key == "new_value" }?.data)
     }
 
     private fun setPowerSaveMode(powerSaveModeEnabled: Boolean) {

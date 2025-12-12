@@ -293,6 +293,17 @@ sealed class SchemaType(
             "initial_value" to initialValue.toString()
         )
     }
+
+    class PowerState(initialValue: PowerMode) :
+        State<PowerState.PowerMode>(initialValue, "power") {
+        enum class PowerMode(private val value: String) {
+            NORMAL("normal"),
+            LOW("low"),
+            UNKNOWN("unknown");
+
+            override fun toString(): String = value
+        }
+    }
 }
 
 @Suppress("UNCHECKED_CAST")

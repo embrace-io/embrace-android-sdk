@@ -40,7 +40,7 @@ internal class EmbraceRnBundleIdTrackerTest {
             every { getSystemService("window") } returns mockk<WindowManager>(relaxed = true)
         }
         assetManager = mockk(relaxed = true)
-        buildInfo = BuildInfo("device-id", null, null, "bundle-id")
+        buildInfo = BuildInfo("device-id", null, null, "bundle-id", "UNKNOWN", "UNKNOWN", "UNKNOWN")
         configService = FakeConfigService().apply {
             appFramework = AppFramework.REACT_NATIVE
         }

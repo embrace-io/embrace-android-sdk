@@ -103,7 +103,6 @@ class PayloadSourceModuleImpl(
                 hostedSdkVersionInfo,
                 configModule.appEnvironment.environment,
                 EmbTrace.trace("buildInfo") { configModule.buildInfo },
-                EmbTrace.trace("packageInfo") { configModule.packageVersionInfo },
                 configModule.configService.appFramework,
                 configModule.cpuAbi,
                 EmbTrace.trace("deviceImpl") {

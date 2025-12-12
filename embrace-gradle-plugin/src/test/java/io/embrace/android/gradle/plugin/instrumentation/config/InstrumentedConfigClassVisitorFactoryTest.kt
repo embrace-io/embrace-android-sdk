@@ -3,6 +3,7 @@ package io.embrace.android.gradle.plugin.instrumentation.config
 import io.embrace.android.gradle.plugin.instrumentation.ASM_API_VERSION
 import io.embrace.android.gradle.plugin.instrumentation.config.model.VariantConfig
 import io.embrace.android.gradle.plugin.instrumentation.config.visitor.ConfigInstrumentationClassVisitor
+import io.embrace.android.gradle.plugin.model.VariantOutputInfo
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -10,6 +11,7 @@ import org.junit.Test
 class InstrumentedConfigClassVisitorFactoryTest {
 
     private val config = VariantConfig("", null, null, null, null)
+    private val variantOutputInfo = VariantOutputInfo("", "", "")
     private val api = ASM_API_VERSION
     private val embracePackage = "io.embrace.android.embracesdk.internal.config.instrumented"
 
@@ -65,5 +67,5 @@ class InstrumentedConfigClassVisitorFactoryTest {
     }
 
     private fun createVisitor(className: String) =
-        ConfigClassVisitorFactory.createClassVisitor(className, config, null, null, api, null)
+        ConfigClassVisitorFactory.createClassVisitor(className, config, null, variantOutputInfo, null, api, null)
 }

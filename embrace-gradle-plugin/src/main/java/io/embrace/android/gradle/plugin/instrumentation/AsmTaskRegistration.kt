@@ -5,6 +5,7 @@ import com.android.build.api.instrumentation.InstrumentationScope
 import io.embrace.android.gradle.plugin.EmbraceLogger
 import io.embrace.android.gradle.plugin.gradle.lazyTaskLookup
 import io.embrace.android.gradle.plugin.gradle.safeFlatMap
+import io.embrace.android.gradle.plugin.model.toVariantOutputInfoProvider
 import io.embrace.android.gradle.plugin.tasks.ndk.EncodeFileToBase64Task
 import io.embrace.android.gradle.plugin.tasks.reactnative.GenerateRnSourcemapTask
 import io.embrace.android.gradle.plugin.tasks.registration.EmbraceTaskRegistration
@@ -47,6 +48,7 @@ class AsmTaskRegistration : EmbraceTaskRegistration {
                 params.shouldInstrumentOnLongClick.set(behavior.instrumentation.onLongClickEnabled)
                 params.shouldInstrumentOnClick.set(behavior.instrumentation.onClickEnabled)
                 params.applicationInitTimingEnabled.set(behavior.instrumentation.applicationInitTimingEnabled)
+                params.variantOutputInfo.set(variant.toVariantOutputInfoProvider(project))
 
                 val encodeFileToBase64Task = project.lazyTaskLookup<EncodeFileToBase64Task>(
                     "${EncodeFileToBase64Task.NAME}${data.name.capitalizedString()}"

@@ -2,6 +2,7 @@ package io.embrace.android.gradle.plugin.instrumentation
 
 import com.android.build.api.instrumentation.InstrumentationParameters
 import io.embrace.android.gradle.plugin.instrumentation.config.model.VariantConfig
+import io.embrace.android.gradle.plugin.model.VariantOutputInfo
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
@@ -24,6 +25,12 @@ interface BytecodeInstrumentationParams : InstrumentationParameters {
      */
     @get:Input
     val config: Property<VariantConfig>
+
+    /**
+     * Variant output information including version name, version code, and application ID.
+     */
+    @get:Input
+    val variantOutputInfo: Property<VariantOutputInfo>
 
     /**
      * Base64 encoded string of the shared object files map to be injected in the SDK.

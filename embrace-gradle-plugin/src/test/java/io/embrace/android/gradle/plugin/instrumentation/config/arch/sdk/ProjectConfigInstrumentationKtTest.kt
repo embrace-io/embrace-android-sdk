@@ -3,6 +3,7 @@ package io.embrace.android.gradle.plugin.instrumentation.config.arch.sdk
 import io.embrace.android.gradle.plugin.instrumentation.config.model.EmbraceVariantConfig
 import io.embrace.android.gradle.plugin.instrumentation.config.model.SdkLocalConfig
 import io.embrace.android.gradle.plugin.instrumentation.config.model.VariantConfig
+import io.embrace.android.gradle.plugin.model.VariantOutputInfo
 import org.junit.Test
 
 class ProjectConfigInstrumentationKtTest {
@@ -21,6 +22,8 @@ class ProjectConfigInstrumentationKtTest {
         )
     )
 
+    private val variantOutputInfo = VariantOutputInfo("", "", "")
+
     private val methods = listOf(
         ConfigMethod("getAppFramework", "()Ljava/lang/String;", "native"),
         ConfigMethod("getBuildId", "()Ljava/lang/String;", "my_id"),
@@ -30,7 +33,7 @@ class ProjectConfigInstrumentationKtTest {
 
     @Test
     fun `test empty cfg`() {
-        val instrumentation = createProjectConfigInstrumentation(cfg, null)
+        val instrumentation = createProjectConfigInstrumentation(cfg, null, variantOutputInfo)
         verifyConfigMethodVisitor(instrumentation, ConfigMethod("getAppId", "()Ljava/lang/String;", ""))
 
         methods.map { it.copy(result = null) }.forEach { method ->
@@ -53,7 +56,8 @@ class ProjectConfigInstrumentationKtTest {
                 buildType = "build_type",
                 buildFlavor = "build_flavor"
             ),
-            reactNativeBundleId = "a1B2c3"
+            reactNativeBundleId = "a1B2c3",
+            variantOutputInfo
         )
         verifyConfigMethodVisitor(instrumentation, ConfigMethod("getAppId", "()Ljava/lang/String;", "abcde"))
         methods.forEach { method ->

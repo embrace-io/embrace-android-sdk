@@ -307,6 +307,17 @@ sealed class SchemaType(
         }
     }
 
+    class PowerState(initialValue: PowerMode) :
+        State<PowerState.PowerMode>(initialValue, "power") {
+        enum class PowerMode(private val value: String) {
+            NORMAL("normal"),
+            LOW("low"),
+            UNKNOWN("unknown");
+
+            override fun toString(): String = value
+        }
+    }
+
     /**
      * A custom telemetry type. This allows the hybrid SDKs (and others) to pass in custom
      * telemetry schemas if required.

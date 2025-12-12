@@ -1,1 +1,2 @@
 io.embrace.android.embracesdk.internal.instrumentation.powersave.PowerSaveInstrumentationProvider
+io.embrace.android.embracesdk.internal.instrumentation.powersave.PowerStateInstrumentationProvider

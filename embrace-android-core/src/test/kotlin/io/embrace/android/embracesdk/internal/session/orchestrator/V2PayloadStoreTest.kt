@@ -86,7 +86,6 @@ class V2PayloadStoreTest {
             System.Crash,
             System.NativeCrash,
             System.ReactNativeCrash,
-            System.FlutterException
         ).forEach { type ->
             storeLogWithType(type)
             assertEquals(SupportedEnvelopeType.CRASH, getLastLogMetadata().envelopeType)

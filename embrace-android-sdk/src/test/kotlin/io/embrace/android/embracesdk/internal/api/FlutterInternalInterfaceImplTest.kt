@@ -1,15 +1,11 @@
 package io.embrace.android.embracesdk.internal.api
 
 import io.embrace.android.embracesdk.EmbraceImpl
-import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.internal.api.delegate.FlutterInternalInterfaceImpl
-import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.FlutterException.embFlutterExceptionContext
-import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.FlutterException.embFlutterExceptionLibrary
 import io.embrace.android.embracesdk.internal.envelope.metadata.FlutterSdkVersionInfo
 import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
-import io.embrace.android.embracesdk.internal.logs.LogExceptionType
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -48,51 +44,6 @@ internal class FlutterInternalInterfaceImplTest {
         impl.setDartVersion("2.12")
         verify(exactly = 1) {
             logger.logSdkNotInitialized(any())
-        }
-    }
-
-    @Test
-    fun testLogUnhandledDartException() {
-        every { embrace.isStarted } returns true
-        impl.logUnhandledDartException("stack", "exception name", "message", "ctx", "lib")
-        verify(exactly = 1) {
-            embrace.logMessage(
-                severity = Severity.ERROR,
-                message = "Dart error",
-                attributes = mapOf(
-                    embFlutterExceptionContext.name to "ctx",
-                    embFlutterExceptionLibrary.name to "lib"
-                ),
-                exceptionData = match {
-                    it.name == "exception name" &&
-                        it.message == "message" &&
-                        it.stacktrace == "stack" &&
-                        it.logExceptionType == LogExceptionType.UNHANDLED
-                }
-            )
-        }
-    }
-
-    @Test
-    fun testLogHandledDartException() {
-        every { embrace.isStarted } returns true
-        impl.logHandledDartException("stack", "exception name", "message", "ctx", "lib")
-
-        verify(exactly = 1) {
-            embrace.logMessage(
-                severity = Severity.ERROR,
-                message = "Dart error",
-                attributes = mapOf(
-                    embFlutterExceptionContext.name to "ctx",
-                    embFlutterExceptionLibrary.name to "lib"
-                ),
-                exceptionData = match {
-                    it.name == "exception name" &&
-                        it.message == "message" &&
-                        it.stacktrace == "stack" &&
-                        it.logExceptionType == LogExceptionType.HANDLED
-                }
-            )
         }
     }
 }

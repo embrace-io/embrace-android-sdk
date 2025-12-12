@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.session.orchestrator
 
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.Crash
-import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.FlutterException
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.NativeCrash
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.NetworkCapturedRequest
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.ReactNativeCrash
@@ -79,7 +78,6 @@ internal class PayloadStoreImpl(
             Crash.value -> SupportedEnvelopeType.CRASH
             NativeCrash.value -> SupportedEnvelopeType.CRASH
             ReactNativeCrash.value -> SupportedEnvelopeType.CRASH
-            FlutterException.value -> SupportedEnvelopeType.CRASH
             NetworkCapturedRequest.value -> SupportedEnvelopeType.BLOB
             else -> SupportedEnvelopeType.LOG
         }

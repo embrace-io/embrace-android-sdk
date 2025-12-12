@@ -55,15 +55,24 @@ internal class UnityInternalInterfaceImpl(
         exceptionType: LogExceptionType,
     ) {
         if (embrace.isStarted) {
+            val attrs = mutableMapOf(
+                "emb.type" to "sys.exception",
+                "emb.private.send_mode" to "immediate",
+                "exception.message" to message,
+            )
+
+            // add exception name + message attrs
+            name?.let { attrs["exception.type"] = it }
+            stacktrace?.let { attrs["exception.stacktrace"] = it }
+
+            if (exceptionType != LogExceptionType.NONE) {
+                attrs["emb.exception_handling"] = exceptionType.value
+            }
+
             embrace.logMessage(
                 severity = Severity.ERROR,
                 message = "Unity exception",
-                exceptionData = ExceptionData(
-                    name = name,
-                    message = message,
-                    stacktrace = stacktrace,
-                    logExceptionType = exceptionType,
-                )
+                properties = attrs,
             )
         } else {
             logger.logSdkNotInitialized("log Unity exception")

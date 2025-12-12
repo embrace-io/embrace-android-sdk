@@ -1,14 +1,17 @@
 package io.embrace.android.embracesdk.testcases
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.internal.logs.LogExceptionType
 import io.embrace.android.embracesdk.assertions.assertMatches
 import io.embrace.android.embracesdk.assertions.assertOtelLogReceived
 import io.embrace.android.embracesdk.assertions.getLogOfType
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.config.FakeProjectConfig
 import io.embrace.android.embracesdk.internal.EmbraceInternalApi
+import io.embrace.android.embracesdk.internal.arch.attrs.embSendMode
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.arch.schema.SendMode
+import io.embrace.android.embracesdk.internal.logs.LogExceptionType
+import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
@@ -27,6 +30,8 @@ import org.junit.runner.RunWith
 @OptIn(ExperimentalApi::class)
 @RunWith(AndroidJUnit4::class)
 internal class FlutterInternalInterfaceTest {
+
+    private val flutterExceptionType = EmbType.Custom("sys", "flutter_exception")
 
     private val instrumentedConfig = FakeInstrumentedConfig(
         project = FakeProjectConfig(
@@ -176,7 +181,7 @@ internal class FlutterInternalInterfaceTest {
                 }.actionTimeMs
             },
             assertAction = {
-                val log = getSingleLogEnvelope().getLogOfType(EmbType.System.FlutterException)
+                val log = getSingleLogEnvelope().getLogOfType(flutterExceptionType)
 
                 assertOtelLogReceived(
                     logReceived = log,
@@ -196,6 +201,8 @@ internal class FlutterInternalInterfaceTest {
                         "emb.exception.library" to expectedLibrary,
                     )
                 )
+                val sendMode = log.attributes?.findAttributeValue(embSendMode.name)
+                assertEquals(SendMode.IMMEDIATE, SendMode.fromString(sendMode))
             }
         )
     }
@@ -222,7 +229,7 @@ internal class FlutterInternalInterfaceTest {
                 }.actionTimeMs
             },
             assertAction = {
-                val log = getSingleLogEnvelope().getLogOfType(EmbType.System.FlutterException)
+                val log = getSingleLogEnvelope().getLogOfType(flutterExceptionType)
 
                 assertOtelLogReceived(
                     logReceived = log,
@@ -242,6 +249,8 @@ internal class FlutterInternalInterfaceTest {
                         "emb.exception.library" to expectedLibrary,
                     )
                 )
+                val sendMode = log.attributes?.findAttributeValue(embSendMode.name)
+                assertEquals(SendMode.IMMEDIATE, SendMode.fromString(sendMode))
             }
         )
     }

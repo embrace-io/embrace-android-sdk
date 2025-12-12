@@ -62,18 +62,6 @@ sealed class EmbType(type: String, subtype: String?) : EmbraceAttribute {
 
         object InternalError : System("internal")
 
-        object FlutterException : System("flutter_exception", SendMode.IMMEDIATE) {
-            /**
-             * Attribute name for the exception context in a log representing an exception
-             */
-            val embFlutterExceptionContext: EmbraceAttributeKey = EmbraceAttributeKey.create("exception.context")
-
-            /**
-             * Attribute name for the exception library in a log representing an exception
-             */
-            val embFlutterExceptionLibrary: EmbraceAttributeKey = EmbraceAttributeKey.create("exception.library")
-        }
-
         object Exit : System("exit", SendMode.IMMEDIATE)
 
         object PushNotification : System("push_notification")
@@ -118,4 +106,13 @@ sealed class EmbType(type: String, subtype: String?) : EmbraceAttribute {
 
         object WebViewInfo : System("webview_info")
     }
+
+    /**
+     * Custom type for hybrid SDKs.
+     */
+    class Custom(
+        type: String,
+        subtype: String?,
+        override val sendMode: SendMode = SendMode.DEFAULT,
+    ) : EmbType(type, subtype)
 }

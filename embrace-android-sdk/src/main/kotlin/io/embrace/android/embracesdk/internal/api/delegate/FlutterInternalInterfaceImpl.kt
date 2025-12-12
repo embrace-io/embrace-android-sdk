@@ -4,8 +4,6 @@ import io.embrace.android.embracesdk.EmbraceImpl
 import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
 import io.embrace.android.embracesdk.internal.FlutterInternalInterface
-import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.FlutterException.embFlutterExceptionContext
-import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.FlutterException.embFlutterExceptionLibrary
 import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logs.LogExceptionType
@@ -66,20 +64,26 @@ internal class FlutterInternalInterfaceImpl(
         exceptionType: LogExceptionType,
     ) {
         if (embrace.isStarted) {
-            val attrs = mutableMapOf<String, String>()
-            context?.let { attrs[embFlutterExceptionContext.name] = it }
-            library?.let { attrs[embFlutterExceptionLibrary.name] = it }
+            val attrs = mutableMapOf(
+                "emb.type" to "sys.flutter_exception",
+                "emb.private.send_mode" to "immediate",
+            )
+            context?.let { attrs["emb.exception.context"] = it }
+            library?.let { attrs["emb.exception.library"] = it }
+
+            // add exception name + message attrs
+            name?.let { attrs["exception.type"] = it }
+            message?.let { attrs["exception.message"] = it }
+            stack?.let { attrs["exception.stacktrace"] = it }
+
+            if (exceptionType != LogExceptionType.NONE) {
+                attrs["emb.exception_handling"] = exceptionType.value
+            }
 
             embrace.logMessage(
                 severity = Severity.ERROR,
                 message = "Dart error",
-                attributes = attrs,
-                exceptionData = ExceptionData(
-                    name = name,
-                    message = message,
-                    stacktrace = stack,
-                    logExceptionType = exceptionType,
-                )
+                properties = attrs,
             )
         } else {
             logger.logSdkNotInitialized("logDartError")

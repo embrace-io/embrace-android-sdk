@@ -49,7 +49,6 @@ class NdkUploadTasksRegistrationTest {
         flavorName = "variantFlavor",
         buildTypeName = "buildTypeName",
         isBuildTypeDebuggable = false,
-        versionName = "versionName",
         productFlavors = emptyList(),
         sourceMapPath = "sourceMapPath"
     )

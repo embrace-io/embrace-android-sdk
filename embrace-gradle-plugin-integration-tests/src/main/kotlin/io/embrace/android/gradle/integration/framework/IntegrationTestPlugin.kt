@@ -27,7 +27,6 @@ class IntegrationTestPlugin : Plugin<Project> {
                 "demo",
                 "release",
                 false,
-                "1.2.3",
                 listOf("development"),
                 ""
             )

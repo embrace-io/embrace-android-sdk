@@ -1,5 +1,7 @@
 package io.embrace.android.embracesdk.internal.session.id
 
+import io.embrace.android.embracesdk.fakes.fakeSessionZygote
+import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -16,7 +18,7 @@ internal class SessionTrackerImplTest {
     }
 
     @Test
-    fun `test set session id`() {
+    fun `verify tracker implementation`() {
         var count = 0
         tracker.addListener {
             count++
@@ -24,16 +26,15 @@ internal class SessionTrackerImplTest {
         assertNull(tracker.getActiveSession())
         assertNull(tracker.getActiveSessionId())
         assertEquals(0, count)
+        val newSession = fakeSessionZygote()
+        tracker.newActiveSession(
+            endSessionCallback = {},
+            startSessionCallback = { newSession },
+            postTransitionAppState = AppState.FOREGROUND
+        )
 
-//        tracker.setActiveSession("123", AppState.FOREGROUND)
-//        assertEquals(SessionData("123", AppState.FOREGROUND), tracker.getActiveSession())
-//        assertEquals("123", tracker.getActiveSessionId())
-//        assertEquals(1, count)
-//
-//        tracker.setActiveSession("456", AppState.FOREGROUND)
-//        assertEquals(2, count)
-//
-//        tracker.setActiveSession(null, AppState.BACKGROUND)
-//        assertEquals(3, count)
+        assertEquals(newSession, tracker.getActiveSession())
+        assertEquals(newSession.sessionId, tracker.getActiveSessionId())
+        assertEquals(1, count)
     }
 }

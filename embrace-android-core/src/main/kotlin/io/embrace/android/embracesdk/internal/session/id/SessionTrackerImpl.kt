@@ -17,7 +17,7 @@ internal class SessionTrackerImpl(
     private val listeners = CopyOnWriteArraySet<SessionChangeListener>()
 
     @Volatile
-    private var activeSession: SessionData? = null
+    private var activeSession: SessionZygote? = null
         set(value) {
             field = value
             try {
@@ -30,24 +30,21 @@ internal class SessionTrackerImpl(
         listeners.add(listener)
     }
 
-    override fun getActiveSession(): SessionData? = activeSession
+    override fun getActiveSession(): SessionZygote? = activeSession
 
     override fun newActiveSession(
-        endingSession: SessionZygote?,
         endSessionCallback: SessionZygote.() -> Unit,
         startSessionCallback: () -> SessionZygote?,
-        appState: AppState,
+        postTransitionAppState: AppState,
     ): SessionZygote? {
-        endingSession?.endSessionCallback()
-        val newSession = startSessionCallback()
-        val sessionId = newSession?.sessionId
-        activeSession = sessionId?.run { SessionData(sessionId, appState) }
+        activeSession?.endSessionCallback()
+        activeSession = startSessionCallback()
 
-        if (appState == AppState.FOREGROUND) {
-            setSessionIdToProcessStateSummary(sessionId)
+        if (postTransitionAppState == AppState.FOREGROUND) {
+            setSessionIdToProcessStateSummary(activeSession?.sessionId)
         }
 
-        return newSession
+        return activeSession
     }
 
     /**

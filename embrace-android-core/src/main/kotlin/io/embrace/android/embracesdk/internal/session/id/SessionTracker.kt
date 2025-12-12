@@ -9,21 +9,20 @@ interface SessionTracker {
     /**
      * Gets the currently active session, if present.
      */
-    fun getActiveSession(): SessionData?
+    fun getActiveSession(): SessionZygote?
 
     /**
      * Gets the currently active session ID, if present.
      */
-    fun getActiveSessionId(): String? = getActiveSession()?.id
+    fun getActiveSessionId(): String? = getActiveSession()?.sessionId
 
     /**
-     * Manage the transition of the current session
+     * End the existing active session, if one exists, and transition the SDK to a new one, if appropriate.
      */
     fun newActiveSession(
-        endingSession: SessionZygote?,
         endSessionCallback: SessionZygote.() -> Unit,
         startSessionCallback: () -> SessionZygote?,
-        appState: AppState
+        postTransitionAppState: AppState
     ): SessionZygote?
 
     /**

@@ -31,10 +31,9 @@ class PayloadCachingServiceImplTest {
         sessionTracker = FakeSessionTracker()
 
         sessionTracker.newActiveSession(
-            endingSession = null,
             endSessionCallback = {},
             startSessionCallback = { zygote },
-            appState = AppState.FOREGROUND
+            postTransitionAppState = AppState.FOREGROUND
         )
 
         service = PayloadCachingServiceImpl(
@@ -56,10 +55,9 @@ class PayloadCachingServiceImplTest {
     @Test
     fun `session id mismatch does not cache`() {
         sessionTracker.newActiveSession(
-            endingSession = null,
             endSessionCallback = {},
             startSessionCallback = { fakeSessionZygote().copy(sessionId = "someOtherId") },
-            appState = AppState.FOREGROUND
+            postTransitionAppState = AppState.FOREGROUND
         )
         var count = 0
         service.startCaching(zygote, AppState.FOREGROUND) { _, _, _ ->

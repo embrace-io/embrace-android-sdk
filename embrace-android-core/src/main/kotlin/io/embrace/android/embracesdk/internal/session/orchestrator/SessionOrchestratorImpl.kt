@@ -40,10 +40,6 @@ internal class SessionOrchestratorImpl(
 
     private val lock = Any()
 
-    /**
-     * The currently active session.
-     */
-    private var activeSession: SessionZygote? = null
     private var state = appStateTracker.getAppState()
 
     init {
@@ -109,7 +105,7 @@ internal class SessionOrchestratorImpl(
                 return@transitionState shouldEndManualSession(
                     configService,
                     clock,
-                    activeSession,
+                    sessionTracker.getActiveSession()?.startTime,
                     state
                 )
             }
@@ -171,7 +167,7 @@ internal class SessionOrchestratorImpl(
             // first, disable any previous periodic caching so the job doesn't overwrite the to-be saved session
             payloadCachingService?.stopCaching()
 
-            val endingSession = activeSession
+            val endingSession = sessionTracker.getActiveSession()
             if (endingSession != null) {
                 sessionSpanAttrPopulator.populateSessionSpanEndAttrs(
                     endType = transitionType.lifeEventType(state),
@@ -183,7 +179,6 @@ internal class SessionOrchestratorImpl(
             // calculate new session state
             val endAppState = transitionType.endState(state)
             val newSession = sessionTracker.newActiveSession(
-                endingSession = endingSession,
                 endSessionCallback = {
                     // End the current session or background activity, if either exist.
                     EmbTrace.trace("end-current-session") {
@@ -202,12 +197,11 @@ internal class SessionOrchestratorImpl(
                         newSessionAction?.invoke()
                     }
                 },
-                appState = endAppState
+                postTransitionAppState = endAppState
             )
 
             // update the current state of the SDK
             state = endAppState
-            activeSession = newSession
 
             // update newly created session
             if (newSession != null) {

@@ -1,9 +1,11 @@
 package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.internal.arch.datasource.SpanEvent
+import io.embrace.android.embracesdk.internal.arch.datasource.SpanEventImpl
 import io.embrace.android.embracesdk.internal.arch.datasource.SpanToken
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
+import io.embrace.android.embracesdk.internal.clock.millisToNanos
 
 class FakeSpanToken(
     val name: String,
@@ -15,7 +17,7 @@ class FakeSpanToken(
     val internal: Boolean,
     val private: Boolean,
     initialAttrs: Map<String, String>,
-    val events: List<SpanEvent>,
+    val events: MutableList<SpanEvent>,
 ) : SpanToken {
 
     val attributes: Map<String, String>
@@ -39,4 +41,12 @@ class FakeSpanToken(
     }
 
     override fun getStartTimeMs(): Long? = startTimeMs
+
+    override fun addEvent(
+        name: String,
+        eventTimeMs: Long,
+        attributes: Map<String, String>,
+    ) {
+        events.add(SpanEventImpl(name, eventTimeMs.millisToNanos(), attributes))
+    }
 }

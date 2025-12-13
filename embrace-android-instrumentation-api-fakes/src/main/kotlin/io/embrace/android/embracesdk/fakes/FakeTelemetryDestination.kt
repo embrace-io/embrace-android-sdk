@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.internal.arch.attrs.asPair
 import io.embrace.android.embracesdk.internal.arch.datasource.LogSeverity
+import io.embrace.android.embracesdk.internal.arch.datasource.SessionStateToken
 import io.embrace.android.embracesdk.internal.arch.datasource.SpanEvent
 import io.embrace.android.embracesdk.internal.arch.datasource.SpanToken
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
@@ -51,16 +52,16 @@ class FakeTelemetryDestination : TelemetryDestination {
         autoTerminate: Boolean,
     ): SpanToken {
         val token = FakeSpanToken(
-            schemaType.fixedObjectName,
-            startTimeMs,
-            null,
-            null,
-            null,
-            schemaType.telemetryType,
-            true,
-            false,
-            schemaType.attributes() + mapOf(schemaType.telemetryType.asPair()),
-            emptyList(),
+            name = schemaType.fixedObjectName,
+            startTimeMs = startTimeMs,
+            endTimeMs = null,
+            errorCode = null,
+            parent = null,
+            type = schemaType.telemetryType,
+            internal = true,
+            private = false,
+            initialAttrs = schemaType.attributes() + mapOf(schemaType.telemetryType.asPair()),
+            events = mutableListOf(),
         )
 
         createdSpans.add(token)
@@ -72,18 +73,18 @@ class FakeTelemetryDestination : TelemetryDestination {
         startTimeMs: Long,
         parent: SpanToken?,
         type: EmbType,
-    ): SpanToken? {
+    ): SpanToken {
         val token = FakeSpanToken(
-            name,
-            startTimeMs,
-            null,
-            null,
-            parent,
-            type,
-            true,
-            false,
-            emptyMap(),
-            emptyList(),
+            name = name,
+            startTimeMs = startTimeMs,
+            endTimeMs = null,
+            errorCode = null,
+            parent = parent,
+            type = type,
+            internal = true,
+            private = false,
+            initialAttrs = emptyMap(),
+            events = mutableListOf(),
         )
 
         createdSpans.add(token)
@@ -103,19 +104,21 @@ class FakeTelemetryDestination : TelemetryDestination {
         events: List<SpanEvent>,
     ) {
         val token = FakeSpanToken(
-            name,
-            startTimeMs,
-            endTimeMs,
-            errorCode,
-            parent,
-            type,
-            internal,
-            private,
-            attributes,
-            events,
+            name = name,
+            startTimeMs = startTimeMs,
+            endTimeMs = endTimeMs,
+            errorCode = errorCode,
+            parent = parent,
+            type = type,
+            internal = internal,
+            private = private,
+            initialAttrs = attributes,
+            events = events.toMutableList(),
         )
         createdSpans.add(token)
     }
+
+    override fun <T> startSessionStateCapture(state: SchemaType.State<T>): SessionStateToken<T> = FakeSessionStateToken()
 
     override var sessionUpdateAction: (() -> Unit)? = null
 }

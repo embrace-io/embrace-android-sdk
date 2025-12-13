@@ -64,4 +64,9 @@ interface AutoDataCaptureBehavior {
      * Whether the app startup trace will be waiting for a call to Embrace.appReady() to signal completion
      */
     fun isEndStartupWithAppReadyEnabled(): Boolean
+
+    /**
+     * Whether the state-as-span feature is enabled
+     */
+    fun isStateCaptureEnabled(): Boolean
 }

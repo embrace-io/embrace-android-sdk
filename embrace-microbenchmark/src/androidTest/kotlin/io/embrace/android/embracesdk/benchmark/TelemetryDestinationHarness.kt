@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.benchmark
 
 import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.arch.SessionChangeListener
+import io.embrace.android.embracesdk.internal.arch.SessionEndListener
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.arch.destination.TelemetryDestinationImpl
 import io.embrace.android.embracesdk.internal.arch.state.AppState
@@ -72,7 +73,10 @@ internal class TelemetryDestinationHarness {
             postTransitionAppState: AppState,
         ): SessionToken? = null
 
-        override fun addListener(listener: SessionChangeListener) {
+        override fun addSessionChangeListener(listener: SessionChangeListener) {
+        }
+
+        override fun addSessionEndListener(listener: SessionEndListener) {
         }
     }
 

@@ -7,7 +7,7 @@ import kotlin.reflect.KClass
 /**
  * Registry for all features whose instrumentation should be orchestrated by the Embrace SDK.
  */
-interface InstrumentationRegistry {
+interface InstrumentationRegistry : SessionEndListener, SessionChangeListener {
 
     /**
      * Adds a feature to the registry. The SDK will control when a feature is enabled/disabled
@@ -20,16 +20,6 @@ interface InstrumentationRegistry {
      * required in some cases (e.g. when a manual API call by a library consumer also adds data).
      */
     fun <T : DataSource> findByType(clazz: KClass<T>): T?
-
-    /**
-     * Invoked when a session is about to end
-     */
-    fun onEndSession()
-
-    /**
-     * Invoked when a new session is ready.
-     */
-    fun onNewSession()
 
     /**
      * Loads instrumentation via SPI and registers it with the SDK.

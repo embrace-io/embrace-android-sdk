@@ -64,8 +64,8 @@ internal class InstrumentationRegistryTest {
             instrumentationProviders = listOf(provider),
             args = FakeInstrumentationArgs(ApplicationProvider.getApplicationContext())
         )
-        registry.onEndSession()
-        registry.onNewSession()
+        registry.onPreSessionEnd()
+        registry.onPostSessionChange()
         assertEquals(1, dataSource.sessionEnds)
         assertEquals(1, dataSource.sessionChanges)
     }

@@ -1,3 +1,9 @@
+[![codecov](https://codecov.io/gh/embrace-io/embrace-android-sdk/graph/badge.svg?token=4kNC8ceoVB)](https://codecov.io/gh/embrace-io/embrace-android-sdk)
+[![android api](https://img.shields.io/badge/Android_API-21-green.svg "Android min API 21")](https://dash.embrace.io/signup/)
+[![build](https://img.shields.io/github/actions/workflow/status/embrace-io/embrace-android-sdk/ci-gradle.yml)](https://github.com/embrace-io/embrace-android-sdk/actions)
+[![latest version](https://shields.io/github/v/release/embrace-io/embrace-android-sdk)](https://shields.io/github/v/release/embrace-io/embrace-android-sdk)
+[![Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-orange)](./LICENSE.txt)
+
 <p align="center">
   <a href="https://embrace.io/?utm_source=github&utm_medium=logo" target="_blank">
     <picture>
@@ -8,86 +14,21 @@
   </a>
 </p>
 
-[![codecov](https://codecov.io/gh/embrace-io/embrace-android-sdk/graph/badge.svg?token=4kNC8ceoVB)](https://codecov.io/gh/embrace-io/embrace-android-sdk)
-[![android api](https://img.shields.io/badge/Android_API-21-green.svg "Android min API 21")](https://dash.embrace.io/signup/)
-[![build](https://img.shields.io/github/actions/workflow/status/embrace-io/embrace-android-sdk/ci-gradle.yml)](https://github.com/embrace-io/embrace-android-sdk/actions)
-[![latest version](https://shields.io/github/v/release/embrace-io/embrace-android-sdk)](https://shields.io/github/v/release/embrace-io/embrace-android-sdk)
-
 # About
-The Embrace Android SDK builds on top of [OpenTelemetry](https://opentelemetry.io) to capture performance data for 
-Android apps, enabling full-stack observability of your system by connecting mobile and backend telemetry in a seamless way.
 
-Telemetry recorded through this SDK can be consumed on the Embrace platform for Embrace customers, but it can also be used by those who are
-not Embrace customers to export collected data directly to any OTel Collector, either one that they host or is hosted by other vendors. 
-In effect, this SDK is an alternative to [opentelemetry-android](https://github.com/open-telemetry/opentelemetry-android) or using the [OpenTelemetry Java SDK](https://github.com/open-telemetry/opentelemetry-java) directly for Android apps that want to leverage the 
-OpenTelemetry ecosystem for observability, but also want all the advanced telemetry capture that Embrace is known for, like ANR thread sampling, native crash
-capture, and so forth.
-
-Currently, only Spans and Logs are supported, but other signals will be added in the future.
+The Embrace Android SDK builds on top of [OpenTelemetry](https://opentelemetry.io) to capture performance data for
+Android apps and provides user-focused observability of your system by connecting mobile and backend telemetry seamlessly.
 
 # Getting Started
-### Android Project Setup
-1. In your app's Gradle file, add a dependency to the latest version of the Embrace Gradle plugin: `io.embrace:embrace-gradle-plugin:<version>`.
-   - This plugin is responsible for configuring your app at build time to auto-capture telemetry. This includes:
-     - Updating dependencies to include optional modules that are needed for certain features.
-     - Setting up configuration files to be read at runtime.
-     - Doing bytecode instrumentation to enable the capture of certain telemetry.
-2. For multi-module projects, in the Gradle files of modules where you want to invoke Embrace SDK API methods, add a dependency to the main Embrace SDK module: `'io.embrace:embrace-android-sdk:<version>`.
-3. To configure Java OTel Exporters with the Embrace Android SDK or access its implementation of the Java OpenTelemetry API, add a dependency to the Embrace Java OpenTelemetry module, which provides extension methods that allow you to do so: `io.embrace:embrace-android-otel-java:<version>`
-4. In the `main` directory of your app's root source folder (i.e. `app/src/main/`), add a file called `embrace-config.json` that contains `{}` as its only line.
-   - To further configure the SDK, additional attributes can be added to this configuration file. 
-   - See our [configuration documentation page](https://embrace.io/docs/android/features/configuration-file/) for further details.
-5. In your app's Gradle properties file, add the entry `embrace.disableMappingFileUpload=true`
-   - This allows the SDK to function without sending data to Embrace.
-6. In Android Studio, do a Gradle Sync. Barring any errors, you should be able to configure and start the SDK to begin recording and exporting data.
 
-### Configure Exporters and Start SDK
-Using the Embrace SDK without being an Embrace customer requires you to set up OTel Exporters to work with the SDK so that recorded telemetry can be sent somewhere. 
-To do that, create and configure instances of your chosen exporters and register them with the Embrace SDK before you start it.
+Please follow our [SDK integration instructions](https://embrace.io/docs/android/) to get started with Embrace in your app.
+If you don't have one already, you can [create an account here](https://dash.embrace.io/signup/).
 
-```kotlin
+## Support
 
-val grafanaCloudExporter = OtlpHttpSpanExporter.builder()
-    .setEndpoint("https://myinstance.grafana.net/otlp/v1/traces")
-    .addHeader("Authorization", "YourToken")
-    .build()
+Please submit feature requests or bug reports to Github's issue tracker. If you wish to submit a pull request please read
+our [Contribution Guidelines](CONTRIBUTING.md) first.
 
-Embrace.addJavaSpanExporter(grafanaCloudExporter)
-Embrace.addJavaLogRecordExporter(SystemOutLogRecordExporter.create())
-
-```
-
-It is recommended that you start the Embrace SDK in your `Application` object's `onCreate()` function (or even earlier) to minimize
-the amount of time when telemetry isn't being recorded. This allows performance problems such as crashes and ANRs to be captured as soon
-as possible.
-
-```kotlin
-internal class MyApplication : Application() {
-    override fun onCreate() {
-        super.onCreate()
-
-        // Do your exporter setup before starting the SDK
-
-        Embrace.start(this)
-    }
-}
-```
-
-For details about the features the Embrace Android SDK supports, refer to our [features page](https://embrace.io/docs/android/features/).
-
-## Prospective Embrace Customers
-- If you want to try out the Embrace product along with using this SDK, [go to our website](https://dash.embrace.io/signup/) and begin the sign up process.
-- After you've obtained an `appId` and `API token`, checkout our [integration guide](https://embrace.io/docs/android/integration/) for further instructions.
-
-## Existing Embrace Customers Upgrading from 6.x and 7.x
-- For existing customers on older versions of the Embrace SDK, follow the instructions in our [upgrade guide](UPGRADING.md).
-
-## Support 
-
-We appreciate any feedback you have on the SDK and the APIs that it provides. To contribute to this project, please see our [Contribution Guidelines](CONTRIBUTING.md). There, you'll be able to submit a feature request, create a bug report, or submit a pull request.
-
-For urgent matters (such as outages) or issues concerning the Embrace service or UI reach out in our [Community Slack](https://join.slack.com/t/embraceio-community/shared_invite/zt-ywr4jhzp-DLROX0ndN9a0soHMf6Ksow) for direct, faster assistance.
-
-Embrace Android SDK is published under the Apache-2.0 license. 
-
-[![Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-orange)](./LICENSE.txt)
+For urgent matters (such as outages) or issues concerning the Embrace service or UI reach out in
+our [Community Slack](https://join.slack.com/t/embraceio-community/shared_invite/zt-ywr4jhzp-DLROX0ndN9a0soHMf6Ksow) for direct, faster
+assistance.

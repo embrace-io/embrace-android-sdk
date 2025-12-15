@@ -27,7 +27,7 @@ internal class SessionOrchestratorImpl(
     private val boundaryDelegate: OrchestratorBoundaryDelegate,
     private val payloadStore: PayloadStore?,
     private val payloadCachingService: PayloadCachingService?,
-    private val instrumentationRegistry: InstrumentationRegistry,
+    instrumentationRegistry: InstrumentationRegistry,
     private val destination: TelemetryDestination,
     private val sessionSpanAttrPopulator: SessionSpanAttrPopulator,
 ) : SessionOrchestrator {
@@ -44,6 +44,8 @@ internal class SessionOrchestratorImpl(
 
     init {
         appStateTracker.addListener(this)
+        sessionTracker.addSessionEndListener(instrumentationRegistry)
+        sessionTracker.addSessionChangeListener(instrumentationRegistry)
         EmbTrace.trace("start-first-session") { createInitialSession() }
     }
 
@@ -180,7 +182,6 @@ internal class SessionOrchestratorImpl(
             val endAppState = transitionType.endState(state)
             val newSession = sessionTracker.newActiveSession(
                 endSessionCallback = {
-                    instrumentationRegistry.onEndSession()
                     // End the current session or background activity, if either exist.
                     EmbTrace.trace("end-current-session") {
                         processEndMessage(oldSessionAction?.invoke(this), transitionType)
@@ -208,7 +209,6 @@ internal class SessionOrchestratorImpl(
             if (newSession != null) {
                 boundaryDelegate.prepareForNewSession()
                 sessionSpanAttrPopulator.populateSessionSpanStartAttrs(newSession)
-                instrumentationRegistry.onNewSession()
                 if (transitionType != TransitionType.CRASH) {
                     // initiate periodic caching of the payload if a new session has started
                     EmbTrace.start("initiate-periodic-caching")

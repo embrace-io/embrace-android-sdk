@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.internal.envelope.CpuAbi
 import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
+import java.util.concurrent.ConcurrentHashMap
 
 internal class EnvelopeResourceSourceImpl(
     private val hosted: HostedSdkVersionInfo,
@@ -18,6 +19,8 @@ internal class EnvelopeResourceSourceImpl(
     private val device: Device,
     private val rnBundleIdTracker: RnBundleIdTracker,
 ) : EnvelopeResourceSource {
+
+    private val extras = ConcurrentHashMap<String, String>()
 
     override fun getEnvelopeResource(): EnvelopeResource {
         return EnvelopeResource(
@@ -46,7 +49,12 @@ internal class EnvelopeResourceSourceImpl(
             osVersion = device.systemInfo.osVersion,
             osCode = device.systemInfo.androidOsApiLevel,
             screenResolution = device.screenResolution,
-            numCores = device.numberOfCores
+            numCores = device.numberOfCores,
+            extras = extras.toMap()
         )
+    }
+
+    override fun add(key: String, value: String) {
+        extras[key] = value
     }
 }

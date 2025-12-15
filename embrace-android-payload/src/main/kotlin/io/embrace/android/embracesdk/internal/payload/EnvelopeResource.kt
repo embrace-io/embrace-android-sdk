@@ -69,6 +69,9 @@ import com.squareup.moshi.JsonClass
 @JsonClass(generateAdapter = true)
 data class EnvelopeResource(
 
+    /**** WARNING: when altering fields, please keep JSON keys in sync with
+     * [io.embrace.android.embracesdk.internal.serialization.EnvelopeResourceAdapter]. ****/
+
     /* The app's publicly displayed version name. Previous name: a.v */
     @Json(name = "app_version")
     val appVersion: String? = null,
@@ -176,5 +179,8 @@ data class EnvelopeResource(
 
     /* (Android) The number of CPU cores the device has. Previous name: d.nc */
     @Json(name = "num_cores")
-    val numCores: Int? = null
+    val numCores: Int? = null,
+
+    @Transient
+    val extras: Map<String, String> = emptyMap(),
 )

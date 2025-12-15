@@ -32,18 +32,18 @@ class FakePayloadSourceModule(
     logPayloadSource: LogPayloadSource = FakeLogPayloadSource(),
 ) : PayloadSourceModule {
 
-    private val envelopeResourceSource = FakeEnvelopeResourceSource()
+    override val resourceSource = FakeEnvelopeResourceSource()
     private val envelopeMetadataSource = FakeEnvelopeMetadataSource()
 
     override val sessionEnvelopeSource: SessionEnvelopeSource = FakeSessionEnvelopeSource(
         envelopeMetadataSource,
-        envelopeResourceSource,
+        resourceSource,
         sessionPayloadSource
     )
 
     override val logEnvelopeSource: FakeLogEnvelopeSource = FakeLogEnvelopeSource(
         envelopeMetadataSource,
-        envelopeResourceSource,
+        resourceSource,
         logPayloadSource
     )
 }

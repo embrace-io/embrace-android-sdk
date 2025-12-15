@@ -16,6 +16,7 @@ class EmbraceSerializer : PlatformSerializer {
     private val ref = object : ThreadLocal<Moshi>() {
         override fun initialValue(): Moshi = Moshi.Builder()
             .add(AppFrameworkAdapter())
+            .add(EnvelopeResourceAdapter())
             .build()
     }
 

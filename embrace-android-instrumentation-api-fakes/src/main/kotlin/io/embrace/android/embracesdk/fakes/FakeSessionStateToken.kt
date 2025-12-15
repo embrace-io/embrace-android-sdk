@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.internal.arch.datasource.SessionStateToken
+import io.embrace.android.embracesdk.internal.arch.datasource.UnrecordedTransitions
 import io.embrace.android.embracesdk.internal.clock.Clock
 
 class FakeSessionStateToken<T>(
@@ -8,7 +9,7 @@ class FakeSessionStateToken<T>(
     private val clock: Clock = FakeClock(),
 ) : SessionStateToken<T> {
     var endTimeMs = 0L
-    override fun update(updateDetectedTimeMs: Long, newValue: T, droppedTransitions: Int) {
+    override fun update(updateDetectedTimeMs: Long, newValue: T, unrecordedTransitions: UnrecordedTransitions) {
         transitions.add(Pair(updateDetectedTimeMs, newValue))
     }
 

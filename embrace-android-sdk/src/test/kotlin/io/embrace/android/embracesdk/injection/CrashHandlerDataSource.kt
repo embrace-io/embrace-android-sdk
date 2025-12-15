@@ -29,6 +29,7 @@ internal class CrashHandlerDataSource : JvmCrashDataSource {
 
     override fun <T> captureTelemetry(
         inputValidation: () -> Boolean,
+        invalidInputCallback: () -> Unit,
         action: TelemetryDestination.() -> T?,
     ): T? = null
 }

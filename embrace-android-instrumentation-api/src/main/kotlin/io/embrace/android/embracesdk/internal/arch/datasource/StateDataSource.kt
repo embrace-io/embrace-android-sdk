@@ -7,7 +7,6 @@ import io.embrace.android.embracesdk.internal.arch.SessionEndListener
 import io.embrace.android.embracesdk.internal.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
-import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 
 /**
@@ -24,26 +23,27 @@ abstract class StateDataSource<T>(
 ) {
     private val currentState: AtomicReference<T> = AtomicReference(defaultValue)
     private val sessionStateToken: AtomicReference<SessionStateToken<T>?> = AtomicReference()
-    private val unrecordedTransitions = AtomicInteger(0)
+    private val unrecordedTransitions = AtomicReference(noUnrecordedTransitions)
 
     protected fun onStateChange(updateDetectedTimeMs: Long, newState: T, droppedTransitions: Int = 0) {
         val oldState = currentState.getAndSet(newState)
         val currentStateToken = sessionStateToken.get()
-        unrecordedTransitions.addAndGet(droppedTransitions)
-        var transitionRecorded = false
+        unrecordedTransitions.updateDroppedByInstrumentation(droppedTransitions)
         if (currentStateToken != null) {
-            captureTelemetry(inputValidation = { newState != oldState }) {
+            captureTelemetry(
+                inputValidation = { newState != oldState },
+                invalidInputCallback = {
+                    unrecordedTransitions.updateDroppedByInstrumentation(1)
+                }
+            ) {
                 currentStateToken.update(
                     updateDetectedTimeMs = updateDetectedTimeMs,
                     newValue = newState,
-                    droppedTransitions = unrecordedTransitions.getAndSet(0)
+                    unrecordedTransitions = unrecordedTransitions.getAndSet(noUnrecordedTransitions)
                 )
-                transitionRecorded = true
             }
-        }
-
-        if (!transitionRecorded) {
-            unrecordedTransitions.incrementAndGet()
+        } else {
+            unrecordedTransitions.dropTransitionNotInSession()
         }
     }
 
@@ -68,6 +68,24 @@ abstract class StateDataSource<T>(
             )
         } catch (t: Throwable) {
             logger.trackInternalError(InternalErrorType.SESSION_STATE_CREATION_FAIL, t)
+        }
+    }
+
+    private fun AtomicReference<UnrecordedTransitions>.dropTransitionNotInSession() {
+        getAndUpdate { oldValue ->
+            oldValue.copy(
+                notInSession = oldValue.notInSession + 1,
+                droppedByInstrumentation = oldValue.droppedByInstrumentation
+            )
+        }
+    }
+
+    private fun AtomicReference<UnrecordedTransitions>.updateDroppedByInstrumentation(droppedTransitions: Int) {
+        getAndUpdate { oldValue ->
+            oldValue.copy(
+                notInSession = oldValue.notInSession,
+                droppedByInstrumentation = oldValue.droppedByInstrumentation + droppedTransitions
+            )
         }
     }
 }

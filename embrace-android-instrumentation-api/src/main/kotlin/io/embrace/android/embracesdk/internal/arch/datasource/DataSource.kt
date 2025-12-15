@@ -36,6 +36,7 @@ interface DataSource {
      */
     fun <T> captureTelemetry(
         inputValidation: () -> Boolean = { true },
+        invalidInputCallback: () -> Unit = {},
         action: TelemetryDestination.() -> T?,
     ): T?
 }

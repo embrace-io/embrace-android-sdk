@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.internal.arch.datasource.SessionStateToken
 import io.embrace.android.embracesdk.internal.arch.datasource.SpanEvent
 import io.embrace.android.embracesdk.internal.arch.datasource.SpanToken
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
+import io.embrace.android.embracesdk.internal.arch.datasource.UnrecordedTransitions
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
@@ -253,14 +254,22 @@ class TelemetryDestinationImpl(
     ) : SessionStateToken<T> {
         private val transitionCount = AtomicInteger(0)
 
-        override fun update(updateDetectedTimeMs: Long, newValue: T, droppedTransitions: Int) {
+        override fun update(
+            updateDetectedTimeMs: Long,
+            newValue: T,
+            unrecordedTransitions: UnrecordedTransitions,
+        ) {
             spanToken.addEvent(
                 name = "transition",
                 eventTimeMs = updateDetectedTimeMs,
                 attributes = mutableMapOf("new_value" to newValue.toString())
                     .apply {
-                        if (droppedTransitions > 0) {
-                            put("dropped_transitions", droppedTransitions.toString())
+                        if (unrecordedTransitions.notInSession > 0) {
+                            put("not_in_session", unrecordedTransitions.toString())
+                        }
+
+                        if (unrecordedTransitions.droppedByInstrumentation > 0) {
+                            put("dropped_by_instrumentation", unrecordedTransitions.toString())
                         }
                     }.toMap()
             )
@@ -273,7 +282,7 @@ class TelemetryDestinationImpl(
     }
 
     private class NoopSessionStateToken<T> : SessionStateToken<T> {
-        override fun update(updateDetectedTimeMs: Long, newValue: T, droppedTransitions: Int) {}
+        override fun update(updateDetectedTimeMs: Long, newValue: T, unrecordedTransitions: UnrecordedTransitions) {}
         override fun end() {}
     }
 }

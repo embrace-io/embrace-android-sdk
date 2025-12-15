@@ -89,6 +89,7 @@ internal class EmbraceUncaughtExceptionHandlerTest {
 
         override fun <T> captureTelemetry(
             inputValidation: () -> Boolean,
+            invalidInputCallback: () -> Unit,
             action: TelemetryDestination.() -> T?,
         ): T? = null
     }

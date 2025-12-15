@@ -39,10 +39,13 @@ abstract class DataSourceImpl(
      */
     override fun <T> captureTelemetry(
         inputValidation: () -> Boolean,
+        invalidInputCallback: () -> Unit,
         action: TelemetryDestination.() -> T?,
     ): T? {
         try {
-            if (inputValidation() && limitStrategy.shouldCapture()) {
+            if (!inputValidation()) {
+                invalidInputCallback()
+            } else if (limitStrategy.shouldCapture()) {
                 return destination.action()
             }
         } catch (exc: Throwable) {

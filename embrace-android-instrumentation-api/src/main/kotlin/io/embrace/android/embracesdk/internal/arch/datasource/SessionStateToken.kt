@@ -15,10 +15,24 @@ interface SessionStateToken<T> {
      * Notify the session that the state was updated to that value at that time. The timestamp must be explicitly passed in by the caller to
      * avoid including into the timestamp the delay between when the transition happened to when instrumentation recorded it.
      */
-    fun update(updateDetectedTimeMs: Long, newValue: T, droppedTransitions: Int = 0)
+    fun update(
+        updateDetectedTimeMs: Long,
+        newValue: T,
+        unrecordedTransitions: UnrecordedTransitions = noUnrecordedTransitions
+    )
 
     /**
      * End tracking of this state for the current session.
      */
     fun end()
 }
+
+/**
+ * Defines the count of state transitions that were not recorded since the last time the token received an update.
+ */
+data class UnrecordedTransitions(
+    val notInSession: Int = 0,
+    val droppedByInstrumentation: Int = 0,
+)
+
+internal val noUnrecordedTransitions = UnrecordedTransitions()

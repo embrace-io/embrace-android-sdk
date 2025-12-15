@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.session.id
 import android.app.ActivityManager
 import android.os.Build
 import io.embrace.android.embracesdk.internal.arch.SessionChangeListener
+import io.embrace.android.embracesdk.internal.arch.SessionEndListener
 import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
@@ -14,20 +15,18 @@ internal class SessionTrackerImpl(
     private val logger: EmbLogger,
 ) : SessionTracker {
 
-    private val listeners = CopyOnWriteArraySet<SessionChangeListener>()
+    private val sessionChangeListeners = CopyOnWriteArraySet<SessionChangeListener>()
+    private val sessionEndListeners = CopyOnWriteArraySet<SessionEndListener>()
 
     @Volatile
     private var activeSession: SessionToken? = null
-        set(value) {
-            field = value
-            try {
-                listeners.forEach(SessionChangeListener::onPostSessionChange)
-            } catch (ignored: Throwable) {
-            }
-        }
 
-    override fun addListener(listener: SessionChangeListener) {
-        listeners.add(listener)
+    override fun addSessionChangeListener(listener: SessionChangeListener) {
+        sessionChangeListeners.add(listener)
+    }
+
+    override fun addSessionEndListener(listener: SessionEndListener) {
+        sessionEndListeners.add(listener)
     }
 
     override fun getActiveSession(): SessionToken? = activeSession
@@ -37,8 +36,17 @@ internal class SessionTrackerImpl(
         startSessionCallback: () -> SessionToken?,
         postTransitionAppState: AppState,
     ): SessionToken? {
-        activeSession?.endSessionCallback()
+        activeSession?.let { endingSession ->
+            runCatching {
+                sessionEndListeners.forEach(SessionEndListener::onPreSessionEnd)
+            }
+            endingSession.endSessionCallback()
+        }
+
         activeSession = startSessionCallback()
+        runCatching {
+            sessionChangeListeners.forEach(SessionChangeListener::onPostSessionChange)
+        }
 
         if (postTransitionAppState == AppState.FOREGROUND) {
             setSessionIdToProcessStateSummary(activeSession?.sessionId)

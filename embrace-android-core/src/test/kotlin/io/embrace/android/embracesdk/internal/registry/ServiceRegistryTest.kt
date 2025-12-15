@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.registry
 import io.embrace.android.embracesdk.fakes.FakeAppStateTracker
 import io.embrace.android.embracesdk.fakes.FakeSessionTracker
 import io.embrace.android.embracesdk.internal.arch.SessionChangeListener
+import io.embrace.android.embracesdk.internal.arch.SessionEndListener
 import io.embrace.android.embracesdk.internal.arch.state.AppStateListener
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -22,6 +23,7 @@ internal class ServiceRegistryTest {
         val expected = listOf(service)
         assertEquals(expected, registry.closeables)
         assertEquals(expected, registry.appStateListeners)
+        assertEquals(expected, registry.sessionEndListeners)
         assertEquals(expected, registry.sessionChangeListeners)
     }
 
@@ -37,8 +39,10 @@ internal class ServiceRegistryTest {
         assertEquals(expected, activityService.listeners)
 
         val sessionTracker = FakeSessionTracker()
+        registry.registerSessionEndListeners(sessionTracker)
+        assertEquals(expected, sessionTracker.sessionEndListeners)
         registry.registerSessionChangeListeners(sessionTracker)
-        assertEquals(expected, sessionTracker.listeners)
+        assertEquals(expected, sessionTracker.sessionChangeListeners)
 
         assertFalse(service.closed)
         registry.close()
@@ -47,6 +51,7 @@ internal class ServiceRegistryTest {
 
     private class FakeService :
         Closeable,
+        SessionEndListener,
         SessionChangeListener,
         AppStateListener {
 
@@ -54,6 +59,9 @@ internal class ServiceRegistryTest {
 
         override fun close() {
             closed = true
+        }
+
+        override fun onPreSessionEnd() {
         }
 
         override fun onPostSessionChange() {

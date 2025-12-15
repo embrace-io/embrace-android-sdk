@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.Context
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.SessionChangeListener
+import io.embrace.android.embracesdk.internal.arch.SessionEndListener
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.arch.state.AppStateTracker
 import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
@@ -63,7 +64,11 @@ internal class InstrumentationArgsImpl(
     override fun sessionProperties(): Map<String, String> = sessionPropertiesService.getProperties()
 
     override fun registerSessionChangeListener(listener: SessionChangeListener) {
-        sessionTracker.addListener(listener)
+        sessionTracker.addSessionChangeListener(listener)
+    }
+
+    override fun registerSessionEndListener(listener: SessionEndListener) {
+        sessionTracker.addSessionEndListener(listener)
     }
 
     @Suppress("UNCHECKED_CAST")

@@ -17,9 +17,23 @@ class InstrumentationRegistryImpl(
 
     private val dataSourceStates = CopyOnWriteArrayList<DataSourceState<*>>()
 
+    override fun onEndSession() {
+        dataSourceStates.toList()
+            .filter { it.dataSource is SessionEndListener }
+            .map { it.dataSource as SessionEndListener }
+            .forEach {
+                it.onPreSessionEnd()
+            }
+    }
+
     override fun onNewSession() {
         dataSourceStates.toList().forEach {
-            it.dataSource?.resetDataCaptureLimits()
+            it.dataSource?.run {
+                resetDataCaptureLimits()
+                if (this is SessionChangeListener) {
+                    onPostSessionChange()
+                }
+            }
         }
     }
 

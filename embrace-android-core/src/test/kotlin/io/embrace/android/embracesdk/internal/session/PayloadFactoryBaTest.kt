@@ -10,7 +10,7 @@ import io.embrace.android.embracesdk.fakes.FakeOtelPayloadMapper
 import io.embrace.android.embracesdk.fakes.FakeSessionTracker
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.createBackgroundActivityBehavior
-import io.embrace.android.embracesdk.fakes.fakeSessionZygote
+import io.embrace.android.embracesdk.fakes.fakeSessionToken
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakePayloadSourceModule
 import io.embrace.android.embracesdk.internal.arch.state.AppState
@@ -32,7 +32,7 @@ import org.junit.Test
 
 internal class PayloadFactoryBaTest {
 
-    private val initial = fakeSessionZygote()
+    private val initial = fakeSessionToken()
     private lateinit var service: PayloadFactoryImpl
     private lateinit var clock: FakeClock
     private lateinit var metadataService: MetadataService

@@ -2,7 +2,13 @@ package io.embrace.android.embracesdk.internal.arch.datasource
 
 /**
  * An object representing a State for a particular session. A valid instance can be used to update or end state tracking for a particular
- * session
+ * session.
+ *
+ * Due to the asynchronousness of telemetry instrumentation, session transitions, and state updates (which includes potential delays in
+ * detection and instrumentation), these timestamps will not always line up. Therefore, telemetry recorded right when states updates are
+ * happening may not precisely represent the true state of system, so while implementations should try to preserve the integrity of the
+ * session-state-instrumentation relationships as far as it knows, the telemetry and metadata that is generated may ultimately still be
+ * out of sync, which any backend consuming this data should expect and deal with if required.
  */
 interface SessionStateToken<T> {
     /**

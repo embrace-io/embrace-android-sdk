@@ -10,6 +10,10 @@ import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 
+/**
+ * Base [DataSource] to handle State updates in a unified way. This will create the right objects to represent a state in the data model,
+ * as well as track and put in the common metadata expected by the backend.
+ */
 abstract class StateDataSource<T>(
     private val args: InstrumentationArgs,
     private val stateValueFactory: (initialValue: T) -> SchemaType.State<T>,
@@ -68,4 +72,8 @@ abstract class StateDataSource<T>(
     }
 }
 
+/**
+ * Maximum transitions per state span that the backend can expect. This could be overridable in the future, at which point the max value
+ * should be encoded in the data.
+ */
 private const val MAX_TRANSITIONS = 1000

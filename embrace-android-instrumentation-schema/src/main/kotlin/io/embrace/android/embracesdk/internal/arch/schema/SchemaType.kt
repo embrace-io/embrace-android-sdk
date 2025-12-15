@@ -277,6 +277,10 @@ sealed class SchemaType(
         )
     }
 
+    /**
+     * Base [SchemaType] to handle common logic for States. This includes expecting the type [T] as the value of the State
+     * whose value can be encoded uniquely as a string via [toString], which will be used to presented it in any serialized forms.
+     */
     abstract class State<T>(
         initialValue: T,
         stateSpanName: String,

@@ -42,10 +42,10 @@ internal class SessionTrackerImpl(
             }
             endingSession.endSessionCallback()
         }
-        activeSession = startSessionCallback()?.apply {
-            runCatching {
-                sessionChangeListeners.forEach(SessionChangeListener::onPostSessionChange)
-            }
+
+        activeSession = startSessionCallback()
+        runCatching {
+            sessionChangeListeners.forEach(SessionChangeListener::onPostSessionChange)
         }
 
         if (postTransitionAppState == AppState.FOREGROUND) {

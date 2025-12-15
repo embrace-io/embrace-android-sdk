@@ -94,7 +94,8 @@ internal class SessionTrackerImplTest {
                 "change-listener",
                 "end-listener",
                 "end-session",
-                "new-session"
+                "new-session",
+                "change-listener",
             ),
             callbackInvocations.toList()
         )

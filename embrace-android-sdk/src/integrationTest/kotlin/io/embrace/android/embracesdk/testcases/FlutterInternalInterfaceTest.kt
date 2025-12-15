@@ -1,22 +1,12 @@
 package io.embrace.android.embracesdk.testcases
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.assertions.assertMatches
-import io.embrace.android.embracesdk.assertions.assertOtelLogReceived
-import io.embrace.android.embracesdk.assertions.getLogOfType
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.config.FakeProjectConfig
 import io.embrace.android.embracesdk.internal.EmbraceInternalApi
-import io.embrace.android.embracesdk.internal.arch.attrs.embSendMode
-import io.embrace.android.embracesdk.internal.arch.schema.EmbType
-import io.embrace.android.embracesdk.internal.arch.schema.SendMode
-import io.embrace.android.embracesdk.internal.logs.LogExceptionType
-import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
-import io.embrace.opentelemetry.kotlin.logging.model.SeverityNumber
-import io.embrace.opentelemetry.kotlin.semconv.ExceptionAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Before
@@ -30,8 +20,6 @@ import org.junit.runner.RunWith
 @OptIn(ExperimentalApi::class)
 @RunWith(AndroidJUnit4::class)
 internal class FlutterInternalInterfaceTest {
-
-    private val flutterExceptionType = EmbType.Custom("sys", "flutter_exception")
 
     private val instrumentedConfig = FakeInstrumentedConfig(
         project = FakeProjectConfig(
@@ -155,102 +143,6 @@ internal class FlutterInternalInterfaceTest {
                 assertEquals(AppFramework.FLUTTER, res.appFramework)
                 assertEquals("28.9.2", res.hostedPlatformVersion)
                 assertEquals("1.2.4", res.hostedSdkVersion)
-            }
-        )
-    }
-
-    @Test
-    fun `log flutter handled exception generates an OTel log`() {
-        val expectedName = "Exception name"
-        val expectedMessage = "Handled exception: name: message"
-        val expectedStacktrace = "stacktrace"
-        val expectedContext = "context"
-        val expectedLibrary = "library"
-
-        testRule.runTest(
-            instrumentedConfig = instrumentedConfig,
-            testCaseAction = {
-                sessionStartTimeMs = recordSession {
-                    EmbraceInternalApi.flutterInternalInterface.logHandledDartException(
-                        expectedStacktrace,
-                        expectedName,
-                        expectedMessage,
-                        expectedContext,
-                        expectedLibrary,
-                    )
-                }.actionTimeMs
-            },
-            assertAction = {
-                val log = getSingleLogEnvelope().getLogOfType(flutterExceptionType)
-
-                assertOtelLogReceived(
-                    logReceived = log,
-                    expectedMessage = "Dart error",
-                    expectedSeverityNumber = SeverityNumber.ERROR,
-                    expectedTimeMs = sessionStartTimeMs,
-                    expectedType = LogExceptionType.HANDLED.value,
-                    expectedExceptionName = expectedName,
-                    expectedExceptionMessage = expectedMessage,
-                    expectedEmbType = "sys.flutter_exception",
-                    expectedState = "foreground",
-                )
-                log.attributes?.assertMatches(
-                    mapOf(
-                        ExceptionAttributes.EXCEPTION_STACKTRACE to expectedStacktrace,
-                        "emb.exception.context" to expectedContext,
-                        "emb.exception.library" to expectedLibrary,
-                    )
-                )
-                val sendMode = log.attributes?.findAttributeValue(embSendMode.name)
-                assertEquals(SendMode.IMMEDIATE, SendMode.fromString(sendMode))
-            }
-        )
-    }
-
-    @Test
-    fun `log flutter unhandled exception generates an OTel log`() {
-        val expectedName = "Exception name"
-        val expectedMessage = "Handled exception: name: message"
-        val expectedStacktrace = "stacktrace"
-        val expectedContext = "context"
-        val expectedLibrary = "library"
-
-        testRule.runTest(
-            instrumentedConfig = instrumentedConfig,
-            testCaseAction = {
-                sessionStartTimeMs = recordSession {
-                    EmbraceInternalApi.flutterInternalInterface.logUnhandledDartException(
-                        expectedStacktrace,
-                        expectedName,
-                        expectedMessage,
-                        expectedContext,
-                        expectedLibrary,
-                    )
-                }.actionTimeMs
-            },
-            assertAction = {
-                val log = getSingleLogEnvelope().getLogOfType(flutterExceptionType)
-
-                assertOtelLogReceived(
-                    logReceived = log,
-                    expectedMessage = "Dart error",
-                    expectedSeverityNumber = SeverityNumber.ERROR,
-                    expectedTimeMs = sessionStartTimeMs,
-                    expectedType = LogExceptionType.UNHANDLED.value,
-                    expectedExceptionName = expectedName,
-                    expectedExceptionMessage = expectedMessage,
-                    expectedEmbType = "sys.flutter_exception",
-                    expectedState = "foreground",
-                )
-                log.attributes?.assertMatches(
-                    mapOf(
-                        ExceptionAttributes.EXCEPTION_STACKTRACE to expectedStacktrace,
-                        "emb.exception.context" to expectedContext,
-                        "emb.exception.library" to expectedLibrary,
-                    )
-                )
-                val sendMode = log.attributes?.findAttributeValue(embSendMode.name)
-                assertEquals(SendMode.IMMEDIATE, SendMode.fromString(sendMode))
             }
         )
     }

@@ -619,6 +619,8 @@ internal class SpanServiceImplTest {
             logSink = LogSinkImpl(),
             sdkName = "test-sdk",
             sdkVersion = "1.0",
+            appVersion = "1.0.0",
+            packageName = "com.test.app",
             systemInfo = SystemInfo(),
             sessionIdProvider = { "fake-session-id" },
             processIdentifierProvider = { "fake-pid" }

@@ -34,13 +34,15 @@ internal class OtelSdkConfigTest {
             logSink = LogSinkImpl(),
             sdkName = "sdk",
             sdkVersion = "1.0",
+            appVersion = "2.5.1",
+            packageName = "com.test.app",
             systemInfo = systemInfo
         )
 
         val attrs = FakeMutableAttributeContainer().apply(configuration.resourceAction).attributes
         val expected = mapOf(
-            ServiceAttributes.SERVICE_NAME to configuration.sdkName,
-            ServiceAttributes.SERVICE_VERSION to configuration.sdkVersion,
+            ServiceAttributes.SERVICE_NAME to configuration.packageName,
+            ServiceAttributes.SERVICE_VERSION to configuration.appVersion,
             TelemetryAttributes.TELEMETRY_DISTRO_NAME to configuration.sdkName,
             TelemetryAttributes.TELEMETRY_DISTRO_VERSION to configuration.sdkVersion,
             OsAttributes.OS_NAME to systemInfo.osName,

@@ -86,7 +86,7 @@ jobs:
 
       - name: Archive Test Results
         if: ${{ always() && matrix.gradle-task != 'bundleReleaseExampleApp' }}
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: test-results-${{ matrix.gradle-task }}
           path: '**/build/reports/tests/**'

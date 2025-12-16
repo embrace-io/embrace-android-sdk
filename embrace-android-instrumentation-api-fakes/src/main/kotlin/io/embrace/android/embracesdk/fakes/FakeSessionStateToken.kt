@@ -9,11 +9,12 @@ class FakeSessionStateToken<T>(
     private val clock: Clock = FakeClock(),
 ) : SessionStateToken<T> {
     var endTimeMs = 0L
-    override fun update(updateDetectedTimeMs: Long, newValue: T, unrecordedTransitions: UnrecordedTransitions) {
+    override fun update(updateDetectedTimeMs: Long, newValue: T, unrecordedTransitions: UnrecordedTransitions): Boolean {
         transitions.add(Pair(updateDetectedTimeMs, newValue))
+        return true
     }
 
-    override fun end() {
+    override fun end(unrecordedTransitions: UnrecordedTransitions) {
         endTimeMs = clock.now()
     }
 }

@@ -258,32 +258,46 @@ class TelemetryDestinationImpl(
             updateDetectedTimeMs: Long,
             newValue: T,
             unrecordedTransitions: UnrecordedTransitions,
-        ) {
+        ): Boolean {
+            if (!spanToken.isRecording()) {
+                return false
+            }
             spanToken.addEvent(
                 name = "transition",
                 eventTimeMs = updateDetectedTimeMs,
                 attributes = mutableMapOf("new_value" to newValue.toString())
                     .apply {
                         if (unrecordedTransitions.notInSession > 0) {
-                            put("not_in_session", unrecordedTransitions.toString())
+                            put("not_in_session", unrecordedTransitions.notInSession.toString())
                         }
 
                         if (unrecordedTransitions.droppedByInstrumentation > 0) {
-                            put("dropped_by_instrumentation", unrecordedTransitions.toString())
+                            put("dropped_by_instrumentation", unrecordedTransitions.droppedByInstrumentation.toString())
                         }
                     }.toMap()
             )
             spanToken.setSystemAttribute("transition_count", transitionCount.incrementAndGet().toString())
+            return true
         }
 
-        override fun end() {
+        override fun end(unrecordedTransitions: UnrecordedTransitions) {
+            if (unrecordedTransitions.notInSession > 0) {
+                spanToken.setSystemAttribute("not_in_session", unrecordedTransitions.notInSession.toString())
+            }
+            if (unrecordedTransitions.droppedByInstrumentation > 0) {
+                spanToken.setSystemAttribute("dropped_by_instrumentation", unrecordedTransitions.droppedByInstrumentation.toString())
+            }
             spanToken.stop()
         }
     }
 
     private class NoopSessionStateToken<T> : SessionStateToken<T> {
-        override fun update(updateDetectedTimeMs: Long, newValue: T, unrecordedTransitions: UnrecordedTransitions) {}
-        override fun end() {}
+        override fun update(
+            updateDetectedTimeMs: Long,
+            newValue: T,
+            unrecordedTransitions: UnrecordedTransitions
+        ) = false
+        override fun end(unrecordedTransitions: UnrecordedTransitions) {}
     }
 }
 

@@ -19,12 +19,12 @@ interface SessionStateToken<T> {
         updateDetectedTimeMs: Long,
         newValue: T,
         unrecordedTransitions: UnrecordedTransitions = noUnrecordedTransitions
-    )
+    ): Boolean
 
     /**
      * End tracking of this state for the current session.
      */
-    fun end()
+    fun end(unrecordedTransitions: UnrecordedTransitions = noUnrecordedTransitions)
 }
 
 /**

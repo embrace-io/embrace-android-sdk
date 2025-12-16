@@ -17,40 +17,62 @@ abstract class StateDataSource<T>(
     private val args: InstrumentationArgs,
     private val stateValueFactory: (initialValue: T) -> SchemaType.State<T>,
     defaultValue: T,
+    maxTransitions: Int = DEFAULT_MAX_TRANSITIONS,
 ) : SessionEndListener, SessionChangeListener, DataSourceImpl(
     args = args,
-    limitStrategy = UpToLimitStrategy { MAX_TRANSITIONS }
+    limitStrategy = UpToLimitStrategy { maxTransitions }
 ) {
     private val currentState: AtomicReference<T> = AtomicReference(defaultValue)
     private val sessionStateToken: AtomicReference<SessionStateToken<T>?> = AtomicReference()
     private val unrecordedTransitions = AtomicReference(noUnrecordedTransitions)
 
-    protected fun onStateChange(updateDetectedTimeMs: Long, newState: T, droppedTransitions: Int = 0) {
+    fun onStateChange(updateDetectedTimeMs: Long, newState: T, droppedTransitions: Int = 0) {
         val oldState = currentState.getAndSet(newState)
         val currentStateToken = sessionStateToken.get()
+        // Track the number of transitions dropped by instrumentation that didn't cause this to be invoked
         unrecordedTransitions.updateDroppedByInstrumentation(droppedTransitions)
         if (currentStateToken != null) {
             captureTelemetry(
                 inputValidation = { newState != oldState },
                 invalidInputCallback = {
+                    // Input validation failing means the transition didn't change the state value, so keep track of it as unrecorded
                     unrecordedTransitions.updateDroppedByInstrumentation(1)
                 }
             ) {
-                currentStateToken.update(
+                val droppedTransitions = unrecordedTransitions.getAndSet(noUnrecordedTransitions)
+                val transitionRecorded = currentStateToken.update(
                     updateDetectedTimeMs = updateDetectedTimeMs,
                     newValue = newState,
-                    unrecordedTransitions = unrecordedTransitions.getAndSet(noUnrecordedTransitions)
+                    unrecordedTransitions = droppedTransitions
                 )
+
+                // If the transition was not recorded by the token, it means the associated session has ended.
+                // Add that transition as occurring outside of a session and also add back unrecorded transitions we tried to record.
+                if (!transitionRecorded) {
+                    unrecordedTransitions.incrementCount(
+                        notInSession = droppedTransitions.notInSession + 1,
+                        droppedByInstrumentation = droppedTransitions.droppedByInstrumentation
+                    )
+                }
             }
         } else {
-            unrecordedTransitions.dropTransitionNotInSession()
+            // The token not existing means a session hasn't be creat yet
+            unrecordedTransitions.updateNotInSession(1)
+        }
+    }
+
+    @CallSuper
+    override fun onDataCaptureEnabled() {
+        // Create a new state span as soon as the data source is enabled if there's an active session
+        if (args.sessionId() != null) {
+            createSessionStateSpan(currentState.get())
         }
     }
 
     @CallSuper
     override fun onPreSessionEnd() {
         sessionStateToken.getAndSet(null)?.apply {
-            end()
+            end(unrecordedTransitions.get())
         }
     }
 
@@ -71,20 +93,23 @@ abstract class StateDataSource<T>(
         }
     }
 
-    private fun AtomicReference<UnrecordedTransitions>.dropTransitionNotInSession() {
-        getAndUpdate { oldValue ->
-            oldValue.copy(
-                notInSession = oldValue.notInSession + 1,
-                droppedByInstrumentation = oldValue.droppedByInstrumentation
-            )
-        }
+    private fun AtomicReference<UnrecordedTransitions>.updateNotInSession(count: Int) {
+        incrementCount(notInSession = count)
     }
 
-    private fun AtomicReference<UnrecordedTransitions>.updateDroppedByInstrumentation(droppedTransitions: Int) {
-        getAndUpdate { oldValue ->
-            oldValue.copy(
-                notInSession = oldValue.notInSession,
-                droppedByInstrumentation = oldValue.droppedByInstrumentation + droppedTransitions
+    private fun AtomicReference<UnrecordedTransitions>.updateDroppedByInstrumentation(count: Int) {
+        incrementCount(droppedByInstrumentation = count)
+    }
+
+    private fun AtomicReference<UnrecordedTransitions>.incrementCount(notInSession: Int = 0, droppedByInstrumentation: Int = 0) {
+        synchronized(this) {
+            set(
+                get().let { oldValue ->
+                    UnrecordedTransitions(
+                        notInSession = oldValue.notInSession + notInSession,
+                        droppedByInstrumentation = oldValue.droppedByInstrumentation + droppedByInstrumentation
+                    )
+                }
             )
         }
     }
@@ -94,4 +119,4 @@ abstract class StateDataSource<T>(
  * Maximum transitions per state span that the backend can expect. This could be overridable in the future, at which point the max value
  * should be encoded in the data.
  */
-private const val MAX_TRANSITIONS = 1000
+private const val DEFAULT_MAX_TRANSITIONS = 1000

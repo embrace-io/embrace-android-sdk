@@ -18,28 +18,4 @@ interface FlutterInternalInterface : EmbraceInternalInterface {
      * @suppress
      */
     fun setDartVersion(version: String?)
-
-    /**
-     * Logs a handled Dart error to the Embrace SDK - this is not intended for public use.
-     * @suppress
-     */
-    fun logHandledDartException(
-        stack: String?,
-        name: String?,
-        message: String?,
-        context: String?,
-        library: String?,
-    )
-
-    /**
-     * Logs an unhandled Dart error to the Embrace SDK - this is not intended for public use.
-     * @suppress
-     */
-    fun logUnhandledDartException(
-        stack: String?,
-        name: String?,
-        message: String?,
-        context: String?,
-        library: String?,
-    )
 }

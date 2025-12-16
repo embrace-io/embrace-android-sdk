@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.testcases.features
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.EmbraceImpl
+import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.config.FakeProjectConfig
 import io.embrace.android.embracesdk.internal.EmbraceInternalApi
@@ -94,12 +95,13 @@ internal class PayloadTypesHeaderTest {
             testCaseAction = {
                 embrace.logInfo("log message")
                 logger.trackInternalError(InternalErrorType.INTERNAL_INTERFACE_FAIL, RuntimeException("some internal error"))
-                EmbraceInternalApi.flutterInternalInterface.logUnhandledDartException(
-                    "Flutter stacktrace",
-                    "FlutterException",
+                embrace.logMessage(
                     "Flutter error occurred",
-                    "Flutter context",
-                    "Flutter library"
+                    Severity.ERROR,
+                    mapOf(
+                        "emb.type" to "sys.flutter_exception",
+                        "emb.private.send_mode" to "immediate",
+                    )
                 )
                 clock.tick(2000L)
             },

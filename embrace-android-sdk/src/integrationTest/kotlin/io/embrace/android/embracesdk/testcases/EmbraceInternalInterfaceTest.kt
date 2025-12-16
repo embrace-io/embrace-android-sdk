@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.internal.EmbraceInternalApi
 import io.embrace.android.embracesdk.internal.config.remote.NetworkCaptureRuleRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Rule
 import org.junit.Test
@@ -50,9 +51,19 @@ internal class EmbraceInternalInterfaceTest {
                 )
             ),
             testCaseAction = {
+                EmbraceInternalApi.internalInterface.addEnvelopeResource("foo", "bar")
                 recordSession {
+                    embrace.logInfo("Hi")
                     assertFalse(EmbraceInternalApi.internalInterface.isNetworkSpanForwardingEnabled())
                 }
+            },
+            assertAction = {
+                val expected = mapOf("foo" to "bar")
+                val sessionResource = checkNotNull(getSingleSessionEnvelope().resource)
+                assertEquals(expected, sessionResource.extras)
+
+                val logResource = checkNotNull(getSingleLogEnvelope().resource)
+                assertEquals(expected, logResource.extras)
             }
         )
     }

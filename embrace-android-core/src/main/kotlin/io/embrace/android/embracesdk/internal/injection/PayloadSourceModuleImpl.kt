@@ -17,6 +17,7 @@ import io.embrace.android.embracesdk.internal.envelope.metadata.NativeSdkVersion
 import io.embrace.android.embracesdk.internal.envelope.metadata.ReactNativeSdkVersionInfo
 import io.embrace.android.embracesdk.internal.envelope.metadata.UnitySdkVersionInfo
 import io.embrace.android.embracesdk.internal.envelope.resource.DeviceImpl
+import io.embrace.android.embracesdk.internal.envelope.resource.EnvelopeResourceSource
 import io.embrace.android.embracesdk.internal.envelope.resource.EnvelopeResourceSourceImpl
 import io.embrace.android.embracesdk.internal.envelope.session.OtelPayloadMapper
 import io.embrace.android.embracesdk.internal.envelope.session.SessionEnvelopeSource
@@ -97,7 +98,7 @@ class PayloadSourceModuleImpl(
         }
     }
 
-    private val resourceSource by singleton {
+    override val resourceSource: EnvelopeResourceSource by singleton {
         EmbTrace.trace("resource-source") {
             EnvelopeResourceSourceImpl(
                 hostedSdkVersionInfo,

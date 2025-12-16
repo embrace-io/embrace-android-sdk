@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
 /**
  * Creates a [EnvelopeResource] object.
  */
-fun interface EnvelopeResourceSource {
+interface EnvelopeResourceSource {
     fun getEnvelopeResource(): EnvelopeResource
+    fun add(key: String, value: String)
 }

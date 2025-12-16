@@ -10,4 +10,7 @@ class FakeEmbraceInternalInterface(
     var networkRequests: MutableList<EmbraceNetworkRequest> = mutableListOf()
 
     override fun isNetworkSpanForwardingEnabled(): Boolean = networkSpanForwardingEnabled
+
+    override fun addEnvelopeResource(key: String, value: String) {
+    }
 }

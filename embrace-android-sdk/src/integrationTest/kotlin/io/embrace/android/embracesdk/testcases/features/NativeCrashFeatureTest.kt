@@ -3,6 +3,8 @@ package io.embrace.android.embracesdk.testcases.features
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.getLogOfType
 import io.embrace.android.embracesdk.assertions.getSessionId
+import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
+import io.embrace.android.embracesdk.fakes.FakeJniDelegate
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
@@ -17,12 +19,14 @@ import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.LogPayload
+import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbracePayloadAssertionInterface
 import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import io.embrace.android.embracesdk.testframework.actions.StoredNativeCrashData
 import io.embrace.android.embracesdk.testframework.actions.createStoredNativeCrashData
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -101,8 +105,10 @@ internal class NativeCrashFeatureTest {
     val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule {
         EmbraceSetupInterface(
             fakeStorageLayer = true,
+            workerToFake = Worker.Background.IoRegWorker,
         ).apply {
             getEmbLogger().throwOnInternalError = false
+            getFakedWorkerExecutor().blockingMode = false
         }
     }
 
@@ -273,6 +279,64 @@ internal class NativeCrashFeatureTest {
                 assertNoNativeCrashSent(crashData)
             }
         )
+    }
+
+    @Test
+    fun `sessionId and crash path properly set up when background activity enabled`() {
+        checkNativeMetadata(true)
+    }
+
+    @Test
+    fun `sessionId and crash path properly set up when background activity disabled`() {
+        checkNativeMetadata(false)
+    }
+
+    private fun checkNativeMetadata(backgroundActivityEnabled: Boolean) {
+        lateinit var jniDelegate: FakeJniDelegate
+        lateinit var ioWorker: BlockingScheduledExecutorService
+        val sessions: MutableList<String?> = mutableListOf()
+        val nativeSessionMetadata: MutableList<Pair<String?, String?>> = mutableListOf()
+        testRule.runTest(
+            instrumentedConfig = config.copy(
+                enabledFeatures = FakeEnabledFeatureConfig(
+                    nativeCrashCapture = true,
+                    bgActivityCapture = backgroundActivityEnabled
+                )
+            ),
+            setupAction = {
+                jniDelegate = fakeJniDelegate
+                ioWorker = getFakedWorkerExecutor()
+                ioWorker.blockingMode = true
+            },
+            testCaseAction = {
+                ioWorker.runCurrentlyBlocked()
+                jniDelegate.persistMetadata(embrace.currentSessionId, sessions, nativeSessionMetadata)
+                recordSession {
+                    jniDelegate.persistMetadata(embrace.currentSessionId, sessions, nativeSessionMetadata)
+                }
+                jniDelegate.persistMetadata(embrace.currentSessionId, sessions, nativeSessionMetadata)
+                recordSession {
+                    jniDelegate.persistMetadata(embrace.currentSessionId, sessions, nativeSessionMetadata)
+                }
+            },
+            assertAction = {
+                repeat(3) { i ->
+                    with(nativeSessionMetadata[i]) {
+                        assertEquals("sessions: $sessions, nativeMetadata: $nativeSessionMetadata", sessions[i], first)
+                        assertNotNull(second)
+                    }
+                }
+            }
+        )
+    }
+
+    private fun FakeJniDelegate.persistMetadata(
+        currentSessionId: String?,
+        sessions: MutableList<String?>,
+        nativeSessionMetadata: MutableList<Pair<String?, String?>>
+    ) {
+        sessions.add(currentSessionId ?: "null")
+        nativeSessionMetadata.add(Pair(sessionId, reportPath))
     }
 
     private fun findMatchingSessionId(it: Envelope<LogPayload>, data: StoredNativeCrashData): Boolean {

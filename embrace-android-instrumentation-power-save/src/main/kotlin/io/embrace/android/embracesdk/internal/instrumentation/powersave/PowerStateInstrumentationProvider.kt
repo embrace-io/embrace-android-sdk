@@ -6,9 +6,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 
 class PowerStateInstrumentationProvider :
     StateInstrumentationProvider<PowerStateDataSource, SchemaType.PowerState.PowerMode>(
-        configGate = {
-            configService.autoDataCaptureBehavior.isPowerSaveModeCaptureEnabled()
-        }
+        configGate = { configService.autoDataCaptureBehavior.isPowerSaveModeCaptureEnabled() }
     ) {
     override fun factoryProvider(args: InstrumentationArgs): () -> PowerStateDataSource {
         return { PowerStateDataSource(args) }

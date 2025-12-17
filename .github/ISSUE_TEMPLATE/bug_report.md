@@ -7,42 +7,18 @@ assignees: ''
 
 ---
 
-<!-- Before raising, please check if somebody else has already reported your issue. -->
-
 ### Describe the bug
+
 A clear and concise description of what the bug is.
 
 ### Steps to reproduce
-1. Calling API X
-2. Doing this in the emulator...
-3. Throws error A or collects wrongly data B
 
-### Environment
-* Android version:
-* Embrace SDK version:
-* Emulator or physical device:
+Details on how to reproduce the issue, if known.
 
-<!--
-  Below are a few approaches you might take to communicate the issue, in
-  descending order of awesomeness. Please choose one and feel free to delete
-  the others from this template.
--->
+### Environment details
 
-### Example Repo <!-- Option 1 -->
+Information about the API level, device model, etc if it will help reproduce the bug.
 
-- [ ] Create a minimal repository that can reproduce the issue
-- [ ] Link to it here:
+### Additional details
 
-### Example code snippet <!-- Option 2 -->
-
-```
-# (Insert code sample to reproduce the problem)
-```
-
-<!-- Error messages, if any -->
-<details><summary>Error messages:</summary>
-
-```
-
-```
-</details>
+Anything else that might be helpful in solving the problem.

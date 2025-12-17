@@ -12,12 +12,8 @@ class NetworkStatusDataSource(
     args: InstrumentationArgs,
 ) : NetworkConnectivityListener, DataSourceImpl(
     args = args,
-    limitStrategy = UpToLimitStrategy { MAX_CAPTURED_NETWORK_STATUS }
+    limitStrategy = UpToLimitStrategy { MAX_CAPTURED_NETWORK_STATE_TRANSITIONS }
 ) {
-    private companion object {
-        private const val MAX_CAPTURED_NETWORK_STATUS = 100
-    }
-
     private var span: SpanToken? = null
 
     override fun onNetworkConnectivityStatusChanged(status: NetworkStatus) {

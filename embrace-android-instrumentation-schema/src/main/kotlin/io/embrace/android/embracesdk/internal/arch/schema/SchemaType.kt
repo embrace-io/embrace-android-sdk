@@ -294,6 +294,19 @@ sealed class SchemaType(
         )
     }
 
+    class NetworkState(
+        initialValue: Status,
+    ) : State<NetworkState.Status>(initialValue, "network") {
+        enum class Status(private val value: String) {
+            NOT_REACHABLE("none"),
+            WIFI("wifi"),
+            WAN("wan"),
+            UNKNOWN("unknown");
+
+            override fun toString(): String = value
+        }
+    }
+
     /**
      * A custom telemetry type. This allows the hybrid SDKs (and others) to pass in custom
      * telemetry schemas if required.

@@ -32,6 +32,10 @@ fun List<Attribute>.hasEmbraceAttributeKey(embraceAttributeKey: EmbraceAttribute
     it.key == embraceAttributeKey.name
 }
 
+fun List<Attribute>.hasEmbraceAttributeValue(embraceAttributeKey: EmbraceAttributeKey, value: Any): Boolean = any {
+    it.key == embraceAttributeKey.name && it.data == value.toString()
+}
+
 fun List<Attribute>.hasEmbraceAttribute(embraceAttribute: EmbraceAttribute): Boolean = any {
     it.key == embraceAttribute.key.name && it.data == embraceAttribute.value
 }
@@ -43,6 +47,11 @@ fun Map<String, String>.hasEmbraceAttribute(embraceAttribute: EmbraceAttribute):
 
 fun MutableMap<String, String>.setEmbraceAttribute(embraceAttribute: EmbraceAttribute): Map<String, String> {
     this[embraceAttribute.key.name] = embraceAttribute.value
+    return this
+}
+
+fun MutableMap<String, String>.setEmbraceAttribute(key: EmbraceAttributeKey, value: Any): Map<String, String> {
+    this[key.name] = value.toString()
     return this
 }
 

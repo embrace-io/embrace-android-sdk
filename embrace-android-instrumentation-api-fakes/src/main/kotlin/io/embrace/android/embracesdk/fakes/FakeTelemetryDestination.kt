@@ -118,7 +118,7 @@ class FakeTelemetryDestination : TelemetryDestination {
         createdSpans.add(token)
     }
 
-    override fun <T> startSessionStateCapture(state: SchemaType.State<T>): SessionStateToken<T> = FakeSessionStateToken()
+    override fun <T: Any> startSessionStateCapture(state: SchemaType.State<T>): SessionStateToken<T> = FakeSessionStateToken()
 
     override var sessionUpdateAction: (() -> Unit)? = null
 }

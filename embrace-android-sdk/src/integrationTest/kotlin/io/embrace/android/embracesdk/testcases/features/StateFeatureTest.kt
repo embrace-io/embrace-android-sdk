@@ -1,23 +1,21 @@
 package io.embrace.android.embracesdk.testcases.features
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.assertions.assertStateTransition
 import io.embrace.android.embracesdk.assertions.findSpansOfType
 import io.embrace.android.embracesdk.fakes.TestStateDataSource
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
+import io.embrace.android.embracesdk.internal.arch.attrs.embStateDroppedByInstrumentation
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.state.AppState
-import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
-import io.embrace.android.embracesdk.internal.payload.Envelope
-import io.embrace.android.embracesdk.internal.payload.SessionPayload
-import io.embrace.android.embracesdk.internal.payload.Span
-import io.embrace.android.embracesdk.internal.payload.SpanEvent
+import io.embrace.android.embracesdk.internal.otel.spans.hasEmbraceAttributeValue
 import io.embrace.android.embracesdk.internal.session.getSessionSpan
+import io.embrace.android.embracesdk.internal.session.getStateSpan
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface.Companion.LIFECYCLE_EVENT_GAP
-import io.embrace.android.embracesdk.testframework.actions.EmbracePayloadAssertionInterface
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -93,15 +91,15 @@ internal class StateFeatureTest {
 
                 val sessions = listOf(background.first(), foreground.first(), background.last())
                 repeat(sessions.size) { i ->
-                    val stateSpan = getStateSpan(sessions[i])
+                    val stateSpan = checkNotNull(sessions[i].getStateSpan("emb-state-test"))
                     with(checkNotNull(stateSpan.events)) {
                         repeat(size) { j ->
                             val event = transitions[i][j]
-                            this[j].assertTransition(event.first, event.second)
+                            this[j].assertStateTransition(event.first, event.second)
                         }
                     }
                     val sessionSpan = checkNotNull(sessions[i].getSessionSpan())
-                    assertEquals(sessionSpan.startTimeNanos,stateSpan.startTimeNanos)
+                    assertEquals(sessionSpan.startTimeNanos, stateSpan.startTimeNanos)
                     assertEquals(sessionSpan.endTimeNanos, stateSpan.endTimeNanos)
                 }
             }
@@ -120,11 +118,11 @@ internal class StateFeatureTest {
                 }
             },
             assertAction = {
-                val stateSpan = getStateSpan()
+                val stateSpan = checkNotNull(getSingleSessionEnvelope().getStateSpan("emb-state-test"))
                 with(checkNotNull(stateSpan.events)) {
                     assertEquals(4, size)
                     repeat(size) { i ->
-                        this[i].assertTransition(transitions[i].first, transitions[i].second)
+                        this[i].assertStateTransition(transitions[i].first, transitions[i].second)
                     }
                 }
             }
@@ -143,14 +141,15 @@ internal class StateFeatureTest {
                 }
             },
             assertAction = {
-                val stateSpan = getStateSpan()
+                val stateSpan = checkNotNull(getSingleSessionEnvelope().getStateSpan("emb-state-test"))
                 with(checkNotNull(stateSpan.events).single()) {
-                    assertTransition(
+                    assertStateTransition(
                         timestampMs = transitions[0].first,
-                        newValue = transitions[0].second
+                        newStateValue = transitions[0].second
                     )
                 }
-                assertEquals("1", checkNotNull(stateSpan.attributes).single { it.key == "dropped_by_instrumentation" }.data)
+
+                stateSpan.hasEmbraceAttributeValue(embStateDroppedByInstrumentation, 1)
             }
         )
     }
@@ -170,13 +169,13 @@ internal class StateFeatureTest {
             assertAction = {
                 val sessionPayload = getSingleSessionEnvelope()
                 val sessionSpan = checkNotNull(sessionPayload.getSessionSpan())
-                val stateSpan = getStateSpan(sessionPayload)
+                val stateSpan = checkNotNull(sessionPayload.getStateSpan("emb-state-test"))
                 with(checkNotNull(stateSpan.events)) {
                     assertEquals(stateUpdates.size, size)
                     repeat(size) { i ->
-                        this[i].assertTransition(
+                        this[i].assertStateTransition(
                             timestampMs = transitions[i].first,
-                            newValue = transitions[i].second,
+                            newStateValue = transitions[i].second,
                             droppedByInstrumentation = transitionDrops
                         )
                     }
@@ -203,18 +202,18 @@ internal class StateFeatureTest {
                 }
             },
             assertAction = {
-                val stateSpan = getStateSpan()
+                val stateSpan = checkNotNull(getSingleSessionEnvelope().getStateSpan("emb-state-test"))
                 with(checkNotNull(stateSpan.events)) {
                     assertEquals(4, size)
                     repeat(size) { i ->
-                        this[i].assertTransition(
+                        this[i].assertStateTransition(
                             timestampMs = transitions[i].first,
-                            newValue = transitions[i].second,
+                            newStateValue = transitions[i].second,
                             droppedByInstrumentation = transitionDrops
                         )
                     }
                 }
-                assertEquals("3", checkNotNull(stateSpan.attributes).single { it.key == "dropped_by_instrumentation" }.data)
+                stateSpan.hasEmbraceAttributeValue(embStateDroppedByInstrumentation, 3)
             }
         )
     }
@@ -238,11 +237,11 @@ internal class StateFeatureTest {
                 val sessions = getSessionEnvelopes(2)
                 repeat(sessions.size) { i ->
                     val periodWithTransition = transitions.filter { it.size == 2 }[i]
-                    val stateSpan = getStateSpan(sessionPayload = sessions[i])
+                    val stateSpan = checkNotNull(sessions[i].getStateSpan("emb-state-test"))
                     assertEquals(stateUpdates.size, stateSpan.events?.size)
-                    checkNotNull(stateSpan.events).first().assertTransition(
+                    checkNotNull(stateSpan.events).first().assertStateTransition(
                         timestampMs = periodWithTransition[0].first,
-                        newValue = periodWithTransition[0].second,
+                        newStateValue = periodWithTransition[0].second,
                         notInSession = 1
                     )
                 }
@@ -265,33 +264,5 @@ internal class StateFeatureTest {
             )
         }
         return transitions
-    }
-
-    private fun EmbracePayloadAssertionInterface.getStateSpan(
-        sessionPayload: Envelope<SessionPayload> = getSingleSessionEnvelope(),
-    ): Span = sessionPayload.findSpansOfType(EmbType.State).single { it.name == "emb-state-test" }
-
-    private fun SpanEvent.assertTransition(
-        timestampMs: Long,
-        newValue: String,
-        notInSession: Int = 0,
-        droppedByInstrumentation: Int = 0,
-    ) {
-        assertEquals("transition", name)
-        assertEquals(timestampMs.millisToNanos(), timestampNanos)
-        with(checkNotNull(attributes)) {
-            assertEquals(newValue, single { it.key == "new_value" }.data)
-            if (notInSession > 0) {
-                assertEquals(notInSession.toString(), single { it.key == "not_in_session" }.data)
-            } else {
-                assertEquals(0, filter { it.key == "not_in_session" }.size)
-            }
-
-            if (droppedByInstrumentation > 0) {
-                assertEquals(droppedByInstrumentation.toString(), single { it.key == "dropped_by_instrumentation" }.data)
-            } else {
-                assertEquals(0, filter { it.key == "dropped_by_instrumentation" }.size)
-            }
-        }
     }
 }

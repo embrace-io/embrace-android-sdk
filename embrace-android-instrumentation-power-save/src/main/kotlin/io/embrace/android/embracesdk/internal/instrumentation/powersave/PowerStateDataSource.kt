@@ -20,6 +20,7 @@ class PowerStateDataSource(
     private val receiver = PowerSaveModeReceiver(powerManagerProvider, ::onPowerSaveModeChanged)
 
     override fun onDataCaptureEnabled() {
+        super.onDataCaptureEnabled()
         args.backgroundWorker(Worker.Background.NonIoRegWorker).run {
             receiver.register(args.context, this)
             submit {

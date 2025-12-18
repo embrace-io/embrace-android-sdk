@@ -38,6 +38,7 @@ internal class AutoDataCaptureBehaviorImplTest {
             assertTrue(isUiLoadTracingTraceAll())
             assertTrue(isThermalStatusCaptureEnabled())
             assertFalse(isEndStartupWithAppReadyEnabled())
+            assertFalse(isStateCaptureEnabled())
         }
     }
 
@@ -126,16 +127,30 @@ internal class AutoDataCaptureBehaviorImplTest {
         assertFalse(behavior.isUiLoadTracingTraceAll())
     }
 
+    @Test
+    fun `enable state capture`() {
+        val behavior = createBehavior(
+            localUiLoadTracingEnabled = true,
+            localUiLoadTracingTraceAllEnabled = true,
+            stateCaptureEnabled = true,
+            remote = remote
+        )
+
+        assertTrue(behavior.isStateCaptureEnabled())
+    }
+
     private fun createBehavior(
         localUiLoadTracingEnabled: Boolean,
         localUiLoadTracingTraceAllEnabled: Boolean,
+        stateCaptureEnabled: Boolean = false,
         remote: RemoteConfig,
     ) = AutoDataCaptureBehaviorImpl(
         thresholdCheck = BehaviorThresholdCheck { FAKE_DEVICE_ID },
         local = FakeInstrumentedConfig(
             enabledFeatures = FakeEnabledFeatureConfig(
                 uiLoadTracingTraceAll = localUiLoadTracingTraceAllEnabled,
-                uiLoadTracingEnabled = localUiLoadTracingEnabled
+                uiLoadTracingEnabled = localUiLoadTracingEnabled,
+                stateCaptureEnabled = stateCaptureEnabled
             )
         ),
         remote = remote

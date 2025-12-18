@@ -20,10 +20,15 @@ internal class DataSourceImplTest {
     fun `capture data successfully`() {
         val source = FakeDataSourceImpl()
         var b = true
-        source.captureTelemetry(inputValidation = { true }) {
+        var validationFailed = 0
+        source.captureTelemetry(
+            inputValidation = { true },
+            invalidInputCallback = { validationFailed++ }
+        ) {
             b = false
         }
         assertFalse(b)
+        assertEquals(0, validationFailed)
     }
 
     @Test
@@ -31,7 +36,7 @@ internal class DataSourceImplTest {
         val source = FakeDataSourceImpl()
 
         // no exception thrown
-        source.captureTelemetry(inputValidation = { true }) {
+        source.captureTelemetry {
             error("Whoops!")
         }
     }
@@ -42,7 +47,7 @@ internal class DataSourceImplTest {
 
         var count = 0
         repeat(4) {
-            source.captureTelemetry(inputValidation = { true }) {
+            source.captureTelemetry {
                 count++
             }
         }
@@ -52,14 +57,20 @@ internal class DataSourceImplTest {
     @Test
     fun `capture data respects validation`() {
         val source = FakeDataSourceImpl(UpToLimitStrategy { 2 })
+        var validationFailed = 0
 
         var count = 0
         repeat(4) {
-            source.captureTelemetry(inputValidation = { false }) {
+            source.captureTelemetry(
+                inputValidation = { false },
+                invalidInputCallback = { validationFailed++ }
+            ) {
                 count++
             }
         }
+
         assertEquals(0, count)
+        assertEquals(4, validationFailed)
     }
 
     private class FakeDataSourceImpl(

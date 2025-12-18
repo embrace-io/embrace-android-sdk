@@ -278,6 +278,22 @@ sealed class SchemaType(
     }
 
     /**
+     * Base [SchemaType] to handle common logic for States. This includes expecting the type [T] as the value of the State
+     * whose value can be encoded uniquely as a string via [toString], which will be used to presented it in any serialized forms.
+     */
+    abstract class State<T>(
+        initialValue: T,
+        stateSpanName: String,
+    ) : SchemaType(
+        telemetryType = EmbType.State,
+        fixedObjectName = "state-$stateSpanName"
+    ) {
+        override val schemaAttributes: Map<String, String> = mapOf(
+            "initial_value" to initialValue.toString()
+        )
+    }
+
+    /**
      * A custom telemetry type. This allows the hybrid SDKs (and others) to pass in custom
      * telemetry schemas if required.
      */

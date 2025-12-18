@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.internal.arch.InstrumentationProvider
 import io.embrace.android.embracesdk.internal.arch.SessionChangeListener
 import io.embrace.android.embracesdk.internal.instrumentation.crash.jvm.JvmCrashDataSource
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeCrashDataSource
+import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkStateDataSource
 import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkStatusDataSource
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.EmbTrace.end
@@ -111,6 +112,9 @@ internal fun ModuleGraph.postLoadInstrumentation() {
         deliveryModule.payloadStore?.let(::addCrashTeardownHandler)
     }
     registry.findByType(NetworkStatusDataSource::class)?.let {
+        essentialServiceModule.networkConnectivityService.addNetworkConnectivityListener(it)
+    }
+    registry.findByType(NetworkStateDataSource::class)?.let {
         essentialServiceModule.networkConnectivityService.addNetworkConnectivityListener(it)
     }
 }

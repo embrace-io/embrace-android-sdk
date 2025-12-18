@@ -119,4 +119,4 @@ abstract class StateDataSource<T>(
  * Maximum transitions per state span that the backend can expect. This could be overridable in the future, at which point the max value
  * should be encoded in the data.
  */
-private const val DEFAULT_MAX_TRANSITIONS = 1000
+private const val DEFAULT_MAX_TRANSITIONS = 100

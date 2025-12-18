@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.arch.schema
 import io.embrace.android.embracesdk.internal.arch.attrs.embAeiNumber
 import io.embrace.android.embracesdk.internal.arch.attrs.embCrashNumber
 import io.embrace.android.embracesdk.internal.arch.attrs.embSendMode
+import io.embrace.android.embracesdk.internal.arch.attrs.embStateInitialValue
 import io.embrace.android.embracesdk.internal.arch.attrs.toEmbraceAttributeName
 import io.embrace.opentelemetry.kotlin.semconv.ExceptionAttributes
 import io.embrace.opentelemetry.kotlin.semconv.HttpAttributes
@@ -281,7 +282,7 @@ sealed class SchemaType(
      * Base [SchemaType] to handle common logic for States. This includes expecting the type [T] as the value of the State
      * whose value can be encoded uniquely as a string via [toString], which will be used to presented it in any serialized forms.
      */
-    abstract class State<T>(
+    abstract class State<T : Any>(
         initialValue: T,
         stateSpanName: String,
     ) : SchemaType(
@@ -289,7 +290,7 @@ sealed class SchemaType(
         fixedObjectName = "state-$stateSpanName"
     ) {
         override val schemaAttributes: Map<String, String> = mapOf(
-            "initial_value" to initialValue.toString()
+            embStateInitialValue.name to initialValue.toString()
         )
     }
 

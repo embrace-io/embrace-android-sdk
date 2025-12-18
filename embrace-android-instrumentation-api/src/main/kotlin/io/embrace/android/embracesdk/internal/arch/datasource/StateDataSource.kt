@@ -13,7 +13,7 @@ import java.util.concurrent.atomic.AtomicReference
  * Base [DataSource] to handle State updates in a unified way. This will create the right objects to represent a state in the data model,
  * as well as track and put in the common metadata expected by the backend.
  */
-abstract class StateDataSource<T>(
+abstract class StateDataSource<T : Any>(
     private val args: InstrumentationArgs,
     private val stateValueFactory: (initialValue: T) -> SchemaType.State<T>,
     defaultValue: T,

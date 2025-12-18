@@ -14,6 +14,10 @@ fun Envelope<SessionPayload>.getSessionSpan(): Span? {
         ?: data.spanSnapshots?.singleOrNull { it.hasEmbraceAttribute(EmbType.Ux.Session) }
 }
 
+fun Envelope<SessionPayload>.getStateSpan(spanName: String): Span? {
+    return data.spans?.singleOrNull { it.hasEmbraceAttribute(EmbType.State) && it.name == spanName }
+}
+
 @OptIn(IncubatingApi::class)
 fun Envelope<SessionPayload>.getSessionId(): String? {
     return getSessionSpan()?.attributes?.findAttributeValue(SessionAttributes.SESSION_ID)

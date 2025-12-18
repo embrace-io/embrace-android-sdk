@@ -8,7 +8,7 @@ import io.embrace.android.embracesdk.internal.arch.InstrumentationProvider
  *
  * It ensures the state feature flag is enabled as well as whatever configuration gate is required.
  */
-abstract class StateInstrumentationProvider<T : StateDataSource<S>, S>(
+abstract class StateInstrumentationProvider<T : StateDataSource<S>, S : Any>(
     private val configGate: InstrumentationArgs.() -> Boolean = { true },
 ) : InstrumentationProvider {
 

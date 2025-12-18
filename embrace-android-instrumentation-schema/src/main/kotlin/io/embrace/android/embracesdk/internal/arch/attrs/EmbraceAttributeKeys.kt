@@ -119,3 +119,30 @@ val embAttachmentErrorCode: EmbraceAttributeKey = EmbraceAttributeKey.create("at
  * The name of the Activity that app startup completed in
  */
 val embStartupActivityName: EmbraceAttributeKey = EmbraceAttributeKey.create("startup_activity")
+
+/**
+ * The initial value a state began with
+ */
+val embStateInitialValue: EmbraceAttributeKey = createStateKey("initial_value")
+
+/**
+ * The value a state transitioned into in the given event
+ */
+val embStateNewValue: EmbraceAttributeKey = createStateKey("new_value")
+
+/**
+ * The total number of transitions recorded explicitly in the given state span
+ */
+val embStateTransitionCount: EmbraceAttributeKey = createStateKey("transition_count")
+
+/**
+ * The number of transitions dropped because they didn't occur during a session since the last time a transition event was recorded
+ */
+val embStateNotInSession: EmbraceAttributeKey = createStateKey("not_in_session")
+
+/**
+ * The number of transitions dropped by the instrumentation since the last time a transition event was recorded
+ */
+val embStateDroppedByInstrumentation: EmbraceAttributeKey = createStateKey("dropped_by_instrumentation")
+
+private fun createStateKey(id: String) = EmbraceAttributeKey.create("state.$id")

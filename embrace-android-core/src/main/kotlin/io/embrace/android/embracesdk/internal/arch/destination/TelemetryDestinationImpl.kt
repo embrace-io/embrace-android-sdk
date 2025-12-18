@@ -2,6 +2,10 @@ package io.embrace.android.embracesdk.internal.arch.destination
 
 import io.embrace.android.embracesdk.internal.arch.attrs.asPair
 import io.embrace.android.embracesdk.internal.arch.attrs.embState
+import io.embrace.android.embracesdk.internal.arch.attrs.embStateDroppedByInstrumentation
+import io.embrace.android.embracesdk.internal.arch.attrs.embStateNewValue
+import io.embrace.android.embracesdk.internal.arch.attrs.embStateNotInSession
+import io.embrace.android.embracesdk.internal.arch.attrs.embStateTransitionCount
 import io.embrace.android.embracesdk.internal.arch.datasource.LogSeverity
 import io.embrace.android.embracesdk.internal.arch.datasource.SessionStateToken
 import io.embrace.android.embracesdk.internal.arch.datasource.SpanEvent
@@ -16,6 +20,7 @@ import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.arch.state.AppStateTracker
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
+import io.embrace.android.embracesdk.internal.otel.sdk.setEmbraceAttribute
 import io.embrace.android.embracesdk.internal.otel.sdk.toEmbraceObjectName
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
@@ -141,7 +146,7 @@ class TelemetryDestinationImpl(
         }
     }
 
-    override fun <T> startSessionStateCapture(state: SchemaType.State<T>): SessionStateToken<T> {
+    override fun <T : Any> startSessionStateCapture(state: SchemaType.State<T>): SessionStateToken<T> {
         val spanToken = startSpanCapture(
             schemaType = state,
             startTimeMs = clock.now(),
@@ -249,7 +254,7 @@ class TelemetryDestinationImpl(
         }
     }
 
-    private class SessionStateTokenImpl<T>(
+    private class SessionStateTokenImpl<T : Any>(
         private val spanToken: SpanToken,
     ) : SessionStateToken<T> {
         private val transitionCount = AtomicInteger(0)
@@ -265,27 +270,27 @@ class TelemetryDestinationImpl(
             spanToken.addEvent(
                 name = "transition",
                 eventTimeMs = updateDetectedTimeMs,
-                attributes = mutableMapOf("new_value" to newValue.toString())
+                attributes = mutableMapOf(embStateNewValue.asPair(newValue))
                     .apply {
                         if (unrecordedTransitions.notInSession > 0) {
-                            put("not_in_session", unrecordedTransitions.notInSession.toString())
+                            setEmbraceAttribute(embStateNotInSession, unrecordedTransitions.notInSession)
                         }
 
                         if (unrecordedTransitions.droppedByInstrumentation > 0) {
-                            put("dropped_by_instrumentation", unrecordedTransitions.droppedByInstrumentation.toString())
+                            setEmbraceAttribute(embStateDroppedByInstrumentation, unrecordedTransitions.droppedByInstrumentation)
                         }
                     }.toMap()
             )
-            spanToken.setSystemAttribute("transition_count", transitionCount.incrementAndGet().toString())
+            spanToken.setSystemAttribute(embStateTransitionCount, transitionCount.incrementAndGet())
             return true
         }
 
         override fun end(unrecordedTransitions: UnrecordedTransitions) {
             if (unrecordedTransitions.notInSession > 0) {
-                spanToken.setSystemAttribute("not_in_session", unrecordedTransitions.notInSession.toString())
+                spanToken.setSystemAttribute(embStateNotInSession, unrecordedTransitions.notInSession)
             }
             if (unrecordedTransitions.droppedByInstrumentation > 0) {
-                spanToken.setSystemAttribute("dropped_by_instrumentation", unrecordedTransitions.droppedByInstrumentation.toString())
+                spanToken.setSystemAttribute(embStateDroppedByInstrumentation, unrecordedTransitions.droppedByInstrumentation)
             }
             spanToken.stop()
         }

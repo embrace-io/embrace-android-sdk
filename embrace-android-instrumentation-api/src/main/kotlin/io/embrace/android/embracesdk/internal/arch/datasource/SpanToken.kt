@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.arch.datasource
 
+import io.embrace.android.embracesdk.internal.arch.attrs.EmbraceAttributeKey
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 
 /**
@@ -31,6 +32,12 @@ interface SpanToken {
      * Set the value of the attribute with the given key, overwriting the original value if it's already set
      */
     fun setSystemAttribute(key: String, value: String)
+
+    /**
+     * Set the value of the attribute with the given [EmbraceAttributeKey] to the result of [toString] on the value,
+     * overwriting the original value if it's already set
+     */
+    fun setSystemAttribute(key: EmbraceAttributeKey, value: Any) = setSystemAttribute(key.name, value.toString())
 
     /**
      * Add an event to the span

@@ -16,6 +16,7 @@ internal class EmbraceTelemetryService(
     private val okHttpReflectionFacade: OkHttpReflectionFacade = OkHttpReflectionFacade()
     private val usageCountMap = ConcurrentHashMap<String, Int>()
     private val storageTelemetryMap = ConcurrentHashMap<String, String>()
+    private val appliedLimitCountMap = ConcurrentHashMap<String, Int>()
     private val appAttributes: Map<String, String> by lazy { computeAppAttributes() }
 
     override fun onPublicApiCalled(name: String) {
@@ -28,9 +29,18 @@ internal class EmbraceTelemetryService(
         this.storageTelemetryMap.putAll(storageTelemetry)
     }
 
+    override fun logAppliedLimit(telemetryType: LimitedTelemetryType, limitType: AppliedLimitType) {
+        val id = "applied_limit.${telemetryType.toAttributeName()}.${limitType.toAttributeName()}"
+        val key = EmbraceAttributeKey.create(id, isPrivate = true).name
+        synchronized(appliedLimitCountMap) {
+            appliedLimitCountMap[key] = (appliedLimitCountMap[key] ?: 0) + 1
+        }
+    }
+
     override fun getAndClearTelemetryAttributes(): Map<String, String> {
         return getAndClearUsageCountTelemetry()
             .plus(getAndClearStorageTelemetry())
+            .plus(getAndClearAppliedLimitTelemetry())
             .plus(appAttributes)
     }
 
@@ -48,6 +58,16 @@ internal class EmbraceTelemetryService(
         val result = storageTelemetryMap.toMap()
         storageTelemetryMap.clear()
         return result
+    }
+
+    private fun getAndClearAppliedLimitTelemetry(): Map<String, String> {
+        synchronized(appliedLimitCountMap) {
+            val appliedLimitTelemetryMap = appliedLimitCountMap.entries.associate {
+                it.key to it.value.toString()
+            }
+            appliedLimitCountMap.clear()
+            return appliedLimitTelemetryMap
+        }
     }
 
     /**

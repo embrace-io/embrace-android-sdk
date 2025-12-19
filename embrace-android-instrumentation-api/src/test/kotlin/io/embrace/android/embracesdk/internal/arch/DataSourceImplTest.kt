@@ -81,6 +81,7 @@ internal class DataSourceImplTest {
         ),
     ) : DataSourceImpl(
         args,
-        limitStrategy
+        limitStrategy,
+        "test_data_source"
     )
 }

@@ -29,6 +29,7 @@ class NetworkRequestDataSourceImpl(
 ) : NetworkRequestDataSource, DataSourceImpl(
     args,
     NoopLimitStrategy,
+    "network_request_data_source"
 ) {
 
     private val domainCountLimiter: DomainCountLimiter = args.configService.networkBehavior.domainCountLimiter

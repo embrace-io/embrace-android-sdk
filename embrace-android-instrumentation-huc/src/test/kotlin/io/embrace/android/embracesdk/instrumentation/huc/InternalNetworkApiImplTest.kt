@@ -69,6 +69,8 @@ internal class InternalNetworkApiImplTest {
     }
 
     private class FakeNetworkRequestDataSource : NetworkRequestDataSource {
+        override val instrumentationName: String = "fake_network_request_data_source"
+
         val requests: MutableList<HttpNetworkRequest> = mutableListOf()
 
         override fun recordNetworkRequest(request: HttpNetworkRequest) {

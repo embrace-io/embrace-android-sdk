@@ -14,7 +14,8 @@ internal class ComposeTapDataSource(
     private val tapDataSourceProvider: () -> TapDataSource?,
 ) : DataSourceImpl(
     args = args,
-    limitStrategy = UpToLimitStrategy(args.configService.breadcrumbBehavior::getTapBreadcrumbLimit)
+    limitStrategy = UpToLimitStrategy(args.configService.breadcrumbBehavior::getTapBreadcrumbLimit),
+    instrumentationName = "compose_tap_data_source"
 ) {
 
     @Volatile

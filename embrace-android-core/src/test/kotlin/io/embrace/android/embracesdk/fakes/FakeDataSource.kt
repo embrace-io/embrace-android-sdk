@@ -12,6 +12,8 @@ class FakeDataSource(
     private val ctx: Context,
 ) : DataSource, ComponentCallbacks2, SessionEndListener, SessionChangeListener {
 
+    override val instrumentationName: String = "fake_data_source"
+
     var enableDataCaptureCount: Int = 0
     var disableDataCaptureCount: Int = 0
     var resetCount: Int = 0

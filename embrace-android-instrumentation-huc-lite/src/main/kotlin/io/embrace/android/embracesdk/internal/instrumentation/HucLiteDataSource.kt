@@ -35,7 +35,8 @@ class HucLiteDataSource(
     private val factoryInstaller: (URLStreamHandlerFactory) -> Unit = URL::setURLStreamHandlerFactory,
 ) : DataSourceImpl(
     args = args,
-    limitStrategy = NoopLimitStrategy
+    limitStrategy = NoopLimitStrategy,
+    instrumentationName = "huc_lite_data_source"
 ) {
     private val telemetryDestination = args.destination
     private val domainCountLimiter = args.configService.networkBehavior.domainCountLimiter

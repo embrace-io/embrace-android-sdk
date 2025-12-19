@@ -16,6 +16,7 @@ class NetworkCaptureDataSourceImpl(
 ) : NetworkCaptureDataSource, DataSourceImpl(
     args = args,
     limitStrategy = NoopLimitStrategy,
+    instrumentationName = "network_capture_data_source"
 ) {
 
     private val keyValueStore: KeyValueStore = args.store

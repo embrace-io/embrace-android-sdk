@@ -15,6 +15,7 @@ class PowerStateDataSource(
     args = args,
     stateTypeFactory = ::PowerState,
     defaultValue = PowerMode.UNKNOWN,
+    instrumentationName = "power_state_data_source"
 ) {
     private val powerManagerProvider: Provider<PowerManager?> = { args.systemService(Context.POWER_SERVICE) }
     private val receiver = PowerSaveModeReceiver(powerManagerProvider, ::onPowerSaveModeChanged)

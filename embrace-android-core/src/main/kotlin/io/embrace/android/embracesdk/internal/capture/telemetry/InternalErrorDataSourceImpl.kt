@@ -16,6 +16,7 @@ internal class InternalErrorDataSourceImpl(
     DataSourceImpl(
         args,
         limitStrategy = UpToLimitStrategy { 10 },
+        instrumentationName = "internal_error_data_source"
     ) {
 
     override fun trackInternalError(type: InternalErrorType, throwable: Throwable) {

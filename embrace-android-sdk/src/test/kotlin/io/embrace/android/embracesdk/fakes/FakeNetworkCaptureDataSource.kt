@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.internal.instrumentation.network.HttpNetwor
 import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkCaptureDataSource
 
 class FakeNetworkCaptureDataSource : NetworkCaptureDataSource {
+    override val instrumentationName: String = "fake_network_capture_data_source"
 
     val requests: MutableList<HttpNetworkRequest> = mutableListOf()
 

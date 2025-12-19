@@ -105,7 +105,12 @@ internal class CurrentSessionSpanImpl(
 
         if (currentSessionSpan != spanToStop) {
             spanToStop?.spanContext?.let { spanToStopContext ->
-                currentSessionSpan?.addSystemLink(spanToStopContext, LinkType.EndedIn)
+                if (currentSessionSpan != null) {
+                    currentSessionSpan.addSystemLink(spanToStopContext, LinkType.EndedIn)
+                    if (spanToStop.hasEmbraceAttribute(EmbType.State)) {
+                        currentSessionSpan.addSystemLink(spanToStopContext, LinkType.State)
+                    }
+                }
             }
 
             val sessionId = currentSessionSpan?.getSystemAttribute(SessionAttributes.SESSION_ID)

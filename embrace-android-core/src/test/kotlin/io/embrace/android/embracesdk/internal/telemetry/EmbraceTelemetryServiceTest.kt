@@ -108,4 +108,88 @@ internal class EmbraceTelemetryServiceTest {
         assertTrue(telemetryAttributes.containsKey("emb.okhttp3"))
         assertTrue(telemetryAttributes.containsKey("emb.okhttp3_on_classpath"))
     }
+
+    @Test
+    fun `logAppliedLimit with a new limit`() {
+        // Given no limits have been logged
+        assertEquals(
+            null,
+            embraceTelemetryService.getAndClearTelemetryAttributes()["emb.private.applied_limit.error_log.truncate_attributes"]
+        )
+
+        // When a limit is logged
+        embraceTelemetryService.logAppliedLimit(LimitedTelemetryType.ERROR_LOG, AppliedLimitType.TRUNCATE_ATTRIBUTES)
+
+        // Then the limit is in the map
+        assertEquals(
+            "1",
+            embraceTelemetryService.getAndClearTelemetryAttributes()["emb.private.applied_limit.error_log.truncate_attributes"]
+        )
+    }
+
+    @Test
+    fun `logAppliedLimit increments existing limit counter`() {
+        // Given a limit is already logged
+        embraceTelemetryService.logAppliedLimit(LimitedTelemetryType.BREADCRUMB, AppliedLimitType.TRUNCATE_STRING)
+
+        // When the same limit is logged again
+        embraceTelemetryService.logAppliedLimit(LimitedTelemetryType.BREADCRUMB, AppliedLimitType.TRUNCATE_STRING)
+        embraceTelemetryService.logAppliedLimit(LimitedTelemetryType.BREADCRUMB, AppliedLimitType.TRUNCATE_STRING)
+
+        // Then the counter is incremented
+        assertEquals(
+            "3",
+            embraceTelemetryService.getAndClearTelemetryAttributes()["emb.private.applied_limit.breadcrumb.truncate_string"]
+        )
+    }
+
+    @Test
+    fun `logAppliedLimit tracks multiple different limits`() {
+        // Given multiple different limits are logged
+        embraceTelemetryService.logAppliedLimit(LimitedTelemetryType.ERROR_LOG, AppliedLimitType.TRUNCATE_ATTRIBUTES)
+        embraceTelemetryService.logAppliedLimit(LimitedTelemetryType.BREADCRUMB, AppliedLimitType.TRUNCATE_STRING)
+        embraceTelemetryService.logAppliedLimit(LimitedTelemetryType.SPAN, AppliedLimitType.DROP)
+        embraceTelemetryService.logAppliedLimit(LimitedTelemetryType.ERROR_LOG, AppliedLimitType.TRUNCATE_ATTRIBUTES)
+
+        // When getting telemetry attributes
+        val telemetryAttributes = embraceTelemetryService.getAndClearTelemetryAttributes()
+
+        // Then all limits are tracked separately
+        assertEquals("2", telemetryAttributes["emb.private.applied_limit.error_log.truncate_attributes"])
+        assertEquals("1", telemetryAttributes["emb.private.applied_limit.breadcrumb.truncate_string"])
+        assertEquals("1", telemetryAttributes["emb.private.applied_limit.span.drop"])
+    }
+
+    @Test
+    fun `getTelemetryAttributes clears applied limits map`() {
+        // Given a limit is logged
+        embraceTelemetryService.logAppliedLimit(LimitedTelemetryType.SPAN, AppliedLimitType.DROP)
+
+        // After getting telemetry attributes
+        embraceTelemetryService.getAndClearTelemetryAttributes()
+        val attributes = embraceTelemetryService.getAndClearTelemetryAttributes()
+
+        // That limit isn't in the map anymore
+        assertEquals(null, attributes.getOrDefault("emb.private.applied_limit.span.drop", null))
+    }
+
+    @Test
+    fun `usage, storage, applied limits and app attributes are added correctly`() {
+        // Given usage, storage, and applied limit attributes are added
+        embraceTelemetryService.onPublicApiCalled("a_method")
+        embraceTelemetryService.logStorageTelemetry(mapOf("emb.storage.used" to "12"))
+        embraceTelemetryService.logAppliedLimit(LimitedTelemetryType.ERROR_LOG, AppliedLimitType.TRUNCATE_ATTRIBUTES)
+        embraceTelemetryService.logAppliedLimit(LimitedTelemetryType.BREADCRUMB, AppliedLimitType.DROP)
+
+        // When getting telemetry attributes
+        val telemetryAttributes = embraceTelemetryService.getAndClearTelemetryAttributes()
+
+        // Then all attributes are in the map
+        assertEquals("1", telemetryAttributes["emb.usage.a_method"])
+        assertEquals("12", telemetryAttributes["emb.storage.used"])
+        assertEquals("1", telemetryAttributes["emb.private.applied_limit.error_log.truncate_attributes"])
+        assertEquals("1", telemetryAttributes["emb.private.applied_limit.breadcrumb.drop"])
+        assertTrue(telemetryAttributes.containsKey("emb.okhttp3"))
+        assertTrue(telemetryAttributes.containsKey("emb.okhttp3_on_classpath"))
+    }
 }

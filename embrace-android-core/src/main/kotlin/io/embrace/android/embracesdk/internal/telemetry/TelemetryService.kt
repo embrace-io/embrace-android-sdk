@@ -15,6 +15,14 @@ interface TelemetryService {
     fun logStorageTelemetry(storageTelemetry: Map<String, String>)
 
     /**
+     * Tracks when a limit is applied to telemetry (truncation or drop).
+     *
+     * @param telemetryType The type of telemetry that had the limit applied
+     * @param limitType The type of limit that was applied
+     */
+    fun logAppliedLimit(telemetryType: LimitedTelemetryType, limitType: AppliedLimitType)
+
+    /**
      * Returns a map with every telemetry value. This is called when the session ends.
      * We clear the usage count map so we don't count the same usages in the next session.
      */

@@ -8,13 +8,21 @@ import android.os.PowerManager
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.assertMatches
+import io.embrace.android.embracesdk.assertions.assertStateTransition
 import io.embrace.android.embracesdk.assertions.findSpanOfType
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
+import io.embrace.android.embracesdk.internal.instrumentation.powersave.PowerStateDataSource
+import io.embrace.android.embracesdk.internal.session.getSessionSpan
+import io.embrace.android.embracesdk.internal.session.getStateSpan
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
+import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface.Companion.LIFECYCLE_EVENT_GAP
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -70,6 +78,81 @@ internal class LowPowerFeatureTest {
             otelExportAssertion = {
                 val spans = awaitSpansWithType(1, EmbType.System.LowPower)
                 assertSpansMatchGoldenFile(spans, "system-low-power-export.json")
+            }
+        )
+    }
+
+    @Test
+    fun `power state feature`() {
+        val transitions: MutableList<Pair<Long, SchemaType.PowerState.PowerMode>> = mutableListOf()
+        testRule.runTest(
+            instrumentedConfig = FakeInstrumentedConfig(
+                enabledFeatures = FakeEnabledFeatureConfig(
+                    stateCaptureEnabled = true,
+                    bgActivityCapture = false,
+                    powerSaveCapture = true
+                )
+            ),
+            testCaseAction = {
+                recordSession {
+                    setPowerSaveMode(true)
+                    transitions.add(Pair(clock.now(), SchemaType.PowerState.PowerMode.LOW))
+                    clock.tick(10000L)
+                    setPowerSaveMode(false)
+                    transitions.add(Pair(clock.now(), SchemaType.PowerState.PowerMode.NORMAL))
+                }
+            },
+            assertAction = {
+                val message = getSingleSessionEnvelope()
+                val sessionSpan = checkNotNull(message.getSessionSpan())
+                with(checkNotNull(message.getStateSpan("emb-state-power"))) {
+                    assertEquals(
+                        checkNotNull(sessionSpan.startTimeNanos).nanosToMillis() + LIFECYCLE_EVENT_GAP,
+                        checkNotNull(startTimeNanos).nanosToMillis()
+                    )
+                    assertEquals(sessionSpan.endTimeNanos, endTimeNanos)
+                    with(checkNotNull(events)) {
+                        assertEquals(2, size)
+                        repeat(size) { i ->
+                            this[i].assertStateTransition(
+                                timestampMs = transitions[i].first,
+                                newStateValue = transitions[i].second,
+                                notInSession = if (i == 0) {
+                                    1
+                                } else {
+                                    0
+                                }
+                            )
+                        }
+                    }
+                }
+            }
+        )
+    }
+
+    @Test
+    fun `power state disabled by feature flag`() {
+        var throwable: Throwable? = null
+        testRule.runTest(
+            instrumentedConfig = FakeInstrumentedConfig(
+                enabledFeatures = FakeEnabledFeatureConfig(
+                    stateCaptureEnabled = true,
+                    powerSaveCapture = false
+                )
+            ),
+            testCaseAction = {
+                try {
+                    findDataSource<PowerStateDataSource>()
+                } catch (e: IllegalStateException) {
+                    throwable = e
+                }
+                recordSession {
+                    setPowerSaveMode(true)
+                }
+            },
+            assertAction = {
+                assertNull(getSingleSessionEnvelope().getStateSpan("emb-state-power"))
+                assertTrue(throwable is IllegalStateException)
             }
         )
     }

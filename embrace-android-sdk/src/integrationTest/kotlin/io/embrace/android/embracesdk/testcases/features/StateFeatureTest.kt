@@ -7,9 +7,11 @@ import io.embrace.android.embracesdk.fakes.TestStateDataSource
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.internal.arch.attrs.embStateDroppedByInstrumentation
+import io.embrace.android.embracesdk.internal.arch.attrs.embStateInitialValue
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
+import io.embrace.android.embracesdk.internal.otel.sdk.hasEmbraceAttributeValue
 import io.embrace.android.embracesdk.internal.otel.spans.hasEmbraceAttributeValue
 import io.embrace.android.embracesdk.internal.session.getSessionSpan
 import io.embrace.android.embracesdk.internal.session.getStateSpan
@@ -18,7 +20,6 @@ import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterfac
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface.Companion.LIFECYCLE_EVENT_GAP
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
-import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -36,10 +37,6 @@ internal class StateFeatureTest {
             bgActivityCapture = false
         )
     )
-
-    @Before
-    fun setup() {
-    }
 
     @Test
     fun `state feature off`() {
@@ -70,6 +67,7 @@ internal class StateFeatureTest {
     fun `transitions during session and background activity record state spans`() {
         val stateUpdates = listOf("foo", "bar", "baz")
         val transitions: MutableList<List<Pair<Long, String>>> = mutableListOf()
+        var initialStateValue = "UNKNOWN"
         testRule.runTest(
             instrumentedConfig = FakeInstrumentedConfig(
                 enabledFeatures = FakeEnabledFeatureConfig(
@@ -101,6 +99,8 @@ internal class StateFeatureTest {
                     val sessionSpan = checkNotNull(sessions[i].getSessionSpan())
                     assertEquals(sessionSpan.startTimeNanos, stateSpan.startTimeNanos)
                     assertEquals(sessionSpan.endTimeNanos, stateSpan.endTimeNanos)
+                    stateSpan.attributes?.hasEmbraceAttributeValue(embStateInitialValue, initialStateValue)
+                    initialStateValue = stateUpdates[i]
                 }
             }
         )
@@ -244,6 +244,30 @@ internal class StateFeatureTest {
                         newStateValue = periodWithTransition[0].second,
                         notInSession = 1
                     )
+                }
+            }
+        )
+    }
+
+    @Test
+    fun `state value retained even if transition event dropped`() {
+        val stateUpdates = listOf("foo", "bar")
+        val transitions: MutableList<List<Pair<Long, String>>> = mutableListOf()
+        testRule.runTest(
+            instrumentedConfig = stateEnabledInstrumentedConfig,
+            testCaseAction = {
+                repeat(2) {
+                    transitions.add(executeTransitions(listOf("baz")))
+                    recordSession {
+                        transitions.add(executeTransitions(stateUpdates))
+                    }
+                }
+            },
+            assertAction = {
+                val sessions = getSessionEnvelopes(2)
+                repeat(sessions.size) { i ->
+                    val stateSpan = checkNotNull(sessions[i].getStateSpan("emb-state-test"))
+                    stateSpan.attributes?.hasEmbraceAttributeValue(embStateInitialValue, "baz")
                 }
             }
         )

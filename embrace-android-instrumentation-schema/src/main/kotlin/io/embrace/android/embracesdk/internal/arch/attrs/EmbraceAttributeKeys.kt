@@ -145,4 +145,4 @@ val embStateNotInSession: EmbraceAttributeKey = createStateKey("not_in_session")
  */
 val embStateDroppedByInstrumentation: EmbraceAttributeKey = createStateKey("dropped_by_instrumentation")
 
-private fun createStateKey(id: String) = EmbraceAttributeKey.create("state.$id")
+fun createStateKey(id: String) = EmbraceAttributeKey.create("state.$id")

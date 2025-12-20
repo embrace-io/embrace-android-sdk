@@ -4,6 +4,7 @@ import androidx.annotation.CallSuper
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.SessionChangeListener
 import io.embrace.android.embracesdk.internal.arch.SessionEndListener
+import io.embrace.android.embracesdk.internal.arch.attrs.createStateKey
 import io.embrace.android.embracesdk.internal.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
@@ -15,17 +16,22 @@ import java.util.concurrent.atomic.AtomicReference
  */
 abstract class StateDataSource<T : Any>(
     private val args: InstrumentationArgs,
-    private val stateValueFactory: (initialValue: T) -> SchemaType.State<T>,
+    private val stateTypeFactory: (initialValue: T) -> SchemaType.State<T>,
     defaultValue: T,
     maxTransitions: Int = DEFAULT_MAX_TRANSITIONS,
 ) : SessionEndListener, SessionChangeListener, DataSourceImpl(
     args = args,
     limitStrategy = UpToLimitStrategy { maxTransitions }
 ) {
+    val stateAttributeKey = createStateKey(stateTypeFactory(defaultValue).stateName)
     private val currentState: AtomicReference<T> = AtomicReference(defaultValue)
     private val sessionStateToken: AtomicReference<SessionStateToken<T>?> = AtomicReference()
     private val unrecordedTransitions = AtomicReference(noUnrecordedTransitions)
 
+    /**
+     * Notify that the state has changed at the given time to teh given value, with the given number of transitions dropped by the
+     * since the last time this data source was notified of a state change.
+     */
     fun onStateChange(updateDetectedTimeMs: Long, newState: T, droppedTransitions: Int = 0) {
         val oldState = currentState.getAndSet(newState)
         val currentStateToken = sessionStateToken.get()
@@ -61,6 +67,11 @@ abstract class StateDataSource<T : Any>(
         }
     }
 
+    /**
+     * Return the current state value
+     */
+    fun getCurrentStateValue(): T = currentState.get()
+
     @CallSuper
     override fun onDataCaptureEnabled() {
         // Create a new state span as soon as the data source is enabled if there's an active session
@@ -85,7 +96,7 @@ abstract class StateDataSource<T : Any>(
         try {
             sessionStateToken.set(
                 args.destination.startSessionStateCapture(
-                    state = stateValueFactory(initialValue)
+                    state = stateTypeFactory(initialValue)
                 )
             )
         } catch (t: Throwable) {

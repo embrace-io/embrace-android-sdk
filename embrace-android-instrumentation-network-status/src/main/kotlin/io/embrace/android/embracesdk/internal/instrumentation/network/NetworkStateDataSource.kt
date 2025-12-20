@@ -11,7 +11,7 @@ class NetworkStateDataSource(
     args: InstrumentationArgs,
 ) : NetworkConnectivityListener, StateDataSource<Status>(
     args = args,
-    stateValueFactory = ::NetworkState,
+    stateTypeFactory = ::NetworkState,
     defaultValue = Status.UNKNOWN,
     maxTransitions = MAX_CAPTURED_NETWORK_STATE_TRANSITIONS
 ) {

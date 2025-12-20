@@ -8,7 +8,7 @@ class TestStateDataSource(
     args: InstrumentationArgs,
 ) : StateDataSource<String>(
     args = args,
-    stateValueFactory = ::TestState,
+    stateTypeFactory = ::TestState,
     defaultValue = "UNKNOWN",
     maxTransitions = 4
 )

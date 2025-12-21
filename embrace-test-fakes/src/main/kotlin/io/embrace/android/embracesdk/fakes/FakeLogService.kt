@@ -36,6 +36,4 @@ class FakeLogService : LogService {
     override fun getErrorLogsCount(): Int {
         return errorLogIds.count()
     }
-
-    override fun onPostSessionChange() {}
 }

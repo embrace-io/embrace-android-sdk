@@ -3,24 +3,19 @@ package io.embrace.android.embracesdk.internal.telemetry
 /**
  * Represents the type of limit that was applied to telemetry.
  */
-enum class AppliedLimitType {
+enum class AppliedLimitType(val attributeName: String) {
     /**
      * Attributes on a telemetry item were truncated due to attribute count limits.
      */
-    TRUNCATE_ATTRIBUTES,
+    TRUNCATE_ATTRIBUTES("truncate_attributes"),
 
     /**
      * A string value was truncated due to string length limits.
      */
-    TRUNCATE_STRING,
+    TRUNCATE_STRING("truncate_string"),
 
     /**
      * A telemetry item was completely dropped due to rate limits or other constraints.
      */
-    DROP;
-
-    /**
-     * Converts the enum to its attribute name format (lowercase with underscores).
-     */
-    fun toAttributeName(): String = name.lowercase()
+    DROP("drop")
 }

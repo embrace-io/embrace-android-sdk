@@ -18,7 +18,7 @@ class FakeTelemetryService : TelemetryService {
         storageTelemetryMap.putAll(storageTelemetry)
     }
 
-    override fun logAppliedLimit(telemetryType: LimitedTelemetryType, limitType: AppliedLimitType) {
+    override fun trackAppliedLimit(telemetryType: LimitedTelemetryType, limitType: AppliedLimitType) {
         appliedLimits.add(telemetryType to limitType)
     }
 

@@ -21,6 +21,8 @@ import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.session.SessionToken
 import io.embrace.android.embracesdk.internal.session.id.SessionTracker
+import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
+import io.embrace.android.embracesdk.internal.telemetry.LimitedTelemetryType
 import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 
@@ -60,6 +62,9 @@ internal class TelemetryDestinationHarness {
         }
 
         override fun logStorageTelemetry(storageTelemetry: Map<String, String>) {
+        }
+
+        override fun trackAppliedLimit(telemetryType: LimitedTelemetryType, limitType: AppliedLimitType) {
         }
 
         override fun getAndClearTelemetryAttributes(): Map<String, String> = emptyMap()

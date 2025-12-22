@@ -20,7 +20,7 @@ interface TelemetryService {
      * @param telemetryType The type of telemetry that had the limit applied
      * @param limitType The type of limit that was applied
      */
-    fun logAppliedLimit(telemetryType: LimitedTelemetryType, limitType: AppliedLimitType)
+    fun trackAppliedLimit(telemetryType: LimitedTelemetryType, limitType: AppliedLimitType)
 
     /**
      * Returns a map with every telemetry value. This is called when the session ends.

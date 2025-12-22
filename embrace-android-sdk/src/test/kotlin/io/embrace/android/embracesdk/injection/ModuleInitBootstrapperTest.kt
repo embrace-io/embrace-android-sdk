@@ -67,7 +67,6 @@ internal class ModuleInitBootstrapperTest {
             assertNotNull(initModule)
             assertNotNull(openTelemetryModule)
             assertNotNull(workerThreadModule)
-            assertNotNull(storageModule)
             assertTrue(essentialServiceModule is EssentialServiceModuleImpl)
             assertNotNull(dataCaptureServiceModule)
             assertNotNull(deliveryModule)

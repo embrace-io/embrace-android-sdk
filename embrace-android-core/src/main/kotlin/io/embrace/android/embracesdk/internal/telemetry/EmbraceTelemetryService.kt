@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.internal.arch.attrs.EmbraceAttributeKey
 import io.embrace.android.embracesdk.internal.isEmulator
 import io.embrace.android.embracesdk.internal.otel.sdk.toEmbraceUsageAttributeName
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * Service for tracking usage of public APIs, and different internal metrics about the app.
@@ -16,7 +17,7 @@ internal class EmbraceTelemetryService(
     private val okHttpReflectionFacade: OkHttpReflectionFacade = OkHttpReflectionFacade()
     private val usageCountMap = ConcurrentHashMap<String, Int>()
     private val storageTelemetryMap = ConcurrentHashMap<String, String>()
-    private val appliedLimitCountMap = ConcurrentHashMap<String, Int>()
+    private val appliedLimitCountMap = ConcurrentHashMap<String, AtomicInteger>()
     private val appAttributes: Map<String, String> by lazy { computeAppAttributes() }
 
     override fun onPublicApiCalled(name: String) {
@@ -29,12 +30,10 @@ internal class EmbraceTelemetryService(
         this.storageTelemetryMap.putAll(storageTelemetry)
     }
 
-    override fun logAppliedLimit(telemetryType: LimitedTelemetryType, limitType: AppliedLimitType) {
-        val id = "applied_limit.${telemetryType.toAttributeName()}.${limitType.toAttributeName()}"
+    override fun trackAppliedLimit(telemetryType: LimitedTelemetryType, limitType: AppliedLimitType) {
+        val id = "applied_limit.${telemetryType.attributeName}.${limitType.attributeName}"
         val key = EmbraceAttributeKey.create(id, isPrivate = true).name
-        synchronized(appliedLimitCountMap) {
-            appliedLimitCountMap[key] = (appliedLimitCountMap[key] ?: 0) + 1
-        }
+        appliedLimitCountMap.getOrPut(key) { AtomicInteger(0) }.incrementAndGet()
     }
 
     override fun getAndClearTelemetryAttributes(): Map<String, String> {
@@ -61,13 +60,9 @@ internal class EmbraceTelemetryService(
     }
 
     private fun getAndClearAppliedLimitTelemetry(): Map<String, String> {
-        synchronized(appliedLimitCountMap) {
-            val appliedLimitTelemetryMap = appliedLimitCountMap.entries.associate {
-                it.key to it.value.toString()
-            }
-            appliedLimitCountMap.clear()
-            return appliedLimitTelemetryMap
-        }
+        val result = appliedLimitCountMap.mapValues { it.value.get().toString() }
+        appliedLimitCountMap.clear()
+        return result
     }
 
     /**

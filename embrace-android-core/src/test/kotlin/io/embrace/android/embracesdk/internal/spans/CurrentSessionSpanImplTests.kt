@@ -18,6 +18,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.LinkType
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.OtelLimitsConfig
 import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
 import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
+import io.embrace.android.embracesdk.internal.otel.spans.NoopEmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.otel.spans.OtelSpanStartArgs
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
@@ -117,7 +118,8 @@ internal class CurrentSessionSpanImplTests {
                 )
             )
         }
-        assertNull(
+        assertEquals(
+            NoopEmbraceSdkSpan,
             spanService.createSpan(
                 name = "failed-span",
                 internal = false
@@ -135,7 +137,8 @@ internal class CurrentSessionSpanImplTests {
                 )
             )
         }
-        assertNull(
+        assertEquals(
+            NoopEmbraceSdkSpan,
             spanService.createSpan(
                 name = "failed-span",
                 internal = false
@@ -145,7 +148,10 @@ internal class CurrentSessionSpanImplTests {
         repeat(MAX_INTERNAL_SPANS_PER_SESSION) {
             assertNotNull(spanService.createSpan(name = "internal$it"))
         }
-        assertNull(spanService.createSpan(name = "failed-span"))
+        assertEquals(
+            NoopEmbraceSdkSpan,
+            spanService.createSpan(name = "failed-span")
+        )
     }
 
     @Test
@@ -164,7 +170,8 @@ internal class CurrentSessionSpanImplTests {
                 )
             )
         }
-        assertNull(
+        assertEquals(
+            NoopEmbraceSdkSpan,
             spanService.createSpan(
                 otelSpanStartArgs = OtelSpanStartArgs(
                     name = "external-span",
@@ -201,7 +208,8 @@ internal class CurrentSessionSpanImplTests {
                 ) { "derp" }
             )
         }
-        assertNull(
+        assertEquals(
+            NoopEmbraceSdkSpan,
             spanService.createSpan(
                 name = "failed-span",
                 internal = false,
@@ -221,7 +229,8 @@ internal class CurrentSessionSpanImplTests {
                 )
             )
         }
-        assertNull(
+        assertEquals(
+            NoopEmbraceSdkSpan,
             spanService.createSpan(
                 name = "failed-span",
                 internal = false,
@@ -247,13 +256,15 @@ internal class CurrentSessionSpanImplTests {
                 )
             )
         }
-        assertNull(
+        assertEquals(
+            NoopEmbraceSdkSpan,
             spanService.createSpan(
                 name = "failed-span",
                 internal = false,
             )
         )
-        assertNull(
+        assertEquals(
+            NoopEmbraceSdkSpan,
             spanService.createSpan(
                 name = "child-span",
                 parent = parent,
@@ -263,14 +274,12 @@ internal class CurrentSessionSpanImplTests {
         assertNotNull(
             spanService.createSpan(
                 name = "internal-again",
-                internal = true,
             )
         )
         assertNotNull(
             spanService.createSpan(
                 name = "internal-child-span",
                 parent = parent,
-                internal = true,
             )
         )
     }
@@ -287,7 +296,8 @@ internal class CurrentSessionSpanImplTests {
             assertTrue(checkNotNull(span).start())
             parentSpan = span
         }
-        assertNull(
+        assertEquals(
+            NoopEmbraceSdkSpan,
             spanService.createSpan(
                 name = "failed-span",
                 parent = parentSpan,
@@ -320,7 +330,6 @@ internal class CurrentSessionSpanImplTests {
         val parentSpan = checkNotNull(
             spanService.createSpan(
                 name = "parent-span",
-                internal = true,
             )
         )
         assertTrue(parentSpan.start())
@@ -328,14 +337,12 @@ internal class CurrentSessionSpanImplTests {
             spanService.createSpan(
                 name = "failed-span",
                 parent = parentSpan,
-                internal = true,
             )
         )
         assertNotNull(
             spanService.recordSpan(
                 name = "failed-span",
                 parent = parentSpan,
-                internal = true,
             ) { }
         )
         assertTrue(
@@ -344,7 +351,6 @@ internal class CurrentSessionSpanImplTests {
                 startTimeMs = 100L,
                 endTimeMs = 200L,
                 parent = parentSpan,
-                internal = true,
             )
         )
 
@@ -357,7 +363,8 @@ internal class CurrentSessionSpanImplTests {
                 )
             )
         }
-        assertNull(
+        assertEquals(
+            NoopEmbraceSdkSpan,
             spanService.createSpan(
                 name = "failed-span",
                 parent = parentSpan,
@@ -368,7 +375,6 @@ internal class CurrentSessionSpanImplTests {
             spanService.createSpan(
                 name = "internal-span",
                 parent = parentSpan,
-                internal = true,
             )
         )
     }
@@ -418,8 +424,7 @@ internal class CurrentSessionSpanImplTests {
             expectedCustomAttributes = mapOf(
                 AppTerminationCause.Crash.asPair(),
                 EmbType.Ux.Session.asPair()
-            ),
-            private = false
+            )
         )
 
         assertEmbraceSpanData(
@@ -522,11 +527,11 @@ internal class CurrentSessionSpanImplTests {
     fun `span stop callback creates the correct span links`() {
         val sessionSpan = checkNotNull(spanRepository.getActiveSpans().single())
         val sessionId = checkNotNull(sessionSpan.getSystemAttribute(SessionAttributes.SESSION_ID))
-        val span = spanService.startSpan("test")?.apply {
+        val span = spanService.startSpan("test").apply {
             stop()
         }
 
-        val spanSnapshot = checkNotNull(span?.snapshot())
+        val spanSnapshot = checkNotNull(span.snapshot())
         val sessionSpanSnapshot = checkNotNull(sessionSpan.snapshot())
 
         checkNotNull(spanSnapshot.links).single().validateSystemLink(
@@ -556,12 +561,12 @@ internal class CurrentSessionSpanImplTests {
 
     @Test
     fun `span stop callback will not create links if there's no active session`() {
-        val span = spanService.startSpan("test")?.apply {
+        val span = spanService.startSpan("test").apply {
             currentSessionSpan.endSession(false)
             stop()
         }
 
-        val spanSnapshot = checkNotNull(span?.snapshot())
+        val spanSnapshot = checkNotNull(span.snapshot())
         assertEquals(0, spanSnapshot.links?.size)
     }
 

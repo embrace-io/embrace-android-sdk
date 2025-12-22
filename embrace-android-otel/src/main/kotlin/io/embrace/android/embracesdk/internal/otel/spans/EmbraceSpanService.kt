@@ -63,7 +63,7 @@ class EmbraceSpanService(
         internal: Boolean,
         private: Boolean,
         autoTerminationMode: AutoTerminationMode,
-    ): EmbraceSdkSpan? =
+    ): EmbraceSdkSpan =
         currentDelegate.createSpan(
             name = name,
             parent = parent,
@@ -73,7 +73,7 @@ class EmbraceSpanService(
             autoTerminationMode = autoTerminationMode
         )
 
-    override fun createSpan(otelSpanStartArgs: OtelSpanStartArgs): EmbraceSdkSpan? = currentDelegate.createSpan(otelSpanStartArgs)
+    override fun createSpan(otelSpanStartArgs: OtelSpanStartArgs): EmbraceSdkSpan = currentDelegate.createSpan(otelSpanStartArgs)
 
     override fun <T> recordSpan(
         name: String,

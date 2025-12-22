@@ -44,7 +44,7 @@ class SpanServiceImpl(
         internal: Boolean,
         private: Boolean,
         autoTerminationMode: AutoTerminationMode,
-    ): EmbraceSdkSpan? {
+    ): EmbraceSdkSpan {
         EmbTrace.trace("span-create") {
             return if (name.isNotBlank() && canStartNewSpan(parent, internal)) {
                 embraceSpanFactory.create(
@@ -60,12 +60,12 @@ class SpanServiceImpl(
                     )
                 )
             } else {
-                null
+                NoopEmbraceSdkSpan
             }
         }
     }
 
-    override fun createSpan(otelSpanStartArgs: OtelSpanStartArgs): EmbraceSdkSpan? {
+    override fun createSpan(otelSpanStartArgs: OtelSpanStartArgs): EmbraceSdkSpan {
         EmbTrace.trace("span-create") {
             return if (
                 otelSpanStartArgs.initialSpanName.isNotBlank() &&
@@ -76,7 +76,7 @@ class SpanServiceImpl(
             ) {
                 embraceSpanFactory.create(otelSpanStartArgs)
             } else {
-                null
+                NoopEmbraceSdkSpan
             }
         }
     }

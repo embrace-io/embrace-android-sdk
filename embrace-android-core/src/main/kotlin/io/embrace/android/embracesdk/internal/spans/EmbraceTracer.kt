@@ -16,12 +16,11 @@ class EmbraceTracer(
         name: String,
         parent: EmbraceSpan?,
         autoTerminationMode: AutoTerminationMode,
-    ): EmbraceSpan? =
+    ): EmbraceSpan =
         spanService.createSpan(
             name = name,
             parent = parent,
             internal = false,
-            private = false,
             autoTerminationMode = autoTerminationMode
         )
 
@@ -30,13 +29,12 @@ class EmbraceTracer(
         parent: EmbraceSpan?,
         startTimeMs: Long?,
         autoTerminationMode: AutoTerminationMode,
-    ): EmbraceSpan? =
+    ): EmbraceSpan =
         spanService.startSpan(
             name = name,
             parent = parent,
             startTimeMs = startTimeMs?.normalizeTimestampAsMillis(),
             internal = false,
-            private = false,
             autoTerminationMode = autoTerminationMode
         )
 

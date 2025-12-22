@@ -30,6 +30,7 @@ import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
 import io.embrace.android.embracesdk.internal.session.getSessionSpan
 import io.embrace.android.embracesdk.internal.arch.state.AppState
+import io.embrace.android.embracesdk.internal.otel.spans.NoopEmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.toEmbraceSpanData
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
@@ -44,7 +45,6 @@ import java.util.concurrent.TimeUnit
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -345,13 +345,13 @@ internal class TracingApiTest {
     fun `can only create span if there is a valid session`() {
         testRule.runTest(
             preSdkStartAction = {
-                assertNull(embrace.startSpan("test"))
+                assertEquals(NoopEmbraceSdkSpan, embrace.startSpan("test"))
             },
             testCaseAction = {
                 recordSession {
                     assertNotNull(embrace.startSpan("test"))
                 }
-                assertNull(embrace.startSpan("test"))
+                assertEquals(NoopEmbraceSdkSpan, embrace.startSpan("test"))
                 recordSession {
                     assertNotNull(embrace.startSpan("test"))
                 }

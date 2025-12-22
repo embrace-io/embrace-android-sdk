@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.internal.injection
 
 import android.app.Application
 import android.content.Context
-import io.embrace.android.embracesdk.internal.prefs.PreferencesService
 import io.embrace.android.embracesdk.internal.registry.ServiceRegistry
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.store.OrdinalStore
@@ -33,7 +32,6 @@ interface CoreModule {
      */
     val serviceRegistry: ServiceRegistry
 
-    val preferencesService: PreferencesService
     val store: KeyValueStore
     val ordinalStore: OrdinalStore
 }

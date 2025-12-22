@@ -31,6 +31,7 @@ class FakeConfigModule(
     ),
     override val cpuAbi: CpuAbi = CpuAbi.ARM64_V8A,
     override val nativeSymbolMap: Map<String, String>? = emptyMap(),
+    override var deviceIdentifier: String = ""
 ) : ConfigModule {
 
     override val okHttpClient: OkHttpClient by lazy { OkHttpClient() }

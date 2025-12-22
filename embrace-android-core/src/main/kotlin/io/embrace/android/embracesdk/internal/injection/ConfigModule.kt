@@ -32,4 +32,6 @@ interface ConfigModule {
      * The current native symbols.
      */
     val nativeSymbolMap: Map<String, String>?
+
+    val deviceIdentifier: String
 }

@@ -13,8 +13,8 @@ internal class SdkStateApiDelegate(
     private val sessionTracker by embraceImplInject(sdkCallChecker) {
         bootstrapper.essentialServiceModule.sessionTracker
     }
-    private val preferencesService by embraceImplInject(sdkCallChecker) {
-        bootstrapper.coreModule.preferencesService
+    private val deviceIdentifier by embraceImplInject(sdkCallChecker) {
+        bootstrapper.configModule.deviceIdentifier
     }
     private val crashVerifier by embraceImplInject(sdkCallChecker) { bootstrapper.featureModule.lastRunCrashVerifier }
 
@@ -24,7 +24,7 @@ internal class SdkStateApiDelegate(
     override val deviceId: String
         get() {
             return if (sdkCallChecker.check("get_device_id")) {
-                preferencesService?.deviceIdentifier ?: ""
+                deviceIdentifier ?: ""
             } else {
                 ""
             }

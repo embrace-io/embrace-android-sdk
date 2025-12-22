@@ -48,7 +48,7 @@ class PayloadSourceModuleImpl(
             configModule.buildInfo,
             coreModule.context,
             configModule.configService,
-            coreModule.preferencesService,
+            coreModule.store,
             workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker)
         )
     }

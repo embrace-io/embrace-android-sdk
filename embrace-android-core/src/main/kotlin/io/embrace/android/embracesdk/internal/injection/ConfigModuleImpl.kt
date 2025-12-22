@@ -15,6 +15,7 @@ import io.embrace.android.embracesdk.internal.envelope.BuildInfo
 import io.embrace.android.embracesdk.internal.envelope.CpuAbi
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.symbols.SymbolServiceImpl
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
+import io.embrace.android.embracesdk.internal.utils.Uuid.getEmbUuid
 import io.embrace.android.embracesdk.internal.worker.Worker
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
@@ -23,7 +24,7 @@ import java.util.concurrent.TimeUnit
 
 class ConfigModuleImpl(
     initModule: InitModule,
-    coreModule: CoreModule,
+    private val coreModule: CoreModule,
     openTelemetryModule: OpenTelemetryModule,
     workerThreadModule: WorkerThreadModule,
 ) : ConfigModule {
@@ -31,6 +32,7 @@ class ConfigModuleImpl(
     companion object {
         private const val DEFAULT_CONNECTION_TIMEOUT_SECONDS = 10L
         private const val DEFAULT_READ_TIMEOUT_SECONDS = 60L
+        private const val DEVICE_IDENTIFIER_KEY = "io.embrace.deviceid"
     }
 
     override val okHttpClient by singleton {
@@ -58,7 +60,7 @@ class ConfigModuleImpl(
             ConfigServiceImpl(
                 instrumentedConfig = initModule.instrumentedConfig,
                 remoteConfig = combinedRemoteConfigSource?.getConfig(),
-                deviceIdSupplier = coreModule.preferencesService::deviceIdentifier,
+                deviceIdSupplier = ::deviceIdentifier,
                 hasConfiguredOtelExporters = openTelemetryModule.otelSdkConfig::hasConfiguredOtelExporters,
             )
         }
@@ -84,7 +86,7 @@ class ConfigModuleImpl(
         if (initModule.onlyOtelExportEnabled()) return@singleton null
         EmbTrace.trace("url-builder-init") {
             EmbraceApiUrlBuilder(
-                deviceId = coreModule.preferencesService.deviceIdentifier,
+                deviceId = deviceIdentifier,
                 appVersionName = buildInfo.versionName,
                 instrumentedConfig = initModule.instrumentedConfig,
             )
@@ -128,5 +130,17 @@ class ConfigModuleImpl(
             initModule.logger,
             initModule.instrumentedConfig,
         ).symbolsForCurrentArch
+    }
+
+    override val deviceIdentifier: String by lazy {
+        val deviceId = coreModule.store.getString(DEVICE_IDENTIFIER_KEY)
+        if (deviceId != null) {
+            return@lazy deviceId
+        }
+        val newId = getEmbUuid()
+        coreModule.store.edit {
+            putString(DEVICE_IDENTIFIER_KEY, newId)
+        }
+        newId
     }
 }

@@ -18,8 +18,8 @@ import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistry
 import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
 import io.embrace.android.embracesdk.internal.envelope.BuildInfo
 import io.embrace.android.embracesdk.internal.envelope.CpuAbi
-import io.embrace.android.embracesdk.internal.injection.ConfigModule
-import io.embrace.android.embracesdk.internal.injection.ConfigModuleImpl
+import io.embrace.android.embracesdk.internal.config.ConfigModule
+import io.embrace.android.embracesdk.internal.config.ConfigModuleImpl
 import io.embrace.android.embracesdk.internal.injection.CoreModule
 import io.embrace.android.embracesdk.internal.injection.CoreModuleImpl
 import io.embrace.android.embracesdk.internal.injection.DeliveryModuleImpl

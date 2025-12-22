@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.internal.config.instrumented.schema.Instrum
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
+import okhttp3.OkHttpClient
 
 /**
  * A module of components and services required at SDK instantiation time, i.e. before the SDK has fully started
@@ -38,4 +39,6 @@ interface InitModule {
     val jsonSerializer: PlatformSerializer
 
     val instrumentedConfig: InstrumentedConfig
+
+    val okHttpClient: OkHttpClient
 }

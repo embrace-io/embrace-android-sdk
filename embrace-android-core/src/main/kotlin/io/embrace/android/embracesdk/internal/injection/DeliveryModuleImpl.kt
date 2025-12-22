@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.injection
 
 import io.embrace.android.embracesdk.core.BuildConfig
+import io.embrace.android.embracesdk.internal.config.ConfigModule
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.caching.PayloadCachingService
 import io.embrace.android.embracesdk.internal.delivery.caching.PayloadCachingServiceImpl
@@ -158,7 +159,7 @@ class DeliveryModuleImpl(
             val coreBaseUrl = configModule.urlBuilder?.baseDataUrl ?: return@singleton null
             val lazyDeviceId = lazy(configModule::deviceIdentifier)
             OkHttpRequestExecutionService(
-                configModule.okHttpClient,
+                initModule.okHttpClient,
                 coreBaseUrl,
                 lazyDeviceId,
                 appId,

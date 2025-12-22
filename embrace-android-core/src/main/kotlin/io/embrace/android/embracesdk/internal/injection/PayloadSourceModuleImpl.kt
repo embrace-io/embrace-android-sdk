@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.internal.capture.metadata.EmbraceMetadataSe
 import io.embrace.android.embracesdk.internal.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.internal.capture.metadata.RnBundleIdTracker
 import io.embrace.android.embracesdk.internal.capture.metadata.RnBundleIdTrackerImpl
+import io.embrace.android.embracesdk.internal.config.ConfigModule
 import io.embrace.android.embracesdk.internal.envelope.log.LogEnvelopeSource
 import io.embrace.android.embracesdk.internal.envelope.log.LogEnvelopeSourceImpl
 import io.embrace.android.embracesdk.internal.envelope.log.LogPayloadSourceImpl

@@ -5,7 +5,7 @@ import io.embrace.android.embracesdk.internal.config.source.ConfigHttpResponse
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import java.io.File
 
-internal class RemoteConfigStoreImpl(
+class RemoteConfigStoreImpl(
     private val serializer: PlatformSerializer,
     storageDir: File,
 ) : RemoteConfigStore {

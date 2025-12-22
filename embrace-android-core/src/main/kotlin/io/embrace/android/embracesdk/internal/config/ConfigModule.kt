@@ -1,17 +1,14 @@
-package io.embrace.android.embracesdk.internal.injection
+package io.embrace.android.embracesdk.internal.config
 
 import io.embrace.android.embracesdk.internal.comms.api.ApiUrlBuilder
-import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.config.source.CombinedRemoteConfigSource
 import io.embrace.android.embracesdk.internal.envelope.BuildInfo
 import io.embrace.android.embracesdk.internal.envelope.CpuAbi
-import okhttp3.OkHttpClient
 
 interface ConfigModule {
     val configService: ConfigService
     val combinedRemoteConfigSource: CombinedRemoteConfigSource?
     val urlBuilder: ApiUrlBuilder?
-    val okHttpClient: OkHttpClient
 
     val buildInfo: BuildInfo
 

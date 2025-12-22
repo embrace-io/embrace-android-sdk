@@ -18,6 +18,7 @@ import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.Th
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageServiceSupplier
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.createThreadBlockageService
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
+import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
 import io.embrace.android.embracesdk.internal.storage.EmbraceStorageService
 import io.embrace.android.embracesdk.internal.storage.StatFsAvailabilityChecker
 import io.embrace.android.embracesdk.internal.storage.StorageService
@@ -185,7 +186,7 @@ internal class ModuleInitBootstrapper(
             payloadSourceModule,
         )
     },
-    private val sessionOrchestrationModuleSupplier: SessionOrchestrationModuleSupplier = {
+    private val sessionOrchestratorSupplier: SessionOrchestratorSupplier = {
             initModule: InitModule,
             openTelemetryModule: OpenTelemetryModule,
             coreModule: CoreModule,
@@ -208,7 +209,7 @@ internal class ModuleInitBootstrapper(
             payloadSourceModule,
             startupDurationProvider,
             logModule
-        )
+        ).sessionOrchestrator
     },
     private val payloadSourceModuleSupplier: PayloadSourceModuleSupplier = {
             initModule: InitModule,
@@ -246,7 +247,7 @@ internal class ModuleInitBootstrapper(
     override val logModule: LogModule get() = delegate.logModule
     override val instrumentationModule: InstrumentationModule get() = delegate.instrumentationModule
     override val featureModule: FeatureModule get() = delegate.featureModule
-    override val sessionOrchestrationModule: SessionOrchestrationModule get() = delegate.sessionOrchestrationModule
+    override val sessionOrchestrator: SessionOrchestrator get() = delegate.sessionOrchestrator
     override val payloadSourceModule: PayloadSourceModule get() = delegate.payloadSourceModule
 
     /**
@@ -281,7 +282,7 @@ internal class ModuleInitBootstrapper(
                     deliveryModuleSupplier,
                     threadBlockageServiceSupplier,
                     logModuleSupplier,
-                    sessionOrchestrationModuleSupplier,
+                    sessionOrchestratorSupplier,
                     payloadSourceModuleSupplier
                 )
                 return isInitialized()

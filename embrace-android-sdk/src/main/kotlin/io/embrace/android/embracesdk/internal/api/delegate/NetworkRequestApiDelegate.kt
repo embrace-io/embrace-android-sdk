@@ -19,7 +19,7 @@ internal class NetworkRequestApiDelegate(
         bootstrapper.instrumentationModule.instrumentationRegistry
     }
     private val sessionOrchestrator by embraceImplInject(sdkCallChecker) {
-        bootstrapper.sessionOrchestrationModule.sessionOrchestrator
+        bootstrapper.sessionOrchestrator
     }
 
     override fun recordNetworkRequest(networkRequest: EmbraceNetworkRequest) {

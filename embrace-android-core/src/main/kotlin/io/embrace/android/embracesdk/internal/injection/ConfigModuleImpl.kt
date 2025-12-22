@@ -1,7 +1,5 @@
 package io.embrace.android.embracesdk.internal.injection
 
-import android.content.pm.ApplicationInfo
-import io.embrace.android.embracesdk.internal.capture.metadata.AppEnvironment
 import io.embrace.android.embracesdk.internal.comms.api.ApiUrlBuilder
 import io.embrace.android.embracesdk.internal.comms.api.EmbraceApiUrlBuilder
 import io.embrace.android.embracesdk.internal.config.ConfigService
@@ -91,14 +89,6 @@ class ConfigModuleImpl(
                 instrumentedConfig = initModule.instrumentedConfig,
             )
         }
-    }
-
-    override val appEnvironment: AppEnvironment by lazy {
-        val context = coreModule.context
-        val isDebug: Boolean = with(context.applicationInfo) {
-            flags and ApplicationInfo.FLAG_DEBUGGABLE != 0
-        }
-        AppEnvironment(isDebug)
     }
 
     override val buildInfo: BuildInfo by lazy {

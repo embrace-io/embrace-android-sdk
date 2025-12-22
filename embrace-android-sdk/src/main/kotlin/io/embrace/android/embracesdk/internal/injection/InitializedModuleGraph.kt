@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.internal.instrumentation.startup.DataCaptur
 import io.embrace.android.embracesdk.internal.instrumentation.startup.DataCaptureServiceModuleSupplier
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageService
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageServiceSupplier
+import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
 import io.embrace.android.embracesdk.internal.storage.StorageService
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
@@ -30,7 +31,7 @@ internal class InitializedModuleGraph(
     private val deliveryModuleSupplier: DeliveryModuleSupplier,
     private val threadBlockageServiceSupplier: ThreadBlockageServiceSupplier,
     private val logModuleSupplier: LogModuleSupplier,
-    private val sessionOrchestrationModuleSupplier: SessionOrchestrationModuleSupplier,
+    private val sessionOrchestratorSupplier: SessionOrchestratorSupplier,
     private val payloadSourceModuleSupplier: PayloadSourceModuleSupplier,
 ) : ModuleGraph {
 
@@ -159,8 +160,8 @@ internal class InitializedModuleGraph(
         )
     }
 
-    override val sessionOrchestrationModule: SessionOrchestrationModule = init {
-        sessionOrchestrationModuleSupplier(
+    override val sessionOrchestrator: SessionOrchestrator = init {
+        sessionOrchestratorSupplier(
             initModule,
             openTelemetryModule,
             coreModule,

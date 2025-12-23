@@ -161,13 +161,13 @@ internal class SpanServiceImplTest {
     @Test
     fun `cannot create span with if validation fails`() {
         spanCreationAllowed = false
-        assertNull(spansService.createSpan(name = "test"))
+        assertEquals(NoopEmbraceSdkSpan, spansService.createSpan(name = "test"))
     }
 
     @Test
     fun `cannot create span with blank name`() {
-        assertNull(spansService.createSpan(name = ""))
-        assertNull(spansService.createSpan(name = " "))
+        assertEquals(NoopEmbraceSdkSpan, spansService.createSpan(name = ""))
+        assertEquals(NoopEmbraceSdkSpan, spansService.createSpan(name = " "))
     }
 
     @Test

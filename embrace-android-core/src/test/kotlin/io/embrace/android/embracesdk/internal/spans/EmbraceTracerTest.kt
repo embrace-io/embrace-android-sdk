@@ -11,6 +11,7 @@ import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanData
+import io.embrace.android.embracesdk.internal.otel.spans.NoopEmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
@@ -20,7 +21,6 @@ import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.tracing.StatusCode
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -108,7 +108,7 @@ internal class EmbraceTracerTest {
     @Test
     fun `cannot start a span if given parent has not started`() {
         val notStartedParent = checkNotNull(embraceTracer.createSpan(name = "test-span"))
-        assertNull(embraceTracer.startSpan(name = "child-span", notStartedParent))
+        assertEquals(NoopEmbraceSdkSpan, embraceTracer.startSpan(name = "child-span", notStartedParent))
     }
 
     @Test

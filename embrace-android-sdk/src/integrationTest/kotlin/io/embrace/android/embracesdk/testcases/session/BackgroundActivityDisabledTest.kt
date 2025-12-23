@@ -19,6 +19,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
+import io.embrace.android.embracesdk.internal.otel.spans.NoopEmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
@@ -62,7 +63,7 @@ internal class BackgroundActivityDisabledTest {
                 assertTrue(embrace.isStarted)
                 assertTrue(embrace.currentSessionId.isNullOrBlank())
                 assertTrue(embrace.deviceId.isNotBlank())
-                assertNull(embrace.startSpan("test"))
+                assertEquals(NoopEmbraceSdkSpan, embrace.startSpan("test"))
                 embrace.logError("error")
 
                 embrace.addBreadcrumb("not-logged")

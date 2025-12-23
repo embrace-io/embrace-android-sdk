@@ -28,9 +28,9 @@ class UninitializedSdkSpanService : SpanService {
         internal: Boolean,
         private: Boolean,
         autoTerminationMode: AutoTerminationMode,
-    ): EmbraceSdkSpan? = null
+    ): EmbraceSdkSpan = NoopEmbraceSdkSpan
 
-    override fun createSpan(otelSpanStartArgs: OtelSpanStartArgs): EmbraceSdkSpan? = null
+    override fun createSpan(otelSpanStartArgs: OtelSpanStartArgs): EmbraceSdkSpan = NoopEmbraceSdkSpan
 
     override fun <T> recordSpan(
         name: String,

@@ -8,27 +8,27 @@ public interface TracingApi {
 
     /**
      * Create an [EmbraceSpan] with the given name and parent. Passing in a parent that is null result in a new trace with this
-     * [EmbraceSpan] as its root. Returns null if the [EmbraceSpan] cannot be created, e.g if the parent has not been started,
+     * [EmbraceSpan] as its root. Returns a no-op instance if a span cannot be created, e.g if the parent has not been started,
      * the name is invalid, or some other factor due to the current conditions of the SDK.
      *
-     * * Note: the [EmbraceSpan] created will not be started. For a method that creates and starts the span, use [startSpan]
+     * Note: the [EmbraceSpan] created will not be started. For a method that creates and starts the span, use [startSpan]
      */
     public fun createSpan(
         name: String,
         parent: EmbraceSpan? = null,
         autoTerminationMode: AutoTerminationMode = AutoTerminationMode.NONE,
-    ): EmbraceSpan?
+    ): EmbraceSpan
 
     /**
      * Create, start, and return a new [EmbraceSpan] with the given name, parent, and start time (epoch time in milliseconds).
-     * Returns null if the [EmbraceSpan] cannot be created or started, like if the parent has been started.
+     * Returns a noop instance if the span cannot be created or started, like if the parent has been started.
      */
     public fun startSpan(
         name: String,
         parent: EmbraceSpan? = null,
         startTimeMs: Long? = null,
         autoTerminationMode: AutoTerminationMode = AutoTerminationMode.NONE,
-    ): EmbraceSpan?
+    ): EmbraceSpan
 
     /**
      * Execute the given block of code and record a new span around it with the given parent with optional attributes and list

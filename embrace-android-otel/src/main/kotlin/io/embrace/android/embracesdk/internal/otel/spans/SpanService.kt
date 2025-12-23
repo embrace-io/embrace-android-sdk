@@ -13,8 +13,8 @@ import io.embrace.android.embracesdk.spans.ErrorCode
 interface SpanService : Initializable {
 
     /**
-     * Return an [EmbraceSpan] instance that can be used to record spans. Returns null if at least one input parameter is not valid or if
-     * the SDK or session is not in a state where a new span can be recorded.
+     * Return an [EmbraceSpan] instance that can be used to record spans. Returns noop instance if at least one input parameter
+     * is not valid or if the SDK or session is not in a state where a new span can be recorded.
      */
     fun createSpan(
         name: String,
@@ -23,13 +23,13 @@ interface SpanService : Initializable {
         internal: Boolean = true,
         private: Boolean = false,
         autoTerminationMode: AutoTerminationMode = AutoTerminationMode.NONE,
-    ): EmbraceSdkSpan?
+    ): EmbraceSdkSpan
 
     /**
-     * Return an [EmbraceSpan] instance that can be used to record spans given the [OtelSpanStartArgs]. Returns null if the builder
+     * Return an [EmbraceSpan] instance that can be used to record spans given the [OtelSpanStartArgs]. Returns noop instance if the builder
      * will not build a valid span or if the SDK and session is not in a state where a new span can be recorded.
      */
-    fun createSpan(otelSpanStartArgs: OtelSpanStartArgs): EmbraceSdkSpan?
+    fun createSpan(otelSpanStartArgs: OtelSpanStartArgs): EmbraceSdkSpan
 
     /**
      * Create, start, and return a new [EmbraceSpan] with the given parameters
@@ -42,21 +42,19 @@ interface SpanService : Initializable {
         internal: Boolean = true,
         private: Boolean = false,
         autoTerminationMode: AutoTerminationMode = AutoTerminationMode.NONE,
-    ): EmbraceSdkSpan? {
-        createSpan(
+    ): EmbraceSdkSpan {
+        val newSpan = createSpan(
             name = name,
             parent = parent,
             type = type,
             internal = internal,
             private = private,
             autoTerminationMode = autoTerminationMode,
-        )?.let { newSpan ->
-            if (newSpan.start(startTimeMs)) {
-                return newSpan
-            }
+        )
+        return when {
+            newSpan.start(startTimeMs) -> newSpan
+            else -> NoopEmbraceSdkSpan
         }
-
-        return null
     }
 
     /**

@@ -21,7 +21,6 @@ import io.embrace.opentelemetry.kotlin.tracing.Tracer
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -95,8 +94,8 @@ internal class EmbraceSpanServiceTest {
             openTelemetrySupplier = { fakeOpenTelemetry() }
         )
         assertFalse(uninitializedService.initialized())
-        assertNull(uninitializedService.createSpan("test-span"))
-        assertNull(uninitializedService.startSpan("test-span"))
+        assertEquals(NoopEmbraceSdkSpan, uninitializedService.createSpan("test-span"))
+        assertEquals(NoopEmbraceSdkSpan, uninitializedService.startSpan("test-span"))
         assertTrue(uninitializedService.recordCompletedSpan("test-span", 10, 20))
         var lambdaRan = false
         uninitializedService.recordSpan("test-span") { lambdaRan = true }

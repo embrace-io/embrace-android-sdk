@@ -15,6 +15,7 @@ dependencies {
     implementation(project(":embrace-android-otel-fakes"))
     implementation(project(":embrace-android-instrumentation-api-fakes"))
     implementation(project(":embrace-android-instrumentation-crash-ndk"))
+    implementation(project(":embrace-android-envelope"))
 
     compileOnly(project(":embrace-android-core"))
     compileOnly(project(":embrace-android-infra"))

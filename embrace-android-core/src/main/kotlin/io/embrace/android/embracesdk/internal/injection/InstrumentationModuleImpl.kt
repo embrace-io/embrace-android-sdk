@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.internal.InstrumentationArgsImpl
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistry
 import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistryImpl
+import io.embrace.android.embracesdk.internal.config.ConfigModule
 import io.embrace.android.embracesdk.internal.storage.StorageService
 
 class InstrumentationModuleImpl(

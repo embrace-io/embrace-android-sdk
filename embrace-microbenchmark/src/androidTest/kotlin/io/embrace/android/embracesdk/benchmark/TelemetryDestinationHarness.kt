@@ -23,6 +23,7 @@ import io.embrace.android.embracesdk.internal.session.SessionToken
 import io.embrace.android.embracesdk.internal.session.id.SessionTracker
 import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
+import okhttp3.OkHttpClient
 
 @OptIn(ExperimentalApi::class)
 internal class TelemetryDestinationHarness {
@@ -53,6 +54,7 @@ internal class TelemetryDestinationHarness {
         override val systemInfo: SystemInfo = SystemInfo()
         override val jsonSerializer: PlatformSerializer = EmbraceSerializer()
         override val instrumentedConfig: InstrumentedConfig = InstrumentedConfigImpl
+        override val okHttpClient: OkHttpClient = OkHttpClient()
     }
 
     private object NoopTelemetryService : TelemetryService {

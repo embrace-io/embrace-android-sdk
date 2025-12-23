@@ -6,6 +6,8 @@ import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkConnectivityService
 import io.embrace.android.embracesdk.internal.clock.Clock
+import io.embrace.android.embracesdk.internal.config.ConfigModule
+import io.embrace.android.embracesdk.internal.config.ConfigModuleImpl
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
 import io.embrace.android.embracesdk.internal.delivery.execution.RequestExecutionService

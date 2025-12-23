@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.injection
 
+import io.embrace.android.embracesdk.internal.config.ConfigModule
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactory
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactoryImpl
 import io.embrace.android.embracesdk.internal.session.message.PayloadMessageCollatorImpl

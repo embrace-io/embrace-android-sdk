@@ -1,15 +1,13 @@
 package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.fakes.behavior.FakeNetworkBehavior
-import io.embrace.android.embracesdk.internal.capture.metadata.AppEnvironment
 import io.embrace.android.embracesdk.internal.comms.api.ApiUrlBuilder
 import io.embrace.android.embracesdk.internal.comms.api.Endpoint
+import io.embrace.android.embracesdk.internal.config.ConfigModule
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.config.source.CombinedRemoteConfigSource
 import io.embrace.android.embracesdk.internal.envelope.BuildInfo
 import io.embrace.android.embracesdk.internal.envelope.CpuAbi
-import io.embrace.android.embracesdk.internal.injection.ConfigModule
-import okhttp3.OkHttpClient
 
 class FakeConfigModule(
     override val configService: ConfigService = FakeConfigService(
@@ -30,11 +28,8 @@ class FakeConfigModule(
     ),
     override val cpuAbi: CpuAbi = CpuAbi.ARM64_V8A,
     override val nativeSymbolMap: Map<String, String>? = emptyMap(),
-    override var deviceIdentifier: String = ""
-) : ConfigModule {
-
-    override val okHttpClient: OkHttpClient by lazy { OkHttpClient() }
-}
+    override var deviceIdentifier: String = "",
+) : ConfigModule
 
 private class FakeApiUrlBuilder(
     override val appId: String = "",

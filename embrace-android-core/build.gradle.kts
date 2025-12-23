@@ -22,6 +22,7 @@ android {
 dependencies {
     implementation(project(":embrace-android-payload"))
     implementation(project(":embrace-android-delivery"))
+    implementation(project(":embrace-android-envelope"))
     implementation(project(":embrace-android-infra"))
     implementation(project(":embrace-android-utils"))
     implementation(project(":embrace-internal-api"))

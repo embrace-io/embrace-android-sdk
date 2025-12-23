@@ -1,9 +1,10 @@
-package io.embrace.android.embracesdk.internal.envelope
+package io.embrace.android.embracesdk.internal.config
 
 /**
  * Specifies the application ID and build ID.
  */
 class BuildInfo(
+
     /**
      * The ID of the particular build, generated at compile-time.
      */

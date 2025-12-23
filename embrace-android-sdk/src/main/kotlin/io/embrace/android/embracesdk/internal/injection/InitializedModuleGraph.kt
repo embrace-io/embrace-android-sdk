@@ -57,11 +57,6 @@ internal class InitializedModuleGraph(
         )
     }.apply {
         EmbTrace.trace("sdk-disable-check") {
-            // kick off config HTTP request first so the SDK can't get in a permanently disabled state
-            EmbTrace.trace("load-config-response") {
-                combinedRemoteConfigSource?.scheduleConfigRequests()
-            }
-
             EmbTrace.trace("behavior-check") {
                 if (configService.sdkModeBehavior.isSdkDisabled()) {
                     // bail out early. Caught at a higher-level that relies on this specific type

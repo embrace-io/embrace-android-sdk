@@ -37,10 +37,8 @@ class InstrumentationModuleImpl(
             sessionTracker = essentialServiceModule.sessionTracker,
             ordinalStore = coreModule.ordinalStore,
             sessionPropertiesService = essentialServiceModule.sessionPropertiesService,
-            cpuAbi = configModule.cpuAbi,
             processIdentifier = openTelemetryModule.otelSdkConfig.processIdentifier,
             crashMarkerFileProvider = { storageService.getFileForWrite("embrace_crash_marker") },
-            symbols = configModule.nativeSymbolMap,
             appStateTracker = essentialServiceModule.appStateTracker,
         )
     }

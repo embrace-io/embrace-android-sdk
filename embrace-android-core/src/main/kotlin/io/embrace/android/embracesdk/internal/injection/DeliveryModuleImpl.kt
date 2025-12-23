@@ -160,7 +160,7 @@ class DeliveryModuleImpl(
             val coreBaseUrl = initModule.instrumentedConfig.baseUrls.getData() ?: "https://a-$appId.data.emb-api.com"
             val url = "$coreBaseUrl/${Endpoint.SESSIONS.version}/"
 
-            val lazyDeviceId = lazy(configModule::deviceIdentifier)
+            val lazyDeviceId = lazy(configModule.configService::deviceId)
             OkHttpRequestExecutionService(
                 initModule.okHttpClient,
                 url,

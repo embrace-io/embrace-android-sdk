@@ -33,9 +33,9 @@ internal class SdkStateApiDelegateTest {
     @Before
     fun setUp() {
         logService = FakeLogService()
-        configModule = FakeConfigModule(
-            deviceIdentifier = Uuid.getEmbUuid()
-        )
+        configModule = FakeConfigModule().apply {
+            configService.deviceId = Uuid.getEmbUuid()
+        }
         val moduleInitBootstrapper = ModuleInitBootstrapper(
             FakeInitModule(),
             configModuleSupplier = { _, _, _, _ ->
@@ -63,14 +63,14 @@ internal class SdkStateApiDelegateTest {
 
     @Test
     fun getDeviceId() {
-        configModule.deviceIdentifier = "foo"
+        configModule.configService.deviceId = "foo"
         assertEquals("foo", delegate.deviceId)
     }
 
     @Test
     fun `device ID not returned SDK is not enabled`() {
         logger.throwOnInternalError = false
-        configModule.deviceIdentifier = "foo"
+        configModule.configService.deviceId = "foo"
         sdkCallChecker.started.set(false)
         assertEquals("", delegate.deviceId)
     }

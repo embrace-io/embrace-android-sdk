@@ -1,20 +1,26 @@
 package io.embrace.android.embracesdk.internal.config
 
-import io.embrace.android.embracesdk.fakes.FAKE_DEVICE_ID
+import io.embrace.android.embracesdk.fakes.FakeEmbLogger
+import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.config.FakeProjectConfig
+import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
 import io.embrace.android.embracesdk.internal.config.behavior.BehaviorThresholdCheck
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.payload.AppFramework
+import okhttp3.OkHttpClient
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.nio.file.Files
 
 internal class ConfigServiceImplTest {
 
+    private val okHttpClient = OkHttpClient()
+    private val serializer = TestPlatformSerializer()
     private lateinit var service: ConfigServiceImpl
     private lateinit var thresholdCheck: BehaviorThresholdCheck
     private lateinit var remoteConfig: RemoteConfig
@@ -100,13 +106,19 @@ internal class ConfigServiceImplTest {
      * Create a new instance of the [ConfigServiceImpl]
      */
     private fun createService(
-        deviceIdSupplier: () -> String = { FAKE_DEVICE_ID },
         hasConfiguredExporters: () -> Boolean = { false },
         appId: String? = "AbCdE",
     ): ConfigServiceImpl = ConfigServiceImpl(
-        hasConfiguredOtelExporters = hasConfiguredExporters,
-        deviceIdSupplier = deviceIdSupplier,
         instrumentedConfig = FakeInstrumentedConfig(project = FakeProjectConfig(appId = appId)),
-        remoteConfig = remoteConfig,
+        worker = fakeBackgroundWorker(),
+        serializer = serializer,
+        store = FakeDeviceIdStore(),
+        okHttpClient = okHttpClient,
+        abis = arrayOf("arm64-v8a"),
+        sdkVersion = "1.2.3",
+        apiLevel = 36,
+        filesDir = Files.createTempDirectory("tmp").toFile(),
+        logger = FakeEmbLogger(),
+        hasConfiguredOtelExporters = hasConfiguredExporters,
     )
 }

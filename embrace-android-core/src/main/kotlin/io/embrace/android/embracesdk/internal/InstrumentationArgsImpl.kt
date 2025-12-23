@@ -10,7 +10,6 @@ import io.embrace.android.embracesdk.internal.arch.state.AppStateTracker
 import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.ConfigService
-import io.embrace.android.embracesdk.internal.envelope.CpuAbi
 import io.embrace.android.embracesdk.internal.injection.WorkerThreadModule
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
@@ -33,9 +32,7 @@ internal class InstrumentationArgsImpl(
     override val store: KeyValueStore,
     override val serializer: PlatformSerializer,
     override val ordinalStore: OrdinalStore,
-    override val cpuAbi: CpuAbi,
     override val processIdentifier: String,
-    override val symbols: Map<String, String>?,
     override val appStateTracker: AppStateTracker,
     private val workerThreadModule: WorkerThreadModule,
     private val sessionTracker: SessionTracker,

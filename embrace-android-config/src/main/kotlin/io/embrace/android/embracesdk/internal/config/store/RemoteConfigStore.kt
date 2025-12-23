@@ -5,7 +5,7 @@ import io.embrace.android.embracesdk.internal.config.source.ConfigHttpResponse
 /**
  * Interface for storing and loading the most recently received remote configuration.
  */
-interface RemoteConfigStore {
+internal interface RemoteConfigStore {
 
     /**
      * Loads the most recent remote configuration, if any.

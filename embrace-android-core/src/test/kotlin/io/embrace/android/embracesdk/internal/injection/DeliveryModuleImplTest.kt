@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.internal.injection
 
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.fakes.FakeConfigModule
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
 import io.embrace.android.embracesdk.fakes.FakeRequestExecutionService
@@ -29,7 +28,7 @@ class DeliveryModuleImplTest {
         configService = FakeConfigService()
         val initModule = FakeInitModule()
         module = DeliveryModuleImpl(
-            FakeConfigModule(configService),
+            configService,
             initModule,
             FakeOpenTelemetryModule(),
             FakeWorkerThreadModule(),

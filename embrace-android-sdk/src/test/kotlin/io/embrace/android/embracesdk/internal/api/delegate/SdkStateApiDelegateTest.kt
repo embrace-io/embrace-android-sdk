@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.api.delegate
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.LastRunEndState
-import io.embrace.android.embracesdk.fakes.FakeConfigModule
+import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeLogService
 import io.embrace.android.embracesdk.fakes.FakeSessionTracker
@@ -25,7 +25,7 @@ internal class SdkStateApiDelegateTest {
 
     private lateinit var delegate: SdkStateApiDelegate
     private lateinit var logService: FakeLogService
-    private lateinit var configModule: FakeConfigModule
+    private lateinit var configService: FakeConfigService
     private lateinit var sessionTracker: FakeSessionTracker
     private lateinit var sdkCallChecker: SdkCallChecker
     private lateinit var logger: FakeEmbLogger
@@ -33,13 +33,11 @@ internal class SdkStateApiDelegateTest {
     @Before
     fun setUp() {
         logService = FakeLogService()
-        configModule = FakeConfigModule().apply {
-            configService.deviceId = Uuid.getEmbUuid()
-        }
+        configService = FakeConfigService(deviceId = Uuid.getEmbUuid())
         val moduleInitBootstrapper = ModuleInitBootstrapper(
             FakeInitModule(),
-            configModuleSupplier = { _, _, _, _ ->
-                configModule
+            configServiceSupplier = { _, _, _, _ ->
+                configService
             },
             essentialServiceModuleSupplier = { _, _, _, _, _, _, _ ->
                 FakeEssentialServiceModule()
@@ -63,14 +61,14 @@ internal class SdkStateApiDelegateTest {
 
     @Test
     fun getDeviceId() {
-        configModule.configService.deviceId = "foo"
+        configService.deviceId = "foo"
         assertEquals("foo", delegate.deviceId)
     }
 
     @Test
     fun `device ID not returned SDK is not enabled`() {
         logger.throwOnInternalError = false
-        configModule.configService.deviceId = "foo"
+        configService.deviceId = "foo"
         sdkCallChecker.started.set(false)
         assertEquals("", delegate.deviceId)
     }

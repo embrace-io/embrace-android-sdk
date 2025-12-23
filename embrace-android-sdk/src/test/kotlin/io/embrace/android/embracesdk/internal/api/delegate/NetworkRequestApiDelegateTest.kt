@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.internal.api.delegate
 
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.fakes.FakeConfigModule
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeTelemetryService
@@ -25,13 +24,13 @@ internal class NetworkRequestApiDelegateTest {
     fun setUp() {
         val moduleInitBootstrapper = ModuleInitBootstrapper(
             FakeInitModule(),
-            configModuleSupplier = { _, _, _, _ ->
-                FakeConfigModule()
+            configServiceSupplier = { _, _, _, _ ->
+                FakeConfigService()
             },
         )
         moduleInitBootstrapper.init(ApplicationProvider.getApplicationContext())
 
-        configService = moduleInitBootstrapper.configModule.configService as FakeConfigService
+        configService = moduleInitBootstrapper.configService as FakeConfigService
         val sdkCallChecker = SdkCallChecker(FakeEmbLogger(), FakeTelemetryService())
         sdkCallChecker.started.set(true)
         delegate = NetworkRequestApiDelegate(moduleInitBootstrapper, sdkCallChecker)

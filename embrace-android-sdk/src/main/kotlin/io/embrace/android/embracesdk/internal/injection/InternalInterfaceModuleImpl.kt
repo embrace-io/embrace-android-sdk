@@ -9,11 +9,11 @@ import io.embrace.android.embracesdk.internal.api.delegate.EmbraceInternalInterf
 import io.embrace.android.embracesdk.internal.api.delegate.FlutterInternalInterfaceImpl
 import io.embrace.android.embracesdk.internal.api.delegate.ReactNativeInternalInterfaceImpl
 import io.embrace.android.embracesdk.internal.api.delegate.UnityInternalInterfaceImpl
-import io.embrace.android.embracesdk.internal.config.ConfigModule
+import io.embrace.android.embracesdk.internal.config.ConfigService
 
 internal class InternalInterfaceModuleImpl(
     initModule: InitModule,
-    configModule: ConfigModule,
+    configService: ConfigService,
     payloadSourceModule: PayloadSourceModule,
     embrace: EmbraceImpl,
     bootstrapper: ModuleInitBootstrapper,
@@ -21,7 +21,7 @@ internal class InternalInterfaceModuleImpl(
 
     override val embraceInternalInterface: EmbraceInternalInterface by singleton {
         EmbraceInternalInterfaceImpl(
-            configModule.configService,
+            configService,
             payloadSourceModule.resourceSource
         )
     }

@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.injection
 
 import android.content.Context
-import io.embrace.android.embracesdk.internal.config.ConfigModule
+import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.instrumentation.startup.DataCaptureServiceModule
 import io.embrace.android.embracesdk.internal.instrumentation.startup.DataCaptureServiceModuleSupplier
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageService
@@ -22,7 +22,7 @@ internal class InitializedModuleGraph(
     override val initModule: InitModule,
     override val openTelemetryModule: OpenTelemetryModule,
     private val coreModuleSupplier: CoreModuleSupplier,
-    private val configModuleSupplier: ConfigModuleSupplier,
+    private val configServiceSupplier: ConfigServiceSupplier,
     private val workerThreadModuleSupplier: WorkerThreadModuleSupplier,
     private val storageServiceSupplier: StorageServiceSupplier,
     private val essentialServiceModuleSupplier: EssentialServiceModuleSupplier,
@@ -48,8 +48,8 @@ internal class InitializedModuleGraph(
         }
     }
 
-    override val configModule: ConfigModule = init {
-        configModuleSupplier(
+    override val configService: ConfigService = init {
+        configServiceSupplier(
             initModule,
             coreModule,
             openTelemetryModule,
@@ -58,7 +58,7 @@ internal class InitializedModuleGraph(
     }.apply {
         EmbTrace.trace("sdk-disable-check") {
             EmbTrace.trace("behavior-check") {
-                if (configService.sdkModeBehavior.isSdkDisabled()) {
+                if (sdkModeBehavior.isSdkDisabled()) {
                     // bail out early. Caught at a higher-level that relies on this specific type
                     throw SdkDisabledException()
                 }
@@ -73,7 +73,7 @@ internal class InitializedModuleGraph(
     override val essentialServiceModule: EssentialServiceModule = init {
         essentialServiceModuleSupplier(
             initModule,
-            configModule,
+            configService,
             openTelemetryModule,
             coreModule,
             workerThreadModule,
@@ -87,7 +87,7 @@ internal class InitializedModuleGraph(
             initModule,
             openTelemetryModule,
             workerThreadModule,
-            configModule,
+            configService,
             essentialServiceModule,
             coreModule,
             storageService,
@@ -97,7 +97,7 @@ internal class InitializedModuleGraph(
     override val featureModule: FeatureModule = init {
         featureModuleSupplier(
             instrumentationModule,
-            configModule.configService,
+            configService,
             storageService,
         )
     }
@@ -107,14 +107,14 @@ internal class InitializedModuleGraph(
             initModule.clock,
             initModule.logger,
             instrumentationModule.instrumentationArgs.destination,
-            configModule.configService,
+            configService,
             versionChecker,
         )
     }
 
     override val deliveryModule: DeliveryModule = init {
         deliveryModuleSupplier(
-            configModule,
+            configService,
             initModule,
             openTelemetryModule,
             workerThreadModule,
@@ -137,7 +137,7 @@ internal class InitializedModuleGraph(
             coreModule,
             workerThreadModule,
             essentialServiceModule,
-            configModule,
+            configService,
             openTelemetryModule,
             threadBlockageService,
             deliveryModule
@@ -149,7 +149,7 @@ internal class InitializedModuleGraph(
             initModule,
             openTelemetryModule,
             essentialServiceModule,
-            configModule,
+            configService,
             deliveryModule,
             workerThreadModule,
             payloadSourceModule,
@@ -162,7 +162,7 @@ internal class InitializedModuleGraph(
             openTelemetryModule,
             coreModule,
             essentialServiceModule,
-            configModule,
+            configService,
             deliveryModule,
             instrumentationModule,
             payloadSourceModule,

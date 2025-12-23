@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.injection
 
-import io.embrace.android.embracesdk.internal.config.ConfigModule
+import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactory
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactoryImpl
 import io.embrace.android.embracesdk.internal.session.message.PayloadMessageCollatorImpl
@@ -16,7 +16,7 @@ class SessionOrchestrationModuleImpl(
     openTelemetryModule: OpenTelemetryModule,
     coreModule: CoreModule,
     essentialServiceModule: EssentialServiceModule,
-    configModule: ConfigModule,
+    configService: ConfigService,
     deliveryModule: DeliveryModule,
     instrumentationModule: InstrumentationModule,
     payloadSourceModule: PayloadSourceModule,
@@ -36,7 +36,7 @@ class SessionOrchestrationModuleImpl(
         PayloadFactoryImpl(
             EmbTrace.trace("payloadMessageCollator") { payloadMessageCollator },
             EmbTrace.trace("logEnvelopeSource") { payloadSourceModule.logEnvelopeSource },
-            EmbTrace.trace("configService") { configModule.configService },
+            EmbTrace.trace("configService") { configService },
             initModule.logger
         )
     }
@@ -62,7 +62,7 @@ class SessionOrchestrationModuleImpl(
             essentialServiceModule.appStateTracker,
             EmbTrace.trace("payloadFactory") { payloadFactory },
             initModule.clock,
-            configModule.configService,
+            configService,
             essentialServiceModule.sessionTracker,
             boundaryDelegate,
             deliveryModule.payloadStore,

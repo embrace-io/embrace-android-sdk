@@ -19,9 +19,9 @@ import java.util.ServiceLoader
  */
 internal fun ModuleGraph.postInit() {
     openTelemetryModule.applyConfiguration(
-        sensitiveKeysBehavior = configModule.configService.sensitiveKeysBehavior,
-        bypassValidation = configModule.configService.isOnlyUsingOtelExporters(),
-        otelBehavior = configModule.configService.otelBehavior
+        sensitiveKeysBehavior = configService.sensitiveKeysBehavior,
+        bypassValidation = configService.isOnlyUsingOtelExporters(),
+        otelBehavior = configService.otelBehavior
     )
 
     initModule.logger.errorHandlerProvider = { featureModule.internalErrorDataSource.dataSource }
@@ -56,7 +56,7 @@ internal fun ModuleGraph.registerListeners() {
             registerService(
                 lazy {
                     SessionChangeListener {
-                        configModule.configService.networkBehavior.domainCountLimiter.reset()
+                        configService.networkBehavior.domainCountLimiter.reset()
                     }
                 }
             )
@@ -149,7 +149,7 @@ internal fun ModuleGraph.markSdkInitComplete() {
         Thread.currentThread().name
     )
     end()
-    val appId = configModule.configService.appId
-    val startMsg = "Embrace SDK version ${BuildConfig.VERSION_NAME} started" + appId?.run { " for appId =  $this" }
+    val appId = configService.appId
+    val startMsg = "Embrace SDK version ${BuildConfig.VERSION_NAME} started" + appId?.run { " for appId = $this" }
     initModule.logger.logInfo(startMsg)
 }

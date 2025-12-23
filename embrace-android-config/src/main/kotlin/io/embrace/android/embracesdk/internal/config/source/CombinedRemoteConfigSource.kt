@@ -5,7 +5,7 @@ import io.embrace.android.embracesdk.internal.config.store.RemoteConfigStore
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import java.util.concurrent.TimeUnit
 
-class CombinedRemoteConfigSource(
+internal class CombinedRemoteConfigSource(
     private val store: RemoteConfigStore,
     httpSource: Lazy<RemoteConfigSource>,
     private val worker: BackgroundWorker,

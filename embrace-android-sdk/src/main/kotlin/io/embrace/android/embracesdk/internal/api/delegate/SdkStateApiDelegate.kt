@@ -14,7 +14,7 @@ internal class SdkStateApiDelegate(
         bootstrapper.essentialServiceModule.sessionTracker
     }
     private val deviceIdentifier by embraceImplInject(sdkCallChecker) {
-        bootstrapper.configModule.configService.deviceId
+        bootstrapper.configService.deviceId
     }
     private val crashVerifier by embraceImplInject(sdkCallChecker) { bootstrapper.featureModule.lastRunCrashVerifier }
 

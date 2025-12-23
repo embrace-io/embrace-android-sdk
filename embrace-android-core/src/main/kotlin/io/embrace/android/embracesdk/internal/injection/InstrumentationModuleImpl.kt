@@ -4,14 +4,14 @@ import io.embrace.android.embracesdk.internal.InstrumentationArgsImpl
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistry
 import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistryImpl
-import io.embrace.android.embracesdk.internal.config.ConfigModule
+import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.storage.StorageService
 
 class InstrumentationModuleImpl(
     initModule: InitModule,
     openTelemetryModule: OpenTelemetryModule,
     workerThreadModule: WorkerThreadModule,
-    configModule: ConfigModule,
+    configService: ConfigService,
     essentialServiceModule: EssentialServiceModule,
     coreModule: CoreModule,
     storageService: StorageService,
@@ -25,7 +25,7 @@ class InstrumentationModuleImpl(
 
     override val instrumentationArgs: InstrumentationArgs by singleton {
         InstrumentationArgsImpl(
-            configService = configModule.configService,
+            configService = configService,
             logger = initModule.logger,
             clock = initModule.clock,
             context = coreModule.context,

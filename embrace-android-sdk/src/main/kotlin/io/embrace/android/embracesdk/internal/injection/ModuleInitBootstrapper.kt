@@ -1,14 +1,15 @@
 package io.embrace.android.embracesdk.internal.injection
 
 import android.content.Context
+import android.os.Build
 import androidx.lifecycle.LifecycleOwner
+import io.embrace.android.embracesdk.core.BuildConfig
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkConnectivityService
 import io.embrace.android.embracesdk.internal.clock.Clock
-import io.embrace.android.embracesdk.internal.config.ConfigModule
-import io.embrace.android.embracesdk.internal.config.ConfigModuleImpl
 import io.embrace.android.embracesdk.internal.config.ConfigService
+import io.embrace.android.embracesdk.internal.config.ConfigServiceImpl
 import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
 import io.embrace.android.embracesdk.internal.delivery.execution.RequestExecutionService
 import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageService
@@ -48,18 +49,27 @@ internal class ModuleInitBootstrapper(
             initModule
         )
     },
-    private val configModuleSupplier: ConfigModuleSupplier = {
+    private val configServiceSupplier: ConfigServiceSupplier = {
             initModule: InitModule,
             coreModule: CoreModule,
             openTelemetryModule: OpenTelemetryModule,
             workerThreadModule: WorkerThreadModule,
         ->
-        ConfigModuleImpl(
-            initModule,
-            coreModule,
-            openTelemetryModule,
-            workerThreadModule,
-        )
+        EmbTrace.trace("config-service-init") {
+            ConfigServiceImpl(
+                instrumentedConfig = initModule.instrumentedConfig,
+                worker = workerThreadModule.backgroundWorker(Worker.Background.IoRegWorker),
+                serializer = initModule.jsonSerializer,
+                okHttpClient = initModule.okHttpClient,
+                hasConfiguredOtelExporters = openTelemetryModule.otelSdkConfig::hasConfiguredOtelExporters,
+                sdkVersion = BuildConfig.VERSION_NAME,
+                apiLevel = Build.VERSION.SDK_INT,
+                filesDir = coreModule.context.filesDir,
+                store = coreModule.store,
+                abis = Build.SUPPORTED_ABIS,
+                logger = initModule.logger,
+            )
+        }
     },
     private val workerThreadModuleSupplier: WorkerThreadModuleSupplier = { WorkerThreadModuleImpl() },
     private val storageServiceSupplier: StorageServiceSupplier = {
@@ -79,7 +89,7 @@ internal class ModuleInitBootstrapper(
     },
     private val essentialServiceModuleSupplier: EssentialServiceModuleSupplier = {
             initModule: InitModule,
-            configModule: ConfigModule,
+            configService: ConfigService,
             openTelemetryModule: OpenTelemetryModule,
             coreModule: CoreModule,
             workerThreadModule: WorkerThreadModule,
@@ -88,7 +98,7 @@ internal class ModuleInitBootstrapper(
         ->
         EssentialServiceModuleImpl(
             initModule,
-            configModule,
+            configService,
             openTelemetryModule,
             coreModule,
             workerThreadModule,
@@ -111,7 +121,7 @@ internal class ModuleInitBootstrapper(
             initModule: InitModule,
             openTelemetryModule: OpenTelemetryModule,
             workerThreadModule: WorkerThreadModule,
-            configModule: ConfigModule,
+            configService: ConfigService,
             essentialServiceModule: EssentialServiceModule,
             coreModule: CoreModule,
             storageService: StorageService,
@@ -120,7 +130,7 @@ internal class ModuleInitBootstrapper(
             initModule,
             openTelemetryModule,
             workerThreadModule,
-            configModule,
+            configService,
             essentialServiceModule,
             coreModule,
             storageService,
@@ -142,7 +152,7 @@ internal class ModuleInitBootstrapper(
         )
     },
     private val deliveryModuleSupplier: DeliveryModuleSupplier = {
-            configModule: ConfigModule,
+            configService: ConfigService,
             initModule: InitModule,
             otelModule: OpenTelemetryModule,
             workerThreadModule: WorkerThreadModule,
@@ -154,7 +164,7 @@ internal class ModuleInitBootstrapper(
             deliveryTracer: DeliveryTracer?,
         ->
         DeliveryModuleImpl(
-            configModule,
+            configService,
             initModule,
             otelModule,
             workerThreadModule,
@@ -173,7 +183,7 @@ internal class ModuleInitBootstrapper(
             initModule: InitModule,
             openTelemetryModule: OpenTelemetryModule,
             essentialServiceModule: EssentialServiceModule,
-            configModule: ConfigModule,
+            configService: ConfigService,
             deliveryModule: DeliveryModule,
             workerThreadModule: WorkerThreadModule,
             payloadSourceModule: PayloadSourceModule,
@@ -182,7 +192,7 @@ internal class ModuleInitBootstrapper(
             initModule,
             openTelemetryModule,
             essentialServiceModule,
-            configModule,
+            configService,
             deliveryModule,
             workerThreadModule,
             payloadSourceModule,
@@ -193,7 +203,7 @@ internal class ModuleInitBootstrapper(
             openTelemetryModule: OpenTelemetryModule,
             coreModule: CoreModule,
             essentialServiceModule: EssentialServiceModule,
-            configModule: ConfigModule,
+            configService: ConfigService,
             deliveryModule: DeliveryModule,
             instrumentationModule: InstrumentationModule,
             payloadSourceModule: PayloadSourceModule,
@@ -205,7 +215,7 @@ internal class ModuleInitBootstrapper(
             openTelemetryModule,
             coreModule,
             essentialServiceModule,
-            configModule,
+            configService,
             deliveryModule,
             instrumentationModule,
             payloadSourceModule,
@@ -218,7 +228,7 @@ internal class ModuleInitBootstrapper(
             coreModule: CoreModule,
             workerThreadModule: WorkerThreadModule,
             essentialServiceModule: EssentialServiceModule,
-            configModule: ConfigModule,
+            configService: ConfigService,
             otelModule: OpenTelemetryModule,
             otelPayloadMapper: OtelPayloadMapper?,
             deliveryModule: DeliveryModule,
@@ -228,7 +238,7 @@ internal class ModuleInitBootstrapper(
             coreModule,
             workerThreadModule,
             essentialServiceModule,
-            configModule,
+            configService,
             otelModule,
             otelPayloadMapper,
             deliveryModule,
@@ -239,7 +249,7 @@ internal class ModuleInitBootstrapper(
     @Volatile
     private var delegate: ModuleGraph = UninitializedModuleGraph
     override val coreModule: CoreModule get() = delegate.coreModule
-    override val configModule: ConfigModule get() = delegate.configModule
+    override val configService: ConfigService get() = delegate.configService
     override val workerThreadModule: WorkerThreadModule get() = delegate.workerThreadModule
     override val storageService: StorageService get() = delegate.storageService
     override val essentialServiceModule: EssentialServiceModule get() = delegate.essentialServiceModule
@@ -274,7 +284,7 @@ internal class ModuleInitBootstrapper(
                     initModule,
                     openTelemetryModule,
                     coreModuleSupplier,
-                    configModuleSupplier,
+                    configServiceSupplier,
                     workerThreadModuleSupplier,
                     storageServiceSupplier,
                     essentialServiceModuleSupplier,

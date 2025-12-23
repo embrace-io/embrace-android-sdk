@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.internal.injection
 
 import io.embrace.android.embracesdk.core.BuildConfig
 import io.embrace.android.embracesdk.internal.comms.api.Endpoint
-import io.embrace.android.embracesdk.internal.config.ConfigModule
+import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.caching.PayloadCachingService
 import io.embrace.android.embracesdk.internal.delivery.caching.PayloadCachingServiceImpl
@@ -27,7 +27,7 @@ import io.embrace.android.embracesdk.internal.worker.PriorityWorker
 import io.embrace.android.embracesdk.internal.worker.Worker
 
 class DeliveryModuleImpl(
-    configModule: ConfigModule,
+    configService: ConfigService,
     initModule: InitModule,
     otelModule: OpenTelemetryModule,
     workerThreadModule: WorkerThreadModule,
@@ -42,7 +42,7 @@ class DeliveryModuleImpl(
     private val processIdProvider = { otelModule.otelSdkConfig.processIdentifier }
 
     override val payloadStore: PayloadStore? by singleton {
-        val configService = configModule.configService
+        val configService = configService
         if (configService.isOnlyUsingOtelExporters()) {
             null
         } else {
@@ -56,7 +56,7 @@ class DeliveryModuleImpl(
     }
 
     override val intakeService: IntakeService? by singleton {
-        if (configModule.configService.isOnlyUsingOtelExporters()) {
+        if (configService.isOnlyUsingOtelExporters()) {
             null
         } else {
             val payloadStorageService = payloadStorageService ?: return@singleton null
@@ -82,7 +82,7 @@ class DeliveryModuleImpl(
     }
 
     override val payloadCachingService: PayloadCachingService? by singleton {
-        if (configModule.configService.isOnlyUsingOtelExporters()) {
+        if (configService.isOnlyUsingOtelExporters()) {
             null
         } else {
             val payloadStore = payloadStore ?: return@singleton null
@@ -97,7 +97,7 @@ class DeliveryModuleImpl(
     }
 
     private val payloadStorageService: PayloadStorageService? by singleton {
-        payloadStorageServiceProvider?.invoke() ?: if (configModule.configService.isOnlyUsingOtelExporters()) {
+        payloadStorageServiceProvider?.invoke() ?: if (configService.isOnlyUsingOtelExporters()) {
             null
         } else {
             val location = StorageLocation.PAYLOAD.asFile(
@@ -116,7 +116,7 @@ class DeliveryModuleImpl(
     }
 
     override val cacheStorageService: PayloadStorageService? by singleton {
-        cacheStorageServiceProvider?.invoke() ?: if (configModule.configService.isOnlyUsingOtelExporters()) {
+        cacheStorageServiceProvider?.invoke() ?: if (configService.isOnlyUsingOtelExporters()) {
             null
         } else {
             val location = StorageLocation.CACHE.asFile(
@@ -135,7 +135,7 @@ class DeliveryModuleImpl(
     }
 
     override val cachedLogEnvelopeStore: CachedLogEnvelopeStore? by singleton {
-        if (configModule.configService.isOnlyUsingOtelExporters()) {
+        if (configService.isOnlyUsingOtelExporters()) {
             null
         } else {
             val location = StorageLocation.ENVELOPE.asFile(
@@ -153,14 +153,14 @@ class DeliveryModuleImpl(
     }
 
     private val requestExecutionService: RequestExecutionService? by singleton {
-        requestExecutionServiceProvider?.invoke() ?: if (configModule.configService.isOnlyUsingOtelExporters()) {
+        requestExecutionServiceProvider?.invoke() ?: if (configService.isOnlyUsingOtelExporters()) {
             null
         } else {
-            val appId = configModule.configService.appId ?: return@singleton null
+            val appId = configService.appId ?: return@singleton null
             val coreBaseUrl = initModule.instrumentedConfig.baseUrls.getData() ?: "https://a-$appId.data.emb-api.com"
             val url = "$coreBaseUrl/${Endpoint.SESSIONS.version}/"
 
-            val lazyDeviceId = lazy(configModule.configService::deviceId)
+            val lazyDeviceId = lazy(configService::deviceId)
             OkHttpRequestExecutionService(
                 initModule.okHttpClient,
                 url,
@@ -174,7 +174,7 @@ class DeliveryModuleImpl(
     }
 
     override val schedulingService: SchedulingService? by singleton {
-        if (configModule.configService.isOnlyUsingOtelExporters()) {
+        if (configService.isOnlyUsingOtelExporters()) {
             null
         } else {
             val payloadStorageService = payloadStorageService ?: return@singleton null

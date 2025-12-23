@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.fakes
 
+import io.embrace.android.embracesdk.internal.arch.attrs.EmbraceAttributeKey
 import io.embrace.android.embracesdk.internal.arch.attrs.asPair
 import io.embrace.android.embracesdk.internal.arch.datasource.LogSeverity
 import io.embrace.android.embracesdk.internal.arch.datasource.SessionStateToken
@@ -118,7 +119,9 @@ class FakeTelemetryDestination : TelemetryDestination {
         createdSpans.add(token)
     }
 
-    override fun <T: Any> startSessionStateCapture(state: SchemaType.State<T>): SessionStateToken<T> = FakeSessionStateToken()
+    override fun <T : Any> startSessionStateCapture(state: SchemaType.State<T>): SessionStateToken<T> = FakeSessionStateToken()
 
     override var sessionUpdateAction: (() -> Unit)? = null
+
+    override var currentStatesProvider: () -> Map<EmbraceAttributeKey, Any> = { emptyMap() }
 }

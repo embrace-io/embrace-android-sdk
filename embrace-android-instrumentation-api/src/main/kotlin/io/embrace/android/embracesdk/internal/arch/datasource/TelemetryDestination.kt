@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.arch.datasource
 
+import io.embrace.android.embracesdk.internal.arch.attrs.EmbraceAttributeKey
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
@@ -86,4 +87,9 @@ interface TelemetryDestination {
      * Notify the SDK that the current session has updated telemetry or metadata
      */
     var sessionUpdateAction: (() -> Unit)?
+
+    /**
+     * Function that returns a snapshot of all of the current values of registered instances of [StateDataSource] as a name-value pair
+     */
+    var currentStatesProvider: () -> Map<EmbraceAttributeKey, Any>
 }

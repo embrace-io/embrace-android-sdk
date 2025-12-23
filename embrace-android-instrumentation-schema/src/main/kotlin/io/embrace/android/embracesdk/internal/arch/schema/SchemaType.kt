@@ -284,10 +284,10 @@ sealed class SchemaType(
      */
     abstract class State<T : Any>(
         initialValue: T,
-        stateSpanName: String,
+        val stateName: String,
     ) : SchemaType(
         telemetryType = EmbType.State,
-        fixedObjectName = "state-$stateSpanName"
+        fixedObjectName = "state-$stateName"
     ) {
         override val schemaAttributes: Map<String, String> = mapOf(
             embStateInitialValue.name to initialValue.toString()

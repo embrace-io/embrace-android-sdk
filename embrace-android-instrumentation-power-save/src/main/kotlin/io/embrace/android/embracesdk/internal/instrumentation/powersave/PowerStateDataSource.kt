@@ -13,7 +13,7 @@ class PowerStateDataSource(
     private val args: InstrumentationArgs,
 ) : StateDataSource<PowerMode>(
     args = args,
-    stateValueFactory = ::PowerState,
+    stateTypeFactory = ::PowerState,
     defaultValue = PowerMode.UNKNOWN,
 ) {
     private val powerManagerProvider: Provider<PowerManager?> = { args.systemService(Context.POWER_SERVICE) }

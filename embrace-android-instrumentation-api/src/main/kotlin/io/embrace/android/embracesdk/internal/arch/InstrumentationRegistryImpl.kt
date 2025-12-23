@@ -1,7 +1,9 @@
 package io.embrace.android.embracesdk.internal.arch
 
+import io.embrace.android.embracesdk.internal.arch.attrs.EmbraceAttributeKey
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSource
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState
+import io.embrace.android.embracesdk.internal.arch.datasource.StateDataSource
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import java.util.concurrent.CopyOnWriteArrayList
@@ -68,5 +70,20 @@ class InstrumentationRegistryImpl(
                 logger.trackInternalError(InternalErrorType.INSTRUMENTATION_REG_FAIL, exc)
             }
         }
+    }
+
+    override fun getCurrentStates(): Map<EmbraceAttributeKey, Any> {
+        val stateAttributes = mutableMapOf<EmbraceAttributeKey, Any>()
+
+        dataSourceStates
+            .toList()
+            .filter { it.dataSource is StateDataSource<*> }
+            .forEach {
+                (it.dataSource as StateDataSource<*>).apply {
+                    stateAttributes[stateAttributeKey] = getCurrentStateValue()
+                }
+            }
+
+        return stateAttributes
     }
 }

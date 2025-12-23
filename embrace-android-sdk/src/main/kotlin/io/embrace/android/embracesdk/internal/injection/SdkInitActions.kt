@@ -39,6 +39,8 @@ internal fun ModuleGraph.postInit() {
     }
 
     essentialServiceModule.telemetryDestination.sessionUpdateAction = sessionOrchestrator::onSessionDataUpdate
+    essentialServiceModule.telemetryDestination.currentStatesProvider =
+        instrumentationModule.instrumentationRegistry::getCurrentStates
 }
 
 /**

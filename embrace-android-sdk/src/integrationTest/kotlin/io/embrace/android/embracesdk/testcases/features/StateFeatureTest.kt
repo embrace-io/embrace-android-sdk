@@ -3,10 +3,12 @@ package io.embrace.android.embracesdk.testcases.features
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.assertStateTransition
 import io.embrace.android.embracesdk.assertions.findSpansOfType
+import io.embrace.android.embracesdk.assertions.getLogs
 import io.embrace.android.embracesdk.assertions.hasLinkToEmbraceSpan
 import io.embrace.android.embracesdk.fakes.TestStateDataSource
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
+import io.embrace.android.embracesdk.internal.arch.attrs.EmbraceAttributeKey
 import io.embrace.android.embracesdk.internal.arch.attrs.embStateDroppedByInstrumentation
 import io.embrace.android.embracesdk.internal.arch.attrs.embStateInitialValue
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
@@ -271,6 +273,51 @@ internal class StateFeatureTest {
                 repeat(sessions.size) { i ->
                     val stateSpan = checkNotNull(sessions[i].getStateSpan("emb-state-test"))
                     stateSpan.attributes?.hasEmbraceAttributeValue(embStateInitialValue, "baz")
+                }
+            }
+        )
+    }
+
+    @Test
+    fun `logs have correct current state`() {
+        val stateUpdates = listOf("foo", "bar")
+        val stateValues = mutableListOf<String>()
+        var dataSourceKey: EmbraceAttributeKey? = null
+        testRule.runTest(
+            instrumentedConfig = FakeInstrumentedConfig(
+                enabledFeatures = FakeEnabledFeatureConfig(
+                    stateCaptureEnabled = true,
+                    bgActivityCapture = true
+                )
+            ),
+            testCaseAction = {
+                val dataSource = findDataSource<TestStateDataSource>()
+                dataSourceKey = dataSource.stateAttributeKey
+                stateValues.add(dataSource.getCurrentStateValue())
+                embrace.logInfo("test")
+                repeat(stateUpdates.size) { i ->
+                    executeTransitions(listOf(stateUpdates[i]))
+                    stateValues.add(dataSource.getCurrentStateValue())
+                    embrace.logInfo("test")
+                }
+                recordSession {
+                    repeat(stateUpdates.size) { i ->
+                        executeTransitions(listOf(stateUpdates[i]))
+                        stateValues.add(dataSource.getCurrentStateValue())
+                        embrace.logInfo("test")
+                    }
+                }
+                stateValues.add(dataSource.getCurrentStateValue())
+                embrace.logInfo("test")
+            },
+            assertAction = {
+                val logs = getSingleLogEnvelope().getLogs { it.body == "test" }
+                val expectedStateValues = listOf("UNKNOWN", "foo", "bar", "foo", "bar", "bar")
+
+                assertEquals(6, logs.size)
+                repeat(logs.size) { i ->
+                    assertTrue(checkNotNull(logs[i].attributes).hasEmbraceAttributeValue(checkNotNull(dataSourceKey), expectedStateValues[i]))
+                    assertEquals(expectedStateValues[i], stateValues[i])
                 }
             }
         )

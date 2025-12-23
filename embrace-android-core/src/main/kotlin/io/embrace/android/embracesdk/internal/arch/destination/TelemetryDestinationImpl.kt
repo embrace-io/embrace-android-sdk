@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.arch.destination
 
+import io.embrace.android.embracesdk.internal.arch.attrs.EmbraceAttributeKey
 import io.embrace.android.embracesdk.internal.arch.attrs.asPair
 import io.embrace.android.embracesdk.internal.arch.attrs.embState
 import io.embrace.android.embracesdk.internal.arch.attrs.embStateDroppedByInstrumentation
@@ -51,6 +52,7 @@ class TelemetryDestinationImpl(
 ) : TelemetryDestination {
 
     override var sessionUpdateAction: (() -> Unit)? = null
+    override var currentStatesProvider: () -> Map<EmbraceAttributeKey, Any> = { emptyMap() }
 
     @OptIn(IncubatingApi::class)
     override fun addLog(
@@ -99,6 +101,11 @@ class TelemetryDestinationImpl(
                     setStringAttribute(it.key, it.value)
                 }
             }
+
+            currentStatesProvider().forEach {
+                setStringAttribute(it.key.name, it.value.toString())
+            }
+
             sessionUpdateAction?.invoke()
         }
     }

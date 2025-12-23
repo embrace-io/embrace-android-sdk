@@ -26,4 +26,9 @@ sealed class LinkType(
      * On a session span, it links to a span that ended during the session associated this the session span.
      */
     object EndedIn : LinkType("ENDED_IN")
+
+    /**
+     * On a session span, it links to a span that represents a State during the course of that session.
+     */
+    object State : LinkType("STATE")
 }

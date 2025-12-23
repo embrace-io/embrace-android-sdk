@@ -3,12 +3,14 @@ package io.embrace.android.embracesdk.testcases.features
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.assertStateTransition
 import io.embrace.android.embracesdk.assertions.findSpansOfType
+import io.embrace.android.embracesdk.assertions.hasLinkToEmbraceSpan
 import io.embrace.android.embracesdk.fakes.TestStateDataSource
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.internal.arch.attrs.embStateDroppedByInstrumentation
 import io.embrace.android.embracesdk.internal.arch.attrs.embStateInitialValue
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.arch.schema.LinkType
 import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.otel.sdk.hasEmbraceAttributeValue
@@ -97,6 +99,7 @@ internal class StateFeatureTest {
                         }
                     }
                     val sessionSpan = checkNotNull(sessions[i].getSessionSpan())
+                    sessionSpan.hasLinkToEmbraceSpan(stateSpan, LinkType.State)
                     assertEquals(sessionSpan.startTimeNanos, stateSpan.startTimeNanos)
                     assertEquals(sessionSpan.endTimeNanos, stateSpan.endTimeNanos)
                     stateSpan.attributes?.hasEmbraceAttributeValue(embStateInitialValue, initialStateValue)

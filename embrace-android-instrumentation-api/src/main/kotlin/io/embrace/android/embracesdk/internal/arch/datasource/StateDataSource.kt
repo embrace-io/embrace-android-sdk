@@ -29,7 +29,7 @@ abstract class StateDataSource<T : Any>(
     private val unrecordedTransitions = AtomicReference(noUnrecordedTransitions)
 
     /**
-     * Notify that the state has changed at the given time to teh given value, with the given number of transitions dropped by the
+     * Notify that the state has changed at the given time to the given value, with the given number of transitions dropped by the
      * since the last time this data source was notified of a state change.
      */
     fun onStateChange(updateDetectedTimeMs: Long, newState: T, droppedTransitions: Int = 0) {

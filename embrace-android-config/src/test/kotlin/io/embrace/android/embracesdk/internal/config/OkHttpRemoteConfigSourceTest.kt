@@ -1,8 +1,5 @@
 package io.embrace.android.embracesdk.internal.config
 
-import android.os.Build
-import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.core.BuildConfig
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.fakes.config.FakeBaseUrlConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
@@ -22,10 +19,8 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
-import org.junit.runner.RunWith
 import java.util.concurrent.TimeUnit
 
-@RunWith(AndroidJUnit4::class)
 class OkHttpRemoteConfigSourceTest {
 
     private lateinit var server: MockWebServer
@@ -65,8 +60,8 @@ class OkHttpRemoteConfigSourceTest {
                         configImpl = baseUrl,
                     )
                 ),
-                BuildConfig.VERSION_NAME,
-                Build.VERSION.SDK_INT
+                "1.0.0",
+                36
             )
         )
     }
@@ -166,7 +161,7 @@ class OkHttpRemoteConfigSourceTest {
         assertEmbraceHeadersAdded(request)
         val requestUrl = request.requestUrl?.toUrl() ?: error("Request URL cannot be null")
         assertEquals("/api/v2/config", requestUrl.path)
-        assertEquals("appId=abcde&osVersion=21.0.0&appVersion=1.0.0&deviceId=deviceId", requestUrl.query)
+        assertEquals("appId=abcde&osVersion=36.0.0&appVersion=1.0.0&deviceId=deviceId", requestUrl.query)
     }
 
     private fun assertConfigResponseDeserialized(cfg: RemoteConfig?) {

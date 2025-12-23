@@ -9,7 +9,7 @@ import okio.GzipSource
 import okio.buffer
 import java.io.IOException
 
-internal class OkHttpRemoteConfigSource(
+class OkHttpRemoteConfigSource(
     private val okhttpClient: OkHttpClient,
     private val serializer: PlatformSerializer,
     private val configEndpoint: ConfigEndpoint,

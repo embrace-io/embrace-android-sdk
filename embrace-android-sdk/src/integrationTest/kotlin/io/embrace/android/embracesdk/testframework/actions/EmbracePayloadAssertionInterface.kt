@@ -51,7 +51,7 @@ internal class EmbracePayloadAssertionInterface(
 
     private val serializer by lazy { bootstrapper.initModule.jsonSerializer }
     private val deliveryTracer by lazy {
-        checkNotNull(bootstrapper.deliveryModule.deliveryTracer)
+        checkNotNull(bootstrapper.deliveryModule?.deliveryTracer)
     }
 
     /*** LOGS ***/

@@ -25,7 +25,7 @@ internal fun ModuleGraph.postInit() {
     )
 
     initModule.logger.errorHandlerProvider = { featureModule.internalErrorDataSource.dataSource }
-    deliveryModule.payloadCachingService?.run {
+    deliveryModule?.payloadCachingService?.run {
         openTelemetryModule.spanRepository.setSpanUpdateNotifier {
             reportBackgroundActivityStateChange()
         }
@@ -109,7 +109,7 @@ internal fun ModuleGraph.postLoadInstrumentation() {
         addCrashTeardownHandler(logModule.logOrchestrator)
         addCrashTeardownHandler(sessionOrchestrator)
         addCrashTeardownHandler(featureModule.crashMarker)
-        deliveryModule.payloadStore?.let(::addCrashTeardownHandler)
+        deliveryModule?.payloadStore?.let(::addCrashTeardownHandler)
     }
     registry.findByType(NetworkStatusDataSource::class)?.let {
         essentialServiceModule.networkConnectivityService.addNetworkConnectivityListener(it)
@@ -132,10 +132,10 @@ internal fun ModuleGraph.triggerPayloadSend() {
         }
     }
     worker.submit { // potentially trigger first delivery attempt by firing network status callback
-        deliveryModule.schedulingService?.let(
+        deliveryModule?.schedulingService?.let(
             essentialServiceModule.networkConnectivityService::addNetworkConnectivityListener
         )
-        deliveryModule.schedulingService?.onPayloadIntake()
+        deliveryModule?.schedulingService?.onPayloadIntake()
     }
 }
 

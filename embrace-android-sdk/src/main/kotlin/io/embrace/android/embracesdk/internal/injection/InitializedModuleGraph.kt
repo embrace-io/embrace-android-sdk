@@ -112,19 +112,23 @@ internal class InitializedModuleGraph(
         )
     }
 
-    override val deliveryModule: DeliveryModule = init {
-        deliveryModuleSupplier(
-            configService,
-            initModule,
-            openTelemetryModule,
-            workerThreadModule,
-            coreModule,
-            essentialServiceModule,
-            null,
-            null,
-            null,
+    override val deliveryModule: DeliveryModule? = init {
+        if (configService.isOnlyUsingOtelExporters()) {
             null
-        )
+        } else {
+            deliveryModuleSupplier(
+                configService,
+                initModule,
+                openTelemetryModule,
+                workerThreadModule,
+                coreModule,
+                essentialServiceModule,
+                null,
+                null,
+                null,
+                null
+            )
+        }
     }
 
     override val threadBlockageService: ThreadBlockageService? = init {

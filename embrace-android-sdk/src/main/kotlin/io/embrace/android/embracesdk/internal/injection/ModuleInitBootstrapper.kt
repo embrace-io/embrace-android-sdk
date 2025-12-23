@@ -184,7 +184,7 @@ internal class ModuleInitBootstrapper(
             openTelemetryModule: OpenTelemetryModule,
             essentialServiceModule: EssentialServiceModule,
             configService: ConfigService,
-            deliveryModule: DeliveryModule,
+            deliveryModule: DeliveryModule?,
             workerThreadModule: WorkerThreadModule,
             payloadSourceModule: PayloadSourceModule,
         ->
@@ -204,7 +204,7 @@ internal class ModuleInitBootstrapper(
             coreModule: CoreModule,
             essentialServiceModule: EssentialServiceModule,
             configService: ConfigService,
-            deliveryModule: DeliveryModule,
+            deliveryModule: DeliveryModule?,
             instrumentationModule: InstrumentationModule,
             payloadSourceModule: PayloadSourceModule,
             startupDurationProvider: () -> Long?,
@@ -231,7 +231,7 @@ internal class ModuleInitBootstrapper(
             configService: ConfigService,
             otelModule: OpenTelemetryModule,
             otelPayloadMapper: OtelPayloadMapper?,
-            deliveryModule: DeliveryModule,
+            deliveryModule: DeliveryModule?,
         ->
         PayloadSourceModuleImpl(
             initModule,
@@ -254,7 +254,7 @@ internal class ModuleInitBootstrapper(
     override val storageService: StorageService get() = delegate.storageService
     override val essentialServiceModule: EssentialServiceModule get() = delegate.essentialServiceModule
     override val dataCaptureServiceModule: DataCaptureServiceModule get() = delegate.dataCaptureServiceModule
-    override val deliveryModule: DeliveryModule get() = delegate.deliveryModule
+    override val deliveryModule: DeliveryModule? get() = delegate.deliveryModule
     override val threadBlockageService: ThreadBlockageService? get() = delegate.threadBlockageService
     override val logModule: LogModule get() = delegate.logModule
     override val instrumentationModule: InstrumentationModule get() = delegate.instrumentationModule

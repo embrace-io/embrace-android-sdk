@@ -39,7 +39,7 @@ internal class LogsApiDelegate(
         bootstrapper.initModule.logger
     }
     private val payloadStore by embraceImplInject(sdkCallChecker) {
-        bootstrapper.deliveryModule.payloadStore
+        bootstrapper.deliveryModule?.payloadStore
     }
     private val serializer by embraceImplInject(sdkCallChecker) {
         bootstrapper.initModule.jsonSerializer

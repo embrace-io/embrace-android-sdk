@@ -42,7 +42,7 @@ class PayloadSourceModuleImpl(
     configService: ConfigService,
     otelModule: OpenTelemetryModule,
     otelPayloadMapper: OtelPayloadMapper?,
-    deliveryModule: DeliveryModule,
+    deliveryModule: DeliveryModule?,
     versionChecker: VersionChecker = BuildVersionChecker,
 ) : PayloadSourceModule {
 
@@ -79,7 +79,7 @@ class PayloadSourceModuleImpl(
     }
 
     override val logEnvelopeSource: LogEnvelopeSource by singleton {
-        LogEnvelopeSourceImpl(metadataSource, resourceSource, logPayloadSource, deliveryModule.cachedLogEnvelopeStore)
+        LogEnvelopeSourceImpl(metadataSource, resourceSource, logPayloadSource, deliveryModule?.cachedLogEnvelopeStore)
     }
 
     override val hostedSdkVersionInfo: HostedSdkVersionInfo by singleton {
@@ -149,13 +149,11 @@ class PayloadSourceModuleImpl(
     }
 
     override val payloadResurrectionService: PayloadResurrectionService? by singleton {
-        val intakeService = deliveryModule.intakeService ?: return@singleton null
-        val cacheStorageService = deliveryModule.cacheStorageService ?: return@singleton null
-        val cachedLogEnvelopeStore = deliveryModule.cachedLogEnvelopeStore ?: return@singleton null
+        deliveryModule ?: return@singleton null
         PayloadResurrectionServiceImpl(
-            intakeService = intakeService,
-            cacheStorageService = cacheStorageService,
-            cachedLogEnvelopeStore = cachedLogEnvelopeStore,
+            intakeService = deliveryModule.intakeService,
+            cacheStorageService = deliveryModule.cacheStorageService,
+            cachedLogEnvelopeStore = deliveryModule.cachedLogEnvelopeStore,
             logger = initModule.logger,
             serializer = initModule.jsonSerializer
         )

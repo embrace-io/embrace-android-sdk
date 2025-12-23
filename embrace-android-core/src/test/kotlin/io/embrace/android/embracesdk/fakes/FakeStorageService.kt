@@ -1,16 +1,11 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.android.embracesdk.internal.injection.StorageModule
 import io.embrace.android.embracesdk.internal.storage.StorageService
 import java.io.File
 import java.io.FilenameFilter
 import java.nio.file.Files
 
-class FakeStorageModule(
-    override val storageService: StorageService = FakeStorageService(),
-) : StorageModule
-
-private class FakeStorageService : StorageService {
+class FakeStorageService : StorageService {
 
     var shouldThrow = false
 

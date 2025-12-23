@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
 import io.embrace.android.embracesdk.internal.delivery.execution.RequestExecutionService
 import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageService
 import io.embrace.android.embracesdk.internal.envelope.session.OtelPayloadMapper
+import io.embrace.android.embracesdk.internal.storage.StorageService
 import io.embrace.android.embracesdk.internal.utils.Provider
 
 typealias ConfigModuleSupplier = (
@@ -48,7 +49,7 @@ typealias EssentialServiceModuleSupplier = (
 typealias FeatureModuleSupplier = (
     instrumentationModule: InstrumentationModule,
     configService: ConfigService,
-    storageModule: StorageModule,
+    storageService: StorageService,
 ) -> FeatureModule
 
 typealias InstrumentationModuleSupplier = (
@@ -58,7 +59,7 @@ typealias InstrumentationModuleSupplier = (
     configModule: ConfigModule,
     essentialServiceModule: EssentialServiceModule,
     coreModule: CoreModule,
-    storageModule: StorageModule,
+    storageService: StorageService,
 ) -> InstrumentationModule
 
 typealias LogModuleSupplier = (
@@ -95,10 +96,10 @@ typealias SessionOrchestrationModuleSupplier = (
     logModule: LogModule,
 ) -> SessionOrchestrationModule
 
-typealias StorageModuleSupplier = (
+typealias StorageServiceSupplier = (
     initModule: InitModule,
     coreModule: CoreModule,
     workerThreadModule: WorkerThreadModule,
-) -> StorageModule
+) -> StorageService
 
 typealias WorkerThreadModuleSupplier = () -> WorkerThreadModule

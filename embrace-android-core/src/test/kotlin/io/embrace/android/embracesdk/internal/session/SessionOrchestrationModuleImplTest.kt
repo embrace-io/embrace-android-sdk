@@ -4,7 +4,7 @@ import io.embrace.android.embracesdk.fakes.FakeConfigModule
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeDeliveryModule
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
-import io.embrace.android.embracesdk.fakes.FakeStorageModule
+import io.embrace.android.embracesdk.fakes.FakeStorageService
 import io.embrace.android.embracesdk.fakes.createBackgroundActivityBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
@@ -39,7 +39,7 @@ internal class SessionOrchestrationModuleImplTest {
             FakeConfigModule(),
             FakeEssentialServiceModule(),
             coreModule,
-            FakeStorageModule()
+            FakeStorageService()
         )
         val module = SessionOrchestrationModuleImpl(
             initModule,
@@ -67,7 +67,7 @@ internal class SessionOrchestrationModuleImplTest {
             FakeConfigModule(),
             FakeEssentialServiceModule(),
             coreModule,
-            FakeStorageModule()
+            FakeStorageService()
         )
 
         val module = SessionOrchestrationModuleImpl(

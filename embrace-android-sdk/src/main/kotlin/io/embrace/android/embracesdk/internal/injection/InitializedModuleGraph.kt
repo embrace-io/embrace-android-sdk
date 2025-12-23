@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.internal.instrumentation.startup.DataCaptur
 import io.embrace.android.embracesdk.internal.instrumentation.startup.DataCaptureServiceModuleSupplier
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageService
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageServiceSupplier
+import io.embrace.android.embracesdk.internal.storage.StorageService
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
@@ -21,7 +22,7 @@ internal class InitializedModuleGraph(
     private val coreModuleSupplier: CoreModuleSupplier,
     private val configModuleSupplier: ConfigModuleSupplier,
     private val workerThreadModuleSupplier: WorkerThreadModuleSupplier,
-    private val storageModuleSupplier: StorageModuleSupplier,
+    private val storageServiceSupplier: StorageServiceSupplier,
     private val essentialServiceModuleSupplier: EssentialServiceModuleSupplier,
     private val featureModuleSupplier: FeatureModuleSupplier,
     private val instrumentationModuleSupplier: InstrumentationModuleSupplier,
@@ -68,8 +69,8 @@ internal class InitializedModuleGraph(
         }
     }
 
-    override val storageModule: StorageModule = init {
-        storageModuleSupplier(initModule, coreModule, workerThreadModule)
+    override val storageService: StorageService = init {
+        storageServiceSupplier(initModule, coreModule, workerThreadModule)
     }
 
     override val essentialServiceModule: EssentialServiceModule = init {
@@ -92,7 +93,7 @@ internal class InitializedModuleGraph(
             configModule,
             essentialServiceModule,
             coreModule,
-            storageModule,
+            storageService,
         )
     }
 
@@ -100,7 +101,7 @@ internal class InitializedModuleGraph(
         featureModuleSupplier(
             instrumentationModule,
             configModule.configService,
-            storageModule,
+            storageService,
         )
     }
 

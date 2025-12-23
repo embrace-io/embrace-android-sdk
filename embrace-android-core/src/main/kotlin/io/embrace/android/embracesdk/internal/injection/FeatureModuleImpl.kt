@@ -8,11 +8,12 @@ import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.instrumentation.crash.CrashFileMarker
 import io.embrace.android.embracesdk.internal.instrumentation.crash.CrashFileMarkerImpl
 import io.embrace.android.embracesdk.internal.instrumentation.crash.LastRunCrashVerifier
+import io.embrace.android.embracesdk.internal.storage.StorageService
 
 class FeatureModuleImpl(
     instrumentationModule: InstrumentationModule,
     configService: ConfigService,
-    storageModule: StorageModule,
+    storageService: StorageService,
 ) : FeatureModule {
 
     override val breadcrumbDataSource: DataSourceState<BreadcrumbDataSource> by singleton {
@@ -42,7 +43,7 @@ class FeatureModuleImpl(
 
     override val crashMarker: CrashFileMarker by singleton {
         val markerFile = lazy {
-            storageModule.storageService.getFileForWrite(CrashFileMarkerImpl.CRASH_MARKER_FILE_NAME)
+            storageService.getFileForWrite(CrashFileMarkerImpl.CRASH_MARKER_FILE_NAME)
         }
         CrashFileMarkerImpl(markerFile)
     }

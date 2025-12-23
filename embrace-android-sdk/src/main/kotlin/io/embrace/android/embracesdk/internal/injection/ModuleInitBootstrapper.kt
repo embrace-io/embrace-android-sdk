@@ -18,10 +18,15 @@ import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.Th
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageServiceSupplier
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.createThreadBlockageService
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
+import io.embrace.android.embracesdk.internal.storage.EmbraceStorageService
+import io.embrace.android.embracesdk.internal.storage.StatFsAvailabilityChecker
+import io.embrace.android.embracesdk.internal.storage.StorageService
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
+import io.embrace.android.embracesdk.internal.worker.Worker
+import java.util.concurrent.TimeUnit
 
 /**
  * A class that wires together and initializes modules in a manner that makes them work as a cohesive whole.
@@ -54,16 +59,20 @@ internal class ModuleInitBootstrapper(
         )
     },
     private val workerThreadModuleSupplier: WorkerThreadModuleSupplier = { WorkerThreadModuleImpl() },
-    private val storageModuleSupplier: StorageModuleSupplier = {
+    private val storageServiceSupplier: StorageServiceSupplier = {
             initModule: InitModule,
             coreModule: CoreModule,
             workerThreadModule: WorkerThreadModule,
         ->
-        StorageModuleImpl(
-            initModule,
-            coreModule,
-            workerThreadModule
+        val storageService = EmbraceStorageService(
+            coreModule.context,
+            initModule.telemetryService,
+            StatFsAvailabilityChecker(coreModule.context)
         )
+        workerThreadModule
+            .backgroundWorker(Worker.Background.IoRegWorker)
+            .schedule<Unit>({ storageService.logStorageTelemetry() }, 1, TimeUnit.MINUTES)
+        storageService
     },
     private val essentialServiceModuleSupplier: EssentialServiceModuleSupplier = {
             initModule: InitModule,
@@ -87,12 +96,12 @@ internal class ModuleInitBootstrapper(
     private val featureModuleSupplier: FeatureModuleSupplier = {
             instrumentationModule: InstrumentationModule,
             configService: ConfigService,
-            storageModule: StorageModule,
+            storageService: StorageService,
         ->
         FeatureModuleImpl(
             instrumentationModule = instrumentationModule,
             configService = configService,
-            storageModule = storageModule,
+            storageService = storageService,
         )
     },
     private val instrumentationModuleSupplier: InstrumentationModuleSupplier = {
@@ -102,7 +111,7 @@ internal class ModuleInitBootstrapper(
             configModule: ConfigModule,
             essentialServiceModule: EssentialServiceModule,
             coreModule: CoreModule,
-            storageModule: StorageModule,
+            storageService: StorageService,
         ->
         InstrumentationModuleImpl(
             initModule,
@@ -111,7 +120,7 @@ internal class ModuleInitBootstrapper(
             configModule,
             essentialServiceModule,
             coreModule,
-            storageModule,
+            storageService,
         )
     },
     private val dataCaptureServiceModuleSupplier: DataCaptureServiceModuleSupplier = {
@@ -229,7 +238,7 @@ internal class ModuleInitBootstrapper(
     override val coreModule: CoreModule get() = delegate.coreModule
     override val configModule: ConfigModule get() = delegate.configModule
     override val workerThreadModule: WorkerThreadModule get() = delegate.workerThreadModule
-    override val storageModule: StorageModule get() = delegate.storageModule
+    override val storageService: StorageService get() = delegate.storageService
     override val essentialServiceModule: EssentialServiceModule get() = delegate.essentialServiceModule
     override val dataCaptureServiceModule: DataCaptureServiceModule get() = delegate.dataCaptureServiceModule
     override val deliveryModule: DeliveryModule get() = delegate.deliveryModule
@@ -264,7 +273,7 @@ internal class ModuleInitBootstrapper(
                     coreModuleSupplier,
                     configModuleSupplier,
                     workerThreadModuleSupplier,
-                    storageModuleSupplier,
+                    storageServiceSupplier,
                     essentialServiceModuleSupplier,
                     featureModuleSupplier,
                     instrumentationModuleSupplier,

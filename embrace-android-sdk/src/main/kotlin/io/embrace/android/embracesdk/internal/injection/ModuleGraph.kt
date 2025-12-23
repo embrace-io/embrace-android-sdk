@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.injection
 
 import io.embrace.android.embracesdk.internal.instrumentation.startup.DataCaptureServiceModule
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageService
+import io.embrace.android.embracesdk.internal.storage.StorageService
 
 /**
  * Contains all the dependency modules that are required by the initialized SDK.
@@ -12,7 +13,7 @@ internal interface ModuleGraph {
     val coreModule: CoreModule
     val configModule: ConfigModule
     val workerThreadModule: WorkerThreadModule
-    val storageModule: StorageModule
+    val storageService: StorageService
     val essentialServiceModule: EssentialServiceModule
     val dataCaptureServiceModule: DataCaptureServiceModule
     val deliveryModule: DeliveryModule

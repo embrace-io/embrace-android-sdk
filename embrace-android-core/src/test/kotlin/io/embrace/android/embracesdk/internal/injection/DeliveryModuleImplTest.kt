@@ -5,14 +5,10 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
 import io.embrace.android.embracesdk.fakes.FakeRequestExecutionService
-import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
-import io.embrace.android.embracesdk.internal.session.orchestrator.PayloadStoreImpl
 import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertNull
-import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -48,25 +44,6 @@ class DeliveryModuleImplTest {
         assertNotNull(module.cacheStorageService)
         assertNotNull(module.cachedLogEnvelopeStore)
         assertNotNull(module.schedulingService)
-        assertTrue(module.payloadStore is PayloadStoreImpl)
-    }
-
-    @Test
-    fun `test otel export only`() {
-        configService.onlyUsingOtelExporters = true
-        assertNotNull(module)
-        assertNull(module.intakeService)
-        assertNull(module.payloadCachingService)
-        assertNull(module.cacheStorageService)
-        assertNull(module.cachedLogEnvelopeStore)
-        assertNull(module.schedulingService)
-        assertNull(module.payloadStore)
-    }
-
-    @Test
-    fun testV2Store() {
-        configService.autoDataCaptureBehavior = FakeAutoDataCaptureBehavior()
-        assertNotNull(module)
-        assertTrue(module.payloadStore is PayloadStoreImpl)
+        assertNotNull(module.payloadStore)
     }
 }

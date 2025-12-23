@@ -112,7 +112,7 @@ internal class ModuleInitBootstrapperTest {
             moduleInitBootstrapper.logModule.logOrchestrator,
             moduleInitBootstrapper.sessionOrchestrator,
             moduleInitBootstrapper.featureModule.crashMarker,
-            moduleInitBootstrapper.deliveryModule.payloadStore
+            moduleInitBootstrapper.deliveryModule?.payloadStore
         )
         assertEquals(expected, handlers)
     }

@@ -18,7 +18,7 @@ internal interface ModuleGraph {
     val storageService: StorageService
     val essentialServiceModule: EssentialServiceModule
     val dataCaptureServiceModule: DataCaptureServiceModule
-    val deliveryModule: DeliveryModule
+    val deliveryModule: DeliveryModule?
     val threadBlockageService: ThreadBlockageService?
     val logModule: LogModule
     val instrumentationModule: InstrumentationModule

@@ -35,7 +35,7 @@ typealias DeliveryModuleSupplier = (
     cacheStorageServiceProvider: Provider<PayloadStorageService>?,
     requestExecutionServiceProvider: Provider<RequestExecutionService>?,
     deliveryTracer: DeliveryTracer?,
-) -> DeliveryModule
+) -> DeliveryModule?
 
 typealias EssentialServiceModuleSupplier = (
     initModule: InitModule,
@@ -68,7 +68,7 @@ typealias LogModuleSupplier = (
     openTelemetryModule: OpenTelemetryModule,
     essentialServiceModule: EssentialServiceModule,
     configService: ConfigService,
-    deliveryModule: DeliveryModule,
+    deliveryModule: DeliveryModule?,
     workerThreadModule: WorkerThreadModule,
     payloadSourceModule: PayloadSourceModule,
 ) -> LogModule
@@ -81,7 +81,7 @@ typealias PayloadSourceModuleSupplier = (
     configService: ConfigService,
     otelModule: OpenTelemetryModule,
     otelPayloadMapper: OtelPayloadMapper?,
-    deliveryModule: DeliveryModule,
+    deliveryModule: DeliveryModule?,
 ) -> PayloadSourceModule
 
 typealias SessionOrchestratorSupplier = (
@@ -90,7 +90,7 @@ typealias SessionOrchestratorSupplier = (
     coreModule: CoreModule,
     essentialServiceModule: EssentialServiceModule,
     configService: ConfigService,
-    deliveryModule: DeliveryModule,
+    deliveryModule: DeliveryModule?,
     instrumentationModule: InstrumentationModule,
     payloadSourceModule: PayloadSourceModule,
     startupDurationProvider: () -> Long?,

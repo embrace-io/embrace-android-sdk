@@ -14,7 +14,7 @@ class FakeDeliveryModule(
     override val intakeService: IntakeService = FakeIntakeService(),
     override val payloadCachingService: PayloadCachingService = FakePayloadCachingService(),
     override val cacheStorageService: PayloadStorageService = FakePayloadStorageService(),
-    override val cachedLogEnvelopeStore: CachedLogEnvelopeStore? = FakeCachedLogEnvelopeStore(),
+    override val cachedLogEnvelopeStore: CachedLogEnvelopeStore = FakeCachedLogEnvelopeStore(),
     override val schedulingService: SchedulingService = FakeSchedulingService(),
     override val deliveryTracer: DeliveryTracer = DeliveryTracer(),
 ) : DeliveryModule

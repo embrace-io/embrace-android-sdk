@@ -20,7 +20,7 @@ internal object UninitializedModuleGraph : ModuleGraph {
     override val storageService: StorageService get() = throwSdkNotInitialized()
     override val essentialServiceModule: EssentialServiceModule get() = throwSdkNotInitialized()
     override val dataCaptureServiceModule: DataCaptureServiceModule get() = throwSdkNotInitialized()
-    override val deliveryModule: DeliveryModule get() = throwSdkNotInitialized()
+    override val deliveryModule: DeliveryModule? get() = throwSdkNotInitialized()
     override val threadBlockageService: ThreadBlockageService get() = throwSdkNotInitialized()
     override val logModule: LogModule get() = throwSdkNotInitialized()
     override val instrumentationModule: InstrumentationModule get() = throwSdkNotInitialized()

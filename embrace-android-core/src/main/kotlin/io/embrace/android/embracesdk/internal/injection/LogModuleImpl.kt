@@ -13,7 +13,7 @@ class LogModuleImpl(
     openTelemetryModule: OpenTelemetryModule,
     essentialServiceModule: EssentialServiceModule,
     configService: ConfigService,
-    deliveryModule: DeliveryModule,
+    deliveryModule: DeliveryModule?,
     workerThreadModule: WorkerThreadModule,
     payloadSourceModule: PayloadSourceModule,
 ) : LogModule {
@@ -31,7 +31,7 @@ class LogModuleImpl(
             workerThreadModule.backgroundWorker(Worker.Background.LogMessageWorker),
             initModule.clock,
             openTelemetryModule.logSink,
-            deliveryModule.payloadStore,
+            deliveryModule?.payloadStore,
             payloadSourceModule.logEnvelopeSource,
         )
     }

@@ -41,37 +41,24 @@ class DeliveryModuleImpl(
 
     private val processIdProvider = { otelModule.otelSdkConfig.processIdentifier }
 
-    override val payloadStore: PayloadStore? by singleton {
-        val configService = configService
-        if (configService.isOnlyUsingOtelExporters()) {
-            null
-        } else {
-            val intakeService = intakeService ?: return@singleton null
-            PayloadStoreImpl(intakeService, initModule.clock, processIdProvider)
-        }
+    override val payloadStore: PayloadStore by singleton {
+        PayloadStoreImpl(intakeService, initModule.clock, processIdProvider)
     }
 
     private val dataPersistenceWorker: PriorityWorker<StoredTelemetryMetadata> by singleton {
         workerThreadModule.priorityWorker(Worker.Priority.DataPersistenceWorker)
     }
 
-    override val intakeService: IntakeService? by singleton {
-        if (configService.isOnlyUsingOtelExporters()) {
-            null
-        } else {
-            val payloadStorageService = payloadStorageService ?: return@singleton null
-            val schedulingService = schedulingService ?: return@singleton null
-            val cacheStorageService = cacheStorageService ?: return@singleton null
-            IntakeServiceImpl(
-                schedulingService,
-                payloadStorageService,
-                cacheStorageService,
-                initModule.logger,
-                initModule.jsonSerializer,
-                dataPersistenceWorker,
-                deliveryTracer
-            )
-        }
+    override val intakeService: IntakeService by singleton {
+        IntakeServiceImpl(
+            schedulingService,
+            payloadStorageService,
+            cacheStorageService,
+            initModule.logger,
+            initModule.jsonSerializer,
+            dataPersistenceWorker,
+            deliveryTracer
+        )
     }
 
     private val periodicSessionCacher: PeriodicSessionCacher by singleton {
@@ -81,25 +68,18 @@ class DeliveryModuleImpl(
         )
     }
 
-    override val payloadCachingService: PayloadCachingService? by singleton {
-        if (configService.isOnlyUsingOtelExporters()) {
-            null
-        } else {
-            val payloadStore = payloadStore ?: return@singleton null
-            PayloadCachingServiceImpl(
-                periodicSessionCacher,
-                initModule.clock,
-                essentialServiceModule.sessionTracker,
-                payloadStore,
-                deliveryTracer
-            )
-        }
+    override val payloadCachingService: PayloadCachingService by singleton {
+        PayloadCachingServiceImpl(
+            periodicSessionCacher,
+            initModule.clock,
+            essentialServiceModule.sessionTracker,
+            payloadStore,
+            deliveryTracer
+        )
     }
 
-    private val payloadStorageService: PayloadStorageService? by singleton {
-        payloadStorageServiceProvider?.invoke() ?: if (configService.isOnlyUsingOtelExporters()) {
-            null
-        } else {
+    private val payloadStorageService: PayloadStorageService by singleton {
+        payloadStorageServiceProvider?.invoke() ?: run {
             val location = StorageLocation.PAYLOAD.asFile(
                 logger = initModule.logger,
                 rootDirSupplier = { coreModule.context.filesDir },
@@ -115,10 +95,8 @@ class DeliveryModuleImpl(
         }
     }
 
-    override val cacheStorageService: PayloadStorageService? by singleton {
-        cacheStorageServiceProvider?.invoke() ?: if (configService.isOnlyUsingOtelExporters()) {
-            null
-        } else {
+    override val cacheStorageService: PayloadStorageService by singleton {
+        cacheStorageServiceProvider?.invoke() ?: run {
             val location = StorageLocation.CACHE.asFile(
                 logger = initModule.logger,
                 rootDirSupplier = { coreModule.context.filesDir },
@@ -134,29 +112,23 @@ class DeliveryModuleImpl(
         }
     }
 
-    override val cachedLogEnvelopeStore: CachedLogEnvelopeStore? by singleton {
-        if (configService.isOnlyUsingOtelExporters()) {
-            null
-        } else {
-            val location = StorageLocation.ENVELOPE.asFile(
-                logger = initModule.logger,
-                rootDirSupplier = { coreModule.context.filesDir },
-                fallbackDirSupplier = { coreModule.context.cacheDir }
-            )
-            CachedLogEnvelopeStoreImpl(
-                outputDir = location,
-                worker = dataPersistenceWorker,
-                logger = initModule.logger,
-                serializer = initModule.jsonSerializer
-            )
-        }
+    override val cachedLogEnvelopeStore: CachedLogEnvelopeStore by singleton {
+        val location = StorageLocation.ENVELOPE.asFile(
+            logger = initModule.logger,
+            rootDirSupplier = { coreModule.context.filesDir },
+            fallbackDirSupplier = { coreModule.context.cacheDir }
+        )
+        CachedLogEnvelopeStoreImpl(
+            outputDir = location,
+            worker = dataPersistenceWorker,
+            logger = initModule.logger,
+            serializer = initModule.jsonSerializer
+        )
     }
 
-    private val requestExecutionService: RequestExecutionService? by singleton {
-        requestExecutionServiceProvider?.invoke() ?: if (configService.isOnlyUsingOtelExporters()) {
-            null
-        } else {
-            val appId = configService.appId ?: return@singleton null
+    private val requestExecutionService: RequestExecutionService by singleton {
+        requestExecutionServiceProvider?.invoke() ?: run {
+            val appId = checkNotNull(configService.appId)
             val coreBaseUrl = initModule.instrumentedConfig.baseUrls.getData() ?: "https://a-$appId.data.emb-api.com"
             val url = "$coreBaseUrl/${Endpoint.SESSIONS.version}/"
 
@@ -173,21 +145,15 @@ class DeliveryModuleImpl(
         }
     }
 
-    override val schedulingService: SchedulingService? by singleton {
-        if (configService.isOnlyUsingOtelExporters()) {
-            null
-        } else {
-            val payloadStorageService = payloadStorageService ?: return@singleton null
-            val requestExecutionService = requestExecutionService ?: return@singleton null
-            SchedulingServiceImpl(
-                payloadStorageService,
-                requestExecutionService,
-                workerThreadModule.backgroundWorker(Worker.Background.IoRegWorker),
-                workerThreadModule.backgroundWorker(Worker.Background.HttpRequestWorker),
-                initModule.clock,
-                initModule.logger,
-                deliveryTracer
-            )
-        }
+    override val schedulingService: SchedulingService by singleton {
+        SchedulingServiceImpl(
+            payloadStorageService,
+            requestExecutionService,
+            workerThreadModule.backgroundWorker(Worker.Background.IoRegWorker),
+            workerThreadModule.backgroundWorker(Worker.Background.HttpRequestWorker),
+            initModule.clock,
+            initModule.logger,
+            deliveryTracer
+        )
     }
 }

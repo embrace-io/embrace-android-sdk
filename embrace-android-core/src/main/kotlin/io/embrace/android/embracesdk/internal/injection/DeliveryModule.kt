@@ -15,11 +15,11 @@ import io.embrace.android.embracesdk.internal.session.orchestrator.PayloadStore
  * functionality.
  */
 interface DeliveryModule {
-    val payloadStore: PayloadStore?
-    val intakeService: IntakeService?
-    val payloadCachingService: PayloadCachingService?
-    val cacheStorageService: PayloadStorageService?
-    val cachedLogEnvelopeStore: CachedLogEnvelopeStore?
-    val schedulingService: SchedulingService?
+    val payloadStore: PayloadStore
+    val intakeService: IntakeService
+    val payloadCachingService: PayloadCachingService
+    val cacheStorageService: PayloadStorageService
+    val cachedLogEnvelopeStore: CachedLogEnvelopeStore
+    val schedulingService: SchedulingService
     val deliveryTracer: DeliveryTracer?
 }

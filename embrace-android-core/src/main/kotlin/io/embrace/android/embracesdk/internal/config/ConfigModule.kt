@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.config
 
-import io.embrace.android.embracesdk.internal.comms.api.ApiUrlBuilder
 import io.embrace.android.embracesdk.internal.config.source.CombinedRemoteConfigSource
 import io.embrace.android.embracesdk.internal.envelope.BuildInfo
 import io.embrace.android.embracesdk.internal.envelope.CpuAbi
@@ -8,7 +7,6 @@ import io.embrace.android.embracesdk.internal.envelope.CpuAbi
 interface ConfigModule {
     val configService: ConfigService
     val combinedRemoteConfigSource: CombinedRemoteConfigSource?
-    val urlBuilder: ApiUrlBuilder?
 
     val buildInfo: BuildInfo
 

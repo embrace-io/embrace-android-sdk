@@ -1,12 +1,14 @@
 package io.embrace.android.embracesdk.internal.config
 
+import android.os.Build
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.core.BuildConfig
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.fakes.config.FakeBaseUrlConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
-import io.embrace.android.embracesdk.internal.comms.api.EmbraceApiUrlBuilder
 import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.internal.config.source.ConfigEndpoint
 import io.embrace.android.embracesdk.internal.config.source.OkHttpRemoteConfigSource
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
@@ -28,7 +30,6 @@ class OkHttpRemoteConfigSourceTest {
 
     private lateinit var server: MockWebServer
     private lateinit var client: OkHttpClient
-    private lateinit var urlBuilder: EmbraceApiUrlBuilder
     private lateinit var source: OkHttpRemoteConfigSource
 
     private val remoteConfig = RemoteConfig(
@@ -44,15 +45,6 @@ class OkHttpRemoteConfigSourceTest {
         }
         val baseUrl = server.url("api").toString()
         client = OkHttpClient.Builder().build()
-        urlBuilder = EmbraceApiUrlBuilder(
-            "deviceId",
-            "1.0.0",
-            FakeInstrumentedConfig(
-                baseUrls = FakeBaseUrlConfig(
-                    configImpl = baseUrl,
-                )
-            )
-        )
 
         // serialize the config response
         configResponseBuffer = Buffer()
@@ -62,7 +54,21 @@ class OkHttpRemoteConfigSourceTest {
             RemoteConfig::class.java,
             gzipSink.outputStream()
         )
-        source = OkHttpRemoteConfigSource(client, urlBuilder, TestPlatformSerializer())
+        source = OkHttpRemoteConfigSource(
+            client,
+            TestPlatformSerializer(),
+            ConfigEndpoint(
+                "deviceId",
+                "1.0.0",
+                FakeInstrumentedConfig(
+                    baseUrls = FakeBaseUrlConfig(
+                        configImpl = baseUrl,
+                    )
+                ),
+                BuildConfig.VERSION_NAME,
+                Build.VERSION.SDK_INT
+            )
+        )
     }
 
     @Test

@@ -23,6 +23,5 @@ internal class ConfigModuleImplTest {
             workerThreadModule = FakeWorkerThreadModule(),
         )
         assertNotNull(module.configService)
-        assertNotNull(module.urlBuilder)
     }
 }

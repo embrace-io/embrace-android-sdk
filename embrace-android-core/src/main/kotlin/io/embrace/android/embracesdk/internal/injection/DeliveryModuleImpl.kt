@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.injection
 
 import io.embrace.android.embracesdk.core.BuildConfig
+import io.embrace.android.embracesdk.internal.comms.api.Endpoint
 import io.embrace.android.embracesdk.internal.config.ConfigModule
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.caching.PayloadCachingService
@@ -156,11 +157,13 @@ class DeliveryModuleImpl(
             null
         } else {
             val appId = configModule.configService.appId ?: return@singleton null
-            val coreBaseUrl = configModule.urlBuilder?.baseDataUrl ?: return@singleton null
+            val coreBaseUrl = initModule.instrumentedConfig.baseUrls.getData() ?: "https://a-$appId.data.emb-api.com"
+            val url = "$coreBaseUrl/${Endpoint.SESSIONS.version}/"
+
             val lazyDeviceId = lazy(configModule::deviceIdentifier)
             OkHttpRequestExecutionService(
                 initModule.okHttpClient,
-                coreBaseUrl,
+                url,
                 lazyDeviceId,
                 appId,
                 BuildConfig.VERSION_NAME,

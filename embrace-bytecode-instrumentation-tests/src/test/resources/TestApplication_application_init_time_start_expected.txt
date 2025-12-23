@@ -22,15 +22,14 @@ public final class io/embrace/test/fixtures/TestApplication extends android/app/
   public onCreate()V
     INVOKESTATIC io/embrace/android/embracesdk/internal/instrumentation/bytecode/ApplicationInitTimeBytecodeEntrypoint.applicationInitStart ()V
    L0
+    LINENUMBER 7 L0
     ALOAD 0
-   L1
-    LINENUMBER 7 L1
     INVOKESPECIAL android/app/Application.onCreate ()V
-   L2
-    LINENUMBER 8 L2
+   L1
+    LINENUMBER 8 L1
     RETURN
-   L3
-    LOCALVARIABLE this Lio/embrace/test/fixtures/TestApplication; L0 L3 0
+   L2
+    LOCALVARIABLE this Lio/embrace/test/fixtures/TestApplication; L0 L2 0
     MAXSTACK = 1
     MAXLOCALS = 1
 }

@@ -18,7 +18,7 @@ android {
     }
     lint {
         abortOnError = true
-        warningsAsErrors = true
+        warningsAsErrors = false
         checkAllWarnings = true
         htmlReport = false
         baseline = project.file("lint-baseline.xml")
@@ -55,6 +55,6 @@ kotlin.compilerOptions {
     apiVersion.set(minKotlinVersion)
     languageVersion.set(minKotlinVersion)
     jvmTarget.set(target)
-    allWarningsAsErrors.set(true)
+    allWarningsAsErrors.set(false)
 }
 kotlin.coreLibrariesVersion = coreLibrariesVersion

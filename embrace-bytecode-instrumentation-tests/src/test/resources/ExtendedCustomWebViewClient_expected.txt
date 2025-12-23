@@ -27,21 +27,20 @@ public final class io/embrace/test/fixtures/ExtendedCustomWebViewClient extends 
     ALOAD 2
     INVOKESTATIC io/embrace/android/embracesdk/internal/instrumentation/bytecode/WebViewClientBytecodeEntrypoint.onPageStarted (Ljava/lang/String;)V
    L0
+    LINENUMBER 8 L0
     ALOAD 0
-   L1
-    LINENUMBER 8 L1
     ALOAD 1
     LDC "http://google.com"
     ALOAD 3
     INVOKESPECIAL io/embrace/test/fixtures/CustomWebViewClient.onPageStarted (Landroid/webkit/WebView;Ljava/lang/String;Landroid/graphics/Bitmap;)V
-   L2
-    LINENUMBER 9 L2
+   L1
+    LINENUMBER 9 L1
     RETURN
-   L3
-    LOCALVARIABLE this Lio/embrace/test/fixtures/ExtendedCustomWebViewClient; L0 L3 0
-    LOCALVARIABLE view Landroid/webkit/WebView; L0 L3 1
-    LOCALVARIABLE url Ljava/lang/String; L0 L3 2
-    LOCALVARIABLE favicon Landroid/graphics/Bitmap; L0 L3 3
+   L2
+    LOCALVARIABLE this Lio/embrace/test/fixtures/ExtendedCustomWebViewClient; L0 L2 0
+    LOCALVARIABLE view Landroid/webkit/WebView; L0 L2 1
+    LOCALVARIABLE url Ljava/lang/String; L0 L2 2
+    LOCALVARIABLE favicon Landroid/graphics/Bitmap; L0 L2 3
     MAXSTACK = 4
     MAXLOCALS = 4
 }

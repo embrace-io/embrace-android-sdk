@@ -1,8 +1,9 @@
 package io.embrace.android.embracesdk.internal.config
 
-import io.embrace.android.embracesdk.internal.comms.api.ApiUrlBuilder
-import io.embrace.android.embracesdk.internal.comms.api.EmbraceApiUrlBuilder
+import android.os.Build
+import io.embrace.android.embracesdk.core.BuildConfig
 import io.embrace.android.embracesdk.internal.config.source.CombinedRemoteConfigSource
+import io.embrace.android.embracesdk.internal.config.source.ConfigEndpoint
 import io.embrace.android.embracesdk.internal.config.source.OkHttpRemoteConfigSource
 import io.embrace.android.embracesdk.internal.config.source.RemoteConfigSource
 import io.embrace.android.embracesdk.internal.config.store.RemoteConfigStore
@@ -53,10 +54,17 @@ class ConfigModuleImpl(
 
     private val remoteConfigSource: RemoteConfigSource? by singleton {
         if (initModule.onlyOtelExportEnabled()) return@singleton null
+
         OkHttpRemoteConfigSource(
             okhttpClient = initModule.okHttpClient,
-            apiUrlBuilder = urlBuilder ?: return@singleton null,
             serializer = initModule.jsonSerializer,
+            configEndpoint = ConfigEndpoint(
+                deviceIdentifier,
+                buildInfo.versionName,
+                initModule.instrumentedConfig,
+                BuildConfig.VERSION_NAME,
+                Build.VERSION.SDK_INT,
+            )
         )
     }
 
@@ -65,17 +73,6 @@ class ConfigModuleImpl(
             serializer = initModule.jsonSerializer,
             storageDir = File(coreModule.context.filesDir, "embrace_remote_config"),
         )
-    }
-
-    override val urlBuilder: ApiUrlBuilder? by singleton {
-        if (initModule.onlyOtelExportEnabled()) return@singleton null
-        EmbTrace.trace("url-builder-init") {
-            EmbraceApiUrlBuilder(
-                deviceId = deviceIdentifier,
-                appVersionName = buildInfo.versionName,
-                instrumentedConfig = initModule.instrumentedConfig,
-            )
-        }
     }
 
     override val buildInfo: BuildInfo by lazy {

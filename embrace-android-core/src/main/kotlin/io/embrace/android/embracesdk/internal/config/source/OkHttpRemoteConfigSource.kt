@@ -1,12 +1,5 @@
 package io.embrace.android.embracesdk.internal.config.source
 
-import io.embrace.android.embracesdk.core.BuildConfig
-import io.embrace.android.embracesdk.internal.comms.api.ApiRequest
-import io.embrace.android.embracesdk.internal.comms.api.ApiRequestUrl
-import io.embrace.android.embracesdk.internal.comms.api.ApiUrlBuilder
-import io.embrace.android.embracesdk.internal.comms.api.Endpoint
-import io.embrace.android.embracesdk.internal.comms.api.HttpMethod
-import io.embrace.android.embracesdk.internal.comms.api.getHeaders
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import okhttp3.OkHttpClient
@@ -18,8 +11,8 @@ import java.io.IOException
 
 internal class OkHttpRemoteConfigSource(
     private val okhttpClient: OkHttpClient,
-    private val apiUrlBuilder: ApiUrlBuilder,
     private val serializer: PlatformSerializer,
+    private val configEndpoint: ConfigEndpoint,
 ) : RemoteConfigSource {
 
     override fun getConfig(): ConfigHttpResponse? = try {
@@ -42,13 +35,10 @@ internal class OkHttpRemoteConfigSource(
     }
 
     private fun prepareRequest(): Request {
-        val url = apiUrlBuilder.resolveUrl(Endpoint.CONFIG)
-        val headers = prepareConfigRequest(url).getHeaders()
+        val url = configEndpoint.url
+        val headers = prepareConfigRequestHeaders()
         val builder = Request.Builder().url(url)
 
-        etag?.let {
-            builder.header("If-None-Match", it)
-        }
         headers.forEach { entry ->
             builder.header(entry.key, entry.value)
         }
@@ -72,12 +62,18 @@ internal class OkHttpRemoteConfigSource(
         return ConfigHttpResponse(cfg, etag)
     }
 
-    private fun prepareConfigRequest(url: String) = ApiRequest(
-        userAgent = "Embrace/a/" + BuildConfig.VERSION_NAME,
-        url = ApiRequestUrl(url),
-        httpMethod = HttpMethod.GET,
-        acceptEncoding = "gzip",
-        appId = apiUrlBuilder.appId,
-        deviceId = apiUrlBuilder.deviceId,
-    )
+    private fun prepareConfigRequestHeaders(): Map<String, String> {
+        val headers = mutableMapOf(
+            "Accept" to "application/json",
+            "User-Agent" to "Embrace/a/" + configEndpoint.sdkVersion,
+            "Content-Type" to "application/json",
+            "X-EM-AID" to configEndpoint.appId,
+            "X-EM-DID" to configEndpoint.deviceId,
+            "Accept-Encoding" to "gzip",
+        )
+        etag?.let {
+            headers["If-None-Match"] = it
+        }
+        return headers
+    }
 }

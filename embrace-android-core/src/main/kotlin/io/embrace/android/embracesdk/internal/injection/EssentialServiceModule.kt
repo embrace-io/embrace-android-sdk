@@ -6,7 +6,6 @@ import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkConnec
 import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
 import io.embrace.android.embracesdk.internal.capture.user.UserService
 import io.embrace.android.embracesdk.internal.session.id.SessionTracker
-import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityTracker
 
 /**
  * This module contains services that are essential for bootstrapping other functionality in
@@ -14,7 +13,6 @@ import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityTracker
  */
 interface EssentialServiceModule {
     val appStateTracker: AppStateTracker
-    val activityLifecycleTracker: ActivityTracker
     val userService: UserService
     val networkConnectivityService: NetworkConnectivityService
     val sessionTracker: SessionTracker

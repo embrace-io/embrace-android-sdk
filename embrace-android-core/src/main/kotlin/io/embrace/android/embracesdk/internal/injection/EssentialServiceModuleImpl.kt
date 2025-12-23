@@ -15,7 +15,6 @@ import io.embrace.android.embracesdk.internal.capture.user.UserService
 import io.embrace.android.embracesdk.internal.config.ConfigModule
 import io.embrace.android.embracesdk.internal.session.id.SessionTracker
 import io.embrace.android.embracesdk.internal.session.id.SessionTrackerImpl
-import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityLifecycleTracker
 import io.embrace.android.embracesdk.internal.session.lifecycle.AppStateTrackerImpl
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.Provider
@@ -40,10 +39,6 @@ class EssentialServiceModuleImpl(
             val lifecycleOwner = lifecycleOwnerProvider() ?: ProcessLifecycleOwner.get()
             AppStateTrackerImpl(initModule.logger, lifecycleOwner)
         }
-    }
-
-    override val activityLifecycleTracker: ActivityLifecycleTracker by singleton {
-        ActivityLifecycleTracker(coreModule.application)
     }
 
     override val userService: UserService by singleton {

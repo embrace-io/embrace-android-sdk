@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.injection
 
-import io.embrace.android.embracesdk.fakes.FakeConfigModule
+import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
 import io.embrace.android.embracesdk.fakes.FakeStorageService
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
@@ -24,7 +24,7 @@ internal class InstrumentationModuleImplTest {
                 fakeInitModule = fakeInitModule,
                 testWorker = Worker.Background.NonIoRegWorker
             ),
-            FakeConfigModule(),
+            FakeConfigService(),
             FakeEssentialServiceModule(),
             FakeCoreModule(),
             FakeStorageService(),

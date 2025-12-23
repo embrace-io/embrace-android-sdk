@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.injection
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.fakes.FakeConfigModule
+import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeDeliveryModule
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
 import io.embrace.android.embracesdk.fakes.FakeOtelPayloadMapper
@@ -26,7 +26,7 @@ internal class PayloadSourceModuleImplTest {
             CoreModuleImpl(RuntimeEnvironment.getApplication(), initModule),
             FakeWorkerThreadModule(),
             FakeEssentialServiceModule(),
-            FakeConfigModule(),
+            FakeConfigService(),
             FakeOpenTelemetryModule(),
             FakeOtelPayloadMapper(),
             FakeDeliveryModule(),

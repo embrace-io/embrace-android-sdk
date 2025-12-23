@@ -111,7 +111,7 @@ internal class EmbraceImpl(
             start("post-services-setup")
             internalInterfaceModule = InternalInterfaceModuleImpl(
                 bootstrapper.initModule,
-                bootstrapper.configModule,
+                bootstrapper.configService,
                 bootstrapper.payloadSourceModule,
                 this,
                 bootstrapper
@@ -122,7 +122,7 @@ internal class EmbraceImpl(
             sdkCallChecker.started.set(true)
             bootstrapper.registerListeners()
             bootstrapper.loadInstrumentation()
-            initializeHucInstrumentation(bootstrapper.configModule.configService.networkBehavior)
+            initializeHucInstrumentation(bootstrapper.configService.networkBehavior)
             bootstrapper.postLoadInstrumentation()
             bootstrapper.triggerPayloadSend()
             bootstrapper.markSdkInitComplete()

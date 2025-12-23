@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.internal.injection
 import android.content.Context
 import androidx.lifecycle.LifecycleOwner
 import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkConnectivityService
-import io.embrace.android.embracesdk.internal.config.ConfigModule
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
 import io.embrace.android.embracesdk.internal.delivery.execution.RequestExecutionService
@@ -13,12 +12,12 @@ import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrches
 import io.embrace.android.embracesdk.internal.storage.StorageService
 import io.embrace.android.embracesdk.internal.utils.Provider
 
-typealias ConfigModuleSupplier = (
+typealias ConfigServiceSupplier = (
     initModule: InitModule,
     coreModule: CoreModule,
     openTelemetryModule: OpenTelemetryModule,
     workerThreadModule: WorkerThreadModule,
-) -> ConfigModule
+) -> ConfigService
 
 typealias CoreModuleSupplier = (
     context: Context,
@@ -26,7 +25,7 @@ typealias CoreModuleSupplier = (
 ) -> CoreModule
 
 typealias DeliveryModuleSupplier = (
-    configModule: ConfigModule,
+    configService: ConfigService,
     initModule: InitModule,
     otelModule: OpenTelemetryModule,
     workerThreadModule: WorkerThreadModule,
@@ -40,7 +39,7 @@ typealias DeliveryModuleSupplier = (
 
 typealias EssentialServiceModuleSupplier = (
     initModule: InitModule,
-    configModule: ConfigModule,
+    configService: ConfigService,
     openTelemetryModule: OpenTelemetryModule,
     coreModule: CoreModule,
     workerThreadModule: WorkerThreadModule,
@@ -58,7 +57,7 @@ typealias InstrumentationModuleSupplier = (
     initModule: InitModule,
     openTelemetryModule: OpenTelemetryModule,
     workerThreadModule: WorkerThreadModule,
-    configModule: ConfigModule,
+    configService: ConfigService,
     essentialServiceModule: EssentialServiceModule,
     coreModule: CoreModule,
     storageService: StorageService,
@@ -68,7 +67,7 @@ typealias LogModuleSupplier = (
     initModule: InitModule,
     openTelemetryModule: OpenTelemetryModule,
     essentialServiceModule: EssentialServiceModule,
-    configModule: ConfigModule,
+    configService: ConfigService,
     deliveryModule: DeliveryModule,
     workerThreadModule: WorkerThreadModule,
     payloadSourceModule: PayloadSourceModule,
@@ -79,7 +78,7 @@ typealias PayloadSourceModuleSupplier = (
     coreModule: CoreModule,
     workerThreadModule: WorkerThreadModule,
     essentialServiceModule: EssentialServiceModule,
-    configModule: ConfigModule,
+    configService: ConfigService,
     otelModule: OpenTelemetryModule,
     otelPayloadMapper: OtelPayloadMapper?,
     deliveryModule: DeliveryModule,
@@ -90,7 +89,7 @@ typealias SessionOrchestratorSupplier = (
     openTelemetryModule: OpenTelemetryModule,
     coreModule: CoreModule,
     essentialServiceModule: EssentialServiceModule,
-    configModule: ConfigModule,
+    configService: ConfigService,
     deliveryModule: DeliveryModule,
     instrumentationModule: InstrumentationModule,
     payloadSourceModule: PayloadSourceModule,

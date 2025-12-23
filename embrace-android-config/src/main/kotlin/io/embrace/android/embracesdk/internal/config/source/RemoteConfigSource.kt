@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.config.source
 
-interface RemoteConfigSource {
+internal interface RemoteConfigSource {
 
     /**
      * Gets the remotely delivered configuration that should apply to the app for the lifetime of this process, if any.

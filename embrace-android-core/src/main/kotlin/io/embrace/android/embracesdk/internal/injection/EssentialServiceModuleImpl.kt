@@ -12,7 +12,7 @@ import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesS
 import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesServiceImpl
 import io.embrace.android.embracesdk.internal.capture.user.EmbraceUserService
 import io.embrace.android.embracesdk.internal.capture.user.UserService
-import io.embrace.android.embracesdk.internal.config.ConfigModule
+import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.session.id.SessionTracker
 import io.embrace.android.embracesdk.internal.session.id.SessionTrackerImpl
 import io.embrace.android.embracesdk.internal.session.lifecycle.AppStateTrackerImpl
@@ -24,15 +24,13 @@ import io.embrace.opentelemetry.kotlin.ExperimentalApi
 @OptIn(ExperimentalApi::class)
 class EssentialServiceModuleImpl(
     initModule: InitModule,
-    configModule: ConfigModule,
+    configService: ConfigService,
     openTelemetryModule: OpenTelemetryModule,
     coreModule: CoreModule,
     workerThreadModule: WorkerThreadModule,
     lifecycleOwnerProvider: Provider<LifecycleOwner?>,
     networkConnectivityServiceProvider: Provider<NetworkConnectivityService?>,
 ) : EssentialServiceModule {
-
-    private val configService by lazy { configModule.configService }
 
     override val appStateTracker: AppStateTracker by singleton {
         EmbTrace.trace("process-state-service-init") {

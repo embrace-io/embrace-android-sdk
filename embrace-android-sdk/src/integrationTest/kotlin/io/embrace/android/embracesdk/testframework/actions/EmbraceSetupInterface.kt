@@ -1,8 +1,10 @@
 package io.embrace.android.embracesdk.testframework.actions
 
+import android.os.Build
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.testing.TestLifecycleOwner
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
+import io.embrace.android.embracesdk.core.BuildConfig
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeJniDelegate
@@ -16,9 +18,8 @@ import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistry
 import io.embrace.android.embracesdk.internal.config.BuildInfo
-import io.embrace.android.embracesdk.internal.config.ConfigModule
-import io.embrace.android.embracesdk.internal.config.ConfigModuleImpl
 import io.embrace.android.embracesdk.internal.config.ConfigService
+import io.embrace.android.embracesdk.internal.config.ConfigServiceImpl
 import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
 import io.embrace.android.embracesdk.internal.config.CpuAbi
 import io.embrace.android.embracesdk.internal.injection.CoreModule
@@ -100,14 +101,26 @@ internal class EmbraceSetupInterface(
         openTelemetryModule = fakeInitModule.openTelemetryModule,
         coreModuleSupplier = { _, _ -> coreModule },
         workerThreadModuleSupplier = { workerThreadModule },
-        configModuleSupplier = { initModule, coreModule, openTelemetryModule, workerThreadModule ->
-            val impl = ConfigModuleImpl(initModule, coreModule, openTelemetryModule, workerThreadModule)
-            DecoratedConfigModule(impl)
+        configServiceSupplier = { initModule, coreModule, openTelemetryModule, workerThreadModule ->
+            val impl = ConfigServiceImpl(
+                instrumentedConfig = initModule.instrumentedConfig,
+                worker = workerThreadModule.backgroundWorker(Worker.Background.IoRegWorker),
+                serializer = initModule.jsonSerializer,
+                okHttpClient = initModule.okHttpClient,
+                hasConfiguredOtelExporters = openTelemetryModule.otelSdkConfig::hasConfiguredOtelExporters,
+                sdkVersion = BuildConfig.VERSION_NAME,
+                apiLevel = Build.VERSION.SDK_INT,
+                filesDir = coreModule.context.filesDir,
+                store = coreModule.store,
+                abis = Build.SUPPORTED_ABIS,
+                logger = initModule.logger,
+            )
+            DecoratedConfigService(impl)
         },
-        essentialServiceModuleSupplier = { initModule, configModule, openTelemetryModule, coreModule, workerThreadModule, _, _ ->
+        essentialServiceModuleSupplier = { initModule, configService, openTelemetryModule, coreModule, workerThreadModule, _, _ ->
             EssentialServiceModuleImpl(
                 initModule = initModule,
-                configModule = configModule,
+                configService = configService,
                 openTelemetryModule = openTelemetryModule,
                 coreModule = coreModule,
                 workerThreadModule = workerThreadModule,
@@ -115,9 +128,9 @@ internal class EmbraceSetupInterface(
                 networkConnectivityServiceProvider = { fakeNetworkConnectivityService },
             )
         },
-        deliveryModuleSupplier = { configModule, initModule, otelModule, workerThreadModule, coreModule, essentialServiceModule, _, _, _, _ ->
+        deliveryModuleSupplier = { configService, initModule, otelModule, workerThreadModule, coreModule, essentialServiceModule, _, _, _, _ ->
             DeliveryModuleImpl(
-                configModule = configModule,
+                configService = configService,
                 initModule = initModule,
                 otelModule = otelModule,
                 workerThreadModule = workerThreadModule,
@@ -215,10 +228,6 @@ internal class EmbraceSetupInterface(
                     threadBlockageMonitoringThread = threadBlockageWatchdogThread
                 )
             }
-    }
-
-    private class DecoratedConfigModule(private val impl: ConfigModule) : ConfigModule by impl {
-        override val configService: ConfigService = DecoratedConfigService(impl.configService)
     }
 
     private class DecoratedConfigService(private val impl: ConfigService): ConfigService by impl {

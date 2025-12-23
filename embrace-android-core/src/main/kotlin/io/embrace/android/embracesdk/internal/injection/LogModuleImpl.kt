@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.injection
 
-import io.embrace.android.embracesdk.internal.config.ConfigModule
+import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.logs.LogOrchestrator
 import io.embrace.android.embracesdk.internal.logs.LogOrchestratorImpl
 import io.embrace.android.embracesdk.internal.logs.LogService
@@ -12,7 +12,7 @@ class LogModuleImpl(
     initModule: InitModule,
     openTelemetryModule: OpenTelemetryModule,
     essentialServiceModule: EssentialServiceModule,
-    configModule: ConfigModule,
+    configService: ConfigService,
     deliveryModule: DeliveryModule,
     workerThreadModule: WorkerThreadModule,
     payloadSourceModule: PayloadSourceModule,
@@ -21,7 +21,7 @@ class LogModuleImpl(
     override val logService: LogService by singleton {
         LogServiceImpl(
             essentialServiceModule.telemetryDestination,
-            configModule.configService,
+            configService,
             essentialServiceModule.sessionPropertiesService,
         )
     }

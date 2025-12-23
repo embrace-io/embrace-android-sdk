@@ -4,7 +4,6 @@ import android.content.Context
 import android.os.Build.VERSION_CODES.TIRAMISU
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeClock
-import io.embrace.android.embracesdk.fakes.FakeConfigModule
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationModule
@@ -46,7 +45,7 @@ internal class ModuleInitBootstrapperTest {
         context = application.applicationContext
         moduleInitBootstrapper = ModuleInitBootstrapper(
             InitModuleImpl(logger, clock),
-            configModuleSupplier = { _, _, _, _ -> FakeConfigModule(FakeConfigService()) },
+            configServiceSupplier = { _, _, _, _ -> FakeConfigService() },
             coreModuleSupplier = { _, _ -> coreModule },
             instrumentationModuleSupplier = { _, _, _, _, _, _, _ ->
                 FakeInstrumentationModule(application, logger = logger).apply {

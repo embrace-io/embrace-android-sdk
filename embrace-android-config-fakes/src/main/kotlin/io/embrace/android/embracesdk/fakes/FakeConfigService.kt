@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.fakes.behavior.FakeBreadcrumbBehavior
+import io.embrace.android.embracesdk.fakes.behavior.FakeNetworkBehavior
 import io.embrace.android.embracesdk.internal.config.BuildInfo
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.config.CpuAbi
@@ -34,7 +35,7 @@ class FakeConfigService(
     override var logMessageBehavior: LogMessageBehavior = createLogMessageBehavior(),
     override var threadBlockageBehavior: ThreadBlockageBehavior = createThreadBlockageBehavior(),
     override var sessionBehavior: SessionBehavior = createSessionBehavior(),
-    override var networkBehavior: NetworkBehavior = createNetworkBehavior(),
+    override var networkBehavior: NetworkBehavior = FakeNetworkBehavior(),
     override var dataCaptureEventBehavior: DataCaptureEventBehavior = createDataCaptureEventBehavior(),
     override var sdkModeBehavior: SdkModeBehavior = createSdkModeBehavior(),
     override var appExitInfoBehavior: AppExitInfoBehavior = createAppExitInfoBehavior(),

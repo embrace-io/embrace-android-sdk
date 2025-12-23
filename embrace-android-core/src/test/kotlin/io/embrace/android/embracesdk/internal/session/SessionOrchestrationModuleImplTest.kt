@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.session
 
-import io.embrace.android.embracesdk.fakes.FakeConfigModule
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeDeliveryModule
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
@@ -36,7 +35,7 @@ internal class SessionOrchestrationModuleImplTest {
             initModule,
             FakeOpenTelemetryModule(),
             workerThreadModule,
-            FakeConfigModule(),
+            configService,
             FakeEssentialServiceModule(),
             coreModule,
             FakeStorageService()
@@ -46,7 +45,7 @@ internal class SessionOrchestrationModuleImplTest {
             initModule.openTelemetryModule,
             coreModule,
             FakeEssentialServiceModule(),
-            FakeConfigModule(configService = configService),
+            configService,
             FakeDeliveryModule(),
             dataSourceModule,
             FakePayloadSourceModule(),
@@ -58,13 +57,13 @@ internal class SessionOrchestrationModuleImplTest {
 
     @Test
     fun testEnabledBehaviors() {
-        val configModule = createEnabledBehavior()
+        val configService = createEnabledBehavior()
         val coreModule = FakeCoreModule()
         val dataSourceModule = InstrumentationModuleImpl(
             initModule,
             FakeOpenTelemetryModule(),
             workerThreadModule,
-            FakeConfigModule(),
+            configService,
             FakeEssentialServiceModule(),
             coreModule,
             FakeStorageService()
@@ -75,7 +74,7 @@ internal class SessionOrchestrationModuleImplTest {
             initModule.openTelemetryModule,
             coreModule,
             FakeEssentialServiceModule(),
-            configModule,
+            configService,
             FakeDeliveryModule(),
             dataSourceModule,
             FakePayloadSourceModule(),
@@ -85,13 +84,11 @@ internal class SessionOrchestrationModuleImplTest {
         assertNotNull(module.sessionOrchestrator)
     }
 
-    private fun createEnabledBehavior(): FakeConfigModule {
-        return FakeConfigModule(
-            configService = FakeConfigService(
-                backgroundActivityBehavior = createBackgroundActivityBehavior(
-                    remoteCfg = RemoteConfig(backgroundActivityConfig = BackgroundActivityRemoteConfig(threshold = 100f))
-                ),
-            )
+    private fun createEnabledBehavior(): FakeConfigService {
+        return FakeConfigService(
+            backgroundActivityBehavior = createBackgroundActivityBehavior(
+                remoteCfg = RemoteConfig(backgroundActivityConfig = BackgroundActivityRemoteConfig(threshold = 100f))
+            ),
         )
     }
 }

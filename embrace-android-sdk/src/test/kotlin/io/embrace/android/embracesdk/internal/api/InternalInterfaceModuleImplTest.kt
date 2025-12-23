@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.internal.api
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.EmbraceImpl
-import io.embrace.android.embracesdk.fakes.FakeConfigModule
+import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakePayloadSourceModule
 import io.embrace.android.embracesdk.internal.injection.InternalInterfaceModule
@@ -20,7 +20,7 @@ internal class InternalInterfaceModuleImplTest {
         val initModule = FakeInitModule()
         val module: InternalInterfaceModule = InternalInterfaceModuleImpl(
             initModule,
-            FakeConfigModule(),
+            FakeConfigService(),
             FakePayloadSourceModule(),
             EmbraceImpl(),
             ModuleInitBootstrapper(FakeInitModule())

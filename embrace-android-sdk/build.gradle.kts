@@ -18,6 +18,7 @@ dependencies {
     implementation(project(":embrace-android-utils"))
     implementation(project(":embrace-android-core"))
     implementation(project(":embrace-android-payload"))
+    implementation(project(":embrace-android-config"))
     implementation(project(":embrace-android-delivery"))
     implementation(project(":embrace-internal-api"))
     implementation(project(":embrace-android-otel"))
@@ -57,6 +58,8 @@ dependencies {
     implementation(libs.opentelemetry.kotlin.api.ext)
     implementation(libs.opentelemetry.kotlin.semconv)
     implementation(libs.opentelemetry.kotlin.noop)
+    implementation(platform(libs.okhttp.bom))
+    implementation(libs.okhttp)
 
     testImplementation(libs.opentelemetry.java.aliases)
     testImplementation(project(":embrace-android-otel-java"))

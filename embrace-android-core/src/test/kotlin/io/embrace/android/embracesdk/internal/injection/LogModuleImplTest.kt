@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.injection
 
-import io.embrace.android.embracesdk.fakes.FakeConfigModule
+import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeDeliveryModule
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
@@ -19,7 +19,7 @@ internal class LogModuleImplTest {
             initModule,
             FakeOpenTelemetryModule(),
             FakeEssentialServiceModule(),
-            FakeConfigModule(),
+            FakeConfigService(),
             FakeDeliveryModule(),
             FakeWorkerThreadModule(),
             FakePayloadSourceModule(),

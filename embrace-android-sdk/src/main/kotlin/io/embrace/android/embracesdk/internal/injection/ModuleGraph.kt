@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.injection
 
-import io.embrace.android.embracesdk.internal.config.ConfigModule
+import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.instrumentation.startup.DataCaptureServiceModule
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageService
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
@@ -13,7 +13,7 @@ internal interface ModuleGraph {
     val initModule: InitModule
     val openTelemetryModule: OpenTelemetryModule
     val coreModule: CoreModule
-    val configModule: ConfigModule
+    val configService: ConfigService
     val workerThreadModule: WorkerThreadModule
     val storageService: StorageService
     val essentialServiceModule: EssentialServiceModule

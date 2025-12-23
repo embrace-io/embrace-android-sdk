@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.config.source
 import io.embrace.android.embracesdk.internal.comms.api.Endpoint
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.InstrumentedConfig
 
-class ConfigEndpoint(
+internal class ConfigEndpoint(
     val deviceId: String,
     private val appVersionName: String,
     instrumentedConfig: InstrumentedConfig,

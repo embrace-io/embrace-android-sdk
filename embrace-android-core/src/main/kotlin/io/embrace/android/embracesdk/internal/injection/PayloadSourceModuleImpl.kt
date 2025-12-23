@@ -9,7 +9,7 @@ import io.embrace.android.embracesdk.internal.capture.metadata.EmbraceMetadataSe
 import io.embrace.android.embracesdk.internal.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.internal.capture.metadata.RnBundleIdTracker
 import io.embrace.android.embracesdk.internal.capture.metadata.RnBundleIdTrackerImpl
-import io.embrace.android.embracesdk.internal.config.ConfigModule
+import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.envelope.log.LogEnvelopeSource
 import io.embrace.android.embracesdk.internal.envelope.log.LogEnvelopeSourceImpl
 import io.embrace.android.embracesdk.internal.envelope.log.LogPayloadSourceImpl
@@ -39,7 +39,7 @@ class PayloadSourceModuleImpl(
     coreModule: CoreModule,
     workerThreadModule: WorkerThreadModule,
     essentialServiceModule: EssentialServiceModule,
-    configModule: ConfigModule,
+    configService: ConfigService,
     otelModule: OpenTelemetryModule,
     otelPayloadMapper: OtelPayloadMapper?,
     deliveryModule: DeliveryModule,
@@ -49,7 +49,7 @@ class PayloadSourceModuleImpl(
     override val rnBundleIdTracker: RnBundleIdTracker by singleton {
         RnBundleIdTrackerImpl(
             coreModule.context,
-            configModule.configService,
+            configService,
             coreModule.store,
             workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker)
         )
@@ -58,7 +58,7 @@ class PayloadSourceModuleImpl(
     private val sessionPayloadSource by singleton {
         EmbTrace.trace("session-payload-source") {
             SessionPayloadSourceImpl(
-                configModule.configService.nativeSymbolMap,
+                configService.nativeSymbolMap,
                 otelModule.spanSink,
                 otelModule.currentSessionSpan,
                 otelModule.spanRepository,
@@ -84,7 +84,7 @@ class PayloadSourceModuleImpl(
 
     override val hostedSdkVersionInfo: HostedSdkVersionInfo by singleton {
         val store = coreModule.store
-        when (configModule.configService.appFramework) {
+        when (configService.appFramework) {
             AppFramework.REACT_NATIVE -> ReactNativeSdkVersionInfo(store)
             AppFramework.UNITY -> UnitySdkVersionInfo(store)
             AppFramework.FLUTTER -> FlutterSdkVersionInfo(store)
@@ -113,7 +113,7 @@ class PayloadSourceModuleImpl(
             EnvelopeResourceSourceImpl(
                 hosted = hostedSdkVersionInfo,
                 environment = appEnvironment.environment,
-                configService = configModule.configService,
+                configService = configService,
                 device = EmbTrace.trace("deviceImpl") {
                     DeviceImpl(
                         coreModule.context.getSystemServiceSafe(Context.WINDOW_SERVICE),
@@ -140,7 +140,7 @@ class PayloadSourceModuleImpl(
                 lazy { resourceSource },
                 coreModule.context,
                 lazy { storageManager },
-                configModule.configService,
+                configService,
                 coreModule.store,
                 workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker),
                 initModule.logger

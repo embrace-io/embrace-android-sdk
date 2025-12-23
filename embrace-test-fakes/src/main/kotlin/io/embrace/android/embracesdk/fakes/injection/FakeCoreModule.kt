@@ -5,10 +5,8 @@ import android.content.Context
 import android.content.pm.PackageInfo
 import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.fakes.FakeOrdinalStore
-import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.internal.envelope.BuildInfo
 import io.embrace.android.embracesdk.internal.injection.CoreModule
-import io.embrace.android.embracesdk.internal.prefs.PreferencesService
 import io.embrace.android.embracesdk.internal.registry.ServiceRegistry
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.store.OrdinalStore
@@ -28,7 +26,6 @@ class FakeCoreModule(
     override val context: Context =
         if (isMockKMock(application)) getMockedContext() else application.applicationContext,
     override val serviceRegistry: ServiceRegistry = ServiceRegistry(),
-    override val preferencesService: PreferencesService = FakePreferenceService(),
     override val store: KeyValueStore = FakeKeyValueStore(),
     override val ordinalStore: OrdinalStore = FakeOrdinalStore(),
     override val sdkStartTime: Long = -1,

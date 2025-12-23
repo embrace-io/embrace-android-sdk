@@ -3,13 +3,12 @@ package io.embrace.android.embracesdk.internal.api.delegate
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.LastRunEndState
+import io.embrace.android.embracesdk.fakes.FakeConfigModule
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeLogService
-import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeSessionTracker
 import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.fakeSessionToken
-import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeLogModule
@@ -26,7 +25,7 @@ internal class SdkStateApiDelegateTest {
 
     private lateinit var delegate: SdkStateApiDelegate
     private lateinit var logService: FakeLogService
-    private lateinit var preferencesService: FakePreferenceService
+    private lateinit var configModule: FakeConfigModule
     private lateinit var sessionTracker: FakeSessionTracker
     private lateinit var sdkCallChecker: SdkCallChecker
     private lateinit var logger: FakeEmbLogger
@@ -34,12 +33,13 @@ internal class SdkStateApiDelegateTest {
     @Before
     fun setUp() {
         logService = FakeLogService()
+        configModule = FakeConfigModule(
+            deviceIdentifier = Uuid.getEmbUuid()
+        )
         val moduleInitBootstrapper = ModuleInitBootstrapper(
             FakeInitModule(),
-            coreModuleSupplier = { _, _ ->
-                FakeCoreModule().apply {
-                    preferencesService.deviceIdentifier = Uuid.getEmbUuid()
-                }
+            configModuleSupplier = { _, _, _, _ ->
+                configModule
             },
             essentialServiceModuleSupplier = { _, _, _, _, _, _, _ ->
                 FakeEssentialServiceModule()
@@ -49,7 +49,6 @@ internal class SdkStateApiDelegateTest {
             },
         )
         moduleInitBootstrapper.init(ApplicationProvider.getApplicationContext())
-        preferencesService = moduleInitBootstrapper.coreModule.preferencesService as FakePreferenceService
         sessionTracker = moduleInitBootstrapper.essentialServiceModule.sessionTracker as FakeSessionTracker
         logger = FakeEmbLogger()
         sdkCallChecker = SdkCallChecker(logger, FakeTelemetryService())
@@ -64,14 +63,14 @@ internal class SdkStateApiDelegateTest {
 
     @Test
     fun getDeviceId() {
-        preferencesService.deviceIdentifier = "foo"
+        configModule.deviceIdentifier = "foo"
         assertEquals("foo", delegate.deviceId)
     }
 
     @Test
     fun `device ID not returned SDK is not enabled`() {
         logger.throwOnInternalError = false
-        preferencesService.deviceIdentifier = "foo"
+        configModule.deviceIdentifier = "foo"
         sdkCallChecker.started.set(false)
         assertEquals("", delegate.deviceId)
     }

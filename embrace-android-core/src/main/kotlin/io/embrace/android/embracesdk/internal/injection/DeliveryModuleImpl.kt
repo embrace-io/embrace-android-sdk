@@ -156,7 +156,7 @@ class DeliveryModuleImpl(
         } else {
             val appId = configModule.configService.appId ?: return@singleton null
             val coreBaseUrl = configModule.urlBuilder?.baseDataUrl ?: return@singleton null
-            val lazyDeviceId = lazy(coreModule.preferencesService::deviceIdentifier)
+            val lazyDeviceId = lazy(configModule::deviceIdentifier)
             OkHttpRequestExecutionService(
                 configModule.okHttpClient,
                 coreBaseUrl,

@@ -5,8 +5,6 @@ package io.embrace.android.embracesdk.internal.injection
 import android.app.Application
 import android.content.Context
 import android.preference.PreferenceManager
-import io.embrace.android.embracesdk.internal.prefs.EmbracePreferencesService
-import io.embrace.android.embracesdk.internal.prefs.PreferencesService
 import io.embrace.android.embracesdk.internal.prefs.SharedPrefsStore
 import io.embrace.android.embracesdk.internal.registry.ServiceRegistry
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
@@ -44,9 +42,5 @@ class CoreModuleImpl(
 
     override val ordinalStore: OrdinalStore by singleton {
         OrdinalStoreImpl(store)
-    }
-
-    override val preferencesService: PreferencesService by singleton {
-        EmbracePreferencesService(store)
     }
 }

@@ -5,14 +5,12 @@ import android.content.res.AssetManager
 import android.view.WindowManager
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
-import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.envelope.BuildInfo
 import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.internal.envelope.metadata.ReactNativeSdkVersionInfo
 import io.embrace.android.embracesdk.internal.payload.AppFramework
-import io.embrace.android.embracesdk.internal.prefs.PreferencesService
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -31,7 +29,7 @@ internal class EmbraceRnBundleIdTrackerTest {
     private lateinit var assetManager: AssetManager
     private lateinit var buildInfo: BuildInfo
     private lateinit var configService: ConfigService
-    private lateinit var preferencesService: PreferencesService
+    private lateinit var store: FakeKeyValueStore
 
     @Before
     fun setUp() {
@@ -44,9 +42,7 @@ internal class EmbraceRnBundleIdTrackerTest {
         configService = FakeConfigService().apply {
             appFramework = AppFramework.REACT_NATIVE
         }
-        preferencesService = FakePreferenceService()
-        preferencesService.javaScriptBundleURL = null
-        val store = FakeKeyValueStore()
+        store = FakeKeyValueStore()
         hostedSdkVersionInfo = ReactNativeSdkVersionInfo(store)
     }
 
@@ -54,7 +50,7 @@ internal class EmbraceRnBundleIdTrackerTest {
         buildInfo,
         context,
         configService,
-        preferencesService,
+        store,
         fakeBackgroundWorker()
     )
 
@@ -73,7 +69,9 @@ internal class EmbraceRnBundleIdTrackerTest {
 
     @Test
     fun `test React Native bundle ID from preference if jsBundleIdUrl is the same as the value persisted `() {
-        preferencesService.javaScriptBundleURL = "javaScriptBundleURL"
+        store.edit {
+            putString(JAVA_SCRIPT_BUNDLE_URL_KEY, "javaScriptBundleURL")
+        }
         val metadataService = createRnBundleIdTracker()
 
         metadataService.setReactNativeBundleId("javaScriptBundleURL")
@@ -82,7 +80,9 @@ internal class EmbraceRnBundleIdTrackerTest {
 
     @Test
     fun `test React Native bundle ID from preference if jsBundleIdUrl is a new value`() {
-        preferencesService.javaScriptBundleURL = "oldJavaScriptBundleURL"
+        store.edit {
+            putString(JAVA_SCRIPT_BUNDLE_URL_KEY, "oldJavaScriptBundleURL")
+        }
         val metadataService = createRnBundleIdTracker()
 
         metadataService.setReactNativeBundleId("newJavaScriptBundleURL")
@@ -93,7 +93,6 @@ internal class EmbraceRnBundleIdTrackerTest {
     fun `test React Native bundle ID url as Asset`() {
         val bundleIdFile = Files.createTempFile("bundle-test", ".temp").toFile()
         val inputStream = FileInputStream(bundleIdFile)
-        preferencesService.javaScriptBundleURL = null
 
         every { context.assets } returns assetManager
         every { assetManager.open(any()) } returns inputStream
@@ -111,8 +110,6 @@ internal class EmbraceRnBundleIdTrackerTest {
     fun `test React Native bundle ID url as Asset with forceUpdate param in true`() {
         val bundleIdFile = Files.createTempFile("bundle-test", ".temp").toFile()
         val inputStream = FileInputStream(bundleIdFile)
-        preferencesService.javaScriptBundleURL = null
-        preferencesService.javaScriptBundleId = null
 
         every { context.assets } returns assetManager
         every { assetManager.open(any()) } returns inputStream
@@ -124,15 +121,17 @@ internal class EmbraceRnBundleIdTrackerTest {
 
         assertNotEquals(buildInfo.rnBundleId, metadataService.getReactNativeBundleId())
         assertEquals("D41D8CD98F00B204E9800998ECF8427E", metadataService.getReactNativeBundleId())
-        assertEquals("D41D8CD98F00B204E9800998ECF8427E", preferencesService.javaScriptBundleId)
+        assertEquals("D41D8CD98F00B204E9800998ECF8427E", store.getString(JAVA_SCRIPT_BUNDLE_ID_KEY))
     }
 
     @Test
     fun `test React Native bundle ID url as Asset with forceUpdate param in false`() {
         val bundleIdFile = Files.createTempFile("bundle-test", ".temp").toFile()
         val inputStream = FileInputStream(bundleIdFile)
-        preferencesService.javaScriptBundleURL = "assets://index.android.bundle"
-        preferencesService.javaScriptBundleId = "persistedBundleId"
+        store.edit {
+            putString(JAVA_SCRIPT_BUNDLE_URL_KEY, "assets://index.android.bundle")
+            putString(JAVA_SCRIPT_BUNDLE_ID_KEY, "persistedBundleId")
+        }
 
         every { context.assets } returns assetManager
         every { assetManager.open(any()) } returns inputStream
@@ -142,15 +141,13 @@ internal class EmbraceRnBundleIdTrackerTest {
 
         assertNotEquals(buildInfo.rnBundleId, metadataService.getReactNativeBundleId())
         assertEquals("persistedBundleId", metadataService.getReactNativeBundleId())
-        assertEquals("persistedBundleId", preferencesService.javaScriptBundleId)
+        assertEquals("persistedBundleId", store.getString(JAVA_SCRIPT_BUNDLE_ID_KEY))
     }
 
     @Test
     fun `test React Native bundle ID url as Asset with forceUpdate param being null`() {
         val bundleIdFile = Files.createTempFile("bundle-test", ".temp").toFile()
         val inputStream = FileInputStream(bundleIdFile)
-        preferencesService.javaScriptBundleURL = null
-        preferencesService.javaScriptBundleId = null
 
         every { context.assets } returns assetManager
         every { assetManager.open(any()) } returns inputStream
@@ -160,7 +157,7 @@ internal class EmbraceRnBundleIdTrackerTest {
 
         assertNotEquals(buildInfo.rnBundleId, metadataService.getReactNativeBundleId())
         assertEquals("D41D8CD98F00B204E9800998ECF8427E", metadataService.getReactNativeBundleId())
-        assertEquals(null, preferencesService.javaScriptBundleId)
+        assertEquals(null, store.getString(JAVA_SCRIPT_BUNDLE_ID_KEY))
     }
 
     @Test
@@ -174,7 +171,9 @@ internal class EmbraceRnBundleIdTrackerTest {
 
     @Test
     fun `test computeReactNativeBundleId with wrong assets path`() {
-        preferencesService.javaScriptBundleURL = "assets"
+        store.edit {
+            putString(JAVA_SCRIPT_BUNDLE_URL_KEY, "assets")
+        }
         every { context.assets } returns assetManager
         every { assetManager.open(any()) } throws IOException()
 
@@ -185,9 +184,16 @@ internal class EmbraceRnBundleIdTrackerTest {
 
     @Test
     fun `test computeReactNativeBundleId with wrong custom bundle stream`() {
-        preferencesService.javaScriptBundleURL = "wrongFilePath"
+        store.edit {
+            putString(JAVA_SCRIPT_BUNDLE_URL_KEY, "wrongFilePath")
+        }
 
         // computing is null, so reactNativeBundleID should be set to the default value
         assertEquals(createRnBundleIdTracker().getReactNativeBundleId(), buildInfo.rnBundleId)
+    }
+
+    private companion object {
+        private const val JAVA_SCRIPT_BUNDLE_URL_KEY = "io.embrace.jsbundle.url"
+        private const val JAVA_SCRIPT_BUNDLE_ID_KEY = "io.embrace.jsbundle.id"
     }
 }

@@ -4,7 +4,7 @@ import android.content.Context
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.envelope.BuildInfo
 import io.embrace.android.embracesdk.internal.payload.AppFramework
-import io.embrace.android.embracesdk.internal.prefs.PreferencesService
+import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import java.io.ByteArrayOutputStream
 import java.io.FileInputStream
@@ -17,15 +17,15 @@ internal class RnBundleIdTrackerImpl(
     private val buildInfo: BuildInfo,
     private val context: Context,
     private val configService: ConfigService,
-    private val preferencesService: PreferencesService,
+    private val store: KeyValueStore,
     private val metadataBackgroundWorker: BackgroundWorker,
 ) : RnBundleIdTracker {
 
     private var reactNativeBundleId: Future<String?> =
         if (configService.appFramework == AppFramework.REACT_NATIVE) {
             metadataBackgroundWorker.submit<String?> {
-                val lastKnownJsBundleUrl = preferencesService.javaScriptBundleURL
-                val lastKnownJsBundleId = preferencesService.javaScriptBundleId
+                val lastKnownJsBundleUrl = javaScriptBundleURL
+                val lastKnownJsBundleId = javaScriptBundleId
                 if (!lastKnownJsBundleUrl.isNullOrEmpty() && !lastKnownJsBundleId.isNullOrEmpty()) {
                     // If we have a lastKnownJsBundleId, we use that as the last known bundle ID.
                     return@submit lastKnownJsBundleId
@@ -58,11 +58,11 @@ internal class RnBundleIdTrackerImpl(
         jsBundleUrl: String?,
         forceUpdate: Boolean?,
     ) {
-        val currentUrl = preferencesService.javaScriptBundleURL
+        val currentUrl = javaScriptBundleURL
 
         if (currentUrl != jsBundleUrl || forceUpdate == true) {
             // It`s a new JS bundle URL, save the new value in preferences.
-            preferencesService.javaScriptBundleURL = jsBundleUrl
+            javaScriptBundleURL = jsBundleUrl
 
             // Calculate the bundle ID for the new bundle URL
             reactNativeBundleId = metadataBackgroundWorker.submit<String?> {
@@ -73,14 +73,24 @@ internal class RnBundleIdTrackerImpl(
                 )
                 if (forceUpdate != null) {
                     // if we have a value for forceUpdate, it means the bundleId is cacheable and we should store it.
-                    preferencesService.javaScriptBundleId = bundleId
+                    javaScriptBundleId = bundleId
                 }
                 bundleId
             }
         }
     }
 
+    private var javaScriptBundleURL: String?
+        get() = store.getString(JAVA_SCRIPT_BUNDLE_URL_KEY)
+        set(value) = store.edit { putString(JAVA_SCRIPT_BUNDLE_URL_KEY, value) }
+
+    private var javaScriptBundleId: String?
+        get() = store.getString(JAVA_SCRIPT_BUNDLE_ID_KEY)
+        set(value) = store.edit { putString(JAVA_SCRIPT_BUNDLE_ID_KEY, value) }
+
     companion object {
+        private const val JAVA_SCRIPT_BUNDLE_URL_KEY = "io.embrace.jsbundle.url"
+        private const val JAVA_SCRIPT_BUNDLE_ID_KEY = "io.embrace.jsbundle.id"
 
         private fun getBundleAssetName(bundleUrl: String): String {
             return bundleUrl.substring(bundleUrl.indexOf("://") + 3)

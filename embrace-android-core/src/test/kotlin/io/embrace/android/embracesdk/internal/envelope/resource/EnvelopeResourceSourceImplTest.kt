@@ -1,12 +1,11 @@
 package io.embrace.android.embracesdk.internal.envelope.resource
 
 import android.os.Environment
+import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeDevice
 import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.fakes.FakeRnBundleIdTracker
 import io.embrace.android.embracesdk.internal.capture.metadata.AppEnvironment
-import io.embrace.android.embracesdk.internal.envelope.BuildInfo
-import io.embrace.android.embracesdk.internal.envelope.CpuAbi
 import io.embrace.android.embracesdk.internal.envelope.metadata.UnitySdkVersionInfo
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.mockk.every
@@ -40,34 +39,23 @@ internal class EnvelopeResourceSourceImplTest {
         hostedSdkVersionInfo.hostedSdkVersion = "1.2.0"
         hostedSdkVersionInfo.hostedPlatformVersion = "19"
         hostedSdkVersionInfo.unityBuildIdNumber = "5092abc"
-        val buildInfo = BuildInfo(
-            buildId = "100",
-            buildType = "release",
-            buildFlavor = "oem",
-            rnBundleId = "bundle-id",
-            versionName = "1.0.0",
-            versionCode = "10",
-            packageName = "com.embrace.fake",
-        )
         val source = EnvelopeResourceSourceImpl(
+            FakeConfigService(),
             hostedSdkVersionInfo,
             AppEnvironment.Environment.PROD,
-            buildInfo,
-            AppFramework.NATIVE,
-            CpuAbi.ARM64_V8A,
             FakeDevice(),
             FakeRnBundleIdTracker()
         )
         val envelope = source.getEnvelopeResource()
 
-        assertEquals("1.0.0", envelope.appVersion)
+        assertEquals("2.5.1", envelope.appVersion)
         assertEquals(AppFramework.NATIVE, envelope.appFramework)
-        assertEquals("com.embrace.fake", envelope.appEcosystemId)
-        assertEquals("100", envelope.buildId)
-        assertEquals("release", envelope.buildType)
-        assertEquals("oem", envelope.buildFlavor)
+        assertEquals("com.fake.package", envelope.appEcosystemId)
+        assertEquals("fakeBuildId", envelope.buildId)
+        assertEquals("fakeBuildType", envelope.buildType)
+        assertEquals("fakeBuildFlavor", envelope.buildFlavor)
         assertEquals("prod", envelope.environment)
-        assertEquals("10", envelope.bundleVersion)
+        assertEquals("99", envelope.bundleVersion)
         assertEquals(53, envelope.sdkSimpleVersion)
         assertEquals("fakeReactNativeBundleId", envelope.reactNativeBundleId)
         assertEquals("1.2.0", envelope.hostedSdkVersion)

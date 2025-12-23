@@ -103,4 +103,26 @@ interface ConfigService {
      * to Embrace).
      */
     fun isOnlyUsingOtelExporters(): Boolean
+
+    /**
+     * Provides build-related metadata for the app.
+     */
+    val buildInfo: BuildInfo
+
+    /**
+     * Unique identifier for this device that is persisted per-install.
+     */
+    val deviceId: String
+
+    /**
+     * The primary CPU architecture. We assume that for the vast majority of devices
+     * all CPUs have the same ABI (technically not true, but a reasonable enough for
+     * simpler data analysis)
+     */
+    val cpuAbi: CpuAbi
+
+    /**
+     * The current native symbols.
+     */
+    val nativeSymbolMap: Map<String, String>?
 }

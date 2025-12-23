@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.testcases.features
 import android.util.Base64
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.fakes.config.FakeBase64SharedObjectFilesMap
-import io.embrace.android.embracesdk.internal.envelope.CpuAbi
+import io.embrace.android.embracesdk.internal.config.CpuAbi
 import io.embrace.android.embracesdk.internal.payload.NativeSymbols
 
 fun createNativeSymbolsForCurrentArch(

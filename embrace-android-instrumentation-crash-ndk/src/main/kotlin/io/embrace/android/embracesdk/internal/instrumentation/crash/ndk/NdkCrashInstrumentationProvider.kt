@@ -34,7 +34,7 @@ class NdkCrashInstrumentationProvider : InstrumentationProvider {
                     args,
                     sharedObjectLoader,
                     delegate,
-                    args.symbols,
+                    args.configService.nativeSymbolMap,
                     nativeOutputDir,
                     args.priorityWorker(Worker.Priority.DataPersistenceWorker)
                 )

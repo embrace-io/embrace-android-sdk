@@ -48,7 +48,6 @@ class PayloadSourceModuleImpl(
 
     override val rnBundleIdTracker: RnBundleIdTracker by singleton {
         RnBundleIdTrackerImpl(
-            configModule.buildInfo,
             coreModule.context,
             configModule.configService,
             coreModule.store,
@@ -59,7 +58,7 @@ class PayloadSourceModuleImpl(
     private val sessionPayloadSource by singleton {
         EmbTrace.trace("session-payload-source") {
             SessionPayloadSourceImpl(
-                configModule.nativeSymbolMap,
+                configModule.configService.nativeSymbolMap,
                 otelModule.spanSink,
                 otelModule.currentSessionSpan,
                 otelModule.spanRepository,
@@ -112,12 +111,10 @@ class PayloadSourceModuleImpl(
     override val resourceSource: EnvelopeResourceSource by singleton {
         EmbTrace.trace("resource-source") {
             EnvelopeResourceSourceImpl(
-                hostedSdkVersionInfo,
-                appEnvironment.environment,
-                EmbTrace.trace("buildInfo") { configModule.buildInfo },
-                configModule.configService.appFramework,
-                configModule.cpuAbi,
-                EmbTrace.trace("deviceImpl") {
+                hosted = hostedSdkVersionInfo,
+                environment = appEnvironment.environment,
+                configService = configModule.configService,
+                device = EmbTrace.trace("deviceImpl") {
                     DeviceImpl(
                         coreModule.context.getSystemServiceSafe(Context.WINDOW_SERVICE),
                         coreModule.store,
@@ -126,7 +123,7 @@ class PayloadSourceModuleImpl(
                         initModule.logger
                     )
                 },
-                rnBundleIdTracker
+                rnBundleIdTracker = rnBundleIdTracker
             )
         }
     }

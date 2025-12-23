@@ -6,7 +6,6 @@ import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestinati
 import io.embrace.android.embracesdk.internal.arch.state.AppStateTracker
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.ConfigService
-import io.embrace.android.embracesdk.internal.envelope.CpuAbi
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
@@ -75,11 +74,6 @@ interface InstrumentationArgs {
     val ordinalStore: OrdinalStore
 
     /**
-     * The CPU's ABI
-     */
-    val cpuAbi: CpuAbi
-
-    /**
      * Retrieves a background worker matching the given name.
      */
     fun backgroundWorker(worker: Worker.Background): BackgroundWorker
@@ -109,11 +103,6 @@ interface InstrumentationArgs {
      * Retrieves a snapshot of the current session properties
      */
     fun sessionProperties(): Map<String, String>
-
-    /**
-     * The current native symbols.
-     */
-    val symbols: Map<String, String>?
 
     /**
      * Retrieves the crash marker file.

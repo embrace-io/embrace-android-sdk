@@ -15,11 +15,12 @@ import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistry
-import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
-import io.embrace.android.embracesdk.internal.envelope.BuildInfo
-import io.embrace.android.embracesdk.internal.envelope.CpuAbi
+import io.embrace.android.embracesdk.internal.config.BuildInfo
 import io.embrace.android.embracesdk.internal.config.ConfigModule
 import io.embrace.android.embracesdk.internal.config.ConfigModuleImpl
+import io.embrace.android.embracesdk.internal.config.ConfigService
+import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
+import io.embrace.android.embracesdk.internal.config.CpuAbi
 import io.embrace.android.embracesdk.internal.injection.CoreModule
 import io.embrace.android.embracesdk.internal.injection.CoreModuleImpl
 import io.embrace.android.embracesdk.internal.injection.DeliveryModuleImpl
@@ -217,6 +218,10 @@ internal class EmbraceSetupInterface(
     }
 
     private class DecoratedConfigModule(private val impl: ConfigModule) : ConfigModule by impl {
+        override val configService: ConfigService = DecoratedConfigService(impl.configService)
+    }
+
+    private class DecoratedConfigService(private val impl: ConfigService): ConfigService by impl {
         override val buildInfo: BuildInfo = BuildInfo(
             "fakeBuildId",
             "fakeBuildType",

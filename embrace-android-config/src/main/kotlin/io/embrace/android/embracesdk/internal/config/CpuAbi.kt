@@ -1,6 +1,4 @@
-package io.embrace.android.embracesdk.internal.envelope
-
-import android.os.Build
+package io.embrace.android.embracesdk.internal.config
 
 enum class CpuAbi(
     val archName: String,
@@ -14,7 +12,7 @@ enum class CpuAbi(
     UNKNOWN("unknown", false);
 
     companion object {
-        fun current() = fromArchName(Build.SUPPORTED_ABIS[0])
+        fun current(abis: Array<String>) = fromArchName(abis[0])
 
         fun fromArchName(abi: String): CpuAbi {
             return CpuAbi.entries.find { it.archName == abi } ?: UNKNOWN

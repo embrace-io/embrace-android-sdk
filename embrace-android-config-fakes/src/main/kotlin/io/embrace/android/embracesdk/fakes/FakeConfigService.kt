@@ -1,7 +1,9 @@
 package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.fakes.behavior.FakeBreadcrumbBehavior
+import io.embrace.android.embracesdk.internal.config.BuildInfo
 import io.embrace.android.embracesdk.internal.config.ConfigService
+import io.embrace.android.embracesdk.internal.config.CpuAbi
 import io.embrace.android.embracesdk.internal.config.behavior.AppExitInfoBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.AutoDataCaptureBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.BackgroundActivityBehavior
@@ -39,6 +41,18 @@ class FakeConfigService(
     override var networkSpanForwardingBehavior: NetworkSpanForwardingBehavior = createNetworkSpanForwardingBehavior(),
     override var sensitiveKeysBehavior: SensitiveKeysBehavior = createSensitiveKeysBehavior(),
     override val otelBehavior: OtelBehavior = createOtelBehavior(),
+    override var buildInfo: BuildInfo = BuildInfo(
+        "fakeBuildId",
+        "fakeBuildType",
+        "fakeBuildFlavor",
+        "fakeRnBundleId",
+        "2.5.1",
+        "99",
+        "com.fake.package",
+    ),
+    override var deviceId: String = "",
+    override val cpuAbi: CpuAbi = CpuAbi.ARM64_V8A,
+    override val nativeSymbolMap: Map<String, String>? = emptyMap(),
 ) : ConfigService {
     override fun isOnlyUsingOtelExporters(): Boolean = onlyUsingOtelExporters
 }

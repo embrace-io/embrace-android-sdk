@@ -19,7 +19,6 @@ class FakeConfigModule(
 
     override val urlBuilder: ApiUrlBuilder = FakeApiUrlBuilder(),
 
-    override val appEnvironment: AppEnvironment = AppEnvironment(true),
     override val buildInfo: BuildInfo = BuildInfo(
         "fakeBuildId",
         "fakeBuildType",

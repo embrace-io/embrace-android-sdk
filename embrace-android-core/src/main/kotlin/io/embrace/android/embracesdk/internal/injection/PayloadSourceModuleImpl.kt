@@ -2,7 +2,9 @@ package io.embrace.android.embracesdk.internal.injection
 
 import android.app.usage.StorageStatsManager
 import android.content.Context
+import android.content.pm.ApplicationInfo
 import android.os.Build
+import io.embrace.android.embracesdk.internal.capture.metadata.AppEnvironment
 import io.embrace.android.embracesdk.internal.capture.metadata.EmbraceMetadataService
 import io.embrace.android.embracesdk.internal.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.internal.capture.metadata.RnBundleIdTracker
@@ -98,11 +100,19 @@ class PayloadSourceModuleImpl(
         }
     }
 
+    private val appEnvironment: AppEnvironment by lazy {
+        val context = coreModule.context
+        val isDebug: Boolean = with(context.applicationInfo) {
+            flags and ApplicationInfo.FLAG_DEBUGGABLE != 0
+        }
+        AppEnvironment(isDebug)
+    }
+
     override val resourceSource: EnvelopeResourceSource by singleton {
         EmbTrace.trace("resource-source") {
             EnvelopeResourceSourceImpl(
                 hostedSdkVersionInfo,
-                configModule.appEnvironment.environment,
+                appEnvironment.environment,
                 EmbTrace.trace("buildInfo") { configModule.buildInfo },
                 configModule.configService.appFramework,
                 configModule.cpuAbi,

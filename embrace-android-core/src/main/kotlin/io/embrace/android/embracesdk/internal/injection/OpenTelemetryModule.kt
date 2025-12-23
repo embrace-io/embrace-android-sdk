@@ -10,7 +10,6 @@ import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
 import io.embrace.android.embracesdk.internal.spans.EmbraceTracer
-import io.embrace.opentelemetry.kotlin.Clock
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 
 /**
@@ -58,11 +57,6 @@ interface OpenTelemetryModule {
      * Provides a wrapper around commonly used OTel APIs in the SDK.
      */
     val otelSdkWrapper: OtelSdkWrapper
-
-    /**
-     * OpenTelemetry SDK compatible clock based on the internal Embrace clock instance
-     */
-    val openTelemetryClock: Clock
 
     /**
      * Setup configuration configuration-dependent behavior

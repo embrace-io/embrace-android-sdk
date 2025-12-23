@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.internal.api.delegate
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
-import io.embrace.android.embracesdk.fakes.FakeSessionOrchestrationModule
 import io.embrace.android.embracesdk.fakes.FakeSessionOrchestrator
 import io.embrace.android.embracesdk.fakes.FakeSessionPropertiesService
 import io.embrace.android.embracesdk.fakes.FakeTelemetryService
@@ -33,12 +32,12 @@ internal class SessionApiDelegateTest {
             essentialServiceModuleSupplier = { _, _, _, _, _, _, _ ->
                 FakeEssentialServiceModule()
             },
-            sessionOrchestrationModuleSupplier = { _, _, _, _, _, _, _, _, _, _ ->
-                FakeSessionOrchestrationModule()
+            sessionOrchestratorSupplier = { _, _, _, _, _, _, _, _, _, _ ->
+                FakeSessionOrchestrator()
             }
         )
         moduleInitBootstrapper.init(ApplicationProvider.getApplicationContext())
-        orchestrator = moduleInitBootstrapper.sessionOrchestrationModule.sessionOrchestrator as FakeSessionOrchestrator
+        orchestrator = moduleInitBootstrapper.sessionOrchestrator as FakeSessionOrchestrator
         sessionPropertiesService =
             moduleInitBootstrapper.essentialServiceModule.sessionPropertiesService as FakeSessionPropertiesService
         logger = FakeEmbLogger()

@@ -14,7 +14,6 @@ import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
 import io.embrace.android.embracesdk.internal.otel.spans.SpanSinkImpl
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
 import io.embrace.android.embracesdk.internal.spans.EmbraceTracer
-import io.embrace.opentelemetry.kotlin.Clock
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 
 @OptIn(ExperimentalApi::class)
@@ -40,13 +39,11 @@ class FakeOpenTelemetryModule(
             systemInfo = systemInfo,
         )
 
-    override val openTelemetryClock: Clock = FakeOtelKotlinClock(FakeClock())
-
     override val spanService: SpanService = FakeSpanService()
 
     override val otelSdkWrapper: OtelSdkWrapper =
         OtelSdkWrapper(
-            otelClock = openTelemetryClock,
+            otelClock = FakeOtelKotlinClock(),
             configuration = otelSdkConfig,
             spanService = spanService,
             useKotlinSdk = useKotlinSdk,

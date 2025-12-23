@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
 import io.embrace.android.embracesdk.internal.delivery.execution.RequestExecutionService
 import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageService
 import io.embrace.android.embracesdk.internal.envelope.session.OtelPayloadMapper
+import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
 import io.embrace.android.embracesdk.internal.storage.StorageService
 import io.embrace.android.embracesdk.internal.utils.Provider
 
@@ -83,7 +84,7 @@ typealias PayloadSourceModuleSupplier = (
     deliveryModule: DeliveryModule,
 ) -> PayloadSourceModule
 
-typealias SessionOrchestrationModuleSupplier = (
+typealias SessionOrchestratorSupplier = (
     initModule: InitModule,
     openTelemetryModule: OpenTelemetryModule,
     coreModule: CoreModule,
@@ -94,7 +95,7 @@ typealias SessionOrchestrationModuleSupplier = (
     payloadSourceModule: PayloadSourceModule,
     startupDurationProvider: () -> Long?,
     logModule: LogModule,
-) -> SessionOrchestrationModule
+) -> SessionOrchestrator
 
 typealias StorageServiceSupplier = (
     initModule: InitModule,

@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.injection
 
-import io.embrace.android.embracesdk.internal.capture.metadata.AppEnvironment
 import io.embrace.android.embracesdk.internal.comms.api.ApiUrlBuilder
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.config.source.CombinedRemoteConfigSource
@@ -13,11 +12,6 @@ interface ConfigModule {
     val combinedRemoteConfigSource: CombinedRemoteConfigSource?
     val urlBuilder: ApiUrlBuilder?
     val okHttpClient: OkHttpClient
-
-    /**
-     * Whether the application is a debug build
-     */
-    val appEnvironment: AppEnvironment
 
     val buildInfo: BuildInfo
 

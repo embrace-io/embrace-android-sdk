@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.assertions.validateSystemLink
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
 import io.embrace.android.embracesdk.fakes.FakeEmbraceSpanFactory
+import io.embrace.android.embracesdk.fakes.FakeOtelKotlinClock
 import io.embrace.android.embracesdk.fakes.FakeTracer
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.arch.attrs.asPair
@@ -27,7 +28,6 @@ import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpanImpl.Compa
 import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.ErrorCode
-import io.embrace.opentelemetry.kotlin.Clock
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.OpenTelemetry
 import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
@@ -49,7 +49,6 @@ internal class CurrentSessionSpanImplTests {
     private lateinit var spanSink: SpanSink
     private lateinit var otelLimitsConfig: OtelLimitsConfig
     private lateinit var telemetryService: TelemetryService
-    private lateinit var openTelemetryClock: Clock
     private lateinit var currentSessionSpan: CurrentSessionSpanImpl
     private lateinit var spanService: SpanService
     private lateinit var tracer: Tracer
@@ -62,7 +61,6 @@ internal class CurrentSessionSpanImplTests {
         spanRepository = initModule.openTelemetryModule.spanRepository
         spanSink = initModule.openTelemetryModule.spanSink
         telemetryService = initModule.telemetryService
-        openTelemetryClock = initModule.openTelemetryModule.openTelemetryClock
         currentSessionSpan = initModule.openTelemetryModule.currentSessionSpan as CurrentSessionSpanImpl
         tracer = initModule.openTelemetryModule.otelSdkWrapper.sdkTracer
         openTelemetry = initModule.openTelemetryModule.otelSdkWrapper.openTelemetryKotlin
@@ -474,7 +472,7 @@ internal class CurrentSessionSpanImplTests {
     @Test
     fun `readySession will return false if session span is not recording`() {
         val sessionSpan = CurrentSessionSpanImpl(
-            openTelemetryClock = openTelemetryClock,
+            openTelemetryClock = FakeOtelKotlinClock(),
             telemetryService = telemetryService,
             spanRepository = spanRepository,
             spanSink = spanSink,

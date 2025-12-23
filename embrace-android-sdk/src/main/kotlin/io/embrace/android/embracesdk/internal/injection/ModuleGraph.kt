@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.injection
 
 import io.embrace.android.embracesdk.internal.instrumentation.startup.DataCaptureServiceModule
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageService
+import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
 import io.embrace.android.embracesdk.internal.storage.StorageService
 
 /**
@@ -21,6 +22,6 @@ internal interface ModuleGraph {
     val logModule: LogModule
     val instrumentationModule: InstrumentationModule
     val featureModule: FeatureModule
-    val sessionOrchestrationModule: SessionOrchestrationModule
+    val sessionOrchestrator: SessionOrchestrator
     val payloadSourceModule: PayloadSourceModule
 }

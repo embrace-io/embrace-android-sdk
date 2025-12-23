@@ -48,7 +48,6 @@ internal fun ModuleGraph.registerListeners() {
     EmbTrace.trace("service-registration") {
         val ctx = coreModule.application
         ctx.registerActivityLifecycleCallbacks(dataCaptureServiceModule.startupTracker)
-        ctx.registerActivityLifecycleCallbacks(essentialServiceModule.activityLifecycleTracker)
 
         workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker).submit {
             essentialServiceModule.networkConnectivityService.register()
@@ -143,7 +142,6 @@ internal fun ModuleGraph.triggerPayloadSend() {
  */
 internal fun ModuleGraph.markSdkInitComplete() {
     start("startup-tracking")
-    val dataCaptureServiceModule = dataCaptureServiceModule
     dataCaptureServiceModule.startupService.setSdkStartupInfo(
         coreModule.sdkStartTime,
         initModule.clock.now(),

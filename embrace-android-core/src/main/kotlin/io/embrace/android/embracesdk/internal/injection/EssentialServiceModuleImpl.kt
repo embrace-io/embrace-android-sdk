@@ -79,11 +79,11 @@ class EssentialServiceModuleImpl(
 
     override val telemetryDestination: TelemetryDestination by singleton {
         TelemetryDestinationImpl(
-            logger = openTelemetryModule.otelSdkWrapper.logger,
             sessionTracker = sessionTracker,
             appStateTracker = appStateTracker,
             clock = initModule.clock,
             spanService = openTelemetryModule.spanService,
+            eventService = openTelemetryModule.eventService,
             currentSessionSpan = openTelemetryModule.currentSessionSpan,
         )
     }

@@ -15,7 +15,6 @@ class FakeLogService : LogService {
 
     val logs: MutableList<String> = mutableListOf()
     val loggedMessages: MutableList<LogData> = mutableListOf()
-    var errorLogIds: List<String> = listOf()
 
     override fun log(
         message: String,
@@ -31,9 +30,5 @@ class FakeLogService : LogService {
                 schemaType = schemaProvider(TelemetryAttributes())
             )
         )
-    }
-
-    override fun getErrorLogsCount(): Int {
-        return errorLogIds.count()
     }
 }

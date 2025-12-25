@@ -18,11 +18,4 @@ interface LogService {
         attributes: Map<String, Any>,
         schemaProvider: (TelemetryAttributes) -> SchemaType,
     )
-
-    /**
-     * Gets the number of error logs that have been recorded.
-     *
-     * @return the error logs count
-     */
-    fun getErrorLogsCount(): Int
 }

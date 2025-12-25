@@ -6,7 +6,7 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeClock.Companion.DEFAULT_FAKE_CURRENT_TIME
 import io.embrace.android.embracesdk.fakes.FakeCurrentSessionSpan
 import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
-import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryLogger
+import io.embrace.android.embracesdk.fakes.FakeEventService
 import io.embrace.android.embracesdk.fakes.FakeSessionTracker
 import io.embrace.android.embracesdk.fakes.FakeSpanService
 import io.embrace.android.embracesdk.fakes.fakeSessionToken
@@ -26,7 +26,6 @@ import io.embrace.android.embracesdk.internal.otel.toEmbracePayload
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
-import io.embrace.opentelemetry.kotlin.semconv.LogAttributes
 import io.embrace.opentelemetry.kotlin.semconv.SessionAttributes
 import io.embrace.opentelemetry.kotlin.tracing.StatusCode
 import org.junit.Assert.assertEquals
@@ -39,29 +38,29 @@ import org.junit.Test
 
 @OptIn(ExperimentalApi::class, IncubatingApi::class)
 internal class TelemetryDestinationImplTest {
-    private lateinit var logger: FakeOpenTelemetryLogger
     private lateinit var sessionTracker: FakeSessionTracker
     private lateinit var impl: TelemetryDestination
     private lateinit var appStateTracker: FakeAppStateTracker
     private lateinit var clock: FakeClock
     private lateinit var spanService: FakeSpanService
+    private lateinit var eventService: FakeEventService
     private lateinit var currentSessionSpan: FakeCurrentSessionSpan
     private var sessionDataUpdated = false
 
     @Before
     fun setup() {
         sessionTracker = FakeSessionTracker()
-        logger = FakeOpenTelemetryLogger()
         appStateTracker = FakeAppStateTracker()
         clock = FakeClock()
         spanService = FakeSpanService()
+        eventService = FakeEventService()
         currentSessionSpan = FakeCurrentSessionSpan()
         impl = TelemetryDestinationImpl(
-            logger = logger,
             sessionTracker = sessionTracker,
             appStateTracker = appStateTracker,
             clock = clock,
             spanService = spanService,
+            eventService = eventService,
             currentSessionSpan = currentSessionSpan,
         ).also {
             it.sessionUpdateAction = { sessionDataUpdated = true }
@@ -75,24 +74,24 @@ internal class TelemetryDestinationImplTest {
             startSessionCallback = { fakeSessionToken().copy(sessionId = "fake-session-id") },
             postTransitionAppState = AppState.FOREGROUND
         )
+        val expectedSchemaType = SchemaType.Log(
+            TelemetryAttributes(
+                customAttributes = mapOf(PrivateSpan.asPair())
+            )
+        )
         impl.addLog(
-            schemaType = SchemaType.Log(
-                TelemetryAttributes(
-                    customAttributes = mapOf(PrivateSpan.asPair())
-                )
-            ),
+            schemaType = expectedSchemaType,
             severity = LogSeverity.ERROR,
             message = "test"
         )
-        with(logger.logs.single()) {
-            assertEquals("test", body)
-            assertEquals(Severity.ERROR.name, severityNumber?.name)
+        with(eventService.events.single()) {
+            assertEquals(clock.now(), logTimeMs)
+            assertEquals(expectedSchemaType, schemaType)
+            assertEquals("test", message)
+            assertEquals(Severity.ERROR.name, severity.name)
+            assertFalse(isPrivate)
             assertEquals("fake-session-id", attributes[SessionAttributes.SESSION_ID])
             assertNotNull(attributes[embState.name])
-            assertNotNull(attributes[LogAttributes.LOG_RECORD_UID])
-            assertTrue(attributes[PrivateSpan.key.name] != null)
-            assertEquals(clock.now().millisToNanos(), timestamp)
-            assertNull(observedTimestamp)
         }
         verifyAndResetSessionUpdate()
     }
@@ -105,8 +104,8 @@ internal class TelemetryDestinationImplTest {
             message = "test",
             isPrivate = true
         )
-        with(logger.logs.single()) {
-            assertTrue(attributes[PrivateSpan.key.name] != null)
+        with(eventService.events.single()) {
+            assertTrue(isPrivate)
         }
         impl.addLog(
             schemaType = SchemaType.Log(TelemetryAttributes()),
@@ -114,8 +113,8 @@ internal class TelemetryDestinationImplTest {
             message = "test",
             isPrivate = false
         )
-        with(logger.logs.last()) {
-            assertFalse(attributes[PrivateSpan.key.name] != null)
+        with(eventService.events.last()) {
+            assertFalse(isPrivate)
         }
     }
 
@@ -133,7 +132,7 @@ internal class TelemetryDestinationImplTest {
             message = "test"
         )
 
-        with(logger.logs.last()) {
+        with(eventService.events.last()) {
             assertEquals(
                 "foreground-session",
                 attributes[SessionAttributes.SESSION_ID]
@@ -151,7 +150,7 @@ internal class TelemetryDestinationImplTest {
             message = "test"
         )
 
-        with(logger.logs.last()) {
+        with(eventService.events.last()) {
             assertNull(attributes[SessionAttributes.SESSION_ID])
             assertEquals("background", attributes[embState.name])
         }
@@ -167,9 +166,8 @@ internal class TelemetryDestinationImplTest {
             timestampMs = fakeTimeMs
         )
 
-        with(logger.logs.last()) {
-            assertEquals(fakeTimeMs.millisToNanos(), timestamp)
-            assertNull(observedTimestamp)
+        with(eventService.events.last()) {
+            assertEquals(fakeTimeMs, logTimeMs)
         }
     }
 
@@ -187,7 +185,7 @@ internal class TelemetryDestinationImplTest {
             addCurrentSessionInfo = false,
         )
 
-        with(logger.logs.last()) {
+        with(eventService.events.last()) {
             assertNull(attributes[SessionAttributes.SESSION_ID])
             assertNull(attributes[embState.name])
         }
@@ -202,7 +200,7 @@ internal class TelemetryDestinationImplTest {
             message = "test"
         )
 
-        with(logger.logs.last()) {
+        with(eventService.events.last()) {
             assertNull(attributes[SessionAttributes.SESSION_ID])
             assertEquals("background", attributes[embState.name])
         }

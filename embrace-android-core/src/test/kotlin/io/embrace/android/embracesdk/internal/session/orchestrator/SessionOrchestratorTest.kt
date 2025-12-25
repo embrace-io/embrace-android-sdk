@@ -8,7 +8,7 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeCurrentSessionSpan
 import io.embrace.android.embracesdk.fakes.FakeDataSource
 import io.embrace.android.embracesdk.fakes.FakeLogEnvelopeSource
-import io.embrace.android.embracesdk.fakes.FakeLogService
+import io.embrace.android.embracesdk.fakes.FakeLogLimitingService
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakePayloadMessageCollator
 import io.embrace.android.embracesdk.fakes.FakePayloadStore
@@ -439,7 +439,7 @@ internal class SessionOrchestratorTest {
             SessionSpanAttrPopulatorImpl(
                 destination,
                 { 0 },
-                FakeLogService(),
+                FakeLogLimitingService(),
                 FakeMetadataService()
             )
         )

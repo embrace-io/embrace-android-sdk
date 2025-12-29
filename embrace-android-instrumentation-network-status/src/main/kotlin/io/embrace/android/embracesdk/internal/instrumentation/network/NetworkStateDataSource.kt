@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.SchemaType.NetworkStat
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType.NetworkState.Status
 import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkConnectivityListener
 import io.embrace.android.embracesdk.internal.comms.delivery.NetworkStatus
+import io.embrace.android.embracesdk.internal.telemetry.LimitedTelemetryType
 
 class NetworkStateDataSource(
     args: InstrumentationArgs,
@@ -13,7 +14,8 @@ class NetworkStateDataSource(
     args = args,
     stateTypeFactory = ::NetworkState,
     defaultValue = Status.UNKNOWN,
-    maxTransitions = MAX_CAPTURED_NETWORK_STATE_TRANSITIONS
+    maxTransitions = MAX_CAPTURED_NETWORK_STATE_TRANSITIONS,
+    telemetryType = LimitedTelemetryType.NETWORK_STATE_DATA_SOURCE
 ) {
     override fun onNetworkConnectivityStatusChanged(status: NetworkStatus) {
         onStateChange(clock.now(), status.toState())

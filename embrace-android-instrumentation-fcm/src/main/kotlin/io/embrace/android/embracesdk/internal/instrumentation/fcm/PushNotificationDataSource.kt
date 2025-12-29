@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.internal.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.instrumentation.fcm.PushNotificationBreadcrumb.NotificationType.Builder.notificationTypeFor
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.telemetry.LimitedTelemetryType
 
 /**
  * Captures custom breadcrumbs.
@@ -15,7 +16,8 @@ class PushNotificationDataSource(
     args: InstrumentationArgs,
 ) : DataSourceImpl(
     args = args,
-    limitStrategy = UpToLimitStrategy(args.configService.breadcrumbBehavior::getCustomBreadcrumbLimit)
+    limitStrategy = UpToLimitStrategy(args.configService.breadcrumbBehavior::getCustomBreadcrumbLimit),
+    telemetryType = LimitedTelemetryType.PUSH_NOTIFICATION_DATA_SOURCE
 ) {
 
     fun logPushNotification(

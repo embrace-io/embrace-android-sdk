@@ -13,6 +13,7 @@ import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.store.Ordinal
 import io.embrace.android.embracesdk.internal.store.OrdinalStore
+import io.embrace.android.embracesdk.internal.telemetry.LimitedTelemetryType
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
@@ -27,7 +28,8 @@ internal class AeiDataSourceImpl(
     private val versionChecker: VersionChecker = BuildVersionChecker,
 ) : DataSourceImpl(
     args = args,
-    limitStrategy = UpToLimitStrategy { SDK_AEI_SEND_LIMIT }
+    limitStrategy = UpToLimitStrategy { SDK_AEI_SEND_LIMIT },
+    telemetryType = LimitedTelemetryType.AEI_DATA_SOURCE
 ) {
 
     private companion object {

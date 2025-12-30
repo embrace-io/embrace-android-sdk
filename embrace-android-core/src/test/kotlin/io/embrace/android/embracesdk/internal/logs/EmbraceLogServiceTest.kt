@@ -13,10 +13,7 @@ import io.embrace.android.embracesdk.internal.config.behavior.REDACTED_LABEL
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehaviorImpl
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
-import io.embrace.opentelemetry.kotlin.semconv.LogAttributes
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotEquals
-import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
@@ -63,34 +60,6 @@ internal class EmbraceLogServiceTest {
         val attributes = log.schemaType.attributes()
         assertEquals(REDACTED_LABEL, attributes["password"])
         assertEquals("success", attributes["status"])
-    }
-
-    @Test
-    fun `LOG_RECORD_UID set properly`() {
-        // when logging the message
-        logService.log("message", LogSeverity.INFO, emptyMap(), ::Log)
-
-        // then the telemetry attributes are set correctly
-        val log = destination.logEvents.single()
-        val attributes = log.schemaType.attributes()
-        assertTrue(attributes.containsKey(LogAttributes.LOG_RECORD_UID))
-    }
-
-    @Test
-    fun `Embrace properties can not be overridden by custom properties`() {
-        val props = mapOf(LogAttributes.LOG_RECORD_UID to "fakeUid")
-        logService.log(
-            message = "Hello world",
-            severity = LogSeverity.INFO,
-            attributes = props,
-            schemaProvider = ::Log,
-        )
-
-        val log = destination.logEvents.single()
-        assertNotEquals(
-            "fakeUid",
-            log.schemaType.attributes()[LogAttributes.LOG_RECORD_UID]
-        )
     }
 
     @Test

@@ -14,6 +14,7 @@ import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.logging.model.SeverityNumber
 import io.embrace.opentelemetry.kotlin.semconv.ExceptionAttributes
 import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
+import io.embrace.opentelemetry.kotlin.semconv.LogAttributes
 import io.embrace.opentelemetry.kotlin.semconv.SessionAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -60,6 +61,7 @@ fun assertOtelLogReceived(
             val serializedStack = EmbraceSerializer().truncatedStacktrace(it.toTypedArray())
             assertAttribute(log, ExceptionAttributes.EXCEPTION_STACKTRACE, serializedStack)
         }
+        assertNotNull(expectedEmbType, log.attributes?.single { it.key == LogAttributes.LOG_RECORD_UID }?.data)
         expectedProperties?.forEach { (key, value) ->
             assertAttribute(log, key, value.toString())
         }

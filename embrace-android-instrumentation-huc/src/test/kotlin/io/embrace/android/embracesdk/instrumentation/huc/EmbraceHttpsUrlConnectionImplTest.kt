@@ -68,7 +68,7 @@ internal class EmbraceHttpsUrlConnectionImplTest {
 
     @Test
     fun testGetContentWithClasses() {
-        val array = arrayOf(Object::class.java)
+        val array = arrayOf(Any::class.java)
         embraceHttpsUrlConnectionImpl.getContent(array)
         verify(exactly = 1) { mockDelegate.getContent(array) }
     }

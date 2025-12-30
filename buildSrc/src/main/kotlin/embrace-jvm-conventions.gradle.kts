@@ -19,7 +19,8 @@ kotlin.compilerOptions {
     apiVersion.set(minKotlinVersion)
     languageVersion.set(minKotlinVersion)
     jvmTarget.set(target)
-    allWarningsAsErrors.set(false)
+    allWarningsAsErrors.set(true)
+    freeCompilerArgs.add("-Xsuppress-version-warnings")
 }
 kotlin.coreLibrariesVersion = coreLibrariesVersion
 

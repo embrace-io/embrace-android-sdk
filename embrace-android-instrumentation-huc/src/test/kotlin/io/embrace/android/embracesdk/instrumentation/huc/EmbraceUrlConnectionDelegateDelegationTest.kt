@@ -78,7 +78,7 @@ internal class EmbraceUrlConnectionDelegateDelegationTest {
 
     @Test
     fun testGetContentWithClasses() {
-        val array = arrayOf(Object::class.java)
+        val array = arrayOf(Any::class.java)
         connectionDelegate.getContent(array)
         verify(exactly = 1) { mockConnection.getContent(array) }
     }

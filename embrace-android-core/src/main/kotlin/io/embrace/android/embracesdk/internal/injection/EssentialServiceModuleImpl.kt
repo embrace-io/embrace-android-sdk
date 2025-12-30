@@ -85,6 +85,8 @@ class EssentialServiceModuleImpl(
             spanService = openTelemetryModule.spanService,
             eventService = openTelemetryModule.eventService,
             currentSessionSpan = openTelemetryModule.currentSessionSpan,
-        )
+        ) {
+            sessionPropertiesService.getProperties()
+        }
     }
 }

@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.fakes.injection
 
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeLogLimitingService
-import io.embrace.android.embracesdk.fakes.FakeSessionPropertiesService
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
 import io.embrace.android.embracesdk.internal.injection.LogModule
 import io.embrace.android.embracesdk.internal.logs.LogLimitingService
@@ -16,7 +15,6 @@ class FakeLogModule(
     override val logService: LogService = LogServiceImpl(
         FakeTelemetryDestination(),
         FakeConfigService(),
-        FakeSessionPropertiesService(),
         logLimitingService
     ),
 ) : LogModule {

@@ -20,7 +20,8 @@ android {
     kotlin {
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_11)
-            allWarningsAsErrors.set(false)
+            allWarningsAsErrors.set(true)
+            freeCompilerArgs.add("-Xsuppress-version-warnings")
         }
     }
 }

@@ -57,41 +57,39 @@ class JvmCrashDataSourceImpl(
         if (!mainCrashHandled.getAndSet(true)) {
             captureTelemetry(inputValidation = configService.autoDataCaptureBehavior::isJvmCrashCaptureEnabled) {
                 val crashId = Uuid.getEmbUuid()
-                val crashNumber = args.ordinalStore.incrementAndGet(Ordinal.CRASH)
-                val attrs = TelemetryAttributes(
-                    sessionPropertiesProvider = args::sessionProperties,
-                )
-
-                val crashException = LegacyExceptionInfo.ofThrowable(exception)
-                attrs.setAttribute(
-                    ExceptionAttributes.EXCEPTION_TYPE,
-                    crashException.name
-                )
-                attrs.setAttribute(
-                    ExceptionAttributes.EXCEPTION_MESSAGE,
-                    crashException.message
-                        ?: ""
-                )
-                attrs.setAttribute(
-                    ExceptionAttributes.EXCEPTION_STACKTRACE,
-                    encodeToUTF8String(
-                        serializer.toJson(crashException.lines, List::class.java),
-                    ),
-                )
-                attrs.setAttribute(LogAttributes.LOG_RECORD_UID, crashId)
-                attrs.setAttribute(embCrashNumber, crashNumber.toString())
-                attrs.setAttribute(
-                    EmbType.System.Crash.embAndroidCrashExceptionCause,
-                    encodeToUTF8String(
-                        getExceptionCause(exception),
+                val attrs = TelemetryAttributes().apply {
+                    val crashException = LegacyExceptionInfo.ofThrowable(exception)
+                    setAttribute(
+                        ExceptionAttributes.EXCEPTION_TYPE,
+                        crashException.name
                     )
-                )
-                attrs.setAttribute(
-                    embAndroidThreads,
-                    encodeToUTF8String(
-                        getThreadsInfo(),
-                    ),
-                )
+                    setAttribute(
+                        ExceptionAttributes.EXCEPTION_MESSAGE,
+                        crashException.message
+                            ?: ""
+                    )
+                    setAttribute(
+                        ExceptionAttributes.EXCEPTION_STACKTRACE,
+                        encodeToUTF8String(
+                            serializer.toJson(crashException.lines, List::class.java),
+                        ),
+                    )
+                    setAttribute(LogAttributes.LOG_RECORD_UID, crashId)
+                    setAttribute(embCrashNumber, args.ordinalStore.incrementAndGet(Ordinal.CRASH).toString())
+                    setAttribute(
+                        EmbType.System.Crash.embAndroidCrashExceptionCause,
+                        encodeToUTF8String(
+                            getExceptionCause(exception),
+                        )
+                    )
+                    setAttribute(
+                        embAndroidThreads,
+                        encodeToUTF8String(
+                            getThreadsInfo(),
+                        ),
+                    )
+                }
+
                 val schemaType = telemetryModifier?.invoke(attrs) ?: SchemaType.JvmCrash(attrs)
                 addLog(schemaType, LogSeverity.ERROR, "")
 

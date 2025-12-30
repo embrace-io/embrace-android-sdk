@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.internal.arch.attrs.embStateDroppedByInstru
 import io.embrace.android.embracesdk.internal.arch.attrs.embStateNewValue
 import io.embrace.android.embracesdk.internal.arch.attrs.embStateNotInSession
 import io.embrace.android.embracesdk.internal.arch.attrs.embStateTransitionCount
+import io.embrace.android.embracesdk.internal.arch.attrs.toEmbraceAttributeName
 import io.embrace.android.embracesdk.internal.arch.datasource.LogSeverity
 import io.embrace.android.embracesdk.internal.arch.datasource.SessionStateToken
 import io.embrace.android.embracesdk.internal.arch.datasource.SpanEvent
@@ -28,6 +29,7 @@ import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.session.id.SessionTracker
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
+import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
@@ -45,6 +47,7 @@ class TelemetryDestinationImpl(
     private val spanService: SpanService,
     private val eventService: EventService,
     private val currentSessionSpan: CurrentSessionSpan,
+    private val sessionPropertiesProvider: Provider<Map<String, String>>,
 ) : TelemetryDestination {
 
     override var sessionUpdateAction: (() -> Unit)? = null
@@ -60,6 +63,7 @@ class TelemetryDestinationImpl(
         timestampMs: Long?,
     ) {
         val logTimeMs = timestampMs ?: clock.now()
+
         val attributes = mutableMapOf<String, String>().apply {
             if (addCurrentSessionInfo) {
                 var sessionState: AppState? = null
@@ -71,6 +75,7 @@ class TelemetryDestinationImpl(
                 }
                 val state = sessionState ?: appStateTracker.getAppState()
                 put(embState.name, state.description)
+                putAll(sessionPropertiesProvider().mapKeys { property -> property.key.toEmbraceAttributeName() })
                 currentStatesProvider().forEach {
                     put(it.key.name, it.value.toString())
                 }
@@ -285,8 +290,9 @@ class TelemetryDestinationImpl(
         override fun update(
             updateDetectedTimeMs: Long,
             newValue: T,
-            unrecordedTransitions: UnrecordedTransitions
+            unrecordedTransitions: UnrecordedTransitions,
         ) = false
+
         override fun end(unrecordedTransitions: UnrecordedTransitions) {}
     }
 }

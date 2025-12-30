@@ -9,6 +9,8 @@ import io.embrace.android.embracesdk.fakes.config.FakeProjectConfig
 import io.embrace.android.embracesdk.internal.EmbraceInternalApi
 import io.embrace.android.embracesdk.internal.arch.attrs.embCrashId
 import io.embrace.android.embracesdk.internal.arch.attrs.embState
+import io.embrace.android.embracesdk.internal.arch.attrs.toEmbraceAttributeName
+import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
@@ -18,7 +20,6 @@ import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.session.getSessionSpan
-import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.utils.getSafeStackTrace
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
@@ -55,17 +56,22 @@ internal class JvmCrashFeatureTest {
         testRule.runTest(
             testCaseAction = {
                 crashTimeMs = recordSession {
+                    embrace.addSessionProperty("foo", "bar", true)
                     simulateJvmUncaughtException(testException)
                 }.actionTimeMs
             },
             assertAction = {
                 val session = getSingleSessionEnvelope()
                 assertEquals(0, session.data.spanSnapshots?.size)
-                getSingleLogEnvelope().getLastLog().assertCrash(
-                    state = "foreground",
-                    crashIdFromSession = session.getCrashedId(),
-                    crashTimeMs = crashTimeMs,
-                )
+                val crash = getSingleLogEnvelope().getLastLog().apply {
+                    assertCrash(
+                        state = "foreground",
+                        crashIdFromSession = session.getCrashedId(),
+                        crashTimeMs = crashTimeMs,
+                    )
+                }
+
+                assertEquals("bar", crash.attributes?.single { it.key == "foo".toEmbraceAttributeName() }?.data)
             }
         )
     }

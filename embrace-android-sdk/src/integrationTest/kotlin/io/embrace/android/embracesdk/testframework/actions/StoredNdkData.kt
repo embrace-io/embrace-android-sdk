@@ -76,6 +76,7 @@ internal fun createStoredNativeCrashData(
                 startMs = sessionMetadata.timestamp,
                 lastHeartbeatTimeMs = sessionMetadata.timestamp + 1000L,
                 sessionId = nativeCrashData.sessionId,
+                sessionProperties = mapOf("dead-session-prop" to "some-val"),
                 processIdentifier = sessionMetadata.processIdentifier,
                 resource = envelopeResource,
                 metadata = envelopeMetadata

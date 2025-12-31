@@ -29,7 +29,7 @@ internal class SessionPropertiesTest {
         testRule.runTest(
             instrumentedConfig = FakeInstrumentedConfig(enabledFeatures = FakeEnabledFeatureConfig(bgActivityCapture = true)),
             setupAction = {
-                setupPermanentProperties()
+                setupDefaultPermanentSessionProperties()
             },
             testCaseAction = {
                 addAndRemoveProperties()
@@ -70,7 +70,7 @@ internal class SessionPropertiesTest {
     fun `session properties work with background activity disabled`() {
         testRule.runTest(
             setupAction = {
-                setupPermanentProperties()
+                setupDefaultPermanentSessionProperties()
             },
             testCaseAction = {
                 addAndRemoveProperties()
@@ -101,7 +101,7 @@ internal class SessionPropertiesTest {
     fun `session properties are persisted in cached payloads`() {
         testRule.runTest(
             setupAction = {
-                setupPermanentProperties()
+                setupDefaultPermanentSessionProperties()
             },
             testCaseAction = {
                 addAndRemoveProperties()
@@ -116,7 +116,7 @@ internal class SessionPropertiesTest {
     fun `session properties are persisted in cached payloads when bg activities are disabled`() {
         testRule.runTest(
             setupAction = {
-                setupPermanentProperties()
+                setupDefaultPermanentSessionProperties()
             },
             testCaseAction = {
                 addAndRemoveProperties()
@@ -127,17 +127,14 @@ internal class SessionPropertiesTest {
         )
     }
 
-    private fun EmbraceSetupInterface.setupPermanentProperties() {
-        getStore().edit {
-            putStringMap(
-                "io.embrace.session.properties", mapOf(
-                    EXISTING_KEY_1 to VALUE,
-                    EXISTING_KEY_2 to VALUE,
-                    EXISTING_KEY_3 to VALUE,
-                )
+    private fun EmbraceSetupInterface.setupDefaultPermanentSessionProperties() =
+        setupPermanentSessionProperties(
+            mapOf(
+                EXISTING_KEY_1 to VALUE,
+                EXISTING_KEY_2 to VALUE,
+                EXISTING_KEY_3 to VALUE,
             )
-        }
-    }
+        )
 
     private fun EmbraceActionInterface.addAndRemoveProperties() {
         embrace.removeSessionProperty(EXISTING_KEY_1)

@@ -12,6 +12,7 @@ import io.embrace.android.embracesdk.fakes.fakeEnvelopeMetadata
 import io.embrace.android.embracesdk.fakes.fakeEnvelopeResource
 import io.embrace.android.embracesdk.fakes.fakeLaterEnvelopeMetadata
 import io.embrace.android.embracesdk.fakes.fakeLaterEnvelopeResource
+import io.embrace.android.embracesdk.internal.arch.attrs.toEmbraceAttributeName
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.delivery.PayloadType
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
@@ -50,7 +51,10 @@ internal class NativeCrashFeatureTest {
     private val fakeSymbols = mapOf("libfoo.so" to "symbol_content")
 
     private val config = FakeInstrumentedConfig(
-        enabledFeatures = FakeEnabledFeatureConfig(nativeCrashCapture = true),
+        enabledFeatures = FakeEnabledFeatureConfig(
+            nativeCrashCapture = true,
+            stateCaptureEnabled = false
+        ),
         symbols = createNativeSymbolsForCurrentArch(fakeSymbols)
     )
     private val sessionMetadata = StoredTelemetryMetadata(
@@ -114,9 +118,11 @@ internal class NativeCrashFeatureTest {
 
     @Test
     fun `native crash with foreground session`() {
+        val newSessionProperty = "new-session-prop"
         testRule.runTest(
             instrumentedConfig = config,
             setupAction = {
+                setupPermanentSessionProperties(mapOf(newSessionProperty to "foo"))
                 setupCachedDataFromNativeCrash(
                     crashData = crashData
                 )
@@ -134,6 +140,8 @@ internal class NativeCrashFeatureTest {
                 }
                 val log = envelope.getLogOfType(EmbType.System.NativeCrash)
                 assertNativeCrashSent(log, crashData, fakeSymbols)
+                assertEquals(0, log.attributes?.filter { it.key == newSessionProperty.toEmbraceAttributeName() }?.size)
+                assertEquals(0, log.attributes?.filter { it.key == "emb-state-test" }?.size)
             }
         )
     }
@@ -333,7 +341,7 @@ internal class NativeCrashFeatureTest {
     private fun FakeJniDelegate.persistMetadata(
         currentSessionId: String?,
         sessions: MutableList<String?>,
-        nativeSessionMetadata: MutableList<Pair<String?, String?>>
+        nativeSessionMetadata: MutableList<Pair<String?, String?>>,
     ) {
         sessions.add(currentSessionId ?: "null")
         nativeSessionMetadata.add(Pair(sessionId, reportPath))

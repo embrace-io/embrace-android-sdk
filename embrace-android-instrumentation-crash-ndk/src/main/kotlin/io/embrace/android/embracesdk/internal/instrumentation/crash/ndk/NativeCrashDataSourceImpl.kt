@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.internal.instrumentation.crash.ndk
 
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.attrs.embCrashNumber
-import io.embrace.android.embracesdk.internal.arch.attrs.toEmbraceAttributeName
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceImpl
 import io.embrace.android.embracesdk.internal.arch.datasource.LogSeverity
 import io.embrace.android.embracesdk.internal.arch.limits.NoopLimitStrategy
@@ -71,7 +70,7 @@ internal class NativeCrashDataSourceImpl(
                 }
 
                 sessionProperties.forEach {
-                    setAttribute(key = it.key.toEmbraceAttributeName(), it.value)
+                    setAttribute(key = it.key, it.value)
                 }
             }
             addLog(

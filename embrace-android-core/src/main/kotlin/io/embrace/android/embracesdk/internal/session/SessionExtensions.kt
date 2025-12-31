@@ -7,5 +7,3 @@ import io.embrace.android.embracesdk.internal.payload.Span
 fun Span.getSessionProperty(key: String): String? {
     return attributes?.findAttributeValue(key.toEmbraceAttributeName())
 }
-
-fun Map<String, String>.getSessionProperty(key: String): String? = this[key.toEmbraceAttributeName()]

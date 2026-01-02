@@ -34,11 +34,11 @@ import io.embrace.android.embracesdk.testframework.server.FakeApiServer
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.logging.export.toOtelKotlinLogRecordExporter
 import io.embrace.opentelemetry.kotlin.tracing.export.toOtelKotlinSpanExporter
-import java.io.File
 import okhttp3.Protocol
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.Assert.assertEquals
 import org.junit.rules.ExternalResource
+import java.io.File
 
 /**
  * A [org.junit.Rule] that is responsible for setting up and tearing down the Embrace SDK for use in
@@ -201,7 +201,7 @@ internal class SdkIntegrationTestRule(
      * Setup the Embrace SDK so it's ready for testing.
      */
     override fun before() {
-
+        Thread.setDefaultUncaughtExceptionHandler(null)
     }
 
     /**

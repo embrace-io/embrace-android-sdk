@@ -38,6 +38,8 @@ internal class TelemetryDestinationHarness {
     val spanService = otelModule.spanService
     val currentSessionSpan = otelModule.currentSessionSpan
 
+    val sessionProperties: MutableMap<String, String> = mutableMapOf()
+
     val destination: TelemetryDestination = TelemetryDestinationImpl(
         sessionTracker = NoopSessionTracker,
         appStateTracker = NoopAppStateTracker,
@@ -45,6 +47,7 @@ internal class TelemetryDestinationHarness {
         spanService = spanService,
         eventService = otelModule.eventService,
         currentSessionSpan = otelModule.currentSessionSpan,
+        sessionPropertiesProvider = sessionProperties::toMap
     )
 
     private class TestInitModule : InitModule {

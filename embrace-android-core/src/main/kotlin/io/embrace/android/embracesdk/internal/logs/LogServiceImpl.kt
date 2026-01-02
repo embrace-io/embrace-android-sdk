@@ -5,7 +5,6 @@ import io.embrace.android.embracesdk.internal.arch.datasource.LogSeverity
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.arch.schema.TelemetryAttributes
-import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.config.behavior.REDACTED_LABEL
 import io.embrace.android.embracesdk.internal.payload.AppFramework
@@ -23,7 +22,6 @@ import java.io.Serializable
 class LogServiceImpl(
     private val destination: TelemetryDestination,
     private val configService: ConfigService,
-    private val sessionPropertiesService: SessionPropertiesService,
     private val logLimitingService: LogLimitingService,
 ) : LogService {
 
@@ -42,7 +40,6 @@ class LogServiceImpl(
 
         val redactedAttributes = redactSensitiveAttributes(attributes)
         val telemetryAttributes = TelemetryAttributes(
-            sessionPropertiesProvider = sessionPropertiesService::getProperties,
             customAttributes = redactedAttributes.plus(LogAttributes.LOG_RECORD_UID to Uuid.getEmbUuid()),
         )
 

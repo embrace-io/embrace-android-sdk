@@ -11,9 +11,10 @@ import io.embrace.android.embracesdk.internal.arch.attrs.embSessionStartType
 import io.embrace.android.embracesdk.internal.arch.attrs.embSessionStartupDuration
 import io.embrace.android.embracesdk.internal.arch.attrs.embState
 import io.embrace.android.embracesdk.internal.arch.attrs.embTerminated
+import io.embrace.android.embracesdk.internal.arch.datasource.LogSeverity
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.capture.metadata.MetadataService
-import io.embrace.android.embracesdk.internal.logs.LogService
+import io.embrace.android.embracesdk.internal.logs.LogLimitingService
 import io.embrace.android.embracesdk.internal.session.LifeEventType
 import io.embrace.android.embracesdk.internal.session.SessionToken
 import java.util.Locale
@@ -21,7 +22,7 @@ import java.util.Locale
 internal class SessionSpanAttrPopulatorImpl(
     private val destination: TelemetryDestination,
     private val startupDurationProvider: () -> Long?,
-    private val logService: LogService,
+    private val logLimitingService: LogLimitingService,
     private val metadataService: MetadataService,
 ) : SessionSpanAttrPopulator {
 
@@ -55,7 +56,7 @@ internal class SessionSpanAttrPopulatorImpl(
                 }
             }
 
-            val logCount = logService.getErrorLogsCount()
+            val logCount = logLimitingService.getCount(LogSeverity.ERROR)
             addSessionAttribute(embErrorLogCount.name, logCount.toString())
 
             metadataService.getDiskUsage()?.deviceDiskFree?.let { free ->

@@ -4,8 +4,6 @@ package io.embrace.android.embracesdk.internal.telemetry
  * Represents the type of telemetry that had a limit applied to it.
  */
 enum class LimitedTelemetryType(val attributeName: String) {
-    ERROR_LOG("error_log"),
-    SPAN("span"),
     BREADCRUMB("breadcrumb"),
     TAP_DATA_SOURCE("tap_data_source"),
     COMPOSE_TAP_DATA_SOURCE("compose_tap_data_source"),

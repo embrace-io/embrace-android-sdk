@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakePayloadStore
 import io.embrace.android.embracesdk.fakes.FakeSessionPropertiesService
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
+import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.behavior.FakeLogMessageBehavior
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.config.FakeRedactionConfig
@@ -13,6 +14,8 @@ import io.embrace.android.embracesdk.internal.arch.schema.SchemaType.Log
 import io.embrace.android.embracesdk.internal.config.behavior.REDACTED_LABEL
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehaviorImpl
 import io.embrace.android.embracesdk.internal.payload.AppFramework
+import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
+import io.embrace.android.embracesdk.internal.telemetry.LimitedTelemetryType
 import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
 import io.embrace.opentelemetry.kotlin.semconv.LogAttributes
 import org.junit.Assert.assertEquals
@@ -29,6 +32,7 @@ internal class EmbraceLogServiceTest {
     private lateinit var fakeSessionPropertiesService: FakeSessionPropertiesService
     private lateinit var fakeConfigService: FakeConfigService
     private lateinit var payloadStore: FakePayloadStore
+    private lateinit var fakeTelemetryService: FakeTelemetryService
 
     @Before
     fun setUp() {
@@ -40,6 +44,7 @@ internal class EmbraceLogServiceTest {
         fakeSessionPropertiesService = FakeSessionPropertiesService()
         destination = FakeTelemetryDestination()
         payloadStore = FakePayloadStore()
+        fakeTelemetryService = FakeTelemetryService()
         logService = createEmbraceLogService()
     }
 
@@ -47,6 +52,7 @@ internal class EmbraceLogServiceTest {
         destination = destination,
         configService = fakeConfigService,
         sessionPropertiesService = fakeSessionPropertiesService,
+        telemetryService = fakeTelemetryService,
     )
 
     @Test
@@ -127,6 +133,12 @@ internal class EmbraceLogServiceTest {
 
         // then the logs are not logged
         assertEquals(testLogLimit * 3, destination.logEvents.size)
+
+        // and the drops are tracked
+        assertEquals(3, fakeTelemetryService.appliedLimits.size)
+        assertTrue(fakeTelemetryService.appliedLimits.contains(LimitedTelemetryType.INFO_LOG to AppliedLimitType.DROP))
+        assertTrue(fakeTelemetryService.appliedLimits.contains(LimitedTelemetryType.WARNING_LOG to AppliedLimitType.DROP))
+        assertTrue(fakeTelemetryService.appliedLimits.contains(LimitedTelemetryType.ERROR_LOG to AppliedLimitType.DROP))
     }
 
     @Test
@@ -159,6 +171,10 @@ internal class EmbraceLogServiceTest {
         // then the message is trimmed
         val log = destination.logEvents.single()
         assertEquals("ab...", log.message)
+
+        // and the truncation is tracked
+        assertEquals(1, fakeTelemetryService.appliedLimits.size)
+        assertEquals(LimitedTelemetryType.INFO_LOG to AppliedLimitType.TRUNCATE_STRING, fakeTelemetryService.appliedLimits.first())
     }
 
     @Test
@@ -227,6 +243,13 @@ internal class EmbraceLogServiceTest {
         // then the message is not ellipsized
         val logProps = destination.logEvents.single().schemaType.attributes().filter { it.key.startsWith("test") }
         assertEquals(truncatedProps, logProps)
+
+        // and the truncations are tracked
+        assertTrue(fakeTelemetryService.appliedLimits.contains(LimitedTelemetryType.INFO_LOG to AppliedLimitType.TRUNCATE_ATTRIBUTES))
+        assertTrue(fakeTelemetryService.appliedLimits.contains(LimitedTelemetryType.LOG_ATTRIBUTE_KEY to AppliedLimitType.TRUNCATE_STRING))
+        assertTrue(
+            fakeTelemetryService.appliedLimits.contains(LimitedTelemetryType.LOG_ATTRIBUTE_VALUE to AppliedLimitType.TRUNCATE_STRING)
+        )
     }
 
     @Test

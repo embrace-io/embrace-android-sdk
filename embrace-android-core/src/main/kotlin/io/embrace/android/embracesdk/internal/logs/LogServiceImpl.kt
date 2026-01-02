@@ -9,6 +9,9 @@ import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesS
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.config.behavior.REDACTED_LABEL
 import io.embrace.android.embracesdk.internal.payload.AppFramework
+import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
+import io.embrace.android.embracesdk.internal.telemetry.LimitedTelemetryType
+import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
 import io.embrace.android.embracesdk.internal.utils.PropertyUtils.truncate
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.opentelemetry.kotlin.semconv.ExceptionAttributes
@@ -24,6 +27,7 @@ class LogServiceImpl(
     private val destination: TelemetryDestination,
     private val configService: ConfigService,
     private val sessionPropertiesService: SessionPropertiesService,
+    private val telemetryService: TelemetryService,
 ) : LogService {
 
     private val behavior = configService.logMessageBehavior
@@ -40,17 +44,24 @@ class LogServiceImpl(
         attributes: Map<String, Any>,
         schemaProvider: (TelemetryAttributes) -> SchemaType,
     ) {
+        val telemetryType = when (severity) {
+            LogSeverity.ERROR -> LimitedTelemetryType.ERROR_LOG
+            LogSeverity.WARNING -> LimitedTelemetryType.WARNING_LOG
+            LogSeverity.INFO -> LimitedTelemetryType.INFO_LOG
+        }
+
         if (!logCounters.getValue(severity).addIfAllowed()) {
+            telemetryService.trackAppliedLimit(telemetryType, AppliedLimitType.DROP)
             return
         }
 
-        val redactedAttributes = redactSensitiveAttributes(attributes)
+        val redactedAttributes = redactSensitiveAttributes(attributes, telemetryType)
         val telemetryAttributes = TelemetryAttributes(
             sessionPropertiesProvider = sessionPropertiesService::getProperties,
             customAttributes = redactedAttributes.plus(LogAttributes.LOG_RECORD_UID to Uuid.getEmbUuid()),
         )
 
-        destination.addLog(schemaProvider(telemetryAttributes), severity, trimToMaxLength(message))
+        destination.addLog(schemaProvider(telemetryAttributes), severity, trimToMaxLength(message, telemetryType))
     }
 
     override fun getErrorLogsCount(): Int {
@@ -61,7 +72,7 @@ class LogServiceImpl(
         logCounters.forEach { it.value.clear() }
     }
 
-    private fun trimToMaxLength(message: String): String {
+    private fun trimToMaxLength(message: String, telemetryType: LimitedTelemetryType): String {
         val maxLength = if (configService.appFramework == AppFramework.UNITY) {
             LOG_MESSAGE_UNITY_MAXIMUM_ALLOWED_LENGTH
         } else {
@@ -69,6 +80,8 @@ class LogServiceImpl(
         }
 
         if (message.length > maxLength) {
+            telemetryService.trackAppliedLimit(telemetryType, AppliedLimitType.TRUNCATE_STRING)
+
             val endChars = "..."
 
             if (maxLength <= endChars.length) {
@@ -80,9 +93,10 @@ class LogServiceImpl(
         }
     }
 
-    private fun redactSensitiveAttributes(attributes: Map<String, Any>): Map<String, String> {
+    private fun redactSensitiveAttributes(attributes: Map<String, Any>, telemetryType: LimitedTelemetryType): Map<String, String> {
         return sanitizeAttributes(
             attributes = attributes,
+            telemetryType = telemetryType,
             bypassPropertyLimit = bypassLimitsValidation
         ).mapValues { (key, value) ->
             when {
@@ -94,24 +108,31 @@ class LogServiceImpl(
 
     private fun sanitizeAttributes(
         attributes: Map<String, Any>,
+        telemetryType: LimitedTelemetryType,
         bypassPropertyLimit: Boolean = false,
     ): Map<String, String> {
         return runCatching {
             if (bypassPropertyLimit) {
-                attributes.entries.associate {
-                    Pair(it.key, checkIfSerializable(it.value).toString())
+                return@runCatching attributes.mapValues { checkIfSerializable(it.value).toString() }
+            }
+
+            if (attributes.size > MAX_PROPERTY_COUNT) {
+                telemetryService.trackAppliedLimit(telemetryType, AppliedLimitType.TRUNCATE_ATTRIBUTES)
+            }
+
+            // Process entries
+            attributes.entries.take(MAX_PROPERTY_COUNT).associate { (key, value) ->
+                val truncatedKey =
+                    truncateAndTrack(key, MAX_PROPERTY_KEY_LENGTH, LimitedTelemetryType.LOG_ATTRIBUTE_KEY)
+
+                val stringValue = checkIfSerializable(value).toString()
+                val truncatedValue = if (key == ExceptionAttributes.EXCEPTION_STACKTRACE) {
+                    stringValue
+                } else {
+                    truncateAndTrack(stringValue, MAX_PROPERTY_VALUE_LENGTH, LimitedTelemetryType.LOG_ATTRIBUTE_VALUE)
                 }
-            } else {
-                attributes.entries.take(MAX_PROPERTY_COUNT).associate {
-                    Pair(
-                        first = truncate(it.key, MAX_PROPERTY_KEY_LENGTH),
-                        second = if (it.key == ExceptionAttributes.EXCEPTION_STACKTRACE) {
-                            it.value.toString()
-                        } else {
-                            truncate(checkIfSerializable(it.value).toString(), MAX_PROPERTY_VALUE_LENGTH)
-                        }
-                    )
-                }
+
+                truncatedKey to truncatedValue
             }
         }.getOrDefault(emptyMap())
     }
@@ -121,6 +142,18 @@ class LogServiceImpl(
             return "not serializable"
         }
         return value
+    }
+
+    private fun truncateAndTrack(
+        value: String,
+        limit: Int,
+        telemetryType: LimitedTelemetryType
+    ): String {
+        val truncated = truncate(value, limit)
+        if (truncated != value) {
+            telemetryService.trackAppliedLimit(telemetryType, AppliedLimitType.TRUNCATE_STRING)
+        }
+        return truncated
     }
 
     private companion object {

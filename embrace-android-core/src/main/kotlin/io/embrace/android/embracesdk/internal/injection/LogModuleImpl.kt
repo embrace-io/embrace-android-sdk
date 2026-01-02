@@ -23,6 +23,7 @@ class LogModuleImpl(
             essentialServiceModule.telemetryDestination,
             configService,
             essentialServiceModule.sessionPropertiesService,
+            initModule.telemetryService,
         )
     }
 

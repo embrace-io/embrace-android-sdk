@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.internal.arch.datasource.LogSeverity
 import io.embrace.android.embracesdk.internal.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.telemetry.LimitedTelemetryType
 
 /**
  * Tracks internal errors & sends them as OTel logs.
@@ -16,6 +17,7 @@ internal class InternalErrorDataSourceImpl(
     DataSourceImpl(
         args,
         limitStrategy = UpToLimitStrategy { 10 },
+        telemetryType = LimitedTelemetryType.INTERNAL_ERROR_DATA_SOURCE
     ) {
 
     override fun trackInternalError(type: InternalErrorType, throwable: Throwable) {

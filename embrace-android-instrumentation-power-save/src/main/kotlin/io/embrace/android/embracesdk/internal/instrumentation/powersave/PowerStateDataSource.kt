@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.datasource.StateDataSource
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType.PowerState
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType.PowerState.PowerMode
+import io.embrace.android.embracesdk.internal.telemetry.LimitedTelemetryType
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.worker.Worker
 
@@ -15,6 +16,7 @@ class PowerStateDataSource(
     args = args,
     stateTypeFactory = ::PowerState,
     defaultValue = PowerMode.UNKNOWN,
+    telemetryType = LimitedTelemetryType.POWER_STATE_DATA_SOURCE
 ) {
     private val powerManagerProvider: Provider<PowerManager?> = { args.systemService(Context.POWER_SERVICE) }
     private val receiver = PowerSaveModeReceiver(powerManagerProvider, ::onPowerSaveModeChanged)

@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.store.OrdinalStore
+import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.internal.worker.PriorityWorker
 import io.embrace.android.embracesdk.internal.worker.Worker
@@ -44,6 +45,11 @@ interface InstrumentationArgs {
      * A clock that can be used for time measurements in telemetry.
      */
     val clock: Clock
+
+    /**
+     * Service for tracking telemetry usage and limits.
+     */
+    val telemetryService: TelemetryService
 
     /**
      * The application context

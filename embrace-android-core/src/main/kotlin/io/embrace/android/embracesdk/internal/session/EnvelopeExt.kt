@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.session
 
+import io.embrace.android.embracesdk.internal.arch.attrs.isEmbraceAttributeName
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.otel.spans.hasEmbraceAttribute
@@ -29,4 +30,10 @@ fun Envelope<SessionPayload>.getSessionProperties(): Map<String, String> {
 
 @Suppress("UNCHECKED_CAST")
 private fun Span.getSessionProperties(): Map<String, String> =
-    attributes?.filter { it.key != null && it.data != null }?.associate { it.key to it.data } as Map<String, String>
+    attributes
+        ?.filter {
+            val keyName = it.key
+            keyName != null && keyName.isEmbraceAttributeName() && it.data != null
+        }?.associate {
+            it.key to it.data
+        } as Map<String, String>

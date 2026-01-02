@@ -7,9 +7,10 @@ import io.embrace.android.embracesdk.internal.otel.config.getMaxTotalAttributeCo
 import io.embrace.android.embracesdk.internal.otel.config.getMaxTotalEventCount
 import io.embrace.android.embracesdk.internal.otel.config.getMaxTotalLinkCount
 import io.embrace.android.embracesdk.internal.otel.createSdkOtelInstance
+import io.embrace.android.embracesdk.internal.otel.impl.EmbLoggerProvider
 import io.embrace.android.embracesdk.internal.otel.impl.EmbOpenTelemetry
 import io.embrace.android.embracesdk.internal.otel.impl.EmbTracerProvider
-import io.embrace.android.embracesdk.internal.otel.logs.DefaultLogRecordProcessor
+import io.embrace.android.embracesdk.internal.otel.logs.EventService
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.opentelemetry.kotlin.Clock
@@ -28,6 +29,7 @@ class OtelSdkWrapper(
     otelClock: Clock,
     configuration: OtelSdkConfig,
     spanService: SpanService,
+    eventService: EventService,
     limits: OtelLimitsConfig = InstrumentedConfigImpl.otelLimits,
     val useKotlinSdk: Boolean,
 ) {
@@ -48,7 +50,7 @@ class OtelSdkWrapper(
         }
     }
 
-    val logger: Logger by lazy {
+    val sdkLogger: Logger by lazy {
         EmbTrace.trace("otel-logger-init") {
             kotlinApi.loggerProvider.getLogger(
                 name = configuration.sdkName,
@@ -71,20 +73,20 @@ class OtelSdkWrapper(
             },
             loggerProvider = {
                 resource(attributes = configuration.resourceAction)
-                addLogRecordProcessor(
-                    DefaultLogRecordProcessor(configuration.logRecordExporter)
-                )
                 logLimits {
                     attributeCountLimit = limits.getMaxTotalAttributeCount()
                 }
+                addLogRecordProcessor(configuration.logRecordProcessor)
             },
             clock = otelClock,
         )
     }
 
     val openTelemetryKotlin: OpenTelemetry by lazy {
-        EmbOpenTelemetry(kotlinApi) {
-            EmbTracerProvider(kotlinApi, spanService, otelClock, useKotlinSdk)
-        }
+        EmbOpenTelemetry(
+            impl = kotlinApi,
+            traceProviderSupplier = { EmbTracerProvider(kotlinApi, spanService, otelClock, useKotlinSdk) },
+            loggerProviderSupplier = { EmbLoggerProvider(kotlinApi, eventService) }
+        )
     }
 }

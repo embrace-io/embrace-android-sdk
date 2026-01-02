@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.assertions.assertIsType
 import io.embrace.android.embracesdk.assertions.assertIsTypePerformance
 import io.embrace.android.embracesdk.assertions.assertNotPrivateSpan
 import io.embrace.android.embracesdk.fakes.FakeClock
+import io.embrace.android.embracesdk.fakes.FakeEventService
 import io.embrace.android.embracesdk.fakes.FakeOtelKotlinClock
 import io.embrace.android.embracesdk.fakes.FakeSpanService
 import io.embrace.android.embracesdk.fakes.TestConstants.TESTS_DEFAULT_USE_KOTLIN_SDK
@@ -629,7 +630,8 @@ internal class SpanServiceImplTest {
             otelClock = fakeClock,
             configuration = otelSdkConfig,
             spanService = FakeSpanService(),
-            useKotlinSdk = TESTS_DEFAULT_USE_KOTLIN_SDK
+            eventService = FakeEventService(),
+            useKotlinSdk = TESTS_DEFAULT_USE_KOTLIN_SDK,
         )
 
         return SpanServiceImpl(

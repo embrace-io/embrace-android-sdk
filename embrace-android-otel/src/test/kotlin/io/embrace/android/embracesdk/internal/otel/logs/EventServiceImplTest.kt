@@ -13,6 +13,7 @@ import io.embrace.opentelemetry.kotlin.semconv.LogAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
@@ -25,8 +26,26 @@ class EventServiceImplTest {
     fun setup() {
         logger = FakeOpenTelemetryLogger()
         impl = EventServiceImpl(
-            loggerProvider = { logger }
+            sdkLoggerSupplier = { logger }
         )
+        impl.initializeService(100L)
+    }
+
+    @Test
+    fun `event service needs initialization`() {
+        val notInitializedLogger = EventServiceImpl(
+            sdkLoggerSupplier = { logger }
+        )
+        notInitializedLogger.log(
+            logTimeMs = 1000L,
+            schemaType = SchemaType.Log(TelemetryAttributes()),
+            severity = Severity.ERROR,
+            message = "test",
+            isPrivate = true,
+            embraceAttributes = emptyMap()
+        )
+
+        assertTrue(logger.logs.isEmpty())
     }
 
     @Test

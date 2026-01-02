@@ -20,8 +20,8 @@ import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistry
 import io.embrace.android.embracesdk.internal.config.BuildInfo
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.config.ConfigServiceImpl
-import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
 import io.embrace.android.embracesdk.internal.config.CpuAbi
+import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
 import io.embrace.android.embracesdk.internal.injection.CoreModule
 import io.embrace.android.embracesdk.internal.injection.CoreModuleImpl
 import io.embrace.android.embracesdk.internal.injection.DeliveryModuleImpl
@@ -199,6 +199,17 @@ internal class EmbraceSetupInterface(
         val key = crashData.getCrashFile().absolutePath
         val json = serializer.toJson(crashData.nativeCrash, NativeCrashData::class.java)
         fakeJniDelegate.addCrashRaw(key, json)
+    }
+
+    /**
+     * Setup permanent session properties without using the SDK interfaces
+     */
+    fun setupPermanentSessionProperties(properties: Map<String, String>) {
+        getStore().edit {
+            putStringMap(
+                "io.embrace.session.properties", properties
+            )
+        }
     }
 
     fun getClock(): FakeClock = fakeClock

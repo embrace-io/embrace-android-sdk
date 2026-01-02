@@ -89,6 +89,10 @@ class TelemetryDestinationImpl(
                 }
                 val state = sessionState ?: appStateTracker.getAppState()
                 setStringAttribute(embState.name, state.description)
+
+                currentStatesProvider().forEach {
+                    setStringAttribute(it.key.name, it.value.toString())
+                }
             }
 
             if (isPrivate) {
@@ -100,10 +104,6 @@ class TelemetryDestinationImpl(
                 attributes().forEach {
                     setStringAttribute(it.key, it.value)
                 }
-            }
-
-            currentStatesProvider().forEach {
-                setStringAttribute(it.key.name, it.value.toString())
             }
 
             sessionUpdateAction?.invoke()

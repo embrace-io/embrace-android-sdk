@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.otel.impl
 
-import io.embrace.android.embracesdk.internal.otel.sdk.TracerKey
+import io.embrace.android.embracesdk.internal.otel.sdk.ApiKey
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.opentelemetry.kotlin.Clock
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
@@ -21,7 +21,7 @@ class EmbTracerProvider(
     private val useKotlinSdk: Boolean
 ) : TracerProvider {
 
-    private val tracers = ConcurrentHashMap<TracerKey, Tracer>()
+    private val tracers = ConcurrentHashMap<ApiKey, Tracer>()
 
     override fun getTracer(
         name: String,
@@ -29,7 +29,7 @@ class EmbTracerProvider(
         schemaUrl: String?,
         attributes: (MutableAttributeContainer.() -> Unit)?,
     ): Tracer {
-        val key = TracerKey(
+        val key = ApiKey(
             instrumentationScopeName = name,
             instrumentationScopeVersion = version,
             schemaUrl = schemaUrl
@@ -44,7 +44,7 @@ class EmbTracerProvider(
         return tracer
     }
 
-    private fun createTracer(key: TracerKey): Tracer {
+    private fun createTracer(key: ApiKey): Tracer {
         val tracerImpl = impl.tracerProvider.getTracer(
             name = key.instrumentationScopeName,
             version = key.instrumentationScopeVersion,

@@ -73,7 +73,7 @@ internal fun ModuleGraph.registerListeners() {
                 lazy { threadBlockageService }
             )
             registerService(lazy { logModule.attachmentService })
-            registerService(lazy { logModule.logService })
+            registerService(lazy { logModule.logLimitingService })
 
             // registration ignored after this point
             registerAppStateListeners(essentialServiceModule.appStateTracker)

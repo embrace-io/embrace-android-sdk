@@ -47,6 +47,7 @@ internal class EmbraceLogServiceTest {
         destination = destination,
         configService = fakeConfigService,
         sessionPropertiesService = fakeSessionPropertiesService,
+        logLimitingService = LogLimitingServiceImpl(fakeConfigService)
     )
 
     @Test

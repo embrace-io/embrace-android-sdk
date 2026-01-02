@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceImpl
 import io.embrace.android.embracesdk.internal.arch.datasource.SpanToken
 import io.embrace.android.embracesdk.internal.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
+import io.embrace.android.embracesdk.internal.telemetry.LimitedTelemetryType
 
 /**
  * Captures fragment views.
@@ -16,7 +17,8 @@ class ViewDataSource(
     private val args: InstrumentationArgs,
 ) : DataSourceImpl(
     args,
-    UpToLimitStrategy { args.configService.breadcrumbBehavior.getFragmentBreadcrumbLimit() }
+    UpToLimitStrategy { args.configService.breadcrumbBehavior.getFragmentBreadcrumbLimit() },
+    LimitedTelemetryType.VIEW_DATA_SOURCE
 ),
     Application.ActivityLifecycleCallbacks {
 

@@ -6,9 +6,9 @@ import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.SessionChangeListener
 import io.embrace.android.embracesdk.internal.arch.SessionEndListener
 import io.embrace.android.embracesdk.internal.arch.state.AppStateTracker
-import io.embrace.android.embracesdk.internal.config.CpuAbi
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.store.OrdinalStore
+import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.internal.worker.PriorityWorker
 import io.embrace.android.embracesdk.internal.worker.Worker
@@ -26,6 +26,7 @@ class FakeInstrumentationArgs(
     override val ordinalStore: OrdinalStore = FakeOrdinalStore(),
     override val processIdentifier: String = "fake-process-id",
     override val appStateTracker: AppStateTracker = FakeAppStateTracker(),
+    override val telemetryService: TelemetryService = FakeTelemetryService(),
     val backgroundWorkerSupplier: (worker: Worker.Background) -> BackgroundWorker = { fakeBackgroundWorker() },
     val priorityWorkerSupplier: (worker: Worker.Priority) -> PriorityWorker<*> = { fakePriorityWorker<Any>() },
     val sessionIdSupplier: () -> String? = { null },

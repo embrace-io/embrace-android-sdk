@@ -7,12 +7,14 @@ import io.embrace.android.embracesdk.internal.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkConnectivityListener
 import io.embrace.android.embracesdk.internal.comms.delivery.NetworkStatus
+import io.embrace.android.embracesdk.internal.telemetry.LimitedTelemetryType
 
 class NetworkStatusDataSource(
     args: InstrumentationArgs,
 ) : NetworkConnectivityListener, DataSourceImpl(
     args = args,
-    limitStrategy = UpToLimitStrategy { MAX_CAPTURED_NETWORK_STATE_TRANSITIONS }
+    limitStrategy = UpToLimitStrategy { MAX_CAPTURED_NETWORK_STATE_TRANSITIONS },
+    telemetryType = LimitedTelemetryType.NETWORK_STATUS_DATA_SOURCE
 ) {
     private var span: SpanToken? = null
 

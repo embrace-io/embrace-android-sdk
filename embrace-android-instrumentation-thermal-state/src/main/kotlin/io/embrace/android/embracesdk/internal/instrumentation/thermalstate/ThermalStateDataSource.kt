@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceImpl
 import io.embrace.android.embracesdk.internal.arch.datasource.SpanToken
 import io.embrace.android.embracesdk.internal.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
+import io.embrace.android.embracesdk.internal.telemetry.LimitedTelemetryType
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.worker.Worker
 import java.util.concurrent.Executor
@@ -18,7 +19,8 @@ class ThermalStateDataSource(
     args: InstrumentationArgs,
 ) : DataSourceImpl(
     args,
-    limitStrategy = UpToLimitStrategy { MAX_CAPTURED_THERMAL_STATES }
+    limitStrategy = UpToLimitStrategy { MAX_CAPTURED_THERMAL_STATES },
+    telemetryType = LimitedTelemetryType.THERMAL_STATE_DATA_SOURCE
 ) {
     private companion object {
         private const val MAX_CAPTURED_THERMAL_STATES = 100

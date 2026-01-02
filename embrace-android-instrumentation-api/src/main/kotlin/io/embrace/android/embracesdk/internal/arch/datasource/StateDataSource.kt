@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.internal.arch.attrs.createStateKey
 import io.embrace.android.embracesdk.internal.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.telemetry.LimitedTelemetryType
 import java.util.concurrent.atomic.AtomicReference
 
 /**
@@ -19,9 +20,11 @@ abstract class StateDataSource<T : Any>(
     private val stateTypeFactory: (initialValue: T) -> SchemaType.State<T>,
     defaultValue: T,
     maxTransitions: Int = DEFAULT_MAX_TRANSITIONS,
+    telemetryType: LimitedTelemetryType? = null,
 ) : SessionEndListener, SessionChangeListener, DataSourceImpl(
     args = args,
-    limitStrategy = UpToLimitStrategy { maxTransitions }
+    limitStrategy = UpToLimitStrategy { maxTransitions },
+    telemetryType = telemetryType
 ) {
     val stateAttributeKey = createStateKey(stateTypeFactory(defaultValue).stateName)
     private val currentState: AtomicReference<T> = AtomicReference(defaultValue)

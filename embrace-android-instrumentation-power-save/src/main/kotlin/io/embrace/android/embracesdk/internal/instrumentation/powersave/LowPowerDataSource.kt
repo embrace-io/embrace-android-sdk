@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceImpl
 import io.embrace.android.embracesdk.internal.arch.datasource.SpanToken
 import io.embrace.android.embracesdk.internal.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
+import io.embrace.android.embracesdk.internal.telemetry.LimitedTelemetryType
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 
@@ -15,7 +16,8 @@ class LowPowerDataSource(
     provider: Provider<PowerManager?>,
 ) : DataSourceImpl(
     args = args,
-    limitStrategy = UpToLimitStrategy { MAX_CAPTURED_POWER_MODE_INTERVALS }
+    limitStrategy = UpToLimitStrategy { MAX_CAPTURED_POWER_MODE_INTERVALS },
+    telemetryType = LimitedTelemetryType.LOW_POWER_DATA_SOURCE
 ) {
 
     private companion object {

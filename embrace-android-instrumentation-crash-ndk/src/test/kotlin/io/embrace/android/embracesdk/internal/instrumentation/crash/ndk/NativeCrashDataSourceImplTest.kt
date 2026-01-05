@@ -49,16 +49,17 @@ internal class NativeCrashDataSourceImplTest {
 
     @Test
     fun `native crash sent with session properties and metadata`() {
+        val sessionPropertyName = "prop".toEmbraceAttributeName()
         nativeCrashDataSource.sendNativeCrash(
             nativeCrash = testNativeCrashData,
-            sessionProperties = mapOf("prop" to "value"),
+            sessionProperties = mapOf(sessionPropertyName to "value"),
             metadata = mapOf(embState.name to "background")
         )
 
         with(args.destination.logEvents.single()) {
             val attributes = schemaType.attributes()
             assertEquals(EmbType.System.NativeCrash, schemaType.telemetryType)
-            assertEquals("value", attributes["prop".toEmbraceAttributeName()])
+            assertEquals("value", attributes[sessionPropertyName])
             assertEquals("background", attributes[embState.name])
             assertEquals(
                 testNativeCrashData.sessionId,

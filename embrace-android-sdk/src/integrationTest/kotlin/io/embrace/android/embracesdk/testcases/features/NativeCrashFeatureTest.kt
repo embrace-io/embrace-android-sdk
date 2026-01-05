@@ -12,6 +12,7 @@ import io.embrace.android.embracesdk.fakes.fakeEnvelopeMetadata
 import io.embrace.android.embracesdk.fakes.fakeEnvelopeResource
 import io.embrace.android.embracesdk.fakes.fakeLaterEnvelopeMetadata
 import io.embrace.android.embracesdk.fakes.fakeLaterEnvelopeResource
+import io.embrace.android.embracesdk.internal.arch.attrs.isEmbraceAttributeName
 import io.embrace.android.embracesdk.internal.arch.attrs.toEmbraceAttributeName
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.delivery.PayloadType
@@ -140,6 +141,7 @@ internal class NativeCrashFeatureTest {
                 }
                 val log = envelope.getLogOfType(EmbType.System.NativeCrash)
                 assertNativeCrashSent(log, crashData, fakeSymbols)
+                assertEquals(1, log.attributes?.filter { it.key?.isEmbraceAttributeName() == true }?.size)
                 assertEquals(0, log.attributes?.filter { it.key == newSessionProperty.toEmbraceAttributeName() }?.size)
                 assertEquals(0, log.attributes?.filter { it.key == "emb-state-test" }?.size)
             }

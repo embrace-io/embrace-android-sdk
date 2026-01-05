@@ -4,7 +4,6 @@ import android.os.Environment
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeDevice
 import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
-import io.embrace.android.embracesdk.fakes.FakeRnBundleIdTracker
 import io.embrace.android.embracesdk.internal.capture.metadata.AppEnvironment
 import io.embrace.android.embracesdk.internal.envelope.metadata.UnitySdkVersionInfo
 import io.embrace.android.embracesdk.internal.payload.AppFramework
@@ -44,7 +43,9 @@ internal class EnvelopeResourceSourceImplTest {
             hostedSdkVersionInfo,
             AppEnvironment.Environment.PROD,
             FakeDevice(),
-            FakeRnBundleIdTracker()
+            "",
+            53,
+            { "fakeReactNativeBundleId" }
         )
         val envelope = source.getEnvelopeResource()
 

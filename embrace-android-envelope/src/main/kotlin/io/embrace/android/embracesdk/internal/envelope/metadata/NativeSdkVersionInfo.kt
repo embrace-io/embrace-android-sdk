@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.envelope.metadata
 
-internal class NativeSdkVersionInfo : HostedSdkVersionInfo {
+class NativeSdkVersionInfo : HostedSdkVersionInfo {
 
     override var hostedSdkVersion: String?
         get() = null

@@ -24,15 +24,11 @@ class LogServiceImpl(
     private val destination: TelemetryDestination,
     private val configService: ConfigService,
     private val sessionPropertiesService: SessionPropertiesService,
+    private val logLimitingService: LogLimitingService,
 ) : LogService {
 
     private val behavior = configService.logMessageBehavior
     private val bypassLimitsValidation = configService.isOnlyUsingOtelExporters()
-    private val logCounters = mapOf(
-        LogSeverity.INFO to LogCounter(behavior::getInfoLogLimit),
-        LogSeverity.WARNING to LogCounter(behavior::getWarnLogLimit),
-        LogSeverity.ERROR to LogCounter(behavior::getErrorLogLimit)
-    )
 
     override fun log(
         message: String,
@@ -40,7 +36,7 @@ class LogServiceImpl(
         attributes: Map<String, Any>,
         schemaProvider: (TelemetryAttributes) -> SchemaType,
     ) {
-        if (!logCounters.getValue(severity).addIfAllowed()) {
+        if (!logLimitingService.addIfAllowed(severity)) {
             return
         }
 
@@ -54,11 +50,7 @@ class LogServiceImpl(
     }
 
     override fun getErrorLogsCount(): Int {
-        return logCounters.getValue(LogSeverity.ERROR).getCount()
-    }
-
-    override fun onPostSessionChange() {
-        logCounters.forEach { it.value.clear() }
+        return logLimitingService.getCount(LogSeverity.ERROR)
     }
 
     private fun trimToMaxLength(message: String): String {

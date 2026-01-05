@@ -1,6 +1,8 @@
 package io.embrace.android.embracesdk.internal.injection
 
 import io.embrace.android.embracesdk.internal.config.ConfigService
+import io.embrace.android.embracesdk.internal.logs.LogLimitingService
+import io.embrace.android.embracesdk.internal.logs.LogLimitingServiceImpl
 import io.embrace.android.embracesdk.internal.logs.LogOrchestrator
 import io.embrace.android.embracesdk.internal.logs.LogOrchestratorImpl
 import io.embrace.android.embracesdk.internal.logs.LogService
@@ -18,11 +20,18 @@ class LogModuleImpl(
     payloadSourceModule: PayloadSourceModule,
 ) : LogModule {
 
+    override val logLimitingService: LogLimitingService by singleton {
+        LogLimitingServiceImpl(
+            configService
+        )
+    }
+
     override val logService: LogService by singleton {
         LogServiceImpl(
             essentialServiceModule.telemetryDestination,
             configService,
             essentialServiceModule.sessionPropertiesService,
+            logLimitingService
         )
     }
 

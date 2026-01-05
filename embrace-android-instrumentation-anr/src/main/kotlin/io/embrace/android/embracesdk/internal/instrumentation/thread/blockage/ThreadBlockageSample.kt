@@ -5,7 +5,7 @@ import io.embrace.android.embracesdk.internal.arch.stacktrace.ThreadSample
 /**
  * Holds thread data taken during an [ThreadBlockageInterval].
  */
-internal data class ThreadBlockageSample(
+data class ThreadBlockageSample(
 
     /**
      * The timestamp in milliseconds at which this sample was captured

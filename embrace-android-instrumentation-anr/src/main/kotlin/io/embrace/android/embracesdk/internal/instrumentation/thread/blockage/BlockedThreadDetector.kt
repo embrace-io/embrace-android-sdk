@@ -4,7 +4,6 @@ import android.os.Debug
 import android.os.Handler
 import android.os.Looper
 import android.os.Message
-import android.os.Message.obtain
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageEvent.BLOCKED
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageEvent.BLOCKED_INTERVAL
@@ -25,7 +24,7 @@ import java.util.concurrent.atomic.AtomicLong
  * target thread & scheduling regular checks on a background thread. [BlockedThreadDetector]
  * is responsible for the business logic that checks whether a thread is blocked.
  */
-internal class BlockedThreadDetector(
+class BlockedThreadDetector(
     private val watchdogWorker: BackgroundWorker,
     private val clock: Clock,
     private val looper: Looper,
@@ -118,7 +117,7 @@ internal class BlockedThreadDetector(
         try {
             val now = clock.now()
             if (!targetThreadHandler.hasMessages(HEARTBEAT_REQUEST)) {
-                val heartbeatMessage = obtain(targetThreadHandler, HEARTBEAT_REQUEST)
+                val heartbeatMessage = Message.obtain(targetThreadHandler, HEARTBEAT_REQUEST)
                 targetThreadHandler.sendMessage(heartbeatMessage)
             }
             onMonitorThreadInterval(now)

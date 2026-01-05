@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.instrumentation.thread.blockage
 /**
  * Intervals during which a thread was blocked for more than 1 second.
  */
-internal data class ThreadBlockageInterval(
+data class ThreadBlockageInterval(
 
     /**
      * The time at which the application stopped responding.

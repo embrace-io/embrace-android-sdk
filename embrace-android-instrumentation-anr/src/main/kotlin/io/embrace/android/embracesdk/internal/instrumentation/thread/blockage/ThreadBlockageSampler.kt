@@ -4,9 +4,7 @@ import androidx.annotation.CheckResult
 import io.embrace.android.embracesdk.internal.arch.SessionChangeListener
 import io.embrace.android.embracesdk.internal.arch.stacktrace.ThreadSample
 import io.embrace.android.embracesdk.internal.clock.Clock
-import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageEvent.BLOCKED
-import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageEvent.BLOCKED_INTERVAL
-import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageEvent.UNBLOCKED
+import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageInterval.Companion.CODE_SAMPLES_CLEARED
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageSample.Companion.CODE_DEFAULT
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageSample.Companion.CODE_SAMPLE_LIMIT_REACHED
 import java.util.concurrent.CopyOnWriteArrayList
@@ -17,7 +15,7 @@ import java.util.concurrent.atomic.AtomicReference
 /**
  * This class is responsible for tracking the state of JVM stacktraces sampled during a thread blockage.
  */
-internal class ThreadBlockageSampler(
+class ThreadBlockageSampler(
     private val clock: Clock,
     private val targetThread: Thread,
     private val maxIntervalsPerSession: Int,
@@ -34,11 +32,11 @@ internal class ThreadBlockageSampler(
         event: ThreadBlockageEvent,
         timestamp: Long,
     ) {
-        blocked.set(event != UNBLOCKED)
+        blocked.set(event != ThreadBlockageEvent.UNBLOCKED)
         when (event) {
-            BLOCKED -> onThreadBlocked(timestamp)
-            BLOCKED_INTERVAL -> sampler.get().captureSample()
-            UNBLOCKED -> onThreadUnblocked(timestamp)
+            ThreadBlockageEvent.BLOCKED -> onThreadBlocked(timestamp)
+            ThreadBlockageEvent.BLOCKED_INTERVAL -> sampler.get().captureSample()
+            ThreadBlockageEvent.UNBLOCKED -> onThreadUnblocked(timestamp)
         }
     }
 
@@ -151,10 +149,10 @@ internal class ThreadBlockageSampler(
     @CheckResult
     private fun ThreadBlockageInterval.clearSamples(): ThreadBlockageInterval = copy(
         samples = null,
-        code = ThreadBlockageInterval.Companion.CODE_SAMPLES_CLEARED
+        code = CODE_SAMPLES_CLEARED
     )
 
-    private fun ThreadBlockageInterval.hasSamples(): Boolean = code != ThreadBlockageInterval.Companion.CODE_SAMPLES_CLEARED
+    private fun ThreadBlockageInterval.hasSamples(): Boolean = code != CODE_SAMPLES_CLEARED
 
     private companion object {
 

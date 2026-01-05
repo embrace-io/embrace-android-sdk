@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.internal.arch.attrs.EmbraceAttributeKey
 import io.embrace.android.embracesdk.internal.isEmulator
 import io.embrace.android.embracesdk.internal.otel.sdk.toEmbraceUsageAttributeName
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * Service for tracking usage of public APIs, and different internal metrics about the app.
@@ -16,6 +17,7 @@ internal class EmbraceTelemetryService(
     private val okHttpReflectionFacade: OkHttpReflectionFacade = OkHttpReflectionFacade()
     private val usageCountMap = ConcurrentHashMap<String, Int>()
     private val storageTelemetryMap = ConcurrentHashMap<String, String>()
+    private val appliedLimitCountMap = ConcurrentHashMap<String, AtomicInteger>()
     private val appAttributes: Map<String, String> by lazy { computeAppAttributes() }
 
     override fun onPublicApiCalled(name: String) {
@@ -28,9 +30,16 @@ internal class EmbraceTelemetryService(
         this.storageTelemetryMap.putAll(storageTelemetry)
     }
 
+    override fun trackAppliedLimit(telemetryType: String, limitType: AppliedLimitType) {
+        val id = "applied_limit.$telemetryType.${limitType.attributeName}"
+        val key = EmbraceAttributeKey.create(id, isPrivate = true).name
+        appliedLimitCountMap.getOrPut(key) { AtomicInteger(0) }.incrementAndGet()
+    }
+
     override fun getAndClearTelemetryAttributes(): Map<String, String> {
         return getAndClearUsageCountTelemetry()
             .plus(getAndClearStorageTelemetry())
+            .plus(getAndClearAppliedLimitTelemetry())
             .plus(appAttributes)
     }
 
@@ -47,6 +56,12 @@ internal class EmbraceTelemetryService(
     private fun getAndClearStorageTelemetry(): Map<String, String> {
         val result = storageTelemetryMap.toMap()
         storageTelemetryMap.clear()
+        return result
+    }
+
+    private fun getAndClearAppliedLimitTelemetry(): Map<String, String> {
+        val result = appliedLimitCountMap.mapValues { it.value.get().toString() }
+        appliedLimitCountMap.clear()
         return result
     }
 

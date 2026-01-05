@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.instrumentation.crash.ndk
 
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.attrs.embCrashNumber
+import io.embrace.android.embracesdk.internal.arch.attrs.toEmbraceAttributeName
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceImpl
 import io.embrace.android.embracesdk.internal.arch.datasource.LogSeverity
 import io.embrace.android.embracesdk.internal.arch.limits.NoopLimitStrategy
@@ -36,41 +37,41 @@ internal class NativeCrashDataSourceImpl(
     ) {
         captureTelemetry {
             val nativeCrashNumber = args.ordinalStore.incrementAndGet(Ordinal.NATIVE_CRASH)
-            val crashAttributes = TelemetryAttributes(
-                sessionPropertiesProvider = { sessionProperties }
-            )
-            crashAttributes.setAttribute(
-                key = SessionAttributes.SESSION_ID,
-                value = nativeCrash.sessionId,
-                keepBlankishValues = false,
-            )
-
-            metadata.forEach { attribute ->
-                crashAttributes.setAttribute(attribute.key, attribute.value)
-            }
-
-            crashAttributes.setAttribute(
-                key = embCrashNumber,
-                value = nativeCrashNumber.toString(),
-                keepBlankishValues = false,
-            )
-
-            nativeCrash.crash?.let { crashData ->
-                crashAttributes.setAttribute(
-                    key = EmbType.System.NativeCrash.embNativeCrashException,
-                    value = crashData,
+            val crashAttributes = TelemetryAttributes().apply {
+                setAttribute(
+                    key = SessionAttributes.SESSION_ID,
+                    value = nativeCrash.sessionId,
                     keepBlankishValues = false,
                 )
-            }
 
-            if (!nativeCrash.symbols.isNullOrEmpty()) {
-                val json = args.serializer.toJson(nativeCrash.symbols, Map::class.java)
-                json.let { nativeSymbolsJson ->
-                    crashAttributes.setAttribute(
-                        EmbType.System.NativeCrash.embNativeCrashSymbols,
-                        nativeSymbolsJson,
+                metadata.forEach { attribute ->
+                    setAttribute(attribute.key, attribute.value)
+                }
+
+                setAttribute(
+                    key = embCrashNumber,
+                    value = nativeCrashNumber.toString(),
+                    keepBlankishValues = false,
+                )
+
+                nativeCrash.crash?.let { crashData ->
+                    setAttribute(
+                        key = EmbType.System.NativeCrash.embNativeCrashException,
+                        value = crashData,
                         keepBlankishValues = false,
                     )
+                }
+
+                if (!nativeCrash.symbols.isNullOrEmpty()) {
+                    setAttribute(
+                        EmbType.System.NativeCrash.embNativeCrashSymbols,
+                        args.serializer.toJson(nativeCrash.symbols, Map::class.java),
+                        keepBlankishValues = false,
+                    )
+                }
+
+                sessionProperties.forEach {
+                    setAttribute(key = it.key.toEmbraceAttributeName(), it.value)
                 }
             }
             addLog(

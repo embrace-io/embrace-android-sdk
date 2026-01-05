@@ -7,7 +7,6 @@ import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
 import io.embrace.android.embracesdk.fakes.behavior.FakeLogMessageBehavior
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.config.FakeRedactionConfig
-import io.embrace.android.embracesdk.internal.arch.attrs.toEmbraceAttributeName
 import io.embrace.android.embracesdk.internal.arch.datasource.LogSeverity
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType.Log
 import io.embrace.android.embracesdk.internal.config.behavior.REDACTED_LABEL
@@ -48,7 +47,6 @@ internal class EmbraceLogServiceTest {
     private fun createEmbraceLogService() = LogServiceImpl(
         destination = destination,
         configService = fakeConfigService,
-        sessionPropertiesService = fakeSessionPropertiesService,
         logLimitingService = logLimitingService
     )
 
@@ -68,18 +66,13 @@ internal class EmbraceLogServiceTest {
     }
 
     @Test
-    fun `telemetry attributes are set correctly, including session properties and LOG_RECORD_UID`() {
-        // given a session with properties
-        fakeSessionPropertiesService.props["someProperty"] = "someValue"
-        logService = createEmbraceLogService()
-
+    fun `LOG_RECORD_UID set properly`() {
         // when logging the message
         logService.log("message", LogSeverity.INFO, emptyMap(), ::Log)
 
         // then the telemetry attributes are set correctly
         val log = destination.logEvents.single()
         val attributes = log.schemaType.attributes()
-        assertEquals("someValue", attributes["someProperty".toEmbraceAttributeName()])
         assertTrue(attributes.containsKey(LogAttributes.LOG_RECORD_UID))
     }
 

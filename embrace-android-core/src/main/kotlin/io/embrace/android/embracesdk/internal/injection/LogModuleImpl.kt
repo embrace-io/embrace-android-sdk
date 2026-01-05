@@ -30,7 +30,6 @@ class LogModuleImpl(
         LogServiceImpl(
             essentialServiceModule.telemetryDestination,
             configService,
-            essentialServiceModule.sessionPropertiesService,
             logLimitingService
         )
     }

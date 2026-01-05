@@ -118,7 +118,7 @@ internal class EmbraceTelemetryServiceTest {
         )
 
         // When a limit is logged
-        embraceTelemetryService.trackAppliedLimit(LimitedTelemetryType.ERROR_LOG, AppliedLimitType.TRUNCATE_ATTRIBUTES)
+        embraceTelemetryService.trackAppliedLimit("error_log", AppliedLimitType.TRUNCATE_ATTRIBUTES)
 
         // Then the limit is in the map
         assertEquals(
@@ -130,11 +130,11 @@ internal class EmbraceTelemetryServiceTest {
     @Test
     fun `trackAppliedLimit increments existing limit counter`() {
         // Given a limit is already logged
-        embraceTelemetryService.trackAppliedLimit(LimitedTelemetryType.BREADCRUMB, AppliedLimitType.TRUNCATE_STRING)
+        embraceTelemetryService.trackAppliedLimit("breadcrumb", AppliedLimitType.TRUNCATE_STRING)
 
         // When the same limit is logged again
-        embraceTelemetryService.trackAppliedLimit(LimitedTelemetryType.BREADCRUMB, AppliedLimitType.TRUNCATE_STRING)
-        embraceTelemetryService.trackAppliedLimit(LimitedTelemetryType.BREADCRUMB, AppliedLimitType.TRUNCATE_STRING)
+        embraceTelemetryService.trackAppliedLimit("breadcrumb", AppliedLimitType.TRUNCATE_STRING)
+        embraceTelemetryService.trackAppliedLimit("breadcrumb", AppliedLimitType.TRUNCATE_STRING)
 
         // Then the counter is incremented
         assertEquals(
@@ -146,10 +146,10 @@ internal class EmbraceTelemetryServiceTest {
     @Test
     fun `trackAppliedLimit tracks multiple different limits`() {
         // Given multiple different limits are logged
-        embraceTelemetryService.trackAppliedLimit(LimitedTelemetryType.ERROR_LOG, AppliedLimitType.TRUNCATE_ATTRIBUTES)
-        embraceTelemetryService.trackAppliedLimit(LimitedTelemetryType.BREADCRUMB, AppliedLimitType.TRUNCATE_STRING)
-        embraceTelemetryService.trackAppliedLimit(LimitedTelemetryType.SPAN, AppliedLimitType.DROP)
-        embraceTelemetryService.trackAppliedLimit(LimitedTelemetryType.ERROR_LOG, AppliedLimitType.TRUNCATE_ATTRIBUTES)
+        embraceTelemetryService.trackAppliedLimit("error_log", AppliedLimitType.TRUNCATE_ATTRIBUTES)
+        embraceTelemetryService.trackAppliedLimit("breadcrumb", AppliedLimitType.TRUNCATE_STRING)
+        embraceTelemetryService.trackAppliedLimit("span", AppliedLimitType.DROP)
+        embraceTelemetryService.trackAppliedLimit("error_log", AppliedLimitType.TRUNCATE_ATTRIBUTES)
 
         // When getting telemetry attributes
         val telemetryAttributes = embraceTelemetryService.getAndClearTelemetryAttributes()
@@ -163,7 +163,7 @@ internal class EmbraceTelemetryServiceTest {
     @Test
     fun `getTelemetryAttributes clears applied limits map`() {
         // Given a limit is logged
-        embraceTelemetryService.trackAppliedLimit(LimitedTelemetryType.SPAN, AppliedLimitType.DROP)
+        embraceTelemetryService.trackAppliedLimit("span", AppliedLimitType.DROP)
 
         // After getting telemetry attributes
         embraceTelemetryService.getAndClearTelemetryAttributes()
@@ -178,8 +178,8 @@ internal class EmbraceTelemetryServiceTest {
         // Given usage, storage, and applied limit attributes are added
         embraceTelemetryService.onPublicApiCalled("a_method")
         embraceTelemetryService.logStorageTelemetry(mapOf("emb.storage.used" to "12"))
-        embraceTelemetryService.trackAppliedLimit(LimitedTelemetryType.ERROR_LOG, AppliedLimitType.TRUNCATE_ATTRIBUTES)
-        embraceTelemetryService.trackAppliedLimit(LimitedTelemetryType.BREADCRUMB, AppliedLimitType.DROP)
+        embraceTelemetryService.trackAppliedLimit("error_log", AppliedLimitType.TRUNCATE_ATTRIBUTES)
+        embraceTelemetryService.trackAppliedLimit("breadcrumb", AppliedLimitType.DROP)
 
         // When getting telemetry attributes
         val telemetryAttributes = embraceTelemetryService.getAndClearTelemetryAttributes()

@@ -30,8 +30,8 @@ internal class EmbraceTelemetryService(
         this.storageTelemetryMap.putAll(storageTelemetry)
     }
 
-    override fun trackAppliedLimit(telemetryType: LimitedTelemetryType, limitType: AppliedLimitType) {
-        val id = "applied_limit.${telemetryType.attributeName}.${limitType.attributeName}"
+    override fun trackAppliedLimit(telemetryType: String, limitType: AppliedLimitType) {
+        val id = "applied_limit.$telemetryType.${limitType.attributeName}"
         val key = EmbraceAttributeKey.create(id, isPrivate = true).name
         appliedLimitCountMap.getOrPut(key) { AtomicInteger(0) }.incrementAndGet()
     }

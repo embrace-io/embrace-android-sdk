@@ -53,7 +53,7 @@ class EventServiceImpl(
                 }
             }
 
-            embraceAttributes.forEach {
+            embraceAttributes.toMap().forEach {
                 setStringAttribute(it.key, it.value)
             }
         }

@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.session.orchestrator
 
-import io.embrace.android.embracesdk.fakes.FakeLogService
+import io.embrace.android.embracesdk.fakes.FakeLogLimitingService
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakeSessionPropertiesService
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
@@ -25,7 +25,7 @@ internal class SessionSpanAttrPopulatorImplTest {
         populator = SessionSpanAttrPopulatorImpl(
             destination,
             { 0 },
-            FakeLogService(),
+            FakeLogLimitingService(),
             FakeMetadataService()
         )
     }

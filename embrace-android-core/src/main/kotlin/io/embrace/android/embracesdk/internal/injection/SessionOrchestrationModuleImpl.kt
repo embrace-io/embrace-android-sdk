@@ -52,7 +52,7 @@ class SessionOrchestrationModuleImpl(
         SessionSpanAttrPopulatorImpl(
             essentialServiceModule.telemetryDestination,
             startupDurationProvider,
-            logModule.logService,
+            logModule.logLimitingService,
             payloadSourceModule.metadataService
         )
     }

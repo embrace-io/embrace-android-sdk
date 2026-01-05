@@ -49,10 +49,6 @@ class LogServiceImpl(
         destination.addLog(schemaProvider(telemetryAttributes), severity, trimToMaxLength(message))
     }
 
-    override fun getErrorLogsCount(): Int {
-        return logLimitingService.getCount(LogSeverity.ERROR)
-    }
-
     private fun trimToMaxLength(message: String): String {
         val maxLength = if (configService.appFramework == AppFramework.UNITY) {
             LOG_MESSAGE_UNITY_MAXIMUM_ALLOWED_LENGTH

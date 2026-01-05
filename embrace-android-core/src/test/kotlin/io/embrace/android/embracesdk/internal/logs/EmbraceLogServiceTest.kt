@@ -28,6 +28,7 @@ internal class EmbraceLogServiceTest {
     private lateinit var destination: FakeTelemetryDestination
     private lateinit var fakeSessionPropertiesService: FakeSessionPropertiesService
     private lateinit var fakeConfigService: FakeConfigService
+    private lateinit var logLimitingService: LogLimitingService
     private lateinit var payloadStore: FakePayloadStore
 
     @Before
@@ -40,6 +41,7 @@ internal class EmbraceLogServiceTest {
         fakeSessionPropertiesService = FakeSessionPropertiesService()
         destination = FakeTelemetryDestination()
         payloadStore = FakePayloadStore()
+        logLimitingService = LogLimitingServiceImpl(fakeConfigService)
         logService = createEmbraceLogService()
     }
 
@@ -47,7 +49,7 @@ internal class EmbraceLogServiceTest {
         destination = destination,
         configService = fakeConfigService,
         sessionPropertiesService = fakeSessionPropertiesService,
-        logLimitingService = LogLimitingServiceImpl(fakeConfigService)
+        logLimitingService = logLimitingService
     )
 
     @Test
@@ -109,6 +111,7 @@ internal class EmbraceLogServiceTest {
                 errorLogLimit = testLogLimit
             )
         )
+        logLimitingService = LogLimitingServiceImpl(fakeConfigService)
         logService = createEmbraceLogService()
 
         // when logging exactly the allowed count of each type
@@ -213,7 +216,7 @@ internal class EmbraceLogServiceTest {
         }
 
         // then the correct number of error logs is returned
-        assertEquals(5, logService.getErrorLogsCount())
+        assertEquals(5, logLimitingService.getCount(LogSeverity.ERROR))
     }
 
     @Test

@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.instrumentation.thread.blockage
 /**
  * The state of the thread.
  */
-internal enum class ThreadBlockageEvent {
+enum class ThreadBlockageEvent {
 
     /**
      * When the thread becomes blocked (i.e. not responsive for X milliseconds)

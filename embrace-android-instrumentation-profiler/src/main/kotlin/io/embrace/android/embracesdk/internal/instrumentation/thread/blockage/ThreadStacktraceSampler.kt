@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.instrumentation.thread.blockage
 import io.embrace.android.embracesdk.internal.arch.stacktrace.truncateStacktrace
 import io.embrace.android.embracesdk.internal.clock.Clock
 
-internal class ThreadStacktraceSampler(
+class ThreadStacktraceSampler(
     private val clock: Clock,
     private val targetThread: Thread,
     private val sampleLimit: Int,

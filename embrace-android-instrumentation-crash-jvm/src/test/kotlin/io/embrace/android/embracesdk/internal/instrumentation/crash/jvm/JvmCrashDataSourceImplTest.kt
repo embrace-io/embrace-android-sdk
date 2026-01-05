@@ -12,6 +12,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.TelemetryAttributes
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertSame
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -67,6 +68,18 @@ internal class JvmCrashDataSourceImplTest {
         assert(Thread.getDefaultUncaughtExceptionHandler() is EmbraceUncaughtExceptionHandler)
         crashDataSource.logUnhandledJvmThrowable(IllegalStateException())
         assertEquals(1, args.destination.logEvents.size)
+    }
+
+    @Test
+    fun `default crash handler delegate will not be set if it is already an embrace handler`() {
+        val embraceDefaultHandler = EmbraceUncaughtExceptionHandler(
+            defaultHandler = null,
+            dataSource = FakeJvmCrashDataSource(),
+            logger = FakeEmbLogger()
+        )
+        Thread.setDefaultUncaughtExceptionHandler(embraceDefaultHandler)
+        setupForHandleCrash(true)
+        assertSame(Thread.getDefaultUncaughtExceptionHandler(), embraceDefaultHandler)
     }
 
     @Test

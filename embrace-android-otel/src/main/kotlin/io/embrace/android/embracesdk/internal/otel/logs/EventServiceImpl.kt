@@ -32,13 +32,14 @@ class EventServiceImpl(
             Severity.WARNING -> SeverityNumber.WARN
             Severity.ERROR -> SeverityNumber.ERROR
         }
+        val baseAttributes = embraceAttributes.toMap()
         logger.log(
             body = message,
             severityNumber = severityNumber,
             severityText = getSeverityText(severityNumber),
             timestamp = TimeUnit.MILLISECONDS.toNanos(logTimeMs)
         ) {
-            if (!embraceAttributes.contains(LogAttributes.LOG_RECORD_UID)) {
+            if (!baseAttributes.contains(LogAttributes.LOG_RECORD_UID)) {
                 setStringAttribute(LogAttributes.LOG_RECORD_UID, Uuid.getEmbUuid())
             }
 
@@ -53,7 +54,7 @@ class EventServiceImpl(
                 }
             }
 
-            embraceAttributes.forEach {
+            baseAttributes.forEach {
                 setStringAttribute(it.key, it.value)
             }
         }

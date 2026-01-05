@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.arch.destination
 
+import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.internal.arch.attrs.EmbraceAttributeKey
 import io.embrace.android.embracesdk.internal.arch.attrs.asPair
 import io.embrace.android.embracesdk.internal.arch.attrs.embState
@@ -15,39 +16,34 @@ import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestinati
 import io.embrace.android.embracesdk.internal.arch.datasource.UnrecordedTransitions
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
-import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.arch.state.AppStateTracker
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
+import io.embrace.android.embracesdk.internal.otel.logs.EventService
 import io.embrace.android.embracesdk.internal.otel.sdk.setEmbraceAttribute
 import io.embrace.android.embracesdk.internal.otel.sdk.toEmbraceObjectName
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.session.id.SessionTracker
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
-import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
-import io.embrace.opentelemetry.kotlin.logging.Logger
-import io.embrace.opentelemetry.kotlin.logging.model.SeverityNumber
 import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
-import io.embrace.opentelemetry.kotlin.semconv.LogAttributes
 import io.embrace.opentelemetry.kotlin.semconv.SessionAttributes
-import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 
 @OptIn(ExperimentalApi::class)
 class TelemetryDestinationImpl(
-    private val logger: Logger,
     private val sessionTracker: SessionTracker,
     private val appStateTracker: AppStateTracker,
     private val clock: Clock,
     private val spanService: SpanService,
+    private val eventService: EventService,
     private val currentSessionSpan: CurrentSessionSpan,
 ) : TelemetryDestination {
 
@@ -64,50 +60,37 @@ class TelemetryDestinationImpl(
         timestampMs: Long?,
     ) {
         val logTimeMs = timestampMs ?: clock.now()
-        val severityNumber = when (severity) {
-            LogSeverity.INFO -> SeverityNumber.INFO
-            LogSeverity.WARNING -> SeverityNumber.WARN
-            LogSeverity.ERROR -> SeverityNumber.ERROR
-        }
-        logger.log(
-            body = message,
-            severityNumber = severityNumber,
-            severityText = getSeverityText(severityNumber),
-            timestamp = TimeUnit.MILLISECONDS.toNanos(logTimeMs)
-        ) {
-            if (!attributes.contains(LogAttributes.LOG_RECORD_UID)) {
-                setStringAttribute(LogAttributes.LOG_RECORD_UID, Uuid.getEmbUuid())
-            }
-
+        val attributes = mutableMapOf<String, String>().apply {
             if (addCurrentSessionInfo) {
                 var sessionState: AppState? = null
                 sessionTracker.getActiveSession()?.let { session ->
                     if (session.sessionId.isNotBlank()) {
-                        setStringAttribute(SessionAttributes.SESSION_ID, session.sessionId)
+                        put(SessionAttributes.SESSION_ID, session.sessionId)
                     }
                     sessionState = session.appState
                 }
                 val state = sessionState ?: appStateTracker.getAppState()
-                setStringAttribute(embState.name, state.description)
-
+                put(embState.name, state.description)
                 currentStatesProvider().forEach {
-                    setStringAttribute(it.key.name, it.value.toString())
+                    put(it.key.name, it.value.toString())
                 }
             }
-
-            if (isPrivate) {
-                setStringAttribute(PrivateSpan.key.name, PrivateSpan.value)
-            }
-
-            with(schemaType) {
-                setStringAttribute(telemetryType.key.name, telemetryType.value)
-                attributes().forEach {
-                    setStringAttribute(it.key, it.value)
-                }
-            }
-
-            sessionUpdateAction?.invoke()
         }
+
+        eventService.log(
+            logTimeMs = logTimeMs,
+            schemaType = schemaType,
+            severity = when (severity) {
+                LogSeverity.INFO -> Severity.INFO
+                LogSeverity.WARNING -> Severity.WARNING
+                LogSeverity.ERROR -> Severity.ERROR
+            },
+            message = message,
+            isPrivate = isPrivate,
+            embraceAttributes = attributes
+        )
+
+        sessionUpdateAction?.invoke()
     }
 
     override fun startSpanCapture(
@@ -226,11 +209,6 @@ class TelemetryDestinationImpl(
 
     private fun toEmbraceSpanEvent(event: SpanEvent): EmbraceSpanEvent? {
         return EmbraceSpanEvent.create(event.name, event.timestampNanos.nanosToMillis(), event.attributes)
-    }
-
-    private fun getSeverityText(severity: SeverityNumber) = when (severity) {
-        SeverityNumber.WARN -> "WARNING"
-        else -> severity.name
     }
 
     private class SpanTokenImpl(

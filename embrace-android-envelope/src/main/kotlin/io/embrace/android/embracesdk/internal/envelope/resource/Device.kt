@@ -10,7 +10,7 @@ interface Device {
      *
      * @return true if the device is jailbroken and not an emulator, false otherwise
      */
-    var isJailbroken: Boolean?
+    val isJailbroken: Boolean?
 
     /**
      * Gets the device's screen resolution.
@@ -18,7 +18,7 @@ interface Device {
      * @param windowManager the {@link WindowManager} from the {@link Context}
      * @return the device's screen resolution
      */
-    var screenResolution: String
+    val screenResolution: String
 
     /**
      * Get information about the device and OS known before the SDK starts up

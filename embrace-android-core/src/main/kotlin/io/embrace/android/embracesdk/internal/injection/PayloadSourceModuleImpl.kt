@@ -4,6 +4,7 @@ import android.app.usage.StorageStatsManager
 import android.content.Context
 import android.content.pm.ApplicationInfo
 import android.os.Build
+import io.embrace.android.embracesdk.core.BuildConfig
 import io.embrace.android.embracesdk.internal.capture.metadata.AppEnvironment
 import io.embrace.android.embracesdk.internal.capture.metadata.EmbraceMetadataService
 import io.embrace.android.embracesdk.internal.capture.metadata.MetadataService
@@ -123,7 +124,9 @@ class PayloadSourceModuleImpl(
                         initModule.logger
                     )
                 },
-                rnBundleIdTracker = rnBundleIdTracker
+                rnBundleIdProvider = { rnBundleIdTracker.getReactNativeBundleId() },
+                versionName = BuildConfig.VERSION_NAME,
+                versionCode = BuildConfig.VERSION_CODE.toIntOrNull()
             )
         }
     }

@@ -1,19 +1,19 @@
 package io.embrace.android.embracesdk.internal.envelope.resource
 
-import io.embrace.android.embracesdk.core.BuildConfig
 import io.embrace.android.embracesdk.internal.capture.metadata.AppEnvironment
-import io.embrace.android.embracesdk.internal.capture.metadata.RnBundleIdTracker
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
 import java.util.concurrent.ConcurrentHashMap
 
-internal class EnvelopeResourceSourceImpl(
+class EnvelopeResourceSourceImpl(
     private val configService: ConfigService,
     private val hosted: HostedSdkVersionInfo,
     private val environment: AppEnvironment.Environment,
     private val device: Device,
-    private val rnBundleIdTracker: RnBundleIdTracker,
+    private val versionName: String,
+    private val versionCode: Int?,
+    private val rnBundleIdProvider: () -> String?,
 ) : EnvelopeResourceSource {
 
     private val extras = ConcurrentHashMap<String, String>()
@@ -30,11 +30,11 @@ internal class EnvelopeResourceSourceImpl(
             buildType = buildInfo.buildType,
             buildFlavor = buildInfo.buildFlavor,
             environment = environment.value,
-            sdkVersion = BuildConfig.VERSION_NAME,
-            sdkSimpleVersion = BuildConfig.VERSION_CODE.toIntOrNull(),
+            sdkVersion = versionName,
+            sdkSimpleVersion = versionCode,
             hostedPlatformVersion = hosted.hostedPlatformVersion,
             hostedSdkVersion = hosted.hostedSdkVersion,
-            reactNativeBundleId = rnBundleIdTracker.getReactNativeBundleId(),
+            reactNativeBundleId = rnBundleIdProvider(),
             javascriptPatchNumber = hosted.javaScriptPatchNumber,
             unityBuildId = hosted.unityBuildIdNumber,
             deviceManufacturer = device.systemInfo.deviceManufacturer,

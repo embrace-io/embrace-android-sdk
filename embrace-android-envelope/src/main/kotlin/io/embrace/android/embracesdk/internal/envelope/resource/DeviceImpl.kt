@@ -13,7 +13,7 @@ import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import java.io.File
 import java.util.Locale
 
-internal class DeviceImpl(
+class DeviceImpl(
     private val windowManager: WindowManager?,
     private val store: KeyValueStore,
     private val backgroundWorker: BackgroundWorker,

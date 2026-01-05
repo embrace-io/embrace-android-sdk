@@ -9,10 +9,8 @@ import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.config.behavior.REDACTED_LABEL
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.utils.PropertyUtils.truncate
-import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.opentelemetry.kotlin.semconv.ExceptionAttributes
 import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
-import io.embrace.opentelemetry.kotlin.semconv.LogAttributes
 import java.io.Serializable
 
 /**
@@ -38,12 +36,15 @@ class LogServiceImpl(
             return
         }
 
-        val redactedAttributes = redactSensitiveAttributes(attributes)
-        val telemetryAttributes = TelemetryAttributes(
-            customAttributes = redactedAttributes.plus(LogAttributes.LOG_RECORD_UID to Uuid.getEmbUuid()),
+        destination.addLog(
+            schemaType = schemaProvider(
+                TelemetryAttributes(
+                    customAttributes = redactSensitiveAttributes(attributes)
+                )
+            ),
+            severity = severity,
+            message = trimToMaxLength(message)
         )
-
-        destination.addLog(schemaProvider(telemetryAttributes), severity, trimToMaxLength(message))
     }
 
     private fun trimToMaxLength(message: String): String {

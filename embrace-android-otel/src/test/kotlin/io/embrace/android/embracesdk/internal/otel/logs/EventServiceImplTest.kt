@@ -13,6 +13,7 @@ import io.embrace.opentelemetry.kotlin.semconv.LogAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
@@ -25,20 +26,37 @@ class EventServiceImplTest {
     fun setup() {
         logger = FakeOpenTelemetryLogger()
         impl = EventServiceImpl(
-            loggerProvider = { logger }
+            sdkLoggerSupplier = { logger }
         )
+        impl.initializeService(100L)
+    }
+
+    @Test
+    fun `event service needs initialization`() {
+        val notInitializedLogger = EventServiceImpl(
+            sdkLoggerSupplier = { logger }
+        )
+        notInitializedLogger.log(
+            logTimeMs = 1000L,
+            schemaType = SchemaType.Log(TelemetryAttributes()),
+            severity = Severity.ERROR,
+            message = "test",
+            isPrivate = true,
+            addCurrentMetadata = false,
+        )
+
+        assertTrue(logger.logs.isEmpty())
     }
 
     @Test
     fun `check expected values added to every event`() {
-        val embraceAttributes = mapOf("foo" to "bar")
         impl.log(
             logTimeMs = 1000L,
             schemaType = SchemaType.Log(TelemetryAttributes(customAttributes = mapOf("custom" to "attr"))),
             severity = Severity.ERROR,
             message = "test",
             isPrivate = true,
-            embraceAttributes = embraceAttributes
+            addCurrentMetadata = false,
         )
 
         with(logger.logs.single()) {
@@ -47,7 +65,6 @@ class EventServiceImplTest {
             assertEquals(SeverityNumber.ERROR, severityNumber)
             assertEquals("true", attributes[PrivateSpan.key.name])
             assertEquals("attr", attributes["custom"])
-            assertEquals("bar", attributes["foo"])
             assertNotNull(attributes[LogAttributes.LOG_RECORD_UID])
         }
     }
@@ -60,7 +77,7 @@ class EventServiceImplTest {
             severity = Severity.INFO,
             message = "test",
             isPrivate = false,
-            embraceAttributes = emptyMap(),
+            addCurrentMetadata = false,
         )
 
         with(logger.logs.single()) {
@@ -76,11 +93,49 @@ class EventServiceImplTest {
             severity = Severity.INFO,
             message = "test",
             isPrivate = false,
-            embraceAttributes = emptyMap(),
+            addCurrentMetadata = false,
         )
 
         with(logger.logs.single()) {
             assertEquals("foo", attributes[LogAttributes.LOG_RECORD_UID])
+        }
+    }
+
+    @Test
+    fun `current metadata added only requested`() {
+        val sessionAttributeName = "session-attr"
+        impl.setMetadataProvider { mapOf(sessionAttributeName to "foo") }
+        impl.log(
+            logTimeMs = 1000L,
+            schemaType = SchemaType.Log(TelemetryAttributes(customAttributes = mapOf("custom" to "attr"))),
+            severity = Severity.INFO,
+            message = "add-metadata",
+            isPrivate = false,
+            addCurrentMetadata = true,
+        )
+
+        impl.log(
+            logTimeMs = 1000L,
+            schemaType = SchemaType.Log(TelemetryAttributes(customAttributes = mapOf("custom" to "attr"))),
+            severity = Severity.INFO,
+            message = "test",
+            isPrivate = false,
+            addCurrentMetadata = false,
+        )
+
+        assertEquals(2, logger.logs.size)
+        logger.logs.forEach { log ->
+            with(log) {
+                assertEquals(1000L, timestamp?.nanosToMillis())
+                assertEquals(SeverityNumber.INFO, severityNumber)
+                assertEquals("attr", attributes["custom"])
+                assertNotNull(attributes[LogAttributes.LOG_RECORD_UID])
+                if (body == "add-metadata") {
+                    assertEquals("foo", attributes[sessionAttributeName])
+                } else {
+                    assertFalse(attributes.containsKey(sessionAttributeName))
+                }
+            }
         }
     }
 }

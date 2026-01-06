@@ -41,6 +41,7 @@ import io.embrace.android.embracesdk.internal.injection.markSdkInitComplete
 import io.embrace.android.embracesdk.internal.injection.postInit
 import io.embrace.android.embracesdk.internal.injection.postLoadInstrumentation
 import io.embrace.android.embracesdk.internal.injection.registerListeners
+import io.embrace.android.embracesdk.internal.injection.setupMetadataProvider
 import io.embrace.android.embracesdk.internal.injection.triggerPayloadSend
 import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkCaptureDataSource
 import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkRequestDataSource
@@ -126,6 +127,7 @@ internal class EmbraceImpl(
             bootstrapper.postLoadInstrumentation()
             bootstrapper.triggerPayloadSend()
             bootstrapper.markSdkInitComplete()
+            bootstrapper.setupMetadataProvider()
             end()
         } catch (ignored: Throwable) {
             Log.w("Embrace", "Failed to initialize Embrace SDK", ignored)

@@ -1,13 +1,8 @@
 package io.embrace.android.embracesdk.benchmark
 
 import io.embrace.android.embracesdk.internal.SystemInfo
-import io.embrace.android.embracesdk.internal.arch.SessionChangeListener
-import io.embrace.android.embracesdk.internal.arch.SessionEndListener
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.arch.destination.TelemetryDestinationImpl
-import io.embrace.android.embracesdk.internal.arch.state.AppState
-import io.embrace.android.embracesdk.internal.arch.state.AppStateListener
-import io.embrace.android.embracesdk.internal.arch.state.AppStateTracker
 import io.embrace.android.embracesdk.internal.clock.NormalizedIntervalClock
 import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.InstrumentedConfig
@@ -19,8 +14,6 @@ import io.embrace.android.embracesdk.internal.otel.logs.LogSink
 import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
-import io.embrace.android.embracesdk.internal.session.SessionToken
-import io.embrace.android.embracesdk.internal.session.id.SessionTracker
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
@@ -39,16 +32,11 @@ internal class TelemetryDestinationHarness {
     val spanService = otelModule.spanService
     val currentSessionSpan = otelModule.currentSessionSpan
 
-    val sessionProperties: MutableMap<String, String> = mutableMapOf()
-
     val destination: TelemetryDestination = TelemetryDestinationImpl(
-        sessionTracker = NoopSessionTracker,
-        appStateTracker = NoopAppStateTracker,
         clock = initModule.clock,
         spanService = spanService,
         eventService = otelModule.eventService,
         currentSessionSpan = otelModule.currentSessionSpan,
-        sessionPropertiesProvider = sessionProperties::toMap
     )
 
     private class TestInitModule : InitModule {
@@ -72,27 +60,5 @@ internal class TelemetryDestinationHarness {
         }
 
         override fun getAndClearTelemetryAttributes(): Map<String, String> = emptyMap()
-    }
-
-    private object NoopSessionTracker : SessionTracker {
-        override fun getActiveSession(): SessionToken? = null
-        override fun newActiveSession(
-            endSessionCallback: SessionToken.() -> Unit,
-            startSessionCallback: () -> SessionToken?,
-            postTransitionAppState: AppState,
-        ): SessionToken? = null
-
-        override fun addSessionChangeListener(listener: SessionChangeListener) {
-        }
-
-        override fun addSessionEndListener(listener: SessionEndListener) {
-        }
-    }
-
-    private object NoopAppStateTracker : AppStateTracker {
-        override fun addListener(listener: AppStateListener) {
-        }
-
-        override fun getAppState(): AppState = AppState.FOREGROUND
     }
 }

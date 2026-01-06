@@ -28,7 +28,7 @@ class FakeInitModule(
     override var instrumentedConfig: InstrumentedConfig = FakeInstrumentedConfig(),
 ) : InitModule by initModule {
 
-    val openTelemetryModule: OpenTelemetryModule by lazy { OpenTelemetryModuleImpl(initModule = initModule) }
+    val openTelemetryModule: OpenTelemetryModule by lazy { OpenTelemetryModuleImpl(initModule = this) }
 
     fun getFakeClock(): FakeClock? = clock as? FakeClock
 }

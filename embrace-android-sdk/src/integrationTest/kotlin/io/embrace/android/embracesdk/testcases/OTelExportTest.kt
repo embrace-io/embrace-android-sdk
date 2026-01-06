@@ -6,8 +6,8 @@ import io.embrace.android.embracesdk.fakes.FakeLogRecordExporter
 import io.embrace.android.embracesdk.fakes.FakeSpanExporter
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.config.FakeProjectConfig
-import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.toStringMap
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
@@ -160,6 +160,34 @@ internal class OTelExportTest {
             otelExportAssertion = {
                 awaitSpans(1) { it.name == spanName }
                 awaitLogs(1) { it.body.asString() == logMessage }
+            }
+        )
+    }
+
+    @Test
+    fun `service name added as resource attribute`() {
+        val spanExporter = FakeSpanExporter()
+        val packageName = "default-package-name"
+
+        testRule.runTest(
+            instrumentedConfig = FakeInstrumentedConfig(
+                project = FakeProjectConfig(packageName = packageName)
+            ),
+            preSdkStartAction = {
+                embrace.addSpanExporter(spanExporter)
+            },
+            testCaseAction = {
+                recordSession { }
+            },
+            assertAction = {
+                val span = spanExporter.exportedSpans.first()
+                assertEquals(packageName, span.resource.attributes[ServiceAttributes.SERVICE_NAME])
+
+            },
+            otelExportAssertion = {
+                awaitSpans(1) {
+                    it.name == "emb-session" && it.resource.attributes.toStringMap()[ServiceAttributes.SERVICE_NAME] == packageName
+                }
             }
         )
     }

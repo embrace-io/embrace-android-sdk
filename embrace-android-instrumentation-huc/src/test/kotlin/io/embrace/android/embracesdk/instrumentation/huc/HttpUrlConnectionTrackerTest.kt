@@ -2,9 +2,9 @@ package io.embrace.android.embracesdk.instrumentation.huc
 
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeEmbraceInternalInterface
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
+import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
 import io.embrace.android.embracesdk.internal.api.NetworkRequestApi
 import org.junit.Assert.assertEquals
@@ -24,7 +24,7 @@ internal class HttpUrlConnectionTrackerTest {
 
     @Before
     fun setup() {
-        args = FakeInstrumentationArgs(ApplicationProvider.getApplicationContext(), logger = FakeEmbLogger(false))
+        args = FakeInstrumentationArgs(ApplicationProvider.getApplicationContext(), logger = FakeInternalLogger(false))
         fakeNetworkingApi = FakeNetworkRequestApi()
         fakeInternalInterface = FakeEmbraceInternalInterface()
     }

@@ -10,13 +10,13 @@ import io.embrace.android.embracesdk.internal.instrumentation.startup.activity.U
 import io.embrace.android.embracesdk.internal.instrumentation.startup.activity.UiLoadTraceEmitter
 import io.embrace.android.embracesdk.internal.instrumentation.startup.activity.createActivityLoadEventEmitter
 import io.embrace.android.embracesdk.internal.instrumentation.startup.ui.createDrawEventEmitter
-import io.embrace.android.embracesdk.internal.logging.EmbLogger
+import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
 
 class DataCaptureServiceModuleImpl(
     clock: Clock,
-    logger: EmbLogger,
+    logger: InternalLogger,
     destination: TelemetryDestination,
     configService: ConfigService,
     versionChecker: VersionChecker = BuildVersionChecker,

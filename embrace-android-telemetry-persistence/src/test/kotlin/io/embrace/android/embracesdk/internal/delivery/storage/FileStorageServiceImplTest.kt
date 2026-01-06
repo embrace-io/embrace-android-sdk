@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.internal.delivery.storage
 
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock.Companion.DEFAULT_FAKE_CURRENT_TIME
-import io.embrace.android.embracesdk.fakes.FakeEmbLogger
+import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.internal.delivery.PayloadType
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
@@ -22,7 +22,7 @@ class FileStorageServiceImplTest {
 
     private lateinit var outputDir: File
     private lateinit var service: FileStorageService
-    private lateinit var logger: FakeEmbLogger
+    private lateinit var logger: FakeInternalLogger
     private lateinit var executor: BlockingScheduledExecutorService
 
     @Before
@@ -30,7 +30,7 @@ class FileStorageServiceImplTest {
         outputDir = Files.createTempDirectory("temp").toFile().apply {
             mkdirs()
         }
-        logger = FakeEmbLogger(throwOnInternalError = false)
+        logger = FakeInternalLogger(throwOnInternalError = false)
         executor = BlockingScheduledExecutorService()
         service = FileStorageServiceImpl(
             lazy { outputDir },

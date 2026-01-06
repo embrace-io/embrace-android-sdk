@@ -8,8 +8,8 @@ import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
 import io.embrace.android.embracesdk.internal.handler.MainThreadHandler
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.jni.JniDelegate
-import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
@@ -32,7 +32,7 @@ internal class NativeCrashHandlerInstallerImpl(
     private val markerFilePath = args.crashMarkerFile.absolutePath
 
     private val configService: ConfigService = args.configService
-    private val logger: EmbLogger = args.logger
+    private val logger: InternalLogger = args.logger
     private val backgroundWorker: BackgroundWorker =
         args.backgroundWorker(Worker.Background.IoRegWorker)
     private val clock: Clock = args.clock

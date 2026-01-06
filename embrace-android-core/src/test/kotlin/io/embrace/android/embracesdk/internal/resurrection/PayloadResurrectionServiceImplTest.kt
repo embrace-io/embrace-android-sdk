@@ -9,9 +9,9 @@ import io.embrace.android.embracesdk.assertions.getLastHeartbeatTimeMs
 import io.embrace.android.embracesdk.assertions.getSessionId
 import io.embrace.android.embracesdk.assertions.getStartTime
 import io.embrace.android.embracesdk.fakes.FakeCachedLogEnvelopeStore
-import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
 import io.embrace.android.embracesdk.fakes.FakeIntakeService
+import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakeNativeCrashService
 import io.embrace.android.embracesdk.fakes.FakePayloadStorageService
 import io.embrace.android.embracesdk.fakes.FakeSpanData.Companion.perfSpanSnapshot
@@ -56,7 +56,7 @@ class PayloadResurrectionServiceImplTest {
     private lateinit var cacheStorageService: FakePayloadStorageService
     private lateinit var cachedLogEnvelopeStore: FakeCachedLogEnvelopeStore
     private lateinit var nativeCrashService: FakeNativeCrashService
-    private lateinit var logger: FakeEmbLogger
+    private lateinit var logger: FakeInternalLogger
     private lateinit var serializer: TestPlatformSerializer
     private lateinit var resurrectionService: PayloadResurrectionServiceImpl
 
@@ -66,7 +66,7 @@ class PayloadResurrectionServiceImplTest {
         cacheStorageService = FakePayloadStorageService()
         cachedLogEnvelopeStore = FakeCachedLogEnvelopeStore()
         nativeCrashService = FakeNativeCrashService()
-        logger = FakeEmbLogger(false)
+        logger = FakeInternalLogger(false)
         serializer = TestPlatformSerializer()
         resurrectionService = PayloadResurrectionServiceImpl(
             intakeService = intakeService,

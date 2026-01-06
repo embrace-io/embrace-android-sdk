@@ -11,8 +11,8 @@ import android.os.storage.StorageManager
 import androidx.annotation.RequiresApi
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.envelope.resource.EnvelopeResourceSource
-import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 
@@ -27,7 +27,7 @@ internal class EmbraceMetadataService(
     private val configService: ConfigService,
     private val store: KeyValueStore,
     private val metadataBackgroundWorker: BackgroundWorker,
-    private val logger: EmbLogger,
+    private val logger: InternalLogger,
 ) : MetadataService {
 
     private val res by lazy { resourceSource.value.getEnvelopeResource() }

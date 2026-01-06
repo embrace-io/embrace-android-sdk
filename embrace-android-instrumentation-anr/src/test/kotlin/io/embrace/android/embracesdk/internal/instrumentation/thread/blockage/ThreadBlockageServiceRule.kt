@@ -4,8 +4,8 @@ import android.os.Looper
 import io.embrace.android.embracesdk.fakes.FakeAppStateTracker
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
-import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
+import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.behavior.FakeThreadBlockageBehavior
 import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.utils.Provider
@@ -24,7 +24,7 @@ internal class ThreadBlockageServiceRule<T : ScheduledExecutorService>(
     val clock: FakeClock = FakeClock(),
     private val scheduledExecutorSupplier: Provider<T>,
 ) : ExternalResource() {
-    val logger = FakeEmbLogger()
+    val logger = FakeInternalLogger()
 
     lateinit var fakeConfigService: FakeConfigService
     lateinit var fakeAppStateTracker: FakeAppStateTracker

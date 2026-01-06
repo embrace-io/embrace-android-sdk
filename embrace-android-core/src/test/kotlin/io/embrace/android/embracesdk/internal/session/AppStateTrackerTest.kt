@@ -6,7 +6,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.testing.TestLifecycleOwner
 import io.embrace.android.embracesdk.fakes.FakeAppStateListener
 import io.embrace.android.embracesdk.fakes.FakeClock
-import io.embrace.android.embracesdk.fakes.FakeEmbLogger
+import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakeSessionOrchestrator
 import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.arch.state.AppStateListener
@@ -52,7 +52,7 @@ internal class AppStateTrackerTest {
         }
     }
 
-    private lateinit var fakeEmbLogger: FakeEmbLogger
+    private lateinit var fakeEmbLogger: FakeInternalLogger
 
     @Before
     fun before() {
@@ -62,7 +62,7 @@ internal class AppStateTrackerTest {
             constructorMocks = false,
             staticMocks = false
         )
-        fakeEmbLogger = FakeEmbLogger()
+        fakeEmbLogger = FakeInternalLogger()
         stateService = AppStateTrackerImpl(
             fakeEmbLogger,
             TestLifecycleOwner(Lifecycle.State.INITIALIZED)

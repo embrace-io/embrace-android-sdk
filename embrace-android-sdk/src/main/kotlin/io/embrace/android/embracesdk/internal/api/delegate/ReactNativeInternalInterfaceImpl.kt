@@ -10,7 +10,7 @@ import io.embrace.android.embracesdk.internal.capture.metadata.RnBundleIdTracker
 import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.instrumentation.crash.jvm.JvmCrashDataSource
-import io.embrace.android.embracesdk.internal.logging.EmbLogger
+import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.payload.JsException
 import io.embrace.android.embracesdk.internal.utils.encodeToUTF8String
 
@@ -20,7 +20,7 @@ internal class ReactNativeInternalInterfaceImpl(
     private val bootstrapper: ModuleInitBootstrapper,
     private val rnBundleIdTracker: RnBundleIdTracker,
     private val hostedSdkVersionInfo: HostedSdkVersionInfo,
-    private val logger: EmbLogger,
+    private val logger: InternalLogger,
 ) : EmbraceInternalInterface by impl, ReactNativeInternalInterface {
 
     override fun logUnhandledJsException(

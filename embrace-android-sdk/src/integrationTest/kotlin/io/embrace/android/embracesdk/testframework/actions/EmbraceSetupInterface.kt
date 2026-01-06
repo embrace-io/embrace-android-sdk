@@ -6,7 +6,7 @@ import androidx.lifecycle.testing.TestLifecycleOwner
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.core.BuildConfig
 import io.embrace.android.embracesdk.fakes.FakeClock
-import io.embrace.android.embracesdk.fakes.FakeEmbLogger
+import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakeJniDelegate
 import io.embrace.android.embracesdk.fakes.FakeNetworkConnectivityService
 import io.embrace.android.embracesdk.fakes.FakePayloadStorageService
@@ -78,7 +78,7 @@ internal class EmbraceSetupInterface(
 
     private val fakeInitModule: FakeInitModule = FakeInitModule(
         clock = fakeClock,
-        logger = FakeEmbLogger(ignoredErrors = ignoredInternalErrors),
+        logger = FakeInternalLogger(ignoredErrors = ignoredInternalErrors),
     )
 
     private val workerThreadModule: WorkerThreadModule = initWorkerThreadModule(
@@ -218,7 +218,7 @@ internal class EmbraceSetupInterface(
 
     fun getCurrentSessionSpan(): CurrentSessionSpan = fakeInitModule.openTelemetryModule.currentSessionSpan
 
-    fun getEmbLogger(): FakeEmbLogger = fakeInitModule.logger as FakeEmbLogger
+    fun getEmbLogger(): FakeInternalLogger = fakeInitModule.logger as FakeInternalLogger
 
     fun getFakedWorkerExecutor(): BlockingScheduledExecutorService = (workerThreadModule as FakeWorkerThreadModule).executor
 

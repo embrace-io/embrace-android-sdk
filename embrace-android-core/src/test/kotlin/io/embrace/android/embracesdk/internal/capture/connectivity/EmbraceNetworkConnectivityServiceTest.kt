@@ -7,8 +7,8 @@ import android.net.ConnectivityManager
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
 import io.embrace.android.embracesdk.internal.comms.delivery.NetworkStatus
-import io.embrace.android.embracesdk.internal.logging.EmbLogger
-import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
+import io.embrace.android.embracesdk.internal.logging.InternalLogger
+import io.embrace.android.embracesdk.internal.logging.InternalLoggerImpl
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.mockk.clearAllMocks
 import io.mockk.every
@@ -30,7 +30,7 @@ internal class EmbraceNetworkConnectivityServiceTest {
 
     companion object {
         private lateinit var context: Context
-        private lateinit var logger: EmbLogger
+        private lateinit var logger: InternalLogger
         private lateinit var mockConnectivityManager: ConnectivityManager
         private lateinit var worker: BackgroundWorker
         private lateinit var fakeClock: FakeClock
@@ -42,7 +42,7 @@ internal class EmbraceNetworkConnectivityServiceTest {
         @JvmStatic
         fun setupBeforeAll() {
             context = mockk(relaxed = true)
-            logger = EmbLoggerImpl()
+            logger = InternalLoggerImpl()
             mockConnectivityManager = mockk()
             fakeClock = FakeClock()
             worker = fakeBackgroundWorker()

@@ -5,7 +5,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.arch.state.AppStateTracker
 import io.embrace.android.embracesdk.internal.clock.Clock
-import io.embrace.android.embracesdk.internal.logging.EmbLogger
+import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
@@ -24,7 +24,7 @@ internal class SessionPayloadSourceImpl(
     private val otelPayloadMapper: OtelPayloadMapper?,
     private val appStateTracker: AppStateTracker,
     private val clock: Clock,
-    private val logger: EmbLogger,
+    private val logger: InternalLogger,
 ) : SessionPayloadSource {
 
     override fun getSessionPayload(

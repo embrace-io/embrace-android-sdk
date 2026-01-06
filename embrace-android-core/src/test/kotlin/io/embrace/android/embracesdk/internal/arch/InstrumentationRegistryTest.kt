@@ -8,7 +8,7 @@ import io.embrace.android.embracesdk.fakes.FakeDataSource
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationProvider
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState
-import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
+import io.embrace.android.embracesdk.internal.logging.InternalLoggerImpl
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
@@ -29,7 +29,7 @@ internal class InstrumentationRegistryTest {
         configService = FakeConfigService()
         executorService = BlockingScheduledExecutorService(blockingMode = false)
         registry = InstrumentationRegistryImpl(
-            EmbLoggerImpl(),
+            InternalLoggerImpl(),
         )
     }
 

@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.testcases.features
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.getLogWithAttributeValue
-import io.embrace.android.embracesdk.internal.logging.EmbLogger
+import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
@@ -21,7 +21,7 @@ internal class InternalErrorLogTest {
 
     @Test
     fun `internal error log delivered`() {
-        lateinit var logger: EmbLogger
+        lateinit var logger: InternalLogger
 
         testRule.runTest(
             setupAction = {

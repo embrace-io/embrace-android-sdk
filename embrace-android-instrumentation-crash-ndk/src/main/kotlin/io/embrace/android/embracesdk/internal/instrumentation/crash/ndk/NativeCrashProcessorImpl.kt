@@ -5,8 +5,8 @@ import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.storage.FileStorageService
 import io.embrace.android.embracesdk.internal.delivery.storage.FileStorageServiceImpl
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.jni.JniDelegate
-import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.worker.PriorityWorker
@@ -22,7 +22,7 @@ internal class NativeCrashProcessorImpl(
     worker: PriorityWorker<StoredTelemetryMetadata>,
 ) : NativeCrashProcessor {
 
-    private val logger: EmbLogger = args.logger
+    private val logger: InternalLogger = args.logger
     private val serializer: PlatformSerializer = args.serializer
     private val fileStorageService: FileStorageService = FileStorageServiceImpl(
         outputDir,

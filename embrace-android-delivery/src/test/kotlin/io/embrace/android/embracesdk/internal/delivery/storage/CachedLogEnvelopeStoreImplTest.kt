@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.delivery.storage
 
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
-import io.embrace.android.embracesdk.fakes.FakeEmbLogger
+import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.fakes.fakeEnvelopeMetadata
 import io.embrace.android.embracesdk.fakes.fakeEnvelopeResource
@@ -19,7 +19,7 @@ class CachedLogEnvelopeStoreImplTest {
 
     private lateinit var outputDir: File
     private lateinit var store: CachedLogEnvelopeStoreImpl
-    private lateinit var logger: FakeEmbLogger
+    private lateinit var logger: FakeInternalLogger
     private lateinit var serializer: PlatformSerializer
     private lateinit var executor: BlockingScheduledExecutorService
 
@@ -28,7 +28,7 @@ class CachedLogEnvelopeStoreImplTest {
         outputDir = Files.createTempDirectory("temp").toFile().apply {
             mkdirs()
         }
-        logger = FakeEmbLogger()
+        logger = FakeInternalLogger()
         serializer = TestPlatformSerializer()
         executor = BlockingScheduledExecutorService()
 

@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.delivery.execution
 
-import io.embrace.android.embracesdk.fakes.FakeEmbLogger
+import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.internal.delivery.PayloadType
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
 import okhttp3.Headers.Companion.toHeaders
@@ -22,7 +22,7 @@ class OkHttpRequestExecutionServiceTest {
     private lateinit var requestExecutionService: OkHttpRequestExecutionService
     private lateinit var server: MockWebServer
     private lateinit var testServerUrl: String
-    private lateinit var logger: FakeEmbLogger
+    private lateinit var logger: FakeInternalLogger
     private lateinit var client: OkHttpClient
 
     private val testAppId = "test_app_id"
@@ -46,7 +46,7 @@ class OkHttpRequestExecutionServiceTest {
 
     @Before
     fun setUp() {
-        logger = FakeEmbLogger()
+        logger = FakeInternalLogger()
         server = MockWebServer().apply {
             protocols = listOf(Protocol.HTTP_2, Protocol.HTTP_1_1)
             start()

@@ -9,8 +9,8 @@ import io.embrace.android.embracesdk.internal.delivery.execution.ExecutionResult
 import io.embrace.android.embracesdk.internal.delivery.execution.RequestExecutionService
 import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageService
 import io.embrace.android.embracesdk.internal.delivery.storedTelemetryComparator
-import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import java.io.InputStream
 import java.util.Collections
@@ -25,7 +25,7 @@ class SchedulingServiceImpl(
     private val schedulingWorker: BackgroundWorker,
     private val deliveryWorker: BackgroundWorker,
     private val clock: Clock,
-    private val logger: EmbLogger,
+    private val logger: InternalLogger,
     private val deliveryTracer: DeliveryTracer? = null,
 ) : SchedulingService {
 

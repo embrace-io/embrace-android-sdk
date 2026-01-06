@@ -5,8 +5,8 @@ import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.clock.NormalizedIntervalClock
 import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.InstrumentedConfig
-import io.embrace.android.embracesdk.internal.logging.EmbLogger
-import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
+import io.embrace.android.embracesdk.internal.logging.InternalLogger
+import io.embrace.android.embracesdk.internal.logging.InternalLoggerImpl
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.telemetry.EmbraceTelemetryService
@@ -17,7 +17,7 @@ import okhttp3.Protocol
 import java.util.concurrent.TimeUnit
 
 class InitModuleImpl(
-    override val logger: EmbLogger = EmbLoggerImpl(),
+    override val logger: InternalLogger = InternalLoggerImpl(),
     override val clock: Clock = NormalizedIntervalClock(),
     override val systemInfo: SystemInfo = SystemInfo(),
 ) : InitModule {

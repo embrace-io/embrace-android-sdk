@@ -2,8 +2,8 @@ package io.embrace.android.embracesdk.instrumentation.huc
 
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
+import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.behavior.FakeNetworkSpanForwardingBehavior
 import io.embrace.android.embracesdk.fixtures.fakeCompleteEmbraceNetworkRequest
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
@@ -23,7 +23,7 @@ internal class InternalNetworkApiImplTest {
 
     @Before
     fun setup() {
-        args = FakeInstrumentationArgs(ApplicationProvider.getApplicationContext(), logger = FakeEmbLogger(false))
+        args = FakeInstrumentationArgs(ApplicationProvider.getApplicationContext(), logger = FakeInternalLogger(false))
         requestDataSource = FakeNetworkRequestDataSource()
     }
 

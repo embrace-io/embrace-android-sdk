@@ -13,7 +13,7 @@ import io.embrace.android.embracesdk.fakes.injection.FakePayloadSourceModule
 import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.internal.capture.user.UserService
-import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
+import io.embrace.android.embracesdk.internal.logging.InternalLoggerImpl
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
@@ -98,7 +98,7 @@ internal class PayloadFactorySessionTest {
         appStateTracker.state = AppState.BACKGROUND
 
         val payloadSourceModule = FakePayloadSourceModule()
-        val logger = EmbLoggerImpl()
+        val logger = InternalLoggerImpl()
         val collator = PayloadMessageCollatorImpl(
             payloadSourceModule.sessionEnvelopeSource,
             store,

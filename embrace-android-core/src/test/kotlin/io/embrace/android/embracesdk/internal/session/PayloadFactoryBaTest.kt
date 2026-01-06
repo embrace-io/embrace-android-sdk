@@ -19,7 +19,7 @@ import io.embrace.android.embracesdk.internal.capture.user.UserService
 import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.envelope.session.SessionPayloadSourceImpl
-import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
+import io.embrace.android.embracesdk.internal.logging.InternalLoggerImpl
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
@@ -109,7 +109,7 @@ internal class PayloadFactoryBaTest {
     }
 
     private fun createService(createInitialSession: Boolean = true): PayloadFactoryImpl {
-        val logger = EmbLoggerImpl()
+        val logger = InternalLoggerImpl()
         val payloadSourceModule = FakePayloadSourceModule(
             sessionPayloadSource = SessionPayloadSourceImpl(
                 null,

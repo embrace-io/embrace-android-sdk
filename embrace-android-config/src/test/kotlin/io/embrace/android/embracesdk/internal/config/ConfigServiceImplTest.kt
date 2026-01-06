@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.config
 
-import io.embrace.android.embracesdk.fakes.FakeEmbLogger
+import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.config.FakeProjectConfig
@@ -118,7 +118,7 @@ internal class ConfigServiceImplTest {
         sdkVersion = "1.2.3",
         apiLevel = 36,
         filesDir = Files.createTempDirectory("tmp").toFile(),
-        logger = FakeEmbLogger(),
+        logger = FakeInternalLogger(),
         hasConfiguredOtelExporters = hasConfiguredExporters,
     )
 }

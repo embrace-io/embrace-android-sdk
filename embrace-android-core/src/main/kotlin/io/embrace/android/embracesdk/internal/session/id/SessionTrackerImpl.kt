@@ -5,14 +5,14 @@ import android.os.Build
 import io.embrace.android.embracesdk.internal.arch.SessionChangeListener
 import io.embrace.android.embracesdk.internal.arch.SessionEndListener
 import io.embrace.android.embracesdk.internal.arch.state.AppState
-import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.session.SessionToken
 import java.util.concurrent.CopyOnWriteArraySet
 
 internal class SessionTrackerImpl(
     private val activityManager: ActivityManager?,
-    private val logger: EmbLogger,
+    private val logger: InternalLogger,
 ) : SessionTracker {
 
     private val sessionChangeListeners = CopyOnWriteArraySet<SessionChangeListener>()

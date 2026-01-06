@@ -4,9 +4,9 @@ import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.EmbraceImpl
-import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeEmbraceInternalInterface
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationModule
+import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.fakes.FakeRnBundleIdTracker
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
@@ -33,7 +33,7 @@ internal class ReactNativeInternalInterfaceImplTest {
     private lateinit var store: FakeKeyValueStore
     private lateinit var bootstrapper: ModuleInitBootstrapper
     private lateinit var rnBundleIdTracker: FakeRnBundleIdTracker
-    private lateinit var logger: FakeEmbLogger
+    private lateinit var logger: FakeInternalLogger
     private lateinit var context: Context
     private lateinit var hostedSdkVersionInfo: HostedSdkVersionInfo
 
@@ -43,7 +43,7 @@ internal class ReactNativeInternalInterfaceImplTest {
         store = FakeKeyValueStore()
         rnBundleIdTracker = FakeRnBundleIdTracker()
         hostedSdkVersionInfo = ReactNativeSdkVersionInfo(store)
-        logger = FakeEmbLogger(false)
+        logger = FakeInternalLogger(false)
         context = ApplicationProvider.getApplicationContext()
         bootstrapper = ModuleInitBootstrapper(
             FakeInitModule(),

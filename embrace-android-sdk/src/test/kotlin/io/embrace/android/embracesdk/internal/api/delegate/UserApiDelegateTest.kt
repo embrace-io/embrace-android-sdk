@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.internal.api.delegate
 
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.fakes.FakeEmbLogger
+import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
@@ -34,7 +34,7 @@ internal class UserApiDelegateTest {
             }
         )
         moduleInitBootstrapper.init(ApplicationProvider.getApplicationContext())
-        val sdkCallChecker = SdkCallChecker(FakeEmbLogger(), FakeTelemetryService())
+        val sdkCallChecker = SdkCallChecker(FakeInternalLogger(), FakeTelemetryService())
         sdkCallChecker.started.set(true)
         delegate = UserApiDelegate(moduleInitBootstrapper, sdkCallChecker)
     }

@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.internal.capture.user
 
 import io.embrace.android.embracesdk.internal.clock.Clock
-import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.payload.UserInfo
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
@@ -14,7 +14,7 @@ import java.util.regex.Pattern
 internal class EmbraceUserService(
     private val impl: KeyValueStore,
     private val clock: Clock,
-    private val logger: EmbLogger,
+    private val logger: InternalLogger,
 ) : UserService {
 
     /**

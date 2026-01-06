@@ -6,8 +6,8 @@ import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
 import io.embrace.android.embracesdk.internal.delivery.scheduling.SchedulingService
 import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageService
 import io.embrace.android.embracesdk.internal.delivery.storage.storeAttachment
-import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.worker.PriorityWorker
@@ -18,7 +18,7 @@ class IntakeServiceImpl(
     private val schedulingService: SchedulingService,
     private val payloadStorageService: PayloadStorageService,
     private val cacheStorageService: PayloadStorageService,
-    private val logger: EmbLogger,
+    private val logger: InternalLogger,
     private val serializer: PlatformSerializer,
     private val worker: PriorityWorker<StoredTelemetryMetadata>,
     private val deliveryTracer: DeliveryTracer? = null,

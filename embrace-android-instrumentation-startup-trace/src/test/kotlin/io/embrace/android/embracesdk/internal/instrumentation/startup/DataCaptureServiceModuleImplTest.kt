@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.internal.instrumentation.startup
 
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
-import io.embrace.android.embracesdk.fakes.FakeEmbLogger
+import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
 import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
 import org.junit.Assert.assertNotNull
@@ -15,7 +15,7 @@ internal class DataCaptureServiceModuleImplTest {
     fun testDefaultImplementations() {
         val module = DataCaptureServiceModuleImpl(
             FakeClock(),
-            FakeEmbLogger(),
+            FakeInternalLogger(),
             FakeTelemetryDestination(),
             FakeConfigService(),
         )
@@ -30,7 +30,7 @@ internal class DataCaptureServiceModuleImplTest {
     fun `disable ui load performance capture`() {
         val module = DataCaptureServiceModuleImpl(
             FakeClock(),
-            FakeEmbLogger(),
+            FakeInternalLogger(),
             FakeTelemetryDestination(),
             FakeConfigService(
                 autoDataCaptureBehavior = FakeAutoDataCaptureBehavior(uiLoadTracingEnabled = false)
@@ -45,7 +45,7 @@ internal class DataCaptureServiceModuleImplTest {
     fun `enable only selected ui load performance capture`() {
         val module = DataCaptureServiceModuleImpl(
             FakeClock(),
-            FakeEmbLogger(),
+            FakeInternalLogger(),
             FakeTelemetryDestination(),
             FakeConfigService(
                 autoDataCaptureBehavior = FakeAutoDataCaptureBehavior(uiLoadTracingTraceAll = false)

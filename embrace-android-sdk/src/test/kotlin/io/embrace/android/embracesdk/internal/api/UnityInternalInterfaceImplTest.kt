@@ -5,7 +5,7 @@ import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.internal.api.delegate.UnityInternalInterfaceImpl
 import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.internal.envelope.metadata.UnitySdkVersionInfo
-import io.embrace.android.embracesdk.internal.logging.EmbLogger
+import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -19,7 +19,7 @@ internal class UnityInternalInterfaceImplTest {
     private lateinit var impl: UnityInternalInterfaceImpl
     private lateinit var embrace: EmbraceImpl
     private lateinit var store: FakeKeyValueStore
-    private lateinit var logger: EmbLogger
+    private lateinit var logger: InternalLogger
 
     @Before
     fun setUp() {

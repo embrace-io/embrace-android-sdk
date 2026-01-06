@@ -4,8 +4,8 @@ import io.embrace.android.embracesdk.internal.arch.attrs.EmbraceAttributeKey
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSource
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState
 import io.embrace.android.embracesdk.internal.arch.datasource.StateDataSource
-import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.reflect.KClass
 
@@ -14,7 +14,7 @@ import kotlin.reflect.KClass
  * place to coordinate everything in one place.
  */
 class InstrumentationRegistryImpl(
-    private val logger: EmbLogger,
+    private val logger: InternalLogger,
 ) : InstrumentationRegistry {
 
     private val dataSourceStates = CopyOnWriteArrayList<DataSourceState<*>>()

@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.session.caching
 
-import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
@@ -12,7 +12,7 @@ import java.util.concurrent.TimeUnit
 
 class PeriodicSessionCacher(
     private val worker: BackgroundWorker,
-    private val logger: EmbLogger,
+    private val logger: InternalLogger,
     private val intervalMs: Long = 2000,
 ) {
 

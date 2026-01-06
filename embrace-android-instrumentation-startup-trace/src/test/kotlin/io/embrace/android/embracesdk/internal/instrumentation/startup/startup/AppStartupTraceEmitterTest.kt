@@ -4,7 +4,7 @@ import android.os.Build.VERSION_CODES
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeClock.Companion.DEFAULT_FAKE_CURRENT_TIME
-import io.embrace.android.embracesdk.fakes.FakeEmbLogger
+import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakeProcessInfo
 import io.embrace.android.embracesdk.fakes.FakeSpanToken
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
@@ -60,7 +60,7 @@ internal class AppStartupTraceEmitterTest {
 
     private lateinit var clock: FakeClock
     private lateinit var destination: FakeTelemetryDestination
-    private lateinit var logger: FakeEmbLogger
+    private lateinit var logger: FakeInternalLogger
 
     @Before
     fun setUp() {
@@ -68,7 +68,7 @@ internal class AppStartupTraceEmitterTest {
         destination = FakeTelemetryDestination()
         startupService = StartupServiceImpl(destination)
         clock.tick(100L)
-        logger = FakeEmbLogger(false)
+        logger = FakeInternalLogger(false)
         firePreAndPostCreate = hasPrePostEvents(BuildVersionChecker)
         trackProcessStart = BuildVersionChecker.isAtLeast(VERSION_CODES.N)
         hasRenderEvent = hasRenderEvent(BuildVersionChecker)

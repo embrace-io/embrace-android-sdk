@@ -4,8 +4,8 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeConfigService
-import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
+import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakeJniDelegate
 import io.embrace.android.embracesdk.fakes.FakeMainThreadHandler
 import io.embrace.android.embracesdk.fakes.FakeSharedObjectLoader
@@ -50,7 +50,7 @@ class NativeCrashHandlerInstallerImplTest {
         args = FakeInstrumentationArgs(
             ApplicationProvider.getApplicationContext(),
             configService = fakeConfigService,
-            logger = FakeEmbLogger(false),
+            logger = FakeInternalLogger(false),
             backgroundWorkerSupplier = { BackgroundWorker(executorService) },
             sessionIdSupplier = { sessionId },
             processIdentifier = "pid"

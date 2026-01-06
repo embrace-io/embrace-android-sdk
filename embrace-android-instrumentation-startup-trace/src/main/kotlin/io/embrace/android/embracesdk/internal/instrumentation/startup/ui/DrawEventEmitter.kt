@@ -4,7 +4,7 @@ import android.app.Activity
 import android.os.Build
 import android.os.Build.VERSION_CODES
 import io.embrace.android.embracesdk.internal.handler.AndroidMainThreadHandler
-import io.embrace.android.embracesdk.internal.logging.EmbLogger
+import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
 
 /**
@@ -29,7 +29,7 @@ interface DrawEventEmitter {
 
 internal fun createDrawEventEmitter(
     versionChecker: VersionChecker,
-    logger: EmbLogger,
+    logger: InternalLogger,
 ): DrawEventEmitter? = if (supportFrameCommitCallback(versionChecker)) {
     FirstDrawDetector(logger)
 } else if (hasRenderEvent(versionChecker)) {

@@ -5,8 +5,8 @@ import android.os.Build.VERSION_CODES.TIRAMISU
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
-import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationModule
+import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistry
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState
@@ -30,7 +30,7 @@ import org.robolectric.annotation.Config
 internal class ModuleInitBootstrapperTest {
 
     private lateinit var moduleInitBootstrapper: ModuleInitBootstrapper
-    private lateinit var logger: FakeEmbLogger
+    private lateinit var logger: FakeInternalLogger
     private lateinit var clock: Clock
     private lateinit var coreModule: FakeCoreModule
     private lateinit var context: Context
@@ -38,7 +38,7 @@ internal class ModuleInitBootstrapperTest {
 
     @Before
     fun setup() {
-        logger = FakeEmbLogger(false)
+        logger = FakeInternalLogger(false)
         clock = FakeClock()
         coreModule = FakeCoreModule()
         val application = RuntimeEnvironment.getApplication()

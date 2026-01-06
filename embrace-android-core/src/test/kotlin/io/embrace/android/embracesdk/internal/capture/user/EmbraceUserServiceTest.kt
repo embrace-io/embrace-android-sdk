@@ -1,9 +1,9 @@
 package io.embrace.android.embracesdk.internal.capture.user
 
 import io.embrace.android.embracesdk.fakes.FakeClock
-import io.embrace.android.embracesdk.fakes.FakeEmbLogger
+import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
-import io.embrace.android.embracesdk.internal.logging.EmbLogger
+import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.payload.UserInfo
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -30,12 +30,12 @@ internal class EmbraceUserServiceTest {
 
     private lateinit var service: EmbraceUserService
     private lateinit var store: FakeKeyValueStore
-    private lateinit var logger: EmbLogger
+    private lateinit var logger: InternalLogger
     private lateinit var clock: FakeClock
 
     @Before
     fun setUp() {
-        logger = FakeEmbLogger()
+        logger = FakeInternalLogger()
         clock = FakeClock()
         store = FakeKeyValueStore()
 

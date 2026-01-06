@@ -22,8 +22,8 @@ import io.embrace.android.embracesdk.internal.config.source.OkHttpRemoteConfigSo
 import io.embrace.android.embracesdk.internal.config.source.RemoteConfigSource
 import io.embrace.android.embracesdk.internal.config.store.RemoteConfigStore
 import io.embrace.android.embracesdk.internal.config.store.RemoteConfigStoreImpl
-import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.payload.NativeSymbols
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
@@ -47,7 +47,7 @@ class ConfigServiceImpl(
     private val sdkVersion: String,
     private val apiLevel: Int,
     private val filesDir: File,
-    private val logger: EmbLogger,
+    private val logger: InternalLogger,
     private val hasConfiguredOtelExporters: () -> Boolean,
 ) : ConfigService {
 

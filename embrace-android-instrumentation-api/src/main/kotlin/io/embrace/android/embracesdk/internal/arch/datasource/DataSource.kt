@@ -12,7 +12,7 @@ interface DataSource {
 
     /**
      * The name used to identify this data source for telemetry and tracking purposes.
-     * Should be in snake_case format (e.g., "tap_data_source").
+     * Should be in snake_case format and be unique (e.g., "tap_data_source").
      */
     val instrumentationName: String
 

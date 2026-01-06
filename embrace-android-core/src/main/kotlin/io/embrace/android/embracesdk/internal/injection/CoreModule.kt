@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.internal.injection
 
 import android.app.Application
 import android.content.Context
-import io.embrace.android.embracesdk.internal.registry.ServiceRegistry
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.store.OrdinalStore
 
@@ -26,11 +25,6 @@ interface CoreModule {
      * Reference to the current application.
      */
     val application: Application
-
-    /**
-     * Returns the service registry. This is used to register services that need to be closed
-     */
-    val serviceRegistry: ServiceRegistry
 
     val store: KeyValueStore
     val ordinalStore: OrdinalStore

@@ -7,7 +7,6 @@ import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.fakes.FakeOrdinalStore
 import io.embrace.android.embracesdk.internal.config.BuildInfo
 import io.embrace.android.embracesdk.internal.injection.CoreModule
-import io.embrace.android.embracesdk.internal.registry.ServiceRegistry
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.store.OrdinalStore
 import io.mockk.every
@@ -25,7 +24,6 @@ class FakeCoreModule(
         } else RuntimeEnvironment.getApplication(),
     override val context: Context =
         if (isMockKMock(application)) getMockedContext() else application.applicationContext,
-    override val serviceRegistry: ServiceRegistry = ServiceRegistry(),
     override val store: KeyValueStore = FakeKeyValueStore(),
     override val ordinalStore: OrdinalStore = FakeOrdinalStore(),
     override val sdkStartTime: Long = -1,

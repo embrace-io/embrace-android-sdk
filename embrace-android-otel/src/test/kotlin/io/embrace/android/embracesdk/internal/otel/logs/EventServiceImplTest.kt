@@ -26,7 +26,7 @@ class EventServiceImplTest {
     fun setup() {
         sdkLogger = FakeOpenTelemetryLogger()
         impl = EventServiceImpl(
-            sdkLoggerSupplier = { sdkLogger }
+            sdkLoggerProvider = { sdkLogger }
         )
         impl.initializeService(100L)
     }
@@ -34,7 +34,7 @@ class EventServiceImplTest {
     @Test
     fun `event service needs initialization`() {
         val notInitializedLogger = EventServiceImpl(
-            sdkLoggerSupplier = { sdkLogger }
+            sdkLoggerProvider = { sdkLogger }
         )
         assertFalse(notInitializedLogger.initialized())
         notInitializedLogger.log(

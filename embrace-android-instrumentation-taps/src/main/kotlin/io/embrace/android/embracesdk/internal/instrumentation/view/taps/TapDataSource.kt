@@ -14,7 +14,8 @@ class TapDataSource(
     args: InstrumentationArgs
 ) : DataSourceImpl(
     args = args,
-    limitStrategy = UpToLimitStrategy(args.configService.breadcrumbBehavior::getTapBreadcrumbLimit)
+    limitStrategy = UpToLimitStrategy(args.configService.breadcrumbBehavior::getTapBreadcrumbLimit),
+    instrumentationName = "tap_data_source"
 ) {
 
     companion object {

@@ -6,6 +6,8 @@ import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.arch.schema.TelemetryAttributes
 
 class FakeJvmCrashDataSource : JvmCrashDataSource {
+    override val instrumentationName: String = "fake_jvm_crash_data_source"
+
     var exception: Throwable? = null
     override var telemetryModifier: ((TelemetryAttributes) -> SchemaType)? = null
 

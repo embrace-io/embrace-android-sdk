@@ -31,6 +31,7 @@ class JvmCrashDataSourceImpl(
     DataSourceImpl(
         args = args,
         limitStrategy = NoopLimitStrategy,
+        instrumentationName = "jvm_crash_data_source"
     ) {
 
     private val serializer: PlatformSerializer = args.serializer

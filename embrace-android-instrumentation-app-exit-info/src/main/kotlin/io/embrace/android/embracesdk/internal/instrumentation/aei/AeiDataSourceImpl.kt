@@ -27,7 +27,8 @@ internal class AeiDataSourceImpl(
     private val versionChecker: VersionChecker = BuildVersionChecker,
 ) : DataSourceImpl(
     args = args,
-    limitStrategy = UpToLimitStrategy { SDK_AEI_SEND_LIMIT }
+    limitStrategy = UpToLimitStrategy { SDK_AEI_SEND_LIMIT },
+    instrumentationName = "aei_data_source"
 ) {
 
     private companion object {

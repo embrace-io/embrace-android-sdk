@@ -15,7 +15,8 @@ class PushNotificationDataSource(
     args: InstrumentationArgs,
 ) : DataSourceImpl(
     args = args,
-    limitStrategy = UpToLimitStrategy(args.configService.breadcrumbBehavior::getCustomBreadcrumbLimit)
+    limitStrategy = UpToLimitStrategy(args.configService.breadcrumbBehavior::getCustomBreadcrumbLimit),
+    instrumentationName = "push_notification_data_source"
 ) {
 
     fun logPushNotification(

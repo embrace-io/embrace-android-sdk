@@ -7,6 +7,8 @@ import io.embrace.android.embracesdk.internal.arch.schema.TelemetryAttributes
 import io.embrace.android.embracesdk.internal.instrumentation.crash.jvm.JvmCrashDataSource
 
 internal class CrashHandlerDataSource : JvmCrashDataSource {
+    override val instrumentationName: String = "crash_handler_data_source"
+
     val handlers = mutableListOf<CrashTeardownHandler>()
 
     override fun addCrashTeardownHandler(handler: CrashTeardownHandler) {

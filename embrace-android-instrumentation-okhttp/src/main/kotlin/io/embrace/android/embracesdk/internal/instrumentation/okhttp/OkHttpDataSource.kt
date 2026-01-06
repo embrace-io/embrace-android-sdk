@@ -37,6 +37,7 @@ internal class OkHttpDataSource(
 ) : DataSourceImpl(
     args = args,
     limitStrategy = NoopLimitStrategy, // always allow the OkHttp request chain to proceed
+    instrumentationName = "okhttp_data_source"
 ) {
 
     private val networkRequestDataSource: NetworkRequestDataSource?

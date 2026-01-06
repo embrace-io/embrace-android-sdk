@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 
 /**
  * Base class for data sources.
@@ -14,12 +15,14 @@ import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 abstract class DataSourceImpl(
     args: InstrumentationArgs,
     private val limitStrategy: LimitStrategy,
+    override val instrumentationName: String,
 ) : DataSource {
 
     protected val clock: Clock = args.clock
     protected val logger: EmbLogger = args.logger
     protected val configService: ConfigService = args.configService
     protected val destination: TelemetryDestination = args.destination
+    private val telemetryService = args.telemetryService
 
     override fun onDataCaptureEnabled() {
         // no-op
@@ -47,6 +50,9 @@ abstract class DataSourceImpl(
                 invalidInputCallback()
             } else if (limitStrategy.shouldCapture()) {
                 return destination.action()
+            } else {
+                // Track that a limit was exceeded
+                telemetryService.trackAppliedLimit(instrumentationName, AppliedLimitType.DROP)
             }
         } catch (exc: Throwable) {
             logger.trackInternalError(InternalErrorType.DATA_SOURCE_DATA_CAPTURE_FAIL, exc)

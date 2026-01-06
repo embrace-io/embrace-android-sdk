@@ -69,6 +69,8 @@ internal class EmbraceUncaughtExceptionHandlerTest {
     }
 
     internal class CrashingJvmCrashService : JvmCrashDataSource {
+        override val instrumentationName: String = "crashing_jvm_crash_service"
+
         override fun logUnhandledJvmThrowable(exception: Throwable) {
             throw RuntimeException("Test crash")
         }

@@ -12,7 +12,8 @@ class NetworkStatusDataSource(
     args: InstrumentationArgs,
 ) : NetworkConnectivityListener, DataSourceImpl(
     args = args,
-    limitStrategy = UpToLimitStrategy { MAX_CAPTURED_NETWORK_STATE_TRANSITIONS }
+    limitStrategy = UpToLimitStrategy { MAX_CAPTURED_NETWORK_STATE_TRANSITIONS },
+    instrumentationName = "network_status_data_source"
 ) {
     private var span: SpanToken? = null
 

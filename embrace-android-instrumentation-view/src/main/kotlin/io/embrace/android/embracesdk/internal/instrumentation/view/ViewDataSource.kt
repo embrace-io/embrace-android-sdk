@@ -16,7 +16,8 @@ class ViewDataSource(
     private val args: InstrumentationArgs,
 ) : DataSourceImpl(
     args,
-    UpToLimitStrategy { args.configService.breadcrumbBehavior.getFragmentBreadcrumbLimit() }
+    UpToLimitStrategy { args.configService.breadcrumbBehavior.getFragmentBreadcrumbLimit() },
+    "view_data_source"
 ),
     Application.ActivityLifecycleCallbacks {
 

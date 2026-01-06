@@ -210,7 +210,7 @@ internal class ModuleInitBootstrapper(
             startupDurationProvider: () -> Long?,
             logModule: LogModule,
         ->
-        SessionOrchestrationModuleImpl(
+        createSessionOrchestrator(
             initModule,
             openTelemetryModule,
             coreModule,
@@ -221,7 +221,7 @@ internal class ModuleInitBootstrapper(
             payloadSourceModule,
             startupDurationProvider,
             logModule
-        ).sessionOrchestrator
+        )
     },
     private val payloadSourceModuleSupplier: PayloadSourceModuleSupplier = {
             initModule: InitModule,

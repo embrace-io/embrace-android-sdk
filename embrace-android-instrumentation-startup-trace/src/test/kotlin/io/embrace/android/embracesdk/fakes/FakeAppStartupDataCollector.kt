@@ -87,4 +87,10 @@ class FakeAppStartupDataCollector(
     override fun addAttribute(key: String, value: String) {
         customAttributes[key] = value
     }
+
+    override fun onBackground() {
+    }
+
+    override fun onForeground() {
+    }
 }

@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.instrumentation.startup
 
 import io.embrace.android.embracesdk.internal.arch.datasource.SpanEvent
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
+import io.embrace.android.embracesdk.internal.arch.state.AppStateListener
 
 /**
  * Collects relevant information during app startup to be used to produce telemetry about the startup workflow.
@@ -9,7 +10,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
  * Due to differences in behaviour between platform versions and various startup scenarios, you cannot assume that these methods
  * will be invoked in any order or at all. Implementations need to take into account that fact when using the underlying data.
  */
-interface AppStartupDataCollector {
+interface AppStartupDataCollector : AppStateListener {
     /**
      *  Set the time when the application object initialization was started
      */

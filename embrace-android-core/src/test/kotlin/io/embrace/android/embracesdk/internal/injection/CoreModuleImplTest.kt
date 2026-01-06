@@ -5,7 +5,6 @@ import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.capture.metadata.AppEnvironment
 import io.embrace.android.embracesdk.internal.capture.metadata.AppEnvironment.Environment
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertSame
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -22,7 +21,6 @@ internal class CoreModuleImplTest {
         val module = CoreModuleImpl(ctx, initModule)
         assertSame(ctx, module.context)
         assertSame(ctx, module.application)
-        assertNotNull(module.serviceRegistry)
     }
 
     @Test

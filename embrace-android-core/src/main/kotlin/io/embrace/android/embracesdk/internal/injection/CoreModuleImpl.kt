@@ -6,7 +6,6 @@ import android.app.Application
 import android.content.Context
 import android.preference.PreferenceManager
 import io.embrace.android.embracesdk.internal.prefs.SharedPrefsStore
-import io.embrace.android.embracesdk.internal.registry.ServiceRegistry
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.store.OrdinalStore
 import io.embrace.android.embracesdk.internal.store.OrdinalStoreImpl
@@ -26,10 +25,6 @@ class CoreModuleImpl(
     }
 
     override val application: Application by singleton { context as Application }
-
-    override val serviceRegistry: ServiceRegistry by singleton {
-        ServiceRegistry()
-    }
 
     override val store: KeyValueStore by singleton {
         SharedPrefsStore(

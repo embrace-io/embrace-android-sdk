@@ -313,7 +313,7 @@ internal class ModuleInitBootstrapper(
         }
         synchronized(delegate) {
             if (isInitialized()) {
-                coreModule.serviceRegistry.close()
+                essentialServiceModule.networkConnectivityService.close()
                 workerThreadModule.close()
                 delegate = UninitializedModuleGraph
             }

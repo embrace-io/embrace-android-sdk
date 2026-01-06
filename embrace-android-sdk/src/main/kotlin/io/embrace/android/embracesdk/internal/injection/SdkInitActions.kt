@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.internal.injection
 
 import io.embrace.android.embracesdk.core.BuildConfig
 import io.embrace.android.embracesdk.internal.arch.InstrumentationProvider
-import io.embrace.android.embracesdk.internal.arch.SessionChangeListener
 import io.embrace.android.embracesdk.internal.instrumentation.crash.jvm.JvmCrashDataSource
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeCrashDataSource
 import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkStateDataSource
@@ -54,32 +53,23 @@ internal fun ModuleGraph.registerListeners() {
         workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker).submit {
             essentialServiceModule.networkConnectivityService.register()
         }
-        with(coreModule.serviceRegistry) {
-            registerService(
-                lazy {
-                    SessionChangeListener {
-                        configService.networkBehavior.domainCountLimiter.reset()
-                    }
-                }
-            )
 
-            registerServices(
-                lazy { essentialServiceModule.networkConnectivityService }
-            )
-            registerServices(
-                lazy { dataCaptureServiceModule.appStartupDataCollector },
-            )
-            registerServices(
-                lazy { threadBlockageService }
-            )
-            registerService(lazy { logModule.attachmentService })
-            registerService(lazy { logModule.logLimitingService })
+        val sessionTracker = essentialServiceModule.sessionTracker
+        val appStateTracker = essentialServiceModule.appStateTracker
 
-            // registration ignored after this point
-            registerAppStateListeners(essentialServiceModule.appStateTracker)
-            registerSessionEndListeners(essentialServiceModule.sessionTracker)
-            registerSessionChangeListeners(essentialServiceModule.sessionTracker)
+        sessionTracker.addSessionChangeListener {
+            configService.networkBehavior.domainCountLimiter.reset()
         }
+
+        appStateTracker.addListener(dataCaptureServiceModule.appStartupDataCollector)
+
+        threadBlockageService?.let {
+            appStateTracker.addListener(it)
+            sessionTracker.addSessionChangeListener(it)
+        }
+
+        sessionTracker.addSessionChangeListener(logModule.attachmentService)
+        sessionTracker.addSessionChangeListener(logModule.logLimitingService)
     }
 }
 

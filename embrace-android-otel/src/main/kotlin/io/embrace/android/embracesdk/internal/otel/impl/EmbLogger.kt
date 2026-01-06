@@ -21,8 +21,9 @@ class EmbLogger(
         severityText: String?,
         attributes: (MutableAttributeContainer.() -> Unit)?,
     ) {
-        eventService.logRecord(
+        eventService.log(
             impl = impl,
+            eventName = null,
             body = body,
             timestamp = timestamp,
             observedTimestamp = observedTimestamp,
@@ -30,7 +31,7 @@ class EmbLogger(
             severityNumber = severityNumber,
             severityText = severityText,
             addCurrentMetadata = true,
-            attributes = attributes
+            eventAttributes = attributes
         )
     }
 
@@ -44,7 +45,7 @@ class EmbLogger(
         severityText: String?,
         attributes: (MutableAttributeContainer.() -> Unit)?,
     ) {
-        eventService.logEvent(
+        eventService.log(
             impl = impl,
             eventName = eventName,
             body = body,
@@ -54,7 +55,7 @@ class EmbLogger(
             severityNumber = severityNumber,
             severityText = severityText,
             addCurrentMetadata = true,
-            attributes = attributes
+            eventAttributes = attributes
         )
     }
 }

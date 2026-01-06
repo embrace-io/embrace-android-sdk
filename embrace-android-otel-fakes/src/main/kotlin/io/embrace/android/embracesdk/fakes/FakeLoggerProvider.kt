@@ -12,5 +12,5 @@ class FakeLoggerProvider : LoggerProvider {
         version: String?,
         schemaUrl: String?,
         attributes: (MutableAttributeContainer.() -> Unit)?,
-    ): Logger = FakeLogger()
+    ): Logger = FakeOpenTelemetryLogger()
 }

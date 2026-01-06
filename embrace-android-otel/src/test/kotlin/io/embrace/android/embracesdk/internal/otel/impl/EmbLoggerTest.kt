@@ -2,8 +2,8 @@ package io.embrace.android.embracesdk.internal.otel.impl
 
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeEventService
-import io.embrace.android.embracesdk.fakes.FakeLogger
 import io.embrace.android.embracesdk.fakes.FakeMutableAttributeContainer
+import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryLogger
 import io.embrace.android.embracesdk.fakes.FakeOtelKotlinClock
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.createNoopOpenTelemetry
@@ -17,13 +17,13 @@ internal class EmbLoggerTest {
     private val clock = FakeClock()
     private val openTelemetryClock = FakeOtelKotlinClock(clock)
     private lateinit var eventService: FakeEventService
-    private lateinit var sdkLogger: FakeLogger
+    private lateinit var sdkLogger: FakeOpenTelemetryLogger
 
     private lateinit var logger: EmbLogger
 
     @Before
     fun setup() {
-        sdkLogger = FakeLogger()
+        sdkLogger = FakeOpenTelemetryLogger()
         eventService = FakeEventService()
         logger = EmbLogger(
             impl = sdkLogger,
@@ -46,7 +46,7 @@ internal class EmbLoggerTest {
         ) {
             setStringAttribute("foo", "bar")
         }
-        val event = eventService.otelEvents.single()
+        val event = eventService.eventData.single()
         val expectedAttributes = FakeMutableAttributeContainer().apply {
             event.attributes?.invoke(this)
         }

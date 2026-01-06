@@ -67,6 +67,7 @@ class OpenTelemetryModuleImpl(
                     otelClock = openTelemetryClock,
                     configuration = otelSdkConfig,
                     spanService = spanService,
+                    eventService = eventService,
                     // adding guard in case this is accessed before we fetch the config
                     useKotlinSdk = otelBehavior?.shouldUseKotlinSdk() ?: false,
                 )
@@ -147,7 +148,7 @@ class OpenTelemetryModuleImpl(
 
     override val eventService: EventService by lazy {
         EventServiceImpl(
-            sdkLoggerProvider = { otelSdkWrapper.logger }
+            sdkLoggerProvider = { otelSdkWrapper.sdkLogger }
         )
     }
 

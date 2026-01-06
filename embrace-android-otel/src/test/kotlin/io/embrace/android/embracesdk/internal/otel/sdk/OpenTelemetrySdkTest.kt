@@ -8,11 +8,14 @@ import io.embrace.android.embracesdk.fakes.FakeSpanExporter
 import io.embrace.android.embracesdk.fakes.FakeSpanService
 import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.otel.config.OtelSdkConfig
+import io.embrace.android.embracesdk.internal.otel.logs.EventServiceImpl
 import io.embrace.android.embracesdk.internal.otel.logs.LogSink
 import io.embrace.android.embracesdk.internal.otel.logs.LogSinkImpl
 import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
 import io.embrace.android.embracesdk.internal.otel.spans.SpanSinkImpl
+import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
+import io.embrace.opentelemetry.kotlin.logging.Logger
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Before
@@ -34,7 +37,7 @@ internal class OpenTelemetrySdkTest {
         spanSink = SpanSinkImpl()
         logSink = LogSinkImpl()
         systemInfo = SystemInfo()
-        sdk = createSdkWrapper()
+        sdk = createSdkWrapper { sdk.sdkLogger }
     }
 
     @Test
@@ -50,8 +53,8 @@ internal class OpenTelemetrySdkTest {
     }
 
     @Test
-    fun `check resource added by default logger`() {
-        sdk.openTelemetryKotlin.loggerProvider.getLogger("my_logger").log()
+    fun `check resource added by sdk logger`() {
+        sdk.sdkLogger.log()
         checkNotNull(logExporter.exportedLogs).single().resource.assertExpectedAttributes(
             expectedServiceName = configuration.packageName,
             expectedServiceVersion = configuration.appVersion,
@@ -89,8 +92,34 @@ internal class OpenTelemetrySdkTest {
     }
 
     @Test
+    fun `sdk name and version used as instrumentation scope for logger instance used by embrace`() {
+        sdk.sdkLogger.log()
+        with(logExporter.exportedLogs.single().instrumentationScopeInfo) {
+            assertEquals(configuration.sdkName, name)
+            assertEquals(configuration.sdkVersion, version)
+            assertNull(schemaUrl)
+        }
+    }
+
+    @Test
+    fun `instrumentation scope set properly on external logger`() {
+        val loggerProvider = sdk.openTelemetryKotlin.loggerProvider
+        val logger = loggerProvider.getLogger(
+            name = "testScope",
+            version = "v1",
+            schemaUrl = "url"
+        )
+        logger.log()
+        with(logExporter.exportedLogs.single().instrumentationScopeInfo) {
+            assertEquals("testScope", name)
+            assertEquals("v1", version)
+            assertEquals("url", schemaUrl)
+        }
+    }
+
+    @Test
     fun `verify that the default StorageContext is used if Java SDK is used`() {
-        sdk = createSdkWrapper()
+        sdk = createSdkWrapper { sdk.sdkLogger }
         assertEquals("default", System.getProperty("io.opentelemetry.context.contextStorageProvider"))
     }
 
@@ -112,12 +141,13 @@ internal class OpenTelemetrySdkTest {
         return configuration
     }
 
-    private fun createSdkWrapper(): OtelSdkWrapper {
+    private fun createSdkWrapper(sdkLoggerSupplier: Provider<Logger>): OtelSdkWrapper {
         configuration = createOtelSdkConfig()
         return OtelSdkWrapper(
             otelClock = FakeOtelKotlinClock(FakeClock()),
             configuration = configuration,
             spanService = FakeSpanService(),
+            eventService = EventServiceImpl(sdkLoggerSupplier),
             useKotlinSdk = false,
         )
     }

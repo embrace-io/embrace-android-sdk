@@ -3,12 +3,10 @@ package io.embrace.android.embracesdk.internal.arch.destination
 import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.internal.arch.attrs.EmbraceAttributeKey
 import io.embrace.android.embracesdk.internal.arch.attrs.asPair
-import io.embrace.android.embracesdk.internal.arch.attrs.embState
 import io.embrace.android.embracesdk.internal.arch.attrs.embStateDroppedByInstrumentation
 import io.embrace.android.embracesdk.internal.arch.attrs.embStateNewValue
 import io.embrace.android.embracesdk.internal.arch.attrs.embStateNotInSession
 import io.embrace.android.embracesdk.internal.arch.attrs.embStateTransitionCount
-import io.embrace.android.embracesdk.internal.arch.attrs.toEmbraceAttributeName
 import io.embrace.android.embracesdk.internal.arch.datasource.LogSeverity
 import io.embrace.android.embracesdk.internal.arch.datasource.SessionStateToken
 import io.embrace.android.embracesdk.internal.arch.datasource.SpanEvent
@@ -18,8 +16,6 @@ import io.embrace.android.embracesdk.internal.arch.datasource.UnrecordedTransiti
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
-import io.embrace.android.embracesdk.internal.arch.state.AppState
-import io.embrace.android.embracesdk.internal.arch.state.AppStateTracker
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.otel.logs.EventService
@@ -27,27 +23,21 @@ import io.embrace.android.embracesdk.internal.otel.sdk.setEmbraceAttribute
 import io.embrace.android.embracesdk.internal.otel.sdk.toEmbraceObjectName
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
-import io.embrace.android.embracesdk.internal.session.id.SessionTracker
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
-import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
-import io.embrace.opentelemetry.kotlin.semconv.SessionAttributes
 import java.util.concurrent.atomic.AtomicInteger
 
 @OptIn(ExperimentalApi::class)
 class TelemetryDestinationImpl(
-    private val sessionTracker: SessionTracker,
-    private val appStateTracker: AppStateTracker,
     private val clock: Clock,
     private val spanService: SpanService,
     private val eventService: EventService,
     private val currentSessionSpan: CurrentSessionSpan,
-    private val sessionPropertiesProvider: Provider<Map<String, String>>,
 ) : TelemetryDestination {
 
     override var sessionUpdateAction: (() -> Unit)? = null
@@ -63,25 +53,6 @@ class TelemetryDestinationImpl(
         timestampMs: Long?,
     ) {
         val logTimeMs = timestampMs ?: clock.now()
-
-        val attributes = mutableMapOf<String, String>().apply {
-            if (addCurrentSessionInfo) {
-                var sessionState: AppState? = null
-                sessionTracker.getActiveSession()?.let { session ->
-                    if (session.sessionId.isNotBlank()) {
-                        put(SessionAttributes.SESSION_ID, session.sessionId)
-                    }
-                    sessionState = session.appState
-                }
-                val state = sessionState ?: appStateTracker.getAppState()
-                put(embState.name, state.description)
-                putAll(sessionPropertiesProvider().mapKeys { property -> property.key.toEmbraceAttributeName() })
-                currentStatesProvider().forEach {
-                    put(it.key.name, it.value.toString())
-                }
-            }
-        }
-
         eventService.log(
             logTimeMs = logTimeMs,
             schemaType = schemaType,
@@ -92,7 +63,7 @@ class TelemetryDestinationImpl(
             },
             message = message,
             isPrivate = isPrivate,
-            embraceAttributes = attributes
+            addCurrentMetadata = addCurrentSessionInfo
         )
 
         sessionUpdateAction?.invoke()

@@ -54,7 +54,7 @@ internal class NativeCrashFeatureTest {
     private val config = FakeInstrumentedConfig(
         enabledFeatures = FakeEnabledFeatureConfig(
             nativeCrashCapture = true,
-            stateCaptureEnabled = false
+            stateCaptureEnabled = true
         ),
         symbols = createNativeSymbolsForCurrentArch(fakeSymbols)
     )
@@ -143,7 +143,7 @@ internal class NativeCrashFeatureTest {
                 assertNativeCrashSent(log, crashData, fakeSymbols)
                 assertEquals(1, log.attributes?.filter { it.key?.isEmbraceAttributeName() == true }?.size)
                 assertEquals(0, log.attributes?.filter { it.key == newSessionProperty.toEmbraceAttributeName() }?.size)
-                assertEquals(0, log.attributes?.filter { it.key == "emb-state-test" }?.size)
+                assertEquals(0, log.attributes?.filter { it.key == "emb.state.test" }?.size)
             }
         )
     }

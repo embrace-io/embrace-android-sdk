@@ -1,8 +1,5 @@
 package io.embrace.android.embracesdk.internal.otel.logs
 
-import io.embrace.android.embracesdk.Severity
-import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
-import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
@@ -13,7 +10,6 @@ import io.embrace.opentelemetry.kotlin.logging.Logger
 import io.embrace.opentelemetry.kotlin.logging.model.SeverityNumber
 import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
 import io.embrace.opentelemetry.kotlin.semconv.LogAttributes
-import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 
 @OptIn(ExperimentalApi::class, IncubatingApi::class)
@@ -31,44 +27,8 @@ class EventServiceImpl(
     override fun initialized(): Boolean = sdkLoggerRef.get() != noopLogger
 
     override fun log(
-        logTimeMs: Long,
-        schemaType: SchemaType,
-        severity: Severity,
-        message: String,
-        isPrivate: Boolean,
-        addCurrentMetadata: Boolean,
-    ) {
-        val severityNumber = when (severity) {
-            Severity.INFO -> SeverityNumber.INFO
-            Severity.WARNING -> SeverityNumber.WARN
-            Severity.ERROR -> SeverityNumber.ERROR
-        }
-        val logTimeNanos = TimeUnit.MILLISECONDS.toNanos(logTimeMs)
-        logRecord(
-            impl = sdkLoggerRef.get(),
-            body = message,
-            timestamp = logTimeNanos,
-            observedTimestamp = logTimeNanos,
-            context = null,
-            severityNumber = severityNumber,
-            severityText = getSeverityText(severityNumber),
-            addCurrentMetadata = addCurrentMetadata
-        ) {
-            if (isPrivate) {
-                setStringAttribute(PrivateSpan.key.name, PrivateSpan.value)
-            }
-
-            with(schemaType) {
-                setStringAttribute(telemetryType.key.name, telemetryType.value)
-                attributes().forEach {
-                    setStringAttribute(it.key, it.value)
-                }
-            }
-        }
-    }
-
-    override fun logRecord(
-        impl: Logger,
+        impl: Logger?,
+        eventName: String?,
         body: String?,
         timestamp: Long?,
         observedTimestamp: Long?,
@@ -76,63 +36,10 @@ class EventServiceImpl(
         severityNumber: SeverityNumber?,
         severityText: String?,
         addCurrentMetadata: Boolean,
-        attributes: (MutableAttributeContainer.() -> Unit)?,
+        eventAttributes: (MutableAttributeContainer.() -> Unit)?,
     ) {
-        impl.record(
-            body = body,
-            timestamp = timestamp,
-            observedTimestamp = observedTimestamp,
-            context = context,
-            severityNumber = severityNumber,
-            severityText = severityText,
-            addCurrentMetadata = addCurrentMetadata,
-            eventAttributes = attributes
-        )
-    }
-
-    override fun logEvent(
-        impl: Logger,
-        eventName: String,
-        body: String?,
-        timestamp: Long?,
-        observedTimestamp: Long?,
-        context: Context?,
-        severityNumber: SeverityNumber?,
-        severityText: String?,
-        addCurrentMetadata: Boolean,
-        attributes: (MutableAttributeContainer.() -> Unit)?,
-    ) {
-        impl.record(
-            eventName = eventName,
-            body = body,
-            timestamp = timestamp,
-            observedTimestamp = observedTimestamp,
-            context = context,
-            severityNumber = severityNumber,
-            severityText = severityText,
-            addCurrentMetadata = addCurrentMetadata,
-            eventAttributes = attributes
-        )
-    }
-
-    override fun setMetadataProvider(provider: Provider<Map<String, String>>) {
-        metadataSupplierProviderRef.set(provider)
-    }
-
-    private fun getCurrentMetadata(): Map<String, String> = metadataSupplierProviderRef.get().invoke().toMap()
-
-    private fun Logger.record(
-        eventName: String? = null,
-        body: String? = null,
-        timestamp: Long? = null,
-        observedTimestamp: Long? = null,
-        context: Context? = null,
-        severityNumber: SeverityNumber? = null,
-        severityText: String? = null,
-        addCurrentMetadata: Boolean = true,
-        eventAttributes: (MutableAttributeContainer.() -> Unit)? = null,
-    ) {
-        val embraceAttributes: (MutableAttributeContainer.() -> Unit) = {
+        val logger = impl ?: sdkLoggerRef.get()
+        val additionalAttributes: (MutableAttributeContainer.() -> Unit) = {
             eventAttributes?.invoke(this)
             if (!attributes.contains(LogAttributes.LOG_RECORD_UID)) {
                 setStringAttribute(LogAttributes.LOG_RECORD_UID, Uuid.getEmbUuid())
@@ -143,18 +50,19 @@ class EventServiceImpl(
                 }
             }
         }
+
         if (eventName == null) {
-            log(
+            logger.log(
                 body = body,
                 timestamp = timestamp,
                 observedTimestamp = observedTimestamp,
                 context = context,
                 severityNumber = severityNumber,
                 severityText = severityText,
-                attributes = embraceAttributes
+                attributes = additionalAttributes
             )
         } else {
-            logEvent(
+            logger.logEvent(
                 eventName = eventName,
                 body = body,
                 timestamp = timestamp,
@@ -162,13 +70,14 @@ class EventServiceImpl(
                 context = context,
                 severityNumber = severityNumber,
                 severityText = severityText,
-                attributes = embraceAttributes
+                attributes = additionalAttributes
             )
         }
     }
 
-    private fun getSeverityText(severity: SeverityNumber) = when (severity) {
-        SeverityNumber.WARN -> "WARNING"
-        else -> severity.name
+    override fun setMetadataProvider(provider: Provider<Map<String, String>>) {
+        metadataSupplierProviderRef.set(provider)
     }
+
+    private fun getCurrentMetadata(): Map<String, String> = metadataSupplierProviderRef.get().invoke().toMap()
 }

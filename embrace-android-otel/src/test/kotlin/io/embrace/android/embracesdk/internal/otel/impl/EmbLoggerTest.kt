@@ -46,7 +46,7 @@ internal class EmbLoggerTest {
         ) {
             setStringAttribute("foo", "bar")
         }
-        val event = eventService.otelEvents.single()
+        val event = eventService.eventData.single()
         val expectedAttributes = FakeMutableAttributeContainer().apply {
             event.attributes?.invoke(this)
         }

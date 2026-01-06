@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.android.embracesdk.fakes.FakeEventService.OTelEventData
+import io.embrace.android.embracesdk.fakes.FakeEventService.FakeEventData
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.attributes.MutableAttributeContainer
 import io.embrace.opentelemetry.kotlin.context.Context
@@ -9,7 +9,7 @@ import io.embrace.opentelemetry.kotlin.logging.model.SeverityNumber
 
 @OptIn(ExperimentalApi::class)
 class FakeLogger : Logger {
-    val otelEvents: MutableList<OTelEventData> = mutableListOf()
+    val otelEvents: MutableList<FakeEventData> = mutableListOf()
 
     override fun log(
         body: String?,
@@ -21,7 +21,7 @@ class FakeLogger : Logger {
         attributes: (MutableAttributeContainer.() -> Unit)?,
     ) {
         otelEvents.add(
-            OTelEventData(
+            FakeEventData(
                 logger = this,
                 eventName = null,
                 body = body,
@@ -47,7 +47,7 @@ class FakeLogger : Logger {
         attributes: (MutableAttributeContainer.() -> Unit)?,
     ) {
         otelEvents.add(
-            OTelEventData(
+            FakeEventData(
                 logger = this,
                 eventName = eventName,
                 body = body,

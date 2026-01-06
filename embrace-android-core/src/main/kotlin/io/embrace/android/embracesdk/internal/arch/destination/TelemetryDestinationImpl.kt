@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.arch.destination
 
-import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.internal.arch.attrs.EmbraceAttributeKey
 import io.embrace.android.embracesdk.internal.arch.attrs.asPair
 import io.embrace.android.embracesdk.internal.arch.attrs.embStateDroppedByInstrumentation
@@ -15,6 +14,7 @@ import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestinati
 import io.embrace.android.embracesdk.internal.arch.datasource.UnrecordedTransitions
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
+import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
@@ -29,7 +29,9 @@ import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
+import io.embrace.opentelemetry.kotlin.logging.model.SeverityNumber
 import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 
 @OptIn(ExperimentalApi::class)
@@ -53,18 +55,33 @@ class TelemetryDestinationImpl(
         timestampMs: Long?,
     ) {
         val logTimeMs = timestampMs ?: clock.now()
+        val severityNumber = when (severity) {
+            LogSeverity.INFO -> SeverityNumber.INFO
+            LogSeverity.WARNING -> SeverityNumber.WARN
+            LogSeverity.ERROR -> SeverityNumber.ERROR
+        }
+        val logTimeNanos = TimeUnit.MILLISECONDS.toNanos(logTimeMs)
         eventService.log(
-            logTimeMs = logTimeMs,
-            schemaType = schemaType,
-            severity = when (severity) {
-                LogSeverity.INFO -> Severity.INFO
-                LogSeverity.WARNING -> Severity.WARNING
-                LogSeverity.ERROR -> Severity.ERROR
-            },
-            message = message,
-            isPrivate = isPrivate,
+            eventName = null,
+            body = message,
+            timestamp = logTimeNanos,
+            observedTimestamp = logTimeNanos,
+            context = null,
+            severityNumber = severityNumber,
+            severityText = getSeverityText(severityNumber),
             addCurrentMetadata = addCurrentSessionInfo
-        )
+        ) {
+            if (isPrivate) {
+                setStringAttribute(PrivateSpan.key.name, PrivateSpan.value)
+            }
+
+            with(schemaType) {
+                setStringAttribute(telemetryType.key.name, telemetryType.value)
+                attributes().forEach {
+                    setStringAttribute(it.key, it.value)
+                }
+            }
+        }
 
         sessionUpdateAction?.invoke()
     }
@@ -185,6 +202,11 @@ class TelemetryDestinationImpl(
 
     private fun toEmbraceSpanEvent(event: SpanEvent): EmbraceSpanEvent? {
         return EmbraceSpanEvent.create(event.name, event.timestampNanos.nanosToMillis(), event.attributes)
+    }
+
+    private fun getSeverityText(severity: SeverityNumber) = when (severity) {
+        SeverityNumber.WARN -> "WARNING"
+        else -> severity.name
     }
 
     private class SpanTokenImpl(

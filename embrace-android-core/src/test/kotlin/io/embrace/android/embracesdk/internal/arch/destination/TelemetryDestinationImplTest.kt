@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.fakes.FakeClock.Companion.DEFAULT_FAKE_CURR
 import io.embrace.android.embracesdk.fakes.FakeCurrentSessionSpan
 import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
 import io.embrace.android.embracesdk.fakes.FakeEventService
+import io.embrace.android.embracesdk.fakes.FakeMutableAttributeContainer
 import io.embrace.android.embracesdk.fakes.FakeSpanService
 import io.embrace.android.embracesdk.internal.arch.attrs.asPair
 import io.embrace.android.embracesdk.internal.arch.datasource.LogSeverity
@@ -18,6 +19,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType.Log
 import io.embrace.android.embracesdk.internal.arch.schema.TelemetryAttributes
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
+import io.embrace.android.embracesdk.internal.otel.sdk.hasEmbraceAttribute
 import io.embrace.android.embracesdk.internal.otel.toEmbracePayload
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
@@ -64,7 +66,7 @@ internal class TelemetryDestinationImplTest {
         impl = createDestination()
         val expectedSchemaType = Log(
             TelemetryAttributes(
-                customAttributes = mapOf(PrivateSpan.asPair())
+                customAttributes = mapOf("foo" to "bar")
             )
         )
         impl.addLog(
@@ -72,40 +74,84 @@ internal class TelemetryDestinationImplTest {
             severity = LogSeverity.ERROR,
             message = "test"
         )
-        with(eventService.events.single()) {
-            assertEquals(clock.now(), logTimeMs)
-            assertEquals(expectedSchemaType, schemaType)
-            assertEquals("test", message)
-            assertEquals(Severity.ERROR.name, severity.name)
-            assertFalse(isPrivate)
-        }
+        eventService.eventData.single().assertFakeEvent(
+            expectedTimestamp = clock.now().millisToNanos(),
+            expectedMessage = "test",
+            expectedSeverity = Severity.ERROR,
+            expectedSchemaType = expectedSchemaType,
+            expectedIsPrivate = false
+        )
         verifyAndResetSessionUpdate()
+    }
+
+    private fun FakeEventService.FakeEventData.assertFakeEvent(
+        expectedTimestamp: Long,
+        expectedMessage: String?,
+        expectedSeverity: Severity,
+        expectedSchemaType: SchemaType,
+        expectedIsPrivate: Boolean,
+    ) {
+        assertEquals(expectedTimestamp, timestamp)
+        assertEquals(expectedMessage, body)
+        assertEquals(expectedSeverity.name, severityNumber?.name)
+        assertAttributes(
+            expectedSchemaType = expectedSchemaType,
+            expectedAdditionalAttributes = if (expectedIsPrivate) {
+                mapOf(PrivateSpan.asPair())
+            } else {
+                emptyMap()
+            }
+        )
+    }
+
+    private fun FakeEventService.FakeEventData.assertAttributes(
+        expectedSchemaType: SchemaType,
+        expectedAdditionalAttributes: Map<String, String>
+    ) {
+        val attrContainer = FakeMutableAttributeContainer()
+        checkNotNull(attributes).invoke(attrContainer)
+        val logAttributes = attrContainer.attributes.mapValues { it.value.toString() }
+        (expectedSchemaType.attributes() + expectedAdditionalAttributes).forEach { attr ->
+            assertEquals(attr.value, logAttributes[attr.key])
+        }
+        assertTrue(logAttributes.hasEmbraceAttribute(expectedSchemaType.telemetryType))
     }
 
     @Test
     fun `check that private value is set`() {
+        val expectedSchemaType = Log(TelemetryAttributes())
         impl.addLog(
-            schemaType = Log(TelemetryAttributes()),
+            schemaType = expectedSchemaType,
             severity = LogSeverity.ERROR,
             message = "test",
             isPrivate = true
         )
-        with(eventService.events.single()) {
-            assertTrue(isPrivate)
-        }
+        eventService.eventData.single().assertFakeEvent(
+            expectedTimestamp = clock.now().millisToNanos(),
+            expectedMessage = "test",
+            expectedSeverity = Severity.ERROR,
+            expectedSchemaType = expectedSchemaType,
+            expectedIsPrivate = true
+        )
+
         impl.addLog(
-            schemaType = Log(TelemetryAttributes()),
+            schemaType = expectedSchemaType,
             severity = LogSeverity.ERROR,
             message = "test",
             isPrivate = false
         )
-        with(eventService.events.last()) {
-            assertFalse(isPrivate)
-        }
+        eventService.eventData.last().assertFakeEvent(
+            expectedTimestamp = clock.now().millisToNanos(),
+            expectedMessage = "test",
+            expectedSeverity = Severity.ERROR,
+            expectedSchemaType = expectedSchemaType,
+            expectedIsPrivate = false
+        )
     }
 
     @Test
     fun `timestamp can be overridden`() {
+        val expectedSchemaType = Log(TelemetryAttributes())
         val fakeTimeMs = DEFAULT_FAKE_CURRENT_TIME
         impl.addLog(
             schemaType = Log(TelemetryAttributes()),
@@ -114,9 +160,13 @@ internal class TelemetryDestinationImplTest {
             timestampMs = fakeTimeMs
         )
 
-        with(eventService.events.last()) {
-            assertEquals(fakeTimeMs, logTimeMs)
-        }
+        eventService.eventData.single().assertFakeEvent(
+            expectedTimestamp = fakeTimeMs.millisToNanos(),
+            expectedMessage = "test",
+            expectedSeverity = Severity.ERROR,
+            expectedSchemaType = expectedSchemaType,
+            expectedIsPrivate = false
+        )
     }
 
     @Test

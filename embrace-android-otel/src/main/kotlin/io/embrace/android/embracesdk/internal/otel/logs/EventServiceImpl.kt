@@ -28,7 +28,7 @@ class EventServiceImpl(
         sdkLoggerRef.set(sdkLoggerSupplier())
     }
 
-    override fun initialized(): Boolean = sdkLoggerRef != noopLogger
+    override fun initialized(): Boolean = sdkLoggerRef.get() != noopLogger
 
     override fun log(
         logTimeMs: Long,

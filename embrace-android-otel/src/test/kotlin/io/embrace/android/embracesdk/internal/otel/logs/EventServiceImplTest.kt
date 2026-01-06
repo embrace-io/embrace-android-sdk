@@ -19,14 +19,14 @@ import org.junit.Test
 
 @OptIn(ExperimentalApi::class, IncubatingApi::class)
 class EventServiceImplTest {
-    lateinit var logger: FakeOpenTelemetryLogger
+    lateinit var sdkLogger: FakeOpenTelemetryLogger
     lateinit var impl: EventServiceImpl
 
     @Before
     fun setup() {
-        logger = FakeOpenTelemetryLogger()
+        sdkLogger = FakeOpenTelemetryLogger()
         impl = EventServiceImpl(
-            sdkLoggerSupplier = { logger }
+            sdkLoggerSupplier = { sdkLogger }
         )
         impl.initializeService(100L)
     }
@@ -34,8 +34,9 @@ class EventServiceImplTest {
     @Test
     fun `event service needs initialization`() {
         val notInitializedLogger = EventServiceImpl(
-            sdkLoggerSupplier = { logger }
+            sdkLoggerSupplier = { sdkLogger }
         )
+        assertFalse(notInitializedLogger.initialized())
         notInitializedLogger.log(
             logTimeMs = 1000L,
             schemaType = SchemaType.Log(TelemetryAttributes()),
@@ -45,11 +46,12 @@ class EventServiceImplTest {
             addCurrentMetadata = false,
         )
 
-        assertTrue(logger.logs.isEmpty())
+        assertTrue(sdkLogger.logs.isEmpty())
     }
 
     @Test
     fun `check expected values added to every event`() {
+        assertTrue(impl.initialized())
         impl.log(
             logTimeMs = 1000L,
             schemaType = SchemaType.Log(TelemetryAttributes(customAttributes = mapOf("custom" to "attr"))),
@@ -59,7 +61,7 @@ class EventServiceImplTest {
             addCurrentMetadata = false,
         )
 
-        with(logger.logs.single()) {
+        with(sdkLogger.logs.single()) {
             assertEquals(1000L, timestamp?.nanosToMillis())
             assertEquals("test", body)
             assertEquals(SeverityNumber.ERROR, severityNumber)
@@ -80,7 +82,7 @@ class EventServiceImplTest {
             addCurrentMetadata = false,
         )
 
-        with(logger.logs.single()) {
+        with(sdkLogger.logs.single()) {
             assertFalse(attributes.containsKey(PrivateSpan.key.name))
         }
     }
@@ -96,7 +98,7 @@ class EventServiceImplTest {
             addCurrentMetadata = false,
         )
 
-        with(logger.logs.single()) {
+        with(sdkLogger.logs.single()) {
             assertEquals("foo", attributes[LogAttributes.LOG_RECORD_UID])
         }
     }
@@ -123,8 +125,8 @@ class EventServiceImplTest {
             addCurrentMetadata = false,
         )
 
-        assertEquals(2, logger.logs.size)
-        logger.logs.forEach { log ->
+        assertEquals(2, sdkLogger.logs.size)
+        sdkLogger.logs.forEach { log ->
             with(log) {
                 assertEquals(1000L, timestamp?.nanosToMillis())
                 assertEquals(SeverityNumber.INFO, severityNumber)

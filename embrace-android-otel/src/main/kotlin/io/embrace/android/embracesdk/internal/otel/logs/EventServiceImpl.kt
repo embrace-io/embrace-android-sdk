@@ -18,14 +18,14 @@ import java.util.concurrent.atomic.AtomicReference
 
 @OptIn(ExperimentalApi::class, IncubatingApi::class)
 class EventServiceImpl(
-    private val sdkLoggerSupplier: Provider<Logger>,
+    private val sdkLoggerProvider: Provider<Logger>,
 ) : EventService {
     private val noopLogger = createNoopOpenTelemetry().loggerProvider.getLogger("noop")
     private val sdkLoggerRef: AtomicReference<Logger> = AtomicReference(noopLogger)
     private val metadataSupplierProviderRef = AtomicReference<Provider<Map<String, String>>> { emptyMap() }
 
     override fun initializeService(sdkInitStartTimeMs: Long) {
-        sdkLoggerRef.set(sdkLoggerSupplier())
+        sdkLoggerRef.set(sdkLoggerProvider())
     }
 
     override fun initialized(): Boolean = sdkLoggerRef.get() != noopLogger

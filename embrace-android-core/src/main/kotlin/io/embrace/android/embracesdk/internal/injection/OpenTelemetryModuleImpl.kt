@@ -147,7 +147,7 @@ class OpenTelemetryModuleImpl(
 
     override val eventService: EventService by lazy {
         EventServiceImpl(
-            sdkLoggerSupplier = { otelSdkWrapper.logger }
+            sdkLoggerProvider = { otelSdkWrapper.logger }
         )
     }
 

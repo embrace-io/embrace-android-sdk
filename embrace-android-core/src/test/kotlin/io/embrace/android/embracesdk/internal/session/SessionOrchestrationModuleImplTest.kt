@@ -14,7 +14,7 @@ import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.injection.InstrumentationModuleImpl
-import io.embrace.android.embracesdk.internal.injection.SessionOrchestrationModuleImpl
+import io.embrace.android.embracesdk.internal.injection.createSessionOrchestrator
 import io.embrace.android.embracesdk.internal.worker.Worker
 import org.junit.Assert.assertNotNull
 import org.junit.Test
@@ -40,7 +40,7 @@ internal class SessionOrchestrationModuleImplTest {
             coreModule,
             FakeStorageService()
         )
-        val module = SessionOrchestrationModuleImpl(
+        val orchestrator = createSessionOrchestrator(
             initModule,
             initModule.openTelemetryModule,
             coreModule,
@@ -52,7 +52,7 @@ internal class SessionOrchestrationModuleImplTest {
             { 0 },
             FakeLogModule()
         )
-        assertNotNull(module.sessionOrchestrator)
+        assertNotNull(orchestrator)
     }
 
     @Test
@@ -69,7 +69,7 @@ internal class SessionOrchestrationModuleImplTest {
             FakeStorageService()
         )
 
-        val module = SessionOrchestrationModuleImpl(
+        val orchestrator = createSessionOrchestrator(
             initModule,
             initModule.openTelemetryModule,
             coreModule,
@@ -81,7 +81,7 @@ internal class SessionOrchestrationModuleImplTest {
             { 0 },
             FakeLogModule()
         )
-        assertNotNull(module.sessionOrchestrator)
+        assertNotNull(orchestrator)
     }
 
     private fun createEnabledBehavior(): FakeConfigService {

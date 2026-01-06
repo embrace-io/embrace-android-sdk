@@ -66,10 +66,6 @@ internal class InitializedModuleGraph(
         }
     }
 
-    override val storageService: StorageService = init {
-        storageServiceSupplier(initModule, coreModule, workerThreadModule)
-    }
-
     override val essentialServiceModule: EssentialServiceModule = init {
         essentialServiceModuleSupplier(
             initModule,
@@ -80,6 +76,10 @@ internal class InitializedModuleGraph(
             { null },
             { null },
         )
+    }
+
+    override val storageService: StorageService = init {
+        storageServiceSupplier(initModule, coreModule, workerThreadModule)
     }
 
     override val instrumentationModule: InstrumentationModule = init {

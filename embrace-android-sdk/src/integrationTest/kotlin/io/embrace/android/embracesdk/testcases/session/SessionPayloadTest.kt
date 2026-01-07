@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.assertions.getSessionId
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -23,6 +24,7 @@ internal class SessionPayloadTest {
                 embrace.setResourceAttribute("resource-attr", "foo")
             },
             testCaseAction = {
+                embrace.setResourceAttribute("bad-resource-attr", "foo")
                 recordSession()
 
             },
@@ -37,6 +39,7 @@ internal class SessionPayloadTest {
                         assertTrue(checkNotNull(deviceModel).isNotBlank())
                         assertEquals(AppFramework.NATIVE, appFramework)
                         assertEquals("foo", extras["resource-attr"])
+                        assertFalse(extras.contains("bad-resource-attr"))
                     }
                     assertTrue(getSessionId().isNotBlank())
                 }

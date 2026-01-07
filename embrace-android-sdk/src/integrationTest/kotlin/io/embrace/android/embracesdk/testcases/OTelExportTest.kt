@@ -23,6 +23,7 @@ import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.semconv.ServiceAttributes
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -48,6 +49,7 @@ internal class OTelExportTest {
                 embrace.addSpanExporter(fakeSpanExporter)
             },
             testCaseAction = {
+                embrace.setResourceAttribute("bad-test", "foo")
                 recordSession {
                     embrace.startSpan("test-span").stop()
                 }
@@ -59,9 +61,10 @@ internal class OTelExportTest {
             },
             otelExportAssertion = {
                 val span = awaitSpans(1) { it.name == "test-span" }
-                with(span.single()) {
-                    assertEquals("my.app", resource.attributes.toStringMap()[ServiceAttributes.SERVICE_NAME])
-                    assertEquals("foo", resource.attributes.asMap().filter { it.key.key == "test" }.values.single())
+                with(span.single().resource.attributes.toStringMap()) {
+                    assertEquals("my.app", this[ServiceAttributes.SERVICE_NAME])
+                    assertEquals("foo", this["test"])
+                    assertFalse(contains("bad-test"))
                 }
             }
         )
@@ -95,6 +98,7 @@ internal class OTelExportTest {
                 embrace.setResourceAttribute("test", "foo")
             },
             testCaseAction = {
+                embrace.setResourceAttribute("bad-test", "foo")
                 recordSession {
                     logTimestampNanos = clock.now().millisToNanos()
                     embrace.logMessage("test message", Severity.INFO)
@@ -108,8 +112,11 @@ internal class OTelExportTest {
                     assertEquals("test message", body.asString())
                     assertEquals(logTimestampNanos, timestampEpochNanos)
                     assertEquals(logTimestampNanos, observedTimestampEpochNanos)
-                    assertEquals("my.app", resource.attributes.toStringMap()[ServiceAttributes.SERVICE_NAME])
-                    assertEquals("foo", resource.attributes.asMap().filter { it.key.key == "test" }.values.single())
+                    with(resource.attributes.toStringMap()) {
+                        assertEquals("my.app", this[ServiceAttributes.SERVICE_NAME])
+                        assertEquals("foo", this["test"])
+                        assertFalse(contains("bad-test"))
+                    }
                 }
             }
         )

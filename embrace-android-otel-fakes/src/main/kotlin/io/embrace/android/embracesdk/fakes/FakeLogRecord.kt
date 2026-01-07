@@ -6,10 +6,12 @@ import io.embrace.opentelemetry.kotlin.logging.model.SeverityNumber
 
 @OptIn(ExperimentalApi::class)
 class FakeLogRecord(
-    val observedTimestamp: Long?,
-    val severityNumber: SeverityNumber?,
-    val timestamp: Long?,
+    val eventName: String?,
     val body: String?,
+    val timestamp: Long?,
+    val observedTimestamp: Long?,
     val context: Context?,
+    val severityNumber: SeverityNumber?,
+    val severityText: String?,
     val attributes: Map<String, Any>,
 )

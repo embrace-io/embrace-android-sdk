@@ -1,11 +1,6 @@
 package io.embrace.android.embracesdk.internal.otel.logs
 
-import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryLogger
-import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
-import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
-import io.embrace.android.embracesdk.internal.arch.schema.TelemetryAttributes
-import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.logging.model.SeverityNumber
 import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
@@ -19,6 +14,7 @@ import org.junit.Test
 
 @OptIn(ExperimentalApi::class, IncubatingApi::class)
 class EventServiceImplTest {
+    val sessionAttributeName = "session-attr"
     lateinit var sdkLogger: FakeOpenTelemetryLogger
     lateinit var impl: EventServiceImpl
 
@@ -29,6 +25,7 @@ class EventServiceImplTest {
             sdkLoggerProvider = { sdkLogger }
         )
         impl.initializeService(100L)
+        impl.setMetadataProvider { mapOf(sessionAttributeName to "foo") }
     }
 
     @Test
@@ -38,13 +35,15 @@ class EventServiceImplTest {
         )
         assertFalse(notInitializedLogger.initialized())
         notInitializedLogger.log(
-            logTimeMs = 1000L,
-            schemaType = SchemaType.Log(TelemetryAttributes()),
-            severity = Severity.ERROR,
-            message = "test",
-            isPrivate = true,
-            addCurrentMetadata = false,
-        )
+            eventName = null,
+            body = "test",
+            timestamp = 1000L,
+            observedTimestamp = 1005L,
+            context = null,
+            severityNumber = SeverityNumber.ERROR,
+            severityText = "boo",
+            addCurrentMetadata = true,
+        ) { }
 
         assertTrue(sdkLogger.logs.isEmpty())
     }
@@ -53,50 +52,45 @@ class EventServiceImplTest {
     fun `check expected values added to every event`() {
         assertTrue(impl.initialized())
         impl.log(
-            logTimeMs = 1000L,
-            schemaType = SchemaType.Log(TelemetryAttributes(customAttributes = mapOf("custom" to "attr"))),
-            severity = Severity.ERROR,
-            message = "test",
-            isPrivate = true,
-            addCurrentMetadata = false,
-        )
+            eventName = "my.event",
+            body = "test",
+            timestamp = 1000L,
+            observedTimestamp = 1005L,
+            context = null,
+            severityNumber = SeverityNumber.ERROR,
+            severityText = "boo",
+            addCurrentMetadata = true,
+        ) {
+            setStringAttribute("custom", "attr")
+        }
 
         with(sdkLogger.logs.single()) {
-            assertEquals(1000L, timestamp?.nanosToMillis())
+            assertEquals("my.event", eventName)
+            assertEquals(1000L, timestamp)
+            assertEquals(1005L, observedTimestamp)
             assertEquals("test", body)
             assertEquals(SeverityNumber.ERROR, severityNumber)
-            assertEquals("true", attributes[PrivateSpan.key.name])
+            assertEquals("boo", severityText)
             assertEquals("attr", attributes["custom"])
+            assertEquals("foo", attributes[sessionAttributeName])
             assertNotNull(attributes[LogAttributes.LOG_RECORD_UID])
-        }
-    }
-
-    @Test
-    fun `no extra attribute added when event is non-private`() {
-        impl.log(
-            logTimeMs = 1000L,
-            schemaType = SchemaType.Log(TelemetryAttributes()),
-            severity = Severity.INFO,
-            message = "test",
-            isPrivate = false,
-            addCurrentMetadata = false,
-        )
-
-        with(sdkLogger.logs.single()) {
-            assertFalse(attributes.containsKey(PrivateSpan.key.name))
         }
     }
 
     @Test
     fun `existing log id not overridden`() {
         impl.log(
-            logTimeMs = 1000L,
-            schemaType = SchemaType.Log(TelemetryAttributes(customAttributes = mapOf(LogAttributes.LOG_RECORD_UID to "foo"))),
-            severity = Severity.INFO,
-            message = "test",
-            isPrivate = false,
-            addCurrentMetadata = false,
-        )
+            eventName = null,
+            body = "test",
+            timestamp = 1000L,
+            observedTimestamp = 1005L,
+            context = null,
+            severityNumber = SeverityNumber.ERROR,
+            severityText = "boo",
+            addCurrentMetadata = true,
+        ) {
+            setStringAttribute(LogAttributes.LOG_RECORD_UID, "foo")
+        }
 
         with(sdkLogger.logs.single()) {
             assertEquals("foo", attributes[LogAttributes.LOG_RECORD_UID])
@@ -105,39 +99,19 @@ class EventServiceImplTest {
 
     @Test
     fun `current metadata added only requested`() {
-        val sessionAttributeName = "session-attr"
-        impl.setMetadataProvider { mapOf(sessionAttributeName to "foo") }
         impl.log(
-            logTimeMs = 1000L,
-            schemaType = SchemaType.Log(TelemetryAttributes(customAttributes = mapOf("custom" to "attr"))),
-            severity = Severity.INFO,
-            message = "add-metadata",
-            isPrivate = false,
-            addCurrentMetadata = true,
-        )
-
-        impl.log(
-            logTimeMs = 1000L,
-            schemaType = SchemaType.Log(TelemetryAttributes(customAttributes = mapOf("custom" to "attr"))),
-            severity = Severity.INFO,
-            message = "test",
-            isPrivate = false,
+            eventName = null,
+            body = "test",
+            timestamp = 1000L,
+            observedTimestamp = 1005L,
+            context = null,
+            severityNumber = SeverityNumber.ERROR,
+            severityText = "boo",
             addCurrentMetadata = false,
-        )
+        ) { }
 
-        assertEquals(2, sdkLogger.logs.size)
-        sdkLogger.logs.forEach { log ->
-            with(log) {
-                assertEquals(1000L, timestamp?.nanosToMillis())
-                assertEquals(SeverityNumber.INFO, severityNumber)
-                assertEquals("attr", attributes["custom"])
-                assertNotNull(attributes[LogAttributes.LOG_RECORD_UID])
-                if (body == "add-metadata") {
-                    assertEquals("foo", attributes[sessionAttributeName])
-                } else {
-                    assertFalse(attributes.containsKey(sessionAttributeName))
-                }
-            }
+        with(sdkLogger.logs.single()) {
+            assertFalse(attributes.containsKey(sessionAttributeName))
         }
     }
 }

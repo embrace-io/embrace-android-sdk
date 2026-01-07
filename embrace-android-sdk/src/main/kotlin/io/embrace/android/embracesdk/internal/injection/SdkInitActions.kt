@@ -2,6 +2,9 @@ package io.embrace.android.embracesdk.internal.injection
 
 import io.embrace.android.embracesdk.core.BuildConfig
 import io.embrace.android.embracesdk.internal.arch.InstrumentationProvider
+import io.embrace.android.embracesdk.internal.arch.attrs.embState
+import io.embrace.android.embracesdk.internal.arch.attrs.toEmbraceAttributeName
+import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.instrumentation.crash.jvm.JvmCrashDataSource
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeCrashDataSource
 import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkStateDataSource
@@ -9,7 +12,10 @@ import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkSta
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.EmbTrace.end
 import io.embrace.android.embracesdk.internal.utils.EmbTrace.start
+import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.worker.Worker
+import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
+import io.embrace.opentelemetry.kotlin.semconv.SessionAttributes
 import java.util.ServiceLoader
 
 /**
@@ -144,4 +150,38 @@ internal fun ModuleGraph.markSdkInitComplete() {
     val appId = configService.appId
     val startMsg = "Embrace SDK version ${BuildConfig.VERSION_NAME} started" + appId?.run { " for appId = $this" }
     initModule.logger.logInfo(startMsg)
+}
+
+/**
+ * Set the provider of metadata for the event service
+ */
+internal fun ModuleGraph.setupMetadataProvider() {
+    openTelemetryModule.eventService.setMetadataProvider(eventMetadataSupplierProvider())
+}
+
+@OptIn(IncubatingApi::class)
+private fun ModuleGraph.eventMetadataSupplierProvider(): Provider<Map<String, String>> {
+    return {
+        mutableMapOf<String, String>().apply {
+            var sessionState: AppState? = null
+            essentialServiceModule.sessionTracker.getActiveSession()?.let { session ->
+                if (session.sessionId.isNotBlank()) {
+                    put(SessionAttributes.SESSION_ID, session.sessionId)
+                }
+                sessionState = session.appState
+            }
+            val state = sessionState ?: essentialServiceModule.appStateTracker.getAppState()
+            put(embState.name, state.description)
+            putAll(
+                essentialServiceModule.sessionPropertiesService
+                    .getProperties()
+                    .mapKeys { property ->
+                        property.key.toEmbraceAttributeName()
+                    }
+            )
+            instrumentationModule.instrumentationRegistry.getCurrentStates().forEach {
+                put(it.key.name, it.value.toString())
+            }
+        }
+    }
 }

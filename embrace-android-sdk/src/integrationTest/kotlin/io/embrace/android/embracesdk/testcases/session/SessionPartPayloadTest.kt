@@ -26,7 +26,6 @@ import io.embrace.android.embracesdk.internal.session.getSessionProperty
 import io.embrace.android.embracesdk.internal.session.getSessionPartSpan
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
-import java.util.Locale
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
@@ -35,6 +34,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.util.Locale
 
 /**
  * Asserts the shape and structure of session part payloads: device/app envelope attributes, session-scoped
@@ -47,9 +47,13 @@ internal class SessionPartPayloadTest {
     val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule()
 
     @Test
-    fun `device and app attributes are present in session envelope`() {
+    fun `device, app, and resour attributes are present in session envelope`() {
         testRule.runTest(
+            preSdkStartAction = {
+                embrace.setResourceAttribute("resource-attr", "foo")
+            },
             testCaseAction = {
+                embrace.setResourceAttribute("bad-resource-attr", "foo")
                 recordSession()
 
             },
@@ -63,6 +67,8 @@ internal class SessionPartPayloadTest {
                         assertTrue(checkNotNull(osName).isNotBlank())
                         assertTrue(checkNotNull(deviceModel).isNotBlank())
                         assertEquals(AppFramework.NATIVE, appFramework)
+                        assertEquals("foo", extras["resource-attr"])
+                        assertFalse(extras.contains("bad-resource-attr"))
                     }
                     assertTrue(getOtelSessionId().isNotBlank())
                 }
@@ -162,7 +168,7 @@ internal class SessionPartPayloadTest {
                 val firstSession = sessions[0]
                 val secondSession = sessions[1]
                 val firstSessionPartSpan = checkNotNull(firstSession.getSessionPartSpan())
-                val startAndEndInSession = checkNotNull(firstSession.data.spans?.single { it.name == "startAndEndInSession"})
+                val startAndEndInSession = checkNotNull(firstSession.data.spans?.single { it.name == "startAndEndInSession" })
 
                 assertTrue(firstSessionPartSpan.hasLinkToEmbraceSpan(startAndEndInSession, LinkType.EndedIn))
                 assertFalse(firstSessionPartSpan.hasLinkToEmbraceSpan(firstSessionPartSpan, LinkType.EndedIn))
@@ -170,9 +176,9 @@ internal class SessionPartPayloadTest {
 
                 val secondSessionPartSpan = checkNotNull(secondSession.getSessionPartSpan())
                 val startInSessionEndInBackground =
-                    checkNotNull(secondSession.data.spans?.single { it.name == "startInSessionEndInBackground"})
+                    checkNotNull(secondSession.data.spans?.single { it.name == "startInSessionEndInBackground" })
                 val startAndEndInDifferentSessions =
-                    checkNotNull(secondSession.data.spans?.single { it.name == "startAndEndInDifferentSessions"})
+                    checkNotNull(secondSession.data.spans?.single { it.name == "startAndEndInDifferentSessions" })
                 assertTrue(secondSessionPartSpan.hasLinkToEmbraceSpan(startAndEndInDifferentSessions, LinkType.EndedIn))
                 assertFalse(secondSessionPartSpan.hasLinkToEmbraceSpan(secondSessionPartSpan, LinkType.EndedIn))
                 assertTrue(startAndEndInDifferentSessions.hasLinkToEmbraceSpan(secondSessionPartSpan, LinkType.EndSessionPart))
@@ -196,11 +202,13 @@ internal class SessionPartPayloadTest {
                 // verify first session
                 val messages = getSessionEnvelopes(2)
                 val first = messages[0]
-                first.findSessionPartSpan().attributes?.assertMatches(mapOf(
-                    EmbSessionAttributes.EMB_SESSION_START_TYPE to LifeEventType.STATE.name.lowercase(Locale.ENGLISH),
-                    EmbSessionAttributes.EMB_SESSION_END_TYPE to LifeEventType.STATE.name.lowercase(Locale.ENGLISH),
-                    EmbSessionAttributes.EMB_ERROR_LOG_COUNT to 0
-                ))
+                first.findSessionPartSpan().attributes?.assertMatches(
+                    mapOf(
+                        EmbSessionAttributes.EMB_SESSION_START_TYPE to LifeEventType.STATE.name.lowercase(Locale.ENGLISH),
+                        EmbSessionAttributes.EMB_SESSION_END_TYPE to LifeEventType.STATE.name.lowercase(Locale.ENGLISH),
+                        EmbSessionAttributes.EMB_ERROR_LOG_COUNT to 0
+                    )
+                )
 
                 assertFalse(first.hasSpanSnapshotsOfType(EmbType.Ux.Session))
 

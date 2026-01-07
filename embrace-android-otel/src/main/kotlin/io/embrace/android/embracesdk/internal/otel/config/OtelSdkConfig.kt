@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.otel.config
 
 import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.otel.logs.DefaultLogRecordExporter
+import io.embrace.android.embracesdk.internal.otel.logs.DefaultLogRecordProcessor
 import io.embrace.android.embracesdk.internal.otel.logs.LogSink
 import io.embrace.android.embracesdk.internal.otel.sdk.IdGenerator
 import io.embrace.android.embracesdk.internal.otel.spans.DefaultSpanExporter
@@ -11,6 +12,7 @@ import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.attributes.MutableAttributeContainer
 import io.embrace.opentelemetry.kotlin.logging.export.LogRecordExporter
+import io.embrace.opentelemetry.kotlin.logging.export.LogRecordProcessor
 import io.embrace.opentelemetry.kotlin.semconv.AndroidAttributes
 import io.embrace.opentelemetry.kotlin.semconv.DeviceAttributes
 import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
@@ -91,12 +93,16 @@ class OtelSdkConfig(
         )
     }
 
-    val logRecordExporter: LogRecordExporter by lazy {
+    private val logRecordExporter: LogRecordExporter by lazy {
         DefaultLogRecordExporter(
             logSink = logSink,
             externalExporters = externalLogExporters.toList(),
             exportCheck = exportCheck,
         )
+    }
+
+    val logRecordProcessor: LogRecordProcessor by lazy {
+        DefaultLogRecordProcessor(logRecordExporter)
     }
 
     fun addSpanExporter(spanExporter: SpanExporter) {

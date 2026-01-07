@@ -109,6 +109,10 @@ class PayloadSourceModuleImpl(
         AppEnvironment(isDebug)
     }
 
+    private val otelResourceAttributes: Map<String, String> by lazy {
+        otelModule.otelSdkConfig.getOTelResourceAttributes()
+    }
+
     override val resourceSource: EnvelopeResourceSource by singleton {
         EmbTrace.trace("resource-source") {
             EnvelopeResourceSourceImpl(
@@ -126,8 +130,10 @@ class PayloadSourceModuleImpl(
                 },
                 rnBundleIdProvider = { rnBundleIdTracker.getReactNativeBundleId() },
                 versionName = BuildConfig.VERSION_NAME,
-                versionCode = BuildConfig.VERSION_CODE.toIntOrNull()
-            )
+                versionCode = BuildConfig.VERSION_CODE.toIntOrNull(),
+            ) {
+                otelResourceAttributes
+            }
         }
     }
 

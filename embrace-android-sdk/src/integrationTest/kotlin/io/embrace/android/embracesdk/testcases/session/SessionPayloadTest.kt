@@ -17,8 +17,11 @@ internal class SessionPayloadTest {
     val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule()
 
     @Test
-    fun `device and app attributes are present in session envelope`() {
+    fun `device, app, and otel resource attributes are present in session envelope`() {
         testRule.runTest(
+            preSdkStartAction = {
+                embrace.setResourceAttribute("resource-attr", "foo")
+            },
             testCaseAction = {
                 recordSession()
 
@@ -33,6 +36,7 @@ internal class SessionPayloadTest {
                         assertTrue(checkNotNull(osName).isNotBlank())
                         assertTrue(checkNotNull(deviceModel).isNotBlank())
                         assertEquals(AppFramework.NATIVE, appFramework)
+                        assertEquals("foo", extras["resource-attr"])
                     }
                     assertTrue(getSessionId().isNotBlank())
                 }

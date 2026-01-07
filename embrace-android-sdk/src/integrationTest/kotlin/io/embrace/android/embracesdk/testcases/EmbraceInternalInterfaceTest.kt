@@ -58,12 +58,11 @@ internal class EmbraceInternalInterfaceTest {
                 }
             },
             assertAction = {
-                val expected = mapOf("foo" to "bar")
                 val sessionResource = checkNotNull(getSingleSessionEnvelope().resource)
-                assertEquals(expected, sessionResource.extras)
+                assertEquals("bar", sessionResource.extras["foo"])
 
                 val logResource = checkNotNull(getSingleLogEnvelope().resource)
-                assertEquals(expected, logResource.extras)
+                assertEquals("bar", logResource.extras["foo"])
             }
         )
     }

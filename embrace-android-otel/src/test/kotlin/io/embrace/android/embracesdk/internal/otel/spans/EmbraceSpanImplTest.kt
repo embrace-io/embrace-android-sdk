@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.assertions.validateSystemLink
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
 import io.embrace.android.embracesdk.fakes.FakeOtelKotlinClock
+import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.TestConstants.TESTS_DEFAULT_USE_KOTLIN_SDK
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.fakes.fakeOpenTelemetry
@@ -75,13 +76,14 @@ internal class EmbraceSpanImplTest {
         tracer = createSdkOtelInstance(clock = otelClock, useKotlinSdk = TESTS_DEFAULT_USE_KOTLIN_SDK).getTracer("test-tracer")
         spanRepository = SpanRepository().apply { setSpanUpdateNotifier { updateNotified = true } }
         serializer = TestPlatformSerializer()
-        dataValidator = DataValidator()
+        dataValidator = DataValidator(telemetryService = FakeTelemetryService())
         embraceSpanFactory = EmbraceSpanFactoryImpl(
             openTelemetryClock = otelClock,
             spanRepository = spanRepository,
             dataValidator = dataValidator,
             stopCallback = ::stopCallback,
-            redactionFunction = ::redactionFunction
+            redactionFunction = ::redactionFunction,
+            telemetryService = FakeTelemetryService()
         )
         embraceSpan = embraceSpanFactory.create(
             otelSpanStartArgs = OtelSpanStartArgs(

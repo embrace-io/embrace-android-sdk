@@ -29,7 +29,9 @@ class FakeSpanData(
     private var spanContext: OtelJavaSpanContext = newTraceRootContext(),
     private var parentSpanContext: OtelJavaSpanContext = OtelJavaSpanContext.getInvalid(),
     private var startEpochNanos: Long = DEFAULT_START_TIME_MS.millisToNanos(),
-    private var attributes: OtelJavaAttributes = DataValidator().truncateAttributes(
+    private var attributes: OtelJavaAttributes = DataValidator(
+        telemetryService = FakeTelemetryService()
+    ).truncateAttributes(
         mapOf(
             type.asPair(),
             Pair("my-key", "my-value")

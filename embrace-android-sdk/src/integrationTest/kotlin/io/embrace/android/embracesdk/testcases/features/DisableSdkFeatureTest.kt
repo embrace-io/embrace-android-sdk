@@ -4,7 +4,7 @@ import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.returnIfConditionMet
-import io.embrace.android.embracesdk.fakes.FakeEmbLogger
+import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.internal.delivery.storage.StorageLocation
 import io.embrace.android.embracesdk.internal.delivery.storage.asFile
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
@@ -40,7 +40,7 @@ internal class DisableSdkFeatureTest {
     fun setUp() {
         val ctx = ApplicationProvider.getApplicationContext<Context>()
         embraceDirs = StorageLocation.entries.map { it.asFile(
-            logger = FakeEmbLogger(),
+            logger = FakeInternalLogger(),
             rootDirSupplier = { ctx.filesDir },
             fallbackDirSupplier = { ctx.cacheDir }
         ).value }

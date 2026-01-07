@@ -8,8 +8,8 @@ import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageEvent.BLOCKED
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageEvent.BLOCKED_INTERVAL
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageEvent.UNBLOCKED
-import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
@@ -28,7 +28,7 @@ class BlockedThreadDetector(
     private val watchdogWorker: BackgroundWorker,
     private val clock: Clock,
     private val looper: Looper,
-    private val logger: EmbLogger,
+    private val logger: InternalLogger,
     private val listener: ThreadBlockageListener,
     private val intervalMs: Long,
     private val blockedDurationThreshold: Int,

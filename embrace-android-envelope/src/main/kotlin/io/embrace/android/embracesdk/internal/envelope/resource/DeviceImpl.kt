@@ -6,8 +6,8 @@ import android.util.DisplayMetrics
 import android.view.WindowManager
 import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.isEmulator
-import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import java.io.File
@@ -18,7 +18,7 @@ class DeviceImpl(
     private val store: KeyValueStore,
     private val backgroundWorker: BackgroundWorker,
     override val systemInfo: SystemInfo,
-    private val logger: EmbLogger,
+    private val logger: InternalLogger,
 ) : Device {
     override var isJailbroken: Boolean? = false
     override var screenResolution: String = ""

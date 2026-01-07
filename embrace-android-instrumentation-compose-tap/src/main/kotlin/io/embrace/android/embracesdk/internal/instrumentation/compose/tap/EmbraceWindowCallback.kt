@@ -6,7 +6,7 @@ import android.view.KeyboardShortcutGroup
 import android.view.Menu
 import android.view.MotionEvent
 import android.view.Window
-import io.embrace.android.embracesdk.internal.logging.EmbLogger
+import io.embrace.android.embracesdk.internal.logging.InternalLogger
 
 /**
  * Custom Window callback that triggers onTouch event
@@ -15,7 +15,7 @@ import io.embrace.android.embracesdk.internal.logging.EmbLogger
 internal class EmbraceWindowCallback(
     private val delegate: Window.Callback,
     private val gestureDetector: GestureDetector,
-    private val logger: EmbLogger,
+    private val logger: InternalLogger,
 ) : Window.Callback by delegate {
 
     override fun dispatchTouchEvent(event: MotionEvent?): Boolean {

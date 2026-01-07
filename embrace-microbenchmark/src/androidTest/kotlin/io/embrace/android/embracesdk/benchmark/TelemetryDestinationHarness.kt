@@ -8,8 +8,8 @@ import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedCo
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.InstrumentedConfig
 import io.embrace.android.embracesdk.internal.injection.InitModule
 import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModuleImpl
-import io.embrace.android.embracesdk.internal.logging.EmbLogger
-import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
+import io.embrace.android.embracesdk.internal.logging.InternalLogger
+import io.embrace.android.embracesdk.internal.logging.InternalLoggerImpl
 import io.embrace.android.embracesdk.internal.otel.logs.LogSink
 import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
@@ -42,7 +42,7 @@ internal class TelemetryDestinationHarness {
     private class TestInitModule : InitModule {
         override val clock: io.embrace.android.embracesdk.internal.clock.Clock = NormalizedIntervalClock()
         override val telemetryService: TelemetryService = NoopTelemetryService
-        override val logger: EmbLogger = EmbLoggerImpl()
+        override val logger: InternalLogger = InternalLoggerImpl()
         override val systemInfo: SystemInfo = SystemInfo()
         override val jsonSerializer: PlatformSerializer = EmbraceSerializer()
         override val instrumentedConfig: InstrumentedConfig = InstrumentedConfigImpl

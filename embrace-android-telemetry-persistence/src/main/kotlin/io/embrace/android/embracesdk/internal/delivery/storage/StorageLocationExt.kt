@@ -1,14 +1,14 @@
 package io.embrace.android.embracesdk.internal.delivery.storage
 
-import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import java.io.File
 
 /**
  * Get the directory as a [File] object
  */
 fun StorageLocation.asFile(
-    logger: EmbLogger,
+    logger: InternalLogger,
     rootDirSupplier: () -> File,
     fallbackDirSupplier: () -> File,
 ): Lazy<File> = lazy {

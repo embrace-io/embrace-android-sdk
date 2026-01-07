@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.instrumentation.crash.jvm
 
-import io.embrace.android.embracesdk.fakes.FakeEmbLogger
+import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.internal.arch.CrashTeardownHandler
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
@@ -17,7 +17,7 @@ import org.junit.Test
  */
 internal class EmbraceUncaughtExceptionHandlerTest {
 
-    private val logger = FakeEmbLogger(false)
+    private val logger = FakeInternalLogger(false)
 
     /**
      * Tests that [EmbraceUncaughtExceptionHandler] accepts a null arg.

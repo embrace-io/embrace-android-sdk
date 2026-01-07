@@ -1,13 +1,12 @@
 package io.embrace.android.embracesdk.testcases.features
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.EmbraceImpl
 import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.config.FakeProjectConfig
 import io.embrace.android.embracesdk.internal.EmbraceInternalApi
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
-import io.embrace.android.embracesdk.internal.logging.EmbLogger
+import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import org.junit.Assert.assertEquals
@@ -50,7 +49,7 @@ internal class PayloadTypesHeaderTest {
 
     @Test
     fun `batched logs of different types send a list of header types`() {
-        lateinit var logger: EmbLogger
+        lateinit var logger: InternalLogger
 
         testRule.runTest(
             setupAction = {
@@ -84,7 +83,7 @@ internal class PayloadTypesHeaderTest {
                 appFramework = "flutter"
             )
         )
-        lateinit var logger: EmbLogger
+        lateinit var logger: InternalLogger
 
         testRule.runTest(
             instrumentedConfig = instrumentedConfig,
@@ -132,7 +131,7 @@ internal class PayloadTypesHeaderTest {
                 appFramework = "unity"
             )
         )
-        lateinit var logger: EmbLogger
+        lateinit var logger: InternalLogger
 
         testRule.runTest(
             instrumentedConfig = instrumentedConfig,

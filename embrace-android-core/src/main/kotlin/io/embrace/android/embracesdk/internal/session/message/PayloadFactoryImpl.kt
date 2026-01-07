@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.session.message
 import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.envelope.log.LogEnvelopeSource
-import io.embrace.android.embracesdk.internal.logging.EmbLogger
+import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
@@ -15,7 +15,7 @@ internal class PayloadFactoryImpl(
     private val payloadMessageCollator: PayloadMessageCollator,
     private val logEnvelopeSource: LogEnvelopeSource,
     private val configService: ConfigService,
-    private val logger: EmbLogger,
+    private val logger: InternalLogger,
 ) : PayloadFactory {
 
     override fun startPayloadWithState(state: AppState, timestamp: Long, coldStart: Boolean): SessionToken? =

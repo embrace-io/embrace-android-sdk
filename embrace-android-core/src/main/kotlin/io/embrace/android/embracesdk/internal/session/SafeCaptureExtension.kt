@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.session
 
-import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.utils.Provider
 
 /**
@@ -9,7 +9,7 @@ import io.embrace.android.embracesdk.internal.utils.Provider
  * This is intended for use when building the session/background activity payloads. If an
  * exception is thrown during capture, then we still want to send the request.
  */
-internal inline fun <R> captureDataSafely(logger: EmbLogger, result: Provider<R>): R? {
+internal inline fun <R> captureDataSafely(logger: InternalLogger, result: Provider<R>): R? {
     return try {
         result()
     } catch (exc: Throwable) {

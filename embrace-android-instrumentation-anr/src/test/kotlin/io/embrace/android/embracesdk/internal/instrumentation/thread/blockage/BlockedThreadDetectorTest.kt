@@ -4,13 +4,13 @@ import android.os.Looper
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
-import io.embrace.android.embracesdk.fakes.FakeEmbLogger
+import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakeThreadBlockageListener
 import io.embrace.android.embracesdk.fakes.createThreadBlockageBehavior
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.ThreadBlockageRemoteConfig
-import io.embrace.android.embracesdk.internal.logging.EmbLogger
+import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.mockk.every
 import io.mockk.mockk
@@ -29,7 +29,7 @@ internal class BlockedThreadDetectorTest {
     private lateinit var listener: FakeThreadBlockageListener
     private lateinit var watchdogThread: AtomicReference<Thread>
     private lateinit var watchdogExecutorService: BlockingScheduledExecutorService
-    private lateinit var logger: EmbLogger
+    private lateinit var logger: InternalLogger
     private lateinit var looper: Looper
     private lateinit var cfg: ThreadBlockageRemoteConfig
 
@@ -46,7 +46,7 @@ internal class BlockedThreadDetectorTest {
             )
         )
         watchdogExecutorService = BlockingScheduledExecutorService(clock)
-        logger = FakeEmbLogger()
+        logger = FakeInternalLogger()
         looper = mockk {
             every { thread } returns Thread.currentThread()
         }

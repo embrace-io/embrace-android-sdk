@@ -6,8 +6,8 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.net.ConnectivityManager
 import io.embrace.android.embracesdk.internal.comms.delivery.NetworkStatus
-import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import java.net.Inet4Address
 import java.net.NetworkInterface
@@ -17,7 +17,7 @@ import java.util.concurrent.CopyOnWriteArrayList
 internal class EmbraceNetworkConnectivityService(
     private val context: Context,
     private val backgroundWorker: BackgroundWorker,
-    private val logger: EmbLogger,
+    private val logger: InternalLogger,
     private val connectivityManager: ConnectivityManager?,
 ) : BroadcastReceiver(), NetworkConnectivityService {
 

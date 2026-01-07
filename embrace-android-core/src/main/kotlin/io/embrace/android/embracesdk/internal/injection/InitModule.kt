@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.injection
 import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.InstrumentedConfig
-import io.embrace.android.embracesdk.internal.logging.EmbLogger
+import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
 import okhttp3.OkHttpClient
@@ -26,7 +26,7 @@ interface InitModule {
     /**
      * Logger used by the SDK
      */
-    val logger: EmbLogger
+    val logger: InternalLogger
 
     /**
      * Info about the system available at startup time without expensive disk or API calls

@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.internal.delivery.storage
 
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
-import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.worker.PriorityWorker
 import java.io.File
 import java.io.FileNotFoundException
@@ -13,7 +13,7 @@ import java.util.concurrent.RejectedExecutionException
 class FileStorageServiceImpl(
     outputDir: Lazy<File>,
     private val worker: PriorityWorker<StoredTelemetryMetadata>,
-    private val logger: EmbLogger,
+    private val logger: InternalLogger,
     private val storageLimit: Int = 500,
 ) : FileStorageService {
 

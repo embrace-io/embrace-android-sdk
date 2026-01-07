@@ -11,7 +11,7 @@ import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesS
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.injection.WorkerThreadModule
-import io.embrace.android.embracesdk.internal.logging.EmbLogger
+import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.session.id.SessionTracker
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
@@ -26,7 +26,7 @@ import java.util.concurrent.ConcurrentHashMap
 internal class InstrumentationArgsImpl(
     override val configService: ConfigService,
     override val destination: TelemetryDestination,
-    override val logger: EmbLogger,
+    override val logger: InternalLogger,
     override val clock: Clock,
     override val context: Context,
     override val application: Application,

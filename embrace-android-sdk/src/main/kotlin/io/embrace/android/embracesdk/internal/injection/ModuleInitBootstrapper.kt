@@ -20,7 +20,7 @@ import io.embrace.android.embracesdk.internal.instrumentation.startup.DataCaptur
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageService
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageServiceSupplier
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.createThreadBlockageService
-import io.embrace.android.embracesdk.internal.logging.EmbLogger
+import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
 import io.embrace.android.embracesdk.internal.storage.EmbraceStorageService
 import io.embrace.android.embracesdk.internal.storage.StatFsAvailabilityChecker
@@ -138,7 +138,7 @@ internal class ModuleInitBootstrapper(
     },
     private val dataCaptureServiceModuleSupplier: DataCaptureServiceModuleSupplier = {
             clock: Clock,
-            logger: EmbLogger,
+            logger: InternalLogger,
             destination: TelemetryDestination,
             configService: ConfigService,
             versionChecker: VersionChecker,

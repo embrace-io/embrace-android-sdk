@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.internal.api.delegate
 
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.fakes.FakeEmbLogger
+import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakeLogRecordExporter
 import io.embrace.android.embracesdk.fakes.FakeMutableAttributeContainer
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
@@ -41,7 +41,7 @@ internal class OTelApiDelegateTest {
         bootstrapper.init(ApplicationProvider.getApplicationContext())
         cfg = bootstrapper.openTelemetryModule.otelSdkConfig
 
-        sdkCallChecker = SdkCallChecker(FakeEmbLogger(), FakeTelemetryService())
+        sdkCallChecker = SdkCallChecker(FakeInternalLogger(), FakeTelemetryService())
         sdkCallChecker.started.set(true)
         delegate = OTelApiDelegate(bootstrapper, sdkCallChecker)
     }

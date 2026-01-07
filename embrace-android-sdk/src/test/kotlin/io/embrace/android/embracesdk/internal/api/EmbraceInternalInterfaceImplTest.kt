@@ -3,8 +3,8 @@ package io.embrace.android.embracesdk.internal.api
 import io.embrace.android.embracesdk.EmbraceImpl
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
-import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeResourceSource
+import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.behavior.FakeNetworkSpanForwardingBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.api.delegate.EmbraceInternalInterfaceImpl
@@ -28,7 +28,7 @@ internal class EmbraceInternalInterfaceImplTest {
     fun setUp() {
         embraceImpl = mockk(relaxed = true)
         fakeClock = FakeClock(currentTime = beforeObjectInitTime)
-        initModule = FakeInitModule(clock = fakeClock, logger = FakeEmbLogger(false))
+        initModule = FakeInitModule(clock = fakeClock, logger = FakeInternalLogger(false))
         fakeConfigService = FakeConfigService()
         resourceSource = FakeEnvelopeResourceSource()
         internalImpl = EmbraceInternalInterfaceImpl(fakeConfigService, resourceSource)

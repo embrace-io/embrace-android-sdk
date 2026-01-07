@@ -1,15 +1,15 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorHandler
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.utils.Provider
 
-class FakeEmbLogger(
+class FakeInternalLogger(
     var throwOnInternalError: Boolean = true,
     override var errorHandlerProvider: Provider<InternalErrorHandler?> = { null },
     val ignoredErrors: List<InternalErrorType> = emptyList()
-) : EmbLogger {
+) : InternalLogger {
 
     data class LogMessage(
         val msg: String,

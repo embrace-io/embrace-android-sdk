@@ -3,9 +3,9 @@ package io.embrace.android.embracesdk.internal.logging
 import io.embrace.android.embracesdk.internal.utils.Provider
 
 /**
- * A simple interface that is used within the Embrace SDK for logging.
+ * A simple interface that is used within the Embrace SDK for internal diagnostics logging.
  */
-interface EmbLogger : InternalErrorHandler {
+interface InternalLogger : InternalErrorHandler {
 
     enum class Severity {
         DEBUG, INFO, WARNING, ERROR

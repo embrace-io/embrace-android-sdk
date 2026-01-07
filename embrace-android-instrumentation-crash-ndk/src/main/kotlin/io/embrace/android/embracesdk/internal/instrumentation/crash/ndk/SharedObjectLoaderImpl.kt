@@ -1,12 +1,12 @@
 package io.embrace.android.embracesdk.internal.instrumentation.crash.ndk
 
-import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import java.util.concurrent.atomic.AtomicBoolean
 
 internal class SharedObjectLoaderImpl(
-    private val logger: EmbLogger,
+    private val logger: InternalLogger,
 ) : SharedObjectLoader {
     override val loaded = AtomicBoolean(false)
     private val loggedFailure = AtomicBoolean(false)

@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.delivery.storage
 
 import io.embrace.android.embracesdk.concurrency.BlockableExecutorService
-import io.embrace.android.embracesdk.fakes.FakeEmbLogger
+import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType.BLOB
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType.CRASH
@@ -30,7 +30,7 @@ class PayloadStorageServiceImplTest {
     private val metadata = StoredTelemetryMetadata(TIMESTAMP, UUID, PROCESS_ID, SESSION)
     private lateinit var service: PayloadStorageService
     private lateinit var outputDir: File
-    private lateinit var logger: FakeEmbLogger
+    private lateinit var logger: FakeInternalLogger
     private lateinit var worker: PriorityWorker<StoredTelemetryMetadata>
     private lateinit var currentProcessId: String
 
@@ -39,7 +39,7 @@ class PayloadStorageServiceImplTest {
         outputDir = Files.createTempDirectory("output").toFile()
         outputDir.deleteRecursively()
         worker = PriorityWorker(BlockableExecutorService(false))
-        logger = FakeEmbLogger(false)
+        logger = FakeInternalLogger(false)
         currentProcessId = PROCESS_ID
         service = PayloadStorageServiceImpl(lazy { outputDir }, worker, { currentProcessId }, logger)
     }

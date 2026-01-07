@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.internal.api.delegate
 
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.fakes.FakeEmbLogger
+import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakeSessionOrchestrator
 import io.embrace.android.embracesdk.fakes.FakeSessionPropertiesService
 import io.embrace.android.embracesdk.fakes.FakeTelemetryService
@@ -23,7 +23,7 @@ internal class SessionApiDelegateTest {
     private lateinit var orchestrator: FakeSessionOrchestrator
     private lateinit var sdkCallChecker: SdkCallChecker
     private lateinit var sessionPropertiesService: FakeSessionPropertiesService
-    private lateinit var logger: FakeEmbLogger
+    private lateinit var logger: FakeInternalLogger
 
     @Before
     fun setUp() {
@@ -40,7 +40,7 @@ internal class SessionApiDelegateTest {
         orchestrator = moduleInitBootstrapper.sessionOrchestrator as FakeSessionOrchestrator
         sessionPropertiesService =
             moduleInitBootstrapper.essentialServiceModule.sessionPropertiesService as FakeSessionPropertiesService
-        logger = FakeEmbLogger()
+        logger = FakeInternalLogger()
         sdkCallChecker = SdkCallChecker(logger, FakeTelemetryService())
         sdkCallChecker.started.set(true)
         delegate = SessionApiDelegate(moduleInitBootstrapper, sdkCallChecker)

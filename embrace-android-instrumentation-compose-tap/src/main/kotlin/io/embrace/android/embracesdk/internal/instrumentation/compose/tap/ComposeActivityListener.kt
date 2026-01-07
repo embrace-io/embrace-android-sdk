@@ -5,10 +5,10 @@ import android.app.Application.ActivityLifecycleCallbacks
 import android.os.Bundle
 import android.view.GestureDetector
 import android.view.Window
-import io.embrace.android.embracesdk.internal.logging.EmbLogger
+import io.embrace.android.embracesdk.internal.logging.InternalLogger
 
 internal class ComposeActivityListener(
-    private val logger: EmbLogger,
+    private val logger: InternalLogger,
     private val dataSource: ComposeTapDataSource,
 ) : ActivityLifecycleCallbacks {
 

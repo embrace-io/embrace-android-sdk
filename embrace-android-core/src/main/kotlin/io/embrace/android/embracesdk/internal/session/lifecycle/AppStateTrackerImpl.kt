@@ -8,8 +8,8 @@ import androidx.lifecycle.LifecycleOwner
 import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.arch.state.AppStateListener
 import io.embrace.android.embracesdk.internal.arch.state.AppStateTracker
-import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
 import java.util.concurrent.CopyOnWriteArrayList
 
@@ -18,7 +18,7 @@ import java.util.concurrent.CopyOnWriteArrayList
  * by ProcessLifecycleOwner.
  */
 internal class AppStateTrackerImpl(
-    private val logger: EmbLogger,
+    private val logger: InternalLogger,
     private val lifecycleOwner: LifecycleOwner,
 ) : AppStateTracker, LifecycleEventObserver {
 

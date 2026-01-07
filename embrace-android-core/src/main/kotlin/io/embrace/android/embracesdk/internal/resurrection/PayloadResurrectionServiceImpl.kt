@@ -14,8 +14,8 @@ import io.embrace.android.embracesdk.internal.delivery.storage.CachedLogEnvelope
 import io.embrace.android.embracesdk.internal.delivery.storage.CachedLogEnvelopeStore.Companion.createNativeCrashEnvelopeMetadata
 import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageService
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeCrashService
-import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.otel.spans.hasEmbraceAttribute
 import io.embrace.android.embracesdk.internal.otel.spans.toFailedSpan
@@ -41,7 +41,7 @@ internal class PayloadResurrectionServiceImpl(
     private val intakeService: IntakeService,
     private val cacheStorageService: PayloadStorageService,
     private val cachedLogEnvelopeStore: CachedLogEnvelopeStore,
-    private val logger: EmbLogger,
+    private val logger: InternalLogger,
     private val serializer: PlatformSerializer,
 ) : PayloadResurrectionService {
 

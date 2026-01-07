@@ -4,8 +4,8 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
-import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
+import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
 import io.embrace.android.embracesdk.fakes.FakeURLStreamHandlerFactory
 import io.embrace.android.embracesdk.fakes.behavior.FakeNetworkBehavior
@@ -31,7 +31,7 @@ class HucLiteDataSourceTest {
     private lateinit var factoryFieldRef: Field
     private lateinit var fakeTelemetryDestination: FakeTelemetryDestination
     private lateinit var fakeClock: FakeClock
-    private lateinit var fakeEmbLogger: FakeEmbLogger
+    private lateinit var fakeEmbLogger: FakeInternalLogger
     private lateinit var domainCountLimiter: EmbraceDomainCountLimiter
     private lateinit var fakeConfigService: FakeConfigService
     private lateinit var mockedConnection: HttpsURLConnection
@@ -57,7 +57,7 @@ class HucLiteDataSourceTest {
         )
         fakeTelemetryDestination = FakeTelemetryDestination()
         fakeClock = FakeClock(FAKE_TIME_MS)
-        fakeEmbLogger = FakeEmbLogger(throwOnInternalError = false)
+        fakeEmbLogger = FakeInternalLogger(throwOnInternalError = false)
         mockedConnection =
             mockk<HttpsURLConnection>(relaxed = true).apply {
                 every { url } returns testUrl

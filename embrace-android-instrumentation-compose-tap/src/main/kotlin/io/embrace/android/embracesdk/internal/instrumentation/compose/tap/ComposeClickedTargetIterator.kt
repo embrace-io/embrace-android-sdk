@@ -3,12 +3,12 @@ package io.embrace.android.embracesdk.internal.instrumentation.compose.tap
 import android.view.View
 import android.view.ViewGroup
 import androidx.compose.ui.platform.ComposeView
-import io.embrace.android.embracesdk.internal.logging.EmbLogger
+import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import java.util.LinkedList
 import java.util.Queue
 
 internal class ComposeClickedTargetIterator(
-    private val logger: EmbLogger,
+    private val logger: InternalLogger,
     dataSource: ComposeTapDataSource,
 ) : EmbraceClickedTargetIterator {
 

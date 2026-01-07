@@ -20,8 +20,8 @@ import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
 import io.embrace.android.embracesdk.internal.envelope.session.SessionEnvelopeSourceImpl
 import io.embrace.android.embracesdk.internal.envelope.session.SessionPayloadSourceImpl
-import io.embrace.android.embracesdk.internal.logging.EmbLogger
-import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
+import io.embrace.android.embracesdk.internal.logging.InternalLogger
+import io.embrace.android.embracesdk.internal.logging.InternalLoggerImpl
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
@@ -59,7 +59,7 @@ internal class SessionHandlerTest {
     private lateinit var payloadFactory: PayloadFactory
     private lateinit var executorService: BlockingScheduledExecutorService
     private lateinit var worker: BackgroundWorker
-    private lateinit var logger: EmbLogger
+    private lateinit var logger: InternalLogger
     private lateinit var spanRepository: SpanRepository
     private lateinit var currentSessionSpan: CurrentSessionSpan
     private lateinit var sessionPropertiesService: SessionPropertiesService
@@ -68,7 +68,7 @@ internal class SessionHandlerTest {
     fun before() {
         executorService = BlockingScheduledExecutorService()
         worker = BackgroundWorker(executorService)
-        logger = EmbLoggerImpl()
+        logger = InternalLoggerImpl()
         clock.setCurrentTime(NOW)
         sessionPropertiesService = FakeSessionPropertiesService()
         metadataService = FakeMetadataService()

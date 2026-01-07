@@ -3,8 +3,8 @@ package io.embrace.android.embracesdk.instrumentation.huclite
 import androidx.test.core.app.ApplicationProvider
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeClock.Companion.DEFAULT_FAKE_CURRENT_TIME
-import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
+import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakeSpanToken
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
@@ -24,7 +24,7 @@ import javax.net.ssl.HttpsURLConnection
 internal class HucTestHarness {
     val fakeTelemetryDestination: FakeTelemetryDestination = FakeTelemetryDestination()
     val fakeClock = FakeClock(FAKE_TIME_MS)
-    val fakeEmbLogger = FakeEmbLogger(throwOnInternalError = false)
+    val fakeEmbLogger = FakeInternalLogger(throwOnInternalError = false)
     val hucLiteDataSource = HucLiteDataSource(
         FakeInstrumentationArgs(
             application = ApplicationProvider.getApplicationContext(),

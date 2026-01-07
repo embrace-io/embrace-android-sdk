@@ -19,7 +19,7 @@ class FakeInstrumentationArgs(
     override val configService: FakeConfigService = FakeConfigService(),
     override val context: Context = application,
     override val destination: FakeTelemetryDestination = FakeTelemetryDestination(),
-    override val logger: FakeEmbLogger = FakeEmbLogger(),
+    override val logger: FakeInternalLogger = FakeInternalLogger(),
     override val clock: FakeClock = FakeClock(),
     override val store: FakeKeyValueStore = FakeKeyValueStore(),
     override val serializer: PlatformSerializer = TestPlatformSerializer(),

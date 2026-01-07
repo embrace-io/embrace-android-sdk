@@ -4,7 +4,7 @@ import android.app.Activity
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.View
-import io.embrace.android.embracesdk.internal.logging.EmbLogger
+import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import java.lang.ref.WeakReference
 
 /**
@@ -13,7 +13,7 @@ import java.lang.ref.WeakReference
  */
 internal class EmbraceGestureListener(
     activity: Activity,
-    private val logger: EmbLogger,
+    private val logger: InternalLogger,
     dataSource: ComposeTapDataSource,
 ) : GestureDetector.SimpleOnGestureListener() {
 

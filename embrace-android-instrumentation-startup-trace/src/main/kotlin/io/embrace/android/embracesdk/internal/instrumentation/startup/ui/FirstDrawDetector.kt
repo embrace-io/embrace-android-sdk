@@ -9,8 +9,8 @@ import android.view.ViewTreeObserver
 import android.view.Window
 import androidx.annotation.RequiresApi
 import io.embrace.android.embracesdk.internal.instrumentation.startup.activity.traceInstanceId
-import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -22,7 +22,7 @@ import java.util.concurrent.ConcurrentHashMap
  */
 @RequiresApi(Build.VERSION_CODES.Q)
 internal class FirstDrawDetector(
-    private val logger: EmbLogger,
+    private val logger: InternalLogger,
 ) : DrawEventEmitter {
 
     private val loadingActivities: MutableMap<Int, Runnable> = ConcurrentHashMap()

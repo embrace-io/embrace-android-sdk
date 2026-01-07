@@ -7,26 +7,26 @@ import java.util.concurrent.atomic.AtomicBoolean
 internal const val EMBRACE_TAG = "[Embrace]"
 
 /**
- * Implementation of [EmbLogger] that logs to Android logcat & also allows tracking of internal
+ * Implementation of [InternalLogger] that logs to Android logcat & also allows tracking of internal
  * errors for our telemetry.
  */
-class EmbLoggerImpl : EmbLogger {
+class InternalLoggerImpl : InternalLogger {
 
     private val loggedSdkNotStarted = AtomicBoolean(false)
     override var errorHandlerProvider: Provider<InternalErrorHandler?> = { null }
 
     override fun logInfo(msg: String, throwable: Throwable?) {
-        log(msg, EmbLogger.Severity.INFO, throwable)
+        log(msg, InternalLogger.Severity.INFO, throwable)
     }
 
     override fun logError(msg: String, throwable: Throwable?) {
-        log(msg, EmbLogger.Severity.ERROR, throwable)
+        log(msg, InternalLogger.Severity.ERROR, throwable)
     }
 
     override fun logSdkNotInitialized(action: String) {
         if (!loggedSdkNotStarted.getAndSet(true)) {
             val msg = "Embrace SDK is not initialized yet, cannot $action."
-            log(msg, EmbLogger.Severity.WARNING, Throwable(msg))
+            log(msg, InternalLogger.Severity.WARNING, Throwable(msg))
         }
     }
 
@@ -47,8 +47,8 @@ class EmbLoggerImpl : EmbLogger {
      * @param throwable exception, if any.
      */
     @Suppress("NOTHING_TO_INLINE") // hot path - optimize by inlining
-    private inline fun log(msg: String, severity: EmbLogger.Severity, throwable: Throwable?) {
-        if (severity >= EmbLogger.Severity.INFO) {
+    private inline fun log(msg: String, severity: InternalLogger.Severity, throwable: Throwable?) {
+        if (severity >= InternalLogger.Severity.INFO) {
             logcatImpl(throwable, severity, msg)
         }
     }
@@ -59,14 +59,14 @@ class EmbLoggerImpl : EmbLogger {
     @Suppress("NOTHING_TO_INLINE") // hot path - optimize by inlining
     private inline fun logcatImpl(
         throwable: Throwable?,
-        severity: EmbLogger.Severity,
+        severity: InternalLogger.Severity,
         msg: String,
     ) {
         when (severity) {
-            EmbLogger.Severity.DEBUG -> Log.d(EMBRACE_TAG, msg, throwable)
-            EmbLogger.Severity.INFO -> Log.i(EMBRACE_TAG, msg, throwable)
-            EmbLogger.Severity.WARNING -> Log.w(EMBRACE_TAG, msg, throwable)
-            EmbLogger.Severity.ERROR -> Log.e(EMBRACE_TAG, msg, throwable)
+            InternalLogger.Severity.DEBUG -> Log.d(EMBRACE_TAG, msg, throwable)
+            InternalLogger.Severity.INFO -> Log.i(EMBRACE_TAG, msg, throwable)
+            InternalLogger.Severity.WARNING -> Log.w(EMBRACE_TAG, msg, throwable)
+            InternalLogger.Severity.ERROR -> Log.e(EMBRACE_TAG, msg, throwable)
         }
     }
 }

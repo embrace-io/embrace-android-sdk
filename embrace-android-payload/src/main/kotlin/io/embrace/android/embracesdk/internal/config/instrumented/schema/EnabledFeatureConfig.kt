@@ -170,7 +170,7 @@ interface EnabledFeatureConfig {
     fun isOtelKotlinSdkEnabled(): Boolean = false
 
     /**
-     * Gates whether the state feature is enabled
+     * Gates whether the state feature is enabled. This is never set to true in production.
      */
     fun isStateCaptureEnabled(): Boolean = false
 }

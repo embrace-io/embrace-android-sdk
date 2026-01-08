@@ -61,7 +61,7 @@ internal class ModuleInitBootstrapper(
                 worker = workerThreadModule.backgroundWorker(Worker.Background.IoRegWorker),
                 serializer = initModule.jsonSerializer,
                 okHttpClient = initModule.okHttpClient,
-                hasConfiguredOtelExporters = openTelemetryModule.otelSdkConfig::hasConfiguredOtelExporters,
+                hasConfiguredOtlpExport = openTelemetryModule.otelSdkConfig::hasConfiguredOtlpExport,
                 sdkVersion = BuildConfig.VERSION_NAME,
                 apiLevel = Build.VERSION.SDK_INT,
                 filesDir = coreModule.context.filesDir,

@@ -29,7 +29,7 @@ internal class OTelExportTest {
     val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule()
 
     @Test
-    fun `session span exported`() {
+    fun `session span exported to user-supplied exporter`() {
         val fakeSpanExporter = FakeSpanExporter()
         testRule.runTest(
             preSdkStartAction = {
@@ -39,7 +39,7 @@ internal class OTelExportTest {
             },
             testCaseAction = {
                 recordSession {
-                    embrace.startSpan("test-span")?.stop()
+                    embrace.startSpan("test-span").stop()
                 }
             },
             assertAction = {
@@ -65,7 +65,7 @@ internal class OTelExportTest {
             testCaseAction = {
                 embrace.addSpanExporter(fakeSpanExporter)
                 recordSession {
-                    embrace.startSpan("test")?.stop()
+                    embrace.startSpan("test").stop()
                 }
             },
             assertAction = {
@@ -76,7 +76,7 @@ internal class OTelExportTest {
     }
 
     @Test
-    fun `SDK can receive a LogRecordExporter`() {
+    fun `log record exported to user-supplied LogRecordExporter`() {
         var logTimestampNanos = 0L
 
         testRule.runTest(
@@ -119,17 +119,17 @@ internal class OTelExportTest {
             },
             testCaseAction = {
                 recordSession {
-                    embrace.startSpan(spanName)?.stop()
+                    embrace.startSpan(spanName).stop()
                     embrace.logMessage(logMessage, Severity.INFO)
                 }
             },
             otelExportAssertion = {
                 awaitSpans(1) { it.name == spanName }
                 awaitLogs(1) { it.body.asString() == logMessage }
+                spanExporter.exportedSpans.single { it.name == spanName }
+                logRecordExporter.exportedLogs.single { it.body == logMessage }
             }
         )
-        spanExporter.exportedSpans.single { it.name == spanName }
-        logRecordExporter.exportedLogs.single { it.body == logMessage }
     }
 
     @Test
@@ -149,7 +149,7 @@ internal class OTelExportTest {
             },
             testCaseAction = {
                 recordSession {
-                    embrace.startSpan(spanName)?.stop()
+                    embrace.startSpan(spanName).stop()
                     embrace.logMessage(logMessage, Severity.INFO)
                 }
             },

@@ -50,21 +50,21 @@ internal class OTelApiDelegateTest {
     fun `add span exporter before start`() {
         sdkCallChecker.started.set(false)
         delegate.addSpanExporter(FakeSpanExporter())
-        assertTrue(bootstrapper.openTelemetryModule.otelSdkConfig.hasConfiguredOtelExporters())
+        assertTrue(bootstrapper.openTelemetryModule.otelSdkConfig.hasConfiguredOtlpExport())
     }
 
     @Test
     fun `add log exporter before start`() {
         sdkCallChecker.started.set(false)
         delegate.addLogRecordExporter(FakeLogRecordExporter())
-        assertTrue(bootstrapper.openTelemetryModule.otelSdkConfig.hasConfiguredOtelExporters())
+        assertTrue(bootstrapper.openTelemetryModule.otelSdkConfig.hasConfiguredOtlpExport())
     }
 
     @Test
     fun `add exporters after start`() {
         delegate.addSpanExporter(FakeSpanExporter())
         delegate.addLogRecordExporter(FakeLogRecordExporter())
-        assertFalse(bootstrapper.openTelemetryModule.otelSdkConfig.hasConfiguredOtelExporters())
+        assertFalse(bootstrapper.openTelemetryModule.otelSdkConfig.hasConfiguredOtlpExport())
     }
 
     @Test

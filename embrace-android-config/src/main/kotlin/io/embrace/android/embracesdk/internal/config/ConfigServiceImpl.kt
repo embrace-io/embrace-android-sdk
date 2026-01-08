@@ -48,7 +48,7 @@ class ConfigServiceImpl(
     private val apiLevel: Int,
     private val filesDir: File,
     private val logger: InternalLogger,
-    private val hasConfiguredOtelExporters: () -> Boolean,
+    private val hasConfiguredOtlpExport: () -> Boolean,
 ) : ConfigService {
 
     private val onlyOtelExportEnabled: Boolean = instrumentedConfig.project.getAppId() == null
@@ -136,7 +136,7 @@ class ConfigServiceImpl(
 
     override val appId: String? = run {
         val id = instrumentedConfig.project.getAppId()
-        require(!id.isNullOrEmpty() || hasConfiguredOtelExporters()) {
+        require(!id.isNullOrEmpty() || hasConfiguredOtlpExport()) {
             "No appId supplied in embrace-config.json. This is required if you want to " +
                 "send data to Embrace, unless you configure an OTel exporter and add" +
                 " embrace.disableMappingFileUpload=true to gradle.properties."

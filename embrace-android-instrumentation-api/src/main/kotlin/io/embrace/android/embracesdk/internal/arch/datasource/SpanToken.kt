@@ -19,6 +19,11 @@ interface SpanToken {
     fun isRecording(): Boolean
 
     /**
+     * Returns true if this object represents a valid span instance
+     */
+    fun isValid(): Boolean
+
+    /**
      * Adds an attribute to the span
      */
     fun addAttribute(key: String, value: String)

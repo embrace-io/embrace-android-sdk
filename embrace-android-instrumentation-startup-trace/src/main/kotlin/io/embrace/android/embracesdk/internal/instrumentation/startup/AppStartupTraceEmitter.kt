@@ -244,7 +244,7 @@ internal class AppStartupTraceEmitter(
             )
         }
 
-        if (rootSpan != null) {
+        if (rootSpan.isValid()) {
             appStartupRootSpan.set(rootSpan)
         } else {
             logger.trackInternalError(

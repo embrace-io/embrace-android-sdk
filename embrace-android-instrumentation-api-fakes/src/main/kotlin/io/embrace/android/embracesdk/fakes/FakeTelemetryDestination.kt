@@ -51,6 +51,7 @@ class FakeTelemetryDestination : TelemetryDestination {
         schemaType: SchemaType,
         startTimeMs: Long,
         autoTerminate: Boolean,
+        private: Boolean,
     ): SpanToken {
         val token = FakeSpanToken(
             name = schemaType.fixedObjectName,
@@ -74,6 +75,7 @@ class FakeTelemetryDestination : TelemetryDestination {
         startTimeMs: Long,
         parent: SpanToken?,
         type: EmbType,
+        private: Boolean,
     ): SpanToken {
         val token = FakeSpanToken(
             name = name,

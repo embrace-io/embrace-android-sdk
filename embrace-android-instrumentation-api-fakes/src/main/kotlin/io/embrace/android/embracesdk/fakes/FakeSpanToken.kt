@@ -32,6 +32,8 @@ class FakeSpanToken(
 
     override fun isRecording(): Boolean = endTimeMs == null
 
+    override fun isValid(): Boolean = true
+
     override fun addAttribute(key: String, value: String) {
         attrs[key] = value
     }

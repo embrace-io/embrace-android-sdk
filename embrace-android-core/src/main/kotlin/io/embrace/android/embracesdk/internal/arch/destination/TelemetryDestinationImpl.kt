@@ -90,7 +90,8 @@ class TelemetryDestinationImpl(
         schemaType: SchemaType,
         startTimeMs: Long,
         autoTerminate: Boolean,
-    ): SpanToken? {
+        private: Boolean,
+    ): SpanToken {
         val mode = when {
             autoTerminate -> AutoTerminationMode.ON_BACKGROUND
             else -> AutoTerminationMode.NONE
@@ -99,13 +100,14 @@ class TelemetryDestinationImpl(
             name = schemaType.fixedObjectName,
             startTimeMs = startTimeMs,
             autoTerminationMode = mode,
+            private = private,
             type = schemaType.telemetryType
-        )?.apply {
+        ).apply {
             schemaType.attributes().forEach {
                 addAttribute(it.key, it.value)
             }
             sessionUpdateAction?.invoke()
-        } ?: return null
+        }
         return SpanTokenImpl(span) {
             sessionUpdateAction?.invoke()
         }
@@ -116,14 +118,16 @@ class TelemetryDestinationImpl(
         startTimeMs: Long,
         parent: SpanToken?,
         type: EmbType,
-    ): SpanToken? {
+        private: Boolean,
+    ): SpanToken {
         val parentRef = retrieveParentReference(parent)
         val span = spanService.startSpan(
             name = name,
             startTimeMs = startTimeMs,
             parent = parentRef,
+            private = private,
             type = type,
-        ) ?: return null
+        )
         return SpanTokenImpl(span) {
             sessionUpdateAction?.invoke()
         }
@@ -133,8 +137,8 @@ class TelemetryDestinationImpl(
         val spanToken = startSpanCapture(
             schemaType = state,
             startTimeMs = clock.now(),
-            autoTerminate = false
-        ) ?: return NoopSessionStateToken()
+            private = true
+        )
 
         return SessionStateTokenImpl(
             spanToken = spanToken
@@ -220,6 +224,8 @@ class TelemetryDestinationImpl(
 
         override fun isRecording() = span.isRecording
 
+        override fun isValid() = span.spanContext?.isValid == true
+
         override fun addAttribute(key: String, value: String) {
             span.addAttribute(key, value)
         }
@@ -277,16 +283,6 @@ class TelemetryDestinationImpl(
             }
             spanToken.stop()
         }
-    }
-
-    private class NoopSessionStateToken<T> : SessionStateToken<T> {
-        override fun update(
-            updateDetectedTimeMs: Long,
-            newValue: T,
-            unrecordedTransitions: UnrecordedTransitions,
-        ) = false
-
-        override fun end(unrecordedTransitions: UnrecordedTransitions) {}
     }
 }
 

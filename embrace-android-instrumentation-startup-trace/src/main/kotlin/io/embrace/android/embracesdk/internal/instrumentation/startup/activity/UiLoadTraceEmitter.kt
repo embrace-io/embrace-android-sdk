@@ -291,8 +291,8 @@ internal class UiLoadTraceEmitter(
         if (trace != null && !trace.children.containsKey(lifecycleStage)) {
             destination.startSpanCapture(
                 name = lifecycleStage.spanName(trace.activityName),
-                parent = trace.root,
                 startTimeMs = timestampMs,
+                parent = trace.root,
             )?.let { newSpan ->
                 val newChildren = trace.children.plus(lifecycleStage to newSpan)
                 activeTraces[instanceId] = trace.copy(

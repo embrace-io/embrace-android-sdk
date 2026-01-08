@@ -50,7 +50,8 @@ interface TelemetryDestination {
         schemaType: SchemaType,
         startTimeMs: Long,
         autoTerminate: Boolean = false,
-    ): SpanToken?
+        private: Boolean = false,
+    ): SpanToken
 
     /**
      * Starts a new span with the given [name] and [startTimeMs].
@@ -60,7 +61,8 @@ interface TelemetryDestination {
         startTimeMs: Long,
         parent: SpanToken? = null,
         type: EmbType = EmbType.Performance.Default,
-    ): SpanToken?
+        private: Boolean = false,
+    ): SpanToken
 
     /**
      * Start a recording the given [SchemaType.State] for the current session

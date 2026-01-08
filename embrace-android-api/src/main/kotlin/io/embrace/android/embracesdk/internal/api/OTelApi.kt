@@ -4,7 +4,9 @@ import io.embrace.android.embracesdk.annotation.InternalApi
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.OpenTelemetry
 import io.embrace.opentelemetry.kotlin.logging.export.LogRecordExporter
+import io.embrace.opentelemetry.kotlin.logging.export.LogRecordProcessor
 import io.embrace.opentelemetry.kotlin.tracing.export.SpanExporter
+import io.embrace.opentelemetry.kotlin.tracing.export.SpanProcessor
 
 /**
  * Methods that enable integration with the the large OTel ecosystem through standard OTel APIs and concepts.
@@ -23,6 +25,20 @@ public interface OTelApi {
      */
     @OptIn(ExperimentalApi::class)
     public fun addSpanExporter(spanExporter: SpanExporter)
+
+    /**
+     * Adds a [SpanProcessor] that will process OTel Spans after Embrace's internal processor.
+     * Processors must be added before the SDK has started or they will be ignored.
+     */
+    @OptIn(ExperimentalApi::class)
+    public fun addSpanProcessor(spanProcessor: SpanProcessor)
+
+    /**
+     * Adds a [LogRecordProcessor] that will process OTel Logs after Embrace's internal processor.
+     * Processors must be added before the SDK has started or they will be ignored.
+     */
+    @OptIn(ExperimentalApi::class)
+    public fun addLogRecordProcessor(logRecordProcessor: LogRecordProcessor)
 
     /**
      * Returns an [OpenTelemetry] instance that uses the API from opentelemetry-kotlin. This API

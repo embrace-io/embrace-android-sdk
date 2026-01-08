@@ -3,12 +3,22 @@ package io.embrace.android.embracesdk.testcases
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.fakes.FakeLogRecordExporter
+import io.embrace.android.embracesdk.fakes.FakeLogRecordProcessor
+import io.embrace.android.embracesdk.fakes.FakeOtelJavaLogRecordExporter
+import io.embrace.android.embracesdk.fakes.FakeOtelJavaLogRecordProcessor
+import io.embrace.android.embracesdk.fakes.FakeOtelJavaSpanExporter
+import io.embrace.android.embracesdk.fakes.FakeOtelJavaSpanProcessor
 import io.embrace.android.embracesdk.fakes.FakeSpanExporter
+import io.embrace.android.embracesdk.fakes.FakeSpanProcessor
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.config.FakeProjectConfig
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.toStringMap
+import io.embrace.android.embracesdk.otel.java.addJavaLogRecordExporter
+import io.embrace.android.embracesdk.otel.java.addJavaLogRecordProcessor
+import io.embrace.android.embracesdk.otel.java.addJavaSpanExporter
+import io.embrace.android.embracesdk.otel.java.addJavaSpanProcessor
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.semconv.ServiceAttributes
@@ -106,6 +116,134 @@ internal class OTelExportTest {
     }
 
     @Test
+    fun `span exported to user-supplied SpanProcessor`() {
+        val processor = FakeSpanProcessor()
+        val spanName = "test-processor-span"
+
+        testRule.runTest(
+            preSdkStartAction = {
+                embrace.addSpanProcessor(processor)
+            },
+            testCaseAction = {
+                recordSession {
+                    embrace.startSpan(spanName).stop()
+                }
+            },
+            otelExportAssertion = {
+                awaitSpans(1) { it.name == spanName }
+                assertTrue(processor.startedSpanNames.contains(spanName))
+                assertTrue(processor.endedSpanNames.contains(spanName))
+            }
+        )
+    }
+
+    @Test
+    fun `log record exported to user-supplied LogRecordProcessor`() {
+        val processor = FakeLogRecordProcessor()
+        val logMessage = "test-processor-log"
+
+        testRule.runTest(
+            preSdkStartAction = {
+                embrace.addLogRecordProcessor(processor)
+            },
+            testCaseAction = {
+                recordSession {
+                    embrace.logMessage(logMessage, Severity.INFO)
+                }
+            },
+            otelExportAssertion = {
+                awaitLogs(1) { it.body.asString() == logMessage }
+                assertTrue(processor.processedLogBodies.contains(logMessage))
+            }
+        )
+    }
+
+    @Test
+    fun `span exported to user-supplied SpanExporter using Java API`() {
+        val exporter = FakeOtelJavaSpanExporter()
+        val spanName = "test-java-exporter-span"
+
+        testRule.runTest(
+            preSdkStartAction = {
+                embrace.addJavaSpanExporter(exporter)
+            },
+            testCaseAction = {
+                recordSession {
+                    embrace.startSpan(spanName).stop()
+                }
+            },
+            otelExportAssertion = {
+                awaitSpans(1) { it.name == spanName }
+                exporter.awaitSpanExport(1)
+                assertTrue(exporter.exportedSpans.any { it.name == spanName })
+            }
+        )
+    }
+
+    @Test
+    fun `log record exported to user-supplied LogRecordExporter using Java API`() {
+        val exporter = FakeOtelJavaLogRecordExporter()
+        val logMessage = "test-java-exporter-log"
+
+        testRule.runTest(
+            preSdkStartAction = {
+                embrace.addJavaLogRecordExporter(exporter)
+            },
+            testCaseAction = {
+                recordSession {
+                    embrace.logMessage(logMessage, Severity.INFO)
+                }
+            },
+            otelExportAssertion = {
+                awaitLogs(1) { it.body.asString() == logMessage }
+                assertTrue(exporter.exportedLogs.any { it.body.asString() == logMessage })
+            }
+        )
+    }
+
+    @Test
+    fun `span exported to user-supplied SpanProcessor using Java API`() {
+        val processor = FakeOtelJavaSpanProcessor()
+        val spanName = "test-java-processor-span"
+
+        testRule.runTest(
+            preSdkStartAction = {
+                embrace.addJavaSpanProcessor(processor)
+            },
+            testCaseAction = {
+                recordSession {
+                    embrace.startSpan(spanName).stop()
+                }
+            },
+            otelExportAssertion = {
+                awaitSpans(1) { it.name == spanName }
+                assertTrue(processor.startedSpanNames.contains(spanName))
+                assertTrue(processor.endedSpanNames.contains(spanName))
+            }
+        )
+    }
+
+    @Test
+    fun `log record exported to user-supplied LogRecordProcessor using Java API`() {
+        val processor = FakeOtelJavaLogRecordProcessor()
+
+        testRule.runTest(
+            preSdkStartAction = {
+                embrace.addJavaLogRecordProcessor(processor)
+            },
+            testCaseAction = {
+                recordSession {
+                    embrace.logMessage("test-java-processor-log", Severity.INFO)
+                }
+            },
+            otelExportAssertion = {
+                awaitLogs(1) { it.body.asString() == "test-java-processor-log" }
+                assertTrue(processor.logCount > 0)
+            }
+        )
+    }
+
+    @Test
     fun `add opentelemetry-kotlin exporters`() {
         val logRecordExporter = FakeLogRecordExporter()
         val spanExporter = FakeSpanExporter()
@@ -188,6 +326,105 @@ internal class OTelExportTest {
                 awaitSpans(1) {
                     it.name == "emb-session" && it.resource.attributes.toStringMap()[ServiceAttributes.SERVICE_NAME] == packageName
                 }
+            }
+        )
+    }
+
+    @Test
+    fun `span processors are invoked in order they were added`() {
+        val startCalls = mutableListOf<String>()
+        val endCalls = mutableListOf<String>()
+        val spanName = "test-order-span"
+        val processor1 = FakeSpanProcessor(
+            onStartAction = {
+                if (it.name == spanName) {
+                    startCalls.add("a")
+                }
+            },
+            onEndAction = {
+                if (it.name == spanName) {
+                    endCalls.add("a")
+                }
+            }
+        )
+        val processor2 = FakeSpanProcessor(
+            onStartAction = {
+                if (it.name == spanName) {
+                    startCalls.add("b")
+                }
+            },
+            onEndAction = {
+                if (it.name == spanName) {
+                    endCalls.add("b")
+                }
+            }
+        )
+        val processor3 = FakeSpanProcessor(
+            onStartAction = {
+                if (it.name == spanName) {
+                    startCalls.add("c")
+                }
+            },
+            onEndAction = {
+                if (it.name == spanName) {
+                    endCalls.add("c")
+                }
+            }
+        )
+
+        testRule.runTest(
+            preSdkStartAction = {
+                embrace.addSpanProcessor(processor1)
+                embrace.addSpanProcessor(processor2)
+                embrace.addSpanProcessor(processor3)
+            },
+            testCaseAction = {
+                recordSession {
+                    embrace.startSpan(spanName).stop()
+                }
+            },
+            otelExportAssertion = {
+                awaitSpans(1) { it.name == spanName }
+                assertEquals(listOf("a", "b", "c"), startCalls)
+                assertEquals(listOf("a", "b", "c"), endCalls)
+            }
+        )
+    }
+
+
+    @Test
+    fun `log record processors are invoked in order they were added`() {
+        val msg = "Hello, world!"
+        val calls = mutableListOf<String>()
+        val processor1 = FakeLogRecordProcessor(
+            onEmitAction = {
+                calls.add("a")
+            }
+        )
+        val processor2 = FakeLogRecordProcessor(
+            onEmitAction = {
+                calls.add("b")
+            }
+        )
+        val processor3 = FakeLogRecordProcessor(
+            onEmitAction = {
+                calls.add("c")
+            }
+        )
+        testRule.runTest(
+            preSdkStartAction = {
+                embrace.addLogRecordProcessor(processor1)
+                embrace.addLogRecordProcessor(processor2)
+                embrace.addLogRecordProcessor(processor3)
+            },
+            testCaseAction = {
+                recordSession {
+                    embrace.logInfo(msg)
+                }
+            },
+            otelExportAssertion = {
+                awaitLogs(1) { it.body.asString() == msg }
+                assertEquals(listOf("a", "b", "c"), calls)
             }
         )
     }

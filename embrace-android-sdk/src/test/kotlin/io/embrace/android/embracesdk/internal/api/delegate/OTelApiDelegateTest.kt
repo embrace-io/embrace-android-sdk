@@ -4,9 +4,11 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakeLogRecordExporter
+import io.embrace.android.embracesdk.fakes.FakeLogRecordProcessor
 import io.embrace.android.embracesdk.fakes.FakeMutableAttributeContainer
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
 import io.embrace.android.embracesdk.fakes.FakeSpanExporter
+import io.embrace.android.embracesdk.fakes.FakeSpanProcessor
 import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
@@ -64,6 +66,27 @@ internal class OTelApiDelegateTest {
     fun `add exporters after start`() {
         delegate.addSpanExporter(FakeSpanExporter())
         delegate.addLogRecordExporter(FakeLogRecordExporter())
+        assertFalse(bootstrapper.openTelemetryModule.otelSdkConfig.hasConfiguredOtlpExport())
+    }
+
+    @Test
+    fun `add span processor before start`() {
+        sdkCallChecker.started.set(false)
+        delegate.addSpanProcessor(FakeSpanProcessor())
+        assertTrue(bootstrapper.openTelemetryModule.otelSdkConfig.hasConfiguredOtlpExport())
+    }
+
+    @Test
+    fun `add log processor before start`() {
+        sdkCallChecker.started.set(false)
+        delegate.addLogRecordProcessor(FakeLogRecordProcessor())
+        assertTrue(bootstrapper.openTelemetryModule.otelSdkConfig.hasConfiguredOtlpExport())
+    }
+
+    @Test
+    fun `add processors after start`() {
+        delegate.addSpanProcessor(FakeSpanProcessor())
+        delegate.addLogRecordProcessor(FakeLogRecordProcessor())
         assertFalse(bootstrapper.openTelemetryModule.otelSdkConfig.hasConfiguredOtlpExport())
     }
 

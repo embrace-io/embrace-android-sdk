@@ -6,8 +6,10 @@ public final class io/embrace/android/embracesdk/Embrace : io/embrace/android/em
 	public fun addLoadTraceChildSpan (Landroid/app/Activity;Ljava/lang/String;JJ)V
 	public fun addLoadTraceChildSpan (Landroid/app/Activity;Ljava/lang/String;JJLjava/util/Map;Ljava/util/List;Lio/embrace/android/embracesdk/spans/ErrorCode;)V
 	public fun addLogRecordExporter (Lio/embrace/opentelemetry/kotlin/logging/export/LogRecordExporter;)V
+	public fun addLogRecordProcessor (Lio/embrace/opentelemetry/kotlin/logging/export/LogRecordProcessor;)V
 	public fun addSessionProperty (Ljava/lang/String;Ljava/lang/String;Z)Z
 	public fun addSpanExporter (Lio/embrace/opentelemetry/kotlin/tracing/export/SpanExporter;)V
+	public fun addSpanProcessor (Lio/embrace/opentelemetry/kotlin/tracing/export/SpanProcessor;)V
 	public fun addStartupTraceAttribute (Ljava/lang/String;Ljava/lang/String;)V
 	public fun addStartupTraceChildSpan (Ljava/lang/String;JJ)V
 	public fun addStartupTraceChildSpan (Ljava/lang/String;JJLjava/util/Map;Ljava/util/List;Lio/embrace/android/embracesdk/spans/ErrorCode;)V

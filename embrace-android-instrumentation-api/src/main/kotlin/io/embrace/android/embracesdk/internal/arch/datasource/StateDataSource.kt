@@ -19,11 +19,10 @@ abstract class StateDataSource<T : Any>(
     private val stateTypeFactory: (initialValue: T) -> SchemaType.State<T>,
     defaultValue: T,
     maxTransitions: Int = DEFAULT_MAX_TRANSITIONS,
-    instrumentationName: String,
 ) : SessionEndListener, SessionChangeListener, DataSourceImpl(
     args = args,
     limitStrategy = UpToLimitStrategy { maxTransitions },
-    instrumentationName = instrumentationName
+    instrumentationName = "${stateTypeFactory(defaultValue).stateName}_state_data_source"
 ) {
     val stateAttributeKey = createStateKey(stateTypeFactory(defaultValue).stateName)
     private val currentState: AtomicReference<T> = AtomicReference(defaultValue)

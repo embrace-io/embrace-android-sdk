@@ -69,7 +69,9 @@ class OtelSdkConfig(
     }
 
     private val externalSpanExporters = mutableListOf<SpanExporter>()
+    private val externalSpanProcessors = mutableListOf<SpanProcessor>()
     private val externalLogExporters = mutableListOf<LogRecordExporter>()
+    private val externalLogRecordProcessors = mutableListOf<LogRecordProcessor>()
 
     private var exportEnabled: Boolean = true
     private val exportCheck: () -> Boolean = { exportEnabled }
@@ -109,11 +111,24 @@ class OtelSdkConfig(
         externalSpanExporters.add(spanExporter)
     }
 
+    fun addSpanProcessor(spanProcessor: SpanProcessor) {
+        externalSpanProcessors.add(spanProcessor)
+    }
+
+    fun getExternalSpanProcessors(): List<SpanProcessor> = externalSpanProcessors.toList()
+
     fun addLogExporter(logExporter: LogRecordExporter) {
         externalLogExporters.add(logExporter)
     }
 
-    fun hasConfiguredOtlpExport(): Boolean = externalLogExporters.isNotEmpty() || externalSpanExporters.isNotEmpty()
+    fun addLogRecordProcessor(logRecordProcessor: LogRecordProcessor) {
+        externalLogRecordProcessors.add(logRecordProcessor)
+    }
+
+    fun getExternalLogRecordProcessors(): List<LogRecordProcessor> = externalLogRecordProcessors.toList()
+
+    fun hasConfiguredOtlpExport(): Boolean = externalLogExporters.isNotEmpty() || externalLogRecordProcessors.isNotEmpty() ||
+        externalSpanExporters.isNotEmpty() || externalSpanProcessors.isNotEmpty()
 
     fun setResourceAttribute(key: String, value: String) {
         customAttributes[key] = value

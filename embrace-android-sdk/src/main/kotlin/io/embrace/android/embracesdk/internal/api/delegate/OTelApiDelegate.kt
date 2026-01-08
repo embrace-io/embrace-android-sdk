@@ -6,7 +6,9 @@ import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.OpenTelemetry
 import io.embrace.opentelemetry.kotlin.createNoopOpenTelemetry
 import io.embrace.opentelemetry.kotlin.logging.export.LogRecordExporter
+import io.embrace.opentelemetry.kotlin.logging.export.LogRecordProcessor
 import io.embrace.opentelemetry.kotlin.tracing.export.SpanExporter
+import io.embrace.opentelemetry.kotlin.tracing.export.SpanProcessor
 
 @OptIn(ExperimentalApi::class)
 internal class OTelApiDelegate(
@@ -21,11 +23,25 @@ internal class OTelApiDelegate(
         bootstrapper.openTelemetryModule.otelSdkConfig.addSpanExporter(spanExporter)
     }
 
+    override fun addSpanProcessor(spanProcessor: SpanProcessor) {
+        if (sdkCallChecker.started.get()) {
+            return
+        }
+        bootstrapper.openTelemetryModule.otelSdkConfig.addSpanProcessor(spanProcessor)
+    }
+
     override fun addLogRecordExporter(logRecordExporter: LogRecordExporter) {
         if (sdkCallChecker.started.get()) {
             return
         }
         bootstrapper.openTelemetryModule.otelSdkConfig.addLogExporter(logRecordExporter)
+    }
+
+    override fun addLogRecordProcessor(logRecordProcessor: LogRecordProcessor) {
+        if (sdkCallChecker.started.get()) {
+            return
+        }
+        bootstrapper.openTelemetryModule.otelSdkConfig.addLogRecordProcessor(logRecordProcessor)
     }
 
     override fun setResourceAttribute(key: String, value: String) {

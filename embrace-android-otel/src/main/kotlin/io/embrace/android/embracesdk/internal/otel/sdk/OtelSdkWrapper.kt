@@ -17,7 +17,9 @@ import io.embrace.opentelemetry.kotlin.Clock
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.OpenTelemetry
 import io.embrace.opentelemetry.kotlin.logging.Logger
+import io.embrace.opentelemetry.kotlin.logging.export.createCompositeLogRecordProcessor
 import io.embrace.opentelemetry.kotlin.tracing.Tracer
+import io.embrace.opentelemetry.kotlin.tracing.export.createCompositeSpanProcessor
 
 /**
  * Wrapper that instantiates a copy of the OpenTelemetry SDK configured with the appropriate settings and the given components so
@@ -69,14 +71,22 @@ class OtelSdkWrapper(
                     attributeCountLimit = limits.getMaxTotalAttributeCount()
                     linkCountLimit = limits.getMaxTotalLinkCount()
                 }
-                addSpanProcessor(configuration.spanProcessor)
+                addSpanProcessor(
+                    createCompositeSpanProcessor(
+                        listOf(configuration.spanProcessor) + configuration.getExternalSpanProcessors()
+                    )
+                )
             },
             loggerProvider = {
                 resource(attributes = configuration.resourceAction)
                 logLimits {
                     attributeCountLimit = limits.getMaxTotalAttributeCount()
                 }
-                addLogRecordProcessor(configuration.logRecordProcessor)
+                addLogRecordProcessor(
+                    createCompositeLogRecordProcessor(
+                        listOf(configuration.logRecordProcessor) + configuration.getExternalLogRecordProcessors()
+                    )
+                )
             },
             clock = otelClock,
         )

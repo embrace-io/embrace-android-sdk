@@ -82,7 +82,7 @@ class NativeSymbolTest {
             apiLevel = 36,
             filesDir = Files.createTempDirectory("tmp").toFile(),
             logger = FakeInternalLogger(),
-            hasConfiguredOtelExporters = { false },
+            hasConfiguredOtlpExport = { false },
         )
     }
 }

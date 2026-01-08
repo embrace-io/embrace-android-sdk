@@ -33,7 +33,7 @@ class OtelSdkConfig(
     val packageName: String,
     private val systemInfo: SystemInfo,
     private val sessionIdProvider: () -> String? = { null },
-    private val processIdentifierProvider: () -> String = IdGenerator.Companion::generateLaunchInstanceId
+    private val processIdentifierProvider: () -> String = IdGenerator.Companion::generateLaunchInstanceId,
 ) {
 
     private val customAttributes: MutableMap<String, String> = ConcurrentHashMap()
@@ -113,7 +113,7 @@ class OtelSdkConfig(
         externalLogExporters.add(logExporter)
     }
 
-    fun hasConfiguredOtelExporters(): Boolean = externalLogExporters.isNotEmpty() || externalSpanExporters.isNotEmpty()
+    fun hasConfiguredOtlpExport(): Boolean = externalLogExporters.isNotEmpty() || externalSpanExporters.isNotEmpty()
 
     fun setResourceAttribute(key: String, value: String) {
         customAttributes[key] = value

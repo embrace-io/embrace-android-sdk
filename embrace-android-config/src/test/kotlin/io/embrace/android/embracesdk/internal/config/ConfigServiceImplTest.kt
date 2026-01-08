@@ -119,6 +119,6 @@ internal class ConfigServiceImplTest {
         apiLevel = 36,
         filesDir = Files.createTempDirectory("tmp").toFile(),
         logger = FakeInternalLogger(),
-        hasConfiguredOtelExporters = hasConfiguredExporters,
+        hasConfiguredOtlpExport = hasConfiguredExporters,
     )
 }

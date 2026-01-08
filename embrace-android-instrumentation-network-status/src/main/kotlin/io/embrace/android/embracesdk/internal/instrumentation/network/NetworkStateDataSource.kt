@@ -14,7 +14,6 @@ class NetworkStateDataSource(
     stateTypeFactory = ::NetworkState,
     defaultValue = Status.UNKNOWN,
     maxTransitions = MAX_CAPTURED_NETWORK_STATE_TRANSITIONS,
-    instrumentationName = "network_state_data_source"
 ) {
     override fun onNetworkConnectivityStatusChanged(status: NetworkStatus) {
         onStateChange(clock.now(), status.toState())

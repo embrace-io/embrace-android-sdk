@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.otel.spans
 
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeOtelKotlinClock
+import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.TestConstants.TESTS_DEFAULT_USE_KOTLIN_SDK
 import io.embrace.android.embracesdk.fakes.fakeOpenTelemetry
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
@@ -39,7 +40,8 @@ internal class EmbraceSpanFactoryImplTest {
         embraceSpanFactory = EmbraceSpanFactoryImpl(
             openTelemetryClock = openTelemetryClock,
             spanRepository = spanRepository,
-            dataValidator = DataValidator()
+            dataValidator = DataValidator(telemetryService = FakeTelemetryService()),
+            telemetryService = FakeTelemetryService()
         )
     }
 

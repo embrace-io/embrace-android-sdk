@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.fakes.FakeEmbraceSpanFactory
 import io.embrace.android.embracesdk.fakes.FakeEventService
 import io.embrace.android.embracesdk.fakes.FakeOtelKotlinClock
 import io.embrace.android.embracesdk.fakes.FakeSpanService
+import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.TestConstants.TESTS_DEFAULT_USE_KOTLIN_SDK
 import io.embrace.android.embracesdk.fakes.fakeOpenTelemetry
 import io.embrace.android.embracesdk.internal.SystemInfo
@@ -65,7 +66,7 @@ internal class EmbraceSpanServiceTest {
     }
 
     private fun createEmbraceSpanService(): EmbraceSpanService {
-        val dataValidator = DataValidator()
+        val dataValidator = DataValidator(telemetryService = FakeTelemetryService())
 
         return EmbraceSpanService(
             spanRepository = SpanRepository(),
@@ -75,7 +76,8 @@ internal class EmbraceSpanServiceTest {
                 EmbraceSpanFactoryImpl(
                     openTelemetryClock = clock,
                     spanRepository = SpanRepository(),
-                    dataValidator = dataValidator
+                    dataValidator = dataValidator,
+                    telemetryService = FakeTelemetryService()
                 )
             },
             dataValidator = dataValidator,
@@ -88,7 +90,7 @@ internal class EmbraceSpanServiceTest {
     fun `verify default behaviour before initialization`() {
         val uninitializedService = EmbraceSpanService(
             spanRepository = SpanRepository(),
-            dataValidator = DataValidator(),
+            dataValidator = DataValidator(telemetryService = FakeTelemetryService()),
             canStartNewSpan = ::canStartNewSpan,
             initCallback = ::initCallback,
             embraceSpanFactorySupplier = { FakeEmbraceSpanFactory() },

@@ -102,7 +102,10 @@ class OpenTelemetryModuleImpl(
 
     private var bypassLimitsValidation: Boolean = false
 
-    private val dataValidator: DataValidator = DataValidator(bypassValidation = ::bypassLimitsValidation)
+    private val dataValidator: DataValidator = DataValidator(
+        bypassValidation = ::bypassLimitsValidation,
+        telemetryService = initModule.telemetryService
+    )
 
     private val embraceSpanFactory: EmbraceSpanFactory by singleton {
         EmbraceSpanFactoryImpl(
@@ -110,7 +113,8 @@ class OpenTelemetryModuleImpl(
             spanRepository = spanRepository,
             dataValidator = dataValidator,
             stopCallback = ::spanStopCallbackWrapper,
-            redactionFunction = ::redactionFunction
+            redactionFunction = ::redactionFunction,
+            telemetryService = initModule.telemetryService
         )
     }
 

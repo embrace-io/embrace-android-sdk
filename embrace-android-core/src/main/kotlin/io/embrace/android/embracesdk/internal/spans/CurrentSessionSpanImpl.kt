@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanFactory
 import io.embrace.android.embracesdk.internal.otel.spans.OtelSpanStartArgs
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
+import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.utils.Uuid
@@ -85,6 +86,7 @@ internal class CurrentSessionSpanImpl(
     private fun checkTraceCount(counter: AtomicInteger, limit: Int): Boolean {
         return if (counter.get() >= limit) {
             // If we have already reached the maximum number of spans created for this session, don't allow another one
+            telemetryService.trackAppliedLimit("span", AppliedLimitType.DROP)
             false
         } else {
             synchronized(counter) {

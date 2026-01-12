@@ -66,7 +66,7 @@ import com.squareup.moshi.JsonClass
  * @param numCores (Android) The number of CPU cores the device has. Previous name: d.nc
  */
 
-@JsonClass(generateAdapter = true)
+@JsonClass(generateAdapter = false)
 data class EnvelopeResource(
 
     /**** WARNING: when altering fields, please keep JSON keys in sync with

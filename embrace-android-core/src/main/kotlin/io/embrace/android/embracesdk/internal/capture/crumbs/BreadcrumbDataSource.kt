@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceImpl
 import io.embrace.android.embracesdk.internal.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
+import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 
 /**
  * Captures breadcrumbs.
@@ -27,10 +28,8 @@ class BreadcrumbDataSource(
         return if (input == null || input.length < BREADCRUMB_MESSAGE_MAX_LENGTH) {
             input
         } else {
-            input.substring(
-                0,
-                BREADCRUMB_MESSAGE_MAX_LENGTH - 3
-            ) + "..."
+            telemetryService.trackAppliedLimit("breadcrumb_message", AppliedLimitType.TRUNCATE_STRING)
+            input.take(BREADCRUMB_MESSAGE_MAX_LENGTH - 3) + "..."
         }
     }
 

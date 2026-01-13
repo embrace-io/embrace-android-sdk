@@ -4,22 +4,28 @@ import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestinati
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.config.behavior.REDACTED_LABEL
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
+import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
+import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
 import io.embrace.android.embracesdk.internal.utils.PropertyUtils
 
 internal class SessionPropertiesServiceImpl(
     private val store: KeyValueStore,
     private val configService: ConfigService,
     destination: TelemetryDestination,
+    private val telemetryService: TelemetryService,
 ) : SessionPropertiesService {
 
     private var listener: ((Map<String, String>) -> Unit)? = null
-    private val props = EmbraceSessionProperties(store, configService, destination)
+    private val props = EmbraceSessionProperties(store, configService, destination, telemetryService)
 
     override fun addProperty(originalKey: String, originalValue: String, permanent: Boolean): Boolean {
         if (!isValidKey(originalKey)) {
             return false
         }
         val sanitizedKey = PropertyUtils.truncate(originalKey, SESSION_PROPERTY_KEY_LIMIT)
+        if (sanitizedKey != originalKey) {
+            telemetryService.trackAppliedLimit("session_property_key", AppliedLimitType.TRUNCATE_STRING)
+        }
 
         if (!isValidValue(originalValue)) {
             return false
@@ -28,7 +34,11 @@ internal class SessionPropertiesServiceImpl(
         val sanitizedValue = if (configService.sensitiveKeysBehavior.isSensitiveKey(sanitizedKey)) {
             REDACTED_LABEL
         } else {
-            PropertyUtils.truncate(originalValue, SESSION_PROPERTY_VALUE_LIMIT)
+            val truncatedValue = PropertyUtils.truncate(originalValue, SESSION_PROPERTY_VALUE_LIMIT)
+            if (truncatedValue != originalValue) {
+                telemetryService.trackAppliedLimit("session_property_value", AppliedLimitType.TRUNCATE_STRING)
+            }
+            truncatedValue
         }
 
         val added = props.add(sanitizedKey, sanitizedValue, permanent)

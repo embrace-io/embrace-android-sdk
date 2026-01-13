@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.capture.session
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
+import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.config.FakeRedactionConfig
 import io.embrace.android.embracesdk.internal.config.behavior.REDACTED_LABEL
@@ -31,7 +32,8 @@ internal class SessionPropertiesServiceImplTest {
         service = SessionPropertiesServiceImpl(
             FakeKeyValueStore(),
             fakeConfigService,
-            destination
+            destination,
+            FakeTelemetryService()
         )
         propState = emptyMap()
         service.addChangeListener { propState = it }

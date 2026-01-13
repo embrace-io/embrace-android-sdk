@@ -72,7 +72,8 @@ class EssentialServiceModuleImpl(
             SessionPropertiesServiceImpl(
                 store = coreModule.store,
                 configService = configService,
-                destination = telemetryDestination
+                destination = telemetryDestination,
+                telemetryService = initModule.telemetryService
             )
         }
     }

@@ -6,6 +6,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
+import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.behavior.FakeSessionBehavior
 import org.junit.Assert
 import org.junit.Assert.assertEquals
@@ -45,7 +46,8 @@ internal class EmbraceSessionPropertiesTest {
         sessionProperties = EmbraceSessionProperties(
             store,
             configService,
-            destination
+            destination,
+            FakeTelemetryService()
         )
     }
 
@@ -62,7 +64,7 @@ internal class EmbraceSessionPropertiesTest {
         assertEquals(VALUE_VALID, sessionProperties.get()[KEY_VALID])
 
         // temporary property should not have been persisted
-        val sessionProperties2 = EmbraceSessionProperties(store, configService, destination)
+        val sessionProperties2 = EmbraceSessionProperties(store, configService, destination, FakeTelemetryService())
         assertTrue(sessionProperties2.get().isEmpty())
     }
 
@@ -78,7 +80,7 @@ internal class EmbraceSessionPropertiesTest {
         assertEquals(VALUE_VALID, sessionProperties.get()[KEY_VALID])
 
         // permanent property should have been persisted
-        val sessionProperties2 = EmbraceSessionProperties(store, configService, destination)
+        val sessionProperties2 = EmbraceSessionProperties(store, configService, destination, FakeTelemetryService())
         assertEquals(1, sessionProperties2.get().size.toLong())
         assertEquals(VALUE_VALID, sessionProperties2.get()[KEY_VALID])
 
@@ -86,7 +88,7 @@ internal class EmbraceSessionPropertiesTest {
         assertTrue(sessionProperties.add(KEY_VALID, VALUE_VALID, false))
 
         // permanent property should no longer have been persisted
-        val sessionProperties3 = EmbraceSessionProperties(store, configService, destination)
+        val sessionProperties3 = EmbraceSessionProperties(store, configService, destination, FakeTelemetryService())
         assertTrue(sessionProperties3.get().isEmpty())
     }
 
@@ -210,13 +212,13 @@ internal class EmbraceSessionPropertiesTest {
         assertTrue(sessionProperties.add(KEY_VALID, VALUE_VALID, true))
 
         // permanent property should have been persisted
-        val sessionProperties2 = EmbraceSessionProperties(store, configService, destination)
+        val sessionProperties2 = EmbraceSessionProperties(store, configService, destination, FakeTelemetryService())
         assertEquals(1, sessionProperties2.get().size.toLong())
         assertTrue(sessionProperties.remove(KEY_VALID))
         assertTrue(sessionProperties.get().isEmpty())
 
         // permanent property should have been removed
-        val sessionProperties3 = EmbraceSessionProperties(store, configService, destination)
+        val sessionProperties3 = EmbraceSessionProperties(store, configService, destination, FakeTelemetryService())
         assertTrue(sessionProperties3.get().isEmpty())
     }
 

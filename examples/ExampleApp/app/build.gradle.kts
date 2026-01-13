@@ -43,6 +43,12 @@ android {
             matchingFallbacks += listOf("release")
             isDebuggable = false
         }
+        create("obfuscated") {
+            initWith(buildTypes.getByName("release"))
+            signingConfig = signingConfigs.getByName("debug")
+            matchingFallbacks += listOf("release")
+            isDebuggable = true
+        }
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
@@ -86,10 +92,12 @@ dependencies {
 
     // uncomment to enable debugging through source contained in those modules
 //    implementation(libs.embrace.android.api)
-//    implementation(libs.embrace.android.core)
+    implementation(libs.embrace.android.core)
 //    implementation(libs.embrace.android.features)
-//    implementation(libs.embrace.android.payload)
-//    implementation(libs.embrace.android.delivery)
+    implementation(libs.embrace.android.payload)
+    implementation(libs.embrace.android.delivery)
+    implementation(libs.embrace.android.telemetry.persistence)
+    implementation(libs.embrace.android.payload)
     implementation(libs.embrace.android.sdk)
     implementation(libs.embrace.android.otel.java)
 

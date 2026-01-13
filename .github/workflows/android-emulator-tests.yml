@@ -22,9 +22,13 @@ jobs:
     timeout-minutes: 45
     strategy:
       matrix:
-        api-level: [29]
-        working-directory: ['.', 'examples/ExampleApp']
-      fail-fast: false
+        include:
+          - os: ubuntu-latest
+            api-level: 35
+            target: google_apis
+            arch: x86_64
+            working-directory: [ '.', 'examples/ExampleApp' ]
+
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -36,7 +40,6 @@ jobs:
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
-
       - name: Setup Java
         uses: actions/setup-java@v5
         with:
@@ -69,12 +72,19 @@ jobs:
         uses: reactivecircus/android-emulator-runner@b530d96654c385303d652368551fb075bc2f0b6b # v2.35.0
         if: matrix.working-directory == 'examples/ExampleApp'
         with:
-          working-directory: ${{ matrix.working-directory }}
           api-level: ${{ matrix.api-level }}
-          target: default
-          arch: x86_64
-          cores: 4
-          profile: Nexus 6
+          target: ${{ matrix.target }}
+          arch: ${{ matrix.arch }}
+          working-directory: ${{ matrix.working-directory }}
+          profile: Galaxy Nexus
+          cores: 2
+          ram-size: 2048M
+          sdcard-path-or-size: 100M
+          avd-name: test
+          force-avd-creation: false
+          emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          disable-animations: true
+
           # Grab the failures from the device so we can include them in results. Exit with non-zero so GH checks still fail.
           script: ./gradlew connectedCheck
 
@@ -82,12 +92,19 @@ jobs:
         uses: reactivecircus/android-emulator-runner@b530d96654c385303d652368551fb075bc2f0b6b # v2.35.0
         if: matrix.working-directory != 'examples/ExampleApp'
         with:
-          working-directory: ${{ matrix.working-directory }}
           api-level: ${{ matrix.api-level }}
-          target: default
-          arch: x86_64
-          cores: 4
-          profile: Nexus 6
+          target: ${{ matrix.target }}
+          arch: ${{ matrix.arch }}
+          working-directory: ${{ matrix.working-directory }}
+          profile: Galaxy Nexus
+          cores: 2
+          ram-size: 2048M
+          sdcard-path-or-size: 100M
+          avd-name: test
+          force-avd-creation: false
+          emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          disable-animations: true
+
           # Grab the failures from the device so we can include them in results. Exit with non-zero so GH checks still fail.
           script: ./gradlew connectedCheck -x :embrace-microbenchmark:connectedCheck --stacktrace || (adb logcat '[Embrace]:d' '*:S' -t 100000 > emulator_logcat.log && adb pull /storage/emulated/0/Android/data/io.embrace.android.embracesdk.test/cache/test_failure/ && exit 127)
 

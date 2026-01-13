@@ -22,7 +22,7 @@ abstract class DataSourceImpl(
     protected val logger: InternalLogger = args.logger
     protected val configService: ConfigService = args.configService
     protected val destination: TelemetryDestination = args.destination
-    private val telemetryService = args.telemetryService
+    protected val telemetryService = args.telemetryService
 
     override fun onDataCaptureEnabled() {
         // no-op

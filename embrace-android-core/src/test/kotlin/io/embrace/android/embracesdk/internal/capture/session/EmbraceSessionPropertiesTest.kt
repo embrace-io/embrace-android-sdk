@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
 import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.behavior.FakeSessionBehavior
+import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import org.junit.Assert
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -33,6 +34,7 @@ internal class EmbraceSessionPropertiesTest {
     private lateinit var context: Context
     private lateinit var configService: FakeConfigService
     private lateinit var destination: FakeTelemetryDestination
+    private lateinit var telemetryService: FakeTelemetryService
 
     @Before
     fun setUp() {
@@ -43,11 +45,12 @@ internal class EmbraceSessionPropertiesTest {
             sessionBehavior = FakeSessionBehavior(MAX_SESSION_PROPERTIES_DEFAULT)
         )
         destination = FakeTelemetryDestination()
+        telemetryService = FakeTelemetryService()
         sessionProperties = EmbraceSessionProperties(
             store,
             configService,
             destination,
-            FakeTelemetryService()
+            telemetryService
         )
     }
 
@@ -149,6 +152,14 @@ internal class EmbraceSessionPropertiesTest {
             "should not be able to add new key when limit is hit",
             sessionProperties.add("propTempNew", VALUE_VALID, false)
         )
+
+        // Verify telemetry tracked for dropped properties
+        assertEquals(2, telemetryService.appliedLimits.size)
+        assertEquals("session_property", telemetryService.appliedLimits[0].first)
+        assertEquals(AppliedLimitType.DROP, telemetryService.appliedLimits[0].second)
+        assertEquals("session_property", telemetryService.appliedLimits[1].first)
+        assertEquals(AppliedLimitType.DROP, telemetryService.appliedLimits[1].second)
+
         val otherValue = "other"
         assertTrue(
             "should be able to update key when properties are full",

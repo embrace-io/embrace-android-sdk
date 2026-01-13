@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.config.FakeRedactionConfig
 import io.embrace.android.embracesdk.internal.config.behavior.REDACTED_LABEL
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehaviorImpl
+import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -18,6 +19,7 @@ internal class SessionPropertiesServiceImplTest {
 
     private lateinit var service: SessionPropertiesService
     private lateinit var destination: FakeTelemetryDestination
+    private lateinit var telemetryService: FakeTelemetryService
     private lateinit var propState: Map<String, String>
 
     @Before
@@ -29,11 +31,12 @@ internal class SessionPropertiesServiceImplTest {
                 )
             )
         destination = FakeTelemetryDestination()
+        telemetryService = FakeTelemetryService()
         service = SessionPropertiesServiceImpl(
             FakeKeyValueStore(),
             fakeConfigService,
             destination,
-            FakeTelemetryService()
+            telemetryService
         )
         propState = emptyMap()
         service.addChangeListener { propState = it }
@@ -84,6 +87,11 @@ internal class SessionPropertiesServiceImplTest {
         assertEquals(1, service.getProperties().size.toLong())
         val key = "a".repeat(125) + "..."
         assertEquals("value", service.getProperties()[key])
+
+        // Verify telemetry tracked
+        assertEquals(1, telemetryService.appliedLimits.size)
+        assertEquals("session_property_key", telemetryService.appliedLimits[0].first)
+        assertEquals(AppliedLimitType.TRUNCATE_STRING, telemetryService.appliedLimits[0].second)
     }
 
     @Test
@@ -93,5 +101,10 @@ internal class SessionPropertiesServiceImplTest {
         assertEquals(1, service.getProperties().size.toLong())
         val value = "a".repeat(1021) + "..."
         assertEquals(value, service.getProperties()["key"])
+
+        // Verify telemetry tracked
+        assertEquals(1, telemetryService.appliedLimits.size)
+        assertEquals("session_property_value", telemetryService.appliedLimits[0].first)
+        assertEquals(AppliedLimitType.TRUNCATE_STRING, telemetryService.appliedLimits[0].second)
     }
 }

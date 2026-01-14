@@ -5,10 +5,12 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
+import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.createNetworkBehavior
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.config.remote.NetworkCaptureRuleRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -221,6 +223,36 @@ internal class NetworkCaptureDataSourceTest {
         assertEquals("https://httpbin.org/get", capturedCall.url)
         assertEquals("", capturedCall.errorMessage)
         assertEquals("encrypted-payload", capturedCall.encryptedPayload)
+    }
+
+    @Test
+    fun `test telemetry tracked when network body is truncated`() {
+        cfg = RemoteConfig(networkCaptureRules = setOf(getDefaultRule(maxSize = 2)))
+        val telemetryService = FakeTelemetryService()
+        configService = FakeConfigService(networkBehavior = createNetworkBehavior(remoteCfg = cfg))
+        args = FakeInstrumentationArgs(
+            application = ApplicationProvider.getApplicationContext(),
+            configService = configService,
+            telemetryService = telemetryService
+        )
+
+        val largeBody = ByteArray(3) { 'a'.code.toByte() }
+        NetworkCaptureDataSourceImpl(args).recordNetworkRequest(
+            HttpNetworkRequest(
+                url = "https://embrace.io/changelog",
+                httpMethod = "GET",
+                statusCode = 200,
+                startTime = 0,
+                endTime = 1000,
+                body = HttpNetworkRequest.HttpRequestBody(null, null, largeBody, null, largeBody, null)
+            )
+        )
+
+        assertEquals(2, telemetryService.appliedLimits.size)
+        assertEquals("network_body", telemetryService.appliedLimits[0].first)
+        assertEquals(AppliedLimitType.TRUNCATE_STRING, telemetryService.appliedLimits[0].second)
+        assertEquals("network_body", telemetryService.appliedLimits[1].first)
+        assertEquals(AppliedLimitType.TRUNCATE_STRING, telemetryService.appliedLimits[1].second)
     }
 
     private fun getService(): NetworkCaptureDataSourceImpl {

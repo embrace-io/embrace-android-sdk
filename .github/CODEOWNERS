@@ -1,3 +1,5 @@
-.github @embrace-io/opensource-devops
-
+# Android SDK
 * @embrace-io/opensource-android
+
+# DevOps
+.github @embrace-io/opensource-devops @embrace-io/opensource-android

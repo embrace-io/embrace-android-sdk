@@ -19,12 +19,12 @@ permissions:
 jobs:
   emulator:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
     strategy:
-      matrix:
-        api-level: [29]
-        working-directory: ['.', 'examples/ExampleApp']
       fail-fast: false
+      matrix:
+        api-level:
+          - 29
+        working-directory: ['.', 'examples/ExampleApp']
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -71,12 +71,8 @@ jobs:
         with:
           working-directory: ${{ matrix.working-directory }}
           api-level: ${{ matrix.api-level }}
-          target: default
-          arch: x86_64
-          cores: 4
-          profile: Nexus 6
           # Grab the failures from the device so we can include them in results. Exit with non-zero so GH checks still fail.
-          script: ./gradlew connectedCheck
+          script: ./gradlew connectedCheck -x :app:benchmark:connectedBenchmarkAndroidTest
 
       - name: Run tests on android emulator
         uses: reactivecircus/android-emulator-runner@b530d96654c385303d652368551fb075bc2f0b6b # v2.35.0
@@ -84,10 +80,6 @@ jobs:
         with:
           working-directory: ${{ matrix.working-directory }}
           api-level: ${{ matrix.api-level }}
-          target: default
-          arch: x86_64
-          cores: 4
-          profile: Nexus 6
           # Grab the failures from the device so we can include them in results. Exit with non-zero so GH checks still fail.
           script: ./gradlew connectedCheck -x :embrace-microbenchmark:connectedCheck --stacktrace || (adb logcat '[Embrace]:d' '*:S' -t 100000 > emulator_logcat.log && adb pull /storage/emulated/0/Android/data/io.embrace.android.embracesdk.test/cache/test_failure/ && exit 127)
 

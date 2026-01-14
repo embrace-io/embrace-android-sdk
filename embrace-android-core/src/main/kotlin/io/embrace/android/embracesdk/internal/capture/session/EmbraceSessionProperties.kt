@@ -4,6 +4,8 @@ import io.embrace.android.embracesdk.internal.arch.attrs.toEmbraceAttributeName
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
+import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
+import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
 import io.embrace.android.embracesdk.internal.utils.Provider
 import java.util.concurrent.atomic.AtomicReference
 
@@ -11,6 +13,7 @@ internal class EmbraceSessionProperties(
     private val store: KeyValueStore,
     private val configService: ConfigService,
     private val destination: TelemetryDestination,
+    private val telemetryService: TelemetryService,
 ) {
     private val temporary: MutableMap<String, String> = HashMap()
     private val permanentPropertiesReference = AtomicReference(NOT_LOADED)
@@ -42,6 +45,7 @@ internal class EmbraceSessionProperties(
         synchronized(permanentPropertiesReference) {
             val maxSessionProperties = configService.sessionBehavior.getMaxSessionProperties()
             if (size() > maxSessionProperties || size() == maxSessionProperties && !haveKey(sanitizedKey)) {
+                telemetryService.trackAppliedLimit("session_property", AppliedLimitType.DROP)
                 return false
             }
 

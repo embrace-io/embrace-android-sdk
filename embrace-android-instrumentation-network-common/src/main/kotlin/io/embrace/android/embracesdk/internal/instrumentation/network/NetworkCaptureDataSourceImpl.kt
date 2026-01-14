@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.internal.config.remote.NetworkCaptureRuleRe
 import io.embrace.android.embracesdk.internal.payload.NetworkCapturedCall
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
+import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import kotlin.math.max
 
 class NetworkCaptureDataSourceImpl(
@@ -220,7 +221,11 @@ class NetworkCaptureDataSourceImpl(
      */
     private fun parseBody(body: ByteArray?, maxSize: Long): String? {
         body?.also {
-            val endIndex = if (it.size > maxSize) maxSize else it.size
+            val isTruncated = it.size > maxSize
+            if (isTruncated) {
+                telemetryService.trackAppliedLimit("network_body", AppliedLimitType.TRUNCATE_STRING)
+            }
+            val endIndex = if (isTruncated) maxSize else it.size
             return it.decodeToString(0, endIndex.toInt(), false)
         }
         return null

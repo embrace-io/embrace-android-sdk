@@ -6,9 +6,11 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeDomainCountLimiter
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.fakes.FakeSpanToken
+import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.behavior.FakeNetworkBehavior
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
+import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import io.embrace.android.embracesdk.internal.utils.NetworkUtils
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -108,6 +110,29 @@ internal class NetworkRequestDataSourceTest {
         domainCountLimiter.canLog = false
         logNetworkRequest("www.example.com", 100, 200)
         assertTrue(getNetworkSpans().isEmpty())
+    }
+
+    @Test
+    fun `applied limit is tracked when domain count limiter does not allow logging`() {
+        val fakeTelemetryService = FakeTelemetryService()
+        val argsWithTelemetry = FakeInstrumentationArgs(
+            application = ApplicationProvider.getApplicationContext(),
+            configService = FakeConfigService(networkBehavior = FakeNetworkBehavior(domainCountLimiter = domainCountLimiter)),
+            telemetryService = fakeTelemetryService
+        )
+        val dataSourceWithTelemetry = NetworkRequestDataSourceImpl(argsWithTelemetry)
+
+        domainCountLimiter.canLog = false
+        dataSourceWithTelemetry.recordNetworkRequest(
+            HttpNetworkRequest(
+                url = "www.example.com",
+                httpMethod = "GET",
+                startTime = 100L,
+                endTime = 200L,
+            )
+        )
+
+        assertEquals("network_request" to AppliedLimitType.DROP, fakeTelemetryService.appliedLimits.first())
     }
 
     @Test

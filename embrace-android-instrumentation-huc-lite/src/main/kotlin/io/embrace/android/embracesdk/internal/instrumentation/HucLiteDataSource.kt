@@ -15,6 +15,7 @@ import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.instrumentation.network.getOverriddenURLString
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
+import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import io.embrace.android.embracesdk.internal.utils.NetworkUtils
 import io.embrace.android.embracesdk.internal.utils.toNonNullMap
 import io.embrace.opentelemetry.kotlin.semconv.ErrorAttributes
@@ -68,6 +69,9 @@ class HucLiteDataSource(
                 RequestData(
                     connection = wrappedConnection,
                     shouldRecord = domainCountLimiter::canLogNetworkRequest,
+                    onLimitReached = {
+                        telemetryService.trackAppliedLimit("huc_network_request", AppliedLimitType.DROP)
+                    },
                     clock = clock,
                     telemetryDestination = telemetryDestination,
                     errorHandler = ::errorHandler
@@ -124,6 +128,7 @@ class HucLiteDataSource(
     class RequestData(
         connection: HttpsURLConnection,
         val shouldRecord: (domain: String) -> Boolean,
+        val onLimitReached: () -> Unit,
         val clock: Clock,
         val telemetryDestination: TelemetryDestination,
         val errorHandler: (t: Throwable) -> Unit,
@@ -238,6 +243,8 @@ class HucLiteDataSource(
                     NetworkUtils.getDomain(urlProvider())?.let { domain ->
                         if (shouldRecord(domain)) {
                             recordingFunction()
+                        } else {
+                            onLimitReached()
                         }
                     }
                 }

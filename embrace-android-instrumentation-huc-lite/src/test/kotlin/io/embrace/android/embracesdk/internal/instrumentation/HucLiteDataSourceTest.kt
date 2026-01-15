@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
+import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.FakeURLStreamHandlerFactory
 import io.embrace.android.embracesdk.fakes.behavior.FakeNetworkBehavior
 import io.embrace.android.embracesdk.instrumentation.huclite.DelegatingInstrumentedURLStreamHandlerFactory
@@ -14,6 +15,7 @@ import io.embrace.android.embracesdk.instrumentation.huclite.FAKE_TIME_MS
 import io.embrace.android.embracesdk.instrumentation.huclite.InstrumentedUrlStreamHandlerFactory
 import io.embrace.android.embracesdk.instrumentation.huclite.testUrl
 import io.embrace.android.embracesdk.internal.network.logging.EmbraceDomainCountLimiter
+import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import io.mockk.every
 import io.mockk.mockk
 import org.junit.Assert.assertEquals
@@ -30,10 +32,10 @@ import javax.net.ssl.HttpsURLConnection
 class HucLiteDataSourceTest {
     private lateinit var factoryFieldRef: Field
     private lateinit var fakeTelemetryDestination: FakeTelemetryDestination
+    private lateinit var fakeTelemetryService: FakeTelemetryService
     private lateinit var fakeClock: FakeClock
     private lateinit var fakeEmbLogger: FakeInternalLogger
     private lateinit var domainCountLimiter: EmbraceDomainCountLimiter
-    private lateinit var fakeConfigService: FakeConfigService
     private lateinit var mockedConnection: HttpsURLConnection
     private lateinit var hucLiteDataSource: HucLiteDataSource
     private var staticFactorySetAttempts = 0
@@ -50,12 +52,8 @@ class HucLiteDataSourceTest {
                 mapOf(testUrl.host to 4)
             }
         )
-        fakeConfigService = FakeConfigService(
-            networkBehavior = FakeNetworkBehavior(
-                domainCountLimiter = domainCountLimiter,
-            ),
-        )
         fakeTelemetryDestination = FakeTelemetryDestination()
+        fakeTelemetryService = FakeTelemetryService()
         fakeClock = FakeClock(FAKE_TIME_MS)
         fakeEmbLogger = FakeInternalLogger(throwOnInternalError = false)
         mockedConnection =
@@ -65,21 +63,26 @@ class HucLiteDataSourceTest {
                 every { responseCode } answers { 200 }
                 every { getRequestProperty(any()) } returns null
             }
-        hucLiteDataSource = HucLiteDataSource(
-            args = FakeInstrumentationArgs(
-                application = ApplicationProvider.getApplicationContext(),
-                configService = fakeConfigService,
-                destination = fakeTelemetryDestination,
-                logger = fakeEmbLogger,
-                clock = fakeClock,
-            ),
-            streamHandlerFactoryFieldProvider = { factoryFieldRef },
-            factoryInstaller = {
-                factoryField = it
-                attemptToSetURLStreamHandlerFactory(it)
-            }
-        )
+        hucLiteDataSource = createHucLiteDataSource()
     }
+
+    private fun createHucLiteDataSource(
+        networkBehavior: FakeNetworkBehavior = FakeNetworkBehavior(domainCountLimiter = domainCountLimiter),
+    ): HucLiteDataSource = HucLiteDataSource(
+        args = FakeInstrumentationArgs(
+            application = ApplicationProvider.getApplicationContext(),
+            configService = FakeConfigService(networkBehavior = networkBehavior),
+            destination = fakeTelemetryDestination,
+            logger = fakeEmbLogger,
+            clock = fakeClock,
+            telemetryService = fakeTelemetryService,
+        ),
+        streamHandlerFactoryFieldProvider = { factoryFieldRef },
+        factoryInstaller = {
+            factoryField = it
+            attemptToSetURLStreamHandlerFactory(it)
+        }
+    )
 
     @Test
     fun `specific domain limit enforced`() {
@@ -111,19 +114,29 @@ class HucLiteDataSourceTest {
     }
 
     @Test
-    fun `record only if URL is enabled`() {
-        val ds = HucLiteDataSource(
-            FakeInstrumentationArgs(
-                application = ApplicationProvider.getApplicationContext(),
-                configService = FakeConfigService(
-                    networkBehavior = FakeNetworkBehavior(
-                        urlEnabled = false,
-                        domainCountLimiter = domainCountLimiter,
-                    ),
-                ),
-                destination = fakeTelemetryDestination,
-                logger = fakeEmbLogger,
+    fun `applied limit is tracked when domain limit is exceeded`() {
+        // Make 5 requests - the last one should exceed the limit of 4 for testUrl.host
+        repeat(5) {
+            hucLiteDataSource.createRequestData(
+                wrappedConnection = mockedConnection,
                 clock = fakeClock,
+            )?.apply {
+                startRequest()
+                completeRequest(200)
+            }
+        }
+
+        // 4 spans should be recorded, 1 should be dropped
+        assertEquals(4, fakeTelemetryDestination.createdSpans.size)
+        assertEquals("huc_network_request" to AppliedLimitType.DROP, fakeTelemetryService.appliedLimits.first())
+    }
+
+    @Test
+    fun `record only if URL is enabled`() {
+        val ds = createHucLiteDataSource(
+            networkBehavior = FakeNetworkBehavior(
+                urlEnabled = false,
+                domainCountLimiter = domainCountLimiter,
             )
         )
 

@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.network.logging.DomainCountLimiter
+import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import io.embrace.android.embracesdk.internal.utils.NetworkUtils.getDomain
 import io.embrace.android.embracesdk.internal.utils.NetworkUtils.getUrlPath
 import io.embrace.android.embracesdk.internal.utils.NetworkUtils.getValidTraceId
@@ -44,9 +45,14 @@ class NetworkRequestDataSourceImpl(
             stripUrl(request.url)
         ) ?: return
 
-        captureTelemetry(inputValidation = {
-            domainCountLimiter.canLogNetworkRequest(domain)
-        }) {
+        captureTelemetry(
+            inputValidation = {
+                domainCountLimiter.canLogNetworkRequest(domain)
+            },
+            invalidInputCallback = {
+                telemetryService.trackAppliedLimit("network_request", AppliedLimitType.DROP)
+            }
+        ) {
             val strippedUrl = stripUrl(request.url)
 
             val networkRequestSchemaType = SchemaType.NetworkRequest(generateSchemaAttributes(request))

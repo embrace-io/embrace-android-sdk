@@ -11,8 +11,10 @@ import io.embrace.android.embracesdk.fakes.injection.FakeLogModule
 import io.embrace.android.embracesdk.internal.arch.attrs.embExceptionHandling
 import io.embrace.android.embracesdk.internal.arch.datasource.LogSeverity
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
+import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -22,19 +24,23 @@ internal class LogsApiDelegateTest {
 
     private lateinit var delegate: LogsApiDelegate
     private lateinit var logService: FakeLogService
+    private lateinit var telemetryService: FakeTelemetryService
+    private lateinit var moduleInitBootstrapper: ModuleInitBootstrapper
 
     @Before
     fun setUp() {
         logService = FakeLogService()
-        val moduleInitBootstrapper = ModuleInitBootstrapper(
-            FakeInitModule(),
+        telemetryService = FakeTelemetryService()
+        val fakeInitModule = FakeInitModule(fakeTelemetryService = telemetryService)
+        moduleInitBootstrapper = ModuleInitBootstrapper(
+            fakeInitModule,
             logModuleSupplier = { _, _, _, _, _, _, _ ->
                 FakeLogModule(logService = logService)
             },
         )
         moduleInitBootstrapper.init(ApplicationProvider.getApplicationContext())
 
-        val sdkCallChecker = SdkCallChecker(FakeInternalLogger(), FakeTelemetryService())
+        val sdkCallChecker = SdkCallChecker(FakeInternalLogger(), telemetryService)
         sdkCallChecker.started.set(true)
         delegate = LogsApiDelegate(moduleInitBootstrapper, sdkCallChecker)
     }
@@ -159,5 +165,35 @@ internal class LogsApiDelegateTest {
         assertEquals(LogSeverity.INFO, log.severity)
         assertEquals("handled", log.attributes[embExceptionHandling.name])
         assertEquals("bar", log.attributes["foo"])
+    }
+
+    @Test
+    fun `attachment too large tracks drop`() {
+        val largeAttachment = ByteArray(2 * 1024 * 1024) // 2MB, exceeds 1MB limit
+        delegate.logMessage("test", Severity.INFO, emptyMap(), largeAttachment)
+
+        assertEquals(1, telemetryService.appliedLimits.size)
+        assertEquals("attachment" to AppliedLimitType.DROP, telemetryService.appliedLimits.first())
+    }
+
+    @Test
+    fun `attachment over session limit tracks drop`() {
+        val attachment = ByteArray(100) // Small valid attachment
+        // Log 6 attachments (limit is 5 per session)
+        repeat(6) {
+            delegate.logMessage("test", Severity.INFO, emptyMap(), attachment)
+        }
+
+        // The 6th attachment should be dropped
+        assertEquals(1, telemetryService.appliedLimits.size)
+        assertEquals("attachment" to AppliedLimitType.DROP, telemetryService.appliedLimits.first())
+    }
+
+    @Test
+    fun `valid attachment does not track drop`() {
+        val attachment = ByteArray(100) // Small valid attachment
+        delegate.logMessage("test", Severity.INFO, emptyMap(), attachment)
+
+        assertTrue(telemetryService.appliedLimits.isEmpty())
     }
 }

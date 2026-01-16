@@ -11,6 +11,7 @@ import io.embrace.android.embracesdk.internal.injection.InitModuleImpl
 import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModule
 import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModuleImpl
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
+import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
 
 class FakeInitModule(
     clock: Clock = FakeClock(),
@@ -20,13 +21,17 @@ class FakeInitModule(
         deviceManufacturer = "Fake Manufacturer",
         deviceModel = "Phake Phone Phive"
     ),
-    initModule: InitModule = InitModuleImpl(
+    private val fakeTelemetryService: TelemetryService? = null,
+    private val initModule: InitModule = InitModuleImpl(
         logger = logger,
         clock = clock,
         systemInfo = systemInfo
     ),
     override var instrumentedConfig: InstrumentedConfig = FakeInstrumentedConfig(),
 ) : InitModule by initModule {
+
+    override val telemetryService: TelemetryService
+        get() = fakeTelemetryService ?: initModule.telemetryService
 
     val openTelemetryModule: OpenTelemetryModule by lazy { OpenTelemetryModuleImpl(initModule = this) }
 

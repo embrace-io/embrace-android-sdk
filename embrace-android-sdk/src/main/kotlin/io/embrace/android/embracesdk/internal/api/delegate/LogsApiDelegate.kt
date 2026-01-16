@@ -23,6 +23,7 @@ import io.embrace.android.embracesdk.internal.logs.attachments.AttachmentErrorCo
 import io.embrace.android.embracesdk.internal.logs.attachments.AttachmentErrorCode.UNKNOWN
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.serialization.truncatedStacktrace
+import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import io.embrace.android.embracesdk.internal.utils.getSafeStackTrace
 import io.embrace.opentelemetry.kotlin.semconv.ExceptionAttributes
 
@@ -43,6 +44,9 @@ internal class LogsApiDelegate(
     }
     private val serializer by embraceImplInject(sdkCallChecker) {
         bootstrapper.initModule.jsonSerializer
+    }
+    private val telemetryService by embraceImplInject(sdkCallChecker) {
+        bootstrapper.initModule.telemetryService
     }
 
     override fun logInfo(message: String) = logMessage(message, Severity.INFO)
@@ -101,6 +105,7 @@ internal class LogsApiDelegate(
             UNKNOWN -> "An unknown error occurred while processing the attachment."
             else -> return
         }
+        telemetryService?.trackAppliedLimit("attachment", AppliedLimitType.DROP)
         logger?.logError(msg, RuntimeException(msg))
     }
 

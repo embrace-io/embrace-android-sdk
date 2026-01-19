@@ -8,7 +8,7 @@
         errorLine2="                ~~~~~~">
         <location
             file="src/main/kotlin/io/embrace/android/embracesdk/fakes/FakeOpenTelemetryModule.kt"
-            line="53"
+            line="57"
             column="17"/>
     </issue>
 
@@ -24,6 +24,13 @@
         message="Invalid package reference in org.bouncycastle:bcprov-jdk18on; not included in Android: `javax.naming`. Referenced from `org.bouncycastle.jce.provider.X509LDAPCertStoreSpi`.">
         <location
             file="$GRADLE_USER_HOME/caches/modules-2/files-2.1/org.bouncycastle/bcprov-jdk18on/1.80/e22100b41042decf09cab914a5af8d2c57b5ac4a/bcprov-jdk18on-1.80.jar"/>
+    </issue>
+
+    <issue
+        id="InvalidPackage"
+        message="Invalid package reference in io.mockk:mockk-agent-jvm; not included in Android: `java.lang.instrument`. Referenced from `io.mockk.proxy.jvm.JvmMockKAgentFactory`.">
+        <location
+            file="$GRADLE_USER_HOME/caches/modules-2/files-2.1/io.mockk/mockk-agent-jvm/1.14.7/a36fc2e620cd2cbe7574817813bc775511cb2cf7/mockk-agent-jvm-1.14.7.jar"/>
     </issue>
 
     <issue

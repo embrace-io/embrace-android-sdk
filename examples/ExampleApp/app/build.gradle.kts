@@ -88,18 +88,19 @@ dependencies {
     implementation(libs.opentelemetry.api)
     implementation(libs.opentelemetry.sdk)
     implementation(libs.firebase.messaging)
+    implementation(libs.embrace.android.otel.java)
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
 
     // uncomment to enable debugging through source contained in those modules
+
 //    implementation(libs.embrace.android.api)
-    implementation(libs.embrace.android.core)
+//    implementation(libs.embrace.android.core)
 //    implementation(libs.embrace.android.features)
-    implementation(libs.embrace.android.payload)
-    implementation(libs.embrace.android.delivery)
-    implementation(libs.embrace.android.telemetry.persistence)
-    implementation(libs.embrace.android.payload)
-    implementation(libs.embrace.android.sdk)
-    implementation(libs.embrace.android.otel.java)
+//    implementation(libs.embrace.android.payload)
+//    implementation(libs.embrace.android.delivery)
+//    implementation(libs.embrace.android.telemetry.persistence)
+//    implementation(libs.embrace.android.payload)
+//    implementation(libs.embrace.android.sdk)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

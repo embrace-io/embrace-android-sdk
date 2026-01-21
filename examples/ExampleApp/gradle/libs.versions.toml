@@ -8,7 +8,7 @@ espressoCore = "3.7.0"
 lifecycleRuntimeKtx = "2.10.0"
 activityCompose = "1.12.2"
 composeBom = "2026.01.00"
-embrace = "8.0.0"
+embrace = "8.1.0"
 navigationCompose = "2.9.6"
 okhttp = "5.3.2"
 otel = "1.58.0"
@@ -44,6 +44,7 @@ embrace-android-sdk = { group = "io.embrace", name = "embrace-android-sdk", vers
 embrace-android-core = { group = "io.embrace", name = "embrace-android-core", version.ref = "embrace" }
 embrace-android-features = { group = "io.embrace", name = "embrace-android-features", version.ref = "embrace" }
 embrace-android-payload = { group = "io.embrace", name = "embrace-android-payload", version.ref = "embrace" }
+embrace-android-telemetry-persistence = { group = "io.embrace", name = "embrace-android-telemetry-persistence", version.ref = "embrace" }
 embrace-android-delivery = { group = "io.embrace", name = "embrace-android-delivery", version.ref = "embrace" }
 embrace-android-otel-java = { group = "io.embrace", name = "embrace-android-otel-java", version.ref = "embrace" }
 androidx-uiautomator = { group = "androidx.test.uiautomator", name = "uiautomator", version.ref = "uiautomator" }

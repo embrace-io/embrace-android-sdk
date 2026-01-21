@@ -11,7 +11,7 @@ class LogcatSpanExporter : SpanExporter {
         for (span in spans) {
             Log.i(
                 "EmbraceTestApp",
-                "Span: ${span.name}, TraceId: ${span.traceId}, SpanId: ${span.spanId}, Attributes: ${span.attributes}"
+                "Span: ${span.name}, TraceId: ${span.traceId}, SpanId: ${span.spanId}, Attributes: ${span.attributes}, Events: ${span.events}, Links: ${span.links},"
             )
         }
         return CompletableResultCode.ofSuccess()

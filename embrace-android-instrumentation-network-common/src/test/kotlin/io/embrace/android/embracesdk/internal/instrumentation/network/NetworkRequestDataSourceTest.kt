@@ -1,14 +1,6 @@
 package io.embrace.android.embracesdk.internal.instrumentation.network
 
-import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.fakes.FakeConfigService
-import io.embrace.android.embracesdk.fakes.FakeDomainCountLimiter
-import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
-import io.embrace.android.embracesdk.fakes.FakeSpanToken
-import io.embrace.android.embracesdk.fakes.FakeTelemetryService
-import io.embrace.android.embracesdk.fakes.behavior.FakeNetworkBehavior
-import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import io.embrace.android.embracesdk.internal.utils.NetworkUtils
@@ -20,20 +12,11 @@ import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 internal class NetworkRequestDataSourceTest {
-
-    private lateinit var domainCountLimiter: FakeDomainCountLimiter
-    private lateinit var args: FakeInstrumentationArgs
-    private lateinit var dataSource: NetworkRequestDataSource
+    private lateinit var harness: NetworkRequestDataSourceTestHarness
 
     @Before
     fun setUp() {
-        domainCountLimiter = FakeDomainCountLimiter()
-
-        args = FakeInstrumentationArgs(
-            application = ApplicationProvider.getApplicationContext(),
-            configService = FakeConfigService(networkBehavior = FakeNetworkBehavior(domainCountLimiter = domainCountLimiter)),
-        )
-        dataSource = NetworkRequestDataSourceImpl(args)
+        harness = NetworkRequestDataSourceTestHarness()
     }
 
     @Test
@@ -57,7 +40,7 @@ internal class NetworkRequestDataSourceTest {
             endTime = 500,
             statusCode = 203,
         )
-        dataSource.recordNetworkRequest(
+        harness.dataSource.recordNetworkRequest(
             HttpNetworkRequest(
                 url = "www.example5.com",
                 httpMethod = "GET",
@@ -68,31 +51,36 @@ internal class NetworkRequestDataSourceTest {
             )
         )
 
-        args.destination.createdSpans
+        harness.args.destination.createdSpans
 
-        val spans = getNetworkSpans()
+        val spans = harness.getNetworkSpans()
         assertEquals(5, spans.size)
 
         val requestSpans = spans.associateBy { it.attributes["url.full"] }
-        checkNotNull(requestSpans["www.example1.com"]).assertNetworkRequest(
+        harness.assertNetworkRequest(
+            spanToken = requestSpans["www.example1.com"],
             expectedStartTimeMs = 100L,
             expectedEndTimeMs = 200L,
         )
-        checkNotNull(requestSpans["www.example2.com"]).assertNetworkRequest(
+        harness.assertNetworkRequest(
+            spanToken = requestSpans["www.example2.com"],
             expectedStartTimeMs = 200L,
             expectedEndTimeMs = 300L,
             expectedErrorCode = ErrorCodeAttribute.Failure
         )
-        checkNotNull(requestSpans["www.example3.com"]).assertNetworkRequest(
+        harness.assertNetworkRequest(
+            spanToken = requestSpans["www.example3.com"],
             expectedStartTimeMs = 300L,
             expectedEndTimeMs = 400L,
             expectedErrorCode = ErrorCodeAttribute.Failure
         )
-        checkNotNull(requestSpans["www.example4.com"]).assertNetworkRequest(
+        harness.assertNetworkRequest(
+            spanToken = requestSpans["www.example4.com"],
             expectedStartTimeMs = 400L,
             expectedEndTimeMs = 500L,
         )
-        checkNotNull(requestSpans["www.example5.com"]).assertNetworkRequest(
+        harness.assertNetworkRequest(
+            spanToken = requestSpans["www.example5.com"],
             expectedStartTimeMs = 600L,
             expectedEndTimeMs = 650L,
             expectedErrorCode = ErrorCodeAttribute.Failure
@@ -102,37 +90,21 @@ internal class NetworkRequestDataSourceTest {
     @Test
     fun `network requests are not recorded if the URL domain is invalid`() {
         logNetworkRequest("examplecom", 100, 200)
-        assertTrue(getNetworkSpans().isEmpty())
+        assertTrue(harness.getNetworkSpans().isEmpty())
     }
 
     @Test
     fun `network requests are not recorded if the domain count limiter does not allow it`() {
-        domainCountLimiter.canLog = false
+        harness.domainCountLimiter.canLog = false
         logNetworkRequest("www.example.com", 100, 200)
-        assertTrue(getNetworkSpans().isEmpty())
+        assertTrue(harness.getNetworkSpans().isEmpty())
     }
 
     @Test
     fun `applied limit is tracked when domain count limiter does not allow logging`() {
-        val fakeTelemetryService = FakeTelemetryService()
-        val argsWithTelemetry = FakeInstrumentationArgs(
-            application = ApplicationProvider.getApplicationContext(),
-            configService = FakeConfigService(networkBehavior = FakeNetworkBehavior(domainCountLimiter = domainCountLimiter)),
-            telemetryService = fakeTelemetryService
-        )
-        val dataSourceWithTelemetry = NetworkRequestDataSourceImpl(argsWithTelemetry)
-
-        domainCountLimiter.canLog = false
-        dataSourceWithTelemetry.recordNetworkRequest(
-            HttpNetworkRequest(
-                url = "www.example.com",
-                httpMethod = "GET",
-                startTime = 100L,
-                endTime = 200L,
-            )
-        )
-
-        assertEquals("network_request" to AppliedLimitType.DROP, fakeTelemetryService.appliedLimits.first())
+        harness.domainCountLimiter.canLog = false
+        logNetworkRequest(url = "www.example.com")
+        assertEquals("network_request" to AppliedLimitType.DROP, harness.telemetryService.appliedLimits.first())
     }
 
     @Test
@@ -144,7 +116,7 @@ internal class NetworkRequestDataSourceTest {
             logNetworkRequest(url = "https://embrace.io", startTime = startTime, endTime = endTime)
         }
 
-        assertEquals(2, getNetworkSpans().size)
+        assertEquals(2, harness.getNetworkSpans().size)
     }
 
     @Test
@@ -152,7 +124,7 @@ internal class NetworkRequestDataSourceTest {
         val url = "https://www.example1.com/a?b=c"
         logNetworkRequest(url = url)
 
-        with(checkNotNull(getNetworkSpans().single())) {
+        with(checkNotNull(harness.getNetworkSpans().single())) {
             assertEquals(
                 NetworkUtils.stripUrl(url),
                 attributes["url.full"]
@@ -167,7 +139,7 @@ internal class NetworkRequestDataSourceTest {
         statusCode: Int = 200,
         body: HttpNetworkRequest.HttpRequestBody? = null,
     ) {
-        dataSource.recordNetworkRequest(
+        harness.dataSource.recordNetworkRequest(
             HttpNetworkRequest(
                 url = url,
                 httpMethod = "GET",
@@ -179,20 +151,5 @@ internal class NetworkRequestDataSourceTest {
                 body = body
             )
         )
-    }
-
-    private fun getNetworkSpans(): List<FakeSpanToken> {
-        return args.destination.createdSpans
-            .filter { it.type == EmbType.Performance.Network }
-    }
-
-    private fun FakeSpanToken.assertNetworkRequest(
-        expectedStartTimeMs: Long,
-        expectedEndTimeMs: Long,
-        expectedErrorCode: ErrorCodeAttribute? = null,
-    ) {
-        assertEquals(expectedStartTimeMs, startTimeMs)
-        assertEquals(expectedEndTimeMs, endTimeMs)
-        assertEquals(expectedErrorCode, errorCode)
     }
 }

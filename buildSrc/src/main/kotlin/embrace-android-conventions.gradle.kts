@@ -3,7 +3,6 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 
 plugins {
-    kotlin("android")
     id("com.android.library")
 }
 
@@ -37,6 +36,7 @@ android {
                     this.exceptionFormat = TestExceptionFormat.FULL
                 }
                 test.maxParallelForks = (Runtime.getRuntime().availableProcessors() / 3) + 1
+                test.maxHeapSize = "2g"
 
                 // Disable test discovery failure for modules without test sources
                 test.failOnNoDiscoveredTests.set(false)

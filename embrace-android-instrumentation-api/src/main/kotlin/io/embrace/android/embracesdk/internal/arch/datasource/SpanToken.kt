@@ -34,6 +34,12 @@ interface SpanToken {
     fun getStartTimeMs(): Long?
 
     /**
+     * Get the W3C Traceparent representation for the span associated with this token, or null if the span has not started.
+     * This needs to be unique for each instance.
+     */
+    fun asW3cTraceparent(): String?
+
+    /**
      * Set the value of the attribute with the given key, overwriting the original value if it's already set
      */
     fun setSystemAttribute(key: String, value: String)

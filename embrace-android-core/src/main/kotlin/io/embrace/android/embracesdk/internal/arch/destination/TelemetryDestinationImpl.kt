@@ -232,6 +232,8 @@ class TelemetryDestinationImpl(
 
         override fun getStartTimeMs(): Long? = span.getStartTimeMs()
 
+        override fun asW3cTraceparent(): String? = span.asW3cTraceParent()
+
         override fun setSystemAttribute(key: String, value: String) = span.setSystemAttribute(key, value)
 
         override fun addEvent(name: String, eventTimeMs: Long, attributes: Map<String, String>) {

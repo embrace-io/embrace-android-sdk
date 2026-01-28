@@ -1,5 +1,4 @@
 plugins {
-    kotlin("android") apply false
     kotlin("jvm") apply false
     alias(libs.plugins.google.ksp) apply false
     id("com.android.library") apply false

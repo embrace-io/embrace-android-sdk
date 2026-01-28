@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.instrumentation.crash.ndk
 
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.RobolectricTest
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
@@ -21,7 +22,7 @@ import java.io.File
 import java.nio.file.Files
 
 @RunWith(AndroidJUnit4::class)
-class NativeCrashHandlerInstallerImplTest {
+class NativeCrashHandlerInstallerImplTest : RobolectricTest() {
 
     private lateinit var args: FakeInstrumentationArgs
     private lateinit var fakeSharedObjectLoader: FakeSharedObjectLoader

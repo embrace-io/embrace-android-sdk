@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.capture.session
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.RobolectricTest
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
@@ -22,7 +23,7 @@ private const val MAX_SESSION_PROPERTIES_FROM_CONFIG = 5
 private const val MAX_SESSION_PROPERTIES_DEFAULT = 10
 
 @RunWith(AndroidJUnit4::class)
-internal class EmbraceSessionPropertiesTest {
+internal class EmbraceSessionPropertiesTest : RobolectricTest() {
 
     companion object {
         private const val KEY_VALID = "abc"

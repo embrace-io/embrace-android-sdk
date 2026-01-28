@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.testcases
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.RobolectricTest
 import io.embrace.android.embracesdk.assertions.assertOtelLogReceived
 import io.embrace.android.embracesdk.assertions.getLogOfType
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
@@ -26,7 +27,7 @@ import org.junit.runner.RunWith
  */
 @OptIn(ExperimentalApi::class)
 @RunWith(AndroidJUnit4::class)
-internal class UnityInternalInterfaceTest {
+internal class UnityInternalInterfaceTest: RobolectricTest() {
 
     private val instrumentedConfig = FakeInstrumentedConfig(
         project = FakeProjectConfig(

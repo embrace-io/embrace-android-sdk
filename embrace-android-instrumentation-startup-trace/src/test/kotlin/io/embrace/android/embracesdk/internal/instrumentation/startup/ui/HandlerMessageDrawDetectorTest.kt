@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.instrumentation.startup.ui
 
 import android.app.Activity
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.RobolectricTest
 import io.embrace.android.embracesdk.fakes.FakeMainThreadHandler
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -11,7 +12,7 @@ import org.robolectric.Robolectric
 import java.util.concurrent.CountDownLatch
 
 @RunWith(AndroidJUnit4::class)
-internal class HandlerMessageDrawDetectorTest {
+internal class HandlerMessageDrawDetectorTest : RobolectricTest() {
     private lateinit var handler: FakeMainThreadHandler
     private lateinit var detector: HandlerMessageDrawDetector
     private lateinit var messageHandlerLatch: CountDownLatch

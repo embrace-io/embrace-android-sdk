@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.arch
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.RobolectricTest
 import io.embrace.android.embracesdk.fakes.FakeDataSource
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState
 import org.junit.Assert.assertEquals
@@ -9,7 +10,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RuntimeEnvironment
 
 @RunWith(AndroidJUnit4::class)
-internal class DataSourceStateTest {
+internal class DataSourceStateTest : RobolectricTest() {
 
     @Test
     fun `test config gate defaults to enabled`() {

@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.instrumentation.crash.jvm
 import android.app.Application
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.RobolectricTest
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
@@ -19,7 +20,7 @@ import org.junit.runner.RunWith
 
 @OptIn(IncubatingApi::class)
 @RunWith(AndroidJUnit4::class)
-internal class JvmCrashDataSourceImplTest {
+internal class JvmCrashDataSourceImplTest : RobolectricTest() {
 
     private lateinit var crashDataSource: JvmCrashDataSourceImpl
     private lateinit var args: FakeInstrumentationArgs

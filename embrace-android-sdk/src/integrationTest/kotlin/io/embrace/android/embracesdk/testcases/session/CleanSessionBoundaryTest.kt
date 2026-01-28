@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.testcases.session
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.RobolectricTest
 import io.embrace.android.embracesdk.assertions.findSessionSpan
 import io.embrace.android.embracesdk.internal.session.getSessionProperty
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
@@ -14,7 +15,7 @@ import org.junit.runner.RunWith
  * Asserts that data is cleared between session boundaries.
  */
 @RunWith(AndroidJUnit4::class)
-internal class CleanSessionBoundaryTest {
+internal class CleanSessionBoundaryTest: RobolectricTest() {
 
     @Rule
     @JvmField

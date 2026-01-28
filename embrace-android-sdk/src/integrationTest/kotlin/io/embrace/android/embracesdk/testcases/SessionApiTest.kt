@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.testcases
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.RobolectricTest
 import io.embrace.android.embracesdk.assertions.toMap
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
@@ -18,7 +19,7 @@ import org.junit.runner.RunWith
 
 @OptIn(IncubatingApi::class)
 @RunWith(AndroidJUnit4::class)
-internal class SessionApiTest {
+internal class SessionApiTest: RobolectricTest() {
 
     @Rule
     @JvmField

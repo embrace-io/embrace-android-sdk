@@ -2,7 +2,6 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     id("com.android.library")
-    kotlin("android")
     alias(libs.plugins.benchmark)
 }
 
@@ -42,6 +41,7 @@ dependencies {
     androidTestImplementation(libs.androidx.benchmark.junit4)
     androidTestImplementation(libs.opentelemetry.kotlin)
     androidTestImplementation(libs.opentelemetry.kotlin.compat)
+    androidTestImplementation(platform(libs.okhttp.bom))
     androidTestImplementation(libs.okhttp)
     androidTestImplementation(project(":embrace-android-sdk"))
     androidTestImplementation(project(":embrace-android-core"))

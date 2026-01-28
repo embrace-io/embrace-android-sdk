@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.injection
 
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.RobolectricTest
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
 import io.embrace.android.embracesdk.fakes.FakeRequestExecutionService
@@ -14,7 +15,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
-class DeliveryModuleImplTest {
+class DeliveryModuleImplTest : RobolectricTest() {
 
     private lateinit var module: DeliveryModule
     private lateinit var configService: FakeConfigService

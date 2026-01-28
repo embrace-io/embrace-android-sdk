@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.testcases.features
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.RobolectricTest
 import io.embrace.android.embracesdk.assertions.returnIfConditionMet
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.internal.delivery.storage.StorageLocation
@@ -16,7 +17,7 @@ import org.junit.runner.RunWith
 import java.io.File
 
 @RunWith(AndroidJUnit4::class)
-internal class DisableSdkFeatureTest {
+internal class DisableSdkFeatureTest: RobolectricTest() {
 
     private companion object {
         private const val TEST_PREFIX = "emb_test_"

@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.testcases
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.RobolectricTest
 import io.embrace.android.embracesdk.assertions.getLastLog
 import io.embrace.android.embracesdk.assertions.getSessionId
 import io.embrace.android.embracesdk.fakes.FakeOtelJavaLogRecordExporter
@@ -43,7 +44,7 @@ import java.util.concurrent.TimeUnit
 
 @OptIn(ExperimentalApi::class, IncubatingApi::class)
 @RunWith(AndroidJUnit4::class)
-internal class ExternalOtelJavaLoggerTest {
+internal class ExternalOtelJavaLoggerTest: RobolectricTest() {
 
     @Rule
     @JvmField

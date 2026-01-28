@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.instrumentation.network
 
 import android.util.Base64
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.RobolectricTest
 import org.junit.Assert
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -12,7 +13,7 @@ import java.security.KeyFactory
 import java.security.spec.PKCS8EncodedKeySpec
 
 @RunWith(AndroidJUnit4::class)
-internal class NetworkCaptureEncryptionManagerTest {
+internal class NetworkCaptureEncryptionManagerTest : RobolectricTest() {
 
     private lateinit var networkCaptureEncryptionManager: NetworkCaptureEncryptionManager
 

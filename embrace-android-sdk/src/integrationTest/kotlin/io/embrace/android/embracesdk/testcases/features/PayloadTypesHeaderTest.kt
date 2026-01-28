@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.testcases.features
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.RobolectricTest
 import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.config.FakeProjectConfig
@@ -13,13 +14,15 @@ import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.annotation.Config
+import kotlin.intArrayOf
 
 /**
  * Integration test to verify that the X-EM-PAYLOAD-TYPES header is sent correctly
  * when logging different types of data.
  */
 @RunWith(AndroidJUnit4::class)
-internal class PayloadTypesHeaderTest {
+internal class PayloadTypesHeaderTest: RobolectricTest() {
 
     @Rule
     @JvmField
@@ -47,6 +50,7 @@ internal class PayloadTypesHeaderTest {
         )
     }
 
+    @Config(sdk = [21])
     @Test
     fun `batched logs of different types send a list of header types`() {
         lateinit var logger: InternalLogger
@@ -75,6 +79,7 @@ internal class PayloadTypesHeaderTest {
         )
     }
 
+    @Config(sdk = [21])
     @Test
     fun `flutter exceptions are sent immediately in separate envelopes`() {
         val instrumentedConfig = FakeInstrumentedConfig(

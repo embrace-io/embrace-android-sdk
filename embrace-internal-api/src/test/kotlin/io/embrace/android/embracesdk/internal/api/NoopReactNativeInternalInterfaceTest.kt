@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.api
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.RobolectricTest
 import io.embrace.android.embracesdk.internal.api.delegate.NoopEmbraceInternalInterface
 import io.embrace.android.embracesdk.internal.api.delegate.NoopReactNativeInternalInterface
 import org.junit.Before
@@ -10,7 +11,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
-internal class NoopReactNativeInternalInterfaceTest {
+internal class NoopReactNativeInternalInterfaceTest : RobolectricTest() {
 
     private lateinit var impl: NoopReactNativeInternalInterface
 

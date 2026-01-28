@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.testcases.session
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.RobolectricTest
 import io.embrace.android.embracesdk.assertions.findSessionSpan
 import io.embrace.android.embracesdk.assertions.getSessionId
 import io.embrace.android.embracesdk.assertions.hasSpanSnapshotsOfType
@@ -22,7 +23,7 @@ import org.junit.runner.RunWith
  * Asserts that a stateful session can be recorded.
  */
 @RunWith(AndroidJUnit4::class)
-internal class StatefulSessionTest {
+internal class StatefulSessionTest: RobolectricTest() {
 
     @Rule
     @JvmField

@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.testcases
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.RobolectricTest
 import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.fakes.FakeLogRecordExporter
 import io.embrace.android.embracesdk.fakes.FakeLogRecordProcessor
@@ -32,7 +33,7 @@ import org.junit.runner.RunWith
 @Suppress("DEPRECATION")
 @OptIn(ExperimentalApi::class)
 @RunWith(AndroidJUnit4::class)
-internal class OTelExportTest {
+internal class OTelExportTest: RobolectricTest() {
 
     @Rule
     @JvmField

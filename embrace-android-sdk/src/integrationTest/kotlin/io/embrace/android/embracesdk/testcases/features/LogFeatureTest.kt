@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.testcases.features
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.RobolectricTest
 import io.embrace.android.embracesdk.internal.logs.LogExceptionType
 import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.assertions.assertOtelLogReceived
@@ -29,7 +30,7 @@ import org.junit.runner.RunWith
 
 @OptIn(ExperimentalApi::class)
 @RunWith(AndroidJUnit4::class)
-internal class LogFeatureTest {
+internal class LogFeatureTest: RobolectricTest() {
 
     private val instrumentedConfig = FakeInstrumentedConfig(
         enabledFeatures = FakeEnabledFeatureConfig(

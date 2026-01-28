@@ -7,6 +7,7 @@ import android.content.SharedPreferences
 import android.preference.PreferenceManager
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.RobolectricTest
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.internal.prefs.SharedPrefsStore
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
@@ -18,7 +19,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
-internal class KeyValueStoreTest {
+internal class KeyValueStoreTest : RobolectricTest() {
 
     private val context = ApplicationProvider.getApplicationContext<Context>()
     private lateinit var store: KeyValueStore

@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.testcases.features
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.RobolectricTest
 import io.embrace.android.embracesdk.assertions.getLogOfType
 import io.embrace.android.embracesdk.assertions.getSessionId
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
@@ -42,7 +43,7 @@ import org.junit.runner.RunWith
  * embrace-android-sdk/src/androidTest/java/io/embrace/android/embracesdk/ndk/serializer/FileWriterTestSuite.kt
  */
 @RunWith(AndroidJUnit4::class)
-internal class NativeCrashFeatureTest {
+internal class NativeCrashFeatureTest: RobolectricTest() {
 
     private companion object {
         private const val BASE_TIME_MS = 1691000299000L

@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.otel.spans
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.RobolectricTest
 import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.opentelemetry.kotlin.ExperimentalApi
@@ -15,7 +16,7 @@ import org.junit.runner.RunWith
 
 @OptIn(ExperimentalApi::class)
 @RunWith(AndroidJUnit4::class)
-internal class SpanRepositoryTest {
+internal class SpanRepositoryTest : RobolectricTest() {
     private lateinit var repository: SpanRepository
 
     @Before

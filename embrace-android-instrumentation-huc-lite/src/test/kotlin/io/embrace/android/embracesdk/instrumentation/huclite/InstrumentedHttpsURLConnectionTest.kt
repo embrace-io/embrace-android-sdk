@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.instrumentation.huclite
 
 import android.os.Build.VERSION_CODES
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.RobolectricTest
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.mockk.every
 import io.mockk.mockk
@@ -25,7 +26,7 @@ import javax.net.ssl.HostnameVerifier
 import javax.net.ssl.SSLSocketFactory
 
 @RunWith(AndroidJUnit4::class)
-internal class InstrumentedHttpsURLConnectionTest {
+internal class InstrumentedHttpsURLConnectionTest : RobolectricTest() {
     private lateinit var harness: HucTestHarness
 
     @Before
@@ -327,6 +328,7 @@ internal class InstrumentedHttpsURLConnectionTest {
         assertSingleSuccessfulRequest()
     }
 
+    @Config(sdk = [VERSION_CODES.M])
     @Test
     fun `getHeaderFieldLong delegates to wrapped connection and records telemetry`() = harness.runTest {
         every { mockWrappedConnection.getHeaderFieldInt(FAKE_FIELD_NAME, 0) } returns 1024
@@ -373,6 +375,7 @@ internal class InstrumentedHttpsURLConnectionTest {
         assertSingleSuccessfulRequest()
     }
 
+    @Config(sdk = [VERSION_CODES.M])
     @Test
     fun `getContentLengthLong delegates to wrapped connection and records telemetry`() = harness.runTest {
         every { mockWrappedConnection.contentLength } returns 512

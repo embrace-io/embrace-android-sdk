@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.session.orchestrator
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.RobolectricTest
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeAppStateTracker
 import io.embrace.android.embracesdk.fakes.FakeClock
@@ -46,7 +47,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RuntimeEnvironment
 
 @RunWith(AndroidJUnit4::class)
-internal class SessionOrchestratorTest {
+internal class SessionOrchestratorTest : RobolectricTest() {
 
     private lateinit var orchestrator: SessionOrchestratorImpl
     private lateinit var payloadFactory: PayloadFactoryImpl

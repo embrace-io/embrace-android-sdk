@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.testcases.features
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.RobolectricTest
 import io.embrace.android.embracesdk.assertions.getLogOfType
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
@@ -15,13 +16,16 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.annotation.Config
+import kotlin.intArrayOf
 
 @RunWith(AndroidJUnit4::class)
-internal class HucLiteInstrumentationEnabledTest {
+internal class HucLiteInstrumentationEnabledTest: RobolectricTest() {
     @Rule
     @JvmField
     val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule()
 
+    @Config(sdk = [21])
     @Test
     fun `sdk starts successfully but internal error logged when HUC Lite instrumentation enabled`() {
         testRule.runTest(

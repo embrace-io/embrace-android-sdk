@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.testcases.features
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.RobolectricTest
 import io.embrace.android.embracesdk.assertions.findSpanByName
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.config.FakeRedactionConfig
@@ -12,7 +13,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
-internal class SensitiveKeysRedactionFeatureTest {
+internal class SensitiveKeysRedactionFeatureTest: RobolectricTest() {
 
     private val instrumentedConfig = FakeInstrumentedConfig(
         redaction = FakeRedactionConfig(sensitiveKeys = listOf("password"))

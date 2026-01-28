@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.testcases.features
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.RobolectricTest
 import io.embrace.android.embracesdk.assertions.assertMatches
 import io.embrace.android.embracesdk.assertions.assertOtelLogReceived
 import io.embrace.android.embracesdk.assertions.getLastLog
@@ -36,7 +37,7 @@ import org.junit.runner.RunWith
 
 @OptIn(ExperimentalApi::class, IncubatingApi::class)
 @RunWith(AndroidJUnit4::class)
-internal class JvmCrashFeatureTest {
+internal class JvmCrashFeatureTest: RobolectricTest() {
 
     @Rule
     @JvmField

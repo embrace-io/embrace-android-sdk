@@ -323,6 +323,8 @@ private class EmbraceSpanImpl(
         return otelSpanStartArgs.openTelemetry.contextFactory.storeSpan(parentContext, this)
     }
 
+    override fun asW3cTraceParent(): String? = startedSpan.get()?.spanContext?.run { "00-$traceId-$spanId-01" }
+
     override fun snapshot(): io.embrace.android.embracesdk.internal.payload.Span? {
         return if (canSnapshot()) {
             io.embrace.android.embracesdk.internal.payload.Span(

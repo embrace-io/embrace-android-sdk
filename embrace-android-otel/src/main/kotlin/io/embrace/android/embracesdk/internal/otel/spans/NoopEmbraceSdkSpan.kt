@@ -51,6 +51,8 @@ object NoopEmbraceSdkSpan : EmbraceSdkSpan {
 
     override fun asNewContext(): Context? = null
 
+    override fun asW3cTraceParent(): String? = null
+
     override fun snapshot(): Span? = null
 
     override fun hasEmbraceAttribute(embraceAttribute: EmbraceAttribute): Boolean = false

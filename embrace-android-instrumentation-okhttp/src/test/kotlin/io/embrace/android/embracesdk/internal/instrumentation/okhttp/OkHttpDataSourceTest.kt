@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.instrumentation.okhttp
 
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.fakes.FakeLogData
@@ -60,13 +61,7 @@ internal class OkHttpDataSourceTest {
         private const val RESPONSE_BODY_GZIPPED_SIZE = 43
         private const val RESPONSE_HEADER_VALUE = "responseHeaderVal"
         private const val TRACEPARENT_HEADER = "traceparent"
-        private const val CUSTOM_TRACEPARENT =
-            "00-b583a45b2c7c813e0ebc6aa0835b9d98-b5475c618bb98e67-01"
-        private const val GENERATED_TRACEPARENT =
-            "00-3c72a77a7b51af6fb3778c06d4c165ce-4c1d710fffc88e35-01"
         private const val FAKE_SDK_TIME = 1692201601000L
-        private const val CLOCK_DRIFT = 5000L
-        private const val FAKE_SYSTEM_TIME = FAKE_SDK_TIME + CLOCK_DRIFT
         private const val ENCODING_GZIP = "gzip"
         private const val CONTENT_LENGTH_HEADER_NAME = "Content-Length"
         private const val CONTENT_ENCODING_HEADER_NAME = "Content-Encoding"
@@ -78,12 +73,14 @@ internal class OkHttpDataSourceTest {
     }
 
     private lateinit var server: MockWebServer
+    private lateinit var sdkClock: FakeClock
     private lateinit var args: FakeInstrumentationArgs
     private lateinit var configService: FakeConfigService
     private lateinit var okHttpClient: OkHttpClient
     private lateinit var getRequestBuilder: Request.Builder
     private lateinit var postRequestBuilder: Request.Builder
     private lateinit var fakeSystemClock: DriftClock
+    private lateinit var clockNormalizer: OkHttpDataSource.ClockNormalizer
     private var preNetworkInterceptorBeforeRequestSupplier: (Request) -> Request =
         { request -> request }
     private var preNetworkInterceptorAfterResponseSupplier: (Response) -> Response =
@@ -102,9 +99,11 @@ internal class OkHttpDataSourceTest {
     fun setup() {
         server = MockWebServer()
         configService = FakeConfigService()
+        sdkClock = FakeClock(FAKE_SDK_TIME)
         args = FakeInstrumentationArgs(
             application = ApplicationProvider.getApplicationContext(),
-            configService = configService
+            configService = configService,
+            clock = sdkClock
         )
         val networkRequestDataSource = NetworkRequestDataSourceImpl(args)
         val networkCaptureDataSource = NetworkCaptureDataSourceImpl(args)
@@ -125,14 +124,14 @@ internal class OkHttpDataSourceTest {
             networkSpanForwardingBehavior = FakeNetworkSpanForwardingBehavior()
         }
 
-        fakeSystemClock = DriftClock(::FAKE_SYSTEM_TIME)
+        fakeSystemClock = DriftClock(System::currentTimeMillis)
+        clockNormalizer = OkHttpDataSource.ClockNormalizer(sdkClock, fakeSystemClock)
 
         val dataSource = OkHttpDataSource(
             args,
             { networkRequestDataSource },
             { networkCaptureDataSource },
             fakeSystemClock,
-            FakeTraceparentGenerator(GENERATED_TRACEPARENT)
         )
         val applicationInterceptor = EmbraceOkHttpInterceptor(InterceptorType.APPLICATION) { dataSource }
         val preNetworkInterceptorTestInterceptor = TestInspectionInterceptor(
@@ -377,44 +376,21 @@ internal class OkHttpDataSourceTest {
     }
 
     @Test
-    fun `check existing traceparent not forwarded by default for a complete request`() {
-        server.enqueue(createBaseMockResponse())
-        postRequestBuilder.header(TRACEPARENT_HEADER, CUSTOM_TRACEPARENT)
-        runPostRequest()
-        assertNetworkRequestReceived { span ->
-            val attrs = span.attributes
-            assertEquals("200", attrs[HttpAttributes.HTTP_RESPONSE_STATUS_CODE])
-            assertNull(attrs["emb.w3c_traceparent"])
-        }
-    }
-
-    @Test
-    fun `check traceparent injected and forwarded for a complete request if feature flag is on`() {
+    fun `check w3c traceparent representation is injected and forwarded for a complete request if feature flag is on`() {
         isNetworkSpanForwardingEnabled = true
         server.enqueue(createBaseMockResponse())
-        runPostRequest()
+        val response = runPostRequest()
         assertNetworkRequestReceived { span ->
             val attrs = span.attributes
+            val traceparent = span.asW3cTraceparent()
             assertEquals("200", attrs[HttpAttributes.HTTP_RESPONSE_STATUS_CODE])
-            assertEquals(GENERATED_TRACEPARENT, attrs["emb.w3c_traceparent"])
+            assertEquals(traceparent, attrs["emb.w3c_traceparent"])
+            assertEquals(traceparent, response.networkResponse?.request?.header(TRACEPARENT_HEADER))
         }
     }
 
     @Test
-    fun `check existing traceparent is forwarded for a complete request`() {
-        isNetworkSpanForwardingEnabled = true
-        server.enqueue(createBaseMockResponse())
-        postRequestBuilder.header(TRACEPARENT_HEADER, CUSTOM_TRACEPARENT)
-        runPostRequest()
-        assertNetworkRequestReceived { span ->
-            val attrs = span.attributes
-            assertEquals("200", attrs[HttpAttributes.HTTP_RESPONSE_STATUS_CODE])
-            assertEquals(CUSTOM_TRACEPARENT, attrs["emb.w3c_traceparent"])
-        }
-    }
-
-    @Test
-    fun `check traceparent not injected and forwarded for requests that don't complete because of EmbraceCustomPathException`() {
+    fun `check traceparent is injected and forwarded for requests that don't complete because of EmbraceCustomPathException`() {
         isNetworkSpanForwardingEnabled = true
         postRequestBuilder.header("x-emb-path", CUSTOM_PATH)
         preNetworkInterceptorBeforeRequestSupplier =
@@ -423,47 +399,19 @@ internal class OkHttpDataSourceTest {
         assertNetworkRequestReceived { span ->
             val attrs = span.attributes
             assertNull(attrs[HttpAttributes.HTTP_RESPONSE_STATUS_CODE])
-            assertNull(attrs["emb.w3c_traceparent"])
+            assertEquals(span.asW3cTraceparent(), attrs["emb.w3c_traceparent"])
         }
     }
 
     @Test
-    fun `check traceparent not injected and forwarded for incomplete requests`() {
+    fun `check traceparent is injected and forwarded for incomplete requests`() {
         isNetworkSpanForwardingEnabled = true
         preNetworkInterceptorBeforeRequestSupplier = { throw NullPointerException("hell nah") }
         assertThrows(NullPointerException::class.java) { runPostRequest() }
         assertNetworkRequestReceived { span ->
             val attrs = span.attributes
             assertNull(attrs[HttpAttributes.HTTP_RESPONSE_STATUS_CODE])
-            assertNull(attrs["emb.w3c_traceparent"])
-        }
-    }
-
-    @Test
-    fun `check existing traceparent forwarded for requests that don't complete because of EmbraceCustomPathException`() {
-        isNetworkSpanForwardingEnabled = true
-        postRequestBuilder.header("x-emb-path", CUSTOM_PATH)
-            .header(TRACEPARENT_HEADER, CUSTOM_TRACEPARENT)
-        preNetworkInterceptorBeforeRequestSupplier =
-            { throw EmbraceCustomPathException(CUSTOM_PATH, IllegalStateException()) }
-        assertThrows(EmbraceCustomPathException::class.java) { runPostRequest() }
-        assertNetworkRequestReceived { span ->
-            val attrs = span.attributes
-            assertNull(attrs[HttpAttributes.HTTP_RESPONSE_STATUS_CODE])
-            assertEquals(CUSTOM_TRACEPARENT, attrs["emb.w3c_traceparent"])
-        }
-    }
-
-    @Test
-    fun `check existing traceparent forwarded incomplete requests`() {
-        isNetworkSpanForwardingEnabled = true
-        postRequestBuilder.header(TRACEPARENT_HEADER, CUSTOM_TRACEPARENT)
-        preNetworkInterceptorBeforeRequestSupplier = { throw SocketException("hell nah") }
-        assertThrows(SocketException::class.java) { runPostRequest() }
-        assertNetworkRequestReceived { span ->
-            val attrs = span.attributes
-            assertNull(attrs[HttpAttributes.HTTP_RESPONSE_STATUS_CODE])
-            assertEquals(CUSTOM_TRACEPARENT, attrs["emb.w3c_traceparent"])
+            assertEquals(span.asW3cTraceparent(), attrs["emb.w3c_traceparent"])
         }
     }
 
@@ -471,10 +419,10 @@ internal class OkHttpDataSourceTest {
     fun `check consistent offsets produce expected start and end times`() {
         val clockDrifts = listOf(-500L, -1L, 0L, 1L, 500L)
         clockDrifts.forEach { clockDrift ->
-            args.destination.createdSpans.clear()
-            runAndValidateTimestamps(
+            validateOffset(
                 clockDrift = clockDrift,
-                extraDrift = 0L
+                driftDuringRequest = 0L,
+                expectedOffset = clockDrift
             )
         }
     }
@@ -482,13 +430,19 @@ internal class OkHttpDataSourceTest {
     @Test
     fun `check tick overs round to the lowest absolute value for the offset`() {
         val clockDrifts = listOf(-500L, -2L, -1L, 0L, 1L, 2L, 500L)
-        val extraDrifts = listOf(-1L, 1L)
+        val driftsDuringRequest = listOf(-1L, 1L)
         clockDrifts.forEach { clockDrift ->
-            extraDrifts.forEach { extraDrift ->
-                args.destination.createdSpans.clear()
-                runAndValidateTimestamps(
+            driftsDuringRequest.forEach { extraDrift ->
+                validateOffset(
                     clockDrift = clockDrift,
-                    extraDrift = extraDrift,
+                    driftDuringRequest = extraDrift,
+                    expectedOffset = if (extraDrift * clockDrift >= 0) {
+                        // clock drift shouldn't change if there's no existing drift or if the existing and extra drifts are the same sign
+                        clockDrift
+                    } else {
+                        // clock drift should tick over if the extra drift increases the absolute magnitude of an existing drift
+                        clockDrift + extraDrift
+                    }
                 )
             }
         }
@@ -497,12 +451,12 @@ internal class OkHttpDataSourceTest {
     @Test
     fun `check big differences in offset samples will result in no offset being used`() {
         val clockDrifts = listOf(-500L, -1L, 0L, 1L, 500L)
-        val extraDrifts = listOf(-200L, -2L, 2L, 200L)
+        val driftsDuringRequest = listOf(-200L, -2L, 2L, 200L)
         clockDrifts.forEach { clockDrift ->
-            extraDrifts.forEach { extraDrift ->
-                runAndValidateTimestamps(
+            driftsDuringRequest.forEach { extraDrift ->
+                validateOffset(
                     clockDrift = clockDrift,
-                    extraDrift = extraDrift,
+                    driftDuringRequest = extraDrift,
                     expectedOffset = 0L
                 )
             }
@@ -541,9 +495,6 @@ internal class OkHttpDataSourceTest {
         expectedHttpStatus: Int = 200,
     ) {
         args.destination.createdSpans.clear()
-        val realSystemClockStartTime = System.currentTimeMillis()
-        runPostRequest()
-        val realSystemClockEndTime = System.currentTimeMillis()
         validateWholeRequest(
             path = expectedPath,
             httpStatus = expectedHttpStatus,
@@ -551,8 +502,7 @@ internal class OkHttpDataSourceTest {
             httpMethod = "POST",
             requestSize = REQUEST_BODY_SIZE,
             responseBody = RESPONSE_BODY,
-            realSystemClockStartTime = realSystemClockStartTime,
-            realSystemClockEndTime = realSystemClockEndTime
+            systemClockTimes = runAndGetResponseTimes(::runPostRequest)
         )
     }
 
@@ -560,9 +510,6 @@ internal class OkHttpDataSourceTest {
         expectedResponseBodySize: Int,
     ) {
         args.destination.createdSpans.clear()
-        val realSystemClockStartTime = System.currentTimeMillis()
-        runGetRequest()
-        val realSystemClockEndTime = System.currentTimeMillis()
         validateWholeRequest(
             path = DEFAULT_PATH,
             httpStatus = 200,
@@ -570,42 +517,20 @@ internal class OkHttpDataSourceTest {
             requestSize = 0,
             responseBodySize = expectedResponseBodySize,
             responseBody = null,
-            realSystemClockStartTime = realSystemClockStartTime,
-            realSystemClockEndTime = realSystemClockEndTime
+            systemClockTimes = runAndGetResponseTimes(::runGetRequest)
         )
     }
 
-    private fun runAndValidateTimestamps(
-        clockDrift: Long,
-        extraDrift: Long = 0L,
-        expectedOffset: Long = ((clockDrift * 2) + extraDrift) / 2L,
-    ) {
-        args.destination.createdSpans.clear()
-        val realDrift = AtomicLong(clockDrift)
-        fakeSystemClock.action = { FAKE_SDK_TIME + realDrift.getAndAdd(extraDrift) }
-
-        server.enqueue(createBaseMockResponse().setBody(RESPONSE_BODY))
-        val response = runGetRequest()
-        val realSystemClockStartTime = response.sentRequestAtMillis
-        val realSystemClockEndTime = response.receivedResponseAtMillis
-        assertNetworkRequestReceived { span ->
-            assertEquals(
-                "Unexpected start time when clock drifts are $clockDrift and ${clockDrift + extraDrift}:\n" +
-                    "Unadjusted time: $realSystemClockStartTime with expected offset $expectedOffset\n" +
-                    "Expected time: ${realSystemClockStartTime - expectedOffset}\n" +
-                    "Captured time: ${span.startTimeMs}",
-                realSystemClockStartTime - expectedOffset,
-                span.startTimeMs
-            )
-            assertEquals(
-                "Unexpected end time when clock drifts are $clockDrift and ${clockDrift + extraDrift}\n" +
-                    "Unadjusted time: $realSystemClockEndTime with expected offset $expectedOffset\n" +
-                    "Expected time: ${realSystemClockEndTime - expectedOffset}\n" +
-                    "Captured time: ${span.endTimeMs}",
-                realSystemClockEndTime - expectedOffset,
-                span.endTimeMs
-            )
-        }
+    private fun runAndGetResponseTimes(action: () -> Response): SystemClockTimes {
+        val beforeSystemTime = System.currentTimeMillis()
+        val minClockDrift = beforeSystemTime - sdkClock.now()
+        action()
+        val afterSystemTime = System.currentTimeMillis()
+        return SystemClockTimes(
+            timeBeforeRequest = beforeSystemTime,
+            timeAfterRequest = afterSystemTime,
+            minClockDrift = minClockDrift
+        )
     }
 
     private fun runPostRequest(): Response =
@@ -626,15 +551,14 @@ internal class OkHttpDataSourceTest {
         traceId: String? = null,
         w3cTraceparent: String? = null,
         responseBody: String?,
-        realSystemClockStartTime: Long,
-        realSystemClockEndTime: Long,
+        systemClockTimes: SystemClockTimes,
     ) {
         assertNetworkRequestReceived { span ->
-            assertTrue(realSystemClockStartTime - CLOCK_DRIFT <= span.startTimeMs)
-            assertTrue(realSystemClockStartTime > span.startTimeMs)
+            assertTrue(systemClockTimes.timeBeforeRequest - systemClockTimes.minClockDrift <= span.startTimeMs)
+            assertTrue(systemClockTimes.timeBeforeRequest > span.startTimeMs)
             val endTime = checkNotNull(span.endTimeMs)
-            assertTrue(realSystemClockEndTime - CLOCK_DRIFT >= endTime)
-            assertTrue(realSystemClockEndTime > endTime)
+            assertTrue(systemClockTimes.timeAfterRequest - systemClockTimes.minClockDrift >= endTime)
+            assertTrue(systemClockTimes.timeAfterRequest > endTime)
 
             val attrs = span.attributes
             assertEquals(server.url(path).toString(), attrs[UrlAttributes.URL_FULL])
@@ -651,6 +575,22 @@ internal class OkHttpDataSourceTest {
                 validateNetworkCaptureData(responseBody)
             }
         }
+    }
+
+    private fun validateOffset(
+        clockDrift: Long,
+        driftDuringRequest: Long,
+        expectedOffset: Long,
+    ) {
+        val realDrift = AtomicLong(clockDrift)
+        fakeSystemClock.action = { FAKE_SDK_TIME + realDrift.getAndAdd(driftDuringRequest) }
+        val calculatedOffset = clockNormalizer.offset()
+        assertEquals(
+            "For clockDrift $clockDrift and driftDuringRequest $driftDuringRequest, " +
+                "expectedOffset $expectedOffset and calculatedOffset $calculatedOffset",
+            0,
+            expectedOffset + calculatedOffset
+        )
     }
 
     private fun validateNetworkCaptureData(responseBody: String) {
@@ -716,4 +656,10 @@ internal class OkHttpDataSourceTest {
     private class DriftClock(var action: () -> Long) : Clock {
         override fun now(): Long = action()
     }
+
+    private data class SystemClockTimes(
+        val timeBeforeRequest: Long,
+        val timeAfterRequest: Long,
+        val minClockDrift: Long,
+    )
 }

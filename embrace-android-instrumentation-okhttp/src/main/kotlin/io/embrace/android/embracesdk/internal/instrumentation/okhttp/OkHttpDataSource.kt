@@ -5,23 +5,26 @@ import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceImpl
 import io.embrace.android.embracesdk.internal.arch.limits.NoopLimitStrategy
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.instrumentation.network.CUSTOM_TRACE_ID_HEADER_NAME
-import io.embrace.android.embracesdk.internal.instrumentation.network.DefaultTraceparentGenerator
 import io.embrace.android.embracesdk.internal.instrumentation.network.HttpNetworkRequest
 import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkCaptureDataSource
 import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkRequestDataSource
-import io.embrace.android.embracesdk.internal.instrumentation.network.TraceparentGenerator
+import io.embrace.android.embracesdk.internal.instrumentation.network.RequestEndData
+import io.embrace.android.embracesdk.internal.instrumentation.network.RequestStartData
 import io.embrace.android.embracesdk.internal.instrumentation.network.getOverriddenURLString
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.okhttp3.EmbraceCustomPathException
+import okhttp3.Call
 import okhttp3.Interceptor
 import okhttp3.Request
 import okhttp3.Response
+import okhttp3.ResponseBody
 import okhttp3.internal.http.RealResponseBody
 import okhttp3.internal.http.promisesBody
 import okio.Buffer
 import okio.GzipSource
 import okio.buffer
 import java.io.IOException
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.abs
 
 /**
@@ -33,168 +36,214 @@ internal class OkHttpDataSource(
     private val networkCaptureDataSourceProvider: () -> NetworkCaptureDataSource?,
     // A clock that mirrors the one used by OkHttp to get timestamps
     private val systemClock: Clock = Clock { System.currentTimeMillis() },
-    private val traceparentGenerator: TraceparentGenerator = DefaultTraceparentGenerator,
 ) : DataSourceImpl(
     args = args,
     limitStrategy = NoopLimitStrategy, // always allow the OkHttp request chain to proceed
     instrumentationName = "okhttp_data_source"
 ) {
-
+    /**
+     * A map that stashes instrumentation information for a request so that different interceptors can reference the same instance.
+     * The data for each call will be cleaned up when the result of the request is recorded.
+     */
+    private val activeCalls = ConcurrentHashMap<Call, CallData>()
+    private val clockNormalizer = ClockNormalizer(sdkClock = clock, systemClock = systemClock)
     private val networkRequestDataSource: NetworkRequestDataSource?
         get() = networkRequestDataSourceProvider()
 
     private val networkCaptureDataSource: NetworkCaptureDataSource?
         get() = networkCaptureDataSourceProvider()
 
-    internal fun interceptRequest(chain: Interceptor.Chain, type: InterceptorType): Response? =
-        when (type) {
-            InterceptorType.APPLICATION -> interceptApplicationRequest(chain)
-            InterceptorType.NETWORK -> interceptNetworkRequest(chain)
+    internal fun interceptRequest(chain: Interceptor.Chain, type: InterceptorType): Response? {
+        val call = chain.call()
+        val callData = activeCalls[call] ?: startRequestInstrumentation(chain.request(), call)
+        return when (type) {
+            InterceptorType.APPLICATION -> interceptApplicationRequest(chain, callData)
+            InterceptorType.NETWORK -> interceptNetworkRequest(chain, callData)
         }
+    }
 
-    private fun interceptApplicationRequest(chain: Interceptor.Chain): Response? {
-        val startTime = clock.now()
+    private fun startRequestInstrumentation(request: Request, call: Call): CallData? {
+        // Take a snapshot of the difference in the system and SDK clocks and use it normalize the timestamps used by OkHttp
+        val systemClockStartTime = systemClock.now()
+        val clockOffset = clockNormalizer.offset()
+        val sdkClockStartTime = systemClockStartTime + clockOffset
+        val callId = networkRequestDataSource?.startRequest(
+            RequestStartData(
+                url = getOverriddenURLString(EmbraceOkHttpPathOverrideRequest(request)),
+                httpMethod = request.method,
+                sdkClockStartTime = sdkClockStartTime,
+            )
+        ) ?: return null
+
+        return CallData(
+            id = callId,
+            clockOffset = clockOffset,
+            sdkClockStartTime = sdkClockStartTime
+        ).also {
+            activeCalls[call] = it
+        }
+    }
+
+    private fun interceptApplicationRequest(chain: Interceptor.Chain, callData: CallData?): Response? {
         val request: Request = chain.request()
         return try {
             // we are not interested in response, just proceed
             chain.proceed(request)
         } catch (e: EmbraceCustomPathException) {
-            val urlString =
-                getOverriddenURLString(EmbraceOkHttpPathOverrideRequest(request), e.customPath)
-            val cause = e.cause
-            recordNetworkError(urlString, request, startTime, cause)
+            val urlString = getOverriddenURLString(EmbraceOkHttpPathOverrideRequest(request), e.customPath)
+            callData?.recordNetworkError(chain.call(), urlString, request, e.cause)
             throw e
         } catch (e: Exception) {
             // we are interested in errors.
             val urlString = getOverriddenURLString(EmbraceOkHttpPathOverrideRequest(request))
-            val cause = e
-            recordNetworkError(urlString, request, startTime, cause)
+            callData?.recordNetworkError(chain.call(), urlString, request, e)
             throw e
         }
     }
 
-    private fun recordNetworkError(
+    private fun CallData.recordNetworkError(
+        call: Call,
         urlString: String,
         request: Request,
-        startTime: Long,
         cause: Throwable?,
     ) {
-        networkRequestDataSource?.recordNetworkRequest(
-            HttpNetworkRequest(
-                url = urlString,
-                httpMethod = request.method,
-                startTime = startTime,
-                endTime = clock.now(),
-                errorType = cause?.javaClass?.canonicalName ?: UNKNOWN_EXCEPTION,
-                errorMessage = cause?.message ?: UNKNOWN_MESSAGE,
-                traceId = request.header(CUSTOM_TRACE_ID_HEADER_NAME),
-                w3cTraceparent = if (configService.networkSpanForwardingBehavior.isNetworkSpanForwardingEnabled()) {
-                    request.header(
-                        TRACEPARENT_HEADER_NAME
-                    )
-                } else {
-                    null
-                }
+        try {
+            networkRequestDataSource?.endRequest(
+                RequestEndData(
+                    id = id,
+                    url = urlString,
+                    sdkClockStartTime = sdkClockStartTime,
+                    sdkClockEndTime = clock.now(),
+                    statusCode = null,
+                    errorType = cause?.javaClass?.canonicalName ?: UNKNOWN_EXCEPTION,
+                    errorMessage = cause?.message ?: UNKNOWN_MESSAGE,
+                    traceId = request.header(CUSTOM_TRACE_ID_HEADER_NAME),
+                )
             )
-        )
+        } finally {
+            activeCalls.remove(call)
+        }
     }
 
-    private fun interceptNetworkRequest(chain: Interceptor.Chain): Response? {
-        // If the SDK has not started, don't do anything
+    private fun interceptNetworkRequest(chain: Interceptor.Chain, callData: CallData?): Response {
         val originalRequest: Request = chain.request()
 
-        val networkSpanForwardingEnabled =
-            configService.networkSpanForwardingBehavior.isNetworkSpanForwardingEnabled()
-        var traceparent: String? = null
-        if (networkSpanForwardingEnabled && originalRequest.header(TRACEPARENT_HEADER_NAME) == null) {
-            traceparent = traceparentGenerator.generateW3cTraceparent()
+        // Skip this interceptor if this call isn't being instrumented
+        if (callData == null) {
+            return chain.proceed(originalRequest)
         }
-        val request =
-            if (traceparent == null) {
-                originalRequest
-            } else {
-                originalRequest.newBuilder()
-                    .header(TRACEPARENT_HEADER_NAME, traceparent).build()
-            }
 
-        // Take a snapshot of the difference in the system and SDK clocks and send the request along the chain
-        val offset = sdkClockOffset()
+        val isNetworkSpanForwardingEnabled = configService.networkSpanForwardingBehavior.isNetworkSpanForwardingEnabled()
+        // Inject the started span's W3C traceparent representation as a header if network span forwarding is enabled
+        val request = if (isNetworkSpanForwardingEnabled) {
+            originalRequest.newBuilder().header(TRACEPARENT_HEADER_NAME, callData.id).build()
+        } else {
+            originalRequest
+        }
+
+        // Let the request execution proceed and obs
         val networkResponse: Response = chain.proceed(request)
 
-        // Get response and determine the size of the body
-        var contentLength: Long? = getContentLengthFromHeader(networkResponse)
-
-        if (contentLength == null) {
-            // If we get the body for a server-sent events stream, then we will wait forever
-            contentLength =
-                getContentLengthFromBody(
-                    networkResponse,
-                    networkResponse.header(CONTENT_TYPE_HEADER_NAME, null)
-                )
-        }
-
-        if (contentLength == null) {
-            // Set the content length to 0 if we can't determine it
-            contentLength = 0L
-        }
+        // Get the size of the body from the response header if possible
+        // Failing that, try to count the bytes in the body itself
+        // If neither works, set the content length to 0
+        val contentLength: Long = getContentLengthFromHeader(networkResponse)
+            ?: getContentLengthFromBody(
+                networkResponse = networkResponse,
+                contentType = networkResponse.header(CONTENT_TYPE_HEADER_NAME, null)
+            ) ?: 0L
 
         var response: Response = networkResponse
-        var networkCaptureData: HttpNetworkRequest.HttpRequestBody? = null
+        val requestEndData = createRequestEndData(request, networkResponse, callData, contentLength)
+        try {
+            networkRequestDataSource?.endRequest(requestEndData)
+        } finally {
+            activeCalls.remove(chain.call())
+        }
+
         val shouldCaptureNetworkData = networkCaptureDataSourceProvider()?.shouldCaptureNetworkBody(
             request.url.toString(),
             request.method
         ) ?: false
-
-        // If we need to capture the network response body,
-        if (shouldCaptureNetworkData) {
+        if (shouldCaptureNetworkData && networkCaptureDataSource != null) {
+            // Decompress any response body that is gzipped so it can be captured in plain text
             if (ENCODING_GZIP.equals(
                     networkResponse.header(CONTENT_ENCODING_HEADER_NAME, null),
                     ignoreCase = true
-                ) &&
-                networkResponse.promisesBody()
+                ) && networkResponse.promisesBody()
             ) {
-                val body = networkResponse.body
-                if (body != null) {
-                    val strippedHeaders = networkResponse.headers.newBuilder()
-                        .removeAll(CONTENT_ENCODING_HEADER_NAME)
-                        .removeAll(CONTENT_LENGTH_HEADER_NAME)
-                        .build()
-                    val realResponseBody = RealResponseBody(
-                        networkResponse.header(CONTENT_TYPE_HEADER_NAME, null),
-                        -1L,
-                        GzipSource(body.source()).buffer()
-                    )
-                    val responseBuilder = networkResponse.newBuilder().request(request)
-                    responseBuilder.headers(strippedHeaders)
-                    responseBuilder.body(realResponseBody)
-                    response = responseBuilder.build()
+                networkResponse.body?.also {
+                    response = it.decompressResponseBody(networkResponse, request)
                 }
             }
 
-            networkCaptureData = getNetworkCaptureData(request, response)
+            val networkCaptureData = getNetworkCaptureData(request, response)
+            networkCaptureDataSource?.recordNetworkRequest(
+                requestEndData.createHttpNetworkRequest(
+                    httpMethod = request.method,
+                    w3cTraceparent = if (isNetworkSpanForwardingEnabled) {
+                        callData.id
+                    } else {
+                        null
+                    },
+                    networkCaptureData = networkCaptureData
+                )
+            )
         }
 
-        val req = HttpNetworkRequest(
-            url = getOverriddenURLString(EmbraceOkHttpPathOverrideRequest(request)),
-            httpMethod = request.method,
-            startTime = response.sentRequestAtMillis + offset,
-            endTime = response.receivedResponseAtMillis + offset,
-            bytesSent = request.body?.contentLength() ?: 0,
-            bytesReceived = contentLength,
-            statusCode = response.code,
-            traceId = request.header(CUSTOM_TRACE_ID_HEADER_NAME),
-            w3cTraceparent = if (configService.networkSpanForwardingBehavior.isNetworkSpanForwardingEnabled()) {
-                request.header(
-                    TRACEPARENT_HEADER_NAME
-                )
-            } else {
-                null
-            },
-            body = networkCaptureData
-        )
-        networkRequestDataSource?.recordNetworkRequest(req)
-        networkCaptureDataSource?.recordNetworkRequest(req)
         return response
+    }
+
+    private fun RequestEndData.createHttpNetworkRequest(
+        httpMethod: String,
+        w3cTraceparent: String?,
+        networkCaptureData: HttpNetworkRequest.HttpRequestBody?,
+    ): HttpNetworkRequest = HttpNetworkRequest(
+        url = url,
+        httpMethod = httpMethod,
+        startTime = sdkClockStartTime,
+        endTime = sdkClockEndTime,
+        bytesSent = bytesSent,
+        bytesReceived = bytesReceived,
+        statusCode = statusCode,
+        traceId = traceId,
+        w3cTraceparent = w3cTraceparent,
+        body = networkCaptureData
+    )
+
+    private fun createRequestEndData(
+        request: Request,
+        response: Response,
+        callData: CallData,
+        contentLength: Long,
+    ): RequestEndData = RequestEndData(
+        id = callData.id,
+        url = getOverriddenURLString(EmbraceOkHttpPathOverrideRequest(request)),
+        sdkClockStartTime = response.sentRequestAtMillis + callData.clockOffset,
+        sdkClockEndTime = response.receivedResponseAtMillis + callData.clockOffset,
+        bytesSent = request.body?.contentLength() ?: 0,
+        bytesReceived = contentLength,
+        statusCode = response.code,
+        traceId = request.header(CUSTOM_TRACE_ID_HEADER_NAME),
+    )
+
+    private fun ResponseBody.decompressResponseBody(
+        networkResponse: Response,
+        request: Request,
+    ): Response {
+        val strippedHeaders = networkResponse.headers.newBuilder()
+            .removeAll(CONTENT_ENCODING_HEADER_NAME)
+            .removeAll(CONTENT_LENGTH_HEADER_NAME)
+            .build()
+        val realResponseBody = RealResponseBody(
+            networkResponse.header(CONTENT_TYPE_HEADER_NAME, null),
+            -1L,
+            GzipSource(source()).buffer()
+        )
+        val responseBuilder = networkResponse.newBuilder().request(request)
+        responseBuilder.headers(strippedHeaders)
+        responseBuilder.body(realResponseBody)
+        return responseBuilder.build()
     }
 
     private fun getContentLengthFromHeader(networkResponse: Response): Long? {
@@ -321,31 +370,45 @@ internal class OkHttpDataSource(
     }
 
     /**
-     * Estimate the difference between the current time returned by the SDK clock and the system clock, the latter of which is used by
-     * OkHttp to determine timestamps
+     * Estimates the difference between the current time returned by the SDK clock and the system clock, the latter of which is used by
+     * OkHttp to determine timestamps. The obtained offset can then be used to rationalize timestamps used by the time clocks.
      */
-    private fun sdkClockOffset(): Long {
-        // To ensure that the offset is the result of clock drift, we take two samples and ensure that their difference is less than 1ms
-        // before we use the value. A 1 ms difference between the samples is possible given it could be the result of the time
-        // "ticking over" to the next millisecond, but given the calls take the order of microseconds, it should not go beyond that.
-        //
-        // Any difference that is greater than 1 ms is likely the result of a change to the system clock during this process, or some
-        // scheduling quirk that makes the result not trustworthy. In that case, we simply don't return an offset.
+    class ClockNormalizer(
+        private val sdkClock: Clock,
+        private val systemClock: Clock,
+    ) {
+        fun offset(): Long {
+            // To ensure that the offset is the result of clock drift, we take two samples and ensure that their difference is less than 1ms
+            // before we use the value. A 1 ms difference between the samples is possible given it could be the result of the time
+            // "ticking over" to the next millisecond, but given the calls take the order of microseconds, it should not go beyond that.
+            //
+            // Any difference that is greater than 1 ms is likely the result of a change to the system clock during this process, or some
+            // scheduling quirk that makes the result not trustworthy. In that case, we simply don't return an offset.
 
-        val sdkTime1 = clock.now()
-        val systemTime1 = systemClock.now()
-        val sdkTime2 = clock.now()
-        val systemTime2 = systemClock.now()
+            val sdkTime1 = sdkClock.now()
+            val systemTime1 = systemClock.now()
+            val sdkTime2 = sdkClock.now()
+            val systemTime2 = systemClock.now()
 
-        val diff1 = sdkTime1 - systemTime1
-        val diff2 = sdkTime2 - systemTime2
+            val diff1 = sdkTime1 - systemTime1
+            val diff2 = sdkTime2 - systemTime2
 
-        return if (abs(diff1 - diff2) <= 1L) {
-            (diff1 + diff2) / 2
-        } else {
-            0L
+            return if (abs(diff1 - diff2) <= 1L) {
+                (diff1 + diff2) / 2
+            } else {
+                0L
+            }
         }
     }
+
+    /**
+     * Data used for instrumenting each unique call so multiple sources can reference the same call.
+     */
+    private data class CallData(
+        val id: String,
+        val clockOffset: Long,
+        val sdkClockStartTime: Long,
+    )
 
     internal companion object {
         private const val TRACEPARENT_HEADER_NAME = "traceparent"

@@ -14,7 +14,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
-class TracingApiBenchmarks: RobolectricTest() {
+class TracingApiBenchmarks {
 
     @get:Rule
     val benchmarkRule = BenchmarkRule()

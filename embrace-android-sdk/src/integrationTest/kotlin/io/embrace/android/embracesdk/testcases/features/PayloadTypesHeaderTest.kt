@@ -128,6 +128,7 @@ internal class PayloadTypesHeaderTest: RobolectricTest() {
         )
     }
 
+    @Config(sdk = [21])
     @Test
     fun `unity exceptions are sent immediately in separate envelopes`() {
         val instrumentedConfig = FakeInstrumentedConfig(

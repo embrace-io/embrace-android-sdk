@@ -9,6 +9,8 @@ import io.embrace.android.embracesdk.fixtures.fakeCompleteEmbraceNetworkRequest
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.instrumentation.network.HttpNetworkRequest
 import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkRequestDataSource
+import io.embrace.android.embracesdk.internal.instrumentation.network.RequestEndData
+import io.embrace.android.embracesdk.internal.instrumentation.network.RequestStartData
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Before
@@ -75,6 +77,11 @@ internal class InternalNetworkApiImplTest {
 
         override fun recordNetworkRequest(request: HttpNetworkRequest) {
             requests.add(request)
+        }
+
+        override fun startRequest(startData: RequestStartData): String? = null
+
+        override fun endRequest(endData: RequestEndData) {
         }
 
         override fun onDataCaptureEnabled() {

@@ -42,7 +42,9 @@ class FakeSpanToken(
         attrs[key] = value
     }
 
-    override fun getStartTimeMs(): Long? = startTimeMs
+    override fun getStartTimeMs(): Long = startTimeMs
+
+    override fun asW3cTraceparent(): String = hashCode().toString()
 
     override fun addEvent(
         name: String,

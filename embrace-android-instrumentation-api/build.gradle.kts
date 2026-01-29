@@ -18,7 +18,6 @@ dependencies {
     api(libs.opentelemetry.kotlin.semconv)
     api(libs.androidx.annotation)
 
-    testImplementation(project(":embrace-test-common"))
     testImplementation(project(":embrace-android-instrumentation-api-fakes"))
     testImplementation(libs.robolectric)
 }

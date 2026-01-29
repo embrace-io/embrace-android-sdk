@@ -110,6 +110,7 @@ internal class EmbraceSpanImplTest {
             assertEquals(0, spanRepository.getCompletedSpans().size)
             assertEquals(SpanKind.INTERNAL, spanKind)
             assertNull(embraceSpan.snapshot())
+            assertNull(embraceSpan.asW3cTraceParent())
         }
         assertFalse(updateNotified)
         assertNull(stoppedSpanId)
@@ -137,6 +138,7 @@ internal class EmbraceSpanImplTest {
                 eventCount = 1,
                 expectedCustomAttributeCount = 1
             )
+            assertEquals("00-$traceId-$spanId-01", embraceSpan.asW3cTraceParent())
             assertEquals(1, spanRepository.getActiveSpans().size)
             assertEquals(0, spanRepository.getCompletedSpans().size)
         }

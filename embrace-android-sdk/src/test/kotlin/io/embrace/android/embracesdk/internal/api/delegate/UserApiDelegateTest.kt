@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.internal.api.delegate
 
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.RobolectricTest
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.FakeUserService
@@ -19,7 +18,7 @@ import org.junit.runner.RunWith
 
 @Suppress("DEPRECATION")
 @RunWith(AndroidJUnit4::class)
-internal class UserApiDelegateTest : RobolectricTest() {
+internal class UserApiDelegateTest {
 
     private lateinit var delegate: UserApiDelegate
     private lateinit var fakeUserService: FakeUserService

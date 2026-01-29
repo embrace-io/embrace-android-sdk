@@ -4,7 +4,6 @@ import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.EmbraceImpl
-import io.embrace.android.embracesdk.RobolectricTest
 import io.embrace.android.embracesdk.fakes.FakeEmbraceInternalInterface
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationModule
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
@@ -27,7 +26,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
-internal class ReactNativeInternalInterfaceImplTest : RobolectricTest() {
+internal class ReactNativeInternalInterfaceImplTest {
 
     private lateinit var impl: ReactNativeInternalInterfaceImpl
     private lateinit var embrace: EmbraceImpl

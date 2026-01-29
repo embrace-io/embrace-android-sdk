@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.instrumentation.thread.blockage
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.RobolectricTest
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.internal.arch.stacktrace.ThreadSample
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
@@ -28,7 +27,7 @@ private const val FIRST_SAMPLE_OVERHEAD_MS = 3L
 private const val SECOND_SAMPLE_OVERHEAD_MS = 5L
 
 @RunWith(AndroidJUnit4::class)
-internal class ThreadBlockageOtelMapperTest : RobolectricTest() {
+internal class ThreadBlockageOtelMapperTest {
 
     private val threadSample = ThreadSample(
         threadId = 1,

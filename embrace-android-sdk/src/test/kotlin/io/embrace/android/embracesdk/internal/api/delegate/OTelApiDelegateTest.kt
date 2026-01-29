@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.internal.api.delegate
 
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.RobolectricTest
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakeLogRecordExporter
 import io.embrace.android.embracesdk.fakes.FakeLogRecordProcessor
@@ -28,7 +27,7 @@ import org.junit.runner.RunWith
 
 @OptIn(ExperimentalApi::class)
 @RunWith(AndroidJUnit4::class)
-internal class OTelApiDelegateTest : RobolectricTest() {
+internal class OTelApiDelegateTest {
 
     private lateinit var bootstrapper: ModuleInitBootstrapper
     private lateinit var delegate: OTelApiDelegate

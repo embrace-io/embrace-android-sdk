@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.testcases.features
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.RobolectricTest
 import io.embrace.android.embracesdk.assertions.getLogOfType
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
@@ -20,7 +19,7 @@ import org.robolectric.annotation.Config
 import kotlin.intArrayOf
 
 @RunWith(AndroidJUnit4::class)
-internal class HucLiteInstrumentationEnabledTest: RobolectricTest() {
+internal class HucLiteInstrumentationEnabledTest {
     @Rule
     @JvmField
     val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule()

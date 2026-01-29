@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.internal.capture
 
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.RobolectricTest
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.fakes.FakeLogData
 import io.embrace.android.embracesdk.internal.arch.datasource.LogSeverity
@@ -17,7 +16,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
-internal class InternalErrorDataSourceImplTest : RobolectricTest() {
+internal class InternalErrorDataSourceImplTest {
 
     private lateinit var dataSource: InternalErrorDataSourceImpl
     private lateinit var args: FakeInstrumentationArgs

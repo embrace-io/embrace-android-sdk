@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.otel.spans
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.RobolectricTest
 import io.embrace.android.embracesdk.assertions.assertError
 import io.embrace.android.embracesdk.assertions.assertIsPrivateSpan
 import io.embrace.android.embracesdk.assertions.assertIsType
@@ -51,7 +50,7 @@ import org.junit.runner.RunWith
 
 @OptIn(ExperimentalApi::class)
 @RunWith(AndroidJUnit4::class)
-internal class SpanServiceImplTest : RobolectricTest() {
+internal class SpanServiceImplTest {
     private lateinit var spanSink: SpanSink
     private lateinit var dataValidator: DataValidator
     private lateinit var spansService: SpanServiceImpl

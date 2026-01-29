@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.testcases.features
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.RobolectricTest
 import io.embrace.android.embracesdk.assertions.assertMatches
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
@@ -24,7 +23,7 @@ private const val MAX_INTERVAL_COUNT = 5
 private const val SPAN_NAME = "emb-thread-blockage"
 
 @RunWith(AndroidJUnit4::class)
-internal class ThreadBlockageFeatureTest: RobolectricTest() {
+internal class ThreadBlockageFeatureTest {
 
     private lateinit var watchdogExecutor: BlockingScheduledExecutorService
     private var startTimeMs: Long = 0L

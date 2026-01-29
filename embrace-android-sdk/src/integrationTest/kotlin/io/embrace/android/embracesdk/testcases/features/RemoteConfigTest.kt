@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.testcases.features
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.RobolectricTest
 import io.embrace.android.embracesdk.assertions.returnIfConditionMet
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
@@ -17,7 +16,7 @@ import org.junit.runner.RunWith
  * Embrace server that can enable or disable individual features or the entire SDK.
  */
 @RunWith(AndroidJUnit4::class)
-internal class RemoteConfigTest: RobolectricTest() {
+internal class RemoteConfigTest {
 
     private val sdkDisabledConfig = RemoteConfig(0)
     private val sdkEnabledConfig = RemoteConfig(100)

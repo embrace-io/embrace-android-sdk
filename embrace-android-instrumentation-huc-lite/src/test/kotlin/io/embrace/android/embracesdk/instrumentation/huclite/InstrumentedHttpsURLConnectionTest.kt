@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.instrumentation.huclite
 
 import android.os.Build.VERSION_CODES
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.RobolectricTest
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.mockk.every
 import io.mockk.mockk
@@ -26,7 +25,7 @@ import javax.net.ssl.HostnameVerifier
 import javax.net.ssl.SSLSocketFactory
 
 @RunWith(AndroidJUnit4::class)
-internal class InstrumentedHttpsURLConnectionTest : RobolectricTest() {
+internal class InstrumentedHttpsURLConnectionTest {
     private lateinit var harness: HucTestHarness
 
     @Before

@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.testcases.features
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.RobolectricTest
 import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.config.FakeProjectConfig
@@ -22,7 +21,7 @@ import kotlin.intArrayOf
  * when logging different types of data.
  */
 @RunWith(AndroidJUnit4::class)
-internal class PayloadTypesHeaderTest: RobolectricTest() {
+internal class PayloadTypesHeaderTest {
 
     @Rule
     @JvmField

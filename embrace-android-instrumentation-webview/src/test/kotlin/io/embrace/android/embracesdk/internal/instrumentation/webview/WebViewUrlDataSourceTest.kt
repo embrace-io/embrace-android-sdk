@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.internal.instrumentation.webview
 
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.RobolectricTest
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
@@ -15,7 +14,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
-internal class WebViewUrlDataSourceTest : RobolectricTest() {
+internal class WebViewUrlDataSourceTest {
 
     private lateinit var source: WebViewUrlDataSource
     private lateinit var args: FakeInstrumentationArgs

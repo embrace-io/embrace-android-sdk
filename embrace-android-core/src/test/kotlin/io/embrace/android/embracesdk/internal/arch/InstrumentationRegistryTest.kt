@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.internal.arch
 
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.RobolectricTest
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeDataSource
@@ -17,7 +16,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RuntimeEnvironment
 
 @RunWith(AndroidJUnit4::class)
-internal class InstrumentationRegistryTest : RobolectricTest() {
+internal class InstrumentationRegistryTest {
 
     private lateinit var registry: InstrumentationRegistry
     private lateinit var dataSource: FakeDataSource

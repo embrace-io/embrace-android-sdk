@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.internal.arch
 
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.RobolectricTest
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceImpl
@@ -15,7 +14,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
-internal class DataSourceImplTest : RobolectricTest() {
+internal class DataSourceImplTest {
 
     @Test
     fun `capture data successfully`() {

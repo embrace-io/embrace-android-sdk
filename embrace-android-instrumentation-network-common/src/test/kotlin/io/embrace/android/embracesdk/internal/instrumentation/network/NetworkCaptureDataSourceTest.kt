@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.internal.instrumentation.network
 
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.RobolectricTest
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
@@ -19,7 +18,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
-internal class NetworkCaptureDataSourceTest : RobolectricTest() {
+internal class NetworkCaptureDataSourceTest {
 
     private lateinit var cfg: RemoteConfig
     private lateinit var configService: FakeConfigService

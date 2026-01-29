@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.internal.instrumentation.crash.ndk
 
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.RobolectricTest
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.fakes.FakeNativeCrashProcessor
 import io.embrace.android.embracesdk.internal.arch.attrs.embCrashNumber
@@ -25,7 +24,7 @@ import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 @OptIn(ExperimentalApi::class, IncubatingApi::class)
-internal class NativeCrashDataSourceImplTest : RobolectricTest() {
+internal class NativeCrashDataSourceImplTest {
 
     private lateinit var crashProcessor: FakeNativeCrashProcessor
     private lateinit var args: FakeInstrumentationArgs

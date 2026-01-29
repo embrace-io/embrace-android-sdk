@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.testcases
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.RobolectricTest
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.config.FakeProjectConfig
 import io.embrace.android.embracesdk.internal.EmbraceInternalApi
@@ -20,7 +19,7 @@ import org.junit.runner.RunWith
  */
 @OptIn(ExperimentalApi::class)
 @RunWith(AndroidJUnit4::class)
-internal class FlutterInternalInterfaceTest: RobolectricTest() {
+internal class FlutterInternalInterfaceTest {
 
     private val instrumentedConfig = FakeInstrumentedConfig(
         project = FakeProjectConfig(

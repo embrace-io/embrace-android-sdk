@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.internal.instrumentation.okhttp
 
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.RobolectricTest
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.fakes.FakeLogData
@@ -44,7 +43,7 @@ import java.util.zip.GZIPOutputStream
 
 @OptIn(IncubatingApi::class)
 @RunWith(AndroidJUnit4::class)
-internal class OkHttpDataSourceTest : RobolectricTest() {
+internal class OkHttpDataSourceTest {
 
     companion object {
         private const val REQUEST_HEADER_NAME = "requestHeader"

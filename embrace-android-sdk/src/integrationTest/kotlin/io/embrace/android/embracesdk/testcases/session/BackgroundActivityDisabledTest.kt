@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.testcases.session
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.RobolectricTest
 import io.embrace.android.embracesdk.assertions.assertMatches
 import io.embrace.android.embracesdk.assertions.findEventsOfType
 import io.embrace.android.embracesdk.assertions.findSessionSpan
@@ -41,7 +40,7 @@ import org.robolectric.annotation.Config
  */
 @OptIn(IncubatingApi::class)
 @RunWith(AndroidJUnit4::class)
-internal class BackgroundActivityDisabledTest : RobolectricTest() {
+internal class BackgroundActivityDisabledTest {
 
     @Rule
     @JvmField

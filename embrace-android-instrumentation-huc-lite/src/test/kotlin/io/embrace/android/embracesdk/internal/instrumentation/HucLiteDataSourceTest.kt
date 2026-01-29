@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.internal.instrumentation
 
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.RobolectricTest
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
@@ -30,7 +29,7 @@ import java.net.URLStreamHandlerFactory
 import javax.net.ssl.HttpsURLConnection
 
 @RunWith(AndroidJUnit4::class)
-class HucLiteDataSourceTest : RobolectricTest() {
+class HucLiteDataSourceTest {
     private lateinit var factoryFieldRef: Field
     private lateinit var fakeTelemetryDestination: FakeTelemetryDestination
     private lateinit var fakeTelemetryService: FakeTelemetryService

@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.testcases
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.LastRunEndState
-import io.embrace.android.embracesdk.RobolectricTest
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRemoteConfig
@@ -21,7 +20,7 @@ import org.junit.runner.RunWith
  * Validation of the basic and miscellaneous functionality of the Android SDK
  */
 @RunWith(AndroidJUnit4::class)
-internal class PublicApiTest: RobolectricTest() {
+internal class PublicApiTest {
 
     companion object {
         val validPattern = Regex("^00-" + "[0-9a-fA-F]{32}" + "-" + "[0-9a-fA-F]{16}" + "-01$")

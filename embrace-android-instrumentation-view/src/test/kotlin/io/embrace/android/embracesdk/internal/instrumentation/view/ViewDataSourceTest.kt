@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.internal.instrumentation.view
 
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.RobolectricTest
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.attrs.asPair
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
@@ -14,7 +13,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
-internal class ViewDataSourceTest : RobolectricTest() {
+internal class ViewDataSourceTest {
 
     private lateinit var dataSource: ViewDataSource
     private lateinit var args: FakeInstrumentationArgs

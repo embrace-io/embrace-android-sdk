@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.testcases
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.RobolectricTest
 import io.embrace.android.embracesdk.internal.EmbraceInternalApi
 import io.embrace.android.embracesdk.internal.config.remote.NetworkCaptureRuleRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
@@ -16,7 +15,7 @@ import org.junit.runner.RunWith
  * Validation of the internal API
  */
 @RunWith(AndroidJUnit4::class)
-internal class EmbraceInternalInterfaceTest: RobolectricTest() {
+internal class EmbraceInternalInterfaceTest {
 
     @Rule
     @JvmField

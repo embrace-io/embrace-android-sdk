@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.testcases.features
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.RobolectricTest
 import io.embrace.android.embracesdk.fakes.FakePayloadStorageService
 import io.embrace.android.embracesdk.fakes.fakeSessionEnvelope
 import io.embrace.android.embracesdk.fixtures.fakeSessionStoredTelemetryMetadata
@@ -15,7 +14,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
-internal class DeliveryConnectivityFeatureTest: RobolectricTest() {
+internal class DeliveryConnectivityFeatureTest {
 
     private lateinit var payloadStorageService: FakePayloadStorageService
     

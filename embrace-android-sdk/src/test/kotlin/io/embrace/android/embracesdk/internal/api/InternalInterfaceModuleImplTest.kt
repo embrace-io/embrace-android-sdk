@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.internal.api
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.EmbraceImpl
-import io.embrace.android.embracesdk.RobolectricTest
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakePayloadSourceModule
@@ -14,7 +13,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
-internal class InternalInterfaceModuleImplTest : RobolectricTest() {
+internal class InternalInterfaceModuleImplTest {
 
     @Test
     fun testModule() {

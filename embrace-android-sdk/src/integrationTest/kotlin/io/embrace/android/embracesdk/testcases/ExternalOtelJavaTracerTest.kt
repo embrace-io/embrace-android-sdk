@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.testcases
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.RobolectricTest
 import io.embrace.android.embracesdk.assertions.assertEmbraceSpanData
 import io.embrace.android.embracesdk.fakes.FakeOtelJavaSpanExporter
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
@@ -38,7 +37,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
-internal class ExternalOtelJavaTracerTest: RobolectricTest() {
+internal class ExternalOtelJavaTracerTest {
 
     @Rule
     @JvmField

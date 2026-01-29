@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.testcases.features
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.RobolectricTest
 import io.embrace.android.embracesdk.assertions.findSessionSpan
 import io.embrace.android.embracesdk.fixtures.fakeSessionStoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.comms.delivery.NetworkStatus
@@ -20,7 +19,7 @@ private const val STORAGE_LIMIT = 500
 private const val OVERAGE = 100
 
 @RunWith(AndroidJUnit4::class)
-internal class PruningFeatureTest: RobolectricTest() {
+internal class PruningFeatureTest {
 
     @Rule
     @JvmField

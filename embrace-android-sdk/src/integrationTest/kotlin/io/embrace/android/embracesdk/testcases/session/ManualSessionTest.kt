@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.testcases.session
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.RobolectricTest
 import io.embrace.android.embracesdk.assertions.findSessionSpan
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.SessionRemoteConfig
@@ -16,7 +15,7 @@ import org.junit.runner.RunWith
  * Asserts that a manual session can be recorded.
  */
 @RunWith(AndroidJUnit4::class)
-internal class ManualSessionTest: RobolectricTest() {
+internal class ManualSessionTest {
 
     @Rule
     @JvmField

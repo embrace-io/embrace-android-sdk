@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.session.message
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.RobolectricTest
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeMetadataSource
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeResourceSource
 import io.embrace.android.embracesdk.fakes.FakeOrdinalStore
@@ -26,7 +25,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RuntimeEnvironment
 
 @RunWith(AndroidJUnit4::class)
-internal class PayloadMessageCollatorImplTest : RobolectricTest() {
+internal class PayloadMessageCollatorImplTest {
 
     private lateinit var initModule: FakeInitModule
     private lateinit var coreModule: CoreModule

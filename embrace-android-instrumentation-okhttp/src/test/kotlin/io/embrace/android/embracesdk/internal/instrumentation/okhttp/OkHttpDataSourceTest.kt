@@ -10,7 +10,6 @@ import io.embrace.android.embracesdk.fakes.FakeSpanToken
 import io.embrace.android.embracesdk.fakes.behavior.FakeNetworkBehavior
 import io.embrace.android.embracesdk.fakes.behavior.FakeNetworkSpanForwardingBehavior
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
-import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.remote.NetworkCaptureRuleRemoteConfig
 import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkCaptureDataSourceImpl
 import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkRequestDataSourceImpl
@@ -39,7 +38,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import java.io.ByteArrayOutputStream
 import java.net.SocketException
-import java.util.concurrent.atomic.AtomicLong
 import java.util.zip.GZIPOutputStream
 
 @OptIn(IncubatingApi::class)
@@ -61,7 +59,6 @@ internal class OkHttpDataSourceTest {
         private const val RESPONSE_BODY_GZIPPED_SIZE = 43
         private const val RESPONSE_HEADER_VALUE = "responseHeaderVal"
         private const val TRACEPARENT_HEADER = "traceparent"
-        private const val FAKE_SDK_TIME = 1692201601000L
         private const val ENCODING_GZIP = "gzip"
         private const val CONTENT_LENGTH_HEADER_NAME = "Content-Length"
         private const val CONTENT_ENCODING_HEADER_NAME = "Content-Encoding"
@@ -79,8 +76,6 @@ internal class OkHttpDataSourceTest {
     private lateinit var okHttpClient: OkHttpClient
     private lateinit var getRequestBuilder: Request.Builder
     private lateinit var postRequestBuilder: Request.Builder
-    private lateinit var fakeSystemClock: DriftClock
-    private lateinit var clockNormalizer: OkHttpDataSource.ClockNormalizer
     private var preNetworkInterceptorBeforeRequestSupplier: (Request) -> Request =
         { request -> request }
     private var preNetworkInterceptorAfterResponseSupplier: (Response) -> Response =
@@ -99,7 +94,7 @@ internal class OkHttpDataSourceTest {
     fun setup() {
         server = MockWebServer()
         configService = FakeConfigService()
-        sdkClock = FakeClock(FAKE_SDK_TIME)
+        sdkClock = FakeClock(System.currentTimeMillis())
         args = FakeInstrumentationArgs(
             application = ApplicationProvider.getApplicationContext(),
             configService = configService,
@@ -124,14 +119,10 @@ internal class OkHttpDataSourceTest {
             networkSpanForwardingBehavior = FakeNetworkSpanForwardingBehavior()
         }
 
-        fakeSystemClock = DriftClock(System::currentTimeMillis)
-        clockNormalizer = OkHttpDataSource.ClockNormalizer(sdkClock, fakeSystemClock)
-
         val dataSource = OkHttpDataSource(
             args,
             { networkRequestDataSource },
             { networkCaptureDataSource },
-            fakeSystemClock,
         )
         val applicationInterceptor = EmbraceOkHttpInterceptor(InterceptorType.APPLICATION) { dataSource }
         val preNetworkInterceptorTestInterceptor = TestInspectionInterceptor(
@@ -415,54 +406,6 @@ internal class OkHttpDataSourceTest {
         }
     }
 
-    @Test
-    fun `check consistent offsets produce expected start and end times`() {
-        val clockDrifts = listOf(-500L, -1L, 0L, 1L, 500L)
-        clockDrifts.forEach { clockDrift ->
-            validateOffset(
-                clockDrift = clockDrift,
-                driftDuringRequest = 0L,
-                expectedOffset = clockDrift
-            )
-        }
-    }
-
-    @Test
-    fun `check tick overs round to the lowest absolute value for the offset`() {
-        val clockDrifts = listOf(-500L, -2L, -1L, 0L, 1L, 2L, 500L)
-        val driftsDuringRequest = listOf(-1L, 1L)
-        clockDrifts.forEach { clockDrift ->
-            driftsDuringRequest.forEach { extraDrift ->
-                validateOffset(
-                    clockDrift = clockDrift,
-                    driftDuringRequest = extraDrift,
-                    expectedOffset = if (extraDrift * clockDrift >= 0) {
-                        // clock drift shouldn't change if there's no existing drift or if the existing and extra drifts are the same sign
-                        clockDrift
-                    } else {
-                        // clock drift should tick over if the extra drift increases the absolute magnitude of an existing drift
-                        clockDrift + extraDrift
-                    }
-                )
-            }
-        }
-    }
-
-    @Test
-    fun `check big differences in offset samples will result in no offset being used`() {
-        val clockDrifts = listOf(-500L, -1L, 0L, 1L, 500L)
-        val driftsDuringRequest = listOf(-200L, -2L, 2L, 200L)
-        clockDrifts.forEach { clockDrift ->
-            driftsDuringRequest.forEach { extraDrift ->
-                validateOffset(
-                    clockDrift = clockDrift,
-                    driftDuringRequest = extraDrift,
-                    expectedOffset = 0L
-                )
-            }
-        }
-    }
-
     private fun assertNetworkBodyNotCaptured() {
         assertTrue(args.destination.logEvents.isEmpty())
     }
@@ -554,11 +497,25 @@ internal class OkHttpDataSourceTest {
         systemClockTimes: SystemClockTimes,
     ) {
         assertNetworkRequestReceived { span ->
-            assertTrue(systemClockTimes.timeBeforeRequest - systemClockTimes.minClockDrift <= span.startTimeMs)
-            assertTrue(systemClockTimes.timeBeforeRequest > span.startTimeMs)
+            assertTrue(
+                "SystemClock before: ${systemClockTimes.timeBeforeRequest}, " +
+                    "min drift: ${systemClockTimes.minClockDrift}, span start time: ${span.startTimeMs}",
+                systemClockTimes.timeBeforeRequest - systemClockTimes.minClockDrift <= span.startTimeMs
+            )
+            assertTrue(
+                "SystemClock before: ${systemClockTimes.timeBeforeRequest}, span start time: ${span.startTimeMs}",
+                systemClockTimes.timeBeforeRequest >= span.startTimeMs
+            )
             val endTime = checkNotNull(span.endTimeMs)
-            assertTrue(systemClockTimes.timeAfterRequest - systemClockTimes.minClockDrift >= endTime)
-            assertTrue(systemClockTimes.timeAfterRequest > endTime)
+            assertTrue(
+                "SystemClock after: ${systemClockTimes.timeAfterRequest}, " +
+                    "min drift: ${systemClockTimes.minClockDrift}, span end time: $endTime",
+                systemClockTimes.timeAfterRequest - systemClockTimes.minClockDrift >= endTime
+            )
+            assertTrue(
+                "SystemClock after: ${systemClockTimes.timeAfterRequest}, span end time: $endTime",
+                systemClockTimes.timeAfterRequest >= endTime
+            )
 
             val attrs = span.attributes
             assertEquals(server.url(path).toString(), attrs[UrlAttributes.URL_FULL])
@@ -575,22 +532,6 @@ internal class OkHttpDataSourceTest {
                 validateNetworkCaptureData(responseBody)
             }
         }
-    }
-
-    private fun validateOffset(
-        clockDrift: Long,
-        driftDuringRequest: Long,
-        expectedOffset: Long,
-    ) {
-        val realDrift = AtomicLong(clockDrift)
-        fakeSystemClock.action = { FAKE_SDK_TIME + realDrift.getAndAdd(driftDuringRequest) }
-        val calculatedOffset = clockNormalizer.offset()
-        assertEquals(
-            "For clockDrift $clockDrift and driftDuringRequest $driftDuringRequest, " +
-                "expectedOffset $expectedOffset and calculatedOffset $calculatedOffset",
-            0,
-            expectedOffset + calculatedOffset
-        )
     }
 
     private fun validateNetworkCaptureData(responseBody: String) {
@@ -651,10 +592,6 @@ internal class OkHttpDataSourceTest {
     private fun consumeBody(response: Response): Response {
         checkNotNull(response.body).bytes()
         return response
-    }
-
-    private class DriftClock(var action: () -> Long) : Clock {
-        override fun now(): Long = action()
     }
 
     private data class SystemClockTimes(

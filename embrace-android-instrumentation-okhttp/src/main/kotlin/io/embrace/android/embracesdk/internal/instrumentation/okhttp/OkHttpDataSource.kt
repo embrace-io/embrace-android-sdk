@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceImpl
 import io.embrace.android.embracesdk.internal.arch.limits.NoopLimitStrategy
 import io.embrace.android.embracesdk.internal.clock.Clock
+import io.embrace.android.embracesdk.internal.clock.offset
 import io.embrace.android.embracesdk.internal.instrumentation.network.CUSTOM_TRACE_ID_HEADER_NAME
 import io.embrace.android.embracesdk.internal.instrumentation.network.HttpNetworkRequest
 import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkCaptureDataSource
@@ -25,7 +26,6 @@ import okio.GzipSource
 import okio.buffer
 import java.io.IOException
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.math.abs
 
 /**
  * Captures OkHttp requests as telemetry.
@@ -46,7 +46,6 @@ internal class OkHttpDataSource(
      * The data for each call will be cleaned up when the result of the request is recorded.
      */
     private val activeCalls = ConcurrentHashMap<Call, CallData>()
-    private val clockNormalizer = ClockNormalizer(sdkClock = clock, systemClock = systemClock)
     private val networkRequestDataSource: NetworkRequestDataSource?
         get() = networkRequestDataSourceProvider()
 
@@ -65,7 +64,7 @@ internal class OkHttpDataSource(
     private fun startRequestInstrumentation(request: Request, call: Call): CallData? {
         // Take a snapshot of the difference in the system and SDK clocks and use it normalize the timestamps used by OkHttp
         val systemClockStartTime = systemClock.now()
-        val clockOffset = clockNormalizer.offset()
+        val clockOffset = clock.offset(systemClock)
         val sdkClockStartTime = systemClockStartTime + clockOffset
         val callId = networkRequestDataSource?.startRequest(
             RequestStartData(
@@ -367,38 +366,6 @@ internal class OkHttpDataSource(
             )
         }
         return null
-    }
-
-    /**
-     * Estimates the difference between the current time returned by the SDK clock and the system clock, the latter of which is used by
-     * OkHttp to determine timestamps. The obtained offset can then be used to rationalize timestamps used by the time clocks.
-     */
-    class ClockNormalizer(
-        private val sdkClock: Clock,
-        private val systemClock: Clock,
-    ) {
-        fun offset(): Long {
-            // To ensure that the offset is the result of clock drift, we take two samples and ensure that their difference is less than 1ms
-            // before we use the value. A 1 ms difference between the samples is possible given it could be the result of the time
-            // "ticking over" to the next millisecond, but given the calls take the order of microseconds, it should not go beyond that.
-            //
-            // Any difference that is greater than 1 ms is likely the result of a change to the system clock during this process, or some
-            // scheduling quirk that makes the result not trustworthy. In that case, we simply don't return an offset.
-
-            val sdkTime1 = sdkClock.now()
-            val systemTime1 = systemClock.now()
-            val sdkTime2 = sdkClock.now()
-            val systemTime2 = systemClock.now()
-
-            val diff1 = sdkTime1 - systemTime1
-            val diff2 = sdkTime2 - systemTime2
-
-            return if (abs(diff1 - diff2) <= 1L) {
-                (diff1 + diff2) / 2
-            } else {
-                0L
-            }
-        }
     }
 
     /**

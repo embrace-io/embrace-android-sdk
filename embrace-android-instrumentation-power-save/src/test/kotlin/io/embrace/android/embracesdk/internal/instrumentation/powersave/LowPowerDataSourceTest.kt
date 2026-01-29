@@ -5,6 +5,7 @@ import android.content.Intent
 import android.os.PowerManager
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.RobolectricTest
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
 import io.embrace.android.embracesdk.internal.arch.attrs.asPair
@@ -17,7 +18,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RuntimeEnvironment
 
 @RunWith(AndroidJUnit4::class)
-internal class LowPowerDataSourceTest {
+internal class LowPowerDataSourceTest : RobolectricTest() {
 
     private lateinit var dataSource: LowPowerDataSource
     private lateinit var args: FakeInstrumentationArgs

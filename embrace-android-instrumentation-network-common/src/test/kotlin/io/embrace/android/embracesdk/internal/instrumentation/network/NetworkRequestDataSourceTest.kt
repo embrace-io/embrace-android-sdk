@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.instrumentation.network
 
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.RobolectricTest
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeDomainCountLimiter
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
@@ -19,7 +20,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
-internal class NetworkRequestDataSourceTest {
+internal class NetworkRequestDataSourceTest : RobolectricTest() {
 
     private lateinit var domainCountLimiter: FakeDomainCountLimiter
     private lateinit var args: FakeInstrumentationArgs

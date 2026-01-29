@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.testcases.session
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.RobolectricTest
 import io.embrace.android.embracesdk.assertions.assertMatches
 import io.embrace.android.embracesdk.assertions.findSessionSpan
 import io.embrace.android.embracesdk.assertions.getSessionId
@@ -22,7 +23,7 @@ import org.junit.runner.RunWith
  * Asserts that a stateful background activity can be recorded.
  */
 @RunWith(AndroidJUnit4::class)
-internal class BackgroundActivityTest {
+internal class BackgroundActivityTest: RobolectricTest() {
 
     @Rule
     @JvmField

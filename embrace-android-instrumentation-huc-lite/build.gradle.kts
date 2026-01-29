@@ -13,6 +13,7 @@ dependencies {
     implementation(project(":embrace-android-instrumentation-network-common"))
 
     testImplementation(project(":embrace-android-instrumentation-api-fakes"))
+    testImplementation(project(":embrace-test-common"))
     testImplementation(project(":embrace-test-fakes"))
     testImplementation(libs.robolectric)
     testImplementation(libs.mockk)

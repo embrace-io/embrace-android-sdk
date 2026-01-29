@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.testcases.session
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.RobolectricTest
 import io.embrace.android.embracesdk.assertions.assertMatches
 import io.embrace.android.embracesdk.assertions.findEventsOfType
 import io.embrace.android.embracesdk.assertions.findSessionSpan
@@ -33,13 +34,14 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.annotation.Config
 
 /**
  * Verify functionality of the SDK if background activities are disabled
  */
 @OptIn(IncubatingApi::class)
 @RunWith(AndroidJUnit4::class)
-internal class BackgroundActivityDisabledTest {
+internal class BackgroundActivityDisabledTest : RobolectricTest() {
 
     @Rule
     @JvmField
@@ -142,6 +144,7 @@ internal class BackgroundActivityDisabledTest {
         )
     }
 
+    @Config(sdk = [21])
     @Test
     fun `session span and payloads structurally correct`() {
         var session1StartMs: Long = -1

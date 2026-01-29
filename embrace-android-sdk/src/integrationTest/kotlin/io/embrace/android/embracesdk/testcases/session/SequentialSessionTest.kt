@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.testcases.session
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.RobolectricTest
 import io.embrace.android.embracesdk.assertions.assertMatches
 import io.embrace.android.embracesdk.assertions.assertNoPreviousSession
 import io.embrace.android.embracesdk.assertions.assertPreviousSession
@@ -26,7 +27,7 @@ import org.junit.runner.RunWith
  * Asserts that a stateful session can be recorded with the appropriate metadata with respect to sequencing
  */
 @RunWith(AndroidJUnit4::class)
-internal class SequentialSessionTest {
+internal class SequentialSessionTest: RobolectricTest() {
 
     @Rule
     @JvmField

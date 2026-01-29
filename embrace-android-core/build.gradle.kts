@@ -44,6 +44,7 @@ dependencies {
     implementation(libs.opentelemetry.kotlin.semconv)
 
     testImplementation(project(":embrace-android-api"))
+    testImplementation(project(":embrace-test-common"))
     testImplementation(project(":embrace-test-fakes"))
     testImplementation(project(":embrace-android-config-fakes"))
     testImplementation(project(":embrace-android-delivery-fakes"))

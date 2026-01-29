@@ -16,7 +16,6 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
-import kotlin.intArrayOf
 
 @RunWith(AndroidJUnit4::class)
 internal class HucLiteInstrumentationEnabledTest {

@@ -14,7 +14,6 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
-import kotlin.intArrayOf
 
 /**
  * Integration test to verify that the X-EM-PAYLOAD-TYPES header is sent correctly

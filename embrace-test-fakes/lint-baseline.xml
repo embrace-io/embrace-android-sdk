@@ -28,9 +28,44 @@
 
     <issue
         id="InvalidPackage"
+        message="Invalid package reference in net.bytebuddy:byte-buddy; not included in Android: `java.lang.classfile.attribute`. Referenced from `net.bytebuddy.jar.asmjdkbridge.AsmWrappedAttribute.AsmCharacterRangeTableAttribute`.">
+        <location
+            file="$GRADLE_USER_HOME/caches/modules-2/files-2.1/net.bytebuddy/byte-buddy/1.18.2/7ac991b4bd502e2567efcdecc0d2e9b3f7dd3859/byte-buddy-1.18.2.jar"/>
+    </issue>
+
+    <issue
+        id="InvalidPackage"
+        message="Invalid package reference in net.bytebuddy:byte-buddy; not included in Android: `java.lang.classfile.constantpool`. Referenced from `net.bytebuddy.jar.asmjdkbridge.AsmAttribute.1`.">
+        <location
+            file="$GRADLE_USER_HOME/caches/modules-2/files-2.1/net.bytebuddy/byte-buddy/1.18.2/7ac991b4bd502e2567efcdecc0d2e9b3f7dd3859/byte-buddy-1.18.2.jar"/>
+    </issue>
+
+    <issue
+        id="InvalidPackage"
+        message="Invalid package reference in net.bytebuddy:byte-buddy; not included in Android: `java.lang.classfile.instruction`. Referenced from `net.bytebuddy.jar.asmjdkbridge.AsmWrappedAttribute.AsmCharacterRangeTableAttribute`.">
+        <location
+            file="$GRADLE_USER_HOME/caches/modules-2/files-2.1/net.bytebuddy/byte-buddy/1.18.2/7ac991b4bd502e2567efcdecc0d2e9b3f7dd3859/byte-buddy-1.18.2.jar"/>
+    </issue>
+
+    <issue
+        id="InvalidPackage"
+        message="Invalid package reference in net.bytebuddy:byte-buddy; not included in Android: `java.lang.classfile`. Referenced from `net.bytebuddy.jar.asmjdkbridge.AsmAttribute`.">
+        <location
+            file="$GRADLE_USER_HOME/caches/modules-2/files-2.1/net.bytebuddy/byte-buddy/1.18.2/7ac991b4bd502e2567efcdecc0d2e9b3f7dd3859/byte-buddy-1.18.2.jar"/>
+    </issue>
+
+    <issue
+        id="InvalidPackage"
+        message="Invalid package reference in net.bytebuddy:byte-buddy; not included in Android: `java.lang.constant`. Referenced from `net.bytebuddy.jar.asmjdkbridge.AsmAttribute.DelegatingClassWriter`.">
+        <location
+            file="$GRADLE_USER_HOME/caches/modules-2/files-2.1/net.bytebuddy/byte-buddy/1.18.2/7ac991b4bd502e2567efcdecc0d2e9b3f7dd3859/byte-buddy-1.18.2.jar"/>
+    </issue>
+
+    <issue
+        id="InvalidPackage"
         message="Invalid package reference in io.mockk:mockk-agent-jvm; not included in Android: `java.lang.instrument`. Referenced from `io.mockk.proxy.jvm.JvmMockKAgentFactory`.">
         <location
-            file="$GRADLE_USER_HOME/caches/modules-2/files-2.1/io.mockk/mockk-agent-jvm/1.14.7/a36fc2e620cd2cbe7574817813bc775511cb2cf7/mockk-agent-jvm-1.14.7.jar"/>
+            file="$GRADLE_USER_HOME/caches/modules-2/files-2.1/io.mockk/mockk-agent-jvm/1.14.9/e1e1acc201dc6ec3bfb9d2d8f10e5960eda3c9f0/mockk-agent-jvm-1.14.9.jar"/>
     </issue>
 
     <issue

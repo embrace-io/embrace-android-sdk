@@ -30,6 +30,11 @@ interface EmbraceSdkSpan : EmbraceSpan {
     fun asNewContext(): Context?
 
     /**
+     * Get the W3C Traceparent representation for the span, which uniquely identifies it, if it has started, or null otherwise.
+     */
+    fun asW3cTraceParent(): String?
+
+    /**
      * Create a snapshot of the current state of the object
      */
     fun snapshot(): Span?

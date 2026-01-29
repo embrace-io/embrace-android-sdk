@@ -168,6 +168,8 @@ class FakeEmbraceSdkSpan(
         openTelemetry.contextFactory.storeSpan(parentContext, it)
     }
 
+    override fun asW3cTraceParent(): String? = sdkSpan?.spanContext?.run { "00-${traceId}-${spanId}-01" }
+
     override fun snapshot(): io.embrace.android.embracesdk.internal.payload.Span? {
         return if (spanId == null) {
             null

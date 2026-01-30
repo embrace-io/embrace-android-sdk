@@ -4,6 +4,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import io.embrace.android.embracesdk.internal.utils.NetworkUtils
+import io.embrace.android.embracesdk.internal.utils.NetworkUtils.stripUrl
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -21,7 +22,8 @@ internal class NetworkRequestDataSourceTest {
 
     @Test
     fun `multiple network requests are recorded to the span service correctly`() {
-        logNetworkRequest(url = "www.example1.com")
+        val firstUrl = "https://www.example1.com/api?foo=bar"
+        logNetworkRequest(url = firstUrl)
         logNetworkRequest(
             url = "www.example2.com",
             startTime = 200,
@@ -53,34 +55,41 @@ internal class NetworkRequestDataSourceTest {
 
         harness.args.destination.createdSpans
 
+        val expectedSpanName = "GET "
         val spans = harness.getNetworkSpans()
         assertEquals(5, spans.size)
 
+        val strippedFirstUrl = stripUrl(firstUrl)
         val requestSpans = spans.associateBy { it.attributes["url.full"] }
         harness.assertNetworkRequest(
-            spanToken = requestSpans["www.example1.com"],
+            spanToken = requestSpans[strippedFirstUrl],
+            expectedName = "GET /api",
             expectedStartTimeMs = 100L,
             expectedEndTimeMs = 200L,
         )
         harness.assertNetworkRequest(
             spanToken = requestSpans["www.example2.com"],
+            expectedName = expectedSpanName,
             expectedStartTimeMs = 200L,
             expectedEndTimeMs = 300L,
             expectedErrorCode = ErrorCodeAttribute.Failure
         )
         harness.assertNetworkRequest(
             spanToken = requestSpans["www.example3.com"],
+            expectedName = expectedSpanName,
             expectedStartTimeMs = 300L,
             expectedEndTimeMs = 400L,
             expectedErrorCode = ErrorCodeAttribute.Failure
         )
         harness.assertNetworkRequest(
             spanToken = requestSpans["www.example4.com"],
+            expectedName = expectedSpanName,
             expectedStartTimeMs = 400L,
             expectedEndTimeMs = 500L,
         )
         harness.assertNetworkRequest(
             spanToken = requestSpans["www.example5.com"],
+            expectedName = expectedSpanName,
             expectedStartTimeMs = 600L,
             expectedEndTimeMs = 650L,
             expectedErrorCode = ErrorCodeAttribute.Failure

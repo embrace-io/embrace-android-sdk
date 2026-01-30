@@ -32,12 +32,14 @@ internal class NetworkRequestDataSourceTestHarness {
 
     fun assertNetworkRequest(
         spanToken: FakeSpanToken?,
+        expectedName: String,
         expectedStartTimeMs: Long,
         expectedEndTimeMs: Long,
         expectedErrorCode: ErrorCodeAttribute? = null,
         expectedAttributes: Map<String, String> = emptyMap()
     ) {
         with(checkNotNull(spanToken)) {
+            assertEquals(expectedName, name)
             assertEquals(expectedStartTimeMs, startTimeMs)
             assertEquals(expectedEndTimeMs, endTimeMs)
             assertEquals(expectedErrorCode, errorCode)

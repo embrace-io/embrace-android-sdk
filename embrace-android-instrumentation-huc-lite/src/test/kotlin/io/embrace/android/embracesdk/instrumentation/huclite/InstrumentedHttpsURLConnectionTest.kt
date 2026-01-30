@@ -327,6 +327,7 @@ internal class InstrumentedHttpsURLConnectionTest {
         assertSingleSuccessfulRequest()
     }
 
+    @Config(sdk = [VERSION_CODES.M])
     @Test
     fun `getHeaderFieldLong delegates to wrapped connection and records telemetry`() = harness.runTest {
         every { mockWrappedConnection.getHeaderFieldInt(FAKE_FIELD_NAME, 0) } returns 1024
@@ -373,6 +374,7 @@ internal class InstrumentedHttpsURLConnectionTest {
         assertSingleSuccessfulRequest()
     }
 
+    @Config(sdk = [VERSION_CODES.M])
     @Test
     fun `getContentLengthLong delegates to wrapped connection and records telemetry`() = harness.runTest {
         every { mockWrappedConnection.contentLength } returns 512

@@ -13,6 +13,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.annotation.Config
 
 @RunWith(AndroidJUnit4::class)
 internal class HucInstrumentationEnabledTest {
@@ -20,6 +21,7 @@ internal class HucInstrumentationEnabledTest {
     @JvmField
     val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule()
 
+    @Config(sdk = [21])
     @Test
     fun `sdk starts successfully but internal error logged when HUC instrumentation enabled`() {
         testRule.runTest(

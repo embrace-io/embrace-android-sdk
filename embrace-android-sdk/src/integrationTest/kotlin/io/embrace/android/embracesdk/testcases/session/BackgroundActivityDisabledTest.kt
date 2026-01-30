@@ -33,6 +33,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.annotation.Config
 
 /**
  * Verify functionality of the SDK if background activities are disabled
@@ -142,6 +143,7 @@ internal class BackgroundActivityDisabledTest {
         )
     }
 
+    @Config(sdk = [21])
     @Test
     fun `session span and payloads structurally correct`() {
         var session1StartMs: Long = -1

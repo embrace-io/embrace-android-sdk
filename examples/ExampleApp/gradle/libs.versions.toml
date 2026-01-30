@@ -1,5 +1,5 @@
 [versions]
-agp = "8.13.2"
+agp = "9.0.0"
 kotlin = "2.3.0"
 coreKtx = "1.17.0"
 junit = "4.13.2"
@@ -52,7 +52,6 @@ androidx-benchmark-macro-junit4 = { group = "androidx.benchmark", name = "benchm
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 embrace = { id = "io.embrace.gradle", version.ref = "embrace" }
 android-test = { id = "com.android.test", version.ref = "agp" }

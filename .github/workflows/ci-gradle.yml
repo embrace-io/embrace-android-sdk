@@ -90,14 +90,3 @@ jobs:
         with:
           name: test-results-${{ matrix.gradle-task }}
           path: '**/build/reports/tests/**'
-
-      - name: Run Kover Code Coverage
-        if: ${{ matrix.gradle-task == 'assembleRelease' }}
-        run: ./gradlew koverXmlReportRelease
-
-      - uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
-        if: ${{ matrix.gradle-task == 'assembleRelease' }}
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          fail_ci_if_error: false
-          files: build/reports/kover/reportRelease.xml

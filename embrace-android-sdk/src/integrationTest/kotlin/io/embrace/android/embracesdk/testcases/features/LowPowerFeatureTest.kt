@@ -28,6 +28,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.Shadows
+import org.robolectric.annotation.Config
 import org.robolectric.shadows.ShadowLooper
 import org.robolectric.shadows.ShadowPowerManager
 
@@ -49,6 +50,7 @@ internal class LowPowerFeatureTest {
         shadowMainLooper = Shadows.shadowOf(Looper.getMainLooper())
     }
 
+    @Config(sdk = [21])
     @Test
     fun `low power feature`() {
         val tickTimeMs = 3000L
@@ -82,6 +84,7 @@ internal class LowPowerFeatureTest {
         )
     }
 
+    @Config(sdk = [21])
     @Test
     fun `power state feature`() {
         val transitions: MutableList<Pair<Long, SchemaType.PowerState.PowerMode>> = mutableListOf()

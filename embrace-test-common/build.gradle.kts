@@ -9,5 +9,6 @@ dependencies {
     implementation(platform(libs.okhttp.bom))
     implementation(libs.mockwebserver)
     implementation(libs.moshi)
+    implementation(libs.robolectric)
     ksp(libs.moshi.kotlin.codegen)
 }

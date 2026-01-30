@@ -15,6 +15,7 @@ dependencies {
     implementation(project(":embrace-android-instrumentation-network-common"))
 
     testImplementation(project(":embrace-android-instrumentation-api-fakes"))
+    testImplementation(platform(libs.okhttp.bom))
     testImplementation(libs.mockwebserver)
     testImplementation(libs.robolectric)
 }

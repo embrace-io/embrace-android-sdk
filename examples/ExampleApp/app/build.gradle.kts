@@ -94,11 +94,13 @@ dependencies {
 
 //    implementation(libs.embrace.android.api)
 //    implementation(libs.embrace.android.core)
-//    implementation(libs.embrace.android.features)
+//    implementation(libs.embrace.android.otel)
 //    implementation(libs.embrace.android.payload)
 //    implementation(libs.embrace.android.delivery)
 //    implementation(libs.embrace.android.telemetry.persistence)
-//    implementation(libs.embrace.android.payload)
+//    implementation(libs.embrace.android.instrumentation.api)
+//    implementation(libs.embrace.android.okhttp)
+//    implementation(libs.embrace.android.network.common)
 //    implementation(libs.embrace.android.sdk)
 
     testImplementation(libs.junit)

@@ -4,6 +4,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import io.embrace.android.embracesdk.internal.utils.NetworkUtils
+import io.embrace.android.embracesdk.internal.utils.NetworkUtils.stripUrl
 import io.embrace.opentelemetry.kotlin.semconv.ErrorAttributes
 import io.embrace.opentelemetry.kotlin.semconv.ExceptionAttributes
 import io.embrace.opentelemetry.kotlin.semconv.HttpAttributes
@@ -29,7 +30,9 @@ internal class NetworkRequestDataSourceStatefulApiTest {
     @Test
     fun `multiple serial network requests are recorded`() {
         harness.networkSpanForwardingBehavior.networkSpanForwardingEnabled = true
-        runRequest(url = "www.example1.com")
+
+        val firstUrl = "https://www.example1.com/api?foo=bar"
+        runRequest(url = firstUrl)
         runRequest(
             url = "www.example2.com",
             startTime = 200,
@@ -61,14 +64,16 @@ internal class NetworkRequestDataSourceStatefulApiTest {
         val spans = harness.getNetworkSpans()
         assertEquals(5, spans.size)
 
+        val strippedFirstUrl = stripUrl(firstUrl)
         val requestSpans = spans.associateBy { it.attributes["url.full"] }
-        val firstRequestSpan = checkNotNull(requestSpans["www.example1.com"])
+        val firstRequestSpan = checkNotNull(requestSpans[strippedFirstUrl])
         harness.assertNetworkRequest(
             spanToken = firstRequestSpan,
+            expectedName = "GET /api",
             expectedStartTimeMs = 100L,
             expectedEndTimeMs = 200L,
             expectedAttributes = mapOf(
-                "url.full" to "www.example1.com",
+                "url.full" to strippedFirstUrl,
                 HttpAttributes.HTTP_REQUEST_METHOD to "GET",
                 HttpAttributes.HTTP_RESPONSE_STATUS_CODE to "200",
                 HttpAttributes.HTTP_REQUEST_BODY_SIZE to "100",
@@ -77,25 +82,30 @@ internal class NetworkRequestDataSourceStatefulApiTest {
                 "emb.trace_id" to "fake-trace-id",
             )
         )
+
         harness.assertNetworkRequest(
             spanToken = requestSpans["www.example2.com"],
+            expectedName = "GET ",
             expectedStartTimeMs = 200L,
             expectedEndTimeMs = 300L,
             expectedErrorCode = ErrorCodeAttribute.Failure
         )
         harness.assertNetworkRequest(
             spanToken = requestSpans["www.example3.com"],
+            expectedName = "GET ",
             expectedStartTimeMs = 300L,
             expectedEndTimeMs = 400L,
             expectedErrorCode = ErrorCodeAttribute.Failure
         )
         harness.assertNetworkRequest(
             spanToken = requestSpans["www.example4.com"],
+            expectedName = "GET ",
             expectedStartTimeMs = 400L,
             expectedEndTimeMs = 500L,
         )
         harness.assertNetworkRequest(
             spanToken = requestSpans["www.example5.com"],
+            expectedName = "GET ",
             expectedStartTimeMs = 600L,
             expectedEndTimeMs = 650L,
             expectedErrorCode = ErrorCodeAttribute.Failure,
@@ -165,6 +175,7 @@ internal class NetworkRequestDataSourceStatefulApiTest {
     @Test
     fun `concurrent network requests`() {
         val url = "https://api.example1.com"
+        val expectedSpanName = "GET "
 
         val request1 = startRequest(
             url = url,
@@ -203,16 +214,19 @@ internal class NetworkRequestDataSourceStatefulApiTest {
         assertEquals(3, spans.size)
         harness.assertNetworkRequest(
             spanToken = spans[0],
+            expectedName = expectedSpanName,
             expectedStartTimeMs = 10,
             expectedEndTimeMs = 1150,
         )
         harness.assertNetworkRequest(
             spanToken = spans[1],
+            expectedName = expectedSpanName,
             expectedStartTimeMs = 11,
             expectedEndTimeMs = 1050,
         )
         harness.assertNetworkRequest(
             spanToken = spans[2],
+            expectedName = expectedSpanName,
             expectedStartTimeMs = 15,
             expectedEndTimeMs = 1100,
         )

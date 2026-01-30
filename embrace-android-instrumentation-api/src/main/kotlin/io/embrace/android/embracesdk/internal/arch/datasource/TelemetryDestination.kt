@@ -49,6 +49,7 @@ interface TelemetryDestination {
     fun startSpanCapture(
         schemaType: SchemaType,
         startTimeMs: Long,
+        name: String = schemaType.fixedObjectName,
         autoTerminate: Boolean = false,
         private: Boolean = false,
     ): SpanToken

@@ -89,6 +89,7 @@ class TelemetryDestinationImpl(
     override fun startSpanCapture(
         schemaType: SchemaType,
         startTimeMs: Long,
+        name: String,
         autoTerminate: Boolean,
         private: Boolean,
     ): SpanToken {
@@ -97,7 +98,7 @@ class TelemetryDestinationImpl(
             else -> AutoTerminationMode.NONE
         }
         val span = spanService.startSpan(
-            name = schemaType.fixedObjectName,
+            name = name,
             startTimeMs = startTimeMs,
             autoTerminationMode = mode,
             private = private,

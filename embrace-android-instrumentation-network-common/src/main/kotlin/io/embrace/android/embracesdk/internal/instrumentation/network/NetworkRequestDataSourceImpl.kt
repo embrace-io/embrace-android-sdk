@@ -55,8 +55,6 @@ class NetworkRequestDataSourceImpl(
                 telemetryService.trackAppliedLimit("network_request", AppliedLimitType.DROP)
             }
         ) {
-            val strippedUrl = stripUrl(request.url)
-
             val networkRequestSchemaType = SchemaType.NetworkRequest(generateSchemaAttributes(request))
             val statusCode = request.statusCode
             val errorCode = if (statusCode == null || statusCode <= 0 || statusCode >= 400) {
@@ -65,7 +63,7 @@ class NetworkRequestDataSourceImpl(
                 null
             }
             recordCompletedSpan(
-                name = "${request.httpMethod} ${getUrlPath(strippedUrl)}",
+                name = getNetworkSpanName(request.httpMethod, request.url),
                 startTimeMs = request.startTime,
                 endTimeMs = request.endTime,
                 type = EmbType.Performance.Network,
@@ -93,7 +91,8 @@ class NetworkRequestDataSourceImpl(
         ) {
             val spanToken = destination.startSpanCapture(
                 schemaType = SchemaType.NetworkRequest(requestStartAttributes(startData)),
-                startTimeMs = startData.sdkClockStartTime
+                startTimeMs = startData.sdkClockStartTime,
+                name = getNetworkSpanName(startData.httpMethod, startData.url)
             )
 
             spanToken.asW3cTraceparent()?.also { traceparent ->
@@ -150,4 +149,6 @@ class NetworkRequestDataSourceImpl(
         ExceptionAttributes.EXCEPTION_MESSAGE to endData.errorMessage,
         "emb.trace_id" to getValidTraceId(endData.traceId),
     ).toNonNullMap().mapValues { it.value.toString() }
+
+    private fun getNetworkSpanName(httpMethod: String, url: String) = "$httpMethod ${getUrlPath(stripUrl(url))}"
 }

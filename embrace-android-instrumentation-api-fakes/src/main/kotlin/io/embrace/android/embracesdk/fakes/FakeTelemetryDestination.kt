@@ -50,11 +50,12 @@ class FakeTelemetryDestination : TelemetryDestination {
     override fun startSpanCapture(
         schemaType: SchemaType,
         startTimeMs: Long,
+        name: String,
         autoTerminate: Boolean,
         private: Boolean,
     ): SpanToken {
         val token = FakeSpanToken(
-            name = schemaType.fixedObjectName,
+            name = name,
             startTimeMs = startTimeMs,
             endTimeMs = null,
             errorCode = null,

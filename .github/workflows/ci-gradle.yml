@@ -35,7 +35,7 @@ jobs:
     timeout-minutes: 60
     strategy:
       matrix:
-        gradle-task: ['test', 'assembleRelease', 'bundleReleaseExampleApp']
+        gradle-task: ['build', 'bundleReleaseExampleApp']
       fail-fast: false
     steps:
       - name: Free Disk Space (Ubuntu)
@@ -75,9 +75,9 @@ jobs:
         if: ${{ matrix.gradle-task == 'test' }}
         run: ./gradlew embrace-gradle-plugin-integration-tests:test --stacktrace
 
-      - name: Gradle (assembleRelease check -x embrace-gradle-plugin-integration-tests:test)
-        if: ${{ matrix.gradle-task == 'assembleRelease' }}
-        run: ./gradlew assembleRelease check embrace-microbenchmark:assembleAndroidTest -x embrace-gradle-plugin-integration-tests:test --stacktrace
+      - name: Gradle (build -x embrace-gradle-plugin-integration-tests:test)
+        if: ${{ matrix.gradle-task == 'build' }}
+        run: ./gradlew build embrace-microbenchmark:assembleAndroidTest -x embrace-gradle-plugin-integration-tests:test --stacktrace
 
       - name: Gradle (examples/ExampleApp/ bundleRelease)
         if: ${{ matrix.gradle-task == 'bundleReleaseExampleApp' }}
@@ -90,3 +90,15 @@ jobs:
         with:
           name: test-results-${{ matrix.gradle-task }}
           path: '**/build/reports/tests/**'
+
+      - name: Run Kover Code Coverage
+        if: ${{ matrix.gradle-task == 'build' }}
+        run: ./gradlew koverXmlReport
+
+      - name: Upload Code Coverage
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
+        if: ${{ matrix.gradle-task == 'build' }}
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: true
+          files: build/reports/kover/reportRelease.xml

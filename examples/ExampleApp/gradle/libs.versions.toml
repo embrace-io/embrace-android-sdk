@@ -42,10 +42,14 @@ firebase-messaging = { group = "com.google.firebase", name = "firebase-messaging
 embrace-android-api = { group = "io.embrace", name = "embrace-android-api", version.ref = "embrace" }
 embrace-android-sdk = { group = "io.embrace", name = "embrace-android-sdk", version.ref = "embrace" }
 embrace-android-core = { group = "io.embrace", name = "embrace-android-core", version.ref = "embrace" }
-embrace-android-features = { group = "io.embrace", name = "embrace-android-features", version.ref = "embrace" }
+embrace-android-otel = { group = "io.embrace", name = "embrace-android-otel", version.ref = "embrace" }
 embrace-android-payload = { group = "io.embrace", name = "embrace-android-payload", version.ref = "embrace" }
 embrace-android-telemetry-persistence = { group = "io.embrace", name = "embrace-android-telemetry-persistence", version.ref = "embrace" }
 embrace-android-delivery = { group = "io.embrace", name = "embrace-android-delivery", version.ref = "embrace" }
+embrace-android-okhttp = { group = "io.embrace", name = "embrace-android-instrumentation-okhttp", version.ref = "embrace" }
+embrace-android-network-common = { group = "io.embrace", name = "embrace-android-instrumentation-network-common", version.ref = "embrace" }
+embrace-android-instrumentation-api = { group = "io.embrace", name = "embrace-android-instrumentation-api", version.ref = "embrace" }
+
 embrace-android-otel-java = { group = "io.embrace", name = "embrace-android-otel-java", version.ref = "embrace" }
 androidx-uiautomator = { group = "androidx.test.uiautomator", name = "uiautomator", version.ref = "uiautomator" }
 androidx-benchmark-macro-junit4 = { group = "androidx.benchmark", name = "benchmark-macro-junit4", version.ref = "benchmarkMacroJunit4" }

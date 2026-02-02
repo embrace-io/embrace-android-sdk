@@ -29,9 +29,12 @@ class MainApplication : Application() {
         // add OTel exporters to send data to 3rd party destinations
         Embrace.addJavaSpanExporter(LogcatSpanExporter())
         Embrace.addJavaLogRecordExporter(LogcatLogRecordExporter())
+        Embrace.setResourceAttribute("my.cool.resource.id", "innit")
 
         // start embrace SDK
         Embrace.start(this)
+        Embrace.setUserIdentifier("test-bloke")
+        Embrace.logInfo(message = "We out here")
 
         error?.let {
             Embrace.logException(throwable = it, message = "URLStreamHandlerFactory install failed")

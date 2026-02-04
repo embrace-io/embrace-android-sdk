@@ -27,21 +27,23 @@ jobs:
     timeout-minutes: 60
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout scripts
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # 6.0.2
+        with:
+          sparse-checkout: .github/scripts
+          persist-credentials: false
+
       - name: Configure git
-        run: |
-          git config --global user.name 'embrace-ci[bot]'
-          git config --global user.email 'embrace-ci@users.noreply.github.com'
+        run: .github/scripts/configure-git.sh
 
       - name: Extract base version (major.minor.0)
         id: base_version
         env:
           RC_VERSION: ${{ inputs.rc_version }}
-        run: |
-          base_version=$(echo "$RC_VERSION" | cut -d. -f1,2).0
-          echo "base_version=$base_version" >> $GITHUB_OUTPUT
+        run: .github/scripts/extract-base-version.sh "$RC_VERSION" >> $GITHUB_OUTPUT
 
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # 6.0.2
         with:
           ref: release/${{ steps.base_version.outputs.base_version }}
           persist-credentials: true
@@ -56,13 +58,9 @@ jobs:
         uses: gradle/actions/setup-gradle@f29f5a9d7b09a7c6b29859002d29d24e1674c884 # v5.0.1
 
       - name: Publish to Maven Central
-        run: |
-          ./gradlew publishToMavenCentral --no-configuration-cache --stacktrace
+        run: .github/scripts/gradle-publish-maven-central.sh
 
       - name: Publish git tag
         env:
           RC_VERSION: ${{ inputs.rc_version }}
-        run: |
-          git push origin :refs/tags/${RC_VERSION}
-          git tag -f ${RC_VERSION}
-          git push origin --tags
+        run: .github/scripts/publish-git-tag.sh "$RC_VERSION"

@@ -27,15 +27,12 @@ jobs:
         working-directory: ['.', 'examples/ExampleApp']
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # 6.0.2
         with:
           persist-credentials: false
 
       - name: Enable KVM group perms
-        run: |
-          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
-          sudo udevadm control --reload-rules
-          sudo udevadm trigger --name-match=kvm
+        run: .github/scripts/enable-kvm.sh
 
       - name: Setup Java
         uses: actions/setup-java@v5
@@ -71,8 +68,7 @@ jobs:
         with:
           working-directory: ${{ matrix.working-directory }}
           api-level: ${{ matrix.api-level }}
-          # Grab the failures from the device so we can include them in results. Exit with non-zero so GH checks still fail.
-          script: ./gradlew connectedCheck -x :app:benchmark:connectedBenchmarkAndroidTest
+          script: "$GITHUB_WORKSPACE/.github/scripts/gradle-connected-check-example-app.sh"
 
       - name: Run tests on android emulator
         uses: reactivecircus/android-emulator-runner@b530d96654c385303d652368551fb075bc2f0b6b # v2.35.0
@@ -80,8 +76,7 @@ jobs:
         with:
           working-directory: ${{ matrix.working-directory }}
           api-level: ${{ matrix.api-level }}
-          # Grab the failures from the device so we can include them in results. Exit with non-zero so GH checks still fail.
-          script: ./gradlew connectedCheck -x :embrace-microbenchmark:connectedCheck --stacktrace || (adb logcat '[Embrace]:d' '*:S' -t 100000 > emulator_logcat.log && adb pull /storage/emulated/0/Android/data/io.embrace.android.embracesdk.test/cache/test_failure/ && exit 127)
+          script: "$GITHUB_WORKSPACE/.github/scripts/gradle-connected-check-sdk.sh"
 
       - name: Archive Test Results
         if: ${{ always() && matrix.working-directory == '.' }}

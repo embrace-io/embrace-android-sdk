@@ -17,16 +17,13 @@ jobs:
     timeout-minutes: 30
 
     steps:
-      - name: Enable KVM group perms
-        run: |
-          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
-          sudo udevadm control --reload-rules
-          sudo udevadm trigger --name-match=kvm
-
       - name: Checkout Branch
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # 6.0.2
         with:
           persist-credentials: true
+
+      - name: Enable KVM group perms
+        run: .github/scripts/enable-kvm.sh
 
       - name: Setup Java
         uses: actions/setup-java@v5
@@ -39,17 +36,13 @@ jobs:
 
       - name: Read version
         id: sdk_version
-        run: |
-          # Read the version from gradle.properties
-          version=$(grep '^version' gradle.properties | cut -d'=' -f2 | tr -d '[:space:]')
-          # Set the version as a step output
-          echo "sdk_version=${version}" >> "$GITHUB_OUTPUT"
+        run: .github/scripts/extract-sdk-version.sh >> "$GITHUB_OUTPUT"
 
       - name: Publish to Maven local
-        run: ./gradlew pTML
+        run: .github/scripts/gradle-publish-maven-local.sh
 
       - name: Checkout Android SDK Benchmark
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # 6.0.2
         with:
           repository: embrace-io/android-sdk-benchmark
           ref: main
@@ -61,46 +54,23 @@ jobs:
         working-directory: android-sdk-benchmark
         env:
           SDK_VERSION: ${{ steps.sdk_version.outputs.sdk_version }}
-        run: |
-          # Update the embrace_version in gradle.properties
-          sed -i "s/embrace_version=.*/embrace_version=${SDK_VERSION}/" gradle.properties
+        run: "$GITHUB_WORKSPACE/.github/scripts/update-benchmark-version.sh" "$SDK_VERSION"
 
       - name: Clean Managed Devices
         working-directory: android-sdk-benchmark
-        run: ./gradlew cleanManagedDevices --unused-only
+        run: "$GITHUB_WORKSPACE/.github/scripts/gradle-clean-managed-devices.sh"
 
       - name: Generate Baseline Profile
         working-directory: android-sdk-benchmark
-        run: ./gradlew :macrobenchmark:pixel6Api34BaselineProfileAndroidTest
-          -Pandroid.testInstrumentationRunnerArguments.androidx.benchmark.enabledRules=BaselineProfile
-          -Pandroid.testoptions.manageddevices.emulator.gpu="swiftshader_indirect"
-          -Pandroid.experimental.testOptions.managedDevices.maxConcurrentDevices=1
+        run: "$GITHUB_WORKSPACE/.github/scripts/gradle-generate-baseline-profile.sh"
 
-      # Sets the Baseline Profile on its proper place so it gets correctly bundled into Play Store
       - name: Move & Rename Baseline Profiles
-        run: cp android-sdk-benchmark/macrobenchmark/build/outputs/managed_device_android_test_additional_output/baselineprofile/pixel6Api34/BaselineProfileGenerator_startup-baseline-prof.txt embrace-android-sdk/src/main/baseline-prof.txt
+        run: .github/scripts/copy-baseline-profile.sh
 
       - name: Create baseline profile PR
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          git config --global user.name 'embrace-ci[bot]'
-          git config --global user.email 'embrace-ci@users.noreply.github.com'
-
-          branch=baseline-profile-${{ github.run_id }}
-          git checkout -b $branch
-
-          if [[ `git status --porcelain` ]]; then
-            git add embrace-android-sdk/src/main/baseline-prof.txt
-            git commit -m "Generate baseline profiles"
-            git push -f origin $branch
-
-            gh pr create \
-                --base main \
-                --head $branch \
-                --title "Generate baseline profile ${GITHUB_REF}" \
-                --body "Baseline Profiles help guide optimization beyond app startup by providing common user interactions that improve app runtime from the first launch" \
-                --assignee ${GITHUB_ACTOR}
-          else
-            echo "No changes to commit"
-          fi
+          RUN_ID: ${{ github.run_id }}
+          GITHUB_REF_NAME: ${{ github.ref }}
+          ACTOR: ${{ github.actor }}
+        run: .github/scripts/create-baseline-profile-pr.sh "$RUN_ID" "$GITHUB_REF_NAME" "$ACTOR"

@@ -21,13 +21,16 @@ jobs:
     outputs:
       where: ${{ steps.choose.outputs.where }}
     steps:
+      - name: Checkout scripts
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # 6.0.2
+        with:
+          sparse-checkout: .github/scripts
+          persist-credentials: false
+
       - id: choose
-        run: |
-          if [ ${GITHUB_ACTOR} != 'dependabot[bot]' ]; then
-              echo "where=${DEPOT_RUNNER}" >> $GITHUB_OUTPUT
-          else
-              echo "where=ubuntu-latest" >> $GITHUB_OUTPUT
-          fi
+        env:
+          ACTOR: ${{ github.actor }}
+        run: .github/scripts/choose-runner.sh "$ACTOR" "$DEPOT_RUNNER" >> $GITHUB_OUTPUT
 
   gradle:
     needs: environment
@@ -46,7 +49,7 @@ jobs:
           android: false
 
       - name: Checkout Branch
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # 6.0.2
         with:
           fetch-depth: 0
           persist-credentials: false
@@ -64,25 +67,25 @@ jobs:
         with:
           path: |
             ~/.m2/repository/org/robolectric
-          key: robolectric-${{ hashFiles('.github/fetch-robolectric-dependencies.sh') }}
+          key: robolectric-${{ hashFiles('.github/scripts/fetch-robolectric-dependencies.sh') }}
           restore-keys: |
             robolectric-
 
       - name: Fetch Robolectric dependencies
-        run: /bin/sh .github/fetch-robolectric-dependencies.sh
+        run: .github/scripts/fetch-robolectric-dependencies.sh
 
       - name: Gradle (embrace-gradle-plugin-integration-tests:test)
         if: ${{ matrix.gradle-task == 'test' }}
-        run: ./gradlew embrace-gradle-plugin-integration-tests:test --stacktrace
+        run: .github/scripts/gradle-integration-tests.sh
 
       - name: Gradle (build -x embrace-gradle-plugin-integration-tests:test)
         if: ${{ matrix.gradle-task == 'build' }}
-        run: ./gradlew build embrace-microbenchmark:assembleAndroidTest -x embrace-gradle-plugin-integration-tests:test --stacktrace
+        run: .github/scripts/gradle-build.sh
 
       - name: Gradle (examples/ExampleApp/ bundleRelease)
         if: ${{ matrix.gradle-task == 'bundleReleaseExampleApp' }}
         working-directory: examples/ExampleApp
-        run: ./gradlew bundleRelease
+        run: "$GITHUB_WORKSPACE/.github/scripts/gradle-bundle-release.sh"
 
       - name: Archive Test Results
         if: ${{ always() && matrix.gradle-task != 'bundleReleaseExampleApp' }}
@@ -93,7 +96,7 @@ jobs:
 
       - name: Run Kover Code Coverage
         if: ${{ matrix.gradle-task == 'build' }}
-        run: ./gradlew koverXmlReport
+        run: .github/scripts/gradle-kover-report.sh
 
       - name: Upload Code Coverage
         uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2

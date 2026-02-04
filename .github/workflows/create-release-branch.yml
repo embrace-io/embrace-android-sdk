@@ -21,27 +21,20 @@ jobs:
     timeout-minutes: 60
     runs-on: ubuntu-latest
     steps:
-      - name: Configure git
-        run: |
-          git config --global user.name 'embrace-ci[bot]'
-          git config --global user.email 'embrace-ci@users.noreply.github.com'
-
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # 6.0.2
         with:
           persist-credentials: true
+
+      - name: Configure git
+        run: .github/scripts/configure-git.sh
 
       - name: Create Release Branch "release/${{ inputs.rc_version }}"
         env:
           RC_VERSION: ${{ inputs.rc_version }}
-        run: |
-          git checkout -b release/${RC_VERSION}
+        run: .github/scripts/create-release-branch.sh "$RC_VERSION"
 
       - name: Set version in gradle.properties
         env:
           RC_VERSION: ${{ inputs.rc_version }}
-        run: |
-          sed -i -r "s#version=([^\']+)#version=${RC_VERSION}#" gradle.properties
-          git add gradle.properties
-          git commit -m "CI/CD: change version to be released: ${RC_VERSION}"
-          git push --set-upstream origin release/${RC_VERSION}
+        run: .github/scripts/set-release-version.sh "$RC_VERSION"

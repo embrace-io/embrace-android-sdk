@@ -13,7 +13,13 @@ jobs:
     permissions:
       actions: write
     steps:
-      - name: Run GH CLI
+      - name: Checkout scripts
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # 6.0.2
+        with:
+          sparse-checkout: .github/scripts
+          persist-credentials: false
+
+      - name: Clear CI cache
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh cache delete --all --repo embrace-io/embrace-android-sdk
+        run: .github/scripts/clear-ci-cache.sh

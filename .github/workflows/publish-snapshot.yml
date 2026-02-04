@@ -24,22 +24,18 @@ jobs:
     timeout-minutes: 60
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # 6.0.2
         with:
           persist-credentials: false
 
       - name: Set snapshot_name in gradle.properties if set
         env:
           SNAPSHOT_NAME: ${{ inputs.snapshot_name }}
-        run: |
-          if [ -n "$SNAPSHOT_NAME" ]; then
-            sed -i -r "s#^version=.*#version=${SNAPSHOT_NAME}-SNAPSHOT#" gradle.properties
-            git add gradle.properties
-          fi
+        run: .github/scripts/set-snapshot-version.sh "$SNAPSHOT_NAME"
 
       - name: Fail if version is not -SNAPSHOT
-        run: |
-          grep -q -- '-SNAPSHOT$' gradle.properties || (echo "ERROR: version must end with -SNAPSHOT" && exit 1)
+        run: .github/scripts/validate-snapshot-version.sh
 
       - name: Setup Java
         uses: actions/setup-java@v5
@@ -51,5 +47,4 @@ jobs:
         uses: gradle/actions/setup-gradle@f29f5a9d7b09a7c6b29859002d29d24e1674c884 # v5.0.1
 
       - name: Publish to Maven Central
-        run: |
-          ./gradlew publishToMavenCentral --no-configuration-cache --stacktrace
+        run: .github/scripts/gradle-publish-maven-central.sh

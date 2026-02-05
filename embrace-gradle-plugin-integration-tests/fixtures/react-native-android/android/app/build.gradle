@@ -1,8 +1,13 @@
 apply plugin: "com.android.application"
 apply plugin: 'io.embrace.gradle'
-apply plugin: "org.jetbrains.kotlin.android"
 apply plugin: "com.facebook.react"
 apply plugin: "io.embrace.android.testplugin"
+
+def agpVersion = project.findProperty("agp_version") ?: "8.0.0"
+def agpMajorVersion = agpVersion.toString().split('\\.')[0].toInteger()
+if (agpMajorVersion < 9) {
+    apply plugin: "org.jetbrains.kotlin.android"
+}
 
 repositories {
     google()
@@ -109,7 +114,7 @@ android {
             // see https://reactnative.dev/docs/signed-apk-android.
             signingConfig signingConfigs.debug
             minifyEnabled enableProguardInReleaseBuilds
-            proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
+            proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
         }
     }
 }

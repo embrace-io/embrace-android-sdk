@@ -16,7 +16,11 @@ buildscript {
         classpath "io.embrace:embrace-gradle-plugin:$plugin_snapshot_version"
         classpath "io.embrace:embrace-gradle-plugin-integration-tests:$plugin_snapshot_version"
         classpath("com.facebook.react:react-native-gradle-plugin")
-        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version")
+
+        def agpMajorVersion = agp_version.toString().split("\\.")[0].toInteger()
+        if (agpMajorVersion < 9) {
+            classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version")
+        }
     }
 }
 

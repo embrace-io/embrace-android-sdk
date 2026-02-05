@@ -2,7 +2,12 @@ plugins {
     id("com.android.application")
     id("io.embrace.gradle")
     id("io.embrace.android.testplugin")
-    id("org.jetbrains.kotlin.android")
+}
+
+def agpVersion = project.findProperty("agp_version") ?: "8.0.0"
+def agpMajorVersion = agpVersion.toString().split("\\.")[0].toInteger()
+if (agpMajorVersion < 9) {
+    apply plugin: "org.jetbrains.kotlin.android"
 }
 
 repositories {
@@ -40,12 +45,6 @@ embrace {
     }
 }
 
-android {
-    kotlinOptions {
-        jvmTarget = "1.8"
-    }
-}
-
 dependencies {
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("com.google.firebase:firebase-messaging:23.1.0")
@@ -68,7 +67,7 @@ android {
         release {
             minifyEnabled = true
             proguardFiles(
-                getDefaultProguardFile("proguard-android.txt"),
+                getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
         }

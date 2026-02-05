@@ -44,7 +44,7 @@ class ReactNativeAndroidTest {
         val handshakeArchs = listOf("arm64-v8a", "armeabi-v7a")
         rule.runTest(
             fixture = "react-native-android",
-            testMatrix = TestMatrix.NewerVersion,
+            testMatrix = TestMatrix.MiddleVersion,
             androidProjectRoot = "android",
             task = "build",
             setup = { projectDir ->
@@ -52,7 +52,7 @@ class ReactNativeAndroidTest {
                 setupMockResponses(handshakeLibs, handshakeArchs, defaultExpectedVariants)
             },
             assertions = {
-                verifyBuildTelemetryRequestSent(variantsSentInBuildTelemetry, testMatrix = TestMatrix.NewerVersion)
+                verifyBuildTelemetryRequestSent(variantsSentInBuildTelemetry, testMatrix = TestMatrix.MiddleVersion)
                 verifyHandshakes(defaultExpectedLibs, defaultExpectedArchs, defaultExpectedVariants)
                 verifyUploads(handshakeLibs, handshakeArchs, defaultExpectedVariants)
             }
@@ -63,7 +63,7 @@ class ReactNativeAndroidTest {
     fun `react native asm injection test`() {
         rule.runTest(
             fixture = "react-native-android",
-            testMatrix = TestMatrix.NewerVersion,
+            testMatrix = TestMatrix.MiddleVersion,
             androidProjectRoot = "android",
             task = "assembleRelease",
             setup = { projectDir ->
@@ -103,7 +103,7 @@ class ReactNativeAndroidTest {
         val handshakeArchs = listOf("arm64-v8a", "armeabi-v7a")
         rule.runTest(
             fixture = "react-native-android",
-            testMatrix = TestMatrix.NewerVersion,
+            testMatrix = TestMatrix.MiddleVersion,
             task = "assembleDebug",
             androidProjectRoot = "android",
             setup = { projectDir ->
@@ -111,7 +111,7 @@ class ReactNativeAndroidTest {
                 setupMockResponses(handshakeLibs, handshakeArchs, defaultExpectedVariants)
             },
             assertions = {
-                verifyBuildTelemetryRequestSent(variantsSentInBuildTelemetry, testMatrix = TestMatrix.NewerVersion)
+                verifyBuildTelemetryRequestSent(variantsSentInBuildTelemetry, testMatrix = TestMatrix.MiddleVersion)
                 verifyNoHandshakes()
                 verifyNoUploads()
                 verifyJvmMappingRequestsSent(0)

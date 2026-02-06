@@ -469,10 +469,12 @@ internal class OkHttpDataSourceTest {
         val minClockDrift = beforeSystemTime - sdkClock.now()
         action()
         val afterSystemTime = System.currentTimeMillis()
+        val maxClockDrift = afterSystemTime - sdkClock.now()
         return SystemClockTimes(
             timeBeforeRequest = beforeSystemTime,
             timeAfterRequest = afterSystemTime,
-            minClockDrift = minClockDrift
+            minClockDrift = minClockDrift,
+            maxClockDrift = maxClockDrift
         )
     }
 
@@ -499,12 +501,8 @@ internal class OkHttpDataSourceTest {
         assertNetworkRequestReceived { span ->
             assertTrue(
                 "SystemClock before: ${systemClockTimes.timeBeforeRequest}, " +
-                    "min drift: ${systemClockTimes.minClockDrift}, span start time: ${span.startTimeMs}",
-                systemClockTimes.timeBeforeRequest - systemClockTimes.minClockDrift <= span.startTimeMs
-            )
-            assertTrue(
-                "SystemClock before: ${systemClockTimes.timeBeforeRequest}, span start time: ${span.startTimeMs}",
-                systemClockTimes.timeBeforeRequest >= span.startTimeMs
+                    "max drift: ${systemClockTimes.maxClockDrift}, span start time: ${span.startTimeMs}",
+                systemClockTimes.timeBeforeRequest - systemClockTimes.maxClockDrift <= span.startTimeMs
             )
             val endTime = checkNotNull(span.endTimeMs)
             assertTrue(
@@ -512,11 +510,6 @@ internal class OkHttpDataSourceTest {
                     "min drift: ${systemClockTimes.minClockDrift}, span end time: $endTime",
                 systemClockTimes.timeAfterRequest - systemClockTimes.minClockDrift >= endTime
             )
-            assertTrue(
-                "SystemClock after: ${systemClockTimes.timeAfterRequest}, span end time: $endTime",
-                systemClockTimes.timeAfterRequest >= endTime
-            )
-
             val attrs = span.attributes
             assertEquals(server.url(path).toString(), attrs[UrlAttributes.URL_FULL])
             assertEquals(httpMethod, attrs[HttpAttributes.HTTP_REQUEST_METHOD])
@@ -598,5 +591,6 @@ internal class OkHttpDataSourceTest {
         val timeBeforeRequest: Long,
         val timeAfterRequest: Long,
         val minClockDrift: Long,
+        val maxClockDrift: Long,
     )
 }

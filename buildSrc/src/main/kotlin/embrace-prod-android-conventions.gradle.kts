@@ -22,9 +22,11 @@ android {
     }
 
     sourceSets {
-        getByName("test").java.srcDir("src/integrationTest/java")
-        getByName("test").kotlin.srcDir("src/integrationTest/kotlin")
-        getByName("test").resources.srcDir("src/integrationTest/resources")
+        with(getByName("test")) {
+            java.directories.add("src/integrationTest/java")
+            kotlin.directories.add("src/integrationTest/kotlin")
+            resources.directories.add("src/integrationTest/resources")
+        }
     }
 }
 

@@ -10,6 +10,7 @@ pluginManagement {
         val kotlinVersion = extra["kotlin_version"] as String
 
         id("com.android.application").version(agpVersion)
+        id("com.android.library").version(agpVersion)
         id("org.jetbrains.kotlin.android").version(kotlinVersion)
         id("io.embrace.gradle").version(snapshotVersion)
         id("io.embrace.android.testplugin").version(snapshotVersion)

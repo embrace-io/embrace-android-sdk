@@ -1,6 +1,11 @@
 plugins {
     id("com.android.library")
-    id("org.jetbrains.kotlin.android") version '2.0.21'
+}
+
+def agpVersion = project.findProperty("agp_version") ?: "8.0.0"
+def agpMajorVersion = agpVersion.toString().split("\\.")[0].toInteger()
+if (agpMajorVersion < 9) {
+    apply plugin: "org.jetbrains.kotlin.android"
 }
 
 allprojects {
@@ -13,6 +18,7 @@ allprojects {
 android {
     namespace 'com.example.customLibrary'
     compileSdk 36
+    ndkVersion "27.0.12077973"
 
     defaultConfig {
         minSdk 26

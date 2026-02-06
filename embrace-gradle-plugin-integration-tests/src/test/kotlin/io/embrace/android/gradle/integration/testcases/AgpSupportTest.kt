@@ -50,6 +50,7 @@ class AgpSupportTest {
     }
 
     private fun runTest(testMatrix: TestMatrix) {
+        val agpMajorVersion = testMatrix.agp.split(".").firstOrNull()?.toIntOrNull() ?: 8
         rule.runTest(
             fixture = "android-version-support",
             task = "assembleRelease",
@@ -62,7 +63,10 @@ class AgpSupportTest {
                     additionalAssertions = {
                         assertEquals(26, minSdk)
                         assertEquals(testMatrix.compileAndTargetSdk.toInt(), compileSdk)
-                        assertEquals(testMatrix.kotlin, kotlinVersion)
+                        // AGP 9+ has built-in Kotlin, so external plugin isn't applied and version isn't reported
+                        if (agpMajorVersion < 9) {
+                            assertEquals(testMatrix.kotlin, kotlinVersion)
+                        }
                         assertEquals(testMatrix.jdk.name.removePrefix("JAVA_"), sourceCompatibility)
                     }
                 )

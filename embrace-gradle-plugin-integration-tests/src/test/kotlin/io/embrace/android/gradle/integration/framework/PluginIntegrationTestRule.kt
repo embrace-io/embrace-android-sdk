@@ -163,10 +163,11 @@ class PluginIntegrationTestRule : ExternalResource() {
         // create an empty settings.gradle.kts file - required for Gradle TestKit
         copyFakeFile(projectDir, "settings.gradle.kts", "fakesettings.gradle.kts")
 
-        // create a minimal AndroidManifest.xml and embrace-config.json
+        // create a minimal AndroidManifest.xml, embrace-config.json, and proguard-rules.pro
         if (projectType == ProjectType.ANDROID) {
             copyFakeFile(projectDir, "src/main/AndroidManifest.xml", "FakeAndroidManifest.xml")
             copyFakeFile(projectDir, "src/main/embrace-config.json", "fake-embrace-config.json")
+            copyFakeFile(projectDir, "proguard-rules.pro", "fake-proguard-rules.pro")
         }
     }
 

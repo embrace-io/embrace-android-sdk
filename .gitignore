@@ -63,3 +63,6 @@ docs/
 
 .DS_Store
 .kotlin
+
+# Claude output
+claude-output/

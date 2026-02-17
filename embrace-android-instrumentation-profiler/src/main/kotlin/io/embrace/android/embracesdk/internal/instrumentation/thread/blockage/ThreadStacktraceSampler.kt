@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.instrumentation.thread.blockage
 
 import io.embrace.android.embracesdk.internal.arch.stacktrace.truncateStacktrace
 import io.embrace.android.embracesdk.internal.clock.Clock
+import java.util.concurrent.CopyOnWriteArrayList
 
 class ThreadStacktraceSampler(
     private val clock: Clock,
@@ -10,7 +11,7 @@ class ThreadStacktraceSampler(
     private val stacktraceFrameLimit: Int,
 ) {
 
-    private val samples: MutableList<ThreadSampleMetadata> = mutableListOf()
+    private val samples: MutableList<ThreadSampleMetadata> = CopyOnWriteArrayList()
 
     fun captureSample() {
         if (samples.size < MAX_SAMPLE_COUNT) {

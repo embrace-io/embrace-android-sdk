@@ -1,7 +1,7 @@
 {
   "app_id": "abcde",
   "api_token": "12345123451234512345123451234512",
-  "ndk_enabled": true,
+  "ndk_enabled": false,
   "sdk_config": {
     "app_framework": "flutter",
     "base_urls": {

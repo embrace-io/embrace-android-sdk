@@ -3,6 +3,7 @@ package io.embrace.android.gradle.integration.testcases
 import io.embrace.android.gradle.integration.framework.AssertionInterface
 import io.embrace.android.gradle.integration.framework.PluginIntegrationTestRule
 import io.embrace.android.gradle.integration.framework.ProjectType
+import io.embrace.android.gradle.integration.framework.SetupInterface
 import io.embrace.android.gradle.integration.framework.smali.SmaliConfigReader
 import io.embrace.android.gradle.integration.framework.smali.SmaliParser
 import org.junit.Assert.assertEquals
@@ -25,6 +26,8 @@ class BytecodeInstrumentationTest {
     )
     private val defaultArgs = listOf("-x", "lintVitalRelease")
 
+    private val ndkSetup: SetupInterface.(File) -> Unit = { setupEmptyHandshakeResponse() }
+
     @Test
     fun `bytecode instrumentation enabled`() {
         rule.runTest(
@@ -32,6 +35,7 @@ class BytecodeInstrumentationTest {
             task = "assembleRelease",
             additionalArgs = defaultArgs,
             projectType = ProjectType.ANDROID,
+            setup = ndkSetup,
             assertions = { projectDir ->
                 verifyBytecodeInstrumented(projectDir, "bytecode-instrumentation-enabled.json")
             }
@@ -45,6 +49,7 @@ class BytecodeInstrumentationTest {
             task = "assembleRelease",
             additionalArgs = defaultArgs.plus(listOf("-P", "globalDisable=true")),
             projectType = ProjectType.ANDROID,
+            setup = ndkSetup,
             assertions = { projectDir ->
                 verifyBytecodeInstrumented(projectDir, "bytecode-instrumentation-disabled.json")
             }
@@ -58,6 +63,7 @@ class BytecodeInstrumentationTest {
             task = "assembleRelease",
             additionalArgs = defaultArgs.plus(listOf("-P", "individualDisable=true")),
             projectType = ProjectType.ANDROID,
+            setup = ndkSetup,
             assertions = { projectDir ->
                 verifyBytecodeInstrumented(projectDir, "bytecode-instrumentation-disabled.json")
             }
@@ -71,6 +77,7 @@ class BytecodeInstrumentationTest {
             task = "assembleRelease",
             additionalArgs = defaultArgs.plus(listOf("-P", "disableByVariant=true")),
             projectType = ProjectType.ANDROID,
+            setup = ndkSetup,
             assertions = { projectDir ->
                 verifyBytecodeInstrumented(projectDir, "bytecode-instrumentation-disabled.json")
             }

@@ -66,7 +66,7 @@ interface EnabledFeatureConfig {
      *
      * ndk_enabled
      */
-    fun isNativeCrashCaptureEnabled(): Boolean = false
+    fun isNativeCrashCaptureEnabled(): Boolean = true
 
     /**
      * Gates AEI capture

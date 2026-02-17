@@ -56,6 +56,9 @@ class AgpSupportTest {
             task = "assembleRelease",
             testMatrix = testMatrix,
             projectType = ProjectType.ANDROID,
+            setup = {
+                setupEmptyHandshakeResponse()
+            },
             assertions = {
                 verifyBuildTelemetryRequestSent(
                     listOf("debug", "release"),

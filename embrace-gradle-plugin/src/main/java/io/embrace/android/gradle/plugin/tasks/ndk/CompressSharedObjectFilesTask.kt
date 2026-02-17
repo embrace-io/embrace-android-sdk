@@ -8,6 +8,7 @@ import org.gradle.api.model.ObjectFactory
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputDirectory
+import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.SkipWhenEmpty
 import org.gradle.api.tasks.TaskAction
@@ -28,6 +29,7 @@ abstract class CompressSharedObjectFilesTask @Inject constructor(
 
     @get:InputDirectory
     @get:SkipWhenEmpty
+    @get:Optional
     val architecturesDirectory: DirectoryProperty = objectFactory.directoryProperty()
 
     @get:Input

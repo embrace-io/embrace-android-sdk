@@ -58,7 +58,7 @@
         },
         {
           "signature": "isNativeCrashCaptureEnabled()Z",
-          "returnValue": "true"
+          "returnValue": "false"
         },
         {
           "signature": "isNetworkConnectivityCaptureEnabled()Z",

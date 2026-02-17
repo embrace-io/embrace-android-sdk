@@ -37,6 +37,9 @@ class ConfigInstrumentationTest {
             task = "assembleRelease",
             additionalArgs = listOf("-x", "lintVitalRelease"),
             projectType = ProjectType.ANDROID,
+            setup = {
+                setupEmptyHandshakeResponse()
+            },
             assertions = { projectDir ->
                 verifyInstrumentedConfig(projectDir, "instrumented-config-default.json")
             }
@@ -55,12 +58,6 @@ class ConfigInstrumentationTest {
                 File(projectDir, "src/main/embrace-config.json").outputStream().buffered().use {
                     ResourceReader.readResource("config-overrides.json").buffered().copyTo(it)
                 }
-                // TODO: why is libembrace-native uploaded in this fixture, but not in the rest?
-                setupMockResponses(
-                    expectedLibs = listOf("libembrace-native.so"),
-                    expectedArchs = listOf("x86_64", "x86", "armeabi-v7a", "arm64-v8a"),
-                    expectedVariants = listOf("debug", "release")
-                )
             },
             assertions = { projectDir ->
                 verifyInstrumentedConfig(projectDir, "instrumented-config-overrides.json")

@@ -31,7 +31,7 @@ internal class AutoDataCaptureBehaviorImplTest {
             assertTrue(isJvmCrashCaptureEnabled())
             assertFalse(isComposeClickCaptureEnabled())
             assertFalse(is3rdPartySigHandlerDetectionEnabled())
-            assertFalse(isNativeCrashCaptureEnabled())
+            assertTrue(isNativeCrashCaptureEnabled())
             assertTrue(isDiskUsageCaptureEnabled())
             assertTrue(isThermalStatusCaptureEnabled())
             assertTrue(isUiLoadTracingEnabled())

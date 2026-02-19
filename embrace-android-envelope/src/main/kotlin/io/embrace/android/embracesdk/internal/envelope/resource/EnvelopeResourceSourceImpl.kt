@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.internal.capture.metadata.AppEnvironment
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
+import io.embrace.android.embracesdk.internal.utils.Provider
 import java.util.concurrent.ConcurrentHashMap
 
 class EnvelopeResourceSourceImpl(
@@ -14,6 +15,7 @@ class EnvelopeResourceSourceImpl(
     private val versionName: String,
     private val versionCode: Int?,
     private val rnBundleIdProvider: () -> String?,
+    private val otelResourceAttributesSupplier: Provider<Map<String, String>>,
 ) : EnvelopeResourceSource {
 
     private val extras = ConcurrentHashMap<String, String>()
@@ -48,7 +50,7 @@ class EnvelopeResourceSourceImpl(
             osCode = device.systemInfo.androidOsApiLevel,
             screenResolution = device.screenResolution,
             numCores = device.numberOfCores,
-            extras = extras.toMap()
+            extras = extras.toMap() + otelResourceAttributesSupplier()
         )
     }
 

@@ -32,6 +32,9 @@ class DesugaringTest {
             task = "assembleRelease",
             additionalArgs = listOf("-PminSdk=26"),
             projectType = ProjectType.ANDROID,
+            setup = {
+                setupEmptyHandshakeResponse()
+            },
             assertions = {
                 verifyBuildTelemetryRequestSent(listOf("debug", "release"))
                 verifyJvmMappingRequestsSent(1)
@@ -46,6 +49,9 @@ class DesugaringTest {
             task = "assembleRelease",
             additionalArgs = listOf("-PminSdk=21"),
             projectType = ProjectType.ANDROID,
+            setup = {
+                setupEmptyHandshakeResponse()
+            },
             assertions = {
                 verifyBuildTelemetryRequestSent(listOf("debug", "release"))
                 verifyJvmMappingRequestsSent(1)

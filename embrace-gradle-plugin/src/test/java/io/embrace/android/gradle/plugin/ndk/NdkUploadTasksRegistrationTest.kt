@@ -97,13 +97,19 @@ class NdkUploadTasksRegistrationTest {
     }
 
     @Test
-    fun `tasks are not executed when ndk_enabled property is not specified`() {
-        verifyNoUploadTasksRegistered(
-            VariantConfig(
+    fun `tasks are registered when ndk_enabled property is not specified`() {
+        val registration = createNdkUploadTasksRegistration(
+            variantConfig = VariantConfig(
                 variantName = testVariantName,
                 embraceConfig = createEmbraceVariantConfig(ndkEnabled = null)
             )
         )
+        registerTestTask(project, "merge${testAndroidCompactedVariantData.name.capitalizedString()}NativeLibs")
+        registration.register(testRegistrationParams)
+        assertTaskRegistered(CompressSharedObjectFilesTask.NAME, testAndroidCompactedVariantData.name)
+        assertTaskRegistered(HashSharedObjectFilesTask.NAME, testAndroidCompactedVariantData.name)
+        assertTaskRegistered(UploadSharedObjectFilesTask.NAME, testAndroidCompactedVariantData.name)
+        assertTaskRegistered(EncodeFileToBase64Task.NAME, testAndroidCompactedVariantData.name)
     }
 
     @Test

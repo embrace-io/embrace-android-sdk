@@ -17,7 +17,7 @@
     },
     "ndk_enabled": {
       "description": "Enables NDK crash capture",
-      "default": false,
+      "default": true,
       "type": "boolean"
     },
     "sdk_config": {

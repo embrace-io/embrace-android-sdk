@@ -37,8 +37,11 @@ class NdkUploadTasksRegistration(
      * build process.
      */
     fun RegistrationParams.execute() {
-        // Bail if ndk_enabled is not true.
-        if (variantConfig.embraceConfig?.ndkEnabled != true) return
+        // bail if there is no config file, or if ndk_enabled is false.
+        val embraceConfig = variantConfig.embraceConfig
+        if (embraceConfig == null || embraceConfig.ndkEnabled == false) {
+            return
+        }
 
         val mergeNativeLibsTaskProvider = project.lazyTaskLookup<Task>("merge${variant.name.capitalizedString()}NativeLibs")
 
@@ -86,8 +89,8 @@ class NdkUploadTasksRegistration(
             task.requestParams.set(
                 behavior.failBuildOnUploadErrors.map { failBuildOnUploadErrors ->
                     RequestParams(
-                        appId = variantConfig.embraceConfig.appId.orEmpty(),
-                        apiToken = variantConfig.embraceConfig.apiToken.orEmpty(),
+                        appId = embraceConfig.appId.orEmpty(),
+                        apiToken = embraceConfig.apiToken.orEmpty(),
                         endpoint = EmbraceEndpoint.NDK,
                         failBuildOnUploadErrors = failBuildOnUploadErrors,
                         baseUrl = behavior.baseUrl,
@@ -164,7 +167,7 @@ class NdkUploadTasksRegistration(
         return mergeNativeLibsTaskProvider.safeFlatMap { task ->
             task?.outputs?.files?.asFileTree?.elements?.nullSafeMap { files ->
                 files
-                    .first { it.asFile.extension == "so" }
+                    .firstOrNull { it.asFile.extension == "so" }
                     ?.asFile
                     ?.parentFile
                     ?.parentFile

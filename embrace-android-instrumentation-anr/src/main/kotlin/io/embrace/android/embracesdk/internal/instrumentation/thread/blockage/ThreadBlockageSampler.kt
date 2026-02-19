@@ -8,8 +8,6 @@ import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.Th
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageSample.Companion.CODE_DEFAULT
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageSample.Companion.CODE_SAMPLE_LIMIT_REACHED
 import java.util.concurrent.CopyOnWriteArrayList
-import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
 
 /**
@@ -24,19 +22,44 @@ class ThreadBlockageSampler(
 ) : ThreadBlockageListener, SessionChangeListener {
 
     private val intervalSink = AtomicReference(CopyOnWriteArrayList<ThreadBlockageInterval>())
-    private val sampler = AtomicReference<ThreadStacktraceSampler>()
-    private val lastUnblockedMs: AtomicLong = AtomicLong(0)
-    private val blocked = AtomicBoolean(false)
+    private val currentBlockage = AtomicReference<CurrentBlockage?>(null)
 
     override fun onThreadBlockageEvent(
         event: ThreadBlockageEvent,
         timestamp: Long,
     ) {
-        blocked.set(event != ThreadBlockageEvent.UNBLOCKED)
         when (event) {
-            ThreadBlockageEvent.BLOCKED -> onThreadBlocked(timestamp)
-            ThreadBlockageEvent.BLOCKED_INTERVAL -> sampler.get().captureSample()
-            ThreadBlockageEvent.UNBLOCKED -> onThreadUnblocked(timestamp)
+            ThreadBlockageEvent.BLOCKED -> {
+                currentBlockage.set(
+                    CurrentBlockage(
+                        sampler = ThreadStacktraceSampler(
+                            clock = clock,
+                            targetThread = targetThread,
+                            sampleLimit = maxSamplesPerInterval,
+                            stacktraceFrameLimit = stacktraceFrameLimit
+                        ),
+                        startTime = timestamp
+                    )
+                )
+            }
+            ThreadBlockageEvent.BLOCKED_INTERVAL -> {
+                currentBlockage.get()?.sampler?.captureSample()
+            }
+            ThreadBlockageEvent.UNBLOCKED -> {
+                currentBlockage.get()?.apply {
+                    val intervals = intervalSink.get()
+                    if (intervals.size < MAX_INTERVAL_COUNT) {
+                        intervals.add(
+                            ThreadBlockageInterval(
+                                startTime = startTime,
+                                endTime = timestamp,
+                                samples = sampler.getThreadBlockageSamples(),
+                            )
+                        )
+                    }
+                    currentBlockage.set(null)
+                }
+            }
         }
     }
 
@@ -44,18 +67,21 @@ class ThreadBlockageSampler(
      * Retrieves thread blockage intervals for the current session
      */
     fun getThreadBlockageIntervals(): List<ThreadBlockageInterval> {
-        val intervals = intervalSink.get()
-        val results = intervals.toMutableList()
+        val blockage = currentBlockage.get()
+        var results = intervalSink.get().toMutableList()
 
-        // add any in-progress intervals
-        if (blocked.get()) {
-            results.add(
-                ThreadBlockageInterval(
-                    startTime = lastUnblockedMs.get(),
-                    lastKnownTime = clock.now(),
-                    samples = sampler.get().getThreadBlockageSamples(),
+        if (blockage != null) {
+            if (currentBlockage.get() === blockage) {
+                results.add(
+                    ThreadBlockageInterval(
+                        startTime = blockage.startTime,
+                        lastKnownTime = clock.now(),
+                        samples = blockage.sampler.getThreadBlockageSamples(),
+                    )
                 )
-            )
+            } else {
+                results = intervalSink.get().toMutableList()
+            }
         }
 
         while (reachedIntervalCaptureLimit(results)) {
@@ -70,24 +96,6 @@ class ThreadBlockageSampler(
 
     override fun onPostSessionChange() {
         intervalSink.set(CopyOnWriteArrayList(intervalSink.get().filter { it.endTime == null }))
-    }
-
-    private fun onThreadBlocked(timestamp: Long) {
-        resetState(timestamp)
-    }
-
-    private fun onThreadUnblocked(timestamp: Long) {
-        val intervals = intervalSink.get()
-        if (intervals.size < MAX_INTERVAL_COUNT) {
-            intervals.add(
-                ThreadBlockageInterval(
-                    startTime = lastUnblockedMs.get(),
-                    endTime = timestamp,
-                    samples = sampler.get().getThreadBlockageSamples(),
-                )
-            )
-        }
-        resetState(timestamp)
     }
 
     private fun ThreadStacktraceSampler.getThreadBlockageSamples(): List<ThreadBlockageSample> {
@@ -115,11 +123,6 @@ class ThreadBlockageSampler(
                 }
             )
         }
-    }
-
-    private fun resetState(timestamp: Long) {
-        sampler.set(ThreadStacktraceSampler(clock, targetThread, maxSamplesPerInterval, stacktraceFrameLimit))
-        lastUnblockedMs.set(timestamp)
     }
 
     /**
@@ -153,6 +156,11 @@ class ThreadBlockageSampler(
     )
 
     private fun ThreadBlockageInterval.hasSamples(): Boolean = code != CODE_SAMPLES_CLEARED
+
+    private class CurrentBlockage(
+        val sampler: ThreadStacktraceSampler,
+        val startTime: Long,
+    )
 
     private companion object {
 

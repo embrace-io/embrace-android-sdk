@@ -64,10 +64,8 @@ internal class PayloadResurrectionServiceImpl(
             if (result.isSuccess) {
                 cacheStorageService.delete(payload)
             } else {
-                val exception = IllegalStateException(
-                    "Resurrecting and sending incomplete payloads from previous app launches failed.",
-                    result.exceptionOrNull()
-                )
+                val exception = result.exceptionOrNull()
+                    ?: IllegalStateException("Resurrecting and sending incomplete payloads from previous app launches failed.")
 
                 logger.trackInternalError(
                     type = InternalErrorType.PAYLOAD_RESURRECTION_FAIL,

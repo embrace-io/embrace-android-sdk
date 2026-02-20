@@ -1,9 +1,9 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.opentelemetry.kotlin.ExperimentalApi
-import io.embrace.opentelemetry.kotlin.OpenTelemetry
-import io.embrace.opentelemetry.kotlin.createCompatOpenTelemetry
-import io.embrace.opentelemetry.kotlin.createOpenTelemetry
+import io.opentelemetry.kotlin.ExperimentalApi
+import io.opentelemetry.kotlin.OpenTelemetry
+import io.opentelemetry.kotlin.createCompatOpenTelemetry
+import io.opentelemetry.kotlin.createOpenTelemetry
 
 /**
  * Creates a instance of [OpenTelemetry] that can be used in tests

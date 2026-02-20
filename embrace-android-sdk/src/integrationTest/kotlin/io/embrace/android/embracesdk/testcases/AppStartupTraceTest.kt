@@ -22,7 +22,7 @@ import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterfac
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface.Companion.LIFECYCLE_EVENT_GAP
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface.Companion.POST_ACTIVITY_ACTION_DWELL
 import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanData
+import io.opentelemetry.kotlin.aliases.OtelJavaSpanData
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Rule

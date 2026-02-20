@@ -5,14 +5,14 @@ import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.otel.getDefaultContext
 import io.embrace.android.embracesdk.internal.otel.spans.OtelSpanStartArgs
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
-import io.embrace.opentelemetry.kotlin.Clock
-import io.embrace.opentelemetry.kotlin.ExperimentalApi
-import io.embrace.opentelemetry.kotlin.OpenTelemetry
-import io.embrace.opentelemetry.kotlin.context.Context
-import io.embrace.opentelemetry.kotlin.tracing.Tracer
-import io.embrace.opentelemetry.kotlin.tracing.model.Span
-import io.embrace.opentelemetry.kotlin.tracing.model.SpanKind
-import io.embrace.opentelemetry.kotlin.tracing.model.SpanRelationships
+import io.opentelemetry.kotlin.Clock
+import io.opentelemetry.kotlin.ExperimentalApi
+import io.opentelemetry.kotlin.OpenTelemetry
+import io.opentelemetry.kotlin.context.Context
+import io.opentelemetry.kotlin.tracing.Tracer
+import io.opentelemetry.kotlin.tracing.model.Span
+import io.opentelemetry.kotlin.tracing.model.SpanKind
+import io.opentelemetry.kotlin.tracing.model.SpanRelationships
 
 /**
  * Embrace-specific decorator that adds extra logic to OTel Tracing.
@@ -26,7 +26,24 @@ class EmbTracer(
     private val useKotlinSdk: Boolean
 ) : Tracer {
 
+    @Deprecated("Use startSpan() instead", replaceWith = ReplaceWith("startSpan(name, parentContext, spanKind, startTimestamp, action)"))
     override fun createSpan(
+        name: String,
+        parentContext: Context?,
+        spanKind: SpanKind,
+        startTimestamp: Long?,
+        action: (SpanRelationships.() -> Unit)?,
+    ): Span = buildSpan(name, parentContext, spanKind, startTimestamp, action)
+
+    override fun startSpan(
+        name: String,
+        parentContext: Context?,
+        spanKind: SpanKind,
+        startTimestamp: Long?,
+        action: (SpanRelationships.() -> Unit)?,
+    ): Span = buildSpan(name, parentContext, spanKind, startTimestamp, action)
+
+    private fun buildSpan(
         name: String,
         parentContext: Context?,
         spanKind: SpanKind,

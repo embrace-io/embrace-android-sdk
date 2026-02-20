@@ -2,9 +2,9 @@ package io.embrace.android.embracesdk.testframework.export
 
 import io.embrace.android.embracesdk.assertions.returnIfConditionMet
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaCompletableResultCode
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanData
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanExporter
+import io.opentelemetry.kotlin.aliases.OtelJavaCompletableResultCode
+import io.opentelemetry.kotlin.aliases.OtelJavaSpanData
+import io.opentelemetry.kotlin.aliases.OtelJavaSpanExporter
 import java.util.concurrent.CopyOnWriteArrayList
 
 /**

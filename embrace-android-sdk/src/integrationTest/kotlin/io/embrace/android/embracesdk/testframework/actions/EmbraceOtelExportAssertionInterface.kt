@@ -4,8 +4,8 @@ import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.testframework.export.ExportedSpanValidator
 import io.embrace.android.embracesdk.testframework.export.FilteredLogExporter
 import io.embrace.android.embracesdk.testframework.export.FilteredSpanExporter
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaLogRecordData
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanData
+import io.opentelemetry.kotlin.aliases.OtelJavaLogRecordData
+import io.opentelemetry.kotlin.aliases.OtelJavaSpanData
 
 /**
  * Provides assertions that can be used in integration tests to validate the behavior of the SDK,

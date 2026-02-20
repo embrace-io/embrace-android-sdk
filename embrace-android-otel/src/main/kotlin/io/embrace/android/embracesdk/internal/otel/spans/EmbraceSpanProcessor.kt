@@ -2,15 +2,16 @@ package io.embrace.android.embracesdk.internal.otel.spans
 
 import io.embrace.android.embracesdk.internal.arch.attrs.embProcessIdentifier
 import io.embrace.android.embracesdk.internal.arch.attrs.embSequenceId
-import io.embrace.opentelemetry.kotlin.ExperimentalApi
-import io.embrace.opentelemetry.kotlin.context.Context
-import io.embrace.opentelemetry.kotlin.export.OperationResultCode
-import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
-import io.embrace.opentelemetry.kotlin.semconv.SessionAttributes
-import io.embrace.opentelemetry.kotlin.tracing.export.SpanExporter
-import io.embrace.opentelemetry.kotlin.tracing.export.SpanProcessor
-import io.embrace.opentelemetry.kotlin.tracing.model.ReadWriteSpan
-import io.embrace.opentelemetry.kotlin.tracing.model.ReadableSpan
+import io.opentelemetry.kotlin.ExperimentalApi
+import io.opentelemetry.kotlin.context.Context
+import io.opentelemetry.kotlin.export.OperationResultCode
+import io.opentelemetry.kotlin.semconv.IncubatingApi
+import io.opentelemetry.kotlin.semconv.SessionAttributes
+import io.opentelemetry.kotlin.tracing.export.SpanExporter
+import io.opentelemetry.kotlin.tracing.export.SpanProcessor
+import io.opentelemetry.kotlin.tracing.model.ReadWriteSpan
+import io.opentelemetry.kotlin.tracing.model.ReadableSpan
+import kotlinx.coroutines.runBlocking
 import java.util.concurrent.atomic.AtomicLong
 
 @OptIn(ExperimentalApi::class)
@@ -31,12 +32,15 @@ class EmbraceSpanProcessor(
         }
     }
 
+    override fun onEnding(span: ReadWriteSpan) {
+    }
+
     override fun onEnd(span: ReadableSpan) {
-        spanExporter.export(mutableListOf(span))
+        runBlocking { spanExporter.export(mutableListOf(span)) }
     }
 
     override fun isStartRequired() = true
     override fun isEndRequired() = true
-    override fun forceFlush(): OperationResultCode = OperationResultCode.Success
-    override fun shutdown(): OperationResultCode = OperationResultCode.Success
+    override suspend fun forceFlush(): OperationResultCode = OperationResultCode.Success
+    override suspend fun shutdown(): OperationResultCode = OperationResultCode.Success
 }

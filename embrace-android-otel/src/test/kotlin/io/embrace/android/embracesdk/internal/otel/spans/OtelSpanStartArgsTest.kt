@@ -9,12 +9,12 @@ import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.otel.createSdkOtelInstance
-import io.embrace.opentelemetry.kotlin.Clock
-import io.embrace.opentelemetry.kotlin.ExperimentalApi
-import io.embrace.opentelemetry.kotlin.getTracer
-import io.embrace.opentelemetry.kotlin.tracing.Tracer
-import io.embrace.opentelemetry.kotlin.tracing.model.Span
-import io.embrace.opentelemetry.kotlin.tracing.model.SpanKind
+import io.opentelemetry.kotlin.Clock
+import io.opentelemetry.kotlin.ExperimentalApi
+import io.opentelemetry.kotlin.getTracer
+import io.opentelemetry.kotlin.tracing.Tracer
+import io.opentelemetry.kotlin.tracing.model.Span
+import io.opentelemetry.kotlin.tracing.model.SpanKind
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -65,7 +65,7 @@ internal class OtelSpanStartArgsTest {
 
     @Test
     fun `add parent after initial creation`() {
-        val parent = tracer.createSpan("parent")
+        val parent = tracer.startSpan("parent")
         val ctx = fakeOpenTelemetry(false).contextFactory.storeSpan(fakeOpenTelemetry().contextFactory.root(), parent)
         val args = OtelSpanStartArgs(
             name = "test",

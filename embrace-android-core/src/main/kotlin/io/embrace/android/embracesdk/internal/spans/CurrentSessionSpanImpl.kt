@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.spans
 import io.embrace.android.embracesdk.internal.arch.schema.AppTerminationCause
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.LinkType
-import io.embrace.android.embracesdk.internal.clock.nanosToMillis
+import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanFactory
@@ -16,12 +16,11 @@ import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.ErrorCode
-import io.embrace.opentelemetry.kotlin.Clock
-import io.embrace.opentelemetry.kotlin.ExperimentalApi
-import io.embrace.opentelemetry.kotlin.OpenTelemetry
-import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
-import io.embrace.opentelemetry.kotlin.semconv.SessionAttributes
-import io.embrace.opentelemetry.kotlin.tracing.Tracer
+import io.opentelemetry.kotlin.ExperimentalApi
+import io.opentelemetry.kotlin.OpenTelemetry
+import io.opentelemetry.kotlin.semconv.IncubatingApi
+import io.opentelemetry.kotlin.semconv.SessionAttributes
+import io.opentelemetry.kotlin.tracing.Tracer
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
@@ -132,7 +131,7 @@ internal class CurrentSessionSpanImpl(
         if (sessionSpan.get() == null) {
             synchronized(sessionSpan) {
                 if (sessionSpan.get() == null) {
-                    sessionSpan.set(startSessionSpan(openTelemetryClock.now().nanosToMillis()))
+                    sessionSpan.set(startSessionSpan(openTelemetryClock.now()))
                     return sessionSpanReady()
                 }
             }
@@ -160,13 +159,13 @@ internal class CurrentSessionSpanImpl(
                     lastSessionSpan.set(endingSessionSpan)
                     spanRepository.clearCompletedSpans()
                     val newSession = if (startNewSession) {
-                        startSessionSpan(openTelemetryClock.now().nanosToMillis())
+                        startSessionSpan(openTelemetryClock.now())
                     } else {
                         null
                     }
                     sessionSpan.set(newSession)
                 } else {
-                    val crashTime = openTelemetryClock.now().nanosToMillis()
+                    val crashTime = openTelemetryClock.now()
                     spanRepository.failActiveSpans(crashTime)
                     endingSessionSpan.setSystemAttribute(
                         appTerminationCause.key.name,

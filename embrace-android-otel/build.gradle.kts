@@ -18,6 +18,7 @@ dependencies {
     testImplementation(project(":embrace-android-payload"))
     testImplementation(project(":embrace-android-api"))
 
+    implementation(libs.kotlinx.coroutines.core)
     implementation(libs.opentelemetry.kotlin.api)
     implementation(libs.opentelemetry.kotlin.api.ext)
     implementation(libs.opentelemetry.kotlin.sdk)

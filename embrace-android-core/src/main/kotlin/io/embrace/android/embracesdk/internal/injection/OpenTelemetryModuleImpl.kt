@@ -24,15 +24,14 @@ import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpanImpl
 import io.embrace.android.embracesdk.internal.spans.EmbraceTracer
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
-import io.embrace.opentelemetry.kotlin.ExperimentalApi
+import io.opentelemetry.kotlin.ExperimentalApi
 
 @OptIn(ExperimentalApi::class)
 class OpenTelemetryModuleImpl(
     private val initModule: InitModule,
-    private val openTelemetryClock: EmbClock = EmbClock(
-        embraceClock = initModule.clock
-    )
 ) : OpenTelemetryModule {
+
+    private val openTelemetryClock: EmbClock = EmbClock(embraceClock = initModule.clock)
 
     private val processIdentifierProvider: () -> String by lazy { IdGenerator.Companion::generateLaunchInstanceId }
 
@@ -120,7 +119,7 @@ class OpenTelemetryModuleImpl(
 
     override val currentSessionSpan: CurrentSessionSpan by lazy {
         CurrentSessionSpanImpl(
-            openTelemetryClock = openTelemetryClock,
+            openTelemetryClock = initModule.clock,
             telemetryService = initModule.telemetryService,
             spanRepository = spanRepository,
             spanSink = spanSink,

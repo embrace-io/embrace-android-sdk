@@ -3,17 +3,17 @@
 package io.embrace.android.embracesdk.otel.java
 
 import io.embrace.android.embracesdk.internal.api.SdkApi
-import io.embrace.opentelemetry.kotlin.ExperimentalApi
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaLogRecordExporter
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaLogRecordProcessor
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaOpenTelemetry
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanExporter
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanProcessor
-import io.embrace.opentelemetry.kotlin.logging.export.toOtelKotlinLogRecordExporter
-import io.embrace.opentelemetry.kotlin.logging.export.toOtelKotlinLogRecordProcessor
-import io.embrace.opentelemetry.kotlin.toOtelJavaApi
-import io.embrace.opentelemetry.kotlin.tracing.export.toOtelKotlinSpanExporter
-import io.embrace.opentelemetry.kotlin.tracing.export.toOtelKotlinSpanProcessor
+import io.opentelemetry.kotlin.ExperimentalApi
+import io.opentelemetry.kotlin.aliases.OtelJavaLogRecordExporter
+import io.opentelemetry.kotlin.aliases.OtelJavaLogRecordProcessor
+import io.opentelemetry.kotlin.aliases.OtelJavaOpenTelemetry
+import io.opentelemetry.kotlin.aliases.OtelJavaSpanExporter
+import io.opentelemetry.kotlin.aliases.OtelJavaSpanProcessor
+import io.opentelemetry.kotlin.logging.export.toOtelKotlinLogRecordExporter
+import io.opentelemetry.kotlin.logging.export.toOtelKotlinLogRecordProcessor
+import io.opentelemetry.kotlin.toOtelJavaApi
+import io.opentelemetry.kotlin.tracing.export.toOtelKotlinSpanExporter
+import io.opentelemetry.kotlin.tracing.export.toOtelKotlinSpanProcessor
 
 /**
  * Adds an [OtelJavaSpanExporter] that OTel Spans will be exported to after completion.

@@ -5,9 +5,9 @@ import io.embrace.android.embracesdk.fakes.FakeEventService
 import io.embrace.android.embracesdk.fakes.FakeMutableAttributeContainer
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryLogger
 import io.embrace.android.embracesdk.fakes.FakeOtelKotlinClock
-import io.embrace.opentelemetry.kotlin.ExperimentalApi
-import io.embrace.opentelemetry.kotlin.createNoopOpenTelemetry
-import io.embrace.opentelemetry.kotlin.logging.model.SeverityNumber
+import io.opentelemetry.kotlin.ExperimentalApi
+import io.opentelemetry.kotlin.NoopOpenTelemetry
+import io.opentelemetry.kotlin.logging.model.SeverityNumber
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
@@ -33,11 +33,12 @@ internal class EmbLoggerTest {
 
     @Test
     fun `check log recorded with correct parameters`() {
-        val parentCtx = createNoopOpenTelemetry().contextFactory.root()
+        val parentCtx = NoopOpenTelemetry.contextFactory.root()
         val observedTime = openTelemetryClock.now()
         val logTime = clock.tick()
-        logger.log(
+        logger.emit(
             body = "test",
+            eventName = null,
             timestamp = logTime,
             observedTimestamp = observedTime,
             context = parentCtx,

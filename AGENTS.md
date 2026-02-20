@@ -33,7 +33,7 @@ It is published to Maven Central under the `io.embrace` group.
 | Dependency catalog           | `gradle/libs.versions.toml`                                                |
 | Java                         | 21 (CI), 11 (target compatibility)                                         |
 | Serialization                | Moshi (with KSP codegen)                                                   |
-| OTel                         | `io.embrace.opentelemetry.kotlin` (Kotlin-friendly OpenTelemetry wrappers) |
+| OTel                         | `io.opentelemetry.kotlin` (Kotlin-friendly OpenTelemetry wrappers) |
 | HTTP                         | OkHttp 4.x                                                                 |
 | Configuration cache          | Enabled, problems=fail                                                     |
 

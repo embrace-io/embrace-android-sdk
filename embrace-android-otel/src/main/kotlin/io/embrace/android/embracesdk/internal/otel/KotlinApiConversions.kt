@@ -1,9 +1,9 @@
 package io.embrace.android.embracesdk.internal.otel
 
 import io.embrace.android.embracesdk.internal.payload.Span.Status
-import io.embrace.opentelemetry.kotlin.ExperimentalApi
-import io.embrace.opentelemetry.kotlin.tracing.StatusCode
-import io.embrace.opentelemetry.kotlin.tracing.data.StatusData
+import io.opentelemetry.kotlin.ExperimentalApi
+import io.opentelemetry.kotlin.tracing.StatusCode
+import io.opentelemetry.kotlin.tracing.data.StatusData
 
 @OptIn(ExperimentalApi::class)
 fun StatusCode.toEmbracePayload(): Status = when (this) {

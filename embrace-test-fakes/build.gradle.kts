@@ -30,6 +30,7 @@ dependencies {
     implementation(platform(libs.okhttp.bom))
     implementation(libs.okhttp)
     implementation(libs.opentelemetry.kotlin.api)
+    compileOnly(libs.opentelemetry.kotlin.sdk.api)
 
     implementation(libs.robolectric)
     implementation(libs.mockk)

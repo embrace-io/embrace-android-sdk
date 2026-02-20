@@ -5,7 +5,8 @@ import io.embrace.android.embracesdk.fakes.FakeMutableAttributeContainer
 import io.embrace.android.embracesdk.fakes.FakeReadWriteLogRecord
 import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
-import io.embrace.opentelemetry.kotlin.ExperimentalApi
+import io.opentelemetry.kotlin.ExperimentalApi
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Test
@@ -19,7 +20,7 @@ internal class DefaultLogRecordExporterTest {
         val exporter = DefaultLogRecordExporter(logSink, emptyList()) { true }
         val data = FakeReadWriteLogRecord()
 
-        exporter.export(listOf(FakeReadWriteLogRecord()))
+        runBlocking { exporter.export(listOf(FakeReadWriteLogRecord())) }
 
         assertFalse(logSink.logsForNextBatch().isEmpty())
         assertEquals(data.toEmbracePayload(), logSink.logsForNextBatch()[0])
@@ -39,7 +40,7 @@ internal class DefaultLogRecordExporterTest {
             }
         )
 
-        exporter.export(listOf(data, privateData))
+        runBlocking { exporter.export(listOf(data, privateData)) }
 
         assertEquals(2, logSink.logsForNextBatch().size)
         assertEquals(data.toEmbracePayload(), logSink.logsForNextBatch()[0])

@@ -19,17 +19,17 @@ import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface
 import io.embrace.android.embracesdk.testframework.actions.EmbraceOtelExportAssertionInterface
 import io.embrace.android.embracesdk.testframework.actions.EmbracePreSdkStartInterface
-import io.embrace.opentelemetry.kotlin.ExperimentalApi
-import io.embrace.opentelemetry.kotlin.OpenTelemetry
-import io.embrace.opentelemetry.kotlin.getTracer
-import io.embrace.opentelemetry.kotlin.logging.Logger
-import io.embrace.opentelemetry.kotlin.logging.model.ReadableLogRecord
-import io.embrace.opentelemetry.kotlin.logging.model.SeverityNumber
-import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
-import io.embrace.opentelemetry.kotlin.semconv.LogAttributes
-import io.embrace.opentelemetry.kotlin.semconv.ServiceAttributes
-import io.embrace.opentelemetry.kotlin.semconv.SessionAttributes
-import io.embrace.opentelemetry.kotlin.tracing.model.SpanContext
+import io.opentelemetry.kotlin.ExperimentalApi
+import io.opentelemetry.kotlin.OpenTelemetry
+import io.opentelemetry.kotlin.getTracer
+import io.opentelemetry.kotlin.logging.Logger
+import io.opentelemetry.kotlin.logging.model.ReadableLogRecord
+import io.opentelemetry.kotlin.logging.model.SeverityNumber
+import io.opentelemetry.kotlin.semconv.IncubatingApi
+import io.opentelemetry.kotlin.semconv.LogAttributes
+import io.opentelemetry.kotlin.semconv.ServiceAttributes
+import io.opentelemetry.kotlin.semconv.SessionAttributes
+import io.opentelemetry.kotlin.tracing.model.SpanContext
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -91,8 +91,9 @@ internal class ExternalLoggerTest {
                 recordSession {
                     logTime = clock.now().millisToNanos()
                     embrace.addSessionProperty("session-attr", "blah", true)
-                    embLogger.log(
+                    embLogger.emit(
                         body = "test",
+                        eventName = null,
                         timestamp = logTime,
                         observedTimestamp = observedTime,
                         context = null,
@@ -156,11 +157,11 @@ internal class ExternalLoggerTest {
                 logTime = clock.now().millisToNanos()
                 embrace.addSessionProperty("bg-attr", "blah", true)
                 sessionId = checkNotNull(embrace.currentSessionId)
-                val span = embOpenTelemetry.getTracer("").createSpan("my-span")
+                val span = embOpenTelemetry.getTracer("").startSpan("my-span")
                 parentContext = span.spanContext
-                embLogger.logEvent(
-                    eventName = "my.event",
+                embLogger.emit(
                     body = "event",
+                    eventName = "my.event",
                     timestamp = logTime,
                     observedTimestamp = observedTime,
                     context = embOpenTelemetry.contextFactory.storeSpan(embOpenTelemetry.contextFactory.root(), span),

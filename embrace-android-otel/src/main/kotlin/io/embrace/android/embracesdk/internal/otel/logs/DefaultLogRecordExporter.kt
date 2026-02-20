@@ -4,10 +4,10 @@ import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
 import io.embrace.android.embracesdk.internal.otel.sdk.StoreDataResult
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
-import io.embrace.opentelemetry.kotlin.ExperimentalApi
-import io.embrace.opentelemetry.kotlin.export.OperationResultCode
-import io.embrace.opentelemetry.kotlin.logging.export.LogRecordExporter
-import io.embrace.opentelemetry.kotlin.logging.model.ReadableLogRecord
+import io.opentelemetry.kotlin.ExperimentalApi
+import io.opentelemetry.kotlin.export.OperationResultCode
+import io.opentelemetry.kotlin.logging.export.LogRecordExporter
+import io.opentelemetry.kotlin.logging.model.ReadableLogRecord
 
 /**
  * Exports the given log record to a [LogSink]
@@ -19,7 +19,7 @@ internal class DefaultLogRecordExporter(
     private val exportCheck: () -> Boolean,
 ) : LogRecordExporter {
 
-    override fun export(telemetry: List<ReadableLogRecord>): OperationResultCode {
+    override suspend fun export(telemetry: List<ReadableLogRecord>): OperationResultCode {
         if (!exportCheck()) {
             return OperationResultCode.Success
         }
@@ -46,6 +46,6 @@ internal class DefaultLogRecordExporter(
         }
     }
 
-    override fun forceFlush(): OperationResultCode = OperationResultCode.Success
-    override fun shutdown(): OperationResultCode = OperationResultCode.Success
+    override suspend fun forceFlush(): OperationResultCode = OperationResultCode.Success
+    override suspend fun shutdown(): OperationResultCode = OperationResultCode.Success
 }

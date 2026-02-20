@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.opentelemetry.kotlin.ExperimentalApi
-import io.embrace.opentelemetry.kotlin.resource.MutableResource
-import io.embrace.opentelemetry.kotlin.resource.Resource
+import io.opentelemetry.kotlin.ExperimentalApi
+import io.opentelemetry.kotlin.resource.MutableResource
+import io.opentelemetry.kotlin.resource.Resource
 
 @OptIn(ExperimentalApi::class)
 internal class FakeResource(

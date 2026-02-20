@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.assertions.findSessionSpan
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.instrumentation.webview.WebViewUrlDataSource
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
-import io.embrace.opentelemetry.kotlin.semconv.UrlAttributes.URL_FULL
+import io.opentelemetry.kotlin.semconv.UrlAttributes.URL_FULL
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test

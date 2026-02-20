@@ -1,9 +1,9 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.opentelemetry.kotlin.ExperimentalApi
-import io.embrace.opentelemetry.kotlin.attributes.MutableAttributeContainer
-import io.embrace.opentelemetry.kotlin.logging.Logger
-import io.embrace.opentelemetry.kotlin.logging.LoggerProvider
+import io.opentelemetry.kotlin.ExperimentalApi
+import io.opentelemetry.kotlin.attributes.MutableAttributeContainer
+import io.opentelemetry.kotlin.logging.Logger
+import io.opentelemetry.kotlin.logging.LoggerProvider
 
 @OptIn(ExperimentalApi::class)
 class FakeLoggerProvider : LoggerProvider {

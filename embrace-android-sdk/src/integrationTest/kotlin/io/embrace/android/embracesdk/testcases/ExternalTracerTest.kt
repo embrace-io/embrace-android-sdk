@@ -16,14 +16,14 @@ import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface
 import io.embrace.android.embracesdk.testframework.actions.EmbracePreSdkStartInterface
-import io.embrace.opentelemetry.kotlin.ExperimentalApi
-import io.embrace.opentelemetry.kotlin.OpenTelemetry
-import io.embrace.opentelemetry.kotlin.getTracer
-import io.embrace.opentelemetry.kotlin.semconv.ExceptionAttributes
-import io.embrace.opentelemetry.kotlin.tracing.Tracer
-import io.embrace.opentelemetry.kotlin.tracing.data.SpanData
-import io.embrace.opentelemetry.kotlin.tracing.data.StatusData
-import io.embrace.opentelemetry.kotlin.tracing.recordException
+import io.opentelemetry.kotlin.ExperimentalApi
+import io.opentelemetry.kotlin.OpenTelemetry
+import io.opentelemetry.kotlin.getTracer
+import io.opentelemetry.kotlin.semconv.ExceptionAttributes
+import io.opentelemetry.kotlin.tracing.Tracer
+import io.opentelemetry.kotlin.tracing.data.SpanData
+import io.opentelemetry.kotlin.tracing.data.StatusData
+import io.opentelemetry.kotlin.tracing.recordException
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
@@ -66,7 +66,7 @@ internal class ExternalTracerTest {
                 initializeTracer()
             },
             assertAction = {
-                val span = embTracer.createSpan("test")
+                val span = embTracer.startSpan("test")
                 assertTrue(span.isRecording())
             }
         )
@@ -88,10 +88,10 @@ internal class ExternalTracerTest {
                 embOpenTelemetry = embrace.getOpenTelemetryKotlin()
                 initializeTracer()
                 recordSession {
-                    val span = embTracer.createSpan("external-span")
+                    val span = embTracer.startSpan("external-span")
                     startTimeMs = clock.now()
                     val parentContext = embOpenTelemetry.contextFactory.storeSpan(embOpenTelemetry.contextFactory.root(), span)
-                    val childSpan = embTracer.createSpan("child-span", parentContext)
+                    val childSpan = embTracer.startSpan("child-span", parentContext)
                     childSpan.status = StatusData.Error("oh no")
                     val exception = RuntimeException("bah")
                     childSpan.recordException(exception) {
@@ -103,13 +103,13 @@ internal class ExternalTracerTest {
 
                     val embraceSpan = checkNotNull(embrace.startSpan("another-root"))
                     embraceSpan.stop()
-                    embTracer.createSpan("no-parent").end()
+                    embTracer.startSpan("no-parent").end()
 
                     span.setLongAttribute("failures", 1L)
                     endTimeMs = clock.tick()
                     span.end()
-                    embTracer.createSpan("another-parent-with-tracer").end()
-                    embTracer.createSpan("set-parent-explicitly", parentContext).end()
+                    embTracer.startSpan("another-parent-with-tracer").end()
+                    embTracer.startSpan("set-parent-explicitly", parentContext).end()
                 }
             },
             assertAction = {
@@ -179,9 +179,9 @@ internal class ExternalTracerTest {
                 initializeTracer()
                 embOpenTelemetry = embrace.getOpenTelemetryKotlin()
                 recordSession {
-                    val parentSpan = embTracer.createSpan("external-span")
+                    val parentSpan = embTracer.startSpan("external-span")
                     val parentContext = embOpenTelemetry.contextFactory.storeSpan(embOpenTelemetry.contextFactory.root(), parentSpan)
-                    embTracer.createSpan("set-parent-explicitly", parentContext).end()
+                    embTracer.startSpan("set-parent-explicitly", parentContext).end()
                     parentSpan.end()
                 }
             },
@@ -212,7 +212,7 @@ internal class ExternalTracerTest {
                 initializeTracer()
                 recordSession {
                     startTimeMs = clock.now()
-                    val span = embTracer.createSpan("exc-span")
+                    val span = embTracer.startSpan("exc-span")
                     val exception = RuntimeException("bah")
                     stacktrace = exception.stackTraceToString()
                     span.recordException(exception) {
@@ -260,7 +260,7 @@ internal class ExternalTracerTest {
             preSdkStartAction = {
                 val otelKotlin = embrace.getOpenTelemetryKotlin()
                 val tracer = otelKotlin.getTracer("test-tracer")
-                val span = tracer.createSpan("test-span")
+                val span = tracer.startSpan("test-span")
 
                 // Noop span should not be recording
                 assertFalse(span.isRecording())

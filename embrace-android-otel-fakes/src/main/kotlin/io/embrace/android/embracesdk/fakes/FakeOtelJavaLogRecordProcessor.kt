@@ -1,9 +1,9 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaCompletableResultCode
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaContext
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaLogRecordProcessor
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaReadWriteLogRecord
+import io.opentelemetry.kotlin.aliases.OtelJavaCompletableResultCode
+import io.opentelemetry.kotlin.aliases.OtelJavaContext
+import io.opentelemetry.kotlin.aliases.OtelJavaLogRecordProcessor
+import io.opentelemetry.kotlin.aliases.OtelJavaReadWriteLogRecord
 
 class FakeOtelJavaLogRecordProcessor : OtelJavaLogRecordProcessor {
 

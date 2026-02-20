@@ -2,8 +2,8 @@ package io.embrace.android.embracesdk.internal.otel.payload
 
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Log
-import io.embrace.opentelemetry.kotlin.ExperimentalApi
-import io.embrace.opentelemetry.kotlin.logging.model.ReadableLogRecord
+import io.opentelemetry.kotlin.ExperimentalApi
+import io.opentelemetry.kotlin.logging.model.ReadableLogRecord
 
 @OptIn(ExperimentalApi::class)
 fun ReadableLogRecord.toEmbracePayload(): Log {

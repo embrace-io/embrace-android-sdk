@@ -1,9 +1,9 @@
 package io.embrace.android.embracesdk.testframework.export
 
 import io.embrace.android.embracesdk.assertions.returnIfConditionMet
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaCompletableResultCode
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaLogRecordData
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaLogRecordExporter
+import io.opentelemetry.kotlin.aliases.OtelJavaCompletableResultCode
+import io.opentelemetry.kotlin.aliases.OtelJavaLogRecordData
+import io.opentelemetry.kotlin.aliases.OtelJavaLogRecordExporter
 
 internal class FilteredLogExporter: OtelJavaLogRecordExporter {
 

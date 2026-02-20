@@ -2,21 +2,21 @@ package io.embrace.android.embracesdk.internal.otel.logs
 
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.utils.Uuid
-import io.embrace.opentelemetry.kotlin.ExperimentalApi
-import io.embrace.opentelemetry.kotlin.attributes.MutableAttributeContainer
-import io.embrace.opentelemetry.kotlin.context.Context
-import io.embrace.opentelemetry.kotlin.createNoopOpenTelemetry
-import io.embrace.opentelemetry.kotlin.logging.Logger
-import io.embrace.opentelemetry.kotlin.logging.model.SeverityNumber
-import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
-import io.embrace.opentelemetry.kotlin.semconv.LogAttributes
+import io.opentelemetry.kotlin.ExperimentalApi
+import io.opentelemetry.kotlin.NoopOpenTelemetry
+import io.opentelemetry.kotlin.attributes.MutableAttributeContainer
+import io.opentelemetry.kotlin.context.Context
+import io.opentelemetry.kotlin.logging.Logger
+import io.opentelemetry.kotlin.logging.model.SeverityNumber
+import io.opentelemetry.kotlin.semconv.IncubatingApi
+import io.opentelemetry.kotlin.semconv.LogAttributes
 import java.util.concurrent.atomic.AtomicReference
 
 @OptIn(ExperimentalApi::class, IncubatingApi::class)
 class EventServiceImpl(
     private val sdkLoggerProvider: Provider<Logger>,
 ) : EventService {
-    private val noopLogger = createNoopOpenTelemetry().loggerProvider.getLogger("noop")
+    private val noopLogger = NoopOpenTelemetry.loggerProvider.getLogger("noop")
     private val sdkLoggerRef: AtomicReference<Logger> = AtomicReference(noopLogger)
     private val metadataSupplierProviderRef = AtomicReference<Provider<Map<String, String>>> { emptyMap() }
 
@@ -51,28 +51,16 @@ class EventServiceImpl(
             }
         }
 
-        if (eventName == null) {
-            logger.log(
-                body = body,
-                timestamp = timestamp,
-                observedTimestamp = observedTimestamp,
-                context = context,
-                severityNumber = severityNumber,
-                severityText = severityText,
-                attributes = additionalAttributes
-            )
-        } else {
-            logger.logEvent(
-                eventName = eventName,
-                body = body,
-                timestamp = timestamp,
-                observedTimestamp = observedTimestamp,
-                context = context,
-                severityNumber = severityNumber,
-                severityText = severityText,
-                attributes = additionalAttributes
-            )
-        }
+        logger.emit(
+            body = body,
+            eventName = eventName,
+            timestamp = timestamp,
+            observedTimestamp = observedTimestamp,
+            context = context,
+            severityNumber = severityNumber,
+            severityText = severityText,
+            attributes = additionalAttributes
+        )
     }
 
     override fun setMetadataProvider(provider: Provider<Map<String, String>>) {

@@ -10,8 +10,8 @@ import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface
 import io.embrace.android.embracesdk.testframework.server.FormPart
-import io.embrace.opentelemetry.kotlin.ExperimentalApi
-import io.embrace.opentelemetry.kotlin.logging.model.SeverityNumber
+import io.opentelemetry.kotlin.ExperimentalApi
+import io.opentelemetry.kotlin.logging.model.SeverityNumber
 import java.util.LinkedList
 import java.util.Queue
 import java.util.UUID

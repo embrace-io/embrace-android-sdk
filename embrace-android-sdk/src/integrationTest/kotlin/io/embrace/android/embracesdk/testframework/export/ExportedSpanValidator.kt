@@ -4,7 +4,7 @@ import com.squareup.moshi.Types
 import io.embrace.android.embracesdk.ResourceReader
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.internal.utils.threadLocal
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanData
+import io.opentelemetry.kotlin.aliases.OtelJavaSpanData
 import org.junit.Assert.assertEquals
 
 internal class ExportedSpanValidator {

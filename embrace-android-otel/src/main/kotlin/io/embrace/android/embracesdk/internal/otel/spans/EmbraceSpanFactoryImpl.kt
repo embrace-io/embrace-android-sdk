@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.LinkType
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.clock.normalizeTimestampAsMillis
+import io.embrace.android.embracesdk.internal.otel.impl.EmbClock
 import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
 import io.embrace.android.embracesdk.internal.otel.sdk.DataValidator
 import io.embrace.android.embracesdk.internal.otel.sdk.hasEmbraceAttribute
@@ -24,15 +25,14 @@ import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
-import io.embrace.opentelemetry.kotlin.Clock
-import io.embrace.opentelemetry.kotlin.ExperimentalApi
-import io.embrace.opentelemetry.kotlin.attributes.setAttributes
-import io.embrace.opentelemetry.kotlin.context.Context
-import io.embrace.opentelemetry.kotlin.semconv.ExceptionAttributes
-import io.embrace.opentelemetry.kotlin.tracing.data.StatusData
-import io.embrace.opentelemetry.kotlin.tracing.model.Span
-import io.embrace.opentelemetry.kotlin.tracing.model.SpanContext
-import io.embrace.opentelemetry.kotlin.tracing.model.SpanKind
+import io.opentelemetry.kotlin.ExperimentalApi
+import io.opentelemetry.kotlin.attributes.setAttributes
+import io.opentelemetry.kotlin.context.Context
+import io.opentelemetry.kotlin.semconv.ExceptionAttributes
+import io.opentelemetry.kotlin.tracing.data.StatusData
+import io.opentelemetry.kotlin.tracing.model.Span
+import io.opentelemetry.kotlin.tracing.model.SpanContext
+import io.opentelemetry.kotlin.tracing.model.SpanKind
 import java.util.Queue
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -41,7 +41,7 @@ import java.util.concurrent.atomic.AtomicReference
 
 @OptIn(ExperimentalApi::class)
 class EmbraceSpanFactoryImpl(
-    private val openTelemetryClock: Clock,
+    private val openTelemetryClock: EmbClock,
     private val spanRepository: SpanRepository,
     private val dataValidator: DataValidator,
     private val stopCallback: ((spanId: String) -> Unit)? = null,
@@ -66,7 +66,7 @@ private const val SPAN_EVENT_TELEMETRY_TYPE = "span_event"
 @OptIn(ExperimentalApi::class)
 private class EmbraceSpanImpl(
     private val otelSpanStartArgs: OtelSpanStartArgs,
-    private val openTelemetryClock: Clock,
+    private val openTelemetryClock: EmbClock,
     private val spanRepository: SpanRepository,
     private val dataValidator: DataValidator,
     private val stopCallback: ((spanId: String) -> Unit)?,

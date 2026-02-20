@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.otel.impl
 import android.os.SystemClock
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
-import io.embrace.opentelemetry.kotlin.ExperimentalApi
+import io.opentelemetry.kotlin.ExperimentalApi
 
 /**
  * A clock that is compatible with the OpenTelemetry SDK that defers to the internal clock used by Embrace. This allows the times recorded
@@ -14,9 +14,9 @@ import io.embrace.opentelemetry.kotlin.ExperimentalApi
  * considered enough for client side operation timings at this time.
  */
 @OptIn(ExperimentalApi::class)
-class EmbClock(
+open class EmbClock(
     private val embraceClock: Clock,
-) : io.embrace.opentelemetry.kotlin.Clock {
+) : io.opentelemetry.kotlin.Clock {
 
     override fun now(): Long = embraceClock.now().millisToNanos()
 

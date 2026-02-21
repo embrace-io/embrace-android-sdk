@@ -145,10 +145,22 @@ internal class AutoDataCaptureBehaviorImplTest {
             localUiLoadTracingEnabled = true,
             localUiLoadTracingTraceAllEnabled = true,
             stateCaptureEnabled = false,
-            remote = remote.copy(stateEnabled = true)
+            remote = remote.copy(pctStateCaptureEnabledV2 = 100.0f)
         )
 
         assertTrue(behavior.isStateCaptureEnabled())
+    }
+
+    @Test
+    fun `disable state capture remotely`() {
+        val behavior = createBehavior(
+            localUiLoadTracingEnabled = true,
+            localUiLoadTracingTraceAllEnabled = true,
+            stateCaptureEnabled = true,
+            remote = remote.copy(pctStateCaptureEnabledV2 = 0.0f)
+        )
+
+        assertFalse(behavior.isStateCaptureEnabled())
     }
 
     private fun createBehavior(

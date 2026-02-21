@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.assertions.hasLinkToEmbraceSpan
 import io.embrace.android.embracesdk.fakes.TestStateDataSource
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
+import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.arch.attrs.EmbraceAttributeKey
 import io.embrace.android.embracesdk.internal.arch.attrs.embStateDroppedByInstrumentation
 import io.embrace.android.embracesdk.internal.arch.attrs.embStateInitialValue
@@ -37,9 +38,10 @@ internal class StateFeatureTest {
     @JvmField
     val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule()
 
+    val stateEnabledRemoteConfig = RemoteConfig(pctStateCaptureEnabledV2 = 100.0f)
+
     val stateEnabledInstrumentedConfig = FakeInstrumentedConfig(
         enabledFeatures = FakeEnabledFeatureConfig(
-            stateCaptureEnabled = true,
             bgActivityCapture = false
         )
     )
@@ -77,10 +79,10 @@ internal class StateFeatureTest {
         testRule.runTest(
             instrumentedConfig = FakeInstrumentedConfig(
                 enabledFeatures = FakeEnabledFeatureConfig(
-                    stateCaptureEnabled = true,
                     bgActivityCapture = true
                 )
             ),
+            persistedRemoteConfig = stateEnabledRemoteConfig,
             testCaseAction = {
                 transitions.add(executeTransitions(stateUpdates))
                 recordSession {
@@ -120,6 +122,7 @@ internal class StateFeatureTest {
         var transitions: List<Pair<Long, String>> = listOf()
         testRule.runTest(
             instrumentedConfig = stateEnabledInstrumentedConfig,
+            persistedRemoteConfig = stateEnabledRemoteConfig,
             testCaseAction = {
                 recordSession {
                     transitions = executeTransitions(stateUpdates)
@@ -143,6 +146,7 @@ internal class StateFeatureTest {
         var transitions: List<Pair<Long, String>> = listOf()
         testRule.runTest(
             instrumentedConfig = stateEnabledInstrumentedConfig,
+            persistedRemoteConfig = stateEnabledRemoteConfig,
             testCaseAction = {
                 recordSession {
                     transitions = executeTransitions(stateUpdates)
@@ -169,6 +173,7 @@ internal class StateFeatureTest {
         var transitions: List<Pair<Long, String>> = listOf()
         testRule.runTest(
             instrumentedConfig = stateEnabledInstrumentedConfig,
+            persistedRemoteConfig = stateEnabledRemoteConfig,
             testCaseAction = {
                 recordSession {
                     transitions = executeTransitions(stateUpdates, transitionDrops)
@@ -204,6 +209,7 @@ internal class StateFeatureTest {
         var transitions: List<Pair<Long, String>> = listOf()
         testRule.runTest(
             instrumentedConfig = stateEnabledInstrumentedConfig,
+            persistedRemoteConfig = stateEnabledRemoteConfig,
             testCaseAction = {
                 recordSession {
                     transitions = executeTransitions(stateUpdates, transitionDrops)
@@ -232,6 +238,7 @@ internal class StateFeatureTest {
         val transitions: MutableList<List<Pair<Long, String>>> = mutableListOf()
         testRule.runTest(
             instrumentedConfig = stateEnabledInstrumentedConfig,
+            persistedRemoteConfig = stateEnabledRemoteConfig,
             testCaseAction = {
                 repeat(2) {
                     transitions.add(executeTransitions(listOf("baz")))
@@ -263,6 +270,7 @@ internal class StateFeatureTest {
         val transitions: MutableList<List<Pair<Long, String>>> = mutableListOf()
         testRule.runTest(
             instrumentedConfig = stateEnabledInstrumentedConfig,
+            persistedRemoteConfig = stateEnabledRemoteConfig,
             testCaseAction = {
                 repeat(2) {
                     transitions.add(executeTransitions(listOf("baz")))
@@ -289,10 +297,10 @@ internal class StateFeatureTest {
         testRule.runTest(
             instrumentedConfig = FakeInstrumentedConfig(
                 enabledFeatures = FakeEnabledFeatureConfig(
-                    stateCaptureEnabled = true,
                     bgActivityCapture = true
                 )
             ),
+            persistedRemoteConfig = stateEnabledRemoteConfig,
             testCaseAction = {
                 val dataSource = findDataSource<TestStateDataSource>()
                 dataSourceKey = dataSource.stateAttributeKey

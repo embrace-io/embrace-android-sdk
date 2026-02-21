@@ -51,7 +51,6 @@ internal class ExternalLoggerTest {
     private val instrumentedConfig = FakeInstrumentedConfig(
         enabledFeatures = FakeEnabledFeatureConfig(
             bgActivityCapture = true,
-            stateCaptureEnabled = true
         ),
         project = FakeProjectConfig(
             appId = "abcde",
@@ -64,7 +63,8 @@ internal class ExternalLoggerTest {
     private lateinit var embLogger: Logger
 
     private val remoteConfig = RemoteConfig(
-        otelKotlinSdkConfig = OtelKotlinSdkConfig(pctEnabled = 100.0f) // Enable Kotlin SDK
+        otelKotlinSdkConfig = OtelKotlinSdkConfig(pctEnabled = 100.0f), // Enable Kotlin SDK
+        pctStateCaptureEnabledV2 = 100.0f,
     )
 
     @Before

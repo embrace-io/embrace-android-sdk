@@ -16,6 +16,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.LinkType
 import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
+import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.otel.sdk.hasEmbraceAttribute
 import io.embrace.android.embracesdk.internal.otel.sdk.hasEmbraceAttributeValue
 import io.embrace.android.embracesdk.internal.otel.spans.hasEmbraceAttributeValue
@@ -37,15 +38,41 @@ internal class StateFeatureTest {
     @JvmField
     val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule()
 
-    val stateEnabledInstrumentedConfig = FakeInstrumentedConfig(
+    val stateEnabledRemoteConfig = RemoteConfig(pctStateCaptureEnabledV2 = 100.0f)
+    val stateDisabledRemoteConfig = RemoteConfig(pctStateCaptureEnabledV2 = 0.0f)
+    val stateEnabledLocalConfig = FakeInstrumentedConfig(
         enabledFeatures = FakeEnabledFeatureConfig(
-            stateCaptureEnabled = true,
-            bgActivityCapture = false
+            stateCaptureEnabled = true
+        )
+    )
+    val stateDisabledLocalConfig = FakeInstrumentedConfig(
+        enabledFeatures = FakeEnabledFeatureConfig(
+            stateCaptureEnabled = false
         )
     )
 
     @Test
-    fun `state feature off`() {
+    fun `state feature off by default`() {
+        var throwable: Throwable? = null
+        testRule.runTest(
+            testCaseAction = {
+                try {
+                    findDataSource<TestStateDataSource>()
+                } catch (e: IllegalStateException) {
+                    throwable = e
+                }
+                recordSession {}
+            },
+            assertAction = {
+                val message = getSingleSessionEnvelope()
+                assertEquals(0, message.findSpansOfType(EmbType.State).size)
+                assertTrue(throwable is IllegalStateException)
+            }
+        )
+    }
+
+    @Test
+    fun `state feature off if disabled by local config`() {
         var throwable: Throwable? = null
         testRule.runTest(
             instrumentedConfig = FakeInstrumentedConfig(
@@ -70,6 +97,42 @@ internal class StateFeatureTest {
     }
 
     @Test
+    fun `state feature off if disabled by remote config even if enabled local config`() {
+        var throwable: Throwable? = null
+        testRule.runTest(
+            instrumentedConfig = stateEnabledLocalConfig,
+            persistedRemoteConfig = stateDisabledRemoteConfig,
+            testCaseAction = {
+                try {
+                    findDataSource<TestStateDataSource>()
+                } catch (e: IllegalStateException) {
+                    throwable = e
+                }
+                recordSession {}
+            },
+            assertAction = {
+                val message = getSingleSessionEnvelope()
+                assertEquals(0, message.findSpansOfType(EmbType.State).size)
+                assertTrue(throwable is IllegalStateException)
+            }
+        )
+    }
+
+    @Test
+    fun `state feature on if enabled by remote config even if disabled by local config`() {
+        testRule.runTest(
+            instrumentedConfig = stateDisabledLocalConfig,
+            persistedRemoteConfig = stateEnabledRemoteConfig,
+            testCaseAction = {
+                recordSession {}
+            },
+            assertAction = {
+                assertTrue(getSingleSessionEnvelope().findSpansOfType(EmbType.State).isNotEmpty())
+            }
+        )
+    }
+
+    @Test
     fun `transitions during session and background activity record state spans`() {
         val stateUpdates = listOf("foo", "bar", "baz")
         val transitions: MutableList<List<Pair<Long, String>>> = mutableListOf()
@@ -77,10 +140,10 @@ internal class StateFeatureTest {
         testRule.runTest(
             instrumentedConfig = FakeInstrumentedConfig(
                 enabledFeatures = FakeEnabledFeatureConfig(
-                    stateCaptureEnabled = true,
                     bgActivityCapture = true
                 )
             ),
+            persistedRemoteConfig = stateEnabledRemoteConfig,
             testCaseAction = {
                 transitions.add(executeTransitions(stateUpdates))
                 recordSession {
@@ -119,7 +182,7 @@ internal class StateFeatureTest {
         val stateUpdates = listOf("foo", "bar", "baz", "bar", "baz")
         var transitions: List<Pair<Long, String>> = listOf()
         testRule.runTest(
-            instrumentedConfig = stateEnabledInstrumentedConfig,
+            persistedRemoteConfig = stateEnabledRemoteConfig,
             testCaseAction = {
                 recordSession {
                     transitions = executeTransitions(stateUpdates)
@@ -142,7 +205,7 @@ internal class StateFeatureTest {
         val stateUpdates = listOf("foo", "foo")
         var transitions: List<Pair<Long, String>> = listOf()
         testRule.runTest(
-            instrumentedConfig = stateEnabledInstrumentedConfig,
+            persistedRemoteConfig = stateEnabledRemoteConfig,
             testCaseAction = {
                 recordSession {
                     transitions = executeTransitions(stateUpdates)
@@ -168,7 +231,7 @@ internal class StateFeatureTest {
         val transitionDrops = 2
         var transitions: List<Pair<Long, String>> = listOf()
         testRule.runTest(
-            instrumentedConfig = stateEnabledInstrumentedConfig,
+            persistedRemoteConfig = stateEnabledRemoteConfig,
             testCaseAction = {
                 recordSession {
                     transitions = executeTransitions(stateUpdates, transitionDrops)
@@ -203,7 +266,7 @@ internal class StateFeatureTest {
         val transitionDrops = 2
         var transitions: List<Pair<Long, String>> = listOf()
         testRule.runTest(
-            instrumentedConfig = stateEnabledInstrumentedConfig,
+            persistedRemoteConfig = stateEnabledRemoteConfig,
             testCaseAction = {
                 recordSession {
                     transitions = executeTransitions(stateUpdates, transitionDrops)
@@ -231,7 +294,7 @@ internal class StateFeatureTest {
         val stateUpdates = listOf("foo", "bar")
         val transitions: MutableList<List<Pair<Long, String>>> = mutableListOf()
         testRule.runTest(
-            instrumentedConfig = stateEnabledInstrumentedConfig,
+            persistedRemoteConfig = stateEnabledRemoteConfig,
             testCaseAction = {
                 repeat(2) {
                     transitions.add(executeTransitions(listOf("baz")))
@@ -262,7 +325,7 @@ internal class StateFeatureTest {
         val stateUpdates = listOf("foo", "bar")
         val transitions: MutableList<List<Pair<Long, String>>> = mutableListOf()
         testRule.runTest(
-            instrumentedConfig = stateEnabledInstrumentedConfig,
+            persistedRemoteConfig = stateEnabledRemoteConfig,
             testCaseAction = {
                 repeat(2) {
                     transitions.add(executeTransitions(listOf("baz")))
@@ -289,10 +352,10 @@ internal class StateFeatureTest {
         testRule.runTest(
             instrumentedConfig = FakeInstrumentedConfig(
                 enabledFeatures = FakeEnabledFeatureConfig(
-                    stateCaptureEnabled = true,
                     bgActivityCapture = true
                 )
             ),
+            persistedRemoteConfig = stateEnabledRemoteConfig,
             testCaseAction = {
                 val dataSource = findDataSource<TestStateDataSource>()
                 dataSourceKey = dataSource.stateAttributeKey
@@ -319,7 +382,12 @@ internal class StateFeatureTest {
 
                 assertEquals(6, logs.size)
                 repeat(logs.size) { i ->
-                    assertTrue(checkNotNull(logs[i].attributes).hasEmbraceAttributeValue(checkNotNull(dataSourceKey), expectedStateValues[i]))
+                    assertTrue(
+                        checkNotNull(logs[i].attributes).hasEmbraceAttributeValue(
+                            checkNotNull(dataSourceKey),
+                            expectedStateValues[i]
+                        )
+                    )
                     assertEquals(expectedStateValues[i], stateValues[i])
                 }
             }

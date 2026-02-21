@@ -46,5 +46,8 @@ class AutoDataCaptureBehaviorImpl(
         remote?.uiLoadInstrumentationEnabled ?: UI_LOAD_REMOTE_ENABLED_DEFAULT
 
     override fun isEndStartupWithAppReadyEnabled(): Boolean = local.isEndStartupWithAppReadyEnabled()
-    override fun isStateCaptureEnabled(): Boolean = remote?.stateEnabled ?: local.isStateCaptureEnabled()
+    override fun isStateCaptureEnabled(): Boolean {
+        return thresholdCheck.isBehaviorEnabled(remote?.pctStateCaptureEnabledV2)
+            ?: local.isStateCaptureEnabled()
+    }
 }

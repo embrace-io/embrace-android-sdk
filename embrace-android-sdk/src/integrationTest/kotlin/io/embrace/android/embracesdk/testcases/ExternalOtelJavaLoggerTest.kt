@@ -52,7 +52,6 @@ internal class ExternalOtelJavaLoggerTest {
     private val instrumentedConfig = FakeInstrumentedConfig(
         enabledFeatures = FakeEnabledFeatureConfig(
             bgActivityCapture = true,
-            stateCaptureEnabled = true
         ),
         project = FakeProjectConfig(
             appId = "abcde",
@@ -65,7 +64,8 @@ internal class ExternalOtelJavaLoggerTest {
     private lateinit var otelLogger: OtelJavaLogger
 
     private val remoteConfig = RemoteConfig(
-        otelKotlinSdkConfig = OtelKotlinSdkConfig(pctEnabled = 0.0f)
+        otelKotlinSdkConfig = OtelKotlinSdkConfig(pctEnabled = 0.0f),
+        pctStateCaptureEnabledV2 = 100.0f,
     )
 
     @Before

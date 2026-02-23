@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.internal.instrumentation.crash.jvm.JvmCrash
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeCrashDataSource
 import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkStateDataSource
 import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkStatusDataSource
+import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.EmbTrace.end
 import io.embrace.android.embracesdk.internal.utils.EmbTrace.start
@@ -121,9 +122,20 @@ internal fun ModuleGraph.postLoadInstrumentation() {
 internal fun ModuleGraph.triggerPayloadSend() {
     val worker = workerThreadModule.backgroundWorker(Worker.Background.IoRegWorker)
     worker.submit {
-        instrumentationModule.instrumentationRegistry.findByType(NativeCrashDataSource::class)?.let {
-            payloadSourceModule.payloadResurrectionService?.resurrectOldPayloads(
-                nativeCrashServiceProvider = { it }
+        val resurrectionService = payloadSourceModule.payloadResurrectionService
+        if (resurrectionService != null) {
+            resurrectionService.resurrectOldPayloads(
+                nativeCrashServiceProvider = {
+                    instrumentationModule.instrumentationRegistry.findByType(NativeCrashDataSource::class)
+                }
+            )
+        } else {
+            val payloadCount = deliveryModule?.cacheStorageService?.getUndeliveredPayloads()?.size ?: 0
+            initModule.logger.trackInternalError(
+                type = InternalErrorType.PAYLOAD_RESURRECTION_FAIL,
+                throwable = IllegalStateException(
+                    "Resurrection service not found. Undelivered payloads not processed: $payloadCount"
+                )
             )
         }
     }

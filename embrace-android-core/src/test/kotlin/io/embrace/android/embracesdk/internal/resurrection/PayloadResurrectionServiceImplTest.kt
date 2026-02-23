@@ -87,7 +87,7 @@ class PayloadResurrectionServiceImplTest {
     fun `dead session resurrected and delivered`() {
         deadSessionEnvelope.resurrectPayload()
         val intake = intakeService.getIntakes<SessionPayload>().single()
-        assertEquals(intake.metadata, fakeCachedSessionStoredTelemetryMetadata.copy(complete = true))
+        assertEquals(fakeCachedSessionStoredTelemetryMetadata.copy(complete = true), intake.metadata)
         assertEquals(0, cacheStorageService.storedPayloadCount())
 
         val sessionSpan = checkNotNull(intake.envelope.getSessionSpan())
@@ -349,6 +349,21 @@ class PayloadResurrectionServiceImplTest {
             assertEquals(deadSessionCrashData, first)
             assertTrue(second.keys.none { it.isEmbraceAttributeName() || embState.name == it })
         }
+    }
+
+    @Test
+    fun `dead session is resurrected with no crashId when nativeCrashService is null`() {
+        cacheStorageService.addPayload(
+            metadata = sessionMetadata,
+            data = deadSessionEnvelope
+        )
+        resurrectionService.resurrectOldPayloads { null }
+
+        val resurrectedSession = intakeService.getIntakes<SessionPayload>().single()
+        assertEquals(fakeCachedSessionStoredTelemetryMetadata.copy(complete = true), resurrectedSession.metadata)
+        assertEquals(0, cacheStorageService.storedPayloadCount())
+        val sessionSpan = checkNotNull(resurrectedSession.envelope.getSessionSpan())
+        assertNull(checkNotNull(sessionSpan.attributes).findAttributeValue(embCrashId.name))
     }
 
     private fun Envelope<SessionPayload>.resurrectPayload() {

@@ -19,6 +19,9 @@ class FakeSpanProcessor(
     override fun isEndRequired(): Boolean = true
     override fun isStartRequired(): Boolean = true
 
+    override fun onEnding(span: ReadWriteSpan) {
+    }
+
     override fun onEnd(span: ReadableSpan) {
         endedSpanNames.add(span.name)
         onEndAction(span)
@@ -32,6 +35,6 @@ class FakeSpanProcessor(
         onStartAction(span)
     }
 
-    override fun forceFlush(): OperationResultCode = OperationResultCode.Success
-    override fun shutdown(): OperationResultCode = OperationResultCode.Success
+    override suspend fun forceFlush(): OperationResultCode = OperationResultCode.Success
+    override suspend fun shutdown(): OperationResultCode = OperationResultCode.Success
 }

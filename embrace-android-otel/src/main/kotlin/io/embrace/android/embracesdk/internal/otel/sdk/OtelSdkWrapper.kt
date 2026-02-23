@@ -61,6 +61,7 @@ class OtelSdkWrapper(
         }
     }
 
+    @Suppress("DEPRECATION")
     private val kotlinApi: OpenTelemetry by lazy {
         createSdkOtelInstance(
             useKotlinSdk = useKotlinSdk,

@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.otel.impl
 
-import io.opentelemetry.kotlin.Clock
 import io.opentelemetry.kotlin.ExperimentalApi
 import io.opentelemetry.kotlin.OpenTelemetry
 import io.opentelemetry.kotlin.logging.LoggerProvider
@@ -15,7 +14,6 @@ class EmbOpenTelemetry(
     traceProviderSupplier: () -> TracerProvider,
     loggerProviderSupplier: () -> LoggerProvider,
 ) : OpenTelemetry by impl {
-    override val clock: Clock = impl.clock
     override val tracerProvider: TracerProvider = traceProviderSupplier()
     override val loggerProvider: LoggerProvider = loggerProviderSupplier()
 }

@@ -41,6 +41,7 @@ dependencies {
     implementation(libs.okhttp)
 
     implementation(libs.opentelemetry.kotlin.api)
+    implementation(libs.opentelemetry.kotlin.sdk.api)
     implementation(libs.opentelemetry.kotlin.semconv)
 
     testImplementation(project(":embrace-android-api"))

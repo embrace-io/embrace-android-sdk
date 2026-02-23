@@ -50,7 +50,7 @@ class OtelSpanStartArgs(
     }
 
     fun startSpan(startTimeMs: Long): Span {
-        return tracer.createSpan(
+        return tracer.startSpan(
             name = initialSpanName,
             parentContext = parentContext,
             spanKind = spanKind ?: SpanKind.INTERNAL,

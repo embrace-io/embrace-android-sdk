@@ -19,8 +19,7 @@ internal class DefaultSpanExporter(
     private val exportCheck: () -> Boolean,
 ) : SpanExporter {
 
-    @Synchronized
-    override fun export(telemetry: List<SpanData>): OperationResultCode {
+    override suspend fun export(telemetry: List<SpanData>): OperationResultCode {
         if (!exportCheck()) {
             return OperationResultCode.Success
         }
@@ -47,8 +46,7 @@ internal class DefaultSpanExporter(
         }
     }
 
-    override fun forceFlush(): OperationResultCode = OperationResultCode.Success
+    override suspend fun forceFlush(): OperationResultCode = OperationResultCode.Success
 
-    @Synchronized
-    override fun shutdown(): OperationResultCode = OperationResultCode.Success
+    override suspend fun shutdown(): OperationResultCode = OperationResultCode.Success
 }

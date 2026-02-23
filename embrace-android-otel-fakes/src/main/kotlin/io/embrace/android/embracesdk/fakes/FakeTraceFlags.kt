@@ -5,7 +5,6 @@ import io.opentelemetry.kotlin.tracing.model.TraceFlags
 
 @ExperimentalApi
 class FakeTraceFlags(
-    override val hex: String = "00",
     override val isRandom: Boolean = true,
     override val isSampled: Boolean = false,
 ) : TraceFlags

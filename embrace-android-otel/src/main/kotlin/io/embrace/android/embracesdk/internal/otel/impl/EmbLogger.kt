@@ -12,32 +12,15 @@ class EmbLogger(
     private val impl: Logger,
     private val eventService: EventService,
 ) : Logger {
-    override fun log(
-        body: String?,
-        timestamp: Long?,
-        observedTimestamp: Long?,
+    override fun enabled(
         context: Context?,
         severityNumber: SeverityNumber?,
-        severityText: String?,
-        attributes: (MutableAttributeContainer.() -> Unit)?,
-    ) {
-        eventService.log(
-            impl = impl,
-            eventName = null,
-            body = body,
-            timestamp = timestamp,
-            observedTimestamp = observedTimestamp,
-            context = context,
-            severityNumber = severityNumber,
-            severityText = severityText,
-            addCurrentMetadata = true,
-            eventAttributes = attributes
-        )
-    }
+        eventName: String?,
+    ): Boolean = impl.enabled(context, severityNumber, eventName)
 
-    override fun logEvent(
-        eventName: String,
+    override fun emit(
         body: String?,
+        eventName: String?,
         timestamp: Long?,
         observedTimestamp: Long?,
         context: Context?,
@@ -56,6 +39,57 @@ class EmbLogger(
             severityText = severityText,
             addCurrentMetadata = true,
             eventAttributes = attributes
+        )
+    }
+
+    @Deprecated(
+        "Use emit() instead",
+        replaceWith = ReplaceWith("emit(body, null, timestamp, observedTimestamp, context, severityNumber, severityText, attributes)")
+    )
+    override fun log(
+        body: String?,
+        timestamp: Long?,
+        observedTimestamp: Long?,
+        context: Context?,
+        severityNumber: SeverityNumber?,
+        severityText: String?,
+        attributes: (MutableAttributeContainer.() -> Unit)?,
+    ) {
+        emit(
+            body = body,
+            eventName = null,
+            timestamp = timestamp,
+            observedTimestamp = observedTimestamp,
+            context = context,
+            severityNumber = severityNumber,
+            severityText = severityText,
+            attributes = attributes
+        )
+    }
+
+    @Deprecated(
+        "Use emit() instead",
+        replaceWith = ReplaceWith("emit(body, eventName, timestamp, observedTimestamp, context, severityNumber, severityText, attributes)")
+    )
+    override fun logEvent(
+        eventName: String,
+        body: String?,
+        timestamp: Long?,
+        observedTimestamp: Long?,
+        context: Context?,
+        severityNumber: SeverityNumber?,
+        severityText: String?,
+        attributes: (MutableAttributeContainer.() -> Unit)?,
+    ) {
+        emit(
+            body = body,
+            eventName = eventName,
+            timestamp = timestamp,
+            observedTimestamp = observedTimestamp,
+            context = context,
+            severityNumber = severityNumber,
+            severityText = severityText,
+            attributes = attributes
         )
     }
 }

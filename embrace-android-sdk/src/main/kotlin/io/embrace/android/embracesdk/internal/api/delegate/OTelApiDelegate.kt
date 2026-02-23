@@ -3,8 +3,8 @@ package io.embrace.android.embracesdk.internal.api.delegate
 import io.embrace.android.embracesdk.internal.api.OTelApi
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.opentelemetry.kotlin.ExperimentalApi
+import io.opentelemetry.kotlin.NoopOpenTelemetry
 import io.opentelemetry.kotlin.OpenTelemetry
-import io.opentelemetry.kotlin.createNoopOpenTelemetry
 import io.opentelemetry.kotlin.logging.export.LogRecordExporter
 import io.opentelemetry.kotlin.logging.export.LogRecordProcessor
 import io.opentelemetry.kotlin.tracing.export.SpanExporter
@@ -56,7 +56,7 @@ internal class OTelApiDelegate(
         return if (sdkCallChecker.started.get()) {
             bootstrapper.openTelemetryModule.otelSdkWrapper.openTelemetryKotlin
         } else {
-            createNoopOpenTelemetry()
+            NoopOpenTelemetry
         }
     }
 }

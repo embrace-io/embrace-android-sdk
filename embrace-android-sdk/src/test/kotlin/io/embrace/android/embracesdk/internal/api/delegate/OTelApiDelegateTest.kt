@@ -14,7 +14,7 @@ import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.otel.config.OtelSdkConfig
 import io.opentelemetry.kotlin.ExperimentalApi
-import io.opentelemetry.kotlin.createNoopOpenTelemetry
+import io.opentelemetry.kotlin.NoopOpenTelemetry
 import io.opentelemetry.kotlin.semconv.ServiceAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -93,12 +93,12 @@ internal class OTelApiDelegateTest {
     @Test
     fun `get opentelemetry kotlin before start`() {
         sdkCallChecker.started.set(false)
-        assertEquals(createNoopOpenTelemetry(), delegate.getOpenTelemetryKotlin())
+        assertEquals(NoopOpenTelemetry, delegate.getOpenTelemetryKotlin())
     }
 
     @Test
     fun `get opentelemetry kotlin after start`() {
-        assertNotEquals(createNoopOpenTelemetry(), delegate.getOpenTelemetryKotlin())
+        assertNotEquals(NoopOpenTelemetry, delegate.getOpenTelemetryKotlin())
     }
 
     @Test

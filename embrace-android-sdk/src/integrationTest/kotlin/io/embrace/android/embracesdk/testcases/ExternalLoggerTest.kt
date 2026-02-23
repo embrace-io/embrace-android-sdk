@@ -91,8 +91,9 @@ internal class ExternalLoggerTest {
                 recordSession {
                     logTime = clock.now().millisToNanos()
                     embrace.addSessionProperty("session-attr", "blah", true)
-                    embLogger.log(
+                    embLogger.emit(
                         body = "test",
+                        eventName = null,
                         timestamp = logTime,
                         observedTimestamp = observedTime,
                         context = null,
@@ -156,11 +157,11 @@ internal class ExternalLoggerTest {
                 logTime = clock.now().millisToNanos()
                 embrace.addSessionProperty("bg-attr", "blah", true)
                 sessionId = checkNotNull(embrace.currentSessionId)
-                val span = embOpenTelemetry.getTracer("").createSpan("my-span")
+                val span = embOpenTelemetry.getTracer("").startSpan("my-span")
                 parentContext = span.spanContext
-                embLogger.logEvent(
-                    eventName = "my.event",
+                embLogger.emit(
                     body = "event",
+                    eventName = "my.event",
                     timestamp = logTime,
                     observedTimestamp = observedTime,
                     context = embOpenTelemetry.contextFactory.storeSpan(embOpenTelemetry.contextFactory.root(), span),

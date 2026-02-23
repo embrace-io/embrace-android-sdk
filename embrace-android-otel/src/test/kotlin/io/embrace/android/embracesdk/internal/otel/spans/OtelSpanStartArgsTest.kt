@@ -65,7 +65,7 @@ internal class OtelSpanStartArgsTest {
 
     @Test
     fun `add parent after initial creation`() {
-        val parent = tracer.createSpan("parent")
+        val parent = tracer.startSpan("parent")
         val ctx = fakeOpenTelemetry(false).contextFactory.storeSpan(fakeOpenTelemetry().contextFactory.root(), parent)
         val args = OtelSpanStartArgs(
             name = "test",

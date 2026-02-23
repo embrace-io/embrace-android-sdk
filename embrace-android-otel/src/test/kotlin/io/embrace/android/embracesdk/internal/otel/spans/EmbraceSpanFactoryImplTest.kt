@@ -9,9 +9,9 @@ import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.otel.createSdkOtelInstance
 import io.embrace.android.embracesdk.internal.otel.sdk.DataValidator
-import io.embrace.opentelemetry.kotlin.ExperimentalApi
-import io.embrace.opentelemetry.kotlin.getTracer
-import io.embrace.opentelemetry.kotlin.tracing.Tracer
+import io.opentelemetry.kotlin.ExperimentalApi
+import io.opentelemetry.kotlin.getTracer
+import io.opentelemetry.kotlin.tracing.Tracer
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull

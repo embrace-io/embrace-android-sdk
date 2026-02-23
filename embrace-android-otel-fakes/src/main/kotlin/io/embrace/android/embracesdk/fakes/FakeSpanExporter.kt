@@ -1,9 +1,9 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.opentelemetry.kotlin.ExperimentalApi
-import io.embrace.opentelemetry.kotlin.export.OperationResultCode
-import io.embrace.opentelemetry.kotlin.tracing.data.SpanData
-import io.embrace.opentelemetry.kotlin.tracing.export.SpanExporter
+import io.opentelemetry.kotlin.ExperimentalApi
+import io.opentelemetry.kotlin.export.OperationResultCode
+import io.opentelemetry.kotlin.tracing.data.SpanData
+import io.opentelemetry.kotlin.tracing.export.SpanExporter
 
 @OptIn(ExperimentalApi::class)
 class FakeSpanExporter : SpanExporter {

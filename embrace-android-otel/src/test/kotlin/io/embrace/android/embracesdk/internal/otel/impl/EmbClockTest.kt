@@ -4,7 +4,7 @@ import android.os.Build.VERSION_CODES.TIRAMISU
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.clock.NormalizedIntervalClock
-import io.embrace.opentelemetry.kotlin.ExperimentalApi
+import io.opentelemetry.kotlin.ExperimentalApi
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test

@@ -40,7 +40,7 @@ dependencies {
     androidTestImplementation(libs.androidx.test.junit)
     androidTestImplementation(libs.junit)
     androidTestImplementation(libs.androidx.benchmark.junit4)
-    androidTestImplementation(libs.opentelemetry.kotlin)
+    androidTestImplementation(libs.opentelemetry.kotlin.api)
     androidTestImplementation(libs.opentelemetry.kotlin.compat)
     androidTestImplementation(platform(libs.okhttp.bom))
     androidTestImplementation(libs.okhttp)

@@ -4,10 +4,10 @@ import io.embrace.android.embracesdk.fakes.FakeReadWriteSpan
 import io.embrace.android.embracesdk.fakes.FakeSpanExporter
 import io.embrace.android.embracesdk.internal.arch.attrs.embProcessIdentifier
 import io.embrace.android.embracesdk.internal.arch.attrs.embSequenceId
-import io.embrace.opentelemetry.kotlin.ExperimentalApi
-import io.embrace.opentelemetry.kotlin.createNoopOpenTelemetry
-import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
-import io.embrace.opentelemetry.kotlin.semconv.SessionAttributes
+import io.opentelemetry.kotlin.ExperimentalApi
+import io.opentelemetry.kotlin.createNoopOpenTelemetry
+import io.opentelemetry.kotlin.semconv.IncubatingApi
+import io.opentelemetry.kotlin.semconv.SessionAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Test
 

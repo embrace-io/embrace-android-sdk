@@ -8,7 +8,7 @@ import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.session.LifeEventType
 import io.embrace.android.embracesdk.internal.session.SessionToken
 import io.embrace.android.embracesdk.internal.arch.state.AppState
-import io.embrace.opentelemetry.kotlin.ExperimentalApi
+import io.opentelemetry.kotlin.ExperimentalApi
 
 fun fakeSessionToken(): SessionToken = SessionToken(
     sessionId = "fakeSessionId",

@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.opentelemetry.kotlin.ExperimentalApi
-import io.embrace.opentelemetry.kotlin.tracing.model.TraceFlags
+import io.opentelemetry.kotlin.ExperimentalApi
+import io.opentelemetry.kotlin.tracing.model.TraceFlags
 
 @ExperimentalApi
 class FakeTraceFlags(

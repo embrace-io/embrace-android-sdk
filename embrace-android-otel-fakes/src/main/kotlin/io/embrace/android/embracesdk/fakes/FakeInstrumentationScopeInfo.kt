@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.opentelemetry.kotlin.ExperimentalApi
-import io.embrace.opentelemetry.kotlin.InstrumentationScopeInfo
+import io.opentelemetry.kotlin.ExperimentalApi
+import io.opentelemetry.kotlin.InstrumentationScopeInfo
 
 @OptIn(ExperimentalApi::class)
 internal class FakeInstrumentationScopeInfo(

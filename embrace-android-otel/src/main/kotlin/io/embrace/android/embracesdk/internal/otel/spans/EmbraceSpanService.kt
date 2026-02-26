@@ -7,9 +7,9 @@ import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
-import io.embrace.opentelemetry.kotlin.ExperimentalApi
-import io.embrace.opentelemetry.kotlin.OpenTelemetry
-import io.embrace.opentelemetry.kotlin.tracing.Tracer
+import io.opentelemetry.kotlin.ExperimentalApi
+import io.opentelemetry.kotlin.OpenTelemetry
+import io.opentelemetry.kotlin.tracing.Tracer
 
 /**
  * A [SpanService] that can be instantiated quickly. At that time, it will defer calls an implementation that handles the case when

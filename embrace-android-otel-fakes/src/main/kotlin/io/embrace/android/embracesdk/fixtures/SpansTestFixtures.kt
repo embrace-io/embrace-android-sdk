@@ -13,9 +13,9 @@ import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.utils.PropertyUtils
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
-import io.embrace.opentelemetry.kotlin.ExperimentalApi
-import io.embrace.opentelemetry.kotlin.context.ContextKey
-import io.embrace.opentelemetry.kotlin.tracing.StatusCode
+import io.opentelemetry.kotlin.ExperimentalApi
+import io.opentelemetry.kotlin.context.ContextKey
+import io.opentelemetry.kotlin.tracing.StatusCode
 
 @OptIn(ExperimentalApi::class)
 val testSpan: Span = EmbraceSpanData(

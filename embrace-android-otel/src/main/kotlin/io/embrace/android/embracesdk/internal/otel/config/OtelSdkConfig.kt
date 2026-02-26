@@ -9,18 +9,18 @@ import io.embrace.android.embracesdk.internal.otel.spans.DefaultSpanExporter
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanProcessor
 import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
-import io.embrace.opentelemetry.kotlin.ExperimentalApi
-import io.embrace.opentelemetry.kotlin.attributes.MutableAttributeContainer
-import io.embrace.opentelemetry.kotlin.logging.export.LogRecordExporter
-import io.embrace.opentelemetry.kotlin.logging.export.LogRecordProcessor
-import io.embrace.opentelemetry.kotlin.semconv.AndroidAttributes
-import io.embrace.opentelemetry.kotlin.semconv.DeviceAttributes
-import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
-import io.embrace.opentelemetry.kotlin.semconv.OsAttributes
-import io.embrace.opentelemetry.kotlin.semconv.ServiceAttributes
-import io.embrace.opentelemetry.kotlin.semconv.TelemetryAttributes
-import io.embrace.opentelemetry.kotlin.tracing.export.SpanExporter
-import io.embrace.opentelemetry.kotlin.tracing.export.SpanProcessor
+import io.opentelemetry.kotlin.ExperimentalApi
+import io.opentelemetry.kotlin.attributes.MutableAttributeContainer
+import io.opentelemetry.kotlin.logging.export.LogRecordExporter
+import io.opentelemetry.kotlin.logging.export.LogRecordProcessor
+import io.opentelemetry.kotlin.semconv.AndroidAttributes
+import io.opentelemetry.kotlin.semconv.DeviceAttributes
+import io.opentelemetry.kotlin.semconv.IncubatingApi
+import io.opentelemetry.kotlin.semconv.OsAttributes
+import io.opentelemetry.kotlin.semconv.ServiceAttributes
+import io.opentelemetry.kotlin.semconv.TelemetryAttributes
+import io.opentelemetry.kotlin.tracing.export.SpanExporter
+import io.opentelemetry.kotlin.tracing.export.SpanProcessor
 import java.util.concurrent.ConcurrentHashMap
 
 @OptIn(ExperimentalApi::class)

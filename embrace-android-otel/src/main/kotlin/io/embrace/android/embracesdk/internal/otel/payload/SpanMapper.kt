@@ -12,8 +12,8 @@ import io.embrace.android.embracesdk.internal.payload.Link
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
-import io.embrace.opentelemetry.kotlin.ExperimentalApi
-import io.embrace.opentelemetry.kotlin.tracing.StatusCode
+import io.opentelemetry.kotlin.ExperimentalApi
+import io.opentelemetry.kotlin.tracing.StatusCode
 
 @OptIn(ExperimentalApi::class)
 fun EmbraceSpanData.toEmbracePayload(): Span = Span(

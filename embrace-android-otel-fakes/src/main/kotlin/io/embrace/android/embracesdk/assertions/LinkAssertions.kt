@@ -6,10 +6,10 @@ import io.embrace.android.embracesdk.internal.arch.attrs.asPair
 import io.embrace.android.embracesdk.internal.arch.schema.LinkType
 import io.embrace.android.embracesdk.internal.payload.Link
 import io.embrace.android.embracesdk.internal.payload.Span
-import io.embrace.opentelemetry.kotlin.ExperimentalApi
-import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
-import io.embrace.opentelemetry.kotlin.semconv.SessionAttributes
-import io.embrace.opentelemetry.kotlin.tracing.model.SpanContext
+import io.opentelemetry.kotlin.ExperimentalApi
+import io.opentelemetry.kotlin.semconv.IncubatingApi
+import io.opentelemetry.kotlin.semconv.SessionAttributes
+import io.opentelemetry.kotlin.tracing.model.SpanContext
 import org.junit.Assert.assertTrue
 
 @OptIn(IncubatingApi::class)

@@ -2,11 +2,11 @@ package io.embrace.android.embracesdk.internal.otel.logs
 
 import io.embrace.android.embracesdk.internal.Initializable
 import io.embrace.android.embracesdk.internal.utils.Provider
-import io.embrace.opentelemetry.kotlin.ExperimentalApi
-import io.embrace.opentelemetry.kotlin.attributes.MutableAttributeContainer
-import io.embrace.opentelemetry.kotlin.context.Context
-import io.embrace.opentelemetry.kotlin.logging.Logger
-import io.embrace.opentelemetry.kotlin.logging.model.SeverityNumber
+import io.opentelemetry.kotlin.ExperimentalApi
+import io.opentelemetry.kotlin.attributes.MutableAttributeContainer
+import io.opentelemetry.kotlin.context.Context
+import io.opentelemetry.kotlin.logging.Logger
+import io.opentelemetry.kotlin.logging.model.SeverityNumber
 
 /**
  * An OTel-agnostic API to create telemetry modeled as OTel LogRecords aka Events

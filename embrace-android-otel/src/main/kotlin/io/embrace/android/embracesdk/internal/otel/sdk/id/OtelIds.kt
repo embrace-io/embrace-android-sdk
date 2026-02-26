@@ -2,7 +2,7 @@
 
 package io.embrace.android.embracesdk.internal.otel.sdk.id
 
-import io.embrace.opentelemetry.kotlin.ExperimentalApi
+import io.opentelemetry.kotlin.ExperimentalApi
 
 object OtelIds {
 

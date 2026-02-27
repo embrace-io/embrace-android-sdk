@@ -14,13 +14,11 @@ import io.embrace.android.embracesdk.testframework.actions.EmbracePayloadAsserti
 import io.embrace.android.embracesdk.assertions.assertMatches
 import io.embrace.opentelemetry.kotlin.semconv.ExceptionAttributes
 import io.embrace.opentelemetry.kotlin.semconv.HttpAttributes
-import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
-@OptIn(IncubatingApi::class)
 @RunWith(AndroidJUnit4::class)
 internal class NetworkRequestApiTest {
 

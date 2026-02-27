@@ -28,13 +28,10 @@ import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
-import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.logging.model.SeverityNumber
-import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 
-@OptIn(ExperimentalApi::class)
 class TelemetryDestinationImpl(
     private val clock: Clock,
     private val spanService: SpanService,
@@ -45,7 +42,6 @@ class TelemetryDestinationImpl(
     override var sessionUpdateAction: (() -> Unit)? = null
     override var currentStatesProvider: () -> Map<EmbraceAttributeKey, Any> = { emptyMap() }
 
-    @OptIn(IncubatingApi::class)
     override fun addLog(
         schemaType: SchemaType,
         severity: LogSeverity,

@@ -9,9 +9,7 @@ import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
-import io.embrace.opentelemetry.kotlin.ExperimentalApi
 
-@OptIn(ExperimentalApi::class)
 class FakeSpanService : SpanService {
 
     val createdSpans: MutableList<FakeEmbraceSdkSpan> = mutableListOf()

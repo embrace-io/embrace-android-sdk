@@ -12,8 +12,6 @@ import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.NativeC
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.NativeCrash.embNativeCrashSymbols
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
 import io.embrace.android.embracesdk.internal.utils.toUTF8String
-import io.embrace.opentelemetry.kotlin.ExperimentalApi
-import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
 import io.embrace.opentelemetry.kotlin.semconv.SessionAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -23,7 +21,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
-@OptIn(ExperimentalApi::class, IncubatingApi::class)
 internal class NativeCrashDataSourceImplTest {
 
     private lateinit var crashProcessor: FakeNativeCrashProcessor

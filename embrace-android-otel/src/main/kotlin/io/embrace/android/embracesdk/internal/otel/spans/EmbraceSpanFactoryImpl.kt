@@ -25,7 +25,6 @@ import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.opentelemetry.kotlin.Clock
-import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.attributes.setAttributes
 import io.embrace.opentelemetry.kotlin.context.Context
 import io.embrace.opentelemetry.kotlin.semconv.ExceptionAttributes
@@ -39,7 +38,6 @@ import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 
-@OptIn(ExperimentalApi::class)
 class EmbraceSpanFactoryImpl(
     private val openTelemetryClock: Clock,
     private val spanRepository: SpanRepository,
@@ -63,7 +61,6 @@ class EmbraceSpanFactoryImpl(
 private const val SPAN_LINK_TELEMETRY_TYPE = "span_link"
 private const val SPAN_EVENT_TELEMETRY_TYPE = "span_event"
 
-@OptIn(ExperimentalApi::class)
 private class EmbraceSpanImpl(
     private val otelSpanStartArgs: OtelSpanStartArgs,
     private val openTelemetryClock: Clock,

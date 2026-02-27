@@ -8,7 +8,6 @@ import io.embrace.android.embracesdk.internal.arch.schema.SendMode
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
-import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
 import io.embrace.opentelemetry.kotlin.semconv.SessionAttributes
 
 val testLog: Log = Log(
@@ -41,7 +40,6 @@ val deferredLog: Log = Log(
     attributes = listOf(Attribute(embSendMode.name, SendMode.DEFER.name))
 )
 
-@OptIn(IncubatingApi::class)
 val nativeCrashLog = Log(
     timeUnixNano = 1681972471806000000L,
     attributes = listOf(

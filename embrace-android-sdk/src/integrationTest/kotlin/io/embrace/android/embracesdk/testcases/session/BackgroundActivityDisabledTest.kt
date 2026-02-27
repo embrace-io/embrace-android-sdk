@@ -23,7 +23,6 @@ import io.embrace.android.embracesdk.internal.otel.spans.NoopEmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
-import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
 import io.embrace.opentelemetry.kotlin.semconv.SessionAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -38,7 +37,6 @@ import org.robolectric.annotation.Config
 /**
  * Verify functionality of the SDK if background activities are disabled
  */
-@OptIn(IncubatingApi::class)
 @RunWith(AndroidJUnit4::class)
 internal class BackgroundActivityDisabledTest {
 

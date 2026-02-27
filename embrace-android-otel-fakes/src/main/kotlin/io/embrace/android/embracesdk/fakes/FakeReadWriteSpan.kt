@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.InstrumentationScopeInfo
 import io.embrace.opentelemetry.kotlin.resource.Resource
 import io.embrace.opentelemetry.kotlin.tracing.data.EventData
@@ -9,7 +8,6 @@ import io.embrace.opentelemetry.kotlin.tracing.data.SpanData
 import io.embrace.opentelemetry.kotlin.tracing.model.ReadWriteSpan
 import io.embrace.opentelemetry.kotlin.tracing.model.Span
 
-@OptIn(ExperimentalApi::class)
 class FakeReadWriteSpan(
     private val impl: FakeSpan = FakeSpan(),
 ) : Span by impl, ReadWriteSpan {

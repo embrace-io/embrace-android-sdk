@@ -24,9 +24,7 @@ import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpanImpl
 import io.embrace.android.embracesdk.internal.spans.EmbraceTracer
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
-import io.embrace.opentelemetry.kotlin.ExperimentalApi
 
-@OptIn(ExperimentalApi::class)
 class OpenTelemetryModuleImpl(
     private val initModule: InitModule,
     private val openTelemetryClock: EmbClock = EmbClock(

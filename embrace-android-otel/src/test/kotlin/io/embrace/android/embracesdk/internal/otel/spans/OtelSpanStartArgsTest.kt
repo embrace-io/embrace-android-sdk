@@ -10,7 +10,6 @@ import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.otel.createSdkOtelInstance
 import io.embrace.opentelemetry.kotlin.Clock
-import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.getTracer
 import io.embrace.opentelemetry.kotlin.tracing.Tracer
 import io.embrace.opentelemetry.kotlin.tracing.model.Span
@@ -21,7 +20,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
-@OptIn(ExperimentalApi::class)
 internal class OtelSpanStartArgsTest {
 
     private lateinit var clock: FakeClock

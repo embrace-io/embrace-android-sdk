@@ -20,7 +20,6 @@ import io.embrace.android.embracesdk.otel.java.addJavaLogRecordProcessor
 import io.embrace.android.embracesdk.otel.java.addJavaSpanExporter
 import io.embrace.android.embracesdk.otel.java.addJavaSpanProcessor
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
-import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.semconv.ServiceAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -30,7 +29,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 @Suppress("DEPRECATION")
-@OptIn(ExperimentalApi::class)
 @RunWith(AndroidJUnit4::class)
 internal class OTelExportTest {
 
@@ -390,7 +388,6 @@ internal class OTelExportTest {
             }
         )
     }
-
 
     @Test
     fun `log record processors are invoked in order they were added`() {

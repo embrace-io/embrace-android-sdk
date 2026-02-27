@@ -13,7 +13,6 @@ import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.otel.config.OtelSdkConfig
-import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.createNoopOpenTelemetry
 import io.embrace.opentelemetry.kotlin.semconv.ServiceAttributes
 import org.junit.Assert.assertEquals
@@ -25,7 +24,6 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 
-@OptIn(ExperimentalApi::class)
 @RunWith(AndroidJUnit4::class)
 internal class OTelApiDelegateTest {
 

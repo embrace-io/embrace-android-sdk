@@ -6,17 +6,14 @@ import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Link
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
-import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.tracing.data.EventData
 import io.embrace.opentelemetry.kotlin.tracing.data.LinkData
 import io.embrace.opentelemetry.kotlin.tracing.data.SpanData
 import io.embrace.opentelemetry.kotlin.tracing.model.Span
 
-@OptIn(ExperimentalApi::class)
 fun Span.setEmbraceAttribute(embraceAttribute: EmbraceAttribute) =
     setStringAttribute(embraceAttribute.key.name, embraceAttribute.value)
 
-@OptIn(ExperimentalApi::class)
 fun SpanData.toEmbracePayload(): EmbraceSpanData = EmbraceSpanData(
     traceId = spanContext.traceId,
     spanId = spanContext.spanId,
@@ -30,7 +27,6 @@ fun SpanData.toEmbracePayload(): EmbraceSpanData = EmbraceSpanData(
     links = links.map(LinkData::toEmbracePayload),
 )
 
-@OptIn(ExperimentalApi::class)
 fun LinkData.toEmbracePayload(): Link = Link(
     spanId = spanContext.spanId,
     traceId = spanContext.traceId,
@@ -38,7 +34,6 @@ fun LinkData.toEmbracePayload(): Link = Link(
     isRemote = spanContext.isRemote
 )
 
-@OptIn(ExperimentalApi::class)
 fun EventData.toEmbracePayload(): EmbraceSpanEvent? {
     return EmbraceSpanEvent.create(
         name = name,

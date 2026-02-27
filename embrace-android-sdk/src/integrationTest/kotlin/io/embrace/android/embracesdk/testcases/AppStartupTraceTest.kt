@@ -277,7 +277,6 @@ internal class AppStartupTraceTest {
         )
     }
 
-
     @Test
     fun `start time in L matches SDK startup time if applicationInitEnd is not called`() {
         var sdkStartTime: Long? = null
@@ -308,7 +307,6 @@ internal class AppStartupTraceTest {
             }
         )
     }
-
 
     @Test
     fun `applicationInitEnd call adds extra information`() {

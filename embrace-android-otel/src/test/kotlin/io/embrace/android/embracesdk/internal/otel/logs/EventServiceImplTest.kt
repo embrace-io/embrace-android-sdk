@@ -1,9 +1,7 @@
 package io.embrace.android.embracesdk.internal.otel.logs
 
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryLogger
-import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.logging.model.SeverityNumber
-import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
 import io.embrace.opentelemetry.kotlin.semconv.LogAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -12,7 +10,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
-@OptIn(ExperimentalApi::class, IncubatingApi::class)
 class EventServiceImplTest {
     val sessionAttributeName = "session-attr"
     lateinit var sdkLogger: FakeOpenTelemetryLogger

@@ -7,7 +7,6 @@ import io.embrace.android.embracesdk.internal.arch.attrs.embStateInitialValue
 import io.embrace.android.embracesdk.internal.arch.attrs.toEmbraceAttributeName
 import io.embrace.opentelemetry.kotlin.semconv.ExceptionAttributes
 import io.embrace.opentelemetry.kotlin.semconv.HttpAttributes
-import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
 import io.embrace.opentelemetry.kotlin.semconv.SessionAttributes
 import io.embrace.opentelemetry.kotlin.semconv.UrlAttributes
 
@@ -195,7 +194,6 @@ sealed class SchemaType(
     ) : SchemaType(
         telemetryType = EmbType.System.NetworkCapturedRequest
     ) {
-        @OptIn(IncubatingApi::class)
         override val schemaAttributes: Map<String, String> = mapOf(
             "duration" to duration.toString(),
             "end-time" to endTime.toString(),

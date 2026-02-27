@@ -1,13 +1,11 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.context.Context
 import io.embrace.opentelemetry.kotlin.export.OperationResultCode
 import io.embrace.opentelemetry.kotlin.tracing.export.SpanProcessor
 import io.embrace.opentelemetry.kotlin.tracing.model.ReadWriteSpan
 import io.embrace.opentelemetry.kotlin.tracing.model.ReadableSpan
 
-@OptIn(ExperimentalApi::class)
 class FakeSpanProcessor(
     private val onStartAction: (ReadWriteSpan) -> Unit = {},
     private val onEndAction: (ReadableSpan) -> Unit = {},

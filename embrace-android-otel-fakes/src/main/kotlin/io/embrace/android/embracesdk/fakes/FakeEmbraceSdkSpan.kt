@@ -25,11 +25,9 @@ import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
-import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.OpenTelemetry
 import io.embrace.opentelemetry.kotlin.context.Context
 import io.embrace.opentelemetry.kotlin.factory.toHexString
-import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
 import io.embrace.opentelemetry.kotlin.semconv.SessionAttributes
 import io.embrace.opentelemetry.kotlin.tracing.data.StatusData
 import io.embrace.opentelemetry.kotlin.tracing.model.Span
@@ -37,7 +35,6 @@ import io.embrace.opentelemetry.kotlin.tracing.model.SpanContext
 import io.embrace.opentelemetry.kotlin.tracing.model.SpanKind
 import java.util.concurrent.ConcurrentLinkedQueue
 
-@OptIn(ExperimentalApi::class)
 class FakeEmbraceSdkSpan(
     private val openTelemetry: OpenTelemetry = fakeOpenTelemetry(),
     var name: String = "fake-span",
@@ -249,7 +246,6 @@ class FakeEmbraceSdkSpan(
                 stop()
             }
 
-        @OptIn(IncubatingApi::class)
         fun sessionSpan(
             sessionId: String,
             startTimeMs: Long,

@@ -13,7 +13,6 @@ import io.embrace.android.embracesdk.internal.logs.LogExceptionType
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
-import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.logging.model.SeverityNumber
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -24,7 +23,6 @@ import org.junit.runner.RunWith
 /**
  * Validation of the internal API
  */
-@OptIn(ExperimentalApi::class)
 @RunWith(AndroidJUnit4::class)
 internal class UnityInternalInterfaceTest {
 

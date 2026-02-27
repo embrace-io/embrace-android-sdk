@@ -1,13 +1,11 @@
 package io.embrace.android.embracesdk.spans
 
-import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.tracing.model.SpanContext
 
 /**
  * Represents a Span that can be started and stopped with the appropriate [ErrorCode] if applicable. This wraps the OpenTelemetry Span
  * by adding an additional layer for local validation
  */
-@OptIn(ExperimentalApi::class)
 public interface EmbraceSpan {
 
     /**

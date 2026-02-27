@@ -4,7 +4,6 @@ import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
 import io.embrace.android.embracesdk.internal.otel.sdk.StoreDataResult
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
-import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.export.OperationResultCode
 import io.embrace.opentelemetry.kotlin.logging.export.LogRecordExporter
 import io.embrace.opentelemetry.kotlin.logging.model.ReadableLogRecord
@@ -12,7 +11,6 @@ import io.embrace.opentelemetry.kotlin.logging.model.ReadableLogRecord
 /**
  * Exports the given log record to a [LogSink]
  */
-@ExperimentalApi
 internal class DefaultLogRecordExporter(
     private val logSink: LogSink,
     private val externalExporters: List<LogRecordExporter>,

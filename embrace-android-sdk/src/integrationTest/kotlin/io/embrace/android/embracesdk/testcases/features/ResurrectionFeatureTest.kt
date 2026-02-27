@@ -113,7 +113,6 @@ internal class ResurrectionFeatureTest {
         )
     }
 
-
     @Ignore("Flakey because the internal errors sometimes comes before the crash")
     @Test
     fun `native crash without session or crash envelope is sent with current SDK envelope`() {

@@ -12,13 +12,11 @@ import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
 import io.embrace.android.embracesdk.internal.utils.PropertyUtils.truncate
 import io.embrace.opentelemetry.kotlin.semconv.ExceptionAttributes
-import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
 import java.io.Serializable
 
 /**
  * Creates log records to be sent using the Open Telemetry Logs data model.
  */
-@OptIn(IncubatingApi::class)
 class LogServiceImpl(
     private val destination: TelemetryDestination,
     private val configService: ConfigService,

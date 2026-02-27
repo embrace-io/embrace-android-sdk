@@ -22,9 +22,7 @@ import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.session.getSessionSpan
 import io.embrace.android.embracesdk.internal.utils.getSafeStackTrace
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
-import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.logging.model.SeverityNumber
-import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
 import io.embrace.opentelemetry.kotlin.semconv.LogAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -34,7 +32,6 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
-@OptIn(ExperimentalApi::class, IncubatingApi::class)
 @RunWith(AndroidJUnit4::class)
 internal class JvmCrashFeatureTest {
 

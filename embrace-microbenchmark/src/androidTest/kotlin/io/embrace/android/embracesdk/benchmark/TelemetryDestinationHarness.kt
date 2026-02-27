@@ -16,10 +16,8 @@ import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
-import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import okhttp3.OkHttpClient
 
-@OptIn(ExperimentalApi::class)
 internal class TelemetryDestinationHarness {
 
     private val initModule = TestInitModule()

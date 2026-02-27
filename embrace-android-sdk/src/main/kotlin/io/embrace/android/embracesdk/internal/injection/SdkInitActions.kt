@@ -15,7 +15,6 @@ import io.embrace.android.embracesdk.internal.utils.EmbTrace.end
 import io.embrace.android.embracesdk.internal.utils.EmbTrace.start
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.worker.Worker
-import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
 import io.embrace.opentelemetry.kotlin.semconv.SessionAttributes
 import java.util.ServiceLoader
 
@@ -171,7 +170,6 @@ internal fun ModuleGraph.setupMetadataProvider() {
     openTelemetryModule.eventService.setMetadataProvider(eventMetadataSupplierProvider())
 }
 
-@OptIn(IncubatingApi::class)
 private fun ModuleGraph.eventMetadataSupplierProvider(): Provider<Map<String, String>> {
     return {
         mutableMapOf<String, String>().apply {

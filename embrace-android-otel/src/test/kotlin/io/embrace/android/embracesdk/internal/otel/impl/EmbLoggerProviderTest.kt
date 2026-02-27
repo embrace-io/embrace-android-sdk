@@ -3,14 +3,12 @@ package io.embrace.android.embracesdk.internal.otel.impl
 import io.embrace.android.embracesdk.fakes.FakeEventService
 import io.embrace.android.embracesdk.fakes.FakeLoggerProvider
 import io.embrace.android.embracesdk.fakes.FakeTracerProvider
-import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.createNoopOpenTelemetry
 import org.junit.Assert.assertNotSame
 import org.junit.Assert.assertSame
 import org.junit.Before
 import org.junit.Test
 
-@OptIn(ExperimentalApi::class)
 internal class EmbLoggerProviderTest {
     private lateinit var eventService: FakeEventService
     private lateinit var sdkLoggerProvider: FakeLoggerProvider

@@ -4,7 +4,6 @@ import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.opentelemetry.kotlin.Clock
-import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.OpenTelemetry
 import io.embrace.opentelemetry.kotlin.attributes.MutableAttributeContainer
 import io.embrace.opentelemetry.kotlin.tracing.data.StatusData
@@ -14,7 +13,6 @@ import io.embrace.opentelemetry.kotlin.tracing.model.SpanContext
 import io.embrace.opentelemetry.kotlin.tracing.model.SpanEvent
 import io.embrace.opentelemetry.kotlin.tracing.model.SpanKind
 
-@OptIn(ExperimentalApi::class)
 class EmbSpan(
     private val impl: EmbraceSdkSpan,
     private val clock: Clock,

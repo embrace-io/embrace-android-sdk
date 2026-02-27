@@ -8,7 +8,6 @@ import io.embrace.android.embracesdk.internal.utils.NetworkUtils.stripUrl
 import io.embrace.opentelemetry.kotlin.semconv.ErrorAttributes
 import io.embrace.opentelemetry.kotlin.semconv.ExceptionAttributes
 import io.embrace.opentelemetry.kotlin.semconv.HttpAttributes
-import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
@@ -26,7 +25,6 @@ internal class NetworkRequestDataSourceStatefulApiTest {
         harness = NetworkRequestDataSourceTestHarness()
     }
 
-    @OptIn(IncubatingApi::class)
     @Test
     fun `multiple serial network requests are recorded`() {
         harness.networkSpanForwardingBehavior.networkSpanForwardingEnabled = true

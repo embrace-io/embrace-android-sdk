@@ -15,9 +15,7 @@ import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
 import io.embrace.android.embracesdk.internal.otel.spans.SpanSinkImpl
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
 import io.embrace.android.embracesdk.internal.spans.EmbraceTracer
-import io.embrace.opentelemetry.kotlin.ExperimentalApi
 
-@OptIn(ExperimentalApi::class)
 class FakeOpenTelemetryModule(
     override val currentSessionSpan: CurrentSessionSpan = FakeCurrentSessionSpan(),
     override val spanSink: SpanSink = SpanSinkImpl(),

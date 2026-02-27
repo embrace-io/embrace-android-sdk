@@ -2,13 +2,11 @@ package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.internal.otel.logs.EventService
 import io.embrace.android.embracesdk.internal.utils.Provider
-import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.attributes.MutableAttributeContainer
 import io.embrace.opentelemetry.kotlin.context.Context
 import io.embrace.opentelemetry.kotlin.logging.Logger
 import io.embrace.opentelemetry.kotlin.logging.model.SeverityNumber
 
-@OptIn(ExperimentalApi::class)
 class FakeEventService : EventService {
     val eventData: MutableList<FakeEventData> = mutableListOf()
     var initTime: Long? = null

@@ -9,13 +9,11 @@ import io.embrace.android.embracesdk.internal.otel.spans.DefaultSpanExporter
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanProcessor
 import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
-import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.attributes.MutableAttributeContainer
 import io.embrace.opentelemetry.kotlin.logging.export.LogRecordExporter
 import io.embrace.opentelemetry.kotlin.logging.export.LogRecordProcessor
 import io.embrace.opentelemetry.kotlin.semconv.AndroidAttributes
 import io.embrace.opentelemetry.kotlin.semconv.DeviceAttributes
-import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
 import io.embrace.opentelemetry.kotlin.semconv.OsAttributes
 import io.embrace.opentelemetry.kotlin.semconv.ServiceAttributes
 import io.embrace.opentelemetry.kotlin.semconv.TelemetryAttributes
@@ -23,7 +21,6 @@ import io.embrace.opentelemetry.kotlin.tracing.export.SpanExporter
 import io.embrace.opentelemetry.kotlin.tracing.export.SpanProcessor
 import java.util.concurrent.ConcurrentHashMap
 
-@OptIn(ExperimentalApi::class)
 class OtelSdkConfig(
     spanSink: SpanSink,
     logSink: LogSink,
@@ -38,7 +35,6 @@ class OtelSdkConfig(
 
     private val customAttributes: MutableMap<String, String> = ConcurrentHashMap()
 
-    @OptIn(IncubatingApi::class)
     val resourceAction: MutableAttributeContainer.() -> Unit
         get() = {
             setStringAttribute(ServiceAttributes.SERVICE_NAME, packageName)

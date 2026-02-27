@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.otel.impl
 
-import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.OpenTelemetry
 import io.embrace.opentelemetry.kotlin.attributes.MutableAttributeContainer
 import io.embrace.opentelemetry.kotlin.tracing.data.StatusData
@@ -13,7 +12,6 @@ import io.embrace.opentelemetry.kotlin.tracing.model.SpanKind
 /**
  * Embrace-specific decorator that adds extra logic to OTel Tracing.
  */
-@OptIn(ExperimentalApi::class)
 internal class EmbInvalidSpan(openTelemetry: OpenTelemetry) : Span {
 
     override val attributes: Map<String, Any> = emptyMap()

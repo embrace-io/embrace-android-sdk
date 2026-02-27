@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.internal.api.delegate
 
 import io.embrace.android.embracesdk.internal.api.OTelApi
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
-import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.OpenTelemetry
 import io.embrace.opentelemetry.kotlin.createNoopOpenTelemetry
 import io.embrace.opentelemetry.kotlin.logging.export.LogRecordExporter
@@ -10,7 +9,6 @@ import io.embrace.opentelemetry.kotlin.logging.export.LogRecordProcessor
 import io.embrace.opentelemetry.kotlin.tracing.export.SpanExporter
 import io.embrace.opentelemetry.kotlin.tracing.export.SpanProcessor
 
-@OptIn(ExperimentalApi::class)
 internal class OTelApiDelegate(
     private val bootstrapper: ModuleInitBootstrapper,
     private val sdkCallChecker: SdkCallChecker,
@@ -51,7 +49,6 @@ internal class OTelApiDelegate(
         bootstrapper.openTelemetryModule.otelSdkConfig.setResourceAttribute(key, value)
     }
 
-    @ExperimentalApi
     override fun getOpenTelemetryKotlin(): OpenTelemetry {
         return if (sdkCallChecker.started.get()) {
             bootstrapper.openTelemetryModule.otelSdkWrapper.openTelemetryKotlin

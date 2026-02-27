@@ -17,7 +17,6 @@ import io.embrace.android.embracesdk.internal.utils.toNonNullMap
 import io.embrace.opentelemetry.kotlin.semconv.ErrorAttributes
 import io.embrace.opentelemetry.kotlin.semconv.ExceptionAttributes
 import io.embrace.opentelemetry.kotlin.semconv.HttpAttributes
-import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -104,7 +103,6 @@ class NetworkRequestDataSourceImpl(
         }
     }
 
-    @OptIn(IncubatingApi::class)
     override fun endRequest(endData: RequestEndData) {
         activeRequests.remove(endData.id)?.apply {
             val statusCode = endData.statusCode
@@ -120,7 +118,6 @@ class NetworkRequestDataSourceImpl(
         }
     }
 
-    @OptIn(IncubatingApi::class)
     private fun generateSchemaAttributes(request: HttpNetworkRequest): Map<String, String> = mapOf(
         "url.full" to stripUrl(request.url),
         HttpAttributes.HTTP_REQUEST_METHOD to request.httpMethod,
@@ -133,13 +130,11 @@ class NetworkRequestDataSourceImpl(
         "emb.trace_id" to getValidTraceId(request.traceId),
     ).toNonNullMap().mapValues { it.value.toString() }
 
-    @OptIn(IncubatingApi::class)
     private fun requestStartAttributes(startData: RequestStartData): Map<String, String> = mapOf(
         "url.full" to stripUrl(startData.url),
         HttpAttributes.HTTP_REQUEST_METHOD to startData.httpMethod,
     ).toNonNullMap().mapValues { it.value }
 
-    @OptIn(IncubatingApi::class)
     private fun requestEndAttributes(endData: RequestEndData): Map<String, String> = mapOf(
         "url.full" to stripUrl(endData.url),
         HttpAttributes.HTTP_RESPONSE_STATUS_CODE to endData.statusCode,

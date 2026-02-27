@@ -1,5 +1,3 @@
-@file:OptIn(ExperimentalApi::class)
-
 package io.embrace.android.embracesdk.assertions
 
 import io.embrace.android.embracesdk.fakes.fromErrorCode
@@ -13,7 +11,6 @@ import io.embrace.android.embracesdk.internal.otel.toEmbracePayload
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.spans.ErrorCode
-import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
@@ -48,7 +45,6 @@ fun EmbraceSpanData.assertDoesNotHaveEmbraceAttribute(embraceAttribute: EmbraceA
 /**
  * Assert [EmbraceSpanData] has ended with the error defined by [errorCode]
  */
-@OptIn(ExperimentalApi::class)
 fun EmbraceSpanData.assertError(errorCode: ErrorCode) {
     assertEquals(Span.Status.ERROR, status.toEmbracePayload())
     assertHasEmbraceAttribute(errorCode.fromErrorCode())
@@ -57,7 +53,6 @@ fun EmbraceSpanData.assertError(errorCode: ErrorCode) {
 /**
  * Assert [EmbraceSpanData] has ended successfully
  */
-@OptIn(ExperimentalApi::class)
 fun EmbraceSpanData.assertSuccessful() {
     assertNotEquals(Span.Status.ERROR, status.toEmbracePayload())
     assertNull(attributes[ErrorCodeAttribute.Failure.key.name])

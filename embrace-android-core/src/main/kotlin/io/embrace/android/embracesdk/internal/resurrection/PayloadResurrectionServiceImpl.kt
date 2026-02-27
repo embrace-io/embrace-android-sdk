@@ -32,7 +32,6 @@ import io.embrace.android.embracesdk.internal.session.getSessionId
 import io.embrace.android.embracesdk.internal.session.getSessionProperties
 import io.embrace.android.embracesdk.internal.session.getSessionSpan
 import io.embrace.android.embracesdk.internal.utils.Provider
-import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
 import io.embrace.opentelemetry.kotlin.semconv.SessionAttributes
 import java.util.zip.GZIPInputStream
 import kotlin.math.max
@@ -244,7 +243,6 @@ internal class PayloadResurrectionServiceImpl(
     /**
      * Attach crash data to the existing session span in the payload if it exists
      */
-    @OptIn(IncubatingApi::class)
     private fun Span.attachCrashToSession(nativeCrashData: NativeCrashData): Span {
         return if (attributes?.findAttributeValue(SessionAttributes.SESSION_ID) == nativeCrashData.sessionId) {
             copy(

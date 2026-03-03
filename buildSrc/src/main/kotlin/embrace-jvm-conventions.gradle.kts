@@ -21,6 +21,12 @@ kotlin.compilerOptions {
     jvmTarget.set(target)
     allWarningsAsErrors.set(true)
     freeCompilerArgs.add("-Xsuppress-version-warnings")
+    if (project.findProperty("io.embrace.opentelemetry.optIn") == "true") {
+        optIn.add("io.embrace.opentelemetry.kotlin.ExperimentalApi")
+    }
+    if (project.findProperty("io.embrace.opentelemetry.semconv.optIn") == "true") {
+        optIn.add("io.embrace.opentelemetry.kotlin.semconv.IncubatingApi")
+    }
 }
 kotlin.coreLibrariesVersion = coreLibrariesVersion
 

@@ -8,7 +8,6 @@ import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
-import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.OpenTelemetry
 import io.embrace.opentelemetry.kotlin.tracing.Tracer
 import java.util.concurrent.atomic.AtomicBoolean
@@ -16,7 +15,6 @@ import java.util.concurrent.atomic.AtomicBoolean
 /**
  * Implementation of the core logic for [SpanService]
  */
-@OptIn(ExperimentalApi::class)
 class SpanServiceImpl(
     private val tracer: Tracer,
     private val spanRepository: SpanRepository,

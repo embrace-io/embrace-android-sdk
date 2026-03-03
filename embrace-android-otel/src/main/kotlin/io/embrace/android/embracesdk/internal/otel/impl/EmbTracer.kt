@@ -6,7 +6,6 @@ import io.embrace.android.embracesdk.internal.otel.getDefaultContext
 import io.embrace.android.embracesdk.internal.otel.spans.OtelSpanStartArgs
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.opentelemetry.kotlin.Clock
-import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.OpenTelemetry
 import io.embrace.opentelemetry.kotlin.context.Context
 import io.embrace.opentelemetry.kotlin.tracing.Tracer
@@ -17,7 +16,6 @@ import io.embrace.opentelemetry.kotlin.tracing.model.SpanRelationships
 /**
  * Embrace-specific decorator that adds extra logic to OTel Tracing.
  */
-@OptIn(ExperimentalApi::class)
 class EmbTracer(
     private val impl: Tracer,
     private val openTelemetry: OpenTelemetry,

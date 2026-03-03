@@ -1,10 +1,8 @@
 package io.embrace.android.embracesdk.internal.otel.impl
 
-import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.attributes.MutableAttributeContainer
 import java.util.concurrent.ConcurrentHashMap
 
-@OptIn(ExperimentalApi::class)
 internal class EmbMutableAttributeContainer(
     private val map: MutableMap<String, String> = ConcurrentHashMap(),
 ) : MutableAttributeContainer {

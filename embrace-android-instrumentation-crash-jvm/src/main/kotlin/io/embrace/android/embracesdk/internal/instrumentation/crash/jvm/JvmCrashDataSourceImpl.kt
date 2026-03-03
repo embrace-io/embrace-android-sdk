@@ -17,7 +17,6 @@ import io.embrace.android.embracesdk.internal.store.Ordinal
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.internal.utils.encodeToUTF8String
 import io.embrace.opentelemetry.kotlin.semconv.ExceptionAttributes
-import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
 import io.embrace.opentelemetry.kotlin.semconv.LogAttributes
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicBoolean
@@ -53,7 +52,6 @@ class JvmCrashDataSourceImpl(
      *
      * @param exception the exception thrown by the thread
      */
-    @OptIn(IncubatingApi::class)
     override fun logUnhandledJvmThrowable(exception: Throwable) {
         if (!mainCrashHandled.getAndSet(true)) {
             captureTelemetry(inputValidation = configService.autoDataCaptureBehavior::isJvmCrashCaptureEnabled) {

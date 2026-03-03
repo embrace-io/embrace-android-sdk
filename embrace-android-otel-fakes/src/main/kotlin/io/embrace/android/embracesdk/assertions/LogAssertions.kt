@@ -1,5 +1,3 @@
-@file:OptIn(ExperimentalApi::class)
-
 package io.embrace.android.embracesdk.assertions
 
 import io.embrace.android.embracesdk.Severity
@@ -10,10 +8,8 @@ import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.serialization.truncatedStacktrace
-import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.logging.model.SeverityNumber
 import io.embrace.opentelemetry.kotlin.semconv.ExceptionAttributes
-import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
 import io.embrace.opentelemetry.kotlin.semconv.LogAttributes
 import io.embrace.opentelemetry.kotlin.semconv.SessionAttributes
 import org.junit.Assert.assertEquals
@@ -21,7 +17,6 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 
-@OptIn(ExperimentalApi::class, IncubatingApi::class)
 fun assertOtelLogReceived(
     logReceived: Log?,
     expectedMessage: String,
@@ -68,7 +63,6 @@ fun assertOtelLogReceived(
     }
 }
 
-@OptIn(ExperimentalApi::class)
 fun getOtelSeverity(severity: Severity): SeverityNumber {
     return when (severity) {
         Severity.INFO -> SeverityNumber.INFO

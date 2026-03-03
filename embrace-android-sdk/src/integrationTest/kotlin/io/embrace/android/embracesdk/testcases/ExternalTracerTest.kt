@@ -16,7 +16,6 @@ import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface
 import io.embrace.android.embracesdk.testframework.actions.EmbracePreSdkStartInterface
-import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.OpenTelemetry
 import io.embrace.opentelemetry.kotlin.getTracer
 import io.embrace.opentelemetry.kotlin.semconv.ExceptionAttributes
@@ -34,7 +33,6 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
-@OptIn(ExperimentalApi::class)
 @RunWith(AndroidJUnit4::class)
 internal class ExternalTracerTest {
 
@@ -196,7 +194,6 @@ internal class ExternalTracerTest {
         )
     }
 
-
     @Test
     fun `span record exception`() {
         var stacktrace: String? = null
@@ -251,7 +248,6 @@ internal class ExternalTracerTest {
             }
         )
     }
-
 
     @Test
     fun `getOpenTelemetryKotlin returns noop before SDK start`() {

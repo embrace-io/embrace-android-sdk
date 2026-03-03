@@ -1,10 +1,8 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.factory.TracingIdFactory
 import kotlin.random.Random
 
-@OptIn(ExperimentalApi::class)
 class FakeTracingIdFactory(private val random: Random = Random(0)) : TracingIdFactory {
 
     private companion object {

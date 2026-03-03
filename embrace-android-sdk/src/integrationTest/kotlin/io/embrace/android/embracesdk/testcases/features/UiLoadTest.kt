@@ -139,7 +139,6 @@ internal class UiLoadTest {
                     val trace = findSpansOfType(EmbType.Performance.UiLoad).single()
                     assertEquals("emb-$MANUAL_STOP_ACTIVITY_NAME-cold-time-to-initial-display", trace.name)
 
-
                     val expectedTraceStartTime = preLaunchTimeMs + calculateTotalTime(activityGaps = 1)
                     assertEmbraceSpanData(
                         span = trace,

@@ -56,7 +56,6 @@ internal class EmbracePayloadAssertionInterface(
 
     /*** LOGS ***/
 
-
     /**
      * Returns the list of log payload envelopes that have been sent. If [expectedSize] is specified,
      * it will wait a maximum of 1 second for the number of payloads that exist to equal
@@ -83,7 +82,6 @@ internal class EmbracePayloadAssertionInterface(
         }
     }
 
-
     /*** ATTACHMENTS ***/
 
     internal fun getAttachments(expectedSize: Int) = retrieveAttachments(expectedSize)
@@ -99,7 +97,6 @@ internal class EmbracePayloadAssertionInterface(
             throwPayloadErrMsg(expectedSize, supplier().size, emptyList(), exc)
         }
     }
-
 
     /*** SESSIONS ***/
 
@@ -152,9 +149,7 @@ internal class EmbracePayloadAssertionInterface(
         return AppState.valueOf(value)
     }
 
-
     /*** Config ***/
-
 
     internal fun assertConfigRequested(expectedRequests: Int) {
         val supplier = {

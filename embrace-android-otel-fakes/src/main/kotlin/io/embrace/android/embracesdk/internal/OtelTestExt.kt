@@ -1,5 +1,3 @@
-@file:OptIn(ExperimentalApi::class)
-
 package io.embrace.android.embracesdk.internal
 
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
@@ -8,7 +6,6 @@ import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Link
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
-import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaAttributes
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaEventData
 import io.embrace.opentelemetry.kotlin.aliases.OtelJavaLinkData
@@ -31,7 +28,6 @@ fun OtelJavaAttributes.toStringMap(): Map<String, String> = asMap().entries.asso
     it.key.key.toString() to it.value.toString()
 }
 
-@OptIn(ExperimentalApi::class)
 fun OtelJavaSpanData.toEmbraceSpanData(): EmbraceSpanData = EmbraceSpanData(
     traceId = spanContext.traceId,
     spanId = spanContext.spanId,
@@ -50,7 +46,6 @@ fun OtelJavaSpanData.toEmbraceSpanData(): EmbraceSpanData = EmbraceSpanData(
     links = links.map { it.toEmbracePayload() }
 )
 
-@OptIn(ExperimentalApi::class)
 fun SpanData.toEmbraceSpanData(): EmbraceSpanData = EmbraceSpanData(
     traceId = spanContext.traceId,
     spanId = spanContext.spanId,

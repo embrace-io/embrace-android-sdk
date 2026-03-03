@@ -45,6 +45,16 @@ android {
         }
         execution = "ANDROIDX_TEST_ORCHESTRATOR"
     }
+    kotlin {
+        compilerOptions {
+            if (project.findProperty("io.embrace.opentelemetry.optIn") == "true") {
+                optIn.add("io.embrace.opentelemetry.kotlin.ExperimentalApi")
+            }
+            if (project.findProperty("io.embrace.opentelemetry.semconv.optIn") == "true") {
+                optIn.add("io.embrace.opentelemetry.kotlin.semconv.IncubatingApi")
+            }
+        }
+    }
 }
 
 val target = JvmTarget.JVM_11

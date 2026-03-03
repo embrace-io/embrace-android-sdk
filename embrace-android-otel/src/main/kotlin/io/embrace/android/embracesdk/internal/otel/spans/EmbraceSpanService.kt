@@ -7,7 +7,6 @@ import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
-import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.OpenTelemetry
 import io.embrace.opentelemetry.kotlin.tracing.Tracer
 
@@ -16,7 +15,6 @@ import io.embrace.opentelemetry.kotlin.tracing.Tracer
  * the SDK has not been started ([UninitializedSdkSpanService]. When [initializeService] is called during SDK startup, it will
  * instantiate and initialize [SpanServiceImpl] to provide the span recording functionality.
  */
-@OptIn(ExperimentalApi::class)
 class EmbraceSpanService(
     private val spanRepository: SpanRepository,
     private val dataValidator: DataValidator,

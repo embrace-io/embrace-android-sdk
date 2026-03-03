@@ -1,17 +1,14 @@
 package io.embrace.android.embracesdk.assertions
 
 import io.embrace.android.embracesdk.internal.SystemInfo
-import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.resource.Resource
 import io.embrace.opentelemetry.kotlin.semconv.AndroidAttributes
 import io.embrace.opentelemetry.kotlin.semconv.DeviceAttributes
-import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
 import io.embrace.opentelemetry.kotlin.semconv.OsAttributes
 import io.embrace.opentelemetry.kotlin.semconv.ServiceAttributes
 import io.embrace.opentelemetry.kotlin.semconv.TelemetryAttributes
 import org.junit.Assert.assertEquals
 
-@OptIn(ExperimentalApi::class, IncubatingApi::class)
 fun Resource.assertExpectedAttributes(
     expectedServiceName: String,
     expectedServiceVersion: String,

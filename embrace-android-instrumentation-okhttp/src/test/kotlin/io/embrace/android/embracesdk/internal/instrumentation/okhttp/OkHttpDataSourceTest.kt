@@ -18,7 +18,6 @@ import io.embrace.android.embracesdk.okhttp3.EmbraceCustomPathException
 import io.embrace.opentelemetry.kotlin.semconv.ErrorAttributes
 import io.embrace.opentelemetry.kotlin.semconv.ExceptionAttributes
 import io.embrace.opentelemetry.kotlin.semconv.HttpAttributes
-import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
 import io.embrace.opentelemetry.kotlin.semconv.UrlAttributes
 import okhttp3.Headers
 import okhttp3.OkHttpClient
@@ -40,7 +39,6 @@ import java.io.ByteArrayOutputStream
 import java.net.SocketException
 import java.util.zip.GZIPOutputStream
 
-@OptIn(IncubatingApi::class)
 @RunWith(AndroidJUnit4::class)
 internal class OkHttpDataSourceTest {
 

@@ -17,16 +17,13 @@ import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.opentelemetry.kotlin.Clock
-import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.OpenTelemetry
-import io.embrace.opentelemetry.kotlin.semconv.IncubatingApi
 import io.embrace.opentelemetry.kotlin.semconv.SessionAttributes
 import io.embrace.opentelemetry.kotlin.tracing.Tracer
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 
-@OptIn(ExperimentalApi::class)
 internal class CurrentSessionSpanImpl(
     private val openTelemetryClock: Clock,
     private val telemetryService: TelemetryService,
@@ -95,12 +92,10 @@ internal class CurrentSessionSpanImpl(
         }
     }
 
-    @OptIn(IncubatingApi::class)
     override fun getSessionId(): String {
         return sessionSpan.get()?.getSystemAttribute(SessionAttributes.SESSION_ID) ?: ""
     }
 
-    @OptIn(ExperimentalApi::class, IncubatingApi::class)
     override fun spanStopCallback(spanId: String) {
         val currentSessionSpan = sessionSpan.get()
         val spanToStop = spanRepository.getSpan(spanId)
@@ -186,7 +181,6 @@ internal class CurrentSessionSpanImpl(
     /**
      * This method should always be used when starting a new session span
      */
-    @OptIn(ExperimentalApi::class, IncubatingApi::class)
     private fun startSessionSpan(startTimeMs: Long): EmbraceSdkSpan {
         traceCount.set(0)
         internalTraceCount.set(0)

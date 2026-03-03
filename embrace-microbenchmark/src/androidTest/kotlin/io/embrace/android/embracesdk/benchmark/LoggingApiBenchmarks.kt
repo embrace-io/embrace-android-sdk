@@ -80,7 +80,6 @@ class LoggingApiBenchmarks {
         }
     }
 
-
     companion object {
         private const val TOTAL_LOG_COUNT = 10
         private const val ATTRIBUTES_PER_LOG = 20

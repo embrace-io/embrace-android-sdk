@@ -14,7 +14,6 @@ import io.embrace.android.embracesdk.internal.otel.logs.EventService
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.opentelemetry.kotlin.Clock
-import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.OpenTelemetry
 import io.embrace.opentelemetry.kotlin.logging.Logger
 import io.embrace.opentelemetry.kotlin.logging.export.createCompositeLogRecordProcessor
@@ -26,7 +25,6 @@ import io.embrace.opentelemetry.kotlin.tracing.export.createCompositeSpanProcess
  * the Embrace SDK can hook into its lifecycle. From this, the Embrace SDK can obtain an implementations of the OpenTelemetry API to
  * create OpenTelemetry primitives that it can use internally or export to any OpenTelemetry Collectors.
  */
-@OptIn(ExperimentalApi::class)
 class OtelSdkWrapper(
     otelClock: Clock,
     configuration: OtelSdkConfig,

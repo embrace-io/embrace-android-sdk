@@ -1,5 +1,3 @@
-@file:OptIn(ExperimentalApi::class)
-
 package io.embrace.android.embracesdk.internal.otel.spans
 
 import io.embrace.android.embracesdk.internal.arch.attrs.EmbraceAttribute
@@ -9,7 +7,6 @@ import io.embrace.android.embracesdk.internal.payload.Link
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
 import io.embrace.android.embracesdk.spans.EmbraceSpan
-import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.OpenTelemetry
 import io.embrace.opentelemetry.kotlin.context.Context
 import io.embrace.opentelemetry.kotlin.context.ContextKey
@@ -20,7 +17,6 @@ import io.embrace.opentelemetry.kotlin.tracing.model.SpanKind
 /**
  * An [EmbraceSpan] that has additional functionality to be used internally by the SDK
  */
-@OptIn(ExperimentalApi::class)
 interface EmbraceSdkSpan : EmbraceSpan {
 
     /**
@@ -83,7 +79,6 @@ interface EmbraceSdkSpan : EmbraceSpan {
     /**
      * Add a system link to the span that will subjected to a different maximum than typical links.
      */
-    @OptIn(ExperimentalApi::class)
     fun addSystemLink(
         linkedSpanContext: SpanContext,
         type: LinkType,

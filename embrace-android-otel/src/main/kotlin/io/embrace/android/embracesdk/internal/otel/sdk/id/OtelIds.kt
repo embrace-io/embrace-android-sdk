@@ -1,8 +1,4 @@
-@file:OptIn(ExperimentalApi::class)
-
 package io.embrace.android.embracesdk.internal.otel.sdk.id
-
-import io.embrace.opentelemetry.kotlin.ExperimentalApi
 
 object OtelIds {
 

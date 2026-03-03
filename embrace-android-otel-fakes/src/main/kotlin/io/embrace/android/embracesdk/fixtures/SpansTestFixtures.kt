@@ -1,5 +1,3 @@
-@file:OptIn(ExperimentalApi::class)
-
 package io.embrace.android.embracesdk.fixtures
 
 import io.embrace.android.embracesdk.fakes.fakeOpenTelemetry
@@ -13,11 +11,9 @@ import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.utils.PropertyUtils
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
-import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.context.ContextKey
 import io.embrace.opentelemetry.kotlin.tracing.StatusCode
 
-@OptIn(ExperimentalApi::class)
 val testSpan: Span = EmbraceSpanData(
     traceId = "19bb482ec1c7e6b2f10fb89e0ccc85fa",
     spanId = "342eb9c7f8cb54ff",

@@ -8,7 +8,6 @@ import io.embrace.android.embracesdk.fakes.TestConstants.TESTS_DEFAULT_USE_KOTLI
 import io.embrace.android.embracesdk.fakes.fakeOpenTelemetry
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
-import io.embrace.opentelemetry.kotlin.ExperimentalApi
 import io.embrace.opentelemetry.kotlin.createNoopOpenTelemetry
 import io.embrace.opentelemetry.kotlin.tracing.model.SpanKind
 import org.junit.Assert.assertEquals
@@ -16,7 +15,6 @@ import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
 
-@OptIn(ExperimentalApi::class)
 internal class EmbTracerTest {
     private val clock = FakeClock()
     private val openTelemetryClock = FakeOtelKotlinClock(clock)

@@ -12,7 +12,10 @@ android {
 
     defaultConfig {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        aarMetadata.minCompileSdk = project.findVersion("minCompileSdk").toInt()
+        aarMetadata {
+            minCompileSdk = project.findVersion("minCompileSdk").toInt()
+            minAgpVersion = project.findVersion("minAgpVersion")
+        }
     }
 
     buildTypes {

@@ -4,6 +4,11 @@ import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 
 plugins {
     id("com.android.library")
+    // Applies the kotlin-android stub defined in buildSrc so that binary-compatibility-validator's
+    // withPlugin("kotlin-android") callback fires.
+    // See https://youtrack.jetbrains.com/issue/KT-83410 and
+    // https://issuetracker.google.com/issues/470109449.
+    id("kotlin-android")
 }
 
 android {

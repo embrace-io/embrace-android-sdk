@@ -27,7 +27,7 @@ jobs:
         working-directory: ['.', 'examples/ExampleApp']
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
 
@@ -38,7 +38,7 @@ jobs:
           sudo udevadm trigger --name-match=kvm
 
       - name: Setup Java
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
         with:
           distribution: 'adopt'
           java-version: 21
@@ -48,7 +48,7 @@ jobs:
 
       # Cache the emulator
       - name: AVD cache
-        uses: actions/cache@v5
+        uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         id: avd-cache
         with:
           path: |
@@ -85,7 +85,7 @@ jobs:
 
       - name: Archive Test Results
         if: ${{ always() && matrix.working-directory == '.' }}
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           name: android-emulator-${{ matrix.working-directory }}-test-results
           path: |

@@ -7,19 +7,24 @@ import io.embrace.android.gradle.plugin.tasks.handleHttpCallResult
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.model.ObjectFactory
 import org.gradle.api.tasks.InputFiles
+import org.gradle.api.tasks.PathSensitive
+import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.SkipWhenEmpty
 import org.gradle.api.tasks.TaskAction
+import org.gradle.work.DisableCachingByDefault
 import javax.inject.Inject
 
 /**
  * Task in charge of uploading a compressed file as a multipart request.
  */
+@DisableCachingByDefault(because = "Upload tasks perform network I/O and should not be cached")
 abstract class MultipartUploadTask @Inject constructor(
     objectFactory: ObjectFactory,
 ) : EmbraceUploadTask, EmbraceUploadTaskImpl(objectFactory) {
 
     @get:InputFiles
     @get:SkipWhenEmpty
+    @get:PathSensitive(PathSensitivity.NONE)
     val uploadFile: RegularFileProperty = objectFactory.fileProperty()
 
     @TaskAction

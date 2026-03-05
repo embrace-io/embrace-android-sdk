@@ -19,12 +19,14 @@ import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.PathSensitive
 import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.TaskAction
+import org.gradle.work.DisableCachingByDefault
 import java.io.File
 import javax.inject.Inject
 
 /**
  * Task to upload React Native sourcemap artefacts to Embrace.
  */
+@DisableCachingByDefault(because = "Upload tasks perform network I/O and should not be cached")
 abstract class GenerateRnSourcemapTask @Inject constructor(
     objectFactory: ObjectFactory,
 ) : EmbraceUploadTask, EmbraceUploadTaskImpl(objectFactory) {

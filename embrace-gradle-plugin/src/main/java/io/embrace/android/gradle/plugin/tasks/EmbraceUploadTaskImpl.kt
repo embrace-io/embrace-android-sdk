@@ -6,8 +6,10 @@ import org.gradle.api.DefaultTask
 import org.gradle.api.model.ObjectFactory
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
+import org.gradle.work.DisableCachingByDefault
 import javax.inject.Inject
 
+@DisableCachingByDefault(because = "Upload tasks perform network I/O and should not be cached")
 abstract class EmbraceUploadTaskImpl @Inject constructor(
     objectFactory: ObjectFactory
 ) : DefaultTask(), EmbraceUploadTask {

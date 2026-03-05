@@ -2,8 +2,10 @@ package io.embrace.android.gradle.plugin.tasks.ndk
 
 import io.embrace.android.gradle.plugin.EmbraceLogger
 import io.embrace.android.gradle.plugin.hash.calculateSha1ForFile
-import io.embrace.android.gradle.plugin.tasks.EmbraceTaskImpl
+import io.embrace.android.gradle.plugin.model.AndroidCompactedVariantData
+import io.embrace.android.gradle.plugin.tasks.EmbraceTask
 import io.embrace.android.gradle.plugin.util.serialization.MoshiSerializer
+import org.gradle.api.DefaultTask
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.model.ObjectFactory
@@ -11,8 +13,11 @@ import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.OutputFile
+import org.gradle.api.tasks.PathSensitive
+import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.SkipWhenEmpty
 import org.gradle.api.tasks.TaskAction
+import org.gradle.work.DisableCachingByDefault
 import java.io.File
 import javax.inject.Inject
 
@@ -21,15 +26,21 @@ import javax.inject.Inject
  * this task calculates SHA1 hashes for each compressed file and creates a JSON mapping
  * of architectures to their corresponding hashes.
  */
+@DisableCachingByDefault(because = "Hashes shared object files and does not benefit from caching")
 abstract class HashSharedObjectFilesTask @Inject constructor(
     objectFactory: ObjectFactory,
-) : EmbraceTaskImpl(objectFactory) {
+) : DefaultTask(), EmbraceTask {
+
+    @get:Input
+    override val variantData: Property<AndroidCompactedVariantData> =
+        objectFactory.property(AndroidCompactedVariantData::class.java)
 
     private val serializer = MoshiSerializer()
     private val logger = EmbraceLogger(HashSharedObjectFilesTask::class.java)
 
     @get:InputDirectory
     @get:SkipWhenEmpty
+    @get:PathSensitive(PathSensitivity.NONE)
     val compressedSharedObjectFilesDirectory: DirectoryProperty = objectFactory.directoryProperty()
 
     @get:Input

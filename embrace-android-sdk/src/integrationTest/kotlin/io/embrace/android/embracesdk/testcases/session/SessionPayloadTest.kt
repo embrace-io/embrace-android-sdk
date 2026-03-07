@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.assertions.getSessionId
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -17,9 +18,13 @@ internal class SessionPayloadTest {
     val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule()
 
     @Test
-    fun `device and app attributes are present in session envelope`() {
+    fun `device, app, and otel resource attributes are present in session envelope`() {
         testRule.runTest(
+            preSdkStartAction = {
+                embrace.setResourceAttribute("resource-attr", "foo")
+            },
             testCaseAction = {
+                embrace.setResourceAttribute("bad-resource-attr", "foo")
                 recordSession()
 
             },
@@ -33,6 +38,8 @@ internal class SessionPayloadTest {
                         assertTrue(checkNotNull(osName).isNotBlank())
                         assertTrue(checkNotNull(deviceModel).isNotBlank())
                         assertEquals(AppFramework.NATIVE, appFramework)
+                        assertEquals("foo", extras["resource-attr"])
+                        assertFalse(extras.contains("bad-resource-attr"))
                     }
                     assertTrue(getSessionId().isNotBlank())
                 }

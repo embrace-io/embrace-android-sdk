@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.assertions.findSpanOfType
 import io.embrace.android.embracesdk.assertions.findSpanSnapshotOfType
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
+import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType.NetworkState.Status
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
@@ -101,11 +102,11 @@ internal class NetworkStatusFeatureTest {
         testRule.runTest(
             instrumentedConfig = FakeInstrumentedConfig(
                 enabledFeatures = FakeEnabledFeatureConfig(
-                    stateCaptureEnabled = true,
                     bgActivityCapture = false,
                     networkConnectivityCapture = true
                 )
             ),
+            persistedRemoteConfig = RemoteConfig(pctStateCaptureEnabledV2 = 100.0f),
             testCaseAction = {
                 recordSession {
                     simulateNetworkChange(NetworkStatus.WIFI)
@@ -155,10 +156,10 @@ internal class NetworkStatusFeatureTest {
         testRule.runTest(
             instrumentedConfig = FakeInstrumentedConfig(
                 enabledFeatures = FakeEnabledFeatureConfig(
-                    stateCaptureEnabled = true,
                     networkConnectivityCapture = false
                 )
             ),
+            persistedRemoteConfig = RemoteConfig(pctStateCaptureEnabledV2 = 100.0f),
             testCaseAction = {
                 try {
                     findDataSource<NetworkStateDataSource>()

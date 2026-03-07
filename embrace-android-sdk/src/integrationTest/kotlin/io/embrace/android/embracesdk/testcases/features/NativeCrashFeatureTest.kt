@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.fakes.FakeJniDelegate
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
+import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.fakes.fakeEnvelopeMetadata
 import io.embrace.android.embracesdk.fakes.fakeEnvelopeResource
 import io.embrace.android.embracesdk.fakes.fakeLaterEnvelopeMetadata
@@ -54,10 +55,10 @@ internal class NativeCrashFeatureTest {
     private val config = FakeInstrumentedConfig(
         enabledFeatures = FakeEnabledFeatureConfig(
             nativeCrashCapture = true,
-            stateCaptureEnabled = true
         ),
         symbols = createNativeSymbolsForCurrentArch(fakeSymbols)
     )
+    private val remoteConfig = RemoteConfig(pctStateCaptureEnabledV2 = 100.0f)
     private val sessionMetadata = StoredTelemetryMetadata(
         timestamp = BASE_TIME_MS,
         uuid = "30690ad1-6b87-4e08-b72c-7deca14451d8",
@@ -122,6 +123,7 @@ internal class NativeCrashFeatureTest {
         val newSessionProperty = "new-session-prop"
         testRule.runTest(
             instrumentedConfig = config,
+            persistedRemoteConfig = remoteConfig,
             setupAction = {
                 setupPermanentSessionProperties(mapOf(newSessionProperty to "foo"))
                 setupCachedDataFromNativeCrash(
@@ -152,6 +154,7 @@ internal class NativeCrashFeatureTest {
     fun `native crash with session ID but no matching session`() {
         testRule.runTest(
             instrumentedConfig = config,
+            persistedRemoteConfig = remoteConfig,
             setupAction = {
                 val modifiedCrashData = crashData.copy(sessionMetadata = null, sessionEnvelope = null)
                 setupCachedDataFromNativeCrash(
@@ -174,6 +177,7 @@ internal class NativeCrashFeatureTest {
     fun `session with native crash ID but no matching crash`() {
         testRule.runTest(
             instrumentedConfig = config,
+            persistedRemoteConfig = remoteConfig,
             setupAction = {
                 setupCachedDataFromNativeCrash(crashData = crashData)
             },
@@ -191,6 +195,7 @@ internal class NativeCrashFeatureTest {
     fun `multiple native crashes can be associated with multiple sessions`() {
         testRule.runTest(
             instrumentedConfig = config,
+            persistedRemoteConfig = remoteConfig,
             setupAction = {
                 setupCachedDataFromNativeCrash(crashData = crashData)
                 setupCachedDataFromNativeCrash(crashData = crashData2)
@@ -253,6 +258,7 @@ internal class NativeCrashFeatureTest {
     fun `native crash that fails to load at JNI layer`() {
         testRule.runTest(
             instrumentedConfig = config,
+            persistedRemoteConfig = remoteConfig,
             setupAction = {
                 setupCachedDataFromNativeCrash(crashData = crashData)
                 setupFakeNativeCrash(serializer, crashData)
@@ -274,6 +280,7 @@ internal class NativeCrashFeatureTest {
     fun `native crash that fails to deserialize at JVM layer`() {
         testRule.runTest(
             instrumentedConfig = config,
+            persistedRemoteConfig = remoteConfig,
             setupAction = {
                 setupCachedDataFromNativeCrash(crashData = crashData)
                 setupFakeNativeCrash(serializer, crashData)
@@ -313,6 +320,7 @@ internal class NativeCrashFeatureTest {
                     bgActivityCapture = backgroundActivityEnabled
                 )
             ),
+            persistedRemoteConfig = remoteConfig,
             setupAction = {
                 jniDelegate = fakeJniDelegate
                 ioWorker = getFakedWorkerExecutor()

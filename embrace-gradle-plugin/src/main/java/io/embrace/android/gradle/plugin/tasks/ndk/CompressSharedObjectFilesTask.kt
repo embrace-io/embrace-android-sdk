@@ -1,8 +1,10 @@
 package io.embrace.android.gradle.plugin.tasks.ndk
 
 import io.embrace.android.gradle.plugin.EmbraceLogger
-import io.embrace.android.gradle.plugin.tasks.EmbraceTaskImpl
+import io.embrace.android.gradle.plugin.model.AndroidCompactedVariantData
+import io.embrace.android.gradle.plugin.tasks.EmbraceTask
 import io.embrace.android.gradle.plugin.util.compression.ZstdFileCompressor
+import org.gradle.api.DefaultTask
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.model.ObjectFactory
 import org.gradle.api.provider.Property
@@ -10,8 +12,11 @@ import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.OutputDirectory
+import org.gradle.api.tasks.PathSensitive
+import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.SkipWhenEmpty
 import org.gradle.api.tasks.TaskAction
+import org.gradle.work.DisableCachingByDefault
 import java.io.File
 import javax.inject.Inject
 
@@ -20,9 +25,14 @@ import javax.inject.Inject
  * this task compresses each shared object file using Zstd compression and stores the compressed files in the output directory,
  * preserving the architecture directory structure.
  */
+@DisableCachingByDefault(because = "Compresses shared object files to disk and does not benefit from caching")
 abstract class CompressSharedObjectFilesTask @Inject constructor(
     objectFactory: ObjectFactory,
-) : EmbraceTaskImpl(objectFactory) {
+) : DefaultTask(), EmbraceTask {
+
+    @get:Input
+    override val variantData: Property<AndroidCompactedVariantData> =
+        objectFactory.property(AndroidCompactedVariantData::class.java)
 
     private val compressor = ZstdFileCompressor()
     private val logger = EmbraceLogger(CompressSharedObjectFilesTask::class.java)
@@ -30,6 +40,7 @@ abstract class CompressSharedObjectFilesTask @Inject constructor(
     @get:InputDirectory
     @get:SkipWhenEmpty
     @get:Optional
+    @get:PathSensitive(PathSensitivity.NONE)
     val architecturesDirectory: DirectoryProperty = objectFactory.directoryProperty()
 
     @get:Input

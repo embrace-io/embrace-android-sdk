@@ -13,8 +13,11 @@ import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.InputFile
+import org.gradle.api.tasks.PathSensitive
+import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.SkipWhenEmpty
 import org.gradle.api.tasks.TaskAction
+import org.gradle.work.DisableCachingByDefault
 import java.io.File
 import javax.inject.Inject
 
@@ -30,6 +33,7 @@ import javax.inject.Inject
  * - Find the shared object files requested by the backend (if any) in the compressed files directory.
  * - Upload the requested files individually to the backend.
  */
+@DisableCachingByDefault(because = "Upload tasks perform network I/O and should not be cached")
 abstract class UploadSharedObjectFilesTask @Inject constructor(
     objectFactory: ObjectFactory,
 ) : EmbraceUploadTask, EmbraceUploadTaskImpl(objectFactory) {
@@ -42,10 +46,12 @@ abstract class UploadSharedObjectFilesTask @Inject constructor(
 
     @SkipWhenEmpty
     @get:InputDirectory
+    @get:PathSensitive(PathSensitivity.NONE)
     val compressedSharedObjectFilesDirectory: DirectoryProperty = objectFactory.directoryProperty()
 
     @SkipWhenEmpty
     @get:InputFile
+    @get:PathSensitive(PathSensitivity.NONE)
     val architecturesToHashedSharedObjectFilesMapJson: RegularFileProperty = objectFactory.fileProperty()
 
     private lateinit var architecturesToHashedSharedObjectFilesMap: Map<String, Map<String, String>>

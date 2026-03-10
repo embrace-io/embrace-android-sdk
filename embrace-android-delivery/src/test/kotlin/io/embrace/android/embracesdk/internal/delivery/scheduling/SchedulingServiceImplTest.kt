@@ -19,6 +19,8 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.net.SocketTimeoutException
+import java.net.UnknownHostException
 import java.util.concurrent.RejectedExecutionException
 
 internal class SchedulingServiceImplTest {
@@ -304,6 +306,121 @@ internal class SchedulingServiceImplTest {
         assertEquals(2, logger.internalErrorMessages.size)
     }
 
+    @Test
+    fun `connection failure blocks further delivery attempts`() {
+        blockConnection()
+        waitForOnPayloadIntakeTaskCompletion()
+        deliveryExecutor.awaitExecutionCompletion()
+        assertEquals(1, executionService.sendAttempts())
+        assertEquals(2, storageService.storedPayloadCount())
+    }
+
+    @Test
+    fun `connection timeout doesn't further delivery attempts`() {
+        allSendsTimeout()
+        waitForOnPayloadIntakeTaskCompletion()
+        deliveryExecutor.awaitExecutionCompletion()
+        assertEquals(2, executionService.sendAttempts())
+        assertEquals(2, storageService.storedPayloadCount())
+    }
+
+    @Test
+    fun `connection attempt retried in an exponentially backed off manner`() {
+        blockConnection()
+        schedulingExecutor.blockingMode = true
+        waitForOnPayloadIntakeTaskCompletion()
+        deliveryExecutor.awaitExecutionCompletion()
+        var delay = INITIAL_DELAY_MS
+        repeat(10) { iteration ->
+            schedulingExecutor.moveForwardAndRunBlocked(delay + 1)
+            schedulingExecutor.awaitExecutionCompletion()
+            deliveryExecutor.awaitExecutionCompletion()
+            assertEquals(
+                "Connection retry attempt ${iteration + 1} did not result in the right number of sends after $delay ms",
+                iteration + 2,
+                executionService.sendAttempts()
+            )
+            delay *= 2
+        }
+    }
+
+    @Test
+    fun `payload will be delivered at first retry attempt if unblocked`() {
+        blockConnection()
+        schedulingExecutor.blockingMode = true
+        waitForOnPayloadIntakeTaskCompletion()
+        deliveryExecutor.awaitExecutionCompletion()
+        assertEquals(1, executionService.sendAttempts())
+        assertEquals(2, storageService.storedPayloadCount())
+        allSendsSucceed()
+        schedulingExecutor.moveForwardAndRunBlocked(INITIAL_DELAY_MS - 1)
+        deliveryExecutor.awaitExecutionCompletion()
+        assertEquals(1, executionService.sendAttempts())
+        assertEquals(2, storageService.storedPayloadCount())
+        schedulingExecutor.moveForwardAndRunBlocked(1)
+        waitForOnPayloadIntakeTaskCompletion()
+        assertEquals(3, executionService.sendAttempts())
+        assertEquals(0, storageService.storedPayloadCount())
+    }
+
+    @Test
+    fun `new payload will not result in connection attempt if paused period has not elapsed`() {
+        blockConnection()
+        schedulingExecutor.blockingMode = true
+        waitForOnPayloadIntakeTaskCompletion()
+        deliveryExecutor.awaitExecutionCompletion()
+        schedulingExecutor.moveForwardAndRunBlocked(INITIAL_DELAY_MS - 1)
+        storageService.addFakePayload(fakeSessionStoredTelemetryMetadata2)
+        waitForOnPayloadIntakeTaskCompletion()
+        assertEquals(1, executionService.sendAttempts())
+        assertEquals(3, storageService.storedPayloadCount())
+    }
+
+    @Test
+    fun `network change after connection retry pause period elapse will trigger send`() {
+        allSendsTimeout()
+        schedulingExecutor.blockingMode = true
+        waitForOnPayloadIntakeTaskCompletion()
+
+        // After this returns, both stored payloads should've tried, timed out and scheduled to be retried in INITIAL_DELAY_MS
+        deliveryExecutor.awaitExecutionCompletion()
+
+        // All subsequent requests will be unable to reach the Embrace server
+        blockConnection()
+
+        // Moving the clock forward to when a retry should be invoked
+        // 1 request will fail to connect and lock the delivery layer by INITIAL_DELAY_MS
+        // 1 request will be scheduled to execute by the retry logic but blocked by the connection blockage logic
+        schedulingExecutor.moveForwardAndRunBlocked(INITIAL_DELAY_MS)
+        schedulingExecutor.awaitExecutionCompletion()
+        deliveryExecutor.awaitExecutionCompletion()
+        assertEquals(3, executionService.sendAttempts())
+
+        // Subsequent payloads will succeed
+        allSendsSucceed()
+
+        // Moving the time before to just before the connection blockage will not cause the request not retried to be retried
+        schedulingExecutor.moveForwardAndRunBlocked(INITIAL_DELAY_MS - 1)
+        schedulingExecutor.awaitExecutionCompletion()
+        deliveryExecutor.awaitExecutionCompletion()
+        assertEquals(3, executionService.sendAttempts())
+
+        // The connection changing will reset the connection attempt blockage, will make the previously scheduled retry to run and succeed
+        networkConnectivityService.networkStatus = NetworkStatus.WIFI
+        schedulingExecutor.runCurrentlyBlocked()
+        schedulingExecutor.awaitExecutionCompletion()
+        deliveryExecutor.awaitExecutionCompletion()
+        assertEquals(4, executionService.sendAttempts())
+        assertEquals(1, storageService.storedPayloadCount())
+
+        // Moving the clock to when the request that failed twice retry will make it run and succeed
+        schedulingExecutor.moveForwardAndRunBlocked(INITIAL_DELAY_MS + 1)
+        schedulingExecutor.awaitExecutionCompletion()
+        deliveryExecutor.awaitExecutionCompletion()
+        assertEquals(5, executionService.sendAttempts())
+        assertEquals(0, storageService.storedPayloadCount())
+    }
+
     @Test(expected = RejectedExecutionException::class)
     fun `test shutdown`() {
         logger.throwOnInternalError = false
@@ -329,8 +446,20 @@ internal class SchedulingServiceImplTest {
         executionService.constantResponse = failure
     }
 
+    private fun allSendsTimeout() {
+        executionService.constantResponse = timeout
+    }
+
+    private fun blockConnection() {
+        executionService.constantResponse = cannotConnect
+    }
+
     private companion object {
         const val SHORT_BLOCKED_DURATION = 30_000L
         val failure = ExecutionResult.Failure(code = 500)
+
+        val cannotConnect = ExecutionResult.Incomplete(UnknownHostException(), true)
+
+        val timeout = ExecutionResult.Incomplete(SocketTimeoutException(), true)
     }
 }

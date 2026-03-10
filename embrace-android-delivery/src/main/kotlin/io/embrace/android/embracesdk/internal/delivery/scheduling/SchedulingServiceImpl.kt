@@ -13,6 +13,7 @@ import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import java.io.InputStream
+import java.net.UnknownHostException
 import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Future
@@ -31,6 +32,7 @@ class SchedulingServiceImpl(
 
     private val blockedEndpoints: MutableMap<Endpoint, Long> = ConcurrentHashMap()
     private val hasNetwork = AtomicBoolean(true)
+    private val connectionStatus = ConnectionStatus(clock)
     private val activeSends: MutableSet<StoredTelemetryMetadata> = Collections.newSetFromMap(ConcurrentHashMap())
     private val deleteInProgress: MutableSet<StoredTelemetryMetadata> = Collections.newSetFromMap(ConcurrentHashMap())
     private val payloadsToRetry: MutableMap<StoredTelemetryMetadata, RetryInstance> = ConcurrentHashMap()
@@ -47,6 +49,11 @@ class SchedulingServiceImpl(
     }
 
     override fun onNetworkConnectivityStatusChanged(status: NetworkStatus) {
+        // Every network change to a reachable connection can potentially reset the ability to connect to the Embrace server
+        if (status.isReachable) {
+            connectionStatus.reset()
+        }
+
         val currentlyConnected = status.isReachable
 
         // Set a new connection status if it differs from the current one
@@ -77,7 +84,7 @@ class SchedulingServiceImpl(
             var payload: StoredTelemetryMetadata? = findNextPayload()
             while (payload != null && readyToSend()) {
                 runCatching {
-                    payload?.run {
+                    payload.run {
                         if (shouldSendPayload() && readyToSend()) {
                             envelopeType.endpoint.updateBlockedEndpoint()
                             queueDelivery(this)
@@ -87,7 +94,7 @@ class SchedulingServiceImpl(
                     // This block catches unhandled errors resulting a single payload failing to be queued for delivery.
                     // Any payload failed to be queued will be bypassed in the current delivery loop cycle, as the
                     // SDK encountered an error as it tried to determine whether the payload should be delivered.
-                    val fileName = payload?.run {
+                    val fileName = payload.run {
                         // Keeping track of the payloads that failed to be queued prevents an infinite loop where a
                         // payload that refused to be queued successfully keeps being retried in the same loop.
                         // So even if it isn't possible now, this code prevents makes an attempt to prevent it from
@@ -130,7 +137,7 @@ class SchedulingServiceImpl(
         return deliveryWorker.submit<ExecutionResult> {
             val result: ExecutionResult =
                 try {
-                    // If fail to convert metadata to stream, we can't expect it will success later, so we won't retry.
+                    // If fail to convert metadata to stream, we can't expect it will succeed later, so we won't retry.
                     // The storage service will log an internal exception and we move on.
                     payload.toStream()?.run {
                         executionService.attemptHttpRequest(
@@ -150,6 +157,12 @@ class SchedulingServiceImpl(
 
             deliveryTracer?.onPayloadResult(payload, result)
 
+            // If the request failed because the SDK cannot reach the Embrace server,
+            // update the connection status to prevent delivery attempt
+            if (result is ExecutionResult.Incomplete && result.exception is UnknownHostException) {
+                connectionStatus.connectionFailed()
+            }
+
             with(result) {
                 if (!shouldRetry) {
                     // If the response is such that we should not ever retry the delivery of this payload,
@@ -168,7 +181,7 @@ class SchedulingServiceImpl(
                         blockedEndpoints[endpoint] = unblockedTimestampMs
                         unblockedTimestampMs + 1L
                     } else {
-                        calculateNextRetryTime(retryAttempts = retryAttempts)
+                        clock.calculateNextRetryTime(retryAttempts = retryAttempts)
                     }
 
                     payloadsToRetry[payload] = RetryInstance(
@@ -197,7 +210,7 @@ class SchedulingServiceImpl(
     }
 
     private fun readyToSend(): Boolean {
-        return hasNetwork.get()
+        return hasNetwork.get() && !connectionStatus.disconnected
     }
 
     private fun StoredTelemetryMetadata.shouldSendPayload(): Boolean {
@@ -208,8 +221,12 @@ class SchedulingServiceImpl(
         } else if (isEndpointBlocked()) {
             false
         } else {
+            val currentTime = clock.now()
+
+            // Eagerly evaluate whether it's time to unblock the connection attempt
+            connectionStatus.attemptUnblock(currentTime)
             payloadsToRetry[this]?.run {
-                clock.now() >= nextRetryTimeMs
+                currentTime >= nextRetryTimeMs
             } ?: true
         }
     }
@@ -231,21 +248,52 @@ class SchedulingServiceImpl(
 
     private fun calculateDelay(nextRetryTimeMs: Long): Long = nextRetryTimeMs - clock.now()
 
-    /**
-     * Note: bit-shifting is used to raise 2 to the power of [retryAttempts]. This is the most efficient way of
-     * doing this, and as much as it pains me to do this, it's isolated and tested, and the runtime penalty, however
-     * tiny, is not worth incurring if we can instead do this.
-     */
-    private fun calculateNextRetryTime(
-        retryAttempts: Int,
-    ): Long = clock.now() + (INITIAL_DELAY_MS * (1 shl retryAttempts))
-
     private data class RetryInstance(
         val failedAttempts: Int,
         val nextRetryTimeMs: Long,
     )
 
+    private class ConnectionStatus(
+        private val clock: Clock
+    ) {
+        var disconnected: Boolean = false
+            private set
+
+        var consecutiveFailures: Int = 0
+            private set
+
+        var nextConnectionAttemptTime: Long = 0
+            private set
+
+        fun reset() {
+            disconnected = false
+            consecutiveFailures = 0
+            nextConnectionAttemptTime = 0L
+        }
+
+        fun connectionFailed() {
+            disconnected = true
+            nextConnectionAttemptTime = clock.calculateNextRetryTime(consecutiveFailures)
+            consecutiveFailures++
+        }
+
+        fun attemptUnblock(currentTime: Long) {
+            if (disconnected && nextConnectionAttemptTime <= currentTime) {
+                reset()
+            }
+        }
+    }
+
     companion object {
         const val INITIAL_DELAY_MS = 60_000L
+
+        /**
+         * Note: bit-shifting is used to raise 2 to the power of [retryAttempts]. This is the most efficient way of
+         * doing this, and as much as it pains me to do this, it's isolated and tested, and the runtime penalty, however
+         * tiny, is not worth incurring if we can instead do this.
+         */
+        internal fun Clock.calculateNextRetryTime(
+            retryAttempts: Int,
+        ): Long = now() + (INITIAL_DELAY_MS * (1 shl retryAttempts))
     }
 }

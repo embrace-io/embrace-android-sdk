@@ -13,12 +13,12 @@ import io.embrace.android.embracesdk.internal.otel.impl.EmbTracerProvider
 import io.embrace.android.embracesdk.internal.otel.logs.EventService
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
-import io.embrace.opentelemetry.kotlin.Clock
-import io.embrace.opentelemetry.kotlin.OpenTelemetry
-import io.embrace.opentelemetry.kotlin.logging.Logger
-import io.embrace.opentelemetry.kotlin.logging.export.createCompositeLogRecordProcessor
-import io.embrace.opentelemetry.kotlin.tracing.Tracer
-import io.embrace.opentelemetry.kotlin.tracing.export.createCompositeSpanProcessor
+import io.opentelemetry.kotlin.Clock
+import io.opentelemetry.kotlin.OpenTelemetry
+import io.opentelemetry.kotlin.logging.Logger
+import io.opentelemetry.kotlin.logging.export.createCompositeLogRecordProcessor
+import io.opentelemetry.kotlin.tracing.Tracer
+import io.opentelemetry.kotlin.tracing.export.createCompositeSpanProcessor
 
 /**
  * Wrapper that instantiates a copy of the OpenTelemetry SDK configured with the appropriate settings and the given components so

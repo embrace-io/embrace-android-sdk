@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.opentelemetry.kotlin.resource.MutableResource
-import io.embrace.opentelemetry.kotlin.resource.Resource
+import io.opentelemetry.kotlin.resource.MutableResource
+import io.opentelemetry.kotlin.resource.Resource
 
 internal class FakeResource(
     override val attributes: Map<String, Any> = emptyMap(),

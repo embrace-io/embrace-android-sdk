@@ -1,3 +1,4 @@
+
 package io.embrace.android.embracesdk.internal.resurrection
 
 import io.embrace.android.embracesdk.assertions.assertEmbraceSpanData

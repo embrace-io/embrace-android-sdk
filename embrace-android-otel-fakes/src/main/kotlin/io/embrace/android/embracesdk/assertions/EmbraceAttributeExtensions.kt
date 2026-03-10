@@ -1,3 +1,4 @@
+
 package io.embrace.android.embracesdk.assertions
 
 import io.embrace.android.embracesdk.fakes.fromErrorCode

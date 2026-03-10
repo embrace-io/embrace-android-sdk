@@ -2,12 +2,12 @@ package io.embrace.android.embracesdk.internal.api.delegate
 
 import io.embrace.android.embracesdk.internal.api.OTelApi
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
-import io.embrace.opentelemetry.kotlin.OpenTelemetry
-import io.embrace.opentelemetry.kotlin.createNoopOpenTelemetry
-import io.embrace.opentelemetry.kotlin.logging.export.LogRecordExporter
-import io.embrace.opentelemetry.kotlin.logging.export.LogRecordProcessor
-import io.embrace.opentelemetry.kotlin.tracing.export.SpanExporter
-import io.embrace.opentelemetry.kotlin.tracing.export.SpanProcessor
+import io.opentelemetry.kotlin.OpenTelemetry
+import io.opentelemetry.kotlin.createNoopOpenTelemetry
+import io.opentelemetry.kotlin.logging.export.LogRecordExporter
+import io.opentelemetry.kotlin.logging.export.LogRecordProcessor
+import io.opentelemetry.kotlin.tracing.export.SpanExporter
+import io.opentelemetry.kotlin.tracing.export.SpanProcessor
 
 internal class OTelApiDelegate(
     private val bootstrapper: ModuleInitBootstrapper,

@@ -1,9 +1,9 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.opentelemetry.kotlin.context.Context
-import io.embrace.opentelemetry.kotlin.export.OperationResultCode
-import io.embrace.opentelemetry.kotlin.logging.export.LogRecordProcessor
-import io.embrace.opentelemetry.kotlin.logging.model.ReadWriteLogRecord
+import io.opentelemetry.kotlin.context.Context
+import io.opentelemetry.kotlin.export.OperationResultCode
+import io.opentelemetry.kotlin.logging.export.LogRecordProcessor
+import io.opentelemetry.kotlin.logging.model.ReadWriteLogRecord
 
 class FakeLogRecordProcessor(
     private val onEmitAction: (ReadWriteLogRecord) -> Unit = {},

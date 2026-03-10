@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.otel.impl
 
-import io.embrace.opentelemetry.kotlin.attributes.MutableAttributeContainer
-import io.embrace.opentelemetry.kotlin.tracing.model.SpanEvent
+import io.opentelemetry.kotlin.attributes.MutableAttributeContainer
+import io.opentelemetry.kotlin.tracing.model.SpanEvent
 
 internal class EmbSpanEvent(
     override val name: String,

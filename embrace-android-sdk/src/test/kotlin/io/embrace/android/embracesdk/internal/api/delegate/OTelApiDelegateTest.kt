@@ -13,8 +13,8 @@ import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.otel.config.OtelSdkConfig
-import io.embrace.opentelemetry.kotlin.createNoopOpenTelemetry
-import io.embrace.opentelemetry.kotlin.semconv.ServiceAttributes
+import io.opentelemetry.kotlin.createNoopOpenTelemetry
+import io.opentelemetry.kotlin.semconv.ServiceAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals

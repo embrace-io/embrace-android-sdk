@@ -1,10 +1,10 @@
 package io.embrace.android.embracesdk.internal.otel.logs
 
-import io.embrace.opentelemetry.kotlin.context.Context
-import io.embrace.opentelemetry.kotlin.export.OperationResultCode
-import io.embrace.opentelemetry.kotlin.logging.export.LogRecordExporter
-import io.embrace.opentelemetry.kotlin.logging.export.LogRecordProcessor
-import io.embrace.opentelemetry.kotlin.logging.model.ReadWriteLogRecord
+import io.opentelemetry.kotlin.context.Context
+import io.opentelemetry.kotlin.export.OperationResultCode
+import io.opentelemetry.kotlin.logging.export.LogRecordExporter
+import io.opentelemetry.kotlin.logging.export.LogRecordProcessor
+import io.opentelemetry.kotlin.logging.model.ReadWriteLogRecord
 
 /**
  * A default implementation of a [LogRecordProcessor] that simply exports each log record to an exporter.

@@ -9,11 +9,11 @@ import io.embrace.android.embracesdk.fakes.FakeSpanToken
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.instrumentation.HucLiteDataSource
-import io.embrace.opentelemetry.kotlin.semconv.ErrorAttributes
-import io.embrace.opentelemetry.kotlin.semconv.ExceptionAttributes
-import io.embrace.opentelemetry.kotlin.semconv.HttpAttributes
 import io.mockk.every
 import io.mockk.mockk
+import io.opentelemetry.kotlin.semconv.ErrorAttributes
+import io.opentelemetry.kotlin.semconv.ExceptionAttributes
+import io.opentelemetry.kotlin.semconv.HttpAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull

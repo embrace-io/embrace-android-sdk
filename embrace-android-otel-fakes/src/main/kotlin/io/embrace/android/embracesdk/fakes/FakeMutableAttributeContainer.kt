@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.opentelemetry.kotlin.attributes.MutableAttributeContainer
+import io.opentelemetry.kotlin.attributes.MutableAttributeContainer
 
 class FakeMutableAttributeContainer(
     override val attributes: MutableMap<String, Any> = mutableMapOf(),

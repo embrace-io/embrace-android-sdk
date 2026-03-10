@@ -21,21 +21,21 @@ It is published to Maven Central under the `io.embrace` group.
 
 ## Build & Toolchain
 
-| Tool                         | Version / Notes                                                            |
-|------------------------------|----------------------------------------------------------------------------|
-| Language                     | Kotlin (primary), some minimal Java/C++                                    |
-| Min Supported Kotlin version | 2.0                                                                        |
-| Kotlin compile-time version  | 2.3                                                                        |
-| JVM target                   | 11                                                                         |
-| Android minSdk               | 21                                                                         |
-| Android compileSdk           | 36                                                                         |
-| Build system                 | Gradle (Kotlin DSL) with convention plugins in `buildSrc/`                 |
-| Dependency catalog           | `gradle/libs.versions.toml`                                                |
-| Java                         | 21 (CI), 11 (target compatibility)                                         |
-| Serialization                | Moshi (with KSP codegen)                                                   |
-| OTel                         | `io.embrace.opentelemetry.kotlin` (Kotlin-friendly OpenTelemetry wrappers) |
-| HTTP                         | OkHttp 4.x                                                                 |
-| Configuration cache          | Enabled, problems=fail                                                     |
+| Tool                         | Version / Notes                                                    |
+|------------------------------|--------------------------------------------------------------------|
+| Language                     | Kotlin (primary), some minimal Java/C++                            |
+| Min Supported Kotlin version | 2.0                                                                |
+| Kotlin compile-time version  | 2.3                                                                |
+| JVM target                   | 11                                                                 |
+| Android minSdk               | 21                                                                 |
+| Android compileSdk           | 36                                                                 |
+| Build system                 | Gradle (Kotlin DSL) with convention plugins in `buildSrc/`         |
+| Dependency catalog           | `gradle/libs.versions.toml`                                        |
+| Java                         | 21 (CI), 11 (target compatibility)                                 |
+| Serialization                | Moshi (with KSP codegen)                                           |
+| OTel                         | `io.opentelemetry.kotlin` (Kotlin-friendly OpenTelemetry wrappers) |
+| HTTP                         | OkHttp 4.x                                                         |
+| Configuration cache          | Enabled, problems=fail                                             |
 
 ### Key Commands
 

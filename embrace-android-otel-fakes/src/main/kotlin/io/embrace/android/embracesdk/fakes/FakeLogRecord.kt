@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.opentelemetry.kotlin.context.Context
-import io.embrace.opentelemetry.kotlin.logging.model.SeverityNumber
+import io.opentelemetry.kotlin.context.Context
+import io.opentelemetry.kotlin.logging.model.SeverityNumber
 
 class FakeLogRecord(
     val eventName: String?,

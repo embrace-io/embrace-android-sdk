@@ -16,13 +16,13 @@ import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface
 import io.embrace.android.embracesdk.testframework.actions.EmbracePreSdkStartInterface
-import io.embrace.opentelemetry.kotlin.OpenTelemetry
-import io.embrace.opentelemetry.kotlin.getTracer
-import io.embrace.opentelemetry.kotlin.semconv.ExceptionAttributes
-import io.embrace.opentelemetry.kotlin.tracing.Tracer
-import io.embrace.opentelemetry.kotlin.tracing.data.SpanData
-import io.embrace.opentelemetry.kotlin.tracing.data.StatusData
-import io.embrace.opentelemetry.kotlin.tracing.recordException
+import io.opentelemetry.kotlin.OpenTelemetry
+import io.opentelemetry.kotlin.getTracer
+import io.opentelemetry.kotlin.semconv.ExceptionAttributes
+import io.opentelemetry.kotlin.tracing.Tracer
+import io.opentelemetry.kotlin.tracing.data.SpanData
+import io.opentelemetry.kotlin.tracing.data.StatusData
+import io.opentelemetry.kotlin.tracing.recordException
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
@@ -194,6 +194,7 @@ internal class ExternalTracerTest {
         )
     }
 
+
     @Test
     fun `span record exception`() {
         var stacktrace: String? = null
@@ -248,6 +249,7 @@ internal class ExternalTracerTest {
             }
         )
     }
+
 
     @Test
     fun `getOpenTelemetryKotlin returns noop before SDK start`() {

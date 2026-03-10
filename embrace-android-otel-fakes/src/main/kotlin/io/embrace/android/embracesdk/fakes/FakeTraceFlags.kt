@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.opentelemetry.kotlin.tracing.model.TraceFlags
+import io.opentelemetry.kotlin.tracing.model.TraceFlags
 
 class FakeTraceFlags(
     override val hex: String = "00",

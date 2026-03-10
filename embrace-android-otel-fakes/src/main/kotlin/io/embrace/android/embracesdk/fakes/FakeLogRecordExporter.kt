@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.opentelemetry.kotlin.export.OperationResultCode
-import io.embrace.opentelemetry.kotlin.logging.export.LogRecordExporter
-import io.embrace.opentelemetry.kotlin.logging.model.ReadableLogRecord
+import io.opentelemetry.kotlin.export.OperationResultCode
+import io.opentelemetry.kotlin.logging.export.LogRecordExporter
+import io.opentelemetry.kotlin.logging.model.ReadableLogRecord
 
 class FakeLogRecordExporter : LogRecordExporter {
 

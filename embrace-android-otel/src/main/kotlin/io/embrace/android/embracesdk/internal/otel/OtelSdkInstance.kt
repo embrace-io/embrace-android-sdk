@@ -2,13 +2,13 @@ package io.embrace.android.embracesdk.internal.otel
 
 import io.embrace.android.embracesdk.internal.otel.spans.createContext
 import io.embrace.android.embracesdk.internal.otel.spans.getEmbraceSpan
-import io.embrace.opentelemetry.kotlin.Clock
-import io.embrace.opentelemetry.kotlin.OpenTelemetry
-import io.embrace.opentelemetry.kotlin.context.Context
-import io.embrace.opentelemetry.kotlin.createCompatOpenTelemetry
-import io.embrace.opentelemetry.kotlin.createOpenTelemetry
-import io.embrace.opentelemetry.kotlin.init.LoggerProviderConfigDsl
-import io.embrace.opentelemetry.kotlin.init.TracerProviderConfigDsl
+import io.opentelemetry.kotlin.Clock
+import io.opentelemetry.kotlin.OpenTelemetry
+import io.opentelemetry.kotlin.context.Context
+import io.opentelemetry.kotlin.createCompatOpenTelemetry
+import io.opentelemetry.kotlin.createOpenTelemetry
+import io.opentelemetry.kotlin.init.LoggerProviderConfigDsl
+import io.opentelemetry.kotlin.init.TracerProviderConfigDsl
 
 internal fun createSdkOtelInstance(
     useKotlinSdk: Boolean,

@@ -14,9 +14,9 @@ import io.embrace.android.embracesdk.internal.utils.NetworkUtils.getUrlPath
 import io.embrace.android.embracesdk.internal.utils.NetworkUtils.getValidTraceId
 import io.embrace.android.embracesdk.internal.utils.NetworkUtils.stripUrl
 import io.embrace.android.embracesdk.internal.utils.toNonNullMap
-import io.embrace.opentelemetry.kotlin.semconv.ErrorAttributes
-import io.embrace.opentelemetry.kotlin.semconv.ExceptionAttributes
-import io.embrace.opentelemetry.kotlin.semconv.HttpAttributes
+import io.opentelemetry.kotlin.semconv.ErrorAttributes
+import io.opentelemetry.kotlin.semconv.ExceptionAttributes
+import io.opentelemetry.kotlin.semconv.HttpAttributes
 import java.util.concurrent.ConcurrentHashMap
 
 /**

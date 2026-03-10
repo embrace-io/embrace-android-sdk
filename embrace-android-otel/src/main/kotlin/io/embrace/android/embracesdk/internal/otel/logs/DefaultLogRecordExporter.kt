@@ -4,9 +4,9 @@ import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
 import io.embrace.android.embracesdk.internal.otel.sdk.StoreDataResult
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
-import io.embrace.opentelemetry.kotlin.export.OperationResultCode
-import io.embrace.opentelemetry.kotlin.logging.export.LogRecordExporter
-import io.embrace.opentelemetry.kotlin.logging.model.ReadableLogRecord
+import io.opentelemetry.kotlin.export.OperationResultCode
+import io.opentelemetry.kotlin.logging.export.LogRecordExporter
+import io.opentelemetry.kotlin.logging.model.ReadableLogRecord
 
 /**
  * Exports the given log record to a [LogSink]

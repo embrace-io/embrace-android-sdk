@@ -52,11 +52,11 @@ android {
     }
     kotlin {
         compilerOptions {
-            if (project.findProperty("io.embrace.opentelemetry.optIn") == "true") {
-                optIn.add("io.embrace.opentelemetry.kotlin.ExperimentalApi")
+            if (project.findProperty("io.opentelemetry.kotlin.optIn") == "true") {
+                optIn.add("io.opentelemetry.kotlin.ExperimentalApi")
             }
-            if (project.findProperty("io.embrace.opentelemetry.semconv.optIn") == "true") {
-                optIn.add("io.embrace.opentelemetry.kotlin.semconv.IncubatingApi")
+            if (project.findProperty("io.opentelemetry.kotlin.semconv.optIn") == "true") {
+                optIn.add("io.opentelemetry.kotlin.semconv.IncubatingApi")
             }
         }
     }

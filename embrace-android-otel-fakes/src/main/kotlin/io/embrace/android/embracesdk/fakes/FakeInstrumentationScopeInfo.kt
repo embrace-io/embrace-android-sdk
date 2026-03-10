@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.opentelemetry.kotlin.InstrumentationScopeInfo
+import io.opentelemetry.kotlin.InstrumentationScopeInfo
 
 internal class FakeInstrumentationScopeInfo(
     override val attributes: Map<String, Any> = emptyMap(),

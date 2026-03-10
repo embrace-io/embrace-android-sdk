@@ -1,12 +1,12 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.opentelemetry.kotlin.InstrumentationScopeInfo
-import io.embrace.opentelemetry.kotlin.resource.Resource
-import io.embrace.opentelemetry.kotlin.tracing.data.EventData
-import io.embrace.opentelemetry.kotlin.tracing.data.LinkData
-import io.embrace.opentelemetry.kotlin.tracing.data.SpanData
-import io.embrace.opentelemetry.kotlin.tracing.model.ReadWriteSpan
-import io.embrace.opentelemetry.kotlin.tracing.model.Span
+import io.opentelemetry.kotlin.InstrumentationScopeInfo
+import io.opentelemetry.kotlin.resource.Resource
+import io.opentelemetry.kotlin.tracing.data.EventData
+import io.opentelemetry.kotlin.tracing.data.LinkData
+import io.opentelemetry.kotlin.tracing.data.SpanData
+import io.opentelemetry.kotlin.tracing.model.ReadWriteSpan
+import io.opentelemetry.kotlin.tracing.model.Span
 
 class FakeReadWriteSpan(
     private val impl: FakeSpan = FakeSpan(),

@@ -2,13 +2,13 @@ package io.embrace.android.embracesdk.internal.otel.spans
 
 import io.embrace.android.embracesdk.internal.arch.attrs.embProcessIdentifier
 import io.embrace.android.embracesdk.internal.arch.attrs.embSequenceId
-import io.embrace.opentelemetry.kotlin.context.Context
-import io.embrace.opentelemetry.kotlin.export.OperationResultCode
-import io.embrace.opentelemetry.kotlin.semconv.SessionAttributes
-import io.embrace.opentelemetry.kotlin.tracing.export.SpanExporter
-import io.embrace.opentelemetry.kotlin.tracing.export.SpanProcessor
-import io.embrace.opentelemetry.kotlin.tracing.model.ReadWriteSpan
-import io.embrace.opentelemetry.kotlin.tracing.model.ReadableSpan
+import io.opentelemetry.kotlin.context.Context
+import io.opentelemetry.kotlin.export.OperationResultCode
+import io.opentelemetry.kotlin.semconv.SessionAttributes
+import io.opentelemetry.kotlin.tracing.export.SpanExporter
+import io.opentelemetry.kotlin.tracing.export.SpanProcessor
+import io.opentelemetry.kotlin.tracing.model.ReadWriteSpan
+import io.opentelemetry.kotlin.tracing.model.ReadableSpan
 import java.util.concurrent.atomic.AtomicLong
 
 class EmbraceSpanProcessor(

@@ -4,11 +4,11 @@ import io.embrace.android.embracesdk.fakes.FakeMutableAttributeContainer
 import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.otel.logs.LogSinkImpl
 import io.embrace.android.embracesdk.internal.otel.spans.SpanSinkImpl
-import io.embrace.opentelemetry.kotlin.semconv.AndroidAttributes
-import io.embrace.opentelemetry.kotlin.semconv.DeviceAttributes
-import io.embrace.opentelemetry.kotlin.semconv.OsAttributes
-import io.embrace.opentelemetry.kotlin.semconv.ServiceAttributes
-import io.embrace.opentelemetry.kotlin.semconv.TelemetryAttributes
+import io.opentelemetry.kotlin.semconv.AndroidAttributes
+import io.opentelemetry.kotlin.semconv.DeviceAttributes
+import io.opentelemetry.kotlin.semconv.OsAttributes
+import io.opentelemetry.kotlin.semconv.ServiceAttributes
+import io.opentelemetry.kotlin.semconv.TelemetryAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Test
 

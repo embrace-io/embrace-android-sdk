@@ -20,7 +20,7 @@ import io.embrace.android.embracesdk.otel.java.addJavaLogRecordProcessor
 import io.embrace.android.embracesdk.otel.java.addJavaSpanExporter
 import io.embrace.android.embracesdk.otel.java.addJavaSpanProcessor
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
-import io.embrace.opentelemetry.kotlin.semconv.ServiceAttributes
+import io.opentelemetry.kotlin.semconv.ServiceAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
@@ -388,6 +388,7 @@ internal class OTelExportTest {
             }
         )
     }
+
 
     @Test
     fun `log record processors are invoked in order they were added`() {

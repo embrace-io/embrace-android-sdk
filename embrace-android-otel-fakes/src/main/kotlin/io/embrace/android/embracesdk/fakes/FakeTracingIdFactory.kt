@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.opentelemetry.kotlin.factory.TracingIdFactory
+import io.opentelemetry.kotlin.factory.TracingIdFactory
 import kotlin.random.Random
 
 class FakeTracingIdFactory(private val random: Random = Random(0)) : TracingIdFactory {

@@ -1,10 +1,10 @@
 package io.embrace.android.embracesdk.internal.otel.impl
 
 import io.embrace.android.embracesdk.internal.otel.logs.EventService
-import io.embrace.opentelemetry.kotlin.attributes.MutableAttributeContainer
-import io.embrace.opentelemetry.kotlin.context.Context
-import io.embrace.opentelemetry.kotlin.logging.Logger
-import io.embrace.opentelemetry.kotlin.logging.model.SeverityNumber
+import io.opentelemetry.kotlin.attributes.MutableAttributeContainer
+import io.opentelemetry.kotlin.context.Context
+import io.opentelemetry.kotlin.logging.Logger
+import io.opentelemetry.kotlin.logging.model.SeverityNumber
 
 class EmbLogger(
     private val impl: Logger,

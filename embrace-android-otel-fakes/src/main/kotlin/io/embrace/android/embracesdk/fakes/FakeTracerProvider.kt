@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.opentelemetry.kotlin.attributes.MutableAttributeContainer
+import io.opentelemetry.kotlin.attributes.AttributesMutator
 import io.opentelemetry.kotlin.tracing.Tracer
 import io.opentelemetry.kotlin.tracing.TracerProvider
 
@@ -9,6 +9,6 @@ class FakeTracerProvider : TracerProvider {
         name: String,
         version: String?,
         schemaUrl: String?,
-        attributes: (MutableAttributeContainer.() -> Unit)?,
+        attributes: (AttributesMutator.() -> Unit)?,
     ): Tracer = FakeTracer()
 }

@@ -27,7 +27,7 @@ class OtelSpanStartArgs(
     val spanKind: SpanKind? = null,
     val openTelemetry: OpenTelemetry,
 ) {
-    val parentContext: Context = parentCtx ?: openTelemetry.contextFactory.root()
+    val parentContext: Context = parentCtx ?: openTelemetry.context.root()
     val initialSpanName: String = name.prependEmbracePrefix(internal)
 
     val embraceAttributes = mutableListOf<EmbraceAttribute>(type)
@@ -48,7 +48,7 @@ class OtelSpanStartArgs(
     }
 
     fun startSpan(startTimeMs: Long): Span {
-        return tracer.createSpan(
+        return tracer.startSpan(
             name = initialSpanName,
             parentContext = parentContext,
             spanKind = spanKind ?: SpanKind.INTERNAL,

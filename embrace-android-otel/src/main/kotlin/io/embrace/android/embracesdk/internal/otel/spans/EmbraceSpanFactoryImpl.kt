@@ -317,7 +317,7 @@ private class EmbraceSpanImpl(
         }
 
     override fun asNewContext(): Context? = startedSpan.get()?.run {
-        return otelSpanStartArgs.openTelemetry.contextFactory.storeSpan(parentContext, this)
+        return otelSpanStartArgs.openTelemetry.context.storeSpan(parentContext, this)
     }
 
     override fun asW3cTraceParent(): String? = startedSpan.get()?.spanContext?.run { "00-$traceId-$spanId-01" }

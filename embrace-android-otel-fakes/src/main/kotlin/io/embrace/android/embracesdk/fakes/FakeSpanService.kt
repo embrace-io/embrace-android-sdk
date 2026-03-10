@@ -28,7 +28,7 @@ class FakeSpanService : SpanService {
         autoTerminationMode: AutoTerminationMode,
     ): EmbraceSdkSpan = FakeEmbraceSdkSpan(
         name = name,
-        parentContext = fakeOpenTelemetry().contextFactory.root(),
+        parentContext = fakeOpenTelemetry().context.root(),
         type = type,
         internal = internal,
         private = private,
@@ -82,7 +82,7 @@ class FakeSpanService : SpanService {
         createdSpans.add(
             FakeEmbraceSdkSpan(
                 name = name,
-                parentContext = fakeOpenTelemetry().contextFactory.root(),
+                parentContext = fakeOpenTelemetry().context.root(),
                 type = type,
                 internal = internal,
                 private = private,

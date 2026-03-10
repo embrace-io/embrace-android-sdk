@@ -45,7 +45,7 @@ val testSpan: Span = EmbraceSpanData(
     )
 ).toEmbracePayload()
 
-val fakeContextKey: ContextKey<String> = fakeOpenTelemetry().contextFactory.root().createKey("fake-context-key")
+val fakeContextKey: ContextKey<String> = fakeOpenTelemetry().context.root().createKey("fake-context-key")
 
 private fun createMapOfSize(size: Int): Map<String, String> {
     val mutableMap = mutableMapOf<String, String>()

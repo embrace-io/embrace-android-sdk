@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.internal.otel.logs
 
 import io.embrace.android.embracesdk.internal.Initializable
 import io.embrace.android.embracesdk.internal.utils.Provider
-import io.opentelemetry.kotlin.attributes.MutableAttributeContainer
+import io.opentelemetry.kotlin.attributes.AttributesMutator
 import io.opentelemetry.kotlin.context.Context
 import io.opentelemetry.kotlin.logging.Logger
 import io.opentelemetry.kotlin.logging.model.SeverityNumber
@@ -24,7 +24,7 @@ interface EventService : Initializable {
         severityNumber: SeverityNumber?,
         severityText: String?,
         addCurrentMetadata: Boolean,
-        eventAttributes: (MutableAttributeContainer.() -> Unit)?,
+        eventAttributes: (AttributesMutator.() -> Unit)?,
     )
 
     /**

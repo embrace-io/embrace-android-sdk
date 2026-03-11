@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.opentelemetry.kotlin.attributes.MutableAttributeContainer
+import io.opentelemetry.kotlin.attributes.AttributesMutator
 import io.opentelemetry.kotlin.logging.Logger
 import io.opentelemetry.kotlin.logging.LoggerProvider
 
@@ -9,6 +9,6 @@ class FakeLoggerProvider : LoggerProvider {
         name: String,
         version: String?,
         schemaUrl: String?,
-        attributes: (MutableAttributeContainer.() -> Unit)?,
+        attributes: (AttributesMutator.() -> Unit)?,
     ): Logger = FakeOpenTelemetryLogger()
 }

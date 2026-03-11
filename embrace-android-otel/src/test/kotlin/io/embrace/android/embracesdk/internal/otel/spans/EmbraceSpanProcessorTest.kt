@@ -4,7 +4,7 @@ import io.embrace.android.embracesdk.fakes.FakeReadWriteSpan
 import io.embrace.android.embracesdk.fakes.FakeSpanExporter
 import io.embrace.android.embracesdk.internal.arch.attrs.embProcessIdentifier
 import io.embrace.android.embracesdk.internal.arch.attrs.embSequenceId
-import io.opentelemetry.kotlin.createNoopOpenTelemetry
+import io.opentelemetry.kotlin.NoopOpenTelemetry
 import io.opentelemetry.kotlin.semconv.SessionAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -16,7 +16,7 @@ class EmbraceSpanProcessorTest {
         val spanExporter = FakeSpanExporter()
         val processor = EmbraceSpanProcessor({ "sid" }, "pid", spanExporter)
         val span = FakeReadWriteSpan()
-        processor.onStart(span, createNoopOpenTelemetry().contextFactory.implicitContext())
+        processor.onStart(span, NoopOpenTelemetry.context.implicit())
 
         assertEquals(span.attributes[embSequenceId.name], "1")
         assertEquals(span.attributes[embProcessIdentifier.name], "pid")

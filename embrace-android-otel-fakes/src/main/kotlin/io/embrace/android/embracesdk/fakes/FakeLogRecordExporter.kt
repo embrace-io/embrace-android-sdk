@@ -8,12 +8,12 @@ class FakeLogRecordExporter : LogRecordExporter {
 
     val exportedLogs: MutableList<ReadableLogRecord> = mutableListOf()
 
-    override fun export(telemetry: List<ReadableLogRecord>): OperationResultCode {
+    override suspend fun export(telemetry: List<ReadableLogRecord>): OperationResultCode {
         exportedLogs += telemetry
         return OperationResultCode.Success
     }
 
-    override fun shutdown(): OperationResultCode = OperationResultCode.Success
+    override suspend fun shutdown(): OperationResultCode = OperationResultCode.Success
 
-    override fun forceFlush(): OperationResultCode = OperationResultCode.Success
+    override suspend fun forceFlush(): OperationResultCode = OperationResultCode.Success
 }

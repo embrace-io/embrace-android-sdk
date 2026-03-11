@@ -2,8 +2,8 @@ package io.embrace.android.embracesdk.fakes
 
 import io.opentelemetry.kotlin.InstrumentationScopeInfo
 import io.opentelemetry.kotlin.resource.Resource
-import io.opentelemetry.kotlin.tracing.data.EventData
-import io.opentelemetry.kotlin.tracing.data.LinkData
+import io.opentelemetry.kotlin.tracing.data.SpanEventData
+import io.opentelemetry.kotlin.tracing.data.SpanLinkData
 import io.opentelemetry.kotlin.tracing.data.SpanData
 import io.opentelemetry.kotlin.tracing.model.ReadWriteSpan
 import io.opentelemetry.kotlin.tracing.model.Span
@@ -13,10 +13,10 @@ class FakeReadWriteSpan(
 ) : Span by impl, ReadWriteSpan {
 
     override val attributes: Map<String, Any> = impl.attrs
-    override val events: List<EventData> = emptyList()
+    override val events: List<SpanEventData> = emptyList()
     override val instrumentationScopeInfo: InstrumentationScopeInfo
         get() = throw UnsupportedOperationException()
-    override val links: List<LinkData> = emptyList()
+    override val links: List<SpanLinkData> = emptyList()
     override val resource: Resource
         get() = throw UnsupportedOperationException()
 

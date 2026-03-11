@@ -34,11 +34,12 @@ import io.opentelemetry.kotlin.tracing.model.Span
 import io.opentelemetry.kotlin.tracing.model.SpanContext
 import io.opentelemetry.kotlin.tracing.model.SpanKind
 import java.util.concurrent.ConcurrentLinkedQueue
+import kotlin.random.Random
 
 class FakeEmbraceSdkSpan(
     private val openTelemetry: OpenTelemetry = fakeOpenTelemetry(),
     var name: String = "fake-span",
-    var parentContext: Context = openTelemetry.contextFactory.root(),
+    var parentContext: Context = openTelemetry.context.root(),
     val type: EmbType = EmbType.Performance.Default,
     val internal: Boolean = false,
     val private: Boolean = internal,
@@ -82,15 +83,15 @@ class FakeEmbraceSdkSpan(
 
     private fun createFakeKotlinSdkSpan(timestampMs: Long): Span = FakeSpan(
         name = name,
-        spanContext = openTelemetry.spanContextFactory.create(
-            traceId = parent?.traceId ?: openTelemetry.tracingIdFactory.generateTraceIdBytes().toHexString(),
-            spanId = openTelemetry.tracingIdFactory.generateSpanIdBytes().toHexString(),
-            traceFlags = openTelemetry.traceFlagsFactory.default,
-            traceState = openTelemetry.traceStateFactory.default,
+        spanContext = openTelemetry.spanContext.create(
+            traceId = parent?.traceId ?: Random.nextBytes(16).toHexString(),
+            spanId = Random.nextBytes(8).toHexString(),
+            traceFlags = openTelemetry.traceFlags.default,
+            traceState = openTelemetry.traceState.default,
         ),
         startTimestamp = timestampMs.millisToNanos(),
         parent = parentContext.getEmbraceSpan(openTelemetry)?.spanContext
-            ?: openTelemetry.spanContextFactory.invalid
+            ?: openTelemetry.spanContext.invalid
     )
 
     override fun stop(errorCode: ErrorCode?, endTimeMs: Long?): Boolean {
@@ -162,7 +163,7 @@ class FakeEmbraceSdkSpan(
     }
 
     override fun asNewContext(): Context? = sdkSpan?.let {
-        openTelemetry.contextFactory.storeSpan(parentContext, it)
+        openTelemetry.context.storeSpan(parentContext, it)
     }
 
     override fun asW3cTraceParent(): String? = sdkSpan?.spanContext?.run { "00-${traceId}-${spanId}-01" }
@@ -227,7 +228,7 @@ class FakeEmbraceSdkSpan(
 
         fun started(
             parent: EmbraceSdkSpan? = null,
-            parentContext: Context = parent?.run { parent.asNewContext() } ?: fakeOpenTelemetry().contextFactory.root(),
+            parentContext: Context = parent?.run { parent.asNewContext() } ?: fakeOpenTelemetry().context.root(),
             clock: FakeClock = FakeClock(),
         ): FakeEmbraceSdkSpan =
             FakeEmbraceSdkSpan(

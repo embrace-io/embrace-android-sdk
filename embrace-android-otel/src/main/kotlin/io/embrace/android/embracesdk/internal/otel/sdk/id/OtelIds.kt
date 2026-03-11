@@ -1,7 +1,6 @@
 
 package io.embrace.android.embracesdk.internal.otel.sdk.id
 
-
 object OtelIds {
 
     /**

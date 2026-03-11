@@ -9,7 +9,7 @@ import io.embrace.android.embracesdk.internal.otel.spans.DefaultSpanExporter
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanProcessor
 import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
-import io.opentelemetry.kotlin.attributes.MutableAttributeContainer
+import io.opentelemetry.kotlin.attributes.AttributesMutator
 import io.opentelemetry.kotlin.logging.export.LogRecordExporter
 import io.opentelemetry.kotlin.logging.export.LogRecordProcessor
 import io.opentelemetry.kotlin.semconv.AndroidAttributes
@@ -35,7 +35,7 @@ class OtelSdkConfig(
 
     private val customAttributes: MutableMap<String, String> = ConcurrentHashMap()
 
-    val resourceAction: MutableAttributeContainer.() -> Unit
+    val resourceAction: AttributesMutator.() -> Unit
         get() = {
             setStringAttribute(ServiceAttributes.SERVICE_NAME, packageName)
             setStringAttribute(ServiceAttributes.SERVICE_VERSION, appVersion)

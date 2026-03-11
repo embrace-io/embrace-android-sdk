@@ -17,24 +17,22 @@ internal fun createSdkOtelInstance(
     clock: Clock,
 ): OpenTelemetry {
     return if (useKotlinSdk) {
-        createOpenTelemetry {
+        createOpenTelemetry(clock) {
             tracerProvider { tracerProvider() }
             loggerProvider { loggerProvider() }
-            this.clock = clock
         }
     } else {
-        createCompatOpenTelemetry {
+        createCompatOpenTelemetry(clock) {
             tracerProvider { tracerProvider() }
             loggerProvider { loggerProvider() }
-            this.clock = clock
         }
     }
 }
 
 internal fun OpenTelemetry.getDefaultContext(useKotlinSdk: Boolean): Context? {
     return if (useKotlinSdk) {
-        contextFactory.root().getEmbraceSpan(this)?.createContext(this)
+        context.root().getEmbraceSpan(this)?.createContext(this)
     } else {
-        contextFactory.implicitContext().getEmbraceSpan(this)?.createContext(this)
+        context.implicit().getEmbraceSpan(this)?.createContext(this)
     }
 }

@@ -10,8 +10,8 @@ import io.opentelemetry.kotlin.OpenTelemetry
 import io.opentelemetry.kotlin.context.Context
 import io.opentelemetry.kotlin.tracing.Tracer
 import io.opentelemetry.kotlin.tracing.model.Span
+import io.opentelemetry.kotlin.tracing.model.SpanCreationAction
 import io.opentelemetry.kotlin.tracing.model.SpanKind
-import io.opentelemetry.kotlin.tracing.model.SpanRelationships
 
 /**
  * Embrace-specific decorator that adds extra logic to OTel Tracing.
@@ -24,12 +24,12 @@ class EmbTracer(
     private val useKotlinSdk: Boolean
 ) : Tracer {
 
-    override fun createSpan(
+    override fun startSpan(
         name: String,
         parentContext: Context?,
         spanKind: SpanKind,
         startTimestamp: Long?,
-        action: (SpanRelationships.() -> Unit)?,
+        action: (SpanCreationAction.() -> Unit)?,
     ): Span {
         val spanCreator = OtelSpanStartArgs(
             name = name,
@@ -43,8 +43,7 @@ class EmbTracer(
             startTimeMs = startTimestamp?.nanosToMillis()
         )
         var span: Span? = null
-
-        spanService.createSpan(spanCreator)?.let { embraceSpan ->
+        spanService.createSpan(spanCreator).let { embraceSpan ->
             if (embraceSpan.start()) {
                 span = EmbSpan(
                     impl = embraceSpan,
@@ -55,7 +54,7 @@ class EmbTracer(
         }
         val ref = span ?: EmbInvalidSpan(openTelemetry)
         if (action != null) {
-            action(ref)
+            action(ref as SpanCreationAction)
         }
         return ref
     }

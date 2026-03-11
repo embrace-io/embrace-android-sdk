@@ -123,7 +123,7 @@ private var embraceSpanContextKey: ContextKey<EmbraceSdkSpan>? = null
 fun Context.getEmbraceSpan(openTelemetry: OpenTelemetry): EmbraceSdkSpan? = get(getOrCreateSpanKey(openTelemetry))
 
 fun EmbraceSdkSpan.createContext(openTelemetry: OpenTelemetry): Context {
-    val newParentContext = asNewContext() ?: openTelemetry.contextFactory.root()
+    val newParentContext = asNewContext() ?: openTelemetry.context.root()
     return newParentContext.set(getOrCreateSpanKey(openTelemetry), this)
 }
 
@@ -131,7 +131,7 @@ fun getOrCreateSpanKey(openTelemetry: OpenTelemetry): ContextKey<EmbraceSdkSpan>
     if (embraceSpanContextKey == null) {
         synchronized(lock) {
             if (embraceSpanContextKey == null) {
-                embraceSpanContextKey = openTelemetry.contextFactory.root().createKey("embrace-span-key")
+                embraceSpanContextKey = openTelemetry.context.root().createKey("embrace-span-key")
             }
         }
     }

@@ -17,7 +17,7 @@ internal class DefaultLogRecordExporter(
     private val exportCheck: () -> Boolean,
 ) : LogRecordExporter {
 
-    override fun export(telemetry: List<ReadableLogRecord>): OperationResultCode {
+    override suspend fun export(telemetry: List<ReadableLogRecord>): OperationResultCode {
         if (!exportCheck()) {
             return OperationResultCode.Success
         }
@@ -44,6 +44,6 @@ internal class DefaultLogRecordExporter(
         }
     }
 
-    override fun forceFlush(): OperationResultCode = OperationResultCode.Success
-    override fun shutdown(): OperationResultCode = OperationResultCode.Success
+    override suspend fun forceFlush(): OperationResultCode = OperationResultCode.Success
+    override suspend fun shutdown(): OperationResultCode = OperationResultCode.Success
 }

@@ -2,10 +2,10 @@ package io.embrace.android.embracesdk.internal.api.delegate
 
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.fakes.FakeAttributesMutator
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakeLogRecordExporter
 import io.embrace.android.embracesdk.fakes.FakeLogRecordProcessor
-import io.embrace.android.embracesdk.fakes.FakeMutableAttributeContainer
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
 import io.embrace.android.embracesdk.fakes.FakeSpanExporter
 import io.embrace.android.embracesdk.fakes.FakeSpanProcessor
@@ -13,7 +13,7 @@ import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.otel.config.OtelSdkConfig
-import io.opentelemetry.kotlin.createNoopOpenTelemetry
+import io.opentelemetry.kotlin.NoopOpenTelemetry
 import io.opentelemetry.kotlin.semconv.ServiceAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -91,19 +91,19 @@ internal class OTelApiDelegateTest {
     @Test
     fun `get opentelemetry kotlin before start`() {
         sdkCallChecker.started.set(false)
-        assertEquals(createNoopOpenTelemetry(), delegate.getOpenTelemetryKotlin())
+        assertEquals(NoopOpenTelemetry, delegate.getOpenTelemetryKotlin())
     }
 
     @Test
     fun `get opentelemetry kotlin after start`() {
-        assertNotEquals(createNoopOpenTelemetry(), delegate.getOpenTelemetryKotlin())
+        assertNotEquals(NoopOpenTelemetry, delegate.getOpenTelemetryKotlin())
     }
 
     @Test
     fun `set resource attribute before sdk starts`() {
         sdkCallChecker.started.set(false)
         delegate.setResourceAttribute("test", "foo")
-        val attrs = FakeMutableAttributeContainer().apply(cfg.resourceAction).attributes
+        val attrs = FakeAttributesMutator().apply(cfg.resourceAction).attributes
         assertEquals("foo", attrs["test"])
     }
 
@@ -111,14 +111,14 @@ internal class OTelApiDelegateTest {
     fun `override resource attribute before sdk starts`() {
         sdkCallChecker.started.set(false)
         delegate.setResourceAttribute(ServiceAttributes.SERVICE_NAME, "foo")
-        val attrs = FakeMutableAttributeContainer().apply(cfg.resourceAction).attributes
+        val attrs = FakeAttributesMutator().apply(cfg.resourceAction).attributes
         assertEquals("foo", attrs[ServiceAttributes.SERVICE_NAME])
     }
 
     @Test
     fun `set resource attribute after sdk starts`() {
         delegate.setResourceAttribute("test", "foo")
-        val attrs = FakeMutableAttributeContainer().apply(cfg.resourceAction).attributes
+        val attrs = FakeAttributesMutator().apply(cfg.resourceAction).attributes
         assertNull(attrs["test"])
     }
 }

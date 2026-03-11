@@ -534,7 +534,7 @@ internal class EmbraceSpanImplTest {
 
     @Test
     fun `validate context objects are propagated from the parent to the child span`() {
-        val newParentContext = fakeOpenTelemetry().contextFactory.root().set(fakeContextKey, "fake-value")
+        val newParentContext = fakeOpenTelemetry().context.root().set(fakeContextKey, "fake-value")
         val wrapper = createWrapperForInternalSpan(parentContext = newParentContext)
         embraceSpan = embraceSpanFactory.create(wrapper)
 

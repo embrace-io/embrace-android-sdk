@@ -43,11 +43,11 @@ import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.utils.truncatedStacktraceText
 import io.embrace.android.embracesdk.spans.ErrorCode
-import io.embrace.opentelemetry.kotlin.context.Context
-import io.embrace.opentelemetry.kotlin.getTracer
-import io.embrace.opentelemetry.kotlin.semconv.ExceptionAttributes
-import io.embrace.opentelemetry.kotlin.tracing.Tracer
-import io.embrace.opentelemetry.kotlin.tracing.model.SpanKind
+import io.opentelemetry.kotlin.context.Context
+import io.opentelemetry.kotlin.getTracer
+import io.opentelemetry.kotlin.semconv.ExceptionAttributes
+import io.opentelemetry.kotlin.tracing.Tracer
+import io.opentelemetry.kotlin.tracing.model.SpanKind
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -534,7 +534,7 @@ internal class EmbraceSpanImplTest {
 
     @Test
     fun `validate context objects are propagated from the parent to the child span`() {
-        val newParentContext = fakeOpenTelemetry().contextFactory.root().set(fakeContextKey, "fake-value")
+        val newParentContext = fakeOpenTelemetry().context.root().set(fakeContextKey, "fake-value")
         val wrapper = createWrapperForInternalSpan(parentContext = newParentContext)
         embraceSpan = embraceSpanFactory.create(wrapper)
 

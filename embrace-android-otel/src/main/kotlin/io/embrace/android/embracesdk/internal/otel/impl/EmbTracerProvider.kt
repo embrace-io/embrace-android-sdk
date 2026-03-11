@@ -2,11 +2,11 @@ package io.embrace.android.embracesdk.internal.otel.impl
 
 import io.embrace.android.embracesdk.internal.otel.sdk.ApiKey
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
-import io.embrace.opentelemetry.kotlin.Clock
-import io.embrace.opentelemetry.kotlin.OpenTelemetry
-import io.embrace.opentelemetry.kotlin.attributes.MutableAttributeContainer
-import io.embrace.opentelemetry.kotlin.tracing.Tracer
-import io.embrace.opentelemetry.kotlin.tracing.TracerProvider
+import io.opentelemetry.kotlin.Clock
+import io.opentelemetry.kotlin.OpenTelemetry
+import io.opentelemetry.kotlin.attributes.AttributesMutator
+import io.opentelemetry.kotlin.tracing.Tracer
+import io.opentelemetry.kotlin.tracing.TracerProvider
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -25,7 +25,7 @@ class EmbTracerProvider(
         name: String,
         version: String?,
         schemaUrl: String?,
-        attributes: (MutableAttributeContainer.() -> Unit)?,
+        attributes: (AttributesMutator.() -> Unit)?,
     ): Tracer {
         val key = ApiKey(
             instrumentationScopeName = name,

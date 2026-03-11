@@ -2,13 +2,13 @@ package io.embrace.android.embracesdk.internal.otel
 
 import io.embrace.android.embracesdk.internal.otel.spans.createContext
 import io.embrace.android.embracesdk.internal.otel.spans.getEmbraceSpan
-import io.embrace.opentelemetry.kotlin.Clock
-import io.embrace.opentelemetry.kotlin.OpenTelemetry
-import io.embrace.opentelemetry.kotlin.context.Context
-import io.embrace.opentelemetry.kotlin.createCompatOpenTelemetry
-import io.embrace.opentelemetry.kotlin.createOpenTelemetry
-import io.embrace.opentelemetry.kotlin.init.LoggerProviderConfigDsl
-import io.embrace.opentelemetry.kotlin.init.TracerProviderConfigDsl
+import io.opentelemetry.kotlin.Clock
+import io.opentelemetry.kotlin.OpenTelemetry
+import io.opentelemetry.kotlin.context.Context
+import io.opentelemetry.kotlin.createCompatOpenTelemetry
+import io.opentelemetry.kotlin.createOpenTelemetry
+import io.opentelemetry.kotlin.init.LoggerProviderConfigDsl
+import io.opentelemetry.kotlin.init.TracerProviderConfigDsl
 
 internal fun createSdkOtelInstance(
     useKotlinSdk: Boolean,
@@ -17,24 +17,22 @@ internal fun createSdkOtelInstance(
     clock: Clock,
 ): OpenTelemetry {
     return if (useKotlinSdk) {
-        createOpenTelemetry {
+        createOpenTelemetry(clock) {
             tracerProvider { tracerProvider() }
             loggerProvider { loggerProvider() }
-            this.clock = clock
         }
     } else {
-        createCompatOpenTelemetry {
+        createCompatOpenTelemetry(clock) {
             tracerProvider { tracerProvider() }
             loggerProvider { loggerProvider() }
-            this.clock = clock
         }
     }
 }
 
 internal fun OpenTelemetry.getDefaultContext(useKotlinSdk: Boolean): Context? {
     return if (useKotlinSdk) {
-        contextFactory.root().getEmbraceSpan(this)?.createContext(this)
+        context.root().getEmbraceSpan(this)?.createContext(this)
     } else {
-        contextFactory.implicitContext().getEmbraceSpan(this)?.createContext(this)
+        context.implicit().getEmbraceSpan(this)?.createContext(this)
     }
 }

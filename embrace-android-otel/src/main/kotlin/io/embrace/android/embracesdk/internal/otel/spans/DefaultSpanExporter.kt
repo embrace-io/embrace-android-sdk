@@ -4,9 +4,9 @@ import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.otel.sdk.StoreDataResult
 import io.embrace.android.embracesdk.internal.otel.sdk.toEmbracePayload
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
-import io.embrace.opentelemetry.kotlin.export.OperationResultCode
-import io.embrace.opentelemetry.kotlin.tracing.data.SpanData
-import io.embrace.opentelemetry.kotlin.tracing.export.SpanExporter
+import io.opentelemetry.kotlin.export.OperationResultCode
+import io.opentelemetry.kotlin.tracing.data.SpanData
+import io.opentelemetry.kotlin.tracing.export.SpanExporter
 
 /**
  * Exports the given completed span to the given [SpanSink] as well as any configured external exporter
@@ -17,8 +17,7 @@ internal class DefaultSpanExporter(
     private val exportCheck: () -> Boolean,
 ) : SpanExporter {
 
-    @Synchronized
-    override fun export(telemetry: List<SpanData>): OperationResultCode {
+    override suspend fun export(telemetry: List<SpanData>): OperationResultCode {
         if (!exportCheck()) {
             return OperationResultCode.Success
         }
@@ -45,8 +44,7 @@ internal class DefaultSpanExporter(
         }
     }
 
-    override fun forceFlush(): OperationResultCode = OperationResultCode.Success
+    override suspend fun forceFlush(): OperationResultCode = OperationResultCode.Success
 
-    @Synchronized
-    override fun shutdown(): OperationResultCode = OperationResultCode.Success
+    override suspend fun shutdown(): OperationResultCode = OperationResultCode.Success
 }

@@ -88,11 +88,11 @@ public abstract interface class io/embrace/android/embracesdk/internal/api/Netwo
 }
 
 public abstract interface class io/embrace/android/embracesdk/internal/api/OTelApi {
-	public abstract fun addLogRecordExporter (Lio/embrace/opentelemetry/kotlin/logging/export/LogRecordExporter;)V
-	public abstract fun addLogRecordProcessor (Lio/embrace/opentelemetry/kotlin/logging/export/LogRecordProcessor;)V
-	public abstract fun addSpanExporter (Lio/embrace/opentelemetry/kotlin/tracing/export/SpanExporter;)V
-	public abstract fun addSpanProcessor (Lio/embrace/opentelemetry/kotlin/tracing/export/SpanProcessor;)V
-	public abstract fun getOpenTelemetryKotlin ()Lio/embrace/opentelemetry/kotlin/OpenTelemetry;
+	public abstract fun addLogRecordExporter (Lio/opentelemetry/kotlin/logging/export/LogRecordExporter;)V
+	public abstract fun addLogRecordProcessor (Lio/opentelemetry/kotlin/logging/export/LogRecordProcessor;)V
+	public abstract fun addSpanExporter (Lio/opentelemetry/kotlin/tracing/export/SpanExporter;)V
+	public abstract fun addSpanProcessor (Lio/opentelemetry/kotlin/tracing/export/SpanProcessor;)V
+	public abstract fun getOpenTelemetryKotlin ()Lio/opentelemetry/kotlin/OpenTelemetry;
 	public abstract fun setResourceAttribute (Ljava/lang/String;Ljava/lang/String;)V
 }
 
@@ -231,10 +231,10 @@ public abstract interface class io/embrace/android/embracesdk/spans/EmbraceSpan 
 	public abstract fun addAttribute (Ljava/lang/String;Ljava/lang/String;)Z
 	public abstract fun addEvent (Ljava/lang/String;Ljava/lang/Long;Ljava/util/Map;)Z
 	public abstract fun addLink (Lio/embrace/android/embracesdk/spans/EmbraceSpan;Ljava/util/Map;)Z
-	public abstract fun addLink (Lio/embrace/opentelemetry/kotlin/tracing/model/SpanContext;Ljava/util/Map;)Z
+	public abstract fun addLink (Lio/opentelemetry/kotlin/tracing/model/SpanContext;Ljava/util/Map;)Z
 	public abstract fun getAutoTerminationMode ()Lio/embrace/android/embracesdk/spans/AutoTerminationMode;
 	public abstract fun getParent ()Lio/embrace/android/embracesdk/spans/EmbraceSpan;
-	public abstract fun getSpanContext ()Lio/embrace/opentelemetry/kotlin/tracing/model/SpanContext;
+	public abstract fun getSpanContext ()Lio/opentelemetry/kotlin/tracing/model/SpanContext;
 	public abstract fun getSpanId ()Ljava/lang/String;
 	public abstract fun getTraceId ()Ljava/lang/String;
 	public abstract fun isRecording ()Z
@@ -248,7 +248,7 @@ public final class io/embrace/android/embracesdk/spans/EmbraceSpan$DefaultImpls 
 	public static synthetic fun addEvent$default (Lio/embrace/android/embracesdk/spans/EmbraceSpan;Ljava/lang/String;Ljava/lang/Long;Ljava/util/Map;ILjava/lang/Object;)Z
 	public static fun addLink (Lio/embrace/android/embracesdk/spans/EmbraceSpan;Lio/embrace/android/embracesdk/spans/EmbraceSpan;Ljava/util/Map;)Z
 	public static synthetic fun addLink$default (Lio/embrace/android/embracesdk/spans/EmbraceSpan;Lio/embrace/android/embracesdk/spans/EmbraceSpan;Ljava/util/Map;ILjava/lang/Object;)Z
-	public static synthetic fun addLink$default (Lio/embrace/android/embracesdk/spans/EmbraceSpan;Lio/embrace/opentelemetry/kotlin/tracing/model/SpanContext;Ljava/util/Map;ILjava/lang/Object;)Z
+	public static synthetic fun addLink$default (Lio/embrace/android/embracesdk/spans/EmbraceSpan;Lio/opentelemetry/kotlin/tracing/model/SpanContext;Ljava/util/Map;ILjava/lang/Object;)Z
 	public static synthetic fun recordException$default (Lio/embrace/android/embracesdk/spans/EmbraceSpan;Ljava/lang/Throwable;Ljava/util/Map;ILjava/lang/Object;)Z
 	public static synthetic fun start$default (Lio/embrace/android/embracesdk/spans/EmbraceSpan;Ljava/lang/Long;ILjava/lang/Object;)Z
 	public static synthetic fun stop$default (Lio/embrace/android/embracesdk/spans/EmbraceSpan;Lio/embrace/android/embracesdk/spans/ErrorCode;Ljava/lang/Long;ILjava/lang/Object;)Z

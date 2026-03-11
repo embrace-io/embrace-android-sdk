@@ -1,19 +1,20 @@
 package io.embrace.android.embracesdk.internal.otel.logs
 
+import io.embrace.android.embracesdk.internal.otel.impl.EmbAttributesMutator
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.utils.Uuid
-import io.embrace.opentelemetry.kotlin.attributes.MutableAttributeContainer
-import io.embrace.opentelemetry.kotlin.context.Context
-import io.embrace.opentelemetry.kotlin.createNoopOpenTelemetry
-import io.embrace.opentelemetry.kotlin.logging.Logger
-import io.embrace.opentelemetry.kotlin.logging.model.SeverityNumber
-import io.embrace.opentelemetry.kotlin.semconv.LogAttributes
+import io.opentelemetry.kotlin.NoopOpenTelemetry
+import io.opentelemetry.kotlin.attributes.AttributesMutator
+import io.opentelemetry.kotlin.context.Context
+import io.opentelemetry.kotlin.logging.Logger
+import io.opentelemetry.kotlin.logging.model.SeverityNumber
+import io.opentelemetry.kotlin.semconv.LogAttributes
 import java.util.concurrent.atomic.AtomicReference
 
 class EventServiceImpl(
     private val sdkLoggerProvider: Provider<Logger>,
 ) : EventService {
-    private val noopLogger = createNoopOpenTelemetry().loggerProvider.getLogger("noop")
+    private val noopLogger = NoopOpenTelemetry.loggerProvider.getLogger("noop")
     private val sdkLoggerRef: AtomicReference<Logger> = AtomicReference(noopLogger)
     private val metadataSupplierProviderRef = AtomicReference<Provider<Map<String, String>>> { emptyMap() }
 
@@ -33,43 +34,30 @@ class EventServiceImpl(
         severityNumber: SeverityNumber?,
         severityText: String?,
         addCurrentMetadata: Boolean,
-        eventAttributes: (MutableAttributeContainer.() -> Unit)?,
+        eventAttributes: (AttributesMutator.() -> Unit)?,
     ) {
         val logger = impl ?: sdkLoggerRef.get()
-        val additionalAttributes: (MutableAttributeContainer.() -> Unit) = {
-            eventAttributes?.invoke(this)
-            if (!attributes.contains(LogAttributes.LOG_RECORD_UID)) {
-                setStringAttribute(LogAttributes.LOG_RECORD_UID, Uuid.getEmbUuid())
-            }
-            if (addCurrentMetadata) {
-                getCurrentMetadata().forEach {
-                    setStringAttribute(it.key, it.value)
-                }
-            }
+        val container = EmbAttributesMutator()
+        eventAttributes?.invoke(container)
+        if (!container.attributes.containsKey(LogAttributes.LOG_RECORD_UID)) {
+            container.setStringAttribute(LogAttributes.LOG_RECORD_UID, Uuid.getEmbUuid())
+        }
+        if (addCurrentMetadata) {
+            getCurrentMetadata().forEach { (k, v) -> container.setStringAttribute(k, v) }
         }
 
-        if (eventName == null) {
-            logger.log(
-                body = body,
-                timestamp = timestamp,
-                observedTimestamp = observedTimestamp,
-                context = context,
-                severityNumber = severityNumber,
-                severityText = severityText,
-                attributes = additionalAttributes
-            )
-        } else {
-            logger.logEvent(
-                eventName = eventName,
-                body = body,
-                timestamp = timestamp,
-                observedTimestamp = observedTimestamp,
-                context = context,
-                severityNumber = severityNumber,
-                severityText = severityText,
-                attributes = additionalAttributes
-            )
-        }
+        logger.emit(
+            body = body,
+            eventName = eventName,
+            timestamp = timestamp,
+            observedTimestamp = observedTimestamp,
+            context = context,
+            severityNumber = severityNumber,
+            severityText = severityText,
+            attributes = {
+                container.attributes.forEach { (k, v) -> setStringAttribute(k, v.toString()) }
+            }
+        )
     }
 
     override fun setMetadataProvider(provider: Provider<Map<String, String>>) {

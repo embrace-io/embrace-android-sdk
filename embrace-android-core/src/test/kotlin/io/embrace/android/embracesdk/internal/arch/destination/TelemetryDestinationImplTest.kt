@@ -1,12 +1,12 @@
 package io.embrace.android.embracesdk.internal.arch.destination
 
 import io.embrace.android.embracesdk.Severity
+import io.embrace.android.embracesdk.fakes.FakeAttributesMutator
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeClock.Companion.DEFAULT_FAKE_CURRENT_TIME
 import io.embrace.android.embracesdk.fakes.FakeCurrentSessionSpan
 import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
 import io.embrace.android.embracesdk.fakes.FakeEventService
-import io.embrace.android.embracesdk.fakes.FakeMutableAttributeContainer
 import io.embrace.android.embracesdk.fakes.FakeSpanService
 import io.embrace.android.embracesdk.internal.arch.attrs.asPair
 import io.embrace.android.embracesdk.internal.arch.datasource.LogSeverity
@@ -22,7 +22,7 @@ import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.otel.sdk.hasEmbraceAttribute
 import io.embrace.android.embracesdk.internal.otel.toEmbracePayload
 import io.embrace.android.embracesdk.internal.payload.Span
-import io.embrace.opentelemetry.kotlin.tracing.StatusCode
+import io.opentelemetry.kotlin.tracing.StatusCode
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -105,7 +105,7 @@ internal class TelemetryDestinationImplTest {
         expectedSchemaType: SchemaType,
         expectedAdditionalAttributes: Map<String, String>
     ) {
-        val attrContainer = FakeMutableAttributeContainer()
+        val attrContainer = FakeAttributesMutator()
         checkNotNull(attributes).invoke(attrContainer)
         val logAttributes = attrContainer.attributes.mapValues { it.value.toString() }
         (expectedSchemaType.attributes() + expectedAdditionalAttributes).forEach { attr ->

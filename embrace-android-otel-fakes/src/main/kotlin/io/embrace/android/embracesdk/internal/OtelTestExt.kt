@@ -1,3 +1,4 @@
+
 package io.embrace.android.embracesdk.internal
 
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
@@ -6,12 +7,12 @@ import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Link
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaAttributes
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaEventData
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaLinkData
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaSpanData
-import io.embrace.opentelemetry.kotlin.aliases.OtelJavaStatusCode
-import io.embrace.opentelemetry.kotlin.tracing.data.SpanData
+import io.opentelemetry.kotlin.aliases.OtelJavaAttributes
+import io.opentelemetry.kotlin.aliases.OtelJavaEventData
+import io.opentelemetry.kotlin.aliases.OtelJavaLinkData
+import io.opentelemetry.kotlin.aliases.OtelJavaSpanData
+import io.opentelemetry.kotlin.aliases.OtelJavaStatusCode
+import io.opentelemetry.kotlin.tracing.data.SpanData
 
 fun Map<String, String>.toOtelJava(): OtelJavaAttributes {
     val builder = OtelJavaAttributes.builder()
@@ -36,10 +37,10 @@ fun OtelJavaSpanData.toEmbraceSpanData(): EmbraceSpanData = EmbraceSpanData(
     startTimeNanos = startEpochNanos,
     endTimeNanos = endEpochNanos,
     status = when (status.statusCode) {
-        OtelJavaStatusCode.UNSET -> io.embrace.opentelemetry.kotlin.tracing.StatusCode.UNSET
-        OtelJavaStatusCode.OK -> io.embrace.opentelemetry.kotlin.tracing.StatusCode.OK
-        OtelJavaStatusCode.ERROR -> io.embrace.opentelemetry.kotlin.tracing.StatusCode.ERROR
-        else -> io.embrace.opentelemetry.kotlin.tracing.StatusCode.UNSET
+        OtelJavaStatusCode.UNSET -> io.opentelemetry.kotlin.tracing.StatusCode.UNSET
+        OtelJavaStatusCode.OK -> io.opentelemetry.kotlin.tracing.StatusCode.OK
+        OtelJavaStatusCode.ERROR -> io.opentelemetry.kotlin.tracing.StatusCode.ERROR
+        else -> io.opentelemetry.kotlin.tracing.StatusCode.UNSET
     },
     events = events?.mapNotNull { it.toEmbracePayload() } ?: emptyList(),
     attributes = attributes.toStringMap(),

@@ -1,3 +1,4 @@
+
 package io.embrace.android.embracesdk.assertions
 
 import io.embrace.android.embracesdk.Severity
@@ -8,10 +9,10 @@ import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.serialization.truncatedStacktrace
-import io.embrace.opentelemetry.kotlin.logging.model.SeverityNumber
-import io.embrace.opentelemetry.kotlin.semconv.ExceptionAttributes
-import io.embrace.opentelemetry.kotlin.semconv.LogAttributes
-import io.embrace.opentelemetry.kotlin.semconv.SessionAttributes
+import io.opentelemetry.kotlin.logging.model.SeverityNumber
+import io.opentelemetry.kotlin.semconv.ExceptionAttributes
+import io.opentelemetry.kotlin.semconv.LogAttributes
+import io.opentelemetry.kotlin.semconv.SessionAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull

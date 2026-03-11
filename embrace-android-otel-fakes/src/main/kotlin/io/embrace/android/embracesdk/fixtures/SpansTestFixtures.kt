@@ -1,3 +1,4 @@
+
 package io.embrace.android.embracesdk.fixtures
 
 import io.embrace.android.embracesdk.fakes.fakeOpenTelemetry
@@ -11,8 +12,8 @@ import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.utils.PropertyUtils
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
-import io.embrace.opentelemetry.kotlin.context.ContextKey
-import io.embrace.opentelemetry.kotlin.tracing.StatusCode
+import io.opentelemetry.kotlin.context.ContextKey
+import io.opentelemetry.kotlin.tracing.StatusCode
 
 val testSpan: Span = EmbraceSpanData(
     traceId = "19bb482ec1c7e6b2f10fb89e0ccc85fa",
@@ -44,7 +45,7 @@ val testSpan: Span = EmbraceSpanData(
     )
 ).toEmbracePayload()
 
-val fakeContextKey: ContextKey<String> = fakeOpenTelemetry().contextFactory.root().createKey("fake-context-key")
+val fakeContextKey: ContextKey<String> = fakeOpenTelemetry().context.root().createKey("fake-context-key")
 
 private fun createMapOfSize(size: Int): Map<String, String> {
     val mutableMap = mutableMapOf<String, String>()

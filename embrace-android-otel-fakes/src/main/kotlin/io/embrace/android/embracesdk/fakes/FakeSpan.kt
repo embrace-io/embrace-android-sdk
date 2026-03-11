@@ -1,12 +1,12 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.opentelemetry.kotlin.attributes.MutableAttributeContainer
-import io.embrace.opentelemetry.kotlin.tracing.data.StatusData
-import io.embrace.opentelemetry.kotlin.tracing.model.Link
-import io.embrace.opentelemetry.kotlin.tracing.model.Span
-import io.embrace.opentelemetry.kotlin.tracing.model.SpanContext
-import io.embrace.opentelemetry.kotlin.tracing.model.SpanEvent
-import io.embrace.opentelemetry.kotlin.tracing.model.SpanKind
+import io.opentelemetry.kotlin.attributes.AttributesMutator
+import io.opentelemetry.kotlin.tracing.data.StatusData
+import io.opentelemetry.kotlin.tracing.model.SpanLink
+import io.opentelemetry.kotlin.tracing.model.Span
+import io.opentelemetry.kotlin.tracing.model.SpanContext
+import io.opentelemetry.kotlin.tracing.model.SpanEvent
+import io.opentelemetry.kotlin.tracing.model.SpanKind
 
 class FakeSpan(
     override var name: String = "",
@@ -15,7 +15,7 @@ class FakeSpan(
     override val spanKind: SpanKind = SpanKind.INTERNAL,
     override val startTimestamp: Long = -1,
     override var status: StatusData = StatusData.Unset,
-    override val links: List<Link> = emptyList(),
+    override val links: List<SpanLink> = emptyList(),
     override val events: List<SpanEvent> = emptyList(),
     var recording: Boolean = true,
 ) : Span {
@@ -24,10 +24,10 @@ class FakeSpan(
 
     override val attributes: Map<String, Any> = attrs
 
-    override fun addEvent(name: String, timestamp: Long?, attributes: (MutableAttributeContainer.() -> Unit)?) {
+    override fun addEvent(name: String, timestamp: Long?, attributes: (AttributesMutator.() -> Unit)?) {
     }
 
-    override fun addLink(spanContext: SpanContext, attributes: (MutableAttributeContainer.() -> Unit)?) {
+    override fun addLink(spanContext: SpanContext, attributes: (AttributesMutator.() -> Unit)?) {
     }
 
     override fun end() {

@@ -1,10 +1,10 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.opentelemetry.kotlin.attributes.MutableAttributeContainer
+import io.opentelemetry.kotlin.attributes.AttributesMutator
 
-class FakeMutableAttributeContainer(
-    override val attributes: MutableMap<String, Any> = mutableMapOf(),
-) : MutableAttributeContainer {
+class FakeAttributesMutator(
+    val attributes: MutableMap<String, Any> = mutableMapOf(),
+) : AttributesMutator {
 
     override fun setBooleanAttribute(key: String, value: Boolean) {
         attributes[key] = value

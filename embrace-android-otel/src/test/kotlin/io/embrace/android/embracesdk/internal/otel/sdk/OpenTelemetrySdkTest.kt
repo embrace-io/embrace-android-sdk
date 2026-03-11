@@ -14,7 +14,7 @@ import io.embrace.android.embracesdk.internal.otel.logs.LogSinkImpl
 import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
 import io.embrace.android.embracesdk.internal.otel.spans.SpanSinkImpl
 import io.embrace.android.embracesdk.internal.utils.Provider
-import io.embrace.opentelemetry.kotlin.logging.Logger
+import io.opentelemetry.kotlin.logging.Logger
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Before
@@ -40,7 +40,7 @@ internal class OpenTelemetrySdkTest {
 
     @Test
     fun `check resource added by sdk tracer`() {
-        sdk.sdkTracer.createSpan("test").end()
+        sdk.sdkTracer.startSpan("test").end()
         spanExporter.exportedSpans.single().resource.assertExpectedAttributes(
             expectedServiceName = configuration.packageName,
             expectedServiceVersion = configuration.appVersion,
@@ -52,7 +52,7 @@ internal class OpenTelemetrySdkTest {
 
     @Test
     fun `check resource added by sdk logger`() {
-        sdk.sdkLogger.log()
+        sdk.sdkLogger.emit()
         checkNotNull(logExporter.exportedLogs).single().resource.assertExpectedAttributes(
             expectedServiceName = configuration.packageName,
             expectedServiceVersion = configuration.appVersion,
@@ -65,7 +65,7 @@ internal class OpenTelemetrySdkTest {
     @Test
     fun `sdk name and version used as instrumentation scope for tracer instance used by embrace`() {
         sdk.sdkTracer
-            .createSpan("test")
+            .startSpan("test")
             .end()
         with(spanExporter.exportedSpans.single().instrumentationScopeInfo) {
             assertEquals(configuration.sdkName, name)
@@ -81,7 +81,7 @@ internal class OpenTelemetrySdkTest {
             version = "v1",
             schemaUrl = "url"
         )
-        tracer.createSpan("test").end()
+        tracer.startSpan("test").end()
         with(spanExporter.exportedSpans.single().instrumentationScopeInfo) {
             assertEquals("testScope", name)
             assertEquals("v1", version)
@@ -91,7 +91,7 @@ internal class OpenTelemetrySdkTest {
 
     @Test
     fun `sdk name and version used as instrumentation scope for logger instance used by embrace`() {
-        sdk.sdkLogger.log()
+        sdk.sdkLogger.emit()
         with(logExporter.exportedLogs.single().instrumentationScopeInfo) {
             assertEquals(configuration.sdkName, name)
             assertEquals(configuration.sdkVersion, version)
@@ -107,7 +107,7 @@ internal class OpenTelemetrySdkTest {
             version = "v1",
             schemaUrl = "url"
         )
-        logger.log()
+        logger.emit()
         with(logExporter.exportedLogs.single().instrumentationScopeInfo) {
             assertEquals("testScope", name)
             assertEquals("v1", version)

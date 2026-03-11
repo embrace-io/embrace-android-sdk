@@ -12,7 +12,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.NativeC
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.NativeCrash.embNativeCrashSymbols
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
 import io.embrace.android.embracesdk.internal.utils.toUTF8String
-import io.embrace.opentelemetry.kotlin.semconv.SessionAttributes
+import io.opentelemetry.kotlin.semconv.SessionAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull

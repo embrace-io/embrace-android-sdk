@@ -8,8 +8,8 @@ import io.embrace.android.embracesdk.fakes.TestConstants.TESTS_DEFAULT_USE_KOTLI
 import io.embrace.android.embracesdk.fakes.fakeOpenTelemetry
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
-import io.embrace.opentelemetry.kotlin.createNoopOpenTelemetry
-import io.embrace.opentelemetry.kotlin.tracing.model.SpanKind
+import io.opentelemetry.kotlin.NoopOpenTelemetry
+import io.opentelemetry.kotlin.tracing.model.SpanKind
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Before
@@ -38,7 +38,7 @@ internal class EmbTracerTest {
 
     @Test
     fun `check span generated with default parameters`() {
-        tracer.createSpan("foo").end()
+        tracer.startSpan("foo").end()
         val fakeCreatedSpan = spanService.createdSpans.single()
         with(fakeCreatedSpan) {
             assertNull(parent)
@@ -49,8 +49,8 @@ internal class EmbTracerTest {
 
     @Test
     fun `check span generated with non default parameters`() {
-        val parentCtx = createNoopOpenTelemetry().contextFactory.root()
-        tracer.createSpan(
+        val parentCtx = NoopOpenTelemetry.context.root()
+        tracer.startSpan(
             "foo",
             parentContext = parentCtx,
             spanKind = SpanKind.CLIENT,

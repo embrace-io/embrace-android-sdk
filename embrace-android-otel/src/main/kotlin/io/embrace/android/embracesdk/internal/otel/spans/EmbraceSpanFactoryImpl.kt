@@ -24,14 +24,14 @@ import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
-import io.embrace.opentelemetry.kotlin.Clock
-import io.embrace.opentelemetry.kotlin.attributes.setAttributes
-import io.embrace.opentelemetry.kotlin.context.Context
-import io.embrace.opentelemetry.kotlin.semconv.ExceptionAttributes
-import io.embrace.opentelemetry.kotlin.tracing.data.StatusData
-import io.embrace.opentelemetry.kotlin.tracing.model.Span
-import io.embrace.opentelemetry.kotlin.tracing.model.SpanContext
-import io.embrace.opentelemetry.kotlin.tracing.model.SpanKind
+import io.opentelemetry.kotlin.Clock
+import io.opentelemetry.kotlin.attributes.setAttributes
+import io.opentelemetry.kotlin.context.Context
+import io.opentelemetry.kotlin.semconv.ExceptionAttributes
+import io.opentelemetry.kotlin.tracing.data.StatusData
+import io.opentelemetry.kotlin.tracing.model.Span
+import io.opentelemetry.kotlin.tracing.model.SpanContext
+import io.opentelemetry.kotlin.tracing.model.SpanKind
 import java.util.Queue
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -317,7 +317,7 @@ private class EmbraceSpanImpl(
         }
 
     override fun asNewContext(): Context? = startedSpan.get()?.run {
-        return otelSpanStartArgs.openTelemetry.contextFactory.storeSpan(parentContext, this)
+        return otelSpanStartArgs.openTelemetry.context.storeSpan(parentContext, this)
     }
 
     override fun asW3cTraceParent(): String? = startedSpan.get()?.spanContext?.run { "00-$traceId-$spanId-01" }

@@ -1,3 +1,4 @@
+
 package io.embrace.android.embracesdk.internal.otel.spans
 
 import io.embrace.android.embracesdk.internal.arch.attrs.EmbraceAttribute
@@ -7,12 +8,12 @@ import io.embrace.android.embracesdk.internal.payload.Link
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
 import io.embrace.android.embracesdk.spans.EmbraceSpan
-import io.embrace.opentelemetry.kotlin.OpenTelemetry
-import io.embrace.opentelemetry.kotlin.context.Context
-import io.embrace.opentelemetry.kotlin.context.ContextKey
-import io.embrace.opentelemetry.kotlin.tracing.data.StatusData
-import io.embrace.opentelemetry.kotlin.tracing.model.SpanContext
-import io.embrace.opentelemetry.kotlin.tracing.model.SpanKind
+import io.opentelemetry.kotlin.OpenTelemetry
+import io.opentelemetry.kotlin.context.Context
+import io.opentelemetry.kotlin.context.ContextKey
+import io.opentelemetry.kotlin.tracing.data.StatusData
+import io.opentelemetry.kotlin.tracing.model.SpanContext
+import io.opentelemetry.kotlin.tracing.model.SpanKind
 
 /**
  * An [EmbraceSpan] that has additional functionality to be used internally by the SDK
@@ -122,7 +123,7 @@ private var embraceSpanContextKey: ContextKey<EmbraceSdkSpan>? = null
 fun Context.getEmbraceSpan(openTelemetry: OpenTelemetry): EmbraceSdkSpan? = get(getOrCreateSpanKey(openTelemetry))
 
 fun EmbraceSdkSpan.createContext(openTelemetry: OpenTelemetry): Context {
-    val newParentContext = asNewContext() ?: openTelemetry.contextFactory.root()
+    val newParentContext = asNewContext() ?: openTelemetry.context.root()
     return newParentContext.set(getOrCreateSpanKey(openTelemetry), this)
 }
 
@@ -130,7 +131,7 @@ fun getOrCreateSpanKey(openTelemetry: OpenTelemetry): ContextKey<EmbraceSdkSpan>
     if (embraceSpanContextKey == null) {
         synchronized(lock) {
             if (embraceSpanContextKey == null) {
-                embraceSpanContextKey = openTelemetry.contextFactory.root().createKey("embrace-span-key")
+                embraceSpanContextKey = openTelemetry.context.root().createKey("embrace-span-key")
             }
         }
     }

@@ -2,10 +2,10 @@ package io.embrace.android.embracesdk.internal.otel.impl
 
 import io.embrace.android.embracesdk.internal.otel.logs.EventService
 import io.embrace.android.embracesdk.internal.otel.sdk.ApiKey
-import io.embrace.opentelemetry.kotlin.OpenTelemetry
-import io.embrace.opentelemetry.kotlin.attributes.MutableAttributeContainer
-import io.embrace.opentelemetry.kotlin.logging.Logger
-import io.embrace.opentelemetry.kotlin.logging.LoggerProvider
+import io.opentelemetry.kotlin.OpenTelemetry
+import io.opentelemetry.kotlin.attributes.AttributesMutator
+import io.opentelemetry.kotlin.logging.Logger
+import io.opentelemetry.kotlin.logging.LoggerProvider
 import java.util.concurrent.ConcurrentHashMap
 
 class EmbLoggerProvider(
@@ -19,7 +19,7 @@ class EmbLoggerProvider(
         name: String,
         version: String?,
         schemaUrl: String?,
-        attributes: (MutableAttributeContainer.() -> Unit)?,
+        attributes: (AttributesMutator.() -> Unit)?,
     ): Logger {
         val key = ApiKey(
             instrumentationScopeName = name,

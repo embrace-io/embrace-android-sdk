@@ -3,21 +3,22 @@ package io.embrace.android.embracesdk.internal.otel.impl
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.payload.Attribute
-import io.embrace.opentelemetry.kotlin.Clock
-import io.embrace.opentelemetry.kotlin.OpenTelemetry
-import io.embrace.opentelemetry.kotlin.attributes.MutableAttributeContainer
-import io.embrace.opentelemetry.kotlin.tracing.data.StatusData
-import io.embrace.opentelemetry.kotlin.tracing.model.Link
-import io.embrace.opentelemetry.kotlin.tracing.model.Span
-import io.embrace.opentelemetry.kotlin.tracing.model.SpanContext
-import io.embrace.opentelemetry.kotlin.tracing.model.SpanEvent
-import io.embrace.opentelemetry.kotlin.tracing.model.SpanKind
+import io.opentelemetry.kotlin.Clock
+import io.opentelemetry.kotlin.OpenTelemetry
+import io.opentelemetry.kotlin.attributes.AttributesMutator
+import io.opentelemetry.kotlin.tracing.data.StatusData
+import io.opentelemetry.kotlin.tracing.model.Span
+import io.opentelemetry.kotlin.tracing.model.SpanContext
+import io.opentelemetry.kotlin.tracing.model.SpanCreationAction
+import io.opentelemetry.kotlin.tracing.model.SpanEvent
+import io.opentelemetry.kotlin.tracing.model.SpanKind
+import io.opentelemetry.kotlin.tracing.model.SpanLink
 
 class EmbSpan(
     private val impl: EmbraceSdkSpan,
     private val clock: Clock,
     private val openTelemetry: OpenTelemetry,
-) : Span {
+) : Span, SpanCreationAction {
 
     override fun setStringAttribute(key: String, value: String) {
         impl.addAttribute(key, value)
@@ -60,24 +61,20 @@ class EmbSpan(
     }
 
     override val spanContext: SpanContext
-        get() = impl.spanContext ?: openTelemetry.spanContextFactory.invalid
+        get() = impl.spanContext ?: openTelemetry.spanContext.invalid
 
     override fun isRecording(): Boolean = impl.isRecording
 
-    override fun addEvent(name: String, timestamp: Long?, attributes: (MutableAttributeContainer.() -> Unit)?) {
-        val container = EmbMutableAttributeContainer()
-        if (attributes != null) {
-            container.attributes()
-        }
-        impl.addEvent(name, timestamp, container.attributes)
+    override fun addEvent(name: String, timestamp: Long?, attributes: (AttributesMutator.() -> Unit)?) {
+        val container = EmbAttributesMutator()
+        attributes?.invoke(container)
+        impl.addEvent(name, timestamp, container.attributes.mapValues { it.value.toString() })
     }
 
-    override fun addLink(spanContext: SpanContext, attributes: (MutableAttributeContainer.() -> Unit)?) {
-        val container = EmbMutableAttributeContainer()
-        if (attributes != null) {
-            container.attributes()
-        }
-        impl.addLink(spanContext, container.attributes)
+    override fun addLink(spanContext: SpanContext, attributes: (AttributesMutator.() -> Unit)?) {
+        val container = EmbAttributesMutator()
+        attributes?.invoke(container)
+        impl.addLink(spanContext, container.attributes.mapValues { it.value.toString() })
     }
 
     override val attributes: Map<String, Any>
@@ -90,7 +87,7 @@ class EmbSpan(
         }
 
     override val parent: SpanContext
-        get() = impl.parent?.spanContext ?: openTelemetry.spanContextFactory.invalid
+        get() = impl.parent?.spanContext ?: openTelemetry.spanContext.invalid
 
     override val spanKind: SpanKind
         get() = impl.spanKind
@@ -111,30 +108,29 @@ class EmbSpan(
             EmbSpanEvent(
                 it.name ?: "",
                 it.timestampNanos ?: 0,
-                it.attributes.toMutableAttributeContainer()
+                it.attributes.toEmbAttributesMutator()
             )
         }
 
-    override val links: List<Link>
+    override val links: List<SpanLink>
         get() = impl.links().map {
-            EmbLink(it.retrieveSpanContext(), it.attributes.toMutableAttributeContainer())
+            EmbLink(it.retrieveSpanContext(), it.attributes.toEmbAttributesMutator())
         }
 
-    private fun List<Attribute>?.toMutableAttributeContainer(): MutableAttributeContainer {
+    private fun List<Attribute>?.toEmbAttributesMutator(): EmbAttributesMutator {
         val raw = this ?: emptyList()
         val attrs = raw.filter { entry -> entry.key == null || entry.data == null }
-        val map = attrs.associate { entry ->
-            Pair(checkNotNull(entry.key), checkNotNull(entry.data))
-        }
-        return EmbMutableAttributeContainer(map.toMutableMap())
+        val map = mutableMapOf<String, Any>()
+        attrs.forEach { entry -> map[checkNotNull(entry.key)] = checkNotNull(entry.data) }
+        return EmbAttributesMutator(map)
     }
 
     private fun io.embrace.android.embracesdk.internal.payload.Link.retrieveSpanContext(): SpanContext {
-        return openTelemetry.spanContextFactory.create(
+        return openTelemetry.spanContext.create(
             traceId = checkNotNull(traceId),
             spanId = checkNotNull(spanId),
-            traceFlags = openTelemetry.traceFlagsFactory.default,
-            traceState = openTelemetry.traceStateFactory.default,
+            traceFlags = openTelemetry.traceFlags.default,
+            traceState = openTelemetry.traceState.default,
         )
     }
 }

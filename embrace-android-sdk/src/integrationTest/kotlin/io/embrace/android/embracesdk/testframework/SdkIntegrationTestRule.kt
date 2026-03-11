@@ -1,3 +1,4 @@
+
 package io.embrace.android.embracesdk.testframework
 
 import android.content.Context
@@ -29,8 +30,8 @@ import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import io.embrace.android.embracesdk.testframework.export.FilteredLogExporter
 import io.embrace.android.embracesdk.testframework.export.FilteredSpanExporter
 import io.embrace.android.embracesdk.testframework.server.FakeApiServer
-import io.embrace.opentelemetry.kotlin.logging.export.toOtelKotlinLogRecordExporter
-import io.embrace.opentelemetry.kotlin.tracing.export.toOtelKotlinSpanExporter
+import io.opentelemetry.kotlin.logging.export.toOtelKotlinLogRecordExporter
+import io.opentelemetry.kotlin.tracing.export.toOtelKotlinSpanExporter
 import okhttp3.Protocol
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.Assert.assertEquals

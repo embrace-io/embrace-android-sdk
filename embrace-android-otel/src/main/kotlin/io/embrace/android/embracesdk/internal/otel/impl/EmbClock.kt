@@ -14,7 +14,7 @@ import io.embrace.android.embracesdk.internal.clock.millisToNanos
  */
 class EmbClock(
     private val embraceClock: Clock,
-) : io.embrace.opentelemetry.kotlin.Clock {
+) : io.opentelemetry.kotlin.Clock {
 
     override fun now(): Long = embraceClock.now().millisToNanos()
 

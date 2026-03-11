@@ -9,11 +9,11 @@ import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.otel.createSdkOtelInstance
-import io.embrace.opentelemetry.kotlin.Clock
-import io.embrace.opentelemetry.kotlin.getTracer
-import io.embrace.opentelemetry.kotlin.tracing.Tracer
-import io.embrace.opentelemetry.kotlin.tracing.model.Span
-import io.embrace.opentelemetry.kotlin.tracing.model.SpanKind
+import io.opentelemetry.kotlin.Clock
+import io.opentelemetry.kotlin.getTracer
+import io.opentelemetry.kotlin.tracing.Tracer
+import io.opentelemetry.kotlin.tracing.model.Span
+import io.opentelemetry.kotlin.tracing.model.SpanKind
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -51,7 +51,7 @@ internal class OtelSpanStartArgsTest {
             assertTrue(contains(EmbType.Performance.Default))
         }
         assertEquals("emb-test", args.initialSpanName)
-        val spanContext = fakeOpenTelemetry(false).spanFactory.fromContext(args.parentContext).spanContext
+        val spanContext = fakeOpenTelemetry(false).span.fromContext(args.parentContext).spanContext
         assertFalse(spanContext.isValid)
 
         args.startSpan(startTime).assertSpan(
@@ -63,8 +63,8 @@ internal class OtelSpanStartArgsTest {
 
     @Test
     fun `add parent after initial creation`() {
-        val parent = tracer.createSpan("parent")
-        val ctx = fakeOpenTelemetry(false).contextFactory.storeSpan(fakeOpenTelemetry().contextFactory.root(), parent)
+        val parent = tracer.startSpan("parent")
+        val ctx = fakeOpenTelemetry(false).context.storeSpan(fakeOpenTelemetry().context.root(), parent)
         val args = OtelSpanStartArgs(
             name = "test",
             type = EmbType.Performance.Default,
@@ -74,7 +74,7 @@ internal class OtelSpanStartArgsTest {
             parentCtx = ctx,
             openTelemetry = fakeOpenTelemetry()
         )
-        val spanContext = fakeOpenTelemetry(false).spanFactory.fromContext(args.parentContext).spanContext
+        val spanContext = fakeOpenTelemetry(false).span.fromContext(args.parentContext).spanContext
         assertEquals(parent.spanContext.traceId, spanContext.traceId)
 
         val startTime = otelClock.now()

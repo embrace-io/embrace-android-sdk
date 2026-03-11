@@ -95,6 +95,6 @@ data class RemoteConfig(
     @Json(name = "otel_kotlin_sdk")
     val otelKotlinSdkConfig: OtelKotlinSdkConfig? = null,
 
-    @Json(name = "state_enabled")
-    val stateEnabled: Boolean? = null,
+    @Json(name = "pct_state_enabled_v2")
+    val pctStateCaptureEnabledV2: Float? = null,
 )

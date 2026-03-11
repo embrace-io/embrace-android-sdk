@@ -243,7 +243,11 @@ internal class ExternalOtelJavaLoggerTest {
         assertEquals(expectedBody, bodyValue?.value)
         assertEquals(expectedObservedTimestamp, observedTimestampEpochNanos)
         assertEquals(expectedTimestamp, timestampEpochNanos)
-        assertEquals(expectedSpanContext, spanContext)
+        // Compare traceId, spanId, and isSampled: OTel 1.60+ sets a RANDOM bit in traceFlags for
+        // randomly-generated trace IDs, but log records don't always propagate all flag bits.
+        assertEquals(expectedSpanContext.traceId, spanContext.traceId)
+        assertEquals(expectedSpanContext.spanId, spanContext.spanId)
+        assertEquals(expectedSpanContext.isSampled, spanContext.isSampled)
         assertEquals(expectedSeverity.severityNumber, severity?.severityNumber)
         assertEquals(expectedSeverityText, severityText)
         with(checkNotNull(attributes.toStringMap())) {

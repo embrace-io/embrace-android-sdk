@@ -6,6 +6,7 @@ import io.embrace.android.gradle.plugin.model.AndroidCompactedVariantData
 import org.junit.AfterClass
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.BeforeClass
 import org.junit.Test
 import java.io.File
@@ -158,6 +159,25 @@ class BuildVariantConfigFromFileTest {
         )
 
         assertEquals("confg", variantConfiguration?.appId)
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun `config file with unknown top-level key throws exception`() {
+        configFile.writeText("""{"app_id": "abcde", "unknown_key": "value"}""")
+        buildVariantConfig(fakeVariantInfo, projectDirectory, listOf(fileFinder))
+    }
+
+    @Test
+    fun `config file with unknown nested key includes helpful message`() {
+        configFile.writeText("""{"sdk_config": {"unknown_nested_key": true}}""")
+        val ex = try {
+            buildVariantConfig(fakeVariantInfo, projectDirectory, listOf(fileFinder))
+            null
+        } catch (e: IllegalArgumentException) {
+            e
+        }
+        assertTrue("Expected an IllegalArgumentException", ex != null)
+        assertTrue(ex?.message?.contains("unrecognized key") == true)
     }
 
     companion object {

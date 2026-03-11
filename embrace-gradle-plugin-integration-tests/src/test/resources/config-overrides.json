@@ -29,7 +29,6 @@
       "enable_network_span_forwarding": true
     },
     "automatic_data_capture": {
-      "memory_info": false,
       "network_connectivity_info": false,
       "power_save_mode_info": false,
       "anr_info": false,
@@ -66,16 +65,6 @@
       "enable": false,
       "capture_query_params": false
     },
-    "capture_fcm_pii_data": true,
-    "session": {
-      "components": [
-        "component_a",
-        "component_b"
-      ],
-      "send_full_for": [
-        "crash",
-        "log"
-      ]
-    }
+    "capture_fcm_pii_data": true
   }
 }

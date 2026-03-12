@@ -1,5 +1,6 @@
 package io.embrace.android.gradle.plugin.config.variant
 
+import com.squareup.moshi.JsonDataException
 import com.squareup.moshi.Moshi
 import io.embrace.android.gradle.plugin.EmbraceLogger
 import io.embrace.android.gradle.plugin.instrumentation.config.model.EmbraceVariantConfig
@@ -61,6 +62,13 @@ private fun buildVariantConfiguration(configFile: File, systemWrapper: SystemWra
         VariantConfigurationValidator.validate(configuration)
 
         configuration
+    } catch (ex: JsonDataException) {
+        throw IllegalArgumentException(
+            "Embrace config file ${configFile.absoluteFile} contains an unrecognized key.\n" +
+                "Please check your embrace-config.json for typos or unsupported options.\n" +
+                "Available options are documented here: https://embrace.io/docs/android/configuration/configuration-file/\n" +
+                "Error: ${ex.localizedMessage}"
+        )
     } catch (ex: Throwable) {
         throw IllegalArgumentException(
             "Problem parsing field in Embrace config file ${configFile.absoluteFile}.\nError=${ex.localizedMessage}"
@@ -103,6 +111,6 @@ private fun getAppIdFromEnv(config: EmbraceVariantConfig, systemWrapper: SystemW
 private fun readConfigurationFromFile(configFile: File): EmbraceVariantConfig? =
     configFile.inputStream().source().buffer().use { buffer ->
         val moshi = Moshi.Builder().build()
-        val adapter = moshi.adapter(EmbraceVariantConfig::class.java)
+        val adapter = moshi.adapter(EmbraceVariantConfig::class.java).failOnUnknown()
         adapter.fromJson(buffer)
     }

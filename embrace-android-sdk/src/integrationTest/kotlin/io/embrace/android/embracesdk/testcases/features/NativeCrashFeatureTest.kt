@@ -58,6 +58,14 @@ internal class NativeCrashFeatureTest {
         ),
         symbols = createNativeSymbolsForCurrentArch(fakeSymbols)
     )
+
+    private val disabledConfig = FakeInstrumentedConfig(
+        enabledFeatures = FakeEnabledFeatureConfig(
+            nativeCrashCapture = false,
+            stateCaptureEnabled = true
+        )
+    )
+
     private val sessionMetadata = StoredTelemetryMetadata(
         timestamp = BASE_TIME_MS,
         uuid = "30690ad1-6b87-4e08-b72c-7deca14451d8",
@@ -234,17 +242,23 @@ internal class NativeCrashFeatureTest {
     }
 
     @Test
-    fun `stored native crash not sent if ndk disabled`() {
+    fun `native crash tombstone not processed and sent if ndk disabled`() {
         testRule.runTest(
-            instrumentedConfig = FakeInstrumentedConfig(),
+            instrumentedConfig = disabledConfig,
             setupAction = {
                 setupCachedDataFromNativeCrash(crashData = crashData)
                 setupFakeNativeCrash(serializer, crashData)
             },
-            testCaseAction = {},
+            testCaseAction = {
+                recordSession {
+                    embrace.logInfo("test")
+                }
+            },
             assertAction = {
-                assertEquals(0, getSessionEnvelopes(0).size)
-                assertEquals(0, getLogEnvelopes(0).size)
+                // This means the new and resurrected session as well as an Embrace log were delivered.
+                // Before a native crash log, which would've been delivered if processed.
+                assertEquals(2, getSessionEnvelopes(2).size)
+                assertNotNull(getSingleLogEnvelope().getLogOfType(EmbType.System.Log))
             }
         )
     }

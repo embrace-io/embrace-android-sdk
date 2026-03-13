@@ -19,6 +19,9 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.net.ConnectException
+import java.net.SocketTimeoutException
+import java.net.UnknownHostException
 import java.util.concurrent.RejectedExecutionException
 
 internal class SchedulingServiceImplTest {
@@ -293,6 +296,15 @@ internal class SchedulingServiceImplTest {
     }
 
     @Test
+    fun `burst of already queued payloads when there is no network will not be sent`() {
+        networkConnectivityService.networkStatus = NetworkStatus.NOT_REACHABLE
+        queuePayloadsWithoutExecution()
+        waitForOnPayloadIntakeAndDeliveryCompletion()
+        assertEquals(0, executionService.sendAttempts())
+        assertEquals(2, storageService.storedPayloadCount())
+    }
+
+    @Test
     fun `unhandled exception during request sending will not be retried`() {
         logger.throwOnInternalError = false
         executionService.exceptionOnExecution = RuntimeException("die")
@@ -302,6 +314,127 @@ internal class SchedulingServiceImplTest {
         assertEquals(0, executionService.sendAttempts())
         assertEquals(0, storageService.storedPayloadCount())
         assertEquals(2, logger.internalErrorMessages.size)
+    }
+
+    @Test
+    fun `connection failure blocks further delivery attempts`() {
+        blockConnection()
+        waitForOnPayloadIntakeAndDeliveryCompletion()
+        assertEquals(1, executionService.sendAttempts())
+        assertEquals(2, storageService.storedPayloadCount())
+        storageService.addFakePayload(fakeSessionStoredTelemetryMetadata2)
+        waitForOnPayloadIntakeAndDeliveryCompletion()
+        assertEquals(1, executionService.sendAttempts())
+        assertEquals(3, storageService.storedPayloadCount())
+    }
+
+    @Test
+    fun `connection timeout doesn't further delivery attempts`() {
+        allSendsTimeout()
+        waitForOnPayloadIntakeAndDeliveryCompletion()
+        assertEquals(2, executionService.sendAttempts())
+        assertEquals(2, storageService.storedPayloadCount())
+        storageService.addFakePayload(fakeSessionStoredTelemetryMetadata2)
+        waitForOnPayloadIntakeAndDeliveryCompletion()
+        assertEquals(3, executionService.sendAttempts())
+        assertEquals(3, storageService.storedPayloadCount())
+    }
+
+    @Test
+    fun `burst of already queued payloads will result in only one request attempt if it results in connection blockage`() {
+        // Blocking the delivery executor means all the cached payloads will be queued by the scheduling executor
+        // without a chance for the first request to trigger a block. This simulates a burst of undelivered payloads
+        // being queued up at SDK startup, which should result in just one failed request
+        queuePayloadsWithoutExecution(::blockConnection)
+        waitForOnPayloadIntakeAndDeliveryCompletion()
+        assertEquals(1, executionService.sendAttempts())
+        assertEquals(2, storageService.storedPayloadCount())
+    }
+
+    @Test
+    fun `connection attempt retried in an exponentially backed off manner`() {
+        queuePayloadsWithoutExecution(::disconnect)
+        waitForOnPayloadIntakeAndDeliveryCompletion()
+        var delay = INITIAL_DELAY_MS
+        repeat(10) { iteration ->
+            schedulingExecutor.moveForwardAndRunBlocked(delay)
+            schedulingExecutor.awaitExecutionCompletion()
+            deliveryExecutor.awaitExecutionCompletion()
+            assertEquals(
+                "Connection retry attempt ${iteration + 1} did not result in the right number of sends after $delay ms",
+                iteration + 2,
+                executionService.sendAttempts()
+            )
+            delay *= 2
+        }
+        assertEquals(2, storageService.storedPayloadCount())
+    }
+
+    @Test
+    fun `payload will be delivered at first retry attempt if unblocked`() {
+        queuePayloadsWithoutExecution(::disconnect)
+        waitForOnPayloadIntakeAndDeliveryCompletion()
+        allSendsSucceed()
+        schedulingExecutor.moveForwardAndRunBlocked(INITIAL_DELAY_MS - 1)
+        deliveryExecutor.awaitExecutionCompletion()
+        assertEquals(1, executionService.sendAttempts())
+        schedulingExecutor.moveForwardAndRunBlocked(1)
+        schedulingExecutor.awaitExecutionCompletion()
+        deliveryExecutor.awaitExecutionCompletion()
+        assertEquals(3, executionService.sendAttempts())
+        assertEquals(0, storageService.storedPayloadCount())
+    }
+
+    @Test
+    fun `new payload will not result in connection attempt if paused period has not elapsed`() {
+        queuePayloadsWithoutExecution(::blockConnection)
+        waitForOnPayloadIntakeAndDeliveryCompletion()
+        schedulingExecutor.moveForwardAndRunBlocked(INITIAL_DELAY_MS - 1)
+        storageService.addFakePayload(fakeSessionStoredTelemetryMetadata2)
+        waitForOnPayloadIntakeTaskCompletion()
+        assertEquals(1, executionService.sendAttempts())
+        assertEquals(3, storageService.storedPayloadCount())
+    }
+
+    @Test
+    fun `network change after connection retry pause period elapse will trigger send`() {
+        queuePayloadsWithoutExecution(::allSendsTimeout)
+
+        // After this returns, both stored payloads should've tried, timed out and scheduled to be retried in INITIAL_DELAY_MS
+        waitForOnPayloadIntakeAndDeliveryCompletion()
+        assertEquals(2, executionService.sendAttempts())
+
+        // All subsequent requests will be unable to reach the Embrace server
+        blockConnection()
+
+        // Moving the clock forward to when a retry should be invoked
+        // first request will fail to connect and lock the delivery layer by INITIAL_DELAY_MS
+        // second request not execute
+        // both requests will be retried when the connection is unblocked
+        schedulingExecutor.moveForwardAndRunBlocked(INITIAL_DELAY_MS)
+        schedulingExecutor.awaitExecutionCompletion()
+        deliveryExecutor.awaitExecutionCompletion()
+        assertEquals(3, executionService.sendAttempts())
+
+        // Subsequent payloads will succeed
+        allSendsSucceed()
+
+        // Moving the time before to just before the connection blockage will not cause any retries
+        schedulingExecutor.moveForwardAndRunBlocked(INITIAL_DELAY_MS - 1)
+        schedulingExecutor.awaitExecutionCompletion()
+        deliveryExecutor.awaitExecutionCompletion()
+        assertEquals(3, executionService.sendAttempts())
+
+        // The connection changing will reset the connection blockage and make the previously blocked requests run and succeed
+        networkConnectivityService.networkStatus = NetworkStatus.WIFI
+        schedulingExecutor.runCurrentlyBlocked()
+        schedulingExecutor.awaitExecutionCompletion()
+        deliveryExecutor.awaitExecutionCompletion()
+        // Trigger delivery loop on scheduler thread
+        schedulingExecutor.awaitExecutionCompletion()
+        deliveryExecutor.awaitExecutionCompletion()
+        assertEquals(5, executionService.sendAttempts())
+        assertEquals(0, storageService.storedPayloadCount())
     }
 
     @Test(expected = RejectedExecutionException::class)
@@ -314,6 +447,11 @@ internal class SchedulingServiceImplTest {
         // test setup & the real executor has its own rejection handler,
         // meaning the exception will never get thrown in prod.
         schedulingService.onPayloadIntake()
+    }
+
+    private fun waitForOnPayloadIntakeAndDeliveryCompletion() {
+        waitForOnPayloadIntakeTaskCompletion()
+        deliveryExecutor.awaitExecutionCompletion()
     }
 
     private fun waitForOnPayloadIntakeTaskCompletion() {
@@ -329,8 +467,31 @@ internal class SchedulingServiceImplTest {
         executionService.constantResponse = failure
     }
 
+    private fun allSendsTimeout() {
+        executionService.constantResponse = timeout
+    }
+
+    private fun disconnect() {
+        executionService.constantResponse = failHostLookup
+    }
+
+    private fun blockConnection() {
+        executionService.constantResponse = failHostLookup
+    }
+
+    private fun queuePayloadsWithoutExecution(setup: () -> Unit = {}) {
+        schedulingExecutor.blockingMode = true
+        deliveryExecutor.blockingMode = true
+        setup()
+    }
+
     private companion object {
         const val SHORT_BLOCKED_DURATION = 30_000L
         val failure = ExecutionResult.Failure(code = 500)
+
+        val failHostLookup = ExecutionResult.Incomplete(UnknownHostException(), true)
+        val cannotConnect = ExecutionResult.Incomplete(ConnectException(), true)
+
+        val timeout = ExecutionResult.Incomplete(SocketTimeoutException(), true)
     }
 }

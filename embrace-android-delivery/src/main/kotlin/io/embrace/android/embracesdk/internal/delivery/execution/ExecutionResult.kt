@@ -48,6 +48,11 @@ sealed class ExecutionResult(
     data class Incomplete(val exception: Throwable, val retry: Boolean) : ExecutionResult(retry)
 
     /**
+     * Execution was not attempted because the network isn't ready. It should be sent at the next possible time.
+     */
+    object NetworkNotReady : ExecutionResult(true)
+
+    /**
      * An execution attempt was not made for expected reasons. Any internal error logging will be handled at the
      * site where the error was found, and the caller can move on.
      */

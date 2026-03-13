@@ -425,17 +425,12 @@ internal class SchedulingServiceImplTest {
         deliveryExecutor.awaitExecutionCompletion()
         assertEquals(3, executionService.sendAttempts())
 
-        // The connection changing will reset the connection attempt blockage, will make the previously blocked request run and succeed
-        // The request that failed to connect will not run because it would be scheduled for retry after this time
+        // The connection changing will reset the connection blockage and make the previously blocked requests run and succeed
         networkConnectivityService.networkStatus = NetworkStatus.WIFI
         schedulingExecutor.runCurrentlyBlocked()
         schedulingExecutor.awaitExecutionCompletion()
         deliveryExecutor.awaitExecutionCompletion()
-        assertEquals(4, executionService.sendAttempts())
-        assertEquals(1, storageService.storedPayloadCount())
-
-        // Moving the clock to when the request that failed twice retry will make it run and succeed
-        schedulingExecutor.moveForwardAndRunBlocked(INITIAL_DELAY_MS + 1)
+        // Trigger delivery loop on scheduler thread
         schedulingExecutor.awaitExecutionCompletion()
         deliveryExecutor.awaitExecutionCompletion()
         assertEquals(5, executionService.sendAttempts())

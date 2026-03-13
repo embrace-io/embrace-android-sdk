@@ -51,13 +51,18 @@ class SchedulingServiceImpl(
     }
 
     override fun onNetworkConnectivityStatusChanged(status: NetworkStatus) {
-        val trySend = connectionStatus.updateNetworkStatus(status.isReachable).also {
-            connectionStatus.unblock()
-        }
-
-        // trigger a new delivery loop we potentially went from offline to online
-        if (trySend) {
-            startDeliveryLoop()
+        val networkAcquired = connectionStatus.updateNetworkStatus(status.isReachable)
+        val wasBlocked = connectionStatus.isBlocked()
+        // Trigger a new delivery loop we potentially went from offline to online, but do the unblocking on the delivery thread
+        // so it runs after the currently queued up requests execute. This prevents a race between the network change
+        // handling logic (which could be late) from unblocking during a delivery burst.
+        // If it is late and processing the change that triggered the connection block, it will erroneously unblock and cause a failure,
+        // If the unblocking is legit, the burst will just be skipped together and then retried by the unblock.
+        if (wasBlocked || networkAcquired) {
+            deliveryWorker.submit {
+                connectionStatus.unblock()
+                startDeliveryLoop()
+            }
         }
     }
 
@@ -189,7 +194,7 @@ class SchedulingServiceImpl(
             }
 
             with(result) {
-                if (this is ExecutionResult.NetworkNotReady) {
+                if (failedToConnect() || this is ExecutionResult.NetworkNotReady) {
                     connectionStatus.payloadBlocked(payload)
                 } else if (!shouldRetry) {
                     // If the response is such that we should not ever retry the delivery of this payload,
@@ -314,7 +319,7 @@ class SchedulingServiceImpl(
         /**
          * Unblock connection if currently blocked.
          *
-         * Called on main and scheduler threads
+         * Called on delivery and scheduler threads
          */
         fun unblock() {
             synchronized(connectionUnblockTime) {
@@ -373,7 +378,7 @@ class SchedulingServiceImpl(
 
         private fun shouldUnblockAtTime(time: Long): Boolean = isBlocked() && time >= connectionUnblockTime.get()
 
-        private fun isBlocked(): Boolean = connectionUnblockTime.get() > 0
+        fun isBlocked(): Boolean = connectionUnblockTime.get() > 0
     }
 
     companion object {

@@ -1,1 +1,1 @@
-sourceset_dependencies = '{":embrace-android-api/debug":[],":embrace-android-api/main":[],":embrace-android-api/release":[],":embrace-android-sdk/debug":[],":embrace-android-sdk/main":[],":embrace-android-sdk/release":[]}'
+sourceset_dependencies = '{":embrace-android-api/release":[],":embrace-android-sdk/release":[]}'

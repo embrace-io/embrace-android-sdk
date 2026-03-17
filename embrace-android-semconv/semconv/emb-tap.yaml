@@ -1,0 +1,18 @@
+groups:
+  - id: emb.tap
+    type: attribute_group
+    brief: "Embrace tap breadcrumb attributes"
+    prefix: ""
+    attributes:
+      - id: view.name
+        type: string
+        brief: "The name of the view/element that the tap event occurred in."
+        stability: stable
+      - id: tap.type
+        type: string
+        brief: "The type of tap event (tap or long_press)."
+        stability: stable
+      - id: tap.coords
+        type: string
+        brief: "The coordinates of the tap event in x,y format."
+        stability: stable

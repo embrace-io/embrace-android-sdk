@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.internal.arch.attrs.embCrashNumber
 import io.embrace.android.embracesdk.internal.arch.attrs.embSendMode
 import io.embrace.android.embracesdk.internal.arch.attrs.embStateInitialValue
 import io.embrace.android.embracesdk.internal.arch.attrs.toEmbraceAttributeName
+import io.embrace.android.embracesdk.semconv.EmbTapAttributes
 import io.opentelemetry.kotlin.semconv.ExceptionAttributes
 import io.opentelemetry.kotlin.semconv.HttpAttributes
 import io.opentelemetry.kotlin.semconv.SessionAttributes
@@ -89,9 +90,9 @@ sealed class SchemaType(
         fixedObjectName = "ui-tap"
     ) {
         override val schemaAttributes: Map<String, String> = mapOf(
-            "view.name" to viewName,
-            "tap.type" to type,
-            "tap.coords" to coords
+            EmbTapAttributes.VIEW_NAME to viewName,
+            EmbTapAttributes.TAP_TYPE to type,
+            EmbTapAttributes.TAP_COORDS to coords
         ).toNonNullMap()
     }
 

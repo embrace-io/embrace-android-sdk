@@ -1,0 +1,19 @@
+comment_formats:
+  kdoc:
+    format: markdown
+    header: "/**"
+    prefix: " * "
+    footer: " */"
+default_comment_format: kdoc
+templates:
+  - pattern: embrace_semconv_template.kt.j2
+    filter: >
+      .groups
+      | map(select(.type == "attribute_group"))
+      | map({
+          group_id: .id,
+          brief: (.brief // ""),
+          attributes: (.attributes // [])
+        })
+    application_mode: each
+    file_name: "{{ ctx.group_id | replace('.', '_') | pascal_case }}Attributes.kt"

@@ -1,0 +1,19 @@
+comment_formats:
+  godoc:
+    format: plain
+    header: ""
+    prefix: "// "
+    footer: ""
+default_comment_format: godoc
+templates:
+  - pattern: semconv_template.go.j2
+    filter: >
+      .groups
+      | map(select(.type == "attribute_group"))
+      | map({
+          group_id: .id,
+          brief: (.brief // ""),
+          attributes: (.attributes // [])
+        })
+    application_mode: each
+    file_name: "{{ ctx.group_id | replace('.', '_') | snake_case }}_attributes.go"

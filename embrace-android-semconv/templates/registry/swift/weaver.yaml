@@ -1,0 +1,19 @@
+comment_formats:
+  swift_doc:
+    format: plain
+    header: ""
+    prefix: "/// "
+    footer: ""
+default_comment_format: swift_doc
+templates:
+  - pattern: semconv_template.swift.j2
+    filter: >
+      .groups
+      | map(select(.type == "attribute_group"))
+      | map({
+          group_id: .id,
+          brief: (.brief // ""),
+          attributes: (.attributes // [])
+        })
+    application_mode: each
+    file_name: "{{ ctx.group_id | replace('.', '_') | pascal_case }}Attributes.swift"

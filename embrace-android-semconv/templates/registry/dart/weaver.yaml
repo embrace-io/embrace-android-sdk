@@ -1,0 +1,19 @@
+comment_formats:
+  dart_doc:
+    format: plain
+    header: ""
+    prefix: "/// "
+    footer: ""
+default_comment_format: dart_doc
+templates:
+  - pattern: semconv_template.dart.j2
+    filter: >
+      .groups
+      | map(select(.type == "attribute_group"))
+      | map({
+          group_id: .id,
+          brief: (.brief // ""),
+          attributes: (.attributes // [])
+        })
+    application_mode: each
+    file_name: "{{ ctx.group_id | replace('.', '_') | snake_case }}_attributes.dart"

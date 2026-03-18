@@ -48,4 +48,7 @@ class AutoDataCaptureBehaviorImpl(
     override fun isEndStartupWithAppReadyEnabled(): Boolean = local.isEndStartupWithAppReadyEnabled()
     override fun isStateCaptureEnabled(): Boolean =
         thresholdCheck.isBehaviorEnabled(remote?.pctStateCaptureEnabledV2) ?: local.isStateCaptureEnabled()
+
+    override fun isNetworkCallbackConnectivityServiceEnabled(): Boolean =
+        thresholdCheck.isBehaviorEnabled(remote?.pctNetworkCallbackConnectivityServiceEnabled) ?: false
 }

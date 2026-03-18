@@ -1,12 +1,14 @@
 package io.embrace.android.embracesdk.internal.injection
 
 import android.content.Context
+import android.os.Build
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ProcessLifecycleOwner
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.arch.destination.TelemetryDestinationImpl
 import io.embrace.android.embracesdk.internal.arch.state.AppStateTracker
 import io.embrace.android.embracesdk.internal.capture.connectivity.EmbraceNetworkConnectivityService
+import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkCallbackConnectivityService
 import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkConnectivityService
 import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
 import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesServiceImpl
@@ -49,12 +51,23 @@ class EssentialServiceModuleImpl(
 
     override val networkConnectivityService: NetworkConnectivityService by singleton {
         networkConnectivityServiceProvider() ?: EmbTrace.trace("network-connectivity-service-init") {
-            EmbraceNetworkConnectivityService(
-                coreModule.context,
-                workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker),
-                initModule.logger,
-                coreModule.context.getSystemServiceSafe(Context.CONNECTIVITY_SERVICE),
-            )
+            val worker = workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N &&
+                configService.autoDataCaptureBehavior.isNetworkCallbackConnectivityServiceEnabled()
+            ) {
+                NetworkCallbackConnectivityService(
+                    worker,
+                    initModule.logger,
+                    coreModule.context.getSystemServiceSafe(Context.CONNECTIVITY_SERVICE),
+                )
+            } else {
+                EmbraceNetworkConnectivityService(
+                    coreModule.context,
+                    worker,
+                    initModule.logger,
+                    coreModule.context.getSystemServiceSafe(Context.CONNECTIVITY_SERVICE),
+                )
+            }
         }
     }
 

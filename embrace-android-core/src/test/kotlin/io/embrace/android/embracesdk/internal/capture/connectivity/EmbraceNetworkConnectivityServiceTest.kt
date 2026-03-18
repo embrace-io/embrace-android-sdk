@@ -96,9 +96,11 @@ internal class EmbraceNetworkConnectivityServiceTest {
 
     @Test
     fun `test listener get notified when connectivity status changes to WIFI`() {
-        service.addNetworkConnectivityListener {
-            networkStatus = it
-        }
+        service.addNetworkConnectivityListener(object : NetworkConnectivityListener {
+            override fun onNetworkConnectivityStatusChanged(status: NetworkStatus) {
+                networkStatus = status
+            }
+        })
 
         // call onReceive to emulate a connectivity status change
         val mockIntent = mockk<Intent>()
@@ -110,9 +112,11 @@ internal class EmbraceNetworkConnectivityServiceTest {
 
     @Test
     fun `test listener get notified when connectivity status changes to MOBILE`() {
-        service.addNetworkConnectivityListener {
-            networkStatus = it
-        }
+        service.addNetworkConnectivityListener(object : NetworkConnectivityListener {
+            override fun onNetworkConnectivityStatusChanged(status: NetworkStatus) {
+                networkStatus = status
+            }
+        })
 
         // call onReceive to emulate a connectivity status change
         val mockIntent = mockk<Intent>()
@@ -124,9 +128,11 @@ internal class EmbraceNetworkConnectivityServiceTest {
 
     @Test
     fun `test listener get notified when connectivity status changes to no connectivity`() {
-        service.addNetworkConnectivityListener {
-            networkStatus = it
-        }
+        service.addNetworkConnectivityListener(object : NetworkConnectivityListener {
+            override fun onNetworkConnectivityStatusChanged(status: NetworkStatus) {
+                networkStatus = status
+            }
+        })
 
         // call onReceive to emulate a connectivity status change
         val mockIntent = mockk<Intent>()
@@ -137,9 +143,11 @@ internal class EmbraceNetworkConnectivityServiceTest {
 
     @Test
     fun `test listener get notified when connectivity status changes and no info obtained`() {
-        service.addNetworkConnectivityListener {
-            networkStatus = it
-        }
+        service.addNetworkConnectivityListener(object : NetworkConnectivityListener {
+            override fun onNetworkConnectivityStatusChanged(status: NetworkStatus) {
+                networkStatus = status
+            }
+        })
 
         // call onReceive to emulate a connectivity status change
         val mockIntent = mockk<Intent>()
@@ -150,8 +158,10 @@ internal class EmbraceNetworkConnectivityServiceTest {
 
     @Test
     fun `test listener get notified when connectivity status changes and not notified when removed`() {
-        val listener: (status: NetworkStatus) -> Unit = {
-            networkStatus = it
+        val listener = object : NetworkConnectivityListener {
+            override fun onNetworkConnectivityStatusChanged(status: NetworkStatus) {
+                networkStatus = status
+            }
         }
         service.addNetworkConnectivityListener(listener)
 

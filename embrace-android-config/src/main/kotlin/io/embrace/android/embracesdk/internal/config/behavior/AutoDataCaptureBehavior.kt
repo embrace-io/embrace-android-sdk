@@ -69,4 +69,9 @@ interface AutoDataCaptureBehavior {
      * Whether the state-as-span feature is enabled
      */
     fun isStateCaptureEnabled(): Boolean
+
+    /**
+     * Whether the NetworkCallback-based connectivity service implementation is enabled
+     */
+    fun isNetworkCallbackConnectivityServiceEnabled(): Boolean
 }

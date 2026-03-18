@@ -97,4 +97,10 @@ data class RemoteConfig(
 
     @Json(name = "pct_state_enabled_v2")
     val pctStateCaptureEnabledV2: Float? = null,
+
+    /**
+     * Percentage of devices for which the NetworkCallback-based NetworkConnectivityService implementation is enabled.
+     */
+    @Json(name = "pct_network_callback_connectivity_service_enabled")
+    val pctNetworkCallbackConnectivityServiceEnabled: Float? = null,
 )

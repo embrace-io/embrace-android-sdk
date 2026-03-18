@@ -11,6 +11,10 @@ sealed class ConnectivityStatus(
 
     class Unknown(override val isConnected: Boolean) : ConnectivityStatus(ConnectionType.UNKNOWN)
 
+    object Unverified : ConnectivityStatus(ConnectionType.UNKNOWN) {
+        override val isConnected: Boolean = true
+    }
+
     object None : ConnectivityStatus(ConnectionType.NONE) {
         override val isConnected: Boolean = false
     }

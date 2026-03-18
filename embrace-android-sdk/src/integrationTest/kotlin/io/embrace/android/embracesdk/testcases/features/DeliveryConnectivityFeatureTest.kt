@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.fakes.FakePayloadStorageService
 import io.embrace.android.embracesdk.fakes.fakeSessionEnvelope
 import io.embrace.android.embracesdk.fixtures.fakeSessionStoredTelemetryMetadata
 import io.embrace.android.embracesdk.fixtures.fakeSessionStoredTelemetryMetadata2
+import io.embrace.android.embracesdk.internal.capture.connectivity.ConnectivityStatus
 import io.embrace.android.embracesdk.internal.comms.delivery.NetworkStatus
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
@@ -33,7 +34,7 @@ internal class DeliveryConnectivityFeatureTest {
         val envelope = fakeSessionEnvelope(startMs = startMs)
         testRule.runTest(
             setupAction = {
-                fakeNetworkConnectivityService.networkStatus = NetworkStatus.NOT_REACHABLE
+                fakeNetworkConnectivityService.connectivityStatus = ConnectivityStatus.None
                 payloadStorageService.addPayload(sessionMetadata, envelope)
             },
             testCaseAction = {},
@@ -47,7 +48,7 @@ internal class DeliveryConnectivityFeatureTest {
     fun `new payload not sent with no connection`() {
         testRule.runTest(
             setupAction = {
-                fakeNetworkConnectivityService.networkStatus = NetworkStatus.NOT_REACHABLE
+                fakeNetworkConnectivityService.connectivityStatus = ConnectivityStatus.None
             },
             testCaseAction = {
                 recordSession()
@@ -65,7 +66,7 @@ internal class DeliveryConnectivityFeatureTest {
         val envelope = fakeSessionEnvelope(startMs = startMs)
         testRule.runTest(
             setupAction = {
-                fakeNetworkConnectivityService.networkStatus = NetworkStatus.NOT_REACHABLE
+                fakeNetworkConnectivityService.connectivityStatus = ConnectivityStatus.None
                 payloadStorageService.addPayload(sessionMetadata, envelope)
             },
             testCaseAction = {

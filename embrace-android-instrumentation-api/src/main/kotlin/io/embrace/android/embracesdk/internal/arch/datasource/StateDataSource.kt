@@ -52,7 +52,6 @@ abstract class StateDataSource<T : Any>(
                     newValue = newState,
                     unrecordedTransitions = droppedTransitions
                 )
-
                 // If the transition was not recorded by the token, it means the associated session has ended.
                 // Add that transition as occurring outside of a session and also add back unrecorded transitions we tried to record.
                 if (!transitionRecorded) {
@@ -63,7 +62,7 @@ abstract class StateDataSource<T : Any>(
                 }
             }
         } else {
-            // The token not existing means a session hasn't be creat yet
+            // The token not existing means a session hasn't been created yet
             unrecordedTransitions.updateNotInSession(1)
         }
     }

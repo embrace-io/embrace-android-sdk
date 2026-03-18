@@ -1,5 +1,7 @@
 package io.embrace.android.embracesdk.internal.comms.delivery
 
+import io.embrace.android.embracesdk.internal.capture.connectivity.ConnectivityStatus
+
 enum class NetworkStatus(val value: String) {
     NOT_REACHABLE("none"),
     WIFI("wifi"),
@@ -13,3 +15,15 @@ enum class NetworkStatus(val value: String) {
     val isReachable: Boolean
         get() = this != NOT_REACHABLE
 }
+
+fun NetworkStatus.toConnectivityStatus(): ConnectivityStatus =
+    when (this) {
+        NetworkStatus.NOT_REACHABLE -> ConnectivityStatus.None
+        NetworkStatus.WIFI -> OptimisticWifi
+        NetworkStatus.WAN -> OptimisticWan
+        NetworkStatus.UNKNOWN -> OptimisticUnknown
+    }
+
+private val OptimisticWifi = ConnectivityStatus.Wifi(true)
+private val OptimisticWan = ConnectivityStatus.Wan(true)
+private val OptimisticUnknown = ConnectivityStatus.Unknown(true)

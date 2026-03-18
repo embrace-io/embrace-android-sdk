@@ -1,16 +1,16 @@
 package io.embrace.android.embracesdk.fakes
 
+import io.embrace.android.embracesdk.internal.capture.connectivity.ConnectivityStatus
 import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkConnectivityListener
 import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkConnectivityService
-import io.embrace.android.embracesdk.internal.comms.delivery.NetworkStatus
 import java.util.concurrent.CopyOnWriteArrayList
 
 class FakeNetworkConnectivityService(
-    initialNetworkStatus: NetworkStatus = NetworkStatus.UNKNOWN,
+    initialConnectivityStatus: ConnectivityStatus = ConnectivityStatus.Unverified,
 ) : NetworkConnectivityService {
 
     private val networkConnectivityListeners = CopyOnWriteArrayList<NetworkConnectivityListener>()
-    var networkStatus: NetworkStatus = initialNetworkStatus
+    var connectivityStatus: ConnectivityStatus = initialConnectivityStatus
         set(value) {
             field = value
             notifyListeners()
@@ -18,7 +18,7 @@ class FakeNetworkConnectivityService(
 
     override fun addNetworkConnectivityListener(listener: NetworkConnectivityListener) {
         networkConnectivityListeners.add(listener)
-        listener.onNetworkConnectivityStatusChanged(networkStatus)
+        listener.onNetworkConnectivityStatusChanged(connectivityStatus)
     }
 
     override fun removeNetworkConnectivityListener(listener: NetworkConnectivityListener) {
@@ -33,7 +33,7 @@ class FakeNetworkConnectivityService(
 
     private fun notifyListeners() {
         networkConnectivityListeners.forEach {
-            it.onNetworkConnectivityStatusChanged(networkStatus)
+            it.onNetworkConnectivityStatusChanged(connectivityStatus)
         }
     }
 }

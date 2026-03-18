@@ -3,8 +3,9 @@ package io.embrace.android.embracesdk.testcases.features
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.assertMatches
 import io.embrace.android.embracesdk.assertions.assertStateTransition
-import io.embrace.android.embracesdk.assertions.findSpanOfType
 import io.embrace.android.embracesdk.assertions.findSpanSnapshotOfType
+import io.embrace.android.embracesdk.assertions.findSpanSnapshotsOfType
+import io.embrace.android.embracesdk.assertions.findSpansOfType
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
@@ -43,11 +44,14 @@ internal class NetworkStatusFeatureTest {
                     clock.tick(tickTimeMs)
                     statusChangeTimeMs = clock.now()
                     simulateNetworkChange(NetworkStatus.WIFI)
+                    // duplicates should not result in another span being created
+                    clock.tick()
+                    simulateNetworkChange(NetworkStatus.WIFI)
                 }
             },
             assertAction = {
                 val message = getSingleSessionEnvelope()
-                val span = message.findSpanOfType(EmbType.System.NetworkStatus)
+                val span = message.findSpansOfType(EmbType.System.NetworkStatus).single()
                 assertEquals("emb-network-status", span.name)
                 assertEquals(sdkStartTimeMs, span.startTimeNanos?.nanosToMillis())
                 assertEquals(statusChangeTimeMs, span.endTimeNanos?.nanosToMillis())
@@ -59,7 +63,7 @@ internal class NetworkStatusFeatureTest {
                     )
                 )
 
-                val snapshot = message.findSpanSnapshotOfType(EmbType.System.NetworkStatus)
+                val snapshot = message.findSpanSnapshotsOfType(EmbType.System.NetworkStatus).single()
                 assertEquals("emb-network-status", snapshot.name)
                 assertEquals(statusChangeTimeMs, snapshot.startTimeNanos?.nanosToMillis())
                 snapshot.attributes?.assertMatches(

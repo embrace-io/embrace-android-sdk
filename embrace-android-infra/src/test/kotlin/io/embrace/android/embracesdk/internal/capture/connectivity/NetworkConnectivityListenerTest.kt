@@ -15,6 +15,7 @@ internal class NetworkConnectivityListenerTest {
             ConnectivityStatus.Wan(false) to NetworkStatus.WAN,
             ConnectivityStatus.Unknown(true) to NetworkStatus.UNKNOWN,
             ConnectivityStatus.Unknown(false) to NetworkStatus.UNKNOWN,
+            ConnectivityStatus.Unverified to NetworkStatus.UNKNOWN,
             ConnectivityStatus.None to NetworkStatus.NOT_REACHABLE
         )
         var receivedNetworkStatus: NetworkStatus? = null

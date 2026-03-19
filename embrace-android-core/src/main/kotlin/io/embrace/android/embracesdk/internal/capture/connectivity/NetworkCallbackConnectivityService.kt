@@ -23,7 +23,7 @@ internal class NetworkCallbackConnectivityService(
 ) : NetworkConnectivityService, ConnectivityManager.NetworkCallback() {
 
     private var currentNetwork: AtomicReference<Network?> = AtomicReference(null)
-    private val currentStatus = AtomicReference<ConnectivityStatus>(UNVERIFIED)
+    private val currentStatus = AtomicReference<ConnectivityStatus>(ConnectivityStatus.Unverified)
     private val listeners = CopyOnWriteArrayList<NetworkConnectivityListener>()
 
     override fun onAvailable(network: Network) {
@@ -112,11 +112,4 @@ internal class NetworkCallbackConnectivityService(
         }.onFailure {
             logger.trackInternalError(InternalErrorType.CONNECTIVITY_UPDATE_FAILURE, it)
         }
-
-    private companion object {
-        /**
-         * When the type of connection is not known, but it's assumed it's connected to the internet
-         */
-        val UNVERIFIED = ConnectivityStatus.Unknown(true)
-    }
 }

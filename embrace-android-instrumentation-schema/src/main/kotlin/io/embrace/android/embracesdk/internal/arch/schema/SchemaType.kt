@@ -297,9 +297,13 @@ sealed class SchemaType(
     ) : State<NetworkState.Status>(initialValue, "network") {
         enum class Status(private val value: String) {
             NOT_REACHABLE("none"),
+            UNVERIFIED("unverified"),
             WIFI("wifi"),
+            WIFI_CONNECTING("wifi_connecting"),
             WAN("wan"),
-            UNKNOWN("unknown");
+            WAN_CONNECTING("wan_connecting"),
+            UNKNOWN("unknown"),
+            UNKNOWN_CONNECTING("unknown_connecting");
 
             override fun toString(): String = value
         }

@@ -6,7 +6,11 @@ import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.internal.api.SdkApi
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSource
+import io.embrace.android.embracesdk.internal.capture.connectivity.ConnectionType
+import io.embrace.android.embracesdk.internal.capture.connectivity.ConnectivityStatus
+import io.embrace.android.embracesdk.internal.capture.connectivity.toNetworkStatus
 import io.embrace.android.embracesdk.internal.comms.delivery.NetworkStatus
+import io.embrace.android.embracesdk.internal.comms.delivery.toConnectivityStatus
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import org.robolectric.Robolectric
 import org.robolectric.android.controller.ActivityController
@@ -95,7 +99,43 @@ internal class EmbraceActionInterface(
     }
 
     fun simulateNetworkChange(status: NetworkStatus) {
-        setup.fakeNetworkConnectivityService.networkStatus = status
+        setup.fakeNetworkConnectivityService.connectivityStatus = status.toConnectivityStatus()
+    }
+
+    fun simulateConnectivityChange(status: ConnectivityStatus) {
+        setup.fakeNetworkConnectivityService.connectivityStatus = status
+    }
+
+    fun simulateNetworkChangeShim(status: ConnectivityStatus) {
+        setup.fakeNetworkConnectivityService.connectivityStatus = status.toNetworkStatus().toConnectivityStatus()
+    }
+
+    fun simulateConnectionTypeChange(connectionType: ConnectionType, legacyBehavior: Boolean = false) {
+        val fireEvent = if (legacyBehavior) {
+            ::simulateNetworkChangeShim
+        } else {
+            ::simulateConnectivityChange
+        }
+        when (connectionType) {
+            ConnectionType.WIFI -> {
+                fireEvent(ConnectivityStatus.Wifi(false))
+                clock.tick(CONNECTIVITY_VALIDATION_GAP)
+                fireEvent(ConnectivityStatus.Wifi(true))
+            }
+            ConnectionType.WAN -> {
+                fireEvent(ConnectivityStatus.Wan(false))
+                clock.tick(CONNECTIVITY_VALIDATION_GAP)
+                fireEvent(ConnectivityStatus.Wan(true))
+            }
+            ConnectionType.UNKNOWN -> {
+                fireEvent(ConnectivityStatus.Unknown(false))
+                clock.tick(CONNECTIVITY_VALIDATION_GAP)
+                fireEvent(ConnectivityStatus.Unknown(true))
+            }
+            ConnectionType.NONE -> {
+                fireEvent(ConnectivityStatus.None)
+            }
+        }
     }
 
     internal fun simulateOpeningActivities(
@@ -195,6 +235,7 @@ internal class EmbraceActionInterface(
 
     companion object {
         const val LIFECYCLE_EVENT_GAP: Long = 10L
+        const val CONNECTIVITY_VALIDATION_GAP: Long = 50L
         const val ACTIVITY_GAP: Long = 100L
         const val STARTUP_BACKGROUND_TIME: Long = 1000L
         const val POST_ACTIVITY_ACTION_DWELL: Long = 10000L

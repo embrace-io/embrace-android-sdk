@@ -11,6 +11,7 @@ import io.embrace.android.embracesdk.fixtures.fakeSessionStoredTelemetryMetadata
 import io.embrace.android.embracesdk.fixtures.fakeSessionStoredTelemetryMetadata2
 import io.embrace.android.embracesdk.internal.comms.api.Endpoint
 import io.embrace.android.embracesdk.internal.comms.delivery.NetworkStatus
+import io.embrace.android.embracesdk.internal.comms.delivery.toConnectivityStatus
 import io.embrace.android.embracesdk.internal.delivery.execution.ExecutionResult
 import io.embrace.android.embracesdk.internal.delivery.scheduling.SchedulingServiceImpl.Companion.INITIAL_DELAY_MS
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
@@ -238,12 +239,12 @@ internal class SchedulingServiceImplTest {
 
     @Test
     fun `ready payloads will not be sent if there's no network but will be sent when network comes back online`() {
-        networkConnectivityService.networkStatus = NetworkStatus.NOT_REACHABLE
+        networkConnectivityService.connectivityStatus = NetworkStatus.NOT_REACHABLE.toConnectivityStatus()
         waitForPayloadIntake()
         deliveryExecutor.awaitExecutionCompletion()
         assertEquals(0, executionService.sendAttempts())
         assertEquals(2, storageService.storedPayloadCount())
-        networkConnectivityService.networkStatus = NetworkStatus.WIFI
+        networkConnectivityService.connectivityStatus = NetworkStatus.WIFI.toConnectivityStatus()
         schedulingExecutor.awaitExecutionCompletion()
         deliveryExecutor.awaitExecutionCompletion()
         assertEquals(2, executionService.sendAttempts())
@@ -254,18 +255,18 @@ internal class SchedulingServiceImplTest {
     fun `losing network will cause payload sends to stop and reconnection makes it start again`() {
         schedulingExecutor.blockingMode = true
         allSendsFail()
-        networkConnectivityService.networkStatus = NetworkStatus.WAN
+        networkConnectivityService.connectivityStatus = NetworkStatus.WAN.toConnectivityStatus()
         waitForPayloadIntake()
         deliveryExecutor.awaitExecutionCompletion()
         assertEquals(2, executionService.sendAttempts())
         assertEquals(2, storageService.storedPayloadCount())
-        networkConnectivityService.networkStatus = NetworkStatus.NOT_REACHABLE
+        networkConnectivityService.connectivityStatus = NetworkStatus.NOT_REACHABLE.toConnectivityStatus()
         schedulingExecutor.moveForwardAndRunBlocked(INITIAL_DELAY_MS + 1)
         schedulingExecutor.awaitExecutionCompletion()
         assertEquals(2, executionService.sendAttempts())
         assertEquals(2, storageService.storedPayloadCount())
         allSendsSucceed()
-        networkConnectivityService.networkStatus = NetworkStatus.UNKNOWN
+        networkConnectivityService.connectivityStatus = NetworkStatus.UNKNOWN.toConnectivityStatus()
         tickAndWaitForDeliveryAttempt((INITIAL_DELAY_MS * 2) + 1)
         assertEquals(4, executionService.sendAttempts())
         assertEquals(0, storageService.storedPayloadCount())
@@ -273,7 +274,7 @@ internal class SchedulingServiceImplTest {
 
     @Test
     fun `burst of already queued payloads when there is no network will not be sent`() {
-        networkConnectivityService.networkStatus = NetworkStatus.NOT_REACHABLE
+        networkConnectivityService.connectivityStatus = NetworkStatus.NOT_REACHABLE.toConnectivityStatus()
         queuePayloadsWithoutExecution()
         waitForPayloadIntakeAndDeliveryAttempt()
         assertEquals(0, executionService.sendAttempts())
@@ -439,7 +440,7 @@ internal class SchedulingServiceImplTest {
      * Simulate the network being changed to wifi and allow all callbacks to be invoked and processed
      */
     private fun triggerSwitchToWifi() {
-        networkConnectivityService.networkStatus = NetworkStatus.WIFI
+        networkConnectivityService.connectivityStatus = NetworkStatus.WIFI.toConnectivityStatus()
         schedulingExecutor.runCurrentlyBlocked()
         schedulingExecutor.awaitExecutionCompletion()
         deliveryExecutor.awaitExecutionCompletion()

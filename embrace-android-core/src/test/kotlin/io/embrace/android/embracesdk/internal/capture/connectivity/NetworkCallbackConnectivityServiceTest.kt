@@ -73,14 +73,14 @@ internal class NetworkCallbackConnectivityServiceTest {
     fun `adding listener before registration`() {
         service.addNetworkConnectivityListener(networkConnectivityListener)
         service.register()
-        assertEquals(ConnectivityStatus.Unknown(true), receivedConnectivityStatuses.single())
+        assertEquals(ConnectivityStatus.Unverified, receivedConnectivityStatuses.single())
     }
 
     @Test
     fun `adding listener after registration`() {
         service.register()
         service.addNetworkConnectivityListener(networkConnectivityListener)
-        assertEquals(ConnectivityStatus.Unknown(true), receivedConnectivityStatuses.single())
+        assertEquals(ConnectivityStatus.Unverified, receivedConnectivityStatuses.single())
     }
 
     @Test
@@ -96,10 +96,10 @@ internal class NetworkCallbackConnectivityServiceTest {
 
     @Test
     fun `onAvailable makes doesn't change connectivity status but onCapabilitiesChanged does`() {
-        initWithNetwork(connectedUnknown)
+        initService()
         val newNetwork = setActiveNetwork(connectedWifi)
         service.onAvailable(newNetwork)
-        assertEquals(connectedUnknown.getConnectivityStatus(), receivedConnectivityStatuses.single())
+        assertEquals(unverified.getConnectivityStatus(), receivedConnectivityStatuses.single())
         service.onCapabilitiesChanged(newNetwork, connectedWifi.getNetworkCapabilities())
         assertEquals(2, receivedConnectivityStatuses.size)
         assertEquals(connectedWifi.getConnectivityStatus(), receivedConnectivityStatuses.last())
@@ -119,6 +119,7 @@ internal class NetworkCallbackConnectivityServiceTest {
     @Test
     fun `switching to all the connections`() {
         initService()
+        assertEquals(ConnectivityStatus.Unverified, receivedConnectivityStatuses.last())
         networkCapabilities.keys.forEach { networkInfo ->
             setActiveNetwork(networkInfo).let { network ->
                 service.onAvailable(network)
@@ -126,6 +127,18 @@ internal class NetworkCallbackConnectivityServiceTest {
             }
             assertEquals(networkInfo.getConnectivityStatus(), receivedConnectivityStatuses.last())
         }
+    }
+
+    @Test
+    fun `switching from unverified to connected unknown will result in a dispatch`() {
+        initService()
+        assertEquals(ConnectivityStatus.Unverified, receivedConnectivityStatuses.last())
+        setActiveNetwork(connectedUnknown).let { network ->
+            service.onAvailable(network)
+            service.onCapabilitiesChanged(network, connectedUnknown.getNetworkCapabilities())
+        }
+        assertEquals(2, receivedConnectivityStatuses.size)
+        assertEquals(connectedUnknown.getConnectivityStatus(), receivedConnectivityStatuses.last())
     }
 
     @Test
@@ -193,7 +206,7 @@ internal class NetworkCallbackConnectivityServiceTest {
         val newNetwork = setActiveNetwork(connectedWifi)
         service.onAvailable(newNetwork)
         service.onCapabilitiesChanged(newNetwork, connectedWifi.getNetworkCapabilities())
-        assertEquals(connectedUnknown.getConnectivityStatus(), receivedConnectivityStatuses.single())
+        assertEquals(unverified.getConnectivityStatus(), receivedConnectivityStatuses.single())
     }
 
     @Test
@@ -292,6 +305,13 @@ internal class NetworkCallbackConnectivityServiceTest {
             isConnected = false,
         )
 
+        val unverified = createNetworkInfo(
+            detailedState = NetworkInfo.DetailedState.CONNECTED,
+            type = ConnectivityManager.TYPE_DUMMY,
+            isAvailable = true,
+            isConnected = true,
+        )
+
         val networkCapabilities = mapOf(
             connectedWifi to buildCaps {
                 addCapability(NET_CAPABILITY_INTERNET)
@@ -328,6 +348,7 @@ internal class NetworkCallbackConnectivityServiceTest {
             disconnectedWan to ConnectivityStatus.Wan(false),
             connectedUnknown to ConnectivityStatus.Unknown(true),
             disconnectedUnknown to ConnectivityStatus.Unknown(false),
+            unverified to ConnectivityStatus.Unverified,
             none to ConnectivityStatus.None
         )
 

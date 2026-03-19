@@ -4,8 +4,10 @@ import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.datasource.StateDataSource
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType.NetworkState
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType.NetworkState.Status
+import io.embrace.android.embracesdk.internal.capture.connectivity.ConnectivityStatus
 import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkConnectivityListener
 import io.embrace.android.embracesdk.internal.comms.delivery.NetworkStatus
+import io.embrace.android.embracesdk.internal.comms.delivery.toConnectivityStatus
 
 class NetworkStateDataSource(
     args: InstrumentationArgs,
@@ -16,15 +18,38 @@ class NetworkStateDataSource(
     maxTransitions = MAX_CAPTURED_NETWORK_STATE_TRANSITIONS,
 ) {
     override fun onNetworkConnectivityStatusChanged(status: NetworkStatus) {
+        onNetworkConnectivityStatusChanged(status.toConnectivityStatus())
+    }
+
+    override fun onNetworkConnectivityStatusChanged(status: ConnectivityStatus) {
         onStateChange(clock.now(), status.toState())
     }
 
-    private fun NetworkStatus.toState(): Status =
+    private fun ConnectivityStatus.toState(): Status =
         when (this) {
-            NetworkStatus.NOT_REACHABLE -> Status.NOT_REACHABLE
-            NetworkStatus.WIFI -> Status.WIFI
-            NetworkStatus.WAN -> Status.WAN
-            NetworkStatus.UNKNOWN -> Status.WAN
+            ConnectivityStatus.None -> Status.NOT_REACHABLE
+            ConnectivityStatus.Unverified -> Status.UNVERIFIED
+            is ConnectivityStatus.Unknown -> {
+                if (isConnected) {
+                    Status.UNKNOWN
+                } else {
+                    Status.UNKNOWN_CONNECTING
+                }
+            }
+            is ConnectivityStatus.Wan -> {
+                if (isConnected) {
+                    Status.WAN
+                } else {
+                    Status.WAN_CONNECTING
+                }
+            }
+            is ConnectivityStatus.Wifi -> {
+                if (isConnected) {
+                    Status.WIFI
+                } else {
+                    Status.WIFI_CONNECTING
+                }
+            }
         }
 }
 

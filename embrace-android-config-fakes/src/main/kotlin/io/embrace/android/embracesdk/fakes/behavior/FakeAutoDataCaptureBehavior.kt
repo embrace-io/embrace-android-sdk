@@ -16,6 +16,7 @@ class FakeAutoDataCaptureBehavior(
     private val uiLoadTracingTraceAll: Boolean = true,
     private val endStartupWithAppReady: Boolean = false,
     private val enableStateCapture: Boolean = false,
+    private val networkCallbackConnectivityServiceEnabled: Boolean = false,
 ) : AutoDataCaptureBehavior {
 
     override fun isThermalStatusCaptureEnabled(): Boolean = thermalStatusCaptureEnabled
@@ -31,4 +32,5 @@ class FakeAutoDataCaptureBehavior(
     override fun isUiLoadTracingTraceAll(): Boolean = uiLoadTracingTraceAll
     override fun isEndStartupWithAppReadyEnabled(): Boolean = endStartupWithAppReady
     override fun isStateCaptureEnabled(): Boolean = enableStateCapture
+    override fun isNetworkCallbackConnectivityServiceEnabled(): Boolean = networkCallbackConnectivityServiceEnabled
 }

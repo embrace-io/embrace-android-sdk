@@ -9,8 +9,6 @@ import io.embrace.android.embracesdk.internal.comms.delivery.NetworkStatus
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
-import java.net.Inet4Address
-import java.net.NetworkInterface
 import java.util.concurrent.CopyOnWriteArrayList
 
 @Suppress("DEPRECATION") // uses deprecated APIs for backwards compat
@@ -24,7 +22,6 @@ internal class EmbraceNetworkConnectivityService(
     private val intentFilter = IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION)
     private var lastNetworkStatus: NetworkStatus = NetworkStatus.UNKNOWN
     private val networkConnectivityListeners = CopyOnWriteArrayList<NetworkConnectivityListener>()
-    override val ipAddress: String? by lazy { calculateIpAddress() }
 
     override fun onReceive(context: Context, intent: Intent) {
         try {
@@ -38,7 +35,7 @@ internal class EmbraceNetworkConnectivityService(
         }
     }
 
-    override fun getCurrentNetworkStatus(): NetworkStatus {
+    private fun getCurrentNetworkStatus(): NetworkStatus {
         var networkStatus: NetworkStatus
         try {
             val networkInfo = connectivityManager?.activeNetworkInfo
@@ -102,22 +99,5 @@ internal class EmbraceNetworkConnectivityService(
         for (listener in networkConnectivityListeners) {
             listener.onNetworkConnectivityStatusChanged(status)
         }
-    }
-
-    private fun calculateIpAddress(): String? {
-        runCatching {
-            val en = NetworkInterface.getNetworkInterfaces()
-            while (en.hasMoreElements()) {
-                val intf = en.nextElement()
-                val enumIpAddr = intf.inetAddresses
-                while (enumIpAddr.hasMoreElements()) {
-                    val inetAddress = enumIpAddr.nextElement()
-                    if (!inetAddress.isLoopbackAddress && inetAddress is Inet4Address) {
-                        return inetAddress.getHostAddress()
-                    }
-                }
-            }
-        }
-        return null
     }
 }

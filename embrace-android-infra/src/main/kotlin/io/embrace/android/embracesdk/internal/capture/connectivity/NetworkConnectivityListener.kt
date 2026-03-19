@@ -2,10 +2,17 @@ package io.embrace.android.embracesdk.internal.capture.connectivity
 
 import io.embrace.android.embracesdk.internal.comms.delivery.NetworkStatus
 
-fun interface NetworkConnectivityListener {
+interface NetworkConnectivityListener {
 
     /**
-     * Called when the network status has changed.
+     * Legacy callback when the network status has changed.
      */
     fun onNetworkConnectivityStatusChanged(status: NetworkStatus)
+
+    /**
+     * Callback when network status has changed.
+     */
+    fun onNetworkConnectivityStatusChanged(status: ConnectivityStatus) {
+        onNetworkConnectivityStatusChanged(status.toNetworkStatus())
+    }
 }

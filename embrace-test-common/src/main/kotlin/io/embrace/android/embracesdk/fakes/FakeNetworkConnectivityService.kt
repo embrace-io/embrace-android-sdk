@@ -7,7 +7,6 @@ import java.util.concurrent.CopyOnWriteArrayList
 
 class FakeNetworkConnectivityService(
     initialNetworkStatus: NetworkStatus = NetworkStatus.UNKNOWN,
-    override var ipAddress: String = defaultIpAddress,
 ) : NetworkConnectivityService {
 
     private val networkConnectivityListeners = CopyOnWriteArrayList<NetworkConnectivityListener>()
@@ -26,8 +25,6 @@ class FakeNetworkConnectivityService(
         networkConnectivityListeners.remove(listener)
     }
 
-    override fun getCurrentNetworkStatus(): NetworkStatus = networkStatus
-
     override fun close() {
     }
 
@@ -38,9 +35,5 @@ class FakeNetworkConnectivityService(
         networkConnectivityListeners.forEach {
             it.onNetworkConnectivityStatusChanged(networkStatus)
         }
-    }
-
-    private companion object {
-        private const val defaultIpAddress = "220.1.1.1"
     }
 }

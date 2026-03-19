@@ -39,6 +39,7 @@ internal class AutoDataCaptureBehaviorImplTest {
             assertTrue(isThermalStatusCaptureEnabled())
             assertFalse(isEndStartupWithAppReadyEnabled())
             assertFalse(isStateCaptureEnabled())
+            assertFalse(isNetworkCallbackConnectivityServiceEnabled())
         }
     }
 
@@ -161,6 +162,29 @@ internal class AutoDataCaptureBehaviorImplTest {
         )
 
         assertFalse(behavior.isStateCaptureEnabled())
+    }
+
+    @Test
+    fun `isNetworkCallbackConnectivityServiceEnabled false when remote field null`() {
+        assertFalse(createAutoDataCaptureBehavior(remoteCfg = null).isNetworkCallbackConnectivityServiceEnabled())
+    }
+
+    @Test
+    fun `isNetworkCallbackConnectivityServiceEnabled true when pct is 100`() {
+        assertTrue(
+            createAutoDataCaptureBehavior(
+                remoteCfg = RemoteConfig(pctNetworkCallbackConnectivityServiceEnabled = 100.0f)
+            ).isNetworkCallbackConnectivityServiceEnabled()
+        )
+    }
+
+    @Test
+    fun `isNetworkCallbackConnectivityServiceEnabled false when pct is 0`() {
+        assertFalse(
+            createAutoDataCaptureBehavior(
+                remoteCfg = RemoteConfig(pctNetworkCallbackConnectivityServiceEnabled = 0.0f)
+            ).isNetworkCallbackConnectivityServiceEnabled()
+        )
     }
 
     private fun createBehavior(

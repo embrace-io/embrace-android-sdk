@@ -13,6 +13,7 @@ import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 
 @RequiresApi(Build.VERSION_CODES.N)
@@ -25,6 +26,7 @@ internal class NetworkCallbackConnectivityService(
     private var currentNetwork: AtomicReference<Network?> = AtomicReference(null)
     private val currentStatus = AtomicReference<ConnectivityStatus>(ConnectivityStatus.Unverified)
     private val listeners = CopyOnWriteArrayList<NetworkConnectivityListener>()
+    private val registered = AtomicBoolean(false)
 
     override fun onAvailable(network: Network) {
         updateNetwork(network)
@@ -43,24 +45,30 @@ internal class NetworkCallbackConnectivityService(
 
     override fun register() {
         backgroundWorker.submit {
-            updateSafely {
-                connectivityManager?.activeNetwork?.let { defaultNetwork ->
-                    synchronized(currentNetwork) {
-                        updateNetwork(defaultNetwork)
-                        updateStatus(
-                            updatedNetwork = defaultNetwork,
-                            networkCapabilities = connectivityManager.getNetworkCapabilities(defaultNetwork)
-                        )
+            if (connectivityManager != null && !registered.getAndSet(true)) {
+                updateSafely {
+                    connectivityManager.activeNetwork?.let { defaultNetwork ->
+                        synchronized(currentNetwork) {
+                            updateNetwork(defaultNetwork)
+                            updateStatus(
+                                updatedNetwork = defaultNetwork,
+                                networkCapabilities = connectivityManager.getNetworkCapabilities(defaultNetwork)
+                            )
+                        }
                     }
+                    connectivityManager.registerDefaultNetworkCallback(this)
                 }
-                connectivityManager?.registerDefaultNetworkCallback(this)
             }
         }
     }
 
     override fun close() {
-        runCatching {
-            connectivityManager?.unregisterNetworkCallback(this)
+        backgroundWorker.submit {
+            updateSafely {
+                if (connectivityManager != null && registered.getAndSet(false)) {
+                    connectivityManager.unregisterNetworkCallback(this)
+                }
+            }
         }
     }
 

@@ -84,6 +84,14 @@ internal class NetworkCallbackConnectivityServiceTest {
     }
 
     @Test
+    fun `register called twice only registers once`() {
+        service.register()
+        service.register()
+        service.addNetworkConnectivityListener(networkConnectivityListener)
+        assertEquals(1, shadowConnectivityManager.networkCallbacks.size)
+    }
+
+    @Test
     fun `exception during register is caught and does not propagate`() {
         NetworkCallbackConnectivityService(
             fakeBackgroundWorker(),
@@ -213,6 +221,30 @@ internal class NetworkCallbackConnectivityServiceTest {
     fun `close calls unregisterNetworkCallback with service as callback`() {
         service.register()
         assertTrue(shadowConnectivityManager.networkCallbacks.contains(service))
+        service.close()
+        assertFalse(shadowConnectivityManager.networkCallbacks.contains(service))
+    }
+
+    @Test
+    fun `close without register is a no-op`() {
+        service.close()
+        assertFalse(shadowConnectivityManager.networkCallbacks.contains(service))
+    }
+
+    @Test
+    fun `close then register re-registers`() {
+        service.register()
+        assertTrue(shadowConnectivityManager.networkCallbacks.contains(service))
+        service.close()
+        assertFalse(shadowConnectivityManager.networkCallbacks.contains(service))
+        service.register()
+        assertTrue(shadowConnectivityManager.networkCallbacks.contains(service))
+    }
+
+    @Test
+    fun `close called twice does not throw`() {
+        service.register()
+        service.close()
         service.close()
         assertFalse(shadowConnectivityManager.networkCallbacks.contains(service))
     }

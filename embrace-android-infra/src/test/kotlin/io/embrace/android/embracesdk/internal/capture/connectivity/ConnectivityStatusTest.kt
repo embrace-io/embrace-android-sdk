@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.capture.connectivity
 
 import io.embrace.android.embracesdk.internal.comms.delivery.NetworkStatus
+import io.embrace.android.embracesdk.internal.comms.delivery.toConnectivityStatus
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Test
@@ -48,5 +49,13 @@ internal class ConnectivityStatusTest {
         assertNotEquals(ConnectivityStatus.Wifi(true), ConnectivityStatus.Wifi(false))
         assertNotEquals(ConnectivityStatus.Wan(true), ConnectivityStatus.Wan(false))
         assertNotEquals(ConnectivityStatus.Unknown(true), ConnectivityStatus.Unknown(false))
+    }
+
+    @Test
+    fun `toConnectivityStatus maps every NetworkStatus to the correct ConnectivityStatus`() {
+        assertEquals(ConnectivityStatus.None, NetworkStatus.NOT_REACHABLE.toConnectivityStatus())
+        assertEquals(ConnectivityStatus.Wifi(true), NetworkStatus.WIFI.toConnectivityStatus())
+        assertEquals(ConnectivityStatus.Wan(true), NetworkStatus.WAN.toConnectivityStatus())
+        assertEquals(ConnectivityStatus.Unknown(true), NetworkStatus.UNKNOWN.toConnectivityStatus())
     }
 }

@@ -14,6 +14,7 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
+import java.io.IOException
 import java.net.URL
 import java.nio.charset.StandardCharsets
 import java.util.concurrent.Executors
@@ -24,7 +25,8 @@ private enum class RequestType {
     REDIRECTED_GET_REQUEST,
     POST_REQUEST,
     NOT_FOUND_REQUEST,
-    INVALID_REQUEST
+    INVALID_REQUEST,
+    CRASH_DURING_GET_REQUEST,
 }
 
 private val client = OkHttpClient.Builder().build()
@@ -44,7 +46,7 @@ fun NetworkRequestExample() {
         onClick = {
             val request = prepareRequest(requestValue)
             client.newCall(request).enqueue(object : okhttp3.Callback {
-                override fun onFailure(call: okhttp3.Call, e: java.io.IOException) {
+                override fun onFailure(call: okhttp3.Call, e: IOException) {
                     Log.i("EmbraceTestApp", "Network request failed ${e.message}")
                 }
 
@@ -52,6 +54,8 @@ fun NetworkRequestExample() {
                     Log.i("EmbraceTestApp", "Network request completed ${response.code} ${response.body.string()}")
                 }
             })
+
+            onPostRequestQueuing(requestValue)
         },
     ) {
         Text("Make OkHttp network request")
@@ -88,6 +92,8 @@ fun NetworkRequestExample() {
                     connection?.disconnect()
                 }
             }
+
+            onPostRequestQueuing(requestValue)
         },
     ) {
         Text("Make HUC network request")
@@ -100,6 +106,7 @@ private fun getUrl(requestValue: RequestType): String = when (requestValue) {
     RequestType.POST_REQUEST -> "https://httpbin.org/post"
     RequestType.NOT_FOUND_REQUEST -> "https://httpbin.org/status/404"
     RequestType.INVALID_REQUEST -> "https://some-invalid-url.path"
+    RequestType.CRASH_DURING_GET_REQUEST -> "https://www.google.com/crash"
 }
 
 private fun prepareRequest(requestType: RequestType): Request {
@@ -108,4 +115,11 @@ private fun prepareRequest(requestType: RequestType): Request {
         builder.post("{}".toRequestBody("application/json".toMediaType()))
     }
     return builder.build()
+}
+
+private fun onPostRequestQueuing(requestValue: RequestType) {
+    if (requestValue == RequestType.CRASH_DURING_GET_REQUEST) {
+        Thread.sleep(10L)
+        throw IllegalStateException("CRASHING")
+    }
 }

@@ -5,9 +5,10 @@ package io.embrace.android.embracesdk.internal.capture.connectivity
  */
 enum class ConnectionType(
     val openForDelivery: Boolean,
+    val typeName: String,
 ) {
-    WIFI(openForDelivery = true),
-    WAN(openForDelivery = true),
-    UNKNOWN(openForDelivery = true),
-    NONE(openForDelivery = false),
+    WIFI(openForDelivery = true, typeName = "wifi"),
+    WAN(openForDelivery = true, typeName = "wan"),
+    UNKNOWN(openForDelivery = true, typeName = "unknown"),
+    NONE(openForDelivery = false, typeName = "none"),
 }

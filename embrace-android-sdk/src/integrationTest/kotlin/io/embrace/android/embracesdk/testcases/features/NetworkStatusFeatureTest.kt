@@ -13,7 +13,6 @@ import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType.NetworkState.Status
 import io.embrace.android.embracesdk.internal.capture.connectivity.ConnectionType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
-import io.embrace.android.embracesdk.internal.comms.delivery.NetworkStatus
 import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkStateDataSource
 import io.embrace.android.embracesdk.internal.otel.spans.hasEmbraceAttributeValue
 import io.embrace.android.embracesdk.internal.session.getSessionSpan
@@ -35,7 +34,7 @@ internal class NetworkStatusFeatureTest {
     val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule()
 
     @Test
-    fun `network status feature`() {
+    fun `network status feature with legacy connectivity service simulation`() {
         val tickTimeMs = 3000L
         var sdkStartTimeMs: Long = 0
         var statusChangeTimeMs: Long = 0
@@ -46,10 +45,55 @@ internal class NetworkStatusFeatureTest {
                 recordSession {
                     clock.tick(tickTimeMs)
                     statusChangeTimeMs = clock.now()
-                    simulateNetworkChange(NetworkStatus.WIFI)
+                    simulateConnectionTypeChange(ConnectionType.WIFI, true)
                     // duplicates should not result in another span being created
                     clock.tick()
-                    simulateNetworkChange(NetworkStatus.WIFI)
+                    simulateConnectionTypeChange(ConnectionType.WIFI, true)
+                }
+            },
+            assertAction = {
+                val message = getSingleSessionEnvelope()
+                val span = message.findSpansOfType(EmbType.System.NetworkStatus).single()
+                assertEquals("emb-network-status", span.name)
+                assertEquals(sdkStartTimeMs, span.startTimeNanos?.nanosToMillis())
+                assertEquals(statusChangeTimeMs, span.endTimeNanos?.nanosToMillis())
+
+                span.attributes?.assertMatches(
+                    mapOf(
+                        "emb.type" to "sys.network_status",
+                        "network" to "unknown"
+                    )
+                )
+
+                val snapshot = message.findSpanSnapshotsOfType(EmbType.System.NetworkStatus).single()
+                assertEquals("emb-network-status", snapshot.name)
+                assertEquals(statusChangeTimeMs, snapshot.startTimeNanos?.nanosToMillis())
+                snapshot.attributes?.assertMatches(
+                    mapOf(
+                        "emb.type" to "sys.network_status",
+                        "network" to "wifi"
+                    )
+                )
+            }
+        )
+    }
+
+    @Test
+    fun `network status feature with network callback based connectivity service simulation`() {
+        val tickTimeMs = 3000L
+        var sdkStartTimeMs: Long = 0
+        var statusChangeTimeMs: Long = 0
+
+        testRule.runTest(
+            testCaseAction = {
+                sdkStartTimeMs = clock.now()
+                recordSession {
+                    clock.tick(tickTimeMs)
+                    statusChangeTimeMs = clock.now()
+                    simulateConnectionTypeChange(ConnectionType.WIFI)
+                    // duplicates should not result in another span being created
+                    clock.tick()
+                    simulateConnectionTypeChange(ConnectionType.WIFI)
                 }
             },
             assertAction = {

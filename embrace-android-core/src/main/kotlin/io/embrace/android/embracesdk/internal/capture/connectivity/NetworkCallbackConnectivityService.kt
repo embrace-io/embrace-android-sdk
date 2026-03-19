@@ -43,7 +43,7 @@ internal class NetworkCallbackConnectivityService(
 
     override fun register() {
         backgroundWorker.submit {
-            runCatching {
+            updateSafely {
                 connectivityManager?.activeNetwork?.let { defaultNetwork ->
                     synchronized(currentNetwork) {
                         updateNetwork(defaultNetwork)
@@ -54,8 +54,6 @@ internal class NetworkCallbackConnectivityService(
                     }
                 }
                 connectivityManager?.registerDefaultNetworkCallback(this)
-            }.onFailure {
-                logger.trackInternalError(InternalErrorType.NETWORK_STATUS_CAPTURE_FAIL, it)
             }
         }
     }
@@ -67,8 +65,10 @@ internal class NetworkCallbackConnectivityService(
     }
 
     override fun addNetworkConnectivityListener(listener: NetworkConnectivityListener) {
-        listeners.add(listener)
-        listener.onNetworkConnectivityStatusChanged(currentStatus.get())
+        updateSafely {
+            listeners.add(listener)
+            listener.onNetworkConnectivityStatusChanged(currentStatus.get())
+        }
     }
 
     override fun removeNetworkConnectivityListener(listener: NetworkConnectivityListener) {
@@ -87,7 +87,9 @@ internal class NetworkCallbackConnectivityService(
             if (currentStatus.get() != newStatus) {
                 currentStatus.set(newStatus)
                 for (listener in listeners) {
-                    listener.onNetworkConnectivityStatusChanged(newStatus)
+                    updateSafely {
+                        listener.onNetworkConnectivityStatusChanged(newStatus)
+                    }
                 }
             }
         }
@@ -103,6 +105,13 @@ internal class NetworkCallbackConnectivityService(
             else -> ConnectivityStatus.Unknown(connected)
         }
     }
+
+    private fun updateSafely(action: () -> Unit) =
+        runCatching {
+            action()
+        }.onFailure {
+            logger.trackInternalError(InternalErrorType.CONNECTIVITY_UPDATE_FAILURE, it)
+        }
 
     private companion object {
         /**

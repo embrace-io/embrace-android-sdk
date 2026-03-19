@@ -26,6 +26,7 @@ import org.junit.Test
 internal class EmbraceNetworkConnectivityServiceTest {
 
     private lateinit var service: EmbraceNetworkConnectivityService
+    private lateinit var testListener: NetworkConnectivityListener
     private var networkStatus: NetworkStatus? = null
 
     companion object {
@@ -71,6 +72,13 @@ internal class EmbraceNetworkConnectivityServiceTest {
             logger,
             mockConnectivityManager,
         )
+
+        testListener = object : NetworkConnectivityListener {
+            override fun onNetworkConnectivityStatusChanged(status: NetworkStatus) {
+                networkStatus = status
+            }
+        }
+        service.addNetworkConnectivityListener(testListener)
     }
 
     /**
@@ -96,12 +104,6 @@ internal class EmbraceNetworkConnectivityServiceTest {
 
     @Test
     fun `test listener get notified when connectivity status changes to WIFI`() {
-        service.addNetworkConnectivityListener(object : NetworkConnectivityListener {
-            override fun onNetworkConnectivityStatusChanged(status: NetworkStatus) {
-                networkStatus = status
-            }
-        })
-
         // call onReceive to emulate a connectivity status change
         val mockIntent = mockk<Intent>()
         every { mockConnectivityManager.activeNetworkInfo?.isConnected } returns true
@@ -112,12 +114,6 @@ internal class EmbraceNetworkConnectivityServiceTest {
 
     @Test
     fun `test listener get notified when connectivity status changes to MOBILE`() {
-        service.addNetworkConnectivityListener(object : NetworkConnectivityListener {
-            override fun onNetworkConnectivityStatusChanged(status: NetworkStatus) {
-                networkStatus = status
-            }
-        })
-
         // call onReceive to emulate a connectivity status change
         val mockIntent = mockk<Intent>()
         every { mockConnectivityManager.activeNetworkInfo?.isConnected } returns true
@@ -128,12 +124,6 @@ internal class EmbraceNetworkConnectivityServiceTest {
 
     @Test
     fun `test listener get notified when connectivity status changes to no connectivity`() {
-        service.addNetworkConnectivityListener(object : NetworkConnectivityListener {
-            override fun onNetworkConnectivityStatusChanged(status: NetworkStatus) {
-                networkStatus = status
-            }
-        })
-
         // call onReceive to emulate a connectivity status change
         val mockIntent = mockk<Intent>()
         every { mockConnectivityManager.activeNetworkInfo?.isConnected } returns false
@@ -143,12 +133,6 @@ internal class EmbraceNetworkConnectivityServiceTest {
 
     @Test
     fun `test listener get notified when connectivity status changes and no info obtained`() {
-        service.addNetworkConnectivityListener(object : NetworkConnectivityListener {
-            override fun onNetworkConnectivityStatusChanged(status: NetworkStatus) {
-                networkStatus = status
-            }
-        })
-
         // call onReceive to emulate a connectivity status change
         val mockIntent = mockk<Intent>()
         every { mockConnectivityManager.activeNetworkInfo } throws Exception("")
@@ -158,13 +142,6 @@ internal class EmbraceNetworkConnectivityServiceTest {
 
     @Test
     fun `test listener get notified when connectivity status changes and not notified when removed`() {
-        val listener = object : NetworkConnectivityListener {
-            override fun onNetworkConnectivityStatusChanged(status: NetworkStatus) {
-                networkStatus = status
-            }
-        }
-        service.addNetworkConnectivityListener(listener)
-
         // call onReceive to emulate a connectivity status change
         val mockIntent = mockk<Intent>()
         every { mockConnectivityManager.activeNetworkInfo?.isConnected } returns true
@@ -174,7 +151,7 @@ internal class EmbraceNetworkConnectivityServiceTest {
         assertEquals(NetworkStatus.WAN, networkStatus)
 
         // remove listener and call onReceive again
-        service.removeNetworkConnectivityListener(listener)
+        service.removeNetworkConnectivityListener(testListener)
         every { mockConnectivityManager.activeNetworkInfo?.type } returns ConnectivityManager.TYPE_WIFI
         service.onReceive(context, mockIntent)
 

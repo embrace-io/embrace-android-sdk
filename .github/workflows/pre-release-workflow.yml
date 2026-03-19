@@ -33,7 +33,7 @@ jobs:
     permissions:
       contents: write
     needs: create-release-branch
-    uses: ./.github/workflows/upload-artifacts-to-maven-central.yml
+    uses: ./.github/workflows/upload-artifacts-to-maven-central.yml # zizmor: ignore[secrets-inherit]
     with:
       rc_version: ${{ inputs.rc_version }}
     secrets: inherit

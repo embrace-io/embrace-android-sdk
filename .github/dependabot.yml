@@ -5,13 +5,14 @@ updates:
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 50
+    groups:
+      github:
+        patterns:
+          - "actions/*"
   - package-ecosystem: "gradle"
-    directory: "/"
-    schedule:
-      interval: "daily"
-    open-pull-requests-limit: 50
-  - package-ecosystem: "gradle"
-    directory: "/examples/ExampleApp"
+    directories:
+      - "/"
+      - "/examples/ExampleApp"
     schedule:
       interval: "daily"
     open-pull-requests-limit: 50

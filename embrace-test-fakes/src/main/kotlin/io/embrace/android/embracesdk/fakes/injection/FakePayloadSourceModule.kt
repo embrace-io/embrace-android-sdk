@@ -51,12 +51,15 @@ class FakePayloadSourceModule(
 private class FakePayloadResurrectionService : PayloadResurrectionService {
 
     var resurrectCount: Int = 0
+    private val completionListeners = mutableListOf<() -> Unit>()
 
     override fun addResurrectionCompleteListener(listener: () -> Unit) {
+        completionListeners.add(listener)
     }
 
     override fun resurrectOldPayloads(nativeCrashServiceProvider: Provider<NativeCrashService?>) {
         resurrectCount++
+        completionListeners.forEach { it() }
     }
 }
 

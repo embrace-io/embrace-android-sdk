@@ -43,12 +43,12 @@ class SchedulingServiceImpl(
     private val payloadsInProgress = ConcurrentHashMap<SupportedEnvelopeType, StoredTelemetryMetadata>()
 
     override fun onPayloadIntake() {
-        startDeliveryLoop()
+        queueNextPayloadOnSchedulingWorker()
     }
 
     override fun onResurrectionComplete() {
         if (!resurrectionComplete.getAndSet(true)) {
-            startDeliveryLoop()
+            queueNextPayloadOnSchedulingWorker()
         }
     }
 
@@ -70,20 +70,20 @@ class SchedulingServiceImpl(
         if (wasBlocked || networkAcquired) {
             deliveryWorker.submit {
                 connectionStatus.unblock()
-                startDeliveryLoop()
+                queueNextPayloadOnSchedulingWorker()
             }
         }
     }
 
     /**
-     * Schedule a delivery loop to start at the given time
+     * Schedule a delivery at the given time
      */
-    private fun scheduleDeliveryLoopStart(timestampMs: Long) {
+    private fun scheduleNextDelivery(timestampMs: Long) {
         if (timestampMs <= clock.now()) {
-            startDeliveryLoop()
+            queueNextPayloadOnSchedulingWorker()
         } else if (timestampMs != Long.MAX_VALUE) {
             schedulingWorker.schedule<Unit>(
-                ::startDeliveryLoop,
+                ::queueNextPayloadOnSchedulingWorker,
                 calculateDelay(timestampMs),
                 TimeUnit.MILLISECONDS
             )
@@ -91,72 +91,37 @@ class SchedulingServiceImpl(
     }
 
     /**
-     * Start the delivery loop on the scheduler thread
+     * Start delivery on the scheduler thread
      */
-    private fun startDeliveryLoop() {
-        deliveryTracer?.onStartDeliveryLoop()
+    private fun queueNextPayloadOnSchedulingWorker() {
+        deliveryTracer?.onScheduleNextDeliveryNow()
         schedulingWorker.submit {
-            deliveryLoop()
+            queueNextPayload()
         }
     }
 
     /**
-     * Loop through the payloads ready to be sent by priority and queue for delivery
+     * Find the highest-priority eligible payload and queue it for delivery on the delivery worker.
      */
-    private fun deliveryLoop() {
-        val failedPayloads = mutableSetOf<StoredTelemetryMetadata>()
+    private fun queueNextPayload() {
         try {
-            var payload: StoredTelemetryMetadata? = findNextPayload()
-            while (payload != null && connectionStatus.ready()) {
-                runCatching {
-                    payload.run {
-                        if (eligibleForSending() && connectionStatus.ready()) {
-                            envelopeType.endpoint.updateBlockedEndpoint()
-                            payloadsInProgress[envelopeType] = this
-                            queueDelivery(this)
-                        }
-                    }
-                }.exceptionOrNull()?.let { error ->
-                    // This block catches unhandled errors resulting a single payload failing to be queued for delivery.
-                    // Any payload failed to be queued will be bypassed in the current delivery loop cycle, as the
-                    // SDK encountered an error as it tried to determine whether the payload should be delivered.
-                    val fileName = payload.run {
-                        // Keeping track of the payloads that failed to be queued prevents an infinite loop where a
-                        // payload that refused to be queued successfully keeps being retried in the same loop.
-                        // So even if it isn't possible now, this code prevents makes an attempt to prevent it from
-                        // happening in the future, if, say, checking the state of the SDK can throw indefinitely.
-                        failedPayloads.add(this)
-                        filename
-                    }
-                    logger.trackInternalError(
-                        type = InternalErrorType.DELIVERY_SCHEDULING_FAIL,
-                        throwable = IllegalStateException("Failed to queue payload with file name $fileName", error)
-                    )
-                }
-                payload = findNextPayload(failedPayloads)
+            connectionStatus.attemptUnblock(clock.now())
+            if (!connectionStatus.ready()) {
+                return
             }
+            val payload = findNextPayload() ?: return
+            payload.envelopeType.endpoint.updateBlockedEndpoint()
+            payloadsInProgress[payload.envelopeType] = payload
+            queueDelivery(payload)
         } catch (t: Throwable) {
-            // This block catches unhandled errors resulting from the recreation of a queue of payloads to be delivered
-            // When this type of error encountered, we abort the delivery loop and wait for the next retry or intake
-            // to retry any pending payloads.
             logger.trackInternalError(InternalErrorType.DELIVERY_SCHEDULING_FAIL, t)
-        } finally {
-            // Ensure the retry scheduling runs after all the payloads have been queued.
-            // Will try delivery again at the earliest retry time or when the connection is expected to unblock, whichever is greater
-            deliveryWorker.submit {
-                payloadsToRetry.map { it.value.nextRetryTimeMs }.minOrNull()?.let { retryTimeMs ->
-                    scheduleDeliveryLoopStart(maxOf(retryTimeMs, connectionStatus.getUnblockTime()))
-                }
-            }
         }
     }
 
-    private fun findNextPayload(exclude: Set<StoredTelemetryMetadata> = emptySet()): StoredTelemetryMetadata? {
-        // Eagerly evaluate whether it's time to unblock the connection
-        connectionStatus.attemptUnblock(clock.now())
+    private fun findNextPayload(): StoredTelemetryMetadata? {
         val payloadsByPriority = storageService.getPayloadsByPriority()
         val payloadsToSend = payloadsByPriority
-            .filter { it.eligibleForSending() && !exclude.contains(it) && !connectionStatus.isPayloadBlocked(it) }
+            .filter { !connectionStatus.isPayloadBlocked(it) && it.eligibleForSending() }
             .sortedWith(storedTelemetryComparator)
         deliveryTracer?.onPayloadQueueCreated(
             payloadsByPriority,
@@ -165,6 +130,9 @@ class SchedulingServiceImpl(
         return payloadsToSend.firstOrNull()
     }
 
+    /**
+     *  Execute the delivery of the given payload if it's still eligible.
+     */
     private fun queueDelivery(payload: StoredTelemetryMetadata): Future<ExecutionResult> {
         deliveryTracer?.onPayloadEnqueued(payload)
         activeSends.add(payload)
@@ -199,6 +167,9 @@ class SchedulingServiceImpl(
         }
     }
 
+    /**
+     * Update the state of the connection after request execution, scheduling the next eligible payload and the next retry attempt.
+     */
     private fun ExecutionResult.processDeliveryResult(
         payload: StoredTelemetryMetadata,
     ) {
@@ -206,7 +177,7 @@ class SchedulingServiceImpl(
         // update the connection status to prevent delivery attempt
         if (failedToConnect()) {
             val nextConnectionAttemptTime = connectionStatus.block()
-            scheduleDeliveryLoopStart(nextConnectionAttemptTime)
+            scheduleNextDelivery(nextConnectionAttemptTime)
         } else if (connectedToServer()) {
             connectionStatus.connectionValidated()
         }
@@ -241,10 +212,20 @@ class SchedulingServiceImpl(
 
         if (!shouldRetry) {
             payloadsInProgress.remove(payload.envelopeType)
-            startDeliveryLoop()
+        }
+
+        // Always see if there's another payload eligible to be delivered
+        queueNextPayloadOnSchedulingWorker()
+
+        // Always schedule a payload delivery for the next retry or connection unblocking, whichever happens later
+        payloadsToRetry.values.minOfOrNull { it.nextRetryTimeMs }?.let { retryTimeMs ->
+            scheduleNextDelivery(maxOf(retryTimeMs, connectionStatus.getUnblockTime()))
         }
     }
 
+    /**
+     * Whether the given payload is eligible to be delivered based on the state of the connection, delivery, and undelivered payloads.
+     */
     private fun StoredTelemetryMetadata.eligibleForSending(): Boolean {
         // determine if the given payload is eligible to be sent
         // i.e. not already being sent, endpoint not blocked by 429, and isn't waiting to be retried

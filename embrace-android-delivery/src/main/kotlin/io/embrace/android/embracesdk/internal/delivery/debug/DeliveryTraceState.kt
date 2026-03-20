@@ -97,7 +97,7 @@ internal sealed class DeliveryTraceState {
     /**
      * The delivery loop was started
      */
-    internal object StartDeliveryLoop : DeliveryTraceState() {
+    internal object ScheduleNextDeliveryNow : DeliveryTraceState() {
         override fun toString(): String = "StartDeliveryLoop"
     }
 

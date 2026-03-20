@@ -32,7 +32,7 @@ class IntakeServiceImpl(
         worker.shutdownAndWait(shutdownTimeoutMs)
     }
 
-    override fun take(intake: Envelope<*>, metadata: StoredTelemetryMetadata) {
+    override fun take(intake: Envelope<*>, metadata: StoredTelemetryMetadata): Future<*> {
         deliveryTracer?.onTake(metadata)
         val future = worker.submit(metadata) {
             processIntake(intake, metadata)
@@ -44,6 +44,8 @@ class IntakeServiceImpl(
             cachingTasks[metadata.envelopeType] = future
             prev?.cancel(false)
         }
+
+        return future
     }
 
     @Suppress("UNCHECKED_CAST")

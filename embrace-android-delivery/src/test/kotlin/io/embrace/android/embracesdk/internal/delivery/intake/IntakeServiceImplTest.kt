@@ -361,4 +361,29 @@ class IntakeServiceImplTest {
         assertEquals(cache1.filename, cacheStorageService.storedFilenames().single())
         assertEquals(InternalErrorType.INTAKE_UNEXPECTED_TYPE.toString(), logger.internalErrorMessages.single().msg)
     }
+
+    @Test
+    fun `take returns a future that resolves after storage`() {
+        val future = intakeService.take(sessionEnvelope, sessionMetadata)
+        assertFalse(future.isDone)
+        assertEquals(0, payloadStorageService.storedPayloadCount())
+        executorService.runCurrentlyBlocked()
+        assertTrue(future.isDone)
+        assertEquals(1, payloadStorageService.storedPayloadCount())
+        assertEquals(1, schedulingService.payloadIntakeCount)
+    }
+
+    @Test
+    fun `duplicate cache takes will result in the first future being canceled`() {
+        val f1 = intakeService.take(sessionEnvelope, sessionMetadata.copy(complete = false))
+        assertFalse(f1.isDone)
+        assertFalse(f1.isCancelled)
+        val f2 = intakeService.take(sessionEnvelope, sessionMetadata.copy(complete = false))
+        assertTrue(f1.isCancelled)
+        assertTrue(f1.isDone)
+        executorService.runCurrentlyBlocked()
+        assertEquals(1, cacheStorageService.storedPayloadCount())
+        assertFalse(f2.isCancelled)
+        assertTrue(f2.isDone)
+    }
 }

@@ -34,6 +34,8 @@ import io.embrace.android.embracesdk.internal.session.getSessionSpan
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.opentelemetry.kotlin.semconv.SessionAttributes
 import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 import java.util.zip.GZIPInputStream
 import kotlin.math.max
 
@@ -222,11 +224,17 @@ internal class PayloadResurrectionServiceImpl(
             else -> null
         }
 
+        // Synchronously provide the payload to the IntakeService, blocking on the returned Future
         if (resurrectedPayload != null) {
-            intakeService.take(
+            val task = intakeService.take(
                 intake = resurrectedPayload,
                 metadata = copy(complete = true)
             )
+            try {
+                task.get(5, TimeUnit.SECONDS)
+            } catch (e: TimeoutException) {
+                logger.trackInternalError(InternalErrorType.INTAKE_FAIL, e)
+            }
         }
     }
 

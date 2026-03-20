@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.delivery.intake
 import io.embrace.android.embracesdk.internal.delivery.Shutdownable
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.payload.Envelope
+import java.util.concurrent.Future
 
 /**
  * IntakeService is responsible for storing telemetry payloads to disk and notifying the
@@ -19,5 +20,5 @@ interface IntakeService : Shutdownable {
     /**
      * Stores a payload on disk as its JSON representation.
      */
-    fun take(intake: Envelope<*>, metadata: StoredTelemetryMetadata)
+    fun take(intake: Envelope<*>, metadata: StoredTelemetryMetadata): Future<*>
 }

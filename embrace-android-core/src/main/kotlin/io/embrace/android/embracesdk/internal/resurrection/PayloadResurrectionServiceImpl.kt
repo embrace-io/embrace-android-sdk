@@ -33,6 +33,7 @@ import io.embrace.android.embracesdk.internal.session.getSessionProperties
 import io.embrace.android.embracesdk.internal.session.getSessionSpan
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.opentelemetry.kotlin.semconv.SessionAttributes
+import java.util.concurrent.CopyOnWriteArrayList
 import java.util.zip.GZIPInputStream
 import kotlin.math.max
 
@@ -44,7 +45,24 @@ internal class PayloadResurrectionServiceImpl(
     private val serializer: PlatformSerializer,
 ) : PayloadResurrectionService {
 
+    private val completionListeners = CopyOnWriteArrayList<() -> Unit>()
+
+    override fun addResurrectionCompleteListener(listener: () -> Unit) {
+        completionListeners.add(listener)
+    }
+
     override fun resurrectOldPayloads(nativeCrashServiceProvider: Provider<NativeCrashService?>) {
+        runCatching {
+            processTombstones(nativeCrashServiceProvider)
+        }.onFailure {
+            logger.trackInternalError(InternalErrorType.PAYLOAD_RESURRECTION_FAIL, it)
+        }
+        completionListeners.forEach { listener ->
+            listener()
+        }
+    }
+
+    private fun processTombstones(nativeCrashServiceProvider: Provider<NativeCrashService?>) {
         val nativeCrashService = nativeCrashServiceProvider()
         val undeliveredPayloads = cacheStorageService.getUndeliveredPayloads()
         val payloadsToResurrect = undeliveredPayloads.filterNot { it.isCrashEnvelope() }

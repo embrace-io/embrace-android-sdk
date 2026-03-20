@@ -40,6 +40,7 @@ class SchedulingServiceImpl(
     private val deleteInProgress: MutableSet<StoredTelemetryMetadata> = Collections.newSetFromMap(ConcurrentHashMap())
     private val payloadsToRetry: MutableMap<StoredTelemetryMetadata, RetryInstance> = ConcurrentHashMap()
     private val resurrectionComplete = AtomicBoolean(false)
+    private val payloadsInProgress = ConcurrentHashMap<SupportedEnvelopeType, StoredTelemetryMetadata>()
 
     override fun onPayloadIntake() {
         startDeliveryLoop()
@@ -111,6 +112,7 @@ class SchedulingServiceImpl(
                     payload.run {
                         if (eligibleForSending() && connectionStatus.ready()) {
                             envelopeType.endpoint.updateBlockedEndpoint()
+                            payloadsInProgress[envelopeType] = this
                             queueDelivery(this)
                         }
                     }
@@ -191,47 +193,55 @@ class SchedulingServiceImpl(
             }
 
             deliveryTracer?.onPayloadResult(payload, result)
-
-            // If the request failed because the SDK cannot reach the Embrace server,
-            // update the connection status to prevent delivery attempt
-            if (result.failedToConnect()) {
-                val nextConnectionAttemptTime = connectionStatus.block()
-                scheduleDeliveryLoopStart(nextConnectionAttemptTime)
-            } else if (result.connectedToServer()) {
-                connectionStatus.connectionValidated()
-            }
-
-            with(result) {
-                if (failedToConnect() || this is ExecutionResult.NetworkNotReady) {
-                    connectionStatus.payloadBlocked(payload)
-                } else if (!shouldRetry) {
-                    // If the response is such that we should not ever retry the delivery of this payload,
-                    // delete it from both the in memory retry payloads map and on disk
-                    payloadsToRetry.remove(payload)
-                    deleteInProgress.add(payload)
-                    storageService.delete(payload) {
-                        deleteInProgress.remove(payload)
-                    }
-                } else {
-                    // If delivery of this payload should be retried, add or replace the entry in the retry map
-                    // with the new values for how many times it has failed, and when the next retry should happen
-                    val retryAttempts = payloadsToRetry[payload]?.failedAttempts ?: 0
-                    val nextRetryTimeMs = if (this is ExecutionResult.TooManyRequests && retryAfterMs != null) {
-                        val unblockedTimestampMs = clock.now() + retryAfterMs
-                        blockedEndpoints[endpoint] = unblockedTimestampMs
-                        unblockedTimestampMs + 1L
-                    } else {
-                        clock.calculateNextRetryTime(retryAttempts = retryAttempts)
-                    }
-
-                    payloadsToRetry[payload] = RetryInstance(
-                        failedAttempts = retryAttempts + 1,
-                        nextRetryTimeMs = nextRetryTimeMs
-                    )
-                }
-            }
+            result.processDeliveryResult(payload)
             activeSends.remove(payload)
             result
+        }
+    }
+
+    private fun ExecutionResult.processDeliveryResult(
+        payload: StoredTelemetryMetadata,
+    ) {
+        // If the request failed because the SDK cannot reach the Embrace server,
+        // update the connection status to prevent delivery attempt
+        if (failedToConnect()) {
+            val nextConnectionAttemptTime = connectionStatus.block()
+            scheduleDeliveryLoopStart(nextConnectionAttemptTime)
+        } else if (connectedToServer()) {
+            connectionStatus.connectionValidated()
+        }
+
+        if (failedToConnect() || this is ExecutionResult.NetworkNotReady) {
+            connectionStatus.payloadBlocked(payload)
+        } else if (!shouldRetry) {
+            // If the response is such that we should not ever retry the delivery of this payload,
+            // delete it from both the in memory retry payloads map and on disk
+            payloadsToRetry.remove(payload)
+            deleteInProgress.add(payload)
+            storageService.delete(payload) {
+                deleteInProgress.remove(payload)
+            }
+        } else {
+            // If delivery of this payload should be retried, add or replace the entry in the retry map
+            // with the new values for how many times it has failed, and when the next retry should happen
+            val retryAttempts = payloadsToRetry[payload]?.failedAttempts ?: 0
+            val nextRetryTimeMs = if (this is ExecutionResult.TooManyRequests && retryAfterMs != null) {
+                val unblockedTimestampMs = clock.now() + retryAfterMs
+                blockedEndpoints[endpoint] = unblockedTimestampMs
+                unblockedTimestampMs + 1L
+            } else {
+                clock.calculateNextRetryTime(retryAttempts = retryAttempts)
+            }
+
+            payloadsToRetry[payload] = RetryInstance(
+                failedAttempts = retryAttempts + 1,
+                nextRetryTimeMs = nextRetryTimeMs
+            )
+        }
+
+        if (!shouldRetry) {
+            payloadsInProgress.remove(payload.envelopeType)
+            startDeliveryLoop()
         }
     }
 
@@ -247,6 +257,11 @@ class SchedulingServiceImpl(
         }
 
         if (envelopeType != SupportedEnvelopeType.CRASH && !resurrectionComplete.get()) {
+            return false
+        }
+
+        val activePayload = payloadsInProgress[envelopeType]
+        if (activePayload != null && activePayload != this) {
             return false
         }
 

@@ -58,7 +58,11 @@ internal class PayloadResurrectionServiceImpl(
             logger.trackInternalError(InternalErrorType.PAYLOAD_RESURRECTION_FAIL, it)
         }
         completionListeners.forEach { listener ->
-            listener()
+            runCatching {
+                listener()
+            }.onFailure {
+                logger.trackInternalError(InternalErrorType.PAYLOAD_RESURRECTION_FAIL, it)
+            }
         }
     }
 

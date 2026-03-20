@@ -122,12 +122,17 @@ internal fun ModuleGraph.triggerPayloadSend() {
     val worker = workerThreadModule.backgroundWorker(Worker.Background.IoRegWorker)
     worker.submit {
         val resurrectionService = payloadSourceModule.payloadResurrectionService
+        var resurrectionAttempted = false
         if (resurrectionService != null) {
+            deliveryModule?.schedulingService?.let { scheduler ->
+                resurrectionService.addResurrectionCompleteListener(scheduler::onResurrectionComplete)
+            }
             resurrectionService.resurrectOldPayloads(
                 nativeCrashServiceProvider = {
                     instrumentationModule.instrumentationRegistry.findByType(NativeCrashDataSource::class)
                 }
             )
+            resurrectionAttempted = true
         } else {
             val payloadCount = deliveryModule?.cacheStorageService?.getUndeliveredPayloads()?.size ?: 0
             initModule.logger.trackInternalError(
@@ -136,6 +141,11 @@ internal fun ModuleGraph.triggerPayloadSend() {
                     "Resurrection service not found. Undelivered payloads not processed: $payloadCount"
                 )
             )
+        }
+
+        // Unblock scheduler if no resurrection was attempted
+        if (!resurrectionAttempted) {
+            deliveryModule?.schedulingService?.onResurrectionComplete()
         }
     }
     worker.submit { // potentially trigger first delivery attempt by firing network status callback

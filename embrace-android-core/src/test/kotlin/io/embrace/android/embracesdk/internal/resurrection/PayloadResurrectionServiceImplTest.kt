@@ -75,6 +75,24 @@ class PayloadResurrectionServiceImplTest {
     }
 
     @Test
+    fun `completion listeners fired after successful resurrection`() {
+        var listenerCalled = false
+        resurrectionService.addResurrectionCompleteListener { listenerCalled = true }
+        resurrectionService.resurrectOldPayloads { nativeCrashService }
+        assertTrue(listenerCalled)
+    }
+
+    @Test
+    fun `completion listeners fired after failed resurrection`() {
+        var listenerCalled = false
+        resurrectionService.addResurrectionCompleteListener { listenerCalled = true }
+        // Force an error by providing a cache that will fail to deserialize
+        cacheStorageService.addFakePayload(fakeCachedSessionStoredTelemetryMetadata)
+        resurrectionService.resurrectOldPayloads { nativeCrashService }
+        assertTrue(listenerCalled)
+    }
+
+    @Test
     fun `if no previous cached session then send previous cached sessions should not send anything`() {
         resurrectionService.resurrectOldPayloads { nativeCrashService }
         assertTrue(intakeService.intakeList.isEmpty())

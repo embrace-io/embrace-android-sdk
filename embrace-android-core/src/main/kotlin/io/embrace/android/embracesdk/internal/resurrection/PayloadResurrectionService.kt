@@ -12,6 +12,12 @@ import io.embrace.android.embracesdk.internal.utils.Provider
 interface PayloadResurrectionService {
 
     /**
+     * Registers a listener that will be called when [resurrectOldPayloads] completes, at which time all tombstones are processed and
+     * deleted.
+     */
+    fun addResurrectionCompleteListener(listener: () -> Unit)
+
+    /**
      * Resurrects any payloads that were cached in a previous process & sends them to the
      * [IntakeService].
      */

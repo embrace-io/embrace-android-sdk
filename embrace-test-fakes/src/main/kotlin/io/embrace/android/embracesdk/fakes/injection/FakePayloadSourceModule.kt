@@ -52,6 +52,9 @@ private class FakePayloadResurrectionService : PayloadResurrectionService {
 
     var resurrectCount: Int = 0
 
+    override fun addResurrectionCompleteListener(listener: () -> Unit) {
+    }
+
     override fun resurrectOldPayloads(nativeCrashServiceProvider: Provider<NativeCrashService?>) {
         resurrectCount++
     }

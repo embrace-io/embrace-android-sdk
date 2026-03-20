@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakeNetworkConnectivityService
 import io.embrace.android.embracesdk.fakes.FakePayloadStorageService
 import io.embrace.android.embracesdk.fakes.FakeRequestExecutionService
+import io.embrace.android.embracesdk.fixtures.fakeCrashStoredTelemetryMetadata
 import io.embrace.android.embracesdk.fixtures.fakeLogStoredTelemetryMetadata
 import io.embrace.android.embracesdk.fixtures.fakeSessionStoredTelemetryMetadata
 import io.embrace.android.embracesdk.fixtures.fakeSessionStoredTelemetryMetadata2
@@ -14,7 +15,9 @@ import io.embrace.android.embracesdk.internal.comms.delivery.NetworkStatus
 import io.embrace.android.embracesdk.internal.comms.delivery.toConnectivityStatus
 import io.embrace.android.embracesdk.internal.delivery.execution.ExecutionResult
 import io.embrace.android.embracesdk.internal.delivery.scheduling.SchedulingServiceImpl.Companion.INITIAL_DELAY_MS
+import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
+import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -65,7 +68,7 @@ internal class SchedulingServiceImplTest {
     @Test
     fun `new payload will trigger new delivery loop if the previous one is done`() {
         schedulingExecutor.blockingMode = true
-        schedulingService.onPayloadIntake()
+        schedulingService.onResurrectionComplete()
         assertEquals(1, schedulingExecutor.submitCount)
         schedulingExecutor.awaitExecutionCompletion()
         schedulingService.onPayloadIntake()
@@ -75,15 +78,14 @@ internal class SchedulingServiceImplTest {
     @Test
     fun `new payload will not trigger new delivery loop job if one is running`() {
         schedulingExecutor.blockingMode = true
-        schedulingService.onPayloadIntake()
+        schedulingService.onResurrectionComplete()
         schedulingService.onPayloadIntake()
         assertEquals(2, schedulingExecutor.submitCount)
     }
 
     @Test
     fun `all payloads ready to be sent are sent in priority order`() {
-        waitForPayloadIntake()
-        deliveryExecutor.awaitExecutionCompletion()
+        waitForResurrectionAndDeliveryAttempt()
         assertEquals(2, executionService.sendAttempts())
         assertEquals(0, storageService.storedPayloadCount())
         assertTrue(executionService.attemptedHttpRequests.first().data is SessionPayload)
@@ -92,7 +94,7 @@ internal class SchedulingServiceImplTest {
     @Test
     fun `payloads being sent will not be resent when a new payload arrives`() {
         deliveryExecutor.blockingMode = true
-        waitForPayloadIntake()
+        waitForResurrection()
         storageService.addFakePayload(fakeSessionStoredTelemetryMetadata2)
         waitForPayloadIntake()
         deliveryExecutor.blockingMode = false
@@ -103,7 +105,7 @@ internal class SchedulingServiceImplTest {
     @Test
     fun `payloads that fail to send will not be ready to be resent immediately`() {
         allSendsFail()
-        waitForPayloadIntakeAndDeliveryAttempt()
+        waitForResurrectionAndDeliveryAttempt()
         assertEquals(2, executionService.sendAttempts())
         assertEquals(2, storageService.storedPayloadCount())
         waitForPayloadIntakeAndDeliveryAttempt()
@@ -115,7 +117,7 @@ internal class SchedulingServiceImplTest {
     fun `payloads that fail to send will be retried with exponential back off`() {
         allSendsFail()
         schedulingExecutor.blockingMode = true
-        waitForPayloadIntakeAndDeliveryAttempt()
+        waitForResurrectionAndDeliveryAttempt()
         var delay = INITIAL_DELAY_MS
         repeat(10) { iteration ->
             tickAndWaitForDeliveryAttempt(delay + 1)
@@ -133,7 +135,7 @@ internal class SchedulingServiceImplTest {
     fun `payloads remaining in storage will resent if retry period has ended`() {
         allSendsFail()
         schedulingExecutor.blockingMode = true
-        waitForPayloadIntakeAndDeliveryAttempt()
+        waitForResurrectionAndDeliveryAttempt()
         clock.tick(INITIAL_DELAY_MS + 1)
         waitForPayloadIntakeAndDeliveryAttempt()
         assertEquals(4, executionService.sendAttempts())
@@ -143,7 +145,7 @@ internal class SchedulingServiceImplTest {
     fun `new payload arrival during delivery loop will be picked up and sent without delay`() {
         schedulingExecutor.blockingMode = true
         deliveryExecutor.blockingMode = true
-        schedulingService.onPayloadIntake()
+        waitForResurrection()
         storageService.addFakePayload(fakeSessionStoredTelemetryMetadata2)
         waitForPayloadIntake()
         deliveryExecutor.blockingMode = false
@@ -159,7 +161,7 @@ internal class SchedulingServiceImplTest {
             endpoint = Endpoint.SESSIONS,
             retryAfterMs = longBlockedDuration
         )
-        waitForPayloadIntakeAndDeliveryAttempt()
+        waitForResurrectionAndDeliveryAttempt()
         assertEquals(1, executionService.sendAttempts())
         allSendsSucceed()
         tickAndWaitForDeliveryAttempt(INITIAL_DELAY_MS + 1)
@@ -176,7 +178,7 @@ internal class SchedulingServiceImplTest {
             endpoint = Endpoint.SESSIONS,
             retryAfterMs = SHORT_BLOCKED_DURATION
         )
-        waitForPayloadIntakeAndDeliveryAttempt()
+        waitForResurrectionAndDeliveryAttempt()
         allSendsSucceed()
         tickAndWaitForDeliveryAttempt(SHORT_BLOCKED_DURATION + 1)
         assertEquals(2, executionService.sendAttempts())
@@ -190,7 +192,7 @@ internal class SchedulingServiceImplTest {
             endpoint = Endpoint.SESSIONS,
             retryAfterMs = SHORT_BLOCKED_DURATION
         )
-        waitForPayloadIntakeAndDeliveryAttempt()
+        waitForResurrectionAndDeliveryAttempt()
         assertEquals(1, executionService.sendAttempts())
         allSendsSucceed()
         storageService.addFakePayload(fakeLogStoredTelemetryMetadata)
@@ -208,7 +210,7 @@ internal class SchedulingServiceImplTest {
             endpoint = Endpoint.SESSIONS,
             retryAfterMs = SHORT_BLOCKED_DURATION
         )
-        waitForPayloadIntakeAndDeliveryAttempt()
+        waitForResurrectionAndDeliveryAttempt()
         assertEquals(1, executionService.sendAttempts())
         tickAndWaitForDeliveryAttempt(SHORT_BLOCKED_DURATION + 1)
         assertEquals(2, executionService.sendAttempts())
@@ -221,7 +223,7 @@ internal class SchedulingServiceImplTest {
             endpoint = Endpoint.SESSIONS,
             retryAfterMs = SHORT_BLOCKED_DURATION
         )
-        waitForPayloadIntakeAndDeliveryAttempt()
+        waitForResurrectionAndDeliveryAttempt()
         storageService.addFakePayload(fakeSessionStoredTelemetryMetadata2)
         waitForPayloadIntakeAndDeliveryAttempt()
         assertEquals(1, executionService.sendAttempts())
@@ -230,7 +232,7 @@ internal class SchedulingServiceImplTest {
     @Test
     fun `no sent attempt will be made if a payload cannot be found on disk`() {
         deliveryExecutor.blockingMode = true
-        waitForPayloadIntake()
+        waitForResurrection()
         storageService.delete(fakeLogStoredTelemetryMetadata)
         deliveryExecutor.blockingMode = false
         deliveryExecutor.awaitExecutionCompletion()
@@ -240,8 +242,7 @@ internal class SchedulingServiceImplTest {
     @Test
     fun `ready payloads will not be sent if there's no network but will be sent when network comes back online`() {
         networkConnectivityService.connectivityStatus = NetworkStatus.NOT_REACHABLE.toConnectivityStatus()
-        waitForPayloadIntake()
-        deliveryExecutor.awaitExecutionCompletion()
+        waitForResurrectionAndDeliveryAttempt()
         assertEquals(0, executionService.sendAttempts())
         assertEquals(2, storageService.storedPayloadCount())
         networkConnectivityService.connectivityStatus = NetworkStatus.WIFI.toConnectivityStatus()
@@ -256,8 +257,7 @@ internal class SchedulingServiceImplTest {
         schedulingExecutor.blockingMode = true
         allSendsFail()
         networkConnectivityService.connectivityStatus = NetworkStatus.WAN.toConnectivityStatus()
-        waitForPayloadIntake()
-        deliveryExecutor.awaitExecutionCompletion()
+        waitForResurrectionAndDeliveryAttempt()
         assertEquals(2, executionService.sendAttempts())
         assertEquals(2, storageService.storedPayloadCount())
         networkConnectivityService.connectivityStatus = NetworkStatus.NOT_REACHABLE.toConnectivityStatus()
@@ -276,7 +276,7 @@ internal class SchedulingServiceImplTest {
     fun `burst of already queued payloads when there is no network will not be sent`() {
         networkConnectivityService.connectivityStatus = NetworkStatus.NOT_REACHABLE.toConnectivityStatus()
         queuePayloadsWithoutExecution()
-        waitForPayloadIntakeAndDeliveryAttempt()
+        waitForResurrectionAndDeliveryAttempt()
         assertEquals(0, executionService.sendAttempts())
         assertEquals(2, storageService.storedPayloadCount())
     }
@@ -286,8 +286,7 @@ internal class SchedulingServiceImplTest {
         logger.throwOnInternalError = false
         executionService.exceptionOnExecution = RuntimeException("die")
         schedulingExecutor.blockingMode = true
-        waitForPayloadIntake()
-        deliveryExecutor.awaitExecutionCompletion()
+        waitForResurrectionAndDeliveryAttempt()
         assertEquals(0, executionService.sendAttempts())
         assertEquals(0, storageService.storedPayloadCount())
         assertEquals(2, logger.internalErrorMessages.size)
@@ -296,7 +295,7 @@ internal class SchedulingServiceImplTest {
     @Test
     fun `connection failure blocks further delivery attempts`() {
         blockConnection()
-        waitForPayloadIntakeAndDeliveryAttempt()
+        waitForResurrectionAndDeliveryAttempt()
         assertEquals(1, executionService.sendAttempts())
         assertEquals(2, storageService.storedPayloadCount())
         storageService.addFakePayload(fakeSessionStoredTelemetryMetadata2)
@@ -308,7 +307,7 @@ internal class SchedulingServiceImplTest {
     @Test
     fun `connection timeout doesn't further delivery attempts`() {
         allSendsTimeout()
-        waitForPayloadIntakeAndDeliveryAttempt()
+        waitForResurrectionAndDeliveryAttempt()
         assertEquals(2, executionService.sendAttempts())
         assertEquals(2, storageService.storedPayloadCount())
         storageService.addFakePayload(fakeSessionStoredTelemetryMetadata2)
@@ -323,7 +322,7 @@ internal class SchedulingServiceImplTest {
         // without a chance for the first request to trigger a block. This simulates a burst of undelivered payloads
         // being queued up at SDK startup, which should result in just one failed request
         queuePayloadsWithoutExecution(::blockConnection)
-        waitForPayloadIntakeAndDeliveryAttempt()
+        waitForResurrectionAndDeliveryAttempt()
         assertEquals(1, executionService.sendAttempts())
         assertEquals(2, storageService.storedPayloadCount())
     }
@@ -331,7 +330,7 @@ internal class SchedulingServiceImplTest {
     @Test
     fun `connection attempt retried in an exponentially backed off manner`() {
         queuePayloadsWithoutExecution(::disconnect)
-        waitForPayloadIntakeAndDeliveryAttempt()
+        waitForResurrectionAndDeliveryAttempt()
         var delay = INITIAL_DELAY_MS
         repeat(10) { iteration ->
             tickAndWaitForDeliveryAttempt(delay)
@@ -348,7 +347,7 @@ internal class SchedulingServiceImplTest {
     @Test
     fun `payload will be delivered at first retry attempt if unblocked`() {
         queuePayloadsWithoutExecution(::disconnect)
-        waitForPayloadIntakeAndDeliveryAttempt()
+        waitForResurrectionAndDeliveryAttempt()
         allSendsSucceed()
         tickAndWaitForDeliveryAttempt(INITIAL_DELAY_MS - 1)
         assertEquals(1, executionService.sendAttempts())
@@ -360,7 +359,7 @@ internal class SchedulingServiceImplTest {
     @Test
     fun `new payload will not result in connection attempt if paused period has not elapsed`() {
         queuePayloadsWithoutExecution(::blockConnection)
-        waitForPayloadIntakeAndDeliveryAttempt()
+        waitForResurrectionAndDeliveryAttempt()
         schedulingExecutor.moveForwardAndRunBlocked(INITIAL_DELAY_MS - 1)
         storageService.addFakePayload(fakeSessionStoredTelemetryMetadata2)
         waitForPayloadIntake()
@@ -373,7 +372,7 @@ internal class SchedulingServiceImplTest {
         queuePayloadsWithoutExecution(::allSendsTimeout)
 
         // After this returns, both stored payloads should've tried, timed out and scheduled to be retried in INITIAL_DELAY_MS
-        waitForPayloadIntakeAndDeliveryAttempt()
+        waitForResurrectionAndDeliveryAttempt()
         assertEquals(2, executionService.sendAttempts())
 
         // All subsequent requests will be unable to reach the Embrace server
@@ -399,10 +398,65 @@ internal class SchedulingServiceImplTest {
         assertEquals(0, storageService.storedPayloadCount())
     }
 
+    @Test
+    fun `non-crash payloads held until resurrection completes`() {
+        schedulingService.onPayloadIntake()
+        schedulingExecutor.awaitExecutionCompletion()
+        deliveryExecutor.awaitExecutionCompletion()
+        assertEquals(0, executionService.sendAttempts())
+        assertEquals(2, storageService.storedPayloadCount())
+        waitForResurrectionAndDeliveryAttempt()
+        assertEquals(2, executionService.sendAttempts())
+        assertEquals(0, storageService.storedPayloadCount())
+    }
+
+    @Test
+    fun `crash payloads delivered during resurrection`() {
+        storageService.clearStorage()
+        storageService.addFakePayload(fakeCrashStoredTelemetryMetadata)
+        schedulingService.onPayloadIntake()
+        schedulingExecutor.awaitExecutionCompletion()
+        deliveryExecutor.awaitExecutionCompletion()
+        assertEquals(1, executionService.sendAttempts())
+        assertEquals(0, storageService.storedPayloadCount())
+    }
+
+    @Test
+    fun `current session waits for resurrected sessions`() {
+        // Store a session and attempt to deliver it before resurrection
+        storageService.clearStorage()
+        val newerPayload = Envelope(data = SessionPayload(spans = listOf(Span(name = "newer"))))
+        storageService.addPayload(fakeSessionStoredTelemetryMetadata2, newerPayload)
+        schedulingService.onPayloadIntake()
+        schedulingExecutor.awaitExecutionCompletion()
+        deliveryExecutor.awaitExecutionCompletion()
+        assertEquals(0, executionService.sendAttempts())
+
+        // Simulate resurrection completing and adding an older session
+        val olderPayload = Envelope(data = SessionPayload(spans = listOf(Span(name = "older"))))
+        storageService.addPayload(fakeSessionStoredTelemetryMetadata, olderPayload)
+        waitForResurrectionAndDeliveryAttempt()
+
+        // Both should now be delivered, with the older session first (priority ordering)
+        val requests = executionService.getRequests<SessionPayload>()
+        assertEquals(2, requests.size)
+        assertEquals("older", requests[0].data.spans?.single()?.name)
+        assertEquals("newer", requests[1].data.spans?.single()?.name)
+    }
+
+    @Test
+    fun `onResurrectionComplete is idempotent`() {
+        schedulingExecutor.blockingMode = true
+        schedulingService.onResurrectionComplete()
+        val countAfterFirst = schedulingExecutor.submitCount
+        schedulingService.onResurrectionComplete()
+        assertEquals(countAfterFirst, schedulingExecutor.submitCount)
+    }
+
     @Test(expected = RejectedExecutionException::class)
     fun `test shutdown`() {
         logger.throwOnInternalError = false
-        schedulingService.onPayloadIntake()
+        schedulingService.onResurrectionComplete()
         schedulingService.shutdown()
 
         // Throws RejectedExecutionException. Note that this is a consequence of the
@@ -420,10 +474,26 @@ internal class SchedulingServiceImplTest {
     }
 
     /**
+     * Wait for resurrection to complete and all the payloads to be processed and delivery attempted
+     */
+    private fun waitForResurrectionAndDeliveryAttempt() {
+        waitForResurrection()
+        deliveryExecutor.awaitExecutionCompletion()
+    }
+
+    /**
      * Wait for payloads in storage to be processed and scheduled for delivery
      */
     private fun waitForPayloadIntake() {
         schedulingService.onPayloadIntake()
+        schedulingExecutor.awaitExecutionCompletion()
+    }
+
+    /**
+     * Wait for resurrection to complete and for the payloads to be scheduled
+     */
+    private fun waitForResurrection() {
+        schedulingService.onResurrectionComplete()
         schedulingExecutor.awaitExecutionCompletion()
     }
 

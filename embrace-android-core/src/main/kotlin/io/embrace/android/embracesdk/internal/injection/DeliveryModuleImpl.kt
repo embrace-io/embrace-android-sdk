@@ -149,7 +149,7 @@ class DeliveryModuleImpl(
         SchedulingServiceImpl(
             payloadStorageService,
             requestExecutionService,
-            workerThreadModule.backgroundWorker(Worker.Background.IoRegWorker),
+            workerThreadModule.backgroundWorker(Worker.Background.DeliverySchedulingWorker),
             workerThreadModule.backgroundWorker(Worker.Background.HttpRequestWorker),
             initModule.clock,
             initModule.logger,

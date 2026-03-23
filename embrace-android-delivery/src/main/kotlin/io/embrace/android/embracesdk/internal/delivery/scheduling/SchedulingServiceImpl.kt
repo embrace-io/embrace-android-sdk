@@ -18,7 +18,6 @@ import java.net.ConnectException
 import java.net.UnknownHostException
 import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
@@ -41,14 +40,22 @@ class SchedulingServiceImpl(
     private val payloadsToRetry: MutableMap<StoredTelemetryMetadata, RetryInstance> = ConcurrentHashMap()
     private val resurrectionComplete = AtomicBoolean(false)
     private val payloadsInProgress = ConcurrentHashMap<SupportedEnvelopeType, StoredTelemetryMetadata>()
+    private val intakeDeliveryPending = AtomicBoolean(false)
 
     override fun onPayloadIntake() {
-        queueNextPayloadOnSchedulingWorker()
+        // We only need to schedule a delivery queuing if one wasn't already scheduled.
+        // If one were scheduled, it will trigger a new delivery when it's complete.
+        if (intakeDeliveryPending.compareAndSet(false, true)) {
+            schedulingWorker.submit {
+                intakeDeliveryPending.set(false)
+                findAndDeliverNextPayload()
+            }
+        }
     }
 
     override fun onResurrectionComplete() {
         if (!resurrectionComplete.getAndSet(true)) {
-            queueNextPayloadOnSchedulingWorker()
+            queueDeliveryAttempt()
         }
     }
 
@@ -61,29 +68,25 @@ class SchedulingServiceImpl(
 
     override fun onNetworkConnectivityStatusChanged(status: NetworkStatus) {
         val networkAcquired = connectionStatus.updateNetworkStatus(status.isReachable)
-        val wasBlocked = connectionStatus.isBlocked()
-        // Trigger a new delivery loop we potentially went from offline to online, but do the unblocking on the delivery thread
-        // so it runs after the currently queued up requests execute. This prevents a race between the network change
-        // handling logic (which could be late) from unblocking during a delivery burst.
-        // If it is late and processing the change that triggered the connection block, it will erroneously unblock and cause a failure,
-        // If the unblocking is legit, the burst will just be skipped together and then retried by the unblock.
-        if (wasBlocked || networkAcquired) {
-            deliveryWorker.submit {
+        // Schedule an unblock of the connection and schedule a delivery if we have recently connected
+        // to a potentially connected network OR if the connection was previously blocked
+        if (networkAcquired || connectionStatus.isBlocked()) {
+            schedulingWorker.submit {
                 connectionStatus.unblock()
-                queueNextPayloadOnSchedulingWorker()
+                queueDeliveryAttempt()
             }
         }
     }
 
     /**
-     * Schedule a delivery at the given time
+     * Schedule a delivery attempt at the given time. If the time is now or in the past, schedule the attempt to run now.
      */
-    private fun scheduleNextDelivery(timestampMs: Long) {
+    private fun scheduleFutureDeliveryAttempt(timestampMs: Long) {
         if (timestampMs <= clock.now()) {
-            queueNextPayloadOnSchedulingWorker()
+            queueDeliveryAttempt()
         } else if (timestampMs != Long.MAX_VALUE) {
             schedulingWorker.schedule<Unit>(
-                ::queueNextPayloadOnSchedulingWorker,
+                ::queueDeliveryAttempt,
                 calculateDelay(timestampMs),
                 TimeUnit.MILLISECONDS
             )
@@ -91,28 +94,29 @@ class SchedulingServiceImpl(
     }
 
     /**
-     * Start delivery on the scheduler thread
+     * Start delivery on the scheduler thread. Basically, this runs [findAndDeliverNextPayload] on the appropriate thread,
+     * so it can be called anywhere, whereas [findAndDeliverNextPayload] has to be called on the scheduling thread.
      */
-    private fun queueNextPayloadOnSchedulingWorker() {
-        deliveryTracer?.onScheduleNextDeliveryNow()
+    private fun queueDeliveryAttempt() {
+        deliveryTracer?.onQueueDeliveryAttempt()
         schedulingWorker.submit {
-            queueNextPayload()
+            findAndDeliverNextPayload()
         }
     }
 
     /**
-     * Find the highest-priority eligible payload and queue it for delivery on the delivery worker.
+     * Find the next eligible payload with the highest priority and attempt to deliver it if the connection is ready.
      */
-    private fun queueNextPayload() {
+    private fun findAndDeliverNextPayload() {
         try {
-            connectionStatus.attemptUnblock(clock.now())
-            if (!connectionStatus.ready()) {
-                return
+            connectionStatus.unblockIfWaitTimeExceeded(clock.now())
+            if (connectionStatus.ready()) {
+                findNextPayload()?.let { payload ->
+                    payload.envelopeType.endpoint.updateBlockedEndpoint()
+                    payloadsInProgress[payload.envelopeType] = payload
+                    executeDelivery(payload)
+                }
             }
-            val payload = findNextPayload() ?: return
-            payload.envelopeType.endpoint.updateBlockedEndpoint()
-            payloadsInProgress[payload.envelopeType] = payload
-            queueDelivery(payload)
         } catch (t: Throwable) {
             logger.trackInternalError(InternalErrorType.DELIVERY_SCHEDULING_FAIL, t)
         }
@@ -120,27 +124,30 @@ class SchedulingServiceImpl(
 
     private fun findNextPayload(): StoredTelemetryMetadata? {
         val payloadsByPriority = storageService.getPayloadsByPriority()
-        val payloadsToSend = payloadsByPriority
+        val payloadToSend = payloadsByPriority
             .filter { !connectionStatus.isPayloadBlocked(it) && it.eligibleForSending() }
             .sortedWith(storedTelemetryComparator)
-        deliveryTracer?.onPayloadQueueCreated(
+            .firstOrNull()
+        deliveryTracer?.onFindNextPayload(
             payloadsByPriority,
-            payloadsToSend,
+            payloadToSend
         )
-        return payloadsToSend.firstOrNull()
+        return payloadToSend
     }
 
     /**
-     *  Execute the delivery of the given payload if it's still eligible.
+     * Attempt payload delivery on worker thread. Handle connection blocking up execution attempt completing, but defer to the scheduling
+     * worker to handle further scheduling.
      */
-    private fun queueDelivery(payload: StoredTelemetryMetadata): Future<ExecutionResult> {
-        deliveryTracer?.onPayloadEnqueued(payload)
+    private fun executeDelivery(payload: StoredTelemetryMetadata) {
+        deliveryTracer?.onExecuteDelivery(payload)
         activeSends.add(payload)
-        return deliveryWorker.submit<ExecutionResult> {
-            val result: ExecutionResult = if (connectionStatus.ready()) {
+        deliveryWorker.submit {
+            // Do not execute if the network isn't ready
+            val result: ExecutionResult = if (!connectionStatus.ready()) {
+                ExecutionResult.NetworkNotReady
+            } else {
                 try {
-                    // If fail to convert metadata to stream, we can't expect it will succeed later, so we won't retry.
-                    // The storage service will log an internal exception and we move on.
                     payload.toStream()?.run {
                         executionService.attemptHttpRequest(
                             payloadStream = { this },
@@ -149,39 +156,41 @@ class SchedulingServiceImpl(
                         )
                     } ?: ExecutionResult.NotAttempted
                 } catch (t: Throwable) {
-                    // An unknown error occurred, not the expected exceptions during request executions
-                    // These types of errors happen before we execute the request, and results in us unable to
-                    // turn the stored bytes in to a request that can be executed.
-                    // For this, we log the error to ensure it's not a systemic problem and move on from the payload.
                     logger.trackInternalError(InternalErrorType.DELIVERY_SCHEDULING_FAIL, t)
                     ExecutionResult.Incomplete(exception = t, retry = false)
                 }
-            } else {
-                ExecutionResult.NetworkNotReady
             }
 
-            deliveryTracer?.onPayloadResult(payload, result)
-            result.processDeliveryResult(payload)
-            activeSends.remove(payload)
-            result
+            // Block the connection right away to prevent future delivery if the request just run dictates that
+            if (result.failedToConnect()) {
+                connectionStatus.block()
+            }
+
+            // Allow the scheduling thread to process the execution results
+            schedulingWorker.submit {
+                deliveryTracer?.onProcessingDeliveryResult(payload, result)
+                result.processDeliveryResult(payload)
+            }
         }
     }
 
     /**
-     * Update the state of the connection after request execution, scheduling the next eligible payload and the next retry attempt.
+     * Schedule future deliveries based on the latest delivery execution
      */
     private fun ExecutionResult.processDeliveryResult(
         payload: StoredTelemetryMetadata,
     ) {
-        // If the request failed because the SDK cannot reach the Embrace server,
-        // update the connection status to prevent delivery attempt
+        // If the request failed because the SDK cannot reach the Embrace server, schedule a delivery for when the connection unblocks.
+        // At that time, the scheduler will determine what that payload is.
         if (failedToConnect()) {
-            val nextConnectionAttemptTime = connectionStatus.block()
-            scheduleNextDelivery(nextConnectionAttemptTime)
+            scheduleFutureDeliveryAttempt(connectionStatus.getUnblockTime())
         } else if (connectedToServer()) {
+            // If the request successfully connected to Embrace, regardless if it succeeded, validate the connection
             connectionStatus.connectionValidated()
         }
 
+        // If a request either failed to connect to Embrace or execution was not attempted because the network was not ready,
+        // notify the connection, which will either block it or extend its retry time due to consecutive failures.
         if (failedToConnect() || this is ExecutionResult.NetworkNotReady) {
             connectionStatus.payloadBlocked(payload)
         } else if (!shouldRetry) {
@@ -210,17 +219,22 @@ class SchedulingServiceImpl(
             )
         }
 
+        // Any payload that will not be retried is either sent or deleted, so it should no longer considered to be in progress.
+        // If it should be retried, leave the payload as being in progress so no other payloads of the same type will be scheduled.
         if (!shouldRetry) {
             payloadsInProgress.remove(payload.envelopeType)
         }
 
-        // Always see if there's another payload eligible to be delivered
-        queueNextPayloadOnSchedulingWorker()
-
-        // Always schedule a payload delivery for the next retry or connection unblocking, whichever happens later
+        /**
+         * Always try to send the next payload and schedule the next retry or connection unblocking, whichever happens later.
+         * This is fulfilling the promise made in [onPayloadIntake] so that any debounced intake will not result in a
+         * new payload intake being ignored.
+         */
+        findAndDeliverNextPayload()
         payloadsToRetry.values.minOfOrNull { it.nextRetryTimeMs }?.let { retryTimeMs ->
-            scheduleNextDelivery(maxOf(retryTimeMs, connectionStatus.getUnblockTime()))
+            scheduleFutureDeliveryAttempt(maxOf(retryTimeMs, connectionStatus.getUnblockTime()))
         }
+        activeSends.remove(payload)
     }
 
     /**
@@ -307,16 +321,17 @@ class SchedulingServiceImpl(
             }
 
         /**
-         * Connection is ready to be used
+         * Connection is ready to be used.
          *
-         * Called on scheduler and delivery threads
+         * Called on the scheduling thread for authoritative checks of network readiness, and on the delivery thread to only attempt
+         * delivery if it could possibly succeed.
          */
         fun ready(): Boolean = hasNetworkConnection.get() && !isBlocked()
 
         /**
          * Block connection. If already blocked, the unblock time will be updated, which will be returned.
          *
-         * Only called on delivery thread
+         * Called on the delivery thread and must be synchronized with [unblock] which happens on the scheduling thread.
          */
         fun block(): Long {
             synchronized(connectionUnblockTime) {
@@ -329,7 +344,7 @@ class SchedulingServiceImpl(
         /**
          * Unblock connection if currently blocked.
          *
-         * Called on delivery and scheduler threads
+         * Only called on the scheduling thread. Must be synchronized with [block] which happens on the delivery thread
          */
         fun unblock() {
             synchronized(connectionUnblockTime) {
@@ -341,53 +356,55 @@ class SchedulingServiceImpl(
         }
 
         /**
-         * Unblock the connection if the time period of blockage has elapsed
+         * Unblock the connection if the time period of blockage has elapsed.
          *
-         * Only called in the scheduler thread. Will never be invoked concurrently with [isPayloadBlocked].
+         * Only called on the scheduling thread.
          */
-        fun attemptUnblock(currentTime: Long) {
-            if (shouldUnblockAtTime(currentTime)) {
-                synchronized(connectionUnblockTime) {
-                    if (shouldUnblockAtTime(currentTime)) {
-                        unblock()
-                    }
-                }
+        fun unblockIfWaitTimeExceeded(currentTime: Long) {
+            if (isBlocked() && currentTime >= connectionUnblockTime.get()) {
+                unblock()
             }
         }
 
         /**
          * Returns the time at which the connection will be unblocked, or 0 if not currently blocked.
          *
-         * Called on the delivery thread
+         * Only called on the scheduling thread.
          */
         fun getUnblockTime(): Long = connectionUnblockTime.get()
 
         /**
-         * Track a payload that was prevented from being sent because the connection is blocked
+         * Track a payload that was prevented from being sent because the connection is blocked.
          *
-         * Only called on delivery thread
+         * Only called on the scheduling thread.
          */
         fun payloadBlocked(payload: StoredTelemetryMetadata) {
             blockedPayloads.add(payload)
         }
 
         /**
-         * Returns true if the payload was prevented from being sent because the connection is blocked
+         * Returns true if the payload was prevented from being sent because the connection is blocked.
          *
-         * Only called in the scheduler thread
+         * Only called on the scheduling thread.
          */
         fun isPayloadBlocked(
             payload: StoredTelemetryMetadata,
         ): Boolean = blockedPayloads.contains(payload) && isBlocked()
 
+        /**
+         * Validate that the Embrace server can be contacted, i.e. the next failure to connect is not the retrying of a blocked connection
+         */
         fun connectionValidated() {
             if (consecutiveFailures.get() > 0) {
                 consecutiveFailures.set(0)
             }
         }
 
-        private fun shouldUnblockAtTime(time: Long): Boolean = isBlocked() && time >= connectionUnblockTime.get()
-
+        /**
+         * Returns true if the connection is currently blocked.
+         *
+         * Called from both the scheduling and delivery threads, as well as the thread that handles network change listeners
+         */
         fun isBlocked(): Boolean = connectionUnblockTime.get() > 0
     }
 

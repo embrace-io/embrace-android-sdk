@@ -509,6 +509,86 @@ internal class SchedulingServiceImplTest {
         assertEquals(fakeCrashPayload, executionService.getRequests<LogPayload>().last())
     }
 
+    @Test
+    fun `debounce coalesces multiple onPayloadIntake calls into one scheduling task`() {
+        // onPayloadIntake should not queue work if resurrection has not completed yet
+        repeat(10) { schedulingService.onPayloadIntake() }
+        assertEquals(0, executionService.sendAttempts())
+
+        // Once resurrection completes, delivery starts. Subsequent rapid intakes are coalesced.
+        schedulingService.onResurrectionComplete()
+        val countAfterResurrection = schedulingExecutor.submitCount
+        repeat(100) { schedulingService.onPayloadIntake() }
+        // At most 1 additional submit from the debounce (could be 0 if the flag is still set)
+        assertTrue(schedulingExecutor.submitCount <= countAfterResurrection + 1)
+    }
+
+    @Test
+    fun `network change to reachable triggers delivery via scheduling worker`() {
+        networkConnectivityService.connectivityStatus = NetworkStatus.NOT_REACHABLE.toConnectivityStatus()
+        waitForResurrectionAndDeliveryAttempt(2)
+        assertEquals(0, executionService.sendAttempts())
+        // Switch to wifi — should submit unblock + delivery to the scheduling worker
+        networkConnectivityService.connectivityStatus = NetworkStatus.WIFI.toConnectivityStatus()
+        waitForPayloadIntakeAndDeliveryAttempt(2)
+        assertEquals(2, executionService.sendAttempts())
+        assertEquals(0, storageService.storedPayloadCount())
+    }
+
+    @Test
+    fun `network change while connection blocked unblocks and delivers`() {
+        blockConnection()
+        waitForResurrectionAndDeliveryAttempt(2)
+        assertEquals(1, executionService.sendAttempts())
+        assertEquals(2, storageService.storedPayloadCount())
+        // Connection is now blocked. A network status change (even reachable→reachable)
+        // should unblock and allow delivery of payloads not in retry cooldown.
+        allSendsSucceed()
+        networkConnectivityService.connectivityStatus = NetworkStatus.WAN.toConnectivityStatus()
+        // Process the unblock task and its chained queueNextPayload
+        schedulingExecutor.runCurrentlyBlocked()
+        deliveryExecutor.awaitExecutionCompletion()
+        // The log was never attempted (blocked before it could be sent), so it delivers immediately.
+        // The session is still in retry cooldown.
+        waitPayloadSendAttempt(1)
+        assertEquals(2, executionService.sendAttempts())
+        assertEquals(1, storageService.storedPayloadCount())
+        // After the retry delay, the session is also delivered
+        tickAndWaitForDeliveryAttempts(INITIAL_DELAY_MS + 1)
+        assertEquals(3, executionService.sendAttempts())
+        assertEquals(0, storageService.storedPayloadCount())
+    }
+
+    @Test
+    fun `processDeliveryResult chains inline on scheduling worker`() {
+        // Verify that after a successful delivery, the next payload is found and
+        // sent without requiring a separate intake signal
+        storageService.clearStorage()
+        val s1 = Envelope(data = SessionPayload(spans = listOf(Span(name = "first"))))
+        val s2 = Envelope(data = SessionPayload(spans = listOf(Span(name = "second"))))
+        val s3 = Envelope(data = SessionPayload(spans = listOf(Span(name = "third"))))
+        storageService.addPayload(fakeSessionStoredTelemetryMetadata, s1)
+        storageService.addPayload(fakeSessionStoredTelemetryMetadata2, s2)
+        val thirdSession = StoredTelemetryMetadata(
+            timestamp = clock.now() + 20_000L,
+            uuid = "c3c3c3c3-c3c3-c3c3-c3c3-c3c3c3c3c3c3",
+            processIdentifier = "8115ec91-3e5e-4d8a-816d-cc40306f9822",
+            envelopeType = SupportedEnvelopeType.SESSION,
+            payloadType = PayloadType.SESSION,
+        )
+        storageService.addPayload(thirdSession, s3)
+
+        // Trigger ONE delivery. The chain should deliver all 3 sequentially
+        // without any additional onPayloadIntake calls.
+        waitForResurrectionAndDeliveryAttempt(3)
+
+        val requests = executionService.getRequests<SessionPayload>()
+        assertEquals(3, requests.size)
+        assertEquals("first", requests[0].data.spans?.single()?.name)
+        assertEquals("second", requests[1].data.spans?.single()?.name)
+        assertEquals("third", requests[2].data.spans?.single()?.name)
+    }
+
     @Test(expected = RejectedExecutionException::class)
     fun `test shutdown`() {
         logger.throwOnInternalError = false
@@ -573,8 +653,12 @@ internal class SchedulingServiceImplTest {
 
     private fun waitPayloadSendAttempt(expectedPayloads: Int = 1) {
         repeat(expectedPayloads) {
+            // Scheduling worker submitting job to delivery worker
             schedulingExecutor.awaitExecutionCompletion()
+            // Delivery worker executing request and submitting results for scheduling worker to process
             deliveryExecutor.awaitExecutionCompletion()
+            // Scheduling worker processing the execution result and scheduling the next delivery and retry
+            schedulingExecutor.awaitExecutionCompletion()
         }
     }
 

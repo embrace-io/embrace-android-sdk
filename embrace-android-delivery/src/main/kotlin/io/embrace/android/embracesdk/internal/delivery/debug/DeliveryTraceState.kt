@@ -11,39 +11,41 @@ import io.embrace.android.embracesdk.internal.delivery.execution.ExecutionResult
  */
 internal sealed class DeliveryTraceState {
 
+    var threadName: String? = null
+
     /**
      * The schedule service was informed of a new payload
      */
     internal class IntakeServiceAcceptedEnvelope(val metadata: StoredTelemetryMetadata) : DeliveryTraceState() {
-        override fun toString(): String = "IntakeServiceAccepted, ${metadata.toReportString()}"
+        override fun toString(): String = "[$threadName] IntakeServiceAccepted, ${metadata.toReportString()}"
     }
 
     /**
      * An envelope was accepted by the intake service
      */
     internal class ScheduleServiceInformed(val metadata: StoredTelemetryMetadata) : DeliveryTraceState() {
-        override fun toString(): String = "ScheduleServiceInformed, ${metadata.toReportString()}"
+        override fun toString(): String = "[$threadName] ScheduleServiceInformed, ${metadata.toReportString()}"
     }
 
     /**
      * The payload store service persisted a payload
      */
     internal class PayloadStored(val metadata: StoredTelemetryMetadata) : DeliveryTraceState() {
-        override fun toString(): String = "PayloadStored, ${metadata.toReportString()}"
+        override fun toString(): String = "[$threadName] PayloadStored, ${metadata.toReportString()}"
     }
 
     /**
      * The payload store service deleted a payload
      */
     internal class PayloadDeleted(val metadata: StoredTelemetryMetadata) : DeliveryTraceState() {
-        override fun toString(): String = "PayloadDeleted, ${metadata.toReportString()}"
+        override fun toString(): String = "[$threadName] PayloadDeleted, ${metadata.toReportString()}"
     }
 
     /**
      * The payload store service loaded a payload
      */
     internal class PayloadLoaded(val success: Boolean) : DeliveryTraceState() {
-        override fun toString(): String = "PayloadLoaded, success=$success"
+        override fun toString(): String = "[$threadName] PayloadLoaded, success=$success"
     }
 
     /**
@@ -51,7 +53,7 @@ internal sealed class DeliveryTraceState {
      */
     internal class GetPayloadsByPriority(val payloads: List<StoredTelemetryMetadata>) : DeliveryTraceState() {
         override fun toString(): String =
-            "GetPayloadsByPriority, count=${payloads.size},\n${payloads.reportListString()}"
+            "[$threadName] GetPayloadsByPriority, count=${payloads.size},\n${payloads.reportListString()}"
     }
 
     /**
@@ -59,7 +61,7 @@ internal sealed class DeliveryTraceState {
      */
     internal class GetUndeliveredPayloads(val payloads: List<StoredTelemetryMetadata>) : DeliveryTraceState() {
         override fun toString(): String =
-            "GetUndeliveredPayloads, count=${payloads.size},\n${payloads.reportListString()}"
+            "[$threadName] GetUndeliveredPayloads, count=${payloads.size},\n${payloads.reportListString()}"
     }
 
     /**
@@ -70,42 +72,42 @@ internal sealed class DeliveryTraceState {
         val envelopeType: SupportedEnvelopeType,
         val payloadType: String,
     ) : DeliveryTraceState() {
-        override fun toString(): String = "HttpCallEnded, ${result.javaClass.simpleName}, $envelopeType, $payloadType"
+        override fun toString(): String = "[$threadName] HttpCallEnded, ${result.javaClass.simpleName}, $envelopeType, $payloadType"
     }
 
     /**
      * Session caching was started for the current session
      */
     internal object SessionCachingStarted : DeliveryTraceState() {
-        override fun toString(): String = "SessionCachingStarted"
+        override fun toString(): String = "[$threadName] SessionCachingStarted"
     }
 
     /**
      * Session caching was stopped for the current session
      */
     internal object SessionCachingStopped : DeliveryTraceState() {
-        override fun toString(): String = "SessionCachingStopped"
+        override fun toString(): String = "[$threadName] SessionCachingStopped"
     }
 
     /**
      * A session was written to the cache.
      */
     internal object SessionCacheAttempt : DeliveryTraceState() {
-        override fun toString(): String = "SessionCacheAttempt"
+        override fun toString(): String = "[$threadName] SessionCacheAttempt"
     }
 
     /**
-     * The delivery loop was started
+     * The delivery attempt has been queued on scheduling thread
      */
-    internal object ScheduleNextDeliveryNow : DeliveryTraceState() {
-        override fun toString(): String = "StartDeliveryLoop"
+    internal object QueueDeliveryAttempt : DeliveryTraceState() {
+        override fun toString(): String = "[$threadName] QueueDeliveryAttempt"
     }
 
     /**
-     * A payload was enqueued for delivery
+     * A payload was sent to delivery worker for delivery
      */
-    class PayloadEnqueued(private val payload: StoredTelemetryMetadata) : DeliveryTraceState() {
-        override fun toString(): String = "PayloadEnqueued, ${payload.toReportString()}"
+    class ExecuteDelivery(private val payload: StoredTelemetryMetadata) : DeliveryTraceState() {
+        override fun toString(): String = "[$threadName] ExecuteDelivery, ${payload.toReportString()}"
     }
 
     /**
@@ -115,19 +117,19 @@ internal sealed class DeliveryTraceState {
         private val payload: StoredTelemetryMetadata,
         private val result: ExecutionResult,
     ) : DeliveryTraceState() {
-        override fun toString(): String = "PayloadResult, ${payload.toReportString()}, result=${result.javaClass.simpleName}"
+        override fun toString(): String = "[$threadName] PayloadResult, ${payload.toReportString()}, result=${result.javaClass.simpleName}"
     }
 
     /**
      * A payload queue was created
      */
-    class PayloadQueueCreated(
+    class FindNextPayload(
         private val payloadsByPriority: List<StoredTelemetryMetadata>,
-        private val payloadsToSend: List<StoredTelemetryMetadata>,
+        private val payloadToSend: StoredTelemetryMetadata?,
     ) : DeliveryTraceState() {
         override fun toString(): String {
-            return "PayloadQueueCreated, payloadsByPriority=${payloadsByPriority.map { it.uuid }}, " +
-                "payloadsToSend=${payloadsToSend.map { it.uuid }}"
+            return "[$threadName] FindNextPayload, payloadsByPriority=${payloadsByPriority.map { it.uuid }}, " +
+                "payloadsToSend=${payloadToSend?.uuid ?: "<none>" }}"
         }
     }
 
@@ -135,7 +137,7 @@ internal sealed class DeliveryTraceState {
      * A HTTP request was started
      */
     class ServerReceivedRequest(private val endpoint: String) : DeliveryTraceState() {
-        override fun toString(): String = "ServerReceivedRequest, $endpoint"
+        override fun toString(): String = "[$threadName] ServerReceivedRequest, $endpoint"
     }
 
     /**
@@ -145,7 +147,7 @@ internal sealed class DeliveryTraceState {
         private val endpoint: String,
         private val metadata: String
     ) : DeliveryTraceState() {
-        override fun toString(): String = "ServerCompletedRequest, $endpoint $metadata"
+        override fun toString(): String = "[$threadName] ServerCompletedRequest, $endpoint $metadata"
     }
 
     internal fun StoredTelemetryMetadata.toReportString(): String {

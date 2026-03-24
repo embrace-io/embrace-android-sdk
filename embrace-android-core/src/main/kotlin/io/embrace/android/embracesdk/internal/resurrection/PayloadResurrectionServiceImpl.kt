@@ -76,25 +76,22 @@ internal class PayloadResurrectionServiceImpl(
         val processedCrashes = mutableSetOf<NativeCrashData>()
 
         payloadsToResurrect.forEach { payload ->
-            val result = runCatching {
+            runCatching {
                 payload.processUndeliveredPayload(
                     nativeCrashService = nativeCrashService,
                     nativeCrashProvider = nativeCrashes::get,
                     postNativeCrashProcessingCallback = processedCrashes::add,
                 )
-            }
-
-            if (result.isSuccess) {
-                cacheStorageService.delete(payload)
-            } else {
-                val exception = result.exceptionOrNull()
-                    ?: IllegalStateException("Resurrecting and sending incomplete payloads from previous app launches failed.")
-
+            }.onFailure {
                 logger.trackInternalError(
-                    type = InternalErrorType.PAYLOAD_RESURRECTION_FAIL,
-                    throwable = exception
+                    type = InternalErrorType.PAYLOAD_RESURRECTION_PAYLOAD_FAIL,
+                    throwable = it
                 )
             }
+
+            // Delete every processed. If there's a failure resurrecting a particular payload, assume it is not recoverable
+            // and log the instance so we know it happened.
+            cacheStorageService.delete(payload)
         }
 
         if (nativeCrashService != null) {

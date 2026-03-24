@@ -35,6 +35,7 @@ import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType.CRA
 import io.embrace.android.embracesdk.internal.delivery.intake.IntakeService
 import io.embrace.android.embracesdk.internal.delivery.intake.IntakeServiceImpl
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeCrashService
+import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
@@ -228,7 +229,7 @@ class PayloadResurrectionServiceImplTest {
     }
 
     @Test
-    fun `resurrection failure leaves payload cached`() {
+    fun `resurrection failure deletes cache file and logs unrecoverable error`() {
         cacheStorageService.addPayload(
             metadata = sessionMetadata,
             data = deadSessionEnvelope
@@ -500,8 +501,12 @@ class PayloadResurrectionServiceImplTest {
 
     private fun assertResurrectionFailure() {
         assertEquals(0, payloadStorageService.storedPayloadCount())
-        assertEquals(1, cacheStorageService.storedPayloadCount())
+        assertEquals(0, cacheStorageService.storedPayloadCount())
         assertEquals(1, logger.internalErrorMessages.size)
+        assertEquals(
+            InternalErrorType.PAYLOAD_RESURRECTION_PAYLOAD_FAIL.toString(),
+            logger.internalErrorMessages.single().msg
+        )
     }
 
     private companion object {

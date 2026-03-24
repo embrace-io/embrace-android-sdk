@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.delivery.scheduling
 
+import io.embrace.android.embracesdk.concurrency.BlockableExecutorService
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
@@ -41,6 +42,8 @@ internal class SchedulingServiceImplTest {
     private lateinit var executionService: FakeRequestExecutionService
     private lateinit var schedulingExecutor: BlockingScheduledExecutorService
     private lateinit var deliveryExecutor: BlockingScheduledExecutorService
+
+    private lateinit var storageExecutor: BlockableExecutorService
     private lateinit var networkConnectivityService: FakeNetworkConnectivityService
     private lateinit var logger: FakeInternalLogger
     private lateinit var schedulingService: SchedulingServiceImpl
@@ -53,8 +56,9 @@ internal class SchedulingServiceImplTest {
         clock = FakeClock()
         schedulingExecutor = BlockingScheduledExecutorService(clock, blockingMode = true)
         deliveryExecutor = BlockingScheduledExecutorService(clock, blockingMode = true)
+        storageExecutor = BlockableExecutorService(blockingMode = false)
         networkConnectivityService = FakeNetworkConnectivityService()
-        storageService = FakePayloadStorageService().apply {
+        storageService = FakePayloadStorageService(workerExecutor = storageExecutor).apply {
             addFakePayload(fakeLogStoredTelemetryMetadata)
             addFakePayload(fakeSessionStoredTelemetryMetadata)
         }
@@ -615,6 +619,38 @@ internal class SchedulingServiceImplTest {
         tickAndWaitForDeliveryAttempts(INITIAL_DELAY_MS)
         assertEquals(3, executionService.getRequests<SessionPayload>().size)
         assertEquals(2, executionService.getRequests<LogPayload>().size)
+    }
+
+    @Test
+    fun `to-be-deleted payloads after successful send should never be re-sent`() {
+        storageExecutor.blockingMode = true
+        waitForResurrection()
+        waitPayloadSendAttempt()
+        assertEquals(1, executionService.sendAttempts())
+        assertTrue(executionService.attemptedHttpRequests.first().data is SessionPayload)
+
+        // Verify delete hasn't happened
+        assertEquals(0, storageService.deleteCount.get())
+
+        // Unblock sending of next payload
+        waitPayloadSendAttempt()
+        assertEquals(2, executionService.sendAttempts())
+
+        // Verify delete hasn't happened
+        assertEquals(0, storageService.deleteCount.get())
+
+        // Add another session and see that it's delivered too
+        storageService.addFakePayload(fakeSessionStoredTelemetryMetadata2)
+        waitForPayloadIntakeAndDeliveryAttempt()
+        assertEquals(3, executionService.sendAttempts())
+
+        // Verify delete hasn't happened
+        assertEquals(0, storageService.deleteCount.get())
+        assertEquals(3, storageService.storedPayloadCount())
+
+        // Let deletes run
+        storageExecutor.runCurrentlyBlocked()
+        assertEquals(0, storageService.storedPayloadCount())
     }
 
     @Test(expected = RejectedExecutionException::class)

@@ -201,7 +201,12 @@ class SchedulingServiceImpl(
             payloadsToRetry.remove(payload)
             deleteInProgress.add(payload)
             storageService.delete(payload) {
-                deleteInProgress.remove(payload)
+                // Remove delete flag on scheduling thread once the storage system finishes deletion
+                // Doing it prematurely leads to a to-be-deleted payload seeming like it's eligible to be sent.
+                // Trying to do so will lead to a failure when we attempt to do so, but the payload is not found
+                schedulingWorker.submit {
+                    deleteInProgress.remove(payload)
+                }
             }
         } else {
             // If delivery of this payload should be retried, add or replace the entry in the retry map

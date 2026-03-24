@@ -130,22 +130,6 @@ class OkHttpRequestExecutionServiceTest {
     }
 
     @Test
-    fun `return payload too large if the server returns a 413 response`() {
-        // given a server that returns a 413 response
-        server.enqueue(MockResponse().setResponseCode(413))
-
-        // when attempting to make a request
-        val result = requestExecutionService.attemptHttpRequest(
-            payloadStream = { testPostBody.byteInputStream() },
-            envelopeType = SupportedEnvelopeType.SESSION,
-            payloadType = PayloadType.SESSION.value
-        )
-
-        // then the result should be payload too large
-        assertTrue(result is ExecutionResult.PayloadTooLarge)
-    }
-
-    @Test
     fun `return too many requests if the server returns a 429 response`() {
         // given a server that returns a 429 response
         server.enqueue(

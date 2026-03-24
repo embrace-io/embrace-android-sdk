@@ -18,6 +18,7 @@ import java.net.ConnectException
 import java.net.UnknownHostException
 import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
@@ -41,6 +42,11 @@ class SchedulingServiceImpl(
     private val resurrectionComplete = AtomicBoolean(false)
     private val payloadsInProgress = ConcurrentHashMap<SupportedEnvelopeType, StoredTelemetryMetadata>()
     private val intakeDeliveryPending = AtomicBoolean(false)
+    private val scheduledDeliveryAttempt: ScheduledDeliveryAttempt = ScheduledDeliveryAttempt(
+        clock = clock,
+        scheduleAction = ::queueDeliveryAttempt,
+        worker = schedulingWorker
+    )
 
     override fun onPayloadIntake() {
         // We only need to schedule a delivery queuing if one wasn't already scheduled.
@@ -84,12 +90,8 @@ class SchedulingServiceImpl(
     private fun scheduleFutureDeliveryAttempt(timestampMs: Long) {
         if (timestampMs <= clock.now()) {
             queueDeliveryAttempt()
-        } else if (timestampMs != Long.MAX_VALUE) {
-            schedulingWorker.schedule<Unit>(
-                ::queueDeliveryAttempt,
-                calculateDelay(timestampMs),
-                TimeUnit.MILLISECONDS
-            )
+        } else {
+            scheduledDeliveryAttempt.update(timestampMs)
         }
     }
 
@@ -280,8 +282,6 @@ class SchedulingServiceImpl(
         }
     }
 
-    private fun calculateDelay(nextRetryTimeMs: Long): Long = nextRetryTimeMs - clock.now()
-
     private fun ExecutionResult.failedToConnect(): Boolean =
         this is ExecutionResult.Incomplete && (exception is UnknownHostException || exception is ConnectException)
 
@@ -406,6 +406,40 @@ class SchedulingServiceImpl(
          * Called from both the scheduling and delivery threads, as well as the thread that handles network change listeners
          */
         fun isBlocked(): Boolean = connectionUnblockTime.get() > 0
+    }
+
+    /**
+     * Manage the single scheduled future delivery attempt in the delivery layer
+     */
+    private class ScheduledDeliveryAttempt(
+        private val clock: Clock,
+        private val scheduleAction: () -> Unit,
+        private val worker: BackgroundWorker,
+    ) {
+        private var scheduledTime: Long? = null
+        private var scheduledTask: ScheduledFuture<*>? = null
+
+        /**
+         * Update the scheduled future delivery attempt based on the requested time.
+         * If there is no scheduled attempt or the new requested time is earlier than the scheduled time,
+         * cancel the existing task and schedule a new task for the earlier time.
+         */
+        fun update(requestedDeliveryAttemptTimeMs: Long) {
+            val existingTime = scheduledTime
+            if (existingTime == null || requestedDeliveryAttemptTimeMs < existingTime) {
+                scheduledTask?.cancel(false)
+                scheduledTask = worker.schedule<Unit>(
+                    {
+                        scheduledTask = null
+                        scheduledTime = null
+                        scheduleAction()
+                    },
+                    requestedDeliveryAttemptTimeMs - clock.now(),
+                    TimeUnit.MILLISECONDS
+                )
+                scheduledTime = requestedDeliveryAttemptTimeMs
+            }
+        }
     }
 
     companion object {

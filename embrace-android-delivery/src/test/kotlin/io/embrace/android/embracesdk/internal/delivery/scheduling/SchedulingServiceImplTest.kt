@@ -589,6 +589,34 @@ internal class SchedulingServiceImplTest {
         assertEquals("third", requests[2].data.spans?.single()?.name)
     }
 
+    @Test
+    fun `earlier requested future delivery attempt replaces later one`() {
+        resetToSingleSessionPayload()
+        allSendsFail()
+        waitForResurrectionAndDeliveryAttempt()
+        assertEquals(1, executionService.getRequests<SessionPayload>().size)
+        assertEquals(0, executionService.getRequests<LogPayload>().size)
+        tickAndWaitForDeliveryAttempts(INITIAL_DELAY_MS + 1)
+        assertEquals(2, executionService.getRequests<SessionPayload>().size)
+        assertEquals(0, executionService.getRequests<LogPayload>().size)
+
+        // This retry will be earlier than the previous one, and will cancel replace it.
+        storageService.addFakePayload(fakeLogStoredTelemetryMetadata)
+        waitForPayloadIntakeAndDeliveryAttempt()
+        assertEquals(2, executionService.getRequests<SessionPayload>().size)
+        assertEquals(1, executionService.getRequests<LogPayload>().size)
+
+        allSendsSucceed()
+        tickAndWaitForDeliveryAttempts(INITIAL_DELAY_MS)
+        assertEquals(2, executionService.getRequests<SessionPayload>().size)
+        assertEquals(2, executionService.getRequests<LogPayload>().size)
+
+        // After the retry for the log request succeeds, retry for the session will be rescheduled
+        tickAndWaitForDeliveryAttempts(INITIAL_DELAY_MS)
+        assertEquals(3, executionService.getRequests<SessionPayload>().size)
+        assertEquals(2, executionService.getRequests<LogPayload>().size)
+    }
+
     @Test(expected = RejectedExecutionException::class)
     fun `test shutdown`() {
         logger.throwOnInternalError = false

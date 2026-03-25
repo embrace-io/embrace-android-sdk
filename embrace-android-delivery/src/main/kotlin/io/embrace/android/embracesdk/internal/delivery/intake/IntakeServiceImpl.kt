@@ -26,16 +26,24 @@ class IntakeServiceImpl(
 ) : IntakeService {
 
     private val cachingTasks: MutableMap<SupportedEnvelopeType, Future<*>> = ConcurrentHashMap()
-    private val cacheReferences: MutableMap<SupportedEnvelopeType, StoredTelemetryMetadata> = ConcurrentHashMap()
+    private val lastCachedEntry: MutableMap<SupportedEnvelopeType, StoredTelemetryMetadata> = ConcurrentHashMap()
 
     override fun shutdown() {
         worker.shutdownAndWait(shutdownTimeoutMs)
     }
 
-    override fun take(intake: Envelope<*>, metadata: StoredTelemetryMetadata): Future<*> {
+    override fun take(
+        intake: Envelope<*>,
+        metadata: StoredTelemetryMetadata,
+        staleEntry: StoredTelemetryMetadata?,
+    ): Future<*> {
         deliveryTracer?.onTake(metadata)
         val future = worker.submit(metadata) {
-            processIntake(intake, metadata)
+            processIntake(
+                intake = intake,
+                metadata = metadata,
+                staleEntry = staleEntry
+            )
         }
 
         // cancel any cache attempts that are already pending to avoid unnecessary I/O.
@@ -52,6 +60,7 @@ class IntakeServiceImpl(
     private fun processIntake(
         intake: Envelope<*>,
         metadata: StoredTelemetryMetadata,
+        staleEntry: StoredTelemetryMetadata?,
     ) {
         try {
             val service = when {
@@ -67,25 +76,34 @@ class IntakeServiceImpl(
                     storeAttachment(stream, pair.second, pair.first)
                 }
             }
-            val lastReference = cacheReferences[metadata.envelopeType]
+
+            /**
+             * Determine which cache entry to clean up:
+             *
+             * - Use [staleEntry] if caller explicitly tells the system that a particular payload will be stale after intake
+             * - For complete payloads (i.e. ready for delivery), delete last cached entry for the given envelope type and don't replace it
+             * - For incomplete payloads (i.e. cached snapshots not ready for delivery), delete last cached entry and replace it with intake
+             */
+            val entryToCleanup = staleEntry
+                ?: if (metadata.complete) {
+                    // Take the last cached entry and don't replace it
+                    lastCachedEntry.remove(metadata.envelopeType)
+                } else {
+                    // Take the last cached entry and replace it with the new intake
+                    lastCachedEntry.put(metadata.envelopeType, metadata)
+                }
 
             if (metadata.complete) {
                 deliveryTracer?.onPayloadIntake(metadata)
                 schedulingService.onPayloadIntake()
-            } else {
-                cacheReferences[metadata.envelopeType] = metadata
-                if (!cacheableEnvelopeTypes.contains(metadata.envelopeType)) {
-                    logger.trackInternalError(
-                        InternalErrorType.INTAKE_UNEXPECTED_TYPE,
-                        IllegalStateException("Unexpected envelope type cache attempt: ${metadata.envelopeType}"),
-                    )
-                }
+            } else if (!cacheableEnvelopeTypes.contains(metadata.envelopeType)) {
+                logger.trackInternalError(
+                    InternalErrorType.INTAKE_UNEXPECTED_TYPE,
+                    IllegalStateException("Unexpected envelope type cache attempt: ${metadata.envelopeType}"),
+                )
             }
 
-            // Clean up any previously cached payload of the current type.
-            // If the newly saved payload is complete, the cached copy is no longer needed. If it's a cache attempt,
-            // the old copy is stale. Either way, it should be deleted.
-            lastReference?.let {
+            entryToCleanup?.let {
                 cacheStorageService.delete(it)
             }
         } catch (exc: Throwable) {

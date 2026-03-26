@@ -96,6 +96,12 @@ class SchedulingServiceImpl(
     }
 
     /**
+     * Schedule a delivery attempt for when the connection is expected to be unblocked. If an attempt has already been scheduled,
+     * update the time to the unblocking time if it's earlier than the currently scheduled time.
+     */
+    private fun scheduleDeliveryAtUnblocking() = scheduleFutureDeliveryAttempt(connectionStatus.getUnblockTime())
+
+    /**
      * Start delivery on the scheduler thread. Basically, this runs [findAndDeliverNextPayload] on the appropriate thread,
      * so it can be called anywhere, whereas [findAndDeliverNextPayload] has to be called on the scheduling thread.
      */
@@ -103,6 +109,11 @@ class SchedulingServiceImpl(
         deliveryTracer?.onQueueDeliveryAttempt()
         schedulingWorker.submit {
             findAndDeliverNextPayload()
+
+            // Reschedule a unblocking attempt if the connection is still blocked
+            if (connectionStatus.isBlocked()) {
+                scheduleDeliveryAtUnblocking()
+            }
         }
     }
 
@@ -185,7 +196,7 @@ class SchedulingServiceImpl(
         // If the request failed because the SDK cannot reach the Embrace server, schedule a delivery for when the connection unblocks.
         // At that time, the scheduler will determine what that payload is.
         if (failedToConnect()) {
-            scheduleFutureDeliveryAttempt(connectionStatus.getUnblockTime())
+            scheduleDeliveryAtUnblocking()
         } else if (connectedToServer()) {
             // If the request successfully connected to Embrace, regardless if it succeeded, validate the connection
             connectionStatus.connectionValidated()
@@ -430,8 +441,8 @@ class SchedulingServiceImpl(
          * cancel the existing task and schedule a new task for the earlier time.
          */
         fun update(requestedDeliveryAttemptTimeMs: Long) {
-            val existingTime = scheduledTime
-            if (existingTime == null || requestedDeliveryAttemptTimeMs < existingTime) {
+            val unblockAttemptRuntimeMs = scheduledTime
+            if (unblockAttemptRuntimeMs == null || requestedDeliveryAttemptTimeMs < unblockAttemptRuntimeMs) {
                 scheduledTask?.cancel(false)
                 scheduledTask = worker.schedule<Unit>(
                     {

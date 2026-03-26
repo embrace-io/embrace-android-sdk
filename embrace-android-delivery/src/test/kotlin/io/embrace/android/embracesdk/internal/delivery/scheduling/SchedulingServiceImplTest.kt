@@ -653,6 +653,48 @@ internal class SchedulingServiceImplTest {
         assertEquals(0, storageService.storedPayloadCount())
     }
 
+    @Test
+    fun `network change while connection blocked will trigger retry that fails and delays unblocking attempt`() {
+        blockConnection()
+        waitForResurrectionAndDeliveryAttempt(2)
+        assertEquals(1, executionService.sendAttempts())
+
+        // Switching to a valid connection will trigger a delivery attempt before the scheduled unblocking attempt
+        networkConnectivityService.connectivityStatus = NetworkStatus.WAN.toConnectivityStatus()
+        schedulingExecutor.runCurrentlyBlocked()
+        deliveryExecutor.awaitExecutionCompletion()
+        waitPayloadSendAttempt(2)
+        assertEquals(2, executionService.sendAttempts())
+
+        // The original unblocking would run but since the connection is still blocked, no delivery attempt will be made
+        tickAndWaitForDeliveryAttempts(INITIAL_DELAY_MS)
+        assertEquals(2, executionService.sendAttempts())
+
+        // But the failed attempt due to the block will schedule a run for when the connection will actually unblock, so it will run then
+        tickAndWaitForDeliveryAttempts(INITIAL_DELAY_MS)
+        assertEquals(3, executionService.sendAttempts())
+
+        // Move time ahead to before the next unblocking, still no more attempts
+        tickAndWaitForDeliveryAttempts(INITIAL_DELAY_MS * 2)
+        assertEquals(3, executionService.sendAttempts())
+
+        // Switch to wifi which will trigger an unblocking attempt, which will yield two failed attempts as we are not blocked anymore
+        allSendsFail()
+        networkConnectivityService.connectivityStatus = NetworkStatus.WIFI.toConnectivityStatus()
+        schedulingExecutor.runCurrentlyBlocked()
+        deliveryExecutor.awaitExecutionCompletion()
+        waitPayloadSendAttempt(2)
+        assertEquals(5, executionService.sendAttempts())
+
+        // After the retry wait is over, we try again
+        tickAndWaitForDeliveryAttempts(INITIAL_DELAY_MS, 2)
+        assertEquals(7, executionService.sendAttempts())
+
+        // As we are no longer blocked, the original unblocking time will not yield a delivery attempt
+        tickAndWaitForDeliveryAttempts(INITIAL_DELAY_MS, 2)
+        assertEquals(7, executionService.sendAttempts())
+    }
+
     @Test(expected = RejectedExecutionException::class)
     fun `test shutdown`() {
         logger.throwOnInternalError = false

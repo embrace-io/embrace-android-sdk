@@ -11,6 +11,9 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
 
 @RunWith(AndroidJUnit4::class)
 internal class ViewDataSourceTest {
@@ -147,5 +150,39 @@ internal class ViewDataSourceTest {
         assertTrue(secondSpan.isRecording())
         assertTrue(firstSpan.attributes["view.name"] == "a_view")
         assertTrue(secondSpan.attributes["view.name"] == "another_view")
+    }
+
+    @Test
+    fun `concurrent startView and endView does not throw ConcurrentModificationException`() {
+        val iterations = 100
+        val errors = AtomicInteger(0)
+        val latch = CountDownLatch(2)
+
+        val starter = Thread {
+            repeat(iterations) { i ->
+                try {
+                    dataSource.startView("view_$i")
+                } catch (e: ConcurrentModificationException) {
+                    errors.incrementAndGet()
+                }
+            }
+            latch.countDown()
+        }
+
+        val ender = Thread {
+            repeat(iterations) { i ->
+                try {
+                    dataSource.endView("view_$i")
+                } catch (e: ConcurrentModificationException) {
+                    errors.incrementAndGet()
+                }
+            }
+            latch.countDown()
+        }
+
+        starter.start()
+        ender.start()
+        assertTrue(latch.await(2, TimeUnit.SECONDS))
+        assertEquals("ConcurrentModificationException detected", 0, errors.get())
     }
 }

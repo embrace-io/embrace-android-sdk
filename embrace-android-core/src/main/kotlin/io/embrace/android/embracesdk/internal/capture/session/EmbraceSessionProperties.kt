@@ -44,7 +44,8 @@ internal class EmbraceSessionProperties(
     fun add(sanitizedKey: String, sanitizedValue: String, isPermanent: Boolean): Boolean {
         synchronized(permanentPropertiesReference) {
             val maxSessionProperties = configService.sessionBehavior.getMaxSessionProperties()
-            if (size() > maxSessionProperties || size() == maxSessionProperties && !haveKey(sanitizedKey)) {
+            val totalCount = permanentProperties().size + temporary.size
+            if (totalCount > maxSessionProperties || totalCount == maxSessionProperties && !haveKey(sanitizedKey)) {
                 telemetryService.trackAppliedLimit("session_property", AppliedLimitType.DROP)
                 return false
             }
@@ -53,13 +54,13 @@ internal class EmbraceSessionProperties(
             if (isPermanent) {
                 permanentProperties()[sanitizedKey] = sanitizedValue
                 temporary.remove(sanitizedKey)
-                permanentSessionProperties = permanentProperties()
+                permanentSessionProperties = snapshotPermanentProperties()
             } else {
                 // only save the permanent values if the key existed in the permanent map
                 val newPermanent = permanentProperties()
                 if (newPermanent.remove(sanitizedKey) != null) {
                     permanentPropertiesReference.set(newPermanent)
-                    permanentSessionProperties = permanentProperties()
+                    permanentSessionProperties = snapshotPermanentProperties()
                 }
                 temporary[sanitizedKey] = sanitizedValue
             }
@@ -81,7 +82,7 @@ internal class EmbraceSessionProperties(
             val newPermanent = permanentProperties()
             if (newPermanent.remove(sanitizedKey) != null) {
                 permanentPropertiesReference.set(newPermanent)
-                permanentSessionProperties = permanentProperties()
+                permanentSessionProperties = snapshotPermanentProperties()
                 existed = true
             }
             destination.removeSessionAttribute(sanitizedKey.toEmbraceAttributeName())
@@ -93,8 +94,6 @@ internal class EmbraceSessionProperties(
         permanentProperties().plus(temporary)
     }
 
-    private fun size(): Int = permanentProperties().size + temporary.size
-
     fun clear() {
         synchronized(permanentPropertiesReference) {
             temporary.clear()
@@ -102,13 +101,18 @@ internal class EmbraceSessionProperties(
     }
 
     fun addPermPropsToSessionSpan() {
-        permanentProperties().entries.forEach {
+        snapshotPermanentProperties().forEach {
             destination.addSessionAttribute(
                 it.key.toEmbraceAttributeName(),
                 it.value
             )
         }
     }
+
+    private fun snapshotPermanentProperties() =
+        synchronized(permanentPropertiesReference) {
+            permanentProperties().toMap()
+        }
 
     private companion object {
         private val NOT_LOADED = mutableMapOf<String, String>()

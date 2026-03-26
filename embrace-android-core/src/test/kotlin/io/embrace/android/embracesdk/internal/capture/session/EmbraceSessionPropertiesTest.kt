@@ -17,6 +17,8 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
 
 private const val MAX_SESSION_PROPERTIES_FROM_CONFIG = 5
 private const val MAX_SESSION_PROPERTIES_DEFAULT = 10
@@ -249,5 +251,45 @@ internal class EmbraceSessionPropertiesTest {
         assertTrue(sessionProperties.add(longKey, VALUE_VALID, false))
         assertTrue(sessionProperties.remove(longKey))
         assertTrue(sessionProperties.get().isEmpty())
+    }
+
+    @Test
+    fun `permanent session properties can be accessed concurrently`() {
+        // Add permanent properties
+        repeat(5) { i ->
+            sessionProperties.add("perm$i", "value$i", isPermanent = true)
+        }
+
+        val iterations = 100
+        val errors = AtomicInteger(0)
+        val latch = CountDownLatch(2)
+
+        val apiCaller = Thread {
+            repeat(iterations) {
+                try {
+                    sessionProperties.addPermPropsToSessionSpan()
+                } catch (e: ConcurrentModificationException) {
+                    errors.incrementAndGet()
+                }
+            }
+            latch.countDown()
+        }
+
+        val internalCaller = Thread {
+            repeat(iterations) { i ->
+                try {
+                    sessionProperties.add("dynamic$i", "val$i", isPermanent = true)
+                    sessionProperties.remove("dynamic$i")
+                } catch (e: ConcurrentModificationException) {
+                    errors.incrementAndGet()
+                }
+            }
+            latch.countDown()
+        }
+
+        apiCaller.start()
+        internalCaller.start()
+        assertTrue(latch.await(2, TimeUnit.SECONDS))
+        assertEquals("ConcurrentModificationException detected", 0, errors.get())
     }
 }

@@ -56,21 +56,19 @@ class UninitializedSdkSpanService : SpanService {
         events: List<EmbraceSpanEvent>,
         errorCode: ErrorCode?,
     ): Boolean {
-        return realSpanService.get()?.recordCompletedSpan(
-            name = name,
-            startTimeMs = startTimeMs,
-            endTimeMs = endTimeMs,
-            parent = parent,
-            type = type,
-            internal = internal,
-            private = private,
-            attributes = attributes,
-            events = events,
-            errorCode = errorCode
-        ) ?: if (bufferedCallsCount.getAndIncrement() < MAX_BUFFERED_CALLS) {
-            // Note: there's no public way to create an [EmbraceSpan] before the service is initialized, so while we buffer
-            // the passed in [parent], we should never get a valid non-null value for it here.
-            synchronized(bufferedCalls) {
+        synchronized(bufferedCalls) {
+            return realSpanService.get()?.recordCompletedSpan(
+                name = name,
+                startTimeMs = startTimeMs,
+                endTimeMs = endTimeMs,
+                parent = parent,
+                type = type,
+                internal = internal,
+                private = private,
+                attributes = attributes,
+                events = events,
+                errorCode = errorCode
+            ) ?: if (bufferedCallsCount.getAndIncrement() < MAX_BUFFERED_CALLS) {
                 bufferedCalls.add(
                     BufferedRecordCompletedSpan(
                         name = name,
@@ -85,10 +83,10 @@ class UninitializedSdkSpanService : SpanService {
                         errorCode = errorCode,
                     )
                 )
+                true
+            } else {
+                false
             }
-            true
-        } else {
-            false
         }
     }
 

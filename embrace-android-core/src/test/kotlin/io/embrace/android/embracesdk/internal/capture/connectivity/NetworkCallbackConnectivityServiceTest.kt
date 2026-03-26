@@ -38,12 +38,8 @@ internal class NetworkCallbackConnectivityServiceTest {
     private lateinit var connectivityManager: ConnectivityManager
     private lateinit var shadowConnectivityManager: ShadowConnectivityManager
     private lateinit var receivedConnectivityStatuses: MutableList<ConnectivityStatus>
-
-    private val networkConnectivityListener = object : NetworkConnectivityListener {
-        override fun onNetworkConnectivityStatusChanged(status: ConnectivityStatus) {
-            receivedConnectivityStatuses.add(status)
-        }
-    }
+    private val networkConnectivityListener =
+        NetworkConnectivityListener { status -> receivedConnectivityStatuses.add(status) }
 
     @Before
     fun setUp() {

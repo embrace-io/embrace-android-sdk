@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.capture.connectivity
 
-import io.embrace.android.embracesdk.internal.comms.delivery.NetworkStatus
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -14,10 +13,10 @@ internal class ConnectionTypeTest {
     }
 
     @Test
-    fun `verify name of every time matches corresponding network status enum value`() {
-        assertEquals(NetworkStatus.WIFI.value, ConnectionType.WIFI.typeName)
-        assertEquals(NetworkStatus.WAN.value, ConnectionType.WAN.typeName)
-        assertEquals(NetworkStatus.UNKNOWN.value, ConnectionType.UNKNOWN.typeName)
-        assertEquals(NetworkStatus.NOT_REACHABLE.value, ConnectionType.NONE.typeName)
+    fun `verify conversion to optimistic connectivity status`() {
+        assertEquals(OptimisticWifi, ConnectionType.WIFI.toOptimisticStatus())
+        assertEquals(OptimisticWan, ConnectionType.WAN.toOptimisticStatus())
+        assertEquals(OptimisticUnknown, ConnectionType.UNKNOWN.toOptimisticStatus())
+        assertEquals(ConnectivityStatus.None, ConnectionType.NONE.toOptimisticStatus())
     }
 }

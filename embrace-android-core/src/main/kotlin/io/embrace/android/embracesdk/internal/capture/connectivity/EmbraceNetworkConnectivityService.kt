@@ -5,7 +5,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.net.ConnectivityManager
-import io.embrace.android.embracesdk.internal.comms.delivery.NetworkStatus
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
@@ -20,53 +19,42 @@ internal class EmbraceNetworkConnectivityService(
 ) : BroadcastReceiver(), NetworkConnectivityService {
 
     private val intentFilter = IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION)
-    private var lastNetworkStatus: NetworkStatus = NetworkStatus.UNKNOWN
+    private var lastConnectivityStatus: ConnectivityStatus = ConnectivityStatus.Unverified
     private val networkConnectivityListeners = CopyOnWriteArrayList<NetworkConnectivityListener>()
 
     override fun onReceive(context: Context, intent: Intent) {
         try {
-            val networkStatus = getCurrentNetworkStatus()
-            if (didNetworkStatusChange(networkStatus)) {
-                lastNetworkStatus = networkStatus
-                notifyNetworkConnectivityListeners(networkStatus)
+            val connectivityStatus = getCurrentConnectivityStatus()
+            if (lastConnectivityStatus != connectivityStatus) {
+                lastConnectivityStatus = connectivityStatus
+                notifyNetworkConnectivityListeners(connectivityStatus)
             }
         } catch (ex: Exception) {
             logger.trackInternalError(InternalErrorType.NETWORK_STATUS_CAPTURE_FAIL, ex)
         }
     }
 
-    private fun getCurrentNetworkStatus(): NetworkStatus {
-        var networkStatus: NetworkStatus
+    private fun getCurrentConnectivityStatus(): ConnectivityStatus {
+        var status: ConnectivityStatus
         try {
             val networkInfo = connectivityManager?.activeNetworkInfo
-            if (networkInfo != null && networkInfo.isConnected) {
+            status = if (networkInfo != null && networkInfo.isConnected) {
                 // Network is reachable
                 when (networkInfo.type) {
-                    ConnectivityManager.TYPE_WIFI -> {
-                        networkStatus = NetworkStatus.WIFI
-                    }
-
-                    ConnectivityManager.TYPE_MOBILE -> {
-                        networkStatus = NetworkStatus.WAN
-                    }
-
-                    else -> {
-                        networkStatus = NetworkStatus.UNKNOWN
-                    }
+                    ConnectivityManager.TYPE_WIFI -> OptimisticWifi
+                    ConnectivityManager.TYPE_MOBILE -> OptimisticWan
+                    else -> OptimisticUnknown
                 }
             } else {
                 // Network is not reachable
-                networkStatus = NetworkStatus.NOT_REACHABLE
+                ConnectivityStatus.None
             }
         } catch (e: Exception) {
             logger.trackInternalError(InternalErrorType.NETWORK_STATUS_CAPTURE_FAIL, e)
-            networkStatus = NetworkStatus.UNKNOWN
+            status = OptimisticUnknown
         }
-        return networkStatus
+        return status
     }
-
-    private fun didNetworkStatusChange(newNetworkStatus: NetworkStatus) =
-        lastNetworkStatus != newNetworkStatus
 
     override fun register() {
         backgroundWorker.submit {
@@ -85,7 +73,7 @@ internal class EmbraceNetworkConnectivityService(
      */
     override fun addNetworkConnectivityListener(listener: NetworkConnectivityListener) {
         networkConnectivityListeners.add(listener)
-        listener.onNetworkConnectivityStatusChanged(lastNetworkStatus)
+        listener.onNetworkConnectivityStatusChanged(lastConnectivityStatus)
     }
 
     /**
@@ -95,7 +83,7 @@ internal class EmbraceNetworkConnectivityService(
         networkConnectivityListeners.remove(listener)
     }
 
-    private fun notifyNetworkConnectivityListeners(status: NetworkStatus) {
+    private fun notifyNetworkConnectivityListeners(status: ConnectivityStatus) {
         for (listener in networkConnectivityListeners) {
             listener.onNetworkConnectivityStatusChanged(status)
         }

@@ -8,8 +8,6 @@ import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.capture.connectivity.ConnectionType
 import io.embrace.android.embracesdk.internal.capture.connectivity.ConnectivityStatus
 import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkConnectivityListener
-import io.embrace.android.embracesdk.internal.comms.delivery.NetworkStatus
-import io.embrace.android.embracesdk.internal.comms.delivery.toConnectivityStatus
 import java.util.concurrent.atomic.AtomicReference
 
 class NetworkStatusDataSource(
@@ -21,10 +19,6 @@ class NetworkStatusDataSource(
 ) {
     private val currentConnectionType: AtomicReference<ConnectionType> = AtomicReference(null)
     private var span: SpanToken? = null
-
-    override fun onNetworkConnectivityStatusChanged(status: NetworkStatus) {
-        onNetworkConnectivityStatusChanged(status.toConnectivityStatus())
-    }
 
     override fun onNetworkConnectivityStatusChanged(status: ConnectivityStatus) {
         val newConnectionType = status.connectionType

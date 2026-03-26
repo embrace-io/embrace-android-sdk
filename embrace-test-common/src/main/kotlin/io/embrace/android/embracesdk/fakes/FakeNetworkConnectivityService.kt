@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.fakes
 
+import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.internal.capture.connectivity.ConnectivityStatus
 import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkConnectivityListener
 import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkConnectivityService
@@ -7,6 +8,7 @@ import java.util.concurrent.CopyOnWriteArrayList
 
 class FakeNetworkConnectivityService(
     initialConnectivityStatus: ConnectivityStatus = ConnectivityStatus.Unverified,
+    private val executor: BlockingScheduledExecutorService? = null
 ) : NetworkConnectivityService {
 
     private val networkConnectivityListeners = CopyOnWriteArrayList<NetworkConnectivityListener>()
@@ -18,7 +20,9 @@ class FakeNetworkConnectivityService(
 
     override fun addNetworkConnectivityListener(listener: NetworkConnectivityListener) {
         networkConnectivityListeners.add(listener)
-        listener.onNetworkConnectivityStatusChanged(connectivityStatus)
+        runOnThread {
+            listener.onNetworkConnectivityStatusChanged(connectivityStatus)
+        }
     }
 
     override fun removeNetworkConnectivityListener(listener: NetworkConnectivityListener) {
@@ -32,8 +36,20 @@ class FakeNetworkConnectivityService(
     }
 
     private fun notifyListeners() {
-        networkConnectivityListeners.forEach {
-            it.onNetworkConnectivityStatusChanged(connectivityStatus)
+        runOnThread {
+            networkConnectivityListeners.forEach {
+                it.onNetworkConnectivityStatusChanged(connectivityStatus)
+            }
+        }
+    }
+
+    private fun runOnThread(action: () -> Unit = {}) {
+        if (executor == null) {
+            action()
+        } else {
+            executor.submit {
+                action()
+            }
         }
     }
 }

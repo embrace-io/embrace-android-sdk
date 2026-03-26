@@ -77,6 +77,10 @@ internal class EmbraceNetworkConnectivityServiceTest {
             override fun onNetworkConnectivityStatusChanged(status: NetworkStatus) {
                 networkStatus = status
             }
+
+            override fun onNetworkConnectivityStatusChanged(status: ConnectivityStatus) {
+                networkStatus = status.toNetworkStatus()
+            }
         }
         service.addNetworkConnectivityListener(testListener)
     }

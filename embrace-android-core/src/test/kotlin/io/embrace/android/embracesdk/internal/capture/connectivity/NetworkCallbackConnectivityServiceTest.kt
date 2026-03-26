@@ -15,7 +15,6 @@ import android.os.Build
 import androidx.test.core.app.ApplicationProvider.getApplicationContext
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
-import io.embrace.android.embracesdk.internal.comms.delivery.NetworkStatus
 import io.embrace.android.embracesdk.internal.logging.InternalLoggerImpl
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -41,9 +40,6 @@ internal class NetworkCallbackConnectivityServiceTest {
     private lateinit var receivedConnectivityStatuses: MutableList<ConnectivityStatus>
 
     private val networkConnectivityListener = object : NetworkConnectivityListener {
-        override fun onNetworkConnectivityStatusChanged(status: NetworkStatus) {
-        }
-
         override fun onNetworkConnectivityStatusChanged(status: ConnectivityStatus) {
             receivedConnectivityStatuses.add(status)
         }
@@ -247,22 +243,6 @@ internal class NetworkCallbackConnectivityServiceTest {
         service.close()
         service.close()
         assertFalse(shadowConnectivityManager.networkCallbacks.contains(service))
-    }
-
-    @Test
-    fun `legacy listener receives bridged NetworkStatus via default overload`() {
-        val receivedStatuses = mutableListOf<NetworkStatus>()
-        val legacyListener = object : NetworkConnectivityListener {
-            override fun onNetworkConnectivityStatusChanged(status: NetworkStatus) {
-                receivedStatuses.add(status)
-            }
-        }
-        service.register()
-        service.addNetworkConnectivityListener(legacyListener)
-        val newNetwork = setActiveNetwork(connectedWifi)
-        service.onAvailable(newNetwork)
-        service.onCapabilitiesChanged(newNetwork, connectedWifi.getNetworkCapabilities())
-        assertEquals(listOf(NetworkStatus.UNKNOWN, NetworkStatus.WIFI), receivedStatuses)
     }
 
     private fun initWithNetwork(network: NetworkInfo): Network {

@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.internal.delivery.scheduling
 
+import io.embrace.android.embracesdk.internal.capture.connectivity.ConnectivityStatus
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.comms.api.Endpoint
-import io.embrace.android.embracesdk.internal.comms.delivery.NetworkStatus
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
 import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
@@ -74,11 +74,11 @@ class SchedulingServiceImpl(
         deliveryWorker.shutdownAndWait(0)
     }
 
-    override fun onNetworkConnectivityStatusChanged(status: NetworkStatus) {
-        val networkAcquired = connectionStatus.updateNetworkStatus(status.isReachable)
-        // Schedule an unblock of the connection and schedule a delivery if we have recently connected
-        // to a potentially connected network OR if the connection was previously blocked
-        if (networkAcquired || connectionStatus.isBlocked()) {
+    override fun onNetworkConnectivityStatusChanged(status: ConnectivityStatus) {
+        val networkAcquired = connectionStatus.updateConnectivityStatus(status.isConnected)
+        // Schedule a delivery attempt if we got confirmation the current connection is connected to the internet
+        // OR if the connection is currently blocked and the new connectivity status indicates that we are connected to the internet
+        if (networkAcquired || (connectionStatus.isBlocked() && status.isConnected)) {
             schedulingWorker.submit {
                 connectionStatus.unblock()
                 queueDeliveryAttempt()
@@ -331,7 +331,7 @@ class SchedulingServiceImpl(
          *
          * Called on main thread
          */
-        fun updateNetworkStatus(newStatus: Boolean): Boolean =
+        fun updateConnectivityStatus(newStatus: Boolean): Boolean =
             if (!hasNetworkConnection.getAndSet(newStatus)) {
                 newStatus
             } else {

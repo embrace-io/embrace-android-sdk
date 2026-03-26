@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.testcases.features
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.findSessionSpan
 import io.embrace.android.embracesdk.fixtures.fakeSessionStoredTelemetryMetadata
-import io.embrace.android.embracesdk.internal.comms.delivery.NetworkStatus
+import io.embrace.android.embracesdk.internal.capture.connectivity.ConnectionType
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.worker.Worker.Priority.DataPersistenceWorker
@@ -33,7 +33,7 @@ internal class PruningFeatureTest {
     fun `stored payloads are pruned appropriately`() {
         testRule.runTest(
             testCaseAction = {
-                simulateNetworkChange(NetworkStatus.NOT_REACHABLE)
+                simulateConnectionTypeChange(ConnectionType.NONE)
                 repeat(STORAGE_LIMIT + OVERAGE) { k ->
                     recordSession {
                         embrace.addBreadcrumb("$k")
@@ -68,7 +68,7 @@ internal class PruningFeatureTest {
         val worker =
             workerThreadModule.priorityWorker<StoredTelemetryMetadata>(DataPersistenceWorker)
         worker.submit(fakeSessionStoredTelemetryMetadata) {
-            simulateNetworkChange(NetworkStatus.WIFI)
+            simulateConnectionTypeChange(ConnectionType.WIFI)
         }
     }
 }

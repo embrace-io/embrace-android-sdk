@@ -78,13 +78,13 @@ class FileStorageServiceImpl(
 
     private fun processDelete(metadata: StoredTelemetryMetadata) {
         try {
-            if (metadata.asFile().delete()) {
-                storedFiles.remove(metadata)
-            }
+            metadata.asFile().delete()
         } catch (exc: Throwable) {
             if (exc !is FileNotFoundException) {
                 logger.trackInternalError(InternalErrorType.PAYLOAD_STORAGE_FAIL, exc)
             }
+        } finally {
+            storedFiles.remove(metadata)
         }
     }
 

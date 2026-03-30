@@ -51,4 +51,7 @@ class AutoDataCaptureBehaviorImpl(
 
     override fun isNetworkCallbackConnectivityServiceEnabled(): Boolean =
         thresholdCheck.isBehaviorEnabled(remote?.pctNetworkCallbackConnectivityServiceEnabled) ?: false
+
+    override fun isNavigationStateCaptureEnabled(): Boolean =
+        thresholdCheck.isBehaviorEnabled(remote?.pctNavigationStateCaptureEnabled) ?: true
 }

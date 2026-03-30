@@ -17,6 +17,7 @@ class FakeAutoDataCaptureBehavior(
     private val endStartupWithAppReady: Boolean = false,
     private val enableStateCapture: Boolean = false,
     private val networkCallbackConnectivityServiceEnabled: Boolean = false,
+    private val navigationStateCaptureEnabled: Boolean = true,
 ) : AutoDataCaptureBehavior {
 
     override fun isThermalStatusCaptureEnabled(): Boolean = thermalStatusCaptureEnabled
@@ -33,4 +34,5 @@ class FakeAutoDataCaptureBehavior(
     override fun isEndStartupWithAppReadyEnabled(): Boolean = endStartupWithAppReady
     override fun isStateCaptureEnabled(): Boolean = enableStateCapture
     override fun isNetworkCallbackConnectivityServiceEnabled(): Boolean = networkCallbackConnectivityServiceEnabled
+    override fun isNavigationStateCaptureEnabled(): Boolean = navigationStateCaptureEnabled
 }

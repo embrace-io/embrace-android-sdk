@@ -306,6 +306,13 @@ sealed class SchemaType(
         }
     }
 
+    class NavigationState(initialValue: Screen) :
+        State<NavigationState.Screen>(initialValue, "screen-automatic") {
+        data class Screen(private val name: String) {
+            override fun toString(): String = name
+        }
+    }
+
     /**
      * A custom telemetry type. This allows the hybrid SDKs (and others) to pass in custom
      * telemetry schemas if required.

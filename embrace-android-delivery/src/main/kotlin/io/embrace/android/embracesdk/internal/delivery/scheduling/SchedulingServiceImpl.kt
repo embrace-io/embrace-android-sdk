@@ -24,8 +24,7 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
-import javax.net.ssl.SSLHandshakeException
-import javax.net.ssl.SSLPeerUnverifiedException
+import javax.net.ssl.SSLException
 
 class SchedulingServiceImpl(
     private val storageService: PayloadStorageService,
@@ -472,8 +471,7 @@ class SchedulingServiceImpl(
             setOf(
                 UnknownHostException::class.java,
                 ConnectException::class.java,
-                SSLHandshakeException::class.java,
-                SSLPeerUnverifiedException::class.java,
+                SSLException::class.java,
                 NoRouteToHostException::class.java
             )
 

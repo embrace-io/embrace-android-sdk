@@ -31,7 +31,7 @@ sealed class Worker(val threadName: String) {
          * Used to perform miscellaneous tasks that _do_ involve I/O & don't require guarantees about
          * running on a specific thread or in a specific order.
          */
-        object IoRegWorker : Background("non-io-reg")
+        object IoRegWorker : Background("io-reg")
 
         /**
          * Used for periodic writing of session/background activity payloads to disk.
@@ -48,6 +48,11 @@ sealed class Worker(val threadName: String) {
          * Monitor thread that checks the main thread for thread blockages
          */
         object ThreadBlockageWatchdogWorker : Background("thread-blockage-watchdog")
+
+        /**
+         * Worker used to handle payload scheduling
+         */
+        object DeliverySchedulingWorker : Background("delivery-scheduling")
 
         /**
          * Worker that performs HTTP requests that push data to the server.

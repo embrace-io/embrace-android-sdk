@@ -10,47 +10,47 @@ class DeliveryTracer {
     private val events: MutableList<DeliveryTraceState> = CopyOnWriteArrayList()
 
     fun onHttpCallEnded(result: ExecutionResult, envelopeType: SupportedEnvelopeType, payloadType: String) {
-        events.add(DeliveryTraceState.HttpCallEnded(result, envelopeType, payloadType))
+        addWithThreadInfo(DeliveryTraceState.HttpCallEnded(result, envelopeType, payloadType))
     }
 
     fun onPayloadIntake(metadata: StoredTelemetryMetadata) {
-        events.add(DeliveryTraceState.ScheduleServiceInformed(metadata))
+        addWithThreadInfo(DeliveryTraceState.ScheduleServiceInformed(metadata))
     }
 
     fun onTake(metadata: StoredTelemetryMetadata) {
-        events.add(DeliveryTraceState.IntakeServiceAcceptedEnvelope(metadata))
+        addWithThreadInfo(DeliveryTraceState.IntakeServiceAcceptedEnvelope(metadata))
     }
 
     fun onStore(metadata: StoredTelemetryMetadata) {
-        events.add(DeliveryTraceState.PayloadStored(metadata))
+        addWithThreadInfo(DeliveryTraceState.PayloadStored(metadata))
     }
 
     fun onDelete(metadata: StoredTelemetryMetadata) {
-        events.add(DeliveryTraceState.PayloadDeleted(metadata))
+        addWithThreadInfo(DeliveryTraceState.PayloadDeleted(metadata))
     }
 
     fun onLoadPayloadAsStream(success: Boolean) {
-        events.add(DeliveryTraceState.PayloadLoaded(success))
+        addWithThreadInfo(DeliveryTraceState.PayloadLoaded(success))
     }
 
     fun onGetPayloadsByPriority(payloads: List<StoredTelemetryMetadata>) {
-        events.add(DeliveryTraceState.GetPayloadsByPriority(payloads))
+        addWithThreadInfo(DeliveryTraceState.GetPayloadsByPriority(payloads))
     }
 
     fun onGetUndeliveredPayloads(payloads: List<StoredTelemetryMetadata>) {
-        events.add(DeliveryTraceState.GetUndeliveredPayloads(payloads))
+        addWithThreadInfo(DeliveryTraceState.GetUndeliveredPayloads(payloads))
     }
 
     fun onCachingStopped() {
-        events.add(DeliveryTraceState.SessionCachingStopped)
+        addWithThreadInfo(DeliveryTraceState.SessionCachingStopped)
     }
 
     fun onCachingStarted() {
-        events.add(DeliveryTraceState.SessionCachingStarted)
+        addWithThreadInfo(DeliveryTraceState.SessionCachingStarted)
     }
 
     fun onSessionCache() {
-        events.add(DeliveryTraceState.SessionCacheAttempt)
+        addWithThreadInfo(DeliveryTraceState.SessionCacheAttempt)
     }
 
     fun generateReport(): String {
@@ -60,30 +60,35 @@ class DeliveryTracer {
             }.joinToString("\n")
     }
 
-    fun onStartDeliveryLoop() {
-        events.add(DeliveryTraceState.StartDeliveryLoop)
+    fun onQueueDeliveryAttempt() {
+        addWithThreadInfo(DeliveryTraceState.QueueDeliveryAttempt)
     }
 
-    fun onPayloadQueueCreated(
+    fun onFindNextPayload(
         payloadsByPriority: List<StoredTelemetryMetadata>,
-        payloadsToSend: List<StoredTelemetryMetadata>,
+        payloadToSend: StoredTelemetryMetadata?,
     ) {
-        events.add(DeliveryTraceState.PayloadQueueCreated(payloadsByPriority, payloadsToSend))
+        addWithThreadInfo(DeliveryTraceState.FindNextPayload(payloadsByPriority, payloadToSend))
     }
 
-    fun onPayloadEnqueued(payload: StoredTelemetryMetadata) {
-        events.add(DeliveryTraceState.PayloadEnqueued(payload))
+    fun onExecuteDelivery(payload: StoredTelemetryMetadata) {
+        addWithThreadInfo(DeliveryTraceState.ExecuteDelivery(payload))
     }
 
-    fun onPayloadResult(payload: StoredTelemetryMetadata, result: ExecutionResult) {
-        events.add(DeliveryTraceState.PayloadResult(payload, result))
+    fun onProcessingDeliveryResult(payload: StoredTelemetryMetadata, result: ExecutionResult) {
+        addWithThreadInfo(DeliveryTraceState.PayloadResult(payload, result))
     }
 
     fun onServerReceivedRequest(endpoint: String) {
-        events.add(DeliveryTraceState.ServerReceivedRequest(endpoint))
+        addWithThreadInfo(DeliveryTraceState.ServerReceivedRequest(endpoint))
     }
 
     fun onServerCompletedRequest(endpoint: String, sessionId: String) {
-        events.add(DeliveryTraceState.ServerCompletedRequest(endpoint, sessionId))
+        addWithThreadInfo(DeliveryTraceState.ServerCompletedRequest(endpoint, sessionId))
+    }
+
+    private fun addWithThreadInfo(state: DeliveryTraceState) {
+        state.threadName = Thread.currentThread().name
+        events.add(state)
     }
 }

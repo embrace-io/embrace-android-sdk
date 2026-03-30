@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.fakes
 
+import io.embrace.android.embracesdk.concurrency.BlockableExecutorService
 import io.embrace.android.embracesdk.internal.delivery.PayloadType
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageService
@@ -7,20 +8,29 @@ import io.embrace.android.embracesdk.internal.delivery.storage.SerializationActi
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
+import io.embrace.android.embracesdk.internal.worker.PriorityWorker
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.io.InputStream
+import java.util.Collections
 import java.util.UUID
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.zip.GZIPOutputStream
 
 class FakePayloadStorageService(
-    processIdentifier: String = UUID.randomUUID().toString()
+    processIdentifier: String = UUID.randomUUID().toString(),
+    workerExecutor: BlockableExecutorService? = null,
 ) : PayloadStorageService {
     private val processIdProvider: () -> String = { processIdentifier }
     private val serializer = TestPlatformSerializer()
-    private val cachedPayloads = LinkedHashMap<StoredTelemetryMetadata, ByteArray>()
+    private val cachedPayloads = Collections.synchronizedMap(LinkedHashMap<StoredTelemetryMetadata, ByteArray>())
+
+    private val worker = if (workerExecutor != null) {
+        PriorityWorker<StoredTelemetryMetadata>(workerExecutor)
+    } else {
+        null
+    }
 
     val storeCount = AtomicInteger(0)
     val deleteCount = AtomicInteger(0)
@@ -52,9 +62,13 @@ class FakePayloadStorageService(
     }
 
     override fun delete(metadata: StoredTelemetryMetadata, callback: () -> Unit) {
-        cachedPayloads.remove(metadata)
-        deleteCount.getAndIncrement()
-        callback()
+        if (worker == null) {
+            deleteSynchronous(metadata, callback)
+        } else {
+            worker.submit(metadata) {
+                deleteSynchronous(metadata, callback)
+            }
+        }
     }
 
     override fun getPayloadsByPriority(): List<StoredTelemetryMetadata> =
@@ -91,4 +105,10 @@ class FakePayloadStorageService(
             Envelope.logEnvelopeType -> Envelope(data = LogPayload())
             else -> null
         }
+
+    private fun deleteSynchronous(metadata: StoredTelemetryMetadata, callback: () -> Unit) {
+        cachedPayloads.remove(metadata)
+        deleteCount.getAndIncrement()
+        callback()
+    }
 }

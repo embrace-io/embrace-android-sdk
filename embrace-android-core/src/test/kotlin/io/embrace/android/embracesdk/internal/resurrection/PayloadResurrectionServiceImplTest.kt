@@ -6,12 +6,13 @@ import io.embrace.android.embracesdk.assertions.findSpansByName
 import io.embrace.android.embracesdk.assertions.getLastHeartbeatTimeMs
 import io.embrace.android.embracesdk.assertions.getSessionId
 import io.embrace.android.embracesdk.assertions.getStartTime
+import io.embrace.android.embracesdk.concurrency.BlockableExecutorService
 import io.embrace.android.embracesdk.fakes.FakeCachedLogEnvelopeStore
 import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
-import io.embrace.android.embracesdk.fakes.FakeIntakeService
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakeNativeCrashService
 import io.embrace.android.embracesdk.fakes.FakePayloadStorageService
+import io.embrace.android.embracesdk.fakes.FakeSchedulingService
 import io.embrace.android.embracesdk.fakes.FakeSpanData.Companion.perfSpanSnapshot
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.fakes.fakeEmptyLogEnvelope
@@ -31,6 +32,9 @@ import io.embrace.android.embracesdk.internal.delivery.PayloadType
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType.CRASH
+import io.embrace.android.embracesdk.internal.delivery.intake.IntakeService
+import io.embrace.android.embracesdk.internal.delivery.intake.IntakeServiceImpl
+import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeCrashService
 import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
@@ -40,16 +44,25 @@ import io.embrace.android.embracesdk.internal.payload.NativeCrashData
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.session.getSessionSpan
 import io.embrace.android.embracesdk.internal.toEmbraceSpanData
+import io.embrace.android.embracesdk.internal.worker.PriorityWorker
 import io.embrace.android.embracesdk.spans.ErrorCode
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.io.ByteArrayInputStream
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Future
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
+import java.util.zip.GZIPInputStream
 
 class PayloadResurrectionServiceImplTest {
 
-    private lateinit var intakeService: FakeIntakeService
+    private lateinit var payloadStorageService: FakePayloadStorageService
+    private lateinit var intakeExecutor: BlockableExecutorService
+    private lateinit var schedulingService: FakeSchedulingService
     private lateinit var cacheStorageService: FakePayloadStorageService
     private lateinit var cachedLogEnvelopeStore: FakeCachedLogEnvelopeStore
     private lateinit var nativeCrashService: FakeNativeCrashService
@@ -59,14 +72,23 @@ class PayloadResurrectionServiceImplTest {
 
     @Before
     fun setUp() {
-        intakeService = FakeIntakeService()
+        payloadStorageService = FakePayloadStorageService()
+        intakeExecutor = BlockableExecutorService(blockingMode = false)
+        schedulingService = FakeSchedulingService()
         cacheStorageService = FakePayloadStorageService()
         cachedLogEnvelopeStore = FakeCachedLogEnvelopeStore()
         nativeCrashService = FakeNativeCrashService()
         logger = FakeInternalLogger(false)
         serializer = TestPlatformSerializer()
         resurrectionService = PayloadResurrectionServiceImpl(
-            intakeService = intakeService,
+            intakeService = IntakeServiceImpl(
+                schedulingService,
+                payloadStorageService,
+                cacheStorageService,
+                logger,
+                serializer,
+                PriorityWorker(intakeExecutor),
+            ),
             cacheStorageService = cacheStorageService,
             cachedLogEnvelopeStore = cachedLogEnvelopeStore,
             logger = logger,
@@ -75,19 +97,37 @@ class PayloadResurrectionServiceImplTest {
     }
 
     @Test
+    fun `completion listeners fired after successful resurrection`() {
+        var listenerCalled = false
+        resurrectionService.addResurrectionCompleteListener { listenerCalled = true }
+        resurrectInBackground()
+        assertTrue(listenerCalled)
+    }
+
+    @Test
+    fun `completion listeners fired after failed resurrection`() {
+        var listenerCalled = false
+        resurrectionService.addResurrectionCompleteListener { listenerCalled = true }
+        cacheStorageService.addFakePayload(fakeCachedSessionStoredTelemetryMetadata)
+        resurrectInBackground()
+        assertTrue(listenerCalled)
+    }
+
+    @Test
     fun `if no previous cached session then send previous cached sessions should not send anything`() {
-        resurrectionService.resurrectOldPayloads { nativeCrashService }
-        assertTrue(intakeService.intakeList.isEmpty())
+        resurrectInBackground()
+        assertEquals(0, payloadStorageService.storedPayloadCount())
     }
 
     @Test
     fun `dead session resurrected and delivered`() {
         deadSessionEnvelope.resurrectPayload()
-        val intake = intakeService.getIntakes<SessionPayload>().single()
-        assertEquals(fakeCachedSessionStoredTelemetryMetadata.copy(complete = true), intake.metadata)
+        val storedMetadata = payloadStorageService.storedPayloadMetadata().single()
+        assertEquals(fakeCachedSessionStoredTelemetryMetadata.copy(complete = true), storedMetadata)
         assertEquals(0, cacheStorageService.storedPayloadCount())
 
-        val sessionSpan = checkNotNull(intake.envelope.getSessionSpan())
+        val sessionEnvelope = getStoredSessionEnvelopes().single()
+        val sessionSpan = checkNotNull(sessionEnvelope.getSessionSpan())
         val expectedStartTimeMs = deadSessionEnvelope.getStartTime()
         val expectedEndTimeMs = deadSessionEnvelope.getLastHeartbeatTimeMs()
 
@@ -111,9 +151,9 @@ class PayloadResurrectionServiceImplTest {
         )
         assertEquals(1, cacheStorageService.storedPayloadCount())
         assertEquals(0, cacheStorageService.deleteCount.get())
-        resurrectionService.resurrectOldPayloads { nativeCrashService }
+        resurrectInBackground()
 
-        assertTrue(intakeService.getIntakes<SessionPayload>().isEmpty())
+        assertEquals(0, payloadStorageService.storedPayloadCount())
         assertEquals(1, cacheStorageService.deleteCount.get())
     }
 
@@ -121,7 +161,7 @@ class PayloadResurrectionServiceImplTest {
     fun `snapshot will be delivered as failed span once resurrected`() {
         deadSessionEnvelope.resurrectPayload()
 
-        val sentSession = intakeService.getIntakes<SessionPayload>().single().envelope
+        val sentSession = getStoredSessionEnvelopes().single()
         assertEquals(2, sentSession.data.spans?.size)
         assertEquals(0, sentSession.data.spanSnapshots?.size)
 
@@ -149,7 +189,7 @@ class PayloadResurrectionServiceImplTest {
     fun `do not add failed span from a snapshot if a span with the same id is already in the payload`() {
         messedUpSessionEnvelope.resurrectPayload()
 
-        with(intakeService.getIntakes<SessionPayload>().single().envelope) {
+        with(getStoredSessionEnvelopes().single()) {
             assertEquals(3, data.spans?.size)
             assertEquals(0, data.spanSnapshots?.size)
         }
@@ -165,7 +205,7 @@ class PayloadResurrectionServiceImplTest {
         )
         deadSessionEnvelope.resurrectPayload()
 
-        val sessionSpan = intakeService.getIntakes<SessionPayload>().single().envelope.getSessionSpan()
+        val sessionSpan = getStoredSessionEnvelopes().single().getSessionSpan()
         assertEquals("dead-session-native-crash", sessionSpan?.attributes?.findAttributeValue(embCrashId.name))
 
         nativeCrashService.addNativeCrashData(
@@ -177,7 +217,7 @@ class PayloadResurrectionServiceImplTest {
         deadSessionEnvelope.resurrectPayload()
 
         val attributes =
-            checkNotNull(intakeService.getIntakes<SessionPayload>().last().envelope.getSessionSpan()?.attributes)
+            checkNotNull(getStoredSessionEnvelopes().last().getSessionSpan()?.attributes)
         assertNull(attributes.findAttributeValue(embCrashId.name))
     }
 
@@ -194,7 +234,7 @@ class PayloadResurrectionServiceImplTest {
             data = deadSessionEnvelope
         )
         serializer.errorOnNextOperation()
-        resurrectionService.resurrectOldPayloads { nativeCrashService }
+        resurrectInBackground()
         assertResurrectionFailure()
     }
 
@@ -244,33 +284,39 @@ class PayloadResurrectionServiceImplTest {
             data = earlierDeadSession
         )
 
-        resurrectionService.resurrectOldPayloads { nativeCrashService }
+        resurrectInBackground()
 
-        val sessionPayloads = intakeService.getIntakes<SessionPayload>()
-        assertEquals(2, sessionPayloads.size)
-        with(sessionPayloads.first()) {
-            assertEquals(sessionMetadata.copy(complete = true), metadata)
-            assertEquals(deadSessionEnvelope.getSessionId(), envelope.getSessionId())
+        val sessionEnvelopes = getStoredSessionEnvelopes()
+        val sessionMetadataList = payloadStorageService.storedPayloadMetadata()
+        assertEquals(2, sessionEnvelopes.size)
+
+        with(sessionMetadataList.first()) {
+            assertEquals(sessionMetadata.copy(complete = true), this)
+        }
+        with(sessionEnvelopes.first()) {
+            assertEquals(deadSessionEnvelope.getSessionId(), getSessionId())
             assertEquals(
                 "native-crash-1",
-                envelope.getSessionSpan()?.attributes?.findAttributeValue(embCrashId.name)
+                getSessionSpan()?.attributes?.findAttributeValue(embCrashId.name)
             )
             assertEquals(
                 "foreground",
-                envelope.getSessionSpan()?.attributes?.findAttributeValue(embState.name)
+                getSessionSpan()?.attributes?.findAttributeValue(embState.name)
             )
         }
 
-        with(sessionPayloads.last()) {
-            assertEquals(earlierDeadSessionMetadata.copy(complete = true), metadata)
-            assertEquals(earlierDeadSession.getSessionId(), envelope.getSessionId())
+        with(sessionMetadataList.last()) {
+            assertEquals(earlierDeadSessionMetadata.copy(complete = true), this)
+        }
+        with(sessionEnvelopes.last()) {
+            assertEquals(earlierDeadSession.getSessionId(), getSessionId())
             assertEquals(
                 "native-crash-2",
-                envelope.getSessionSpan()?.attributes?.findAttributeValue(embCrashId.name)
+                getSessionSpan()?.attributes?.findAttributeValue(embCrashId.name)
             )
             assertEquals(
                 "foreground",
-                envelope.getSessionSpan()?.attributes?.findAttributeValue(embState.name)
+                getSessionSpan()?.attributes?.findAttributeValue(embState.name)
             )
         }
 
@@ -313,9 +359,9 @@ class PayloadResurrectionServiceImplTest {
             )
         )
         nativeCrashService.addNativeCrashData(deadSessionCrashData)
-        resurrectionService.resurrectOldPayloads { nativeCrashService }
+        resurrectInBackground()
 
-        assertEquals(0, intakeService.getIntakes<SessionPayload>().size)
+        assertEquals(0, payloadStorageService.storedPayloadCount())
 
         with(cachedLogEnvelopeStore.createdEnvelopes.single()) {
             assertEquals(fakeLaterEnvelopeResource, resource)
@@ -336,9 +382,9 @@ class PayloadResurrectionServiceImplTest {
             sessionId = "no-session-id"
         )
         nativeCrashService.addNativeCrashData(deadSessionCrashData)
-        resurrectionService.resurrectOldPayloads { nativeCrashService }
+        resurrectInBackground()
 
-        assertEquals(0, intakeService.getIntakes<SessionPayload>().size)
+        assertEquals(0, payloadStorageService.storedPayloadCount())
 
         assertTrue(cachedLogEnvelopeStore.createdEnvelopes.isEmpty())
         assertEquals(1, nativeCrashService.nativeCrashesSent.size)
@@ -354,13 +400,74 @@ class PayloadResurrectionServiceImplTest {
             metadata = sessionMetadata,
             data = deadSessionEnvelope
         )
-        resurrectionService.resurrectOldPayloads { null }
+        resurrectInBackground { null }
 
-        val resurrectedSession = intakeService.getIntakes<SessionPayload>().single()
-        assertEquals(fakeCachedSessionStoredTelemetryMetadata.copy(complete = true), resurrectedSession.metadata)
+        val storedMetadata = payloadStorageService.storedPayloadMetadata().single()
+        assertEquals(fakeCachedSessionStoredTelemetryMetadata.copy(complete = true), storedMetadata)
         assertEquals(0, cacheStorageService.storedPayloadCount())
-        val sessionSpan = checkNotNull(resurrectedSession.envelope.getSessionSpan())
+        val sessionSpan = checkNotNull(getStoredSessionEnvelopes().single().getSessionSpan())
         assertNull(checkNotNull(sessionSpan.attributes).findAttributeValue(embCrashId.name))
+    }
+
+    @Test
+    fun `resurrection completes even if a listener throws`() {
+        val latch = CountDownLatch(1)
+        cacheStorageService.addPayload(sessionMetadata, deadSessionEnvelope)
+        resurrectionService.addResurrectionCompleteListener {
+            throw IllegalStateException()
+        }
+        resurrectionService.addResurrectionCompleteListener {
+            latch.countDown()
+        }
+
+        resurrectInBackground()
+        latch.await(1000, TimeUnit.MILLISECONDS)
+        assertEquals(1, payloadStorageService.storedPayloadCount())
+    }
+
+    @Test
+    fun `resurrection timeout logged when future throws timeout on get`() {
+        val hangingIntakeService = object : IntakeService {
+            override fun shutdown() {}
+            override fun take(intake: Envelope<*>, metadata: StoredTelemetryMetadata): Future<*> {
+                return object : Future<Unit> {
+                    override fun cancel(mayInterruptIfRunning: Boolean) = false
+                    override fun isCancelled() = false
+                    override fun isDone() = false
+                    override fun get() = throw TimeoutException("test")
+                    override fun get(timeout: Long, unit: TimeUnit) = throw TimeoutException("test")
+                }
+            }
+        }
+        val service = PayloadResurrectionServiceImpl(
+            intakeService = hangingIntakeService,
+            cacheStorageService = cacheStorageService,
+            cachedLogEnvelopeStore = cachedLogEnvelopeStore,
+            logger = logger,
+            serializer = serializer,
+        )
+
+        cacheStorageService.addPayload(sessionMetadata, deadSessionEnvelope)
+
+        var listenerCalled = false
+        service.addResurrectionCompleteListener { listenerCalled = true }
+        service.resurrectOldPayloads { nativeCrashService }
+
+        assertTrue(listenerCalled)
+        assertTrue(
+            logger.internalErrorMessages.any {
+                it.throwable is TimeoutException
+            }
+        )
+    }
+
+    /**
+     * Runs resurrection on a background thread to simulate what happens in production
+     */
+    private fun resurrectInBackground(nativeCrashServiceProvider: () -> NativeCrashService? = { nativeCrashService }) {
+        val thread = Thread { resurrectionService.resurrectOldPayloads(nativeCrashServiceProvider) }
+        thread.start()
+        thread.join(5000)
     }
 
     private fun Envelope<SessionPayload>.resurrectPayload() {
@@ -368,7 +475,16 @@ class PayloadResurrectionServiceImplTest {
             metadata = sessionMetadata,
             data = this
         )
-        resurrectionService.resurrectOldPayloads { nativeCrashService }
+        resurrectInBackground()
+    }
+
+    private fun getStoredSessionEnvelopes(): List<Envelope<SessionPayload>> {
+        return payloadStorageService.storedPayloads().map { bytes ->
+            serializer.fromJson(
+                GZIPInputStream(ByteArrayInputStream(bytes)),
+                Envelope.sessionEnvelopeType
+            )
+        }
     }
 
     private fun createNativeCrashData(
@@ -383,7 +499,7 @@ class PayloadResurrectionServiceImplTest {
     )
 
     private fun assertResurrectionFailure() {
-        assertTrue(intakeService.intakeList.isEmpty())
+        assertEquals(0, payloadStorageService.storedPayloadCount())
         assertEquals(1, cacheStorageService.storedPayloadCount())
         assertEquals(1, logger.internalErrorMessages.size)
     }

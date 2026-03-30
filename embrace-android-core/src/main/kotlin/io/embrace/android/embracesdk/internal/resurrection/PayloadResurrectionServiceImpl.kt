@@ -33,6 +33,9 @@ import io.embrace.android.embracesdk.internal.session.getSessionProperties
 import io.embrace.android.embracesdk.internal.session.getSessionSpan
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.opentelemetry.kotlin.semconv.SessionAttributes
+import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 import java.util.zip.GZIPInputStream
 import kotlin.math.max
 
@@ -44,7 +47,28 @@ internal class PayloadResurrectionServiceImpl(
     private val serializer: PlatformSerializer,
 ) : PayloadResurrectionService {
 
+    private val completionListeners = CopyOnWriteArrayList<() -> Unit>()
+
+    override fun addResurrectionCompleteListener(listener: () -> Unit) {
+        completionListeners.add(listener)
+    }
+
     override fun resurrectOldPayloads(nativeCrashServiceProvider: Provider<NativeCrashService?>) {
+        runCatching {
+            processTombstones(nativeCrashServiceProvider)
+        }.onFailure {
+            logger.trackInternalError(InternalErrorType.PAYLOAD_RESURRECTION_FAIL, it)
+        }
+        completionListeners.forEach { listener ->
+            runCatching {
+                listener()
+            }.onFailure {
+                logger.trackInternalError(InternalErrorType.PAYLOAD_RESURRECTION_FAIL, it)
+            }
+        }
+    }
+
+    private fun processTombstones(nativeCrashServiceProvider: Provider<NativeCrashService?>) {
         val nativeCrashService = nativeCrashServiceProvider()
         val undeliveredPayloads = cacheStorageService.getUndeliveredPayloads()
         val payloadsToResurrect = undeliveredPayloads.filterNot { it.isCrashEnvelope() }
@@ -200,11 +224,17 @@ internal class PayloadResurrectionServiceImpl(
             else -> null
         }
 
+        // Synchronously provide the payload to the IntakeService, blocking on the returned Future
         if (resurrectedPayload != null) {
-            intakeService.take(
+            val task = intakeService.take(
                 intake = resurrectedPayload,
                 metadata = copy(complete = true)
             )
+            try {
+                task.get(5, TimeUnit.SECONDS)
+            } catch (e: TimeoutException) {
+                logger.trackInternalError(InternalErrorType.INTAKE_FAIL, e)
+            }
         }
     }
 

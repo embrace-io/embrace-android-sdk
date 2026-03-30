@@ -13,4 +13,10 @@ interface SchedulingService : Shutdownable, NetworkConnectivityListener {
      * Called when a new payload has been stored by the [IntakeService] and is ready for scheduling.
      */
     fun onPayloadIntake()
+
+    /**
+     * Called when payload resurrection has completed. This allows the scheduling service to coordinate with the resurrection service
+     * to ensure the payload queue is fully populated before scheduling decisions are made.
+     */
+    fun onResurrectionComplete()
 }

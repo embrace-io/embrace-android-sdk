@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.comms.api.Endpoint
 import io.embrace.android.embracesdk.internal.comms.delivery.NetworkStatus
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
+import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
 import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
 import io.embrace.android.embracesdk.internal.delivery.execution.ExecutionResult
 import io.embrace.android.embracesdk.internal.delivery.execution.RequestExecutionService
@@ -38,9 +39,16 @@ class SchedulingServiceImpl(
     private val activeSends: MutableSet<StoredTelemetryMetadata> = Collections.newSetFromMap(ConcurrentHashMap())
     private val deleteInProgress: MutableSet<StoredTelemetryMetadata> = Collections.newSetFromMap(ConcurrentHashMap())
     private val payloadsToRetry: MutableMap<StoredTelemetryMetadata, RetryInstance> = ConcurrentHashMap()
+    private val resurrectionComplete = AtomicBoolean(false)
 
     override fun onPayloadIntake() {
         startDeliveryLoop()
+    }
+
+    override fun onResurrectionComplete() {
+        if (!resurrectionComplete.getAndSet(true)) {
+            startDeliveryLoop()
+        }
     }
 
     override fun shutdown() {
@@ -230,15 +238,21 @@ class SchedulingServiceImpl(
     private fun StoredTelemetryMetadata.eligibleForSending(): Boolean {
         // determine if the given payload is eligible to be sent
         // i.e. not already being sent, endpoint not blocked by 429, and isn't waiting to be retried
-        return if (activeSends.contains(this) || deleteInProgress.contains(this)) {
-            false
-        } else if (isEndpointBlocked()) {
-            false
-        } else {
-            payloadsToRetry[this]?.run {
-                clock.now() >= nextRetryTimeMs
-            } ?: true
+        if (activeSends.contains(this) || deleteInProgress.contains(this)) {
+            return false
         }
+
+        if (isEndpointBlocked()) {
+            return false
+        }
+
+        if (envelopeType != SupportedEnvelopeType.CRASH && !resurrectionComplete.get()) {
+            return false
+        }
+
+        return payloadsToRetry[this]?.run {
+            clock.now() >= nextRetryTimeMs
+        } ?: true
     }
 
     private fun StoredTelemetryMetadata.toStream(): InputStream? = storageService.loadPayloadAsStream(this)
@@ -382,7 +396,7 @@ class SchedulingServiceImpl(
     }
 
     companion object {
-        const val INITIAL_DELAY_MS = 60_000L
+        const val INITIAL_DELAY_MS = 15_000L
 
         /**
          * Note: bit-shifting is used to raise 2 to the power of [retryAttempts]. This is the most efficient way of

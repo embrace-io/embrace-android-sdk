@@ -301,7 +301,7 @@ class SchedulingServiceImpl(
     }
 
     private fun ExecutionResult.failedToConnect(): Boolean =
-        this is ExecutionResult.Incomplete && (connectionBlockingExceptions.contains(exception.javaClass))
+        this is ExecutionResult.Incomplete && (connectionBlockingExceptions.any { it.isInstance(exception) })
 
     private fun ExecutionResult.connectedToServer(): Boolean =
         this !is ExecutionResult.NetworkNotReady && this !is ExecutionResult.NotAttempted

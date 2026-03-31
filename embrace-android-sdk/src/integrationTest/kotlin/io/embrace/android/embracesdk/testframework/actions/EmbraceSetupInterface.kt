@@ -51,7 +51,7 @@ internal class EmbraceSetupInterface(
     workerToFake: Worker.Background? = null,
     private val threadBlockageWatchdogThread: Thread? = null,
     fakeStorageLayer: Boolean = false,
-    val ignoredInternalErrors: List<InternalErrorType> = emptyList(),
+    ignoredInternalErrors: List<InternalErrorType> = listOf(),
     val fakeClock: FakeClock = FakeClock(currentTime = SdkIntegrationTestRule.DEFAULT_SDK_START_TIME_MS),
 ) {
     private val processIdentifier: String = Uuid.getEmbUuid()

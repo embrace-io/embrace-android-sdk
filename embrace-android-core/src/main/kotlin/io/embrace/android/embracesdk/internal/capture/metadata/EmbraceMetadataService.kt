@@ -11,8 +11,6 @@ import android.os.storage.StorageManager
 import androidx.annotation.RequiresApi
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.envelope.resource.EnvelopeResourceSource
-import io.embrace.android.embracesdk.internal.logging.InternalErrorType
-import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 
@@ -27,7 +25,6 @@ internal class EmbraceMetadataService(
     private val configService: ConfigService,
     private val store: KeyValueStore,
     private val metadataBackgroundWorker: BackgroundWorker,
-    private val logger: InternalLogger,
 ) : MetadataService {
 
     private val res by lazy { resourceSource.value.getEnvelopeResource() }
@@ -75,7 +72,7 @@ internal class EmbraceMetadataService(
         packageManager: PackageManager,
         contextPackageName: String?,
     ): Long? {
-        try {
+        runCatching {
             val packageInfo = packageManager.getPackageInfo(contextPackageName!!, 0)
             if (packageInfo?.packageName != null && storageStatsManager != null) {
                 val stats = storageStatsManager.queryStatsForPackage(
@@ -85,10 +82,9 @@ internal class EmbraceMetadataService(
                 )
                 return stats.appBytes + stats.dataBytes + stats.cacheBytes
             }
-        } catch (ex: Exception) {
-            // The package name and storage volume should always exist
-            logger.trackInternalError(InternalErrorType.DISK_STAT_CAPTURE_FAIL, ex)
         }
+
+        // Ignore unrecoverable exception
         return null
     }
 

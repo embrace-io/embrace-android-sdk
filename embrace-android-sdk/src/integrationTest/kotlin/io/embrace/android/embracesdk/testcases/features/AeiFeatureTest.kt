@@ -10,22 +10,20 @@ import android.os.Build
 import android.preference.PreferenceManager
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
-import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
-import io.embrace.android.embracesdk.internal.arch.schema.EmbType
-import io.embrace.android.embracesdk.internal.config.remote.AppExitInfoConfig
-import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
-import io.embrace.android.embracesdk.internal.logging.InternalErrorType
-import io.embrace.android.embracesdk.internal.arch.attrs.embAeiNumber
-import io.embrace.android.embracesdk.internal.arch.attrs.embCrashNumber
-import io.embrace.android.embracesdk.internal.payload.Log
-import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
-import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
-import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import io.embrace.android.embracesdk.assertions.assertMatches
 import io.embrace.android.embracesdk.assertions.getLastLog
 import io.embrace.android.embracesdk.assertions.getLogOfType
 import io.embrace.android.embracesdk.assertions.getLogsOfType
+import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
+import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
+import io.embrace.android.embracesdk.internal.arch.attrs.embAeiNumber
+import io.embrace.android.embracesdk.internal.arch.attrs.embCrashNumber
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.config.remote.AppExitInfoConfig
+import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
+import io.embrace.android.embracesdk.internal.payload.Log
+import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.mockk.every
 import io.mockk.mockk
 import org.junit.Assert.assertEquals
@@ -72,14 +70,7 @@ internal class AeiFeatureTest {
 
     @Rule
     @JvmField
-    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule {
-        EmbraceSetupInterface(
-            ignoredInternalErrors = listOf(
-                InternalErrorType.APP_LAUNCH_TRACE_FAIL,
-                InternalErrorType.DISK_STAT_CAPTURE_FAIL
-            )
-        )
-    }
+    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule()
 
     private val jvmCrash = TestAeiData(
         ApplicationExitInfo.REASON_CRASH,

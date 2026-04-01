@@ -9,7 +9,6 @@ import io.embrace.android.embracesdk.internal.arch.datasource.DataSource
 import io.embrace.android.embracesdk.internal.capture.connectivity.ConnectionType
 import io.embrace.android.embracesdk.internal.capture.connectivity.ConnectivityStatus
 import io.embrace.android.embracesdk.internal.capture.connectivity.toNetworkStatus
-import io.embrace.android.embracesdk.internal.comms.delivery.NetworkStatus
 import io.embrace.android.embracesdk.internal.comms.delivery.toConnectivityStatus
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import org.robolectric.Robolectric
@@ -96,10 +95,6 @@ internal class EmbraceActionInterface(
 
     private fun onBackground() {
         setup.fakeLifecycleOwner.handleLifecycleEvent(Lifecycle.Event.ON_STOP)
-    }
-
-    fun simulateNetworkChange(status: NetworkStatus) {
-        setup.fakeNetworkConnectivityService.connectivityStatus = status.toConnectivityStatus()
     }
 
     fun simulateConnectivityChange(status: ConnectivityStatus) {

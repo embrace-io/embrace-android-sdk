@@ -7,27 +7,23 @@ import org.junit.Test
 internal class NetworkConnectivityListenerTest {
 
     @Test
-    fun `default implementation of new interface fires old interface with appropriate value`() {
+    fun `default implementation of old interface fires new interface with appropriate value`() {
         val mapping = mapOf(
-            ConnectivityStatus.Wifi(true) to NetworkStatus.WIFI,
-            ConnectivityStatus.Wifi(false) to NetworkStatus.WIFI,
-            ConnectivityStatus.Wan(true) to NetworkStatus.WAN,
-            ConnectivityStatus.Wan(false) to NetworkStatus.WAN,
-            ConnectivityStatus.Unknown(true) to NetworkStatus.UNKNOWN,
-            ConnectivityStatus.Unknown(false) to NetworkStatus.UNKNOWN,
-            ConnectivityStatus.Unverified to NetworkStatus.UNKNOWN,
-            ConnectivityStatus.None to NetworkStatus.NOT_REACHABLE
+            NetworkStatus.WIFI to ConnectivityStatus.Wifi(true),
+            NetworkStatus.WAN to ConnectivityStatus.Wan(true),
+            NetworkStatus.UNKNOWN to ConnectivityStatus.Unknown(true),
+            NetworkStatus.NOT_REACHABLE to ConnectivityStatus.None
         )
-        var receivedNetworkStatus: NetworkStatus? = null
+        var receivedStatus: ConnectivityStatus? = null
         val listener = object : NetworkConnectivityListener {
-            override fun onNetworkConnectivityStatusChanged(status: NetworkStatus) {
-                receivedNetworkStatus = status
+            override fun onNetworkConnectivityStatusChanged(status: ConnectivityStatus) {
+                receivedStatus = status
             }
         }
 
         mapping.forEach {
             listener.onNetworkConnectivityStatusChanged(it.key)
-            assertEquals(it.value, receivedNetworkStatus)
+            assertEquals(it.value, receivedStatus)
         }
     }
 }

@@ -11,9 +11,9 @@ import io.embrace.android.embracesdk.fixtures.fakeCrashStoredTelemetryMetadata
 import io.embrace.android.embracesdk.fixtures.fakeLogStoredTelemetryMetadata
 import io.embrace.android.embracesdk.fixtures.fakeSessionStoredTelemetryMetadata
 import io.embrace.android.embracesdk.fixtures.fakeSessionStoredTelemetryMetadata2
+import io.embrace.android.embracesdk.internal.capture.connectivity.ConnectionType
+import io.embrace.android.embracesdk.internal.capture.connectivity.ConnectivityStatus
 import io.embrace.android.embracesdk.internal.comms.api.Endpoint
-import io.embrace.android.embracesdk.internal.comms.delivery.NetworkStatus
-import io.embrace.android.embracesdk.internal.comms.delivery.toConnectivityStatus
 import io.embrace.android.embracesdk.internal.delivery.PayloadType
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
@@ -42,8 +42,8 @@ internal class SchedulingServiceImplTest {
     private lateinit var executionService: FakeRequestExecutionService
     private lateinit var schedulingExecutor: BlockingScheduledExecutorService
     private lateinit var deliveryExecutor: BlockingScheduledExecutorService
-
     private lateinit var storageExecutor: BlockableExecutorService
+    private lateinit var networkUpdateDispatchExecutor: BlockingScheduledExecutorService
     private lateinit var networkConnectivityService: FakeNetworkConnectivityService
     private lateinit var logger: FakeInternalLogger
     private lateinit var schedulingService: SchedulingServiceImpl
@@ -57,7 +57,11 @@ internal class SchedulingServiceImplTest {
         schedulingExecutor = BlockingScheduledExecutorService(clock, blockingMode = true)
         deliveryExecutor = BlockingScheduledExecutorService(clock, blockingMode = true)
         storageExecutor = BlockableExecutorService(blockingMode = false)
-        networkConnectivityService = FakeNetworkConnectivityService()
+        networkUpdateDispatchExecutor = BlockingScheduledExecutorService(blockingMode = true)
+        networkConnectivityService = FakeNetworkConnectivityService(
+            initialConnectivityStatus = ConnectivityStatus.Unverified,
+            executor = networkUpdateDispatchExecutor
+        )
         storageService = FakePayloadStorageService(workerExecutor = storageExecutor).apply {
             addFakePayload(fakeLogStoredTelemetryMetadata)
             addFakePayload(fakeSessionStoredTelemetryMetadata)
@@ -74,6 +78,7 @@ internal class SchedulingServiceImplTest {
             logger = logger,
         )
         networkConnectivityService.addNetworkConnectivityListener(schedulingService)
+        networkUpdateDispatchExecutor.awaitExecutionCompletion()
     }
 
     @Test
@@ -225,38 +230,31 @@ internal class SchedulingServiceImplTest {
     }
 
     @Test
-    fun `ready payloads will not be sent if there's no network but will be sent when network comes back online`() {
-        networkConnectivityService.connectivityStatus = NetworkStatus.NOT_REACHABLE.toConnectivityStatus()
-        waitForResurrectionAndDeliveryAttempt(2)
-        assertEquals(0, executionService.sendAttempts())
-        assertEquals(2, storageService.storedPayloadCount())
-        networkConnectivityService.connectivityStatus = NetworkStatus.WIFI.toConnectivityStatus()
-        waitForPayloadIntakeAndDeliveryAttempt(2)
-        assertEquals(2, executionService.sendAttempts())
-        assertEquals(0, storageService.storedPayloadCount())
-    }
-
-    @Test
     fun `losing network will cause payload sends to stop and reconnection makes it start again`() {
         allSendsFail()
-        networkConnectivityService.connectivityStatus = NetworkStatus.WAN.toConnectivityStatus()
+        switchToConnectionType(ConnectionType.WAN, 2)
+        assertEquals(0, executionService.sendAttempts())
+        assertEquals(2, storageService.storedPayloadCount())
         waitForResurrectionAndDeliveryAttempt(2)
         assertEquals(2, executionService.sendAttempts())
         assertEquals(2, storageService.storedPayloadCount())
-        networkConnectivityService.connectivityStatus = NetworkStatus.NOT_REACHABLE.toConnectivityStatus()
+        switchToConnectionType(ConnectionType.NONE)
+
+        // failed requests should have been retried, but because there was no network, they did not
         tickAndWaitForDeliveryAttempts(INITIAL_DELAY_MS, 2)
         assertEquals(2, executionService.sendAttempts())
         assertEquals(2, storageService.storedPayloadCount())
         allSendsSucceed()
-        networkConnectivityService.connectivityStatus = NetworkStatus.UNKNOWN.toConnectivityStatus()
-        tickAndWaitForDeliveryAttempts((INITIAL_DELAY_MS * 2) + 1, 2)
+
+        // once we switch to a connected network again, they will be delivered immediately
+        switchToConnectionType(ConnectionType.UNKNOWN, 2)
         assertEquals(4, executionService.sendAttempts())
         assertEquals(0, storageService.storedPayloadCount())
     }
 
     @Test
     fun `burst of already queued payloads when there is no network will not be sent`() {
-        networkConnectivityService.connectivityStatus = NetworkStatus.NOT_REACHABLE.toConnectivityStatus()
+        switchToConnectionType(ConnectionType.NONE, 2)
         waitForResurrectionAndDeliveryAttempt(2)
         assertEquals(0, executionService.sendAttempts())
         assertEquals(2, storageService.storedPayloadCount())
@@ -373,8 +371,7 @@ internal class SchedulingServiceImplTest {
         assertEquals(3, executionService.sendAttempts())
 
         // The connection changing will reset the connection blockage and make the previously blocked requests run and succeed
-        triggerSwitchToWifi()
-        waitPayloadSendAttempt(2)
+        switchToConnectionType(ConnectionType.WIFI, 2)
         assertEquals(5, executionService.sendAttempts())
         assertEquals(0, storageService.storedPayloadCount())
     }
@@ -530,38 +527,27 @@ internal class SchedulingServiceImplTest {
     }
 
     @Test
-    fun `network change to reachable triggers delivery via scheduling worker`() {
-        networkConnectivityService.connectivityStatus = NetworkStatus.NOT_REACHABLE.toConnectivityStatus()
-        waitForResurrectionAndDeliveryAttempt(2)
-        assertEquals(0, executionService.sendAttempts())
-        // Switch to wifi — should submit unblock + delivery to the scheduling worker
-        networkConnectivityService.connectivityStatus = NetworkStatus.WIFI.toConnectivityStatus()
-        waitForPayloadIntakeAndDeliveryAttempt(2)
-        assertEquals(2, executionService.sendAttempts())
-        assertEquals(0, storageService.storedPayloadCount())
-    }
-
-    @Test
     fun `network change while connection blocked unblocks and delivers`() {
         blockConnection()
         waitForResurrectionAndDeliveryAttempt(2)
-        assertEquals(1, executionService.sendAttempts())
+        assertEquals(1, executionService.getRequests<SessionPayload>().size)
+        assertEquals(0, executionService.getRequests<LogPayload>().size)
         assertEquals(2, storageService.storedPayloadCount())
-        // Connection is now blocked. A network status change (even reachable→reachable)
-        // should unblock and allow delivery of payloads not in retry cooldown.
+        // Connection is now blocked with the failed resurrected session delivery attempt
+        // Set network requests to succeed from now on
         allSendsSucceed()
-        networkConnectivityService.connectivityStatus = NetworkStatus.WAN.toConnectivityStatus()
-        // Process the unblock task and its chained queueNextPayload
-        schedulingExecutor.runCurrentlyBlocked()
-        deliveryExecutor.awaitExecutionCompletion()
-        // The log was never attempted (blocked before it could be sent), so it delivers immediately.
-        // The session is still in retry cooldown.
-        waitPayloadSendAttempt(1)
-        assertEquals(2, executionService.sendAttempts())
+
+        // Switching to a valid network connection should unblock the connection
+        // Unblock and check sends one at a time to validate order
+        switchToConnectionType(ConnectionType.WAN)
+        // The session will be sent first because it never got in the retry queue, so unblock will send it immediately
+        assertEquals(2, executionService.getRequests<SessionPayload>().size)
+        assertEquals(0, executionService.getRequests<LogPayload>().size)
         assertEquals(1, storageService.storedPayloadCount())
-        // After the retry delay, the session is also delivered
-        tickAndWaitForDeliveryAttempts(INITIAL_DELAY_MS + 1)
-        assertEquals(3, executionService.sendAttempts())
+        // Log will be sent second because it's lower priority
+        waitPayloadSendAttempt()
+        assertEquals(2, executionService.getRequests<SessionPayload>().size)
+        assertEquals(1, executionService.getRequests<LogPayload>().size)
         assertEquals(0, storageService.storedPayloadCount())
     }
 
@@ -656,16 +642,65 @@ internal class SchedulingServiceImplTest {
     }
 
     @Test
+    fun `realistic transition from having no connection to wifi`() {
+        switchToConnectionType(ConnectionType.NONE)
+        waitForResurrectionAndDeliveryAttempt(2)
+        assertEquals(0, executionService.sendAttempts())
+
+        switchToConnectivityStatus(ConnectivityStatus.Wifi(false), 2)
+        assertEquals(0, executionService.sendAttempts())
+        assertEquals(2, storageService.storedPayloadCount())
+
+        switchToConnectivityStatus(ConnectivityStatus.Wifi(true), 2)
+        assertEquals(2, executionService.sendAttempts())
+        assertEquals(0, storageService.storedPayloadCount())
+    }
+
+    @Test
+    fun `payload arriving before validation will be delivered after validate`() {
+        waitForResurrectionAndDeliveryAttempt(2)
+        assertEquals(2, executionService.sendAttempts())
+        assertEquals(0, storageService.storedPayloadCount())
+
+        // begin to connect - initially not validated, no network
+        switchToConnectivityStatus(ConnectivityStatus.Wifi(false), 0)
+
+        // add a new payload and wait for intake, but no network means no delivery attempt
+        storageService.addFakePayload(fakeSessionStoredTelemetryMetadata2)
+        waitForPayloadIntakeAndDeliveryAttempt()
+        assertEquals(2, executionService.sendAttempts())
+        assertEquals(1, storageService.storedPayloadCount())
+
+        // connection validated - delivery unlocked immediately
+        switchToConnectivityStatus(ConnectivityStatus.Wifi(true))
+        assertEquals(3, executionService.sendAttempts())
+        assertEquals(0, storageService.storedPayloadCount())
+    }
+
+    @Test
+    fun `blocked connection to unconnected or no network will not trigger scheduled unblocking attempts`() {
+        blockConnection()
+        waitForResurrectionAndDeliveryAttempt(2)
+        assertEquals(1, executionService.sendAttempts())
+        switchToConnectivityStatus(ConnectivityStatus.Wifi(false))
+        tickAndWaitForDeliveryAttempts(INITIAL_DELAY_MS, 2)
+        assertEquals(1, executionService.sendAttempts())
+        switchToConnectivityStatus(ConnectivityStatus.None)
+        tickAndWaitForDeliveryAttempts(INITIAL_DELAY_MS * 2, 2)
+        assertEquals(1, executionService.sendAttempts())
+        allSendsSucceed()
+        switchToConnectionType(ConnectionType.UNKNOWN, 2)
+        assertEquals(3, executionService.sendAttempts())
+    }
+
+    @Test
     fun `network change while connection blocked will trigger retry that fails and delays unblocking attempt`() {
         blockConnection()
         waitForResurrectionAndDeliveryAttempt(2)
         assertEquals(1, executionService.sendAttempts())
 
         // Switching to a valid connection will trigger a delivery attempt before the scheduled unblocking attempt
-        networkConnectivityService.connectivityStatus = NetworkStatus.WAN.toConnectivityStatus()
-        schedulingExecutor.runCurrentlyBlocked()
-        deliveryExecutor.awaitExecutionCompletion()
-        waitPayloadSendAttempt(2)
+        switchToConnectionType(ConnectionType.WAN, 2)
         assertEquals(2, executionService.sendAttempts())
 
         // The original unblocking would run but since the connection is still blocked, no delivery attempt will be made
@@ -682,10 +717,7 @@ internal class SchedulingServiceImplTest {
 
         // Switch to wifi which will trigger an unblocking attempt, which will yield two failed attempts as we are not blocked anymore
         allSendsFail()
-        networkConnectivityService.connectivityStatus = NetworkStatus.WIFI.toConnectivityStatus()
-        schedulingExecutor.runCurrentlyBlocked()
-        deliveryExecutor.awaitExecutionCompletion()
-        waitPayloadSendAttempt(2)
+        switchToConnectionType(ConnectionType.WIFI, 2)
         assertEquals(5, executionService.sendAttempts())
 
         // After the retry wait is over, we try again
@@ -712,17 +744,17 @@ internal class SchedulingServiceImplTest {
     /**
      * Wait for payloads in storage to be processed and attempted to be delivered
      */
-    private fun waitForPayloadIntakeAndDeliveryAttempt(expectedPayloads: Int = 1) {
+    private fun waitForPayloadIntakeAndDeliveryAttempt(payloadsToWaitFor: Int = 1) {
         waitForPayloadIntake()
-        waitPayloadSendAttempt(expectedPayloads)
+        waitPayloadSendAttempt(payloadsToWaitFor)
     }
 
     /**
      * Wait for resurrection to complete and all the payloads to be processed and delivery attempted
      */
-    private fun waitForResurrectionAndDeliveryAttempt(expectedPayloads: Int = 1) {
+    private fun waitForResurrectionAndDeliveryAttempt(payloadsToWaitFor: Int = 1) {
         waitForResurrection()
-        waitPayloadSendAttempt(expectedPayloads)
+        waitPayloadSendAttempt(payloadsToWaitFor)
     }
 
     /**
@@ -744,23 +776,54 @@ internal class SchedulingServiceImplTest {
     /**
      * Advance the clock by [delayMs] and wait for the expected number of payloads to be scheduled and delivered
      */
-    private fun tickAndWaitForDeliveryAttempts(delayMs: Long, expectedPayloads: Int = 1) {
+    private fun tickAndWaitForDeliveryAttempts(delayMs: Long, payloadsToWaitFor: Int = 1) {
         schedulingExecutor.moveForwardAndRunBlocked(delayMs)
         deliveryExecutor.awaitExecutionCompletion()
-        waitPayloadSendAttempt(expectedPayloads)
+        waitPayloadSendAttempt(payloadsToWaitFor)
     }
 
     /**
-     * Simulate the network being changed to wifi and allow all callbacks to be invoked and processed
+     * Simulate the network connectivity service firing the given [ConnectivityStatus]
      */
-    private fun triggerSwitchToWifi() {
-        networkConnectivityService.connectivityStatus = NetworkStatus.WIFI.toConnectivityStatus()
-        schedulingExecutor.runCurrentlyBlocked()
-        deliveryExecutor.awaitExecutionCompletion()
+    private fun switchToConnectivityStatus(status: ConnectivityStatus, payloadToWaitFor: Int = 1) {
+        networkConnectivityService.connectivityStatus = status
+        // Run listeners on worker thread
+        networkUpdateDispatchExecutor.awaitExecutionCompletion()
+        // Process scheduling updates on scheduler thread
+        schedulingExecutor.awaitExecutionCompletion()
+        if (payloadToWaitFor > 0) {
+            waitPayloadSendAttempt(payloadToWaitFor)
+        }
     }
 
-    private fun waitPayloadSendAttempt(expectedPayloads: Int = 1) {
-        repeat(expectedPayloads) {
+    /**
+     * Simulate sequence of events when a new connection type is switched to
+     */
+    private fun switchToConnectionType(connectionType: ConnectionType, payloadsToWaitFor: Int = 1) {
+        when (connectionType) {
+            ConnectionType.WIFI -> {
+                switchToConnectivityStatus(ConnectivityStatus.Wifi(false), payloadsToWaitFor)
+                clock.tick(VERIFICATION_DURATION)
+                switchToConnectivityStatus(ConnectivityStatus.Wifi(true), payloadsToWaitFor)
+            }
+            ConnectionType.WAN -> {
+                switchToConnectivityStatus(ConnectivityStatus.Wan(false), payloadsToWaitFor)
+                clock.tick(VERIFICATION_DURATION)
+                switchToConnectivityStatus(ConnectivityStatus.Wan(true), payloadsToWaitFor)
+            }
+            ConnectionType.UNKNOWN -> {
+                switchToConnectivityStatus(ConnectivityStatus.Unknown(false), payloadsToWaitFor)
+                clock.tick(VERIFICATION_DURATION)
+                switchToConnectivityStatus(ConnectivityStatus.Unknown(true), payloadsToWaitFor)
+            }
+            ConnectionType.NONE -> {
+                switchToConnectivityStatus(ConnectivityStatus.None)
+            }
+        }
+    }
+
+    private fun waitPayloadSendAttempt(payloadsToWaitFor: Int = 1) {
+        repeat(payloadsToWaitFor) {
             // Scheduling worker submitting job to delivery worker
             schedulingExecutor.awaitExecutionCompletion()
             // Delivery worker executing request and submitting results for scheduling worker to process
@@ -801,5 +864,6 @@ internal class SchedulingServiceImplTest {
 
     private companion object {
         const val SHORT_BLOCKED_DURATION = 30_000L
+        const val VERIFICATION_DURATION = 100L
     }
 }

@@ -5,8 +5,8 @@ import io.embrace.android.embracesdk.fakes.FakePayloadStorageService
 import io.embrace.android.embracesdk.fakes.fakeSessionEnvelope
 import io.embrace.android.embracesdk.fixtures.fakeSessionStoredTelemetryMetadata
 import io.embrace.android.embracesdk.fixtures.fakeSessionStoredTelemetryMetadata2
+import io.embrace.android.embracesdk.internal.capture.connectivity.ConnectionType
 import io.embrace.android.embracesdk.internal.capture.connectivity.ConnectivityStatus
-import io.embrace.android.embracesdk.internal.comms.delivery.NetworkStatus
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import org.junit.Assert.assertEquals
@@ -71,7 +71,7 @@ internal class DeliveryConnectivityFeatureTest {
             },
             testCaseAction = {
                 recordSession()
-                simulateNetworkChange(NetworkStatus.WIFI)
+                simulateConnectionTypeChange(ConnectionType.WIFI)
             },
             assertAction = {
                 assertEquals(2, getSessionEnvelopes(2).size)

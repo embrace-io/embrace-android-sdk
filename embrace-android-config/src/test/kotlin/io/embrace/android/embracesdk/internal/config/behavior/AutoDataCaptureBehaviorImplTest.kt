@@ -40,6 +40,7 @@ internal class AutoDataCaptureBehaviorImplTest {
             assertFalse(isEndStartupWithAppReadyEnabled())
             assertFalse(isStateCaptureEnabled())
             assertFalse(isNetworkCallbackConnectivityServiceEnabled())
+            assertTrue(isNavigationStateCaptureEnabled())
         }
     }
 
@@ -187,9 +188,34 @@ internal class AutoDataCaptureBehaviorImplTest {
         )
     }
 
+    @Test
+    fun `navigation state capture enabled by default when remote pct is null`() {
+        assertTrue(
+            createBehavior(remote = RemoteConfig()).isNavigationStateCaptureEnabled()
+        )
+    }
+
+    @Test
+    fun `navigation state capture enabled when pct is 100`() {
+        assertTrue(
+            createBehavior(
+                remote = RemoteConfig(pctNavigationStateCaptureEnabled = 100.0f)
+            ).isNavigationStateCaptureEnabled()
+        )
+    }
+
+    @Test
+    fun `navigation state capture disabled when pct is 0`() {
+        assertFalse(
+            createBehavior(
+                remote = RemoteConfig(pctNavigationStateCaptureEnabled = 0.0f)
+            ).isNavigationStateCaptureEnabled()
+        )
+    }
+
     private fun createBehavior(
-        localUiLoadTracingEnabled: Boolean,
-        localUiLoadTracingTraceAllEnabled: Boolean,
+        localUiLoadTracingEnabled: Boolean = true,
+        localUiLoadTracingTraceAllEnabled: Boolean = true,
         stateCaptureEnabled: Boolean = false,
         remote: RemoteConfig,
     ) = AutoDataCaptureBehaviorImpl(
@@ -198,7 +224,7 @@ internal class AutoDataCaptureBehaviorImplTest {
             enabledFeatures = FakeEnabledFeatureConfig(
                 uiLoadTracingTraceAll = localUiLoadTracingTraceAllEnabled,
                 uiLoadTracingEnabled = localUiLoadTracingEnabled,
-                stateCaptureEnabled = stateCaptureEnabled
+                stateCaptureEnabled = stateCaptureEnabled,
             )
         ),
         remote = remote

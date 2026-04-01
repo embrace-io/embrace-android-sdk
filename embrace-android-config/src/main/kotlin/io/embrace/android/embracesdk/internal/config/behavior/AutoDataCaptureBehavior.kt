@@ -74,4 +74,9 @@ interface AutoDataCaptureBehavior {
      * Whether the NetworkCallback-based connectivity service implementation is enabled
      */
     fun isNetworkCallbackConnectivityServiceEnabled(): Boolean
+
+    /**
+     * Whether navigation state capture is enabled
+     */
+    fun isNavigationStateCaptureEnabled(): Boolean
 }

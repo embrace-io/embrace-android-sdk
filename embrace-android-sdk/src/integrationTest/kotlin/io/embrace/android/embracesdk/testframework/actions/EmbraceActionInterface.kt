@@ -8,8 +8,7 @@ import io.embrace.android.embracesdk.internal.api.SdkApi
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSource
 import io.embrace.android.embracesdk.internal.capture.connectivity.ConnectionType
 import io.embrace.android.embracesdk.internal.capture.connectivity.ConnectivityStatus
-import io.embrace.android.embracesdk.internal.capture.connectivity.toNetworkStatus
-import io.embrace.android.embracesdk.internal.comms.delivery.toConnectivityStatus
+import io.embrace.android.embracesdk.internal.capture.connectivity.toOptimisticStatus
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import org.robolectric.Robolectric
 import org.robolectric.android.controller.ActivityController
@@ -101,34 +100,32 @@ internal class EmbraceActionInterface(
         setup.fakeNetworkConnectivityService.connectivityStatus = status
     }
 
-    fun simulateNetworkChangeShim(status: ConnectivityStatus) {
-        setup.fakeNetworkConnectivityService.connectivityStatus = status.toNetworkStatus().toConnectivityStatus()
-    }
-
     fun simulateConnectionTypeChange(connectionType: ConnectionType, legacyBehavior: Boolean = false) {
-        val fireEvent = if (legacyBehavior) {
-            ::simulateNetworkChangeShim
+        if (legacyBehavior) {
+            simulateConnectivityChange(connectionType.toOptimisticStatus())
         } else {
-            ::simulateConnectivityChange
-        }
-        when (connectionType) {
-            ConnectionType.WIFI -> {
-                fireEvent(ConnectivityStatus.Wifi(false))
-                clock.tick(CONNECTIVITY_VALIDATION_GAP)
-                fireEvent(ConnectivityStatus.Wifi(true))
-            }
-            ConnectionType.WAN -> {
-                fireEvent(ConnectivityStatus.Wan(false))
-                clock.tick(CONNECTIVITY_VALIDATION_GAP)
-                fireEvent(ConnectivityStatus.Wan(true))
-            }
-            ConnectionType.UNKNOWN -> {
-                fireEvent(ConnectivityStatus.Unknown(false))
-                clock.tick(CONNECTIVITY_VALIDATION_GAP)
-                fireEvent(ConnectivityStatus.Unknown(true))
-            }
-            ConnectionType.NONE -> {
-                fireEvent(ConnectivityStatus.None)
+            when (connectionType) {
+                ConnectionType.WIFI -> {
+                    simulateConnectivityChange(ConnectivityStatus.Wifi(false))
+                    clock.tick(CONNECTIVITY_VALIDATION_GAP)
+                    simulateConnectivityChange(ConnectivityStatus.Wifi(true))
+                }
+
+                ConnectionType.WAN -> {
+                    simulateConnectivityChange(ConnectivityStatus.Wan(false))
+                    clock.tick(CONNECTIVITY_VALIDATION_GAP)
+                    simulateConnectivityChange(ConnectivityStatus.Wan(true))
+                }
+
+                ConnectionType.UNKNOWN -> {
+                    simulateConnectivityChange(ConnectivityStatus.Unknown(false))
+                    clock.tick(CONNECTIVITY_VALIDATION_GAP)
+                    simulateConnectivityChange(ConnectivityStatus.Unknown(true))
+                }
+
+                ConnectionType.NONE -> {
+                    simulateConnectivityChange(ConnectivityStatus.None)
+                }
             }
         }
     }

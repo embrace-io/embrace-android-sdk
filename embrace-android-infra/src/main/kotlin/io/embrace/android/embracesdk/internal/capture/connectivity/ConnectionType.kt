@@ -12,3 +12,11 @@ enum class ConnectionType(
     UNKNOWN(openForDelivery = true, typeName = "unknown"),
     NONE(openForDelivery = false, typeName = "none"),
 }
+
+fun ConnectionType.toOptimisticStatus() =
+    when (this) {
+        ConnectionType.WIFI -> OptimisticWifi
+        ConnectionType.WAN -> OptimisticWan
+        ConnectionType.UNKNOWN -> OptimisticUnknown
+        ConnectionType.NONE -> ConnectivityStatus.None
+    }

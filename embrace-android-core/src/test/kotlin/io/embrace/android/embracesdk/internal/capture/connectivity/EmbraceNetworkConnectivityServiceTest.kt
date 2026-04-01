@@ -6,7 +6,6 @@ import android.content.Intent
 import android.net.ConnectivityManager
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
-import io.embrace.android.embracesdk.internal.comms.delivery.NetworkStatus
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.logging.InternalLoggerImpl
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
@@ -27,7 +26,7 @@ internal class EmbraceNetworkConnectivityServiceTest {
 
     private lateinit var service: EmbraceNetworkConnectivityService
     private lateinit var testListener: NetworkConnectivityListener
-    private var networkStatus: NetworkStatus? = null
+    private var status: ConnectivityStatus? = null
 
     companion object {
         private lateinit var context: Context
@@ -73,15 +72,7 @@ internal class EmbraceNetworkConnectivityServiceTest {
             mockConnectivityManager,
         )
 
-        testListener = object : NetworkConnectivityListener {
-            override fun onNetworkConnectivityStatusChanged(status: NetworkStatus) {
-                networkStatus = status
-            }
-
-            override fun onNetworkConnectivityStatusChanged(status: ConnectivityStatus) {
-                networkStatus = status.toNetworkStatus()
-            }
-        }
+        testListener = NetworkConnectivityListener { status -> this@EmbraceNetworkConnectivityServiceTest.status = status }
         service.addNetworkConnectivityListener(testListener)
     }
 
@@ -113,7 +104,7 @@ internal class EmbraceNetworkConnectivityServiceTest {
         every { mockConnectivityManager.activeNetworkInfo?.isConnected } returns true
         every { mockConnectivityManager.activeNetworkInfo?.type } returns ConnectivityManager.TYPE_WIFI
         service.onReceive(context, mockIntent)
-        assertEquals(NetworkStatus.WIFI, networkStatus)
+        assertEquals(OptimisticWifi, status)
     }
 
     @Test
@@ -123,7 +114,7 @@ internal class EmbraceNetworkConnectivityServiceTest {
         every { mockConnectivityManager.activeNetworkInfo?.isConnected } returns true
         every { mockConnectivityManager.activeNetworkInfo?.type } returns ConnectivityManager.TYPE_MOBILE
         service.onReceive(context, mockIntent)
-        assertEquals(NetworkStatus.WAN, networkStatus)
+        assertEquals(OptimisticWan, status)
     }
 
     @Test
@@ -132,7 +123,7 @@ internal class EmbraceNetworkConnectivityServiceTest {
         val mockIntent = mockk<Intent>()
         every { mockConnectivityManager.activeNetworkInfo?.isConnected } returns false
         service.onReceive(context, mockIntent)
-        assertEquals(NetworkStatus.NOT_REACHABLE, networkStatus)
+        assertEquals(ConnectivityStatus.None, status)
     }
 
     @Test
@@ -141,7 +132,7 @@ internal class EmbraceNetworkConnectivityServiceTest {
         val mockIntent = mockk<Intent>()
         every { mockConnectivityManager.activeNetworkInfo } throws Exception("")
         service.onReceive(context, mockIntent)
-        assertEquals(NetworkStatus.UNKNOWN, networkStatus)
+        assertEquals(OptimisticUnknown, status)
     }
 
     @Test
@@ -152,13 +143,13 @@ internal class EmbraceNetworkConnectivityServiceTest {
         every { mockConnectivityManager.activeNetworkInfo?.type } returns ConnectivityManager.TYPE_MOBILE
         service.onReceive(context, mockIntent)
 
-        assertEquals(NetworkStatus.WAN, networkStatus)
+        assertEquals(OptimisticWan, status)
 
         // remove listener and call onReceive again
         service.removeNetworkConnectivityListener(testListener)
         every { mockConnectivityManager.activeNetworkInfo?.type } returns ConnectivityManager.TYPE_WIFI
         service.onReceive(context, mockIntent)
 
-        assertEquals(NetworkStatus.WAN, networkStatus)
+        assertEquals(OptimisticWan, status)
     }
 }

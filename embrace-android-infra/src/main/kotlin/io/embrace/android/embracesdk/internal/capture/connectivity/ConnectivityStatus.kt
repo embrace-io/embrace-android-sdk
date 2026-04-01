@@ -1,7 +1,5 @@
 package io.embrace.android.embracesdk.internal.capture.connectivity
 
-import io.embrace.android.embracesdk.internal.comms.delivery.NetworkStatus
-
 sealed class ConnectivityStatus(
     val connectionType: ConnectionType,
 ) {
@@ -40,9 +38,6 @@ sealed class ConnectivityStatus(
     }
 }
 
-fun ConnectivityStatus.toNetworkStatus(): NetworkStatus = when (connectionType) {
-    ConnectionType.WIFI -> NetworkStatus.WIFI
-    ConnectionType.WAN -> NetworkStatus.WAN
-    ConnectionType.UNKNOWN -> NetworkStatus.UNKNOWN
-    ConnectionType.NONE -> NetworkStatus.NOT_REACHABLE
-}
+val OptimisticWifi = ConnectivityStatus.Wifi(true)
+val OptimisticWan = ConnectivityStatus.Wan(true)
+val OptimisticUnknown = ConnectivityStatus.Unknown(true)

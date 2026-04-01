@@ -10,7 +10,6 @@ import io.embrace.android.embracesdk.internal.capture.connectivity.ConnectionTyp
 import io.embrace.android.embracesdk.internal.capture.connectivity.ConnectivityStatus
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkStateDataSource
-import io.embrace.android.embracesdk.internal.otel.spans.hasEmbraceAttributeValue
 import io.embrace.android.embracesdk.internal.session.getSessionSpan
 import io.embrace.android.embracesdk.internal.session.getStateSpan
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
@@ -69,7 +68,6 @@ internal class NetworkStateFeatureTest {
                         checkNotNull(startTimeNanos).nanosToMillis()
                     )
                     assertEquals(sessionSpan.endTimeNanos, endTimeNanos)
-                    assertTrue(stateSpan.hasEmbraceAttributeValue(embStateDroppedByInstrumentation, 1))
                     with(checkNotNull(events)) {
                         assertEquals(3, size)
                         assertEquals(transitions.size, size)
@@ -81,18 +79,10 @@ internal class NetworkStateFeatureTest {
                             } else {
                                 0
                             }
-                            // Only the second transition should have an event dropped
-                            // The dropped event for the duplicate WAN status exists at the state span level
-                            val droppedByInstrumentation = if (i == 1) {
-                                1
-                            } else {
-                                0
-                            }
                             this[i].assertStateTransition(
                                 timestampMs = transitions[i].first,
                                 newStateValue = transitions[i].second,
                                 notInSession = notInSession,
-                                droppedByInstrumentation = droppedByInstrumentation
                             )
                         }
                     }

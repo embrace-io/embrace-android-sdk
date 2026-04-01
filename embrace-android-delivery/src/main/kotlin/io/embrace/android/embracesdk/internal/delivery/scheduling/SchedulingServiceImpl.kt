@@ -15,6 +15,7 @@ import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import java.io.InputStream
 import java.net.ConnectException
+import java.net.NoRouteToHostException
 import java.net.UnknownHostException
 import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
@@ -23,6 +24,7 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
+import javax.net.ssl.SSLException
 
 class SchedulingServiceImpl(
     private val storageService: PayloadStorageService,
@@ -299,7 +301,7 @@ class SchedulingServiceImpl(
     }
 
     private fun ExecutionResult.failedToConnect(): Boolean =
-        this is ExecutionResult.Incomplete && (exception is UnknownHostException || exception is ConnectException)
+        this is ExecutionResult.Incomplete && (connectionBlockingExceptions.any { it.isInstance(exception) })
 
     private fun ExecutionResult.connectedToServer(): Boolean =
         this !is ExecutionResult.NetworkNotReady && this !is ExecutionResult.NotAttempted
@@ -460,6 +462,18 @@ class SchedulingServiceImpl(
 
     companion object {
         const val INITIAL_DELAY_MS = 15_000L
+
+        /**
+         * The set of exceptions thrown during network request execution which consider to be likely unrecoverable without a new
+         * network connection.
+         */
+        internal val connectionBlockingExceptions: Set<Class<out Throwable>> =
+            setOf(
+                UnknownHostException::class.java,
+                ConnectException::class.java,
+                SSLException::class.java,
+                NoRouteToHostException::class.java
+            )
 
         /**
          * Note: bit-shifting is used to raise 2 to the power of [retryAttempts]. This is the most efficient way of

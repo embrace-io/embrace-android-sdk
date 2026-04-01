@@ -33,8 +33,8 @@ import org.junit.Before
 import org.junit.Test
 import java.net.ConnectException
 import java.net.SocketTimeoutException
-import java.net.UnknownHostException
 import java.util.concurrent.RejectedExecutionException
+import javax.net.ssl.SSLKeyException
 
 internal class SchedulingServiceImplTest {
 
@@ -789,7 +789,7 @@ internal class SchedulingServiceImplTest {
 
     private fun disconnect() = setExecutionResult(Incomplete(ConnectException(), true))
 
-    private fun blockConnection() = setExecutionResult(Incomplete(UnknownHostException(), true))
+    private fun blockConnection() = setExecutionResult(Incomplete(SSLKeyException("dang bad key"), true))
 
     private fun setExecutionResult(result: ExecutionResult) {
         executionService.constantResponse = result

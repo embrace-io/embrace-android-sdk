@@ -25,7 +25,7 @@ class FakeIntakeService : IntakeService {
         shutdownCount++
     }
 
-    override fun take(intake: Envelope<*>, metadata: StoredTelemetryMetadata): Future<*> {
+    override fun take(intake: Envelope<*>, metadata: StoredTelemetryMetadata, staleEntry: StoredTelemetryMetadata?): Future<*> {
         val dst = when (metadata.complete) {
             true -> intakeList
             false -> cacheList

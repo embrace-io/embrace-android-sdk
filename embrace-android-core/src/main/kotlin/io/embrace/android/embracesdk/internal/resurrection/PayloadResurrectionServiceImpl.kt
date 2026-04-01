@@ -225,7 +225,8 @@ internal class PayloadResurrectionServiceImpl(
         if (resurrectedPayload != null) {
             val task = intakeService.take(
                 intake = resurrectedPayload,
-                metadata = copy(complete = true)
+                metadata = copy(complete = true),
+                staleEntry = this,
             )
             try {
                 task.get(5, TimeUnit.SECONDS)

@@ -430,7 +430,11 @@ class PayloadResurrectionServiceImplTest {
     fun `resurrection timeout logged when future throws timeout on get`() {
         val hangingIntakeService = object : IntakeService {
             override fun shutdown() {}
-            override fun take(intake: Envelope<*>, metadata: StoredTelemetryMetadata): Future<*> {
+            override fun take(
+                intake: Envelope<*>,
+                metadata: StoredTelemetryMetadata,
+                staleEntry: StoredTelemetryMetadata?
+            ): Future<*> {
                 return object : Future<Unit> {
                     override fun cancel(mayInterruptIfRunning: Boolean) = false
                     override fun isCancelled() = false

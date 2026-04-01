@@ -284,67 +284,149 @@ class IntakeServiceImplTest {
     }
 
     @Test
-    fun `only cached session payloads cleaned up and only by another session payload intake`() {
+    fun `previous cached session snapshot is cleaned up automatically by IntakeServiceImpl`() {
         executorService.blockingMode = false
-        val cache1 = StoredTelemetryMetadata(clock.now(), UUID, PROCESS_ID, SESSION, complete = false).apply {
-            intakeService.take(
-                intake = sessionEnvelope,
-                metadata = this
-            )
+        val snapshot1 = StoredTelemetryMetadata(
+            timestamp = clock.now(),
+            uuid = UUID,
+            processIdentifier = PROCESS_ID,
+            envelopeType = SESSION,
+            complete = false
+        ).apply {
+            intakeService.take(intake = sessionEnvelope, metadata = this)
         }
 
+        // Log payload intake doesn't affect session cache
         intakeService.take(
             intake = logEnvelope,
-            metadata = StoredTelemetryMetadata(clock.tick(), UUID, PROCESS_ID, LOG, complete = true)
+            metadata = StoredTelemetryMetadata(
+                timestamp = clock.tick(),
+                uuid = UUID,
+                processIdentifier = PROCESS_ID,
+                envelopeType = LOG,
+                complete = true
+            )
         )
+        assertTrue(cacheStorageService.storedFilenames().contains(snapshot1.filename))
 
-        assertTrue(cacheStorageService.storedFilenames().contains(cache1.filename))
-
-        val cache2 = StoredTelemetryMetadata(clock.tick(), UUID, PROCESS_ID, SESSION, complete = false).apply {
-            intakeService.take(
-                intake = sessionEnvelope,
-                metadata = this
-            )
+        // New snapshot replaces old one
+        val snapshot2 = StoredTelemetryMetadata(
+            timestamp = clock.tick(),
+            uuid = UUID,
+            processIdentifier = PROCESS_ID,
+            envelopeType = SESSION,
+            complete = false
+        ).apply {
+            intakeService.take(intake = sessionEnvelope, metadata = this)
         }
+        assertFalse(cacheStorageService.storedFilenames().contains(snapshot1.filename))
+        assertTrue(cacheStorageService.storedFilenames().contains(snapshot2.filename))
 
-        assertFalse(cacheStorageService.storedFilenames().contains(cache1.filename))
-        assertTrue(cacheStorageService.storedFilenames().contains(cache2.filename))
-
-        val session = StoredTelemetryMetadata(clock.tick(), UUID, PROCESS_ID, SESSION, complete = true).apply {
-            intakeService.take(
-                intake = sessionEnvelope,
-                metadata = this
-            )
+        // Complete session payload cleans up snapshot
+        val session = StoredTelemetryMetadata(
+            timestamp = clock.tick(),
+            uuid = UUID,
+            processIdentifier = PROCESS_ID,
+            envelopeType = SESSION,
+            complete = true
+        ).apply {
+            intakeService.take(intake = sessionEnvelope, metadata = this)
         }
-
-        assertFalse(cacheStorageService.storedFilenames().contains(cache2.filename))
+        assertFalse(cacheStorageService.storedFilenames().contains(snapshot2.filename))
         assertTrue(payloadStorageService.storedFilenames().contains(session.filename))
         assertTrue(logger.internalErrorMessages.isEmpty())
     }
 
     @Test
-    fun `new empty crash envelope caching will remove the old copy`() {
+    fun `new empty crash envelope caching will remove the old copy automatically`() {
         executorService.blockingMode = false
-        val cache1 =
-            StoredTelemetryMetadata(clock.now(), UUID, PROCESS_ID, CRASH, false, PayloadType.UNKNOWN).apply {
-                intakeService.take(
-                    intake = logEnvelope,
-                    metadata = this
-                )
-            }
+        val snapshot1 = StoredTelemetryMetadata(
+            timestamp = clock.now(),
+            uuid = UUID,
+            processIdentifier = PROCESS_ID,
+            envelopeType = CRASH,
+            complete = false,
+            payloadType = PayloadType.UNKNOWN
+        ).apply {
+            intakeService.take(intake = logEnvelope, metadata = this)
+        }
 
-        assertEquals(cache1.filename, cacheStorageService.storedFilenames().single())
+        assertEquals(snapshot1.filename, cacheStorageService.storedFilenames().single())
 
-        val cache2 =
-            StoredTelemetryMetadata(clock.tick(), UUID, PROCESS_ID, CRASH, false, PayloadType.UNKNOWN).apply {
-                intakeService.take(
-                    intake = logEnvelope,
-                    metadata = this
-                )
-            }
+        val snapshot2 = StoredTelemetryMetadata(
+            timestamp = clock.tick(),
+            uuid = UUID,
+            processIdentifier = PROCESS_ID,
+            envelopeType = CRASH,
+            complete = false,
+            payloadType = PayloadType.UNKNOWN
+        ).apply {
+            intakeService.take(intake = logEnvelope, metadata = this)
+        }
 
-        assertEquals(cache2.filename, cacheStorageService.storedFilenames().single())
+        assertEquals(snapshot2.filename, cacheStorageService.storedFilenames().single())
         assertTrue(logger.internalErrorMessages.isEmpty())
+    }
+
+    @Test
+    fun `explicit staleEntry takes precedence over internal cache tracking`() {
+        executorService.blockingMode = false
+
+        // Cache a session snapshot — tracked internally by IntakeServiceImpl
+        val snapshot = StoredTelemetryMetadata(
+            timestamp = clock.now(),
+            uuid = UUID,
+            processIdentifier = PROCESS_ID,
+            envelopeType = SESSION,
+            complete = false
+        ).apply {
+            intakeService.take(intake = sessionEnvelope, metadata = this)
+        }
+        assertEquals(1, cacheStorageService.storedPayloadCount())
+
+        // Resurrection provides an explicit staleEntry for a different metadata.
+        // The explicit staleEntry should be deleted, NOT the internally tracked snapshot.
+        val resurrectionSource = StoredTelemetryMetadata(
+            timestamp = clock.tick(),
+            uuid = "other-uuid",
+            processIdentifier = "old-pid",
+            envelopeType = SESSION,
+            complete = false
+        ).apply {
+            cacheStorageService.store(this) {
+                it.write("old".toByteArray())
+            }
+        }
+        assertEquals(2, cacheStorageService.storedPayloadCount())
+
+        intakeService.take(
+            intake = sessionEnvelope,
+            metadata = StoredTelemetryMetadata(
+                timestamp = clock.tick(),
+                uuid = UUID,
+                processIdentifier = PROCESS_ID,
+                envelopeType = SESSION,
+                complete = true
+            ),
+            staleEntry = resurrectionSource
+        )
+
+        // resurrectionSource was deleted (explicit staleEntry), snapshot is still present
+        assertFalse(cacheStorageService.storedFilenames().contains(resurrectionSource.filename))
+        assertTrue(cacheStorageService.storedFilenames().contains(snapshot.filename))
+        assertEquals(1, payloadStorageService.storedPayloadCount())
+    }
+
+    @Test
+    fun `complete intake with no prior cached or not cacheable payloads deletes nothing`() {
+        executorService.blockingMode = false
+
+        intakeService.take(intake = sessionEnvelope, metadata = sessionMetadata)
+        intakeService.take(intake = logEnvelope, metadata = logMetadata)
+
+        assertEquals(2, payloadStorageService.storedPayloadCount())
+        assertEquals(0, cacheStorageService.storedPayloadCount())
+        assertEquals(0, cacheStorageService.deleteCount.get())
     }
 
     @Test

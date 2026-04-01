@@ -28,13 +28,23 @@ internal class PayloadStoreImpl(
         envelope: Envelope<SessionPayload>,
         transitionType: TransitionType,
     ) {
-        intakeService.take(envelope, createMetadata(SupportedEnvelopeType.SESSION, payloadType = PayloadType.SESSION))
+        intakeService.take(
+            intake = envelope,
+            metadata = createMetadata(
+                type = SupportedEnvelopeType.SESSION,
+                payloadType = PayloadType.SESSION
+            )
+        )
     }
 
     override fun cacheSessionSnapshot(envelope: Envelope<SessionPayload>) {
         intakeService.take(
-            envelope,
-            createMetadata(SupportedEnvelopeType.SESSION, complete = false, payloadType = PayloadType.SESSION)
+            intake = envelope,
+            metadata = createMetadata(
+                type = SupportedEnvelopeType.SESSION,
+                complete = false,
+                payloadType = PayloadType.SESSION
+            )
         )
     }
 
@@ -42,13 +52,20 @@ internal class PayloadStoreImpl(
         val type = findSupportedEnvelopeType(envelope.data.logs)
         val payloadType = getPayloadType(envelope)
         val payloadTypesHeader = getPayloadTypesHeader(envelope)
-        intakeService.take(envelope, createMetadata(type, payloadType = payloadType, payloadTypesHeader = payloadTypesHeader))
+        intakeService.take(
+            intake = envelope,
+            metadata = createMetadata(
+                type = type,
+                payloadType = payloadType,
+                payloadTypesHeader = payloadTypesHeader
+            )
+        )
     }
 
     override fun storeAttachment(envelope: Envelope<Pair<String, ByteArray>>) {
         intakeService.take(
-            envelope,
-            createMetadata(
+            intake = envelope,
+            metadata = createMetadata(
                 type = SupportedEnvelopeType.ATTACHMENT,
                 payloadType = PayloadType.ATTACHMENT
             )

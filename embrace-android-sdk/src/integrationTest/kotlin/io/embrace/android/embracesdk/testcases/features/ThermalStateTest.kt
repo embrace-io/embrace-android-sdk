@@ -11,6 +11,7 @@ import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.assertions.assertMatches
 import io.embrace.android.embracesdk.internal.instrumentation.thermalstate.ThermalStateDataSource
+import io.embrace.android.embracesdk.semconv.EmbThermalStateAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -47,7 +48,7 @@ internal class ThermalStateFeatureTest {
                 assertEquals("perf.thermal_state", attrs.findAttributeValue("emb.type"))
                 assertEquals(
                     PowerManager.THERMAL_STATUS_NONE.toString(),
-                    attrs.findAttributeValue("status")
+                    attrs.findAttributeValue(EmbThermalStateAttributes.STATUS)
                 )
                 assertEquals(startTimeMs, snapshot.startTimeNanos?.nanosToMillis())
             }
@@ -83,13 +84,13 @@ internal class ThermalStateFeatureTest {
                 }
                 val firstSpan = spans.first()
                 firstSpan.attributes?.assertMatches(mapOf(
-                    "status" to PowerManager.THERMAL_STATUS_CRITICAL.toString()
+                    EmbThermalStateAttributes.STATUS to PowerManager.THERMAL_STATUS_CRITICAL.toString()
                 ))
                 assertEquals(startTimeMs, firstSpan.startTimeNanos?.nanosToMillis())
                 assertEquals(startTimeMs + tickTimeMs, firstSpan.endTimeNanos?.nanosToMillis())
                 val secondSpan = spans.last()
                 secondSpan.attributes?.assertMatches(mapOf(
-                    "status" to PowerManager.THERMAL_STATUS_MODERATE.toString()
+                    EmbThermalStateAttributes.STATUS to PowerManager.THERMAL_STATUS_MODERATE.toString()
                 ))
                 assertEquals(startTimeMs + tickTimeMs, secondSpan.startTimeNanos?.nanosToMillis())
                 assertEquals(startTimeMs + tickTimeMs * 2, secondSpan.endTimeNanos?.nanosToMillis())
@@ -98,7 +99,7 @@ internal class ThermalStateFeatureTest {
                 assertEquals("emb-thermal-state", snapshot.name)
                 assertEquals("perf.thermal_state", snapshot.attributes?.findAttributeValue("emb.type"))
                 snapshot.attributes?.assertMatches(mapOf(
-                    "status" to PowerManager.THERMAL_STATUS_NONE.toString()
+                    EmbThermalStateAttributes.STATUS to PowerManager.THERMAL_STATUS_NONE.toString()
                 ))
                 assertEquals(startTimeMs + tickTimeMs * 2, snapshot.startTimeNanos?.nanosToMillis())
             }

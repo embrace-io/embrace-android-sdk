@@ -5,6 +5,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.semconv.EmbTapAttributes
+import io.embrace.android.embracesdk.semconv.EmbViewAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
@@ -34,7 +35,7 @@ internal class TapBreadcrumbDataSourceTest {
             assertEquals(args.clock.now(), startTimeMs)
             assertEquals(
                 mapOf(
-                    EmbTapAttributes.VIEW_NAME to "my-button-id",
+                    EmbViewAttributes.VIEW_NAME to "my-button-id",
                     EmbTapAttributes.TAP_TYPE to "tap",
                     EmbTapAttributes.TAP_COORDS to "126,309"
                 ),

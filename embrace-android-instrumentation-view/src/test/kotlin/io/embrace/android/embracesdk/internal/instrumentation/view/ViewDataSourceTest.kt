@@ -5,6 +5,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.attrs.asPair
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.semconv.EmbViewAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -36,7 +37,7 @@ internal class ViewDataSourceTest {
         assertTrue(span.isRecording())
         assertEquals(
             mapOf(
-                "view.name" to "my_fragment",
+                EmbViewAttributes.VIEW_NAME to "my_fragment",
                 EmbType.Ux.View.asPair(),
             ),
             span.attributes
@@ -54,7 +55,7 @@ internal class ViewDataSourceTest {
         assertTrue(
             spans.all {
                 it.type == EmbType.Ux.View &&
-                    it.attributes["view.name"] == "my_fragment" &&
+                    it.attributes[EmbViewAttributes.VIEW_NAME] == "my_fragment" &&
                     it.attributes["emb.type"] == "ux.view"
             }
         )
@@ -85,8 +86,8 @@ internal class ViewDataSourceTest {
         val firstSpan = spans.first()
         val secondSpan = spans.last()
 
-        assertEquals("my_fragment", firstSpan.attributes["view.name"])
-        assertEquals("another_fragment", secondSpan.attributes["view.name"])
+        assertEquals("my_fragment", firstSpan.attributes[EmbViewAttributes.VIEW_NAME])
+        assertEquals("another_fragment", secondSpan.attributes[EmbViewAttributes.VIEW_NAME])
     }
 
     @Test
@@ -99,7 +100,7 @@ internal class ViewDataSourceTest {
         assertFalse(span.isRecording())
         assertEquals(
             mapOf(
-                "view.name" to "my_fragment",
+                EmbViewAttributes.VIEW_NAME to "my_fragment",
                 EmbType.Ux.View.asPair()
             ),
             span.attributes
@@ -121,7 +122,7 @@ internal class ViewDataSourceTest {
         assertTrue(span.isRecording())
         assertEquals(
             mapOf(
-                "view.name" to "some_view",
+                EmbViewAttributes.VIEW_NAME to "some_view",
                 EmbType.Ux.View.asPair(),
             ),
             span.attributes
@@ -148,8 +149,8 @@ internal class ViewDataSourceTest {
 
         assertFalse(firstSpan.isRecording())
         assertTrue(secondSpan.isRecording())
-        assertTrue(firstSpan.attributes["view.name"] == "a_view")
-        assertTrue(secondSpan.attributes["view.name"] == "another_view")
+        assertTrue(firstSpan.attributes[EmbViewAttributes.VIEW_NAME] == "a_view")
+        assertTrue(secondSpan.attributes[EmbViewAttributes.VIEW_NAME] == "another_view")
     }
 
     @Test

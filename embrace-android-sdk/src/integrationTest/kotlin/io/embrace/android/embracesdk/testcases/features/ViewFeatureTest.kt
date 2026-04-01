@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.assertions.findSpansOfType
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
+import io.embrace.android.embracesdk.semconv.EmbViewAttributes
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -39,17 +40,17 @@ internal class ViewFeatureTest {
                 val viewSpans = getSingleSessionEnvelope().findSpansOfType(EmbType.Ux.View)
                 assertEquals(3, viewSpans.size)
 
-                with(viewSpans.single { it.attributes?.findAttributeValue("view.name") == "MyView" }) {
+                with(viewSpans.single { it.attributes?.findAttributeValue(EmbViewAttributes.VIEW_NAME) == "MyView" }) {
                     assertEquals(startTimeMs, startTimeNanos?.nanosToMillis())
                     assertEquals(startTimeMs + 3000L, endTimeNanos?.nanosToMillis())
                 }
 
-                with(viewSpans.single { it.attributes?.findAttributeValue("view.name") == "AnotherView" }) {
+                with(viewSpans.single { it.attributes?.findAttributeValue(EmbViewAttributes.VIEW_NAME) == "AnotherView" }) {
                     assertEquals(startTimeMs + 1000L, startTimeNanos?.nanosToMillis())
                     assertEquals(startTimeMs + 3000L, endTimeNanos?.nanosToMillis())
                 }
 
-                assertNotNull(viewSpans.single { it.attributes?.findAttributeValue("view.name") == "android.app.Activity" })
+                assertNotNull(viewSpans.single { it.attributes?.findAttributeValue(EmbViewAttributes.VIEW_NAME) == "android.app.Activity" })
             }
         )
     }

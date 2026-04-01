@@ -21,10 +21,4 @@ object EmbTapAttributes {
      */
     @ExperimentalSemconv
     const val TAP_TYPE: String = "tap.type"
-
-    /**
-     * The name of the view/element that the tap event occurred in.
-     */
-    @ExperimentalSemconv
-    const val VIEW_NAME: String = "view.name"
 }

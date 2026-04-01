@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.instrumentation.thermalstate
 import android.os.PowerManager
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.semconv.EmbThermalStateAttributes
 import io.mockk.mockk
 import io.mockk.verify
 import org.junit.Assert.assertEquals
@@ -33,9 +34,12 @@ internal class ThermalStateDataSourceTest {
         destination.createdSpans.forEach {
             assertEquals(EmbType.Performance.ThermalState, it.type)
         }
-        assertEquals(PowerManager.THERMAL_STATUS_NONE, destination.createdSpans[0].attributes["status"]?.toInt())
-        assertEquals(PowerManager.THERMAL_STATUS_SEVERE, destination.createdSpans[1].attributes["status"]?.toInt())
-        assertEquals(PowerManager.THERMAL_STATUS_CRITICAL, destination.createdSpans[2].attributes["status"]?.toInt())
+        assertEquals(PowerManager.THERMAL_STATUS_NONE, destination.createdSpans[0].attributes[EmbThermalStateAttributes.STATUS]?.toInt())
+        assertEquals(PowerManager.THERMAL_STATUS_SEVERE, destination.createdSpans[1].attributes[EmbThermalStateAttributes.STATUS]?.toInt())
+        assertEquals(
+            PowerManager.THERMAL_STATUS_CRITICAL,
+            destination.createdSpans[2].attributes[EmbThermalStateAttributes.STATUS]?.toInt()
+        )
     }
 
     @Test

@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.internal.instrumentation.HucLiteDataSource
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
+import io.opentelemetry.kotlin.semconv.ExceptionAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
@@ -92,11 +93,11 @@ internal class HucLiteInstrumentationEnabledTest {
         val attrs = checkNotNull(attributes)
         assertEquals(
             "java.lang.reflect.InaccessibleObjectException",
-            attrs.findAttributeValue("exception.type")
+            attrs.findAttributeValue(ExceptionAttributes.EXCEPTION_TYPE)
         )
         assertEquals(
             attempted,
-            attrs.findAttributeValue("exception.stacktrace")?.contains(HucLiteDataSource::class.java.name)
+            attrs.findAttributeValue(ExceptionAttributes.EXCEPTION_STACKTRACE)?.contains(HucLiteDataSource::class.java.name)
         )
     }
 }

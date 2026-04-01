@@ -4,6 +4,7 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.semconv.EmbBreadcrumbAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
@@ -34,7 +35,7 @@ internal class BreadcrumbDataSourceTest {
             assertEquals(EmbType.System.Breadcrumb, schemaType.telemetryType)
             assertEquals(15000000000, startTimeMs)
             assertEquals(
-                mapOf("message" to "Hello, world!"),
+                mapOf(EmbBreadcrumbAttributes.MESSAGE to "Hello, world!"),
                 schemaType.attributes()
             )
         }

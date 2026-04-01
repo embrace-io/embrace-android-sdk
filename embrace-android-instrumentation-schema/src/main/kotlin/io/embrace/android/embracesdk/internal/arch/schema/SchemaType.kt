@@ -4,8 +4,14 @@ import io.embrace.android.embracesdk.internal.arch.attrs.embAeiNumber
 import io.embrace.android.embracesdk.internal.arch.attrs.embCrashNumber
 import io.embrace.android.embracesdk.internal.arch.attrs.embSendMode
 import io.embrace.android.embracesdk.internal.arch.attrs.embStateInitialValue
-import io.embrace.android.embracesdk.internal.arch.attrs.toEmbraceAttributeName
+import io.embrace.android.embracesdk.semconv.EmbAeiAttributes
+import io.embrace.android.embracesdk.semconv.EmbBreadcrumbAttributes
+import io.embrace.android.embracesdk.semconv.EmbNetworkCapturedRequestAttributes
+import io.embrace.android.embracesdk.semconv.EmbNetworkStatusAttributes
+import io.embrace.android.embracesdk.semconv.EmbPushNotificationAttributes
 import io.embrace.android.embracesdk.semconv.EmbTapAttributes
+import io.embrace.android.embracesdk.semconv.EmbThermalStateAttributes
+import io.embrace.android.embracesdk.semconv.EmbViewAttributes
 import io.opentelemetry.kotlin.semconv.ExceptionAttributes
 import io.opentelemetry.kotlin.semconv.HttpAttributes
 import io.opentelemetry.kotlin.semconv.SessionAttributes
@@ -40,14 +46,14 @@ sealed class SchemaType(
         telemetryType = EmbType.System.Breadcrumb,
         fixedObjectName = "breadcrumb"
     ) {
-        override val schemaAttributes: Map<String, String> = mapOf("message" to message)
+        override val schemaAttributes: Map<String, String> = mapOf(EmbBreadcrumbAttributes.MESSAGE to message)
     }
 
     class View(viewName: String) : SchemaType(
         telemetryType = EmbType.Ux.View,
         fixedObjectName = "screen-view"
     ) {
-        override val schemaAttributes: Map<String, String> = mapOf("view.name" to viewName)
+        override val schemaAttributes: Map<String, String> = mapOf(EmbViewAttributes.VIEW_NAME to viewName)
     }
 
     /**
@@ -66,12 +72,12 @@ sealed class SchemaType(
         fixedObjectName = "push-notification"
     ) {
         override val schemaAttributes: Map<String, String> = mapOf(
-            "notification.title" to title,
-            "notification.type" to type,
-            "notification.body" to body,
-            "notification.id" to id,
-            "notification.from" to from,
-            "notification.priority" to priority.toString()
+            EmbPushNotificationAttributes.NOTIFICATION_TITLE to title,
+            EmbPushNotificationAttributes.NOTIFICATION_TYPE to type,
+            EmbPushNotificationAttributes.NOTIFICATION_BODY to body,
+            EmbPushNotificationAttributes.NOTIFICATION_ID to id,
+            EmbPushNotificationAttributes.NOTIFICATION_FROM to from,
+            EmbPushNotificationAttributes.NOTIFICATION_PRIORITY to priority.toString()
         ).toNonNullMap()
     }
 
@@ -90,7 +96,7 @@ sealed class SchemaType(
         fixedObjectName = "ui-tap"
     ) {
         override val schemaAttributes: Map<String, String> = mapOf(
-            EmbTapAttributes.VIEW_NAME to viewName,
+            EmbViewAttributes.VIEW_NAME to viewName,
             EmbTapAttributes.TAP_TYPE to type,
             EmbTapAttributes.TAP_COORDS to coords
         ).toNonNullMap()
@@ -122,16 +128,16 @@ sealed class SchemaType(
         aeiNumber: Int?,
     ) : SchemaType(EmbType.System.Exit) {
         override val schemaAttributes: Map<String, String> = mapOf(
-            "aei_session_id" to sessionId,
-            "session_id_error" to sessionIdError,
-            "process_importance" to importance.toString(),
-            "pss" to pss.toString(),
-            "reason" to reason.toString(),
-            "rss" to rss.toString(),
-            "exit_status" to status.toString(),
-            "timestamp" to timestamp.toString(),
-            "description" to description,
-            "trace_status" to traceStatus,
+            EmbAeiAttributes.AEI_SESSION_ID to sessionId,
+            EmbAeiAttributes.SESSION_ID_ERROR to sessionIdError,
+            EmbAeiAttributes.PROCESS_IMPORTANCE to importance.toString(),
+            EmbAeiAttributes.PSS to pss.toString(),
+            EmbAeiAttributes.REASON to reason.toString(),
+            EmbAeiAttributes.RSS to rss.toString(),
+            EmbAeiAttributes.EXIT_STATUS to status.toString(),
+            EmbAeiAttributes.TIMESTAMP to timestamp.toString(),
+            EmbAeiAttributes.DESCRIPTION to description,
+            EmbAeiAttributes.TRACE_STATUS to traceStatus,
             embCrashNumber.name to crashNumber.toString(),
             embAeiNumber.name to aeiNumber.toString()
         ).toNonNullMap()
@@ -196,26 +202,26 @@ sealed class SchemaType(
         telemetryType = EmbType.System.NetworkCapturedRequest
     ) {
         override val schemaAttributes: Map<String, String> = mapOf(
-            "duration" to duration.toString(),
-            "end-time" to endTime.toString(),
+            EmbNetworkCapturedRequestAttributes.DURATION to duration.toString(),
+            EmbNetworkCapturedRequestAttributes.END_TIME to endTime.toString(),
             HttpAttributes.HTTP_REQUEST_METHOD to httpMethod,
             UrlAttributes.URL_FULL to matchedUrl,
-            "network-id" to networkId,
-            "request-body" to requestBody,
+            EmbNetworkCapturedRequestAttributes.NETWORK_ID to networkId,
+            EmbNetworkCapturedRequestAttributes.REQUEST_BODY to requestBody,
             HttpAttributes.HTTP_REQUEST_BODY_SIZE to requestBodySize.toString(),
-            "request-query" to requestQuery,
-            "http.request.header" to requestQueryHeaders.toString(),
-            "request-size" to requestSize.toString(),
-            "response-body" to responseBody,
+            EmbNetworkCapturedRequestAttributes.REQUEST_QUERY to requestQuery,
+            HttpAttributes.HTTP_REQUEST_HEADER to requestQueryHeaders.toString(),
+            EmbNetworkCapturedRequestAttributes.REQUEST_SIZE to requestSize.toString(),
+            EmbNetworkCapturedRequestAttributes.RESPONSE_BODY to responseBody,
             HttpAttributes.HTTP_RESPONSE_BODY_SIZE to responseBodySize.toString(),
-            "http.response.header" to responseHeaders.toString(),
-            "response-size" to responseSize.toString(),
+            HttpAttributes.HTTP_RESPONSE_HEADER to responseHeaders.toString(),
+            EmbNetworkCapturedRequestAttributes.RESPONSE_SIZE to responseSize.toString(),
             HttpAttributes.HTTP_RESPONSE_STATUS_CODE to responseStatus.toString(),
             SessionAttributes.SESSION_ID to sessionId,
-            "start-time" to startTime.toString(),
-            "url" to url,
+            EmbNetworkCapturedRequestAttributes.START_TIME to startTime.toString(),
+            EmbNetworkCapturedRequestAttributes.URL to url,
             ExceptionAttributes.EXCEPTION_MESSAGE to errorMessage,
-            "encrypted-payload" to encryptedPayload
+            EmbNetworkCapturedRequestAttributes.ENCRYPTED_PAYLOAD to encryptedPayload
         ).toNonNullMap()
     }
 
@@ -226,30 +232,8 @@ sealed class SchemaType(
         fixedObjectName = "network-status"
     ) {
         override val schemaAttributes: Map<String, String> = mapOf(
-            "network" to networkStatus
+            EmbNetworkStatusAttributes.NETWORK to networkStatus
         ).toNonNullMap()
-    }
-
-    class ReactNativeAction(
-        name: String,
-        outcome: String,
-        payloadSize: Int,
-        properties: Map<String?, Any?>,
-    ) : SchemaType(
-        telemetryType = EmbType.System.ReactNativeAction,
-        fixedObjectName = "rn-action"
-    ) {
-        override val schemaAttributes: Map<String, String> = mapOf(
-            "name" to name,
-            "outcome" to outcome,
-            "payload_size" to payloadSize.toString(),
-        )
-            .plus(
-                properties
-                    .mapKeys { it.key.toString().toEmbraceAttributeName() }
-                    .mapValues { it.value.toString() }
-            )
-            .toNonNullMap()
     }
 
     class ThermalState(
@@ -259,7 +243,7 @@ sealed class SchemaType(
         fixedObjectName = "thermal-state"
     ) {
         override val schemaAttributes: Map<String, String> = mapOf(
-            "status" to status.toString()
+            EmbThermalStateAttributes.STATUS to status.toString()
         )
     }
 

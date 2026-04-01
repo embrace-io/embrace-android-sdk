@@ -20,6 +20,7 @@ import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.instrumentation.crash.jvm.JvmCrashDataSourceImpl
 import io.mockk.every
 import io.mockk.mockk
+import io.opentelemetry.kotlin.semconv.ExceptionAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
@@ -157,8 +158,8 @@ internal class ReactNativeInternalInterfaceImplTest {
         assertEquals(EmbType.System.ReactNativeCrash, logEvent.schemaType.telemetryType)
         val lastSentCrashAttributes = logEvent.schemaType.attributes()
         assertEquals(1, destination.logEvents.size)
-        assertEquals("Whoops", lastSentCrashAttributes["exception.message"])
-        assertEquals("java.lang.IllegalStateException", lastSentCrashAttributes["exception.type"])
+        assertEquals("Whoops", lastSentCrashAttributes[ExceptionAttributes.EXCEPTION_MESSAGE])
+        assertEquals("java.lang.IllegalStateException", lastSentCrashAttributes[ExceptionAttributes.EXCEPTION_TYPE])
         assertEquals(
             "{\"n\":\"name\",\"" +
                 "m\":\"message\",\"" +

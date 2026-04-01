@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.assertions.findSpanSnapshotsOfType
 import io.embrace.android.embracesdk.assertions.findSpansOfType
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.capture.connectivity.ConnectionType
+import io.embrace.android.embracesdk.semconv.EmbNetworkStatusAttributes
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import org.junit.Assert.assertEquals
@@ -49,7 +50,7 @@ internal class NetworkStatusFeatureTest {
                 span.attributes?.assertMatches(
                     mapOf(
                         "emb.type" to "sys.network_status",
-                        "network" to "unknown"
+                        EmbNetworkStatusAttributes.NETWORK to "unknown"
                     )
                 )
 
@@ -59,7 +60,7 @@ internal class NetworkStatusFeatureTest {
                 snapshot.attributes?.assertMatches(
                     mapOf(
                         "emb.type" to "sys.network_status",
-                        "network" to "wifi"
+                        EmbNetworkStatusAttributes.NETWORK to "wifi"
                     )
                 )
             }
@@ -94,7 +95,7 @@ internal class NetworkStatusFeatureTest {
                 span.attributes?.assertMatches(
                     mapOf(
                         "emb.type" to "sys.network_status",
-                        "network" to "unknown"
+                        EmbNetworkStatusAttributes.NETWORK to "unknown"
                     )
                 )
 
@@ -104,7 +105,7 @@ internal class NetworkStatusFeatureTest {
                 snapshot.attributes?.assertMatches(
                     mapOf(
                         "emb.type" to "sys.network_status",
-                        "network" to "wifi"
+                        EmbNetworkStatusAttributes.NETWORK to "wifi"
                     )
                 )
             }
@@ -127,7 +128,7 @@ internal class NetworkStatusFeatureTest {
                 snapshot.attributes?.assertMatches(
                     mapOf(
                         "emb.type" to "sys.network_status",
-                        "network" to "unknown"
+                        EmbNetworkStatusAttributes.NETWORK to "unknown"
                     )
                 )
             }

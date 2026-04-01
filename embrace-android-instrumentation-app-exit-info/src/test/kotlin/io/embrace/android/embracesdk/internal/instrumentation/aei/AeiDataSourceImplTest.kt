@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.fakes.behavior.FakeAppExitInfoBehavior
 import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
 import io.embrace.android.embracesdk.internal.arch.datasource.LogSeverity
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.semconv.EmbAeiAttributes
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.unmockkAll
@@ -99,15 +100,15 @@ internal class AeiDataSourceImplTest {
 
         // when getCapturedData is called
         val attrs = getAeiLogAttrs()
-        assertEquals(TIMESTAMP.toString(), attrs["timestamp"])
-        assertEquals(SESSION_ID, attrs["aei_session_id"])
-        assertEquals(IMPORTANCE.toString(), attrs["process_importance"])
-        assertEquals(PSS.toString(), attrs["pss"])
-        assertEquals(RSS.toString(), attrs["rss"])
-        assertEquals(STATUS.toString(), attrs["exit_status"])
-        assertEquals(DESCRIPTION, attrs["description"])
-        assertEquals("", attrs["session_id_error"])
-        assertNull(attrs["trace_status"])
+        assertEquals(TIMESTAMP.toString(), attrs[EmbAeiAttributes.TIMESTAMP])
+        assertEquals(SESSION_ID, attrs[EmbAeiAttributes.AEI_SESSION_ID])
+        assertEquals(IMPORTANCE.toString(), attrs[EmbAeiAttributes.PROCESS_IMPORTANCE])
+        assertEquals(PSS.toString(), attrs[EmbAeiAttributes.PSS])
+        assertEquals(RSS.toString(), attrs[EmbAeiAttributes.RSS])
+        assertEquals(STATUS.toString(), attrs[EmbAeiAttributes.EXIT_STATUS])
+        assertEquals(DESCRIPTION, attrs[EmbAeiAttributes.DESCRIPTION])
+        assertEquals("", attrs[EmbAeiAttributes.SESSION_ID_ERROR])
+        assertNull(attrs[EmbAeiAttributes.TRACE_STATUS])
 
         val logEventData = args.destination.logEvents.single()
         assertEquals(TRACE, logEventData.message)
@@ -181,8 +182,8 @@ internal class AeiDataSourceImplTest {
         // when AEI is delivered
         val attrs = getAeiLogAttrs()
 
-        // then captured data should only have applicationExitInfo3
-        assertEquals("3", attrs["timestamp"])
+        // then captured data should only have applicationExitInfo
+        assertEquals("3", attrs[EmbAeiAttributes.TIMESTAMP])
     }
 
     @Test
@@ -203,8 +204,8 @@ internal class AeiDataSourceImplTest {
         val attrs = getAeiLogAttrs()
 
         // then the invalid session ID message should be added to the sessionIdError
-        assertEquals("invalid session ID: $invalidSessionId", attrs["session_id_error"])
-        assertEquals(invalidSessionId, attrs["aei_session_id"])
+        assertEquals("invalid session ID: $invalidSessionId", attrs[EmbAeiAttributes.SESSION_ID_ERROR])
+        assertEquals(invalidSessionId, attrs[EmbAeiAttributes.AEI_SESSION_ID])
     }
 
     @Test
@@ -244,7 +245,7 @@ internal class AeiDataSourceImplTest {
         // then a null trace should be sent
         val attrs = getAeiLogAttrs()
         assertNull("", attrs["blob"])
-        assertEquals("oom: Ouch", attrs["trace_status"])
+        assertEquals("oom: Ouch", attrs[EmbAeiAttributes.TRACE_STATUS])
     }
 
     @Test
@@ -265,7 +266,7 @@ internal class AeiDataSourceImplTest {
         // then a null trace should be sent
         val attrs = getAeiLogAttrs()
         assertNull(attrs["blob"])
-        assertEquals("ioexception: Ouch", attrs["trace_status"])
+        assertEquals("ioexception: Ouch", attrs[EmbAeiAttributes.TRACE_STATUS])
     }
 
     @Test
@@ -287,7 +288,7 @@ internal class AeiDataSourceImplTest {
         // then a null trace should be sent
         val attrs = getAeiLogAttrs()
         assertNull(attrs["blob"])
-        assertEquals("error: $errorMessage", attrs["trace_status"])
+        assertEquals("error: $errorMessage", attrs[EmbAeiAttributes.TRACE_STATUS])
     }
 
     @Test

@@ -14,22 +14,19 @@ sealed class ExecutionResult(
     object Success : ExecutionResult(false)
 
     /**
-     * A completed HTTP request that returned a 413 (Payload Too Large) status code.
-     */
-    object PayloadTooLarge : ExecutionResult(false)
-
-    /**
      * A completed HTTP request that returned a 429 (Too Many Requests) status code.
      */
     data class TooManyRequests(val endpoint: Endpoint, val retryAfterMs: Long?) : ExecutionResult(true)
 
     /**
-     * A completed HTTP request that with a status code that indicates it did not succeed (4xx and 5xx)
+     * A completed HTTP request that with a status code that indicates it did not succeed (4xx and 5xx).
      *
-     * Other than 413 and 429, which are modeled by [PayloadTooLarge] and [TooManyRequests] respectively, all properly
-     * received responses will be represented by this result.
+     * Other than 429, which is modeled by [TooManyRequests], all properly received error responses will be represented by this result.
+     *
+     * Since Embrace servers are not configured to send back these codes, it is assumed that they are returned by something else
+     * in the network hops in between the device and Embrace, and thus are potentially recoverable.
      */
-    data class Failure(val code: Int) : ExecutionResult(code in 500..599)
+    data class Failure(val code: Int) : ExecutionResult(true)
 
     /**
      * A completed HTTP request with a status code not explicitly covered by other [ExecutionResult]
@@ -60,7 +57,6 @@ sealed class ExecutionResult(
 
     companion object {
         private const val HTTP_OK = 200
-        private const val HTTP_ENTITY_TOO_LARGE = 413
         private const val HTTP_TOO_MANY_REQUESTS = 429
         private val HTTP_FAILURES = 400..599
 
@@ -80,7 +76,6 @@ sealed class ExecutionResult(
                 )
 
                 HTTP_OK -> Success
-                HTTP_ENTITY_TOO_LARGE -> PayloadTooLarge
                 HTTP_TOO_MANY_REQUESTS -> TooManyRequests(
                     endpoint,
                     headersProvider()["Retry-After"]?.toLongOrNull()?.times(1000)

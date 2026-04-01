@@ -128,6 +128,8 @@ internal class SchedulingServiceImplTest {
             )
             assertEquals("Send attempt $iteration failed", 2, storageService.storedPayloadCount())
             delay *= 2
+            // switch to different type of retryable error
+            allSendsMessedUpByTransport()
         }
     }
 
@@ -481,13 +483,13 @@ internal class SchedulingServiceImplTest {
     }
 
     @Test
-    fun `request failures that will not retry will not block subsequent payloads`() {
+    fun `requests that will not retry will not block subsequent payloads`() {
         storageService.clearStorage()
         storageService.addFakePayload(fakeSessionStoredTelemetryMetadata)
         storageService.addFakePayload(fakeSessionStoredTelemetryMetadata2)
 
-        // This makes the session not be retried
-        allRequestsTooLarge()
+        // This makes the request not be retried and its payload deleted
+        allSendsRejected()
         waitForResurrectionAndDeliveryAttempt(2)
 
         // Both sessions attempted to be sent but will be deleted instead
@@ -780,9 +782,11 @@ internal class SchedulingServiceImplTest {
 
     private fun allSendsFail() = setExecutionResult(Failure(code = 500))
 
+    private fun allSendsMessedUpByTransport() = setExecutionResult(Failure(code = 404))
+
     private fun allSendsTimeout() = setExecutionResult(Incomplete(SocketTimeoutException(), true))
 
-    private fun allRequestsTooLarge() = setExecutionResult(ExecutionResult.PayloadTooLarge)
+    private fun allSendsRejected() = setExecutionResult(ExecutionResult.Other(304))
 
     private fun serverBusy(endpoint: Endpoint, retryAfterMs: Long) =
         setExecutionResult(ExecutionResult.TooManyRequests(endpoint, retryAfterMs))

@@ -12,6 +12,7 @@ import io.embrace.android.embracesdk.network.http.HttpMethod
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbracePayloadAssertionInterface
 import io.embrace.android.embracesdk.assertions.assertMatches
+import io.embrace.android.embracesdk.semconv.EmbNetworkRequestAttributes
 import io.opentelemetry.kotlin.semconv.ExceptionAttributes
 import io.opentelemetry.kotlin.semconv.HttpAttributes
 import org.junit.Assert.assertEquals
@@ -309,8 +310,8 @@ internal class NetworkRequestApiTest {
                     attributes?.assertMatches(mapOf(
                         "url.full" to expectedRequest.url,
                         HttpAttributes.HTTP_REQUEST_METHOD to expectedRequest.httpMethod,
-                        "emb.trace_id" to expectedRequest.traceId,
-                        "emb.w3c_traceparent" to expectedRequest.w3cTraceparent,
+                        EmbNetworkRequestAttributes.EMB_TRACE_ID to expectedRequest.traceId,
+                        EmbNetworkRequestAttributes.EMB_W3C_TRACEPARENT to expectedRequest.w3cTraceparent,
                         HttpAttributes.HTTP_RESPONSE_STATUS_CODE to when {
                             completed -> expectedRequest.responseCode
                             else -> null

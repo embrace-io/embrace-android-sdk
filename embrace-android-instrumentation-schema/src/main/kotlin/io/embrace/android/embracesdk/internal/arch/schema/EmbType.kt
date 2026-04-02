@@ -83,8 +83,6 @@ sealed class EmbType(type: String, subtype: String?) : EmbraceAttribute {
             )
         }
 
-        object ReactNativeAction : System("rn_action")
-
         object NativeCrash : System("android.native_crash", SendMode.DEFER) {
             /**
              * Exception coming from the native layer

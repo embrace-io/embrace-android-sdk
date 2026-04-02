@@ -21,6 +21,7 @@ import io.embrace.android.embracesdk.internal.utils.toNonNullMap
 import io.opentelemetry.kotlin.semconv.ErrorAttributes
 import io.opentelemetry.kotlin.semconv.ExceptionAttributes
 import io.opentelemetry.kotlin.semconv.HttpAttributes
+import io.opentelemetry.kotlin.semconv.UrlAttributes
 import java.lang.reflect.Field
 import java.lang.reflect.Modifier
 import java.net.URL
@@ -210,7 +211,7 @@ class HucLiteDataSource(
             httpMethod: String,
             responseCode: Int,
         ): Map<String, String> = mapOf(
-            "url.full" to url,
+            UrlAttributes.URL_FULL to url,
             HttpAttributes.HTTP_REQUEST_METHOD to httpMethod,
             HttpAttributes.HTTP_RESPONSE_STATUS_CODE to responseCode,
         ).toNonNullMap().mapValues { it.value.toString() }
@@ -221,7 +222,7 @@ class HucLiteDataSource(
             errorType: String,
             errorMessage: String,
         ): Map<String, String> = mapOf(
-            "url.full" to url,
+            UrlAttributes.URL_FULL to url,
             HttpAttributes.HTTP_REQUEST_METHOD to httpMethod,
             ErrorAttributes.ERROR_TYPE to errorType,
             ExceptionAttributes.EXCEPTION_MESSAGE to errorMessage,

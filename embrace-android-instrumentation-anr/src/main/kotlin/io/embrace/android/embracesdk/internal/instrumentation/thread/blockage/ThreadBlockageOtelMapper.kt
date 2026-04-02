@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
+import io.embrace.android.embracesdk.semconv.EmbAnrAttributes
 import io.opentelemetry.kotlin.semconv.ExceptionAttributes
 import io.opentelemetry.kotlin.semconv.JvmAttributes
 import kotlin.random.Random
@@ -33,10 +34,10 @@ internal fun mapIntervalToSpanAttributes(interval: ThreadBlockageInterval): List
     attrs.add(Attribute("emb.type", "perf.thread_blockage"))
 
     interval.code?.let {
-        attrs.add(Attribute("interval_code", it.toString()))
+        attrs.add(Attribute(EmbAnrAttributes.INTERVAL_CODE, it.toString()))
     }
     interval.lastKnownTime?.let {
-        attrs.add(Attribute("last_known_time_unix_nano", it.millisToNanos().toString()))
+        attrs.add(Attribute(EmbAnrAttributes.LAST_KNOWN_TIME_UNIX_NANO, it.millisToNanos().toString()))
     }
     return attrs
 }
@@ -50,15 +51,15 @@ internal fun mapSampleToSpanEvent(sample: ThreadBlockageSample): SpanEvent {
     attrs.add(Attribute("emb.type", "perf.thread_blockage_sample"))
 
     sample.sampleOverheadMs?.let {
-        attrs.add(Attribute("sample_overhead", it.millisToNanos().toString()))
+        attrs.add(Attribute(EmbAnrAttributes.SAMPLE_OVERHEAD, it.millisToNanos().toString()))
     }
     sample.code?.let {
-        attrs.add(Attribute("sample_code", it.toString()))
+        attrs.add(Attribute(EmbAnrAttributes.SAMPLE_CODE, it.toString()))
     }
     sample.threadSample?.let { threadTrace ->
         attrs.add(Attribute(JvmAttributes.JVM_THREAD_STATE, threadTrace.state.toString()))
-        attrs.add(Attribute("thread_priority", threadTrace.priority.toString()))
-        attrs.add(Attribute("frame_count", threadTrace.frameCount.toString()))
+        attrs.add(Attribute(EmbAnrAttributes.THREAD_PRIORITY, threadTrace.priority.toString()))
+        attrs.add(Attribute(EmbAnrAttributes.FRAME_COUNT, threadTrace.frameCount.toString()))
 
         threadTrace.lines?.let { lines ->
             attrs.add(

@@ -219,3 +219,129 @@ groups:
         brief: "The thermal state status of the device."
         stability: development
         examples: ["0", "1", "2", "3"]
+
+  - id: emb.network_request
+    type: attribute_group
+    stability: development
+    brief: "Embrace-specific network request attributes"
+    prefix: ""
+    attributes:
+      - id: emb.w3c_traceparent
+        type: string
+        brief: "The W3C traceparent header value forwarded with the network request."
+        stability: development
+        examples: ["00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01"]
+      - id: emb.trace_id
+        type: string
+        brief: "The Embrace trace ID used for correlation."
+        stability: development
+        examples: ["a3ce929d0e0e4736"]
+
+  - id: emb.anr
+    type: attribute_group
+    stability: development
+    brief: "Embrace ANR / thread blockage attributes"
+    prefix: ""
+    attributes:
+      - id: interval_code
+        type: string
+        brief: "The ANR interval code."
+        stability: development
+        examples: ["1", "2"]
+      - id: last_known_time_unix_nano
+        type: string
+        brief: "The last known time the thread was responsive (nanoseconds since epoch)."
+        stability: development
+        examples: ["1617983000000000000"]
+      - id: sample_overhead
+        type: string
+        brief: "The overhead of collecting this sample (nanoseconds)."
+        stability: development
+        examples: ["500000"]
+      - id: sample_code
+        type: string
+        brief: "The ANR sample code."
+        stability: development
+        examples: ["1", "2"]
+      - id: thread_priority
+        type: string
+        brief: "The priority of the blocked thread."
+        stability: development
+        examples: ["5", "10"]
+      - id: frame_count
+        type: string
+        brief: "The number of stack frames in the thread sample."
+        stability: development
+        examples: ["10", "50"]
+
+  - id: emb.network_state
+    type: attribute_group
+    stability: development
+    brief: "Embrace network connectivity state attributes"
+    prefix: ""
+    attributes:
+      - id: network.status
+        type:
+          allow_custom_values: false
+          members:
+            - id: not_reachable
+              value: "none"
+              brief: "No network reachability"
+              stability: development
+            - id: unverified
+              value: "unverified"
+              brief: "Network present but not verified"
+              stability: development
+            - id: wifi
+              value: "wifi"
+              brief: "WiFi connection"
+              stability: development
+            - id: wifi_connecting
+              value: "wifi_connecting"
+              brief: "WiFi connection being established"
+              stability: development
+            - id: wan
+              value: "wan"
+              brief: "Mobile/WAN connection"
+              stability: development
+            - id: wan_connecting
+              value: "wan_connecting"
+              brief: "Mobile/WAN connection being established"
+              stability: development
+            - id: unknown
+              value: "unknown"
+              brief: "Unknown network state"
+              stability: development
+            - id: unknown_connecting
+              value: "unknown_connecting"
+              brief: "Unknown network connection being established"
+              stability: development
+        brief: "The network connectivity status."
+        stability: development
+        examples: ["wifi", "wan", "none"]
+
+  - id: emb.power_state
+    type: attribute_group
+    stability: development
+    brief: "Embrace device power state attributes"
+    prefix: ""
+    attributes:
+      - id: power.mode
+        type:
+          allow_custom_values: false
+          members:
+            - id: normal
+              value: "normal"
+              brief: "Normal power mode"
+              stability: development
+            - id: low
+              value: "low"
+              brief: "Low power / battery saver mode"
+              stability: development
+            - id: unknown
+              value: "unknown"
+              brief: "Unknown power mode"
+              stability: development
+        brief: "The device power mode."
+        stability: development
+        examples: ["normal", "low"]

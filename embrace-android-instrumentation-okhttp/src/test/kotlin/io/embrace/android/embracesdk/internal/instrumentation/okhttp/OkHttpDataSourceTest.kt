@@ -16,6 +16,7 @@ import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkReq
 import io.embrace.android.embracesdk.internal.utils.NetworkUtils.getValidTraceId
 import io.embrace.android.embracesdk.okhttp3.EmbraceCustomPathException
 import io.embrace.android.embracesdk.semconv.EmbNetworkCapturedRequestAttributes
+import io.embrace.android.embracesdk.semconv.EmbNetworkRequestAttributes
 import io.opentelemetry.kotlin.semconv.ErrorAttributes
 import io.opentelemetry.kotlin.semconv.ExceptionAttributes
 import io.opentelemetry.kotlin.semconv.HttpAttributes
@@ -361,7 +362,7 @@ internal class OkHttpDataSourceTest {
         assertNetworkRequestReceived { span ->
             val attrs = span.attributes
             assertEquals("200", attrs[HttpAttributes.HTTP_RESPONSE_STATUS_CODE])
-            assertNull(attrs["emb.w3c_traceparent"])
+            assertNull(attrs[EmbNetworkRequestAttributes.EMB_W3C_TRACEPARENT])
         }
     }
 
@@ -374,7 +375,7 @@ internal class OkHttpDataSourceTest {
             val attrs = span.attributes
             val traceparent = span.asW3cTraceparent()
             assertEquals("200", attrs[HttpAttributes.HTTP_RESPONSE_STATUS_CODE])
-            assertEquals(traceparent, attrs["emb.w3c_traceparent"])
+            assertEquals(traceparent, attrs[EmbNetworkRequestAttributes.EMB_W3C_TRACEPARENT])
             assertEquals(traceparent, response.networkResponse?.request?.header(TRACEPARENT_HEADER))
         }
     }
@@ -389,7 +390,7 @@ internal class OkHttpDataSourceTest {
         assertNetworkRequestReceived { span ->
             val attrs = span.attributes
             assertNull(attrs[HttpAttributes.HTTP_RESPONSE_STATUS_CODE])
-            assertEquals(span.asW3cTraceparent(), attrs["emb.w3c_traceparent"])
+            assertEquals(span.asW3cTraceparent(), attrs[EmbNetworkRequestAttributes.EMB_W3C_TRACEPARENT])
         }
     }
 
@@ -401,7 +402,7 @@ internal class OkHttpDataSourceTest {
         assertNetworkRequestReceived { span ->
             val attrs = span.attributes
             assertNull(attrs[HttpAttributes.HTTP_RESPONSE_STATUS_CODE])
-            assertEquals(span.asW3cTraceparent(), attrs["emb.w3c_traceparent"])
+            assertEquals(span.asW3cTraceparent(), attrs[EmbNetworkRequestAttributes.EMB_W3C_TRACEPARENT])
         }
     }
 
@@ -517,8 +518,8 @@ internal class OkHttpDataSourceTest {
             assertEquals(responseBodySize.toString(), attrs[HttpAttributes.HTTP_RESPONSE_BODY_SIZE])
             assertEquals(errorType, attrs[ErrorAttributes.ERROR_TYPE])
             assertEquals(errorMessage, attrs[ExceptionAttributes.EXCEPTION_MESSAGE])
-            assertEquals(w3cTraceparent, attrs["emb.w3c_traceparent"])
-            assertEquals(getValidTraceId(traceId), attrs["emb.trace_id"])
+            assertEquals(w3cTraceparent, attrs[EmbNetworkRequestAttributes.EMB_W3C_TRACEPARENT])
+            assertEquals(getValidTraceId(traceId), attrs[EmbNetworkRequestAttributes.EMB_TRACE_ID])
 
             if (responseBody != null) {
                 validateNetworkCaptureData(responseBody)

@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import io.embrace.android.embracesdk.internal.utils.NetworkUtils
 import io.embrace.android.embracesdk.internal.utils.NetworkUtils.stripUrl
+import io.embrace.android.embracesdk.semconv.EmbNetworkRequestAttributes
 import io.opentelemetry.kotlin.semconv.ErrorAttributes
 import io.opentelemetry.kotlin.semconv.ExceptionAttributes
 import io.opentelemetry.kotlin.semconv.HttpAttributes
@@ -76,8 +77,8 @@ internal class NetworkRequestDataSourceStatefulApiTest {
                 HttpAttributes.HTTP_RESPONSE_STATUS_CODE to "200",
                 HttpAttributes.HTTP_REQUEST_BODY_SIZE to "100",
                 HttpAttributes.HTTP_RESPONSE_BODY_SIZE to "1000",
-                "emb.w3c_traceparent" to firstRequestSpan.asW3cTraceparent(),
-                "emb.trace_id" to "fake-trace-id",
+                EmbNetworkRequestAttributes.EMB_W3C_TRACEPARENT to firstRequestSpan.asW3cTraceparent(),
+                EmbNetworkRequestAttributes.EMB_TRACE_ID to "fake-trace-id",
             )
         )
 

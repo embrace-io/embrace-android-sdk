@@ -90,11 +90,15 @@ internal class EmbraceActionInterface(
     }
 
     private fun onForeground() {
-        setup.fakeLifecycleOwner.handleLifecycleEvent(Lifecycle.Event.ON_START)
+        invokeWithMainLooperUnblock {
+            setup.fakeLifecycleOwner.handleLifecycleEvent(Lifecycle.Event.ON_START)
+        }
     }
 
     private fun onBackground() {
-        setup.fakeLifecycleOwner.handleLifecycleEvent(Lifecycle.Event.ON_STOP)
+        invokeWithMainLooperUnblock {
+            setup.fakeLifecycleOwner.handleLifecycleEvent(Lifecycle.Event.ON_STOP)
+        }
     }
 
     fun simulateConnectivityChange(status: ConnectivityStatus) {
@@ -147,14 +151,15 @@ internal class EmbraceActionInterface(
         } else {
             null
         }?.apply {
-            create()
-            start()
+            invokeWithMainLooperUnblock(::create)
+            invokeWithMainLooperUnblock(::start)
             appExecutionTimes.firstForegroundTimeMs = clock.now()
             onForeground()
-            resume()
-            pause()
+            invokeWithMainLooperUnblock(::resume)
+            invokeWithMainLooperUnblock(::pause)
+
             if (startInBackground) {
-                stop()
+                invokeWithMainLooperUnblock(::stop)
                 appExecutionTimes.lastBackgroundTimeMs = clock.now()
                 onBackground()
                 setup.getClock().tick(STARTUP_BACKGROUND_TIME)
@@ -164,7 +169,7 @@ internal class EmbraceActionInterface(
         }
         activitiesAndActions.forEachIndexed { index, (activityController, action) ->
             if (index != 0 || createFirstActivity) {
-                activityController.create()
+                invokeWithMainLooperUnblock(activityController::create)
                 setup.getClock().tick(LIFECYCLE_EVENT_GAP)
             }
             if (index == 0 && startInBackground) {
@@ -173,10 +178,9 @@ internal class EmbraceActionInterface(
                 }
                 onForeground()
             }
-            activityController.start()
+            invokeWithMainLooperUnblock(activityController::start)
             setup.getClock().tick(LIFECYCLE_EVENT_GAP)
-            activityController.resume()
-
+            invokeWithMainLooperUnblock(activityController::resume)
             setup.getClock().tick(LIFECYCLE_EVENT_GAP)
 
             if (invokeManualEnd) {
@@ -192,13 +196,16 @@ internal class EmbraceActionInterface(
                 )
                 embrace.activityLoaded(activityController.get())
             }
-            lastActivity?.stop()
+
+            invokeWithMainLooperUnblock {
+                lastActivity?.stop()
+            }
 
             appExecutionTimes.firstActionTimeMs = clock.now()
             action()
 
             setup.getClock().tick(POST_ACTIVITY_ACTION_DWELL)
-            activityController.pause()
+            invokeWithMainLooperUnblock(activityController::pause)
             setup.getClock().tick(ACTIVITY_GAP)
             lastActivity = activityController
         }
@@ -206,7 +213,9 @@ internal class EmbraceActionInterface(
         if (endInBackground) {
             setup.getClock().tick()
             appExecutionTimes.lastBackgroundTimeMs = clock.now()
-            lastActivity?.stop()
+            invokeWithMainLooperUnblock {
+                lastActivity?.stop()
+            }
             onBackground()
         }
 
@@ -215,6 +224,13 @@ internal class EmbraceActionInterface(
 
     fun simulateJvmUncaughtException(exc: Throwable) {
         Thread.getDefaultUncaughtExceptionHandler()?.uncaughtException(Thread.currentThread(), exc)
+    }
+
+    fun invokeWithMainLooperUnblock(action: () -> Unit) {
+        action()
+        if (setup.unblockMainLooperOnNavigation) {
+            setup.shadowMainLooper.idle()
+        }
     }
 
     /**

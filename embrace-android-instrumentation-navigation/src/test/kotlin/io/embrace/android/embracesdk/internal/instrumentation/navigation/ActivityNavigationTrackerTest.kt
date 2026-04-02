@@ -41,24 +41,65 @@ internal class ActivityNavigationTrackerTest {
         simulateActivityTransition()
     }
 
+    @Test
+    @Config(sdk = [Build.VERSION_CODES.P])
+    fun `opening concurrent visible activities produces the right events in P`() {
+        simulateConcurrentActivities()
+    }
+
+    @Test
+    @Config(sdk = [Build.VERSION_CODES.Q])
+    fun `opening concurrent visible activities produces the right events in Q`() {
+        simulateConcurrentActivities()
+    }
+
     private fun simulateActivityTransition() {
+        var totalEvents = 0
         activityController.start()
-        assertEquals(1, events.size)
-        assertEquals(NavigationEvent.ActivityStarted(activityController.get().localClassName), events.last())
+        assertNewEvent(++totalEvents, NavigationEvent.ActivityStarted(activityController.get()))
         activityController.resume()
-        assertEquals(1, events.size)
+        assertNewEvent(++totalEvents, NavigationEvent.ActivityResumed(activityController.get()))
         activityController.pause()
-        assertEquals(1, events.size)
+        assertNewEvent(++totalEvents, NavigationEvent.ActivityPaused(activityController.get()))
         anotherController.start()
-        assertEquals(2, events.size)
-        assertEquals(NavigationEvent.ActivityStarted(anotherController.get().localClassName), events.last())
+        assertNewEvent(++totalEvents, NavigationEvent.ActivityStarted(anotherController.get()))
         anotherController.resume()
+        assertNewEvent(++totalEvents, NavigationEvent.ActivityResumed(anotherController.get()))
         activityController.stop()
+        assertEquals(totalEvents, events.size)
         anotherController.pause()
-        assertEquals(2, events.size)
+        assertNewEvent(++totalEvents, NavigationEvent.ActivityPaused(anotherController.get()))
         anotherController.stop()
-        assertEquals(3, events.size)
-        assertEquals(NavigationEvent.Backgrounded, events.last())
+        assertEquals(totalEvents, events.size)
+        tracker.onBackground()
+        assertNewEvent(++totalEvents, NavigationEvent.Backgrounded)
+    }
+
+    private fun simulateConcurrentActivities() {
+        var totalEvents = 0
+        activityController.start()
+        assertNewEvent(++totalEvents, NavigationEvent.ActivityStarted(activityController.get()))
+        activityController.resume()
+        assertNewEvent(++totalEvents, NavigationEvent.ActivityResumed(activityController.get()))
+        anotherController.start()
+        assertNewEvent(++totalEvents, NavigationEvent.ActivityStarted(anotherController.get()))
+        anotherController.resume()
+        assertNewEvent(++totalEvents, NavigationEvent.ActivityResumed(anotherController.get()))
+        activityController.pause()
+        assertNewEvent(++totalEvents, NavigationEvent.ActivityPaused(activityController.get()))
+        activityController.stop()
+        assertEquals(totalEvents, events.size)
+        anotherController.pause()
+        assertNewEvent(++totalEvents, NavigationEvent.ActivityPaused(anotherController.get()))
+        anotherController.stop()
+        assertEquals(totalEvents, events.size)
+        tracker.onBackground()
+        assertNewEvent(++totalEvents, NavigationEvent.Backgrounded)
+    }
+
+    private fun assertNewEvent(expectedTotalCount: Int, event: NavigationEvent) {
+        assertEquals(expectedTotalCount, events.size)
+        assertEquals(event, events.last())
     }
 
     private class DopeActivity : Activity()

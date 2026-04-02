@@ -4,18 +4,20 @@ import android.app.Activity
 import android.app.Application
 import android.os.Build
 import android.os.Bundle
+import io.embrace.android.embracesdk.internal.arch.state.AppStateListener
+import io.embrace.android.embracesdk.internal.instrumentation.navigation.NavigationEvent.ActivityPaused
+import io.embrace.android.embracesdk.internal.instrumentation.navigation.NavigationEvent.ActivityResumed
 import io.embrace.android.embracesdk.internal.instrumentation.navigation.NavigationEvent.ActivityStarted
-import java.util.concurrent.atomic.AtomicInteger
+import io.embrace.android.embracesdk.internal.instrumentation.navigation.NavigationEvent.Backgrounded
 
+/**
+ * Tracks Activities coming into and out of view through [Application.ActivityLifecycleCallbacks], but listens to [AppStateListener]
+ * when it comes to tracking app backgrounding in order to synchronize with the rest of the SDK's app backgrounding logic.
+ */
 internal class ActivityNavigationTracker(
     private val onEvent: (NavigationEvent) -> Unit,
-) : Application.ActivityLifecycleCallbacks {
+) : Application.ActivityLifecycleCallbacks, AppStateListener {
 
-    /**
-     * A ref count of how many activities have been started and not stopped. If this number is greater than one it means there
-     * is still an activity that is visible.
-     */
-    private var startedActivityCount = AtomicInteger(0)
     private val usePrePostCallbacks = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
 
     override fun onActivityPreStarted(activity: Activity) {
@@ -30,33 +32,49 @@ internal class ActivityNavigationTracker(
         }
     }
 
-    override fun onActivityPostStopped(activity: Activity) {
+    override fun onActivityPreResumed(activity: Activity) {
         if (usePrePostCallbacks) {
-            checkForBackgrounded()
+            handleActivityResumed(activity)
         }
     }
 
-    override fun onActivityStopped(activity: Activity) {
-        startedActivityCount.decrementAndGet()
+    override fun onActivityResumed(activity: Activity) {
         if (!usePrePostCallbacks) {
-            checkForBackgrounded()
+            handleActivityResumed(activity)
         }
+    }
+
+    override fun onActivityPaused(activity: Activity) {
+        if (!usePrePostCallbacks) {
+            handleActivityPaused(activity)
+        }
+    }
+
+    override fun onActivityPostPaused(activity: Activity) {
+        if (usePrePostCallbacks) {
+            handleActivityPaused(activity)
+        }
+    }
+
+    override fun onBackground() {
+        onEvent(Backgrounded)
     }
 
     override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {}
-    override fun onActivityResumed(activity: Activity) {}
-    override fun onActivityPaused(activity: Activity) {}
+    override fun onActivityStopped(activity: Activity) {}
     override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) {}
     override fun onActivityDestroyed(activity: Activity) {}
+    override fun onForeground() {}
 
     private fun handleActivityStarted(activity: Activity) {
-        startedActivityCount.incrementAndGet()
-        onEvent(ActivityStarted(activity.localClassName))
+        onEvent(ActivityStarted(activity))
     }
 
-    private fun checkForBackgrounded() {
-        if (startedActivityCount.get() <= 0) {
-            onEvent(NavigationEvent.Backgrounded)
-        }
+    private fun handleActivityResumed(activity: Activity) {
+        onEvent(ActivityResumed(activity))
+    }
+
+    private fun handleActivityPaused(activity: Activity) {
+        onEvent(ActivityPaused(activity))
     }
 }

@@ -23,9 +23,9 @@ internal class NavigationStateDataSourceTest {
     @Test
     fun `state updated when notified of new screen load`() {
         assertEquals(Screen("Initializing"), dataSource.getCurrentStateValue())
-        dataSource.onScreenLoad("home")
+        dataSource.onScreenLoad(args.clock.tick(), "home")
         assertEquals(Screen("home"), dataSource.getCurrentStateValue())
-        dataSource.onScreenLoad("settings")
+        dataSource.onScreenLoad(args.clock.tick(), "settings")
         assertEquals(Screen("settings"), dataSource.getCurrentStateValue())
     }
 }

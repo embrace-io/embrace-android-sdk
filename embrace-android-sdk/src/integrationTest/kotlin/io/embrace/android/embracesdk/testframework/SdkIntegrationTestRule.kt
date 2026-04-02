@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.fakes.config.FakeBaseUrlConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
+import io.embrace.android.embracesdk.internal.arch.state.AppStateListener
 import io.embrace.android.embracesdk.internal.config.behavior.BehaviorThresholdCheck
 import io.embrace.android.embracesdk.internal.config.behavior.OtelBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehaviorImpl
@@ -171,6 +172,10 @@ internal class SdkIntegrationTestRule(
                     expectSdkToStart,
                     embraceImpl.isStarted
                 )
+
+                if (embraceImpl.isStarted) {
+                    addMainLooperUnblocker()
+                }
             }
         }
         testCaseAction(action)
@@ -193,6 +198,21 @@ internal class SdkIntegrationTestRule(
         responseFile.outputStream().buffered().use { stream ->
             TestPlatformSerializer().toJson(persistedRemoteConfig, RemoteConfig::class.java, stream)
         }
+    }
+
+    private fun addMainLooperUnblocker() {
+        // Add listener to run everything queued up on the main looper before session transition happens
+        val listener = object : AppStateListener {
+            override fun onBackground() {
+                setup.shadowMainLooper.idle()
+            }
+
+            override fun onForeground() {
+                setup.shadowMainLooper.idle()
+            }
+        }
+
+        bootstrapper.essentialServiceModule.appStateTracker.addListener(listener)
     }
 
     /**

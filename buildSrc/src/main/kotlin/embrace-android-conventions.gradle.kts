@@ -58,6 +58,9 @@ android {
             if (project.findProperty("io.opentelemetry.kotlin.semconv.optIn") == "true") {
                 optIn.add("io.opentelemetry.kotlin.semconv.IncubatingApi")
             }
+            if (project.findProperty("io.embrace.android.embracesdk.semconv.optIn") == "true") {
+                optIn.add("io.embrace.android.embracesdk.semconv.ExperimentalSemconv")
+            }
         }
     }
 }

@@ -3,5 +3,6 @@ plugins {
 }
 
 dependencies {
+    implementation(project(":embrace-android-semconv"))
     implementation(libs.opentelemetry.kotlin.semconv)
 }

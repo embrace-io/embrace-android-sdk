@@ -15,6 +15,7 @@ dependencies {
     api(project(":embrace-android-utils"))
     api(project(":embrace-android-config"))
     api(project(":embrace-android-payload"))
+    api(project(":embrace-android-semconv"))
     api(libs.opentelemetry.kotlin.semconv)
     api(libs.androidx.annotation)
 

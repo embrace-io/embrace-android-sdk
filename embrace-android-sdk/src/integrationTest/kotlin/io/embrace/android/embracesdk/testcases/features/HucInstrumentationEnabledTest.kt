@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
+import io.opentelemetry.kotlin.semconv.ExceptionAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
@@ -41,7 +42,7 @@ internal class HucInstrumentationEnabledTest {
                 with(getSingleLogEnvelope().getLogOfType(EmbType.System.InternalError)) {
                     assertEquals(
                         "java.lang.reflect.InaccessibleObjectException",
-                        checkNotNull(attributes).findAttributeValue("exception.type")
+                        checkNotNull(attributes).findAttributeValue(ExceptionAttributes.EXCEPTION_TYPE)
                     )
                 }
                 assertNotNull(getSingleSessionEnvelope())

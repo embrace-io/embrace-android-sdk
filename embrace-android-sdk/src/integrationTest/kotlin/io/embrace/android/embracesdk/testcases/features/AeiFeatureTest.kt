@@ -23,6 +23,7 @@ import io.embrace.android.embracesdk.internal.config.remote.AppExitInfoConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.payload.Log
+import io.embrace.android.embracesdk.semconv.EmbAeiAttributes
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.mockk.every
 import io.mockk.mockk
@@ -311,16 +312,16 @@ internal class AeiFeatureTest {
         with(expected) {
             attributes?.assertMatches(
                 mapOf<String, Any?>(
-                    "timestamp" to timestamp,
-                    "aei_session_id" to sessionId,
-                    "session_id_error" to sessionIdError,
-                    "trace_status" to traceStatus,
-                    "process_importance" to importance,
-                    "pss" to pss,
-                    "rss" to rss,
-                    "exit_status" to status,
-                    "description" to description,
-                    "reason" to reason,
+                    EmbAeiAttributes.TIMESTAMP to timestamp,
+                    EmbAeiAttributes.AEI_SESSION_ID to sessionId,
+                    EmbAeiAttributes.SESSION_ID_ERROR to sessionIdError,
+                    EmbAeiAttributes.TRACE_STATUS to traceStatus,
+                    EmbAeiAttributes.PROCESS_IMPORTANCE to importance,
+                    EmbAeiAttributes.PSS to pss,
+                    EmbAeiAttributes.RSS to rss,
+                    EmbAeiAttributes.EXIT_STATUS to status,
+                    EmbAeiAttributes.DESCRIPTION to description,
+                    EmbAeiAttributes.REASON to reason,
                     "emb.type" to "sys.exit",
                     embCrashNumber.name to crashNumber,
                     embAeiNumber.name to aeiNumber,

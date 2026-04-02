@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.internal.UnityInternalInterface
 import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.logs.LogExceptionType
+import io.opentelemetry.kotlin.semconv.ExceptionAttributes
 
 internal class UnityInternalInterfaceImpl(
     private val embrace: EmbraceImpl,
@@ -58,12 +59,12 @@ internal class UnityInternalInterfaceImpl(
             val attrs = mutableMapOf(
                 "emb.type" to "sys.exception",
                 "emb.private.send_mode" to "immediate",
-                "exception.message" to message,
+                ExceptionAttributes.EXCEPTION_MESSAGE to message,
             )
 
             // add exception name + message attrs
-            name?.let { attrs["exception.type"] = it }
-            stacktrace?.let { attrs["exception.stacktrace"] = it }
+            name?.let { attrs[ExceptionAttributes.EXCEPTION_TYPE] = it }
+            stacktrace?.let { attrs[ExceptionAttributes.EXCEPTION_STACKTRACE] = it }
 
             if (exceptionType != LogExceptionType.NONE) {
                 attrs["emb.exception_handling"] = exceptionType.value

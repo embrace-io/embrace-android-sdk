@@ -11,6 +11,7 @@ import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.assertions.assertMatches
+import io.embrace.android.embracesdk.semconv.EmbPushNotificationAttributes
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -102,12 +103,12 @@ internal class PushNotificationApiTest {
                 assertTrue(checkNotNull(event.timestampNanos) > 0)
                 event.attributes?.assertMatches(mapOf(
                     EmbType.System.PushNotification.asPair(),
-                    "notification.title" to "title",
-                    "notification.type" to "notif-data",
-                    "notification.body" to "body",
-                    "notification.id" to "id",
-                    "notification.from" to "from",
-                    "notification.priority" to 1,
+                    EmbPushNotificationAttributes.NOTIFICATION_TITLE to "title",
+                    EmbPushNotificationAttributes.NOTIFICATION_TYPE to "notif-data",
+                    EmbPushNotificationAttributes.NOTIFICATION_BODY to "body",
+                    EmbPushNotificationAttributes.NOTIFICATION_ID to "id",
+                    EmbPushNotificationAttributes.NOTIFICATION_FROM to "from",
+                    EmbPushNotificationAttributes.NOTIFICATION_PRIORITY to 1,
                 ))
             }
         )

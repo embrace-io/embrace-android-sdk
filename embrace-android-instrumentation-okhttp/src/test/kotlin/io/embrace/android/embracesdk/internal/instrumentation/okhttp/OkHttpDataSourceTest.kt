@@ -15,6 +15,7 @@ import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkCap
 import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkRequestDataSourceImpl
 import io.embrace.android.embracesdk.internal.utils.NetworkUtils.getValidTraceId
 import io.embrace.android.embracesdk.okhttp3.EmbraceCustomPathException
+import io.embrace.android.embracesdk.semconv.EmbNetworkCapturedRequestAttributes
 import io.opentelemetry.kotlin.semconv.ErrorAttributes
 import io.opentelemetry.kotlin.semconv.ExceptionAttributes
 import io.opentelemetry.kotlin.semconv.HttpAttributes
@@ -530,7 +531,7 @@ internal class OkHttpDataSourceTest {
         assertTrue(log.schemaType is SchemaType.NetworkCapturedRequest)
         val attrs = log.schemaType.attributes()
         validateDefaultNonBodyNetworkCaptureData(log)
-        assertEquals(responseBody, attrs["response-body"])
+        assertEquals(responseBody, attrs[EmbNetworkCapturedRequestAttributes.RESPONSE_BODY])
         assertNull(attrs[ExceptionAttributes.EXCEPTION_MESSAGE])
     }
 
@@ -541,9 +542,9 @@ internal class OkHttpDataSourceTest {
 
         val responseHeader = checkNotNull(attrs[HttpAttributes.HTTP_RESPONSE_HEADER])
         assertTrue(responseHeader.contains("responseheader=responseHeaderVal"))
-        assertEquals(DEFAULT_QUERY_STRING, attrs["request-query"])
+        assertEquals(DEFAULT_QUERY_STRING, attrs[EmbNetworkCapturedRequestAttributes.REQUEST_QUERY])
 
-        val body = checkNotNull(attrs["request-body"])
+        val body = checkNotNull(attrs[EmbNetworkCapturedRequestAttributes.REQUEST_BODY])
         assertEquals(REQUEST_BODY_STRING, body)
     }
 

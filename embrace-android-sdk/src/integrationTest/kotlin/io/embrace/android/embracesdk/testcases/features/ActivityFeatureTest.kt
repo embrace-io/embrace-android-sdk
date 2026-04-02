@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.SessionTimestamps
 import io.embrace.android.embracesdk.assertions.assertMatches
+import io.embrace.android.embracesdk.semconv.EmbViewAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -36,7 +37,7 @@ internal class ActivityFeatureTest {
 
                 viewSpan.attributes?.assertMatches(
                     mapOf(
-                        "view.name" to "android.app.Activity"
+                        EmbViewAttributes.VIEW_NAME to "android.app.Activity"
                     )
                 )
 

@@ -2,10 +2,11 @@ package io.embrace.android.embracesdk.testcases.features
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.getLogWithAttributeValue
-import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
+import io.opentelemetry.kotlin.semconv.ExceptionAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Rule
@@ -34,7 +35,7 @@ internal class InternalErrorLogTest {
                 }
             },
             assertAction = {
-                with(getSingleLogEnvelope().getLogWithAttributeValue("exception.message", "Some error message")) {
+                with(getSingleLogEnvelope().getLogWithAttributeValue(ExceptionAttributes.EXCEPTION_MESSAGE, "Some error message")) {
                     assertEquals("ERROR", severityText)
                     assertEquals("", body)
 
@@ -42,15 +43,15 @@ internal class InternalErrorLogTest {
                     assertEquals("sys.internal", attrs.findAttributeValue("emb.type"))
                     assertEquals(
                         "Some error message",
-                        attrs.findAttributeValue("exception.message")
+                        attrs.findAttributeValue(ExceptionAttributes.EXCEPTION_MESSAGE)
                     )
                     assertEquals(
                         "java.lang.RuntimeException",
-                        attrs.findAttributeValue("exception.type")
+                        attrs.findAttributeValue(ExceptionAttributes.EXCEPTION_TYPE)
                     )
                     assertNotNull(attrs.findAttributeValue("log.record.uid"))
                     assertNotNull(attrs.findAttributeValue("session.id"))
-                    checkNotNull(attrs.findAttributeValue("exception.stacktrace"))
+                    checkNotNull(attrs.findAttributeValue(ExceptionAttributes.EXCEPTION_STACKTRACE))
                 }
             }
         )

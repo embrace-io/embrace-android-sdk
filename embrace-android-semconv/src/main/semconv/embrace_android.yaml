@@ -5,11 +5,6 @@ groups:
     brief: "Embrace tap breadcrumb attributes"
     prefix: ""
     attributes:
-      - id: view.name
-        type: string
-        brief: "The name of the view/element that the tap event occurred in."
-        stability: development
-        examples: ["MainActivity", "LoginButton"]
       - id: tap.type
         type: string
         brief: "The type of tap event (tap or long_press)."
@@ -20,3 +15,207 @@ groups:
         brief: "The coordinates of the tap event in x,y format."
         stability: development
         examples: ["100,200", "0,0"]
+
+  - id: emb.breadcrumb
+    type: attribute_group
+    stability: development
+    brief: "Embrace breadcrumb attributes"
+    prefix: ""
+    attributes:
+      - id: message
+        type: string
+        brief: "The breadcrumb message."
+        stability: development
+        examples: ["User tapped login"]
+
+  - id: emb.view
+    type: attribute_group
+    stability: development
+    brief: "Embrace view/screen attributes"
+    prefix: ""
+    attributes:
+      - id: view.name
+        type: string
+        brief: "The name of the view or screen."
+        stability: development
+        examples: ["MainActivity", "LoginFragment"]
+
+  - id: emb.push_notification
+    type: attribute_group
+    stability: development
+    brief: "Embrace push notification attributes"
+    prefix: ""
+    attributes:
+      - id: notification.title
+        type: string
+        brief: "The title of the push notification."
+        stability: development
+        examples: ["New message"]
+      - id: notification.type
+        type: string
+        brief: "The type of push notification."
+        stability: development
+        examples: ["notif", "data", "notif-data", "unknown"]
+      - id: notification.body
+        type: string
+        brief: "The body text of the push notification."
+        stability: development
+        examples: ["You have a new message"]
+      - id: notification.id
+        type: string
+        brief: "The ID of the push notification."
+        stability: development
+        examples: ["abc123"]
+      - id: notification.from
+        type: string
+        brief: "The sender of the push notification."
+        stability: development
+        examples: ["123456789"]
+      - id: notification.priority
+        type: string
+        brief: "The priority of the push notification."
+        stability: development
+        examples: ["0", "1", "2"]
+
+  - id: emb.aei
+    type: attribute_group
+    stability: development
+    brief: "Embrace Application Exit Info attributes"
+    prefix: ""
+    attributes:
+      - id: aei_session_id
+        type: string
+        brief: "The session ID associated with the AEI event."
+        stability: development
+        examples: ["abc123"]
+      - id: session_id_error
+        type: string
+        brief: "Error message if the session ID could not be determined."
+        stability: development
+        examples: ["session not found"]
+      - id: process_importance
+        type: string
+        brief: "The importance level of the process at exit."
+        stability: development
+        examples: ["100", "125"]
+      - id: pss
+        type: string
+        brief: "Proportional set size of the process at exit (bytes)."
+        stability: development
+        examples: ["12345678"]
+      - id: reason
+        type: string
+        brief: "The reason for the application exit."
+        stability: development
+        examples: ["1", "2", "6"]
+      - id: rss
+        type: string
+        brief: "Resident set size of the process at exit (bytes)."
+        stability: development
+        examples: ["23456789"]
+      - id: exit_status
+        type: string
+        brief: "The exit status code of the process."
+        stability: development
+        examples: ["0", "1"]
+      - id: timestamp
+        type: string
+        brief: "The timestamp of the application exit event."
+        stability: development
+        examples: ["1617983000000"]
+      - id: description
+        type: string
+        brief: "A description of the application exit."
+        stability: development
+        examples: ["ANR detected"]
+      - id: trace_status
+        type: string
+        brief: "The trace status at the time of exit."
+        stability: development
+        examples: ["OK", "ERROR"]
+
+  - id: emb.network_captured_request
+    type: attribute_group
+    stability: development
+    brief: "Embrace network captured request attributes"
+    prefix: ""
+    attributes:
+      - id: duration
+        type: string
+        brief: "The duration of the network request in milliseconds."
+        stability: development
+        examples: ["1234"]
+      - id: end-time
+        type: string
+        brief: "The end time of the network request in milliseconds since epoch."
+        stability: development
+        examples: ["1617983000000"]
+      - id: network-id
+        type: string
+        brief: "The ID of the network interface used for the request."
+        stability: development
+        examples: ["wifi0"]
+      - id: request-body
+        type: string
+        brief: "The body of the network request."
+        stability: development
+        examples: ["{\"key\": \"value\"}"]
+      - id: request-query
+        type: string
+        brief: "The query parameters of the network request."
+        stability: development
+        examples: ["foo=bar&baz=qux"]
+      - id: request-size
+        type: string
+        brief: "The size of the network request body in bytes."
+        stability: development
+        examples: ["1024"]
+      - id: response-body
+        type: string
+        brief: "The body of the network response."
+        stability: development
+        examples: ["{\"result\": \"ok\"}"]
+      - id: response-size
+        type: string
+        brief: "The size of the network response body in bytes."
+        stability: development
+        examples: ["2048"]
+      - id: start-time
+        type: string
+        brief: "The start time of the network request in milliseconds since epoch."
+        stability: development
+        examples: ["1617982999000"]
+      - id: url
+        type: string
+        brief: "The URL of the network request."
+        stability: development
+        examples: ["https://example.com/api/v1/resource"]
+      - id: encrypted-payload
+        type: string
+        brief: "The encrypted payload of the network request or response."
+        stability: development
+        examples: ["abc123encrypted"]
+
+  - id: emb.network_status
+    type: attribute_group
+    stability: development
+    brief: "Embrace network status attributes"
+    prefix: ""
+    attributes:
+      - id: network
+        type: string
+        brief: "The network connectivity status."
+        stability: development
+        examples: ["wifi", "cellular", "none"]
+
+  - id: emb.thermal_state
+    type: attribute_group
+    stability: development
+    brief: "Embrace thermal state attributes"
+    prefix: ""
+    attributes:
+      - id: status
+        type: string
+        brief: "The thermal state status of the device."
+        stability: development
+        examples: ["0", "1", "2", "3"]

@@ -14,9 +14,11 @@ import io.embrace.android.embracesdk.internal.utils.NetworkUtils.getUrlPath
 import io.embrace.android.embracesdk.internal.utils.NetworkUtils.getValidTraceId
 import io.embrace.android.embracesdk.internal.utils.NetworkUtils.stripUrl
 import io.embrace.android.embracesdk.internal.utils.toNonNullMap
+import io.embrace.android.embracesdk.semconv.EmbNetworkRequestAttributes
 import io.opentelemetry.kotlin.semconv.ErrorAttributes
 import io.opentelemetry.kotlin.semconv.ExceptionAttributes
 import io.opentelemetry.kotlin.semconv.HttpAttributes
+import io.opentelemetry.kotlin.semconv.UrlAttributes
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -96,7 +98,7 @@ class NetworkRequestDataSourceImpl(
 
             spanToken.asW3cTraceparent()?.also { traceparent ->
                 if (configService.networkSpanForwardingBehavior.isNetworkSpanForwardingEnabled()) {
-                    spanToken.setSystemAttribute("emb.w3c_traceparent", traceparent)
+                    spanToken.setSystemAttribute(EmbNetworkRequestAttributes.EMB_W3C_TRACEPARENT, traceparent)
                 }
                 activeRequests[traceparent] = spanToken
             }
@@ -119,30 +121,30 @@ class NetworkRequestDataSourceImpl(
     }
 
     private fun generateSchemaAttributes(request: HttpNetworkRequest): Map<String, String> = mapOf(
-        "url.full" to stripUrl(request.url),
+        UrlAttributes.URL_FULL to stripUrl(request.url),
         HttpAttributes.HTTP_REQUEST_METHOD to request.httpMethod,
         HttpAttributes.HTTP_RESPONSE_STATUS_CODE to request.statusCode,
         HttpAttributes.HTTP_REQUEST_BODY_SIZE to request.bytesSent,
         HttpAttributes.HTTP_RESPONSE_BODY_SIZE to request.bytesReceived,
         ErrorAttributes.ERROR_TYPE to request.errorType,
         ExceptionAttributes.EXCEPTION_MESSAGE to request.errorMessage,
-        "emb.w3c_traceparent" to request.w3cTraceparent,
-        "emb.trace_id" to getValidTraceId(request.traceId),
+        EmbNetworkRequestAttributes.EMB_W3C_TRACEPARENT to request.w3cTraceparent,
+        EmbNetworkRequestAttributes.EMB_TRACE_ID to getValidTraceId(request.traceId),
     ).toNonNullMap().mapValues { it.value.toString() }
 
     private fun requestStartAttributes(startData: RequestStartData): Map<String, String> = mapOf(
-        "url.full" to stripUrl(startData.url),
+        UrlAttributes.URL_FULL to stripUrl(startData.url),
         HttpAttributes.HTTP_REQUEST_METHOD to startData.httpMethod,
     ).toNonNullMap().mapValues { it.value }
 
     private fun requestEndAttributes(endData: RequestEndData): Map<String, String> = mapOf(
-        "url.full" to stripUrl(endData.url),
+        UrlAttributes.URL_FULL to stripUrl(endData.url),
         HttpAttributes.HTTP_RESPONSE_STATUS_CODE to endData.statusCode,
         HttpAttributes.HTTP_REQUEST_BODY_SIZE to endData.bytesSent,
         HttpAttributes.HTTP_RESPONSE_BODY_SIZE to endData.bytesReceived,
         ErrorAttributes.ERROR_TYPE to endData.errorType,
         ExceptionAttributes.EXCEPTION_MESSAGE to endData.errorMessage,
-        "emb.trace_id" to getValidTraceId(endData.traceId),
+        EmbNetworkRequestAttributes.EMB_TRACE_ID to getValidTraceId(endData.traceId),
     ).toNonNullMap().mapValues { it.value.toString() }
 
     private fun getNetworkSpanName(httpMethod: String, url: String) = "$httpMethod ${getUrlPath(stripUrl(url))}"

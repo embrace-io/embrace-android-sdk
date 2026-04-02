@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.Th
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageEvent.BLOCKED_INTERVAL
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageEvent.UNBLOCKED
 import io.embrace.android.embracesdk.internal.payload.Span
+import io.embrace.android.embracesdk.semconv.EmbAnrAttributes
 import io.opentelemetry.kotlin.semconv.ExceptionAttributes
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -337,5 +338,5 @@ internal class ThreadBlockageServiceImplTest {
     }
 
     private val Span.lastKnownTime: Long?
-        get() = attributes?.find { it.key == "last_known_time_unix_nano" }?.data?.toLong()
+        get() = attributes?.find { it.key == EmbAnrAttributes.LAST_KNOWN_TIME_UNIX_NANO }?.data?.toLong()
 }

@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.worker.Worker
+import io.embrace.android.embracesdk.semconv.EmbAnrAttributes
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import org.junit.Assert.assertEquals
@@ -170,7 +171,7 @@ internal class ThreadBlockageFeatureTest {
         span.attributes?.assertMatches(
             mapOf(
                 "emb.type" to "perf.thread_blockage",
-                "interval_code" to expectedIntervalCode
+                EmbAnrAttributes.INTERVAL_CODE to expectedIntervalCode
             )
         )
 
@@ -183,8 +184,8 @@ internal class ThreadBlockageFeatureTest {
             event.attributes?.assertMatches(
                 mapOf(
                     "emb.type" to "perf.thread_blockage_sample",
-                    "sample_overhead" to 0,
-                    "sample_code" to when {
+                    EmbAnrAttributes.SAMPLE_OVERHEAD to 0,
+                    EmbAnrAttributes.SAMPLE_CODE to when {
                         index < MAX_SAMPLE_COUNT -> "0"
                         else -> "1"
                     }

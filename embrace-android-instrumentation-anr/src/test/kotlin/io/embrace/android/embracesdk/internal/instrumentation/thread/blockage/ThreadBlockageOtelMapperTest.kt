@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
+import io.embrace.android.embracesdk.semconv.EmbAnrAttributes
 import io.opentelemetry.kotlin.semconv.ExceptionAttributes
 import io.opentelemetry.kotlin.semconv.JvmAttributes
 import org.junit.Assert.assertEquals
@@ -110,7 +111,7 @@ internal class ThreadBlockageOtelMapperTest {
         val span = listOf(completedInterval).map { mapIntervalToSpan(it, clock, random) }.single()
         span.assertCommonOtelCharacteristics()
         assertEquals(END_TIME_MS, span.endTimeNanos?.nanosToMillis())
-        assertEquals("0", span.attributes?.findAttribute("interval_code")?.data)
+        assertEquals("0", span.attributes?.findAttribute(EmbAnrAttributes.INTERVAL_CODE)?.data)
 
         // validate samples
         val events = checkNotNull(span.events)
@@ -127,7 +128,7 @@ internal class ThreadBlockageOtelMapperTest {
         assertEquals(clock.now().millisToNanos(), span.endTimeNanos)
         val attributes = checkNotNull(span.attributes)
         val lastKnownTime =
-            checkNotNull(attributes.findAttribute("last_known_time_unix_nano").data)
+            checkNotNull(attributes.findAttribute(EmbAnrAttributes.LAST_KNOWN_TIME_UNIX_NANO).data)
         assertEquals(LAST_KNOWN_TIME, lastKnownTime.toLong().nanosToMillis())
 
         // validate samples
@@ -141,7 +142,7 @@ internal class ThreadBlockageOtelMapperTest {
     fun `map cleared interval`() {
         val span = listOf(clearedInterval).map { mapIntervalToSpan(it, clock, random) }.single()
         span.assertCommonOtelCharacteristics()
-        assertEquals("1", span.attributes?.findAttribute("interval_code")?.data)
+        assertEquals("1", span.attributes?.findAttribute(EmbAnrAttributes.INTERVAL_CODE)?.data)
         assertEquals(0, span.events?.size)
     }
 
@@ -149,7 +150,7 @@ internal class ThreadBlockageOtelMapperTest {
     fun `map limited sample`() {
         val span = listOf(intervalWithLimitedSample).map { mapIntervalToSpan(it, clock, random) }.single()
         span.assertCommonOtelCharacteristics()
-        assertEquals("0", span.attributes?.findAttribute("interval_code")?.data)
+        assertEquals("0", span.attributes?.findAttribute(EmbAnrAttributes.INTERVAL_CODE)?.data)
 
         // validate samples
         val events = checkNotNull(span.events)
@@ -193,16 +194,16 @@ internal class ThreadBlockageOtelMapperTest {
         assertEquals(sample.timestamp, checkNotNull(event.timestampNanos).nanosToMillis())
 
         val attrs = checkNotNull(event.attributes)
-        val overhead = attrs.findAttribute("sample_overhead").data
+        val overhead = attrs.findAttribute(EmbAnrAttributes.SAMPLE_OVERHEAD).data
         assertEquals(sample.sampleOverheadMs, overhead?.toLong()?.nanosToMillis())
 
-        assertEquals(sample.code, attrs.findAttribute("sample_code").data?.toInt())
+        assertEquals(sample.code, attrs.findAttribute(EmbAnrAttributes.SAMPLE_CODE).data?.toInt())
 
         // validate threads
         val thread = checkNotNull(sample.threadSample)
         assertEquals(thread.state.toString(), attrs.findAttribute(JvmAttributes.JVM_THREAD_STATE).data)
-        assertEquals(thread.priority, attrs.findAttribute("thread_priority").data?.toInt())
-        assertEquals(thread.frameCount, attrs.findAttribute("frame_count").data?.toInt())
+        assertEquals(thread.priority, attrs.findAttribute(EmbAnrAttributes.THREAD_PRIORITY).data?.toInt())
+        assertEquals(thread.frameCount, attrs.findAttribute(EmbAnrAttributes.FRAME_COUNT).data?.toInt())
         assertEquals(
             thread.lines?.joinToString("\n"),
             attrs.findAttribute(ExceptionAttributes.EXCEPTION_STACKTRACE).data

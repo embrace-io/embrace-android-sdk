@@ -7,7 +7,9 @@ import io.embrace.android.embracesdk.internal.arch.attrs.embStateInitialValue
 import io.embrace.android.embracesdk.semconv.EmbAeiAttributes
 import io.embrace.android.embracesdk.semconv.EmbBreadcrumbAttributes
 import io.embrace.android.embracesdk.semconv.EmbNetworkCapturedRequestAttributes
+import io.embrace.android.embracesdk.semconv.EmbNetworkStateAttributes
 import io.embrace.android.embracesdk.semconv.EmbNetworkStatusAttributes
+import io.embrace.android.embracesdk.semconv.EmbPowerStateAttributes
 import io.embrace.android.embracesdk.semconv.EmbPushNotificationAttributes
 import io.embrace.android.embracesdk.semconv.EmbTapAttributes
 import io.embrace.android.embracesdk.semconv.EmbThermalStateAttributes
@@ -281,14 +283,14 @@ sealed class SchemaType(
         initialValue: Status,
     ) : State<NetworkState.Status>(initialValue, "network") {
         enum class Status(private val value: String) {
-            NOT_REACHABLE("none"),
-            UNVERIFIED("unverified"),
-            WIFI("wifi"),
-            WIFI_CONNECTING("wifi_connecting"),
-            WAN("wan"),
-            WAN_CONNECTING("wan_connecting"),
-            UNKNOWN("unknown"),
-            UNKNOWN_CONNECTING("unknown_connecting");
+            NOT_REACHABLE(EmbNetworkStateAttributes.NetworkStatusValues.NOT_REACHABLE),
+            UNVERIFIED(EmbNetworkStateAttributes.NetworkStatusValues.UNVERIFIED),
+            WIFI(EmbNetworkStateAttributes.NetworkStatusValues.WIFI),
+            WIFI_CONNECTING(EmbNetworkStateAttributes.NetworkStatusValues.WIFI_CONNECTING),
+            WAN(EmbNetworkStateAttributes.NetworkStatusValues.WAN),
+            WAN_CONNECTING(EmbNetworkStateAttributes.NetworkStatusValues.WAN_CONNECTING),
+            UNKNOWN(EmbNetworkStateAttributes.NetworkStatusValues.UNKNOWN),
+            UNKNOWN_CONNECTING(EmbNetworkStateAttributes.NetworkStatusValues.UNKNOWN_CONNECTING);
 
             override fun toString(): String = value
         }
@@ -297,9 +299,9 @@ sealed class SchemaType(
     class PowerState(initialValue: PowerMode) :
         State<PowerState.PowerMode>(initialValue, "power") {
         enum class PowerMode(private val value: String) {
-            NORMAL("normal"),
-            LOW("low"),
-            UNKNOWN("unknown");
+            NORMAL(EmbPowerStateAttributes.PowerModeValues.NORMAL),
+            LOW(EmbPowerStateAttributes.PowerModeValues.LOW),
+            UNKNOWN(EmbPowerStateAttributes.PowerModeValues.UNKNOWN);
 
             override fun toString(): String = value
         }

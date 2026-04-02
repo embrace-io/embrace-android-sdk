@@ -19,5 +19,20 @@ object {{ class_name }} {
     @ExperimentalSemconv
     {%- endif %}
     const val {{ attribute.name | screaming_snake_case }}: String = "{{ attribute.name }}"
+    {%- if attribute.type is mapping and attribute.type.members is defined %}
+
+    object {{ attribute.name | replace(".", "_") | pascal_case }}Values {
+        {%- for member in attribute.type.members %}
+
+        /**
+         * {{ member.brief }}
+         */
+        {%- if ctx.stability == "development" %}
+        @ExperimentalSemconv
+        {%- endif %}
+        const val {{ member.id | screaming_snake_case }}: String = "{{ member.value }}"
+        {%- endfor %}
+    }
+    {%- endif %}
 {%- endfor %}
 }

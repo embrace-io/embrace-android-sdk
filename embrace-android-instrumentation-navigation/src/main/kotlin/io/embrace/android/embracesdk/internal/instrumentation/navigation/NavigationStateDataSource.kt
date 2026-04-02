@@ -5,11 +5,9 @@ import io.embrace.android.embracesdk.internal.arch.datasource.StateDataSource
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType.NavigationState
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType.NavigationState.Screen
 
-/**
- * Tracks the user's navigation state in the app
- */
 class NavigationStateDataSource(
     private val args: InstrumentationArgs,
+    trackNav: Boolean,
 ) : StateDataSource<Screen>(
     args = args,
     stateTypeFactory = ::NavigationState,
@@ -20,7 +18,12 @@ class NavigationStateDataSource(
         onScreenLoad = ::onScreenLoad
     )
 
-    private val activityNavigationTracker = ActivityNavigationTracker(args.clock, broker::onEvent)
+    private val activityNavigationTracker = ActivityNavigationTracker(
+        clock = args.clock,
+        onEvent = broker::onEvent,
+        trackNav = trackNav,
+        logger = args.logger,
+    )
 
     override fun onDataCaptureEnabled() {
         super.onDataCaptureEnabled()

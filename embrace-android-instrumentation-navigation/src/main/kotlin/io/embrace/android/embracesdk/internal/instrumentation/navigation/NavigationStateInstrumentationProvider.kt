@@ -10,7 +10,13 @@ class NavigationStateInstrumentationProvider :
             configService.autoDataCaptureBehavior.isNavigationStateCaptureEnabled()
         },
     ) {
+
     override fun factoryProvider(args: InstrumentationArgs): () -> NavigationStateDataSource {
-        return { NavigationStateDataSource(args) }
+        return {
+            NavigationStateDataSource(
+                args = args,
+                trackNav = runCatching { Class.forName("androidx.navigation.NavController") }.isSuccess
+            )
+        }
     }
 }

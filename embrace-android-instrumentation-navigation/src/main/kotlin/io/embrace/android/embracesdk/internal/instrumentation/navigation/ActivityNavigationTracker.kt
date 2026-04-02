@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.internal.instrumentation.navigation.Navigat
 import io.embrace.android.embracesdk.internal.instrumentation.navigation.NavigationEvent.ActivityResumed
 import io.embrace.android.embracesdk.internal.instrumentation.navigation.NavigationEvent.ActivityStarted
 import io.embrace.android.embracesdk.internal.instrumentation.navigation.NavigationEvent.Backgrounded
+import io.embrace.android.embracesdk.internal.logging.InternalLogger
 
 /**
  * Tracks Activities coming into and out of view through [Application.ActivityLifecycleCallbacks], but listens to [AppStateListener]
@@ -20,9 +21,16 @@ import io.embrace.android.embracesdk.internal.instrumentation.navigation.Navigat
 internal class ActivityNavigationTracker(
     private val clock: Clock,
     private val onEvent: (NavigationEvent) -> Unit,
+    trackNav: Boolean,
+    logger: InternalLogger
 ) : Application.ActivityLifecycleCallbacks, AppStateListener {
 
     private val usePrePostCallbacks = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
+    private val navControllerTracker: NavControllerTracker? = if (trackNav) {
+        NavControllerTracker(onEvent, clock, logger)
+    } else {
+        null
+    }
 
     override fun onActivityPreStarted(activity: Activity) {
         if (usePrePostCallbacks) {
@@ -71,6 +79,7 @@ internal class ActivityNavigationTracker(
     override fun onForeground() {}
 
     private fun handleActivityStarted(activity: Activity) {
+        navControllerTracker?.track(activity)
         onEvent(ActivityStarted(activity, clock.now()))
     }
 

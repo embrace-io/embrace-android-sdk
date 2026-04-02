@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.internal.arch.attrs.embFreeDiskBytes
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
+import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.opentelemetry.kotlin.semconv.SessionAttributes
 import org.junit.Assert.assertEquals
@@ -67,20 +68,20 @@ internal class SessionApiTest {
                 }.toMap().toSortedMap()
 
                 val expected = mapOf(
-                    "emb.cold_start" to "true",
-                    "emb.state" to "foreground",
-                    "emb.clean_exit" to "true",
-                    "emb.session_start_type" to "state",
-                    "emb.terminated" to "false",
-                    "emb.session_end_type" to "state",
-                    "emb.session_number" to "1",
+                    EmbSessionAttributes.EMB_COLD_START to "true",
+                    EmbSessionAttributes.EMB_STATE to "foreground",
+                    EmbSessionAttributes.EMB_CLEAN_EXIT to "true",
+                    EmbSessionAttributes.EMB_SESSION_START_TYPE to "state",
+                    EmbSessionAttributes.EMB_TERMINATED to "false",
+                    EmbSessionAttributes.EMB_SESSION_END_TYPE to "state",
+                    EmbSessionAttributes.EMB_SESSION_NUMBER to "1",
                     "emb.type" to "ux.session",
-                    "emb.error_log_count" to "0",
+                    EmbSessionAttributes.EMB_ERROR_LOG_COUNT to "0",
                     "emb.usage.set_username" to "1",
                     "emb.usage.set_user_email" to "1",
                     "emb.usage.set_user_identifier" to "1",
-                    "emb.private.sequence_id" to "5",
-                    "emb.startup_duration" to "0"
+                    EmbSessionAttributes.EMB_PRIVATE_SEQUENCE_ID to "5",
+                    EmbSessionAttributes.EMB_STARTUP_DURATION to "0"
                 ).toSortedMap()
 
                 assertEquals(expected, attributesToCheck)
@@ -94,10 +95,10 @@ internal class SessionApiTest {
             SessionAttributes.SESSION_ID,
             "emb.kotlin_on_classpath",
             "emb.okhttp3",
-            "emb.process_identifier",
+            EmbSessionAttributes.EMB_PROCESS_IDENTIFIER,
             "emb.is_emulator",
             "emb.okhttp3_on_classpath",
-            "emb.heartbeat_time_unix_nano",
+            EmbSessionAttributes.EMB_HEARTBEAT_TIME_UNIX_NANO,
         )
 
         // Attributes that are unstable that we should not try to verify

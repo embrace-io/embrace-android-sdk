@@ -4,7 +4,7 @@ import androidx.annotation.CallSuper
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.SessionChangeListener
 import io.embrace.android.embracesdk.internal.arch.SessionEndListener
-import io.embrace.android.embracesdk.internal.arch.attrs.createStateKey
+import io.embrace.android.embracesdk.internal.arch.attrs.EmbraceAttributeKey
 import io.embrace.android.embracesdk.internal.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
@@ -24,7 +24,7 @@ abstract class StateDataSource<T : Any>(
     limitStrategy = UpToLimitStrategy { maxTransitions },
     instrumentationName = "${stateTypeFactory(defaultValue).stateName}_state_data_source"
 ) {
-    val stateAttributeKey = createStateKey(stateTypeFactory(defaultValue).stateName)
+    val stateAttributeKey = EmbraceAttributeKey("emb.state.${stateTypeFactory(defaultValue).stateName}")
     private val currentState: AtomicReference<T> = AtomicReference(defaultValue)
     private val sessionStateToken: AtomicReference<SessionStateToken<T>?> = AtomicReference()
     private val unrecordedTransitions = AtomicReference(noUnrecordedTransitions)

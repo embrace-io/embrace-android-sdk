@@ -4,6 +4,7 @@ import com.squareup.moshi.Types
 import io.embrace.android.embracesdk.ResourceReader
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.internal.utils.threadLocal
+import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.opentelemetry.kotlin.aliases.OtelJavaSpanData
 import org.junit.Assert.assertEquals
 
@@ -46,7 +47,7 @@ internal class ExportedSpanValidator {
     }
 
     private fun OtelJavaSpanData.representAttributes(): Map<String, String> {
-        val ignoreList = listOf("emb.process_identifier", "emb.private.sequence_id", "session.id")
+        val ignoreList = listOf(EmbSessionAttributes.EMB_PROCESS_IDENTIFIER, EmbSessionAttributes.EMB_PRIVATE_SEQUENCE_ID, "session.id")
         val attrs: Map<String, String> = attributes.asMap().map {
             it.key.key to it.value.toString()
         }.toMap()

@@ -106,4 +106,7 @@ data class RemoteConfig(
 
     @Json(name = "pct_navigation_state_capture_enabled")
     val pctNavigationStateCaptureEnabled: Float? = null,
+
+    @Json(name = "user_session")
+    val userSession: UserSessionRemoteConfig? = null,
 )

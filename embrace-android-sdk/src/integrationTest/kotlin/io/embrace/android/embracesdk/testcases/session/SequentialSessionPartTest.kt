@@ -26,7 +26,7 @@ import org.junit.runner.RunWith
  * Asserts that a stateful session can be recorded with the appropriate metadata with respect to sequencing
  */
 @RunWith(AndroidJUnit4::class)
-internal class SequentialSessionTest {
+internal class SequentialSessionPartTest {
 
     @Rule
     @JvmField

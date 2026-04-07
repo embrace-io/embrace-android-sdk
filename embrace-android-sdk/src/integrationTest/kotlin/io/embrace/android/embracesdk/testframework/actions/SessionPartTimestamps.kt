@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.testframework.actions
 /**
  * Timestamps for various events during the simulated execution of an app when we record a session during the integration tests
  */
-internal data class SessionTimestamps(
+internal data class SessionPartTimestamps(
     /**
      * The time when the session begins
      */

@@ -10,7 +10,7 @@ import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
-import io.embrace.android.embracesdk.testframework.actions.SessionTimestamps
+import io.embrace.android.embracesdk.testframework.actions.SessionPartTimestamps
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -42,8 +42,8 @@ internal class SpanAutoTerminationTest {
 
     @Test
     fun `auto termination feature`() {
-        var firstSessionTimestamps: SessionTimestamps? = null
-        var secondSessionTimestamps: SessionTimestamps? = null
+        var firstSessionPartTimestamps: SessionPartTimestamps? = null
+        var secondSessionPartTimestamps: SessionPartTimestamps? = null
         testRule.runTest(
             instrumentedConfig = FakeInstrumentedConfig(
                 enabledFeatures = FakeEnabledFeatureConfig(
@@ -54,7 +54,7 @@ internal class SpanAutoTerminationTest {
                 var hangingSpan: EmbraceSpan? = null
 
                 // first session
-                firstSessionTimestamps = recordSession {
+                firstSessionPartTimestamps = recordSession {
                     // start a span without auto termination
                     hangingSpan = embrace.startSpan(
                         ROOT_HANGING_SPAN,
@@ -110,20 +110,20 @@ internal class SpanAutoTerminationTest {
                 embrace.startSpan(BG_SPAN, autoTerminationMode = AutoTerminationMode.ON_BACKGROUND)
 
                 // second session
-                secondSessionTimestamps = recordSession {
+                secondSessionPartTimestamps = recordSession {
                     // stop a span without auto termination
                     hangingSpan?.stop()
                 }
             },
             assertAction = {
                 val message = getSessionEnvelopes(2)
-                checkNotNull(firstSessionTimestamps).assertFirstSpans(message[0])
-                checkNotNull(secondSessionTimestamps).assertSecondSpans(message[1])
+                checkNotNull(firstSessionPartTimestamps).assertFirstSpans(message[0])
+                checkNotNull(secondSessionPartTimestamps).assertSecondSpans(message[1])
             }
         )
     }
 
-    private fun SessionTimestamps.assertFirstSpans(
+    private fun SessionPartTimestamps.assertFirstSpans(
         first: Envelope<SessionPartPayload>,
     ) {
         // startSpan() with children
@@ -167,7 +167,7 @@ internal class SpanAutoTerminationTest {
         assertNull(hangingSpan.endTimeNanos)
     }
 
-    private fun SessionTimestamps.assertSecondSpans(
+    private fun SessionPartTimestamps.assertSecondSpans(
         second: Envelope<SessionPartPayload>,
     ) {
         val roota = second.findSpanByName(ROOT_HANGING_SPAN)

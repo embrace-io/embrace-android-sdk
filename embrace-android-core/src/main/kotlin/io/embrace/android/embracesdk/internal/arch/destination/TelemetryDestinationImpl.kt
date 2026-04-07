@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.internal.arch.attrs.embStateNewValue
 import io.embrace.android.embracesdk.internal.arch.attrs.embStateNotInSession
 import io.embrace.android.embracesdk.internal.arch.attrs.embStateTransitionCount
 import io.embrace.android.embracesdk.internal.arch.datasource.LogSeverity
-import io.embrace.android.embracesdk.internal.arch.datasource.SessionStateToken
+import io.embrace.android.embracesdk.internal.arch.datasource.SessionPartStateToken
 import io.embrace.android.embracesdk.internal.arch.datasource.SpanEvent
 import io.embrace.android.embracesdk.internal.arch.datasource.SpanToken
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
@@ -130,14 +130,14 @@ class TelemetryDestinationImpl(
         }
     }
 
-    override fun <T : Any> startSessionStateCapture(state: SchemaType.State<T>): SessionStateToken<T> {
+    override fun <T : Any> startSessionStateCapture(state: SchemaType.State<T>): SessionPartStateToken<T> {
         val spanToken = startSpanCapture(
             schemaType = state,
             startTimeMs = clock.now(),
             private = true
         )
 
-        return SessionStateTokenImpl(
+        return SessionPartStateTokenImpl(
             spanToken = spanToken
         )
     }
@@ -242,9 +242,9 @@ class TelemetryDestinationImpl(
         }
     }
 
-    private class SessionStateTokenImpl<T : Any>(
+    private class SessionPartStateTokenImpl<T : Any>(
         private val spanToken: SpanToken,
-    ) : SessionStateToken<T> {
+    ) : SessionPartStateToken<T> {
         private val transitionCount = AtomicInteger(0)
 
         override fun update(

@@ -6,7 +6,7 @@ import io.embrace.android.embracesdk.assertions.findSpanOfType
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
-import io.embrace.android.embracesdk.testframework.actions.SessionTimestamps
+import io.embrace.android.embracesdk.testframework.actions.SessionPartTimestamps
 import io.embrace.android.embracesdk.assertions.assertMatches
 import io.embrace.android.embracesdk.semconv.EmbViewAttributes
 import org.junit.Assert.assertEquals
@@ -25,7 +25,7 @@ internal class ActivityFeatureTest {
 
     @Test
     fun `automatically capture activities`() {
-        var timestamps: SessionTimestamps? = null
+        var timestamps: SessionPartTimestamps? = null
 
         testRule.runTest(
             testCaseAction = {

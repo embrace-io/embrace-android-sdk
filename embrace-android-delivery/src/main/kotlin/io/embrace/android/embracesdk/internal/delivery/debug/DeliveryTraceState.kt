@@ -76,24 +76,24 @@ internal sealed class DeliveryTraceState {
     }
 
     /**
-     * Session caching was started for the current session
+     * Part caching was started for the current part
      */
-    internal object SessionCachingStarted : DeliveryTraceState() {
-        override fun toString(): String = "[$threadName] SessionCachingStarted"
+    internal object SessionPartCachingStarted : DeliveryTraceState() {
+        override fun toString(): String = "[$threadName] SessionPartCachingStarted"
     }
 
     /**
-     * Session caching was stopped for the current session
+     * Part caching was stopped for the current part
      */
-    internal object SessionCachingStopped : DeliveryTraceState() {
-        override fun toString(): String = "[$threadName] SessionCachingStopped"
+    internal object SessionPartCachingStopped : DeliveryTraceState() {
+        override fun toString(): String = "[$threadName] SessionPartCachingStopped"
     }
 
     /**
-     * A session was written to the cache.
+     * A part was written to the cache.
      */
-    internal object SessionCacheAttempt : DeliveryTraceState() {
-        override fun toString(): String = "[$threadName] SessionCacheAttempt"
+    internal object SessionPartCacheAttempt : DeliveryTraceState() {
+        override fun toString(): String = "[$threadName] SessionPartCacheAttempt"
     }
 
     /**

@@ -14,7 +14,7 @@ internal class NavigationEventBroker(
     private val onScreenLoad: (loadTimeMs: Long, newScreenName: String) -> Unit,
 ) {
     private val handler = Handler(looper)
-    private val lastEvent = AtomicReference<NavigationEvent>(null)
+    private val lastEvent = AtomicReference<NavigationEvent?>(null)
     private val activityStartTimes = mutableMapOf<Int, Long>()
     private val visibleActivities = mutableMapOf<Int, String>()
 
@@ -54,7 +54,11 @@ internal class NavigationEventBroker(
         loadTime: Long = event.timestampMs,
         stateValue: String = event.name,
     ) {
-        if (event != lastEvent.getAndSet(event)) {
+        val notify = lastEvent.getAndSet(event)?.let {
+            it.componentId != event.componentId || it.name != event.name
+        } ?: true
+
+        if (notify) {
             onScreenLoad(loadTime, stateValue)
         }
     }

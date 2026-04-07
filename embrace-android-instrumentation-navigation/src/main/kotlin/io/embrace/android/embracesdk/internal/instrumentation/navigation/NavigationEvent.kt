@@ -76,6 +76,7 @@ internal sealed class NavigationEvent(
         other as NavigationEvent
 
         if (componentId != other.componentId) return false
+        if (timestampMs != other.timestampMs) return false
         if (name != other.name) return false
 
         return true
@@ -83,6 +84,7 @@ internal sealed class NavigationEvent(
 
     override fun hashCode(): Int {
         var result = componentId
+        result = 31 * result + timestampMs.hashCode()
         result = 31 * result + name.hashCode()
         return result
     }

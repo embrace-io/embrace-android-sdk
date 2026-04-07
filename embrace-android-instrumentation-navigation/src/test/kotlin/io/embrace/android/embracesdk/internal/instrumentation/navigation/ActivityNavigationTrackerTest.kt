@@ -128,37 +128,40 @@ internal class ActivityNavigationTrackerTest {
     }
 
     private fun ActivityNavigationTracker.assertPlainActivityNavigation() {
-        transitionBetweenActivities(activityController, anotherController)
+        val times = transitionBetweenActivities(activityController, anotherController)
+        assertEquals(7, times.size)
         assertEvents(
-            ActivityStarted(activityController.get(), clock.now()),
-            ActivityResumed(activityController.get(), clock.now()),
-            ActivityPaused(activityController.get(), clock.now()),
-            ActivityStarted(anotherController.get(), clock.now()),
-            ActivityResumed(anotherController.get(), clock.now()),
-            ActivityPaused(anotherController.get(), clock.now()),
-            Backgrounded(clock.now()),
+            ActivityStarted(activityController.get(), times[0]),
+            ActivityResumed(activityController.get(), times[1]),
+            ActivityPaused(activityController.get(), times[2]),
+            ActivityStarted(anotherController.get(), times[3]),
+            ActivityResumed(anotherController.get(), times[4]),
+            ActivityPaused(anotherController.get(), times[5]),
+            Backgrounded(times[6]),
         )
     }
 
     private fun ActivityNavigationTracker.assertConcurrentPlainActivityNavigation() {
-        openConcurrentActivities(activityController, anotherController)
+        val times = openConcurrentActivities(activityController, anotherController)
+        assertEquals(7, times.size)
         assertEvents(
-            ActivityStarted(activityController.get(), clock.now()),
-            ActivityResumed(activityController.get(), clock.now()),
-            ActivityStarted(anotherController.get(), clock.now()),
-            ActivityResumed(anotherController.get(), clock.now()),
-            ActivityPaused(activityController.get(), clock.now()),
-            ActivityPaused(anotherController.get(), clock.now()),
-            Backgrounded(clock.now()),
+            ActivityStarted(activityController.get(), times[0]),
+            ActivityResumed(activityController.get(), times[1]),
+            ActivityStarted(anotherController.get(), times[2]),
+            ActivityResumed(anotherController.get(), times[3]),
+            ActivityPaused(activityController.get(), times[4]),
+            ActivityPaused(anotherController.get(), times[5]),
+            Backgrounded(times[6]),
         )
     }
 
     private fun ActivityNavigationTracker.assertNavControllerActivityOpening(trackNav: Boolean) {
-        openActivity(navActivityController)
+        val times = openActivity(navActivityController)
+        assertEquals(4, times.size)
         val expectedEvents: List<NavigationEvent> = if (trackNav) {
             mutableListOf(
-                NavControllerAttached(navActivityController.get(), clock.now()),
-                NavControllerDestinationChanged(navActivityController.get(), "home", clock.now())
+                NavControllerAttached(navActivityController.get(), times[0]),
+                NavControllerDestinationChanged(navActivityController.get(), "home", times[0])
             )
         } else {
             listOf()
@@ -166,41 +169,43 @@ internal class ActivityNavigationTrackerTest {
 
         assertEvents(
             expectedEvents + listOf(
-                ActivityStarted(navActivityController.get(), clock.now()),
-                ActivityResumed(navActivityController.get(), clock.now()),
-                ActivityPaused(navActivityController.get(), clock.now()),
-                Backgrounded(clock.now()),
+                ActivityStarted(navActivityController.get(), times[0]),
+                ActivityResumed(navActivityController.get(), times[1]),
+                ActivityPaused(navActivityController.get(), times[2]),
+                Backgrounded(times[3]),
             )
         )
     }
 
     private fun ActivityNavigationTracker.assertNavControllerToPlainActivityNavigation() {
-        transitionBetweenActivities(navActivityController, activityController)
+        val times = transitionBetweenActivities(navActivityController, activityController)
+        assertEquals(7, times.size)
         assertEvents(
-            NavControllerAttached(navActivityController.get(), clock.now()),
-            NavControllerDestinationChanged(navActivityController.get(), "home", clock.now()),
-            ActivityStarted(navActivityController.get(), clock.now()),
-            ActivityResumed(navActivityController.get(), clock.now()),
-            ActivityPaused(navActivityController.get(), clock.now()),
-            ActivityStarted(activityController.get(), clock.now()),
-            ActivityResumed(activityController.get(), clock.now()),
-            ActivityPaused(activityController.get(), clock.now()),
-            Backgrounded(clock.now()),
+            NavControllerAttached(navActivityController.get(), times[0]),
+            NavControllerDestinationChanged(navActivityController.get(), "home", times[0]),
+            ActivityStarted(navActivityController.get(), times[0]),
+            ActivityResumed(navActivityController.get(), times[1]),
+            ActivityPaused(navActivityController.get(), times[2]),
+            ActivityStarted(activityController.get(), times[3]),
+            ActivityResumed(activityController.get(), times[4]),
+            ActivityPaused(activityController.get(), times[5]),
+            Backgrounded(times[6]),
         )
     }
 
     private fun ActivityNavigationTracker.assertPlainToNavControllerActivityNavigation() {
-        transitionBetweenActivities(activityController, navActivityController)
+        val times = transitionBetweenActivities(activityController, navActivityController)
+        assertEquals(7, times.size)
         assertEvents(
-            ActivityStarted(activityController.get(), clock.now()),
-            ActivityResumed(activityController.get(), clock.now()),
-            ActivityPaused(activityController.get(), clock.now()),
-            NavControllerAttached(navActivityController.get(), clock.now()),
-            NavControllerDestinationChanged(navActivityController.get(), "home", clock.now()),
-            ActivityStarted(navActivityController.get(), clock.now()),
-            ActivityResumed(navActivityController.get(), clock.now()),
-            ActivityPaused(navActivityController.get(), clock.now()),
-            Backgrounded(clock.now()),
+            ActivityStarted(activityController.get(), times[0]),
+            ActivityResumed(activityController.get(), times[1]),
+            ActivityPaused(activityController.get(), times[2]),
+            NavControllerAttached(navActivityController.get(), times[3]),
+            NavControllerDestinationChanged(navActivityController.get(), "home", times[3]),
+            ActivityStarted(navActivityController.get(), times[3]),
+            ActivityResumed(navActivityController.get(), times[4]),
+            ActivityPaused(navActivityController.get(), times[5]),
+            Backgrounded(times[6]),
         )
     }
 
@@ -223,41 +228,57 @@ internal class ActivityNavigationTrackerTest {
     private fun ActivityNavigationTracker.transitionBetweenActivities(
         first: ActivityController<out Activity>,
         second: ActivityController<out Activity>,
-    ) {
-        first.start()
-        first.resume()
-        first.pause()
-        second.start()
-        second.resume()
-        first.stop()
-        second.pause()
-        second.stop()
-        onBackground()
+    ): List<Long> {
+        return invokeCallbacks(
+            listOf(
+                first::start,
+                first::resume,
+                first::pause,
+                second::start,
+                second::resume,
+                second::pause,
+                ::onBackground
+            )
+        )
     }
 
     private fun ActivityNavigationTracker.openConcurrentActivities(
         first: ActivityController<out Activity>,
         second: ActivityController<out Activity>,
-    ) {
-        first.start()
-        first.resume()
-        second.start()
-        second.resume()
-        first.pause()
-        first.stop()
-        second.pause()
-        second.stop()
-        onBackground()
+    ): List<Long> {
+        return invokeCallbacks(
+            listOf(
+                first::start,
+                first::resume,
+                second::start,
+                second::resume,
+                first::pause,
+                second::pause,
+                ::onBackground
+            )
+        )
     }
 
     private fun ActivityNavigationTracker.openActivity(
         activity: ActivityController<out Activity>,
-    ) {
-        activity.start()
-        activity.resume()
-        activity.pause()
-        activity.stop()
-        onBackground()
+    ): List<Long> {
+        return invokeCallbacks(
+            listOf(
+                activity::start,
+                activity::resume,
+                activity::pause,
+                ::onBackground
+            )
+        )
+    }
+
+    private fun invokeCallbacks(callbacks: List<Function0<Any>>): List<Long> {
+        val times = mutableListOf<Long>()
+        callbacks.forEach {
+            times.add(clock.tick())
+            it()
+        }
+        return times
     }
 
     private fun createTracker(trackNav: Boolean): ActivityNavigationTracker {

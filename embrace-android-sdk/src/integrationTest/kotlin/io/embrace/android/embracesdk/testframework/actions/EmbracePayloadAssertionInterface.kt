@@ -11,6 +11,8 @@ import io.embrace.android.embracesdk.internal.TypeUtils
 import io.embrace.android.embracesdk.internal.arch.attrs.embCleanExit
 import io.embrace.android.embracesdk.internal.arch.attrs.embCrashId
 import io.embrace.android.embracesdk.internal.arch.attrs.embState
+import io.embrace.android.embracesdk.semconv.EmbAndroidAttributes
+import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
@@ -240,12 +242,12 @@ internal class EmbracePayloadAssertionInterface(
             mapOf(
                 "emb.android.native_crash.exception" to crashData.nativeCrash.crash,
                 "emb.android.native_crash.symbols" to symbols,
-                "emb.private.send_mode" to "DEFER",
+                EmbSessionAttributes.EMB_PRIVATE_SEND_MODE to "DEFER",
                 "emb.type" to "sys.android.native_crash",
             )
         )
         assertNotNull(attrs.findAttributeValue("log.record.uid"))
-        assertNotNull(attrs.findAttributeValue("emb.android.crash_number"))
+        assertNotNull(attrs.findAttributeValue(EmbAndroidAttributes.EMB_ANDROID_CRASH_NUMBER))
         if (crashData.sessionEnvelope != null) {
             assertEquals(crashData.sessionEnvelope.getSessionId(), attrs.findAttributeValue("session.id"))
         }

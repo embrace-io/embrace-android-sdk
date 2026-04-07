@@ -7,6 +7,8 @@ import io.embrace.android.embracesdk.internal.UnityInternalInterface
 import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.logs.LogExceptionType
+import io.embrace.android.embracesdk.semconv.EmbAndroidAttributes
+import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.opentelemetry.kotlin.semconv.ExceptionAttributes
 
 internal class UnityInternalInterfaceImpl(
@@ -58,7 +60,7 @@ internal class UnityInternalInterfaceImpl(
         if (embrace.isStarted) {
             val attrs = mutableMapOf(
                 "emb.type" to "sys.exception",
-                "emb.private.send_mode" to "immediate",
+                EmbSessionAttributes.EMB_PRIVATE_SEND_MODE to "immediate",
                 ExceptionAttributes.EXCEPTION_MESSAGE to message,
             )
 
@@ -67,7 +69,7 @@ internal class UnityInternalInterfaceImpl(
             stacktrace?.let { attrs[ExceptionAttributes.EXCEPTION_STACKTRACE] = it }
 
             if (exceptionType != LogExceptionType.NONE) {
-                attrs["emb.exception_handling"] = exceptionType.value
+                attrs[EmbAndroidAttributes.EMB_EXCEPTION_HANDLING] = exceptionType.value
             }
 
             embrace.logMessage(

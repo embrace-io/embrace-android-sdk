@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.assertions
 
-import io.embrace.android.embracesdk.internal.arch.attrs.embHeartbeatTimeUnixNano
+import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
@@ -42,7 +42,7 @@ fun Envelope<SessionPayload>.getStartTime(): Long {
  */
 fun Envelope<SessionPayload>.getLastHeartbeatTimeMs(): Long {
     return checkNotNull(
-        findSessionSpan().attributes?.findAttributeValue(embHeartbeatTimeUnixNano.name)?.toLongOrNull()
+        findSessionSpan().attributes?.findAttributeValue(EmbSessionAttributes.EMB_HEARTBEAT_TIME_UNIX_NANO)?.toLongOrNull()
             ?.nanosToMillis()
     ) {
         "No last heartbeat time found in session payload"

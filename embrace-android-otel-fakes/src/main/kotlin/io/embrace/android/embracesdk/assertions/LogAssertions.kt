@@ -2,8 +2,8 @@
 package io.embrace.android.embracesdk.assertions
 
 import io.embrace.android.embracesdk.Severity
-import io.embrace.android.embracesdk.internal.arch.attrs.embExceptionHandling
-import io.embrace.android.embracesdk.internal.arch.attrs.embState
+import io.embrace.android.embracesdk.semconv.EmbAndroidAttributes
+import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.payload.Log
@@ -45,8 +45,8 @@ fun assertOtelLogReceived(
         } else {
             assertNull(log.attributes?.find { it.key == SessionAttributes.SESSION_ID })
         }
-        expectedType?.let { assertAttribute(log, embExceptionHandling.name, it) }
-        assertEquals(expectedState, log.attributes?.findAttributeValue(embState.name))
+        expectedType?.let { assertAttribute(log, EmbAndroidAttributes.EMB_EXCEPTION_HANDLING, it) }
+        assertEquals(expectedState, log.attributes?.findAttributeValue(EmbSessionAttributes.EMB_STATE))
         expectedExceptionName?.let {
             assertAttribute(log, ExceptionAttributes.EXCEPTION_TYPE, expectedExceptionName)
         }

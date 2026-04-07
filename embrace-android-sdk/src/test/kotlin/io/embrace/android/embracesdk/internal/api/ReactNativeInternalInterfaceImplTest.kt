@@ -167,7 +167,7 @@ internal class ReactNativeInternalInterfaceImplTest {
                 "t\":\"type\",\"" +
                 "st\":\"" +
                 "stack\"}",
-            lastSentCrashAttributes[embAndroidReactNativeCrashJsException.name]
+            lastSentCrashAttributes[embAndroidReactNativeCrashJsException]
         )
     }
 

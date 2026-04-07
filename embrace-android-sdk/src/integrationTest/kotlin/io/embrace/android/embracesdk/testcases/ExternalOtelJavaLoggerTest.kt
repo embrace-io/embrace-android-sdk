@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.fakes.FakeOtelJavaLogRecordExporter
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.config.FakeProjectConfig
-import io.embrace.android.embracesdk.internal.arch.attrs.embState
+import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.internal.arch.attrs.toEmbraceAttributeName
 import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
@@ -257,7 +257,7 @@ internal class ExternalOtelJavaLoggerTest {
             } else {
                 assertFalse(containsKey(SessionAttributes.SESSION_ID))
             }
-            assertEquals(expectedAppState.description, this[embState.name])
+            assertEquals(expectedAppState.description, this[EmbSessionAttributes.EMB_STATE])
             assertTrue(containsKey("emb.state.test"))
             expectedSessionProperties.forEach { prop ->
                 assertEquals(prop.value, this[prop.key.toEmbraceAttributeName()])

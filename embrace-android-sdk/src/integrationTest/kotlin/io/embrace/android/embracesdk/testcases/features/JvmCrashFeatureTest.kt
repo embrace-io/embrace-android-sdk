@@ -7,8 +7,7 @@ import io.embrace.android.embracesdk.assertions.getLastLog
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.config.FakeProjectConfig
 import io.embrace.android.embracesdk.internal.EmbraceInternalApi
-import io.embrace.android.embracesdk.internal.arch.attrs.embCrashId
-import io.embrace.android.embracesdk.internal.arch.attrs.embState
+import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.semconv.EmbAndroidAttributes
 import io.embrace.android.embracesdk.internal.arch.attrs.toEmbraceAttributeName
@@ -151,13 +150,13 @@ internal class JvmCrashFeatureTest {
                 val expectedJsException = "{\"n\":\"name\",\"m\":\"message\",\"t\":\"type\",\"st\":\"stacktrace\"}"
 
                 val message = getSingleSessionEnvelope()
-                val crashId = message.getSessionSpan()?.attributes?.findAttributeValue(embCrashId.name)
+                val crashId = message.getSessionSpan()?.attributes?.findAttributeValue(EmbSessionAttributes.EMB_CRASH_ID)
                 assertNotNull(crashId)
                 log.attributes?.assertMatches(
                     mapOf(
-                        EmbType.System.ReactNativeCrash.embAndroidReactNativeCrashJsException.name to expectedJsException,
+                        EmbType.System.ReactNativeCrash.embAndroidReactNativeCrashJsException to expectedJsException,
                         EmbAndroidAttributes.EMB_ANDROID_CRASH_NUMBER to 1,
-                        EmbType.System.Crash.embAndroidCrashExceptionCause.name to expectedExceptionCause,
+                        EmbType.System.Crash.embAndroidCrashExceptionCause to expectedExceptionCause,
                         LogAttributes.LOG_RECORD_UID to crashId
                     )
                 )
@@ -167,7 +166,7 @@ internal class JvmCrashFeatureTest {
     }
 
     private fun Envelope<SessionPayload>.getCrashedId(): String {
-        val crashId = checkNotNull(getSessionSpan()?.attributes?.findAttributeValue(embCrashId.name))
+        val crashId = checkNotNull(getSessionSpan()?.attributes?.findAttributeValue(EmbSessionAttributes.EMB_CRASH_ID))
         assertFalse(crashId.isBlank())
         return crashId
     }
@@ -196,9 +195,9 @@ internal class JvmCrashFeatureTest {
 
         attributes?.assertMatches(
             mapOf(
-                embState.name to state,
+                EmbSessionAttributes.EMB_STATE to state,
                 EmbAndroidAttributes.EMB_ANDROID_CRASH_NUMBER to 1,
-                EmbType.System.Crash.embAndroidCrashExceptionCause.name to expectedExceptionCause,
+                EmbType.System.Crash.embAndroidCrashExceptionCause to expectedExceptionCause,
             )
         )
 

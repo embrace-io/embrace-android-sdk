@@ -2,8 +2,6 @@ package io.embrace.android.embracesdk.internal.instrumentation.crash.jvm
 
 import io.embrace.android.embracesdk.internal.arch.CrashTeardownHandler
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
-import io.embrace.android.embracesdk.internal.arch.attrs.embAndroidThreads
-import io.embrace.android.embracesdk.internal.arch.attrs.embCrashNumber
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceImpl
 import io.embrace.android.embracesdk.internal.arch.datasource.LogSeverity
 import io.embrace.android.embracesdk.internal.arch.limits.NoopLimitStrategy
@@ -16,6 +14,7 @@ import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.store.Ordinal
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.internal.utils.encodeToUTF8String
+import io.embrace.android.embracesdk.semconv.EmbAndroidAttributes
 import io.opentelemetry.kotlin.semconv.ExceptionAttributes
 import io.opentelemetry.kotlin.semconv.LogAttributes
 import java.util.concurrent.CopyOnWriteArrayList
@@ -74,7 +73,7 @@ class JvmCrashDataSourceImpl(
                         ),
                     )
                     setAttribute(LogAttributes.LOG_RECORD_UID, crashId)
-                    setAttribute(embCrashNumber, args.ordinalStore.incrementAndGet(Ordinal.CRASH).toString())
+                    setAttribute(EmbAndroidAttributes.EMB_ANDROID_CRASH_NUMBER, args.ordinalStore.incrementAndGet(Ordinal.CRASH).toString())
                     setAttribute(
                         EmbType.System.Crash.embAndroidCrashExceptionCause,
                         encodeToUTF8String(
@@ -82,7 +81,7 @@ class JvmCrashDataSourceImpl(
                         )
                     )
                     setAttribute(
-                        embAndroidThreads,
+                        EmbAndroidAttributes.EMB_ANDROID_THREADS,
                         encodeToUTF8String(
                             getThreadsInfo(),
                         ),

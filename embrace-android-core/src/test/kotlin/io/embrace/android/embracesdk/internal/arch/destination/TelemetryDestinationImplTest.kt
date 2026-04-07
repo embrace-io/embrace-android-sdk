@@ -195,7 +195,7 @@ internal class TelemetryDestinationImplTest {
         assertEquals(endTimeMs, span.spanEndTimeMs)
         assertEquals(StatusCode.UNSET, span.status.statusCode)
         assertTrue(span.hasEmbraceAttribute(EmbType.Performance.Default))
-        assertFalse(span.attributes.containsKey(ErrorCodeAttribute.Failure.key.name))
+        assertFalse(span.attributes.containsKey(ErrorCodeAttribute.Failure.key))
         assertEquals("bar", span.attributes["foo"])
         val event = span.events.single()
         assertEquals("event", event.name)
@@ -251,7 +251,7 @@ internal class TelemetryDestinationImplTest {
         assertEquals(startTimeMs, span.spanStartTimeMs)
         assertEquals(StatusCode.UNSET, span.status.statusCode)
         assertTrue(span.hasEmbraceAttribute(EmbType.Performance.Default))
-        assertFalse(span.attributes.containsKey(ErrorCodeAttribute.Failure.key.name))
+        assertFalse(span.attributes.containsKey(ErrorCodeAttribute.Failure.key))
         assertNull(span.parent)
         verifyAndResetSessionUpdate()
     }

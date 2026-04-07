@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.arch.schema
 
 import io.embrace.android.embracesdk.internal.arch.attrs.EmbraceAttribute
-import io.embrace.android.embracesdk.internal.arch.attrs.EmbraceAttributeKey
 import io.embrace.android.embracesdk.semconv.EmbAndroidAttributes
 
 /**
@@ -11,7 +10,7 @@ import io.embrace.android.embracesdk.semconv.EmbAndroidAttributes
  */
 sealed class EmbType(type: String, subtype: String?) : EmbraceAttribute {
 
-    override val key: EmbraceAttributeKey = EmbraceAttributeKey.create(id = "type")
+    override val key: String = "emb.type"
     override val value: String = type + (subtype?.run { ".$this" } ?: "")
     open val sendMode: SendMode = SendMode.DEFAULT
 
@@ -71,30 +70,26 @@ sealed class EmbType(type: String, subtype: String?) : EmbraceAttribute {
             /**
              * The list of [Throwable] that caused the exception responsible for a crash
              */
-            val embAndroidCrashExceptionCause: EmbraceAttributeKey =
-                EmbraceAttributeKey(EmbAndroidAttributes.EMB_ANDROID_CRASH_EXCEPTION_CAUSE)
+            val embAndroidCrashExceptionCause: String = EmbAndroidAttributes.EMB_ANDROID_CRASH_EXCEPTION_CAUSE
         }
 
         object ReactNativeCrash : System("android.react_native_crash", SendMode.DEFER) {
             /**
              * The JavaScript unhandled exception from the ReactNative layer
              */
-            val embAndroidReactNativeCrashJsException: EmbraceAttributeKey =
-                EmbraceAttributeKey(EmbAndroidAttributes.EMB_ANDROID_REACT_NATIVE_CRASH_JS_EXCEPTION)
+            val embAndroidReactNativeCrashJsException: String = EmbAndroidAttributes.EMB_ANDROID_REACT_NATIVE_CRASH_JS_EXCEPTION
         }
 
         object NativeCrash : System("android.native_crash", SendMode.DEFER) {
             /**
              * Exception coming from the native layer
              */
-            val embNativeCrashException: EmbraceAttributeKey =
-                EmbraceAttributeKey(EmbAndroidAttributes.EMB_ANDROID_NATIVE_CRASH_EXCEPTION)
+            val embNativeCrashException: String = EmbAndroidAttributes.EMB_ANDROID_NATIVE_CRASH_EXCEPTION
 
             /**
              * Native symbols used to symbolicate a native crash
              */
-            val embNativeCrashSymbols: EmbraceAttributeKey =
-                EmbraceAttributeKey(EmbAndroidAttributes.EMB_ANDROID_NATIVE_CRASH_SYMBOLS)
+            val embNativeCrashSymbols: String = EmbAndroidAttributes.EMB_ANDROID_NATIVE_CRASH_SYMBOLS
         }
 
         object LowPower : System("low_power")

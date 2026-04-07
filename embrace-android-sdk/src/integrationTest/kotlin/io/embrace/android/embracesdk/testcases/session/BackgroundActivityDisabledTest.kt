@@ -6,15 +6,7 @@ import io.embrace.android.embracesdk.assertions.findEventsOfType
 import io.embrace.android.embracesdk.assertions.findSessionSpan
 import io.embrace.android.embracesdk.assertions.getLogsOfType
 import io.embrace.android.embracesdk.assertions.getSessionId
-import io.embrace.android.embracesdk.internal.arch.attrs.embCleanExit
-import io.embrace.android.embracesdk.internal.arch.attrs.embColdStart
-import io.embrace.android.embracesdk.internal.arch.attrs.embProcessIdentifier
-import io.embrace.android.embracesdk.internal.arch.attrs.embSequenceId
-import io.embrace.android.embracesdk.internal.arch.attrs.embSessionEndType
-import io.embrace.android.embracesdk.internal.arch.attrs.embSessionNumber
-import io.embrace.android.embracesdk.internal.arch.attrs.embSessionStartType
-import io.embrace.android.embracesdk.internal.arch.attrs.embState
-import io.embrace.android.embracesdk.internal.arch.attrs.embTerminated
+import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
@@ -86,7 +78,7 @@ internal class BackgroundActivityDisabledTest {
                     assertEquals("error", body)
                     attributes?.assertMatches(
                         mapOf(
-                            embState.name to "background"
+                            EmbSessionAttributes.EMB_STATE to "background"
                         )
                     )
                     assertNull(attributes?.findAttributeValue(SessionAttributes.SESSION_ID))
@@ -95,7 +87,7 @@ internal class BackgroundActivityDisabledTest {
                     assertEquals("info", body)
                     attributes?.assertMatches(
                         mapOf(
-                            embState.name to "background"
+                            EmbSessionAttributes.EMB_STATE to "background"
                         )
                     )
                     assertNull(attributes?.findAttributeValue(SessionAttributes.SESSION_ID))
@@ -104,7 +96,7 @@ internal class BackgroundActivityDisabledTest {
                     assertEquals("warning", body)
                     attributes?.assertMatches(
                         mapOf(
-                            embState.name to "foreground",
+                            EmbSessionAttributes.EMB_STATE to "foreground",
                             SessionAttributes.SESSION_ID to sessions[1].getSessionId()
                         )
                     )
@@ -115,7 +107,7 @@ internal class BackgroundActivityDisabledTest {
                     assertEquals("sent-after-session", body)
                     attributes?.assertMatches(
                         mapOf(
-                            embState.name to "foreground",
+                            EmbSessionAttributes.EMB_STATE to "foreground",
                             SessionAttributes.SESSION_ID to secondSession.getSessionId()
                         )
                     )
@@ -200,8 +192,8 @@ internal class BackgroundActivityDisabledTest {
                 )
 
                 assertEquals(
-                    sessionSpan1.attributes?.findAttributeValue(embProcessIdentifier.name),
-                    sessionSpan2.attributes?.findAttributeValue(embProcessIdentifier.name)
+                    sessionSpan1.attributes?.findAttributeValue(EmbSessionAttributes.EMB_PROCESS_IDENTIFIER),
+                    sessionSpan2.attributes?.findAttributeValue(EmbSessionAttributes.EMB_PROCESS_IDENTIFIER)
                 )
             }
         )
@@ -218,18 +210,18 @@ internal class BackgroundActivityDisabledTest {
         assertEquals(endMs, endTimeNanos?.nanosToMillis())
         attributes?.assertMatches(
             mapOf(
-                embSessionNumber.name to sessionNumber,
-                embSequenceId.name to sequenceId,
-                embColdStart.name to coldStart,
-                embState.name to "foreground",
-                embCleanExit.name to "true",
-                embTerminated.name to "false",
-                embSessionStartType.name to "state",
-                embSessionEndType.name to "state",
+                EmbSessionAttributes.EMB_SESSION_NUMBER to sessionNumber,
+                EmbSessionAttributes.EMB_PRIVATE_SEQUENCE_ID to sequenceId,
+                EmbSessionAttributes.EMB_COLD_START to coldStart,
+                EmbSessionAttributes.EMB_STATE to "foreground",
+                EmbSessionAttributes.EMB_CLEAN_EXIT to "true",
+                EmbSessionAttributes.EMB_TERMINATED to "false",
+                EmbSessionAttributes.EMB_SESSION_START_TYPE to "state",
+                EmbSessionAttributes.EMB_SESSION_END_TYPE to "state",
             )
         )
         with(checkNotNull(attributes)) {
-            assertFalse(findAttributeValue(embProcessIdentifier.name).isNullOrBlank())
+            assertFalse(findAttributeValue(EmbSessionAttributes.EMB_PROCESS_IDENTIFIER).isNullOrBlank())
             assertFalse(findAttributeValue(SessionAttributes.SESSION_ID).isNullOrBlank())
         }
     }

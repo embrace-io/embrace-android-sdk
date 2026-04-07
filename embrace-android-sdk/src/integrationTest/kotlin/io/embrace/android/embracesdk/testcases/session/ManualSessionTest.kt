@@ -4,7 +4,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.findSessionSpan
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.SessionRemoteConfig
-import io.embrace.android.embracesdk.internal.arch.attrs.embSessionNumber
+import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.assertions.assertMatches
 import org.junit.Rule
@@ -36,10 +36,10 @@ internal class ManualSessionTest {
                 val manualSession = messages[1] // started manually, ended via state
 
                 stateSession.findSessionSpan().attributes?.assertMatches(mapOf(
-                    embSessionNumber.name to 1
+                    EmbSessionAttributes.EMB_SESSION_NUMBER to 1
                 ))
                 manualSession.findSessionSpan().attributes?.assertMatches(mapOf(
-                    embSessionNumber.name to 2
+                    EmbSessionAttributes.EMB_SESSION_NUMBER to 2
                 ))
             }
         )
@@ -75,7 +75,7 @@ internal class ManualSessionTest {
             assertAction = {
                 val message = getSingleSessionEnvelope()
                 message.findSessionSpan().attributes?.assertMatches(mapOf(
-                    embSessionNumber.name to 1
+                    EmbSessionAttributes.EMB_SESSION_NUMBER to 1
                 ))
             }
         )

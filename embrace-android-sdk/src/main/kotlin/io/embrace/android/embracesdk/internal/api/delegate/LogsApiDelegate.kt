@@ -2,8 +2,6 @@ package io.embrace.android.embracesdk.internal.api.delegate
 
 import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.internal.api.LogsApi
-import io.embrace.android.embracesdk.internal.arch.attrs.embExceptionHandling
-import io.embrace.android.embracesdk.internal.arch.attrs.embSendMode
 import io.embrace.android.embracesdk.internal.arch.datasource.LogSeverity
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType.Exception
@@ -25,6 +23,8 @@ import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.serialization.truncatedStacktrace
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import io.embrace.android.embracesdk.internal.utils.getSafeStackTrace
+import io.embrace.android.embracesdk.semconv.EmbAndroidAttributes
+import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.opentelemetry.kotlin.semconv.ExceptionAttributes
 
 internal class LogsApiDelegate(
@@ -180,12 +180,12 @@ internal class LogsApiDelegate(
         exceptionData?.stacktrace?.let { attrs[ExceptionAttributes.EXCEPTION_STACKTRACE] = it }
 
         if (exceptionType != LogExceptionType.NONE) {
-            attrs[embExceptionHandling.name] = exceptionType.value
+            attrs[EmbAndroidAttributes.EMB_EXCEPTION_HANDLING] = exceptionType.value
         }
 
         // add attachment attrs
         if (attachment != null) {
-            attrs.putAll(attachment.attributes.mapKeys { it.key.name })
+            attrs.putAll(attachment.attributes)
         }
 
         // map severity value
@@ -216,8 +216,8 @@ internal class LogsApiDelegate(
      */
     private fun createSchemaProvider(attrs: Map<String, Any>): (TelemetryAttributes) -> SchemaType {
         val type = attrs["emb.type"] as? String
-        val sendMode = attrs[embSendMode.name] as? String
-        val handledMode = attrs[embExceptionHandling.name] as? String
+        val sendMode = attrs[EmbSessionAttributes.EMB_PRIVATE_SEND_MODE] as? String
+        val handledMode = attrs[EmbAndroidAttributes.EMB_EXCEPTION_HANDLING] as? String
 
         return when {
             type != null -> createCustomSchema(type, sendMode) ?: ::Log

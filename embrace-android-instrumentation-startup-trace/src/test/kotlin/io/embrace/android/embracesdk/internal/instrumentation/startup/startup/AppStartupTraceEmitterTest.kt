@@ -8,7 +8,6 @@ import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakeProcessInfo
 import io.embrace.android.embracesdk.fakes.FakeSpanToken
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
-import io.embrace.android.embracesdk.internal.arch.attrs.embStartupActivityName
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.arch.state.AppState
@@ -29,6 +28,7 @@ import io.embrace.android.embracesdk.internal.instrumentation.startup.activity.h
 import io.embrace.android.embracesdk.internal.instrumentation.startup.ui.hasRenderEvent
 import io.embrace.android.embracesdk.internal.instrumentation.startup.ui.supportFrameCommitCallback
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
+import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -878,10 +878,10 @@ internal class AppStartupTraceEmitterTest {
         val trace = input
         assertEquals(expectedStartTimeMs, trace.startTimeMs)
         assertEquals(expectedEndTimeMs, trace.endTimeMs)
-        assertFalse(trace.attributes.containsKey(PrivateSpan.key.name))
+        assertFalse(trace.attributes.containsKey(PrivateSpan.key))
 
         val attrs = checkNotNull(trace.attributes)
-        assertEquals(STARTUP_ACTIVITY_NAME, attrs[embStartupActivityName.name])
+        assertEquals(STARTUP_ACTIVITY_NAME, attrs[EmbSessionAttributes.EMB_STARTUP_ACTIVITY])
         assertEquals(1, dataCollectionCompletedCallbackInvokedCount)
 
         expectedCustomAttributes.forEach { entry ->
@@ -893,7 +893,7 @@ internal class AppStartupTraceEmitterTest {
         checkNotNull(span)
         assertEquals(expectedStartTimeNanos, span.startTimeMs)
         assertEquals(expectedEndTimeNanos, span.endTimeMs)
-        assertFalse(span.attributes.containsKey(PrivateSpan.key.name))
+        assertFalse(span.attributes.containsKey(PrivateSpan.key))
     }
 
     private fun Map<String, FakeSpanToken>.coldAppStartupRootSpan() = this[COLD_APP_STARTUP_ROOT_SPAN]

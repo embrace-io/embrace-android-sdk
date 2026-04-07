@@ -100,7 +100,7 @@ internal class OTelExportTest {
             },
             otelExportAssertion = {
                 val log = awaitLogs(1) {
-                    it.attributes.toStringMap().containsKey(EmbType.System.Log.key.name)
+                    it.attributes.toStringMap().containsKey(EmbType.System.Log.key)
                 }
                 with(log.single()) {
                     assertEquals("test message", body.asString())

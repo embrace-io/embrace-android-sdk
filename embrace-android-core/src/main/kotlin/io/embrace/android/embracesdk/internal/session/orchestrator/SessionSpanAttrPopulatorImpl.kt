@@ -1,22 +1,12 @@
 package io.embrace.android.embracesdk.internal.session.orchestrator
 
-import io.embrace.android.embracesdk.internal.arch.attrs.embCleanExit
-import io.embrace.android.embracesdk.internal.arch.attrs.embColdStart
-import io.embrace.android.embracesdk.internal.arch.attrs.embCrashId
-import io.embrace.android.embracesdk.internal.arch.attrs.embErrorLogCount
-import io.embrace.android.embracesdk.internal.arch.attrs.embFreeDiskBytes
-import io.embrace.android.embracesdk.internal.arch.attrs.embSessionEndType
-import io.embrace.android.embracesdk.internal.arch.attrs.embSessionNumber
-import io.embrace.android.embracesdk.internal.arch.attrs.embSessionStartType
-import io.embrace.android.embracesdk.internal.arch.attrs.embSessionStartupDuration
-import io.embrace.android.embracesdk.internal.arch.attrs.embState
-import io.embrace.android.embracesdk.internal.arch.attrs.embTerminated
 import io.embrace.android.embracesdk.internal.arch.datasource.LogSeverity
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.internal.logs.LogLimitingService
 import io.embrace.android.embracesdk.internal.session.LifeEventType
 import io.embrace.android.embracesdk.internal.session.SessionToken
+import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import java.util.Locale
 
 internal class SessionSpanAttrPopulatorImpl(
@@ -28,39 +18,39 @@ internal class SessionSpanAttrPopulatorImpl(
 
     override fun populateSessionSpanStartAttrs(session: SessionToken) {
         with(destination) {
-            addSessionAttribute(embColdStart.name, session.isColdStart.toString())
-            addSessionAttribute(embSessionNumber.name, session.number.toString())
-            addSessionAttribute(embState.name, session.appState.name.lowercase(Locale.US))
-            addSessionAttribute(embCleanExit.name, false.toString())
-            addSessionAttribute(embTerminated.name, true.toString())
+            addSessionAttribute(EmbSessionAttributes.EMB_COLD_START, session.isColdStart.toString())
+            addSessionAttribute(EmbSessionAttributes.EMB_SESSION_NUMBER, session.number.toString())
+            addSessionAttribute(EmbSessionAttributes.EMB_STATE, session.appState.name.lowercase(Locale.US))
+            addSessionAttribute(EmbSessionAttributes.EMB_CLEAN_EXIT, false.toString())
+            addSessionAttribute(EmbSessionAttributes.EMB_TERMINATED, true.toString())
 
             session.startType.toString().lowercase(Locale.US).let {
-                addSessionAttribute(embSessionStartType.name, it)
+                addSessionAttribute(EmbSessionAttributes.EMB_SESSION_START_TYPE, it)
             }
         }
     }
 
     override fun populateSessionSpanEndAttrs(endType: LifeEventType?, crashId: String?, coldStart: Boolean) {
         with(destination) {
-            addSessionAttribute(embCleanExit.name, true.toString())
-            addSessionAttribute(embTerminated.name, false.toString())
+            addSessionAttribute(EmbSessionAttributes.EMB_CLEAN_EXIT, true.toString())
+            addSessionAttribute(EmbSessionAttributes.EMB_TERMINATED, false.toString())
             crashId?.let {
-                addSessionAttribute(embCrashId.name, crashId)
+                addSessionAttribute(EmbSessionAttributes.EMB_CRASH_ID, crashId)
             }
             endType?.toString()?.lowercase(Locale.US)?.let {
-                addSessionAttribute(embSessionEndType.name, it)
+                addSessionAttribute(EmbSessionAttributes.EMB_SESSION_END_TYPE, it)
             }
             if (coldStart) {
                 startupDurationProvider()?.let { duration ->
-                    addSessionAttribute(embSessionStartupDuration.name, duration.toString())
+                    addSessionAttribute(EmbSessionAttributes.EMB_STARTUP_DURATION, duration.toString())
                 }
             }
 
             val logCount = logLimitingService.getCount(LogSeverity.ERROR)
-            addSessionAttribute(embErrorLogCount.name, logCount.toString())
+            addSessionAttribute(EmbSessionAttributes.EMB_ERROR_LOG_COUNT, logCount.toString())
 
             metadataService.getDiskUsage()?.deviceDiskFree?.let { free ->
-                addSessionAttribute(embFreeDiskBytes.name, free.toString())
+                addSessionAttribute(EmbSessionAttributes.EMB_DISK_FREE_BYTES, free.toString())
             }
         }
     }

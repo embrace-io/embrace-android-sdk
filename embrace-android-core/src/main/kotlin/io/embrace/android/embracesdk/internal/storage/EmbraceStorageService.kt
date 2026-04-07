@@ -1,9 +1,8 @@
 package io.embrace.android.embracesdk.internal.storage
 
 import android.content.Context
-import io.embrace.android.embracesdk.internal.arch.attrs.embStorageAvailable
-import io.embrace.android.embracesdk.internal.arch.attrs.embStorageUsed
 import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
+import io.embrace.android.embracesdk.semconv.EmbTelemetryAttributes
 import java.io.File
 import java.io.FilenameFilter
 
@@ -68,8 +67,8 @@ class EmbraceStorageService(
             .filter { it.isFile }
             .sumOf { it.length() }
         val storageTelemetryMap = mapOf(
-            embStorageUsed.name to storageUsed.toString(),
-            embStorageAvailable.name to availableStorage.toString()
+            EmbTelemetryAttributes.EMB_STORAGE_USED to storageUsed.toString(),
+            EmbTelemetryAttributes.EMB_STORAGE_AVAILABLE to availableStorage.toString()
         )
         telemetryService.logStorageTelemetry(storageTelemetryMap)
     }

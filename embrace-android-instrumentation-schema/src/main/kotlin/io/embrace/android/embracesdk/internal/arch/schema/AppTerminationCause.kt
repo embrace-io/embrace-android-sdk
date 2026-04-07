@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.arch.schema
 
 import io.embrace.android.embracesdk.internal.arch.attrs.EmbraceAttribute
-import io.embrace.android.embracesdk.internal.arch.attrs.EmbraceAttributeKey
 import io.embrace.android.embracesdk.semconv.EmbSpanAttributes
 
 /**
@@ -10,7 +9,7 @@ import io.embrace.android.embracesdk.semconv.EmbSpanAttributes
 sealed class AppTerminationCause(
     override val value: String,
 ) : EmbraceAttribute {
-    override val key: EmbraceAttributeKey = EmbraceAttributeKey(EmbSpanAttributes.EMB_TERMINATION_CAUSE)
+    override val key: String = EmbSpanAttributes.EMB_TERMINATION_CAUSE
 
     object Crash : AppTerminationCause("crash")
 

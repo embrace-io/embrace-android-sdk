@@ -4,6 +4,10 @@ import android.app.Activity
 import android.os.Looper
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeClock
+import io.embrace.android.embracesdk.internal.instrumentation.navigation.NavigationEvent.ActivityPaused
+import io.embrace.android.embracesdk.internal.instrumentation.navigation.NavigationEvent.ActivityResumed
+import io.embrace.android.embracesdk.internal.instrumentation.navigation.NavigationEvent.ActivityStarted
+import io.embrace.android.embracesdk.internal.instrumentation.navigation.NavigationEvent.Backgrounded
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
@@ -32,10 +36,7 @@ internal class NavigationEventBrokerTest {
         shadowMainLooper = Shadows.shadowOf(Looper.getMainLooper())
         loadTimes = mutableListOf()
         states = CopyOnWriteArrayList()
-        broker = NavigationEventBroker(
-            clock = clock,
-            looper = Looper.getMainLooper()
-        ) { loadTimeMs, newScreenName ->
+        broker = NavigationEventBroker { loadTimeMs, newScreenName ->
             states.add(Pair(loadTimeMs, newScreenName))
         }
         homeActivity = Robolectric.buildActivity(HomeActivity::class.java).get()
@@ -46,31 +47,31 @@ internal class NavigationEventBrokerTest {
     @Test
     fun `start time of activity used and instead of resume time when notifying screen load`() {
         val latch = CountDownLatch(1)
-        loadTimes.add(broker.moveClockAndQueue(NavigationEvent.ActivityStarted(homeActivity)))
-        broker.moveClockAndQueue(NavigationEvent.ActivityResumed(homeActivity))
-        broker.moveClockAndQueue(NavigationEvent.ActivityPaused(homeActivity))
-        loadTimes.add(broker.moveClockAndQueue(NavigationEvent.ActivityStarted(settingsActivity)))
-        broker.moveClockAndQueue(NavigationEvent.ActivityResumed(settingsActivity))
-        broker.moveClockAndQueue(NavigationEvent.ActivityPaused(settingsActivity))
+        loadTimes.add(broker.queueAndMoveClock(ActivityStarted(homeActivity, clock.now())))
+        broker.queueAndMoveClock(ActivityResumed(homeActivity, clock.now()))
+        broker.queueAndMoveClock(ActivityPaused(homeActivity, clock.now()))
+        loadTimes.add(broker.queueAndMoveClock(ActivityStarted(settingsActivity, clock.now())))
+        broker.queueAndMoveClock(ActivityResumed(settingsActivity, clock.now()))
+        broker.queueAndMoveClock(ActivityPaused(settingsActivity, clock.now()))
 
         // Background should always be queued before the profile activity event because the latter depends on the
         // former to finish to unlock the latch
         Thread {
             clock.tick()
-            broker.queueEvent(NavigationEvent.Backgrounded)
+            broker.queueEvent(Backgrounded(clock.now()))
             latch.countDown()
         }.start()
         latch.await(1, TimeUnit.SECONDS)
         assertEquals(0, latch.count)
         shadowMainLooper.idle()
         loadTimes.add(clock.now())
-        loadTimes.add(broker.moveClockAndQueue(NavigationEvent.ActivityStarted(profileActivity)))
-        broker.moveClockAndQueue(NavigationEvent.ActivityResumed(profileActivity))
+        loadTimes.add(broker.queueAndMoveClock(ActivityStarted(profileActivity, clock.now())))
+        broker.queueAndMoveClock(ActivityResumed(profileActivity, clock.now()))
         assertEquals(
             listOf(
                 Pair(loadTimes[0], homeActivity.localClassName),
                 Pair(loadTimes[1], settingsActivity.localClassName),
-                Pair(loadTimes[2], NavigationEvent.Backgrounded.name),
+                Pair(loadTimes[2], "Backgrounded"),
                 Pair(loadTimes[3], profileActivity.localClassName)
             ),
             states
@@ -79,18 +80,18 @@ internal class NavigationEventBrokerTest {
 
     @Test
     fun `duplicate events are dropped`() {
-        broker.moveClockAndQueue(NavigationEvent.ActivityStarted(homeActivity))
-        loadTimes.add(broker.moveClockAndQueue(NavigationEvent.ActivityStarted(homeActivity)))
-        broker.moveClockAndQueue(NavigationEvent.ActivityResumed(homeActivity))
-        broker.moveClockAndQueue(NavigationEvent.ActivityResumed(homeActivity))
-        broker.moveClockAndQueue(NavigationEvent.ActivityPaused(homeActivity))
-        broker.moveClockAndQueue(NavigationEvent.ActivityPaused(homeActivity))
-        loadTimes.add(broker.moveClockAndQueue(NavigationEvent.Backgrounded))
-        broker.moveClockAndQueue(NavigationEvent.Backgrounded)
+        broker.queueAndMoveClock(ActivityStarted(homeActivity, clock.now()))
+        loadTimes.add(broker.queueAndMoveClock(ActivityStarted(homeActivity, clock.now())))
+        broker.queueAndMoveClock(ActivityResumed(homeActivity, clock.now()))
+        broker.queueAndMoveClock(ActivityResumed(homeActivity, clock.now()))
+        broker.queueAndMoveClock(ActivityPaused(homeActivity, clock.now()))
+        broker.queueAndMoveClock(ActivityPaused(homeActivity, clock.now()))
+        loadTimes.add(broker.queueAndMoveClock(Backgrounded(clock.now())))
+        broker.queueAndMoveClock(Backgrounded(clock.now()))
         assertEquals(
             listOf(
                 Pair(loadTimes[0], homeActivity.localClassName),
-                Pair(loadTimes[1], NavigationEvent.Backgrounded.name),
+                Pair(loadTimes[1], "Backgrounded"),
             ),
             states
         )
@@ -98,18 +99,18 @@ internal class NavigationEventBrokerTest {
 
     @Test
     fun `no screen load recorded for activities that do not hit resume`() {
-        broker.moveClockAndQueue(NavigationEvent.ActivityStarted(homeActivity))
-        loadTimes.add(broker.moveClockAndQueue(NavigationEvent.ActivityStarted(settingsActivity)))
-        broker.moveClockAndQueue(NavigationEvent.ActivityResumed(settingsActivity))
+        broker.queueAndMoveClock(ActivityStarted(homeActivity, clock.now()))
+        loadTimes.add(broker.queueAndMoveClock(ActivityStarted(settingsActivity, clock.now())))
+        broker.queueAndMoveClock(ActivityResumed(settingsActivity, clock.now()))
         assertEquals(Pair(loadTimes[0], settingsActivity.localClassName), states.single())
     }
 
     @Test
     fun `multiple visible activities results in compound state`() {
-        loadTimes.add(broker.moveClockAndQueue(NavigationEvent.ActivityStarted(homeActivity)))
-        broker.moveClockAndQueue(NavigationEvent.ActivityResumed(homeActivity))
-        broker.moveClockAndQueue(NavigationEvent.ActivityStarted(settingsActivity))
-        loadTimes.add(broker.moveClockAndQueue(NavigationEvent.ActivityResumed(settingsActivity)))
+        loadTimes.add(broker.queueAndMoveClock(ActivityStarted(homeActivity, clock.now())))
+        broker.queueAndMoveClock(ActivityResumed(homeActivity, clock.now()))
+        broker.queueAndMoveClock(ActivityStarted(settingsActivity, clock.now()))
+        loadTimes.add(broker.queueAndMoveClock(ActivityResumed(settingsActivity, clock.now())))
         assertEquals(
             listOf(
                 Pair(loadTimes[0], homeActivity.localClassName),
@@ -121,10 +122,10 @@ internal class NavigationEventBrokerTest {
 
     @Test
     fun `multiple activities with interleaved activity callback orders results in compound state`() {
-        broker.moveClockAndQueue(NavigationEvent.ActivityStarted(homeActivity))
-        loadTimes.add(broker.moveClockAndQueue(NavigationEvent.ActivityStarted(settingsActivity)))
-        broker.moveClockAndQueue(NavigationEvent.ActivityResumed(settingsActivity))
-        loadTimes.add(broker.moveClockAndQueue(NavigationEvent.ActivityResumed(homeActivity)))
+        broker.queueAndMoveClock(ActivityStarted(homeActivity, clock.now()))
+        loadTimes.add(broker.queueAndMoveClock(ActivityStarted(settingsActivity, clock.now())))
+        broker.queueAndMoveClock(ActivityResumed(settingsActivity, clock.now()))
+        loadTimes.add(broker.queueAndMoveClock(ActivityResumed(homeActivity, clock.now())))
 
         assertEquals(
             listOf(
@@ -135,11 +136,12 @@ internal class NavigationEventBrokerTest {
         )
     }
 
-    private fun NavigationEventBroker.moveClockAndQueue(event: NavigationEvent): Long {
-        clock.tick()
+    private fun NavigationEventBroker.queueAndMoveClock(event: NavigationEvent): Long {
+        val eventTime = clock.now()
         queueEvent(event)
         shadowMainLooper.idle()
-        return clock.now()
+        clock.tick()
+        return eventTime
     }
 
     private class HomeActivity : Activity()

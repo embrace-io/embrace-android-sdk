@@ -16,15 +16,23 @@ internal sealed class NavigationEvent(
      * different IDs, and it's up to the event to determine what it is based on the input at construction time.
      */
     val componentId: Int = 0,
+
+    /**
+     * The times at which the event was detected and generated. Any downstream processing ascribing a time to this event should
+     * use this value rather than the time the processing is taking place
+     */
+    val timestampMs: Long,
 ) {
     /**
      * An Activity is about to be started.
      */
     class ActivityStarted(
         activity: Activity,
+        timestampMs: Long,
     ) : NavigationEvent(
         name = activity.localClassName,
-        componentId = activity.getId()
+        componentId = activity.getId(),
+        timestampMs = timestampMs,
     )
 
     /**
@@ -32,9 +40,11 @@ internal sealed class NavigationEvent(
      */
     class ActivityResumed(
         activity: Activity,
+        timestampMs: Long,
     ) : NavigationEvent(
         name = activity.localClassName,
-        componentId = activity.getId()
+        componentId = activity.getId(),
+        timestampMs = timestampMs,
     )
 
     /**
@@ -42,15 +52,22 @@ internal sealed class NavigationEvent(
      */
     class ActivityPaused(
         activity: Activity,
+        timestampMs: Long,
     ) : NavigationEvent(
         name = activity.localClassName,
-        componentId = activity.getId()
+        componentId = activity.getId(),
+        timestampMs = timestampMs,
     )
 
     /**
      * The app has backgrounded, i.e. it has no visible activities
      */
-    object Backgrounded : NavigationEvent("Backgrounded")
+    class Backgrounded(
+        timestampMs: Long,
+    ) : NavigationEvent(
+        name = "Backgrounded",
+        timestampMs = timestampMs,
+    )
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

@@ -5,6 +5,7 @@ import android.app.Application
 import android.os.Build
 import android.os.Bundle
 import io.embrace.android.embracesdk.internal.arch.state.AppStateListener
+import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.instrumentation.navigation.NavigationEvent.ActivityPaused
 import io.embrace.android.embracesdk.internal.instrumentation.navigation.NavigationEvent.ActivityResumed
 import io.embrace.android.embracesdk.internal.instrumentation.navigation.NavigationEvent.ActivityStarted
@@ -13,8 +14,11 @@ import io.embrace.android.embracesdk.internal.instrumentation.navigation.Navigat
 /**
  * Tracks Activities coming into and out of view through [Application.ActivityLifecycleCallbacks], but listens to [AppStateListener]
  * when it comes to tracking app backgrounding in order to synchronize with the rest of the SDK's app backgrounding logic.
+ *
+ * The time that this component's listeners fire is the canonical time for the event, whenever it is processed downstream.
  */
 internal class ActivityNavigationTracker(
+    private val clock: Clock,
     private val onEvent: (NavigationEvent) -> Unit,
 ) : Application.ActivityLifecycleCallbacks, AppStateListener {
 
@@ -57,7 +61,7 @@ internal class ActivityNavigationTracker(
     }
 
     override fun onBackground() {
-        onEvent(Backgrounded)
+        onEvent(Backgrounded(clock.now()))
     }
 
     override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {}
@@ -67,14 +71,14 @@ internal class ActivityNavigationTracker(
     override fun onForeground() {}
 
     private fun handleActivityStarted(activity: Activity) {
-        onEvent(ActivityStarted(activity))
+        onEvent(ActivityStarted(activity, clock.now()))
     }
 
     private fun handleActivityResumed(activity: Activity) {
-        onEvent(ActivityResumed(activity))
+        onEvent(ActivityResumed(activity, clock.now()))
     }
 
     private fun handleActivityPaused(activity: Activity) {
-        onEvent(ActivityPaused(activity))
+        onEvent(ActivityPaused(activity, clock.now()))
     }
 }

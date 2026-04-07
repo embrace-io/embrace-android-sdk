@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.instrumentation.navigation
 import android.app.Activity
 import android.os.Build
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.fakes.FakeClock
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
@@ -15,6 +16,7 @@ import org.robolectric.annotation.Config
 @RunWith(AndroidJUnit4::class)
 internal class ActivityNavigationTrackerTest {
 
+    private lateinit var clock: FakeClock
     private lateinit var events: MutableList<NavigationEvent>
     private lateinit var tracker: ActivityNavigationTracker
     private lateinit var activityController: ActivityController<DopeActivity>
@@ -22,8 +24,9 @@ internal class ActivityNavigationTrackerTest {
 
     @Before
     fun setUp() {
+        clock = FakeClock()
         events = mutableListOf()
-        tracker = ActivityNavigationTracker(events::add)
+        tracker = ActivityNavigationTracker(clock, events::add)
         RuntimeEnvironment.getApplication().registerActivityLifecycleCallbacks(tracker)
         activityController = Robolectric.buildActivity(DopeActivity::class.java).create()
         anotherController = Robolectric.buildActivity(CoolActivity::class.java).create()
@@ -56,45 +59,45 @@ internal class ActivityNavigationTrackerTest {
     private fun simulateActivityTransition() {
         var totalEvents = 0
         activityController.start()
-        assertNewEvent(++totalEvents, NavigationEvent.ActivityStarted(activityController.get()))
+        assertNewEvent(++totalEvents, NavigationEvent.ActivityStarted(activityController.get(), clock.now()))
         activityController.resume()
-        assertNewEvent(++totalEvents, NavigationEvent.ActivityResumed(activityController.get()))
+        assertNewEvent(++totalEvents, NavigationEvent.ActivityResumed(activityController.get(), clock.now()))
         activityController.pause()
-        assertNewEvent(++totalEvents, NavigationEvent.ActivityPaused(activityController.get()))
+        assertNewEvent(++totalEvents, NavigationEvent.ActivityPaused(activityController.get(), clock.now()))
         anotherController.start()
-        assertNewEvent(++totalEvents, NavigationEvent.ActivityStarted(anotherController.get()))
+        assertNewEvent(++totalEvents, NavigationEvent.ActivityStarted(anotherController.get(), clock.now()))
         anotherController.resume()
-        assertNewEvent(++totalEvents, NavigationEvent.ActivityResumed(anotherController.get()))
+        assertNewEvent(++totalEvents, NavigationEvent.ActivityResumed(anotherController.get(), clock.now()))
         activityController.stop()
         assertEquals(totalEvents, events.size)
         anotherController.pause()
-        assertNewEvent(++totalEvents, NavigationEvent.ActivityPaused(anotherController.get()))
+        assertNewEvent(++totalEvents, NavigationEvent.ActivityPaused(anotherController.get(), clock.now()))
         anotherController.stop()
         assertEquals(totalEvents, events.size)
         tracker.onBackground()
-        assertNewEvent(++totalEvents, NavigationEvent.Backgrounded)
+        assertNewEvent(++totalEvents, NavigationEvent.Backgrounded(clock.now()))
     }
 
     private fun simulateConcurrentActivities() {
         var totalEvents = 0
         activityController.start()
-        assertNewEvent(++totalEvents, NavigationEvent.ActivityStarted(activityController.get()))
+        assertNewEvent(++totalEvents, NavigationEvent.ActivityStarted(activityController.get(), clock.now()))
         activityController.resume()
-        assertNewEvent(++totalEvents, NavigationEvent.ActivityResumed(activityController.get()))
+        assertNewEvent(++totalEvents, NavigationEvent.ActivityResumed(activityController.get(), clock.now()))
         anotherController.start()
-        assertNewEvent(++totalEvents, NavigationEvent.ActivityStarted(anotherController.get()))
+        assertNewEvent(++totalEvents, NavigationEvent.ActivityStarted(anotherController.get(), clock.now()))
         anotherController.resume()
-        assertNewEvent(++totalEvents, NavigationEvent.ActivityResumed(anotherController.get()))
+        assertNewEvent(++totalEvents, NavigationEvent.ActivityResumed(anotherController.get(), clock.now()))
         activityController.pause()
-        assertNewEvent(++totalEvents, NavigationEvent.ActivityPaused(activityController.get()))
+        assertNewEvent(++totalEvents, NavigationEvent.ActivityPaused(activityController.get(), clock.now()))
         activityController.stop()
         assertEquals(totalEvents, events.size)
         anotherController.pause()
-        assertNewEvent(++totalEvents, NavigationEvent.ActivityPaused(anotherController.get()))
+        assertNewEvent(++totalEvents, NavigationEvent.ActivityPaused(anotherController.get(), clock.now()))
         anotherController.stop()
         assertEquals(totalEvents, events.size)
         tracker.onBackground()
-        assertNewEvent(++totalEvents, NavigationEvent.Backgrounded)
+        assertNewEvent(++totalEvents, NavigationEvent.Backgrounded(clock.now()))
     }
 
     private fun assertNewEvent(expectedTotalCount: Int, event: NavigationEvent) {

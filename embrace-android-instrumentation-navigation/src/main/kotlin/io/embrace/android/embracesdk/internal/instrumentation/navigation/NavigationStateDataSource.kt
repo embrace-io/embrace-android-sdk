@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.instrumentation.navigation
 
-import android.os.Looper
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.datasource.StateDataSource
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType.NavigationState
@@ -18,12 +17,10 @@ class NavigationStateDataSource(
     maxTransitions = MAX_NAVIGATION_STATE_TRANSITIONS,
 ) {
     private val broker = NavigationEventBroker(
-        clock = args.clock,
-        looper = Looper.getMainLooper(),
         onScreenLoad = ::onScreenLoad
     )
 
-    private val activityNavigationTracker = ActivityNavigationTracker(broker::queueEvent)
+    private val activityNavigationTracker = ActivityNavigationTracker(args.clock, broker::queueEvent)
 
     override fun onDataCaptureEnabled() {
         super.onDataCaptureEnabled()

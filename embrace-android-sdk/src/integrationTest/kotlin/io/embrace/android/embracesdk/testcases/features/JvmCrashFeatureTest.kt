@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.fakes.config.FakeProjectConfig
 import io.embrace.android.embracesdk.internal.EmbraceInternalApi
 import io.embrace.android.embracesdk.internal.arch.attrs.embCrashId
 import io.embrace.android.embracesdk.internal.arch.attrs.embState
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.semconv.EmbAndroidAttributes
 import io.embrace.android.embracesdk.internal.arch.attrs.toEmbraceAttributeName
 import io.embrace.android.embracesdk.internal.arch.state.AppState
@@ -154,9 +155,9 @@ internal class JvmCrashFeatureTest {
                 assertNotNull(crashId)
                 log.attributes?.assertMatches(
                     mapOf(
-                        "emb.android.react_native_crash.js_exception" to expectedJsException,
+                        EmbType.System.ReactNativeCrash.embAndroidReactNativeCrashJsException.name to expectedJsException,
                         EmbAndroidAttributes.EMB_ANDROID_CRASH_NUMBER to 1,
-                        "emb.android.crash.exception_cause" to expectedExceptionCause,
+                        EmbType.System.Crash.embAndroidCrashExceptionCause.name to expectedExceptionCause,
                         LogAttributes.LOG_RECORD_UID to crashId
                     )
                 )
@@ -197,7 +198,7 @@ internal class JvmCrashFeatureTest {
             mapOf(
                 embState.name to state,
                 EmbAndroidAttributes.EMB_ANDROID_CRASH_NUMBER to 1,
-                "emb.android.crash.exception_cause" to expectedExceptionCause,
+                EmbType.System.Crash.embAndroidCrashExceptionCause.name to expectedExceptionCause,
             )
         )
 

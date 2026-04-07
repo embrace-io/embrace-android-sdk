@@ -11,6 +11,7 @@ import io.embrace.android.embracesdk.internal.TypeUtils
 import io.embrace.android.embracesdk.internal.arch.attrs.embCleanExit
 import io.embrace.android.embracesdk.internal.arch.attrs.embCrashId
 import io.embrace.android.embracesdk.internal.arch.attrs.embState
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.semconv.EmbAndroidAttributes
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.internal.arch.state.AppState
@@ -240,8 +241,8 @@ internal class EmbracePayloadAssertionInterface(
         val attrs = checkNotNull(log.attributes)
         attrs.assertMatches(
             mapOf(
-                "emb.android.native_crash.exception" to crashData.nativeCrash.crash,
-                "emb.android.native_crash.symbols" to symbols,
+                EmbType.System.NativeCrash.embNativeCrashException.name to crashData.nativeCrash.crash,
+                EmbType.System.NativeCrash.embNativeCrashSymbols.name to symbols,
                 EmbSessionAttributes.EMB_PRIVATE_SEND_MODE to "DEFER",
                 "emb.type" to "sys.android.native_crash",
             )

@@ -3,7 +3,9 @@ package io.embrace.android.embracesdk.internal.arch.attrs
 import io.embrace.android.embracesdk.semconv.EmbAndroidAttributes
 import io.embrace.android.embracesdk.semconv.EmbAttachmentAttributes
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
+import io.embrace.android.embracesdk.semconv.EmbSpanAttributes
 import io.embrace.android.embracesdk.semconv.EmbStateTransitionAttributes
+import io.embrace.android.embracesdk.semconv.EmbTelemetryAttributes
 
 /**
  * A snapshot of the current call stack of the threads running in the app process per [io.embrace.android.embracesdk.internal.payload.ThreadInfo]
@@ -155,3 +157,38 @@ val embStateNotInSession: EmbraceAttributeKey =
 val embStateDroppedByInstrumentation: EmbraceAttributeKey = EmbraceAttributeKey(
     EmbStateTransitionAttributes.EMB_STATE_DROPPED_BY_INSTRUMENTATION
 )
+
+/**
+ * Semantic meaning of a span link, defining the relationship between the containing span and the linked span
+ */
+val embLinkType: EmbraceAttributeKey = EmbraceAttributeKey(EmbSpanAttributes.EMB_LINK_TYPE)
+
+/**
+ * Storage used by Embrace in bytes
+ */
+val embStorageUsed: EmbraceAttributeKey = EmbraceAttributeKey(EmbTelemetryAttributes.EMB_STORAGE_USED)
+
+/**
+ * Storage available on the device in bytes
+ */
+val embStorageAvailable: EmbraceAttributeKey = EmbraceAttributeKey(EmbTelemetryAttributes.EMB_STORAGE_AVAILABLE)
+
+/**
+ * Whether OkHttp3 is present on the classpath
+ */
+val embOkhttp3: EmbraceAttributeKey = EmbraceAttributeKey(EmbTelemetryAttributes.EMB_OKHTTP3)
+
+/**
+ * The version of OkHttp3 found on the classpath
+ */
+val embOkhttp3OnClasspath: EmbraceAttributeKey = EmbraceAttributeKey(EmbTelemetryAttributes.EMB_OKHTTP3_ON_CLASSPATH)
+
+/**
+ * The version of Kotlin found on the classpath
+ */
+val embKotlinOnClasspath: EmbraceAttributeKey = EmbraceAttributeKey(EmbTelemetryAttributes.EMB_KOTLIN_ON_CLASSPATH)
+
+/**
+ * Whether the app is running on an emulator
+ */
+val embIsEmulator: EmbraceAttributeKey = EmbraceAttributeKey(EmbTelemetryAttributes.EMB_IS_EMULATOR)

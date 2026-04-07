@@ -2,6 +2,10 @@ package io.embrace.android.embracesdk.internal.telemetry
 
 import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.arch.attrs.EmbraceAttributeKey
+import io.embrace.android.embracesdk.internal.arch.attrs.embIsEmulator
+import io.embrace.android.embracesdk.internal.arch.attrs.embKotlinOnClasspath
+import io.embrace.android.embracesdk.internal.arch.attrs.embOkhttp3
+import io.embrace.android.embracesdk.internal.arch.attrs.embOkhttp3OnClasspath
 import io.embrace.android.embracesdk.internal.isEmulator
 import io.embrace.android.embracesdk.internal.otel.sdk.toEmbraceUsageAttributeName
 import java.util.concurrent.ConcurrentHashMap
@@ -71,17 +75,17 @@ internal class EmbraceTelemetryService(
     private fun computeAppAttributes(): Map<String, String> {
         val appAttributesMap = mutableMapOf<String, String>()
 
-        appAttributesMap[EmbraceAttributeKey.create("okhttp3").name] = okHttpReflectionFacade.hasOkHttp3().toString()
+        appAttributesMap[embOkhttp3.name] = okHttpReflectionFacade.hasOkHttp3().toString()
 
         val okhttp3Version = okHttpReflectionFacade.getOkHttp3Version()
         if (okhttp3Version.isNotEmpty()) {
-            appAttributesMap[EmbraceAttributeKey.create("okhttp3_on_classpath").name] = okhttp3Version
+            appAttributesMap[embOkhttp3OnClasspath.name] = okhttp3Version
         }
 
-        appAttributesMap[EmbraceAttributeKey.create("kotlin_on_classpath").name] =
+        appAttributesMap[embKotlinOnClasspath.name] =
             runCatching { KotlinVersion.CURRENT.toString() }.getOrDefault("unknown")
 
-        appAttributesMap[EmbraceAttributeKey.create("is_emulator").name] =
+        appAttributesMap[embIsEmulator.name] =
             runCatching { systemInfo.isEmulator().toString() }.getOrDefault("unknown")
 
         return appAttributesMap

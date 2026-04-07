@@ -5,6 +5,10 @@ import io.embrace.android.embracesdk.assertions.toMap
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.internal.arch.attrs.embFreeDiskBytes
+import io.embrace.android.embracesdk.internal.arch.attrs.embIsEmulator
+import io.embrace.android.embracesdk.internal.arch.attrs.embKotlinOnClasspath
+import io.embrace.android.embracesdk.internal.arch.attrs.embOkhttp3
+import io.embrace.android.embracesdk.internal.arch.attrs.embOkhttp3OnClasspath
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
@@ -93,11 +97,11 @@ internal class SessionApiTest {
         // Attributes we want to know exist, but whose value we don't need to validate
         val validateExistenceOnly = setOf(
             SessionAttributes.SESSION_ID,
-            "emb.kotlin_on_classpath",
-            "emb.okhttp3",
+            embKotlinOnClasspath.name,
+            embOkhttp3.name,
             EmbSessionAttributes.EMB_PROCESS_IDENTIFIER,
-            "emb.is_emulator",
-            "emb.okhttp3_on_classpath",
+            embIsEmulator.name,
+            embOkhttp3OnClasspath.name,
             EmbSessionAttributes.EMB_HEARTBEAT_TIME_UNIX_NANO,
         )
 

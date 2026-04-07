@@ -1,6 +1,11 @@
 package io.embrace.android.embracesdk.internal.telemetry
 
 import io.embrace.android.embracesdk.internal.SystemInfo
+import io.embrace.android.embracesdk.internal.arch.attrs.embIsEmulator
+import io.embrace.android.embracesdk.internal.arch.attrs.embKotlinOnClasspath
+import io.embrace.android.embracesdk.internal.arch.attrs.embOkhttp3
+import io.embrace.android.embracesdk.internal.arch.attrs.embOkhttp3OnClasspath
+import io.embrace.android.embracesdk.internal.arch.attrs.embStorageUsed
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -43,7 +48,7 @@ internal class EmbraceTelemetryServiceTest {
     fun `getTelemetryAttributes clears maps`() {
         // Given a method is in the map
         embraceTelemetryService.onPublicApiCalled("a_method")
-        embraceTelemetryService.logStorageTelemetry(mapOf("emb.storage.used" to "12"))
+        embraceTelemetryService.logStorageTelemetry(mapOf(embStorageUsed.name to "12"))
 
         // After getting telemetry attributes
         embraceTelemetryService.getAndClearTelemetryAttributes()
@@ -51,25 +56,25 @@ internal class EmbraceTelemetryServiceTest {
 
         // That method isn't in the map anymore
         assertEquals(null, attributes.getOrDefault("emb.usage.a_method", null))
-        assertEquals(null, attributes.getOrDefault("emb.storage.used", null))
+        assertEquals(null, attributes.getOrDefault(embStorageUsed.name, null))
     }
 
     @Test
     fun `logStorageTelemetry adds usage to the telemetry attributes`() {
         // Given storage telemetry is added
-        embraceTelemetryService.logStorageTelemetry(mapOf("emb.storage.used" to "1231"))
+        embraceTelemetryService.logStorageTelemetry(mapOf(embStorageUsed.name to "1231"))
 
         // When getting telemetry attributes
         val telemetryAttributes = embraceTelemetryService.getAndClearTelemetryAttributes()
 
         // Then storage telemetry is in the map
-        assertEquals("1231", telemetryAttributes["emb.storage.used"])
+        assertEquals("1231", telemetryAttributes[embStorageUsed.name])
     }
 
     @Test
     fun `getTelemetryAttributes clears the storage map`() {
         // Given a method is in the map
-        embraceTelemetryService.logStorageTelemetry(mapOf("emb.storage.used" to "1"))
+        embraceTelemetryService.logStorageTelemetry(mapOf(embStorageUsed.name to "1"))
 
         // When getting telemetry attributes
         embraceTelemetryService.getAndClearTelemetryAttributes()
@@ -87,26 +92,26 @@ internal class EmbraceTelemetryServiceTest {
         val telemetryAttributes = embraceTelemetryService.getAndClearTelemetryAttributes()
 
         // Then the app attributes are in the map
-        assertEquals("true", telemetryAttributes["emb.okhttp3"])
-        assertTrue(telemetryAttributes.containsKey("emb.okhttp3_on_classpath"))
-        assertTrue(telemetryAttributes.containsKey("emb.is_emulator"))
-        assertTrue(telemetryAttributes.containsKey("emb.kotlin_on_classpath"))
+        assertEquals("true", telemetryAttributes[embOkhttp3.name])
+        assertTrue(telemetryAttributes.containsKey(embOkhttp3OnClasspath.name))
+        assertTrue(telemetryAttributes.containsKey(embIsEmulator.name))
+        assertTrue(telemetryAttributes.containsKey(embKotlinOnClasspath.name))
     }
 
     @Test
     fun `usage, storage and app attributes are added correctly`() {
         // Given some usage and storage attributes are added
         embraceTelemetryService.onPublicApiCalled("a_method")
-        embraceTelemetryService.logStorageTelemetry(mapOf("emb.storage.used" to "12"))
+        embraceTelemetryService.logStorageTelemetry(mapOf(embStorageUsed.name to "12"))
 
         // When getting telemetry attributes
         val telemetryAttributes = embraceTelemetryService.getAndClearTelemetryAttributes()
 
         // Then the usage, storage, and app attributes are in the map
         assertEquals("1", telemetryAttributes["emb.usage.a_method"])
-        assertEquals("12", telemetryAttributes["emb.storage.used"])
-        assertTrue(telemetryAttributes.containsKey("emb.okhttp3"))
-        assertTrue(telemetryAttributes.containsKey("emb.okhttp3_on_classpath"))
+        assertEquals("12", telemetryAttributes[embStorageUsed.name])
+        assertTrue(telemetryAttributes.containsKey(embOkhttp3.name))
+        assertTrue(telemetryAttributes.containsKey(embOkhttp3OnClasspath.name))
     }
 
     @Test
@@ -177,7 +182,7 @@ internal class EmbraceTelemetryServiceTest {
     fun `usage, storage, applied limits and app attributes are added correctly`() {
         // Given usage, storage, and applied limit attributes are added
         embraceTelemetryService.onPublicApiCalled("a_method")
-        embraceTelemetryService.logStorageTelemetry(mapOf("emb.storage.used" to "12"))
+        embraceTelemetryService.logStorageTelemetry(mapOf(embStorageUsed.name to "12"))
         embraceTelemetryService.trackAppliedLimit("error_log", AppliedLimitType.TRUNCATE_ATTRIBUTES)
         embraceTelemetryService.trackAppliedLimit("breadcrumb", AppliedLimitType.DROP)
 
@@ -186,10 +191,10 @@ internal class EmbraceTelemetryServiceTest {
 
         // Then all attributes are in the map
         assertEquals("1", telemetryAttributes["emb.usage.a_method"])
-        assertEquals("12", telemetryAttributes["emb.storage.used"])
+        assertEquals("12", telemetryAttributes[embStorageUsed.name])
         assertEquals("1", telemetryAttributes["emb.private.applied_limit.error_log.truncate_attributes"])
         assertEquals("1", telemetryAttributes["emb.private.applied_limit.breadcrumb.drop"])
-        assertTrue(telemetryAttributes.containsKey("emb.okhttp3"))
-        assertTrue(telemetryAttributes.containsKey("emb.okhttp3_on_classpath"))
+        assertTrue(telemetryAttributes.containsKey(embOkhttp3.name))
+        assertTrue(telemetryAttributes.containsKey(embOkhttp3OnClasspath.name))
     }
 }

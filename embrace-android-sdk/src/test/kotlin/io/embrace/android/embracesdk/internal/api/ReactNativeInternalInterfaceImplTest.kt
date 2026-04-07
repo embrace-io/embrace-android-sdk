@@ -14,6 +14,7 @@ import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.api.delegate.ReactNativeInternalInterfaceImpl
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.ReactNativeCrash.embAndroidReactNativeCrashJsException
 import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.internal.envelope.metadata.ReactNativeSdkVersionInfo
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
@@ -166,7 +167,7 @@ internal class ReactNativeInternalInterfaceImplTest {
                 "t\":\"type\",\"" +
                 "st\":\"" +
                 "stack\"}",
-            lastSentCrashAttributes["emb.android.react_native_crash.js_exception"]
+            lastSentCrashAttributes[embAndroidReactNativeCrashJsException.name]
         )
     }
 

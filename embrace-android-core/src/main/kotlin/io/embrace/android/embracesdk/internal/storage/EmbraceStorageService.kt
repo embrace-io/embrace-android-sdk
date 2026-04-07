@@ -1,6 +1,8 @@
 package io.embrace.android.embracesdk.internal.storage
 
 import android.content.Context
+import io.embrace.android.embracesdk.internal.arch.attrs.embStorageAvailable
+import io.embrace.android.embracesdk.internal.arch.attrs.embStorageUsed
 import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
 import java.io.File
 import java.io.FilenameFilter
@@ -66,8 +68,8 @@ class EmbraceStorageService(
             .filter { it.isFile }
             .sumOf { it.length() }
         val storageTelemetryMap = mapOf(
-            EMBRACE_TELEMETRY_USED_STORAGE_NAME to storageUsed.toString(),
-            EMBRACE_TELEMETRY_AVAILABLE_STORAGE_NAME to availableStorage.toString()
+            embStorageUsed.name to storageUsed.toString(),
+            embStorageAvailable.name to availableStorage.toString()
         )
         telemetryService.logStorageTelemetry(storageTelemetryMap)
     }
@@ -95,13 +97,3 @@ private const val EMBRACE_DIRECTORY = "embrace"
  * Directory name for the config files that are stored in the cache directory.
  */
 private const val EMBRACE_CONFIG_CACHE_DIRECTORY = "emb_config_cache"
-
-/**
- * Telemetry attribute name for the storage used by Embrace.
- */
-private const val EMBRACE_TELEMETRY_USED_STORAGE_NAME = "emb.storage.used"
-
-/**
- * Telemetry attribute name for the storage used by Embrace.
- */
-private const val EMBRACE_TELEMETRY_AVAILABLE_STORAGE_NAME = "emb.storage.available"

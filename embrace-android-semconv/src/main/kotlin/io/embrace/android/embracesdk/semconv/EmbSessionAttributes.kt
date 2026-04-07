@@ -47,6 +47,12 @@ object EmbSessionAttributes {
     const val EMB_HEARTBEAT_TIME_UNIX_NANO: String = "emb.heartbeat_time_unix_nano"
 
     /**
+     * Set to 1 if this session part is the known final part (max duration reached or manual termination). Omitted otherwise.
+     */
+    @ExperimentalSemconv
+    const val EMB_IS_FINAL_SESSION: String = "emb.is_final_session"
+
+    /**
      * How a signal should be delivered to the Embrace backend.
      */
     @ExperimentalSemconv
@@ -105,4 +111,22 @@ object EmbSessionAttributes {
      */
     @ExperimentalSemconv
     const val EMB_TERMINATED: String = "emb.terminated"
+
+    /**
+     * UUID identifying the session.
+     */
+    @ExperimentalSemconv
+    const val EMB_USER_SESSION_ID: String = "emb.user_session_id"
+
+    /**
+     * Incremental counter of sessions since SDK install.
+     */
+    @ExperimentalSemconv
+    const val EMB_USER_SESSION_NUMBER: String = "emb.user_session_number"
+
+    /**
+     * Session start timestamp (milliseconds since epoch).
+     */
+    @ExperimentalSemconv
+    const val EMB_USER_SESSION_START_TS: String = "emb.user_session_start_ts"
 }

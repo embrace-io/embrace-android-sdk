@@ -432,6 +432,26 @@ groups:
         brief: "Unique ID assigned to each app instance."
         stability: development
         examples: ["1", "42"]
+      - id: emb.user_session_id
+        type: string
+        brief: "UUID identifying the session."
+        stability: development
+        examples: ["3a1c2b4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d"]
+      - id: emb.user_session_number
+        type: string
+        brief: "Incremental counter of sessions since SDK install."
+        stability: development
+        examples: ["1", "42"]
+      - id: emb.user_session_start_ts
+        type: string
+        brief: "Session start timestamp (milliseconds since epoch)."
+        stability: development
+        examples: ["1617983000000"]
+      - id: emb.is_final_session
+        type: string
+        brief: "Set to 1 if this session part is the known final part (max duration reached or manual termination). Omitted otherwise."
+        stability: development
+        examples: ["1"]
 
   - id: emb.android
     type: attribute_group

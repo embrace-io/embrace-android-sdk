@@ -3,14 +3,14 @@ package io.embrace.android.embracesdk.internal.session.caching
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.payload.Envelope
-import io.embrace.android.embracesdk.internal.payload.SessionPayload
+import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 
-class PeriodicSessionCacher(
+class PeriodicSessionPartCacher(
     private val worker: BackgroundWorker,
     private val logger: InternalLogger,
     private val intervalMs: Long = 2000,
@@ -21,7 +21,7 @@ class PeriodicSessionCacher(
     /**
      * It starts a background job that will schedule a callback to do periodic caching.
      */
-    fun start(provider: Provider<Envelope<SessionPayload>?>) {
+    fun start(provider: Provider<Envelope<SessionPartPayload>?>) {
         scheduledFuture = this.worker.scheduleWithFixedDelay(
             onPeriodicCache(provider),
             0,
@@ -30,7 +30,7 @@ class PeriodicSessionCacher(
         )
     }
 
-    private fun onPeriodicCache(provider: Provider<Envelope<SessionPayload>?>) = Runnable {
+    private fun onPeriodicCache(provider: Provider<Envelope<SessionPartPayload>?>) = Runnable {
         EmbTrace.trace("snapshot-session") {
             try {
                 provider()

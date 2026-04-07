@@ -6,7 +6,7 @@ import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.payload.Envelope
-import io.embrace.android.embracesdk.internal.payload.SessionPayload
+import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
@@ -124,7 +124,7 @@ internal class SpanAutoTerminationTest {
     }
 
     private fun SessionTimestamps.assertFirstSpans(
-        first: Envelope<SessionPayload>,
+        first: Envelope<SessionPartPayload>,
     ) {
         // startSpan() with children
         val rootb = first.findSpanByName(ROOT_START_SPAN)
@@ -168,7 +168,7 @@ internal class SpanAutoTerminationTest {
     }
 
     private fun SessionTimestamps.assertSecondSpans(
-        second: Envelope<SessionPayload>,
+        second: Envelope<SessionPartPayload>,
     ) {
         val roota = second.findSpanByName(ROOT_HANGING_SPAN)
         assertEquals(actionTimeMs.millisToNanos(), roota.endTimeNanos)

@@ -13,20 +13,20 @@ import io.embrace.android.embracesdk.fakes.FakeSessionPropertiesService
 import io.embrace.android.embracesdk.fakes.FakeSessionTracker
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.createSessionBehavior
-import io.embrace.android.embracesdk.fakes.fakeSessionToken
+import io.embrace.android.embracesdk.fakes.fakeSessionPartToken
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakePayloadSourceModule
 import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
-import io.embrace.android.embracesdk.internal.envelope.session.SessionEnvelopeSourceImpl
-import io.embrace.android.embracesdk.internal.envelope.session.SessionPayloadSourceImpl
+import io.embrace.android.embracesdk.internal.envelope.session.SessionPartEnvelopeSourceImpl
+import io.embrace.android.embracesdk.internal.envelope.session.SessionPartPayloadSourceImpl
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.logging.InternalLoggerImpl
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
 import io.embrace.android.embracesdk.internal.payload.Envelope
-import io.embrace.android.embracesdk.internal.payload.SessionPayload
+import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactory
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactoryImpl
@@ -47,7 +47,7 @@ internal class SessionHandlerTest {
         private var sessionNumber = 5
     }
 
-    private val initial = fakeSessionToken().copy(startTime = NOW)
+    private val initial = fakeSessionPartToken().copy(startTime = NOW)
     private val userService: FakeUserService = FakeUserService()
 
     private lateinit var spanSink: SpanSink
@@ -82,7 +82,7 @@ internal class SessionHandlerTest {
         spanService = initModule.openTelemetryModule.spanService
         spanRepository = initModule.openTelemetryModule.spanRepository
         currentSessionSpan = initModule.openTelemetryModule.currentSessionSpan
-        val sessionPayloadSource = SessionPayloadSourceImpl(
+        val partPayloadSource = SessionPartPayloadSourceImpl(
             null,
             spanSink,
             currentSessionSpan,
@@ -93,13 +93,13 @@ internal class SessionHandlerTest {
             logger
         )
         val payloadSourceModule = FakePayloadSourceModule(
-            sessionPayloadSource = sessionPayloadSource
+            partPayloadSource = partPayloadSource
         )
         val collator = PayloadMessageCollatorImpl(
-            SessionEnvelopeSourceImpl(
+            SessionPartEnvelopeSourceImpl(
                 metadataSource = FakeEnvelopeMetadataSource(),
                 resourceSource = FakeEnvelopeResourceSource(),
-                sessionPayloadSource = sessionPayloadSource
+                payloadSource = partPayloadSource
             ),
             store,
             currentSessionSpan
@@ -191,7 +191,7 @@ internal class SessionHandlerTest {
         assertEquals(0, spanSink.completedSpans().size)
     }
 
-    private fun startFakeSession(): SessionToken {
+    private fun startFakeSession(): SessionPartToken {
         return checkNotNull(
             payloadFactory.startPayloadWithState(
                 AppState.FOREGROUND,
@@ -205,7 +205,7 @@ internal class SessionHandlerTest {
         spanService.initializeService(startTimeMillis)
     }
 
-    private fun assertSpanInSessionEnvelope(envelope: Envelope<SessionPayload>?) {
+    private fun assertSpanInSessionEnvelope(envelope: Envelope<SessionPartPayload>?) {
         assertNotNull(envelope)
         val spans = checkNotNull(envelope?.data?.spans)
         assertEquals(2, spans.size)

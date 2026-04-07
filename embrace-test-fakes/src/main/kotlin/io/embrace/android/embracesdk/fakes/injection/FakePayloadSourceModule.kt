@@ -7,20 +7,20 @@ import io.embrace.android.embracesdk.fakes.FakeLogEnvelopeSource
 import io.embrace.android.embracesdk.fakes.FakeLogPayloadSource
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakeRnBundleIdTracker
-import io.embrace.android.embracesdk.fakes.FakeSessionPayloadSource
+import io.embrace.android.embracesdk.fakes.FakeSessionPartPayloadSource
 import io.embrace.android.embracesdk.internal.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.internal.envelope.log.LogPayloadSource
 import io.embrace.android.embracesdk.internal.envelope.metadata.EnvelopeMetadataSource
 import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.internal.envelope.resource.EnvelopeResourceSource
-import io.embrace.android.embracesdk.internal.envelope.session.SessionEnvelopeSource
-import io.embrace.android.embracesdk.internal.envelope.session.SessionPayloadSource
+import io.embrace.android.embracesdk.internal.envelope.session.SessionPartEnvelopeSource
+import io.embrace.android.embracesdk.internal.envelope.session.SessionPartPayloadSource
 import io.embrace.android.embracesdk.internal.injection.PayloadSourceModule
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeCrashService
 import io.embrace.android.embracesdk.internal.payload.Envelope
-import io.embrace.android.embracesdk.internal.payload.SessionPayload
+import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.resurrection.PayloadResurrectionService
-import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSnapshotType
+import io.embrace.android.embracesdk.internal.session.orchestrator.SessionPartSnapshotType
 import io.embrace.android.embracesdk.internal.utils.Provider
 
 class FakePayloadSourceModule(
@@ -28,17 +28,17 @@ class FakePayloadSourceModule(
     override val hostedSdkVersionInfo: HostedSdkVersionInfo = FakeHostedSdkVersionInfo(),
     override val rnBundleIdTracker: FakeRnBundleIdTracker = FakeRnBundleIdTracker(),
     override val payloadResurrectionService: PayloadResurrectionService = FakePayloadResurrectionService(),
-    sessionPayloadSource: SessionPayloadSource = FakeSessionPayloadSource(),
+    partPayloadSource: SessionPartPayloadSource = FakeSessionPartPayloadSource(),
     logPayloadSource: LogPayloadSource = FakeLogPayloadSource(),
 ) : PayloadSourceModule {
 
     override val resourceSource = FakeEnvelopeResourceSource()
     private val envelopeMetadataSource = FakeEnvelopeMetadataSource()
 
-    override val sessionEnvelopeSource: SessionEnvelopeSource = FakeSessionEnvelopeSource(
+    override val sessionPartEnvelopeSource: SessionPartEnvelopeSource = FakeSessionPartEnvelopeSource(
         envelopeMetadataSource,
         resourceSource,
-        sessionPayloadSource
+        partPayloadSource
     )
 
     override val logEnvelopeSource: FakeLogEnvelopeSource = FakeLogEnvelopeSource(
@@ -63,23 +63,23 @@ private class FakePayloadResurrectionService : PayloadResurrectionService {
     }
 }
 
-private class FakeSessionEnvelopeSource(
+private class FakeSessionPartEnvelopeSource(
     private val metadataSource: EnvelopeMetadataSource,
     private val resourceSource: EnvelopeResourceSource,
-    private val sessionPayloadSource: SessionPayloadSource,
-) : SessionEnvelopeSource {
+    private val partPayloadSource: SessionPartPayloadSource,
+) : SessionPartEnvelopeSource {
 
     override fun getEnvelope(
-        endType: SessionSnapshotType,
+        endType: SessionPartSnapshotType,
         startNewSession: Boolean,
         crashId: String?,
-    ): Envelope<SessionPayload> {
+    ): Envelope<SessionPartPayload> {
         return Envelope(
             resourceSource.getEnvelopeResource(),
             metadataSource.getEnvelopeMetadata(),
             "0.1.0",
             "spans",
-            sessionPayloadSource.getSessionPayload(endType, startNewSession, crashId)
+            partPayloadSource.getSessionPartPayload(endType, startNewSession, crashId)
         )
     }
 }

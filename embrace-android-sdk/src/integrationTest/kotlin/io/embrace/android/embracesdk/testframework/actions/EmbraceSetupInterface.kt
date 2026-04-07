@@ -177,8 +177,8 @@ internal class EmbraceSetupInterface(
      */
     fun setupCachedDataFromNativeCrash(crashData: StoredNativeCrashData) {
         if (fakeCacheStorageService != null) {
-            if (crashData.sessionMetadata != null && crashData.sessionEnvelope != null) {
-                fakeCacheStorageService.addPayload(crashData.sessionMetadata, crashData.sessionEnvelope)
+            if (crashData.sessionMetadata != null && crashData.partEnvelope != null) {
+                fakeCacheStorageService.addPayload(crashData.sessionMetadata, crashData.partEnvelope)
             }
             if (crashData.cachedCrashEnvelopeMetadata != null && crashData.cachedCrashEnvelope != null) {
                 fakeCacheStorageService.addPayload(crashData.cachedCrashEnvelopeMetadata, crashData.cachedCrashEnvelope)

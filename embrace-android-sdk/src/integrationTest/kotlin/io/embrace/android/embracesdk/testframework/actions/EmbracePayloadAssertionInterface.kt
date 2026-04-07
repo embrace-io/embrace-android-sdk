@@ -22,7 +22,7 @@ import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.internal.payload.LogPayload
-import io.embrace.android.embracesdk.internal.payload.SessionPayload
+import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.session.getSessionSpan
 import io.embrace.android.embracesdk.testframework.assertions.JsonComparator
@@ -109,7 +109,7 @@ internal class EmbracePayloadAssertionInterface(
         expectedSize: Int,
         state: AppState = AppState.FOREGROUND,
         waitTimeMs: Int = WAIT_TIME_MS,
-    ): List<Envelope<SessionPayload>> {
+    ): List<Envelope<SessionPartPayload>> {
         return retrieveSessionEnvelopes(expectedSize, state, waitTimeMs)
     }
 
@@ -118,11 +118,11 @@ internal class EmbracePayloadAssertionInterface(
      */
     internal fun getSingleSessionEnvelope(
         state: AppState = AppState.FOREGROUND,
-    ): Envelope<SessionPayload> = getSessionEnvelopes(1, state).single()
+    ): Envelope<SessionPartPayload> = getSessionEnvelopes(1, state).single()
 
     private fun retrieveSessionEnvelopes(
         expectedSize: Int, appState: AppState, waitTimeMs: Int,
-    ): List<Envelope<SessionPayload>> {
+    ): List<Envelope<SessionPartPayload>> {
         val supplier = {
             checkNotNull(apiServer).getSessionEnvelopes()
                 .filter { it.findAppState() == appState }
@@ -142,7 +142,7 @@ internal class EmbracePayloadAssertionInterface(
         }
     }
 
-    private fun Envelope<SessionPayload>.findAppState(): AppState {
+    private fun Envelope<SessionPartPayload>.findAppState(): AppState {
         val attrs = findSessionSpan().attributes
         val state = checkNotNull(attrs?.findAttributeValue(embState.name)) {
             "AppState not found in session payload."
@@ -206,12 +206,12 @@ internal class EmbracePayloadAssertionInterface(
         }
     }
 
-    fun Envelope<SessionPayload>.assertDeadSessionResurrected(crashData: StoredNativeCrashData?) {
+    fun Envelope<SessionPartPayload>.assertDeadPartResurrected(crashData: StoredNativeCrashData?) {
         with(checkNotNull(getSessionSpan())) {
             assertEquals(Span.Status.ERROR, status)
 
             if (crashData != null) {
-                assertEquals(checkNotNull(crashData.sessionEnvelope).getSessionId(), getSessionId())
+                assertEquals(checkNotNull(crashData.partEnvelope).getSessionId(), getSessionId())
                 assertEquals(crashData.lastHeartbeatMs, endTimeNanos?.nanosToMillis())
                 assertEquals(
                     crashData.nativeCrash.nativeCrashId,
@@ -248,8 +248,8 @@ internal class EmbracePayloadAssertionInterface(
         )
         assertNotNull(attrs.findAttributeValue("log.record.uid"))
         assertNotNull(attrs.findAttributeValue(EmbAndroidAttributes.EMB_ANDROID_CRASH_NUMBER))
-        if (crashData.sessionEnvelope != null) {
-            assertEquals(crashData.sessionEnvelope.getSessionId(), attrs.findAttributeValue("session.id"))
+        if (crashData.partEnvelope != null) {
+            assertEquals(crashData.partEnvelope.getSessionId(), attrs.findAttributeValue("session.id"))
         }
         assertNativeCrashDoesNotExist(crashData)
     }

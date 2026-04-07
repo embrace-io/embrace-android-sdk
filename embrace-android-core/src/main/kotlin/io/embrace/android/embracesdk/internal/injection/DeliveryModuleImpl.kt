@@ -19,7 +19,7 @@ import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageSer
 import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageServiceImpl
 import io.embrace.android.embracesdk.internal.delivery.storage.StorageLocation
 import io.embrace.android.embracesdk.internal.delivery.storage.asFile
-import io.embrace.android.embracesdk.internal.session.caching.PeriodicSessionCacher
+import io.embrace.android.embracesdk.internal.session.caching.PeriodicSessionPartCacher
 import io.embrace.android.embracesdk.internal.session.orchestrator.PayloadStore
 import io.embrace.android.embracesdk.internal.session.orchestrator.PayloadStoreImpl
 import io.embrace.android.embracesdk.internal.utils.Provider
@@ -61,8 +61,8 @@ class DeliveryModuleImpl(
         )
     }
 
-    private val periodicSessionCacher: PeriodicSessionCacher by singleton {
-        PeriodicSessionCacher(
+    private val partCacher: PeriodicSessionPartCacher by singleton {
+        PeriodicSessionPartCacher(
             workerThreadModule.backgroundWorker(Worker.Background.PeriodicCacheWorker),
             initModule.logger
         )
@@ -70,7 +70,7 @@ class DeliveryModuleImpl(
 
     override val payloadCachingService: PayloadCachingService by singleton {
         PayloadCachingServiceImpl(
-            periodicSessionCacher,
+            partCacher,
             initModule.clock,
             essentialServiceModule.sessionTracker,
             payloadStore,

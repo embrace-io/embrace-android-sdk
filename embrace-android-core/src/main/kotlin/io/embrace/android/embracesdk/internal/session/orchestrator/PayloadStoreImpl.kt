@@ -14,7 +14,7 @@ import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.internal.payload.LogPayload
-import io.embrace.android.embracesdk.internal.payload.SessionPayload
+import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.utils.Uuid
 
 internal class PayloadStoreImpl(
@@ -24,8 +24,8 @@ internal class PayloadStoreImpl(
     private val uuidProvider: () -> String = { Uuid.getEmbUuid() },
 ) : PayloadStore {
 
-    override fun storeSessionPayload(
-        envelope: Envelope<SessionPayload>,
+    override fun storeSessionPartPayload(
+        envelope: Envelope<SessionPartPayload>,
         transitionType: TransitionType,
     ) {
         intakeService.take(
@@ -37,7 +37,7 @@ internal class PayloadStoreImpl(
         )
     }
 
-    override fun cacheSessionSnapshot(envelope: Envelope<SessionPayload>) {
+    override fun cacheSessionPartSnapshot(envelope: Envelope<SessionPartPayload>) {
         intakeService.take(
             intake = envelope,
             metadata = createMetadata(

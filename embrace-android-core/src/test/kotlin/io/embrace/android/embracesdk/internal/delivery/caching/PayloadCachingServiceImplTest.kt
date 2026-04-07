@@ -6,9 +6,9 @@ import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakePayloadStore
 import io.embrace.android.embracesdk.fakes.FakeSessionTracker
 import io.embrace.android.embracesdk.fakes.fakeSessionEnvelope
-import io.embrace.android.embracesdk.fakes.fakeSessionToken
+import io.embrace.android.embracesdk.fakes.fakeSessionPartToken
 import io.embrace.android.embracesdk.internal.arch.state.AppState
-import io.embrace.android.embracesdk.internal.session.caching.PeriodicSessionCacher
+import io.embrace.android.embracesdk.internal.session.caching.PeriodicSessionPartCacher
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -22,12 +22,12 @@ class PayloadCachingServiceImplTest {
     private lateinit var executorService: BlockingScheduledExecutorService
     private lateinit var service: PayloadCachingService
     private lateinit var sessionTracker: FakeSessionTracker
-    private val zygote = fakeSessionToken()
+    private val zygote = fakeSessionPartToken()
 
     @Before
     fun setUp() {
         executorService = BlockingScheduledExecutorService(FakeClock())
-        val cacher = PeriodicSessionCacher(BackgroundWorker(executorService), FakeInternalLogger(), INTERVAL)
+        val cacher = PeriodicSessionPartCacher(BackgroundWorker(executorService), FakeInternalLogger(), INTERVAL)
         sessionTracker = FakeSessionTracker()
 
         sessionTracker.newActiveSession(
@@ -56,7 +56,7 @@ class PayloadCachingServiceImplTest {
     fun `session id mismatch does not cache`() {
         sessionTracker.newActiveSession(
             endSessionCallback = {},
-            startSessionCallback = { fakeSessionToken().copy(sessionId = "someOtherId") },
+            startSessionCallback = { fakeSessionPartToken().copy(sessionId = "someOtherId") },
             postTransitionAppState = AppState.FOREGROUND
         )
         var count = 0

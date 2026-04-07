@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.internal.session.message
 
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeOrdinalStore
-import io.embrace.android.embracesdk.fakes.FakeSessionPayloadSource
+import io.embrace.android.embracesdk.fakes.FakeSessionPartPayloadSource
 import io.embrace.android.embracesdk.fakes.createBackgroundActivityBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakePayloadSourceModule
@@ -21,21 +21,21 @@ import org.junit.Test
 internal class PayloadFactoryImplTest {
 
     private lateinit var configService: FakeConfigService
-    private lateinit var sessionPayloadSource: FakeSessionPayloadSource
+    private lateinit var partPayloadSource: FakeSessionPartPayloadSource
     private lateinit var factory: PayloadFactoryImpl
 
     @Before
     fun setUp() {
         val initModule = FakeInitModule()
         configService = FakeConfigService()
-        sessionPayloadSource = FakeSessionPayloadSource()
+        partPayloadSource = FakeSessionPartPayloadSource()
         val payloadSourceModule = FakePayloadSourceModule(
-            sessionPayloadSource = sessionPayloadSource
+            partPayloadSource = partPayloadSource
         )
         val collator = PayloadMessageCollatorImpl(
             store = FakeOrdinalStore(),
             currentSessionSpan = initModule.openTelemetryModule.currentSessionSpan,
-            sessionEnvelopeSource = payloadSourceModule.sessionEnvelopeSource
+            sessionPartEnvelopeSource = payloadSourceModule.sessionPartEnvelopeSource
         )
         factory = PayloadFactoryImpl(
             payloadMessageCollator = collator,
@@ -76,7 +76,7 @@ internal class PayloadFactoryImplTest {
         if (zygoteCreated) {
             assertTrue(checkNotNull(zygote).sessionId.isNotBlank())
             assertNotNull(factory.endPayloadWithState(state, 0, zygote))
-            assertEquals(startNewSession, sessionPayloadSource.lastStartNewSession)
+            assertEquals(startNewSession, partPayloadSource.lastStartNewSession)
         } else {
             assertNull(zygote)
         }
@@ -86,6 +86,6 @@ internal class PayloadFactoryImplTest {
         val zygote = factory.startSessionWithManual(0)
         assertTrue(zygote.sessionId.isNotBlank())
         assertNotNull(factory.endSessionWithManual(0, zygote))
-        assertEquals(true, sessionPayloadSource.lastStartNewSession)
+        assertEquals(true, partPayloadSource.lastStartNewSession)
     }
 }

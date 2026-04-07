@@ -13,7 +13,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.payload.Envelope
-import io.embrace.android.embracesdk.internal.payload.SessionPayload
+import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
@@ -127,7 +127,7 @@ internal class SequentialSessionTest {
         )
     }
 
-    private fun Envelope<SessionPayload>.getValidatedSessionSpan(
+    private fun Envelope<SessionPartPayload>.getValidatedSessionSpan(
         sessionNumber: Long,
         isColdStart: Boolean = true,
         previousSessionSpan: Span? = null,

@@ -18,7 +18,7 @@ import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.internal.payload.LogPayload
-import io.embrace.android.embracesdk.internal.payload.SessionPayload
+import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.worker.PriorityRunnable
 import io.embrace.android.embracesdk.internal.worker.PriorityThreadPoolExecutor
@@ -54,7 +54,7 @@ class IntakeServiceImplTest {
 
     private val serializer = TestPlatformSerializer()
     private val sessionEnvelope = Envelope(
-        data = SessionPayload(spans = listOf(Span(name = "session-span")))
+        data = SessionPartPayload(spans = listOf(Span(name = "session-span")))
     )
     private val logEnvelope = Envelope(
         data = LogPayload(logs = listOf(Log(body = "Log data")))

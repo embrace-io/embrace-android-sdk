@@ -11,17 +11,17 @@ import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.otel.spans.SpanSinkImpl
 import io.embrace.android.embracesdk.internal.otel.spans.hasEmbraceAttribute
-import io.embrace.android.embracesdk.internal.payload.SessionPayload
-import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSnapshotType
+import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
+import io.embrace.android.embracesdk.internal.session.orchestrator.SessionPartSnapshotType
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
 
-internal class SessionPayloadSourceImplTest {
+internal class SessionPartPayloadSourceImplTest {
 
-    private lateinit var impl: SessionPayloadSourceImpl
+    private lateinit var impl: SessionPartPayloadSourceImpl
     private lateinit var sink: SpanSinkImpl
     private lateinit var currentSessionSpan: FakeCurrentSessionSpan
     private lateinit var spanRepository: SpanRepository
@@ -40,7 +40,7 @@ internal class SessionPayloadSourceImplTest {
         spanRepository = SpanRepository()
         spanRepository.trackStartedSpan(checkNotNull(currentSessionSpan.sessionSpan))
         spanRepository.trackStartedSpan(activeSpan)
-        impl = SessionPayloadSourceImpl(
+        impl = SessionPartPayloadSourceImpl(
             mapOf("armeabi-v7a" to "my-symbols"),
             sink,
             currentSessionSpan,
@@ -54,14 +54,14 @@ internal class SessionPayloadSourceImplTest {
 
     @Test
     fun `session crash`() {
-        val payload = impl.getSessionPayload(SessionSnapshotType.JVM_CRASH, false)
+        val payload = impl.getSessionPartPayload(SessionPartSnapshotType.JVM_CRASH, false)
         assertPayloadPopulated(payload = payload, hasSessionSnapshot = false, hasNonSessionSnapshots = false)
         assertNotNull(payload.spans?.single())
     }
 
     @Test
     fun `session cache`() {
-        val payload = impl.getSessionPayload(SessionSnapshotType.PERIODIC_CACHE, false)
+        val payload = impl.getSessionPartPayload(SessionPartSnapshotType.PERIODIC_CACHE, false)
         assertPayloadPopulated(payload = payload, hasSessionSnapshot = true, hasNonSessionSnapshots = true)
         val span = checkNotNull(payload.spans?.single())
         assertEquals("cache-span", span.name)
@@ -69,13 +69,13 @@ internal class SessionPayloadSourceImplTest {
 
     @Test
     fun `session lifecycle change`() {
-        val payload = impl.getSessionPayload(SessionSnapshotType.NORMAL_END, true)
+        val payload = impl.getSessionPartPayload(SessionPartSnapshotType.NORMAL_END, true)
         assertPayloadPopulated(payload = payload, hasSessionSnapshot = false, hasNonSessionSnapshots = true)
         assertNotNull(payload.spans?.single())
     }
 
     private fun assertPayloadPopulated(
-        payload: SessionPayload,
+        payload: SessionPartPayload,
         hasSessionSnapshot: Boolean,
         hasNonSessionSnapshots: Boolean,
     ) {

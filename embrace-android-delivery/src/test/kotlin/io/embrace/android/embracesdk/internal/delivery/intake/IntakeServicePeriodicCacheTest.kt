@@ -9,7 +9,7 @@ import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType.SESSION
 import io.embrace.android.embracesdk.internal.payload.Envelope
-import io.embrace.android.embracesdk.internal.payload.SessionPayload
+import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.worker.PriorityWorker
 import org.junit.Assert.assertEquals
@@ -27,7 +27,7 @@ class IntakeServicePeriodicCacheTest {
 
     private val serializer = TestPlatformSerializer()
     private val sessionEnvelope = Envelope(
-        data = SessionPayload(spans = listOf(Span(name = "session-span")))
+        data = SessionPartPayload(spans = listOf(Span(name = "session-span")))
     )
     private val clock = FakeClock()
 

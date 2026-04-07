@@ -17,7 +17,7 @@ import io.embrace.android.embracesdk.internal.payload.EnvelopeMetadata
 import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
-import io.embrace.android.embracesdk.internal.payload.SessionPayload
+import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import java.io.File
 
@@ -26,7 +26,7 @@ internal data class StoredNativeCrashData(
     val crashMetadata: StoredTelemetryMetadata,
     val cachedCrashEnvelopeMetadata: StoredTelemetryMetadata?,
     val nativeCrash: NativeCrashData,
-    val sessionEnvelope: Envelope<SessionPayload>?,
+    val partEnvelope: Envelope<SessionPartPayload>?,
     val cachedCrashEnvelope: Envelope<LogPayload>?,
     val lastHeartbeatMs: Long? = if (sessionMetadata != null) sessionMetadata.timestamp + 1000L else null,
 ) {
@@ -71,7 +71,7 @@ internal fun createStoredNativeCrashData(
             null
         },
         nativeCrash = nativeCrashData,
-        sessionEnvelope = if (sessionMetadata != null) {
+        partEnvelope = if (sessionMetadata != null) {
             fakeIncompleteSessionEnvelope(
                 startMs = sessionMetadata.timestamp,
                 lastHeartbeatTimeMs = sessionMetadata.timestamp + 1000L,

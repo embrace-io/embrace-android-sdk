@@ -5,24 +5,24 @@ import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.otel.spans.hasEmbraceAttribute
 import io.embrace.android.embracesdk.internal.payload.Envelope
-import io.embrace.android.embracesdk.internal.payload.SessionPayload
+import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.opentelemetry.kotlin.semconv.SessionAttributes
 
-fun Envelope<SessionPayload>.getSessionSpan(): Span? {
+fun Envelope<SessionPartPayload>.getSessionSpan(): Span? {
     return data.spans?.singleOrNull { it.hasEmbraceAttribute(EmbType.Ux.Session) }
         ?: data.spanSnapshots?.singleOrNull { it.hasEmbraceAttribute(EmbType.Ux.Session) }
 }
 
-fun Envelope<SessionPayload>.getStateSpan(spanName: String): Span? {
+fun Envelope<SessionPartPayload>.getStateSpan(spanName: String): Span? {
     return data.spans?.singleOrNull { it.hasEmbraceAttribute(EmbType.State) && it.name == spanName }
 }
 
-fun Envelope<SessionPayload>.getSessionId(): String? {
+fun Envelope<SessionPartPayload>.getSessionId(): String? {
     return getSessionSpan()?.attributes?.findAttributeValue(SessionAttributes.SESSION_ID)
 }
 
-fun Envelope<SessionPayload>.getSessionProperties(): Map<String, String> {
+fun Envelope<SessionPartPayload>.getSessionProperties(): Map<String, String> {
     return getSessionSpan()?.getSessionProperties() ?: emptyMap()
 }
 

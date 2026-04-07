@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.session.orchestrator
 /**
  * Defines the states in which a session can end.
  */
-enum class SessionSnapshotType(
+enum class SessionPartSnapshotType(
 
     /**
      * Whether the session ended cleanly (i.e. not because of a crash).

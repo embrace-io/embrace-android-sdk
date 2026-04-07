@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.assertions.assertOtelLogReceived
 import io.embrace.android.embracesdk.assertions.getLogOfType
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
+import io.embrace.android.embracesdk.semconv.EmbAttachmentAttributes
 import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface
@@ -24,13 +25,6 @@ import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 internal class FileAttachmentFeatureTest {
-
-    private companion object {
-        private const val ATTR_KEY_SIZE = "emb.attachment_size"
-        private const val ATTR_KEY_URL = "emb.attachment_url"
-        private const val ATTR_KEY_ID = "emb.attachment_id"
-        private const val ATTR_KEY_ERR_CODE = "emb.attachment_error_code"
-    }
 
     private val attachmentId = UUID.randomUUID()
     private lateinit var logTimestamps: Queue<Long>
@@ -57,7 +51,7 @@ internal class FileAttachmentFeatureTest {
         }, assertAction = {
             val log = getSingleLogEnvelope().getLogOfType(EmbType.System.Log)
             assertUserHostedLogSent(log, url, id, logTimestamps.remove())
-            assertNull(log.attributes?.findAttributeValue(ATTR_KEY_ERR_CODE))
+            assertNull(log.attributes?.findAttributeValue(EmbAttachmentAttributes.EMB_ATTACHMENT_ERROR_CODE))
         })
     }
 
@@ -84,7 +78,7 @@ internal class FileAttachmentFeatureTest {
             logs.forEachIndexed { k, log ->
                 assertUserHostedLogSent(log, url, id, logTimestamps.remove())
 
-                val errCode = log.attributes?.findAttributeValue(ATTR_KEY_ERR_CODE)
+                val errCode = log.attributes?.findAttributeValue(EmbAttachmentAttributes.EMB_ATTACHMENT_ERROR_CODE)
                 val expectedCode = when (k) {
                     limit, limit + limit + 1 -> "OVER_MAX_ATTACHMENTS"
                     else -> null
@@ -134,7 +128,7 @@ internal class FileAttachmentFeatureTest {
             logs.forEachIndexed { k, log ->
                 assertEmbraceHostedLogSent(log, byteArray.size.toLong(), logTimestamps.remove())
 
-                val errCode = log.attributes?.findAttributeValue(ATTR_KEY_ERR_CODE)
+                val errCode = log.attributes?.findAttributeValue(EmbAttachmentAttributes.EMB_ATTACHMENT_ERROR_CODE)
                 val expectedCode = when (k) {
                     limit, limit + limit + 1 -> "OVER_MAX_ATTACHMENTS"
                     else -> null
@@ -207,9 +201,9 @@ internal class FileAttachmentFeatureTest {
             val attachments = getAttachments(expectedSize)
             assertEquals(expectedSize, attachments.size)
 
-            val aId = logs[0].attributes?.findAttributeValue(ATTR_KEY_ID)
-            val bId = logs[1].attributes?.findAttributeValue(ATTR_KEY_ID)
-            val cId = logs[2].attributes?.findAttributeValue(ATTR_KEY_ID)
+            val aId = logs[0].attributes?.findAttributeValue(EmbAttachmentAttributes.EMB_ATTACHMENT_ID)
+            val bId = logs[1].attributes?.findAttributeValue(EmbAttachmentAttributes.EMB_ATTACHMENT_ID)
+            val cId = logs[2].attributes?.findAttributeValue(EmbAttachmentAttributes.EMB_ATTACHMENT_ID)
 
             val attachmentA = attachments.single { it[1].data == aId }
             val attachmentB = attachments.single { it[1].data == bId }
@@ -219,7 +213,7 @@ internal class FileAttachmentFeatureTest {
             verifyAttachment(attachmentB, b)
             verifyAttachment(attachmentC, c)
 
-            val uniqueIds = logs.distinctBy { it.attributes?.findAttributeValue(ATTR_KEY_ID) }
+            val uniqueIds = logs.distinctBy { it.attributes?.findAttributeValue(EmbAttachmentAttributes.EMB_ATTACHMENT_ID) }
             assertEquals(expectedSize, uniqueIds.size)
         })
     }
@@ -252,8 +246,8 @@ internal class FileAttachmentFeatureTest {
             expectedTimeMs = timestamp,
             expectedProperties = mapOf(
                 "key" to "value",
-                ATTR_KEY_URL to url,
-                ATTR_KEY_ID to id,
+                EmbAttachmentAttributes.EMB_ATTACHMENT_URL to url,
+                EmbAttachmentAttributes.EMB_ATTACHMENT_ID to id,
             ),
             expectedState = "foreground",
         )
@@ -271,11 +265,11 @@ internal class FileAttachmentFeatureTest {
             expectedTimeMs = timestamp,
             expectedProperties = mapOf(
                 "key" to "value",
-                ATTR_KEY_SIZE to size.toString(),
+                EmbAttachmentAttributes.EMB_ATTACHMENT_SIZE to size.toString(),
             ),
             expectedState = "foreground",
         )
-        val id = log.attributes?.findAttributeValue(ATTR_KEY_ID)
+        val id = log.attributes?.findAttributeValue(EmbAttachmentAttributes.EMB_ATTACHMENT_ID)
         checkNotNull(UUID.fromString(id))
     }
 

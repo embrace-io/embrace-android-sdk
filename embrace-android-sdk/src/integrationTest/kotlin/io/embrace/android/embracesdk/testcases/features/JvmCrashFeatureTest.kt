@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.fakes.config.FakeProjectConfig
 import io.embrace.android.embracesdk.internal.EmbraceInternalApi
 import io.embrace.android.embracesdk.internal.arch.attrs.embCrashId
 import io.embrace.android.embracesdk.internal.arch.attrs.embState
+import io.embrace.android.embracesdk.semconv.EmbAndroidAttributes
 import io.embrace.android.embracesdk.internal.arch.attrs.toEmbraceAttributeName
 import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRemoteConfig
@@ -154,12 +155,12 @@ internal class JvmCrashFeatureTest {
                 log.attributes?.assertMatches(
                     mapOf(
                         "emb.android.react_native_crash.js_exception" to expectedJsException,
-                        "emb.android.crash_number" to 1,
+                        EmbAndroidAttributes.EMB_ANDROID_CRASH_NUMBER to 1,
                         "emb.android.crash.exception_cause" to expectedExceptionCause,
                         LogAttributes.LOG_RECORD_UID to crashId
                     )
                 )
-                assertNotNull(log.attributes?.findAttributeValue("emb.android.threads"))
+                assertNotNull(log.attributes?.findAttributeValue(EmbAndroidAttributes.EMB_ANDROID_THREADS))
             }
         )
     }
@@ -195,7 +196,7 @@ internal class JvmCrashFeatureTest {
         attributes?.assertMatches(
             mapOf(
                 embState.name to state,
-                "emb.android.crash_number" to 1,
+                EmbAndroidAttributes.EMB_ANDROID_CRASH_NUMBER to 1,
                 "emb.android.crash.exception_cause" to expectedExceptionCause,
             )
         )
@@ -206,6 +207,6 @@ internal class JvmCrashFeatureTest {
         } else {
             assertNotNull(foundCrashId)
         }
-        assertNotNull(attributes?.findAttributeValue("emb.android.threads"))
+        assertNotNull(attributes?.findAttributeValue(EmbAndroidAttributes.EMB_ANDROID_THREADS))
     }
 }

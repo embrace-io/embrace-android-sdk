@@ -16,6 +16,7 @@ import io.embrace.android.embracesdk.internal.session.getSessionProperty
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import io.embrace.android.embracesdk.assertions.assertMatches
+import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -65,8 +66,8 @@ internal class PeriodicSessionCacheTest {
                 assertEquals("Test", span.getSessionProperty("Test"))
                 span.attributes?.assertMatches(
                     mapOf(
-                        "emb.clean_exit" to false,
-                        "emb.terminated" to true
+                        EmbSessionAttributes.EMB_CLEAN_EXIT to false,
+                        EmbSessionAttributes.EMB_TERMINATED to true
                     )
                 )
                 val completedMessage = getSingleSessionEnvelope()
@@ -74,8 +75,8 @@ internal class PeriodicSessionCacheTest {
                 assertEquals("Passed", completedSpan.getSessionProperty("Test"))
                 completedSpan.attributes?.assertMatches(
                     mapOf(
-                        "emb.clean_exit" to true,
-                        "emb.terminated" to false
+                        EmbSessionAttributes.EMB_CLEAN_EXIT to true,
+                        EmbSessionAttributes.EMB_TERMINATED to false
                     )
                 )
             }

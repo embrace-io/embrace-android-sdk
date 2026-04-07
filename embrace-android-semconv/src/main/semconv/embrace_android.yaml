@@ -345,3 +345,176 @@ groups:
         brief: "The device power mode."
         stability: development
         examples: ["normal", "low"]
+
+  - id: emb.session
+    type: attribute_group
+    stability: development
+    brief: "Embrace session span attributes"
+    prefix: ""
+    attributes:
+      - id: emb.state
+        type: string
+        brief: "The application state (foreground/background) at the time the log was recorded."
+        stability: development
+        examples: ["foreground", "background"]
+      - id: emb.cold_start
+        type: string
+        brief: "Whether the session is a cold start."
+        stability: development
+        examples: ["true", "false"]
+      - id: emb.session_number
+        type: string
+        brief: "Session number (integer sequence ID)."
+        stability: development
+        examples: ["1", "42"]
+      - id: emb.clean_exit
+        type: string
+        brief: "Whether the session was ended by the SDK or an unexpected termination."
+        stability: development
+        examples: ["true", "false"]
+      - id: emb.terminated
+        type: string
+        brief: "Whether the session was terminated."
+        stability: development
+        examples: ["true", "false"]
+      - id: emb.heartbeat_time_unix_nano
+        type: string
+        brief: "Last known time that the session existed (nanoseconds since epoch)."
+        stability: development
+        examples: ["1617983000000000000"]
+      - id: emb.crash_id
+        type: string
+        brief: "The crash report ID tied to the session."
+        stability: development
+        examples: ["abc123"]
+      - id: emb.session_start_type
+        type: string
+        brief: "The session start type."
+        stability: development
+        examples: ["cold_start", "resume"]
+      - id: emb.session_end_type
+        type: string
+        brief: "The session end type."
+        stability: development
+        examples: ["clean_exit", "crash"]
+      - id: emb.startup_duration
+        type: string
+        brief: "The startup duration in nanoseconds."
+        stability: development
+        examples: ["1000000000"]
+      - id: emb.error_log_count
+        type: string
+        brief: "The number of error logs in a session."
+        stability: development
+        examples: ["0", "5"]
+      - id: emb.disk_free_bytes
+        type: string
+        brief: "The number of free bytes on disk."
+        stability: development
+        examples: ["1073741824"]
+      - id: emb.private.send_mode
+        type: string
+        brief: "How a signal should be delivered to the Embrace backend."
+        stability: development
+        examples: ["immediate", "DEFER"]
+      - id: emb.startup_activity
+        type: string
+        brief: "The name of the Activity that app startup completed in."
+        stability: development
+        examples: ["MainActivity"]
+      - id: emb.process_identifier
+        type: string
+        brief: "Monotonically increasing sequence ID given to completed spans expected to be sent to the server."
+        stability: development
+        examples: ["abc123"]
+      - id: emb.private.sequence_id
+        type: string
+        brief: "Unique ID assigned to each app instance."
+        stability: development
+        examples: ["1", "42"]
+
+  - id: emb.android
+    type: attribute_group
+    stability: development
+    brief: "Embrace Android platform attributes"
+    prefix: ""
+    attributes:
+      - id: emb.android.threads
+        type: string
+        brief: "A snapshot of the current call stack of the threads running in the app process."
+        stability: development
+        examples: ["[{...}]"]
+      - id: emb.android.crash_number
+        type: string
+        brief: "Sequence number for the number of crashes captured by Embrace on the device."
+        stability: development
+        examples: ["1", "42"]
+      - id: emb.android.aei_crash_number
+        type: string
+        brief: "Sequence number for the number of AEI crashes captured by Embrace on the device."
+        stability: development
+        examples: ["1", "42"]
+      - id: emb.exception_handling
+        type: string
+        brief: "The exception handling type - whether it's handled or unhandled."
+        stability: development
+        examples: ["handled", "unhandled"]
+
+  - id: emb.state_transition
+    type: attribute_group
+    stability: development
+    brief: "Embrace state transition tracking attributes"
+    prefix: ""
+    attributes:
+      - id: emb.state.initial_value
+        type: string
+        brief: "The initial value a state began with."
+        stability: development
+        examples: ["foreground", "wifi"]
+      - id: emb.state.new_value
+        type: string
+        brief: "The value a state transitioned into in the given event."
+        stability: development
+        examples: ["background", "wan"]
+      - id: emb.state.transition_count
+        type: string
+        brief: "The total number of transitions recorded explicitly in the given state span."
+        stability: development
+        examples: ["1", "10"]
+      - id: emb.state.not_in_session
+        type: string
+        brief: "The number of transitions dropped because they didn't occur during a session."
+        stability: development
+        examples: ["0", "3"]
+      - id: emb.state.dropped_by_instrumentation
+        type: string
+        brief: "The number of transitions dropped by the instrumentation."
+        stability: development
+        examples: ["0", "1"]
+
+  - id: emb.attachment
+    type: attribute_group
+    stability: development
+    brief: "Embrace log message attachment attributes"
+    prefix: ""
+    attributes:
+      - id: emb.attachment_size
+        type: string
+        brief: "The size of a log message attachment in bytes."
+        stability: development
+        examples: ["1024", "65536"]
+      - id: emb.attachment_url
+        type: string
+        brief: "The URL of a user-hosted log message attachment."
+        stability: development
+        examples: ["https://example.com/attachment"]
+      - id: emb.attachment_id
+        type: string
+        brief: "The ID of a user-hosted log message attachment."
+        stability: development
+        examples: ["abc123"]
+      - id: emb.attachment_error_code
+        type: string
+        brief: "The error code associated with a failed log message attachment."
+        stability: development
+        examples: ["404", "500"]

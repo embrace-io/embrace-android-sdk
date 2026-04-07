@@ -38,6 +38,7 @@ import io.embrace.android.embracesdk.internal.session.id.SessionTracker
 import io.embrace.android.embracesdk.internal.session.id.SessionTrackerImpl
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactoryImpl
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
+import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -344,39 +345,39 @@ internal class SessionOrchestratorTest {
         createOrchestrator(AppState.BACKGROUND)
         orchestrator.onForeground()
         assertHeartbeatMatchesClock()
-        assertEquals("true", destination.attributes["emb.terminated"])
+        assertEquals("true", destination.attributes[EmbSessionAttributes.EMB_TERMINATED])
 
         // run periodic cache
         clock.tick(2000)
         sessionCacheExecutor.runCurrentlyBlocked()
         assertHeartbeatMatchesClock()
-        assertEquals("true", destination.attributes["emb.terminated"])
+        assertEquals("true", destination.attributes[EmbSessionAttributes.EMB_TERMINATED])
 
         // end with crash
         orchestrator.handleCrash("my-crash-id")
-        assertEquals("false", destination.attributes["emb.terminated"])
+        assertEquals("false", destination.attributes[EmbSessionAttributes.EMB_TERMINATED])
     }
 
     @Test
     fun `test background session span heartbeat`() {
         createOrchestrator(AppState.BACKGROUND)
         assertHeartbeatMatchesClock()
-        assertEquals("true", destination.attributes["emb.terminated"])
+        assertEquals("true", destination.attributes[EmbSessionAttributes.EMB_TERMINATED])
 
         // run periodic cache
         clock.tick(6000)
         orchestrator.onSessionDataUpdate()
         sessionCacheExecutor.runCurrentlyBlocked()
         assertHeartbeatMatchesClock()
-        assertEquals("true", destination.attributes["emb.terminated"])
+        assertEquals("true", destination.attributes[EmbSessionAttributes.EMB_TERMINATED])
 
         // end with crash
         orchestrator.handleCrash("my-crash-id")
-        assertEquals("false", destination.attributes["emb.terminated"])
+        assertEquals("false", destination.attributes[EmbSessionAttributes.EMB_TERMINATED])
     }
 
     private fun assertHeartbeatMatchesClock() {
-        val attr = checkNotNull(destination.attributes["emb.heartbeat_time_unix_nano"])
+        val attr = checkNotNull(destination.attributes[EmbSessionAttributes.EMB_HEARTBEAT_TIME_UNIX_NANO])
         assertEquals(clock.now(), attr.toLong().nanosToMillis())
     }
 

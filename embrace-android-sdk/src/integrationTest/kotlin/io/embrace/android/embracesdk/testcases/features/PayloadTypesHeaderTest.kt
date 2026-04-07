@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.internal.EmbraceInternalApi
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -102,7 +103,7 @@ internal class PayloadTypesHeaderTest {
                     Severity.ERROR,
                     mapOf(
                         "emb.type" to "sys.flutter_exception",
-                        "emb.private.send_mode" to "immediate",
+                        EmbSessionAttributes.EMB_PRIVATE_SEND_MODE to "immediate",
                     )
                 )
                 clock.tick(2000L)

@@ -68,7 +68,7 @@ interface TelemetryDestination {
     /**
      * Start a recording the given [SchemaType.State] for the current session
      */
-    fun <T : Any> startSessionStateCapture(state: SchemaType.State<T>): SessionStateToken<T>
+    fun <T : Any> startSessionStateCapture(state: SchemaType.State<T>): SessionPartStateToken<T>
 
     /**
      * Records a span that has already completed.

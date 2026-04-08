@@ -14,7 +14,7 @@ import org.junit.runner.RunWith
  * Asserts that data is cleared between session boundaries.
  */
 @RunWith(AndroidJUnit4::class)
-internal class CleanSessionBoundaryTest {
+internal class SessionPartBoundaryTest {
 
     @Rule
     @JvmField

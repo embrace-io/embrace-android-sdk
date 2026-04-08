@@ -32,7 +32,7 @@ import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.logging.InternalLoggerImpl
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.session.LifeEventType
-import io.embrace.android.embracesdk.internal.session.caching.PeriodicSessionCacher
+import io.embrace.android.embracesdk.internal.session.caching.PeriodicSessionPartCacher
 import io.embrace.android.embracesdk.internal.session.id.SessionTracker
 import io.embrace.android.embracesdk.internal.session.id.SessionTrackerImpl
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactoryImpl
@@ -86,7 +86,7 @@ internal class SessionOrchestratorTest {
         assertEquals(0, payloadCollator.sessionCount.get())
         assertEquals(1, payloadCollator.baCount.get())
         assertEquals(sessionTracker.getActiveSessionId(), currentSessionSpan.getSessionId())
-        assertTrue(store.storedSessionPayloads.isEmpty())
+        assertTrue(store.storedSessionPartPayloads.isEmpty())
         assertTrue(store.cachedEmptyCrashPayloads.isEmpty())
         assertEquals(1, fakeDataSource.enableDataCaptureCount)
     }
@@ -98,7 +98,7 @@ internal class SessionOrchestratorTest {
         assertEquals(1, payloadCollator.sessionCount.get())
         assertEquals(0, payloadCollator.baCount.get())
         assertEquals(sessionTracker.getActiveSessionId(), currentSessionSpan.getSessionId())
-        assertTrue(store.storedSessionPayloads.isEmpty())
+        assertTrue(store.storedSessionPartPayloads.isEmpty())
         assertTrue(store.cachedEmptyCrashPayloads.isEmpty())
         assertEquals(1, fakeDataSource.enableDataCaptureCount)
     }
@@ -140,12 +140,12 @@ internal class SessionOrchestratorTest {
         clock.tick()
         orchestrator.onSessionDataUpdate()
         sessionCacheExecutor.runCurrentlyBlocked()
-        assertEquals(1, store.cachedSessionPayloads.size)
+        assertEquals(1, store.cachedSessionPartPayloads.size)
         orchestrator.onForeground()
         clock.tick()
         orchestrator.onBackground()
-        assertEquals(1, store.cachedSessionPayloads.size)
-        assertEquals(2, store.storedSessionPayloads.size)
+        assertEquals(1, store.cachedSessionPartPayloads.size)
+        assertEquals(2, store.storedSessionPartPayloads.size)
     }
 
     @Test
@@ -154,9 +154,9 @@ internal class SessionOrchestratorTest {
         clock.tick()
         orchestrator.onForeground()
         clock.tick()
-        assertEquals(1, store.storedSessionPayloads.size)
+        assertEquals(1, store.storedSessionPartPayloads.size)
         sessionCacheExecutor.runCurrentlyBlocked()
-        assertEquals(1, store.storedSessionPayloads.size)
+        assertEquals(1, store.storedSessionPartPayloads.size)
     }
 
     @Test
@@ -164,11 +164,11 @@ internal class SessionOrchestratorTest {
         createOrchestrator(AppState.FOREGROUND)
         clock.tick()
         sessionCacheExecutor.runCurrentlyBlocked()
-        assertEquals(1, store.cachedSessionPayloads.size)
+        assertEquals(1, store.cachedSessionPartPayloads.size)
         orchestrator.onBackground()
         clock.tick()
-        assertEquals(1, store.cachedSessionPayloads.size)
-        assertEquals(1, store.storedSessionPayloads.size)
+        assertEquals(1, store.cachedSessionPartPayloads.size)
+        assertEquals(1, store.storedSessionPartPayloads.size)
     }
 
     @Test
@@ -177,9 +177,9 @@ internal class SessionOrchestratorTest {
         clock.tick()
         orchestrator.onBackground()
         clock.tick()
-        assertEquals(1, store.storedSessionPayloads.size)
+        assertEquals(1, store.storedSessionPartPayloads.size)
         sessionCacheExecutor.runCurrentlyBlocked()
-        assertEquals(1, store.storedSessionPayloads.size)
+        assertEquals(1, store.storedSessionPartPayloads.size)
     }
 
     @Test
@@ -202,7 +202,7 @@ internal class SessionOrchestratorTest {
         createOrchestrator(AppState.BACKGROUND)
         appStateTracker.state = AppState.BACKGROUND
         orchestrator.endSessionWithManual(true)
-        assertTrue(store.storedSessionPayloads.isEmpty())
+        assertTrue(store.storedSessionPartPayloads.isEmpty())
         assertTrue(store.cachedEmptyCrashPayloads.isEmpty())
     }
 
@@ -248,7 +248,7 @@ internal class SessionOrchestratorTest {
         assertEquals(1, payloadCollator.sessionCount.get())
         orchestrator.endSessionWithManual(false)
         assertEquals(1, payloadCollator.sessionCount.get())
-        assertTrue(store.storedSessionPayloads.isEmpty())
+        assertTrue(store.storedSessionPartPayloads.isEmpty())
     }
 
     @Test
@@ -269,7 +269,7 @@ internal class SessionOrchestratorTest {
         assertEquals(1, payloadCollator.sessionCount.get())
         orchestrator.endSessionWithManual(true)
         assertEquals(2, payloadCollator.sessionCount.get())
-        checkNotNull(store.storedSessionPayloads.last().first)
+        checkNotNull(store.storedSessionPartPayloads.last().first)
     }
 
     @Test
@@ -280,7 +280,7 @@ internal class SessionOrchestratorTest {
 
         orchestrator.endSessionWithManual(true)
         assertEquals(1, payloadCollator.sessionCount.get())
-        assertTrue(store.storedSessionPayloads.isEmpty())
+        assertTrue(store.storedSessionPartPayloads.isEmpty())
     }
 
     @Test
@@ -311,16 +311,16 @@ internal class SessionOrchestratorTest {
     @Test
     fun `periodic caching started with initial session`() {
         createOrchestrator(AppState.FOREGROUND)
-        assertEquals(0, store.cachedSessionPayloads.size)
+        assertEquals(0, store.cachedSessionPartPayloads.size)
         sessionCacheExecutor.runCurrentlyBlocked()
-        assertEquals(1, store.cachedSessionPayloads.size)
+        assertEquals(1, store.cachedSessionPartPayloads.size)
     }
 
     @Test
     fun `test session span cold start`() {
         createOrchestrator(AppState.BACKGROUND)
         orchestrator.onForeground()
-        checkNotNull(store.storedSessionPayloads.last().first)
+        checkNotNull(store.storedSessionPartPayloads.last().first)
     }
 
     @Test
@@ -328,7 +328,7 @@ internal class SessionOrchestratorTest {
         createOrchestrator(AppState.BACKGROUND)
         orchestrator.onForeground()
         orchestrator.onBackground()
-        checkNotNull(store.storedSessionPayloads.last().first)
+        checkNotNull(store.storedSessionPartPayloads.last().first)
     }
 
     @Test
@@ -336,7 +336,7 @@ internal class SessionOrchestratorTest {
         createOrchestrator(AppState.BACKGROUND)
         orchestrator.onForeground()
         orchestrator.handleCrash("my-crash-id")
-        checkNotNull(store.storedSessionPayloads.last().first)
+        checkNotNull(store.storedSessionPartPayloads.last().first)
     }
 
     @Test
@@ -402,7 +402,7 @@ internal class SessionOrchestratorTest {
         )
         sessionCacheExecutor = BlockingScheduledExecutorService(clock, true)
         payloadCachingService = PayloadCachingServiceImpl(
-            PeriodicSessionCacher(
+            PeriodicSessionPartCacher(
                 BackgroundWorker(sessionCacheExecutor),
                 logger
             ),

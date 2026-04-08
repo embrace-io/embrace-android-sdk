@@ -69,7 +69,7 @@ internal class ResurrectionFeatureTest {
             testCaseAction = {},
             assertAction = {
                 with(getSingleSessionEnvelope()) {
-                    assertDeadSessionResurrected(crashData)
+                    assertDeadPartResurrected(crashData)
                 }
                 val envelope = getSingleLogEnvelope()
                 with(envelope) {
@@ -169,7 +169,7 @@ internal class ResurrectionFeatureTest {
             testCaseAction = {},
             assertAction = {
                 with(getSingleSessionEnvelope()) {
-                    assertDeadSessionResurrected(null)
+                    assertDeadPartResurrected(null)
                 }
                 assertEquals(0, getLogEnvelopes(0).size)
             }

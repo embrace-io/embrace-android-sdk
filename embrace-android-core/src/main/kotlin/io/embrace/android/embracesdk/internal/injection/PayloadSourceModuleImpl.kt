@@ -24,9 +24,9 @@ import io.embrace.android.embracesdk.internal.envelope.resource.DeviceImpl
 import io.embrace.android.embracesdk.internal.envelope.resource.EnvelopeResourceSource
 import io.embrace.android.embracesdk.internal.envelope.resource.EnvelopeResourceSourceImpl
 import io.embrace.android.embracesdk.internal.envelope.session.OtelPayloadMapper
-import io.embrace.android.embracesdk.internal.envelope.session.SessionEnvelopeSource
-import io.embrace.android.embracesdk.internal.envelope.session.SessionEnvelopeSourceImpl
-import io.embrace.android.embracesdk.internal.envelope.session.SessionPayloadSourceImpl
+import io.embrace.android.embracesdk.internal.envelope.session.SessionPartEnvelopeSource
+import io.embrace.android.embracesdk.internal.envelope.session.SessionPartEnvelopeSourceImpl
+import io.embrace.android.embracesdk.internal.envelope.session.SessionPartPayloadSourceImpl
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.resurrection.PayloadResurrectionService
 import io.embrace.android.embracesdk.internal.resurrection.PayloadResurrectionServiceImpl
@@ -56,9 +56,9 @@ class PayloadSourceModuleImpl(
         )
     }
 
-    private val sessionPayloadSource by singleton {
+    private val partPayloadSource by singleton {
         EmbTrace.trace("session-payload-source") {
-            SessionPayloadSourceImpl(
+            SessionPartPayloadSourceImpl(
                 configService.nativeSymbolMap,
                 otelModule.spanSink,
                 otelModule.currentSessionSpan,
@@ -75,8 +75,8 @@ class PayloadSourceModuleImpl(
         LogPayloadSourceImpl(otelModule.logSink)
     }
 
-    override val sessionEnvelopeSource: SessionEnvelopeSource by singleton {
-        SessionEnvelopeSourceImpl(metadataSource, resourceSource, sessionPayloadSource)
+    override val sessionPartEnvelopeSource: SessionPartEnvelopeSource by singleton {
+        SessionPartEnvelopeSourceImpl(metadataSource, resourceSource, partPayloadSource)
     }
 
     override val logEnvelopeSource: LogEnvelopeSource by singleton {

@@ -2,12 +2,12 @@ package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.payload.Envelope
-import io.embrace.android.embracesdk.internal.payload.SessionPayload
-import io.embrace.android.embracesdk.internal.session.SessionToken
+import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
+import io.embrace.android.embracesdk.internal.session.SessionPartToken
 import io.embrace.android.embracesdk.internal.session.message.FinalEnvelopeParams
 import io.embrace.android.embracesdk.internal.session.message.InitialEnvelopeParams
 import io.embrace.android.embracesdk.internal.session.message.PayloadMessageCollator
-import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSnapshotType
+import io.embrace.android.embracesdk.internal.session.orchestrator.SessionPartSnapshotType
 import java.util.concurrent.atomic.AtomicInteger
 
 class FakePayloadMessageCollator(
@@ -17,7 +17,7 @@ class FakePayloadMessageCollator(
     val sessionCount: AtomicInteger = AtomicInteger(0)
     val baCount: AtomicInteger = AtomicInteger(0)
 
-    override fun buildInitialSession(params: InitialEnvelopeParams): SessionToken = with(params) {
+    override fun buildInitialPart(params: InitialEnvelopeParams): SessionPartToken = with(params) {
         val sessionNumber = when (appState) {
             AppState.FOREGROUND -> {
                 sessionCount.incrementAndGet()
@@ -27,7 +27,7 @@ class FakePayloadMessageCollator(
                 baCount.incrementAndGet()
             }
         }
-        SessionToken(
+        SessionPartToken(
             sessionId = currentSessionSpan.getSessionId(),
             startTime = startTime,
             isColdStart = coldStart,
@@ -43,10 +43,10 @@ class FakePayloadMessageCollator(
      */
     override fun buildFinalEnvelope(
         params: FinalEnvelopeParams,
-    ): Envelope<SessionPayload> {
-        if (params.endType != SessionSnapshotType.PERIODIC_CACHE) {
+    ): Envelope<SessionPartPayload> {
+        if (params.endType != SessionPartSnapshotType.PERIODIC_CACHE) {
             currentSessionSpan.endSession(startNewSession = params.startNewSession)
         }
-        return Envelope(data = SessionPayload())
+        return Envelope(data = SessionPartPayload())
     }
 }

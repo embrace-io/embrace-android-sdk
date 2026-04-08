@@ -5,7 +5,7 @@ import io.embrace.android.embracesdk.internal.arch.state.AppState
 /**
  * An object that holds immutable state associated with a started session.
  */
-data class SessionToken(
+data class SessionPartToken(
 
     /**
      * A unique ID which identifies the session.

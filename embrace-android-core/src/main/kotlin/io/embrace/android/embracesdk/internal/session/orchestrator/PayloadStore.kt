@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.session.orchestrator
 import io.embrace.android.embracesdk.internal.arch.CrashTeardownHandler
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.LogPayload
-import io.embrace.android.embracesdk.internal.payload.SessionPayload
+import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 
 /**
  * Interface that hides the details of how session payloads are stored to callers. This is
@@ -15,12 +15,12 @@ interface PayloadStore : CrashTeardownHandler {
      * Stores a final session payload that will have no further modifications
      * (i.e. the session ended or crashed)
      */
-    fun storeSessionPayload(envelope: Envelope<SessionPayload>, transitionType: TransitionType)
+    fun storeSessionPartPayload(envelope: Envelope<SessionPartPayload>, transitionType: TransitionType)
 
     /**
      * Stores a session snapshot that is likely to have further modifications.
      */
-    fun cacheSessionSnapshot(envelope: Envelope<SessionPayload>)
+    fun cacheSessionPartSnapshot(envelope: Envelope<SessionPartPayload>)
 
     /**
      * Stores a log payload that will have no further modifications.

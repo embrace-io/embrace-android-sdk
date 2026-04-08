@@ -4,17 +4,17 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeMetadataSource
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeResourceSource
 import io.embrace.android.embracesdk.fakes.FakeOrdinalStore
-import io.embrace.android.embracesdk.fakes.FakeSessionPayloadSource
+import io.embrace.android.embracesdk.fakes.FakeSessionPartPayloadSource
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.arch.state.AppState
-import io.embrace.android.embracesdk.internal.envelope.session.SessionEnvelopeSourceImpl
+import io.embrace.android.embracesdk.internal.envelope.session.SessionPartEnvelopeSourceImpl
 import io.embrace.android.embracesdk.internal.injection.CoreModule
 import io.embrace.android.embracesdk.internal.injection.CoreModuleImpl
 import io.embrace.android.embracesdk.internal.payload.Envelope
-import io.embrace.android.embracesdk.internal.payload.SessionPayload
+import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.session.LifeEventType
-import io.embrace.android.embracesdk.internal.session.SessionToken
-import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSnapshotType
+import io.embrace.android.embracesdk.internal.session.SessionPartToken
+import io.embrace.android.embracesdk.internal.session.orchestrator.SessionPartSnapshotType
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -36,22 +36,22 @@ internal class PayloadMessageCollatorImplTest {
     fun setUp() {
         initModule = FakeInitModule()
         coreModule = CoreModuleImpl(RuntimeEnvironment.getApplication(), initModule)
-        val sessionEnvelopeSource = SessionEnvelopeSourceImpl(
+        val sessionPartEnvelopeSource = SessionPartEnvelopeSourceImpl(
             metadataSource = FakeEnvelopeMetadataSource(),
             resourceSource = FakeEnvelopeResourceSource(),
-            sessionPayloadSource = FakeSessionPayloadSource()
+            payloadSource = FakeSessionPartPayloadSource()
         )
         currentSessionSpan = initModule.openTelemetryModule.currentSessionSpan
         collator = PayloadMessageCollatorImpl(
             store = FakeOrdinalStore(),
             currentSessionSpan = currentSessionSpan,
-            sessionEnvelopeSource = sessionEnvelopeSource
+            sessionPartEnvelopeSource = sessionPartEnvelopeSource
         )
     }
 
     @Test
     fun `create background activity initial message`() {
-        val msg = collator.buildInitialSession(
+        val msg = collator.buildInitialPart(
             InitialEnvelopeParams(
                 false,
                 LifeEventType.BKGND_STATE,
@@ -64,7 +64,7 @@ internal class PayloadMessageCollatorImplTest {
 
     @Test
     fun `create session initial message`() {
-        val msg = collator.buildInitialSession(
+        val msg = collator.buildInitialPart(
             InitialEnvelopeParams(
                 false,
                 LifeEventType.STATE,
@@ -78,7 +78,7 @@ internal class PayloadMessageCollatorImplTest {
     @Test
     fun `create background activity end message`() {
         // create start message
-        val startMsg = collator.buildInitialSession(
+        val startMsg = collator.buildInitialPart(
             InitialEnvelopeParams(
                 false,
                 LifeEventType.BKGND_STATE,
@@ -92,7 +92,7 @@ internal class PayloadMessageCollatorImplTest {
         val payload = collator.buildFinalEnvelope(
             FinalEnvelopeParams(
                 initial = startMsg,
-                endType = SessionSnapshotType.NORMAL_END,
+                endType = SessionPartSnapshotType.NORMAL_END,
                 logger = initModule.logger,
                 continueMonitoring = true,
                 crashId = "crashId"
@@ -104,7 +104,7 @@ internal class PayloadMessageCollatorImplTest {
     @Test
     fun `create session end message`() {
         // create start message
-        val startMsg = collator.buildInitialSession(
+        val startMsg = collator.buildInitialPart(
             InitialEnvelopeParams(
                 false,
                 LifeEventType.STATE,
@@ -118,7 +118,7 @@ internal class PayloadMessageCollatorImplTest {
         val payload = collator.buildFinalEnvelope(
             FinalEnvelopeParams(
                 initial = startMsg,
-                endType = SessionSnapshotType.NORMAL_END,
+                endType = SessionPartSnapshotType.NORMAL_END,
                 logger = initModule.logger,
                 continueMonitoring = true,
                 crashId = "crashId",
@@ -133,7 +133,7 @@ internal class PayloadMessageCollatorImplTest {
         listOf(true, false).forEach { startupTemperature ->
             LifeEventType.entries.forEach { lifeEventType ->
                 AppState.entries.forEach { previousState ->
-                    collator.buildInitialSession(
+                    collator.buildInitialPart(
                         InitialEnvelopeParams(
                             coldStart = startupTemperature,
                             startType = lifeEventType,
@@ -146,7 +146,7 @@ internal class PayloadMessageCollatorImplTest {
         }
     }
 
-    private fun Envelope<SessionPayload>.verifyFinalFieldsPopulated() {
+    private fun Envelope<SessionPartPayload>.verifyFinalFieldsPopulated() {
         assertNotNull(resource)
         assertNotNull(metadata)
         assertNotNull(data)
@@ -154,7 +154,7 @@ internal class PayloadMessageCollatorImplTest {
         assertNotNull(type)
     }
 
-    private fun SessionToken.verifyInitialFieldsPopulated() {
+    private fun SessionPartToken.verifyInitialFieldsPopulated() {
         assertTrue("Session ID invalid: $this", sessionId.isNotBlank())
         assertEquals(5L, startTime)
     }

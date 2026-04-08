@@ -42,15 +42,15 @@ class DeliveryTracer {
     }
 
     fun onCachingStopped() {
-        addWithThreadInfo(DeliveryTraceState.SessionCachingStopped)
+        addWithThreadInfo(DeliveryTraceState.SessionPartCachingStopped)
     }
 
     fun onCachingStarted() {
-        addWithThreadInfo(DeliveryTraceState.SessionCachingStarted)
+        addWithThreadInfo(DeliveryTraceState.SessionPartCachingStarted)
     }
 
     fun onSessionCache() {
-        addWithThreadInfo(DeliveryTraceState.SessionCacheAttempt)
+        addWithThreadInfo(DeliveryTraceState.SessionPartCacheAttempt)
     }
 
     fun generateReport(): String {

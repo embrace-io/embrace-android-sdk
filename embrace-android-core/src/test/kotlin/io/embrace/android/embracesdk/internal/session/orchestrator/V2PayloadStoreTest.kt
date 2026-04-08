@@ -12,7 +12,7 @@ import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.internal.payload.LogPayload
-import io.embrace.android.embracesdk.internal.payload.SessionPayload
+import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertSame
 import org.junit.Before
@@ -32,7 +32,7 @@ class V2PayloadStoreTest {
     @Test
     fun `test store session`() {
         val envelope = fakeSessionEnvelope()
-        store.storeSessionPayload(envelope, TransitionType.ON_BACKGROUND)
+        store.storeSessionPartPayload(envelope, TransitionType.ON_BACKGROUND)
         verifySessionIntake(
             envelope,
             intakeService.getIntakes(),
@@ -43,7 +43,7 @@ class V2PayloadStoreTest {
     @Test
     fun `test store session with crash`() {
         val envelope = fakeSessionEnvelope()
-        store.storeSessionPayload(envelope, TransitionType.CRASH)
+        store.storeSessionPartPayload(envelope, TransitionType.CRASH)
         verifySessionIntake(
             envelope,
             intakeService.getIntakes(),
@@ -71,7 +71,7 @@ class V2PayloadStoreTest {
     @Test
     fun `test snapshot`() {
         val envelope = fakeSessionEnvelope()
-        store.cacheSessionSnapshot(envelope)
+        store.cacheSessionPartSnapshot(envelope)
         verifySessionIntake(
             envelope,
             intakeService.getIntakes(false),
@@ -136,8 +136,8 @@ class V2PayloadStoreTest {
     }
 
     private fun verifySessionIntake(
-        envelope: Envelope<SessionPayload>,
-        intakes: List<FakePayloadIntake<SessionPayload>>,
+        envelope: Envelope<SessionPartPayload>,
+        intakes: List<FakePayloadIntake<SessionPartPayload>>,
         filename: String,
     ) {
         val intake = intakes.single()

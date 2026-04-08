@@ -22,7 +22,7 @@ fun createSessionOrchestrator(
     logModule: LogModule,
 ): SessionOrchestrator {
     val payloadMessageCollator = PayloadMessageCollatorImpl(
-        EmbTrace.trace("sessionEnvelopeSource") { payloadSourceModule.sessionEnvelopeSource },
+        EmbTrace.trace("sessionEnvelopeSource") { payloadSourceModule.sessionPartEnvelopeSource },
         coreModule.ordinalStore,
         openTelemetryModule.currentSessionSpan,
     )

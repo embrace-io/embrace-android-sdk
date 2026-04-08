@@ -1,10 +1,10 @@
 package io.embrace.android.embracesdk.internal.session.id
 
-import io.embrace.android.embracesdk.fakes.fakeSessionToken
+import io.embrace.android.embracesdk.fakes.fakeSessionPartToken
 import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.logging.InternalLoggerImpl
 import io.embrace.android.embracesdk.internal.session.LifeEventType
-import io.embrace.android.embracesdk.internal.session.SessionToken
+import io.embrace.android.embracesdk.internal.session.SessionPartToken
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Before
@@ -23,7 +23,7 @@ internal class SessionTrackerImplTest {
         assertNull(tracker.getActiveSession())
         assertNull(tracker.getActiveSessionId())
 
-        val newSession = fakeSessionToken()
+        val newSession = fakeSessionPartToken()
         tracker.newActiveSession(
             endSessionCallback = {},
             startSessionCallback = { newSession },
@@ -33,7 +33,7 @@ internal class SessionTrackerImplTest {
         assertEquals(newSession, tracker.getActiveSession())
         assertEquals(newSession.sessionId, tracker.getActiveSessionId())
 
-        val anotherSession = SessionToken(
+        val anotherSession = SessionPartToken(
             sessionId = "fake",
             startTime = 11L,
             number = 3,
@@ -62,7 +62,7 @@ internal class SessionTrackerImplTest {
 
     @Test
     fun `callback invocation`() {
-        val newSessions = listOf(fakeSessionToken(), fakeSessionToken(), null)
+        val newSessions = listOf(fakeSessionPartToken(), fakeSessionPartToken(), null)
         val callbackInvocations = mutableListOf<String>()
         tracker.addSessionChangeListener {
             callbackInvocations.add("change-listener")

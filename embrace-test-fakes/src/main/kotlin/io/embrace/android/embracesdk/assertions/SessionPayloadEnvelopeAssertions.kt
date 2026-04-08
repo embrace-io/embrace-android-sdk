@@ -6,14 +6,14 @@ import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.otel.spans.hasEmbraceAttribute
 import io.embrace.android.embracesdk.internal.payload.Envelope
-import io.embrace.android.embracesdk.internal.payload.SessionPayload
+import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.session.getSessionSpan
 
 /**
  * Returns the Session Span
  */
-fun Envelope<SessionPayload>.findSessionSpan(): Span {
+fun Envelope<SessionPartPayload>.findSessionSpan(): Span {
     return checkNotNull(getSessionSpan()) {
         "No session span found in session payload"
     }
@@ -22,7 +22,7 @@ fun Envelope<SessionPayload>.findSessionSpan(): Span {
 /**
  * Return the session ID from the session span in the payload
  */
-fun Envelope<SessionPayload>.getSessionId(): String {
+fun Envelope<SessionPartPayload>.getSessionId(): String {
     return checkNotNull(findSessionSpan().attributes?.findAttributeValue("session.id")) {
         "No session id found in session payload"
     }
@@ -31,7 +31,7 @@ fun Envelope<SessionPayload>.getSessionId(): String {
 /**
  * Return the session start time in milliseconds from the session span in the payload
  */
-fun Envelope<SessionPayload>.getStartTime(): Long {
+fun Envelope<SessionPartPayload>.getStartTime(): Long {
     return checkNotNull(findSessionSpan().startTimeNanos?.nanosToMillis()) {
         "No start time found in session payload"
     }
@@ -40,7 +40,7 @@ fun Envelope<SessionPayload>.getStartTime(): Long {
 /**
  * Return the last heartbeat time in milliseconds from the session span in the payload
  */
-fun Envelope<SessionPayload>.getLastHeartbeatTimeMs(): Long {
+fun Envelope<SessionPartPayload>.getLastHeartbeatTimeMs(): Long {
     return checkNotNull(
         findSessionSpan().attributes?.findAttributeValue(EmbSessionAttributes.EMB_HEARTBEAT_TIME_UNIX_NANO)?.toLongOrNull()
             ?.nanosToMillis()
@@ -52,14 +52,14 @@ fun Envelope<SessionPayload>.getLastHeartbeatTimeMs(): Long {
 /**
  * Finds the span matching the given [EmbType].
  */
-fun Envelope<SessionPayload>.findSpanOfType(telemetryType: EmbType): Span {
+fun Envelope<SessionPartPayload>.findSpanOfType(telemetryType: EmbType): Span {
     return findSpansOfType(telemetryType).single()
 }
 
 /**
  * Finds the span matching the given [EmbType].
  */
-fun Envelope<SessionPayload>.findSpansOfType(telemetryType: EmbType): List<Span> {
+fun Envelope<SessionPartPayload>.findSpansOfType(telemetryType: EmbType): List<Span> {
     val spans = checkNotNull(data.spans) {
         "No spans found in session message"
     }
@@ -71,7 +71,7 @@ fun Envelope<SessionPayload>.findSpansOfType(telemetryType: EmbType): List<Span>
 /**
  * Finds the span matching the given [EmbType].
  */
-fun Envelope<SessionPayload>.findSpansByName(name: String): List<Span> {
+fun Envelope<SessionPartPayload>.findSpansByName(name: String): List<Span> {
     val spans = checkNotNull(data.spans) {
         "No spans found in session message"
     }
@@ -80,15 +80,15 @@ fun Envelope<SessionPayload>.findSpansByName(name: String): List<Span> {
     }
 }
 
-fun Envelope<SessionPayload>.findSpanByName(name: String): Span {
+fun Envelope<SessionPartPayload>.findSpanByName(name: String): Span {
     return findSpansByName(name).single()
 }
 
-fun Envelope<SessionPayload>.findSpanSnapshotOfType(telemetryType: EmbType): Span {
+fun Envelope<SessionPartPayload>.findSpanSnapshotOfType(telemetryType: EmbType): Span {
     return findSpanSnapshotsOfType(telemetryType).single()
 }
 
-fun Envelope<SessionPayload>.findSpanSnapshotsOfType(telemetryType: EmbType): List<Span> {
+fun Envelope<SessionPartPayload>.findSpanSnapshotsOfType(telemetryType: EmbType): List<Span> {
     val snapshots = checkNotNull(data.spanSnapshots) {
         "No span snapshots found in session message"
     }
@@ -97,6 +97,6 @@ fun Envelope<SessionPayload>.findSpanSnapshotsOfType(telemetryType: EmbType): Li
     }
 }
 
-fun Envelope<SessionPayload>.hasSpanSnapshotsOfType(telemetryType: EmbType): Boolean {
+fun Envelope<SessionPartPayload>.hasSpanSnapshotsOfType(telemetryType: EmbType): Boolean {
     return findSpanSnapshotsOfType(telemetryType).isNotEmpty()
 }

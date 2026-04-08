@@ -3,14 +3,14 @@ package io.embrace.android.embracesdk.internal.delivery.caching
 import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.delivery.Shutdownable
 import io.embrace.android.embracesdk.internal.payload.Envelope
-import io.embrace.android.embracesdk.internal.payload.SessionPayload
-import io.embrace.android.embracesdk.internal.session.SessionToken
+import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
+import io.embrace.android.embracesdk.internal.session.SessionPartToken
 
-typealias SessionPayloadSupplier = (
+typealias SessionPartPayloadSupplier = (
     state: AppState,
     timestamp: Long,
-    initial: SessionToken,
-) -> Envelope<SessionPayload>?
+    initial: SessionPartToken,
+) -> Envelope<SessionPartPayload>?
 
 /**
  * This service caches in-memory data in case the process terminates. Cached data from terminated processes will be
@@ -22,9 +22,9 @@ interface PayloadCachingService : Shutdownable {
      * Starts caching a payload.
      */
     fun startCaching(
-        initial: SessionToken,
+        initial: SessionPartToken,
         state: AppState,
-        supplier: SessionPayloadSupplier,
+        supplier: SessionPartPayloadSupplier,
     )
 
     /**

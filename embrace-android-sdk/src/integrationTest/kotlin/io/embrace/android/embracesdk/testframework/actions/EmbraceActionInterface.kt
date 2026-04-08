@@ -45,7 +45,7 @@ internal class EmbraceActionInterface(
     internal fun recordSession(
         isBackgroundActivityEnabled: Boolean = true,
         action: EmbraceActionInterface.() -> Unit = {},
-    ): SessionTimestamps {
+    ): SessionPartTimestamps {
         val sessionAction: () -> Unit = {
             // perform a custom action during the session boundary, e.g. adding a breadcrumb.
             this.action()
@@ -61,7 +61,7 @@ internal class EmbraceActionInterface(
                 startInBackground = true,
                 activitiesAndActions = activityAndAction
             ).let { executionTimestamps ->
-                SessionTimestamps(
+                SessionPartTimestamps(
                     startTimeMs = if (isBackgroundActivityEnabled) {
                         executionTimestamps.firstForegroundTimeMs
                     } else {
@@ -78,7 +78,7 @@ internal class EmbraceActionInterface(
                 startInBackground = true,
                 activitiesAndActions = activityAndAction
             ).let { executionTimestamps ->
-                SessionTimestamps(
+                SessionPartTimestamps(
                     startTimeMs = executionTimestamps.firstForegroundTimeMs,
                     foregroundTimeMs = executionTimestamps.firstForegroundTimeMs,
                     actionTimeMs = executionTimestamps.firstActionTimeMs,

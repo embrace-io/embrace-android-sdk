@@ -40,7 +40,7 @@ import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
-import io.embrace.android.embracesdk.internal.payload.SessionPayload
+import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.session.getSessionSpan
 import io.embrace.android.embracesdk.internal.toEmbraceSpanData
 import io.embrace.android.embracesdk.internal.worker.PriorityWorker
@@ -126,7 +126,7 @@ class PayloadResurrectionServiceImplTest {
         assertEquals(fakeCachedSessionStoredTelemetryMetadata.copy(complete = true), storedMetadata)
         assertEquals(0, cacheStorageService.storedPayloadCount())
 
-        val sessionEnvelope = getStoredSessionEnvelopes().single()
+        val sessionEnvelope = getStoredParts().single()
         val sessionSpan = checkNotNull(sessionEnvelope.getSessionSpan())
         val expectedStartTimeMs = deadSessionEnvelope.getStartTime()
         val expectedEndTimeMs = deadSessionEnvelope.getLastHeartbeatTimeMs()
@@ -161,7 +161,7 @@ class PayloadResurrectionServiceImplTest {
     fun `snapshot will be delivered as failed span once resurrected`() {
         deadSessionEnvelope.resurrectPayload()
 
-        val sentSession = getStoredSessionEnvelopes().single()
+        val sentSession = getStoredParts().single()
         assertEquals(2, sentSession.data.spans?.size)
         assertEquals(0, sentSession.data.spanSnapshots?.size)
 
@@ -189,7 +189,7 @@ class PayloadResurrectionServiceImplTest {
     fun `do not add failed span from a snapshot if a span with the same id is already in the payload`() {
         messedUpSessionEnvelope.resurrectPayload()
 
-        with(getStoredSessionEnvelopes().single()) {
+        with(getStoredParts().single()) {
             assertEquals(3, data.spans?.size)
             assertEquals(0, data.spanSnapshots?.size)
         }
@@ -205,7 +205,7 @@ class PayloadResurrectionServiceImplTest {
         )
         deadSessionEnvelope.resurrectPayload()
 
-        val sessionSpan = getStoredSessionEnvelopes().single().getSessionSpan()
+        val sessionSpan = getStoredParts().single().getSessionSpan()
         assertEquals("dead-session-native-crash", sessionSpan?.attributes?.findAttributeValue(EmbSessionAttributes.EMB_CRASH_ID))
 
         nativeCrashService.addNativeCrashData(
@@ -217,7 +217,7 @@ class PayloadResurrectionServiceImplTest {
         deadSessionEnvelope.resurrectPayload()
 
         val attributes =
-            checkNotNull(getStoredSessionEnvelopes().last().getSessionSpan()?.attributes)
+            checkNotNull(getStoredParts().last().getSessionSpan()?.attributes)
         assertNull(attributes.findAttributeValue(EmbSessionAttributes.EMB_CRASH_ID))
     }
 
@@ -286,7 +286,7 @@ class PayloadResurrectionServiceImplTest {
 
         resurrectInBackground()
 
-        val sessionEnvelopes = getStoredSessionEnvelopes()
+        val sessionEnvelopes = getStoredParts()
         val sessionMetadataList = payloadStorageService.storedPayloadMetadata()
         assertEquals(2, sessionEnvelopes.size)
 
@@ -405,7 +405,7 @@ class PayloadResurrectionServiceImplTest {
         val storedMetadata = payloadStorageService.storedPayloadMetadata().single()
         assertEquals(fakeCachedSessionStoredTelemetryMetadata.copy(complete = true), storedMetadata)
         assertEquals(0, cacheStorageService.storedPayloadCount())
-        val sessionSpan = checkNotNull(getStoredSessionEnvelopes().single().getSessionSpan())
+        val sessionSpan = checkNotNull(getStoredParts().single().getSessionSpan())
         assertNull(checkNotNull(sessionSpan.attributes).findAttributeValue(EmbSessionAttributes.EMB_CRASH_ID))
     }
 
@@ -474,7 +474,7 @@ class PayloadResurrectionServiceImplTest {
         thread.join(5000)
     }
 
-    private fun Envelope<SessionPayload>.resurrectPayload() {
+    private fun Envelope<SessionPartPayload>.resurrectPayload() {
         cacheStorageService.addPayload(
             metadata = sessionMetadata,
             data = this
@@ -482,7 +482,7 @@ class PayloadResurrectionServiceImplTest {
         resurrectInBackground()
     }
 
-    private fun getStoredSessionEnvelopes(): List<Envelope<SessionPayload>> {
+    private fun getStoredParts(): List<Envelope<SessionPartPayload>> {
         return payloadStorageService.storedPayloads().map { bytes ->
             serializer.fromJson(
                 GZIPInputStream(ByteArrayInputStream(bytes)),

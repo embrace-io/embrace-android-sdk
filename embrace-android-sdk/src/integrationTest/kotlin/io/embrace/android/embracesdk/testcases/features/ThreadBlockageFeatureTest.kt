@@ -6,7 +6,7 @@ import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorServic
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.payload.Envelope
-import io.embrace.android.embracesdk.internal.payload.SessionPayload
+import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.semconv.EmbAnrAttributes
@@ -230,5 +230,5 @@ internal class ThreadBlockageFeatureTest {
         }
     }
 
-    private fun Envelope<SessionPayload>.findThreadBlockageSpans() = checkNotNull(data.spans?.filter { it.name == SPAN_NAME })
+    private fun Envelope<SessionPartPayload>.findThreadBlockageSpans() = checkNotNull(data.spans?.filter { it.name == SPAN_NAME })
 }

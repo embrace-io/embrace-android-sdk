@@ -18,7 +18,7 @@ import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.LegacyExceptionInfo
 import io.embrace.android.embracesdk.internal.payload.Log
-import io.embrace.android.embracesdk.internal.payload.SessionPayload
+import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.session.getSessionSpan
 import io.embrace.android.embracesdk.internal.utils.getSafeStackTrace
@@ -165,7 +165,7 @@ internal class JvmCrashFeatureTest {
         )
     }
 
-    private fun Envelope<SessionPayload>.getCrashedId(): String {
+    private fun Envelope<SessionPartPayload>.getCrashedId(): String {
         val crashId = checkNotNull(getSessionSpan()?.attributes?.findAttributeValue(EmbSessionAttributes.EMB_CRASH_ID))
         assertFalse(crashId.isBlank())
         return crashId

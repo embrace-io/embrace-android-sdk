@@ -11,7 +11,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.delivery.PayloadType
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
 import io.embrace.android.embracesdk.internal.payload.Envelope
-import io.embrace.android.embracesdk.internal.payload.SessionPayload
+import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.session.getSessionProperty
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
@@ -29,7 +29,7 @@ import java.util.zip.GZIPInputStream
  */
 @Config(sdk = [TIRAMISU])
 @RunWith(AndroidJUnit4::class)
-internal class PeriodicSessionCacheTest {
+internal class PeriodicPartCacheTest {
 
     private lateinit var cacheStorageService: FakePayloadStorageService
 
@@ -43,15 +43,15 @@ internal class PeriodicSessionCacheTest {
 
     @Test
     fun `session is periodically cached`() {
-        var snapshot: Envelope<SessionPayload>? = null
+        var snapshot: Envelope<SessionPartPayload>? = null
         testRule.runTest(
             testCaseAction = {
                 recordSession {
                     embrace.addSessionProperty("Test", "Test", true)
                     snapshot = returnIfConditionMet(
                         waitTimeMs = 10000,
-                        desiredValueSupplier = { cacheStorageService.getLastCachedSession() },
-                        dataProvider = { cacheStorageService.getLastCachedSession() },
+                        desiredValueSupplier = { cacheStorageService.getLastCachedPart() },
+                        dataProvider = { cacheStorageService.getLastCachedPart() },
                         condition = { data ->
                             data != null && data.findSpanSnapshotOfType(EmbType.Ux.Session).getSessionProperty("Test") != null
                         },
@@ -83,7 +83,7 @@ internal class PeriodicSessionCacheTest {
         )
     }
 
-    private fun FakePayloadStorageService.getLastCachedSession(): Envelope<SessionPayload>? =
+    private fun FakePayloadStorageService.getLastCachedPart(): Envelope<SessionPartPayload>? =
         storedPayloadMetadata()
             .filter { it.payloadType == PayloadType.SESSION }
             .let { sessions ->

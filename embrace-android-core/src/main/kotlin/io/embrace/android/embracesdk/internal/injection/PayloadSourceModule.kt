@@ -5,14 +5,14 @@ import io.embrace.android.embracesdk.internal.capture.metadata.RnBundleIdTracker
 import io.embrace.android.embracesdk.internal.envelope.log.LogEnvelopeSource
 import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.internal.envelope.resource.EnvelopeResourceSource
-import io.embrace.android.embracesdk.internal.envelope.session.SessionEnvelopeSource
+import io.embrace.android.embracesdk.internal.envelope.session.SessionPartEnvelopeSource
 import io.embrace.android.embracesdk.internal.resurrection.PayloadResurrectionService
 
 /**
  * Modules containing classes that generate the payloads.
  */
 interface PayloadSourceModule {
-    val sessionEnvelopeSource: SessionEnvelopeSource
+    val sessionPartEnvelopeSource: SessionPartEnvelopeSource
     val logEnvelopeSource: LogEnvelopeSource
     val metadataService: MetadataService
     val hostedSdkVersionInfo: HostedSdkVersionInfo

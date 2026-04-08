@@ -10,7 +10,7 @@ package io.embrace.android.embracesdk.internal.arch.datasource
  * session-state-instrumentation relationships as far as it knows, the telemetry and metadata that is generated may ultimately still be
  * out of sync, which any backend consuming this data should expect and deal with if required.
  */
-interface SessionStateToken<T> {
+interface SessionPartStateToken<T> {
     /**
      * Notify the session that the state was updated to that value at that time. The timestamp must be explicitly passed in by the caller to
      * avoid including into the timestamp the delay between when the transition happened to when instrumentation recorded it.

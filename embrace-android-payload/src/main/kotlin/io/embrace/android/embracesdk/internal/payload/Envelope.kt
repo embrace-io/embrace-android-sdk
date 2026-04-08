@@ -8,7 +8,7 @@ import java.lang.reflect.ParameterizedType
 /**
  * Envelope used for Embrace API requests for different types of data:
  * - LogPayload
- * - SessionPayload
+ * - SessionPartPayload
  * - BlobPayload
  * - CrashPayload
  * - NetworkCapturePayload
@@ -33,7 +33,7 @@ data class Envelope<T>(
 
     companion object {
         val sessionEnvelopeType: ParameterizedType =
-            Types.newParameterizedType(Envelope::class.java, SessionPayload::class.java)
+            Types.newParameterizedType(Envelope::class.java, SessionPartPayload::class.java)
         val logEnvelopeType: ParameterizedType =
             Types.newParameterizedType(Envelope::class.java, LogPayload::class.java)
 

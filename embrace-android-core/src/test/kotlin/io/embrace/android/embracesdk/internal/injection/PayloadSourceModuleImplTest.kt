@@ -32,7 +32,7 @@ internal class PayloadSourceModuleImplTest {
             FakeDeliveryModule(),
         )
         assertTrue(module.metadataService is EmbraceMetadataService)
-        assertNotNull(module.sessionEnvelopeSource)
+        assertNotNull(module.sessionPartEnvelopeSource)
         assertNotNull(module.logEnvelopeSource)
         assertNotNull(module.payloadResurrectionService)
     }

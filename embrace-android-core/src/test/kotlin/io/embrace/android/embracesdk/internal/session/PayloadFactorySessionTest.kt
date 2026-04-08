@@ -100,7 +100,7 @@ internal class PayloadFactorySessionTest {
         val payloadSourceModule = FakePayloadSourceModule()
         val logger = InternalLoggerImpl()
         val collator = PayloadMessageCollatorImpl(
-            payloadSourceModule.sessionEnvelopeSource,
+            payloadSourceModule.sessionPartEnvelopeSource,
             store,
             currentSessionSpan
         )

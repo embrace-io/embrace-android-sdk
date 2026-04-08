@@ -10,7 +10,7 @@ import io.embrace.android.embracesdk.fakes.FakeOtelPayloadMapper
 import io.embrace.android.embracesdk.fakes.FakeSessionTracker
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.createBackgroundActivityBehavior
-import io.embrace.android.embracesdk.fakes.fakeSessionToken
+import io.embrace.android.embracesdk.fakes.fakeSessionPartToken
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakePayloadSourceModule
 import io.embrace.android.embracesdk.internal.arch.state.AppState
@@ -18,7 +18,7 @@ import io.embrace.android.embracesdk.internal.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.internal.capture.user.UserService
 import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
-import io.embrace.android.embracesdk.internal.envelope.session.SessionPayloadSourceImpl
+import io.embrace.android.embracesdk.internal.envelope.session.SessionPartPayloadSourceImpl
 import io.embrace.android.embracesdk.internal.logging.InternalLoggerImpl
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
@@ -32,7 +32,7 @@ import org.junit.Test
 
 internal class PayloadFactoryBaTest {
 
-    private val initial = fakeSessionToken()
+    private val initial = fakeSessionPartToken()
     private lateinit var service: PayloadFactoryImpl
     private lateinit var clock: FakeClock
     private lateinit var metadataService: MetadataService
@@ -111,7 +111,7 @@ internal class PayloadFactoryBaTest {
     private fun createService(createInitialSession: Boolean = true): PayloadFactoryImpl {
         val logger = InternalLoggerImpl()
         val payloadSourceModule = FakePayloadSourceModule(
-            sessionPayloadSource = SessionPayloadSourceImpl(
+            partPayloadSource = SessionPartPayloadSourceImpl(
                 null,
                 spanSink,
                 currentSessionSpan,
@@ -123,7 +123,7 @@ internal class PayloadFactoryBaTest {
             )
         )
         val collator = PayloadMessageCollatorImpl(
-            payloadSourceModule.sessionEnvelopeSource,
+            payloadSourceModule.sessionPartEnvelopeSource,
             store,
             currentSessionSpan
         )

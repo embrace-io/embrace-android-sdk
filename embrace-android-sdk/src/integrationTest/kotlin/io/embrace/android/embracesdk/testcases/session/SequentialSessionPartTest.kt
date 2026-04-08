@@ -12,7 +12,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.payload.Envelope
-import io.embrace.android.embracesdk.internal.payload.SessionPayload
+import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
@@ -25,7 +25,7 @@ import org.junit.runner.RunWith
  * Asserts that a stateful session can be recorded with the appropriate metadata with respect to sequencing
  */
 @RunWith(AndroidJUnit4::class)
-internal class SequentialSessionTest {
+internal class SequentialSessionPartTest {
 
     @Rule
     @JvmField
@@ -126,7 +126,7 @@ internal class SequentialSessionTest {
         )
     }
 
-    private fun Envelope<SessionPayload>.getValidatedSessionSpan(
+    private fun Envelope<SessionPartPayload>.getValidatedSessionSpan(
         sessionNumber: Long,
         isColdStart: Boolean = true,
         previousSessionSpan: Span? = null,

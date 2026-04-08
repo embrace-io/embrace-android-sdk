@@ -10,13 +10,13 @@ import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
-import io.embrace.android.embracesdk.internal.payload.SessionPayload
+import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.session.captureDataSafely
-import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSnapshotType
+import io.embrace.android.embracesdk.internal.session.orchestrator.SessionPartSnapshotType
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
 
-internal class SessionPayloadSourceImpl(
+internal class SessionPartPayloadSourceImpl(
     private val symbolMap: Map<String, String>?,
     private val spanSink: SpanSink,
     private val currentSessionSpan: CurrentSessionSpan,
@@ -25,15 +25,15 @@ internal class SessionPayloadSourceImpl(
     private val appStateTracker: AppStateTracker,
     private val clock: Clock,
     private val logger: InternalLogger,
-) : SessionPayloadSource {
+) : SessionPartPayloadSource {
 
-    override fun getSessionPayload(
-        endType: SessionSnapshotType,
+    override fun getSessionPartPayload(
+        endType: SessionPartSnapshotType,
         startNewSession: Boolean,
         crashId: String?,
-    ): SessionPayload {
-        val isCacheAttempt = endType == SessionSnapshotType.PERIODIC_CACHE
-        val includeSnapshots = endType != SessionSnapshotType.JVM_CRASH
+    ): SessionPartPayload {
+        val isCacheAttempt = endType == SessionPartSnapshotType.PERIODIC_CACHE
+        val includeSnapshots = endType != SessionPartSnapshotType.JVM_CRASH
 
         if (!endType.forceQuit && appStateTracker.getAppState() == AppState.BACKGROUND) {
             spanRepository.autoTerminateSpans(clock.now())
@@ -49,7 +49,7 @@ internal class SessionPayloadSourceImpl(
         // Ensure the span retrieving is last as that potentially ends the session span, which effectively ends the session
         val spans: List<Span>? = retrieveSpanData(isCacheAttempt, startNewSession, crashId)
 
-        return SessionPayload(
+        return SessionPartPayload(
             spans = spans,
             spanSnapshots = snapshots,
             sharedLibSymbolMapping = symbolMap

@@ -25,7 +25,7 @@ abstract class StateDataSource<T : Any>(
 ) {
     val stateAttributeKey: String = "emb.state.${stateTypeFactory(defaultValue).stateName}"
     private val currentState: AtomicReference<T> = AtomicReference(defaultValue)
-    private val sessionStateToken: AtomicReference<SessionStateToken<T>?> = AtomicReference()
+    private val partStateToken: AtomicReference<SessionPartStateToken<T>?> = AtomicReference()
     private val unrecordedTransitions = AtomicReference(noUnrecordedTransitions)
 
     /**
@@ -34,7 +34,7 @@ abstract class StateDataSource<T : Any>(
      */
     fun onStateChange(updateDetectedTimeMs: Long, newState: T, droppedTransitions: Int = 0) {
         val oldState = currentState.getAndSet(newState)
-        val currentStateToken = sessionStateToken.get()
+        val currentStateToken = partStateToken.get()
         // Track the number of transitions dropped by instrumentation that didn't cause this to be invoked
         unrecordedTransitions.updateDroppedByInstrumentation(droppedTransitions)
         if (currentStateToken != null) {
@@ -81,7 +81,7 @@ abstract class StateDataSource<T : Any>(
 
     @CallSuper
     override fun onPreSessionEnd() {
-        sessionStateToken.getAndSet(null)?.apply {
+        partStateToken.getAndSet(null)?.apply {
             end(unrecordedTransitions.get())
         }
     }
@@ -93,7 +93,7 @@ abstract class StateDataSource<T : Any>(
 
     private fun createSessionStateSpan(initialValue: T) {
         try {
-            sessionStateToken.set(
+            partStateToken.set(
                 args.destination.startSessionStateCapture(
                     state = stateTypeFactory(initialValue)
                 )

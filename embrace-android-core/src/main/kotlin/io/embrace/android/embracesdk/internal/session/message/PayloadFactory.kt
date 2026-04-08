@@ -3,8 +3,8 @@ package io.embrace.android.embracesdk.internal.session.message
 import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.LogPayload
-import io.embrace.android.embracesdk.internal.payload.SessionPayload
-import io.embrace.android.embracesdk.internal.session.SessionToken
+import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
+import io.embrace.android.embracesdk.internal.session.SessionPartToken
 
 /**
  * Factory that creates payload envelopes.
@@ -14,7 +14,7 @@ interface PayloadFactory {
     /**
      * Starts a session in response to a state event.
      */
-    fun startPayloadWithState(state: AppState, timestamp: Long, coldStart: Boolean): SessionToken?
+    fun startPayloadWithState(state: AppState, timestamp: Long, coldStart: Boolean): SessionPartToken?
 
     /**
      * Ends a session in response to a state event.
@@ -22,8 +22,8 @@ interface PayloadFactory {
     fun endPayloadWithState(
         state: AppState,
         timestamp: Long,
-        initial: SessionToken,
-    ): Envelope<SessionPayload>?
+        initial: SessionPartToken,
+    ): Envelope<SessionPartPayload>?
 
     /**
      * Handles an uncaught exception, ending the session and saving the session to disk.
@@ -31,24 +31,24 @@ interface PayloadFactory {
     fun endPayloadWithCrash(
         state: AppState,
         timestamp: Long,
-        initial: SessionToken,
+        initial: SessionPartToken,
         crashId: String,
-    ): Envelope<SessionPayload>?
+    ): Envelope<SessionPartPayload>?
 
     /**
      * Provides a snapshot of the active session
      */
-    fun snapshotPayload(state: AppState, timestamp: Long, initial: SessionToken): Envelope<SessionPayload>?
+    fun snapshotPayload(state: AppState, timestamp: Long, initial: SessionPartToken): Envelope<SessionPartPayload>?
 
     /**
      * Starts a session manually.
      */
-    fun startSessionWithManual(timestamp: Long): SessionToken
+    fun startSessionWithManual(timestamp: Long): SessionPartToken
 
     /**
      * Ends a session manually.
      */
-    fun endSessionWithManual(timestamp: Long, initial: SessionToken): Envelope<SessionPayload>
+    fun endSessionWithManual(timestamp: Long, initial: SessionPartToken): Envelope<SessionPartPayload>
 
     /**
      * Create and return and empty [Envelope] for a [LogPayload] based on the current state of the SDK

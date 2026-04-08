@@ -5,7 +5,7 @@ import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestinati
 import io.embrace.android.embracesdk.internal.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.internal.logs.LogLimitingService
 import io.embrace.android.embracesdk.internal.session.LifeEventType
-import io.embrace.android.embracesdk.internal.session.SessionToken
+import io.embrace.android.embracesdk.internal.session.SessionPartToken
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import java.util.Locale
 
@@ -16,7 +16,7 @@ internal class SessionSpanAttrPopulatorImpl(
     private val metadataService: MetadataService,
 ) : SessionSpanAttrPopulator {
 
-    override fun populateSessionSpanStartAttrs(session: SessionToken) {
+    override fun populateSessionSpanStartAttrs(session: SessionPartToken) {
         with(destination) {
             addSessionAttribute(EmbSessionAttributes.EMB_COLD_START, session.isColdStart.toString())
             addSessionAttribute(EmbSessionAttributes.EMB_SESSION_NUMBER, session.number.toString())

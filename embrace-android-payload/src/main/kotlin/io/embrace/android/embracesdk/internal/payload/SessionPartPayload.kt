@@ -15,7 +15,7 @@ import com.squareup.moshi.JsonClass
  * names, which don’t have UUIDs in them. Previous name: s.sb
  */
 @JsonClass(generateAdapter = true)
-data class SessionPayload(
+data class SessionPartPayload(
 
     /* A list of spans that have completed since the last session, including the session span,
     which contains metadata about the session represented by this payload. The spans included

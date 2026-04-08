@@ -34,6 +34,7 @@ dependencies {
     implementation(project(":embrace-android-instrumentation-crash-ndk"))
     implementation(project(":embrace-android-instrumentation-fcm"))
     implementation(project(":embrace-android-instrumentation-huc-lite"))
+    implementation(project(":embrace-android-instrumentation-compose-navigation"))
     implementation(project(":embrace-android-instrumentation-navigation"))
     implementation(project(":embrace-android-instrumentation-network-status"))
     implementation(project(":embrace-android-instrumentation-okhttp"))

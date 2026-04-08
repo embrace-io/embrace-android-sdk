@@ -4,7 +4,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.assertStateTransition
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
-import io.embrace.android.embracesdk.internal.arch.attrs.embStateDroppedByInstrumentation
+import io.embrace.android.embracesdk.semconv.EmbStateTransitionAttributes
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType.NetworkState.Status
 import io.embrace.android.embracesdk.internal.capture.connectivity.ConnectionType
 import io.embrace.android.embracesdk.internal.capture.connectivity.ConnectivityStatus
@@ -120,7 +120,7 @@ internal class NetworkStateFeatureTest {
                         checkNotNull(startTimeNanos).nanosToMillis()
                     )
                     assertEquals(sessionSpan.endTimeNanos, endTimeNanos)
-                    checkNotNull(stateSpan.attributes).none { it.key == embStateDroppedByInstrumentation.name }
+                    checkNotNull(stateSpan.attributes).none { it.key == EmbStateTransitionAttributes.EMB_STATE_DROPPED_BY_INSTRUMENTATION }
                     with(checkNotNull(events)) {
                         assertEquals(5, size)
                         assertEquals(transitions.size, size)

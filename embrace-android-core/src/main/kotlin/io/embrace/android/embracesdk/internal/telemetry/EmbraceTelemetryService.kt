@@ -1,13 +1,9 @@
 package io.embrace.android.embracesdk.internal.telemetry
 
 import io.embrace.android.embracesdk.internal.SystemInfo
-import io.embrace.android.embracesdk.internal.arch.attrs.EmbraceAttributeKey
-import io.embrace.android.embracesdk.internal.arch.attrs.embIsEmulator
-import io.embrace.android.embracesdk.internal.arch.attrs.embKotlinOnClasspath
-import io.embrace.android.embracesdk.internal.arch.attrs.embOkhttp3
-import io.embrace.android.embracesdk.internal.arch.attrs.embOkhttp3OnClasspath
 import io.embrace.android.embracesdk.internal.isEmulator
 import io.embrace.android.embracesdk.internal.otel.sdk.toEmbraceUsageAttributeName
+import io.embrace.android.embracesdk.semconv.EmbTelemetryAttributes
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -36,7 +32,7 @@ internal class EmbraceTelemetryService(
 
     override fun trackAppliedLimit(telemetryType: String, limitType: AppliedLimitType) {
         val id = "applied_limit.$telemetryType.${limitType.attributeName}"
-        val key = EmbraceAttributeKey.create(id, isPrivate = true).name
+        val key = "emb.private.$id"
         appliedLimitCountMap.getOrPut(key) { AtomicInteger(0) }.incrementAndGet()
     }
 
@@ -75,17 +71,17 @@ internal class EmbraceTelemetryService(
     private fun computeAppAttributes(): Map<String, String> {
         val appAttributesMap = mutableMapOf<String, String>()
 
-        appAttributesMap[embOkhttp3.name] = okHttpReflectionFacade.hasOkHttp3().toString()
+        appAttributesMap[EmbTelemetryAttributes.EMB_OKHTTP3] = okHttpReflectionFacade.hasOkHttp3().toString()
 
         val okhttp3Version = okHttpReflectionFacade.getOkHttp3Version()
         if (okhttp3Version.isNotEmpty()) {
-            appAttributesMap[embOkhttp3OnClasspath.name] = okhttp3Version
+            appAttributesMap[EmbTelemetryAttributes.EMB_OKHTTP3_ON_CLASSPATH] = okhttp3Version
         }
 
-        appAttributesMap[embKotlinOnClasspath.name] =
+        appAttributesMap[EmbTelemetryAttributes.EMB_KOTLIN_ON_CLASSPATH] =
             runCatching { KotlinVersion.CURRENT.toString() }.getOrDefault("unknown")
 
-        appAttributesMap[embIsEmulator.name] =
+        appAttributesMap[EmbTelemetryAttributes.EMB_IS_EMULATOR] =
             runCatching { systemInfo.isEmulator().toString() }.getOrDefault("unknown")
 
         return appAttributesMap

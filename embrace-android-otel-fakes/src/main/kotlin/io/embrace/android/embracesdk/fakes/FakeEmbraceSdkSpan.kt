@@ -2,9 +2,7 @@ package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.internal.arch.attrs.EmbraceAttribute
 import io.embrace.android.embracesdk.internal.arch.attrs.asPair
-import io.embrace.android.embracesdk.internal.arch.attrs.embHeartbeatTimeUnixNano
-import io.embrace.android.embracesdk.internal.arch.attrs.embProcessIdentifier
-import io.embrace.android.embracesdk.internal.arch.attrs.embState
+import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.internal.arch.attrs.toEmbraceAttributeName
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
@@ -103,7 +101,7 @@ class FakeEmbraceSdkSpan(
 
             if (status is StatusData.Error) {
                 val error = errorCode?.fromErrorCode() ?: ErrorCodeAttribute.Failure
-                setSystemAttribute(error.key.name, error.value)
+                setSystemAttribute(error.key, error.value)
             }
 
             val timestamp = endTimeMs ?: fakeClock.now()
@@ -268,10 +266,10 @@ class FakeEmbraceSdkSpan(
                 }
 
                 setSystemAttribute(SessionAttributes.SESSION_ID, sessionId)
-                setSystemAttribute(embProcessIdentifier.name, processIdentifier)
-                setSystemAttribute(embState.name, "foreground")
+                setSystemAttribute(EmbSessionAttributes.EMB_PROCESS_IDENTIFIER, processIdentifier)
+                setSystemAttribute(EmbSessionAttributes.EMB_STATE, "foreground")
                 setSystemAttribute(
-                    embHeartbeatTimeUnixNano.name,
+                    EmbSessionAttributes.EMB_HEARTBEAT_TIME_UNIX_NANO,
                     (lastHeartbeatTimeMs ?: this.spanStartTimeMs)!!.millisToNanos().toString()
                 )
                 if (endTimeMs != null) {

@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.arch
 
-import io.embrace.android.embracesdk.internal.arch.attrs.EmbraceAttributeKey
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSource
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState
 import io.embrace.android.embracesdk.internal.arch.datasource.StateDataSource
@@ -72,8 +71,8 @@ class InstrumentationRegistryImpl(
         }
     }
 
-    override fun getCurrentStates(): Map<EmbraceAttributeKey, Any> {
-        val stateAttributes = mutableMapOf<EmbraceAttributeKey, Any>()
+    override fun getCurrentStates(): Map<String, Any> {
+        val stateAttributes = mutableMapOf<String, Any>()
 
         dataSourceStates
             .toList()

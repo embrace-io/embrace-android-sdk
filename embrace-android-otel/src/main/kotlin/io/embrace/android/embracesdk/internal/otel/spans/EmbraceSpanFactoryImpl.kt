@@ -100,7 +100,7 @@ private class EmbraceSpanImpl(
     private val systemEvents = ConcurrentLinkedQueue<EmbraceSpanEvent>()
     private val customEvents = ConcurrentLinkedQueue<EmbraceSpanEvent>()
     private val systemAttributes = ConcurrentHashMap<String, String>().apply {
-        putAll(otelSpanStartArgs.embraceAttributes.associate { it.key.name to it.value })
+        putAll(otelSpanStartArgs.embraceAttributes.associate { it.key to it.value })
     }
     private val customAttributes = ConcurrentHashMap<String, String>().apply {
         putAll(otelSpanStartArgs.customAttributes)
@@ -307,7 +307,7 @@ private class EmbraceSpanImpl(
 
     override fun addSystemLink(linkedSpanContext: SpanContext, type: LinkType, attributes: Map<String, String>): Boolean =
         addObject(systemLinks, systemLinkCount, dataValidator.otelLimitsConfig.getMaxSystemLinkCount(), SPAN_LINK_TELEMETRY_TYPE) {
-            val attrs = mutableMapOf(type.key.name to type.value)
+            val attrs = mutableMapOf(type.key to type.value)
             EmbraceLinkData(linkedSpanContext, attrs.apply { putAll(attributes) })
         }
 
@@ -342,7 +342,7 @@ private class EmbraceSpanImpl(
     }
 
     override fun hasEmbraceAttribute(embraceAttribute: EmbraceAttribute): Boolean =
-        systemAttributes[embraceAttribute.key.name] == embraceAttribute.value
+        systemAttributes[embraceAttribute.key] == embraceAttribute.value
 
     override fun getSystemAttribute(key: String): String? = systemAttributes[key]
 

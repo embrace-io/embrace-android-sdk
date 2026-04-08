@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.instrumentation.navigation
 
+import androidx.annotation.UiThread
 import java.util.concurrent.atomic.AtomicReference
 
 /**
@@ -14,6 +15,7 @@ internal class NavigationEventBroker(
     private val activityStartTimes = mutableMapOf<Int, Long>()
     private val visibleActivities = mutableMapOf<Int, String>()
 
+    @UiThread
     fun onEvent(event: NavigationEvent) {
         processEvent(event)
     }

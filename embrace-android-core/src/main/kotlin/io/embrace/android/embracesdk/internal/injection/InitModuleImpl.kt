@@ -18,7 +18,7 @@ import java.util.concurrent.TimeUnit
 
 class InitModuleImpl(
     override val logger: InternalLogger = InternalLoggerImpl(),
-    override val clock: Clock = NormalizedIntervalClock(),
+    override val clock: Clock = NormalizedIntervalClock(logger = logger),
     override val systemInfo: SystemInfo = SystemInfo(),
 ) : InitModule {
 

@@ -36,7 +36,7 @@ fun createSessionOrchestrator(
 
     val boundaryDelegate = OrchestratorBoundaryDelegate(
         essentialServiceModule.userService,
-        essentialServiceModule.sessionPropertiesService
+        essentialServiceModule.userSessionPropertiesService
     )
 
     val sessionSpanAttrPopulator = SessionSpanAttrPopulatorImpl(

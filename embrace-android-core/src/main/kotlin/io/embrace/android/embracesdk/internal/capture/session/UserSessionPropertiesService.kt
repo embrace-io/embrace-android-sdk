@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.capture.session
 
-interface SessionPropertiesService {
+interface UserSessionPropertiesService {
 
     /**
      * Annotates the session with a new property. Use this to track permanent and ephemeral

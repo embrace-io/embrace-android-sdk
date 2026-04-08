@@ -12,9 +12,9 @@ import io.embrace.android.embracesdk.fakes.FakeLogLimitingService
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakePayloadMessageCollator
 import io.embrace.android.embracesdk.fakes.FakePayloadStore
-import io.embrace.android.embracesdk.fakes.FakeSessionPropertiesService
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
 import io.embrace.android.embracesdk.fakes.FakeUserService
+import io.embrace.android.embracesdk.fakes.FakeUserSessionPropertiesService
 import io.embrace.android.embracesdk.fakes.behavior.FakeSessionBehavior
 import io.embrace.android.embracesdk.fakes.createBackgroundActivityBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakePayloadSourceModule
@@ -23,7 +23,7 @@ import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistryImpl
 import io.embrace.android.embracesdk.internal.arch.attrs.embCrashId
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState
 import io.embrace.android.embracesdk.internal.arch.state.AppState
-import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
+import io.embrace.android.embracesdk.internal.capture.session.UserSessionPropertiesService
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
@@ -58,7 +58,7 @@ internal class SessionOrchestratorTest {
     private lateinit var configService: FakeConfigService
     private lateinit var userService: FakeUserService
     private lateinit var store: FakePayloadStore
-    private lateinit var sessionPropertiesService: SessionPropertiesService
+    private lateinit var userSessionPropertiesService: UserSessionPropertiesService
     private lateinit var sessionTracker: SessionTracker
     private lateinit var payloadCachingService: PayloadCachingService
     private lateinit var sessionCacheExecutor: BlockingScheduledExecutorService
@@ -395,7 +395,7 @@ internal class SessionOrchestratorTest {
             configService = configService,
             logger = logger
         )
-        sessionPropertiesService = FakeSessionPropertiesService()
+        userSessionPropertiesService = FakeUserSessionPropertiesService()
         userService = FakeUserService()
         sessionTracker = SessionTrackerImpl(
             activityManager = null,
@@ -431,7 +431,7 @@ internal class SessionOrchestratorTest {
             sessionTracker,
             OrchestratorBoundaryDelegate(
                 userService,
-                sessionPropertiesService
+                userSessionPropertiesService
             ),
             store,
             payloadCachingService,
@@ -445,7 +445,7 @@ internal class SessionOrchestratorTest {
             )
         )
         orchestratorStartTimeMs = clock.now()
-        sessionPropertiesService.addProperty("key", "value", false)
+        userSessionPropertiesService.addProperty("key", "value", false)
     }
 
     private fun validateSession(

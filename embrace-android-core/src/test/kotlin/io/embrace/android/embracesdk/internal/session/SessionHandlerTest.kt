@@ -9,15 +9,15 @@ import io.embrace.android.embracesdk.fakes.FakeEnvelopeResourceSource
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakeOrdinalStore
 import io.embrace.android.embracesdk.fakes.FakeOtelPayloadMapper
-import io.embrace.android.embracesdk.fakes.FakeSessionPropertiesService
 import io.embrace.android.embracesdk.fakes.FakeSessionTracker
 import io.embrace.android.embracesdk.fakes.FakeUserService
+import io.embrace.android.embracesdk.fakes.FakeUserSessionPropertiesService
 import io.embrace.android.embracesdk.fakes.createSessionBehavior
 import io.embrace.android.embracesdk.fakes.fakeSessionPartToken
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakePayloadSourceModule
 import io.embrace.android.embracesdk.internal.arch.state.AppState
-import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
+import io.embrace.android.embracesdk.internal.capture.session.UserSessionPropertiesService
 import io.embrace.android.embracesdk.internal.envelope.session.SessionPartEnvelopeSourceImpl
 import io.embrace.android.embracesdk.internal.envelope.session.SessionPartPayloadSourceImpl
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
@@ -62,7 +62,7 @@ internal class SessionHandlerTest {
     private lateinit var logger: InternalLogger
     private lateinit var spanRepository: SpanRepository
     private lateinit var currentSessionSpan: CurrentSessionSpan
-    private lateinit var sessionPropertiesService: SessionPropertiesService
+    private lateinit var userSessionPropertiesService: UserSessionPropertiesService
 
     @Before
     fun before() {
@@ -70,7 +70,7 @@ internal class SessionHandlerTest {
         worker = BackgroundWorker(executorService)
         logger = InternalLoggerImpl()
         clock.setCurrentTime(NOW)
-        sessionPropertiesService = FakeSessionPropertiesService()
+        userSessionPropertiesService = FakeUserSessionPropertiesService()
         metadataService = FakeMetadataService()
         sessionTracker = FakeSessionTracker()
         configService = FakeConfigService(

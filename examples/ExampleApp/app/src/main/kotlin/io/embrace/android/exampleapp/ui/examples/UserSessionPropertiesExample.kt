@@ -17,7 +17,7 @@ import androidx.compose.ui.unit.dp
 import io.embrace.android.embracesdk.Embrace
 
 @Composable
-fun SessionPropertiesExample() {
+fun UserSessionPropertiesExample() {
     var propKey by remember { mutableStateOf("my-session-property-key") }
     var propValue by remember { mutableStateOf("my-session-property-value") }
     var permValue by remember { mutableStateOf(false) }

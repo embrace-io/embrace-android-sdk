@@ -36,7 +36,7 @@ class InstrumentationModuleImpl(
             serializer = initModule.jsonSerializer,
             sessionTracker = essentialServiceModule.sessionTracker,
             ordinalStore = coreModule.ordinalStore,
-            sessionPropertiesService = essentialServiceModule.sessionPropertiesService,
+            userSessionPropertiesService = essentialServiceModule.userSessionPropertiesService,
             processIdentifier = openTelemetryModule.otelSdkConfig.processIdentifier,
             crashMarkerFileProvider = { storageService.getFileForWrite("embrace_crash_marker") },
             appStateTracker = essentialServiceModule.appStateTracker,

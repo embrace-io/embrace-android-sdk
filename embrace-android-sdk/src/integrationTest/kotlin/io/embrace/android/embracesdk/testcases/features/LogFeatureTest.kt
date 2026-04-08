@@ -457,7 +457,7 @@ internal class LogFeatureTest {
     fun `exported logs can contain maximum number of session properties`() {
         val maxCustomSessionProps = 200
         testRule.runTest(
-            persistedRemoteConfig = RemoteConfig(maxSessionProperties = maxCustomSessionProps),
+            persistedRemoteConfig = RemoteConfig(maxUserSessionProperties = maxCustomSessionProps),
             testCaseAction = {
                 recordSession {
                     repeat(maxCustomSessionProps + 1) {

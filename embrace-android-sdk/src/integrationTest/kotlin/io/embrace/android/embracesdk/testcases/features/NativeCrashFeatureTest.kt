@@ -131,7 +131,7 @@ internal class NativeCrashFeatureTest {
         testRule.runTest(
             instrumentedConfig = config,
             setupAction = {
-                setupPermanentSessionProperties(mapOf(newSessionProperty to "foo"))
+                setupPermanentUserSessionProperties(mapOf(newSessionProperty to "foo"))
                 setupCachedDataFromNativeCrash(
                     crashData = crashData
                 )

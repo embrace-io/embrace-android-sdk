@@ -13,7 +13,7 @@ internal class SessionBehaviorImplTest {
         sessionConfig = SessionRemoteConfig(
             isEnabled = true,
         ),
-        maxSessionProperties = 57,
+        maxUserSessionProperties = 57,
     )
 
     private val defaultMaxDurationMs = 24 * 60 * 60_000L
@@ -22,21 +22,21 @@ internal class SessionBehaviorImplTest {
     @Test
     fun testDefaults() {
         with(createSessionBehavior()) {
-            assertEquals(100, getMaxSessionProperties())
+            assertEquals(100, getMaxUserSessionProperties())
         }
     }
 
     @Test
     fun testRemoteAndLocal() {
         with(createSessionBehavior(remoteCfg = remote)) {
-            assertEquals(57, getMaxSessionProperties())
+            assertEquals(57, getMaxUserSessionProperties())
         }
     }
 
     @Test
     fun `remote session properties limit is capped to 200`() {
-        with(createSessionBehavior(remoteCfg = RemoteConfig(maxSessionProperties = 1000))) {
-            assertEquals(200, getMaxSessionProperties())
+        with(createSessionBehavior(remoteCfg = RemoteConfig(maxUserSessionProperties = 1000))) {
+            assertEquals(200, getMaxUserSessionProperties())
         }
     }
 

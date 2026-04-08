@@ -1,7 +1,5 @@
 package io.embrace.android.embracesdk.internal.instrumentation.navigation
 
-import android.os.Handler
-import android.os.Looper
 import java.util.concurrent.atomic.AtomicReference
 
 /**
@@ -10,18 +8,14 @@ import java.util.concurrent.atomic.AtomicReference
  * broker only needs to hand them off to be processed in order.
  */
 internal class NavigationEventBroker(
-    looper: Looper = Looper.getMainLooper(),
     private val onScreenLoad: (loadTimeMs: Long, newScreenName: String) -> Unit,
 ) {
-    private val handler = Handler(looper)
     private val lastEvent = AtomicReference<NavigationEvent?>(null)
     private val activityStartTimes = mutableMapOf<Int, Long>()
     private val visibleActivities = mutableMapOf<Int, String>()
 
-    fun queueEvent(event: NavigationEvent) {
-        handler.post {
-            processEvent(event)
-        }
+    fun onEvent(event: NavigationEvent) {
+        processEvent(event)
     }
 
     private fun processEvent(event: NavigationEvent) {

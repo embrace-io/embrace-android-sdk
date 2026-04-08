@@ -20,7 +20,7 @@ class NavigationStateDataSource(
         onScreenLoad = ::onScreenLoad
     )
 
-    private val activityNavigationTracker = ActivityNavigationTracker(args.clock, broker::queueEvent)
+    private val activityNavigationTracker = ActivityNavigationTracker(args.clock, broker::onEvent)
 
     override fun onDataCaptureEnabled() {
         super.onDataCaptureEnabled()

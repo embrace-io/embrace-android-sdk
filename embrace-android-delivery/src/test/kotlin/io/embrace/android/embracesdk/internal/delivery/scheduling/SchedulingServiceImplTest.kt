@@ -24,7 +24,7 @@ import io.embrace.android.embracesdk.internal.delivery.scheduling.SchedulingServ
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.internal.payload.LogPayload
-import io.embrace.android.embracesdk.internal.payload.SessionPayload
+import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import org.junit.Assert.assertEquals
@@ -96,7 +96,7 @@ internal class SchedulingServiceImplTest {
         waitForResurrectionAndDeliveryAttempt(2)
         assertEquals(2, executionService.sendAttempts())
         assertEquals(0, storageService.storedPayloadCount())
-        assertTrue(executionService.attemptedHttpRequests.first().data is SessionPayload)
+        assertTrue(executionService.attemptedHttpRequests.first().data is SessionPartPayload)
     }
 
     @Test
@@ -164,7 +164,7 @@ internal class SchedulingServiceImplTest {
     fun `payloads to blocked endpoint will not be sent or retried until duration lapses`() {
         val longBlockedDuration = 90_000L
         serverBusy(endpoint = Endpoint.SESSIONS, retryAfterMs = longBlockedDuration)
-        resetToSingleSessionPayload()
+        resetToSingleSessionPartPayload()
         waitForResurrectionAndDeliveryAttempt()
         assertEquals(1, executionService.sendAttempts())
         allSendsSucceed()
@@ -178,7 +178,7 @@ internal class SchedulingServiceImplTest {
     @Test
     fun `payloads that fail to deliver because of a 429 will be retried before the default delay if endpoint is unblocked earlier`() {
         serverBusy(endpoint = Endpoint.SESSIONS, retryAfterMs = SHORT_BLOCKED_DURATION)
-        resetToSingleSessionPayload()
+        resetToSingleSessionPartPayload()
         waitForResurrectionAndDeliveryAttempt()
         allSendsSucceed()
         tickAndWaitForDeliveryAttempts(SHORT_BLOCKED_DURATION + 1)
@@ -189,7 +189,7 @@ internal class SchedulingServiceImplTest {
     @Test
     fun `payloads to unblocked endpoint will not affect other endpoints`() {
         serverBusy(endpoint = Endpoint.SESSIONS, retryAfterMs = SHORT_BLOCKED_DURATION)
-        resetToSingleSessionPayload()
+        resetToSingleSessionPartPayload()
         waitForResurrectionAndDeliveryAttempt()
         assertEquals(1, executionService.sendAttempts())
         allSendsSucceed()
@@ -214,7 +214,7 @@ internal class SchedulingServiceImplTest {
     @Test
     fun `payloads to already blocked endpoint will not be sent`() {
         allSendsTimeout()
-        resetToSingleSessionPayload()
+        resetToSingleSessionPartPayload()
         waitForResurrectionAndDeliveryAttempt()
         storageService.addFakePayload(fakeSessionStoredTelemetryMetadata2)
         waitForPayloadIntakeAndDeliveryAttempt(2)
@@ -401,18 +401,18 @@ internal class SchedulingServiceImplTest {
     fun `current session waits for resurrected sessions`() {
         // Store a session and attempt to deliver it before resurrection
         storageService.clearStorage()
-        val newerPayload = Envelope(data = SessionPayload(spans = listOf(Span(name = "newer"))))
+        val newerPayload = Envelope(data = SessionPartPayload(spans = listOf(Span(name = "newer"))))
         storageService.addPayload(fakeSessionStoredTelemetryMetadata2, newerPayload)
         waitForPayloadIntakeAndDeliveryAttempt()
         assertEquals(0, executionService.sendAttempts())
 
         // Simulate resurrection completing and adding an older session
-        val olderPayload = Envelope(data = SessionPayload(spans = listOf(Span(name = "older"))))
+        val olderPayload = Envelope(data = SessionPartPayload(spans = listOf(Span(name = "older"))))
         storageService.addPayload(fakeSessionStoredTelemetryMetadata, olderPayload)
         waitForResurrectionAndDeliveryAttempt(2)
 
         // Both should now be delivered, with the older session first (priority ordering)
-        val requests = executionService.getRequests<SessionPayload>()
+        val requests = executionService.getRequests<SessionPartPayload>()
         assertEquals(2, requests.size)
         assertEquals("older", requests[0].data.spans?.single()?.name)
         assertEquals("newer", requests[1].data.spans?.single()?.name)
@@ -429,9 +429,9 @@ internal class SchedulingServiceImplTest {
     @Test
     fun `session payloads are delivered in timestamp order`() {
         storageService.clearStorage()
-        val s1 = Envelope(data = SessionPayload(spans = listOf(Span(name = "s1"))))
-        val s2 = Envelope(data = SessionPayload(spans = listOf(Span(name = "s2"))))
-        val s3 = Envelope(data = SessionPayload(spans = listOf(Span(name = "s3"))))
+        val s1 = Envelope(data = SessionPartPayload(spans = listOf(Span(name = "s1"))))
+        val s2 = Envelope(data = SessionPartPayload(spans = listOf(Span(name = "s2"))))
+        val s3 = Envelope(data = SessionPartPayload(spans = listOf(Span(name = "s3"))))
         // Add payloads to the queue out of order
         storageService.addPayload(fakeSessionStoredTelemetryMetadata2, s2)
         storageService.addPayload(fakeSessionStoredTelemetryMetadata, s1)
@@ -444,7 +444,7 @@ internal class SchedulingServiceImplTest {
         )
         storageService.addPayload(thirdSession, s3)
         waitForResurrectionAndDeliveryAttempt(3)
-        val requests = executionService.getRequests<SessionPayload>()
+        val requests = executionService.getRequests<SessionPartPayload>()
         assertEquals(3, requests.size)
         assertEquals("s1", requests[0].data.spans?.single()?.name)
         assertEquals("s2", requests[1].data.spans?.single()?.name)
@@ -454,26 +454,26 @@ internal class SchedulingServiceImplTest {
     @Test
     fun `retryable failure keeps delivery blocked for payloads of that type with the first payload being retried`() {
         storageService.clearStorage()
-        val s1 = Envelope(data = SessionPayload(spans = listOf(Span(name = "first"))))
-        val s2 = Envelope(data = SessionPayload(spans = listOf(Span(name = "second"))))
+        val s1 = Envelope(data = SessionPartPayload(spans = listOf(Span(name = "first"))))
+        val s2 = Envelope(data = SessionPartPayload(spans = listOf(Span(name = "second"))))
         storageService.addPayload(fakeSessionStoredTelemetryMetadata, s1)
         storageService.addPayload(fakeSessionStoredTelemetryMetadata2, s2)
         allSendsFail()
         waitForResurrectionAndDeliveryAttempt(2)
         assertEquals(1, executionService.sendAttempts())
-        assertEquals("first", executionService.getRequests<SessionPayload>().single().data.spans?.single()?.name)
+        assertEquals("first", executionService.getRequests<SessionPartPayload>().single().data.spans?.single()?.name)
         tickAndWaitForDeliveryAttempts(INITIAL_DELAY_MS)
         assertEquals(2, executionService.sendAttempts())
         tickAndWaitForDeliveryAttempts((INITIAL_DELAY_MS * 2) - 1)
         assertEquals(2, executionService.sendAttempts())
         tickAndWaitForDeliveryAttempts(1)
         assertEquals(3, executionService.sendAttempts())
-        val currentPayloads = executionService.getRequests<SessionPayload>()
+        val currentPayloads = executionService.getRequests<SessionPartPayload>()
         assertEquals(currentPayloads[0], currentPayloads[1])
         assertEquals(currentPayloads[0], currentPayloads[2])
         allSendsSucceed()
         tickAndWaitForDeliveryAttempts(INITIAL_DELAY_MS * 4, 2)
-        val requests = executionService.getRequests<SessionPayload>()
+        val requests = executionService.getRequests<SessionPartPayload>()
         assertEquals(5, requests.size)
         assertEquals("first", requests[3].data.spans?.single()?.name)
         assertEquals("second", requests[4].data.spans?.single()?.name)
@@ -530,7 +530,7 @@ internal class SchedulingServiceImplTest {
     fun `network change while connection blocked unblocks and delivers`() {
         blockConnection()
         waitForResurrectionAndDeliveryAttempt(2)
-        assertEquals(1, executionService.getRequests<SessionPayload>().size)
+        assertEquals(1, executionService.getRequests<SessionPartPayload>().size)
         assertEquals(0, executionService.getRequests<LogPayload>().size)
         assertEquals(2, storageService.storedPayloadCount())
         // Connection is now blocked with the failed resurrected session delivery attempt
@@ -541,12 +541,12 @@ internal class SchedulingServiceImplTest {
         // Unblock and check sends one at a time to validate order
         switchToConnectionType(ConnectionType.WAN)
         // The session will be sent first because it never got in the retry queue, so unblock will send it immediately
-        assertEquals(2, executionService.getRequests<SessionPayload>().size)
+        assertEquals(2, executionService.getRequests<SessionPartPayload>().size)
         assertEquals(0, executionService.getRequests<LogPayload>().size)
         assertEquals(1, storageService.storedPayloadCount())
         // Log will be sent second because it's lower priority
         waitPayloadSendAttempt()
-        assertEquals(2, executionService.getRequests<SessionPayload>().size)
+        assertEquals(2, executionService.getRequests<SessionPartPayload>().size)
         assertEquals(1, executionService.getRequests<LogPayload>().size)
         assertEquals(0, storageService.storedPayloadCount())
     }
@@ -556,9 +556,9 @@ internal class SchedulingServiceImplTest {
         // Verify that after a successful delivery, the next payload is found and
         // sent without requiring a separate intake signal
         storageService.clearStorage()
-        val s1 = Envelope(data = SessionPayload(spans = listOf(Span(name = "first"))))
-        val s2 = Envelope(data = SessionPayload(spans = listOf(Span(name = "second"))))
-        val s3 = Envelope(data = SessionPayload(spans = listOf(Span(name = "third"))))
+        val s1 = Envelope(data = SessionPartPayload(spans = listOf(Span(name = "first"))))
+        val s2 = Envelope(data = SessionPartPayload(spans = listOf(Span(name = "second"))))
+        val s3 = Envelope(data = SessionPartPayload(spans = listOf(Span(name = "third"))))
         storageService.addPayload(fakeSessionStoredTelemetryMetadata, s1)
         storageService.addPayload(fakeSessionStoredTelemetryMetadata2, s2)
         val thirdSession = StoredTelemetryMetadata(
@@ -574,7 +574,7 @@ internal class SchedulingServiceImplTest {
         // without any additional onPayloadIntake calls.
         waitForResurrectionAndDeliveryAttempt(3)
 
-        val requests = executionService.getRequests<SessionPayload>()
+        val requests = executionService.getRequests<SessionPartPayload>()
         assertEquals(3, requests.size)
         assertEquals("first", requests[0].data.spans?.single()?.name)
         assertEquals("second", requests[1].data.spans?.single()?.name)
@@ -583,29 +583,29 @@ internal class SchedulingServiceImplTest {
 
     @Test
     fun `earlier requested future delivery attempt replaces later one`() {
-        resetToSingleSessionPayload()
+        resetToSingleSessionPartPayload()
         allSendsFail()
         waitForResurrectionAndDeliveryAttempt()
-        assertEquals(1, executionService.getRequests<SessionPayload>().size)
+        assertEquals(1, executionService.getRequests<SessionPartPayload>().size)
         assertEquals(0, executionService.getRequests<LogPayload>().size)
         tickAndWaitForDeliveryAttempts(INITIAL_DELAY_MS + 1)
-        assertEquals(2, executionService.getRequests<SessionPayload>().size)
+        assertEquals(2, executionService.getRequests<SessionPartPayload>().size)
         assertEquals(0, executionService.getRequests<LogPayload>().size)
 
         // This retry will be earlier than the previous one, and will cancel replace it.
         storageService.addFakePayload(fakeLogStoredTelemetryMetadata)
         waitForPayloadIntakeAndDeliveryAttempt()
-        assertEquals(2, executionService.getRequests<SessionPayload>().size)
+        assertEquals(2, executionService.getRequests<SessionPartPayload>().size)
         assertEquals(1, executionService.getRequests<LogPayload>().size)
 
         allSendsSucceed()
         tickAndWaitForDeliveryAttempts(INITIAL_DELAY_MS)
-        assertEquals(2, executionService.getRequests<SessionPayload>().size)
+        assertEquals(2, executionService.getRequests<SessionPartPayload>().size)
         assertEquals(2, executionService.getRequests<LogPayload>().size)
 
         // After the retry for the log request succeeds, retry for the session will be rescheduled
         tickAndWaitForDeliveryAttempts(INITIAL_DELAY_MS)
-        assertEquals(3, executionService.getRequests<SessionPayload>().size)
+        assertEquals(3, executionService.getRequests<SessionPartPayload>().size)
         assertEquals(2, executionService.getRequests<LogPayload>().size)
     }
 
@@ -615,7 +615,7 @@ internal class SchedulingServiceImplTest {
         waitForResurrection()
         waitPayloadSendAttempt()
         assertEquals(1, executionService.sendAttempts())
-        assertTrue(executionService.attemptedHttpRequests.first().data is SessionPayload)
+        assertTrue(executionService.attemptedHttpRequests.first().data is SessionPartPayload)
 
         // Verify delete hasn't happened
         assertEquals(0, storageService.deleteCount.get())
@@ -836,7 +836,7 @@ internal class SchedulingServiceImplTest {
     /**
      * Reset storage to a single session payload, discarding any payloads from the default setup.
      */
-    private fun resetToSingleSessionPayload() {
+    private fun resetToSingleSessionPartPayload() {
         storageService.clearStorage()
         storageService.addFakePayload(fakeSessionStoredTelemetryMetadata)
     }

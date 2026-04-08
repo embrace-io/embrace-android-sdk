@@ -8,7 +8,7 @@ import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.LogPayload
-import io.embrace.android.embracesdk.internal.payload.SessionPayload
+import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.utils.threadLocal
 import io.embrace.android.embracesdk.assertions.getLastLog
@@ -33,7 +33,7 @@ internal class FakeApiServer(
 ) : Dispatcher() {
 
     private val serializer by threadLocal { TestPlatformSerializer() }
-    private val sessionRequests = CopyOnWriteArrayList<Envelope<SessionPayload>>()
+    private val sessionRequests = CopyOnWriteArrayList<Envelope<SessionPartPayload>>()
     private val logRequests = CopyOnWriteArrayList<Envelope<LogPayload>>()
     private val attachments = CopyOnWriteArrayList<List<FormPart>>()
     private val configRequests = CopyOnWriteArrayList<String>()
@@ -42,7 +42,7 @@ internal class FakeApiServer(
     /**
      * Returns a list of session envelopes in the order in which the server received them.
      */
-    fun getSessionEnvelopes(): List<Envelope<SessionPayload>> = sessionRequests.toList()
+    fun getSessionEnvelopes(): List<Envelope<SessionPartPayload>> = sessionRequests.toList()
 
     /**
      * Returns a list of log envelopes in the order in which the server received them.
@@ -99,7 +99,7 @@ internal class FakeApiServer(
 
     @Suppress("UNCHECKED_CAST")
     private fun handleSessionRequest(endpoint: Endpoint, envelope: Envelope<*>) {
-        val obj = envelope as Envelope<SessionPayload>
+        val obj = envelope as Envelope<SessionPartPayload>
         sessionRequests.add(obj)
         deliveryTracer.onServerCompletedRequest(endpoint.name, obj.getSessionId())
     }
@@ -169,7 +169,7 @@ internal class FakeApiServer(
         try {
             val type = when (endpoint) {
                 Endpoint.LOGS -> LogPayload::class
-                Endpoint.SESSIONS -> SessionPayload::class
+                Endpoint.SESSIONS -> SessionPartPayload::class
                 else -> error("Unsupported endpoint $endpoint")
             }
             val envelopeType = TypeUtils.parameterizedType(Envelope::class, type)

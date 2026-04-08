@@ -8,7 +8,7 @@ import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.attrs.asPair
 import io.embrace.android.embracesdk.internal.payload.Envelope
-import io.embrace.android.embracesdk.internal.payload.SessionPayload
+import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.assertions.assertMatches
 import io.embrace.android.embracesdk.semconv.EmbPushNotificationAttributes
@@ -114,7 +114,7 @@ internal class PushNotificationApiTest {
         )
     }
 
-    private fun Envelope<SessionPayload>.assertNotification(type: String) {
+    private fun Envelope<SessionPartPayload>.assertNotification(type: String) {
         val sessionSpan = findSessionSpan()
         val event = sessionSpan.findEventOfType(EmbType.System.PushNotification)
         assertTrue(checkNotNull(event.timestampNanos) > 0)

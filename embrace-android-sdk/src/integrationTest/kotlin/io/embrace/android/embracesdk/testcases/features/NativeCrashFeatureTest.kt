@@ -140,7 +140,7 @@ internal class NativeCrashFeatureTest {
             testCaseAction = {},
             assertAction = {
                 with(getSingleSessionEnvelope()) {
-                    assertDeadSessionResurrected(crashData)
+                    assertDeadPartResurrected(crashData)
                 }
                 val envelope = getSingleLogEnvelope()
                 with(envelope) {
@@ -161,7 +161,7 @@ internal class NativeCrashFeatureTest {
         testRule.runTest(
             instrumentedConfig = config,
             setupAction = {
-                val modifiedCrashData = crashData.copy(sessionMetadata = null, sessionEnvelope = null)
+                val modifiedCrashData = crashData.copy(sessionMetadata = null, partEnvelope = null)
                 setupCachedDataFromNativeCrash(
                     crashData = modifiedCrashData
                 )
@@ -188,7 +188,7 @@ internal class NativeCrashFeatureTest {
             testCaseAction = {},
             assertAction = {
                 with(getSingleSessionEnvelope()) {
-                    assertDeadSessionResurrected(null)
+                    assertDeadPartResurrected(null)
                 }
                 assertNoNativeCrashSent(crashData)
             }
@@ -232,11 +232,11 @@ internal class NativeCrashFeatureTest {
 
                 // sessions updated to include crash IDs
                 val session1 = sessionEnvelopes.single { it.getSessionId() == crashData.nativeCrash.sessionId }
-                session1.assertDeadSessionResurrected(crashData)
+                session1.assertDeadPartResurrected(crashData)
 
                 // sessions updated to include crash IDs
                 val session2 = sessionEnvelopes.single { it.getSessionId() == crashData2.nativeCrash.sessionId }
-                session2.assertDeadSessionResurrected(crashData2)
+                session2.assertDeadPartResurrected(crashData2)
             }
         )
     }
@@ -277,7 +277,7 @@ internal class NativeCrashFeatureTest {
             testCaseAction = {},
             assertAction = {
                 with(getSingleSessionEnvelope()) {
-                    assertDeadSessionResurrected(null)
+                    assertDeadPartResurrected(null)
                 }
                 assertNoNativeCrashSent(crashData)
             }
@@ -298,7 +298,7 @@ internal class NativeCrashFeatureTest {
             testCaseAction = {},
             assertAction = {
                 with(getSingleSessionEnvelope()) {
-                    assertDeadSessionResurrected(null)
+                    assertDeadPartResurrected(null)
                 }
                 assertNoNativeCrashSent(crashData)
             }

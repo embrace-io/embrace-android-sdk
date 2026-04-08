@@ -4,12 +4,12 @@ import io.embrace.android.embracesdk.fixtures.testSpan
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.EnvelopeMetadata
 import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
-import io.embrace.android.embracesdk.internal.payload.SessionPayload
+import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.session.LifeEventType
-import io.embrace.android.embracesdk.internal.session.SessionToken
+import io.embrace.android.embracesdk.internal.session.SessionPartToken
 import io.embrace.android.embracesdk.internal.arch.state.AppState
 
-fun fakeSessionToken(): SessionToken = SessionToken(
+fun fakeSessionPartToken(): SessionPartToken = SessionPartToken(
     sessionId = "fakeSessionId",
     startTime = 160000000000L,
     number = 1,
@@ -23,7 +23,7 @@ fun fakeSessionEnvelope(
     startMs: Long = 160000000000L,
     endMs: Long = 161000400000L,
     sessionProperties: Map<String, String>? = null,
-): Envelope<SessionPayload> {
+): Envelope<SessionPartPayload> {
     val sessionSpan = FakeEmbraceSdkSpan.sessionSpan(
         sessionId = sessionId,
         startTimeMs = startMs,
@@ -39,7 +39,7 @@ fun fakeSessionEnvelope(
         metadata = fakeEnvelopeMetadata,
         version = "1.0.0",
         type = "spans",
-        data = SessionPayload(
+        data = SessionPartPayload(
             spans = spans,
             spanSnapshots = spanSnapshots
         )
@@ -54,7 +54,7 @@ fun fakeIncompleteSessionEnvelope(
     sessionProperties: Map<String, String>? = null,
     resource: EnvelopeResource = fakeEnvelopeResource,
     metadata: EnvelopeMetadata = fakeEnvelopeMetadata,
-): Envelope<SessionPayload> {
+): Envelope<SessionPartPayload> {
     val fakeClock = FakeClock(currentTime = startMs)
     val incompleteSessionSpan = FakeEmbraceSdkSpan.sessionSpan(
         sessionId = sessionId,
@@ -68,7 +68,7 @@ fun fakeIncompleteSessionEnvelope(
         metadata = metadata,
         version = "1.0.0",
         type = "spans",
-        data = SessionPayload(
+        data = SessionPartPayload(
             spanSnapshots = listOfNotNull(
                 incompleteSessionSpan.snapshot(),
                 FakeEmbraceSdkSpan.started(clock = fakeClock).snapshot()

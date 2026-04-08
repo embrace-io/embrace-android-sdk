@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageSer
 import io.embrace.android.embracesdk.internal.delivery.storage.SerializationAction
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.LogPayload
-import io.embrace.android.embracesdk.internal.payload.SessionPayload
+import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.worker.PriorityWorker
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
@@ -101,7 +101,7 @@ class FakePayloadStorageService(
 
     private fun createFakePayload(metadata: StoredTelemetryMetadata) =
         when (metadata.envelopeType.serializedType) {
-            Envelope.sessionEnvelopeType -> Envelope(data = SessionPayload())
+            Envelope.sessionEnvelopeType -> Envelope(data = SessionPartPayload())
             Envelope.logEnvelopeType -> Envelope(data = LogPayload())
             else -> null
         }

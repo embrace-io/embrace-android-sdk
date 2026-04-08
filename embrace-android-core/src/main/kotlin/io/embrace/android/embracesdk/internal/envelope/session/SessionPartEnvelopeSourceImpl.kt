@@ -3,26 +3,26 @@ package io.embrace.android.embracesdk.internal.envelope.session
 import io.embrace.android.embracesdk.internal.envelope.metadata.EnvelopeMetadataSource
 import io.embrace.android.embracesdk.internal.envelope.resource.EnvelopeResourceSource
 import io.embrace.android.embracesdk.internal.payload.Envelope
-import io.embrace.android.embracesdk.internal.payload.SessionPayload
-import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSnapshotType
+import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
+import io.embrace.android.embracesdk.internal.session.orchestrator.SessionPartSnapshotType
 
-internal class SessionEnvelopeSourceImpl(
+internal class SessionPartEnvelopeSourceImpl(
     private val metadataSource: EnvelopeMetadataSource,
     private val resourceSource: EnvelopeResourceSource,
-    private val sessionPayloadSource: SessionPayloadSource,
-) : SessionEnvelopeSource {
+    private val payloadSource: SessionPartPayloadSource,
+) : SessionPartEnvelopeSource {
 
     override fun getEnvelope(
-        endType: SessionSnapshotType,
+        endType: SessionPartSnapshotType,
         startNewSession: Boolean,
         crashId: String?,
-    ): Envelope<SessionPayload> {
+    ): Envelope<SessionPartPayload> {
         return Envelope(
             resourceSource.getEnvelopeResource(),
             metadataSource.getEnvelopeMetadata(),
             "0.1.0",
             "spans",
-            sessionPayloadSource.getSessionPayload(endType, startNewSession, crashId)
+            payloadSource.getSessionPartPayload(endType, startNewSession, crashId)
         )
     }
 }

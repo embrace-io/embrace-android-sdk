@@ -5,7 +5,7 @@ import io.embrace.android.embracesdk.internal.delivery.execution.ExecutionResult
 import io.embrace.android.embracesdk.internal.delivery.execution.RequestExecutionService
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.LogPayload
-import io.embrace.android.embracesdk.internal.payload.SessionPayload
+import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import java.io.InputStream
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.zip.GZIPInputStream
@@ -20,7 +20,7 @@ class FakeRequestExecutionService : RequestExecutionService {
 
     @Suppress("UNCHECKED_CAST")
     inline fun <reified T : Any> getRequests(): List<Envelope<T>> {
-        if (T::class != SessionPayload::class && T::class != LogPayload::class) {
+        if (T::class != SessionPartPayload::class && T::class != LogPayload::class) {
             error("Unsupported type: ${T::class}")
         }
         return attemptedHttpRequests.filter { it.data is T } as List<Envelope<T>>
@@ -38,5 +38,5 @@ class FakeRequestExecutionService : RequestExecutionService {
         return responseAction(envelope)
     }
 
-    fun sendAttempts() = getRequests<SessionPayload>().size + getRequests<LogPayload>().size
+    fun sendAttempts() = getRequests<SessionPartPayload>().size + getRequests<LogPayload>().size
 }

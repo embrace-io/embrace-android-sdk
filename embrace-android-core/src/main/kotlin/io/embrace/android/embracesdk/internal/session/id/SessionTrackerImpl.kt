@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.internal.arch.SessionEndListener
 import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
-import io.embrace.android.embracesdk.internal.session.SessionToken
+import io.embrace.android.embracesdk.internal.session.SessionPartToken
 import java.util.concurrent.CopyOnWriteArraySet
 
 internal class SessionTrackerImpl(
@@ -19,7 +19,7 @@ internal class SessionTrackerImpl(
     private val sessionEndListeners = CopyOnWriteArraySet<SessionEndListener>()
 
     @Volatile
-    private var activeSession: SessionToken? = null
+    private var activeSession: SessionPartToken? = null
 
     override fun addSessionChangeListener(listener: SessionChangeListener) {
         sessionChangeListeners.add(listener)
@@ -29,13 +29,13 @@ internal class SessionTrackerImpl(
         sessionEndListeners.add(listener)
     }
 
-    override fun getActiveSession(): SessionToken? = activeSession
+    override fun getActiveSession(): SessionPartToken? = activeSession
 
     override fun newActiveSession(
-        endSessionCallback: SessionToken.() -> Unit,
-        startSessionCallback: () -> SessionToken?,
+        endSessionCallback: SessionPartToken.() -> Unit,
+        startSessionCallback: () -> SessionPartToken?,
         postTransitionAppState: AppState,
-    ): SessionToken? {
+    ): SessionPartToken? {
         activeSession?.let { endingSession ->
             runCatching {
                 sessionEndListeners.forEach(SessionEndListener::onPreSessionEnd)

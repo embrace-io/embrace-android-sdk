@@ -25,7 +25,7 @@ import io.embrace.android.embracesdk.internal.payload.EnvelopeMetadata
 import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
-import io.embrace.android.embracesdk.internal.payload.SessionPayload
+import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.session.getSessionId
@@ -173,13 +173,13 @@ internal class PayloadResurrectionServiceImpl(
     ) {
         val resurrectedPayload = when (envelopeType) {
             SupportedEnvelopeType.SESSION -> {
-                val deadSession = serializer.fromJson<Envelope<SessionPayload>>(
+                val deadPart = serializer.fromJson<Envelope<SessionPartPayload>>(
                     inputStream = GZIPInputStream(cacheStorageService.loadPayloadAsStream(this)),
                     type = checkNotNull(envelopeType.serializedType)
                 )
 
-                val sessionId = deadSession.getSessionId()
-                val appState = deadSession.getSessionSpan()?.attributes?.findAttributeValue(embState.name)
+                val sessionId = deadPart.getSessionId()
+                val appState = deadPart.getSessionSpan()?.attributes?.findAttributeValue(embState.name)
                 val nativeCrash = if (nativeCrashService != null && sessionId != null) {
                     nativeCrashProvider(sessionId)?.apply {
                         val nativeCrashEnvelopeMetadata = createNativeCrashEnvelopeMetadata(
@@ -189,13 +189,13 @@ internal class PayloadResurrectionServiceImpl(
 
                         cachedLogEnvelopeStore.create(
                             storedTelemetryMetadata = nativeCrashEnvelopeMetadata,
-                            resource = deadSession.resource ?: EnvelopeResource(),
-                            metadata = deadSession.metadata ?: EnvelopeMetadata()
+                            resource = deadPart.resource ?: EnvelopeResource(),
+                            metadata = deadPart.metadata ?: EnvelopeMetadata()
                         )
 
                         nativeCrashService.sendNativeCrash(
                             nativeCrash = this,
-                            sessionProperties = deadSession.getSessionProperties(),
+                            sessionProperties = deadPart.getSessionProperties(),
                             metadata = if (appState != null) {
                                 mapOf(
                                     embState.name to appState,
@@ -212,7 +212,7 @@ internal class PayloadResurrectionServiceImpl(
                     null
                 }
 
-                deadSession.resurrectSession(nativeCrash)
+                deadPart.resurrectSession(nativeCrash)
                     ?: throw IllegalArgumentException(
                         "Session resurrection failed. Payload does not contain exactly one session span."
                     )
@@ -240,9 +240,9 @@ internal class PayloadResurrectionServiceImpl(
      * Return copy of envelope with a modified set of spans to reflect their resurrected states, or null if the
      * payload does not contain exactly one session span.
      */
-    private fun Envelope<SessionPayload>.resurrectSession(
+    private fun Envelope<SessionPartPayload>.resurrectSession(
         nativeCrashData: NativeCrashData?,
-    ): Envelope<SessionPayload>? {
+    ): Envelope<SessionPartPayload>? {
         val completedSpanIds = data.spans?.map { it.spanId }?.toSet() ?: emptySet()
         val failedSpans = data.spanSnapshots
             ?.filterNot { completedSpanIds.contains(it.spanId) }
@@ -292,7 +292,7 @@ internal class PayloadResurrectionServiceImpl(
      * not have an end time, in which case it will fall back to the last heartbeat time. If either exists, it means we can't find a better
      * time, so we just leave it at 0.
      */
-    private fun getFailedSpanEndTimeMs(envelope: Envelope<SessionPayload>): Long {
+    private fun getFailedSpanEndTimeMs(envelope: Envelope<SessionPartPayload>): Long {
         val sessionSpan = envelope.getSessionSpan() ?: return 0L
         val endTimeMs = sessionSpan.endTimeNanos ?: 0L
         val lastHeartbeatTimeMs =

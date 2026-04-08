@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.testcases.features
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.internal.payload.Envelope
-import io.embrace.android.embracesdk.internal.payload.SessionPayload
+import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -51,7 +51,7 @@ internal class UserFeaturesTest {
         )
     }
 
-    private fun Envelope<SessionPayload>.assertUserInfo(
+    private fun Envelope<SessionPartPayload>.assertUserInfo(
         userId: String?,
         userName: String?,
         email: String?,

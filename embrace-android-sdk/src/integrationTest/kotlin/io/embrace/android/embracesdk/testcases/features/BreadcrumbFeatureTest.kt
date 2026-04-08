@@ -8,7 +8,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.payload.Envelope
-import io.embrace.android.embracesdk.internal.payload.SessionPayload
+import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.semconv.EmbBreadcrumbAttributes
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
@@ -44,7 +44,7 @@ internal class BreadcrumbFeatureTest {
         )
     }
 
-    private fun Envelope<SessionPayload>.assertBreadcrumbWithMessage(message: String) {
+    private fun Envelope<SessionPartPayload>.assertBreadcrumbWithMessage(message: String) {
         findSessionSpan().findEventOfType(EmbType.System.Breadcrumb).attributes?.assertMatches(mapOf(
             EmbBreadcrumbAttributes.MESSAGE to message
         ))

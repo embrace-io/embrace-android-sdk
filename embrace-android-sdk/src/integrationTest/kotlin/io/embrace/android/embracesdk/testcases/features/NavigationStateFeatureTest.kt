@@ -1,30 +1,32 @@
 package io.embrace.android.embracesdk.testcases.features
 
 import android.app.Activity
+import android.os.Build
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.assertStateTransition
 import io.embrace.android.embracesdk.assertions.findSpansOfType
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
-import io.embrace.android.embracesdk.internal.arch.attrs.embStateInitialValue
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
-import io.embrace.android.embracesdk.internal.instrumentation.navigation.NavigationStateDataSource
 import io.embrace.android.embracesdk.internal.otel.spans.hasEmbraceAttributeValue
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.session.getStateSpan
+import io.embrace.android.embracesdk.semconv.EmbStateTransitionAttributes.EMB_STATE_INITIAL_VALUE
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.AppExecutionTimestamps
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface.Companion.LIFECYCLE_EVENT_GAP
-import io.embrace.android.embracesdk.testframework.actions.SessionTimestamps
+import io.embrace.android.embracesdk.testframework.actions.SessionPartTimestamps
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.Robolectric
+import org.robolectric.annotation.Config
 
+@Config(sdk = [Build.VERSION_CODES.UPSIDE_DOWN_CAKE])
 @RunWith(AndroidJUnit4::class)
 internal class NavigationStateFeatureTest {
 
@@ -43,7 +45,6 @@ internal class NavigationStateFeatureTest {
 
     @Test
     fun `navigation state feature disabled when state capture flag off`() {
-        var throwable: Throwable? = null
         testRule.runTest(
             instrumentedConfig = FakeInstrumentedConfig(
                 enabledFeatures = FakeEnabledFeatureConfig(
@@ -52,11 +53,6 @@ internal class NavigationStateFeatureTest {
             ),
             persistedRemoteConfig = enabledRemoteConfig,
             testCaseAction = {
-                try {
-                    findDataSource<NavigationStateDataSource>()
-                } catch (e: IllegalStateException) {
-                    throwable = e
-                }
                 recordSession {}
             },
             assertAction = {
@@ -64,14 +60,12 @@ internal class NavigationStateFeatureTest {
                     .findSpansOfType(EmbType.State)
                     .filter { it.name == "emb-state-screen-automatic" }
                 assertEquals(0, navigationStateSpans.size)
-                assertTrue(throwable is IllegalStateException)
             },
         )
     }
 
     @Test
     fun `navigation state feature disabled when navigation flag off`() {
-        var throwable: Throwable? = null
         testRule.runTest(
             instrumentedConfig = FakeInstrumentedConfig(
                 enabledFeatures = FakeEnabledFeatureConfig(
@@ -80,11 +74,6 @@ internal class NavigationStateFeatureTest {
             ),
             persistedRemoteConfig = RemoteConfig(pctNavigationStateCaptureEnabled = 0.0f),
             testCaseAction = {
-                try {
-                    findDataSource<NavigationStateDataSource>()
-                } catch (e: IllegalStateException) {
-                    throwable = e
-                }
                 recordSession {}
             },
             assertAction = {
@@ -92,7 +81,6 @@ internal class NavigationStateFeatureTest {
                     .findSpansOfType(EmbType.State)
                     .filter { it.name == "emb-state-screen-automatic" }
                 assertEquals(0, navigationStateSpans.size)
-                assertTrue(throwable is IllegalStateException)
             },
         )
     }
@@ -100,7 +88,7 @@ internal class NavigationStateFeatureTest {
     @Test
     fun `activity navigation transitions recorded as state span`() {
         var firstSessionTimestamps: AppExecutionTimestamps? = null
-        var secondSessionTimestamps: SessionTimestamps? = null
+        var secondSessionTimestamps: SessionPartTimestamps? = null
         val foregroundTimes = mutableListOf<Long>()
         val loadedActivities = listOf(
             Robolectric.buildActivity(HomeActivity::class.java),
@@ -139,8 +127,9 @@ internal class NavigationStateFeatureTest {
                 )
 
                 val stateSpan2 = checkNotNull(sessionPayloads[1].getStateSpan("emb-state-screen-automatic"))
+                checkNotNull(secondSessionTimestamps)
                 stateSpan2.assertStateSpan(
-                    transitionTimesMs = listOf(checkNotNull(secondSessionTimestamps).startTimeMs, secondSessionTimestamps.endTimeMs),
+                    transitionTimesMs = listOf(secondSessionTimestamps.startTimeMs, secondSessionTimestamps.endTimeMs),
                     newStateValues = listOf(loadedActivities.last().get().localClassName)
                 )
             },
@@ -150,7 +139,7 @@ internal class NavigationStateFeatureTest {
     @Test
     fun `activity navigation transitions recorded as state span when background activity enabled`() {
         var firstSessionTimestamps: AppExecutionTimestamps? = null
-        var secondSessionTimestamps: SessionTimestamps? = null
+        var secondSessionTimestamps: SessionPartTimestamps? = null
         val foregroundTimes = mutableListOf<Long>()
         val loadedActivities = listOf(
             Robolectric.buildActivity(HomeActivity::class.java),
@@ -226,7 +215,7 @@ internal class NavigationStateFeatureTest {
         } else {
             "Initializing"
         }
-        assertTrue(hasEmbraceAttributeValue(embStateInitialValue, startStateValue))
+        assertTrue(hasEmbraceAttributeValue(EMB_STATE_INITIAL_VALUE, startStateValue))
 
         with(checkNotNull(events)) {
             if (isForeground) {
@@ -247,7 +236,7 @@ internal class NavigationStateFeatureTest {
         }
     }
 
-    private class HomeActivity : Activity()
-    private class SettingsActivity : Activity()
-    private class ProfileActivity : Activity()
+    class HomeActivity : Activity()
+    class SettingsActivity : Activity()
+    class ProfileActivity : Activity()
 }

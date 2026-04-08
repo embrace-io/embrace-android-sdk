@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.instrumentation.thread.blockage
 
 import androidx.annotation.CheckResult
-import io.embrace.android.embracesdk.internal.arch.SessionChangeListener
+import io.embrace.android.embracesdk.internal.arch.SessionPartChangeListener
 import io.embrace.android.embracesdk.internal.arch.stacktrace.ThreadSample
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageInterval.Companion.CODE_SAMPLES_CLEARED
@@ -19,7 +19,7 @@ class ThreadBlockageSampler(
     private val maxIntervalsPerSession: Int,
     private val maxSamplesPerInterval: Int,
     private val stacktraceFrameLimit: Int,
-) : ThreadBlockageListener, SessionChangeListener {
+) : ThreadBlockageListener, SessionPartChangeListener {
 
     private val intervalSink = AtomicReference(CopyOnWriteArrayList<ThreadBlockageInterval>())
     private val currentBlockage = AtomicReference<CurrentBlockage?>(null)

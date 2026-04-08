@@ -1,11 +1,11 @@
 package io.embrace.android.embracesdk.internal.session.id
 
-import io.embrace.android.embracesdk.internal.arch.SessionChangeListener
-import io.embrace.android.embracesdk.internal.arch.SessionEndListener
+import io.embrace.android.embracesdk.internal.arch.SessionPartChangeListener
+import io.embrace.android.embracesdk.internal.arch.SessionPartEndListener
 import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.session.SessionPartToken
 
-interface SessionTracker {
+interface SessionPartTracker {
 
     /**
      * Gets the currently active session, if present.
@@ -30,10 +30,10 @@ interface SessionTracker {
      * Adds a listener that will be called when the session ID changes, and with the initial session
      * ID (if there is any).
      */
-    fun addSessionChangeListener(listener: SessionChangeListener)
+    fun addSessionPartChangeListener(listener: SessionPartChangeListener)
 
     /**
      * Adds a listener that will be called when the active session ends. This will be called prior to the session ending.
      */
-    fun addSessionEndListener(listener: SessionEndListener)
+    fun addSessionPartEndListener(listener: SessionPartEndListener)
 }

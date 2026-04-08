@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.instrumentation.thread.blockage
 
 import io.embrace.android.embracesdk.internal.arch.CrashTeardownHandler
-import io.embrace.android.embracesdk.internal.arch.SessionChangeListener
+import io.embrace.android.embracesdk.internal.arch.SessionPartChangeListener
 import io.embrace.android.embracesdk.internal.arch.state.AppStateListener
 import io.embrace.android.embracesdk.internal.envelope.session.OtelPayloadMapper
 
@@ -9,7 +9,7 @@ import io.embrace.android.embracesdk.internal.envelope.session.OtelPayloadMapper
  * Service which detects when the application is not responding.
  */
 interface ThreadBlockageService :
-    SessionChangeListener,
+    SessionPartChangeListener,
     CrashTeardownHandler,
     AppStateListener,
     OtelPayloadMapper {

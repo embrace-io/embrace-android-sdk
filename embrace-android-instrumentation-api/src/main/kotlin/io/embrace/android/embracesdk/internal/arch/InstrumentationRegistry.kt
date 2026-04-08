@@ -8,7 +8,7 @@ import kotlin.reflect.KClass
 /**
  * Registry for all features whose instrumentation should be orchestrated by the Embrace SDK.
  */
-interface InstrumentationRegistry : SessionEndListener, SessionChangeListener {
+interface InstrumentationRegistry : SessionPartEndListener, SessionPartChangeListener {
 
     /**
      * Adds a feature to the registry. The SDK will control when a feature is enabled/disabled

@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.arch
 
-fun interface SessionChangeListener {
+fun interface SessionPartChangeListener {
 
     /**
      * Called when the 'session' has changed. This is called _after_ the previous session has

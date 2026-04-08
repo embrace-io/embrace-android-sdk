@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.arch
 
-fun interface SessionEndListener {
+fun interface SessionPartEndListener {
     /**
      * Called when a session is about to end.
      */

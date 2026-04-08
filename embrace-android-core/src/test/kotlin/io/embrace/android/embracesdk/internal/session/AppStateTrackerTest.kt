@@ -7,11 +7,11 @@ import androidx.lifecycle.testing.TestLifecycleOwner
 import io.embrace.android.embracesdk.fakes.FakeAppStateListener
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
-import io.embrace.android.embracesdk.fakes.FakeSessionOrchestrator
+import io.embrace.android.embracesdk.fakes.FakeSessionPartOrchestrator
 import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.arch.state.AppStateListener
 import io.embrace.android.embracesdk.internal.session.lifecycle.AppStateTrackerImpl
-import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
+import io.embrace.android.embracesdk.internal.session.orchestrator.SessionPartOrchestrator
 import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.mockk
@@ -148,13 +148,13 @@ internal class AppStateTrackerTest {
     fun `verify listener call order`() {
         val invocations = mutableListOf<String>()
         stateService.addListener(DecoratedListener(invocations))
-        stateService.addListener(DecoratedSessionOrchestrator(invocations))
+        stateService.addListener(DecoratedSessionPartOrchestrator(invocations))
         assertTrue(invocations.isEmpty())
 
         // verify on foreground follows specific call order
         stateService.onForeground()
         val foregroundExpected = listOf(
-            "DecoratedSessionOrchestrator",
+            "DecoratedSessionPartOrchestrator",
             "DecoratedListener"
         )
         assertEquals(foregroundExpected, invocations)
@@ -164,7 +164,7 @@ internal class AppStateTrackerTest {
         stateService.onBackground()
         val backgroundExpected = listOf(
             "DecoratedListener",
-            "DecoratedSessionOrchestrator",
+            "DecoratedSessionPartOrchestrator",
         )
         assertEquals(backgroundExpected, invocations)
     }
@@ -249,10 +249,10 @@ internal class AppStateTrackerTest {
         }
     }
 
-    private class DecoratedSessionOrchestrator(
+    private class DecoratedSessionPartOrchestrator(
         private val invocations: MutableList<String>,
-        private val orchestrator: SessionOrchestrator = FakeSessionOrchestrator(),
-    ) : SessionOrchestrator by orchestrator {
+        private val orchestrator: SessionPartOrchestrator = FakeSessionPartOrchestrator(),
+    ) : SessionPartOrchestrator by orchestrator {
 
         override fun onBackground() {
             invocations.add(javaClass.simpleName)

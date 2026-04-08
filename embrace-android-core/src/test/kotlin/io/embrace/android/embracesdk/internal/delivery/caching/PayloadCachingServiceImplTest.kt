@@ -4,7 +4,7 @@ import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorServic
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakePayloadStore
-import io.embrace.android.embracesdk.fakes.FakeSessionTracker
+import io.embrace.android.embracesdk.fakes.FakeSessionPartTracker
 import io.embrace.android.embracesdk.fakes.fakeSessionEnvelope
 import io.embrace.android.embracesdk.fakes.fakeSessionPartToken
 import io.embrace.android.embracesdk.internal.arch.state.AppState
@@ -21,14 +21,14 @@ class PayloadCachingServiceImplTest {
 
     private lateinit var executorService: BlockingScheduledExecutorService
     private lateinit var service: PayloadCachingService
-    private lateinit var sessionTracker: FakeSessionTracker
+    private lateinit var sessionTracker: FakeSessionPartTracker
     private val zygote = fakeSessionPartToken()
 
     @Before
     fun setUp() {
         executorService = BlockingScheduledExecutorService(FakeClock())
         val cacher = PeriodicSessionPartCacher(BackgroundWorker(executorService), FakeInternalLogger(), INTERVAL)
-        sessionTracker = FakeSessionTracker()
+        sessionTracker = FakeSessionPartTracker()
 
         sessionTracker.newActiveSession(
             endSessionCallback = {},

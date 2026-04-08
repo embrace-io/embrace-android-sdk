@@ -2,30 +2,30 @@ package io.embrace.android.embracesdk.internal.session.id
 
 import android.app.ActivityManager
 import android.os.Build
-import io.embrace.android.embracesdk.internal.arch.SessionChangeListener
-import io.embrace.android.embracesdk.internal.arch.SessionEndListener
+import io.embrace.android.embracesdk.internal.arch.SessionPartChangeListener
+import io.embrace.android.embracesdk.internal.arch.SessionPartEndListener
 import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.session.SessionPartToken
 import java.util.concurrent.CopyOnWriteArraySet
 
-internal class SessionTrackerImpl(
+internal class SessionPartTrackerImpl(
     private val activityManager: ActivityManager?,
     private val logger: InternalLogger,
-) : SessionTracker {
+) : SessionPartTracker {
 
-    private val sessionChangeListeners = CopyOnWriteArraySet<SessionChangeListener>()
-    private val sessionEndListeners = CopyOnWriteArraySet<SessionEndListener>()
+    private val sessionChangeListeners = CopyOnWriteArraySet<SessionPartChangeListener>()
+    private val sessionEndListeners = CopyOnWriteArraySet<SessionPartEndListener>()
 
     @Volatile
     private var activeSession: SessionPartToken? = null
 
-    override fun addSessionChangeListener(listener: SessionChangeListener) {
+    override fun addSessionPartChangeListener(listener: SessionPartChangeListener) {
         sessionChangeListeners.add(listener)
     }
 
-    override fun addSessionEndListener(listener: SessionEndListener) {
+    override fun addSessionPartEndListener(listener: SessionPartEndListener) {
         sessionEndListeners.add(listener)
     }
 
@@ -38,14 +38,14 @@ internal class SessionTrackerImpl(
     ): SessionPartToken? {
         activeSession?.let { endingSession ->
             runCatching {
-                sessionEndListeners.forEach(SessionEndListener::onPreSessionEnd)
+                sessionEndListeners.forEach(SessionPartEndListener::onPreSessionEnd)
             }
             endingSession.endSessionCallback()
         }
 
         activeSession = startSessionCallback()
         runCatching {
-            sessionChangeListeners.forEach(SessionChangeListener::onPostSessionChange)
+            sessionChangeListeners.forEach(SessionPartChangeListener::onPostSessionChange)
         }
 
         if (postTransitionAppState == AppState.FOREGROUND) {

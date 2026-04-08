@@ -10,12 +10,12 @@ import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
 
-internal class SessionTrackerImplTest {
-    private lateinit var tracker: SessionTracker
+internal class SessionPartTrackerImplTest {
+    private lateinit var tracker: SessionPartTracker
 
     @Before
     fun setUp() {
-        tracker = SessionTrackerImpl(null, InternalLoggerImpl())
+        tracker = SessionPartTrackerImpl(null, InternalLoggerImpl())
     }
 
     @Test
@@ -64,10 +64,10 @@ internal class SessionTrackerImplTest {
     fun `callback invocation`() {
         val newSessions = listOf(fakeSessionPartToken(), fakeSessionPartToken(), null)
         val callbackInvocations = mutableListOf<String>()
-        tracker.addSessionChangeListener {
+        tracker.addSessionPartChangeListener {
             callbackInvocations.add("change-listener")
         }
-        tracker.addSessionEndListener {
+        tracker.addSessionPartEndListener {
             callbackInvocations.add("end-listener")
         }
 

@@ -43,7 +43,7 @@ internal fun ModuleGraph.postInit() {
         logModule.logOrchestrator.onLogsAdded()
     }
 
-    essentialServiceModule.telemetryDestination.sessionUpdateAction = sessionOrchestrator::onSessionDataUpdate
+    essentialServiceModule.telemetryDestination.sessionUpdateAction = sessionPartOrchestrator::onSessionDataUpdate
     essentialServiceModule.telemetryDestination.currentStatesProvider =
         instrumentationModule.instrumentationRegistry::getCurrentStates
 }
@@ -60,10 +60,10 @@ internal fun ModuleGraph.registerListeners() {
             essentialServiceModule.networkConnectivityService.register()
         }
 
-        val sessionTracker = essentialServiceModule.sessionTracker
+        val sessionPartTracker = essentialServiceModule.sessionPartTracker
         val appStateTracker = essentialServiceModule.appStateTracker
 
-        sessionTracker.addSessionChangeListener {
+        sessionPartTracker.addSessionPartChangeListener {
             configService.networkBehavior.domainCountLimiter.reset()
         }
 
@@ -71,11 +71,11 @@ internal fun ModuleGraph.registerListeners() {
 
         threadBlockageService?.let {
             appStateTracker.addListener(it)
-            sessionTracker.addSessionChangeListener(it)
+            sessionPartTracker.addSessionPartChangeListener(it)
         }
 
-        sessionTracker.addSessionChangeListener(logModule.attachmentService)
-        sessionTracker.addSessionChangeListener(logModule.logLimitingService)
+        sessionPartTracker.addSessionPartChangeListener(logModule.attachmentService)
+        sessionPartTracker.addSessionPartChangeListener(logModule.logLimitingService)
     }
 }
 
@@ -103,7 +103,7 @@ internal fun ModuleGraph.postLoadInstrumentation() {
     registry.findByType(JvmCrashDataSource::class)?.apply {
         threadBlockageService?.let(::addCrashTeardownHandler)
         addCrashTeardownHandler(logModule.logOrchestrator)
-        addCrashTeardownHandler(sessionOrchestrator)
+        addCrashTeardownHandler(sessionPartOrchestrator)
         addCrashTeardownHandler(featureModule.crashMarker)
         deliveryModule?.payloadStore?.let(::addCrashTeardownHandler)
     }

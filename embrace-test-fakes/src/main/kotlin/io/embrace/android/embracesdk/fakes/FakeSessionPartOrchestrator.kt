@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
+import io.embrace.android.embracesdk.internal.session.orchestrator.SessionPartOrchestrator
 
-class FakeSessionOrchestrator : SessionOrchestrator {
+class FakeSessionPartOrchestrator : SessionPartOrchestrator {
 
     var crashId: String? = null
     var manualEndCount: Int = 0

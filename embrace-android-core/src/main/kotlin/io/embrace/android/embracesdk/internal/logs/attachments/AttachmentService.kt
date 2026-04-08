@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.logs.attachments
 
-import io.embrace.android.embracesdk.internal.arch.SessionChangeListener
+import io.embrace.android.embracesdk.internal.arch.SessionPartChangeListener
 import io.embrace.android.embracesdk.internal.logs.attachments.Attachment.EmbraceHosted
 import io.embrace.android.embracesdk.internal.logs.attachments.Attachment.UserHosted
 import java.util.concurrent.atomic.AtomicInteger
@@ -8,7 +8,7 @@ import java.util.concurrent.atomic.AtomicInteger
 /**
  * Counts the number of attachments that should be added to log records.
  */
-class AttachmentService(private val limit: Int = 5) : SessionChangeListener {
+class AttachmentService(private val limit: Int = 5) : SessionPartChangeListener {
 
     fun createAttachment(attachment: ByteArray): EmbraceHosted =
         EmbraceHosted(attachment, ::incrementAndCheckAttachmentLimit)

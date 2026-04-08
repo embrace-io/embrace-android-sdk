@@ -10,7 +10,7 @@ import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakeOrdinalStore
 import io.embrace.android.embracesdk.fakes.FakeOtelPayloadMapper
 import io.embrace.android.embracesdk.fakes.FakeSessionPropertiesService
-import io.embrace.android.embracesdk.fakes.FakeSessionTracker
+import io.embrace.android.embracesdk.fakes.FakeSessionPartTracker
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.createSessionBehavior
 import io.embrace.android.embracesdk.fakes.fakeSessionPartToken
@@ -53,7 +53,7 @@ internal class UserSessionHandlerTest {
     private lateinit var spanSink: SpanSink
     private lateinit var spanService: SpanService
     private lateinit var store: FakeOrdinalStore
-    private lateinit var sessionTracker: FakeSessionTracker
+    private lateinit var sessionTracker: FakeSessionPartTracker
     private lateinit var metadataService: FakeMetadataService
     private lateinit var configService: FakeConfigService
     private lateinit var payloadFactory: PayloadFactory
@@ -72,7 +72,7 @@ internal class UserSessionHandlerTest {
         clock.setCurrentTime(NOW)
         sessionPropertiesService = FakeSessionPropertiesService()
         metadataService = FakeMetadataService()
-        sessionTracker = FakeSessionTracker()
+        sessionTracker = FakeSessionPartTracker()
         configService = FakeConfigService(
             sessionBehavior = createSessionBehavior()
         )

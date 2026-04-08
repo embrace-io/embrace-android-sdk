@@ -3,14 +3,14 @@ package io.embrace.android.embracesdk.fakes
 import android.content.ComponentCallbacks2
 import android.content.Context
 import android.content.res.Configuration
-import io.embrace.android.embracesdk.internal.arch.SessionChangeListener
-import io.embrace.android.embracesdk.internal.arch.SessionEndListener
+import io.embrace.android.embracesdk.internal.arch.SessionPartChangeListener
+import io.embrace.android.embracesdk.internal.arch.SessionPartEndListener
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSource
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 
 class FakeDataSource(
     private val ctx: Context,
-) : DataSource, ComponentCallbacks2, SessionEndListener, SessionChangeListener {
+) : DataSource, ComponentCallbacks2, SessionPartEndListener, SessionPartChangeListener {
 
     override val instrumentationName: String = "fake_data_source"
 

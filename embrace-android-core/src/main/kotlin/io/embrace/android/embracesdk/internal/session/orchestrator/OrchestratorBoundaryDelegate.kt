@@ -8,8 +8,8 @@ import io.embrace.android.embracesdk.internal.capture.user.UserService
  * I.e. if a session transitions to a background activity, previous data should be cleared
  * & the relevant services should be updated as necessary.
  *
- * This class acts as a delegate to the SessionOrchestrator & is separated out because it
- * contains references to various services that are otherwise irrelevant to the SessionOrchestrator.
+ * This class acts as a delegate to the SessionPartOrchestrator & is separated out because it
+ * contains references to various services that are otherwise irrelevant to the SessionPartOrchestrator.
  */
 internal class OrchestratorBoundaryDelegate(
     private val userService: UserService,

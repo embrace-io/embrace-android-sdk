@@ -34,8 +34,8 @@ import io.embrace.android.embracesdk.internal.logging.InternalLoggerImpl
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.session.LifeEventType
 import io.embrace.android.embracesdk.internal.session.caching.PeriodicSessionPartCacher
-import io.embrace.android.embracesdk.internal.session.id.SessionTracker
-import io.embrace.android.embracesdk.internal.session.id.SessionTrackerImpl
+import io.embrace.android.embracesdk.internal.session.id.SessionPartTracker
+import io.embrace.android.embracesdk.internal.session.id.SessionPartTrackerImpl
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactoryImpl
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
@@ -47,9 +47,9 @@ import org.junit.runner.RunWith
 import org.robolectric.RuntimeEnvironment
 
 @RunWith(AndroidJUnit4::class)
-internal class SessionOrchestratorTest {
+internal class SessionPartOrchestratorTest {
 
-    private lateinit var orchestrator: SessionOrchestratorImpl
+    private lateinit var orchestrator: SessionPartOrchestratorImpl
     private lateinit var payloadFactory: PayloadFactoryImpl
     private lateinit var payloadCollator: FakePayloadMessageCollator
     private lateinit var logEnvelopeSource: FakeLogEnvelopeSource
@@ -59,7 +59,7 @@ internal class SessionOrchestratorTest {
     private lateinit var userService: FakeUserService
     private lateinit var store: FakePayloadStore
     private lateinit var sessionPropertiesService: SessionPropertiesService
-    private lateinit var sessionTracker: SessionTracker
+    private lateinit var sessionTracker: SessionPartTracker
     private lateinit var payloadCachingService: PayloadCachingService
     private lateinit var sessionCacheExecutor: BlockingScheduledExecutorService
     private lateinit var instrumentationRegistry: InstrumentationRegistry
@@ -397,7 +397,7 @@ internal class SessionOrchestratorTest {
         )
         sessionPropertiesService = FakeSessionPropertiesService()
         userService = FakeUserService()
-        sessionTracker = SessionTrackerImpl(
+        sessionTracker = SessionPartTrackerImpl(
             activityManager = null,
             logger = logger
         )
@@ -423,7 +423,7 @@ internal class SessionOrchestratorTest {
             )
         }
 
-        orchestrator = SessionOrchestratorImpl(
+        orchestrator = SessionPartOrchestratorImpl(
             appStateTracker,
             payloadFactory,
             clock,

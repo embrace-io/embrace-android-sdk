@@ -81,11 +81,12 @@ internal class DeliveryConnectivityFeatureTest {
 
     @Test
     fun `stored payload sent on startup`() {
-        val startMs = fakeSessionStoredTelemetryMetadata.timestamp
+        var startMs: Long
         testRule.runTest(
             setupAction = {
+                startMs = fakeClock.now()
                 payloadStorageService.addPayload(
-                    fakeSessionStoredTelemetryMetadata,
+                    fakeSessionStoredTelemetryMetadata.copy(timestamp = startMs),
                     fakeSessionEnvelope(sessionId = "1", startMs = startMs)
                 )
                 payloadStorageService.addPayload(

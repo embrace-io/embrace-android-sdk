@@ -16,8 +16,8 @@ import io.embrace.android.embracesdk.internal.config.behavior.NetworkSpanForward
 import io.embrace.android.embracesdk.internal.config.behavior.OtelBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.SdkModeBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehavior
-import io.embrace.android.embracesdk.internal.config.behavior.SessionBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.ThreadBlockageBehavior
+import io.embrace.android.embracesdk.internal.config.behavior.UserSessionBehavior
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 
 /**
@@ -34,7 +34,7 @@ class FakeConfigService(
     override var breadcrumbBehavior: BreadcrumbBehavior = FakeBreadcrumbBehavior(),
     override var logMessageBehavior: LogMessageBehavior = createLogMessageBehavior(),
     override var threadBlockageBehavior: ThreadBlockageBehavior = createThreadBlockageBehavior(),
-    override var sessionBehavior: SessionBehavior = createSessionBehavior(),
+    override var sessionBehavior: UserSessionBehavior = createSessionBehavior(),
     override var networkBehavior: NetworkBehavior = FakeNetworkBehavior(),
     override var dataCaptureEventBehavior: DataCaptureEventBehavior = createDataCaptureEventBehavior(),
     override var sdkModeBehavior: SdkModeBehavior = createSdkModeBehavior(),

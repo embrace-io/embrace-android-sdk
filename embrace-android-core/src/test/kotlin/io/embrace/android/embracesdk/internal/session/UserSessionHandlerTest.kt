@@ -39,7 +39,7 @@ import org.junit.Assert.assertNotNull
 import org.junit.Before
 import org.junit.Test
 
-internal class SessionHandlerTest {
+internal class UserSessionHandlerTest {
 
     companion object {
         private val clock = FakeClock()

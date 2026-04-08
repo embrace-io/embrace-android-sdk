@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
 import io.embrace.android.embracesdk.fakes.FakeTelemetryService
-import io.embrace.android.embracesdk.fakes.behavior.FakeSessionBehavior
+import io.embrace.android.embracesdk.fakes.behavior.FakeUserSessionBehavior
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import org.junit.Assert
 import org.junit.Assert.assertEquals
@@ -44,7 +44,7 @@ internal class EmbraceSessionPropertiesTest {
         store = FakeKeyValueStore()
 
         configService = FakeConfigService(
-            sessionBehavior = FakeSessionBehavior(MAX_SESSION_PROPERTIES_DEFAULT)
+            sessionBehavior = FakeUserSessionBehavior(MAX_SESSION_PROPERTIES_DEFAULT)
         )
         destination = FakeTelemetryDestination()
         telemetryService = FakeTelemetryService()
@@ -181,7 +181,7 @@ internal class EmbraceSessionPropertiesTest {
 
     @Test
     fun addPropertyTooManyWithRemoteConfigMax() {
-        configService.sessionBehavior = FakeSessionBehavior(maxSessionProperties = MAX_SESSION_PROPERTIES_FROM_CONFIG)
+        configService.sessionBehavior = FakeUserSessionBehavior(maxSessionProperties = MAX_SESSION_PROPERTIES_FROM_CONFIG)
         var isPermanent = true
         for (i in 0 until MAX_SESSION_PROPERTIES_FROM_CONFIG) {
             assertTrue(sessionProperties.add("prop$i", VALUE_VALID, isPermanent))

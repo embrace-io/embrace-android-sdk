@@ -26,8 +26,8 @@ import io.embrace.android.embracesdk.internal.api.delegate.NetworkRequestApiDele
 import io.embrace.android.embracesdk.internal.api.delegate.OTelApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.SdkCallChecker
 import io.embrace.android.embracesdk.internal.api.delegate.SdkStateApiDelegate
-import io.embrace.android.embracesdk.internal.api.delegate.SessionApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.UserApiDelegate
+import io.embrace.android.embracesdk.internal.api.delegate.UserSessionApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.ViewTrackingApiDelegate
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.config.behavior.NetworkBehavior
@@ -65,7 +65,7 @@ internal class EmbraceImpl(
     private val sdkCallChecker: SdkCallChecker =
         SdkCallChecker(bootstrapper.initModule.logger, bootstrapper.initModule.telemetryService),
     private val userApiDelegate: UserApiDelegate = UserApiDelegate(bootstrapper, sdkCallChecker),
-    private val sessionApiDelegate: SessionApiDelegate = SessionApiDelegate(bootstrapper, sdkCallChecker),
+    private val sessionApiDelegate: UserSessionApiDelegate = UserSessionApiDelegate(bootstrapper, sdkCallChecker),
     private val networkRequestApiDelegate: NetworkRequestApiDelegate =
         NetworkRequestApiDelegate(bootstrapper, sdkCallChecker),
     private val logsApiDelegate: LogsApiDelegate = LogsApiDelegate(bootstrapper, sdkCallChecker),

@@ -16,7 +16,7 @@ internal class UserSessionBehaviorImplTest {
         maxUserSessionProperties = 57,
     )
 
-    private val defaultMaxDurationMs = 24 * 60 * 60_000L
+    private val defaultMaxDurationMs = 12 * 60 * 60_000L
     private val defaultInactivityTimeoutMs = 30 * 60_000L
 
     @Test
@@ -104,6 +104,18 @@ internal class UserSessionBehaviorImplTest {
         val cfg =
             RemoteConfig(userSession = UserSessionRemoteConfig(maxDurationMinutes = 0, inactivityTimeoutMinutes = 2000))
         assertEquals(defaultMaxDurationMs, createSessionBehavior(remoteCfg = cfg).getMaxSessionDurationMs())
+        assertEquals(defaultInactivityTimeoutMs, createSessionBehavior(remoteCfg = cfg).getSessionInactivityTimeoutMs())
+    }
+
+    @Test
+    fun `max session duration is capped at 24h when remote value exceeds 24h`() {
+        val cfg = RemoteConfig(userSession = UserSessionRemoteConfig(maxDurationMinutes = 2000))
+        assertEquals(defaultMaxDurationMs, createSessionBehavior(remoteCfg = cfg).getMaxSessionDurationMs())
+    }
+
+    @Test
+    fun `inactivity timeout is capped at 24h when remote value exceeds 24h`() {
+        val cfg = RemoteConfig(userSession = UserSessionRemoteConfig(inactivityTimeoutMinutes = 2000))
         assertEquals(defaultInactivityTimeoutMs, createSessionBehavior(remoteCfg = cfg).getSessionInactivityTimeoutMs())
     }
 }

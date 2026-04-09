@@ -37,6 +37,7 @@ import org.junit.Assert
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 
 /**
  * Provides assertions that can be used in integration tests to validate the behavior of the SDK,
@@ -71,7 +72,9 @@ internal class EmbracePayloadAssertionInterface(
     ): List<Envelope<LogPayload>> {
         val supplier = { checkNotNull(apiServer).getLogEnvelopes() }
         try {
-            return retrievePayload(expectedSize = expectedSize, supplier = supplier)
+            val envelopes = retrievePayload(expectedSize = expectedSize, supplier = supplier)
+            assertLogsDeliveredInOrder(envelopes)
+            return envelopes
         } catch (exc: TimeoutException) {
             val envelopes: List<Map<String, String?>> = supplier().map { envelope ->
                 mapOf(
@@ -128,7 +131,9 @@ internal class EmbracePayloadAssertionInterface(
                 .filter { it.findAppState() == appState }
         }
         try {
-            return retrievePayload(expectedSize, waitTimeMs, supplier)
+            val envelopes = retrievePayload(expectedSize, waitTimeMs, supplier)
+            assertSessionsDeliveredInOrder(envelopes)
+            return envelopes
         } catch (exc: TimeoutException) {
             val envelopes = checkNotNull(apiServer).getSessionEnvelopes()
             val sessions: List<Map<String, String?>> = envelopes.map {
@@ -263,6 +268,31 @@ internal class EmbracePayloadAssertionInterface(
             },
             condition = { !it },
         )
+    }
+
+    private fun assertSessionsDeliveredInOrder(envelopes: List<Envelope<SessionPartPayload>>) {
+        envelopes.zipWithNext { prev, next ->
+            val prevEnd = prev.findSessionSpan().startTimeNanos ?: return@zipWithNext
+            val nextEnd = next.findSessionSpan().startTimeNanos ?: return@zipWithNext
+            assertTrue(
+                "Session payloads delivered out of order. " +
+                    "Previous (id=${prev.getSessionId()}) startTimeNanos=$prevEnd, " +
+                    "next (id=${next.getSessionId()}) startTimeNanos=$nextEnd",
+                nextEnd >= prevEnd
+            )
+        }
+    }
+
+    private fun assertLogsDeliveredInOrder(envelopes: List<Envelope<LogPayload>>) {
+        envelopes.zipWithNext { prev, next ->
+            val prevMax = prev.data.logs?.mapNotNull { it.timeUnixNano }?.maxOrNull() ?: return@zipWithNext
+            val nextMax = next.data.logs?.mapNotNull { it.timeUnixNano }?.maxOrNull() ?: return@zipWithNext
+            assertTrue(
+                "Log payloads delivered out of order. " +
+                    "Previous envelope max timeUnixNano=$prevMax, next max timeUnixNano=$nextMax",
+                nextMax >= prevMax
+            )
+        }
     }
 
     /*** TEST INFRA ***/

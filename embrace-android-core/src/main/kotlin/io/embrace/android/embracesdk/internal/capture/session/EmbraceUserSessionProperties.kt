@@ -64,7 +64,7 @@ internal class EmbraceUserSessionProperties(
                 }
                 temporary[sanitizedKey] = sanitizedValue
             }
-            destination.addSessionAttribute(
+            destination.addSessionPartAttribute(
                 sanitizedKey.toEmbraceAttributeName(),
                 sanitizedValue
             )
@@ -85,7 +85,7 @@ internal class EmbraceUserSessionProperties(
                 permanentSessionProperties = snapshotPermanentProperties()
                 existed = true
             }
-            destination.removeSessionAttribute(sanitizedKey.toEmbraceAttributeName())
+            destination.removeSessionPartAttribute(sanitizedKey.toEmbraceAttributeName())
             return existed
         }
     }
@@ -102,7 +102,7 @@ internal class EmbraceUserSessionProperties(
 
     fun addPermPropsToSessionSpan() {
         snapshotPermanentProperties().forEach {
-            destination.addSessionAttribute(
+            destination.addSessionPartAttribute(
                 it.key.toEmbraceAttributeName(),
                 it.value
             )

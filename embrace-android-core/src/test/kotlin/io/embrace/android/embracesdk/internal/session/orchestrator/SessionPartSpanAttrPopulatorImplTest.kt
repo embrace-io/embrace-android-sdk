@@ -12,18 +12,18 @@ import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 
-internal class SessionSpanAttrPopulatorImplTest {
+internal class SessionPartSpanAttrPopulatorImplTest {
 
     private val zygote = SessionPartToken("id", 1, 5, AppState.FOREGROUND, false, LifeEventType.STATE)
     private lateinit var userSessionPropertiesService: FakeUserSessionPropertiesService
-    private lateinit var populator: SessionSpanAttrPopulatorImpl
+    private lateinit var populator: SessionPartSpanAttrPopulatorImpl
     private lateinit var destination: FakeTelemetryDestination
 
     @Before
     fun setUp() {
         userSessionPropertiesService = FakeUserSessionPropertiesService()
         destination = FakeTelemetryDestination()
-        populator = SessionSpanAttrPopulatorImpl(
+        populator = SessionPartSpanAttrPopulatorImpl(
             destination,
             { 0 },
             FakeLogLimitingService(),

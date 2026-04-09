@@ -6,7 +6,7 @@ import io.embrace.android.embracesdk.internal.session.SessionPartToken
 /**
  * Populates the attributes of a session span.
  */
-interface SessionSpanAttrPopulator {
+interface SessionPartSpanAttrPopulator {
 
     /**
      * Populates session span attributes at the start of the session.

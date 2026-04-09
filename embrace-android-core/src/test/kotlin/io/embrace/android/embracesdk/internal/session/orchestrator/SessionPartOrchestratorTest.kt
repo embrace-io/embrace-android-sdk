@@ -436,7 +436,7 @@ internal class SessionPartOrchestratorTest {
             payloadCachingService,
             instrumentationRegistry,
             destination,
-            SessionSpanAttrPopulatorImpl(
+            SessionPartSpanAttrPopulatorImpl(
                 destination,
                 { 0 },
                 FakeLogLimitingService(),

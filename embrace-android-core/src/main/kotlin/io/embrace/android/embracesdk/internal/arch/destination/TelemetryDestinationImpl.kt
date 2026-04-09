@@ -126,7 +126,7 @@ class TelemetryDestinationImpl(
         }
     }
 
-    override fun <T : Any> startSessionStateCapture(state: SchemaType.State<T>): SessionPartStateToken<T> {
+    override fun <T : Any> startSessionPartStateCapture(state: SchemaType.State<T>): SessionPartStateToken<T> {
         val spanToken = startSpanCapture(
             schemaType = state,
             startTimeMs = clock.now(),
@@ -166,7 +166,7 @@ class TelemetryDestinationImpl(
         sessionUpdateAction?.invoke()
     }
 
-    override fun addSessionEvent(schemaType: SchemaType, startTimeMs: Long): Boolean {
+    override fun addSessionPartEvent(schemaType: SchemaType, startTimeMs: Long): Boolean {
         val currentSession = currentSessionPartSpan.current() ?: return false
         return currentSession.addSystemEvent(
             schemaType.fixedObjectName.toEmbraceObjectName(),
@@ -177,19 +177,19 @@ class TelemetryDestinationImpl(
         }
     }
 
-    override fun removeSessionEvents(type: EmbType) {
+    override fun removeSessionPartEvents(type: EmbType) {
         val currentSession = currentSessionPartSpan.current() ?: return
         currentSession.removeSystemEvents(type)
         sessionUpdateAction?.invoke()
     }
 
-    override fun addSessionAttribute(key: String, value: String) {
+    override fun addSessionPartAttribute(key: String, value: String) {
         val currentSession = currentSessionPartSpan.current() ?: return
         currentSession.addSystemAttribute(key, value)
         sessionUpdateAction?.invoke()
     }
 
-    override fun removeSessionAttribute(key: String) {
+    override fun removeSessionPartAttribute(key: String) {
         val currentSession = currentSessionPartSpan.current() ?: return
         currentSession.removeSystemAttribute(key)
         sessionUpdateAction?.invoke()

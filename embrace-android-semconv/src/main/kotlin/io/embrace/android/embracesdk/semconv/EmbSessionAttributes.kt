@@ -53,6 +53,12 @@ object EmbSessionAttributes {
     const val EMB_IS_FINAL_SESSION: String = "emb.is_final_session"
 
     /**
+     * Set to 1 when the SDK knows for certain this is the final part of a session (max duration reached, inactivity timeout, or manual termination). Omitted when the value would be 0.
+     */
+    @ExperimentalSemconv
+    const val EMB_IS_FINAL_SESSION_PART: String = "emb.is_final_session_part"
+
+    /**
      * How a signal should be delivered to the Embrace backend.
      */
     @ExperimentalSemconv
@@ -81,6 +87,12 @@ object EmbSessionAttributes {
      */
     @ExperimentalSemconv
     const val EMB_SESSION_NUMBER: String = "emb.session_number"
+
+    /**
+     * UUID identifying the session part.
+     */
+    @ExperimentalSemconv
+    const val EMB_SESSION_PART_ID: String = "emb.session_part_id"
 
     /**
      * The session start type.
@@ -113,16 +125,61 @@ object EmbSessionAttributes {
     const val EMB_TERMINATED: String = "emb.terminated"
 
     /**
+     * The reason the session part was terminated.
+     */
+    @ExperimentalSemconv
+    const val EMB_TERMINATION_REASON: String = "emb.termination_reason"
+
+    object EmbTerminationReasonValues {
+
+        /**
+         * Session ended because the maximum session duration was reached.
+         */
+        @ExperimentalSemconv
+        const val MAX_DURATION_REACHED: String = "max_duration_reached"
+
+        /**
+         * Session ended due to inactivity timeout.
+         */
+        @ExperimentalSemconv
+        const val INACTIVITY: String = "inactivity"
+
+        /**
+         * Session ended by manual termination.
+         */
+        @ExperimentalSemconv
+        const val MANUAL: String = "manual"
+    }
+
+    /**
      * UUID identifying the session.
      */
     @ExperimentalSemconv
     const val EMB_USER_SESSION_ID: String = "emb.user_session_id"
 
     /**
+     * The inactivity timeout (in minutes) that the SDK was configured to use.
+     */
+    @ExperimentalSemconv
+    const val EMB_USER_SESSION_INACTIVITY_TIMEOUT_MINUTES: String = "emb.user_session_inactivity_timeout_minutes"
+
+    /**
+     * The maximum session duration (in minutes) that the SDK was configured to use.
+     */
+    @ExperimentalSemconv
+    const val EMB_USER_SESSION_MAX_DURATION_MINUTES: String = "emb.user_session_max_duration_minutes"
+
+    /**
      * Incremental counter of sessions since SDK install.
      */
     @ExperimentalSemconv
     const val EMB_USER_SESSION_NUMBER: String = "emb.user_session_number"
+
+    /**
+     * The index of the part within the session. 1-indexed, matching the behavior of session_number.
+     */
+    @ExperimentalSemconv
+    const val EMB_USER_SESSION_PART_NUMBER: String = "emb.user_session_part_number"
 
     /**
      * Session start timestamp (milliseconds since epoch).

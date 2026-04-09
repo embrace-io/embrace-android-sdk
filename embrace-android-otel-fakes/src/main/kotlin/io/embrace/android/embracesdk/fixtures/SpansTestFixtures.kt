@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.fixtures
 
 import io.embrace.android.embracesdk.fakes.fakeOpenTelemetry
 import io.embrace.android.embracesdk.internal.arch.attrs.asPair
-import io.embrace.android.embracesdk.internal.arch.attrs.embSequenceId
+import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
 import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
@@ -40,7 +40,7 @@ val testSpan: Span = EmbraceSpanData(
         )
     ),
     attributes = mapOf(
-        Pair(embSequenceId.name, "3"),
+        Pair(EmbSessionAttributes.EMB_PRIVATE_SEQUENCE_ID, "3"),
         EmbType.Performance.Default.asPair(),
     )
 ).toEmbracePayload()

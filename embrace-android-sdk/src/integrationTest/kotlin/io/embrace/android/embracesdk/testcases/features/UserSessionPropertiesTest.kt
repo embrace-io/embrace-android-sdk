@@ -128,7 +128,7 @@ internal class SessionPropertiesTest {
     }
 
     private fun EmbraceSetupInterface.setupDefaultPermanentSessionProperties() =
-        setupPermanentSessionProperties(
+        setupPermanentUserSessionProperties(
             mapOf(
                 EXISTING_KEY_1 to VALUE,
                 EXISTING_KEY_2 to VALUE,

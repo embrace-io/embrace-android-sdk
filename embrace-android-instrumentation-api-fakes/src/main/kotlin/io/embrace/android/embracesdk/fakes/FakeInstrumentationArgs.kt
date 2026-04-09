@@ -47,7 +47,7 @@ class FakeInstrumentationArgs(
 
     override fun sessionId(): String? = sessionIdSupplier()
 
-    override fun sessionProperties(): Map<String, String> = emptyMap()
+    override fun userSessionProperties(): Map<String, String> = emptyMap()
 
     override val crashMarkerFile: File by lazy { File.createTempFile("crash_marker", "") }
 

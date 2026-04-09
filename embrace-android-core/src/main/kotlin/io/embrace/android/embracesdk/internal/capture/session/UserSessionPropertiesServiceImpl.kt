@@ -8,15 +8,15 @@ import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
 import io.embrace.android.embracesdk.internal.utils.PropertyUtils
 
-internal class SessionPropertiesServiceImpl(
+internal class UserSessionPropertiesServiceImpl(
     private val store: KeyValueStore,
     private val configService: ConfigService,
     destination: TelemetryDestination,
     private val telemetryService: TelemetryService,
-) : SessionPropertiesService {
+) : UserSessionPropertiesService {
 
     private var listener: ((Map<String, String>) -> Unit)? = null
-    private val props = EmbraceSessionProperties(store, configService, destination, telemetryService)
+    private val props = EmbraceUserSessionProperties(store, configService, destination, telemetryService)
 
     override fun addProperty(originalKey: String, originalValue: String, permanent: Boolean): Boolean {
         if (!isValidKey(originalKey)) {

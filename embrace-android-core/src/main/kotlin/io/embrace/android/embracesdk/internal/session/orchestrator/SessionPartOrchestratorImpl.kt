@@ -1,8 +1,6 @@
 package io.embrace.android.embracesdk.internal.session.orchestrator
 
 import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistry
-import io.embrace.android.embracesdk.internal.arch.attrs.embHeartbeatTimeUnixNano
-import io.embrace.android.embracesdk.internal.arch.attrs.embTerminated
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.arch.state.AppStateTracker
@@ -17,6 +15,7 @@ import io.embrace.android.embracesdk.internal.session.id.SessionPartTracker
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactory
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.Provider
+import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 
 internal class SessionPartOrchestratorImpl(
     appStateTracker: AppStateTracker,
@@ -239,7 +238,7 @@ internal class SessionPartOrchestratorImpl(
 
     private fun updatePeriodicCacheAttrs() {
         val now = clock.now().millisToNanos()
-        destination.addSessionAttribute(embHeartbeatTimeUnixNano.name, now.toString())
-        destination.addSessionAttribute(embTerminated.name, true.toString())
+        destination.addSessionAttribute(EmbSessionAttributes.EMB_HEARTBEAT_TIME_UNIX_NANO, now.toString())
+        destination.addSessionAttribute(EmbSessionAttributes.EMB_TERMINATED, true.toString())
     }
 }

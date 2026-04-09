@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.internal.arch.SessionPartChangeListener
 import io.embrace.android.embracesdk.internal.arch.SessionPartEndListener
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.arch.state.AppStateTracker
-import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
+import io.embrace.android.embracesdk.internal.capture.session.UserSessionPropertiesService
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.injection.WorkerThreadModule
@@ -38,7 +38,7 @@ internal class InstrumentationArgsImpl(
     override val telemetryService: TelemetryService,
     private val workerThreadModule: WorkerThreadModule,
     private val sessionPartTracker: SessionPartTracker,
-    private val sessionPropertiesService: SessionPropertiesService,
+    private val userSessionPropertiesService: UserSessionPropertiesService,
     crashMarkerFileProvider: () -> File,
 ) : InstrumentationArgs {
 
@@ -60,7 +60,7 @@ internal class InstrumentationArgsImpl(
 
     override fun sessionId(): String? = sessionPartTracker.getActiveSessionId()
 
-    override fun sessionProperties(): Map<String, String> = sessionPropertiesService.getProperties()
+    override fun userSessionProperties(): Map<String, String> = userSessionPropertiesService.getProperties()
 
     override fun registerSessionPartChangeListener(listener: SessionPartChangeListener) {
         sessionPartTracker.addSessionPartChangeListener(listener)

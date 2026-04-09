@@ -12,7 +12,7 @@ import io.opentelemetry.kotlin.tracing.data.SpanLinkData
 import io.opentelemetry.kotlin.tracing.model.Span
 
 fun Span.setEmbraceAttribute(embraceAttribute: EmbraceAttribute) =
-    setStringAttribute(embraceAttribute.key.name, embraceAttribute.value)
+    setStringAttribute(embraceAttribute.key, embraceAttribute.value)
 
 fun SpanData.toEmbracePayload(): EmbraceSpanData = EmbraceSpanData(
     traceId = spanContext.traceId,

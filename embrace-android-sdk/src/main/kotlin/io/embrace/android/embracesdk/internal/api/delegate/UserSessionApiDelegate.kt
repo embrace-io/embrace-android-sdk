@@ -9,11 +9,11 @@ internal class UserSessionApiDelegate(
     private val sdkCallChecker: SdkCallChecker,
 ) : SessionApi {
 
-    private val sessionPropertiesService by embraceImplInject(sdkCallChecker) {
-        bootstrapper.essentialServiceModule.sessionPropertiesService
+    private val userSessionPropertiesService by embraceImplInject(sdkCallChecker) {
+        bootstrapper.essentialServiceModule.userSessionPropertiesService
     }
     private val sessionOrchestrator by embraceImplInject(sdkCallChecker) {
-        bootstrapper.sessionOrchestrator
+        bootstrapper.sessionPartOrchestrator
     }
 
     /**
@@ -21,7 +21,7 @@ internal class UserSessionApiDelegate(
      */
     override fun addSessionProperty(key: String, value: String, permanent: Boolean): Boolean {
         if (sdkCallChecker.check("add_session_property")) {
-            return sessionPropertiesService?.addProperty(key, value, permanent) ?: false
+            return userSessionPropertiesService?.addProperty(key, value, permanent) ?: false
         }
         return false
     }
@@ -31,7 +31,7 @@ internal class UserSessionApiDelegate(
      */
     override fun removeSessionProperty(key: String): Boolean {
         if (sdkCallChecker.check("remove_session_property")) {
-            return sessionPropertiesService?.removeProperty(key) ?: false
+            return userSessionPropertiesService?.removeProperty(key) ?: false
         }
         return false
     }

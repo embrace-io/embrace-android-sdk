@@ -4,14 +4,14 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.fakes.FakeNativeCrashProcessor
-import io.embrace.android.embracesdk.internal.arch.attrs.embCrashNumber
-import io.embrace.android.embracesdk.internal.arch.attrs.embState
 import io.embrace.android.embracesdk.internal.arch.attrs.toEmbraceAttributeName
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.NativeCrash.embNativeCrashException
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.NativeCrash.embNativeCrashSymbols
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
 import io.embrace.android.embracesdk.internal.utils.toUTF8String
+import io.embrace.android.embracesdk.semconv.EmbAndroidAttributes
+import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.opentelemetry.kotlin.semconv.SessionAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -49,25 +49,25 @@ internal class NativeCrashDataSourceImplTest {
         val sessionPropertyName = "prop".toEmbraceAttributeName()
         nativeCrashDataSource.sendNativeCrash(
             nativeCrash = testNativeCrashData,
-            sessionProperties = mapOf(sessionPropertyName to "value"),
-            metadata = mapOf(embState.name to "background")
+            userSessionProperties = mapOf(sessionPropertyName to "value"),
+            metadata = mapOf(EmbSessionAttributes.EMB_STATE to "background")
         )
 
         with(args.destination.logEvents.single()) {
             val attributes = schemaType.attributes()
             assertEquals(EmbType.System.NativeCrash, schemaType.telemetryType)
             assertEquals("value", attributes[sessionPropertyName])
-            assertEquals("background", attributes[embState.name])
+            assertEquals("background", attributes[EmbSessionAttributes.EMB_STATE])
             assertEquals(
                 testNativeCrashData.sessionId,
                 attributes[SessionAttributes.SESSION_ID]
             )
-            assertEquals("1", attributes[embCrashNumber.name])
-            assertEquals(testNativeCrashData.crash, attributes[embNativeCrashException.name])
+            assertEquals("1", attributes[EmbAndroidAttributes.EMB_ANDROID_CRASH_NUMBER])
+            assertEquals(testNativeCrashData.crash, attributes[embNativeCrashException])
             val json = args.serializer.toJson(testNativeCrashData.symbols, Map::class.java)
             assertEquals(
                 json.toByteArray().toUTF8String(),
-                attributes[embNativeCrashSymbols.name]
+                attributes[embNativeCrashSymbols]
             )
         }
     }
@@ -82,16 +82,16 @@ internal class NativeCrashDataSourceImplTest {
                 crash = null,
                 symbols = null,
             ),
-            sessionProperties = emptyMap(),
+            userSessionProperties = emptyMap(),
             metadata = emptyMap(),
         )
 
         with(args.destination.logEvents.single()) {
             val attributes = schemaType.attributes()
             assertEquals(EmbType.System.NativeCrash, schemaType.telemetryType)
-            assertEquals("1", attributes[embCrashNumber.name])
-            assertNull(attributes[embNativeCrashException.name])
-            assertNull(attributes[embNativeCrashSymbols.name])
+            assertEquals("1", attributes[EmbAndroidAttributes.EMB_ANDROID_CRASH_NUMBER])
+            assertNull(attributes[embNativeCrashException])
+            assertNull(attributes[embNativeCrashSymbols])
         }
     }
 
@@ -105,17 +105,17 @@ internal class NativeCrashDataSourceImplTest {
                 crash = "",
                 symbols = emptyMap(),
             ),
-            sessionProperties = emptyMap(),
+            userSessionProperties = emptyMap(),
             metadata = emptyMap(),
         )
 
         with(args.destination.logEvents.single()) {
             val attributes = schemaType.attributes()
             assertEquals(EmbType.System.NativeCrash, schemaType.telemetryType)
-            assertEquals("1", attributes[embCrashNumber.name])
-            assertNull(attributes[embState.name])
-            assertNull(attributes[embNativeCrashException.name])
-            assertNull(attributes[embNativeCrashSymbols.name])
+            assertEquals("1", attributes[EmbAndroidAttributes.EMB_ANDROID_CRASH_NUMBER])
+            assertNull(attributes[EmbSessionAttributes.EMB_STATE])
+            assertNull(attributes[embNativeCrashException])
+            assertNull(attributes[embNativeCrashSymbols])
         }
     }
 

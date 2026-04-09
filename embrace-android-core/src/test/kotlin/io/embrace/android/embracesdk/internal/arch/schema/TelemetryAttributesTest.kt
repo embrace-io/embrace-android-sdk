@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.arch.schema
 
-import io.embrace.android.embracesdk.internal.arch.attrs.embProcessIdentifier
 import io.embrace.android.embracesdk.internal.utils.Uuid
+import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.opentelemetry.kotlin.semconv.ExceptionAttributes
 import io.opentelemetry.kotlin.semconv.SessionAttributes
 import org.junit.Assert.assertEquals
@@ -102,15 +102,15 @@ internal class TelemetryAttributesTest {
         }
 
         blankishValues.forEach { value ->
-            telemetryAttributes.setAttribute(embProcessIdentifier, value, true)
-            assertEquals(value, telemetryAttributes.getAttribute(embProcessIdentifier))
+            telemetryAttributes.setAttribute(EmbSessionAttributes.EMB_PROCESS_IDENTIFIER, value, true)
+            assertEquals(value, telemetryAttributes.getAttribute(EmbSessionAttributes.EMB_PROCESS_IDENTIFIER))
         }
 
-        telemetryAttributes.setAttribute(embProcessIdentifier, "test")
+        telemetryAttributes.setAttribute(EmbSessionAttributes.EMB_PROCESS_IDENTIFIER, "test")
 
         blankishValues.forEach { value ->
-            telemetryAttributes.setAttribute(embProcessIdentifier, value, false)
-            assertEquals("test", telemetryAttributes.getAttribute(embProcessIdentifier))
+            telemetryAttributes.setAttribute(EmbSessionAttributes.EMB_PROCESS_IDENTIFIER, value, false)
+            assertEquals("test", telemetryAttributes.getAttribute(EmbSessionAttributes.EMB_PROCESS_IDENTIFIER))
         }
     }
 }

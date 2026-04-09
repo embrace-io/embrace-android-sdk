@@ -2,8 +2,8 @@ package io.embrace.android.embracesdk.internal.session.orchestrator
 
 import io.embrace.android.embracesdk.fakes.FakeLogLimitingService
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
-import io.embrace.android.embracesdk.fakes.FakeSessionPropertiesService
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
+import io.embrace.android.embracesdk.fakes.FakeUserSessionPropertiesService
 import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.session.LifeEventType
 import io.embrace.android.embracesdk.internal.session.SessionPartToken
@@ -15,13 +15,13 @@ import org.junit.Test
 internal class SessionSpanAttrPopulatorImplTest {
 
     private val zygote = SessionPartToken("id", 1, 5, AppState.FOREGROUND, false, LifeEventType.STATE)
-    private lateinit var sessionPropertiesService: FakeSessionPropertiesService
+    private lateinit var userSessionPropertiesService: FakeUserSessionPropertiesService
     private lateinit var populator: SessionSpanAttrPopulatorImpl
     private lateinit var destination: FakeTelemetryDestination
 
     @Before
     fun setUp() {
-        sessionPropertiesService = FakeSessionPropertiesService()
+        userSessionPropertiesService = FakeUserSessionPropertiesService()
         destination = FakeTelemetryDestination()
         populator = SessionSpanAttrPopulatorImpl(
             destination,

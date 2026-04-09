@@ -1,9 +1,5 @@
 package io.embrace.android.embracesdk.internal.resurrection
 
-import io.embrace.android.embracesdk.internal.arch.attrs.embCrashId
-import io.embrace.android.embracesdk.internal.arch.attrs.embHeartbeatTimeUnixNano
-import io.embrace.android.embracesdk.internal.arch.attrs.embProcessIdentifier
-import io.embrace.android.embracesdk.internal.arch.attrs.embState
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
@@ -29,9 +25,10 @@ import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.session.getSessionId
-import io.embrace.android.embracesdk.internal.session.getSessionProperties
 import io.embrace.android.embracesdk.internal.session.getSessionSpan
+import io.embrace.android.embracesdk.internal.session.getUserSessionProperties
 import io.embrace.android.embracesdk.internal.utils.Provider
+import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.opentelemetry.kotlin.semconv.SessionAttributes
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.TimeUnit
@@ -142,9 +139,9 @@ internal class PayloadResurrectionServiceImpl(
                     }
                     nativeCrashService.sendNativeCrash(
                         nativeCrash = nativeCrash,
-                        sessionProperties = emptyMap(),
+                        userSessionProperties = emptyMap(),
                         metadata = mapOf(
-                            embState.name to AppState.BACKGROUND.description,
+                            EmbSessionAttributes.EMB_STATE to AppState.BACKGROUND.description,
                         ),
                     )
                 }
@@ -179,7 +176,7 @@ internal class PayloadResurrectionServiceImpl(
                 )
 
                 val sessionId = deadPart.getSessionId()
-                val appState = deadPart.getSessionSpan()?.attributes?.findAttributeValue(embState.name)
+                val appState = deadPart.getSessionSpan()?.attributes?.findAttributeValue(EmbSessionAttributes.EMB_STATE)
                 val nativeCrash = if (nativeCrashService != null && sessionId != null) {
                     nativeCrashProvider(sessionId)?.apply {
                         val nativeCrashEnvelopeMetadata = createNativeCrashEnvelopeMetadata(
@@ -195,11 +192,11 @@ internal class PayloadResurrectionServiceImpl(
 
                         nativeCrashService.sendNativeCrash(
                             nativeCrash = this,
-                            sessionProperties = deadPart.getSessionProperties(),
+                            userSessionProperties = deadPart.getUserSessionProperties(),
                             metadata = if (appState != null) {
                                 mapOf(
-                                    embState.name to appState,
-                                    embProcessIdentifier.name to processIdentifier
+                                    EmbSessionAttributes.EMB_STATE to appState,
+                                    EmbSessionAttributes.EMB_PROCESS_IDENTIFIER to processIdentifier
                                 )
                             } else {
                                 emptyMap()
@@ -276,7 +273,7 @@ internal class PayloadResurrectionServiceImpl(
             copy(
                 attributes = attributes?.plus(
                     Attribute(
-                        embCrashId.name,
+                        EmbSessionAttributes.EMB_CRASH_ID,
                         nativeCrashData.nativeCrashId
                     )
                 )
@@ -296,7 +293,7 @@ internal class PayloadResurrectionServiceImpl(
         val sessionSpan = envelope.getSessionSpan() ?: return 0L
         val endTimeMs = sessionSpan.endTimeNanos ?: 0L
         val lastHeartbeatTimeMs =
-            sessionSpan.attributes?.findAttributeValue(embHeartbeatTimeUnixNano.name)?.toLongOrNull() ?: 0L
+            sessionSpan.attributes?.findAttributeValue(EmbSessionAttributes.EMB_HEARTBEAT_TIME_UNIX_NANO)?.toLongOrNull() ?: 0L
         return max(endTimeMs, lastHeartbeatTimeMs).nanosToMillis()
     }
 }

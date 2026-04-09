@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.arch
 
-import io.embrace.android.embracesdk.internal.arch.attrs.EmbraceAttributeKey
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSource
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState
 import kotlin.reflect.KClass
@@ -33,5 +32,5 @@ interface InstrumentationRegistry : SessionPartEndListener, SessionPartChangeLis
     /**
      * Return a [Map] of states and their current values
      */
-    fun getCurrentStates(): Map<EmbraceAttributeKey, Any>
+    fun getCurrentStates(): Map<String, Any>
 }

@@ -10,8 +10,8 @@ import io.embrace.android.embracesdk.internal.arch.state.AppStateTracker
 import io.embrace.android.embracesdk.internal.capture.connectivity.EmbraceNetworkConnectivityService
 import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkCallbackConnectivityService
 import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkConnectivityService
-import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
-import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesServiceImpl
+import io.embrace.android.embracesdk.internal.capture.session.UserSessionPropertiesService
+import io.embrace.android.embracesdk.internal.capture.session.UserSessionPropertiesServiceImpl
 import io.embrace.android.embracesdk.internal.capture.user.EmbraceUserService
 import io.embrace.android.embracesdk.internal.capture.user.UserService
 import io.embrace.android.embracesdk.internal.config.ConfigService
@@ -78,9 +78,9 @@ class EssentialServiceModuleImpl(
         )
     }
 
-    override val sessionPropertiesService: SessionPropertiesService by singleton {
+    override val userSessionPropertiesService: UserSessionPropertiesService by singleton {
         EmbTrace.trace("session-properties-init") {
-            SessionPropertiesServiceImpl(
+            UserSessionPropertiesServiceImpl(
                 store = coreModule.store,
                 configService = configService,
                 destination = telemetryDestination,

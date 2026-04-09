@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.envelope.log
 
-import io.embrace.android.embracesdk.internal.arch.attrs.embProcessIdentifier
 import io.embrace.android.embracesdk.internal.delivery.PayloadType
 import io.embrace.android.embracesdk.internal.delivery.storage.CachedLogEnvelopeStore
 import io.embrace.android.embracesdk.internal.delivery.storage.CachedLogEnvelopeStore.Companion.createNativeCrashEnvelopeMetadata
@@ -11,6 +10,7 @@ import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.Envelope.Companion.createLogEnvelope
 import io.embrace.android.embracesdk.internal.payload.LogPayload
+import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.opentelemetry.kotlin.semconv.SessionAttributes
 
 internal class LogEnvelopeSourceImpl(
@@ -41,7 +41,7 @@ internal class LogEnvelopeSourceImpl(
             val envelope = cachedLogEnvelopeStore.get(
                 createNativeCrashEnvelopeMetadata(
                     sessionId = nativeCrash?.attributes?.findAttributeValue(SessionAttributes.SESSION_ID),
-                    processIdentifier = nativeCrash?.attributes?.findAttributeValue(embProcessIdentifier.name)
+                    processIdentifier = nativeCrash?.attributes?.findAttributeValue(EmbSessionAttributes.EMB_PROCESS_IDENTIFIER)
                 )
             )
 

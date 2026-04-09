@@ -40,7 +40,7 @@ fun EmbraceSpanData.assertHasEmbraceAttribute(embraceAttribute: EmbraceAttribute
 }
 
 fun EmbraceSpanData.assertDoesNotHaveEmbraceAttribute(embraceAttribute: EmbraceAttribute) {
-    assertFalse(attributes[embraceAttribute.key.name]?.equals(embraceAttribute.value) ?: false)
+    assertFalse(attributes[embraceAttribute.key]?.equals(embraceAttribute.value) ?: false)
 }
 
 /**
@@ -56,7 +56,7 @@ fun EmbraceSpanData.assertError(errorCode: ErrorCode) {
  */
 fun EmbraceSpanData.assertSuccessful() {
     assertNotEquals(Span.Status.ERROR, status.toEmbracePayload())
-    assertNull(attributes[ErrorCodeAttribute.Failure.key.name])
+    assertNull(attributes[ErrorCodeAttribute.Failure.key])
 }
 
 fun Span.assertIsTypePerformance(): Unit = assertIsType(EmbType.Performance.Default)
@@ -70,7 +70,7 @@ fun Span.assertNotPrivateSpan(): Unit = assertDoesNotHaveEmbraceAttribute(Privat
 /**
  * Return as a [Attribute] representation, to be used used for Embrace payloads
  */
-fun EmbraceAttribute.toPayload(): Attribute = Attribute(key.name, value)
+fun EmbraceAttribute.toPayload(): Attribute = Attribute(key, value)
 
 fun Span.assertHasEmbraceAttribute(embraceAttribute: EmbraceAttribute) {
     assertTrue(checkNotNull(attributes).contains(embraceAttribute.toPayload()))
@@ -87,5 +87,5 @@ fun Span.assertError(errorCode: ErrorCode) {
 
 fun Span.assertSuccessful() {
     assertNotEquals(Span.Status.ERROR, status)
-    assertEquals(0, checkNotNull(attributes).filter { it.key == ErrorCodeAttribute.Failure.key.name }.size)
+    assertEquals(0, checkNotNull(attributes).filter { it.key == ErrorCodeAttribute.Failure.key }.size)
 }

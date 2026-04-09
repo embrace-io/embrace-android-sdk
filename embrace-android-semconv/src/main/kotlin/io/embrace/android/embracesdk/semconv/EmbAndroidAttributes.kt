@@ -17,10 +17,34 @@ object EmbAndroidAttributes {
     const val EMB_ANDROID_AEI_CRASH_NUMBER: String = "emb.android.aei_crash_number"
 
     /**
+     * The list of Throwable that caused the exception responsible for a crash.
+     */
+    @ExperimentalSemconv
+    const val EMB_ANDROID_CRASH_EXCEPTION_CAUSE: String = "emb.android.crash.exception_cause"
+
+    /**
      * Sequence number for the number of crashes captured by Embrace on the device.
      */
     @ExperimentalSemconv
     const val EMB_ANDROID_CRASH_NUMBER: String = "emb.android.crash_number"
+
+    /**
+     * Exception coming from the native layer.
+     */
+    @ExperimentalSemconv
+    const val EMB_ANDROID_NATIVE_CRASH_EXCEPTION: String = "emb.android.native_crash.exception"
+
+    /**
+     * Native symbols used to symbolicate a native crash.
+     */
+    @ExperimentalSemconv
+    const val EMB_ANDROID_NATIVE_CRASH_SYMBOLS: String = "emb.android.native_crash.symbols"
+
+    /**
+     * The JavaScript unhandled exception from the ReactNative layer.
+     */
+    @ExperimentalSemconv
+    const val EMB_ANDROID_REACT_NATIVE_CRASH_JS_EXCEPTION: String = "emb.android.react_native_crash.js_exception"
 
     /**
      * A snapshot of the current call stack of the threads running in the app process.

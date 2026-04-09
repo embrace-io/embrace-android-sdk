@@ -84,7 +84,7 @@ data class RemoteConfig(
      * The maximum number of properties that can be attached to a session
      */
     @Json(name = "max_session_properties")
-    val maxSessionProperties: Int? = null,
+    val maxUserSessionProperties: Int? = null,
 
     @Json(name = "network_span_forwarding")
     val networkSpanForwardingRemoteConfig: NetworkSpanForwardingRemoteConfig? = null,

@@ -11,7 +11,7 @@ import io.embrace.android.exampleapp.ui.examples.NdkCrashExample
 import io.embrace.android.exampleapp.ui.examples.LogMessageExample
 import io.embrace.android.exampleapp.ui.examples.NetworkRequestExample
 import io.embrace.android.exampleapp.ui.examples.SdkStateApiExample
-import io.embrace.android.exampleapp.ui.examples.SessionPropertiesExample
+import io.embrace.android.exampleapp.ui.examples.UserSessionPropertiesExample
 import io.embrace.android.exampleapp.ui.examples.TracingApiExample
 import io.embrace.android.exampleapp.ui.examples.UserExample
 import io.embrace.android.exampleapp.ui.examples.ViewTrackingExample
@@ -24,7 +24,7 @@ fun ExampleContent(example: CodeExample) {
         CodeExample.LOG_MESSAGE -> LogMessageExample()
         CodeExample.LOG_MESSAGE_ATTACHMENT -> LogMessageAttachmentsExample()
         CodeExample.RECORD_NETWORK_REQUEST -> NetworkRequestExample()
-        CodeExample.SESSION_PROPERTIES -> SessionPropertiesExample()
+        CodeExample.SESSION_PROPERTIES -> UserSessionPropertiesExample()
         CodeExample.END_SESSION -> EndSessionExample()
         CodeExample.ALTER_USER -> UserExample()
         CodeExample.VIEW_TRACKING -> ViewTrackingExample()

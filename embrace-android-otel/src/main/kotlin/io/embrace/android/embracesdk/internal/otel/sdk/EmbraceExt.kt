@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.otel.sdk
 
 import io.embrace.android.embracesdk.internal.arch.attrs.EmbraceAttribute
-import io.embrace.android.embracesdk.internal.arch.attrs.EmbraceAttributeKey
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
@@ -9,10 +8,10 @@ import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.opentelemetry.kotlin.semconv.ExceptionAttributes
 
 fun EmbraceSpanData.hasEmbraceAttribute(embraceAttribute: EmbraceAttribute): Boolean =
-    embraceAttribute.value == attributes[embraceAttribute.key.name]
+    embraceAttribute.value == attributes[embraceAttribute.key]
 
 fun EmbraceSpanEvent.hasEmbraceAttribute(embraceAttribute: EmbraceAttribute): Boolean =
-    embraceAttribute.value == attributes[embraceAttribute.key.name]
+    embraceAttribute.value == attributes[embraceAttribute.key]
 
 /**
  * Return the appropriate name used for telemetry created by Embrace given the current value
@@ -28,35 +27,35 @@ fun String.isValidLongValueAttribute(): Boolean = longValueAttributes.contains(t
 
 private val longValueAttributes: Set<String> = setOf(ExceptionAttributes.EXCEPTION_STACKTRACE)
 
-fun List<Attribute>.hasEmbraceAttributeKey(embraceAttributeKey: EmbraceAttributeKey): Boolean = any {
-    it.key == embraceAttributeKey.name
+fun List<Attribute>.hasEmbraceAttributeKey(key: String): Boolean = any {
+    it.key == key
 }
 
-fun List<Attribute>.hasEmbraceAttributeValue(embraceAttributeKey: EmbraceAttributeKey, value: Any): Boolean = any {
-    it.key == embraceAttributeKey.name && it.data == value.toString()
+fun List<Attribute>.hasEmbraceAttributeValue(key: String, value: Any): Boolean = any {
+    it.key == key && it.data == value.toString()
 }
 
 fun List<Attribute>.hasEmbraceAttribute(embraceAttribute: EmbraceAttribute): Boolean = any {
-    it.key == embraceAttribute.key.name && it.data == embraceAttribute.value
+    it.key == embraceAttribute.key && it.data == embraceAttribute.value
 }
 
 fun List<Attribute>.findAttributeValue(key: String): String? = singleOrNull { it.key == key }?.data
 
 fun Map<String, String>.hasEmbraceAttribute(embraceAttribute: EmbraceAttribute): Boolean =
-    this[embraceAttribute.key.name] == embraceAttribute.value
+    this[embraceAttribute.key] == embraceAttribute.value
 
 fun MutableMap<String, String>.setEmbraceAttribute(embraceAttribute: EmbraceAttribute): Map<String, String> {
-    this[embraceAttribute.key.name] = embraceAttribute.value
+    this[embraceAttribute.key] = embraceAttribute.value
     return this
 }
 
-fun MutableMap<String, String>.setEmbraceAttribute(key: EmbraceAttributeKey, value: Any): Map<String, String> {
-    this[key.name] = value.toString()
+fun MutableMap<String, String>.setEmbraceAttribute(key: String, value: Any): Map<String, String> {
+    this[key] = value.toString()
     return this
 }
 
 fun SpanEvent.hasEmbraceAttribute(embraceAttribute: EmbraceAttribute): Boolean =
-    embraceAttribute.value == attributes?.singleOrNull { it.key == embraceAttribute.key.name }?.data
+    embraceAttribute.value == attributes?.singleOrNull { it.key == embraceAttribute.key }?.data
 
 /**
  * Prefix added to OTel signal object names recorded by the SDK

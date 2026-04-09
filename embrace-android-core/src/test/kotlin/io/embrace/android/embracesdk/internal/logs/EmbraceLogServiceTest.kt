@@ -2,9 +2,9 @@ package io.embrace.android.embracesdk.internal.logs
 
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakePayloadStore
-import io.embrace.android.embracesdk.fakes.FakeSessionPropertiesService
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
 import io.embrace.android.embracesdk.fakes.FakeTelemetryService
+import io.embrace.android.embracesdk.fakes.FakeUserSessionPropertiesService
 import io.embrace.android.embracesdk.fakes.behavior.FakeLogMessageBehavior
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.config.FakeRedactionConfig
@@ -23,7 +23,7 @@ internal class EmbraceLogServiceTest {
 
     private lateinit var logService: LogServiceImpl
     private lateinit var destination: FakeTelemetryDestination
-    private lateinit var fakeSessionPropertiesService: FakeSessionPropertiesService
+    private lateinit var fakeUserSessionPropertiesService: FakeUserSessionPropertiesService
     private lateinit var fakeConfigService: FakeConfigService
     private lateinit var logLimitingService: LogLimitingService
     private lateinit var payloadStore: FakePayloadStore
@@ -36,7 +36,7 @@ internal class EmbraceLogServiceTest {
                 FakeInstrumentedConfig(redaction = FakeRedactionConfig(sensitiveKeys = listOf("password"))),
             )
         )
-        fakeSessionPropertiesService = FakeSessionPropertiesService()
+        fakeUserSessionPropertiesService = FakeUserSessionPropertiesService()
         destination = FakeTelemetryDestination()
         payloadStore = FakePayloadStore()
         fakeTelemetryService = FakeTelemetryService()

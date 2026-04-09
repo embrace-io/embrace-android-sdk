@@ -4,8 +4,8 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakeSessionOrchestrator
-import io.embrace.android.embracesdk.fakes.FakeSessionPropertiesService
 import io.embrace.android.embracesdk.fakes.FakeTelemetryService
+import io.embrace.android.embracesdk.fakes.FakeUserSessionPropertiesService
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
@@ -22,7 +22,7 @@ internal class UserSessionApiDelegateTest {
     private lateinit var delegate: UserSessionApiDelegate
     private lateinit var orchestrator: FakeSessionOrchestrator
     private lateinit var sdkCallChecker: SdkCallChecker
-    private lateinit var sessionPropertiesService: FakeSessionPropertiesService
+    private lateinit var userSessionPropertiesService: FakeUserSessionPropertiesService
     private lateinit var logger: FakeInternalLogger
 
     @Before
@@ -38,8 +38,8 @@ internal class UserSessionApiDelegateTest {
         )
         moduleInitBootstrapper.init(ApplicationProvider.getApplicationContext())
         orchestrator = moduleInitBootstrapper.sessionOrchestrator as FakeSessionOrchestrator
-        sessionPropertiesService =
-            moduleInitBootstrapper.essentialServiceModule.sessionPropertiesService as FakeSessionPropertiesService
+        userSessionPropertiesService =
+            moduleInitBootstrapper.essentialServiceModule.userSessionPropertiesService as FakeUserSessionPropertiesService
         logger = FakeInternalLogger()
         sdkCallChecker = SdkCallChecker(logger, FakeTelemetryService())
         sdkCallChecker.started.set(true)
@@ -60,14 +60,14 @@ internal class UserSessionApiDelegateTest {
     @Test
     fun `add session property`() {
         delegate.addSessionProperty("test", "value", false)
-        assertEquals("value", sessionPropertiesService.props["test"])
+        assertEquals("value", userSessionPropertiesService.props["test"])
     }
 
     @Test
     fun `remove session property`() {
         delegate.addSessionProperty("test", "value", false)
         delegate.removeSessionProperty("test")
-        assertNull(sessionPropertiesService.props["test"])
+        assertNull(userSessionPropertiesService.props["test"])
     }
 
     @Test

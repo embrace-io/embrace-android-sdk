@@ -19,10 +19,10 @@ class FakeNativeCrashService : NativeCrashService {
 
     override fun sendNativeCrash(
         nativeCrash: NativeCrashData,
-        sessionProperties: Map<String, String>,
+        userSessionProperties: Map<String, String>,
         metadata: Map<String, String>,
     ) {
-        nativeCrashesSent.add(Pair(nativeCrash, metadata.mapKeys { it.value } + sessionProperties))
+        nativeCrashesSent.add(Pair(nativeCrash, metadata.mapKeys { it.value } + userSessionProperties))
     }
 
     override fun deleteAllNativeCrashes() {

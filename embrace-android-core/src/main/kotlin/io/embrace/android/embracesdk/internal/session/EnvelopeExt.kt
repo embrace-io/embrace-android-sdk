@@ -22,12 +22,12 @@ fun Envelope<SessionPartPayload>.getSessionId(): String? {
     return getSessionSpan()?.attributes?.findAttributeValue(SessionAttributes.SESSION_ID)
 }
 
-fun Envelope<SessionPartPayload>.getSessionProperties(): Map<String, String> {
-    return getSessionSpan()?.getSessionProperties() ?: emptyMap()
+fun Envelope<SessionPartPayload>.getUserSessionProperties(): Map<String, String> {
+    return getSessionSpan()?.getUserSessionProperties() ?: emptyMap()
 }
 
 @Suppress("UNCHECKED_CAST")
-private fun Span.getSessionProperties(): Map<String, String> =
+private fun Span.getUserSessionProperties(): Map<String, String> =
     attributes
         ?.filter {
             val keyName = it.key

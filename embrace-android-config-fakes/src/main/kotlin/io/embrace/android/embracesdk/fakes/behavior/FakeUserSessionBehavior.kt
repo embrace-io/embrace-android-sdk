@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.fakes.behavior
 import io.embrace.android.embracesdk.internal.config.behavior.UserSessionBehavior
 
 class FakeUserSessionBehavior(
-    private val maxSessionProperties: Int = 100,
+    private val maxUserSessionProperties: Int = 100,
     private val sessionControlEnabled: Boolean = false,
     private val maxSessionDurationMs: Long = 86400000,
     private val sessionInactivityTimeoutMs: Long = 1800000,
@@ -11,7 +11,7 @@ class FakeUserSessionBehavior(
 ) : UserSessionBehavior {
 
     override fun isSessionControlEnabled(): Boolean = sessionControlEnabled
-    override fun getMaxSessionProperties(): Int = maxSessionProperties
+    override fun getMaxUserSessionProperties(): Int = maxUserSessionProperties
     override fun getMaxSessionDurationMs(): Long = maxSessionDurationMs
     override fun getSessionInactivityTimeoutMs(): Long = sessionInactivityTimeoutMs
     override fun getMinSessionDurationMs(): Long = minSessionDurationMs

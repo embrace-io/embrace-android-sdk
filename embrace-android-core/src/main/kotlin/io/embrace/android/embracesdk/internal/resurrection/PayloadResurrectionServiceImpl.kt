@@ -25,8 +25,8 @@ import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.session.getSessionId
-import io.embrace.android.embracesdk.internal.session.getSessionProperties
 import io.embrace.android.embracesdk.internal.session.getSessionSpan
+import io.embrace.android.embracesdk.internal.session.getUserSessionProperties
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.opentelemetry.kotlin.semconv.SessionAttributes
@@ -139,7 +139,7 @@ internal class PayloadResurrectionServiceImpl(
                     }
                     nativeCrashService.sendNativeCrash(
                         nativeCrash = nativeCrash,
-                        sessionProperties = emptyMap(),
+                        userSessionProperties = emptyMap(),
                         metadata = mapOf(
                             EmbSessionAttributes.EMB_STATE to AppState.BACKGROUND.description,
                         ),
@@ -192,7 +192,7 @@ internal class PayloadResurrectionServiceImpl(
 
                         nativeCrashService.sendNativeCrash(
                             nativeCrash = this,
-                            sessionProperties = deadPart.getSessionProperties(),
+                            userSessionProperties = deadPart.getUserSessionProperties(),
                             metadata = if (appState != null) {
                                 mapOf(
                                     EmbSessionAttributes.EMB_STATE to appState,

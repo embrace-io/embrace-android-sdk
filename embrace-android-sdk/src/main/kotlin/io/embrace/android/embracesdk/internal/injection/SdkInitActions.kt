@@ -193,7 +193,7 @@ private fun ModuleGraph.eventMetadataSupplierProvider(): Provider<Map<String, St
             val state = sessionState ?: essentialServiceModule.appStateTracker.getAppState()
             put(EmbSessionAttributes.EMB_STATE, state.description)
             putAll(
-                essentialServiceModule.sessionPropertiesService
+                essentialServiceModule.userSessionPropertiesService
                     .getProperties()
                     .mapKeys { property ->
                         property.key.toEmbraceAttributeName()

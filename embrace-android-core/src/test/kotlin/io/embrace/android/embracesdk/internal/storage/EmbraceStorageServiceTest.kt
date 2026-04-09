@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.storage
 
 import android.content.Context
 import io.embrace.android.embracesdk.fakes.FakeTelemetryService
+import io.embrace.android.embracesdk.semconv.EmbTelemetryAttributes
 import io.mockk.every
 import io.mockk.mockk
 import org.junit.Assert.assertEquals
@@ -110,7 +111,7 @@ internal class EmbraceStorageServiceTest {
         storageManager.logStorageTelemetry()
 
         val expectedSize = fileInCache.length() + fileInFiles.length()
-        assertEquals(expectedSize.toString(), fakeTelemetryService.storageTelemetryMap["emb.storage.used"])
-        assertEquals("1000", fakeTelemetryService.storageTelemetryMap["emb.storage.available"])
+        assertEquals(expectedSize.toString(), fakeTelemetryService.storageTelemetryMap[EmbTelemetryAttributes.EMB_STORAGE_USED])
+        assertEquals("1000", fakeTelemetryService.storageTelemetryMap[EmbTelemetryAttributes.EMB_STORAGE_AVAILABLE])
     }
 }

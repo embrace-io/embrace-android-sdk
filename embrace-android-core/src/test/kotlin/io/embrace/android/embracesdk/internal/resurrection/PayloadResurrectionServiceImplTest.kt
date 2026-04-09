@@ -23,8 +23,6 @@ import io.embrace.android.embracesdk.fakes.fakeLaterEnvelopeMetadata
 import io.embrace.android.embracesdk.fakes.fakeLaterEnvelopeResource
 import io.embrace.android.embracesdk.fixtures.fakeCachedSessionStoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.arch.attrs.asPair
-import io.embrace.android.embracesdk.internal.arch.attrs.embCrashId
-import io.embrace.android.embracesdk.internal.arch.attrs.embState
 import io.embrace.android.embracesdk.internal.arch.attrs.isEmbraceAttributeName
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
@@ -46,6 +44,7 @@ import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.session.getSessionSpan
 import io.embrace.android.embracesdk.internal.toEmbraceSpanData
 import io.embrace.android.embracesdk.internal.worker.PriorityWorker
+import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.spans.ErrorCode
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -207,7 +206,7 @@ class PayloadResurrectionServiceImplTest {
         deadSessionEnvelope.resurrectPayload()
 
         val sessionSpan = getStoredParts().single().getSessionSpan()
-        assertEquals("dead-session-native-crash", sessionSpan?.attributes?.findAttributeValue(embCrashId.name))
+        assertEquals("dead-session-native-crash", sessionSpan?.attributes?.findAttributeValue(EmbSessionAttributes.EMB_CRASH_ID))
 
         nativeCrashService.addNativeCrashData(
             createNativeCrashData(
@@ -219,7 +218,7 @@ class PayloadResurrectionServiceImplTest {
 
         val attributes =
             checkNotNull(getStoredParts().last().getSessionSpan()?.attributes)
-        assertNull(attributes.findAttributeValue(embCrashId.name))
+        assertNull(attributes.findAttributeValue(EmbSessionAttributes.EMB_CRASH_ID))
     }
 
     @Test
@@ -298,11 +297,11 @@ class PayloadResurrectionServiceImplTest {
             assertEquals(deadSessionEnvelope.getSessionId(), getSessionId())
             assertEquals(
                 "native-crash-1",
-                getSessionSpan()?.attributes?.findAttributeValue(embCrashId.name)
+                getSessionSpan()?.attributes?.findAttributeValue(EmbSessionAttributes.EMB_CRASH_ID)
             )
             assertEquals(
                 "foreground",
-                getSessionSpan()?.attributes?.findAttributeValue(embState.name)
+                getSessionSpan()?.attributes?.findAttributeValue(EmbSessionAttributes.EMB_STATE)
             )
         }
 
@@ -313,11 +312,11 @@ class PayloadResurrectionServiceImplTest {
             assertEquals(earlierDeadSession.getSessionId(), getSessionId())
             assertEquals(
                 "native-crash-2",
-                getSessionSpan()?.attributes?.findAttributeValue(embCrashId.name)
+                getSessionSpan()?.attributes?.findAttributeValue(EmbSessionAttributes.EMB_CRASH_ID)
             )
             assertEquals(
                 "foreground",
-                getSessionSpan()?.attributes?.findAttributeValue(embState.name)
+                getSessionSpan()?.attributes?.findAttributeValue(EmbSessionAttributes.EMB_STATE)
             )
         }
 
@@ -372,7 +371,7 @@ class PayloadResurrectionServiceImplTest {
         assertEquals(1, nativeCrashService.nativeCrashesSent.size)
         with(nativeCrashService.nativeCrashesSent.first()) {
             assertEquals(deadSessionCrashData, first)
-            assertTrue(second.keys.none { it.isEmbraceAttributeName() || embState.name == it })
+            assertTrue(second.keys.none { it.isEmbraceAttributeName() || EmbSessionAttributes.EMB_STATE == it })
         }
     }
 
@@ -391,7 +390,7 @@ class PayloadResurrectionServiceImplTest {
         assertEquals(1, nativeCrashService.nativeCrashesSent.size)
         with(nativeCrashService.nativeCrashesSent.first()) {
             assertEquals(deadSessionCrashData, first)
-            assertTrue(second.keys.none { it.isEmbraceAttributeName() || embState.name == it })
+            assertTrue(second.keys.none { it.isEmbraceAttributeName() || EmbSessionAttributes.EMB_STATE == it })
         }
     }
 
@@ -407,7 +406,7 @@ class PayloadResurrectionServiceImplTest {
         assertEquals(fakeCachedSessionStoredTelemetryMetadata.copy(complete = true), storedMetadata)
         assertEquals(0, cacheStorageService.storedPayloadCount())
         val sessionSpan = checkNotNull(getStoredParts().single().getSessionSpan())
-        assertNull(checkNotNull(sessionSpan.attributes).findAttributeValue(embCrashId.name))
+        assertNull(checkNotNull(sessionSpan.attributes).findAttributeValue(EmbSessionAttributes.EMB_CRASH_ID))
     }
 
     @Test

@@ -7,8 +7,7 @@ import io.embrace.android.embracesdk.assertions.assertPreviousSession
 import io.embrace.android.embracesdk.assertions.findSessionSpan
 import io.embrace.android.embracesdk.assertions.getSessionId
 import io.embrace.android.embracesdk.assertions.hasSpanSnapshotsOfType
-import io.embrace.android.embracesdk.internal.arch.attrs.embColdStart
-import io.embrace.android.embracesdk.internal.arch.attrs.embSessionNumber
+import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
@@ -138,8 +137,8 @@ internal class SequentialSessionPartTest {
         with(sessionSpan) {
             checkNotNull(attributes).assertMatches(
                 mapOf(
-                    embSessionNumber.name to sessionNumber,
-                    embColdStart.name to isColdStart
+                    EmbSessionAttributes.EMB_SESSION_NUMBER to sessionNumber,
+                    EmbSessionAttributes.EMB_COLD_START to isColdStart
                 )
             )
 

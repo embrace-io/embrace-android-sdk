@@ -5,9 +5,7 @@ import io.embrace.android.embracesdk.assertions.findSessionSpan
 import io.embrace.android.embracesdk.assertions.getSessionId
 import io.embrace.android.embracesdk.assertions.hasSpanSnapshotsOfType
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
-import io.embrace.android.embracesdk.internal.arch.attrs.embErrorLogCount
-import io.embrace.android.embracesdk.internal.arch.attrs.embSessionEndType
-import io.embrace.android.embracesdk.internal.arch.attrs.embSessionStartType
+import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.internal.session.LifeEventType
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.assertions.assertMatches
@@ -44,9 +42,9 @@ internal class StatefulSessionTest {
                 val messages = getSessionEnvelopes(2)
                 val first = messages[0]
                 first.findSessionSpan().attributes?.assertMatches(mapOf(
-                    embSessionStartType.name to LifeEventType.STATE.name.lowercase(Locale.ENGLISH),
-                    embSessionEndType.name to LifeEventType.STATE.name.lowercase(Locale.ENGLISH),
-                    embErrorLogCount.name to 0
+                    EmbSessionAttributes.EMB_SESSION_START_TYPE to LifeEventType.STATE.name.lowercase(Locale.ENGLISH),
+                    EmbSessionAttributes.EMB_SESSION_END_TYPE to LifeEventType.STATE.name.lowercase(Locale.ENGLISH),
+                    EmbSessionAttributes.EMB_ERROR_LOG_COUNT to 0
                 ))
 
                 assertFalse(first.hasSpanSnapshotsOfType(EmbType.Ux.Session))

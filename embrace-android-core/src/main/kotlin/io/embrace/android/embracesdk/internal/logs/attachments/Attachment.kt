@@ -1,14 +1,10 @@
 package io.embrace.android.embracesdk.internal.logs.attachments
 
-import io.embrace.android.embracesdk.internal.arch.attrs.EmbraceAttributeKey
-import io.embrace.android.embracesdk.internal.arch.attrs.embAttachmentErrorCode
-import io.embrace.android.embracesdk.internal.arch.attrs.embAttachmentId
-import io.embrace.android.embracesdk.internal.arch.attrs.embAttachmentSize
-import io.embrace.android.embracesdk.internal.arch.attrs.embAttachmentUrl
 import io.embrace.android.embracesdk.internal.logs.attachments.AttachmentErrorCode.ATTACHMENT_TOO_LARGE
 import io.embrace.android.embracesdk.internal.logs.attachments.AttachmentErrorCode.OVER_MAX_ATTACHMENTS
 import io.embrace.android.embracesdk.internal.logs.attachments.AttachmentErrorCode.UNKNOWN
 import io.embrace.android.embracesdk.internal.utils.toNonNullMap
+import io.embrace.android.embracesdk.semconv.EmbAttachmentAttributes
 import java.util.UUID
 
 /**
@@ -20,15 +16,15 @@ sealed class Attachment(val id: String) {
         private const val LIMIT_MB = 1 * 1024 * 1024
     }
 
-    abstract val attributes: Map<EmbraceAttributeKey, String>
+    abstract val attributes: Map<String, String>
     abstract val errorCode: AttachmentErrorCode?
 
     protected fun constructAttributes(
         id: String,
         errorCode: AttachmentErrorCode? = null,
-    ): Map<EmbraceAttributeKey, String> = mapOf(
-        embAttachmentId to id,
-        embAttachmentErrorCode to errorCode?.name
+    ): Map<String, String> = mapOf(
+        EmbAttachmentAttributes.EMB_ATTACHMENT_ID to id,
+        EmbAttachmentAttributes.EMB_ATTACHMENT_ERROR_CODE to errorCode?.name
     ).toNonNullMap()
 
     /**
@@ -49,8 +45,8 @@ sealed class Attachment(val id: String) {
             else -> null
         }
 
-        override val attributes: Map<EmbraceAttributeKey, String> = constructAttributes(id, errorCode).plus(
-            embAttachmentSize to size.toString(),
+        override val attributes: Map<String, String> = constructAttributes(id, errorCode).plus(
+            EmbAttachmentAttributes.EMB_ATTACHMENT_SIZE to size.toString(),
         )
 
         fun shouldAttemptUpload(): Boolean = errorCode == null
@@ -72,8 +68,8 @@ sealed class Attachment(val id: String) {
             else -> null
         }
 
-        override val attributes: Map<EmbraceAttributeKey, String> = constructAttributes(id, errorCode).plus(
-            embAttachmentUrl to url
+        override val attributes: Map<String, String> = constructAttributes(id, errorCode).plus(
+            EmbAttachmentAttributes.EMB_ATTACHMENT_URL to url
         )
 
         private fun isNotUuid(): Boolean = try {

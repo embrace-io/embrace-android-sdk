@@ -1,8 +1,7 @@
 package io.embrace.android.embracesdk.fixtures
 
 import io.embrace.android.embracesdk.assertions.toPayload
-import io.embrace.android.embracesdk.internal.arch.attrs.embProcessIdentifier
-import io.embrace.android.embracesdk.internal.arch.attrs.embSendMode
+import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.SendMode
 import io.embrace.android.embracesdk.internal.payload.Attribute
@@ -27,7 +26,7 @@ val sendImmediatelyLog: Log = Log(
     severityNumber = 9,
     severityText = "INFO",
     body = "sendImmediately",
-    attributes = listOf(Attribute(embSendMode.name, SendMode.IMMEDIATE.name))
+    attributes = listOf(Attribute(EmbSessionAttributes.EMB_PRIVATE_SEND_MODE, SendMode.IMMEDIATE.name))
 )
 
 val deferredLog: Log = Log(
@@ -37,23 +36,23 @@ val deferredLog: Log = Log(
     severityNumber = 9,
     severityText = "INFO",
     body = "deferred",
-    attributes = listOf(Attribute(embSendMode.name, SendMode.DEFER.name))
+    attributes = listOf(Attribute(EmbSessionAttributes.EMB_PRIVATE_SEND_MODE, SendMode.DEFER.name))
 )
 
 val nativeCrashLog = Log(
     timeUnixNano = 1681972471806000000L,
     attributes = listOf(
-        Attribute(embSendMode.name, SendMode.IMMEDIATE.name),
+        Attribute(EmbSessionAttributes.EMB_PRIVATE_SEND_MODE, SendMode.IMMEDIATE.name),
         EmbType.System.NativeCrash.toPayload(),
         Attribute(SessionAttributes.SESSION_ID, "bb6b5b1ea2ff48928382fe81d7991ced"),
-        Attribute(embProcessIdentifier.name, "8115ec91-3e5e-4d8a-816d-cc40306f9822"),
+        Attribute(EmbSessionAttributes.EMB_PROCESS_IDENTIFIER, "8115ec91-3e5e-4d8a-816d-cc40306f9822"),
     )
 )
 
 val nativeCrashWithoutSessionLog = Log(
     timeUnixNano = 1681972481806000000L,
     attributes = listOf(
-        Attribute(embSendMode.name, SendMode.IMMEDIATE.name),
+        Attribute(EmbSessionAttributes.EMB_PRIVATE_SEND_MODE, SendMode.IMMEDIATE.name),
         EmbType.System.NativeCrash.toPayload(),
     )
 )

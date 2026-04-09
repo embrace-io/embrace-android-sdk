@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.instrumentation.startup
 
 import android.os.Build.VERSION_CODES
-import io.embrace.android.embracesdk.internal.arch.attrs.embStartupActivityName
 import io.embrace.android.embracesdk.internal.arch.datasource.SpanEvent
 import io.embrace.android.embracesdk.internal.arch.datasource.SpanToken
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
@@ -14,6 +13,7 @@ import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
+import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicBoolean
@@ -415,7 +415,7 @@ internal class AppStartupTraceEmitter(
         addCustomAttributes()
 
         startupActivityName?.let { name ->
-            setSystemAttribute(embStartupActivityName.name, name)
+            setSystemAttribute(EmbSessionAttributes.EMB_STARTUP_ACTIVITY, name)
         }
     }
 

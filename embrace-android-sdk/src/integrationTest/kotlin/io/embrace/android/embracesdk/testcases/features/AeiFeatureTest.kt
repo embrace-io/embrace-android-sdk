@@ -16,8 +16,7 @@ import io.embrace.android.embracesdk.assertions.getLogOfType
 import io.embrace.android.embracesdk.assertions.getLogsOfType
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
-import io.embrace.android.embracesdk.internal.arch.attrs.embAeiNumber
-import io.embrace.android.embracesdk.internal.arch.attrs.embCrashNumber
+import io.embrace.android.embracesdk.semconv.EmbAndroidAttributes
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.config.remote.AppExitInfoConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
@@ -323,8 +322,8 @@ internal class AeiFeatureTest {
                     EmbAeiAttributes.DESCRIPTION to description,
                     EmbAeiAttributes.REASON to reason,
                     "emb.type" to "sys.exit",
-                    embCrashNumber.name to crashNumber,
-                    embAeiNumber.name to aeiNumber,
+                    EmbAndroidAttributes.EMB_ANDROID_CRASH_NUMBER to crashNumber,
+                    EmbAndroidAttributes.EMB_ANDROID_AEI_CRASH_NUMBER to aeiNumber,
                 )
             )
             assertEquals(trace, body)

@@ -1,11 +1,11 @@
 package io.embrace.android.embracesdk.internal.otel.logs
 
-import io.embrace.android.embracesdk.internal.arch.attrs.embSendMode
 import io.embrace.android.embracesdk.internal.arch.schema.SendMode
 import io.embrace.android.embracesdk.internal.otel.sdk.StoreDataResult
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.internal.utils.threadSafeTake
+import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import java.util.concurrent.ConcurrentLinkedQueue
 
 class LogSinkImpl : LogSink {
@@ -17,7 +17,7 @@ class LogSinkImpl : LogSink {
     override fun storeLogs(logs: List<Log>): StoreDataResult {
         try {
             logs.forEach { log ->
-                val mode = log.attributes?.findAttributeValue(embSendMode.name)
+                val mode = log.attributes?.findAttributeValue(EmbSessionAttributes.EMB_PRIVATE_SEND_MODE)
                 val sendMode = SendMode.fromString(mode)
                 if (sendMode != SendMode.DEFAULT) {
                     logRequests.add(

@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.instrumentation.crash.ndk
 
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
-import io.embrace.android.embracesdk.internal.arch.attrs.embCrashNumber
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceImpl
 import io.embrace.android.embracesdk.internal.arch.datasource.LogSeverity
 import io.embrace.android.embracesdk.internal.arch.limits.NoopLimitStrategy
@@ -10,6 +9,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.arch.schema.TelemetryAttributes
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
 import io.embrace.android.embracesdk.internal.store.Ordinal
+import io.embrace.android.embracesdk.semconv.EmbAndroidAttributes
 import io.opentelemetry.kotlin.semconv.SessionAttributes
 
 internal class NativeCrashDataSourceImpl(
@@ -47,7 +47,7 @@ internal class NativeCrashDataSourceImpl(
                 }
 
                 setAttribute(
-                    key = embCrashNumber,
+                    key = EmbAndroidAttributes.EMB_ANDROID_CRASH_NUMBER,
                     value = nativeCrashNumber.toString(),
                     keepBlankishValues = false,
                 )

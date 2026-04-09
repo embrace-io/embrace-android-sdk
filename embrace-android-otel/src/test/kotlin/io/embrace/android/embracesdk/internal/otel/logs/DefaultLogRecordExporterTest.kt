@@ -34,7 +34,7 @@ internal class DefaultLogRecordExporterTest {
 
         val privateData = FakeReadWriteLogRecord(
             attributeContainer = FakeAttributesMutator().apply {
-                setStringAttribute(PrivateSpan.key.name, PrivateSpan.value)
+                setStringAttribute(PrivateSpan.key, PrivateSpan.value)
             }
         )
 

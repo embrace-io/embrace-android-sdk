@@ -42,7 +42,7 @@ fun assertEmbraceSpanData(
             assertError(expectedErrorCode)
         } else {
             assertEquals(expectedStatus, status)
-            assertNull(attributes?.findAttributeValue(ErrorCodeAttribute.Failure.key.name))
+            assertNull(attributes?.findAttributeValue(ErrorCodeAttribute.Failure.key))
         }
 
         expectedCustomAttributes.forEach { entry ->

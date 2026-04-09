@@ -8,9 +8,7 @@ import io.embrace.android.embracesdk.assertions.findSessionSpan
 import io.embrace.android.embracesdk.assertions.getSessionId
 import io.embrace.android.embracesdk.assertions.returnIfConditionMet
 import io.embrace.android.embracesdk.internal.TypeUtils
-import io.embrace.android.embracesdk.internal.arch.attrs.embCleanExit
-import io.embrace.android.embracesdk.internal.arch.attrs.embCrashId
-import io.embrace.android.embracesdk.internal.arch.attrs.embState
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.semconv.EmbAndroidAttributes
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.internal.arch.state.AppState
@@ -37,6 +35,7 @@ import org.junit.Assert
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 
 /**
  * Provides assertions that can be used in integration tests to validate the behavior of the SDK,
@@ -71,7 +70,9 @@ internal class EmbracePayloadAssertionInterface(
     ): List<Envelope<LogPayload>> {
         val supplier = { checkNotNull(apiServer).getLogEnvelopes() }
         try {
-            return retrievePayload(expectedSize = expectedSize, supplier = supplier)
+            val envelopes = retrievePayload(expectedSize = expectedSize, supplier = supplier)
+            assertLogsDeliveredInOrder(envelopes)
+            return envelopes
         } catch (exc: TimeoutException) {
             val envelopes: List<Map<String, String?>> = supplier().map { envelope ->
                 mapOf(
@@ -128,14 +129,16 @@ internal class EmbracePayloadAssertionInterface(
                 .filter { it.findAppState() == appState }
         }
         try {
-            return retrievePayload(expectedSize, waitTimeMs, supplier)
+            val envelopes = retrievePayload(expectedSize, waitTimeMs, supplier)
+            assertSessionsDeliveredInOrder(envelopes)
+            return envelopes
         } catch (exc: TimeoutException) {
             val envelopes = checkNotNull(apiServer).getSessionEnvelopes()
             val sessions: List<Map<String, String?>> = envelopes.map {
                 mapOf(
                     "sessionId" to it.getSessionId(),
-                    "cleanExit" to it.findSessionSpan().attributes?.findAttributeValue(embCleanExit.name),
-                    "state" to it.findSessionSpan().attributes?.findAttributeValue(embState.name)
+                    "cleanExit" to it.findSessionSpan().attributes?.findAttributeValue(EmbSessionAttributes.EMB_CLEAN_EXIT),
+                    "state" to it.findSessionSpan().attributes?.findAttributeValue(EmbSessionAttributes.EMB_STATE)
                 )
             }
             throwPayloadErrMsg(expectedSize, envelopes.filter { it.findAppState() == appState }.size, sessions, exc)
@@ -144,7 +147,7 @@ internal class EmbracePayloadAssertionInterface(
 
     private fun Envelope<SessionPartPayload>.findAppState(): AppState {
         val attrs = findSessionSpan().attributes
-        val state = checkNotNull(attrs?.findAttributeValue(embState.name)) {
+        val state = checkNotNull(attrs?.findAttributeValue(EmbSessionAttributes.EMB_STATE)) {
             "AppState not found in session payload."
         }
         val value = state.uppercase(Locale.ENGLISH)
@@ -215,10 +218,10 @@ internal class EmbracePayloadAssertionInterface(
                 assertEquals(crashData.lastHeartbeatMs, endTimeNanos?.nanosToMillis())
                 assertEquals(
                     crashData.nativeCrash.nativeCrashId,
-                    attributes?.findAttributeValue(embCrashId.name)
+                    attributes?.findAttributeValue(EmbSessionAttributes.EMB_CRASH_ID)
                 )
             } else {
-                assertNull(attributes?.findAttributeValue(embCrashId.name))
+                assertNull(attributes?.findAttributeValue(EmbSessionAttributes.EMB_CRASH_ID))
             }
         }
     }
@@ -240,8 +243,8 @@ internal class EmbracePayloadAssertionInterface(
         val attrs = checkNotNull(log.attributes)
         attrs.assertMatches(
             mapOf(
-                "emb.android.native_crash.exception" to crashData.nativeCrash.crash,
-                "emb.android.native_crash.symbols" to symbols,
+                EmbType.System.NativeCrash.embNativeCrashException to crashData.nativeCrash.crash,
+                EmbType.System.NativeCrash.embNativeCrashSymbols to symbols,
                 EmbSessionAttributes.EMB_PRIVATE_SEND_MODE to "DEFER",
                 "emb.type" to "sys.android.native_crash",
             )
@@ -263,6 +266,31 @@ internal class EmbracePayloadAssertionInterface(
             },
             condition = { !it },
         )
+    }
+
+    private fun assertSessionsDeliveredInOrder(envelopes: List<Envelope<SessionPartPayload>>) {
+        envelopes.zipWithNext { prev, next ->
+            val prevEnd = prev.findSessionSpan().startTimeNanos ?: return@zipWithNext
+            val nextEnd = next.findSessionSpan().startTimeNanos ?: return@zipWithNext
+            assertTrue(
+                "Session payloads delivered out of order. " +
+                    "Previous (id=${prev.getSessionId()}) startTimeNanos=$prevEnd, " +
+                    "next (id=${next.getSessionId()}) startTimeNanos=$nextEnd",
+                nextEnd >= prevEnd
+            )
+        }
+    }
+
+    private fun assertLogsDeliveredInOrder(envelopes: List<Envelope<LogPayload>>) {
+        envelopes.zipWithNext { prev, next ->
+            val prevMax = prev.data.logs?.mapNotNull { it.timeUnixNano }?.maxOrNull() ?: return@zipWithNext
+            val nextMax = next.data.logs?.mapNotNull { it.timeUnixNano }?.maxOrNull() ?: return@zipWithNext
+            assertTrue(
+                "Log payloads delivered out of order. " +
+                    "Previous envelope max timeUnixNano=$prevMax, next max timeUnixNano=$nextMax",
+                nextMax >= prevMax
+            )
+        }
     }
 
     /*** TEST INFRA ***/

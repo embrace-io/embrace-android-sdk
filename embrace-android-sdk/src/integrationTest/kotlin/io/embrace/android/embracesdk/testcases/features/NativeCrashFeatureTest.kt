@@ -45,7 +45,7 @@ import org.junit.runner.RunWith
 internal class NativeCrashFeatureTest {
 
     private companion object {
-        private const val BASE_TIME_MS = 1691000299000L
+        private const val BASE_TIME_MS = 169000000000L
     }
 
     private val serializer = TestPlatformSerializer()

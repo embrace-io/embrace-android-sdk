@@ -1,8 +1,6 @@
 package io.embrace.android.embracesdk.assertions
 
-import io.embrace.android.embracesdk.internal.arch.attrs.embStateDroppedByInstrumentation
-import io.embrace.android.embracesdk.internal.arch.attrs.embStateNewValue
-import io.embrace.android.embracesdk.internal.arch.attrs.embStateNotInSession
+import io.embrace.android.embracesdk.semconv.EmbStateTransitionAttributes
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.otel.sdk.hasEmbraceAttributeKey
 import io.embrace.android.embracesdk.internal.otel.sdk.hasEmbraceAttributeValue
@@ -20,17 +18,17 @@ fun <T: Any> SpanEvent.assertStateTransition(
     assertEquals("transition", name)
     assertEquals(timestampMs.millisToNanos(), timestampNanos)
     with(checkNotNull(attributes)) {
-        assertTrue(hasEmbraceAttributeValue(embStateNewValue, newStateValue))
+        assertTrue(hasEmbraceAttributeValue(EmbStateTransitionAttributes.EMB_STATE_NEW_VALUE, newStateValue))
         if (notInSession > 0) {
-            assertTrue(hasEmbraceAttributeValue(embStateNotInSession, notInSession.toString()))
+            assertTrue(hasEmbraceAttributeValue(EmbStateTransitionAttributes.EMB_STATE_NOT_IN_SESSION, notInSession.toString()))
         } else {
-            assertFalse(hasEmbraceAttributeKey(embStateNotInSession))
+            assertFalse(hasEmbraceAttributeKey(EmbStateTransitionAttributes.EMB_STATE_NOT_IN_SESSION))
         }
 
         if (droppedByInstrumentation > 0) {
-            assertTrue(hasEmbraceAttributeValue(embStateDroppedByInstrumentation, droppedByInstrumentation.toString()))
+            assertTrue(hasEmbraceAttributeValue(EmbStateTransitionAttributes.EMB_STATE_DROPPED_BY_INSTRUMENTATION, droppedByInstrumentation.toString()))
         } else {
-            assertFalse(hasEmbraceAttributeKey(embStateDroppedByInstrumentation))
+            assertFalse(hasEmbraceAttributeKey(EmbStateTransitionAttributes.EMB_STATE_DROPPED_BY_INSTRUMENTATION))
         }
     }
 }

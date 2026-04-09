@@ -4,7 +4,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.toMap
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
-import io.embrace.android.embracesdk.internal.arch.attrs.embFreeDiskBytes
+import io.embrace.android.embracesdk.semconv.EmbTelemetryAttributes
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
@@ -93,17 +93,17 @@ internal class SessionApiTest {
         // Attributes we want to know exist, but whose value we don't need to validate
         val validateExistenceOnly = setOf(
             SessionAttributes.SESSION_ID,
-            "emb.kotlin_on_classpath",
-            "emb.okhttp3",
+            EmbTelemetryAttributes.EMB_KOTLIN_ON_CLASSPATH,
+            EmbTelemetryAttributes.EMB_OKHTTP3,
             EmbSessionAttributes.EMB_PROCESS_IDENTIFIER,
-            "emb.is_emulator",
-            "emb.okhttp3_on_classpath",
+            EmbTelemetryAttributes.EMB_IS_EMULATOR,
+            EmbTelemetryAttributes.EMB_OKHTTP3_ON_CLASSPATH,
             EmbSessionAttributes.EMB_HEARTBEAT_TIME_UNIX_NANO,
         )
 
         // Attributes that are unstable that we should not try to verify
         val ignoredAttributes = setOf(
-            embFreeDiskBytes.name
+            EmbSessionAttributes.EMB_DISK_FREE_BYTES
         ).plus(validateExistenceOnly)
     }
 }

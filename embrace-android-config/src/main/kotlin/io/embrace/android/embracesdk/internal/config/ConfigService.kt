@@ -11,8 +11,8 @@ import io.embrace.android.embracesdk.internal.config.behavior.NetworkSpanForward
 import io.embrace.android.embracesdk.internal.config.behavior.OtelBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.SdkModeBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehavior
-import io.embrace.android.embracesdk.internal.config.behavior.SessionBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.ThreadBlockageBehavior
+import io.embrace.android.embracesdk.internal.config.behavior.UserSessionBehavior
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 
 /**
@@ -50,7 +50,7 @@ interface ConfigService {
     /**
      * How sessions should behave.
      */
-    val sessionBehavior: SessionBehavior
+    val sessionBehavior: UserSessionBehavior
 
     /**
      * How network call capture should behave.

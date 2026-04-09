@@ -15,7 +15,7 @@ import io.embrace.android.embracesdk.fakes.FakePayloadStore
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.FakeUserSessionPropertiesService
-import io.embrace.android.embracesdk.fakes.behavior.FakeSessionBehavior
+import io.embrace.android.embracesdk.fakes.behavior.FakeUserSessionBehavior
 import io.embrace.android.embracesdk.fakes.createBackgroundActivityBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakePayloadSourceModule
 import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistry
@@ -240,7 +240,7 @@ internal class SessionOrchestratorTest {
     @Test
     fun `test manual session end disabled for session gating`() {
         configService = FakeConfigService(
-            sessionBehavior = FakeSessionBehavior(sessionControlEnabled = true)
+            sessionBehavior = FakeUserSessionBehavior(sessionControlEnabled = true)
         )
         createOrchestrator(AppState.FOREGROUND)
 

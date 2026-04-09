@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.config.behavior
 
-interface SessionBehavior {
+interface UserSessionBehavior {
 
     /**
      * Whether session control is enabled, meaning that features should be gated.

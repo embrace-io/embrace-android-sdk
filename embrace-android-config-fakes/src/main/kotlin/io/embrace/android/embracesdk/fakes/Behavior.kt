@@ -19,10 +19,10 @@ import io.embrace.android.embracesdk.internal.config.behavior.OtelBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.SdkModeBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.SdkModeBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehaviorImpl
-import io.embrace.android.embracesdk.internal.config.behavior.SessionBehavior
-import io.embrace.android.embracesdk.internal.config.behavior.SessionBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.ThreadBlockageBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.ThreadBlockageBehaviorImpl
+import io.embrace.android.embracesdk.internal.config.behavior.UserSessionBehavior
+import io.embrace.android.embracesdk.internal.config.behavior.UserSessionBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 
@@ -41,11 +41,11 @@ fun createThreadBlockageBehavior(
 ): ThreadBlockageBehavior = ThreadBlockageBehaviorImpl(thresholdCheck, remoteCfg)
 
 /**
- * A [SessionBehaviorImpl] that returns default values.
+ * A [UserSessionBehaviorImpl] that returns default values.
  */
 fun createSessionBehavior(
     remoteCfg: RemoteConfig? = null,
-): SessionBehavior = SessionBehaviorImpl(remoteCfg)
+): UserSessionBehavior = UserSessionBehaviorImpl(remoteCfg)
 
 /**
  * A [NetworkBehaviorImpl] that returns default values.

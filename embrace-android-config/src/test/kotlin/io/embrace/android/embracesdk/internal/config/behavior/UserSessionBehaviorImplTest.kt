@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.internal.config.remote.UserSessionRemoteCon
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
-internal class SessionBehaviorImplTest {
+internal class UserSessionBehaviorImplTest {
 
     private val remote = RemoteConfig(
         sessionConfig = SessionRemoteConfig(

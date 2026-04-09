@@ -17,9 +17,9 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
-internal class SessionApiDelegateTest {
+internal class UserSessionApiDelegateTest {
 
-    private lateinit var delegate: SessionApiDelegate
+    private lateinit var delegate: UserSessionApiDelegate
     private lateinit var orchestrator: FakeSessionOrchestrator
     private lateinit var sdkCallChecker: SdkCallChecker
     private lateinit var userSessionPropertiesService: FakeUserSessionPropertiesService
@@ -43,7 +43,7 @@ internal class SessionApiDelegateTest {
         logger = FakeInternalLogger()
         sdkCallChecker = SdkCallChecker(logger, FakeTelemetryService())
         sdkCallChecker.started.set(true)
-        delegate = SessionApiDelegate(moduleInitBootstrapper, sdkCallChecker)
+        delegate = UserSessionApiDelegate(moduleInitBootstrapper, sdkCallChecker)
     }
 
     @Test

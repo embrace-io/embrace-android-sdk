@@ -6,7 +6,7 @@ import kotlin.math.min
 /**
  * Provides the behavior that functionality relating to sessions should follow.
  */
-class SessionBehaviorImpl(private val remote: RemoteConfig?) : SessionBehavior {
+class UserSessionBehaviorImpl(private val remote: RemoteConfig?) : UserSessionBehavior {
 
     companion object {
         const val SESSION_PROPERTY_LIMIT: Int = 100

@@ -13,7 +13,7 @@ import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.otel.spans.hasEmbraceAttributeValue
 import io.embrace.android.embracesdk.internal.payload.Envelope
-import io.embrace.android.embracesdk.internal.payload.SessionPayload
+import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.session.getStateSpan
 import io.embrace.android.embracesdk.semconv.EmbStateTransitionAttributes.EMB_STATE_INITIAL_VALUE
@@ -345,7 +345,7 @@ internal class NavigationStateFeatureTest {
         }
     }
 
-    private fun Envelope<SessionPayload>.getNavigationStateSpan() = getStateSpan("emb-state-screen-automatic")
+    private fun Envelope<SessionPartPayload>.getNavigationStateSpan() = getStateSpan("emb-state-screen-automatic")
 
     class HomeActivity : Activity()
     class SettingsActivity : Activity()

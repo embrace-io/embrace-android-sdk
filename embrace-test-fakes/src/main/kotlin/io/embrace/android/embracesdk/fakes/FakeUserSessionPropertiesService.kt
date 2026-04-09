@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
+import io.embrace.android.embracesdk.internal.capture.session.UserSessionPropertiesService
 
-class FakeSessionPropertiesService : SessionPropertiesService {
+class FakeUserSessionPropertiesService : UserSessionPropertiesService {
 
     var props: MutableMap<String, String> = mutableMapOf()
     var listeners: MutableList<(Map<String, String>) -> Unit> = mutableListOf()

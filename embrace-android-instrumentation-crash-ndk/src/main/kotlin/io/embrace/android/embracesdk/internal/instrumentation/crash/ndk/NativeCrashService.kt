@@ -23,7 +23,7 @@ interface NativeCrashService {
      */
     fun sendNativeCrash(
         nativeCrash: NativeCrashData,
-        sessionProperties: Map<String, String>,
+        userSessionProperties: Map<String, String>,
         metadata: Map<String, String>,
     )
 

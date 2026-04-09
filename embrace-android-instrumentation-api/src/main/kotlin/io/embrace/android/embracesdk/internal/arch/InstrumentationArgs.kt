@@ -106,9 +106,9 @@ interface InstrumentationArgs {
     val processIdentifier: String
 
     /**
-     * Retrieves a snapshot of the current session properties
+     * Retrieves a snapshot of the current user session properties
      */
-    fun sessionProperties(): Map<String, String>
+    fun userSessionProperties(): Map<String, String>
 
     /**
      * Retrieves the crash marker file.

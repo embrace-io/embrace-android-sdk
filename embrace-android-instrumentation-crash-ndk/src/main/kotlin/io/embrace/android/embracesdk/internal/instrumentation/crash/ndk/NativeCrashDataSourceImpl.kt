@@ -22,7 +22,7 @@ internal class NativeCrashDataSourceImpl(
 ) {
     override fun getAndSendNativeCrash(): NativeCrashData? {
         return nativeCrashProcessor.getLatestNativeCrash()?.apply {
-            sendNativeCrash(nativeCrash = this, sessionProperties = emptyMap(), metadata = emptyMap())
+            sendNativeCrash(nativeCrash = this, userSessionProperties = emptyMap(), metadata = emptyMap())
         }
     }
 
@@ -30,7 +30,7 @@ internal class NativeCrashDataSourceImpl(
 
     override fun sendNativeCrash(
         nativeCrash: NativeCrashData,
-        sessionProperties: Map<String, String>,
+        userSessionProperties: Map<String, String>,
         metadata: Map<String, String>,
     ) {
         captureTelemetry {
@@ -68,7 +68,7 @@ internal class NativeCrashDataSourceImpl(
                     )
                 }
 
-                sessionProperties.forEach {
+                userSessionProperties.forEach {
                     setAttribute(key = it.key, it.value)
                 }
             }

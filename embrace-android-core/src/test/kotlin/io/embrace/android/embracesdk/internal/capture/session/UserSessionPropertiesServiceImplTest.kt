@@ -15,9 +15,9 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
-internal class SessionPropertiesServiceImplTest {
+internal class UserSessionPropertiesServiceImplTest {
 
-    private lateinit var service: SessionPropertiesService
+    private lateinit var service: UserSessionPropertiesService
     private lateinit var destination: FakeTelemetryDestination
     private lateinit var telemetryService: FakeTelemetryService
     private lateinit var propState: Map<String, String>
@@ -32,7 +32,7 @@ internal class SessionPropertiesServiceImplTest {
             )
         destination = FakeTelemetryDestination()
         telemetryService = FakeTelemetryService()
-        service = SessionPropertiesServiceImpl(
+        service = UserSessionPropertiesServiceImpl(
             FakeKeyValueStore(),
             fakeConfigService,
             destination,

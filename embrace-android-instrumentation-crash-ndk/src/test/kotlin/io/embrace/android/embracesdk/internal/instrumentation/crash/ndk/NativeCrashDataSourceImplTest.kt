@@ -49,7 +49,7 @@ internal class NativeCrashDataSourceImplTest {
         val sessionPropertyName = "prop".toEmbraceAttributeName()
         nativeCrashDataSource.sendNativeCrash(
             nativeCrash = testNativeCrashData,
-            sessionProperties = mapOf(sessionPropertyName to "value"),
+            userSessionProperties = mapOf(sessionPropertyName to "value"),
             metadata = mapOf(EmbSessionAttributes.EMB_STATE to "background")
         )
 
@@ -82,7 +82,7 @@ internal class NativeCrashDataSourceImplTest {
                 crash = null,
                 symbols = null,
             ),
-            sessionProperties = emptyMap(),
+            userSessionProperties = emptyMap(),
             metadata = emptyMap(),
         )
 
@@ -105,7 +105,7 @@ internal class NativeCrashDataSourceImplTest {
                 crash = "",
                 symbols = emptyMap(),
             ),
-            sessionProperties = emptyMap(),
+            userSessionProperties = emptyMap(),
             metadata = emptyMap(),
         )
 

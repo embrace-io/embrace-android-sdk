@@ -24,7 +24,7 @@ private const val MAX_SESSION_PROPERTIES_FROM_CONFIG = 5
 private const val MAX_SESSION_PROPERTIES_DEFAULT = 10
 
 @RunWith(AndroidJUnit4::class)
-internal class EmbraceSessionPropertiesTest {
+internal class EmbraceUserSessionPropertiesTest {
 
     companion object {
         private const val KEY_VALID = "abc"
@@ -32,7 +32,7 @@ internal class EmbraceSessionPropertiesTest {
     }
 
     private lateinit var store: FakeKeyValueStore
-    private lateinit var sessionProperties: EmbraceSessionProperties
+    private lateinit var props: EmbraceUserSessionProperties
     private lateinit var context: Context
     private lateinit var configService: FakeConfigService
     private lateinit var destination: FakeTelemetryDestination
@@ -48,7 +48,7 @@ internal class EmbraceSessionPropertiesTest {
         )
         destination = FakeTelemetryDestination()
         telemetryService = FakeTelemetryService()
-        sessionProperties = EmbraceSessionProperties(
+        props = EmbraceUserSessionProperties(
             store,
             configService,
             destination,
@@ -57,49 +57,49 @@ internal class EmbraceSessionPropertiesTest {
     }
 
     @Test
-    fun `Add session property with no error when maxSessionProperties is absent`() {
-        assertTrue(sessionProperties.add(KEY_VALID, VALUE_VALID, false))
-        assertEquals(1, sessionProperties.get().size.toLong())
+    fun `Add user session property with no error when maxSessionProperties is absent`() {
+        assertTrue(props.add(KEY_VALID, VALUE_VALID, false))
+        assertEquals(1, props.get().size.toLong())
     }
 
     @Test
-    fun addSessionProperty() {
-        assertTrue(sessionProperties.add(KEY_VALID, VALUE_VALID, false))
-        assertEquals(1, sessionProperties.get().size.toLong())
-        assertEquals(VALUE_VALID, sessionProperties.get()[KEY_VALID])
+    fun addProperty() {
+        assertTrue(props.add(KEY_VALID, VALUE_VALID, false))
+        assertEquals(1, props.get().size.toLong())
+        assertEquals(VALUE_VALID, props.get()[KEY_VALID])
 
         // temporary property should not have been persisted
-        val sessionProperties2 = EmbraceSessionProperties(store, configService, destination, FakeTelemetryService())
+        val sessionProperties2 = EmbraceUserSessionProperties(store, configService, destination, FakeTelemetryService())
         assertTrue(sessionProperties2.get().isEmpty())
     }
 
     @Test
-    fun addSessionPropertyInvalidValue() {
-        assertTrue(sessionProperties.get().isEmpty())
+    fun addPropertyInvalidValue() {
+        assertTrue(props.get().isEmpty())
     }
 
     @Test
-    fun addSessionPropertyPermanent() {
-        assertTrue(sessionProperties.add(KEY_VALID, VALUE_VALID, true))
-        assertEquals(1, sessionProperties.get().size.toLong())
-        assertEquals(VALUE_VALID, sessionProperties.get()[KEY_VALID])
+    fun addPropertyPermanent() {
+        assertTrue(props.add(KEY_VALID, VALUE_VALID, true))
+        assertEquals(1, props.get().size.toLong())
+        assertEquals(VALUE_VALID, props.get()[KEY_VALID])
 
         // permanent property should have been persisted
-        val sessionProperties2 = EmbraceSessionProperties(store, configService, destination, FakeTelemetryService())
+        val sessionProperties2 = EmbraceUserSessionProperties(store, configService, destination, FakeTelemetryService())
         assertEquals(1, sessionProperties2.get().size.toLong())
         assertEquals(VALUE_VALID, sessionProperties2.get()[KEY_VALID])
 
         // /change property to be not permanent
-        assertTrue(sessionProperties.add(KEY_VALID, VALUE_VALID, false))
+        assertTrue(props.add(KEY_VALID, VALUE_VALID, false))
 
         // permanent property should no longer have been persisted
-        val sessionProperties3 = EmbraceSessionProperties(store, configService, destination, FakeTelemetryService())
+        val sessionProperties3 = EmbraceUserSessionProperties(store, configService, destination, FakeTelemetryService())
         assertTrue(sessionProperties3.get().isEmpty())
     }
 
     @Test
     @Throws(InterruptedException::class)
-    fun addSessionPropertyFromMultipleThreads() {
+    fun addPropertyFromMultipleThreads() {
         val expected: MutableMap<String, String> = HashMap()
         val properties = ArrayList<String>()
         var key: String
@@ -112,19 +112,19 @@ internal class EmbraceSessionPropertiesTest {
         val doneSignal = CountDownLatch(properties.size)
         for (property in properties) {
             // start workers that will all add a fragment each
-            Thread(AddPropertyWorker(startSignal, doneSignal, sessionProperties, property)).start()
+            Thread(AddPropertyWorker(startSignal, doneSignal, props, property)).start()
         }
         startSignal.countDown()
         // wait for all the workers to finish
         doneSignal.await()
-        assertEquals(properties.size.toLong(), sessionProperties.get().size.toLong())
-        assertEquals(expected, sessionProperties.get())
+        assertEquals(properties.size.toLong(), props.get().size.toLong())
+        assertEquals(expected, props.get())
     }
 
     internal class AddPropertyWorker(
         private val startSignal: CountDownLatch,
         private val doneSignal: CountDownLatch,
-        private val properties: EmbraceSessionProperties,
+        private val properties: EmbraceUserSessionProperties,
         private val property: String,
     ) : Runnable {
         override fun run() {
@@ -142,17 +142,17 @@ internal class EmbraceSessionPropertiesTest {
     fun addPropertyTooManyWithDefaultMax() {
         var isPermanent = true
         for (i in 0 until MAX_SESSION_PROPERTIES_DEFAULT) {
-            assertTrue(sessionProperties.add("prop$i", VALUE_VALID, isPermanent))
+            assertTrue(props.add("prop$i", VALUE_VALID, isPermanent))
             // flip between permanent and temporary
             isPermanent = !isPermanent
         }
         assertFalse(
             "should not be able to add new key when limit is hit",
-            sessionProperties.add("propPermNew", VALUE_VALID, true)
+            props.add("propPermNew", VALUE_VALID, true)
         )
         assertFalse(
             "should not be able to add new key when limit is hit",
-            sessionProperties.add("propTempNew", VALUE_VALID, false)
+            props.add("propTempNew", VALUE_VALID, false)
         )
 
         // Verify telemetry tracked for dropped properties
@@ -165,99 +165,99 @@ internal class EmbraceSessionPropertiesTest {
         val otherValue = "other"
         assertTrue(
             "should be able to update key when properties are full",
-            sessionProperties.add("prop0", otherValue, true)
+            props.add("prop0", otherValue, true)
         )
         assertEquals(
             "property was updated",
             otherValue,
-            sessionProperties.get()["prop0"]
+            props.get()["prop0"]
         )
-        assertTrue(sessionProperties.remove("prop0"))
+        assertTrue(props.remove("prop0"))
         assertTrue(
             "can add key once one was deleted",
-            sessionProperties.add("prop11", VALUE_VALID, isPermanent)
+            props.add("prop11", VALUE_VALID, isPermanent)
         )
     }
 
     @Test
     fun addPropertyTooManyWithRemoteConfigMax() {
-        configService.sessionBehavior = FakeSessionBehavior(maxSessionProperties = MAX_SESSION_PROPERTIES_FROM_CONFIG)
+        configService.sessionBehavior = FakeSessionBehavior(maxUserSessionProperties = MAX_SESSION_PROPERTIES_FROM_CONFIG)
         var isPermanent = true
         for (i in 0 until MAX_SESSION_PROPERTIES_FROM_CONFIG) {
-            assertTrue(sessionProperties.add("prop$i", VALUE_VALID, isPermanent))
+            assertTrue(props.add("prop$i", VALUE_VALID, isPermanent))
             // flip between permanent and temporary
             isPermanent = !isPermanent
         }
         assertFalse(
             "should not be able to add new key when limit is hit",
-            sessionProperties.add("propPermNew", VALUE_VALID, true)
+            props.add("propPermNew", VALUE_VALID, true)
         )
         assertFalse(
             "should not be able to add new key when limit is hit",
-            sessionProperties.add("propTempNew", VALUE_VALID, false)
+            props.add("propTempNew", VALUE_VALID, false)
         )
         val otherValue = "other"
         assertTrue(
             "should be able to update key when properties are full",
-            sessionProperties.add("prop0", otherValue, true)
+            props.add("prop0", otherValue, true)
         )
         assertEquals(
             "property was updated",
             otherValue,
-            sessionProperties.get()["prop0"]
+            props.get()["prop0"]
         )
-        assertTrue(sessionProperties.remove("prop0"))
+        assertTrue(props.remove("prop0"))
         assertTrue(
             "can add key once one was deleted",
-            sessionProperties.add("prop11", VALUE_VALID, isPermanent)
+            props.add("prop11", VALUE_VALID, isPermanent)
         )
     }
 
     @Test
-    fun removeSessionProperty() {
-        assertTrue(sessionProperties.add(KEY_VALID, VALUE_VALID, false))
-        assertTrue(sessionProperties.remove(KEY_VALID))
-        assertTrue(sessionProperties.get().isEmpty())
+    fun removeProperty() {
+        assertTrue(props.add(KEY_VALID, VALUE_VALID, false))
+        assertTrue(props.remove(KEY_VALID))
+        assertTrue(props.get().isEmpty())
     }
 
     @Test
-    fun removeSessionPropertyPermanent() {
-        assertTrue(sessionProperties.add(KEY_VALID, VALUE_VALID, true))
+    fun removePropertyPermanent() {
+        assertTrue(props.add(KEY_VALID, VALUE_VALID, true))
 
         // permanent property should have been persisted
-        val sessionProperties2 = EmbraceSessionProperties(store, configService, destination, FakeTelemetryService())
+        val sessionProperties2 = EmbraceUserSessionProperties(store, configService, destination, FakeTelemetryService())
         assertEquals(1, sessionProperties2.get().size.toLong())
-        assertTrue(sessionProperties.remove(KEY_VALID))
-        assertTrue(sessionProperties.get().isEmpty())
+        assertTrue(props.remove(KEY_VALID))
+        assertTrue(props.get().isEmpty())
 
         // permanent property should have been removed
-        val sessionProperties3 = EmbraceSessionProperties(store, configService, destination, FakeTelemetryService())
+        val sessionProperties3 = EmbraceUserSessionProperties(store, configService, destination, FakeTelemetryService())
         assertTrue(sessionProperties3.get().isEmpty())
     }
 
     @Test
-    fun removeSessionPropertyInvalidKey() {
-        assertFalse(sessionProperties.remove(""))
+    fun removePropertyInvalidKey() {
+        assertFalse(props.remove(""))
     }
 
     @Test
-    fun removeSessionPropertyDoesNotExist() {
-        assertFalse(sessionProperties.remove(KEY_VALID))
+    fun removePropertyDoesNotExist() {
+        assertFalse(props.remove(KEY_VALID))
     }
 
     @Test
-    fun removeSessionPropertyLongKey() {
+    fun removePropertyLongKey() {
         val longKey = "a".repeat(129)
-        assertTrue(sessionProperties.add(longKey, VALUE_VALID, false))
-        assertTrue(sessionProperties.remove(longKey))
-        assertTrue(sessionProperties.get().isEmpty())
+        assertTrue(props.add(longKey, VALUE_VALID, false))
+        assertTrue(props.remove(longKey))
+        assertTrue(props.get().isEmpty())
     }
 
     @Test
-    fun `permanent session properties can be accessed concurrently`() {
+    fun `permanent properties can be accessed concurrently`() {
         // Add permanent properties
         repeat(5) { i ->
-            sessionProperties.add("perm$i", "value$i", isPermanent = true)
+            props.add("perm$i", "value$i", isPermanent = true)
         }
 
         val iterations = 100
@@ -267,7 +267,7 @@ internal class EmbraceSessionPropertiesTest {
         val apiCaller = Thread {
             repeat(iterations) {
                 try {
-                    sessionProperties.addPermPropsToSessionSpan()
+                    props.addPermPropsToSessionSpan()
                 } catch (e: ConcurrentModificationException) {
                     errors.incrementAndGet()
                 }
@@ -278,8 +278,8 @@ internal class EmbraceSessionPropertiesTest {
         val internalCaller = Thread {
             repeat(iterations) { i ->
                 try {
-                    sessionProperties.add("dynamic$i", "val$i", isPermanent = true)
-                    sessionProperties.remove("dynamic$i")
+                    props.add("dynamic$i", "val$i", isPermanent = true)
+                    props.remove("dynamic$i")
                 } catch (e: ConcurrentModificationException) {
                     errors.incrementAndGet()
                 }

@@ -10,7 +10,7 @@ interface SessionBehavior {
     /**
      * Returns the maximum number of properties that can be attached to a session
      */
-    fun getMaxSessionProperties(): Int
+    fun getMaxUserSessionProperties(): Int
 
     /**
      * Returns the maximum allowed duration of a user session in milliseconds.

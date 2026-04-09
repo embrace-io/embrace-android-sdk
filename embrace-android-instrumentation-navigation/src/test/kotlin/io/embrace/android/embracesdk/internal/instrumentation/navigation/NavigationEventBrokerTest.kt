@@ -86,7 +86,7 @@ internal class NavigationEventBrokerTest {
     }
 
     @Test
-    fun `multiple visible activities results in compound state`() {
+    fun `multiple visible activities results in last activity to open being used as state`() {
         loadTimes.add(broker.submitAndTick(ActivityStarted(homeActivity, clock.now())))
         broker.submitAndTick(ActivityResumed(homeActivity, clock.now()))
         broker.submitAndTick(ActivityStarted(settingsActivity, clock.now()))
@@ -94,14 +94,14 @@ internal class NavigationEventBrokerTest {
         assertEquals(
             listOf(
                 Pair(loadTimes[0], homeActivity.localClassName),
-                Pair(loadTimes[1], "${homeActivity.localClassName} + ${settingsActivity.localClassName}")
+                Pair(loadTimes[1], settingsActivity.localClassName)
             ),
             states
         )
     }
 
     @Test
-    fun `multiple activities with interleaved activity callback orders results in compound state`() {
+    fun `multiple activities with interleaved callbacks results each resume causing a state value change`() {
         broker.submitAndTick(ActivityStarted(homeActivity, clock.now()))
         loadTimes.add(broker.submitAndTick(ActivityStarted(settingsActivity, clock.now())))
         broker.submitAndTick(ActivityResumed(settingsActivity, clock.now()))
@@ -110,7 +110,7 @@ internal class NavigationEventBrokerTest {
         assertEquals(
             listOf(
                 Pair(loadTimes[0], settingsActivity.localClassName),
-                Pair(loadTimes[1], "${homeActivity.localClassName} + ${settingsActivity.localClassName}")
+                Pair(loadTimes[1], homeActivity.localClassName)
             ),
             states
         )

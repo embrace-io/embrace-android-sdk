@@ -29,13 +29,10 @@ internal class NavigationEventBroker(
                 activityStartTimes.remove(event.componentId)?.let { startTime ->
                     visibleActivities[event.componentId] = event.name
                     var loadTime = startTime
-                    val stateValue = if (visibleActivities.values.size > 1) {
+                    if (visibleActivities.values.size > 1) {
                         loadTime = event.timestampMs
-                        visibleActivities.values.toList().sorted().joinToString(separator = " + ")
-                    } else {
-                        event.name
                     }
-                    notifyLoad(event, loadTime, stateValue)
+                    notifyLoad(event, loadTime)
                 }
             }
             is NavigationEvent.ActivityPaused -> {
@@ -48,14 +45,13 @@ internal class NavigationEventBroker(
     private fun notifyLoad(
         event: NavigationEvent,
         loadTime: Long = event.timestampMs,
-        stateValue: String = event.name,
     ) {
         val notify = lastEvent.getAndSet(event)?.let {
             it.componentId != event.componentId || it.name != event.name
         } ?: true
 
         if (notify) {
-            onScreenLoad(loadTime, stateValue)
+            onScreenLoad(loadTime, event.name)
         }
     }
 }

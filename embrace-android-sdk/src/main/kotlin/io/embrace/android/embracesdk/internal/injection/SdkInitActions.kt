@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.internal.injection
 
 import io.embrace.android.embracesdk.core.BuildConfig
 import io.embrace.android.embracesdk.internal.arch.InstrumentationProvider
-import io.embrace.android.embracesdk.internal.arch.attrs.embState
 import io.embrace.android.embracesdk.internal.arch.attrs.toEmbraceAttributeName
 import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.instrumentation.crash.jvm.JvmCrashDataSource
@@ -15,6 +14,7 @@ import io.embrace.android.embracesdk.internal.utils.EmbTrace.end
 import io.embrace.android.embracesdk.internal.utils.EmbTrace.start
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.worker.Worker
+import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.opentelemetry.kotlin.semconv.SessionAttributes
 import java.util.ServiceLoader
 
@@ -191,7 +191,7 @@ private fun ModuleGraph.eventMetadataSupplierProvider(): Provider<Map<String, St
                 sessionState = session.appState
             }
             val state = sessionState ?: essentialServiceModule.appStateTracker.getAppState()
-            put(embState.name, state.description)
+            put(EmbSessionAttributes.EMB_STATE, state.description)
             putAll(
                 essentialServiceModule.sessionPropertiesService
                     .getProperties()
@@ -200,7 +200,7 @@ private fun ModuleGraph.eventMetadataSupplierProvider(): Provider<Map<String, St
                     }
             )
             instrumentationModule.instrumentationRegistry.getCurrentStates().forEach {
-                put(it.key.name, it.value.toString())
+                put(it.key, it.value.toString())
             }
         }
     }

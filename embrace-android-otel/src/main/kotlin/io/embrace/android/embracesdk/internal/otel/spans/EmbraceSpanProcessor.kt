@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.otel.spans
 
-import io.embrace.android.embracesdk.internal.arch.attrs.embProcessIdentifier
-import io.embrace.android.embracesdk.internal.arch.attrs.embSequenceId
+import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.opentelemetry.kotlin.context.Context
 import io.opentelemetry.kotlin.export.OperationResultCode
 import io.opentelemetry.kotlin.semconv.SessionAttributes
@@ -21,8 +20,8 @@ class EmbraceSpanProcessor(
     private val counter = AtomicLong(1)
 
     override fun onStart(span: ReadWriteSpan, parentContext: Context) {
-        span.setStringAttribute(embSequenceId.name, counter.getAndIncrement().toString())
-        span.setStringAttribute(embProcessIdentifier.name, processIdentifier)
+        span.setStringAttribute(EmbSessionAttributes.EMB_PRIVATE_SEQUENCE_ID, counter.getAndIncrement().toString())
+        span.setStringAttribute(EmbSessionAttributes.EMB_PROCESS_IDENTIFIER, processIdentifier)
         sessionIdProvider()?.let { sessionId ->
             span.setStringAttribute(SessionAttributes.SESSION_ID, sessionId)
         }

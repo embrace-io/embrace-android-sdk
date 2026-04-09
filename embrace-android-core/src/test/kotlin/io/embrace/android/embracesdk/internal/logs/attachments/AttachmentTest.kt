@@ -1,14 +1,11 @@
 package io.embrace.android.embracesdk.internal.logs.attachments
 
-import io.embrace.android.embracesdk.internal.arch.attrs.embAttachmentErrorCode
-import io.embrace.android.embracesdk.internal.arch.attrs.embAttachmentId
-import io.embrace.android.embracesdk.internal.arch.attrs.embAttachmentSize
-import io.embrace.android.embracesdk.internal.arch.attrs.embAttachmentUrl
 import io.embrace.android.embracesdk.internal.logs.attachments.Attachment.EmbraceHosted
 import io.embrace.android.embracesdk.internal.logs.attachments.Attachment.UserHosted
 import io.embrace.android.embracesdk.internal.logs.attachments.AttachmentErrorCode.ATTACHMENT_TOO_LARGE
 import io.embrace.android.embracesdk.internal.logs.attachments.AttachmentErrorCode.OVER_MAX_ATTACHMENTS
 import io.embrace.android.embracesdk.internal.logs.attachments.AttachmentErrorCode.UNKNOWN
+import io.embrace.android.embracesdk.semconv.EmbAttachmentAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Test
@@ -109,10 +106,10 @@ internal class AttachmentTest {
         size: Long = SIZE,
         errorCode: AttachmentErrorCode? = null,
     ) {
-        val observedId = checkNotNull(attributes[embAttachmentId])
+        val observedId = checkNotNull(attributes[EmbAttachmentAttributes.EMB_ATTACHMENT_ID])
         assertNotNull(UUID.fromString(observedId))
-        assertEquals(size, checkNotNull(attributes[embAttachmentSize]).toLong())
-        assertEquals(errorCode?.toString(), attributes[embAttachmentErrorCode])
+        assertEquals(size, checkNotNull(attributes[EmbAttachmentAttributes.EMB_ATTACHMENT_SIZE]).toLong())
+        assertEquals(errorCode?.toString(), attributes[EmbAttachmentAttributes.EMB_ATTACHMENT_ERROR_CODE])
         assertEquals(errorCode == null, shouldAttemptUpload())
     }
 
@@ -121,8 +118,8 @@ internal class AttachmentTest {
         id: String = ID,
         errorCode: AttachmentErrorCode? = null,
     ) {
-        assertEquals(id, checkNotNull(attributes[embAttachmentId]))
-        assertEquals(errorCode?.toString(), attributes[embAttachmentErrorCode])
-        assertEquals(url, checkNotNull(attributes[embAttachmentUrl]))
+        assertEquals(id, checkNotNull(attributes[EmbAttachmentAttributes.EMB_ATTACHMENT_ID]))
+        assertEquals(errorCode?.toString(), attributes[EmbAttachmentAttributes.EMB_ATTACHMENT_ERROR_CODE])
+        assertEquals(url, checkNotNull(attributes[EmbAttachmentAttributes.EMB_ATTACHMENT_URL]))
     }
 }

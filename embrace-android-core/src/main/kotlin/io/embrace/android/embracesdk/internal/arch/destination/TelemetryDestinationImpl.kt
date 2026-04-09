@@ -1,11 +1,6 @@
 package io.embrace.android.embracesdk.internal.arch.destination
 
-import io.embrace.android.embracesdk.internal.arch.attrs.EmbraceAttributeKey
 import io.embrace.android.embracesdk.internal.arch.attrs.asPair
-import io.embrace.android.embracesdk.internal.arch.attrs.embStateDroppedByInstrumentation
-import io.embrace.android.embracesdk.internal.arch.attrs.embStateNewValue
-import io.embrace.android.embracesdk.internal.arch.attrs.embStateNotInSession
-import io.embrace.android.embracesdk.internal.arch.attrs.embStateTransitionCount
 import io.embrace.android.embracesdk.internal.arch.datasource.LogSeverity
 import io.embrace.android.embracesdk.internal.arch.datasource.SessionPartStateToken
 import io.embrace.android.embracesdk.internal.arch.datasource.SpanEvent
@@ -24,6 +19,7 @@ import io.embrace.android.embracesdk.internal.otel.sdk.toEmbraceObjectName
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
+import io.embrace.android.embracesdk.semconv.EmbStateTransitionAttributes
 import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
@@ -40,7 +36,7 @@ class TelemetryDestinationImpl(
 ) : TelemetryDestination {
 
     override var sessionUpdateAction: (() -> Unit)? = null
-    override var currentStatesProvider: () -> Map<EmbraceAttributeKey, Any> = { emptyMap() }
+    override var currentStatesProvider: () -> Map<String, Any> = { emptyMap() }
 
     override fun addLog(
         schemaType: SchemaType,
@@ -68,11 +64,11 @@ class TelemetryDestinationImpl(
             addCurrentMetadata = addCurrentSessionInfo
         ) {
             if (isPrivate) {
-                setStringAttribute(PrivateSpan.key.name, PrivateSpan.value)
+                setStringAttribute(PrivateSpan.key, PrivateSpan.value)
             }
 
             with(schemaType) {
-                setStringAttribute(telemetryType.key.name, telemetryType.value)
+                setStringAttribute(telemetryType.key, telemetryType.value)
                 attributes().forEach {
                     setStringAttribute(it.key, it.value)
                 }
@@ -258,27 +254,39 @@ class TelemetryDestinationImpl(
             spanToken.addEvent(
                 name = "transition",
                 eventTimeMs = updateDetectedTimeMs,
-                attributes = mutableMapOf(embStateNewValue.asPair(newValue))
+                attributes = mutableMapOf(EmbStateTransitionAttributes.EMB_STATE_NEW_VALUE to newValue.toString())
                     .apply {
                         if (unrecordedTransitions.notInSession > 0) {
-                            setEmbraceAttribute(embStateNotInSession, unrecordedTransitions.notInSession)
+                            setEmbraceAttribute(EmbStateTransitionAttributes.EMB_STATE_NOT_IN_SESSION, unrecordedTransitions.notInSession)
                         }
 
                         if (unrecordedTransitions.droppedByInstrumentation > 0) {
-                            setEmbraceAttribute(embStateDroppedByInstrumentation, unrecordedTransitions.droppedByInstrumentation)
+                            setEmbraceAttribute(
+                                EmbStateTransitionAttributes.EMB_STATE_DROPPED_BY_INSTRUMENTATION,
+                                unrecordedTransitions.droppedByInstrumentation
+                            )
                         }
                     }.toMap()
             )
-            spanToken.setSystemAttribute(embStateTransitionCount, transitionCount.incrementAndGet())
+            spanToken.setSystemAttribute(
+                EmbStateTransitionAttributes.EMB_STATE_TRANSITION_COUNT,
+                transitionCount.incrementAndGet().toString()
+            )
             return true
         }
 
         override fun end(unrecordedTransitions: UnrecordedTransitions) {
             if (unrecordedTransitions.notInSession > 0) {
-                spanToken.setSystemAttribute(embStateNotInSession, unrecordedTransitions.notInSession)
+                spanToken.setSystemAttribute(
+                    EmbStateTransitionAttributes.EMB_STATE_NOT_IN_SESSION,
+                    unrecordedTransitions.notInSession.toString()
+                )
             }
             if (unrecordedTransitions.droppedByInstrumentation > 0) {
-                spanToken.setSystemAttribute(embStateDroppedByInstrumentation, unrecordedTransitions.droppedByInstrumentation)
+                spanToken.setSystemAttribute(
+                    EmbStateTransitionAttributes.EMB_STATE_DROPPED_BY_INSTRUMENTATION,
+                    unrecordedTransitions.droppedByInstrumentation.toString()
+                )
             }
             spanToken.stop()
         }

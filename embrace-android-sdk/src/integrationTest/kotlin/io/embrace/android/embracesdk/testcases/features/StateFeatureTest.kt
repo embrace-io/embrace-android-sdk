@@ -8,9 +8,7 @@ import io.embrace.android.embracesdk.assertions.hasLinkToEmbraceSpan
 import io.embrace.android.embracesdk.fakes.TestStateDataSource
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
-import io.embrace.android.embracesdk.internal.arch.attrs.EmbraceAttributeKey
-import io.embrace.android.embracesdk.internal.arch.attrs.embStateDroppedByInstrumentation
-import io.embrace.android.embracesdk.internal.arch.attrs.embStateInitialValue
+import io.embrace.android.embracesdk.semconv.EmbStateTransitionAttributes
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.LinkType
 import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
@@ -170,7 +168,7 @@ internal class StateFeatureTest {
                     sessionSpan.hasLinkToEmbraceSpan(stateSpan, LinkType.State)
                     assertEquals(sessionSpan.startTimeNanos, stateSpan.startTimeNanos)
                     assertEquals(sessionSpan.endTimeNanos, stateSpan.endTimeNanos)
-                    stateSpan.attributes?.hasEmbraceAttributeValue(embStateInitialValue, initialStateValue)
+                    stateSpan.attributes?.hasEmbraceAttributeValue(EmbStateTransitionAttributes.EMB_STATE_INITIAL_VALUE, initialStateValue)
                     initialStateValue = stateUpdates[i]
                 }
             }
@@ -220,7 +218,7 @@ internal class StateFeatureTest {
                     )
                 }
 
-                stateSpan.hasEmbraceAttributeValue(embStateDroppedByInstrumentation, 1)
+                stateSpan.hasEmbraceAttributeValue(EmbStateTransitionAttributes.EMB_STATE_DROPPED_BY_INSTRUMENTATION, 1)
             }
         )
     }
@@ -284,7 +282,7 @@ internal class StateFeatureTest {
                         )
                     }
                 }
-                stateSpan.hasEmbraceAttributeValue(embStateDroppedByInstrumentation, 3)
+                stateSpan.hasEmbraceAttributeValue(EmbStateTransitionAttributes.EMB_STATE_DROPPED_BY_INSTRUMENTATION, 3)
             }
         )
     }
@@ -338,7 +336,7 @@ internal class StateFeatureTest {
                 val sessions = getSessionEnvelopes(2)
                 repeat(sessions.size) { i ->
                     val stateSpan = checkNotNull(sessions[i].getStateSpan("emb-state-test"))
-                    stateSpan.attributes?.hasEmbraceAttributeValue(embStateInitialValue, "baz")
+                    stateSpan.attributes?.hasEmbraceAttributeValue(EmbStateTransitionAttributes.EMB_STATE_INITIAL_VALUE, "baz")
                 }
             }
         )
@@ -348,7 +346,7 @@ internal class StateFeatureTest {
     fun `logs have correct current state`() {
         val stateUpdates = listOf("foo", "bar")
         val stateValues = mutableListOf<String>()
-        var dataSourceKey: EmbraceAttributeKey? = null
+        var dataSourceKey: String? = null
         testRule.runTest(
             instrumentedConfig = FakeInstrumentedConfig(
                 enabledFeatures = FakeEnabledFeatureConfig(

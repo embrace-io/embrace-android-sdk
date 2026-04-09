@@ -479,6 +479,26 @@ groups:
         brief: "The exception handling type - whether it's handled or unhandled."
         stability: development
         examples: ["handled", "unhandled"]
+      - id: emb.android.crash.exception_cause
+        type: string
+        brief: "The list of Throwable that caused the exception responsible for a crash."
+        stability: development
+        examples: ["cause1 -> cause2"]
+      - id: emb.android.react_native_crash.js_exception
+        type: string
+        brief: "The JavaScript unhandled exception from the ReactNative layer."
+        stability: development
+        examples: ["TypeError: undefined is not a function"]
+      - id: emb.android.native_crash.exception
+        type: string
+        brief: "Exception coming from the native layer."
+        stability: development
+        examples: ["SIGSEGV"]
+      - id: emb.android.native_crash.symbols
+        type: string
+        brief: "Native symbols used to symbolicate a native crash."
+        stability: development
+        examples: ["{\"arch\":\"arm64\"}"]
 
   - id: emb.state_transition
     type: attribute_group
@@ -538,3 +558,67 @@ groups:
         brief: "The error code associated with a failed log message attachment."
         stability: development
         examples: ["404", "500"]
+
+  - id: emb.span
+    type: attribute_group
+    stability: development
+    brief: "Embrace span-level attributes"
+    prefix: ""
+    attributes:
+      - id: emb.error_code
+        type: string
+        brief: "Error code indicating the reason a span ended unsuccessfully."
+        stability: development
+        examples: ["failure", "user_abandon", "unknown"]
+      - id: emb.link_type
+        type: string
+        brief: "Semantic meaning of a span link, defining the relationship between the containing span and the linked span."
+        stability: development
+        examples: ["PREV_SESSION", "END_SESSION", "ENDED_IN", "STATE"]
+      - id: emb.private
+        type: string
+        brief: "Denotes a private span recorded by Embrace for diagnostic or internal usage purposes."
+        stability: development
+        examples: ["true"]
+      - id: emb.termination_cause
+        type: string
+        brief: "The reason an app instance terminated."
+        stability: development
+        examples: ["crash", "user_termination", "unknown"]
+
+  - id: emb.telemetry
+    type: attribute_group
+    stability: development
+    brief: "Embrace SDK self-telemetry and environment attributes"
+    prefix: ""
+    attributes:
+      - id: emb.okhttp3
+        type: string
+        brief: "Whether OkHttp3 is present on the classpath."
+        stability: development
+        examples: ["true", "false"]
+      - id: emb.okhttp3_on_classpath
+        type: string
+        brief: "The version of OkHttp3 found on the classpath."
+        stability: development
+        examples: ["4.11.0"]
+      - id: emb.kotlin_on_classpath
+        type: string
+        brief: "The version of Kotlin found on the classpath."
+        stability: development
+        examples: ["1.9.0"]
+      - id: emb.is_emulator
+        type: string
+        brief: "Whether the app is running on an emulator."
+        stability: development
+        examples: ["true", "false"]
+      - id: emb.storage.used
+        type: string
+        brief: "Storage used by Embrace in bytes."
+        stability: development
+        examples: ["102400"]
+      - id: emb.storage.available
+        type: string
+        brief: "Storage available on the device in bytes."
+        stability: development
+        examples: ["1073741824"]

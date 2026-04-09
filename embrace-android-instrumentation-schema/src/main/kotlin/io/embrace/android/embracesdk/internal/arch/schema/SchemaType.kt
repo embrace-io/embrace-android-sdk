@@ -1,16 +1,15 @@
 package io.embrace.android.embracesdk.internal.arch.schema
 
-import io.embrace.android.embracesdk.internal.arch.attrs.embAeiNumber
-import io.embrace.android.embracesdk.internal.arch.attrs.embCrashNumber
-import io.embrace.android.embracesdk.internal.arch.attrs.embSendMode
-import io.embrace.android.embracesdk.internal.arch.attrs.embStateInitialValue
 import io.embrace.android.embracesdk.semconv.EmbAeiAttributes
+import io.embrace.android.embracesdk.semconv.EmbAndroidAttributes
 import io.embrace.android.embracesdk.semconv.EmbBreadcrumbAttributes
 import io.embrace.android.embracesdk.semconv.EmbNetworkCapturedRequestAttributes
 import io.embrace.android.embracesdk.semconv.EmbNetworkStateAttributes
 import io.embrace.android.embracesdk.semconv.EmbNetworkStatusAttributes
 import io.embrace.android.embracesdk.semconv.EmbPowerStateAttributes
 import io.embrace.android.embracesdk.semconv.EmbPushNotificationAttributes
+import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
+import io.embrace.android.embracesdk.semconv.EmbStateTransitionAttributes
 import io.embrace.android.embracesdk.semconv.EmbTapAttributes
 import io.embrace.android.embracesdk.semconv.EmbThermalStateAttributes
 import io.embrace.android.embracesdk.semconv.EmbViewAttributes
@@ -35,7 +34,7 @@ sealed class SchemaType(
 
     private val commonAttributes: Map<String, String> = mutableMapOf<String, String>().apply {
         if (telemetryType.sendMode != SendMode.DEFAULT) {
-            plusAssign(embSendMode.name to telemetryType.sendMode.name)
+            plusAssign(EmbSessionAttributes.EMB_PRIVATE_SEND_MODE to telemetryType.sendMode.name)
         }
     }
 
@@ -140,8 +139,8 @@ sealed class SchemaType(
             EmbAeiAttributes.TIMESTAMP to timestamp.toString(),
             EmbAeiAttributes.DESCRIPTION to description,
             EmbAeiAttributes.TRACE_STATUS to traceStatus,
-            embCrashNumber.name to crashNumber.toString(),
-            embAeiNumber.name to aeiNumber.toString()
+            EmbAndroidAttributes.EMB_ANDROID_CRASH_NUMBER to crashNumber.toString(),
+            EmbAndroidAttributes.EMB_ANDROID_AEI_CRASH_NUMBER to aeiNumber.toString()
         ).toNonNullMap()
     }
 
@@ -275,7 +274,7 @@ sealed class SchemaType(
         fixedObjectName = "state-$stateName"
     ) {
         override val schemaAttributes: Map<String, String> = mapOf(
-            embStateInitialValue.name to initialValue.toString()
+            EmbStateTransitionAttributes.EMB_STATE_INITIAL_VALUE to initialValue.toString()
         )
     }
 

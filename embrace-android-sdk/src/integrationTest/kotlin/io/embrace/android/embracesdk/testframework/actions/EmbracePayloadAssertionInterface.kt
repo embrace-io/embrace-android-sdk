@@ -8,9 +8,7 @@ import io.embrace.android.embracesdk.assertions.findSessionSpan
 import io.embrace.android.embracesdk.assertions.getSessionId
 import io.embrace.android.embracesdk.assertions.returnIfConditionMet
 import io.embrace.android.embracesdk.internal.TypeUtils
-import io.embrace.android.embracesdk.internal.arch.attrs.embCleanExit
-import io.embrace.android.embracesdk.internal.arch.attrs.embCrashId
-import io.embrace.android.embracesdk.internal.arch.attrs.embState
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.semconv.EmbAndroidAttributes
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.internal.arch.state.AppState
@@ -139,8 +137,8 @@ internal class EmbracePayloadAssertionInterface(
             val sessions: List<Map<String, String?>> = envelopes.map {
                 mapOf(
                     "sessionId" to it.getSessionId(),
-                    "cleanExit" to it.findSessionSpan().attributes?.findAttributeValue(embCleanExit.name),
-                    "state" to it.findSessionSpan().attributes?.findAttributeValue(embState.name)
+                    "cleanExit" to it.findSessionSpan().attributes?.findAttributeValue(EmbSessionAttributes.EMB_CLEAN_EXIT),
+                    "state" to it.findSessionSpan().attributes?.findAttributeValue(EmbSessionAttributes.EMB_STATE)
                 )
             }
             throwPayloadErrMsg(expectedSize, envelopes.filter { it.findAppState() == appState }.size, sessions, exc)
@@ -149,7 +147,7 @@ internal class EmbracePayloadAssertionInterface(
 
     private fun Envelope<SessionPartPayload>.findAppState(): AppState {
         val attrs = findSessionSpan().attributes
-        val state = checkNotNull(attrs?.findAttributeValue(embState.name)) {
+        val state = checkNotNull(attrs?.findAttributeValue(EmbSessionAttributes.EMB_STATE)) {
             "AppState not found in session payload."
         }
         val value = state.uppercase(Locale.ENGLISH)
@@ -220,10 +218,10 @@ internal class EmbracePayloadAssertionInterface(
                 assertEquals(crashData.lastHeartbeatMs, endTimeNanos?.nanosToMillis())
                 assertEquals(
                     crashData.nativeCrash.nativeCrashId,
-                    attributes?.findAttributeValue(embCrashId.name)
+                    attributes?.findAttributeValue(EmbSessionAttributes.EMB_CRASH_ID)
                 )
             } else {
-                assertNull(attributes?.findAttributeValue(embCrashId.name))
+                assertNull(attributes?.findAttributeValue(EmbSessionAttributes.EMB_CRASH_ID))
             }
         }
     }
@@ -245,8 +243,8 @@ internal class EmbracePayloadAssertionInterface(
         val attrs = checkNotNull(log.attributes)
         attrs.assertMatches(
             mapOf(
-                "emb.android.native_crash.exception" to crashData.nativeCrash.crash,
-                "emb.android.native_crash.symbols" to symbols,
+                EmbType.System.NativeCrash.embNativeCrashException to crashData.nativeCrash.crash,
+                EmbType.System.NativeCrash.embNativeCrashSymbols to symbols,
                 EmbSessionAttributes.EMB_PRIVATE_SEND_MODE to "DEFER",
                 "emb.type" to "sys.android.native_crash",
             )

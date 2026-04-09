@@ -28,7 +28,7 @@ internal class DefaultSpanExporter(
                     try {
                         exporter.export(
                             telemetry.filterNot {
-                                it.attributes.containsKey(PrivateSpan.key.name)
+                                it.attributes.containsKey(PrivateSpan.key)
                             }
                         )
                     } catch (ignored: Throwable) {

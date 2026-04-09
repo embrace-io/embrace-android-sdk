@@ -20,7 +20,7 @@ import org.junit.runner.RunWith
  * Asserts that a stateful session can be recorded.
  */
 @RunWith(AndroidJUnit4::class)
-internal class StatefulSessionTest {
+internal class StatefulSessionPartTest {
 
     @Rule
     @JvmField

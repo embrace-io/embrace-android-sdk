@@ -301,7 +301,7 @@ class TracingApiBenchmarks {
 
     private fun cleanup(): List<EmbraceSpanData> {
         spanSink.flushSpans()
-        return harness.currentSessionSpan.endSession(true)
+        return harness.currentSessionPartSpan.endSession(true)
     }
 
     companion object {

@@ -15,7 +15,7 @@ import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.session.LifeEventType
 import io.embrace.android.embracesdk.internal.session.SessionPartToken
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionPartSnapshotType
-import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
+import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpan
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
@@ -29,7 +29,7 @@ internal class PayloadMessageCollatorImplTest {
 
     private lateinit var initModule: FakeInitModule
     private lateinit var coreModule: CoreModule
-    private lateinit var currentSessionSpan: CurrentSessionSpan
+    private lateinit var currentSessionPartSpan: CurrentSessionPartSpan
     private lateinit var collator: PayloadMessageCollatorImpl
 
     @Before
@@ -41,10 +41,10 @@ internal class PayloadMessageCollatorImplTest {
             resourceSource = FakeEnvelopeResourceSource(),
             payloadSource = FakeSessionPartPayloadSource()
         )
-        currentSessionSpan = initModule.openTelemetryModule.currentSessionSpan
+        currentSessionPartSpan = initModule.openTelemetryModule.currentSessionPartSpan
         collator = PayloadMessageCollatorImpl(
             store = FakeOrdinalStore(),
-            currentSessionSpan = currentSessionSpan,
+            currentSessionPartSpan = currentSessionPartSpan,
             sessionPartEnvelopeSource = sessionPartEnvelopeSource
         )
     }
@@ -129,7 +129,7 @@ internal class PayloadMessageCollatorImplTest {
 
     @Test
     fun `session span is created when session payload is built if it did not exist before`() {
-        currentSessionSpan.endSession(startNewSession = false)
+        currentSessionPartSpan.endSession(startNewSession = false)
         listOf(true, false).forEach { startupTemperature ->
             LifeEventType.entries.forEach { lifeEventType ->
                 AppState.entries.forEach { previousState ->

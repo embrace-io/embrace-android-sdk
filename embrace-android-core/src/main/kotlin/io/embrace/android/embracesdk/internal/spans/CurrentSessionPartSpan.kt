@@ -9,7 +9,7 @@ import io.embrace.android.embracesdk.spans.EmbraceSpan
 /**
  * Abstraction of the current session span
  */
-interface CurrentSessionSpan : Initializable {
+interface CurrentSessionPartSpan : Initializable {
     /**
      * Ensure there exists a session span that is ready to take in data, and create one if it's possible.
      * Returns true if an active session span exists at the time the method returns.

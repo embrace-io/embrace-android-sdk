@@ -5,7 +5,7 @@ import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorServic
 import io.embrace.android.embracesdk.fakes.FakeAppStateTracker
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
-import io.embrace.android.embracesdk.fakes.FakeCurrentSessionSpan
+import io.embrace.android.embracesdk.fakes.FakeCurrentSessionPartSpan
 import io.embrace.android.embracesdk.fakes.FakeDataSource
 import io.embrace.android.embracesdk.fakes.FakeLogEnvelopeSource
 import io.embrace.android.embracesdk.fakes.FakeLogLimitingService
@@ -64,7 +64,7 @@ internal class SessionPartOrchestratorTest {
     private lateinit var instrumentationRegistry: InstrumentationRegistry
     private lateinit var fakeDataSource: FakeDataSource
     private lateinit var logger: InternalLogger
-    private lateinit var currentSessionSpan: FakeCurrentSessionSpan
+    private lateinit var currentSessionPartSpan: FakeCurrentSessionPartSpan
     private lateinit var destination: FakeTelemetryDestination
     private var orchestratorStartTimeMs: Long = 0
 
@@ -85,7 +85,7 @@ internal class SessionPartOrchestratorTest {
         assertEquals(orchestrator, appStateTracker.listeners.single())
         assertEquals(0, payloadCollator.sessionCount.get())
         assertEquals(1, payloadCollator.baCount.get())
-        assertEquals(sessionTracker.getActiveSessionId(), currentSessionSpan.getSessionId())
+        assertEquals(sessionTracker.getActiveSessionId(), currentSessionPartSpan.getSessionId())
         assertTrue(store.storedSessionPartPayloads.isEmpty())
         assertTrue(store.cachedEmptyCrashPayloads.isEmpty())
         assertEquals(1, fakeDataSource.enableDataCaptureCount)
@@ -97,7 +97,7 @@ internal class SessionPartOrchestratorTest {
         assertEquals(orchestrator, appStateTracker.listeners.single())
         assertEquals(1, payloadCollator.sessionCount.get())
         assertEquals(0, payloadCollator.baCount.get())
-        assertEquals(sessionTracker.getActiveSessionId(), currentSessionSpan.getSessionId())
+        assertEquals(sessionTracker.getActiveSessionId(), currentSessionPartSpan.getSessionId())
         assertTrue(store.storedSessionPartPayloads.isEmpty())
         assertTrue(store.cachedEmptyCrashPayloads.isEmpty())
         assertEquals(1, fakeDataSource.enableDataCaptureCount)
@@ -108,7 +108,7 @@ internal class SessionPartOrchestratorTest {
         createOrchestrator(AppState.BACKGROUND)
         clock.tick()
         val foregroundTime = clock.now()
-        val sessionSpan = currentSessionSpan.sessionSpan
+        val sessionSpan = currentSessionPartSpan.sessionSpan
         orchestrator.onForeground()
         assertEquals(1, fakeDataSource.enableDataCaptureCount)
         validateSession(
@@ -124,7 +124,7 @@ internal class SessionPartOrchestratorTest {
         createOrchestrator(AppState.FOREGROUND)
         clock.tick()
         val backgroundTime = clock.now()
-        val sessionSpan = currentSessionSpan.sessionSpan
+        val sessionSpan = currentSessionPartSpan.sessionSpan
         orchestrator.onBackground()
         validateSession(
             sessionSpan = sessionSpan,
@@ -187,7 +187,7 @@ internal class SessionPartOrchestratorTest {
         createOrchestrator(AppState.FOREGROUND)
         clock.tick(10000)
         val endTimeMs = clock.now()
-        val sessionSpan = currentSessionSpan.sessionSpan
+        val sessionSpan = currentSessionPartSpan.sessionSpan
         orchestrator.endSessionWithManual(true)
         validateSession(
             sessionSpan = sessionSpan,
@@ -383,9 +383,9 @@ internal class SessionPartOrchestratorTest {
     private fun createOrchestrator(state: AppState) {
         store = FakePayloadStore()
         appStateTracker = FakeAppStateTracker(state)
-        currentSessionSpan = FakeCurrentSessionSpan(clock).apply { initializeService(clock.now()) }
+        currentSessionPartSpan = FakeCurrentSessionPartSpan(clock).apply { initializeService(clock.now()) }
         destination = FakeTelemetryDestination()
-        payloadCollator = FakePayloadMessageCollator(currentSessionSpan = currentSessionSpan)
+        payloadCollator = FakePayloadMessageCollator(currentSessionPartSpan = currentSessionPartSpan)
         val payloadSourceModule = FakePayloadSourceModule()
         logEnvelopeSource = payloadSourceModule.logEnvelopeSource
         payloadFactory = PayloadFactoryImpl(

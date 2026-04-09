@@ -14,12 +14,12 @@ import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.session.captureDataSafely
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionPartSnapshotType
-import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
+import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpan
 
 internal class SessionPartPayloadSourceImpl(
     private val symbolMap: Map<String, String>?,
     private val spanSink: SpanSink,
-    private val currentSessionSpan: CurrentSessionSpan,
+    private val currentSessionPartSpan: CurrentSessionPartSpan,
     private val spanRepository: SpanRepository,
     private val otelPayloadMapper: OtelPayloadMapper?,
     private val appStateTracker: AppStateTracker,
@@ -69,7 +69,7 @@ internal class SessionPartPayloadSourceImpl(
                         else -> null
                     }
                     otelPayloadMapper?.record()
-                    val spans = currentSessionSpan.endSession(
+                    val spans = currentSessionPartSpan.endSession(
                         startNewSession = startNewSession,
                         appTerminationCause = appTerminationCause
                     )

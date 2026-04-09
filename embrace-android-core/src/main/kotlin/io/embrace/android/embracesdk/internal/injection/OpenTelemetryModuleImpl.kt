@@ -20,8 +20,8 @@ import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.otel.spans.SpanSink
 import io.embrace.android.embracesdk.internal.otel.spans.SpanSinkImpl
-import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
-import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpanImpl
+import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpan
+import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpanImpl
 import io.embrace.android.embracesdk.internal.spans.EmbraceTracer
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 
@@ -53,7 +53,7 @@ class OpenTelemetryModuleImpl(
             appVersion = initModule.instrumentedConfig.project.getVersionName() ?: "UNKNOWN",
             packageName = initModule.instrumentedConfig.project.getPackageName() ?: "UNKNOWN",
             systemInfo = initModule.systemInfo,
-            sessionIdProvider = { currentSessionSpan.getSessionId() },
+            sessionIdProvider = { currentSessionPartSpan.getSessionId() },
             processIdentifierProvider = processIdentifierProvider,
         )
     }
@@ -116,8 +116,8 @@ class OpenTelemetryModuleImpl(
         )
     }
 
-    override val currentSessionSpan: CurrentSessionSpan by lazy {
-        CurrentSessionSpanImpl(
+    override val currentSessionPartSpan: CurrentSessionPartSpan by lazy {
+        CurrentSessionPartSpanImpl(
             openTelemetryClock = openTelemetryClock,
             telemetryService = initModule.telemetryService,
             spanRepository = spanRepository,
@@ -133,8 +133,8 @@ class OpenTelemetryModuleImpl(
     override val spanService: SpanService by singleton {
         EmbraceSpanService(
             spanRepository = spanRepository,
-            canStartNewSpan = currentSessionSpan::canStartNewSpan,
-            initCallback = currentSessionSpan::initializeService,
+            canStartNewSpan = currentSessionPartSpan::canStartNewSpan,
+            initCallback = currentSessionPartSpan::initializeService,
             dataValidator = dataValidator,
             tracerSupplier = { otelSdkWrapper.sdkTracer },
             openTelemetrySupplier = { otelSdkWrapper.openTelemetryKotlin },

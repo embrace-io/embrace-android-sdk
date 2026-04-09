@@ -24,7 +24,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 
-internal class CurrentSessionSpanImpl(
+internal class CurrentSessionPartSpanImpl(
     private val openTelemetryClock: Clock,
     private val telemetryService: TelemetryService,
     private val spanRepository: SpanRepository,
@@ -32,7 +32,7 @@ internal class CurrentSessionSpanImpl(
     private val tracerSupplier: Provider<Tracer>,
     private val openTelemetrySupplier: Provider<OpenTelemetry>,
     private val embraceSpanFactorySupplier: Provider<EmbraceSpanFactory>,
-) : CurrentSessionSpan {
+) : CurrentSessionPartSpan {
 
     /**
      * Number of traces created in the current session. This value will be reset when a new session is created.
@@ -97,22 +97,22 @@ internal class CurrentSessionSpanImpl(
     }
 
     override fun spanStopCallback(spanId: String) {
-        val currentSessionSpan = sessionSpan.get()
+        val currentSessionPartSpan = sessionSpan.get()
         val spanToStop = spanRepository.getSpan(spanId)
 
-        if (currentSessionSpan != spanToStop) {
+        if (currentSessionPartSpan != spanToStop) {
             spanToStop?.spanContext?.let { spanToStopContext ->
-                if (currentSessionSpan != null) {
-                    currentSessionSpan.addSystemLink(spanToStopContext, LinkType.EndedIn)
+                if (currentSessionPartSpan != null) {
+                    currentSessionPartSpan.addSystemLink(spanToStopContext, LinkType.EndedIn)
                     if (spanToStop.hasEmbraceAttribute(EmbType.State)) {
-                        currentSessionSpan.addSystemLink(spanToStopContext, LinkType.State)
+                        currentSessionPartSpan.addSystemLink(spanToStopContext, LinkType.State)
                     }
                 }
             }
 
-            val sessionId = currentSessionSpan?.getSystemAttribute(SessionAttributes.SESSION_ID)
+            val sessionId = currentSessionPartSpan?.getSystemAttribute(SessionAttributes.SESSION_ID)
             if (sessionId != null) {
-                currentSessionSpan.spanContext?.let { sessionSpanContext ->
+                currentSessionPartSpan.spanContext?.let { sessionSpanContext ->
                     spanToStop?.addSystemLink(
                         linkedSpanContext = sessionSpanContext,
                         type = LinkType.EndSession,

@@ -61,7 +61,7 @@ class PayloadSourceModuleImpl(
             SessionPartPayloadSourceImpl(
                 configService.nativeSymbolMap,
                 otelModule.spanSink,
-                otelModule.currentSessionSpan,
+                otelModule.currentSessionPartSpan,
                 otelModule.spanRepository,
                 otelPayloadMapper,
                 essentialServiceModule.appStateTracker,

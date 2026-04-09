@@ -4,7 +4,7 @@ import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.fakes.FakeAttributesMutator
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeClock.Companion.DEFAULT_FAKE_CURRENT_TIME
-import io.embrace.android.embracesdk.fakes.FakeCurrentSessionSpan
+import io.embrace.android.embracesdk.fakes.FakeCurrentSessionPartSpan
 import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
 import io.embrace.android.embracesdk.fakes.FakeEventService
 import io.embrace.android.embracesdk.fakes.FakeSpanService
@@ -36,7 +36,7 @@ internal class TelemetryDestinationImplTest {
     private lateinit var clock: FakeClock
     private lateinit var spanService: FakeSpanService
     private lateinit var eventService: FakeEventService
-    private lateinit var currentSessionSpan: FakeCurrentSessionSpan
+    private lateinit var currentSessionPartSpan: FakeCurrentSessionPartSpan
     private var sessionDataUpdated = false
 
     @Before
@@ -44,7 +44,7 @@ internal class TelemetryDestinationImplTest {
         clock = FakeClock()
         spanService = FakeSpanService()
         eventService = FakeEventService()
-        currentSessionSpan = FakeCurrentSessionSpan()
+        currentSessionPartSpan = FakeCurrentSessionPartSpan()
         impl = createDestination()
     }
 
@@ -53,7 +53,7 @@ internal class TelemetryDestinationImplTest {
             clock = clock,
             spanService = spanService,
             eventService = eventService,
-            currentSessionSpan = currentSessionSpan,
+            currentSessionPartSpan = currentSessionPartSpan,
         ).also {
             it.sessionUpdateAction = { sessionDataUpdated = true }
         }
@@ -258,8 +258,8 @@ internal class TelemetryDestinationImplTest {
 
     @Test
     fun `test session span events`() {
-        currentSessionSpan.readySession()
-        val current = checkNotNull(currentSessionSpan.current())
+        currentSessionPartSpan.readySession()
+        val current = checkNotNull(currentSessionPartSpan.current())
         val schemaType = SchemaType.Breadcrumb("Hi")
         impl.addSessionEvent(schemaType, 5)
         verifyAndResetSessionUpdate()
@@ -268,14 +268,14 @@ internal class TelemetryDestinationImplTest {
         assertEquals("emb-${schemaType.fixedObjectName}", event.name)
 
         impl.removeSessionEvents(schemaType.telemetryType)
-        assertTrue(currentSessionSpan.addedEvents.isEmpty())
+        assertTrue(currentSessionPartSpan.addedEvents.isEmpty())
         verifyAndResetSessionUpdate()
     }
 
     @Test
     fun `test session span attributes`() {
-        currentSessionSpan.readySession()
-        val current = checkNotNull(currentSessionSpan.current())
+        currentSessionPartSpan.readySession()
+        val current = checkNotNull(currentSessionPartSpan.current())
         impl.addSessionAttribute("foo", "bar")
         assertEquals("bar", current.attributes()["foo"])
         verifyAndResetSessionUpdate()

@@ -28,13 +28,13 @@ internal class TelemetryDestinationHarness {
     val logSink: LogSink = otelModule.logSink
     val spanSink: SpanSink = otelModule.spanSink
     val spanService = otelModule.spanService
-    val currentSessionSpan = otelModule.currentSessionSpan
+    val currentSessionPartSpan = otelModule.currentSessionPartSpan
 
     val destination: TelemetryDestination = TelemetryDestinationImpl(
         clock = initModule.clock,
         spanService = spanService,
         eventService = otelModule.eventService,
-        currentSessionSpan = otelModule.currentSessionSpan,
+        currentSessionPartSpan = otelModule.currentSessionPartSpan,
     )
 
     private class TestInitModule : InitModule {

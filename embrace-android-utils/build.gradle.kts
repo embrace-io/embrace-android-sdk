@@ -13,4 +13,5 @@ dependencies {
     implementation(project(":embrace-android-infra"))
 
     testImplementation(libs.robolectric)
+    testImplementation(project(":embrace-test-common"))
 }

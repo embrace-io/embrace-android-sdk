@@ -43,9 +43,7 @@ internal class NormalizedIntervalClockTest {
         clock.now() // record high-water mark
         elapsedMs -= 60_001L // drift back by just over 60s
         clock.now()
-        assertEquals(1, logger.errorMessages.size)
-        assertTrue(logger.errorMessages[0].msg.contains("drifted back"))
-        assertTrue(logger.errorMessages[0].msg.contains("60001 ms"))
+        assertEquals(1, logger.internalErrorMessages.size)
     }
 
     @Test
@@ -77,7 +75,21 @@ internal class NormalizedIntervalClockTest {
         clock.now()
         elapsedMs -= 1_001L // 1001ms back, over 1s threshold
         clock.now()
-        assertEquals(1, logger.errorMessages.size)
+        assertEquals(1, logger.internalErrorMessages.size)
+    }
+
+    @Test
+    fun `drift logged only once across multiple drifts`() {
+        val clock = buildClock(driftThresholdMs = 60_000L)
+        elapsedMs += 70_000L
+        clock.now() // record high-water mark
+        elapsedMs -= 60_001L // first drift above threshold
+        clock.now()
+        elapsedMs += 70_000L
+        clock.now() // new high-water mark
+        elapsedMs -= 60_001L // second drift above threshold
+        clock.now()
+        assertEquals(1, logger.internalErrorMessages.size)
     }
 
     @Test

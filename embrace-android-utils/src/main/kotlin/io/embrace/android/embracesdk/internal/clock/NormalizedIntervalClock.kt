@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.clock
 import android.os.SystemClock
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 
 /**
@@ -24,15 +25,18 @@ class NormalizedIntervalClock(
 
     private val baseline = wallClock() - monotonicClock()
     private val lastTime = AtomicLong(0L)
+    private val hasLoggedDrift = AtomicBoolean(false)
 
     override fun now(): Long {
         val newTime = baseline + monotonicClock()
         val prev = lastTime.getAndSet(newTime)
         if (prev > 0L && newTime < prev - driftThresholdMs) {
-            logger?.trackInternalError(
-                InternalErrorType.INTERNAL_INTERFACE_FAIL,
-                IllegalStateException("NormalizedIntervalClock drifted back in time by more than threshold. Delivery is likely out-of-order.")
-            )
+            if (hasLoggedDrift.compareAndSet(false, true)) {
+                logger?.trackInternalError(
+                    InternalErrorType.INTERNAL_INTERFACE_FAIL,
+                    IllegalStateException("NormalizedIntervalClock drifted back in time by more than threshold. Delivery is likely out-of-order.")
+                )
+            }
         }
         return newTime
     }

@@ -452,6 +452,50 @@ groups:
         brief: "Set to 1 if this session part is the known final part (max duration reached or manual termination). Omitted otherwise."
         stability: development
         examples: ["1"]
+      - id: emb.session_part_id
+        type: string
+        brief: "UUID identifying the session part."
+        stability: development
+        examples: ["3a1c2b4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d"]
+      - id: emb.user_session_part_number
+        type: string
+        brief: "The index of the part within the session. 1-indexed, matching the behavior of session_number."
+        stability: development
+        examples: ["1", "2"]
+      - id: emb.is_final_session_part
+        type: string
+        brief: "Set to 1 when the SDK knows for certain this is the final part of a session (max duration reached, inactivity timeout, or manual termination). Omitted when the value would be 0."
+        stability: development
+        examples: ["1"]
+      - id: emb.termination_reason
+        type:
+          allow_custom_values: false
+          members:
+            - id: max_duration_reached
+              value: "max_duration_reached"
+              brief: "Session ended because the maximum session duration was reached."
+              stability: development
+            - id: inactivity
+              value: "inactivity"
+              brief: "Session ended due to inactivity timeout."
+              stability: development
+            - id: manual
+              value: "manual"
+              brief: "Session ended by manual termination."
+              stability: development
+        brief: "The reason the session part was terminated."
+        stability: development
+        examples: ["max_duration_reached", "inactivity", "manual"]
+      - id: emb.user_session_max_duration_minutes
+        type: string
+        brief: "The maximum session duration (in minutes) that the SDK was configured to use."
+        stability: development
+        examples: ["60", "120"]
+      - id: emb.user_session_inactivity_timeout_minutes
+        type: string
+        brief: "The inactivity timeout (in minutes) that the SDK was configured to use."
+        stability: development
+        examples: ["5", "30"]
 
   - id: emb.android
     type: attribute_group
@@ -479,6 +523,26 @@ groups:
         brief: "The exception handling type - whether it's handled or unhandled."
         stability: development
         examples: ["handled", "unhandled"]
+      - id: emb.android.crash.exception_cause
+        type: string
+        brief: "The list of Throwable that caused the exception responsible for a crash."
+        stability: development
+        examples: ["cause1 -> cause2"]
+      - id: emb.android.react_native_crash.js_exception
+        type: string
+        brief: "The JavaScript unhandled exception from the ReactNative layer."
+        stability: development
+        examples: ["TypeError: undefined is not a function"]
+      - id: emb.android.native_crash.exception
+        type: string
+        brief: "Exception coming from the native layer."
+        stability: development
+        examples: ["SIGSEGV"]
+      - id: emb.android.native_crash.symbols
+        type: string
+        brief: "Native symbols used to symbolicate a native crash."
+        stability: development
+        examples: ["{\"arch\":\"arm64\"}"]
 
   - id: emb.state_transition
     type: attribute_group
@@ -538,3 +602,67 @@ groups:
         brief: "The error code associated with a failed log message attachment."
         stability: development
         examples: ["404", "500"]
+
+  - id: emb.span
+    type: attribute_group
+    stability: development
+    brief: "Embrace span-level attributes"
+    prefix: ""
+    attributes:
+      - id: emb.error_code
+        type: string
+        brief: "Error code indicating the reason a span ended unsuccessfully."
+        stability: development
+        examples: ["failure", "user_abandon", "unknown"]
+      - id: emb.link_type
+        type: string
+        brief: "Semantic meaning of a span link, defining the relationship between the containing span and the linked span."
+        stability: development
+        examples: ["PREV_SESSION", "END_SESSION", "ENDED_IN", "STATE"]
+      - id: emb.private
+        type: string
+        brief: "Denotes a private span recorded by Embrace for diagnostic or internal usage purposes."
+        stability: development
+        examples: ["true"]
+      - id: emb.termination_cause
+        type: string
+        brief: "The reason an app instance terminated."
+        stability: development
+        examples: ["crash", "user_termination", "unknown"]
+
+  - id: emb.telemetry
+    type: attribute_group
+    stability: development
+    brief: "Embrace SDK self-telemetry and environment attributes"
+    prefix: ""
+    attributes:
+      - id: emb.okhttp3
+        type: string
+        brief: "Whether OkHttp3 is present on the classpath."
+        stability: development
+        examples: ["true", "false"]
+      - id: emb.okhttp3_on_classpath
+        type: string
+        brief: "The version of OkHttp3 found on the classpath."
+        stability: development
+        examples: ["4.11.0"]
+      - id: emb.kotlin_on_classpath
+        type: string
+        brief: "The version of Kotlin found on the classpath."
+        stability: development
+        examples: ["1.9.0"]
+      - id: emb.is_emulator
+        type: string
+        brief: "Whether the app is running on an emulator."
+        stability: development
+        examples: ["true", "false"]
+      - id: emb.storage.used
+        type: string
+        brief: "Storage used by Embrace in bytes."
+        stability: development
+        examples: ["102400"]
+      - id: emb.storage.available
+        type: string
+        brief: "Storage available on the device in bytes."
+        stability: development
+        examples: ["1073741824"]

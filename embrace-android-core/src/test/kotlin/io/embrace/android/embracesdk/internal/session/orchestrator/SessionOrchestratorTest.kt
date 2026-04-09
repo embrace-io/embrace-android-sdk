@@ -20,7 +20,6 @@ import io.embrace.android.embracesdk.fakes.createBackgroundActivityBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakePayloadSourceModule
 import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistry
 import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistryImpl
-import io.embrace.android.embracesdk.internal.arch.attrs.embCrashId
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState
 import io.embrace.android.embracesdk.internal.arch.state.AppState
 import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
@@ -297,7 +296,7 @@ internal class SessionOrchestratorTest {
     fun `end with crash in background`() {
         createOrchestrator(AppState.BACKGROUND)
         orchestrator.handleCrash("crashId")
-        assertEquals("crashId", destination.attributes[embCrashId.name])
+        assertEquals("crashId", destination.attributes[EmbSessionAttributes.EMB_CRASH_ID])
         assertTrue(store.cachedEmptyCrashPayloads.isEmpty())
     }
 
@@ -305,7 +304,7 @@ internal class SessionOrchestratorTest {
     fun `end with crash in foreground`() {
         createOrchestrator(AppState.FOREGROUND)
         orchestrator.handleCrash("crashId")
-        assertEquals("crashId", destination.attributes[embCrashId.name])
+        assertEquals("crashId", destination.attributes[EmbSessionAttributes.EMB_CRASH_ID])
         assertTrue(store.cachedEmptyCrashPayloads.isEmpty())
     }
 

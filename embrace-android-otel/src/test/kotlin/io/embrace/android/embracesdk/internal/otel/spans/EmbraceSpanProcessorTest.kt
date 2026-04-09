@@ -2,8 +2,7 @@ package io.embrace.android.embracesdk.internal.otel.spans
 
 import io.embrace.android.embracesdk.fakes.FakeReadWriteSpan
 import io.embrace.android.embracesdk.fakes.FakeSpanExporter
-import io.embrace.android.embracesdk.internal.arch.attrs.embProcessIdentifier
-import io.embrace.android.embracesdk.internal.arch.attrs.embSequenceId
+import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.opentelemetry.kotlin.NoopOpenTelemetry
 import io.opentelemetry.kotlin.semconv.SessionAttributes
 import org.junit.Assert.assertEquals
@@ -18,8 +17,8 @@ class EmbraceSpanProcessorTest {
         val span = FakeReadWriteSpan()
         processor.onStart(span, NoopOpenTelemetry.context.implicit())
 
-        assertEquals(span.attributes[embSequenceId.name], "1")
-        assertEquals(span.attributes[embProcessIdentifier.name], "pid")
+        assertEquals(span.attributes[EmbSessionAttributes.EMB_PRIVATE_SEQUENCE_ID], "1")
+        assertEquals(span.attributes[EmbSessionAttributes.EMB_PROCESS_IDENTIFIER], "pid")
         assertEquals(span.attributes[SessionAttributes.SESSION_ID], "sid")
 
         processor.onEnd(span)

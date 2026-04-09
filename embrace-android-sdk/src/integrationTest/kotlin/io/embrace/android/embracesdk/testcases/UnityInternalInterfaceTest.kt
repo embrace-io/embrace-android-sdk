@@ -6,7 +6,7 @@ import io.embrace.android.embracesdk.assertions.getLogOfType
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.config.FakeProjectConfig
 import io.embrace.android.embracesdk.internal.EmbraceInternalApi
-import io.embrace.android.embracesdk.internal.arch.attrs.embSendMode
+import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.SendMode
 import io.embrace.android.embracesdk.internal.logs.LogExceptionType
@@ -168,7 +168,7 @@ internal class UnityInternalInterfaceTest {
                     expectedEmbType = "sys.exception",
                     expectedState = "foreground",
                 )
-                val sendMode = log.attributes?.findAttributeValue(embSendMode.name)
+                val sendMode = log.attributes?.findAttributeValue(EmbSessionAttributes.EMB_PRIVATE_SEND_MODE)
                 assertEquals(SendMode.IMMEDIATE, SendMode.fromString(sendMode))
             }
         )
@@ -206,7 +206,7 @@ internal class UnityInternalInterfaceTest {
                     expectedEmbType = "sys.exception",
                     expectedState = "foreground",
                 )
-                val sendMode = log.attributes?.findAttributeValue(embSendMode.name)
+                val sendMode = log.attributes?.findAttributeValue(EmbSessionAttributes.EMB_PRIVATE_SEND_MODE)
                 assertEquals(SendMode.IMMEDIATE, SendMode.fromString(sendMode))
             }
         )

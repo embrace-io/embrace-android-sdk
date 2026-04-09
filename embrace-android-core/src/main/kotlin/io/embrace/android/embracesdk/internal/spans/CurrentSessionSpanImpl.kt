@@ -164,7 +164,7 @@ internal class CurrentSessionSpanImpl(
                     val crashTime = openTelemetryClock.now().nanosToMillis()
                     spanRepository.failActiveSpans(crashTime)
                     endingSessionSpan.setSystemAttribute(
-                        appTerminationCause.key.name,
+                        appTerminationCause.key,
                         appTerminationCause.value
                     )
                     endingSessionSpan.stop(errorCode = ErrorCode.FAILURE, endTimeMs = crashTime)

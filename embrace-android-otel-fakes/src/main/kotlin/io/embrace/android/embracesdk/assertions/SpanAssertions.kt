@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.assertions
 
+import io.embrace.android.embracesdk.semconv.EmbSpanAttributes
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.LinkType
 import io.embrace.android.embracesdk.internal.otel.sdk.hasEmbraceAttribute
@@ -37,13 +38,13 @@ fun Span.assertPreviousSession(previousSessionSpan: Span, previousSessionId: Str
 }
 
 fun Span.assertNoPreviousSession() =
-    links?.filter { it.attributes?.toMap()?.containsKey(LinkType.PreviousSession.key.name) == false }?.size == 0
+    links?.filter { it.attributes?.toMap()?.containsKey(LinkType.PreviousSession.key) == false }?.size == 0
 
 fun Span.findLinksOfType(type: LinkType) = links?.filter { it.attributes?.hasEmbraceAttribute(type) == true }
 
 fun Span.findLinkOfType(type: LinkType): Link = checkNotNull(findLinksOfType(type)?.single())
 
-fun Span.findCustomLinks() = links?.filter { it.attributes?.any { attr -> attr.key == "emb.link_type" } == false }
+fun Span.findCustomLinks() = links?.filter { it.attributes?.any { attr -> attr.key == EmbSpanAttributes.EMB_LINK_TYPE } == false }
 
 fun Span.hasLinkToEmbraceSpan(linkedSpan: Span, type: LinkType): Boolean =
     findLinksOfType(type)?.any { it.isLinkedToSpan(linkedSpan, false) } == true

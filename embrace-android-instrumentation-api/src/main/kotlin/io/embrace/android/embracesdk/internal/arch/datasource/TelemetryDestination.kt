@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.arch.datasource
 
-import io.embrace.android.embracesdk.internal.arch.attrs.EmbraceAttributeKey
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
@@ -94,5 +93,5 @@ interface TelemetryDestination {
     /**
      * Function that returns a snapshot of all of the current values of registered instances of [StateDataSource] as a name-value pair
      */
-    var currentStatesProvider: () -> Map<EmbraceAttributeKey, Any>
+    var currentStatesProvider: () -> Map<String, Any>
 }

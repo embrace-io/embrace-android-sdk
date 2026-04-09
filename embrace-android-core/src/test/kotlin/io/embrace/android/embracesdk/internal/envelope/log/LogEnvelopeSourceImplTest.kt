@@ -10,13 +10,13 @@ import io.embrace.android.embracesdk.fixtures.nativeCrashLog
 import io.embrace.android.embracesdk.fixtures.nativeCrashWithoutSessionLog
 import io.embrace.android.embracesdk.fixtures.sendImmediatelyLog
 import io.embrace.android.embracesdk.fixtures.testLog
-import io.embrace.android.embracesdk.internal.arch.attrs.embProcessIdentifier
 import io.embrace.android.embracesdk.internal.delivery.PayloadType
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
 import io.embrace.android.embracesdk.internal.delivery.storage.CachedLogEnvelopeStore.Companion.createNativeCrashEnvelopeMetadata
 import io.embrace.android.embracesdk.internal.otel.logs.LogRequest
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.payload.LogPayload
+import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.opentelemetry.kotlin.semconv.SessionAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -98,7 +98,7 @@ internal class LogEnvelopeSourceImplTest {
         val crashPayload = LogPayload(logs = listOf(nativeCrashLog))
         val crashLogAttributes = checkNotNull(nativeCrashLog.attributes)
         val expectedSessionId = crashLogAttributes.findAttributeValue(SessionAttributes.SESSION_ID)
-        val expectedProcessIdentifier = crashLogAttributes.findAttributeValue(embProcessIdentifier.name)
+        val expectedProcessIdentifier = crashLogAttributes.findAttributeValue(EmbSessionAttributes.EMB_PROCESS_IDENTIFIER)
         val cachedCrashEnvelopeMetadata = createNativeCrashEnvelopeMetadata(
             sessionId = expectedSessionId,
             processIdentifier = expectedProcessIdentifier,
